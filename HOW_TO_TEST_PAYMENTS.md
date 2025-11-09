@@ -4,10 +4,7 @@ Since PayPal is configured, here are the ways to test payments:
 
 ## Option 1: Test via Production Website
 
-1. **Open the TikTok Downloader page:**
-   ```
-   https://www.thelostandunfounds.com/tools/tiktok-downloader
-   ```
+1. **Open the [TikTok Downloader page](https://www.thelostandunfounds.com/tools/tiktok-downloader)**
 
 2. **Login/Sign up** to get a session
 
@@ -20,7 +17,7 @@ Since PayPal is configured, here are the ways to test payments:
 
 ## Option 2: Test with Browser DevTools
 
-1. Open the TikTok Downloader page
+1. Open the [TikTok Downloader page](https://www.thelostandunfounds.com/tools/tiktok-downloader)
 2. Open Browser DevTools (F12)
 3. Go to Console tab
 4. Check for payment-related logs when clicking upgrade button
@@ -67,7 +64,7 @@ node test-payments-mcp.js --use-mcp --test-create
    - The test script will automatically use them
 
 3. **To test manually:**
-   - Use the production website
+   - Use the [production website](https://www.thelostandunfounds.com/tools/tiktok-downloader)
    - Login and try the upgrade flow
    - Check browser console for errors
 
