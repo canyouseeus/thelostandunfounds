@@ -40,6 +40,8 @@ body {
   display: flex;
   flex-direction: column;
   background-color: #000000;
+  border: none;
+  outline: none;
 }
 
 .header {
@@ -50,6 +52,10 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 1rem;
+  border: none;
+  border-bottom: none;
+  outline: none;
+  box-shadow: none;
 }
 
 .logo-container {
@@ -154,6 +160,10 @@ section h2 {
   background: #000000;
   color: #aaaaaa;
   margin-top: auto;
+  border: none;
+  border-top: none;
+  outline: none;
+  box-shadow: none;
 }
 
 @media (prefers-color-scheme: light) {
