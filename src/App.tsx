@@ -1,13 +1,8 @@
 import { useState, useEffect } from 'react'
-import { 
-  initializeCursorAutoDiscovery,
-  importTool,
-  searchTools 
-} from '@tools/index'
 
 function App() {
   const [mcpReady, setMcpReady] = useState(false)
-  const [tools, setTools] = useState<any[]>([])
+  const [tools] = useState<any[]>([])
 
   useEffect(() => {
     // Initialize MCP registry on mount
