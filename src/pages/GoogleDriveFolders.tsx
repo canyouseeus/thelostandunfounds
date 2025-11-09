@@ -8,6 +8,8 @@ interface DriveFolder {
   createdTime?: string
   modifiedTime?: string
   parents?: string[]
+  webViewLink?: string
+  webContentLink?: string
 }
 
 export default function GoogleDriveFolders() {
@@ -125,6 +127,14 @@ export default function GoogleDriveFolders() {
     }
   }
 
+  const getFolderUrl = (folder: DriveFolder) => {
+    // Use webViewLink if available, otherwise construct URL from folder ID
+    if (folder.webViewLink) {
+      return folder.webViewLink
+    }
+    return `https://drive.google.com/drive/folders/${folder.id}`
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="text-center mb-8">
@@ -194,17 +204,20 @@ export default function GoogleDriveFolders() {
           ) : (
             <div className="space-y-3">
               {folders.map((folder) => (
-                <div
+                <a
                   key={folder.id}
-                  className="bg-black border border-white/10 rounded-lg px-6 py-4 hover:border-white/30 transition-all duration-300"
+                  href={getFolderUrl(folder)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block bg-black border border-white/10 rounded-lg px-6 py-4 hover:border-white/30 transition-all duration-300 cursor-pointer group"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-4 flex-1">
-                      <div className="w-10 h-10 rounded-lg border border-white/20 flex items-center justify-center text-white flex-shrink-0 mt-1">
+                      <div className="w-10 h-10 rounded-lg border border-white/20 flex items-center justify-center text-white flex-shrink-0 mt-1 group-hover:border-white/40 transition-colors">
                         <Folder className="w-5 h-5" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-bold text-white mb-2 truncate">
+                        <h3 className="text-lg font-bold text-white mb-2 truncate group-hover:text-white/90 transition-colors">
                           {folder.name}
                         </h3>
                         <div className="space-y-1 text-sm text-white/60">
@@ -234,7 +247,7 @@ export default function GoogleDriveFolders() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </a>
               ))}
             </div>
           )}
