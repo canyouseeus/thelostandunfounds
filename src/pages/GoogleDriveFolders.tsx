@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Folder, Loader2, RefreshCw, AlertCircle } from 'lucide-react'
+import { useTool, getAvailableTools } from '../services/mcp-registry'
 
 interface DriveFolder {
   id: string
@@ -13,67 +14,106 @@ export default function GoogleDriveFolders() {
   const [folders, setFolders] = useState<DriveFolder[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [authenticated, setAuthenticated] = useState(false)
-
-  const API_BASE_URL = import.meta.env.VITE_API_URL || window.location.origin
+  const [mcpAvailable, setMcpAvailable] = useState(false)
 
   useEffect(() => {
-    checkAuthAndLoadFolders()
+    checkMCPAndLoadFolders()
   }, [])
 
-  const checkAuthAndLoadFolders = async () => {
+  const checkMCPAndLoadFolders = async () => {
     try {
-      // Check if authenticated
-      const statusResponse = await fetch(`${API_BASE_URL}/api/drive/status`)
-      const statusData = await statusResponse.json()
-      setAuthenticated(statusData.authenticated || false)
-
-      if (statusData.authenticated) {
-        await loadFolders()
+      // Check if MCP Google Drive tools are available
+      const availableTools = await getAvailableTools('googledrive')
+      if (availableTools && availableTools.length > 0) {
+        setMcpAvailable(true)
+        await loadFoldersWithMCP()
       } else {
-        setLoading(false)
-        setError('Not authenticated. Please connect Google Drive first.')
+        // Fallback: try alternative namespaces
+        const altTools = await getAvailableTools('google-drive')
+        if (altTools && altTools.length > 0) {
+          setMcpAvailable(true)
+          await loadFoldersWithMCP()
+        } else {
+          setLoading(false)
+          setError('MCP Google Drive tools not found. Please ensure Google Drive MCP Server is configured in Cursor.')
+        }
       }
     } catch (err: any) {
-      console.error('Auth check failed:', err)
+      console.error('MCP check failed:', err)
       setLoading(false)
-      setError('Failed to check authentication status.')
+      setError('Failed to access MCP tools. Please ensure MCP is properly configured.')
     }
   }
 
-  const loadFolders = async () => {
+  const loadFoldersWithMCP = async () => {
     try {
       setLoading(true)
       setError(null)
       
-      const response = await fetch(`${API_BASE_URL}/api/drive/folders`)
-      if (!response.ok) {
-        throw new Error('Failed to fetch folders')
+      // Try different possible MCP tool names for listing folders
+      const possibleToolNames = [
+        'listFolders',
+        'list_folders',
+        'getFolders',
+        'get_folders',
+        'listFiles',
+        'list_files'
+      ]
+      
+      let result = null
+      let toolUsed = null
+      
+      for (const toolName of possibleToolNames) {
+        try {
+          // Try googledrive namespace first
+          result = await useTool('googledrive', toolName, {})
+          toolUsed = `googledrive.${toolName}`
+          break
+        } catch (e) {
+          // Try google-drive namespace
+          try {
+            result = await useTool('google-drive', toolName, {})
+            toolUsed = `google-drive.${toolName}`
+            break
+          } catch (e2) {
+            continue
+          }
+        }
       }
       
-      const data = await response.json()
-      setFolders(data.folders || [])
+      if (!result) {
+        throw new Error('Could not find a suitable MCP tool to list folders')
+      }
+      
+      console.log(`✅ Used MCP tool: ${toolUsed}`)
+      
+      // Handle different response formats
+      if (Array.isArray(result)) {
+        setFolders(result)
+      } else if (result.folders) {
+        setFolders(result.folders)
+      } else if (result.files) {
+        // Filter to only folders if files are returned
+        const folderFiles = result.files.filter((file: any) => 
+          file.mimeType === 'application/vnd.google-apps.folder' || 
+          file.kind === 'drive#folder'
+        )
+        setFolders(folderFiles)
+      } else if (result.data && Array.isArray(result.data)) {
+        setFolders(result.data)
+      } else {
+        setFolders([])
+      }
     } catch (err: any) {
-      console.error('Failed to load folders:', err)
-      setError(err.message || 'Failed to load folders')
+      console.error('Failed to load folders via MCP:', err)
+      setError(err.message || 'Failed to load folders using MCP tools')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleConnect = () => {
-    const authWindow = window.open(
-      `${API_BASE_URL}/api/auth/google`,
-      'Google Auth',
-      'width=500,height=600'
-    )
-    
-    const checkAuth = setInterval(async () => {
-      if (authWindow?.closed) {
-        clearInterval(checkAuth)
-        await checkAuthAndLoadFolders()
-      }
-    }, 1000)
+  const handleRetry = () => {
+    checkMCPAndLoadFolders()
   }
 
   const formatDate = (dateString?: string) => {
@@ -97,17 +137,18 @@ export default function GoogleDriveFolders() {
         </p>
       </div>
 
-      {!authenticated ? (
+      {!mcpAvailable && error ? (
         <div className="bg-black border border-white/10 rounded-lg p-8 text-center">
           <AlertCircle className="w-16 h-16 text-white/50 mx-auto mb-4" />
-          <p className="text-white/70 text-lg mb-6">
-            Please connect your Google Drive account to view folders.
+          <p className="text-white/70 text-lg mb-4">{error}</p>
+          <p className="text-white/50 text-sm mb-6">
+            MCP tools are configured in Cursor IDE settings. Ensure Google Drive MCP Server is enabled.
           </p>
           <button
-            onClick={handleConnect}
+            onClick={handleRetry}
             className="bg-white text-black px-6 py-3 rounded-lg font-semibold hover:bg-white/90 transition-colors"
           >
-            Connect Google Drive
+            Retry
           </button>
         </div>
       ) : (
@@ -119,7 +160,7 @@ export default function GoogleDriveFolders() {
               )}
             </div>
             <button
-              onClick={loadFolders}
+              onClick={loadFoldersWithMCP}
               disabled={loading}
               className="flex items-center gap-2 bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition-colors disabled:opacity-50"
             >

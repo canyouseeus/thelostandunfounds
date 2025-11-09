@@ -51,8 +51,13 @@ export async function getAvailableTools(namespace: string) {
  * Use a tool from the registry
  */
 export async function useTool(namespace: string, toolName: string, params: any) {
-  const tool = await importTool(namespace, toolName);
-  return await tool.execute(params);
+  try {
+    const tool = await importTool(namespace, toolName);
+    return await tool.execute(params);
+  } catch (error) {
+    console.error(`Failed to use tool ${namespace}.${toolName}:`, error);
+    throw error;
+  }
 }
 
 /**
