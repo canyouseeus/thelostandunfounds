@@ -1,22 +1,22 @@
+import { Routes, Route } from 'react-router-dom'
+import { Analytics } from '@vercel/analytics/react'
+import Layout from './components/Layout'
+import Home from './pages/Home'
+import ToolsDashboard from './pages/ToolsDashboard'
+import TikTokDownloader from './pages/TikTokDownloader'
+
 function App() {
-
   return (
-    <div className="app">
-      <header className="header">
-        <div className="logo-container">
-          <img src="/logo.png" alt="THE LOST+UNFOUNDS Logo" className="logo" />
-        </div>
-        <h1>THE LOST+UNFOUNDS</h1>
-      </header>
-
-      <main className="main">
-        <h2 className="center-text">CAN YOU SEE US?</h2>
-      </main>
-
-      <footer className="footer">
-        <p>&copy; {new Date().getFullYear()} THE LOST+UNFOUNDS. All rights reserved.</p>
-      </footer>
-    </div>
+    <>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/tools" element={<Layout />}>
+          <Route index element={<ToolsDashboard />} />
+        </Route>
+        <Route path="/tools/tiktok-downloader" element={<TikTokDownloader />} />
+      </Routes>
+      <Analytics />
+    </>
   )
 }
 
