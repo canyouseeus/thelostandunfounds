@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok Video Downloader - Free No Watermark Downloads | Download TikTok Videos</title>
+    <meta name="description" content="Download TikTok videos without watermark for free. Fast, easy, and secure TikTok video downloader. Get high-quality TikTok videos instantly.">
+    <meta name="keywords" content="tiktok downloader, download tiktok videos, tiktok video downloader, no watermark, free tiktok downloader">
+    <link rel="stylesheet" href="styles.css">
+    <!-- PayPal SDK will be loaded dynamically based on environment -->
+    <!-- Google Pay API -->
+    <!-- Google Pay SDK loaded dynamically when needed (see app.js) -->
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4773809632563177"
+     crossorigin="anonymous"></script>
+</head>
+<body class="dark-mode">
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1 class="title">TikTok Video Downloader</h1>
+                <p class="header-subtitle">Download TikTok videos without watermark - Free and fast</p>
+            </div>
+            <div class="header-menu">
+                <button id="menuToggle" class="menu-toggle" aria-label="Menu" aria-expanded="false">
+                    <span class="menu-icon">☰</span>
+                </button>
+                <div id="menuDropdown" class="menu-dropdown hidden">
+                    <div id="userStatus" class="user-status hidden">
+                        <div class="menu-item">
+                            <span id="userEmail" class="user-email"></span>
+                            <span id="userTier" class="user-tier"></span>
+                            <span id="userDownloads" class="user-downloads"></span>
+                        </div>
+                    </div>
+                    <button id="themeToggle" class="menu-item menu-button" aria-label="Toggle theme">
+                        <span class="menu-label">THEME</span>
+                        <span class="theme-icon">☾</span>
+                    </button>
+                    <button id="menuLoginBtn" class="menu-item menu-button">
+                        <span class="menu-label">LOGIN</span>
+                    </button>
+                    <button id="menuLogoutBtn" class="menu-item menu-button hidden">
+                        <span class="menu-label">LOGOUT</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- AdSense Ad Unit -->
+        <div class="ads-container">
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-4773809632563177"
+                 data-ad-slot="8080145505"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+        </div>
+
+        <main>
+            <div class="input-section">
+                <label for="tiktokUrl" class="label">PASTE TIKTOK URL</label>
+                <div class="input-wrapper">
+                    <input 
+                        type="text" 
+                        id="tiktokUrl" 
+                        class="input" 
+                        placeholder="https://www.tiktok.com/@username/video/1234567890"
+                        autocomplete="off"
+                    >
+                    <button id="downloadBtn" class="btn-download">GET VIDEO</button>
+                </div>
+                <div id="downloadLimit" class="download-limit hidden">
+                    <span id="downloadCount">0</span> / 5 downloads today
+                </div>
+            </div>
+
+            <div id="driveSection" class="drive-section">
+                <div class="drive-status">
+                    <span id="driveStatusText" class="drive-status-text">GOOGLE DRIVE: NOT CONNECTED</span>
+                    <button id="driveAuthBtn" class="btn-drive">CONNECT</button>
+                </div>
+            </div>
+
+            <div id="status" class="status hidden"></div>
+
+            <div id="result" class="result hidden">
+                <div class="video-preview">
+                    <div id="followOverlay" class="follow-overlay hidden">
+                        <div id="followText" class="follow-text">FOLLOW @USERNAME</div>
+                    </div>
+                    <video id="videoPreview" controls class="video"></video>
+                    <div id="transcriptionOverlay" class="transcription-overlay hidden">
+                        <div id="transcriptionText" class="transcription-text"></div>
+                    </div>
+                </div>
+                <div class="actions">
+                    <button id="toggleTranscription" class="btn-toggle">TOGGLE TRANSCRIPTION</button>
+                    <a id="downloadLink" class="btn-download-link" download>DOWNLOAD VIDEO</a>
+                    <button id="shareBtn" class="btn-share hidden">SHARE VIDEO</button>
+                    <button id="uploadDriveBtn" class="btn-drive-upload hidden">UPLOAD TO DRIVE</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Upgrade CTA Banner -->
+        <div id="upgradeBanner" class="upgrade-banner hidden">
+            <div class="upgrade-content">
+                <span class="upgrade-text">FREE TIER: 5 DOWNLOADS/DAY</span>
+                <div class="payment-buttons">
+                    <button id="upgradeBtn" class="btn-upgrade">UPGRADE TO PREMIUM ($4.99/MO)</button>
+                    <div id="applePayButton" class="apple-pay-button hidden"></div>
+                    <div id="googlePayButton" class="google-pay-button hidden"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auth Modal -->
+        <div id="authModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modalTitle">LOGIN</h2>
+                    <button id="closeModal" class="btn-close">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="status info" style="margin-bottom: 20px; white-space: nowrap;">CREATE FREE ACCOUNT FOR 5 DOWNLOADS/DAY</div>
+                    <form id="authForm" onsubmit="event.preventDefault(); document.getElementById('authSubmitBtn').click();">
+                        <div class="auth-section">
+                            <label for="authEmail" class="label">EMAIL</label>
+                            <input type="email" id="authEmail" class="input" placeholder="your@email.com" autocomplete="email" required>
+                            
+                            <label for="authPassword" class="label">PASSWORD</label>
+                            <input type="password" id="authPassword" class="input" placeholder="••••••" autocomplete="current-password" required>
+                            
+                            <div id="authError" class="auth-error hidden"></div>
+                            
+                            <button type="submit" id="authSubmitBtn" class="btn-download">LOGIN / SIGN UP</button>
+                        </div>
+                        
+                        <div class="auth-divider">
+                            <span>OR</span>
+                        </div>
+                        
+                        <div class="auth-section">
+                            <button type="button" id="googleSignInBtn" class="btn-google">
+                                <svg width="18" height="18" viewBox="0 0 18 18" style="margin-right: 8px;">
+                                    <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
+                                    <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
+                                    <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.951H.957C.348 6.174 0 7.55 0 9s.348 2.826.957 4.049l3.007-2.342z"/>
+                                    <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.951L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z"/>
+                                </svg>
+                                SIGN IN WITH GOOGLE
+                            </button>
+                        </div>
+                        
+                        <p class="auth-help-text">
+                            New users will automatically have an account created
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <div class="footer-text">WATERMARK-FREE DOWNLOADS</div>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Initialize AdSense with error handling for iframe compatibility
+        (function() {
+            try {
+                // Only initialize if AdSense is available and container is visible
+                const adContainer = document.querySelector('.ads-container');
+                if (adContainer && typeof adsbygoogle !== 'undefined') {
+                    // Check if we're in an iframe
+                    const inIframe = window.self !== window.top;
+                    
+                    if (inIframe) {
+                        // In iframe: try to initialize but handle errors gracefully
+                        try {
+                            (adsbygoogle = window.adsbygoogle || []).push({});
+                        } catch (e) {
+                            console.debug('AdSense in iframe:', e.message);
+                            // Hide ad container if AdSense fails in iframe
+                            adContainer.style.display = 'none';
+                        }
+                    } else {
+                        // Not in iframe: normal initialization
+                        (adsbygoogle = window.adsbygoogle || []).push({});
+                    }
+                }
+            } catch (error) {
+                // Silently handle AdSense errors (common in iframes or localhost)
+                console.debug('AdSense initialization:', error.message);
+            }
+        })();
+    </script>
+</body>
+</html>
+
+
