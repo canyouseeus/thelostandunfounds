@@ -233,7 +233,27 @@ Add these test cards to Wallet app for testing:
 
 ## Testing Payment Endpoints Directly
 
-### Test Payment Creation
+### Using the Test Scripts
+
+**Option 1: Test with MCP Tools (if available)**
+```bash
+# Test all endpoints using MCP tools
+node test-payments-mcp.js --use-mcp
+
+# Test payment creation with MCP
+node test-payments-mcp.js --test-create --use-mcp
+```
+
+**Option 2: Test with Direct API Calls**
+```bash
+# Test all endpoints via API
+node test-payments-mcp.js --cookie "your-session-cookie"
+
+# Or use the simpler script
+node test-payments.js --cookie "your-session-cookie"
+```
+
+### Test Payment Creation (Manual curl)
 
 ```bash
 # Create a payment order
