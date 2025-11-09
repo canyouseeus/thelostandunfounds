@@ -87,11 +87,21 @@ body {
 
 .main {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
   width: 100%;
   background-color: #000000;
+  color: #ffffff;
+}
+
+.center-text {
+  font-size: 2.5em;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-align: center;
+  margin: 0;
   color: #ffffff;
 }
 
