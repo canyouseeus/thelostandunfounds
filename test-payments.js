@@ -16,8 +16,8 @@
  *   --order-id <id>      Order ID for execute test
  */
 
-const BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000';
-const API_BASE = `${BASE_URL}/api/tiktok`;
+let BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000';
+let API_BASE = `${BASE_URL}/api/tiktok`;
 
 // Colors for console output
 const colors = {
@@ -265,7 +265,7 @@ Environment Variables:
 }
 
 // Update API_BASE if baseUrl changed
-const API_BASE = `${baseUrl}/api/tiktok`;
+API_BASE = `${baseUrl}/api/tiktok`;
 
 // Run tests based on flags
 (async () => {
