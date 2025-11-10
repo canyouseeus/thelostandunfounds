@@ -126,7 +126,12 @@ https://campaigns.zoho.com/api/v1.1/json/listsubscribe
 1. **Get your OAuth Token:**
    - Go to [Zoho API Console](https://api-console.zoho.com/)
    - Create a new OAuth client or use an existing one
-   - Generate an OAuth token with `ZohoCampaigns.contact.READ` and `ZohoCampaigns.contact.CREATE` scopes
+   - **Add Redirect URIs** (Zoho will ask for these):
+     - **Production:** `https://thelostandunfounds.com/oauth/callback`
+     - **Development:** `http://localhost:3000/oauth/callback`
+     - Or use: `https://www.thelostandunfounds.com/oauth/callback`
+   - Select scopes: `ZohoCampaigns.contact.READ` and `ZohoCampaigns.contact.CREATE`
+   - Generate an OAuth token
    - Copy the access token to `ZOHO_API_KEY`
 
 2. **Get your List Key:**
