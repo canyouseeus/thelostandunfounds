@@ -26,13 +26,14 @@ export default async function handler(req: Request): Promise<Response> {
     })
   }
 
-  // Get Zoho credentials from environment variables
-  const zohoApiKey = process.env.ZOHO_API_KEY
-  const zohoListKey = process.env.ZOHO_LIST_KEY
-  const zohoApiUrl = process.env.ZOHO_API_URL || 'https://campaigns.zoho.com/api/v1.1/json/listsubscribe'
+  // Get EmailJS credentials from environment variables
+  const emailjsServiceId = process.env.EMAILJS_SERVICE_ID
+  const emailjsTemplateId = process.env.EMAILJS_TEMPLATE_ID
+  const emailjsPublicKey = process.env.EMAILJS_PUBLIC_KEY
+  const recipientEmail = process.env.RECIPIENT_EMAIL || process.env.EMAILJS_TO_EMAIL
 
-  if (!zohoApiKey || !zohoListKey) {
-    console.error('Missing Zoho configuration')
+  if (!emailjsServiceId || !emailjsTemplateId || !emailjsPublicKey || !recipientEmail) {
+    console.error('Missing EmailJS configuration')
     return new Response(JSON.stringify({ 
       error: 'Email service is not configured. Please contact support.' 
     }), {
@@ -42,41 +43,30 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   try {
-    // Add subscriber to Zoho Campaigns
-    const response = await fetch(zohoApiUrl, {
+    // Send email via EmailJS
+    const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Zoho-oauthtoken ${zohoApiKey}`,
       },
       body: JSON.stringify({
-        listkey: zohoListKey,
-        contactinfo: {
-          email: email,
+        service_id: emailjsServiceId,
+        template_id: emailjsTemplateId,
+        user_id: emailjsPublicKey,
+        template_params: {
+          subscriber_email: email,
+          to_email: recipientEmail,
+          reply_to: email,
         },
-        resubscribe: true, // Re-subscribe if already exists
       }),
     })
 
-    const data = await response.json()
-
     if (!response.ok) {
-      // Handle Zoho API errors
-      const errorMessage = data?.message || data?.error || 'Failed to subscribe'
-      console.error('Zoho API error:', errorMessage)
-      
-      // Check if email already exists (this is often not an error)
-      if (data?.status === 'error' && data?.message?.includes('already')) {
-        return new Response(JSON.stringify({ 
-          success: true, 
-          message: 'You are already subscribed!' 
-        }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        })
-      }
-      
-      return new Response(JSON.stringify({ error: errorMessage }), {
+      const errorText = await response.text()
+      console.error('EmailJS API error:', errorText)
+      return new Response(JSON.stringify({ 
+        error: 'Failed to subscribe. Please try again later.' 
+      }), {
         status: response.status,
         headers: { 'Content-Type': 'application/json' },
       })
@@ -84,7 +74,7 @@ export default async function handler(req: Request): Promise<Response> {
 
     return new Response(JSON.stringify({ 
       success: true, 
-      message: 'Successfully subscribed!' 
+      message: 'Thanks for signing up! We\'ll keep you updated.' 
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
