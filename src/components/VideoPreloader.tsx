@@ -13,17 +13,25 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
     const video = videoRef.current
     if (!video) return
 
-    // Ensure video is muted
+    // Set all attributes for autoplay
     video.muted = true
     video.volume = 0
     video.controls = false
+    video.setAttribute('muted', 'true')
+    video.setAttribute('playsinline', 'true')
+    video.setAttribute('autoplay', 'true')
+    video.setAttribute('preload', 'auto')
+    
+    // Try to hide controls programmatically
+    video.style.setProperty('-webkit-media-controls', 'none', 'important')
+    video.style.setProperty('pointer-events', 'auto', 'important')
 
     const playVideo = async () => {
       try {
         video.muted = true
         await video.play()
       } catch (error) {
-        // Autoplay failed, will wait for user interaction
+        // Will wait for user interaction
       }
     }
 
@@ -31,13 +39,29 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
       onComplete()
     }
 
-    video.addEventListener('ended', handleEnded)
+    const handleCanPlay = () => {
+      playVideo()
+    }
 
-    // Try to play
+    const handleLoadedData = () => {
+      playVideo()
+    }
+
+    video.addEventListener('ended', handleEnded)
+    video.addEventListener('canplay', handleCanPlay)
+    video.addEventListener('loadeddata', handleLoadedData)
+
+    // Try to play immediately
     playVideo()
+
+    // Also try after delays
+    setTimeout(() => playVideo(), 100)
+    setTimeout(() => playVideo(), 500)
 
     return () => {
       video.removeEventListener('ended', handleEnded)
+      video.removeEventListener('canplay', handleCanPlay)
+      video.removeEventListener('loadeddata', handleLoadedData)
     }
   }, [onComplete])
 
@@ -61,9 +85,12 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
           muted
           autoPlay
           preload="auto"
+          playsinline
           controls={false}
           onClick={handleClick}
         />
+        {/* Transparent overlay to cover play button */}
+        <div className="video-overlay" onClick={handleClick} />
       </div>
     </div>
   )
