@@ -13,108 +13,130 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
     const video = videoRef.current
     if (!video) return
 
-    // Force mute and remove any audio
+    // Set all attributes for autoplay
     video.muted = true
     video.volume = 0
     video.controls = false
-    
-    // Set attributes
     video.setAttribute('muted', '')
     video.setAttribute('autoplay', '')
     video.setAttribute('playsinline', '')
     video.setAttribute('preload', 'auto')
     video.removeAttribute('controls')
 
-    // Hide controls via CSS
+    // Hide controls
     video.style.setProperty('-webkit-media-controls', 'none', 'important')
-    video.style.setProperty('pointer-events', 'auto', 'important')
 
-    // Continuously hide play button overlay
-    const hidePlayButton = () => {
-      // Hide any play buttons that Safari adds
-      const playButtons = document.querySelectorAll('button[aria-label*="Play"], .play-button, [class*="play"]')
-      playButtons.forEach(btn => {
-        const el = btn as HTMLElement
-        el.style.display = 'none'
-        el.style.visibility = 'hidden'
-        el.style.opacity = '0'
-        el.style.pointerEvents = 'none'
-      })
-      
-      // Hide webkit media controls
-      const style = document.createElement('style')
-      style.textContent = `
-        video.preloader-video::-webkit-media-controls-overlay-play-button,
-        video.preloader-video::-webkit-media-controls-play-button {
-          display: none !important;
-          opacity: 0 !important;
-          visibility: hidden !important;
-          pointer-events: none !important;
-          width: 0 !important;
-          height: 0 !important;
+    // MutationObserver to hide play button as soon as Safari adds it
+    const observer = new MutationObserver((mutations) => {
+      // Hide any play buttons or controls Safari adds
+      const playButtons = video.querySelectorAll('*')
+      playButtons.forEach((el: Element) => {
+        const htmlEl = el as HTMLElement
+        if (htmlEl.style) {
+          const computedStyle = window.getComputedStyle(htmlEl)
+          if (computedStyle.cursor === 'pointer' || 
+              htmlEl.getAttribute('aria-label')?.toLowerCase().includes('play') ||
+              htmlEl.className?.toLowerCase().includes('play')) {
+            htmlEl.style.display = 'none'
+            htmlEl.style.visibility = 'hidden'
+            htmlEl.style.opacity = '0'
+            htmlEl.style.pointerEvents = 'none'
+          }
         }
-      `
-      document.head.appendChild(style)
+      })
+    })
+
+    observer.observe(video, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['style', 'class']
+    })
+
+    // Also observe the container for any buttons Safari adds
+    const containerObserver = new MutationObserver(() => {
+      const buttons = document.querySelectorAll('button, [role="button"], [aria-label*="Play"], [aria-label*="play"]')
+      buttons.forEach(btn => {
+        const el = btn as HTMLElement
+        if (el.closest('.video-container') || el.closest('.video-preloader')) {
+          el.style.display = 'none'
+          el.style.visibility = 'hidden'
+          el.style.opacity = '0'
+          el.style.pointerEvents = 'none'
+        }
+      })
+    })
+
+    const container = video.closest('.video-container')
+    if (container) {
+      containerObserver.observe(container, {
+        childList: true,
+        subtree: true,
+        attributes: true
+      })
     }
 
-    // Run immediately and continuously
-    hidePlayButton()
-    const hideInterval = setInterval(hidePlayButton, 100)
-
     const playVideo = async () => {
-      if (!video.paused) return
-      try {
-        video.muted = true
-        video.volume = 0
-        await video.play()
-        // Hide play button after play starts
-        hidePlayButton()
-      } catch (error) {
-        // Try again
-        setTimeout(() => {
+      if (video.paused) {
+        try {
           video.muted = true
-          video.play().catch(() => {})
-        }, 100)
+          video.volume = 0
+          await video.play()
+        } catch (error) {
+          // Keep trying
+        }
       }
     }
 
     const handleEnded = () => {
-      clearInterval(hideInterval)
+      observer.disconnect()
+      containerObserver.disconnect()
       onComplete()
     }
 
     const handleCanPlay = () => {
       playVideo()
-      hidePlayButton()
     }
 
     const handleLoadedData = () => {
       playVideo()
-      hidePlayButton()
+    }
+
+    const handlePlay = () => {
+      // Hide play button when video starts playing
+      const buttons = document.querySelectorAll('button, [role="button"]')
+      buttons.forEach(btn => {
+        const el = btn as HTMLElement
+        if (el.closest('.video-container') || el.closest('.video-preloader')) {
+          el.style.display = 'none'
+          el.style.visibility = 'hidden'
+          el.style.opacity = '0'
+        }
+      })
     }
 
     video.addEventListener('ended', handleEnded)
     video.addEventListener('canplay', handleCanPlay)
     video.addEventListener('loadeddata', handleLoadedData)
+    video.addEventListener('play', handlePlay)
 
-    // Load and try to play
+    // Load and play
     video.load()
     playVideo()
 
-    // Keep trying
-    const intervals = [100, 200, 500, 1000]
-    intervals.forEach(delay => {
-      setTimeout(() => {
-        playVideo()
-        hidePlayButton()
-      }, delay)
-    })
+    // Try multiple times
+    setTimeout(() => playVideo(), 50)
+    setTimeout(() => playVideo(), 100)
+    setTimeout(() => playVideo(), 200)
+    setTimeout(() => playVideo(), 500)
 
     return () => {
-      clearInterval(hideInterval)
+      observer.disconnect()
+      containerObserver.disconnect()
       video.removeEventListener('ended', handleEnded)
       video.removeEventListener('canplay', handleCanPlay)
       video.removeEventListener('loadeddata', handleLoadedData)
+      video.removeEventListener('play', handlePlay)
     }
   }, [onComplete])
 
@@ -131,20 +153,6 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
         >
           <source src={localVideoUrl} type="video/mp4" />
         </video>
-        {/* Solid overlay to cover play button */}
-        <div 
-          className="video-overlay-cover"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            backgroundColor: 'transparent',
-            zIndex: 999,
-            pointerEvents: 'none'
-          }}
-        />
       </div>
     </div>
   )
