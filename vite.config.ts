@@ -45,6 +45,13 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    rollupOptions: {
+      external: (id) => {
+        // Mark @tools imports as external (optional dependency)
+        // This prevents build errors when tools-registry is not available
+        return id === '@tools/index' || id.startsWith('@tools/');
+      },
+    },
   },
 })
 

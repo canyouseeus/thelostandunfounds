@@ -24,9 +24,25 @@ const subscriptionToolNames = ['getSubscription', 'getTier', 'canPerformAction',
 async function loadMCPTools() {
   if (toolsLoaded) return;
   
+  // MCP registry is optional - use fallback in production builds
+  // The @tools alias is only available in local development
+  if (import.meta.env.PROD) {
+    // Production fallback - MCP registry not available
+    toolRegistry = {
+      registerMetadata: () => {},
+    };
+    initializeCursorAutoDiscovery = async () => ({ servers: [], tools: [] });
+    importTool = async () => ({ execute: () => Promise.resolve({}) });
+    searchTools = async () => [];
+    toolsLoaded = true;
+    return;
+  }
+  
   try {
-    // Try to dynamically import - will fail gracefully if not available
-    const toolsModule = await import(/* @vite-ignore */ '@tools/index' as string);
+    // Try to dynamically import - only in development with tools-registry available
+    // Construct import path dynamically to prevent static analysis
+    const toolsPath = '@tools/index';
+    const toolsModule = await import(/* @vite-ignore */ toolsPath);
     toolRegistry = toolsModule.toolRegistry;
     initializeCursorAutoDiscovery = toolsModule.initializeCursorAutoDiscovery;
     importTool = toolsModule.importTool;
