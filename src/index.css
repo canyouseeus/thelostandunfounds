@@ -152,6 +152,61 @@ body {
   outline: none;
   border: none;
   cursor: none;
+  -webkit-media-controls: none !important;
+  -webkit-media-controls-enclosure: none !important;
+}
+
+.preloader-video::-webkit-media-controls {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+.preloader-video::-webkit-media-controls-enclosure {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+.preloader-video::-webkit-media-controls-panel {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+.preloader-video::-webkit-media-controls-play-button {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  -webkit-appearance: none !important;
+}
+
+.preloader-video::-webkit-media-controls-start-playback-button {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  -webkit-appearance: none !important;
+}
+
+.preloader-video::-webkit-media-controls-overlay-play-button {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  -webkit-appearance: none !important;
+}
+
+video.preloader-video::-webkit-media-controls-overlay-play-button {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  -webkit-appearance: none !important;
+}
+
+video.preloader-video::-webkit-media-controls-play-button {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  -webkit-appearance: none !important;
 }
 
 /* Hide all media controls */

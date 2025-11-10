@@ -17,14 +17,23 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
     // Ensure video is muted for autoplay
     video.muted = true
     video.volume = 0
+    video.controls = false
+    video.setAttribute('controls', 'false')
+    
+    // Hide controls via style
+    video.style.setProperty('-webkit-media-controls', 'none', 'important')
 
     const playVideo = async () => {
       if (hasPlayedRef.current && !video.paused) return
       
       try {
         video.muted = true
+        video.controls = false
         await video.play()
         hasPlayedRef.current = true
+        // Ensure controls stay hidden after play
+        video.controls = false
+        video.setAttribute('controls', 'false')
       } catch (error) {
         console.error('Autoplay failed:', error)
       }
@@ -102,6 +111,9 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
           autoPlay
           preload="auto"
           playsinline
+          controls={false}
+          disablePictureInPicture
+          disableRemotePlayback
         />
       </div>
     </div>
