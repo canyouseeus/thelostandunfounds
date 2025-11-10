@@ -7,6 +7,7 @@ interface VideoPreloaderProps {
 export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const hasEndedRef = useRef(false)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const localVideoUrl = '/preloader-video.mp4'
 
@@ -14,28 +15,54 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
     const video = videoRef.current
     if (!video) return
 
+    // Safety timeout - proceed to home page after 15 seconds if video doesn't play
+    timeoutRef.current = setTimeout(() => {
+      if (!hasEndedRef.current) {
+        console.warn('Video timeout - proceeding to home page')
+        hasEndedRef.current = true
+        onComplete()
+      }
+    }, 15000)
+
     // Hide play button overlay by setting CSS and attributes
-    video.style.setProperty('-webkit-media-controls', 'none', 'important')
-    video.controls = false
-    video.setAttribute('controls', 'false')
+    try {
+      video.style.setProperty('-webkit-media-controls', 'none', 'important')
+      video.controls = false
+      video.setAttribute('controls', 'false')
+    } catch (e) {
+      console.error('Error setting video attributes:', e)
+    }
     
     // Use MutationObserver to hide any play buttons that get added
     const observer = new MutationObserver(() => {
-      const playButtons = video.querySelectorAll('button, [role="button"], .play-button, [class*="play"]')
-      playButtons.forEach(btn => {
-        const element = btn as HTMLElement
-        element.style.display = 'none'
-        element.style.visibility = 'hidden'
-        element.style.opacity = '0'
-      })
+      try {
+        const playButtons = video.querySelectorAll('button, [role="button"], .play-button, [class*="play"]')
+        playButtons.forEach(btn => {
+          const element = btn as HTMLElement
+          element.style.display = 'none'
+          element.style.visibility = 'hidden'
+          element.style.opacity = '0'
+        })
+      } catch (e) {
+        // Ignore observer errors
+      }
     })
     
-    observer.observe(video, { childList: true, subtree: true, attributes: true })
+    try {
+      observer.observe(video, { childList: true, subtree: true, attributes: true })
+    } catch (e) {
+      console.error('Error setting up observer:', e)
+    }
 
     const playVideo = async () => {
       if (hasEndedRef.current) return
       try {
         await video.play()
+        // Clear timeout once video starts playing
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current)
+          timeoutRef.current = null
+        }
         // Force hide controls after play starts
         video.controls = false
         video.setAttribute('controls', 'false')
@@ -61,6 +88,10 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
     const handleEnded = () => {
       if (!hasEndedRef.current) {
         hasEndedRef.current = true
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current)
+          timeoutRef.current = null
+        }
         onComplete()
       }
     }
@@ -70,17 +101,22 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
       console.error('Video error:', {
         error: videoEl.error,
         code: videoEl.error?.code,
-        message: videoEl.error?.message
+        message: videoEl.error?.message,
+        networkState: videoEl.networkState,
+        readyState: videoEl.readyState
       })
-      // Only proceed if it's a fatal error, otherwise let video try to recover
-      if (videoEl.error && videoEl.error.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED) {
-        setTimeout(() => {
-          if (!hasEndedRef.current) {
-            hasEndedRef.current = true
-            onComplete()
+      
+      // If video fails to load, proceed to home page after a short delay
+      setTimeout(() => {
+        if (!hasEndedRef.current) {
+          hasEndedRef.current = true
+          if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current)
+            timeoutRef.current = null
           }
-        }, 2000)
-      }
+          onComplete()
+        }
+      }, 2000)
     }
 
     // Handle click to play if autoplay fails
@@ -102,9 +138,18 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
     video.addEventListener('click', handleClick)
 
     // Load the video
-    video.load()
+    try {
+      video.load()
+    } catch (e) {
+      console.error('Error loading video:', e)
+      // If load fails, proceed to home page
+      handleError(new Event('error'))
+    }
 
     return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
       observer.disconnect()
       video.removeEventListener('canplay', handleCanPlay)
       video.removeEventListener('loadeddata', handleLoadedData)
@@ -120,7 +165,14 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
       onClick={(e) => {
         const video = videoRef.current
         if (video && video.paused && !hasEndedRef.current) {
-          video.play()
+          video.play().catch(err => {
+            console.error('Click play failed:', err)
+            // If click play fails, proceed to home page
+            if (!hasEndedRef.current) {
+              hasEndedRef.current = true
+              onComplete()
+            }
+          })
         }
       }}
     >
@@ -136,6 +188,16 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
           controls={false}
           disablePictureInPicture
           disableRemotePlayback
+          onError={(e) => {
+            console.error('Video onError handler:', e)
+            const video = e.currentTarget
+            setTimeout(() => {
+              if (!hasEndedRef.current) {
+                hasEndedRef.current = true
+                onComplete()
+              }
+            }, 2000)
+          }}
         />
       </div>
     </div>
