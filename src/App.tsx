@@ -5,6 +5,7 @@ import Home from './pages/Home'
 import ToolsDashboard from './pages/ToolsDashboard'
 import TikTokDownloader from './pages/TikTokDownloader'
 import AuthCallback from './pages/AuthCallback'
+import SEODashboard from './pages/SEODashboard'
 
 function App() {
   // Video preloader temporarily disabled for debugging
@@ -25,6 +26,7 @@ function App() {
           <Route index element={<ToolsDashboard />} />
           <Route path="tiktok-downloader" element={<TikTokDownloader />} />
         </Route>
+        <Route path="/seo" element={<SEODashboard />} />
       </Routes>
       <Analytics />
     </>
