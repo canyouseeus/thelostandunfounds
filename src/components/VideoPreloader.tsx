@@ -6,6 +6,7 @@ interface VideoPreloaderProps {
 
 export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const hasEndedRef = useRef(false)
 
   const localVideoUrl = '/preloader-video.mp4'
 
@@ -14,41 +15,61 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
     if (!video) return
 
     const playVideo = async () => {
+      if (hasEndedRef.current) return
       try {
         await video.play()
       } catch (error) {
         console.error('Error playing video:', error)
         // If autoplay fails, try again after a short delay
         setTimeout(() => {
-          video.play().catch(() => {
-            // If still fails, proceed to home page
-            onComplete()
-          })
+          if (!hasEndedRef.current) {
+            video.play().catch((err) => {
+              console.error('Retry play failed:', err)
+            })
+          }
         }, 100)
       }
     }
 
     const handleCanPlay = () => {
-      playVideo()
+      if (!hasEndedRef.current) {
+        playVideo()
+      }
     }
 
     const handleLoadedData = () => {
-      playVideo()
+      if (!hasEndedRef.current) {
+        playVideo()
+      }
     }
 
     const handleEnded = () => {
-      onComplete()
+      if (!hasEndedRef.current) {
+        hasEndedRef.current = true
+        onComplete()
+      }
     }
 
-    const handleError = () => {
-      // If video fails to load, proceed to home page after a delay
-      setTimeout(() => {
-        onComplete()
-      }, 2000)
+    const handleError = (e: Event) => {
+      const videoEl = e.target as HTMLVideoElement
+      console.error('Video error:', {
+        error: videoEl.error,
+        code: videoEl.error?.code,
+        message: videoEl.error?.message
+      })
+      // Only proceed if it's a fatal error, otherwise let video try to recover
+      if (videoEl.error && videoEl.error.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED) {
+        setTimeout(() => {
+          if (!hasEndedRef.current) {
+            hasEndedRef.current = true
+            onComplete()
+          }
+        }, 2000)
+      }
     }
 
     // Try to play immediately if video is already loaded
-    if (video.readyState >= 2) {
+    if (video.readyState >= 2 && !hasEndedRef.current) {
       playVideo()
     }
 
@@ -57,9 +78,8 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
     video.addEventListener('ended', handleEnded)
     video.addEventListener('error', handleError)
 
-    // Load and try to play the video
+    // Load the video
     video.load()
-    playVideo()
 
     return () => {
       video.removeEventListener('canplay', handleCanPlay)
