@@ -6,7 +6,6 @@ interface VideoPreloaderProps {
 
 export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
-  const hasPlayedRef = useRef(false)
 
   const localVideoUrl = '/preloader-video.mp4'
 
@@ -14,87 +13,45 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
     const video = videoRef.current
     if (!video) return
 
-    // Ensure video is muted for autoplay
+    // Ensure video is muted
     video.muted = true
     video.volume = 0
     video.controls = false
-    video.setAttribute('controls', 'false')
-    
-    // Hide controls via style
-    video.style.setProperty('-webkit-media-controls', 'none', 'important')
 
     const playVideo = async () => {
-      if (hasPlayedRef.current && !video.paused) return
-      
       try {
         video.muted = true
-        video.controls = false
         await video.play()
-        hasPlayedRef.current = true
-        // Ensure controls stay hidden after play
-        video.controls = false
-        video.setAttribute('controls', 'false')
       } catch (error) {
-        console.error('Autoplay failed:', error)
+        // Autoplay failed, will wait for user interaction
       }
-    }
-
-    // Try to play on any user interaction
-    const handleUserInteraction = () => {
-      playVideo()
-    }
-
-    // Add event listeners for user interaction
-    document.addEventListener('touchstart', handleUserInteraction, { once: true })
-    document.addEventListener('click', handleUserInteraction, { once: true })
-    document.addEventListener('keydown', handleUserInteraction, { once: true })
-
-    const handleCanPlay = () => {
-      playVideo()
-    }
-
-    const handleLoadedData = () => {
-      playVideo()
-    }
-
-    const handleLoadedMetadata = () => {
-      playVideo()
     }
 
     const handleEnded = () => {
-      if (hasPlayedRef.current) {
-        onComplete()
-      }
+      onComplete()
     }
 
-    // Try to play immediately
-    if (video.readyState >= 2) {
-      playVideo()
-    }
-
-    video.addEventListener('canplay', handleCanPlay)
-    video.addEventListener('loadeddata', handleLoadedData)
-    video.addEventListener('loadedmetadata', handleLoadedMetadata)
     video.addEventListener('ended', handleEnded)
 
-    // Try playing multiple times with delays
-    setTimeout(() => playVideo(), 100)
-    setTimeout(() => playVideo(), 500)
-    setTimeout(() => playVideo(), 1000)
+    // Try to play
+    playVideo()
 
     return () => {
-      document.removeEventListener('touchstart', handleUserInteraction)
-      document.removeEventListener('click', handleUserInteraction)
-      document.removeEventListener('keydown', handleUserInteraction)
-      video.removeEventListener('canplay', handleCanPlay)
-      video.removeEventListener('loadeddata', handleLoadedData)
-      video.removeEventListener('loadedmetadata', handleLoadedMetadata)
       video.removeEventListener('ended', handleEnded)
     }
   }, [onComplete])
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const video = videoRef.current
+    if (video && video.paused) {
+      video.play().catch(() => {})
+    }
+  }
+
   return (
-    <div className="video-preloader">
+    <div className="video-preloader" onClick={handleClick}>
       <div className="video-container">
         <video
           ref={videoRef}
@@ -104,16 +61,8 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
           muted
           autoPlay
           preload="auto"
-          playsinline
           controls={false}
-          onClick={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
-            const video = e.currentTarget
-            if (video.paused) {
-              video.play().catch(err => console.error('Video play error:', err))
-            }
-          }}
+          onClick={handleClick}
         />
       </div>
     </div>
