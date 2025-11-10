@@ -124,35 +124,30 @@ https://campaigns.zoho.com/api/v1.1/json/listsubscribe
 **Setting up Zoho Campaigns:**
 
 1. **Get your OAuth Token:**
+
+   **Option A: Self-Client (EASIEST - No redirect URI needed):**
    - Go to [Zoho API Console](https://api-console.zoho.com/)
-   - Create a new OAuth client or use an existing one
-   - **Add Redirect URIs** (Zoho will ask for these):
-     - **Production (COPY THIS):**
-       ```
-       https://thelostandunfounds.com/oauth/callback
-       ```
-     - **Development:**
-       ```
-       http://localhost:3000/oauth/callback
-       ```
-     - **Alternative (with www):**
-       ```
-       https://www.thelostandunfounds.com/oauth/callback
-       ```
-   - **Authorized JavaScript Domains** (if Zoho asks):
-     - **Production:**
-       ```
-       https://thelostandunfounds.com
-       https://www.thelostandunfounds.com
-       ```
-     - **Development:**
-       ```
-       http://localhost:3000
-       http://localhost:5173
-       ```
+   - Click **"Self Client"** tab (instead of creating a new client)
+   - Select scopes: `ZohoCampaigns.contact.READ` and `ZohoCampaigns.contact.CREATE`
+   - Click **Generate** - This creates a token directly without client registration
+   - Copy the access token to `ZOHO_API_KEY`
+
+   **Option B: OAuth Client (if Self-Client doesn't work):**
+   - Go to [Zoho API Console](https://api-console.zoho.com/)
+   - Create a new OAuth client
+   - **Client Name:** `Lost+Unfounds Email Signup`
+   - **Client Type:** `Server-based Applications` or `Web application`
+   - **Add Redirect URIs:**
+     - `https://thelostandunfounds.com/oauth/callback`
+     - `http://localhost:3000/oauth/callback` (for development)
+   - **Authorized Domains** (try without https://):
+     - `thelostandunfounds.com`
+     - `www.thelostandunfounds.com`
    - Select scopes: `ZohoCampaigns.contact.READ` and `ZohoCampaigns.contact.CREATE`
    - Generate an OAuth token
    - Copy the access token to `ZOHO_API_KEY`
+
+   **Having issues?** See [ZOHO_TROUBLESHOOTING.md](./ZOHO_TROUBLESHOOTING.md) for help.
 
 2. **Get your List Key:**
    - Log in to [Zoho Campaigns](https://campaigns.zoho.com/)
