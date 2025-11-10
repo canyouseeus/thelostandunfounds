@@ -26,7 +26,9 @@ async function loadMCPTools() {
   
   try {
     // Try to dynamically import - will fail gracefully if not available
-    const toolsModule = await import(/* @vite-ignore */ '@tools/index' as string);
+    // Use a string literal to avoid build-time resolution issues
+    const toolsModulePath = '@tools/index';
+    const toolsModule = await import(/* @vite-ignore */ toolsModulePath);
     toolRegistry = toolsModule.toolRegistry;
     initializeCursorAutoDiscovery = toolsModule.initializeCursorAutoDiscovery;
     importTool = toolsModule.importTool;

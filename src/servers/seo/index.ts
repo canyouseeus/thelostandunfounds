@@ -5,7 +5,7 @@
  * Can be used with MCP registry or directly
  */
 
-import { seoAgent } from '../services/seo';
+import { seoAgent } from '../../services/seo';
 import type {
   KeywordCluster,
   SEOAnalysis,

@@ -45,6 +45,15 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    rollupOptions: {
+      external: (id) => {
+        // Externalize @tools/index to avoid build errors when it doesn't exist
+        if (id === '@tools/index' || id.startsWith('@tools/')) {
+          return !hasToolsRegistry;
+        }
+        return false;
+      },
+    },
   },
 })
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { seoAgent } from '../../services/seo';
+import { seoAgent } from '../services/seo';
 import type {
   KeywordCluster,
   SEOAnalysis,
@@ -8,13 +8,13 @@ import type {
   SEOStrategy,
   ContentGenerationRequest,
   ContentGenerationResponse,
-} from '../../types/seo';
-import KeywordClusterView from '../seo/KeywordClusterView';
-import ContentAnalysisView from '../seo/ContentAnalysisView';
-import ContentOutlineView from '../seo/ContentOutlineView';
-import TopicClustersView from '../seo/TopicClustersView';
-import SEOStrategyView from '../seo/SEOStrategyView';
-import ContentGeneratorView from '../seo/ContentGeneratorView';
+} from '../types/seo';
+import KeywordClusterView from '../components/seo/KeywordClusterView';
+import ContentAnalysisView from '../components/seo/ContentAnalysisView';
+import ContentOutlineView from '../components/seo/ContentOutlineView';
+import TopicClustersView from '../components/seo/TopicClustersView';
+import SEOStrategyView from '../components/seo/SEOStrategyView';
+import ContentGeneratorView from '../components/seo/ContentGeneratorView';
 
 type ViewMode = 
   | 'keyword-cluster'
@@ -117,7 +117,7 @@ export default function SEODashboard() {
     setError(null);
     try {
       // Import the server tool
-      const { generateContent } = await import('../../servers/seo/index');
+      const { generateContent } = await import('../servers/seo/index');
       const response = await generateContent(request);
       setGeneratedContent(response);
     } catch (err) {
