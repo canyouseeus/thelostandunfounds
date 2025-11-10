@@ -115,6 +115,15 @@ ZOHO_LIST_KEY=your_zoho_list_key
 ZOHO_API_URL=https://campaigns.zoho.com/api/v1.1/json/listsubscribe
 ```
 
+**How to add to Vercel:**
+1. Go to Vercel Dashboard → Your Project → **Settings** → **Environment Variables**
+2. Click **"Add New"** for each variable
+3. Add all 3 variables (see list above)
+4. Select all environments (Production, Preview, Development)
+5. **Redeploy** your site after adding variables
+
+📖 **Detailed guide:** See [VERCEL_ENV_SETUP.md](./VERCEL_ENV_SETUP.md) for step-by-step instructions with screenshots.
+
 **Quick Copy - Zoho API URI (US Data Center):**
 ```
 https://campaigns.zoho.com/api/v1.1/json/listsubscribe
