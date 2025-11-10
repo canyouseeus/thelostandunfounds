@@ -115,6 +115,12 @@ ZOHO_LIST_KEY=your_zoho_list_key
 ZOHO_API_URL=https://campaigns.zoho.com/api/v1.1/json/listsubscribe
 ```
 
+**Quick Copy - Zoho API URI (US Data Center):**
+```
+https://campaigns.zoho.com/api/v1.1/json/listsubscribe
+```
+[Click here to open in browser](https://campaigns.zoho.com/api/v1.1/json/listsubscribe)
+
 **Setting up Zoho Campaigns:**
 
 1. **Get your OAuth Token:**
@@ -131,9 +137,12 @@ ZOHO_API_URL=https://campaigns.zoho.com/api/v1.1/json/listsubscribe
    - Copy it to `ZOHO_LIST_KEY`
 
 3. **API URL (US Data Center):**
-   - Default: `https://campaigns.zoho.com/api/v1.1/json/listsubscribe`
-   - For EU: `https://campaigns.zoho.eu/api/v1.1/json/listsubscribe`
-   - For IN: `https://campaigns.zoho.in/api/v1.1/json/listsubscribe`
+   - **Default (US):** [`https://campaigns.zoho.com/api/v1.1/json/listsubscribe`](https://campaigns.zoho.com/api/v1.1/json/listsubscribe)
+     - Click to open | Copy: `https://campaigns.zoho.com/api/v1.1/json/listsubscribe`
+   - **EU Data Center:** [`https://campaigns.zoho.eu/api/v1.1/json/listsubscribe`](https://campaigns.zoho.eu/api/v1.1/json/listsubscribe)
+     - Click to open | Copy: `https://campaigns.zoho.eu/api/v1.1/json/listsubscribe`
+   - **India Data Center:** [`https://campaigns.zoho.in/api/v1.1/json/listsubscribe`](https://campaigns.zoho.in/api/v1.1/json/listsubscribe)
+     - Click to open | Copy: `https://campaigns.zoho.in/api/v1.1/json/listsubscribe`
 
 **For Zoho Mail domain setup:** See [ZOHO_MAIL_SETUP.md](./ZOHO_MAIL_SETUP.md) for detailed instructions on setting up `admin@thelostandunfounds.com` email hosting.
 

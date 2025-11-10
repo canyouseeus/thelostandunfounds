@@ -27,6 +27,9 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   // Get Zoho Campaigns credentials from environment variables
+  // Zoho API URI (US Data Center): https://campaigns.zoho.com/api/v1.1/json/listsubscribe
+  // EU: https://campaigns.zoho.eu/api/v1.1/json/listsubscribe
+  // IN: https://campaigns.zoho.in/api/v1.1/json/listsubscribe
   const zohoApiKey = process.env.ZOHO_API_KEY
   const zohoListKey = process.env.ZOHO_LIST_KEY
   const zohoApiUrl = process.env.ZOHO_API_URL || 'https://campaigns.zoho.com/api/v1.1/json/listsubscribe'
