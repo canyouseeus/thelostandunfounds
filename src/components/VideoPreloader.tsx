@@ -14,20 +14,35 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
     const video = videoRef.current
     if (!video) return
 
+    // Hide play button overlay by setting CSS and attributes
+    video.style.setProperty('-webkit-media-controls', 'none', 'important')
+    video.controls = false
+    video.setAttribute('controls', 'false')
+    
+    // Use MutationObserver to hide any play buttons that get added
+    const observer = new MutationObserver(() => {
+      const playButtons = video.querySelectorAll('button, [role="button"], .play-button, [class*="play"]')
+      playButtons.forEach(btn => {
+        const element = btn as HTMLElement
+        element.style.display = 'none'
+        element.style.visibility = 'hidden'
+        element.style.opacity = '0'
+      })
+    })
+    
+    observer.observe(video, { childList: true, subtree: true, attributes: true })
+
     const playVideo = async () => {
       if (hasEndedRef.current) return
       try {
         await video.play()
+        // Force hide controls after play starts
+        video.controls = false
+        video.setAttribute('controls', 'false')
       } catch (error) {
         console.error('Error playing video:', error)
-        // If autoplay fails, try again after a short delay
-        setTimeout(() => {
-          if (!hasEndedRef.current) {
-            video.play().catch((err) => {
-              console.error('Retry play failed:', err)
-            })
-          }
-        }, 100)
+        // If autoplay fails, enable pointer events so user can click
+        video.style.setProperty('pointer-events', 'auto', 'important')
       }
     }
 
@@ -68,6 +83,13 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
       }
     }
 
+    // Handle click to play if autoplay fails
+    const handleClick = () => {
+      if (!hasEndedRef.current && video.paused) {
+        playVideo()
+      }
+    }
+
     // Try to play immediately if video is already loaded
     if (video.readyState >= 2 && !hasEndedRef.current) {
       playVideo()
@@ -77,20 +99,31 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
     video.addEventListener('loadeddata', handleLoadedData)
     video.addEventListener('ended', handleEnded)
     video.addEventListener('error', handleError)
+    video.addEventListener('click', handleClick)
 
     // Load the video
     video.load()
 
     return () => {
+      observer.disconnect()
       video.removeEventListener('canplay', handleCanPlay)
       video.removeEventListener('loadeddata', handleLoadedData)
       video.removeEventListener('ended', handleEnded)
       video.removeEventListener('error', handleError)
+      video.removeEventListener('click', handleClick)
     }
   }, [onComplete])
 
   return (
-    <div className="video-preloader">
+    <div 
+      className="video-preloader"
+      onClick={(e) => {
+        const video = videoRef.current
+        if (video && video.paused && !hasEndedRef.current) {
+          video.play()
+        }
+      }}
+    >
       <div className="video-container">
         <video
           ref={videoRef}

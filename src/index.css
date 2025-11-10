@@ -125,6 +125,7 @@ body {
   z-index: 9999;
 }
 
+
 .video-container {
   position: relative;
   width: 100%;
@@ -132,6 +133,15 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+
+.video-container * {
+  pointer-events: none;
+}
+
+.video-container video {
+  pointer-events: auto;
 }
 
 .preloader-video {
@@ -141,41 +151,77 @@ body {
   background-color: #000000;
   outline: none;
   border: none;
-  pointer-events: none;
+  cursor: none;
 }
 
+/* Hide all media controls */
 .preloader-video::-webkit-media-controls {
   display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
 }
 
 .preloader-video::-webkit-media-controls-enclosure {
   display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
 }
 
 .preloader-video::-webkit-media-controls-panel {
   display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
 }
 
 .preloader-video::-webkit-media-controls-play-button {
   display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  -webkit-appearance: none !important;
 }
 
 .preloader-video::-webkit-media-controls-start-playback-button {
   display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  -webkit-appearance: none !important;
 }
 
 .preloader-video::-webkit-media-controls-overlay-play-button {
   display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  -webkit-appearance: none !important;
 }
 
 video.preloader-video::-webkit-media-controls-overlay-play-button {
   display: none !important;
-  -webkit-appearance: none;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  -webkit-appearance: none !important;
 }
 
 video.preloader-video::-webkit-media-controls-play-button {
   display: none !important;
-  -webkit-appearance: none;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  -webkit-appearance: none !important;
+}
+
+/* Hide any overlay elements */
+.preloader-video::before,
+.preloader-video::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Hide native controls for all browsers */
+video.preloader-video {
+  -webkit-media-controls: none !important;
+}
+
+video.preloader-video[controls] {
+  display: none !important;
 }
 
 .video-loading {
