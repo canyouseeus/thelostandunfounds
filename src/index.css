@@ -144,72 +144,33 @@ body {
   background-color: #000000;
   outline: none;
   border: none;
+  -webkit-media-controls: none !important;
 }
 
-/* Hide play button overlay - make it invisible and non-interactive */
-.preloader-video::-webkit-media-controls-overlay-play-button {
-  display: none !important;
-  opacity: 0 !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-  -webkit-appearance: none !important;
-  width: 0 !important;
-  height: 0 !important;
-  position: absolute !important;
-  left: -9999px !important;
-}
-
+/* Completely hide all play buttons and controls */
+.preloader-video::-webkit-media-controls-overlay-play-button,
 video.preloader-video::-webkit-media-controls-overlay-play-button {
   display: none !important;
   opacity: 0 !important;
   visibility: hidden !important;
   pointer-events: none !important;
-  -webkit-appearance: none !important;
   width: 0 !important;
   height: 0 !important;
   position: absolute !important;
   left: -9999px !important;
+  z-index: -1 !important;
 }
 
-/* Target Safari's play button overlay specifically */
-video.preloader-video::--webkit-media-controls-overlay-play-button {
-  display: none !important;
-  opacity: 0 !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-}
-
-.preloader-video::-webkit-media-controls-play-button {
-  display: none !important;
-  opacity: 0 !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-  -webkit-appearance: none !important;
-}
-
+.preloader-video::-webkit-media-controls-play-button,
 video.preloader-video::-webkit-media-controls-play-button {
   display: none !important;
   opacity: 0 !important;
   visibility: hidden !important;
   pointer-events: none !important;
-  -webkit-appearance: none !important;
 }
 
-/* Hide all controls */
-.preloader-video::-webkit-media-controls {
-  display: none !important;
-  opacity: 0 !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-}
-
-.preloader-video::-webkit-media-controls-enclosure {
-  display: none !important;
-  opacity: 0 !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-}
-
+.preloader-video::-webkit-media-controls,
+.preloader-video::-webkit-media-controls-enclosure,
 .preloader-video::-webkit-media-controls-panel {
   display: none !important;
   opacity: 0 !important;

@@ -13,23 +13,34 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
     const video = videoRef.current
     if (!video) return
 
-    // Ensure video is muted and set all attributes
+    // Force mute and remove any audio
     video.muted = true
     video.volume = 0
     video.controls = false
-    video.setAttribute('muted', 'true')
-    video.setAttribute('autoplay', 'true')
-    video.setAttribute('playsinline', 'true')
+    
+    // Set attributes
+    video.setAttribute('muted', '')
+    video.setAttribute('autoplay', '')
+    video.setAttribute('playsinline', '')
     video.setAttribute('preload', 'auto')
+    video.removeAttribute('controls')
+
+    // Hide controls via CSS
+    video.style.setProperty('-webkit-media-controls', 'none', 'important')
+    video.style.setProperty('pointer-events', 'auto', 'important')
 
     const playVideo = async () => {
-      if (video.paused) {
-        try {
+      if (!video.paused) return
+      try {
+        video.muted = true
+        video.volume = 0
+        await video.play()
+      } catch (error) {
+        // Try again
+        setTimeout(() => {
           video.muted = true
-          await video.play()
-        } catch (error) {
-          // Silently fail and try again later
-        }
+          video.play().catch(() => {})
+        }, 100)
       }
     }
 
@@ -37,7 +48,7 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
       onComplete()
     }
 
-    const handleCanPlayThrough = () => {
+    const handleCanPlay = () => {
       playVideo()
     }
 
@@ -45,34 +56,24 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
       playVideo()
     }
 
-    const handleLoadedMetadata = () => {
-      playVideo()
-    }
-
-    // Load the video first
-    video.load()
-
     video.addEventListener('ended', handleEnded)
-    video.addEventListener('canplaythrough', handleCanPlayThrough)
+    video.addEventListener('canplay', handleCanPlay)
     video.addEventListener('loadeddata', handleLoadedData)
-    video.addEventListener('loadedmetadata', handleLoadedMetadata)
 
-    // Try to play after video is loaded
-    const tryPlay = () => {
-      if (video.readyState >= 3) {
-        playVideo()
-      } else {
-        setTimeout(tryPlay, 100)
-      }
-    }
+    // Load and try to play
+    video.load()
+    playVideo()
 
-    tryPlay()
+    // Keep trying
+    const intervals = [100, 200, 500, 1000]
+    intervals.forEach(delay => {
+      setTimeout(() => playVideo(), delay)
+    })
 
     return () => {
       video.removeEventListener('ended', handleEnded)
-      video.removeEventListener('canplaythrough', handleCanPlayThrough)
+      video.removeEventListener('canplay', handleCanPlay)
       video.removeEventListener('loadeddata', handleLoadedData)
-      video.removeEventListener('loadedmetadata', handleLoadedMetadata)
     }
   }, [onComplete])
 
@@ -89,6 +90,21 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
         >
           <source src={localVideoUrl} type="video/mp4" />
         </video>
+        {/* Canvas overlay to cover play button */}
+        <canvas 
+          className="video-overlay-canvas" 
+          width="1" 
+          height="1"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            zIndex: 1
+          }}
+        />
       </div>
     </div>
   )
