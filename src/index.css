@@ -105,6 +105,12 @@ body {
   color: #ffffff;
 }
 
+.typing-cursor {
+  color: #ffffff;
+  font-weight: 300;
+  margin-left: 2px;
+}
+
 section {
   margin-bottom: 3rem;
   text-align: left;
