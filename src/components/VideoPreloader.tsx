@@ -13,19 +13,23 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
     const video = videoRef.current
     if (!video) return
 
-    // Set all attributes immediately for autoplay
+    // Ensure video is muted and set all attributes
     video.muted = true
+    video.volume = 0
+    video.controls = false
     video.setAttribute('muted', 'true')
     video.setAttribute('autoplay', 'true')
     video.setAttribute('playsinline', 'true')
-    video.controls = false
+    video.setAttribute('preload', 'auto')
 
     const playVideo = async () => {
-      try {
-        video.muted = true
-        await video.play()
-      } catch (error) {
-        // Keep trying
+      if (video.paused) {
+        try {
+          video.muted = true
+          await video.play()
+        } catch (error) {
+          // Silently fail and try again later
+        }
       }
     }
 
@@ -33,7 +37,7 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
       onComplete()
     }
 
-    const handleCanPlay = () => {
+    const handleCanPlayThrough = () => {
       playVideo()
     }
 
@@ -45,23 +49,28 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
       playVideo()
     }
 
+    // Load the video first
+    video.load()
+
     video.addEventListener('ended', handleEnded)
-    video.addEventListener('canplay', handleCanPlay)
+    video.addEventListener('canplaythrough', handleCanPlayThrough)
     video.addEventListener('loadeddata', handleLoadedData)
     video.addEventListener('loadedmetadata', handleLoadedMetadata)
 
-    // Try to play immediately
-    playVideo()
-    
-    // Try multiple times aggressively
-    setTimeout(() => playVideo(), 50)
-    setTimeout(() => playVideo(), 100)
-    setTimeout(() => playVideo(), 200)
-    setTimeout(() => playVideo(), 500)
+    // Try to play after video is loaded
+    const tryPlay = () => {
+      if (video.readyState >= 3) {
+        playVideo()
+      } else {
+        setTimeout(tryPlay, 100)
+      }
+    }
+
+    tryPlay()
 
     return () => {
       video.removeEventListener('ended', handleEnded)
-      video.removeEventListener('canplay', handleCanPlay)
+      video.removeEventListener('canplaythrough', handleCanPlayThrough)
       video.removeEventListener('loadeddata', handleLoadedData)
       video.removeEventListener('loadedmetadata', handleLoadedMetadata)
     }
@@ -79,7 +88,6 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
           preload="auto"
         >
           <source src={localVideoUrl} type="video/mp4" />
-          Your browser does not support the video tag.
         </video>
       </div>
     </div>
