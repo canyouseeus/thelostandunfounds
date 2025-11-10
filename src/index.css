@@ -136,17 +136,6 @@ body {
   overflow: hidden;
 }
 
-.video-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: transparent;
-  z-index: 10;
-  pointer-events: auto;
-  cursor: pointer;
-}
 
 .preloader-video {
   width: 100%;
