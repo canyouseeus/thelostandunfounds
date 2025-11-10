@@ -27,3 +27,4 @@ if os.path.exists(logo_path):
 else:
     print(f"Logo not found at {logo_path}")
 
+

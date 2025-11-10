@@ -24,15 +24,17 @@ if (savedTheme === 'dark') {
 if (menuToggle) {
     menuToggle.addEventListener('click', (e) => {
         e.stopPropagation();
-        const isHidden = menuDropdown.classList.contains('hidden');
+        menuDropdown.classList.toggle('open');
         menuDropdown.classList.toggle('hidden');
-        menuToggle.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+        const isOpen = menuDropdown.classList.contains('open');
+        menuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     });
 }
 
 // Close menu when clicking outside
 document.addEventListener('click', (e) => {
     if (menuDropdown && !menuDropdown.contains(e.target) && !menuToggle.contains(e.target)) {
+        menuDropdown.classList.remove('open');
         menuDropdown.classList.add('hidden');
         menuToggle.setAttribute('aria-expanded', 'false');
     }
@@ -46,6 +48,18 @@ if (themeToggle) {
         const isDark = body.classList.contains('dark-mode');
         themeToggle.querySelector('.theme-icon').textContent = isDark ? '☾' : '☀';
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    });
+}
+
+// Menu login button
+if (menuLoginBtn) {
+    menuLoginBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        menuDropdown.classList.add('hidden');
+        menuDropdown.classList.remove('open');
+        menuToggle.setAttribute('aria-expanded', 'false');
+        showAuthModal();
     });
 }
 
@@ -196,6 +210,29 @@ function toggleTranscription() {
 // API base URL - proxy through Vercel API routes to Railway backend
 // Note: API_BASE_URL already includes /api/tiktok, so don't add /api/ to paths
 const API_BASE_URL = window.location.origin + '/api/tiktok';
+
+// Initialize Supabase client for Google OAuth
+let supabaseClient = null;
+function initSupabase() {
+    if (typeof supabase !== 'undefined' && !supabaseClient) {
+        // Get from window config or use placeholder - this should be set at build time
+        const SUPABASE_URL = window.SUPABASE_URL || '';
+        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || '';
+        
+        if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+            console.error('Supabase credentials not configured. Please set window.SUPABASE_URL and window.SUPABASE_ANON_KEY');
+            return null;
+        }
+        
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+            }
+        });
+    }
+    return supabaseClient;
+}
 
 // PayPal environment (sandbox or live) - fetched from server
 let PAYPAL_ENVIRONMENT = 'live'; // Default to live, will be updated from server
@@ -461,15 +498,37 @@ authSubmitBtn.addEventListener('click', async (e) => {
         });
         
         console.log('Login response status:', response.status);
-        const data = await response.json();
-        console.log('Login response data:', data);
+        console.log('Login response headers:', Object.fromEntries(response.headers.entries()));
+        
+        // Check if response is JSON before parsing
+        const contentType = response.headers.get('content-type');
+        let data;
+        if (contentType && contentType.includes('application/json')) {
+            try {
+                data = await response.json();
+                console.log('Login response data:', data);
+            } catch (jsonError) {
+                console.error('Failed to parse JSON response:', jsonError);
+                const text = await response.text();
+                console.error('Response text:', text);
+                showAuthError(`SERVER ERROR (${response.status}): ${text.substring(0, 100)}`);
+                return;
+            }
+        } else {
+            const text = await response.text();
+            console.error('Non-JSON response:', text);
+            showAuthError(`SERVER ERROR (${response.status}): Expected JSON but got ${contentType || 'unknown'}`);
+            return;
+        }
         
         if (!response.ok) {
             // Show more helpful error messages
-            const errorMsg = data.error || data.message || 'Authentication failed';
+            const errorMsg = data?.error || data?.message || `HTTP ${response.status}: Authentication failed`;
             if (response.status === 401) {
                 // Account exists but password is wrong
                 showAuthError('ACCOUNT EXISTS - PASSWORD INCORRECT. USE CORRECT PASSWORD OR DIFFERENT EMAIL.');
+            } else if (response.status === 500) {
+                showAuthError('SERVER ERROR - PLEASE TRY AGAIN LATER');
             } else {
                 showAuthError(errorMsg.toUpperCase());
             }
@@ -527,26 +586,42 @@ googleSignInBtn.addEventListener('click', async () => {
     showStatus('REDIRECTING TO GOOGLE...', 'info');
     authError.classList.add('hidden');
     
-    // Get Google OAuth URL from server
-    const response = await fetch(`${API_BASE_URL}/auth/google`, {
-      credentials: 'include'
-    });
-    
-    // Check if response is JSON
-    const contentType = response.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      const text = await response.text();
-      console.error('Non-JSON response:', text.substring(0, 200));
-      throw new Error('Server returned an error. Check console for details.');
+    // Initialize Supabase if not already initialized
+    const supabase = initSupabase();
+    if (!supabase) {
+      throw new Error('Supabase client not available. Please refresh the page.');
     }
     
-    const data = await response.json();
+    // Get the redirect URL - use the current page URL for callback
+    // Since we're in an iframe, we need to redirect the parent window
+    const redirectTo = `${window.location.origin}/auth/callback`;
+    
+    // Use Supabase OAuth directly (same as homepage)
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: redirectTo,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
+      },
+    });
+    
+    if (error) {
+      throw new Error(error.message);
+    }
     
     if (data.url) {
       // Redirect to Google OAuth
-      window.location.href = data.url;
+      // If in iframe, redirect parent window
+      if (window.self !== window.top) {
+        window.top.location.href = data.url;
+      } else {
+        window.location.href = data.url;
+      }
     } else {
-      throw new Error(data.error || 'Failed to get Google OAuth URL');
+      throw new Error('Failed to get Google OAuth URL');
     }
   } catch (error) {
     console.error('Google sign-in error:', error);

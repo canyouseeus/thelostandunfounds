@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Download, ArrowRight } from 'lucide-react'
+import SubscriptionStatus from '../components/subscription/SubscriptionStatus'
 
 interface Tool {
   id: string
@@ -23,13 +24,17 @@ const tools: Tool[] = [
 export default function ToolsDashboard() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-      <div className="text-center mb-4">
+      <div className="text-center mb-6">
         <h1 className="text-5xl font-bold text-white mb-4">
           Tool Box
         </h1>
         <p className="text-xl text-white/80">
           Try one of these custom tools!
         </p>
+      </div>
+
+      <div className="mb-6">
+        <SubscriptionStatus />
       </div>
 
       <div className="space-y-3">
