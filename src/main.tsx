@@ -2,7 +2,8 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
-import { initializeMCPRegistry } from './services/mcp-registry'
+import { ToastProvider } from './components/Toast'
+import { initializeMCPRegistry, initializeSkillsSystem } from './services/mcp-registry'
 import App from './App.tsx'
 import './index.css'
 
@@ -78,13 +79,23 @@ window.addEventListener('unhandledrejection', (event) => {
   originalConsoleError('Unhandled rejection:', event.reason);
 });
 
-// Initialize MCP registry on startup (non-blocking)
-initializeMCPRegistry().catch((error) => {
-  // Silently handle MCP registry errors - it's optional
-  if (import.meta.env.DEV) {
-    console.warn('MCP registry initialization failed (this is optional):', error);
-  }
-});
+// Initialize MCP registry and skills system on startup (non-blocking)
+initializeMCPRegistry()
+  .then(async (mcpResult) => {
+    // Initialize skills system after MCP registry is ready
+    if (mcpResult.toolRegistry) {
+      await initializeSkillsSystem(mcpResult.toolRegistry);
+      if (import.meta.env.DEV) {
+        console.log('✅ Skills system initialized');
+      }
+    }
+  })
+  .catch((error) => {
+    // Silently handle MCP registry errors - it's optional
+    if (import.meta.env.DEV) {
+      console.warn('MCP registry initialization failed (this is optional):', error);
+    }
+  });
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -94,9 +105,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         v7_relativeSplatPath: true,
       }}
     >
-      <AuthProvider>
-        <App />
-      </AuthProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </ToastProvider>
     </BrowserRouter>
   </React.StrictMode>,
 )

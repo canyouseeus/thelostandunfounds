@@ -4,8 +4,14 @@ import path from 'path'
 import { existsSync } from 'fs'
 
 // Check if tools-registry exists (for local development)
-const toolsRegistryPath = path.resolve(__dirname, '../tools-registry/src')
-const hasToolsRegistry = existsSync(toolsRegistryPath)
+// Try multiple possible paths
+const possiblePaths = [
+  path.resolve(__dirname, '../tools-registry/src'),
+  path.resolve(process.cwd(), '../tools-registry/src'),
+  path.resolve(process.cwd(), 'tools-registry/src'),
+]
+const toolsRegistryPath = possiblePaths.find(p => existsSync(p))
+const hasToolsRegistry = !!toolsRegistryPath
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -14,7 +20,8 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
       // Only add @tools alias if tools-registry exists (local dev)
-      ...(hasToolsRegistry && {
+      // In production builds, these imports are handled gracefully with try-catch
+      ...(hasToolsRegistry && toolsRegistryPath && {
         '@tools': toolsRegistryPath,
       }),
     },
@@ -45,6 +52,17 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    rollupOptions: {
+      // Handle @tools imports gracefully - they're optional dependencies
+      // wrapped in try-catch blocks, so Rollup warnings are expected
+      onwarn(warning, warn) {
+        // Suppress warnings for @tools imports - they're handled at runtime
+        if (warning.message && warning.message.includes('@tools')) {
+          return;
+        }
+        warn(warning);
+      },
+    },
   },
 })
 

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../Toast';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [loading, setLoading] = useState(false);
   
   const { signUp, signIn, signInWithGoogle } = useAuth();
+  const { success, error: showError } = useToast();
 
   if (!isOpen) return null;
 
@@ -28,7 +30,9 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         const { error } = await signUp(email, password);
         if (error) {
           setError(error.message);
+          showError(error.message);
         } else {
+          success('Account created successfully!');
           onClose();
           setEmail('');
           setPassword('');
@@ -37,7 +41,9 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         const { error } = await signIn(email, password);
         if (error) {
           setError(error.message);
+          showError(error.message);
         } else {
+          success('Signed in successfully!');
           onClose();
           setEmail('');
           setPassword('');

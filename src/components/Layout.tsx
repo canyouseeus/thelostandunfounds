@@ -119,6 +119,24 @@ export default function Layout() {
                   >
                     Explore Tools
                   </Link>
+                  {!loading && user && (
+                    <>
+                      <Link 
+                        to="/profile" 
+                        className="menu-item"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        Profile
+                      </Link>
+                      <Link 
+                        to="/settings" 
+                        className="menu-item"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        Settings
+                      </Link>
+                    </>
+                  )}
                   {!loading && !user && (
                     <>
                       <button

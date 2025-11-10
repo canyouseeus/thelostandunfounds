@@ -26,7 +26,8 @@ async function loadMCPTools() {
   
   try {
     // Try to dynamically import - will fail gracefully if not available
-    const toolsModule = await import(/* @vite-ignore */ '@tools/index' as string);
+    // Use package name for better Vercel compatibility
+    const toolsModule = await import(/* @vite-ignore */ '@scot33/tools-registry');
     toolRegistry = toolsModule.toolRegistry;
     initializeCursorAutoDiscovery = toolsModule.initializeCursorAutoDiscovery;
     importTool = toolsModule.importTool;
@@ -137,5 +138,14 @@ export async function searchAvailableTools(keyword: string, options?: any) {
 
 // Export registry instance for direct access if needed
 export { toolRegistry };
+
+// Export skills integration
+export { 
+  initializeSkillsSystem,
+  useSkill,
+  searchAvailableSkills,
+  getAllSkills,
+  getSkillMetadata,
+} from './skills-registry';
 
 

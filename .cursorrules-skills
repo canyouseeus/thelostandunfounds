@@ -1,0 +1,183 @@
+# Cursor Rules: Skills System for AI Agents
+
+## Skills System Usage
+
+**ALWAYS use the skills system when building workflows or reusable patterns.**
+
+### Rule: Use Skills Before Creating New Code
+
+When implementing a workflow or pattern:
+1. **First**: Search for existing skills that might solve the problem
+2. **Then**: Use the skill if found
+3. **Otherwise**: Create a new skill if the pattern is reusable
+
+### Discovering Skills
+
+```typescript
+import { searchAvailableSkills } from './services/mcp-registry';
+
+// Search for skills before implementing
+const skills = await searchAvailableSkills('signup');
+// Use: skills[0] if found, or create new skill
+```
+
+### Using Existing Skills
+
+```typescript
+import { useSkill } from './services/mcp-registry';
+
+// ✅ CORRECT - Use existing skill
+const result = await useSkill('@signup', {
+  email: 'user@example.com',
+  password: 'secure123',
+});
+
+// ❌ WRONG - Don't reimplement the workflow
+// const user = await signUp(...);
+// const subscription = await createSubscription(...);
+```
+
+### When to Create a New Skill
+
+Create a new skill when:
+- ✅ You're implementing a workflow that combines 2+ tools/operations
+- ✅ The pattern will be reused in multiple places
+- ✅ The workflow includes error handling, validation, or logging
+- ✅ The workflow has clear input/output parameters
+
+**DO NOT** create a skill for:
+- ❌ Single tool calls (use tools directly)
+- ❌ One-off operations
+- ❌ Simple utility functions
+
+### Creating a New Skill
+
+1. **Create skill file**: `src/skills/[name]-skill.ts`
+2. **Follow the template** (see `SKILL_CREATION_TEMPLATE.md`)
+3. **Register in** `src/services/skills-registry.ts`
+4. **Add to** `.cursorrules` if it's commonly used
+
+### Skill Creation Template
+
+```typescript
+// src/skills/[name]-skill.ts
+import { SkillDefinition, SkillMetadata, SkillExecutionContext } from '../../../tools-registry/src/skills/types';
+
+const metadata: SkillMetadata = {
+  name: 'skill-name',
+  description: 'What this skill does',
+  category: 'category',
+  tags: ['tag1', 'tag2'],
+  aliases: ['@alias'],
+  requiredParams: ['param1'],
+  optionalParams: ['param2'],
+};
+
+const skill: SkillDefinition = {
+  name: 'skill-name',
+  description: metadata.description,
+  metadata,
+  parameters: [
+    {
+      name: 'param1',
+      type: 'string',
+      description: 'Parameter description',
+      required: true,
+    },
+  ],
+  execute: async (params, context) => {
+    // Use tools from context
+    const tool = await context?.tools?.import('namespace', 'toolName');
+    const result = await tool(params);
+    
+    // Or call other skills
+    const otherResult = await context?.skills?.execute('other-skill', params);
+    
+    return { success: true, result };
+  },
+};
+
+export default skill;
+```
+
+### Common Skills to Use
+
+- **`@signup`** - User sign-up workflow
+- **`@signin`** - User sign-in workflow
+- **`@check`** - Check user access/permissions
+- **`@tiktok`** - TikTok download workflow
+- **`@upgrade`** - Subscription upgrade workflow
+
+### Skills vs Tools
+
+- **Tools**: Single operations (e.g., `createOrder`, `uploadFile`)
+- **Skills**: Workflows combining multiple tools (e.g., `@signup`, `@tiktok`)
+
+**Use skills for workflows, tools for single operations.**
+
+### Agent Workflow
+
+When building a feature:
+
+1. **Identify the workflow**: What operations need to happen?
+2. **Search for skills**: Does a skill already exist?
+3. **Use or create**:
+   - If skill exists → Use it
+   - If pattern is reusable → Create new skill
+   - If one-off → Use tools directly
+4. **Document**: Add skill to documentation if commonly used
+
+### Example: Building a Feature
+
+**User Request**: "Add a feature to process payments and send confirmation email"
+
+**Agent Process**:
+1. Search skills: `searchAvailableSkills('payment')`
+2. If no skill exists, create `payment-confirmation-skill.ts`
+3. Skill combines: PayPal tool + Email tool + Logging
+4. Register skill in `skills-registry.ts`
+5. Use skill in feature: `useSkill('@payment-confirm', {...})`
+
+### Skill Naming Conventions
+
+- Use kebab-case: `tiktok-download-skill.ts`
+- Descriptive names: `subscription-upgrade-skill.ts`
+- Category prefix: `auth-signup-skill.ts`
+- Add aliases: `['@signup', '@register']`
+
+### Registering Skills
+
+After creating a skill, register it in `src/services/skills-registry.ts`:
+
+```typescript
+skillRegistry.registerMetadata({
+  name: 'new-skill',
+  description: 'Description',
+  category: 'category',
+  aliases: ['@alias'],
+  definitionPath: 'skills/new-skill.ts',
+  requiredParams: ['param1'],
+});
+```
+
+### Testing Skills
+
+Before using a skill in production:
+1. Test with sample data
+2. Verify error handling
+3. Check logging output
+4. Validate parameters
+
+### Best Practices
+
+- ✅ Create skills for reusable workflows
+- ✅ Use existing skills when possible
+- ✅ Document skill purpose and parameters
+- ✅ Add helpful aliases
+- ✅ Include error handling
+- ✅ Log important steps
+
+- ❌ Don't create skills for one-off operations
+- ❌ Don't duplicate existing skills
+- ❌ Don't skip parameter validation
+

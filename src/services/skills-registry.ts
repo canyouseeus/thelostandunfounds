@@ -18,10 +18,10 @@ async function loadSkillsSystem() {
   if (skillsLoaded) return;
   
   try {
-    // Try to dynamically import skills from tools-registry
-    // Use @tools alias (same pattern as mcp-registry.ts)
-    const skillsModule = await import(/* @vite-ignore */ '@tools/skills' as string);
-    skillRegistry = skillsModule.skillRegistry || skillsModule.default;
+    // Try to dynamically import skills from tools-registry package
+    // Use package name for better Vercel compatibility
+    const skillsModule = await import(/* @vite-ignore */ '@scot33/tools-registry');
+    skillRegistry = skillsModule.skillRegistry || skillsModule.skills || skillsModule.default?.skills;
     executeSkill = skillsModule.executeSkill;
     searchSkills = skillsModule.searchSkills;
     listSkills = skillsModule.listSkills;
