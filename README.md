@@ -134,14 +134,20 @@ https://campaigns.zoho.com/api/v1.1/json/listsubscribe
 
 1. **Get your OAuth Token:**
 
-   **Option A: Self-Client (EASIEST - No redirect URI needed):**
+   **Option A: Self-Client (EASIEST - Recommended):**
    - Go to [Zoho API Console](https://api-console.zoho.com/)
    - Click **"Self Client"** tab (instead of creating a new client)
    - Select scopes: `ZohoCampaigns.contact.READ` and `ZohoCampaigns.contact.CREATE`
    - Click **Generate** - This creates a token directly without client registration
    - Copy the access token to `ZOHO_API_KEY`
 
-   **Option B: OAuth Client (if Self-Client doesn't work):**
+   **Option B: From Client ID & Secret:**
+   - If you only have Client ID and Secret, you need to generate an access token
+   - See [ZOHO_GET_TOKEN.md](./ZOHO_GET_TOKEN.md) for detailed instructions
+   - You'll need to complete the OAuth flow to get an access token
+   - Use the access token as your `ZOHO_API_KEY`
+
+   **Option C: OAuth Client (if Self-Client doesn't work):**
    - Go to [Zoho API Console](https://api-console.zoho.com/)
    - Create a new OAuth client
    - **Client Name:** `Lost+Unfounds Email Signup`
