@@ -1,10 +1,22 @@
+import { useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { Analytics } from '@vercel/analytics/react'
 import Layout from './components/Layout'
+import VideoPreloader from './components/VideoPreloader'
 import Home from './pages/Home'
 import ToolsDashboard from './pages/ToolsDashboard'
 
 function App() {
+  const [showPreloader, setShowPreloader] = useState(true)
+
+  const handlePreloaderComplete = () => {
+    setShowPreloader(false)
+  }
+
+  if (showPreloader) {
+    return <VideoPreloader onComplete={handlePreloaderComplete} />
+  }
+
   return (
     <>
       <Routes>
