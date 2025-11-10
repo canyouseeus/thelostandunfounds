@@ -67,7 +67,7 @@ export default function Home() {
         </div>
       </main>
       <footer className="footer">
-        <p className="info">Exploring the digital frontier</p>
+        <p className="info">© {new Date().getFullYear()} THE LOST+UNFOUNDS. All rights reserved.</p>
       </footer>
     </div>
   )
