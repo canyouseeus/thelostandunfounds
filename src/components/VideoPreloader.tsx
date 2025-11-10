@@ -62,7 +62,9 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
     }
 
     const handleEnded = () => {
-      onComplete()
+      if (hasPlayedRef.current) {
+        onComplete()
+      }
     }
 
     // Try to play immediately
@@ -92,23 +94,7 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
   }, [onComplete])
 
   return (
-    <div 
-      className="video-preloader"
-      onClick={(e) => {
-        e.preventDefault()
-        const video = videoRef.current
-        if (video) {
-          video.play().catch(err => console.error('Play error:', err))
-        }
-      }}
-      onTouchStart={(e) => {
-        e.preventDefault()
-        const video = videoRef.current
-        if (video) {
-          video.play().catch(err => console.error('Play error:', err))
-        }
-      }}
-    >
+    <div className="video-preloader">
       <div className="video-container">
         <video
           ref={videoRef}
@@ -124,7 +110,9 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
             e.preventDefault()
             e.stopPropagation()
             const video = e.currentTarget
-            video.play().catch(err => console.error('Video play error:', err))
+            if (video.paused) {
+              video.play().catch(err => console.error('Video play error:', err))
+            }
           }}
         />
       </div>
