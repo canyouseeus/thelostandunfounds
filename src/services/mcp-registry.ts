@@ -25,7 +25,8 @@ async function loadMCPTools() {
   if (toolsLoaded) return;
   
   try {
-    const toolsModule = await import('@tools/index');
+    // Try to dynamically import - will fail gracefully if not available
+    const toolsModule = await import(/* @vite-ignore */ '@tools/index' as string);
     toolRegistry = toolsModule.toolRegistry;
     initializeCursorAutoDiscovery = toolsModule.initializeCursorAutoDiscovery;
     importTool = toolsModule.importTool;
@@ -33,7 +34,9 @@ async function loadMCPTools() {
     toolsLoaded = true;
   } catch (error) {
     // MCP registry is optional - create a minimal fallback
-    console.warn('MCP registry tools not available, using fallback');
+    if (typeof window !== 'undefined') {
+      console.warn('MCP registry tools not available, using fallback');
+    }
     toolRegistry = {
       registerMetadata: () => {},
     };

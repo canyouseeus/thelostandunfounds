@@ -1,6 +1,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import { existsSync } from 'fs'
+
+// Check if tools-registry exists (for local development)
+const toolsRegistryPath = path.resolve(__dirname, '../tools-registry/src')
+const hasToolsRegistry = existsSync(toolsRegistryPath)
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -8,7 +13,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@tools': path.resolve(__dirname, '../tools-registry/src'),
+      // Only add @tools alias if tools-registry exists (local dev)
+      ...(hasToolsRegistry && {
+        '@tools': toolsRegistryPath,
+      }),
     },
   },
   server: {
