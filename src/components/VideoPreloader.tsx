@@ -6,6 +6,7 @@ interface VideoPreloaderProps {
 
 export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const hasPlayedRef = useRef(false)
 
   const localVideoUrl = '/preloader-video.mp4'
 
@@ -18,23 +19,26 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
     video.volume = 0
 
     const playVideo = async () => {
+      if (hasPlayedRef.current && !video.paused) return
+      
       try {
         video.muted = true
         await video.play()
+        hasPlayedRef.current = true
       } catch (error) {
         console.error('Autoplay failed:', error)
-        // Try multiple times with delays
-        setTimeout(() => {
-          video.muted = true
-          video.play().catch(() => {
-            setTimeout(() => {
-              video.muted = true
-              video.play().catch(() => {})
-            }, 500)
-          })
-        }, 300)
       }
     }
+
+    // Try to play on any user interaction
+    const handleUserInteraction = () => {
+      playVideo()
+    }
+
+    // Add event listeners for user interaction
+    document.addEventListener('touchstart', handleUserInteraction, { once: true })
+    document.addEventListener('click', handleUserInteraction, { once: true })
+    document.addEventListener('keydown', handleUserInteraction, { once: true })
 
     const handleCanPlay = () => {
       playVideo()
@@ -62,12 +66,15 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
     video.addEventListener('loadedmetadata', handleLoadedMetadata)
     video.addEventListener('ended', handleEnded)
 
-    // Also try playing after a short delay
-    setTimeout(() => {
-      playVideo()
-    }, 100)
+    // Try playing multiple times with delays
+    setTimeout(() => playVideo(), 100)
+    setTimeout(() => playVideo(), 500)
+    setTimeout(() => playVideo(), 1000)
 
     return () => {
+      document.removeEventListener('touchstart', handleUserInteraction)
+      document.removeEventListener('click', handleUserInteraction)
+      document.removeEventListener('keydown', handleUserInteraction)
       video.removeEventListener('canplay', handleCanPlay)
       video.removeEventListener('loadeddata', handleLoadedData)
       video.removeEventListener('loadedmetadata', handleLoadedMetadata)
@@ -76,7 +83,15 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
   }, [onComplete])
 
   return (
-    <div className="video-preloader">
+    <div 
+      className="video-preloader"
+      onClick={() => {
+        const video = videoRef.current
+        if (video && video.paused) {
+          video.play()
+        }
+      }}
+    >
       <div className="video-container">
         <video
           ref={videoRef}
