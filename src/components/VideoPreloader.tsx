@@ -13,7 +13,7 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
     const video = videoRef.current
     if (!video) return
 
-    // Set all attributes for autoplay
+    // Set all attributes for autoplay - do this immediately
     video.muted = true
     video.volume = 0
     video.controls = false
@@ -26,55 +26,36 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
     // Hide controls
     video.style.setProperty('-webkit-media-controls', 'none', 'important')
 
-    // MutationObserver to hide play button as soon as Safari adds it
-    const observer = new MutationObserver((mutations) => {
-      // Hide any play buttons or controls Safari adds
-      const playButtons = video.querySelectorAll('*')
-      playButtons.forEach((el: Element) => {
-        const htmlEl = el as HTMLElement
-        if (htmlEl.style) {
-          const computedStyle = window.getComputedStyle(htmlEl)
-          if (computedStyle.cursor === 'pointer' || 
-              htmlEl.getAttribute('aria-label')?.toLowerCase().includes('play') ||
-              htmlEl.className?.toLowerCase().includes('play')) {
-            htmlEl.style.display = 'none'
-            htmlEl.style.visibility = 'hidden'
-            htmlEl.style.opacity = '0'
-            htmlEl.style.pointerEvents = 'none'
-          }
-        }
-      })
-    })
-
-    observer.observe(video, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['style', 'class']
-    })
-
-    // Also observe the container for any buttons Safari adds
-    const containerObserver = new MutationObserver(() => {
-      const buttons = document.querySelectorAll('button, [role="button"], [aria-label*="Play"], [aria-label*="play"]')
+    // MutationObserver to hide play button as soon as browsers add it
+    const hidePlayButtons = () => {
+      // Hide any play buttons browsers add
+      const buttons = document.querySelectorAll('button, [role="button"], [aria-label*="Play"], [aria-label*="play"], [class*="play"]')
       buttons.forEach(btn => {
         const el = btn as HTMLElement
-        if (el.closest('.video-container') || el.closest('.video-preloader')) {
+        if (el.closest('.video-container') || el.closest('.video-preloader') || el.closest('video')) {
           el.style.display = 'none'
           el.style.visibility = 'hidden'
           el.style.opacity = '0'
           el.style.pointerEvents = 'none'
+          el.style.width = '0'
+          el.style.height = '0'
         }
       })
+    }
+
+    const observer = new MutationObserver(() => {
+      hidePlayButtons()
     })
 
-    const container = video.closest('.video-container')
-    if (container) {
-      containerObserver.observe(container, {
-        childList: true,
-        subtree: true,
-        attributes: true
-      })
-    }
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true
+    })
+
+    // Hide immediately and continuously
+    hidePlayButtons()
+    const hideInterval = setInterval(hidePlayButtons, 50)
 
     const playVideo = async () => {
       if (video.paused) {
@@ -82,6 +63,7 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
           video.muted = true
           video.volume = 0
           await video.play()
+          hidePlayButtons()
         } catch (error) {
           // Keep trying
         }
@@ -90,29 +72,22 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
 
     const handleEnded = () => {
       observer.disconnect()
-      containerObserver.disconnect()
+      clearInterval(hideInterval)
       onComplete()
     }
 
     const handleCanPlay = () => {
       playVideo()
+      hidePlayButtons()
     }
 
     const handleLoadedData = () => {
       playVideo()
+      hidePlayButtons()
     }
 
     const handlePlay = () => {
-      // Hide play button when video starts playing
-      const buttons = document.querySelectorAll('button, [role="button"]')
-      buttons.forEach(btn => {
-        const el = btn as HTMLElement
-        if (el.closest('.video-container') || el.closest('.video-preloader')) {
-          el.style.display = 'none'
-          el.style.visibility = 'hidden'
-          el.style.opacity = '0'
-        }
-      })
+      hidePlayButtons()
     }
 
     video.addEventListener('ended', handleEnded)
@@ -120,8 +95,8 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
     video.addEventListener('loadeddata', handleLoadedData)
     video.addEventListener('play', handlePlay)
 
-    // Load and play
-    video.load()
+    // Don't call load() - let autoplay work naturally
+    // Try to play immediately
     playVideo()
 
     // Try multiple times
@@ -132,7 +107,7 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
 
     return () => {
       observer.disconnect()
-      containerObserver.disconnect()
+      clearInterval(hideInterval)
       video.removeEventListener('ended', handleEnded)
       video.removeEventListener('canplay', handleCanPlay)
       video.removeEventListener('loadeddata', handleLoadedData)
