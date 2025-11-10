@@ -101,6 +101,8 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
           autoPlay
           preload="auto"
           controls={false}
+          disablePictureInPicture
+          disableRemotePlayback
         />
       </div>
     </div>

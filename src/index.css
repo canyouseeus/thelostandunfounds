@@ -141,6 +141,7 @@ body {
   background-color: #000000;
   outline: none;
   border: none;
+  pointer-events: none;
 }
 
 .preloader-video::-webkit-media-controls {
@@ -153,6 +154,28 @@ body {
 
 .preloader-video::-webkit-media-controls-panel {
   display: none !important;
+}
+
+.preloader-video::-webkit-media-controls-play-button {
+  display: none !important;
+}
+
+.preloader-video::-webkit-media-controls-start-playback-button {
+  display: none !important;
+}
+
+.preloader-video::-webkit-media-controls-overlay-play-button {
+  display: none !important;
+}
+
+video.preloader-video::-webkit-media-controls-overlay-play-button {
+  display: none !important;
+  -webkit-appearance: none;
+}
+
+video.preloader-video::-webkit-media-controls-play-button {
+  display: none !important;
+  -webkit-appearance: none;
 }
 
 .video-loading {
