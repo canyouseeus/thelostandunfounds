@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Download, ArrowRight } from 'lucide-react'
+import { Download, ArrowRight, Folder } from 'lucide-react'
 
 interface Tool {
   id: string
@@ -10,6 +10,13 @@ interface Tool {
 }
 
 const tools: Tool[] = [
+  {
+    id: 'google-drive-folders',
+    name: 'Google Drive Folders',
+    description: 'List all folders in your Google Drive',
+    icon: <Folder className="w-5 h-5" />,
+    path: '/tools/google-drive-folders',
+  },
   {
     id: 'tiktok-downloader',
     name: 'TikTok Downloader',
