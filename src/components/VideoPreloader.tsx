@@ -13,17 +13,26 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
     const video = videoRef.current
     if (!video) return
 
+    // Ensure video is muted for autoplay
+    video.muted = true
+    video.volume = 0
+
     const playVideo = async () => {
       try {
+        video.muted = true
         await video.play()
       } catch (error) {
-        console.error('Autoplay failed, will retry:', error)
-        // Retry after a short delay
+        console.error('Autoplay failed:', error)
+        // Try multiple times with delays
         setTimeout(() => {
+          video.muted = true
           video.play().catch(() => {
-            // If still fails, video will show play button
+            setTimeout(() => {
+              video.muted = true
+              video.play().catch(() => {})
+            }, 500)
           })
-        }, 500)
+        }, 300)
       }
     }
 
@@ -35,20 +44,33 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
       playVideo()
     }
 
+    const handleLoadedMetadata = () => {
+      playVideo()
+    }
+
     const handleEnded = () => {
       onComplete()
     }
 
+    // Try to play immediately
+    if (video.readyState >= 2) {
+      playVideo()
+    }
+
     video.addEventListener('canplay', handleCanPlay)
     video.addEventListener('loadeddata', handleLoadedData)
+    video.addEventListener('loadedmetadata', handleLoadedMetadata)
     video.addEventListener('ended', handleEnded)
 
-    // Try to play immediately
-    playVideo()
+    // Also try playing after a short delay
+    setTimeout(() => {
+      playVideo()
+    }, 100)
 
     return () => {
       video.removeEventListener('canplay', handleCanPlay)
       video.removeEventListener('loadeddata', handleLoadedData)
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata)
       video.removeEventListener('ended', handleEnded)
     }
   }, [onComplete])
@@ -64,6 +86,7 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
           muted
           autoPlay
           preload="auto"
+          playsinline
         />
       </div>
     </div>
