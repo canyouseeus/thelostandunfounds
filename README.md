@@ -137,7 +137,10 @@ https://campaigns.zoho.com/api/v1.1/json/listsubscribe
    **Option A: Self-Client (EASIEST - Recommended):**
    - Go to [Zoho API Console](https://api-console.zoho.com/)
    - Click **"Self Client"** tab (instead of creating a new client)
-   - Select scopes: `ZohoCampaigns.contact.READ` and `ZohoCampaigns.contact.CREATE`
+   - **Minimum required scope:** `ZohoCampaigns.contact.CREATE` (to add subscribers)
+   - **Recommended scopes:** 
+     - `ZohoCampaigns.contact.CREATE` (required - to add subscribers)
+     - `ZohoCampaigns.contact.READ` (optional - helpful for error handling)
    - Click **Generate** - This creates a token directly without client registration
    - Copy the access token to `ZOHO_API_KEY`
 
@@ -158,7 +161,9 @@ https://campaigns.zoho.com/api/v1.1/json/listsubscribe
    - **Authorized Domains** (try without https://):
      - `thelostandunfounds.com`
      - `www.thelostandunfounds.com`
-   - Select scopes: `ZohoCampaigns.contact.READ` and `ZohoCampaigns.contact.CREATE`
+   - **Select scopes:**
+     - `ZohoCampaigns.contact.CREATE` (required - minimum needed)
+     - `ZohoCampaigns.contact.READ` (optional - but recommended)
    - Generate an OAuth token
    - Copy the access token to `ZOHO_API_KEY`
 
