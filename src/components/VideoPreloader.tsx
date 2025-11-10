@@ -29,12 +29,46 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
     video.style.setProperty('-webkit-media-controls', 'none', 'important')
     video.style.setProperty('pointer-events', 'auto', 'important')
 
+    // Continuously hide play button overlay
+    const hidePlayButton = () => {
+      // Hide any play buttons that Safari adds
+      const playButtons = document.querySelectorAll('button[aria-label*="Play"], .play-button, [class*="play"]')
+      playButtons.forEach(btn => {
+        const el = btn as HTMLElement
+        el.style.display = 'none'
+        el.style.visibility = 'hidden'
+        el.style.opacity = '0'
+        el.style.pointerEvents = 'none'
+      })
+      
+      // Hide webkit media controls
+      const style = document.createElement('style')
+      style.textContent = `
+        video.preloader-video::-webkit-media-controls-overlay-play-button,
+        video.preloader-video::-webkit-media-controls-play-button {
+          display: none !important;
+          opacity: 0 !important;
+          visibility: hidden !important;
+          pointer-events: none !important;
+          width: 0 !important;
+          height: 0 !important;
+        }
+      `
+      document.head.appendChild(style)
+    }
+
+    // Run immediately and continuously
+    hidePlayButton()
+    const hideInterval = setInterval(hidePlayButton, 100)
+
     const playVideo = async () => {
       if (!video.paused) return
       try {
         video.muted = true
         video.volume = 0
         await video.play()
+        // Hide play button after play starts
+        hidePlayButton()
       } catch (error) {
         // Try again
         setTimeout(() => {
@@ -45,15 +79,18 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
     }
 
     const handleEnded = () => {
+      clearInterval(hideInterval)
       onComplete()
     }
 
     const handleCanPlay = () => {
       playVideo()
+      hidePlayButton()
     }
 
     const handleLoadedData = () => {
       playVideo()
+      hidePlayButton()
     }
 
     video.addEventListener('ended', handleEnded)
@@ -67,10 +104,14 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
     // Keep trying
     const intervals = [100, 200, 500, 1000]
     intervals.forEach(delay => {
-      setTimeout(() => playVideo(), delay)
+      setTimeout(() => {
+        playVideo()
+        hidePlayButton()
+      }, delay)
     })
 
     return () => {
+      clearInterval(hideInterval)
       video.removeEventListener('ended', handleEnded)
       video.removeEventListener('canplay', handleCanPlay)
       video.removeEventListener('loadeddata', handleLoadedData)
@@ -90,19 +131,18 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
         >
           <source src={localVideoUrl} type="video/mp4" />
         </video>
-        {/* Canvas overlay to cover play button */}
-        <canvas 
-          className="video-overlay-canvas" 
-          width="1" 
-          height="1"
+        {/* Solid overlay to cover play button */}
+        <div 
+          className="video-overlay-cover"
           style={{
             position: 'absolute',
             top: 0,
             left: 0,
             width: '100%',
             height: '100%',
-            pointerEvents: 'none',
-            zIndex: 1
+            backgroundColor: 'transparent',
+            zIndex: 999,
+            pointerEvents: 'none'
           }}
         />
       </div>
