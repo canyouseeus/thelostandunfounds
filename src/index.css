@@ -139,6 +139,20 @@ body {
   height: 100%;
   object-fit: contain;
   background-color: #000000;
+  outline: none;
+  border: none;
+}
+
+.preloader-video::-webkit-media-controls {
+  display: none !important;
+}
+
+.preloader-video::-webkit-media-controls-enclosure {
+  display: none !important;
+}
+
+.preloader-video::-webkit-media-controls-panel {
+  display: none !important;
 }
 
 .video-loading {

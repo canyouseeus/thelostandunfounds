@@ -1,11 +1,10 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 
 interface VideoPreloaderProps {
   onComplete: () => void
 }
 
 export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
-  const [isLoading, setIsLoading] = useState(true)
   const videoRef = useRef<HTMLVideoElement>(null)
 
   const localVideoUrl = '/preloader-video.mp4'
@@ -14,82 +13,65 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
     const video = videoRef.current
     if (!video) return
 
-    const handleCanPlay = () => {
-      setIsLoading(false)
-      // Try to play the video
-      video.play().catch((error) => {
+    const playVideo = async () => {
+      try {
+        await video.play()
+      } catch (error) {
         console.error('Error playing video:', error)
-        // If autoplay fails, proceed anyway after a short delay
+        // If autoplay fails, try again after a short delay
         setTimeout(() => {
-          onComplete()
-        }, 2000)
-      })
+          video.play().catch(() => {
+            // If still fails, proceed to home page
+            onComplete()
+          })
+        }, 100)
+      }
+    }
+
+    const handleCanPlay = () => {
+      playVideo()
     }
 
     const handleLoadedData = () => {
-      setIsLoading(false)
+      playVideo()
     }
 
     const handleEnded = () => {
       onComplete()
     }
 
-    const handleError = (e: Event) => {
-      const video = e.target as HTMLVideoElement
-      console.error('Video error:', {
-        error: video.error,
-        code: video.error?.code,
-        message: video.error?.message,
-        networkState: video.networkState,
-        readyState: video.readyState,
-        src: video.src
-      })
+    const handleError = () => {
       // If video fails to load, proceed to home page after a delay
-      setIsLoading(false)
       setTimeout(() => {
         onComplete()
       }, 2000)
     }
 
-    const handlePlay = () => {
-      setIsLoading(false)
+    // Try to play immediately if video is already loaded
+    if (video.readyState >= 2) {
+      playVideo()
     }
 
     video.addEventListener('canplay', handleCanPlay)
     video.addEventListener('loadeddata', handleLoadedData)
     video.addEventListener('ended', handleEnded)
     video.addEventListener('error', handleError)
-    video.addEventListener('play', handlePlay)
 
-    // Load the video
+    // Load and try to play the video
     video.load()
-
-    // Fallback timeout - if video doesn't play within 10 seconds, proceed
-    const timeout = setTimeout(() => {
-      if (isLoading) {
-        console.warn('Video loading timeout, proceeding to home page')
-        onComplete()
-      }
-    }, 10000)
+    playVideo()
 
     return () => {
-      clearTimeout(timeout)
       video.removeEventListener('canplay', handleCanPlay)
       video.removeEventListener('loadeddata', handleLoadedData)
       video.removeEventListener('ended', handleEnded)
       video.removeEventListener('error', handleError)
-      video.removeEventListener('play', handlePlay)
     }
-  }, [isLoading, onComplete])
+  }, [onComplete])
 
   return (
     <div className="video-preloader">
       <div className="video-container">
-        {isLoading && (
-          <div className="video-loading">
-            <div className="loading-spinner"></div>
-          </div>
-        )}
         <video
           ref={videoRef}
           src={localVideoUrl}
@@ -98,10 +80,7 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
           muted
           autoPlay
           preload="auto"
-          onError={(e) => {
-            console.error('Video element error:', e)
-            console.error('Video src:', localVideoUrl)
-          }}
+          controls={false}
         />
       </div>
     </div>
