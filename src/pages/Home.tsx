@@ -12,13 +12,28 @@ export default function Home() {
     setStatus('loading')
     setMessage('')
 
-    // TODO: Implement actual email signup API call
-    // For now, just simulate success
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to sign up')
+      }
+
       setStatus('success')
-      setMessage('Thanks for signing up! Check your email.')
+      setMessage(data.message || 'Thanks for signing up! Check your email.')
       setEmail('')
-    }, 1000)
+    } catch (error) {
+      setStatus('error')
+      setMessage(error instanceof Error ? error.message : 'Something went wrong. Please try again.')
+    }
   }
 
   return (
