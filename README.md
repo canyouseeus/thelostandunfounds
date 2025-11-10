@@ -149,6 +149,8 @@ RECIPIENT_EMAIL=your-email@example.com
 5. **Set Recipient Email:**
    - Add your email address where you want to receive sign-ups to `RECIPIENT_EMAIL`
 
+**For Zoho Mail domain setup:** See [ZOHO_MAIL_SETUP.md](./ZOHO_MAIL_SETUP.md) for detailed instructions on setting up `admin@thelostandunfounds.com` email hosting.
+
 ### MCP Server Configuration
 
 MCP servers are configured in Cursor IDE settings. The registry automatically discovers and loads them.
