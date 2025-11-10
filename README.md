@@ -139,6 +139,17 @@ https://campaigns.zoho.com/api/v1.1/json/listsubscribe
        ```
        https://www.thelostandunfounds.com/oauth/callback
        ```
+   - **Authorized JavaScript Domains** (if Zoho asks):
+     - **Production:**
+       ```
+       https://thelostandunfounds.com
+       https://www.thelostandunfounds.com
+       ```
+     - **Development:**
+       ```
+       http://localhost:3000
+       http://localhost:5173
+       ```
    - Select scopes: `ZohoCampaigns.contact.READ` and `ZohoCampaigns.contact.CREATE`
    - Generate an OAuth token
    - Copy the access token to `ZOHO_API_KEY`
