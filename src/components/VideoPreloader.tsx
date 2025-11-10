@@ -94,10 +94,18 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
   return (
     <div 
       className="video-preloader"
-      onClick={() => {
+      onClick={(e) => {
+        e.preventDefault()
         const video = videoRef.current
-        if (video && video.paused) {
-          video.play()
+        if (video) {
+          video.play().catch(err => console.error('Play error:', err))
+        }
+      }}
+      onTouchStart={(e) => {
+        e.preventDefault()
+        const video = videoRef.current
+        if (video) {
+          video.play().catch(err => console.error('Play error:', err))
         }
       }}
     >
@@ -112,8 +120,12 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
           preload="auto"
           playsinline
           controls={false}
-          disablePictureInPicture
-          disableRemotePlayback
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            const video = e.currentTarget
+            video.play().catch(err => console.error('Video play error:', err))
+          }}
         />
       </div>
     </div>

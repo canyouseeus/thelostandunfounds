@@ -136,14 +136,6 @@ body {
   overflow: hidden;
 }
 
-.video-container * {
-  pointer-events: none;
-}
-
-.video-container video {
-  pointer-events: auto;
-}
-
 .preloader-video {
   width: 100%;
   height: 100%;
@@ -151,9 +143,6 @@ body {
   background-color: #000000;
   outline: none;
   border: none;
-  cursor: none;
-  -webkit-media-controls: none !important;
-  -webkit-media-controls-enclosure: none !important;
 }
 
 .preloader-video::-webkit-media-controls {
