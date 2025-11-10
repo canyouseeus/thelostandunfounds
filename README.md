@@ -25,6 +25,7 @@ npm run preview
 - **Vite** - Build tool and dev server
 - **MCP Registry** - Dynamic tool management system
 - **Vercel** - Deployment platform
+- **Zoho Campaigns** - Email list management
 
 ## 📦 MCP Registry Integration
 
@@ -69,9 +70,12 @@ Domain: `thelostandunfounds.com`
 
 ```
 thelostandunfounds/
+├── api/                # Vercel serverless functions
+│   └── subscribe.ts    # Email subscription endpoint
 ├── src/
 │   ├── components/     # React components
 │   ├── pages/          # Page components
+│   │   └── Home.tsx    # Homepage with email sign-up
 │   ├── hooks/          # Custom React hooks
 │   ├── utils/          # Utility functions
 │   ├── services/       # API services
@@ -82,17 +86,55 @@ thelostandunfounds/
 └── package.json        # Dependencies
 ```
 
+## 📧 Email Sign-Up
+
+The homepage includes an email sign-up form that integrates with Zoho Campaigns. Users can subscribe to receive updates about new tools and features.
+
+- **Frontend:** `/src/pages/Home.tsx` - Email sign-up form component
+- **Backend:** `/api/subscribe.ts` - Vercel serverless function for Zoho integration
+
 ## 🔧 Development
 
 ### Environment Variables
 
-Create a `.env.local` file:
+Create a `.env.local` file for local development:
 
 ```env
 VITE_API_URL=https://api.example.com
 VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_key
 ```
+
+#### Zoho Email Integration
+
+For production, add these environment variables in your Vercel dashboard:
+
+```env
+ZOHO_API_KEY=your_zoho_oauth_token
+ZOHO_LIST_KEY=your_zoho_list_key
+ZOHO_API_URL=https://campaigns.zoho.com/api/v1.1/json/listsubscribe
+```
+
+**Setting up Zoho Campaigns:**
+
+1. **Get your OAuth Token:**
+   - Go to [Zoho API Console](https://api-console.zoho.com/)
+   - Create a new OAuth client or use an existing one
+   - Generate an OAuth token with `ZohoCampaigns.contact.READ` and `ZohoCampaigns.contact.CREATE` scopes
+   - Copy the access token to `ZOHO_API_KEY`
+
+2. **Get your List Key:**
+   - Log in to [Zoho Campaigns](https://campaigns.zoho.com/)
+   - Go to Contacts → Lists
+   - Select your mailing list
+   - The List Key is in the URL or list settings (format: `xxxxxxxxxxxxx`)
+   - Copy it to `ZOHO_LIST_KEY`
+
+3. **Optional - Custom API URL:**
+   - If you're using a different Zoho data center, update `ZOHO_API_URL`
+   - Default: `https://campaigns.zoho.com/api/v1.1/json/listsubscribe`
+   - For EU: `https://campaigns.zoho.eu/api/v1.1/json/listsubscribe`
+   - For IN: `https://campaigns.zoho.in/api/v1.1/json/listsubscribe`
 
 ### MCP Server Configuration
 
