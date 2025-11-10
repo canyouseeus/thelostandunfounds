@@ -8,7 +8,7 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
   const [isLoading, setIsLoading] = useState(true)
   const videoRef = useRef<HTMLVideoElement>(null)
 
-  const localVideoUrl = '/preloader-video.mov'
+  const localVideoUrl = '/preloader-video.mp4'
 
   useEffect(() => {
     const video = videoRef.current
@@ -35,7 +35,15 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
     }
 
     const handleError = (e: Event) => {
-      console.error('Video error:', e)
+      const video = e.target as HTMLVideoElement
+      console.error('Video error:', {
+        error: video.error,
+        code: video.error?.code,
+        message: video.error?.message,
+        networkState: video.networkState,
+        readyState: video.readyState,
+        src: video.src
+      })
       // If video fails to load, proceed to home page after a delay
       setIsLoading(false)
       setTimeout(() => {
