@@ -13,45 +13,63 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
     const video = videoRef.current
     if (!video) return
 
-    // Ensure video is muted (required for autoplay)
+    // Set all attributes immediately for autoplay
     video.muted = true
     video.setAttribute('muted', 'true')
+    video.setAttribute('autoplay', 'true')
+    video.setAttribute('playsinline', 'true')
+    video.controls = false
+
+    const playVideo = async () => {
+      try {
+        video.muted = true
+        await video.play()
+      } catch (error) {
+        // Keep trying
+      }
+    }
 
     const handleEnded = () => {
       onComplete()
     }
 
-    video.addEventListener('ended', handleEnded)
-
-    // Try to play on any user interaction
-    const handleInteraction = () => {
-      if (video.paused) {
-        video.play().catch(() => {})
-      }
+    const handleCanPlay = () => {
+      playVideo()
     }
 
-    document.addEventListener('click', handleInteraction, { once: true })
-    document.addEventListener('touchstart', handleInteraction, { once: true })
+    const handleLoadedData = () => {
+      playVideo()
+    }
+
+    const handleLoadedMetadata = () => {
+      playVideo()
+    }
+
+    video.addEventListener('ended', handleEnded)
+    video.addEventListener('canplay', handleCanPlay)
+    video.addEventListener('loadeddata', handleLoadedData)
+    video.addEventListener('loadedmetadata', handleLoadedMetadata)
+
+    // Try to play immediately
+    playVideo()
+    
+    // Try multiple times aggressively
+    setTimeout(() => playVideo(), 50)
+    setTimeout(() => playVideo(), 100)
+    setTimeout(() => playVideo(), 200)
+    setTimeout(() => playVideo(), 500)
 
     return () => {
       video.removeEventListener('ended', handleEnded)
-      document.removeEventListener('click', handleInteraction)
-      document.removeEventListener('touchstart', handleInteraction)
+      video.removeEventListener('canplay', handleCanPlay)
+      video.removeEventListener('loadeddata', handleLoadedData)
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata)
     }
   }, [onComplete])
 
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    const video = videoRef.current
-    if (video && video.paused) {
-      video.play().catch(() => {})
-    }
-  }
-
   return (
-    <div className="video-preloader" onClick={handleClick}>
-      <div className="video-container" onClick={handleClick}>
+    <div className="video-preloader">
+      <div className="video-container">
         <video
           ref={videoRef}
           className="preloader-video"
@@ -59,7 +77,6 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
           muted
           playsInline
           preload="auto"
-          onClick={handleClick}
         >
           <source src={localVideoUrl} type="video/mp4" />
           Your browser does not support the video tag.
