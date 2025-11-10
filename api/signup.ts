@@ -6,6 +6,86 @@ interface ZohoTokenResponse {
   expires_in: number
 }
 
+interface RateLimitStore {
+  [ip: string]: {
+    count: number
+    resetTime: number
+  }
+}
+
+// In-memory rate limit store (for serverless, consider using Redis/Vercel KV for production)
+const rateLimitStore: RateLimitStore = {}
+
+// Rate limiting: 3 signups per hour per IP
+const RATE_LIMIT_MAX = 3
+const RATE_LIMIT_WINDOW = 60 * 60 * 1000 // 1 hour in milliseconds
+
+function getClientIP(req: VercelRequest): string {
+  const forwarded = req.headers['x-forwarded-for']
+  const ip = forwarded 
+    ? (Array.isArray(forwarded) ? forwarded[0] : forwarded.split(',')[0].trim())
+    : req.headers['x-real-ip'] || req.socket.remoteAddress || 'unknown'
+  return ip as string
+}
+
+function checkRateLimit(ip: string): { allowed: boolean; remaining: number; resetTime: number } {
+  const now = Date.now()
+  const record = rateLimitStore[ip]
+
+  if (!record || now > record.resetTime) {
+    // Reset or create new record
+    rateLimitStore[ip] = {
+      count: 1,
+      resetTime: now + RATE_LIMIT_WINDOW
+    }
+    return {
+      allowed: true,
+      remaining: RATE_LIMIT_MAX - 1,
+      resetTime: now + RATE_LIMIT_WINDOW
+    }
+  }
+
+  if (record.count >= RATE_LIMIT_MAX) {
+    return {
+      allowed: false,
+      remaining: 0,
+      resetTime: record.resetTime
+    }
+  }
+
+  record.count++
+  return {
+    allowed: true,
+    remaining: RATE_LIMIT_MAX - record.count,
+    resetTime: record.resetTime
+  }
+}
+
+async function verifyRecaptcha(token: string, secretKey: string): Promise<boolean> {
+  if (!token || !secretKey) {
+    return false
+  }
+
+  try {
+    const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        secret: secretKey,
+        response: token,
+      }),
+    })
+
+    const data = await response.json()
+    return data.success === true && data.score >= 0.5 // Score threshold for v3
+  } catch (error) {
+    console.error('reCAPTCHA verification error:', error)
+    return false
+  }
+}
+
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
@@ -15,11 +95,50 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { email } = req.body
+  const { email, recaptchaToken, honeypot } = req.body
 
-  // Validate email
+  // 1. Honeypot check - if filled, it's definitely a bot
+  if (honeypot && honeypot.trim() !== '') {
+    console.warn('Bot detected via honeypot:', { email, ip: getClientIP(req) })
+    // Return success to avoid revealing the honeypot
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Successfully signed up! We\'ll keep you updated.' 
+    })
+  }
+
+  // 2. Validate email
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return res.status(400).json({ error: 'Valid email is required' })
+  }
+
+  // 3. Rate limiting
+  const clientIP = getClientIP(req)
+  const rateLimit = checkRateLimit(clientIP)
+  
+  if (!rateLimit.allowed) {
+    const resetMinutes = Math.ceil((rateLimit.resetTime - Date.now()) / 60000)
+    return res.status(429).json({ 
+      error: `Too many requests. Please try again in ${resetMinutes} minute${resetMinutes !== 1 ? 's' : ''}.` 
+    })
+  }
+
+  // 4. reCAPTCHA verification (if token provided)
+  const recaptchaSecret = process.env.RECAPTCHA_SECRET_KEY
+  if (recaptchaSecret && recaptchaToken) {
+    const recaptchaValid = await verifyRecaptcha(recaptchaToken, recaptchaSecret)
+    if (!recaptchaValid) {
+      console.warn('reCAPTCHA verification failed:', { email, ip: clientIP })
+      return res.status(400).json({ 
+        error: 'Verification failed. Please try again.' 
+      })
+    }
+  } else if (recaptchaSecret && !recaptchaToken) {
+    // If reCAPTCHA is configured but no token provided, reject
+    console.warn('Missing reCAPTCHA token:', { email, ip: clientIP })
+    return res.status(400).json({ 
+      error: 'Verification required. Please refresh and try again.' 
+    })
   }
 
   try {
@@ -117,6 +236,7 @@ export default async function handler(
           <p>A new user has signed up for updates:</p>
           <p><strong>Email:</strong> ${email}</p>
           <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
+          <p><strong>IP:</strong> ${clientIP}</p>
         `,
         mailFormat: 'html',
       }),

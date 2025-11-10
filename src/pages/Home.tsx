@@ -1,16 +1,68 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Mail } from 'lucide-react'
+
+declare global {
+  interface Window {
+    grecaptcha: {
+      ready: (callback: () => void) => void
+      execute: (siteKey: string, options: { action: string }) => Promise<string>
+    }
+  }
+}
 
 export default function Home() {
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
+  const honeypotRef = useRef<HTMLInputElement>(null)
+  const recaptchaLoaded = useRef(false)
+
+  useEffect(() => {
+    // Load reCAPTCHA v3 when component mounts
+    const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY
+    if (siteKey && typeof window !== 'undefined' && !window.grecaptcha) {
+      const script = document.createElement('script')
+      script.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`
+      script.async = true
+      script.defer = true
+      document.head.appendChild(script)
+      recaptchaLoaded.current = true
+    } else if (window.grecaptcha) {
+      recaptchaLoaded.current = true
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setStatus('loading')
     setMessage('')
+
+    // Honeypot check - if filled, it's a bot
+    if (honeypotRef.current?.value) {
+      setStatus('error')
+      setMessage('Invalid submission detected.')
+      return
+    }
+
+    let recaptchaToken = ''
+
+    // Get reCAPTCHA token if available
+    const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY
+    if (siteKey && typeof window !== 'undefined' && window.grecaptcha) {
+      try {
+        recaptchaToken = await new Promise<string>((resolve, reject) => {
+          window.grecaptcha.ready(() => {
+            window.grecaptcha.execute(siteKey, { action: 'signup' })
+              .then(resolve)
+              .catch(reject)
+          })
+        })
+      } catch (error) {
+        console.error('reCAPTCHA error:', error)
+        // Continue without token if reCAPTCHA fails (for development)
+      }
+    }
 
     try {
       const response = await fetch('/api/signup', {
@@ -18,7 +70,11 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ 
+          email,
+          recaptchaToken,
+          honeypot: honeypotRef.current?.value || ''
+        }),
       })
 
       const data = await response.json()
@@ -30,6 +86,10 @@ export default function Home() {
       setStatus('success')
       setMessage(data.message || 'Thanks for signing up! Check your email.')
       setEmail('')
+      // Clear honeypot
+      if (honeypotRef.current) {
+        honeypotRef.current.value = ''
+      }
     } catch (error) {
       setStatus('error')
       setMessage(error instanceof Error ? error.message : 'Something went wrong. Please try again.')
@@ -87,6 +147,21 @@ export default function Home() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Honeypot field - hidden from users but visible to bots */}
+                <input
+                  ref={honeypotRef}
+                  type="text"
+                  name="website"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  style={{
+                    position: 'absolute',
+                    left: '-9999px',
+                    opacity: 0,
+                    pointerEvents: 'none'
+                  }}
+                  aria-hidden="true"
+                />
                 <div>
                   <input
                     type="email"
