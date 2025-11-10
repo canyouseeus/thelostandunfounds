@@ -90,6 +90,10 @@ export default function VideoPreloader({ onComplete }: VideoPreloaderProps) {
           muted
           autoPlay
           preload="auto"
+          onError={(e) => {
+            console.error('Video element error:', e)
+            console.error('Video src:', localVideoUrl)
+          }}
         />
       </div>
     </div>
