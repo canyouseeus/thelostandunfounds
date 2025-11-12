@@ -44,17 +44,32 @@
       </div>
     </div>
     <script>
-      // Fallback: If React doesn't load in 5 seconds, show error
+      // Immediate visibility test
+      console.log('✅ HTML SCRIPT LOADED');
+      console.log('✅ Root element:', document.getElementById('root'));
+      
+      // Show a message immediately
+      window.addEventListener('load', function() {
+        console.log('✅ Window loaded');
+        const root = document.getElementById('root');
+        if (root) {
+          console.log('✅ Root found, content:', root.innerHTML.substring(0, 100));
+        }
+      });
+      
+      // Fallback: If React doesn't load in 3 seconds, show error
       setTimeout(function() {
         const root = document.getElementById('root');
-        if (root && root.innerHTML.includes('Loading React app...')) {
-          root.innerHTML = '<div style="color: red; padding: 20px; background: white;"><h1>React Failed to Load</h1><p>Check browser console for errors.</p><p>Make sure JavaScript is enabled.</p></div>';
+        console.log('⏰ Timeout check - Root:', root);
+        if (root) {
+          const content = root.innerHTML;
+          console.log('⏰ Root content:', content.substring(0, 200));
+          if (content.includes('Loading React app...')) {
+            console.warn('⚠️ React did not load, showing error message');
+            root.innerHTML = '<div style="color: red !important; padding: 40px !important; font-size: 24px !important; background: white !important; z-index: 99999 !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;"><h1>React Failed to Load</h1><p>Check browser console (F12) for errors.</p><p>Make sure JavaScript is enabled.</p><p>Time: ' + new Date().toLocaleString() + '</p></div>';
+          }
         }
-      }, 5000);
-      
-      // Log that HTML loaded
-      console.log('✅ HTML loaded');
-      console.log('✅ Root element:', document.getElementById('root'));
+      }, 3000);
     </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
