@@ -108,16 +108,23 @@ console.log('🔍 Starting React app initialization...');
 console.log('🔍 Document ready state:', document.readyState);
 console.log('🔍 Window loaded:', typeof window !== 'undefined');
 
-const rootElement = document.getElementById('root');
-console.log('🔍 Root element:', rootElement);
+// Wait for DOM to be ready
+function initApp() {
+  const rootElement = document.getElementById('root');
+  console.log('🔍 Root element:', rootElement);
 
-if (!rootElement) {
-  console.error('❌ Root element not found!');
-  document.body.innerHTML = '<div style="color: red; padding: 20px; font-size: 20px; background: white;">ERROR: Root element not found!</div>';
-} else {
+  if (!rootElement) {
+    console.error('❌ Root element not found!');
+    document.body.innerHTML = '<div style="color: red; padding: 20px; font-size: 20px; background: white; z-index: 99999; position: fixed; top: 0; left: 0; right: 0; bottom: 0;">ERROR: Root element not found!</div>';
+    return;
+  }
+
   console.log('✅ Root element found, rendering React app...');
   
   try {
+    // Clear the loading message
+    rootElement.innerHTML = '';
+    
     const root = ReactDOM.createRoot(rootElement);
     console.log('✅ React root created');
     
@@ -141,12 +148,21 @@ if (!rootElement) {
     console.log('✅ React app rendered successfully');
   } catch (error) {
     console.error('❌ Error rendering React app:', error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : '';
     rootElement.innerHTML = `
-      <div style="color: red; padding: 20px; font-size: 20px; background: white;">
+      <div style="color: red; padding: 20px; font-size: 20px; background: white; z-index: 99999; position: fixed; top: 0; left: 0; right: 0; bottom: 0; overflow: auto;">
         <h1>React Rendering Error</h1>
-        <pre>${error instanceof Error ? error.message : String(error)}</pre>
-        <pre>${error instanceof Error ? error.stack : ''}</pre>
+        <pre>${errorMsg}</pre>
+        <pre style="font-size: 12px;">${errorStack}</pre>
       </div>
     `;
   }
+}
+
+// Try to initialize immediately
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
 }
