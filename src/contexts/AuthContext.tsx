@@ -28,7 +28,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Initialize auth state
   useEffect(() => {
-    initializeAuth();
+    // Wrap in try-catch to prevent blocking rendering
+    initializeAuth().catch((error) => {
+      console.error('Auth initialization error:', error);
+      // Ensure loading state is cleared even on error
+      setLoading(false);
+      setUser(null);
+      setSession(null);
+      setTier('free');
+    });
   }, []);
 
   const initializeAuth = async () => {

@@ -11,6 +11,11 @@ import Settings from './pages/Settings'
 import NotFound from './pages/NotFound'
 
 function App() {
+  // Debug logging
+  if (import.meta.env.DEV) {
+    console.log('🚀 App component rendering...');
+  }
+  
   // Video preloader temporarily disabled for debugging
   // const [showPreloader, setShowPreloader] = useState(true)
   // const handlePreloaderComplete = () => {

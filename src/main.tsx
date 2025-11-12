@@ -8,41 +8,47 @@ import App from './App.tsx'
 import './index.css'
 
 // Suppress 403/406 console errors from Supabase subscription queries
+// Only suppress in production, show all errors in development
 const originalConsoleError = console.error;
-console.error = function(...args: any[]) {
-  const message = args.join(' ').toLowerCase();
-  // Suppress 403/406 errors related to subscription tables (expected if tables don't exist)
-  if (
-    message.includes('403') || 
-    message.includes('406') || 
-    message.includes('platform_subscriptions') ||
-    message.includes('tool_limits') ||
-    message.includes('tool_usage') ||
-    message.includes('failed to load resource')
-  ) {
-    // Suppress these errors - they're expected if database tables don't exist
-    return;
-  }
-  originalConsoleError.apply(console, args);
-};
+if (import.meta.env.PROD) {
+  console.error = function(...args: any[]) {
+    const message = args.join(' ').toLowerCase();
+    // Suppress 403/406 errors related to subscription tables (expected if tables don't exist)
+    if (
+      message.includes('403') || 
+      message.includes('406') || 
+      message.includes('platform_subscriptions') ||
+      message.includes('tool_limits') ||
+      message.includes('tool_usage') ||
+      message.includes('failed to load resource')
+    ) {
+      // Suppress these errors - they're expected if database tables don't exist
+      return;
+    }
+    originalConsoleError.apply(console, args);
+  };
+}
 
 // Suppress 403/406 console warnings from Supabase subscription queries
+// Only suppress in production, show all warnings in development
 const originalConsoleWarn = console.warn;
-console.warn = function(...args: any[]) {
-  const message = args.join(' ').toLowerCase();
-  // Suppress 403/406 warnings related to subscription tables
-  if (
-    message.includes('403') || 
-    message.includes('406') || 
-    message.includes('platform_subscriptions') ||
-    message.includes('tool_limits') ||
-    message.includes('tool_usage')
-  ) {
-    // Suppress these warnings - they're expected if database tables don't exist
-    return;
-  }
-  originalConsoleWarn.apply(console, args);
-};
+if (import.meta.env.PROD) {
+  console.warn = function(...args: any[]) {
+    const message = args.join(' ').toLowerCase();
+    // Suppress 403/406 warnings related to subscription tables
+    if (
+      message.includes('403') || 
+      message.includes('406') || 
+      message.includes('platform_subscriptions') ||
+      message.includes('tool_limits') ||
+      message.includes('tool_usage')
+    ) {
+      // Suppress these warnings - they're expected if database tables don't exist
+      return;
+    }
+    originalConsoleWarn.apply(console, args);
+  };
+}
 
 // Global error handler - suppress 403/406 errors from Supabase subscription queries
 window.addEventListener('error', (event) => {
@@ -97,19 +103,30 @@ initializeMCPRegistry()
     }
   });
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <BrowserRouter
-      future={{
-        v7_startTransition: true,
-        v7_relativeSplatPath: true,
-      }}
-    >
-      <ToastProvider>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </ToastProvider>
-    </BrowserRouter>
-  </React.StrictMode>,
-)
+// Debug: Check if root element exists
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  console.error('❌ Root element not found!');
+  document.body.innerHTML = '<div style="color: red; padding: 20px; font-size: 20px;">ERROR: Root element not found!</div>';
+} else {
+  console.log('✅ Root element found, rendering React app...');
+  
+  ReactDOM.createRoot(rootElement).render(
+    <React.StrictMode>
+      <BrowserRouter
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
+        <ToastProvider>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </ToastProvider>
+      </BrowserRouter>
+    </React.StrictMode>,
+  );
+  
+  console.log('✅ React app rendered');
+}
