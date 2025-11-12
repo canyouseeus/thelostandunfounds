@@ -39,6 +39,9 @@ lerna-debug.log*
 # TypeScript
 *.tsbuildinfo
 
+# Temporary files
+strike.py
+
 
 
 
