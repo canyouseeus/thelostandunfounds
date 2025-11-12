@@ -32,14 +32,29 @@
     <!-- reCAPTCHA v3 will be loaded dynamically by React component -->
   </head>
   <body>
-    <div id="root">
-      <div style="color: white; padding: 20px; text-align: center;">
-        <p>Loading...</p>
+    <div id="root" style="min-height: 100vh; background-color: #000000; color: #ffffff;">
+      <div style="color: #ffffff !important; padding: 40px; text-align: center; background-color: #000000 !important; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <h1 style="color: #ffffff !important; font-size: 2em; margin-bottom: 20px;">THE LOST+UNFOUNDS</h1>
+        <p style="color: #ffffff !important; font-size: 1.2em;">Loading React app...</p>
+        <p style="color: #aaaaaa !important; font-size: 0.9em; margin-top: 20px;">If this message doesn't disappear, check the browser console (F12)</p>
         <noscript>
-          <p style="color: red;">JavaScript is required to run this application.</p>
+          <p style="color: #ff0000 !important; font-size: 1.2em; margin-top: 20px;">⚠️ JavaScript is required to run this application.</p>
         </noscript>
       </div>
     </div>
+    <script>
+      // Fallback: If React doesn't load in 5 seconds, show error
+      setTimeout(function() {
+        const root = document.getElementById('root');
+        if (root && root.innerHTML.includes('Loading React app...')) {
+          root.innerHTML = '<div style="color: red; padding: 20px; background: white;"><h1>React Failed to Load</h1><p>Check browser console for errors.</p><p>Make sure JavaScript is enabled.</p></div>';
+        }
+      }, 5000);
+      
+      // Log that HTML loaded
+      console.log('✅ HTML loaded');
+      console.log('✅ Root element:', document.getElementById('root'));
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

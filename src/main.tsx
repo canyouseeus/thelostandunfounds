@@ -104,29 +104,49 @@ initializeMCPRegistry()
   });
 
 // Debug: Check if root element exists
+console.log('🔍 Starting React app initialization...');
+console.log('🔍 Document ready state:', document.readyState);
+console.log('🔍 Window loaded:', typeof window !== 'undefined');
+
 const rootElement = document.getElementById('root');
+console.log('🔍 Root element:', rootElement);
+
 if (!rootElement) {
   console.error('❌ Root element not found!');
-  document.body.innerHTML = '<div style="color: red; padding: 20px; font-size: 20px;">ERROR: Root element not found!</div>';
+  document.body.innerHTML = '<div style="color: red; padding: 20px; font-size: 20px; background: white;">ERROR: Root element not found!</div>';
 } else {
   console.log('✅ Root element found, rendering React app...');
   
-  ReactDOM.createRoot(rootElement).render(
-    <React.StrictMode>
-      <BrowserRouter
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true,
-        }}
-      >
-        <ToastProvider>
-          <AuthProvider>
-            <App />
-          </AuthProvider>
-        </ToastProvider>
-      </BrowserRouter>
-    </React.StrictMode>,
-  );
-  
-  console.log('✅ React app rendered');
+  try {
+    const root = ReactDOM.createRoot(rootElement);
+    console.log('✅ React root created');
+    
+    root.render(
+      <React.StrictMode>
+        <BrowserRouter
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
+        >
+          <ToastProvider>
+            <AuthProvider>
+              <App />
+            </AuthProvider>
+          </ToastProvider>
+        </BrowserRouter>
+      </React.StrictMode>,
+    );
+    
+    console.log('✅ React app rendered successfully');
+  } catch (error) {
+    console.error('❌ Error rendering React app:', error);
+    rootElement.innerHTML = `
+      <div style="color: red; padding: 20px; font-size: 20px; background: white;">
+        <h1>React Rendering Error</h1>
+        <pre>${error instanceof Error ? error.message : String(error)}</pre>
+        <pre>${error instanceof Error ? error.stack : ''}</pre>
+      </div>
+    `;
+  }
 }
