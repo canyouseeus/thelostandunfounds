@@ -95,14 +95,14 @@ export async function initializeMCPRegistry() {
     // an actual MCP client instance
     if (mcpClient && initializeCursorAutoDiscovery) {
       const { servers, tools } = await initializeCursorAutoDiscovery(mcpClient);
-      return { servers, tools };
+      return { servers, tools, toolRegistry };
     } else {
-      return { servers: [], tools: authToolNames.length + subscriptionToolNames.length };
+      return { servers: [], tools: authToolNames.length + subscriptionToolNames.length, toolRegistry };
     }
   } catch (error) {
     // Don't throw - MCP registry is optional
     console.warn('MCP registry initialization warning:', error);
-    return { servers: [], tools: 0 };
+    return { servers: [], tools: 0, toolRegistry: null };
   }
 }
 

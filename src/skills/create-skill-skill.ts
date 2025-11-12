@@ -5,7 +5,7 @@
  * It generates skill files following the project's conventions.
  */
 
-import { SkillDefinition, SkillMetadata, SkillExecutionContext } from '../../../tools-registry/src/skills/types';
+import { SkillDefinition, SkillMetadata, SkillExecutionContext } from './types';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -130,7 +130,7 @@ const skill: SkillDefinition = {
  * Auto-generated skill
  */
 
-import { SkillDefinition, SkillMetadata, SkillExecutionContext } from '../../../tools-registry/src/skills/types';
+import { SkillDefinition, SkillMetadata, SkillExecutionContext } from './types';
 
 const metadata: SkillMetadata = {
   name: '${name}',

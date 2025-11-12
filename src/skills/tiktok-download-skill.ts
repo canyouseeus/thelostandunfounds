@@ -9,7 +9,7 @@
  * 5. Tracks usage
  */
 
-import { SkillDefinition, SkillMetadata, SkillExecutionContext } from '../../../tools-registry/src/skills/types';
+import { SkillDefinition, SkillMetadata, SkillExecutionContext } from './types';
 
 const metadata: SkillMetadata = {
   name: 'download-tiktok',
