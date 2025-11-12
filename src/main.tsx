@@ -122,9 +122,6 @@ function initApp() {
   console.log('✅ Root element found, rendering React app...');
   
   try {
-    // Clear the loading message
-    rootElement.innerHTML = '';
-    
     const root = ReactDOM.createRoot(rootElement);
     console.log('✅ React root created');
     
@@ -150,11 +147,14 @@ function initApp() {
     console.error('❌ Error rendering React app:', error);
     const errorMsg = error instanceof Error ? error.message : String(error);
     const errorStack = error instanceof Error ? error.stack : '';
+    
+    // Show error message prominently
     rootElement.innerHTML = `
-      <div style="color: red; padding: 20px; font-size: 20px; background: white; z-index: 99999; position: fixed; top: 0; left: 0; right: 0; bottom: 0; overflow: auto;">
-        <h1>React Rendering Error</h1>
-        <pre>${errorMsg}</pre>
-        <pre style="font-size: 12px;">${errorStack}</pre>
+      <div style="color: red !important; padding: 40px !important; font-size: 24px !important; background: white !important; z-index: 99999 !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; overflow: auto !important;">
+        <h1 style="color: red !important; font-size: 32px !important;">React Rendering Error</h1>
+        <p style="color: black !important; font-size: 18px !important;">Something went wrong loading the React app.</p>
+        <pre style="background: #f0f0f0; padding: 20px; overflow: auto; font-size: 14px;">${errorMsg}</pre>
+        <pre style="background: #f0f0f0; padding: 20px; overflow: auto; font-size: 12px; max-height: 400px;">${errorStack}</pre>
       </div>
     `;
   }
