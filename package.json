@@ -8,7 +8,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "setup:github": "node scripts/setup-github.js"
+    "setup:github": "node scripts/setup-github.js",
+    "setup:env": "node scripts/set-env.js",
+    "env:set": "node scripts/set-env.js"
   },
   "dependencies": {
     "@scot33/tools-registry": "file:../tools-registry",
