@@ -70,18 +70,10 @@
       } catch(e) {
         console.error('TEST 2 FAILED:', e);
       }
-      
-      // Test 3: Try importing React
-      import('/src/main-simple.tsx').then(() => {
-        console.log('✅ TEST 3: React module loaded!');
-      }).catch(err => {
-        console.error('❌ TEST 3 FAILED: React module failed:', err);
-        const reactTest = document.getElementById('react-test');
-        if (reactTest) {
-          reactTest.innerHTML += `<div style="color: red; margin-top: 20px;"><h3>React Load Error:</h3><pre>${err.message}</pre></div>`;
-        }
-      });
     </script>
+    
+    <!-- Load React separately -->
+    <script type="module" src="/src/main-simple.tsx"></script>
   </body>
 </html>
 
