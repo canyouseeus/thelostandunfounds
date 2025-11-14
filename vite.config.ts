@@ -47,6 +47,7 @@ export default defineConfig({
     exclude: ['@scot33/tools-registry'],
   },
   server: {
+    host: '0.0.0.0', // Listen on all interfaces (IPv4 and IPv6)
     port: 3000,
     open: false, // Disable auto-open to avoid xdg-open error
     proxy: {

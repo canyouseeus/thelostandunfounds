@@ -31,49 +31,8 @@
     <title>THE LOST+UNFOUNDS</title>
     <!-- reCAPTCHA v3 will be loaded dynamically by React component -->
   </head>
-  <body style="margin: 0; padding: 0; background: #000; color: #fff; font-family: Arial, sans-serif;">
-    <div id="root" style="min-height: 100vh; padding: 40px;">
-      <div style="color: yellow; padding: 20px; background: black; font-size: 24px; border: 2px solid yellow;">
-        <h1>TEST 1: HTML is Loading</h1>
-        <p>If you see this yellow box, HTML is working!</p>
-        <p id="js-test" style="color: white;">Waiting for JavaScript...</p>
-      </div>
-      
-      <div id="react-test" style="margin-top: 40px; padding: 20px; background: #111; border: 2px solid #333;">
-        <h2 style="color: cyan;">React will render here...</h2>
-      </div>
-    </div>
-    
-    <script>
-      // Test 1: Plain JavaScript (non-module)
-      console.log('🔍 TEST 1: Plain script executing!');
-      try {
-        const jsTest = document.getElementById('js-test');
-        if (jsTest) {
-          jsTest.textContent = '✅ TEST 1 PASSED: Plain JavaScript works!';
-          jsTest.style.color = 'lime';
-          jsTest.style.fontWeight = 'bold';
-        }
-      } catch(e) {
-        console.error('TEST 1 FAILED:', e);
-      }
-    </script>
-    
-    <script type="module">
-      // Test 2: Module script
-      console.log('🔍 TEST 2: Module script executing!');
-      try {
-        const reactTest = document.getElementById('react-test');
-        if (reactTest) {
-          reactTest.innerHTML = '<h2 style="color: lime;">✅ TEST 2 PASSED: Module scripts work!</h2><p>Now loading React...</p>';
-        }
-      } catch(e) {
-        console.error('TEST 2 FAILED:', e);
-      }
-    </script>
-    
-    <!-- Load React separately -->
-    <script type="module" src="/src/main-simple.tsx"></script>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-
