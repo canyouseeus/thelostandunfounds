@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Connection Test</title>
+    <style>
+        body {
+            background: #000;
+            color: #0f0;
+            font-family: monospace;
+            padding: 40px;
+            font-size: 24px;
+        }
+        .success { color: #0f0; }
+        .error { color: #f00; }
+    </style>
+</head>
+<body>
+    <h1>✅ Connection Test - HTML Works!</h1>
+    <p>If you see this, the server is accessible.</p>
+    <p id="js-test">JavaScript test...</p>
+    <script>
+        document.getElementById('js-test').textContent = '✅ JavaScript works!';
+        document.getElementById('js-test').className = 'success';
+        console.log('✅ Plain JavaScript executed successfully!');
+    </script>
+</body>
+</html>

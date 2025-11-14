@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Diagnostic</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval'; script-src 'self' 'unsafe-inline' 'unsafe-eval';">
+</head>
+<body style="background: #000; color: #0f0; font-family: monospace; padding: 40px;">
+    <h1>DIAGNOSTIC PAGE</h1>
+    <div id="output"></div>
+    
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(msg) {
+            console.log(msg);
+            const p = document.createElement('p');
+            p.textContent = msg;
+            p.style.color = '#0f0';
+            output.appendChild(p);
+        }
+        
+        log('✅ Page loaded');
+        log('✅ JavaScript executing');
+        log('Time: ' + new Date().toISOString());
+        
+        // Check for error-monitor
+        if (typeof window.errorMonitor !== 'undefined') {
+            log('⚠️ errorMonitor object found');
+        }
+        
+        // Block reloads
+        let reloadCount = 0;
+        window.addEventListener('beforeunload', function(e) {
+            reloadCount++;
+            log('⚠️ Reload attempt #' + reloadCount + ' blocked');
+            e.preventDefault();
+            e.returnValue = 'Reload blocked';
+            return 'Reload blocked';
+        });
+        
+        log('✅ Script setup complete');
+        
+        // Keep page alive
+        setInterval(function() {
+            const timeEl = document.createElement('p');
+            timeEl.textContent = 'Still alive: ' + new Date().toLocaleTimeString();
+            timeEl.style.color = '#0f0';
+            timeEl.style.fontSize = '12px';
+            output.appendChild(timeEl);
+            if (output.children.length > 10) {
+                output.removeChild(output.firstChild);
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

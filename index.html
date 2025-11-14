@@ -33,7 +33,17 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Immediate test - runs before React
+      console.log('🔍 HTML loaded, JavaScript is executing!');
+      const root = document.getElementById('root');
+      if (root) {
+        root.innerHTML = '<div style="color: lime; padding: 20px; font-size: 24px; background: black;">✅ JavaScript is working! Loading React...</div>';
+        console.log('✅ Root element found and updated');
+      } else {
+        console.error('❌ Root element not found!');
+      }
+    </script>
+    <script type="module" src="/src/main-debug.tsx"></script>
   </body>
 </html>
-

@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 import { existsSync } from 'fs'
@@ -13,9 +13,43 @@ const possiblePaths = [
 const toolsRegistryPath = possiblePaths.find(p => existsSync(p))
 const hasToolsRegistry = !!toolsRegistryPath
 
+// Plugin to handle optional @scot33/tools-registry dependency
+const optionalToolsRegistryPlugin = (): Plugin => {
+  return {
+    name: 'optional-tools-registry',
+    enforce: 'pre',
+    resolveId(id) {
+      // Tell Vite to skip resolving this module during pre-transform
+      // This allows dynamic imports to work at runtime
+      if (id === '@scot33/tools-registry') {
+        // Return a virtual module that won't cause errors
+        return '\0virtual:@scot33/tools-registry'
+      }
+    },
+    load(id) {
+      // Provide a stub module for the optional dependency
+      if (id === '\0virtual:@scot33/tools-registry') {
+        return `
+          // Optional dependency stub - will be loaded dynamically at runtime if available
+          // This prevents Vite from trying to resolve the actual package
+          export const toolRegistry = null;
+          export const initializeCursorAutoDiscovery = null;
+          export const importTool = null;
+          export const searchTools = null;
+          export const skillRegistry = null;
+          export const executeSkill = null;
+          export const searchSkills = null;
+          export const listSkills = null;
+          export default {};
+        `
+      }
+    },
+  }
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), optionalToolsRegistryPlugin()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -26,9 +60,14 @@ export default defineConfig({
       }),
     },
   },
+  optimizeDeps: {
+    // Exclude optional dependencies from pre-bundling
+    exclude: ['@scot33/tools-registry'],
+  },
   server: {
+    host: '0.0.0.0', // Listen on all interfaces (IPv4 and IPv6)
     port: 3000,
-    open: true,
+    open: false, // Disable auto-open to avoid xdg-open error
     proxy: {
       '/api/tiktok': {
         target: 'https://tiktok-downloader-production-ab40.up.railway.app',

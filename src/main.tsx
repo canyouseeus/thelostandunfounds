@@ -79,6 +79,39 @@ window.addEventListener('unhandledrejection', (event) => {
   originalConsoleError('Unhandled rejection:', event.reason);
 });
 
+// Log all errors in development to help debug
+if (import.meta.env.DEV) {
+  console.log('🚀 App starting...');
+  
+  // Override error handlers BEFORE React renders to catch all errors
+  const originalErrorHandler = window.onerror;
+  window.onerror = function(message, source, lineno, colno, error) {
+    console.error('❌ Window error:', { message, source, lineno, colno, error });
+    if (originalErrorHandler) {
+      return originalErrorHandler.call(this, message, source, lineno, colno, error);
+    }
+    return false;
+  };
+  
+  window.addEventListener('error', (event) => {
+    console.error('❌ Global error event:', {
+      message: event.message,
+      filename: event.filename,
+      lineno: event.lineno,
+      colno: event.colno,
+      error: event.error,
+      stack: event.error?.stack
+    });
+  }, true); // Use capture phase
+  
+  window.addEventListener('unhandledrejection', (event) => {
+    console.error('❌ Unhandled promise rejection:', {
+      reason: event.reason,
+      stack: event.reason?.stack
+    });
+  });
+}
+
 // Initialize MCP registry and skills system on startup (non-blocking)
 initializeMCPRegistry()
   .then(async (mcpResult) => {
@@ -97,19 +130,60 @@ initializeMCPRegistry()
     }
   });
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <BrowserRouter
-      future={{
-        v7_startTransition: true,
-        v7_relativeSplatPath: true,
-      }}
-    >
-      <ToastProvider>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </ToastProvider>
-    </BrowserRouter>
-  </React.StrictMode>,
-)
+// Verify root element exists
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  console.error('❌ Root element not found!');
+  throw new Error('Root element with id "root" not found in HTML');
+}
+
+console.log('✅ Root element found, rendering React app...');
+
+// Show a loading indicator immediately
+const loadingDiv = document.createElement('div');
+loadingDiv.id = 'react-loading';
+loadingDiv.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; color: #0f0; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 24px; z-index: 99999;';
+loadingDiv.textContent = 'Loading React app...';
+document.body.appendChild(loadingDiv);
+
+// Test if React can render at all
+try {
+  ReactDOM.createRoot(rootElement).render(
+    <React.StrictMode>
+      <BrowserRouter
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
+        <ToastProvider>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </ToastProvider>
+      </BrowserRouter>
+    </React.StrictMode>,
+  );
+  console.log('✅ React app rendered successfully');
+  
+  // Remove loading indicator after a short delay
+  setTimeout(() => {
+    const loading = document.getElementById('react-loading');
+    if (loading) loading.remove();
+  }, 1000);
+} catch (error) {
+  console.error('❌ Failed to render React app:', error);
+  
+  // Remove loading indicator
+  const loading = document.getElementById('react-loading');
+  if (loading) loading.remove();
+  
+  // Show error on screen
+  rootElement.innerHTML = `
+    <div style="color: white; padding: 20px; font-family: monospace; background: #000; min-height: 100vh;">
+      <h1 style="color: #f00;">Error Loading App</h1>
+      <pre style="background: #333; padding: 10px; overflow: auto; color: #fff;">${error instanceof Error ? error.stack : String(error)}</pre>
+    </div>
+  `;
+  throw error;
+}

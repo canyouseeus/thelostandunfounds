@@ -26,8 +26,17 @@ async function loadMCPTools() {
   
   try {
     // Try to dynamically import - will fail gracefully if not available
-    // Use package name for better Vercel compatibility
-    const toolsModule = await import(/* @vite-ignore */ '@scot33/tools-registry');
+    // Use a string variable so Vite can't statically analyze the import
+    const moduleName = '@scot33/tools-registry';
+    const toolsModule = await import(/* @vite-ignore */ moduleName).catch(() => {
+      // If import fails, return null to trigger fallback
+      return null;
+    });
+    
+    if (!toolsModule) {
+      throw new Error('Module not available');
+    }
+    
     toolRegistry = toolsModule.toolRegistry;
     initializeCursorAutoDiscovery = toolsModule.initializeCursorAutoDiscovery;
     importTool = toolsModule.importTool;

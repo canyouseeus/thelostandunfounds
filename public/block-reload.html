@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Block Reload Test</title>
+    <script>
+        // Block any reload attempts
+        let reloadBlocked = false;
+        window.addEventListener('beforeunload', function(e) {
+            if (!reloadBlocked) {
+                e.preventDefault();
+                e.returnValue = '';
+                reloadBlocked = true;
+                console.log('⚠️ Reload blocked!');
+            }
+        });
+        
+        // Log when page loads
+        console.log('✅ Page loaded at:', new Date().toISOString());
+        console.log('✅ Scripts executing');
+    </script>
+</head>
+<body style="background: #000; color: #0f0; font-family: monospace; padding: 40px; font-size: 24px;">
+    <h1>BLOCK RELOAD TEST</h1>
+    <p>If you see this, the page loaded!</p>
+    <p id="time">Time: <script>document.write(new Date().toLocaleTimeString());</script></p>
+    <p style="color: yellow;">If this page keeps reloading, you'll see a browser warning.</p>
+    
+    <script>
+        document.getElementById('time').style.color = 'lime';
+        console.log('✅ All scripts executed successfully');
+    </script>
+</body>
+</html>

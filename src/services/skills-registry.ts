@@ -19,8 +19,17 @@ async function loadSkillsSystem() {
   
   try {
     // Try to dynamically import skills from tools-registry package
-    // Use package name for better Vercel compatibility
-    const skillsModule = await import(/* @vite-ignore */ '@scot33/tools-registry');
+    // Use a string variable so Vite can't statically analyze the import
+    const moduleName = '@scot33/tools-registry';
+    const skillsModule = await import(/* @vite-ignore */ moduleName).catch(() => {
+      // If import fails, return null to trigger fallback
+      return null;
+    });
+    
+    if (!skillsModule) {
+      throw new Error('Module not available');
+    }
+    
     skillRegistry = skillsModule.skillRegistry || skillsModule.skills || skillsModule.default?.skills;
     executeSkill = skillsModule.executeSkill;
     searchSkills = skillsModule.searchSkills;
