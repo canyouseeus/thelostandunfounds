@@ -1,4 +1,4 @@
-# Fourthwall API Key Setup Guide
+# Fourthwall Storefront Token Setup Guide
 
 ## Option 1: Install Node.js/npm (Recommended)
 
@@ -33,16 +33,18 @@ code .env.local
 
 ```env
 # Fourthwall Shop Integration
-FOURTHWALL_API_KEY=your_api_key_here
+FOURTHWALL_STOREFRONT_TOKEN=your_storefront_token_here
 FOURTHWALL_STORE_SLUG=thelostandunfounds-shop
 ```
 
-### Step 3: Get your API key
+### Step 3: Get your Storefront Token
 
 1. Go to: https://thelostandunfounds-shop.fourthwall.com/admin/dashboard/settings/for-developers
-2. Look for API access settings
-3. Copy your API key
-4. Replace `your_api_key_here` in `.env.local` with your actual key
+2. Look for your **Storefront Token**
+3. Copy the token
+4. Replace `your_storefront_token_here` in `.env.local` with your actual token
+
+**Note:** This uses the official Fourthwall Storefront API. See docs: https://docs.fourthwall.com/storefront/
 
 ## Option 3: Using the script directly (if you have Node.js but npm path issue)
 

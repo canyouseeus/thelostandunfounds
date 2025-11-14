@@ -22,56 +22,61 @@ export default async function handler(
 
   try {
     const { handle } = req.query
-    const storeSlug = process.env.FOURTHWALL_STORE_SLUG || 'thelostandunfounds-shop'
-    const apiKey = process.env.FOURTHWALL_API_KEY
+    const storefrontToken = process.env.FOURTHWALL_STOREFRONT_TOKEN
     
     if (!handle || typeof handle !== 'string') {
       return res.status(400).json({ error: 'Collection handle is required' })
     }
 
-    // Build headers with API key if available
-    const headers: HeadersInit = {
-      'Accept': 'application/json',
-      'User-Agent': 'Mozilla/5.0',
-    }
-    
-    if (apiKey) {
-      headers['Authorization'] = `Bearer ${apiKey}`
-      headers['X-API-Key'] = apiKey
+    if (!storefrontToken) {
+      return res.status(200).json({
+        products: [],
+        message: 'FOURTHWALL_STOREFRONT_TOKEN not configured. Get your token from: https://thelostandunfounds-shop.fourthwall.com/admin/dashboard/settings/for-developers',
+      })
     }
 
-    // Fourthwall API endpoint for collections
-    const apiUrl = `https://${storeSlug}.fourthwall.com/api/collections/${handle}/products`
+    // Use the official Fourthwall Storefront API
+    // Docs: https://docs.fourthwall.com/storefront-api/
+    const apiUrl = `https://storefront-api.fourthwall.com/v1/collections/${handle}/offers?storefront_token=${storefrontToken}`
     
     const response = await fetch(apiUrl, {
-      headers,
+      headers: {
+        'Accept': 'application/json',
+      },
     })
 
     if (!response.ok) {
       console.error(`Fourthwall API error: ${response.status} ${response.statusText}`)
       return res.status(200).json({
         products: [],
-        message: 'Collection not found or API access needed.',
+        message: `Collection not found or API error: ${response.status} ${response.statusText}`,
       })
     }
 
     const data = await response.json()
-    const products = Array.isArray(data) ? data : (data.products || [])
+    const offers = data.offers || []
     
     return res.status(200).json({
-      products: products.map((product: any) => ({
-        id: product.id || product.handle,
-        title: product.title || product.name,
-        description: product.description,
-        price: product.price ? parseFloat(product.price) / 100 : 0,
-        compareAtPrice: product.compare_at_price ? parseFloat(product.compare_at_price) / 100 : undefined,
-        currency: product.currency || 'USD',
-        images: product.images || (product.image ? [product.image] : []),
-        handle: product.handle || product.id,
-        available: product.available !== false,
-        variants: product.variants || [],
-        url: product.url || `https://${storeSlug}.fourthwall.com/products/${product.handle || product.id}`,
-      })),
+      products: offers.map((offer: any) => {
+        const variant = offer.variants && offer.variants.length > 0 ? offer.variants[0] : null
+        const price = variant?.unitPrice?.value || 0
+        const currency = variant?.unitPrice?.currency || 'USD'
+        const compareAtPrice = variant?.compareAtPrice?.value
+        
+        return {
+          id: offer.id || offer.slug || '',
+          title: offer.name || offer.title || 'Untitled Product',
+          description: offer.description || '',
+          price: price,
+          compareAtPrice: compareAtPrice,
+          currency: currency,
+          images: offer.images || (offer.image ? [offer.image] : []),
+          handle: offer.slug || offer.handle || offer.id || '',
+          available: offer.available !== false,
+          variants: offer.variants || [],
+          url: `https://thelostandunfounds-shop.fourthwall.com/products/${offer.slug || offer.handle || offer.id}`,
+        }
+      }),
     })
   } catch (error) {
     console.error('Error fetching Fourthwall collection:', error)

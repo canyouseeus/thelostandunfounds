@@ -50,17 +50,17 @@ async function main() {
   
   console.log('To fetch products from your Fourthwall store, you need to:');
   console.log('1. Go to: https://thelostandunfounds-shop.fourthwall.com/admin/dashboard/settings/for-developers');
-  console.log('2. Enable API access (if available)');
-  console.log('3. Copy your API key\n');
+  console.log('2. Find your Storefront Token');
+  console.log('3. Copy the token\n');
 
-  const apiKey = await question('Fourthwall API Key [FOURTHWALL_API_KEY] (optional - press Enter to skip): ');
+  const storefrontToken = await question('Fourthwall Storefront Token [FOURTHWALL_STOREFRONT_TOKEN] (optional - press Enter to skip): ');
   
-  if (apiKey.trim()) {
-    setEnvVar('FOURTHWALL_API_KEY', apiKey.trim(), ENV_FILE);
-    console.log('\n✓ Fourthwall API key configured');
+  if (storefrontToken.trim()) {
+    setEnvVar('FOURTHWALL_STOREFRONT_TOKEN', storefrontToken.trim(), ENV_FILE);
+    console.log('\n✓ Fourthwall Storefront Token configured');
   } else {
-    console.log('\n⚠ Skipped API key setup');
-    console.log('Note: The shop will still work but may need API access configured later.');
+    console.log('\n⚠ Skipped Storefront Token setup');
+    console.log('Note: The shop will still work but may need the token configured later.');
   }
 
   const storeSlug = await question('\nStore Slug [FOURTHWALL_STORE_SLUG] (default: thelostandunfounds-shop): ');
