@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 import { existsSync } from 'fs'
@@ -13,9 +13,25 @@ const possiblePaths = [
 const toolsRegistryPath = possiblePaths.find(p => existsSync(p))
 const hasToolsRegistry = !!toolsRegistryPath
 
+// Plugin to handle optional @scot33/tools-registry dependency
+const optionalToolsRegistryPlugin = (): Plugin => {
+  return {
+    name: 'optional-tools-registry',
+    enforce: 'pre',
+    resolveId(id) {
+      // Tell Vite to skip resolving this module during pre-transform
+      // This allows dynamic imports to work at runtime
+      if (id === '@scot33/tools-registry') {
+        // Return null to skip resolution - dynamic import will handle it at runtime
+        return { id, external: true }
+      }
+    },
+  }
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), optionalToolsRegistryPlugin()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -26,9 +42,13 @@ export default defineConfig({
       }),
     },
   },
+  optimizeDeps: {
+    // Exclude optional dependencies from pre-bundling
+    exclude: ['@scot33/tools-registry'],
+  },
   server: {
     port: 3000,
-    open: true,
+    open: false, // Disable auto-open to avoid xdg-open error
     proxy: {
       '/api/tiktok': {
         target: 'https://tiktok-downloader-production-ab40.up.railway.app',
