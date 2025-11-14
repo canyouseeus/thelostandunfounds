@@ -5,7 +5,7 @@
  * This skill combines subscription checking with usage tracking.
  */
 
-import { SkillDefinition, SkillMetadata, SkillExecutionContext } from '../../../tools-registry/src/skills/types';
+import { SkillDefinition, SkillMetadata, SkillExecutionContext } from './types';
 
 const metadata: SkillMetadata = {
   name: 'check-access',

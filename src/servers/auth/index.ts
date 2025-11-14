@@ -94,39 +94,51 @@ export async function signOut() {
  * Get current user
  */
 export async function getCurrentUser(accessToken?: string) {
-  if (accessToken) {
-    const { data: { user }, error } = await supabase.auth.getUser(accessToken);
+  try {
+    if (accessToken) {
+      const { data: { user }, error } = await supabase.auth.getUser(accessToken);
+      if (error) {
+        throw new Error(error.message);
+      }
+      return { user };
+    }
+
+    const { data: { user }, error } = await supabase.auth.getUser();
     if (error) {
-      throw new Error(error.message);
+      return { user: null };
     }
     return { user };
-  }
-
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error) {
+  } catch (error) {
+    // Handle errors gracefully - might be placeholder client or network issue
+    console.warn('getCurrentUser error (non-critical):', error);
     return { user: null };
   }
-  return { user };
 }
 
 /**
  * Get current session
  */
 export async function getSession() {
-  const { data: { session }, error } = await supabase.auth.getSession();
-  
-  if (error || !session) {
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    
+    if (error || !session) {
+      return { session: null };
+    }
+
+    return {
+      session: {
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+        expires_at: session.expires_at,
+        user: session.user,
+      },
+    };
+  } catch (error) {
+    // Handle errors gracefully - might be placeholder client or network issue
+    console.warn('getSession error (non-critical):', error);
     return { session: null };
   }
-
-  return {
-    session: {
-      access_token: session.access_token,
-      refresh_token: session.refresh_token,
-      expires_at: session.expires_at,
-      user: session.user,
-    },
-  };
 }
 
 /**

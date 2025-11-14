@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>DEBUG PAGE</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #00ff00 !important;
+      color: #000000 !important;
+      font-size: 60px !important;
+      padding: 50px !important;
+      font-family: Arial, sans-serif !important;
+    }
+    h1 { font-size: 100px !important; color: #ff0000 !important; margin: 20px 0 !important; }
+    p { margin: 20px 0 !important; }
+  </style>
+</head>
+<body>
+  <h1>DEBUG PAGE</h1>
+  <p>If you see this GREEN page with RED text, the server is working!</p>
+  <p>Current time: <span id="time"></span></p>
+  <p>JavaScript status: <span id="js-status">Checking...</span></p>
+  <script>
+    document.getElementById('time').textContent = new Date().toLocaleString();
+    document.getElementById('js-status').textContent = 'WORKING ✅';
+    document.getElementById('js-status').style.color = 'green';
+    console.log('DEBUG PAGE LOADED');
+    alert('DEBUG PAGE: If you see this alert, JavaScript works!');
+  </script>
+</body>
+</html>

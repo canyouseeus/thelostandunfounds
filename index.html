@@ -31,8 +31,46 @@
     <title>THE LOST+UNFOUNDS</title>
     <!-- reCAPTCHA v3 will be loaded dynamically by React component -->
   </head>
-  <body>
-    <div id="root"></div>
+  <body style="margin: 0; padding: 0; background-color: #000000 !important; color: #ffffff !important;">
+    <div id="root" style="min-height: 100vh !important; background-color: #000000 !important; color: #ffffff !important; display: block !important; visibility: visible !important; opacity: 1 !important;">
+      <div style="color: #ffffff !important; padding: 40px !important; text-align: center !important; background-color: #000000 !important; min-height: 100vh !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; position: relative !important; z-index: 1 !important;">
+        <h1 style="color: #ffffff !important; font-size: 3em !important; margin-bottom: 20px !important; font-weight: bold !important;">THE LOST+UNFOUNDS</h1>
+        <p style="color: #ffffff !important; font-size: 1.5em !important; margin: 10px 0 !important;">Loading React app...</p>
+        <p style="color: #ffff00 !important; font-size: 1.2em !important; margin-top: 20px !important; font-weight: bold !important;">⚠️ If you see this, HTML is loading but React might not be</p>
+        <p style="color: #aaaaaa !important; font-size: 1em !important; margin-top: 10px !important;">Check browser console (F12) for errors</p>
+        <noscript>
+          <p style="color: #ff0000 !important; font-size: 1.5em !important; margin-top: 20px !important; font-weight: bold !important;">⚠️ JavaScript is required!</p>
+        </noscript>
+      </div>
+    </div>
+    <script>
+      // Immediate visibility test
+      console.log('✅ HTML SCRIPT LOADED');
+      console.log('✅ Root element:', document.getElementById('root'));
+      
+      // Show a message immediately
+      window.addEventListener('load', function() {
+        console.log('✅ Window loaded');
+        const root = document.getElementById('root');
+        if (root) {
+          console.log('✅ Root found, content:', root.innerHTML.substring(0, 100));
+        }
+      });
+      
+      // Fallback: If React doesn't load in 3 seconds, show error
+      setTimeout(function() {
+        const root = document.getElementById('root');
+        console.log('⏰ Timeout check - Root:', root);
+        if (root) {
+          const content = root.innerHTML;
+          console.log('⏰ Root content:', content.substring(0, 200));
+          if (content.includes('Loading React app...')) {
+            console.warn('⚠️ React did not load, showing error message');
+            root.innerHTML = '<div style="color: red !important; padding: 40px !important; font-size: 24px !important; background: white !important; z-index: 99999 !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;"><h1>React Failed to Load</h1><p>Check browser console (F12) for errors.</p><p>Make sure JavaScript is enabled.</p><p>Time: ' + new Date().toLocaleString() + '</p></div>';
+          }
+        }
+      }, 3000);
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
