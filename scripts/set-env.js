@@ -85,6 +85,16 @@ async function interactiveMode() {
 function commandLineMode() {
   const args = process.argv.slice(2);
   
+  if (args.length === 0) {
+    console.error('Error: No environment variables provided.');
+    console.log('\nUsage:');
+    console.log('  npm run env:set KEY=value KEY2=value2');
+    console.log('  npm run env:set VITE_MY_KEY=my_value');
+    console.log('\nOr use interactive mode:');
+    console.log('  npm run setup:env');
+    process.exit(1);
+  }
+  
   args.forEach(arg => {
     const [key, ...valueParts] = arg.split('=');
     const value = valueParts.join('=');
@@ -95,6 +105,8 @@ function commandLineMode() {
       console.error(`Invalid format: ${arg}. Use KEY=value`);
     }
   });
+  
+  console.log(`\n✓ Environment variables set in ${ENV_FILE}`);
 }
 
 // Main
