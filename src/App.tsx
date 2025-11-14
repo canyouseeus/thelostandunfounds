@@ -8,6 +8,7 @@ import TikTokDownloader from './pages/TikTokDownloader'
 import AuthCallback from './pages/AuthCallback'
 import Profile from './pages/Profile'
 import Settings from './pages/Settings'
+import Shop from './pages/Shop'
 import NotFound from './pages/NotFound'
 
 function App() {
@@ -28,6 +29,9 @@ function App() {
         <Route path="/tools" element={<Layout />}>
           <Route index element={<ToolsDashboard />} />
           <Route path="tiktok-downloader" element={<TikTokDownloader />} />
+        </Route>
+        <Route path="/shop" element={<Layout />}>
+          <Route index element={<Shop />} />
         </Route>
         <Route path="/profile" element={<Layout />}>
           <Route index element={<Profile />} />
