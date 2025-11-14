@@ -10,6 +10,8 @@ export default function Home() {
     let leftCount = 0  // Characters added to the left
     let rightCount = 1 // Characters added to the right (start with center char)
     let isRight = true // Start typing to the right first
+    let typingComplete = false
+    let blinkCount = 0
     
     const typeInterval = setInterval(() => {
       if (isRight && rightCount <= text.length - centerIndex) {
@@ -30,12 +32,25 @@ export default function Home() {
         // Animation complete
         clearInterval(typeInterval)
         setDisplayedText(text) // Ensure full text is displayed
+        typingComplete = true
+        setShowCursor(true) // Ensure cursor is visible when typing completes
       }
     }, 100) // Adjust speed here (milliseconds per character)
 
     // Cursor blink animation
     const cursorInterval = setInterval(() => {
-      setShowCursor(prev => !prev)
+      if (typingComplete) {
+        blinkCount++
+        // 3 blinks = 6 state changes (visible->invisible->visible->invisible->visible->invisible)
+        if (blinkCount >= 6) {
+          setShowCursor(false)
+          clearInterval(cursorInterval)
+        } else {
+          setShowCursor(prev => !prev)
+        }
+      } else {
+        setShowCursor(prev => !prev)
+      }
     }, 530)
 
     return () => {
