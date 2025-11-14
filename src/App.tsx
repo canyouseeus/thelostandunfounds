@@ -6,6 +6,7 @@ import Home from './pages/Home'
 import ToolsDashboard from './pages/ToolsDashboard'
 import TikTokDownloader from './pages/TikTokDownloader'
 import AuthCallback from './pages/AuthCallback'
+import OAuth2Callback from './pages/OAuth2Callback'
 import Profile from './pages/Profile'
 import Settings from './pages/Settings'
 import NotFound from './pages/NotFound'
@@ -25,6 +26,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/oauth2callback" element={<OAuth2Callback />} />
         <Route path="/tools" element={<Layout />}>
           <Route index element={<ToolsDashboard />} />
           <Route path="tiktok-downloader" element={<TikTokDownloader />} />
