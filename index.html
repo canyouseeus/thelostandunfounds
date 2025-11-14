@@ -32,8 +32,23 @@
     <!-- reCAPTCHA v3 will be loaded dynamically by React component -->
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <div id="root">
+      <div style="color: yellow; padding: 20px; background: black; font-size: 24px;">
+        <p>If you see this yellow text, HTML is loading but JavaScript hasn't run yet.</p>
+        <p id="js-test">JavaScript test will appear here...</p>
+      </div>
+    </div>
+    <script>
+      // Plain JavaScript test - runs immediately
+      console.log('🔍 PLAIN JS TEST: Script tag is executing!');
+      const jsTest = document.getElementById('js-test');
+      if (jsTest) {
+        jsTest.textContent = '✅ Plain JavaScript is working! React should load next...';
+        jsTest.style.color = 'lime';
+      }
+    </script>
+    <script type="module" src="/src/main-simple.tsx"></script>
+    <!-- <script type="module" src="/src/main.tsx"></script> -->
   </body>
 </html>
 
