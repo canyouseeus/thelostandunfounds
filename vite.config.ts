@@ -22,8 +22,26 @@ const optionalToolsRegistryPlugin = (): Plugin => {
       // Tell Vite to skip resolving this module during pre-transform
       // This allows dynamic imports to work at runtime
       if (id === '@scot33/tools-registry') {
-        // Return null to skip resolution - dynamic import will handle it at runtime
-        return { id, external: true }
+        // Return a virtual module that won't cause errors
+        return '\0virtual:@scot33/tools-registry'
+      }
+    },
+    load(id) {
+      // Provide a stub module for the optional dependency
+      if (id === '\0virtual:@scot33/tools-registry') {
+        return `
+          // Optional dependency stub - will be loaded dynamically at runtime if available
+          // This prevents Vite from trying to resolve the actual package
+          export const toolRegistry = null;
+          export const initializeCursorAutoDiscovery = null;
+          export const importTool = null;
+          export const searchTools = null;
+          export const skillRegistry = null;
+          export const executeSkill = null;
+          export const searchSkills = null;
+          export const listSkills = null;
+          export default {};
+        `
       }
     },
   }
