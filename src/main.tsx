@@ -139,18 +139,15 @@ if (!rootElement) {
 
 console.log('✅ Root element found, rendering React app...');
 
+// Show a loading indicator immediately
+const loadingDiv = document.createElement('div');
+loadingDiv.id = 'react-loading';
+loadingDiv.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; color: #0f0; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 24px; z-index: 99999;';
+loadingDiv.textContent = 'Loading React app...';
+document.body.appendChild(loadingDiv);
+
 // Test if React can render at all
 try {
-  // First, try rendering a simple test component
-  const testDiv = document.createElement('div');
-  testDiv.style.cssText = 'position: fixed; top: 0; left: 0; background: red; color: white; padding: 10px; z-index: 99999;';
-  testDiv.textContent = 'React is loading...';
-  document.body.appendChild(testDiv);
-  
-  setTimeout(() => {
-    testDiv.remove();
-  }, 2000);
-  
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
       <BrowserRouter
@@ -168,13 +165,24 @@ try {
     </React.StrictMode>,
   );
   console.log('✅ React app rendered successfully');
+  
+  // Remove loading indicator after a short delay
+  setTimeout(() => {
+    const loading = document.getElementById('react-loading');
+    if (loading) loading.remove();
+  }, 1000);
 } catch (error) {
   console.error('❌ Failed to render React app:', error);
+  
+  // Remove loading indicator
+  const loading = document.getElementById('react-loading');
+  if (loading) loading.remove();
+  
   // Show error on screen
   rootElement.innerHTML = `
-    <div style="color: white; padding: 20px; font-family: monospace;">
-      <h1>Error Loading App</h1>
-      <pre style="background: #333; padding: 10px; overflow: auto;">${error instanceof Error ? error.stack : String(error)}</pre>
+    <div style="color: white; padding: 20px; font-family: monospace; background: #000; min-height: 100vh;">
+      <h1 style="color: #f00;">Error Loading App</h1>
+      <pre style="background: #333; padding: 10px; overflow: auto; color: #fff;">${error instanceof Error ? error.stack : String(error)}</pre>
     </div>
   `;
   throw error;
