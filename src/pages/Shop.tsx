@@ -1,9 +1,24 @@
 import { useState, useEffect } from 'react'
 import { ExternalLink, ShoppingBag, Loader2 } from 'lucide-react'
 import { fourthwallService, type FourthwallProduct } from '../services/fourthwall'
+import { productsService, type Product } from '../services/products'
+
+interface CombinedProduct {
+  id: string
+  title: string
+  description?: string
+  price: number
+  compareAtPrice?: number
+  currency: string
+  images: string[]
+  handle: string
+  available: boolean
+  url?: string
+  source: 'fourthwall' | 'local'
+}
 
 export default function Shop() {
-  const [products, setProducts] = useState<FourthwallProduct[]>([])
+  const [products, setProducts] = useState<CombinedProduct[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -15,13 +30,63 @@ export default function Shop() {
     setLoading(true)
     setError(null)
     
-    const { products: fetchedProducts, error: fetchError } = await fourthwallService.getProducts()
-    
-    if (fetchError) {
-      setError(fetchError.message)
+    try {
+      // Fetch from both sources in parallel
+      const [fourthwallResult, localResult] = await Promise.all([
+        fourthwallService.getProducts(),
+        productsService.getProducts(),
+      ])
+
+      const combinedProducts: CombinedProduct[] = []
+
+      // Add Fourthwall products
+      if (fourthwallResult.products) {
+        combinedProducts.push(...fourthwallResult.products.map(p => ({
+          id: `fw-${p.id}`,
+          title: p.title,
+          description: p.description,
+          price: p.price,
+          compareAtPrice: p.compareAtPrice,
+          currency: p.currency,
+          images: p.images,
+          handle: p.handle,
+          available: p.available,
+          url: p.url || fourthwallService.getProductUrl(p.handle),
+          source: 'fourthwall' as const,
+        })))
+      }
+
+      // Add local products
+      if (localResult.products) {
+        combinedProducts.push(...localResult.products.map(p => ({
+          id: `local-${p.id}`,
+          title: p.title,
+          description: p.description,
+          price: p.price,
+          compareAtPrice: p.compare_at_price,
+          currency: p.currency,
+          images: p.images.length > 0 ? p.images : (p.image_url ? [p.image_url] : []),
+          handle: p.handle,
+          available: p.available,
+          url: p.fourthwall_url || `/products/${p.handle}`,
+          source: 'local' as const,
+        })))
+      }
+
+      setProducts(combinedProducts)
+
+      // Show error if both failed
+      if (fourthwallResult.error && localResult.error) {
+        setError('Failed to load products from both sources')
+      } else if (fourthwallResult.error) {
+        // Only show warning if local products exist
+        if (localResult.products.length === 0) {
+          setError(fourthwallResult.error.message)
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load products')
       setProducts([])
-    } else {
-      setProducts(fetchedProducts)
     }
     
     setLoading(false)
@@ -92,9 +157,9 @@ export default function Shop() {
           {products.map((product) => (
             <a
               key={product.id}
-              href={product.url || fourthwallService.getProductUrl(product.handle)}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={product.url || (product.source === 'fourthwall' ? fourthwallService.getProductUrl(product.handle) : `/products/${product.handle}`)}
+              target={product.source === 'fourthwall' ? '_blank' : undefined}
+              rel={product.source === 'fourthwall' ? 'noopener noreferrer' : undefined}
               className="group bg-black border border-white/10 rounded-lg overflow-hidden hover:border-white/30 transition-all duration-300 flex flex-col"
             >
               {/* Product Image */}
@@ -156,7 +221,7 @@ export default function Shop() {
                 <div className="mt-3 pt-3 border-t border-white/10">
                   <div className="flex items-center gap-2 text-white/70 group-hover:text-white transition-colors text-sm">
                     <span>View Product</span>
-                    <ExternalLink className="w-4 h-4" />
+                    {product.source === 'fourthwall' && <ExternalLink className="w-4 h-4" />}
                   </div>
                 </div>
               </div>
