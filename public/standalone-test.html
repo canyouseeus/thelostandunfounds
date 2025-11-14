@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Standalone Test</title>
+    <style>
+        body { background: #000; color: #0f0; font-family: monospace; padding: 40px; }
+    </style>
+</head>
+<body>
+    <h1>STANDALONE TEST - NO VITE, NO REACT</h1>
+    <p id="test">Testing...</p>
+    <script>
+        console.log('Standalone script executing');
+        document.getElementById('test').textContent = '✅ Standalone JavaScript works!';
+        document.getElementById('test').style.color = '#0f0';
+        
+        // Check for error-monitor
+        setTimeout(function() {
+            console.log('Checking for error-monitor...');
+            if (window.location.href.includes('error-monitor')) {
+                console.error('ERROR: error-monitor detected in URL');
+            }
+            console.log('Page still loaded after 2 seconds');
+        }, 2000);
+    </script>
+</body>
+</html>
