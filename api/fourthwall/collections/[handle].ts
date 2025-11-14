@@ -22,20 +22,29 @@ export default async function handler(
 
   try {
     const { handle } = req.query
-    const storeSlug = 'thelostandunfounds-shop'
+    const storeSlug = process.env.FOURTHWALL_STORE_SLUG || 'thelostandunfounds-shop'
+    const apiKey = process.env.FOURTHWALL_API_KEY
     
     if (!handle || typeof handle !== 'string') {
       return res.status(400).json({ error: 'Collection handle is required' })
+    }
+
+    // Build headers with API key if available
+    const headers: HeadersInit = {
+      'Accept': 'application/json',
+      'User-Agent': 'Mozilla/5.0',
+    }
+    
+    if (apiKey) {
+      headers['Authorization'] = `Bearer ${apiKey}`
+      headers['X-API-Key'] = apiKey
     }
 
     // Fourthwall API endpoint for collections
     const apiUrl = `https://${storeSlug}.fourthwall.com/api/collections/${handle}/products`
     
     const response = await fetch(apiUrl, {
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0',
-      },
+      headers,
     })
 
     if (!response.ok) {

@@ -22,7 +22,19 @@ export default async function handler(
   }
 
   try {
-    const storeSlug = 'thelostandunfounds-shop'
+    const storeSlug = process.env.FOURTHWALL_STORE_SLUG || 'thelostandunfounds-shop'
+    const apiKey = process.env.FOURTHWALL_API_KEY
+    
+    // Build headers with API key if available
+    const headers: HeadersInit = {
+      'Accept': 'application/json',
+      'User-Agent': 'Mozilla/5.0',
+    }
+    
+    if (apiKey) {
+      headers['Authorization'] = `Bearer ${apiKey}`
+      headers['X-API-Key'] = apiKey
+    }
     
     // Try multiple API endpoint formats that Fourthwall might use
     const apiEndpoints = [
@@ -39,10 +51,7 @@ export default async function handler(
     for (const apiUrl of apiEndpoints) {
       try {
         const response = await fetch(apiUrl, {
-          headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'Mozilla/5.0',
-          },
+          headers,
         })
 
         if (response.ok) {
