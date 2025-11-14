@@ -347,4 +347,12 @@ export default function NewComponent() {
 
 ---
 
+## Related Documentation
+
+- **AI Project Setup**: See `AI_PROJECT_SETUP_PROMPT.md` for integrating new projects with existing infrastructure
+- **Quick Reference**: See `AI_QUICK_REFERENCE.md` for fast AI assistant communication
+- **Existing Components**: Reference `src/components/` for real-world examples
+
+---
+
 **Remember**: Consistency is key. When in doubt, reference existing components and maintain the minimalist dark aesthetic throughout all new features and pages.
