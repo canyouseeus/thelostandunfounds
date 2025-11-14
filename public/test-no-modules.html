@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>No Modules Test</title>
+    <style>
+        body {
+            background: #000;
+            color: #0f0;
+            font-family: monospace;
+            padding: 40px;
+            font-size: 24px;
+        }
+        button {
+            background: #0f0;
+            color: #000;
+            padding: 10px 20px;
+            font-size: 18px;
+            border: none;
+            cursor: pointer;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>✅ HTML Loaded!</h1>
+    <p id="test">JavaScript test will appear here...</p>
+    <button onclick="testClick()">Click Me Test</button>
+    
+    <script>
+        // Plain JavaScript - no modules
+        console.log('🔍 Plain JavaScript executing!');
+        document.getElementById('test').textContent = '✅ Plain JavaScript works!';
+        document.getElementById('test').style.color = '#0f0';
+        
+        function testClick() {
+            alert('Button click works!');
+            console.log('Button clicked!');
+        }
+        
+        // Test right-click
+        document.addEventListener('contextmenu', function(e) {
+            console.log('Right-click detected');
+            // Don't prevent default - allow right-click
+        });
+    </script>
+</body>
+</html>
