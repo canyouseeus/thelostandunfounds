@@ -48,8 +48,23 @@ export default function EmailSignup() {
         // If email already exists, that's okay
         if (insertError.code === '23505') {
           setSuccess(true);
+          const existingEmail = email.toLowerCase().trim();
           setEmail('');
-          alert('Email already subscribed!');
+          
+          // Still send welcome email even if already subscribed
+          try {
+            await fetch('/api/send-welcome-email', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ email: existingEmail }),
+            });
+          } catch (emailError) {
+            console.error('Failed to send welcome email:', emailError);
+          }
+          
+          alert('Email already subscribed! Check your email for a welcome message.');
           if (turnstileRef.current) {
             turnstileRef.current.reset();
           }
@@ -61,8 +76,28 @@ export default function EmailSignup() {
       }
 
       setSuccess(true);
+      const submittedEmail = email.toLowerCase().trim();
       setEmail('');
-      alert('Successfully subscribed! Check your email for updates.');
+      
+      // Send welcome email
+      try {
+        const emailResponse = await fetch('/api/send-welcome-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email: submittedEmail }),
+        });
+        
+        if (emailResponse.ok) {
+          alert('Successfully subscribed! Check your email for a welcome message.');
+        } else {
+          alert('Successfully subscribed! Check your email for updates.');
+        }
+      } catch (emailError) {
+        console.error('Failed to send welcome email:', emailError);
+        alert('Successfully subscribed! Check your email for updates.');
+      }
       
       // Reset Turnstile
       if (turnstileRef.current) {
