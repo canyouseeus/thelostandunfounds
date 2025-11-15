@@ -37,18 +37,29 @@ export default async function handler(
 
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // Check if email exists in database
-    const { data: subscriber, error: queryError } = await supabase
+    // Check if email exists in database (case-insensitive search)
+    const normalizedEmail = email.toLowerCase().trim()
+    const { data: subscribers, error: queryError } = await supabase
       .from('newsletter_subscribers')
       .select('email')
-      .eq('email', email.toLowerCase().trim())
-      .single()
+      .ilike('email', normalizedEmail)
 
-    if (queryError || !subscriber) {
-      return res.status(404).json({
-        error: 'Email not found in subscribers list'
-      })
+    if (queryError || !subscribers || subscribers.length === 0) {
+      // Try exact match as fallback
+      const { data: exactMatch } = await supabase
+        .from('newsletter_subscribers')
+        .select('email')
+        .eq('email', normalizedEmail)
+        .limit(1)
+      
+      if (!exactMatch || exactMatch.length === 0) {
+        return res.status(404).json({
+          error: `Email "${normalizedEmail}" not found in subscribers list`
+        })
+      }
     }
+
+    const targetEmail = subscribers?.[0]?.email || normalizedEmail
 
     // Send welcome email via Zoho Mail
     const clientId = process.env.ZOHO_CLIENT_ID
@@ -127,7 +138,7 @@ export default async function handler(
       },
       body: JSON.stringify({
         fromAddress: fromEmail,
-        toAddress: email.toLowerCase().trim(),
+        toAddress: targetEmail,
         subject: 'Welcome to THE LOST+UNFOUNDS',
         content: `
           <!DOCTYPE html>
