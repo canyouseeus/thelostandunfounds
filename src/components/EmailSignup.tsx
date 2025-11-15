@@ -61,9 +61,34 @@ export default function EmailSignup() {
         throw new Error(data.error || 'Failed to subscribe');
       }
 
+      // Show diagnostic info if email sending failed or credentials are missing
+      if (data.warning || data.emailConfig || data.missingCredentials) {
+        let diagnosticMessage = data.message || 'Successfully subscribed!\n\n';
+        
+        if (data.warning) {
+          diagnosticMessage += `⚠️ ${data.warning}\n\n`;
+        }
+        
+        if (data.emailConfig) {
+          diagnosticMessage += 'Email Configuration:\n';
+          diagnosticMessage += `- Client ID: ${data.emailConfig.hasClientId ? '✓' : '✗ Missing'}\n`;
+          diagnosticMessage += `- Client Secret: ${data.emailConfig.hasClientSecret ? '✓' : '✗ Missing'}\n`;
+          diagnosticMessage += `- Refresh Token: ${data.emailConfig.hasRefreshToken ? '✓' : '✗ Missing'}\n`;
+          diagnosticMessage += `- From Email: ${data.emailConfig.hasFromEmail ? '✓' : '✗ Missing'}\n`;
+        }
+        
+        if (data.errorDetails) {
+          diagnosticMessage += `\nError: ${data.errorDetails}`;
+        }
+        
+        alert(diagnosticMessage);
+        console.log('Email diagnostic info:', data);
+      } else {
+        alert(data.message || 'Successfully subscribed! Check your email for confirmation.');
+      }
+
       setSuccess(true);
       setEmail('');
-      alert(data.message || 'Successfully subscribed! Check your email for confirmation.');
       
       // Reset Turnstile
       if (turnstileRef.current) {
