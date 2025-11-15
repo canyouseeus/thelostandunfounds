@@ -16,12 +16,24 @@ import {
   Users,
   Settings,
   Wrench,
-  BarChart3
+  BarChart3,
+  BookOpen,
+  CheckSquare,
+  Lightbulb,
+  HelpCircle,
+  Code,
+  LayoutDashboard
 } from 'lucide-react';
 import { LoadingSpinner } from '../components/Loading';
+import DashboardOverview from '../components/admin/DashboardOverview';
 import BlogPostManagement from '../components/admin/BlogPostManagement';
 import ProductManagement from '../components/admin/ProductManagement';
 import AffiliateManagement from '../components/admin/AffiliateManagement';
+import DailyJournal from '../components/admin/DailyJournal';
+import TaskManagement from '../components/admin/TaskManagement';
+import IdeaBoard from '../components/admin/IdeaBoard';
+import HelpCenter from '../components/admin/HelpCenter';
+import DeveloperTools from '../components/admin/DeveloperTools';
 import AnalyticsCarousel from '../components/admin/AnalyticsCarousel';
 
 interface DashboardStats {
@@ -37,7 +49,7 @@ interface DashboardStats {
   totalBlogPosts?: number;
 }
 
-type AdminTab = 'blog' | 'products' | 'affiliates' | 'tools' | 'analytics' | 'settings';
+type AdminTab = 'dashboard' | 'blog' | 'products' | 'affiliates' | 'journal' | 'tasks' | 'ideas' | 'tools' | 'analytics' | 'help' | 'developer' | 'settings';
 
 export default function Admin() {
   const { user, loading: authLoading } = useAuth();
@@ -46,7 +58,7 @@ export default function Admin() {
   const [adminStatus, setAdminStatus] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [activeTab, setActiveTab] = useState<AdminTab>('blog');
+  const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
 
   useEffect(() => {
     checkAdminAccess();
@@ -161,33 +173,36 @@ export default function Admin() {
     return null; // Will redirect
   }
 
-  const tabs: { id: AdminTab; label: string; icon: any }[] = [
-    { id: 'blog', label: 'Blog Posts', icon: FileText },
-    { id: 'products', label: 'Products', icon: ShoppingBag },
-    { id: 'affiliates', label: 'Affiliates', icon: Users },
-    { id: 'tools', label: 'Tools', icon: Wrench },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-    { id: 'settings', label: 'Settings', icon: Settings },
+  const tabs: { id: AdminTab; label: string; icon: any; category?: string }[] = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, category: 'Overview' },
+    { id: 'blog', label: 'Blog Posts', icon: FileText, category: 'Content' },
+    { id: 'products', label: 'Products', icon: ShoppingBag, category: 'E-commerce' },
+    { id: 'affiliates', label: 'Affiliates', icon: Users, category: 'E-commerce' },
+    { id: 'journal', label: 'Daily Journal', icon: BookOpen, category: 'Productivity' },
+    { id: 'tasks', label: 'Tasks', icon: CheckSquare, category: 'Productivity' },
+    { id: 'ideas', label: 'Ideas', icon: Lightbulb, category: 'Productivity' },
+    { id: 'analytics', label: 'Analytics', icon: BarChart3, category: 'Analytics' },
+    { id: 'help', label: 'Help Center', icon: HelpCircle, category: 'Resources' },
+    { id: 'developer', label: 'Developer Tools', icon: Code, category: 'Resources' },
+    { id: 'settings', label: 'Settings', icon: Settings, category: 'Configuration' },
   ];
 
   const renderTabContent = () => {
     switch (activeTab) {
+      case 'dashboard':
+        return <DashboardOverview />;
       case 'blog':
         return <BlogPostManagement />;
       case 'products':
         return <ProductManagement />;
       case 'affiliates':
         return <AffiliateManagement />;
-      case 'tools':
-        return (
-          <div className="bg-black border border-white/10 rounded-lg p-6">
-            <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-              <Wrench className="w-6 h-6" />
-              Tools Management
-            </h2>
-            <p className="text-white/60">Tool management features coming soon...</p>
-          </div>
-        );
+      case 'journal':
+        return <DailyJournal />;
+      case 'tasks':
+        return <TaskManagement />;
+      case 'ideas':
+        return <IdeaBoard />;
       case 'analytics':
         return stats ? (
           <AnalyticsCarousel data={stats} />
@@ -196,6 +211,10 @@ export default function Admin() {
             <LoadingSpinner />
           </div>
         );
+      case 'help':
+        return <HelpCenter />;
+      case 'developer':
+        return <DeveloperTools />;
       case 'settings':
         return (
           <div className="bg-black border border-white/10 rounded-lg p-6">
@@ -216,6 +235,14 @@ export default function Admin() {
     }
   };
 
+  // Group tabs by category
+  const tabsByCategory = tabs.reduce((acc, tab) => {
+    const category = tab.category || 'Other';
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(tab);
+    return acc;
+  }, {} as Record<string, typeof tabs>);
+
   return (
     <div className="min-h-screen bg-black">
       {/* Header */}
@@ -232,24 +259,33 @@ export default function Admin() {
       <div className="flex h-[calc(100vh-73px)]">
         {/* Left Sidebar - Tabs */}
         <div className="w-64 border-r border-white/10 bg-black/50 overflow-y-auto">
-          <nav className="p-4 space-y-1">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-                    activeTab === tab.id
-                      ? 'bg-white text-black'
-                      : 'text-white/60 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="font-medium">{tab.label}</span>
-                </button>
-              );
-            })}
+          <nav className="p-4 space-y-4">
+            {Object.entries(tabsByCategory).map(([category, categoryTabs]) => (
+              <div key={category}>
+                <div className="px-2 py-1 text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">
+                  {category}
+                </div>
+                <div className="space-y-1">
+                  {categoryTabs.map((tab) => {
+                    const Icon = tab.icon;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+                          activeTab === tab.id
+                            ? 'bg-white text-black'
+                            : 'text-white/60 hover:text-white hover:bg-white/5'
+                        }`}
+                      >
+                        <Icon className="w-5 h-5" />
+                        <span className="font-medium">{tab.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </nav>
         </div>
 
