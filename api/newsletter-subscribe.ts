@@ -24,14 +24,16 @@ export default async function handler(
   }
 
   // Verify Turnstile token if provided
+  // According to Cloudflare docs: https://developers.cloudflare.com/turnstile/get-started/server-side-validation/
+  // Siteverify API requires application/x-www-form-urlencoded format, not JSON
   const turnstileSecret = process.env.TURNSTILE_SECRET_KEY
   if (turnstileSecret && turnstileToken) {
     const verifyResponse = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: JSON.stringify({
+      body: new URLSearchParams({
         secret: turnstileSecret,
         response: turnstileToken,
       }),
@@ -39,10 +41,16 @@ export default async function handler(
 
     const verifyData = await verifyResponse.json()
     if (!verifyData.success) {
+      console.error('Turnstile verification failed:', verifyData)
       return res.status(400).json({ 
         error: 'Security verification failed. Please try again.' 
       })
     }
+  } else if (turnstileSecret && !turnstileToken) {
+    // If Turnstile is configured but no token provided, reject
+    return res.status(400).json({ 
+      error: 'Security verification required. Please refresh and try again.' 
+    })
   }
 
   try {
