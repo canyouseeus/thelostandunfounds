@@ -141,19 +141,31 @@ export default async function handler(
         })
 
         let accountId: string | null = null
+        let accountInfo: any = null
         
         if (accountInfoResponse.ok) {
           const accounts = await accountInfoResponse.json()
+          console.log('Zoho accounts response:', JSON.stringify(accounts, null, 2))
           if (accounts.data && accounts.data.length > 0) {
-            accountId = accounts.data[0].accountId || accounts.data[0].account_id
+            accountInfo = accounts.data[0]
+            accountId = accounts.data[0].accountId || accounts.data[0].account_id || accounts.data[0].accountId
           }
+        } else {
+          const accountErrorText = await accountInfoResponse.text()
+          console.error('Failed to get Zoho accounts:', {
+            status: accountInfoResponse.status,
+            error: accountErrorText
+          })
         }
 
-        // Fallback: extract account ID from email
+        // Fallback: extract account ID from email (this might not work for all Zoho setups)
         if (!accountId) {
+          console.warn('Account ID not found from API, using email prefix as fallback')
           const emailParts = fromEmail.split('@')
           accountId = emailParts[0]
         }
+        
+        console.log('Using account ID:', accountId, 'for email:', fromEmail)
 
         if (accountId) {
           // Send welcome/confirmation email to user
