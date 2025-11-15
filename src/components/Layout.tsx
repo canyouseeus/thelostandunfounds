@@ -119,6 +119,13 @@ export default function Layout() {
                   >
                     Explore Tools
                   </Link>
+                  <Link 
+                    to="/shop" 
+                    className="menu-item"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Shop
+                  </Link>
                   {!loading && user && (
                     <>
                       <Link 

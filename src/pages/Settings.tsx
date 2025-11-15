@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
 import { Settings, Bell, Shield, Trash2, Key } from 'lucide-react';
 import { LoadingSpinner } from '../components/Loading';
+import ProductManager from '../components/products/ProductManager';
 
 export default function SettingsPage() {
   const { user, signOut } = useAuth();
@@ -71,6 +72,9 @@ export default function SettingsPage() {
       </div>
 
       <div className="space-y-6">
+        {/* Product Management */}
+        <ProductManager />
+
         {/* Notifications */}
         <div className="bg-black border border-white/10 rounded-lg p-6">
           <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">

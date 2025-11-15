@@ -47,6 +47,18 @@ export default defineConfig({
           });
         },
       },
+      // Proxy Fourthwall API to a simple Node server for local dev
+      // In production, Vercel handles these routes automatically
+      '/api/fourthwall': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('error', (err) => {
+            console.warn('Fourthwall API proxy error (this is normal if dev API server is not running):', err.message);
+            console.warn('For full API functionality, use: vercel dev');
+          });
+        },
+      },
     },
   },
   build: {
