@@ -28,7 +28,7 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    open: true,
+    open: false,
     proxy: {
       '/api/tiktok': {
         target: 'https://tiktok-downloader-production-ab40.up.railway.app',

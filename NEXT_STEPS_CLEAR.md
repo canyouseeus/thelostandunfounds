@@ -22,8 +22,10 @@
 Create `.env.local` file with Supabase credentials:
 ```env
 VITE_SUPABASE_URL=https://nonaqhllakrckbtbawrb.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vbmFxaGxsYWtyY2tidGJhd3JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1MzI2MzAsImV4cCI6MjA3NjEwODYzMH0.uf-XaKQF10LHqVlZyXtg45zj5slMkapKSv-GAGVileU
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 ```
+
+**Get your keys from**: https://supabase.com/dashboard/project/nonaqhllakrckbtbawrb/settings/api
 
 ### 3. Test Auth Flow (5 min)
 ```bash

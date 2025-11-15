@@ -1,6 +1,5 @@
 import { useState, useRef } from 'react';
 import { Turnstile } from 'react-turnstile';
-import { supabase } from '../lib/supabase';
 
 export default function EmailSignup() {
   const [email, setEmail] = useState('');
@@ -34,35 +33,38 @@ export default function EmailSignup() {
     setLoading(true);
 
     try {
-      // Store email in Supabase
-      const { error: insertError } = await supabase
-        .from('newsletter_subscribers')
-        .insert({
+      // Call API endpoint to save email and send confirmation
+      const response = await fetch('/api/newsletter-subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           email: email.toLowerCase().trim(),
-          subscribed_at: new Date().toISOString(),
-          source: 'landing_page',
-          verified: true,
-        });
+          turnstileToken: turnstileToken,
+        }),
+      });
 
-      if (insertError) {
-        // If email already exists, that's okay
-        if (insertError.code === '23505') {
-          setSuccess(true);
-          setEmail('');
-          alert('Email already subscribed!');
-          if (turnstileRef.current) {
-            turnstileRef.current.reset();
-          }
-          setTurnstileToken(null);
-          setLoading(false);
-          return;
-        }
-        throw insertError;
+      // Handle empty or invalid responses
+      if (!response.ok && response.status === 404) {
+        throw new Error('API endpoint not found. Make sure you are running with "npx vercel dev" for API routes to work.');
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        throw new Error(`Server returned non-JSON response: ${text || 'Empty response'}`);
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to subscribe');
       }
 
       setSuccess(true);
       setEmail('');
-      alert('Successfully subscribed! Check your email for updates.');
+      alert(data.message || 'Successfully subscribed! Check your email for confirmation.');
       
       // Reset Turnstile
       if (turnstileRef.current) {
@@ -167,7 +169,7 @@ export default function EmailSignup() {
         </div>
 
         {/* Cloudflare Turnstile */}
-        {turnstileSiteKey && (
+        {turnstileSiteKey && typeof Turnstile !== 'undefined' && (
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <Turnstile
               sitekey={turnstileSiteKey}

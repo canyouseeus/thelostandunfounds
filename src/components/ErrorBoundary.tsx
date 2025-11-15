@@ -6,6 +6,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, Home, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getErrorMonitor } from '../services/error-monitor';
 
 interface Props {
   children: ReactNode;
@@ -40,6 +41,16 @@ export class ErrorBoundary extends Component<Props, State> {
     // Log error to console in development
     if (import.meta.env.DEV) {
       console.error('ErrorBoundary caught an error:', error, errorInfo);
+    }
+
+    // Report to error monitor
+    const errorMonitor = getErrorMonitor();
+    if (errorMonitor) {
+      errorMonitor.logError('error', [
+        `ErrorBoundary: ${error.message}`,
+        error,
+        errorInfo
+      ]);
     }
 
     this.setState({
@@ -115,4 +126,5 @@ export class ErrorBoundary extends Component<Props, State> {
 }
 
 export default ErrorBoundary;
+
 

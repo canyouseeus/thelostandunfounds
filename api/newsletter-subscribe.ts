@@ -1,0 +1,188 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { createClient } from '@supabase/supabase-js'
+
+interface ZohoTokenResponse {
+  access_token: string
+  token_type: string
+  expires_in: number
+}
+
+export default async function handler(
+  req: VercelRequest,
+  res: VercelResponse
+) {
+  // Only allow POST requests
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' })
+  }
+
+  const { email, turnstileToken } = req.body
+
+  // Validate email
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ error: 'Valid email is required' })
+  }
+
+  // Verify Turnstile token if provided
+  const turnstileSecret = process.env.TURNSTILE_SECRET_KEY
+  if (turnstileSecret && turnstileToken) {
+    const verifyResponse = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        secret: turnstileSecret,
+        response: turnstileToken,
+      }),
+    })
+
+    const verifyData = await verifyResponse.json()
+    if (!verifyData.success) {
+      return res.status(400).json({ 
+        error: 'Security verification failed. Please try again.' 
+      })
+    }
+  }
+
+  try {
+    // Initialize Supabase client
+    // Use service role key for server-side operations, fallback to anon key
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Missing Supabase credentials')
+      return res.status(500).json({ 
+        error: 'Database service not configured' 
+      })
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    // Save email to Supabase
+    const { error: insertError } = await supabase
+      .from('newsletter_subscribers')
+      .insert({
+        email: email.toLowerCase().trim(),
+        subscribed_at: new Date().toISOString(),
+        source: 'landing_page',
+        verified: true,
+      })
+
+    if (insertError) {
+      // If email already exists, that's okay
+      if (insertError.code === '23505') {
+        return res.status(200).json({ 
+          success: true, 
+          message: 'Email already subscribed!' 
+        })
+      }
+      throw insertError
+    }
+
+    // Send confirmation email via Zoho Mail
+    const clientId = process.env.ZOHO_CLIENT_ID
+    const clientSecret = process.env.ZOHO_CLIENT_SECRET
+    const refreshToken = process.env.ZOHO_REFRESH_TOKEN
+    const fromEmail = process.env.ZOHO_FROM_EMAIL || process.env.ZOHO_EMAIL
+
+    if (clientId && clientSecret && refreshToken && fromEmail) {
+      try {
+        // Get Zoho access token
+        const tokenResponse = await fetch('https://accounts.zoho.com/oauth/v2/token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            refresh_token: refreshToken,
+            client_id: clientId,
+            client_secret: clientSecret,
+            grant_type: 'refresh_token',
+          }),
+        })
+
+        if (tokenResponse.ok) {
+          const tokenData: ZohoTokenResponse = await tokenResponse.json()
+          const accessToken = tokenData.access_token
+
+          // Get account ID
+          const accountInfoResponse = await fetch('https://mail.zoho.com/api/accounts', {
+            method: 'GET',
+            headers: {
+              'Authorization': `Zoho-oauthtoken ${accessToken}`,
+            },
+          })
+
+          let accountId: string | null = null
+          
+          if (accountInfoResponse.ok) {
+            const accounts = await accountInfoResponse.json()
+            if (accounts.data && accounts.data.length > 0) {
+              accountId = accounts.data[0].accountId || accounts.data[0].account_id
+            }
+          }
+
+          // Fallback: extract account ID from email
+          if (!accountId) {
+            const emailParts = fromEmail.split('@')
+            accountId = emailParts[0]
+          }
+
+          if (accountId) {
+            // Send welcome/confirmation email to user
+            const mailApiUrl = `https://mail.zoho.com/api/accounts/${accountId}/messages`
+            
+            await fetch(mailApiUrl, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Zoho-oauthtoken ${accessToken}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                fromAddress: fromEmail,
+                toAddress: email,
+                subject: 'Welcome to THE LOST+UNFOUNDS',
+                content: `
+                  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #000000;">Thanks for subscribing!</h2>
+                    <p>We're excited to have you join THE LOST+UNFOUNDS community.</p>
+                    <p>You'll receive updates about:</p>
+                    <ul>
+                      <li>New tools and features</li>
+                      <li>Platform updates</li>
+                      <li>Special announcements</li>
+                    </ul>
+                    <p>Stay tuned for what's coming next!</p>
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                    <p style="color: #666; font-size: 12px;">
+                      If you didn't sign up for this newsletter, you can safely ignore this email.
+                    </p>
+                  </div>
+                `,
+                mailFormat: 'html',
+              }),
+            })
+          }
+        }
+      } catch (emailError) {
+        // Log error but don't fail the subscription
+        console.error('Failed to send confirmation email:', emailError)
+        // Continue - subscription was saved successfully
+      }
+    }
+
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Successfully subscribed! Check your email for confirmation.' 
+    })
+
+  } catch (error: any) {
+    console.error('Newsletter subscription error:', error)
+    return res.status(500).json({ 
+      error: error.message || 'An error occurred. Please try again later.' 
+    })
+  }
+}
+

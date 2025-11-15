@@ -120,3 +120,4 @@ const skill: SkillDefinition = {
 
 export default skill;
 
+

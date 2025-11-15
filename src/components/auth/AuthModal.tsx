@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../Toast';
+import { isAdminEmail, isAdmin } from '../../utils/admin';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -15,8 +17,32 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   
-  const { signUp, signIn, signInWithGoogle } = useAuth();
+  const { signUp, signIn, signInWithGoogle, user } = useAuth();
   const { success, error: showError } = useToast();
+  const navigate = useNavigate();
+  const [justSignedIn, setJustSignedIn] = useState(false);
+
+  // Redirect admin users after successful login
+  useEffect(() => {
+    if (justSignedIn && user && isAdminEmail(user.email || '')) {
+      const checkAndRedirect = async () => {
+        try {
+          const adminStatus = await isAdmin();
+          if (adminStatus) {
+            navigate('/admin');
+            setJustSignedIn(false);
+          }
+        } catch (error) {
+          // If admin check fails but email matches, still redirect
+          if (isAdminEmail(user.email || '')) {
+            navigate('/admin');
+            setJustSignedIn(false);
+          }
+        }
+      };
+      checkAndRedirect();
+    }
+  }, [user, justSignedIn, navigate]);
 
   if (!isOpen) return null;
 
@@ -36,6 +62,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           onClose();
           setEmail('');
           setPassword('');
+          setJustSignedIn(true);
         }
       } else {
         const { error } = await signIn(email, password);
@@ -47,6 +74,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           onClose();
           setEmail('');
           setPassword('');
+          setJustSignedIn(true);
         }
       }
     } catch (err) {

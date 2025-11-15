@@ -295,3 +295,4 @@ async function handleHelpCommand(): Promise<string> {
   return `🤖 *Telegram Commands*\n\n*System Commands:*\n• /status - Check system health\n• /metrics - Show current metrics\n• /deploy [frontend|backend|both] - Trigger deployment\n\n*Business Commands:*\n• /marketing [start|status|stop] - Control marketing\n• /add [client|automation|transaction] [data] - Add data\n\n*Voice Commands:*\n• Send a voice message with your command\n• The bot will transcribe and execute it\n\n*General:*\n• /help - Show this help message\n\n*Examples:*\n• /status\n• /metrics\n• /deploy both\n• Say "check status" in a voice message`
 }
 
+

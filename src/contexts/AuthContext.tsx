@@ -4,6 +4,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { authService, User, AuthSession } from '../services/auth';
 import { subscriptionService, SubscriptionTier } from '../services/subscription';
+import { autoPromoteToAdmin, isAdminEmail } from '../utils/admin';
 
 interface AuthContextType {
   user: User | null;
@@ -107,6 +108,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(currentSession);
         setUser(currentSession.user);
         
+        // Auto-promote to admin if email matches admin email (on session restore)
+        if (currentSession.user?.id && currentSession.user?.email && isAdminEmail(currentSession.user.email)) {
+          try {
+            await autoPromoteToAdmin(currentSession.user.id, currentSession.user.email);
+          } catch (adminError) {
+            // Silently fail - admin check will still work via email
+          }
+        }
+        
         // Get subscription tier (with error handling)
         try {
           if (currentSession.user?.id) {
@@ -185,6 +195,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (newUser) {
         setUser(newUser);
+        
+        // Auto-promote to admin if email matches admin email
+        if (newUser?.id && newUser?.email && isAdminEmail(newUser.email)) {
+          try {
+            await autoPromoteToAdmin(newUser.id, newUser.email);
+            if (import.meta.env.DEV) {
+              console.log('Admin auto-promoted on signup:', newUser.email);
+            }
+          } catch (adminError) {
+            console.warn('Failed to auto-promote admin on signup:', adminError);
+            // Continue anyway - admin check will still work via email
+          }
+        }
+        
         // Auto sign in after sign up
         try {
           const { session: newSession, error: signInError } = await authService.signIn(email, password);
@@ -228,6 +252,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (newSession) {
         setSession(newSession);
         setUser(newSession.user);
+        
+        // Auto-promote to admin if email matches admin email
+        if (newSession.user?.id && newSession.user?.email && isAdminEmail(newSession.user.email)) {
+          try {
+            await autoPromoteToAdmin(newSession.user.id, newSession.user.email);
+            if (import.meta.env.DEV) {
+              console.log('Admin auto-promoted:', newSession.user.email);
+            }
+          } catch (adminError) {
+            console.warn('Failed to auto-promote admin:', adminError);
+            // Continue anyway - admin check will still work via email
+          }
+        }
+        
         try {
           if (newSession.user?.id) {
             const userTier = await subscriptionService.getTier(newSession.user.id);

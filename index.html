@@ -8,6 +8,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#000000" />
     <meta name="msapplication-TileColor" content="#000000" />
+    <!-- Standard mobile web app capability -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <!-- iOS-specific meta tags (kept for iOS Safari compatibility) -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="apple-mobile-web-app-title" content="THE LOST+UNFOUNDS" />
@@ -32,8 +35,25 @@
     <!-- reCAPTCHA v3 will be loaded dynamically by React component -->
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div style="color: white; padding: 20px; text-align: center;">
+        Loading... If you see this, HTML loaded but React hasn't mounted yet.
+      </div>
+    </div>
+    <script>
+      console.log('🔍 Inline script executed - JavaScript is working!');
+      console.log('Checking if main.tsx will load...');
+    </script>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      setTimeout(() => {
+        const root = document.getElementById('root');
+        if (root && root.innerHTML.includes('Loading')) {
+          console.error('❌ React did not mount after 3 seconds!');
+          root.innerHTML += '<div style="color: red; margin-top: 20px;">ERROR: React failed to mount. Check console for errors.</div>';
+        }
+      }, 3000);
+    </script>
   </body>
 </html>
 

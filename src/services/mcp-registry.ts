@@ -35,8 +35,9 @@ async function loadMCPTools() {
     toolsLoaded = true;
   } catch (error) {
     // MCP registry is optional - create a minimal fallback
-    if (typeof window !== 'undefined') {
-      console.warn('MCP registry tools not available, using fallback');
+    // Only log in development mode to reduce console noise
+    if (typeof window !== 'undefined' && import.meta.env.DEV) {
+      console.warn('MCP registry tools not available, using fallback (this is expected)');
     }
     toolRegistry = {
       registerMetadata: () => {},

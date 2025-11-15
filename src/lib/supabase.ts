@@ -9,11 +9,11 @@ import { createClient } from '@supabase/supabase-js';
 
 // Use Vite env vars in browser, process.env in Node
 const SUPABASE_URL = typeof window !== 'undefined' 
-  ? ((import.meta as any).env?.VITE_SUPABASE_URL)
+  ? import.meta.env.VITE_SUPABASE_URL
   : (process.env.SUPABASE_URL);
 
 const SUPABASE_ANON_KEY = typeof window !== 'undefined'
-  ? ((import.meta as any).env?.VITE_SUPABASE_ANON_KEY)
+  ? import.meta.env.VITE_SUPABASE_ANON_KEY
   : (process.env.SUPABASE_ANON_KEY);
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {

@@ -2,6 +2,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom'
 import { Home } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { isAdmin } from '../utils/admin'
 import AuthModal from './auth/AuthModal'
 
 export default function Layout() {
@@ -11,9 +12,19 @@ export default function Layout() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
+  const [userIsAdmin, setUserIsAdmin] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const isOpeningModalRef = useRef(false)
   const { user, tier, signOut, loading, clearAuthStorage } = useAuth()
+
+  // Check if user is admin
+  useEffect(() => {
+    if (user) {
+      isAdmin().then(setUserIsAdmin).catch(() => setUserIsAdmin(false))
+    } else {
+      setUserIsAdmin(false)
+    }
+  }, [user])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -87,13 +98,14 @@ export default function Layout() {
   return (
     <div className="min-h-screen bg-black">
       {!isTikTokDownloader && (
-      <nav className="bg-black/80 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
+      <nav className="bg-black/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Top row: Title left, Menu button right */}
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center text-white hover:text-white/80 transition">
               <span className="text-xl font-bold">THE LOST+UNFOUNDS</span>
             </Link>
+            {!isHome && (
             <div className="flex items-center space-x-4">
               <div className="header-nav" ref={menuRef}>
                 <button 
@@ -119,6 +131,34 @@ export default function Layout() {
                   >
                     Explore Tools
                   </Link>
+                  <Link 
+                    to="/docs" 
+                    className="menu-item"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Documentation
+                  </Link>
+                  <Link 
+                    to="/pricing" 
+                    className="menu-item"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Pricing
+                  </Link>
+                  <Link 
+                    to="/about" 
+                    className="menu-item"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    About
+                  </Link>
+                  <Link 
+                    to="/support" 
+                    className="menu-item"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Support
+                  </Link>
                   {!loading && user && (
                     <>
                       <Link 
@@ -135,6 +175,15 @@ export default function Layout() {
                       >
                         Settings
                       </Link>
+                      {userIsAdmin && (
+                        <Link 
+                          to="/admin" 
+                          className="menu-item"
+                          onClick={() => setMenuOpen(false)}
+                        >
+                          Admin Dashboard
+                        </Link>
+                      )}
                     </>
                   )}
                   {!loading && !user && (
@@ -205,6 +254,7 @@ export default function Layout() {
                 </div>
               </div>
             </div>
+            )}
           </div>
           {/* Logo centered below */}
           <div className="flex justify-center pb-3">

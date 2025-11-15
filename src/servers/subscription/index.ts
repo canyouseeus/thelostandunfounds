@@ -6,6 +6,7 @@
  */
 
 import { supabase } from '../../lib/supabase';
+import { isAdmin, isAdminEmail } from '../../utils/admin';
 
 export type SubscriptionTier = 'free' | 'premium' | 'pro';
 export type SubscriptionStatus = 'active' | 'cancelled' | 'expired';
@@ -122,6 +123,30 @@ export async function canPerformAction(
   action: string
 ) {
   try {
+    // Check if user is admin - admins bypass all limits
+    const adminStatus = await isAdmin();
+    if (adminStatus) {
+      return {
+        allowed: true,
+        remaining: null, // Infinity
+        limit: null, // Unlimited
+      };
+    }
+
+    // Also check by email if we have user data
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && isAdminEmail(user.email || '')) {
+        return {
+          allowed: true,
+          remaining: null,
+          limit: null,
+        };
+      }
+    } catch (emailCheckError) {
+      // Continue with normal limit check if email check fails
+    }
+
     const tier = await getTier(userId);
     const limits = await getToolLimits(toolId, tier);
     
@@ -210,6 +235,22 @@ export async function getToolLimits(toolId: string, tier: SubscriptionTier) {
  */
 export async function getDailyUsage(userId: string, toolId: string, action: string) {
   try {
+    // Admins don't have usage tracked (unlimited access)
+    const adminStatus = await isAdmin();
+    if (adminStatus) {
+      return 0; // Return 0 so remaining is always unlimited
+    }
+
+    // Also check by email if we have user data
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && isAdminEmail(user.email || '')) {
+        return 0;
+      }
+    } catch (emailCheckError) {
+      // Continue with normal usage check if email check fails
+    }
+
     const today = new Date().toISOString().split('T')[0];
     
     const { count, error } = await supabase
@@ -266,6 +307,22 @@ export async function trackUsage(
   metadata?: Record<string, any>
 ) {
   try {
+    // Don't track usage for admins (they have unlimited access)
+    const adminStatus = await isAdmin();
+    if (adminStatus) {
+      return { success: true }; // Skip tracking for admins
+    }
+
+    // Also check by email if we have user data
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && isAdminEmail(user.email || '')) {
+        return { success: true }; // Skip tracking for admins
+      }
+    } catch (emailCheckError) {
+      // Continue with normal tracking if email check fails
+    }
+
     const { error } = await supabase
       .from('tool_usage')
       .insert({

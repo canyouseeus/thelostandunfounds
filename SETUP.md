@@ -104,13 +104,72 @@ vercel domains add thelostandunfounds.com
 
 ### 5. Environment Variables
 
-Create `.env.local` file (not committed to git):
+#### Required Variables (Must Set)
 
-```env
-VITE_API_URL=https://api.example.com
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_key
-```
+1. **VITE_SUPABASE_URL**
+   - Get from: https://supabase.com/dashboard/project/nonaqhllakrckbtbawrb/settings/api
+   - Value: `https://nonaqhllakrckbtbawrb.supabase.co`
+
+2. **VITE_SUPABASE_ANON_KEY**
+   - Get from: https://supabase.com/dashboard/project/nonaqhllakrckbtbawrb/settings/api-keys
+   - Copy the **"Publishable key"** (starts with `sb_publishable_...`)
+
+#### Optional Variables (Recommended)
+
+3. **VITE_TURNSTILE_SITE_KEY** (Bot protection - Frontend)
+   - Get from: https://dash.cloudflare.com/?to=/:account/turnstile
+   - Create a new Turnstile site for `thelostandunfounds.com`
+   - Copy the **Site Key** (starts with `0x...`)
+   - Add to: Vercel environment variables
+
+4. **TURNSTILE_SECRET_KEY** (Bot protection - Backend)
+   - Get from: Same Cloudflare Turnstile page (after creating site)
+   - Copy the **Secret Key** (different from Site Key)
+   - Add to: Supabase Edge Functions secrets (NOT Vercel!)
+   - **Navigation**: 
+     1. Go to: https://supabase.com/dashboard/project/nonaqhllakrckbtbawrb
+     2. Click **"Edge Functions"** in left sidebar (under CONFIGURATION)
+     3. Click **"Secrets"** tab at the top
+     4. Click **"Add Secret"**
+     5. Name: `TURNSTILE_SECRET_KEY`, Value: your secret key
+   - ⚠️ **IMPORTANT**: Secret keys must be server-side only (Supabase), never in Vercel
+
+#### Optional Variables (Only if using Telegram)
+
+5. **TELEGRAM_BOT_TOKEN**
+   - Get from: https://t.me/botfather (in Telegram)
+   - Create bot with `/newbot` command
+
+6. **OPENAI_API_KEY** (Only if using Telegram voice commands)
+   - Get from: https://platform.openai.com/api-keys
+   - Create new secret key
+
+#### Setup Steps
+
+**For Local Development:**
+1. Create `.env.local` file in `thelostandunfounds/` directory:
+   ```bash
+   cd thelostandunfounds
+   cp .env.example .env.local
+   ```
+
+2. Edit `.env.local` and add your keys:
+   ```env
+   VITE_SUPABASE_URL=https://nonaqhllakrckbtbawrb.supabase.co
+   VITE_SUPABASE_ANON_KEY=your_publishable_key_here
+   VITE_TURNSTILE_SITE_KEY=your_turnstile_site_key_here
+   ```
+
+**For Vercel Production:**
+1. Go to: https://vercel.com/joshua-greenes-projects/thelostandunfounds/settings/environment-variables
+2. Add each variable:
+   - Key: `VITE_SUPABASE_URL`
+   - Value: `https://nonaqhllakrckbtbawrb.supabase.co`
+   - Environments: All (Production, Preview, Development)
+   - Click "Save"
+3. Repeat for other variables
+
+**📖 Detailed Walkthrough**: See `ENV_SETUP_WALKTHROUGH.md` for step-by-step instructions with screenshots guidance.
 
 ## 🚀 Development
 

@@ -34,14 +34,32 @@
 
 The backend needs the **Secret Key** (NOT the Site Key) to verify tokens.
 
-1. Go to your [Supabase Dashboard](https://supabase.com/dashboard)
-2. Select your project
-3. Go to **Project Settings** → **Edge Functions** → **Secrets**
-4. Click **Add Secret**
+**Option A: Via Dashboard (Recommended)**
+
+1. Go to your [Supabase Dashboard](https://supabase.com/dashboard/project/nonaqhllakrckbtbawrb)
+2. In the left sidebar, click **"Edge Functions"** (under CONFIGURATION)
+3. Click on the **"Secrets"** tab at the top
+4. Click **"Add Secret"** or **"New Secret"**
 5. Add:
    - **Name**: `TURNSTILE_SECRET_KEY`
    - **Value**: Your Turnstile Secret Key (from Cloudflare)
-6. Click **Save**
+6. Click **"Save"**
+
+**Option B: Via Supabase CLI (Alternative)**
+
+```bash
+# Install Supabase CLI (if not installed)
+npm install -g supabase
+
+# Login
+supabase login
+
+# Link to your project
+supabase link --project-ref nonaqhllakrckbtbawrb
+
+# Set the secret
+supabase secrets set TURNSTILE_SECRET_KEY=your_secret_key_here
+```
 
 ## Step 4: Deploy Edge Function (if needed)
 

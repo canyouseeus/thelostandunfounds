@@ -1,14 +1,18 @@
 {
   "name": "thelostandunfounds",
-  "version": "1.0.0",
-  "description": "THE LOST+UNFOUNDS - Modern web application",
+  "version": "1.0.0-classic",
+  "description": "THE LOST+UNFOUNDS - SCOT33 CLASSIC - Modern web application",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "setup:github": "node scripts/setup-github.js"
+    "setup:github": "node scripts/setup-github.js",
+    "generate-env-script": "node scripts/generate-env-script.js",
+    "validate-env": "./scripts/validate-env.sh --all",
+    "validate-env:local": "./scripts/validate-env.sh --local",
+    "validate-env:vercel": "./scripts/validate-env.sh --vercel"
   },
   "dependencies": {
     "@scot33/tools-registry": "file:../tools-registry",
@@ -30,15 +34,16 @@
     "@types/react-dom": "^18.2.17",
     "@typescript-eslint/eslint-plugin": "^6.14.0",
     "@typescript-eslint/parser": "^6.14.0",
-    "@vercel/node": "^5.5.5",
+    "@vercel/node": "^5.5.6",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.20",
     "eslint": "^8.55.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
     "postcss": "^8.4.47",
+    "supabase": "^2.54.11",
     "tailwindcss": "^3.4.13",
     "typescript": "^5.2.2",
-    "vite": "^5.0.8"
+    "vite": "^7.2.2"
   }
 }

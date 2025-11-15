@@ -239,3 +239,4 @@ skillRegistry.registerMetadata({
 
 export default skill;
 
+
