@@ -14,13 +14,10 @@ export default function EmailSignup() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // In development, allow submission without Turnstile for testing
+    // Validate Turnstile token (required in production)
     const isDev = import.meta.env.DEV;
-    // Temporarily allow submission without Turnstile if it's failing (for testing)
-    // TODO: Re-enable Turnstile requirement once 400020 error is resolved
-    const requiresTurnstile = false; // turnstileSiteKey && !isDev && turnstileToken;
+    const requiresTurnstile = turnstileSiteKey && !isDev;
 
-    // Validate Turnstile token (only required if Turnstile is configured and not in dev mode)
     if (requiresTurnstile && !turnstileToken) {
       alert('Please complete the security verification');
       return;
@@ -152,17 +149,17 @@ export default function EmailSignup() {
           />
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || (turnstileSiteKey && !turnstileToken && !import.meta.env.DEV)}
             style={{
               width: '100%',
               padding: '0.75rem',
-              background: loading ? 'rgba(255, 255, 255, 0.3)' : '#ffffff',
-              color: loading ? 'rgba(0, 0, 0, 0.5)' : '#000000',
+              background: loading || (turnstileSiteKey && !turnstileToken && !import.meta.env.DEV) ? 'rgba(255, 255, 255, 0.3)' : '#ffffff',
+              color: loading || (turnstileSiteKey && !turnstileToken && !import.meta.env.DEV) ? 'rgba(0, 0, 0, 0.5)' : '#000000',
               border: 'none',
               borderRadius: '4px',
               fontSize: '1rem',
               fontWeight: 600,
-              cursor: loading ? 'not-allowed' : 'pointer',
+              cursor: loading || (turnstileSiteKey && !turnstileToken && !import.meta.env.DEV) ? 'not-allowed' : 'pointer',
               whiteSpace: 'nowrap'
             }}
           >
