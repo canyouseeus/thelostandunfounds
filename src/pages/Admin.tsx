@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
 import { isAdmin } from '../utils/admin';
 import { supabase } from '../lib/supabase';
+import AuthModal from '../components/auth/AuthModal';
 import { 
   Shield, 
   FileText,
@@ -59,6 +60,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   useEffect(() => {
     checkAdminAccess();
@@ -74,7 +76,8 @@ export default function Admin() {
     if (authLoading) return;
     
     if (!user) {
-      navigate('/');
+      // Don't redirect - show login prompt instead
+      setLoading(false);
       return;
     }
 
@@ -161,7 +164,7 @@ export default function Admin() {
     }
   };
 
-  if (loading || authLoading || adminStatus === null) {
+  if (loading || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner />
@@ -169,8 +172,56 @@ export default function Admin() {
     );
   }
 
+  // Show login prompt if not authenticated
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="max-w-md w-full mx-4">
+          <div className="bg-black border border-white/10 rounded-lg p-8 text-center">
+            <Shield className="w-16 h-16 text-white/40 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-white mb-2">Admin Access Required</h1>
+            <p className="text-white/60 mb-6">
+              Please log in with an admin account to access the dashboard.
+            </p>
+            <button
+              onClick={() => setAuthModalOpen(true)}
+              className="w-full px-6 py-3 bg-white text-black rounded-lg hover:bg-white/90 transition font-medium"
+            >
+              Log In
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              className="mt-4 w-full px-6 py-3 bg-white/10 text-white rounded-lg hover:bg-white/20 transition"
+            >
+              Go to Homepage
+            </button>
+          </div>
+        </div>
+        <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
+      </div>
+    );
+  }
+
   if (adminStatus === false) {
-    return null; // Will redirect
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="max-w-md w-full mx-4">
+          <div className="bg-black border border-white/10 rounded-lg p-8 text-center">
+            <Shield className="w-16 h-16 text-red-400/40 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-white mb-2">Access Denied</h1>
+            <p className="text-white/60 mb-6">
+              You don't have admin privileges. Please contact an administrator.
+            </p>
+            <button
+              onClick={() => navigate('/')}
+              className="w-full px-6 py-3 bg-white/10 text-white rounded-lg hover:bg-white/20 transition"
+            >
+              Go to Homepage
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const tabs: { id: AdminTab; label: string; icon: any; category?: string }[] = [
