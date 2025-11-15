@@ -187,12 +187,17 @@ export default async function handler(
                 <head>
                   <meta charset="UTF-8">
                   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                  <style>
+                    body { background-color: #000000 !important; margin: 0 !important; padding: 0 !important; }
+                    table { background-color: #000000 !important; }
+                    td { background-color: #000000 !important; }
+                  </style>
                 </head>
-                <body style="margin: 0; padding: 0; background-color: #000000; font-family: Arial, sans-serif;">
-                  <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #000000;">
+                <body style="margin: 0 !important; padding: 0 !important; background-color: #000000 !important; font-family: Arial, sans-serif;">
+                  <table role="presentation" style="width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 !important; padding: 0 !important;">
                     <tr>
-                      <td align="center" style="padding: 40px 20px;">
-                        <table role="presentation" style="max-width: 600px; width: 100%; border-collapse: collapse; background-color: #000000;">
+                      <td align="center" style="padding: 40px 20px !important; background-color: #000000 !important;">
+                        <table role="presentation" style="max-width: 600px !important; width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 auto !important;">
                           <!-- Logo -->
                           <tr>
                             <td align="center" style="padding: 0 0 30px 0;">
@@ -201,32 +206,32 @@ export default async function handler(
                           </tr>
                           <!-- Main Content -->
                           <tr>
-                            <td style="padding: 0; color: #ffffff;">
-                              <h1 style="color: #ffffff; font-size: 28px; font-weight: bold; margin: 0 0 20px 0; text-align: center; letter-spacing: 0.1em;">
+                            <td style="padding: 0 !important; color: #ffffff !important; background-color: #000000 !important;">
+                              <h1 style="color: #ffffff !important; font-size: 28px; font-weight: bold; margin: 0 0 20px 0; text-align: center; letter-spacing: 0.1em; background-color: #000000 !important;">
                                 CAN YOU SEE US?
                               </h1>
-                              <h2 style="color: #ffffff; font-size: 24px; font-weight: 600; margin: 0 0 20px 0; text-align: center;">
+                              <h2 style="color: #ffffff !important; font-size: 24px; font-weight: 600; margin: 0 0 20px 0; text-align: center; background-color: #000000 !important;">
                                 Thanks for subscribing!
                               </h2>
-                              <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: center;">
+                              <p style="color: #ffffff !important; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: center; background-color: #000000 !important;">
                                 We're excited to have you join THE LOST+UNFOUNDS community.
                               </p>
-                              <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0; text-align: center;">
+                              <p style="color: #ffffff !important; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0; text-align: center; background-color: #000000 !important;">
                                 You'll receive updates about:
                               </p>
-                              <ul style="color: #ffffff; font-size: 16px; line-height: 1.8; margin: 0 0 30px 0; padding-left: 0; list-style: none; text-align: center;">
-                                <li style="margin: 10px 0;">New tools and features</li>
-                                <li style="margin: 10px 0;">Platform updates</li>
-                                <li style="margin: 10px 0;">Special announcements</li>
+                              <ul style="color: #ffffff !important; font-size: 16px; line-height: 1.8; margin: 0 0 30px 0; padding-left: 0; list-style: none; text-align: center; background-color: #000000 !important;">
+                                <li style="margin: 10px 0; color: #ffffff !important; background-color: #000000 !important;">New tools and features</li>
+                                <li style="margin: 10px 0; color: #ffffff !important; background-color: #000000 !important;">Platform updates</li>
+                                <li style="margin: 10px 0; color: #ffffff !important; background-color: #000000 !important;">Special announcements</li>
                               </ul>
-                              <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0; text-align: center;">
+                              <p style="color: #ffffff !important; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0; text-align: center; background-color: #000000 !important;">
                                 Stay tuned for what's coming next!
                               </p>
-                              <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0;">
-                              <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 0; text-align: center;">
+                              <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0; background-color: #000000 !important;">
+                              <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 0; text-align: center; background-color: #000000 !important;">
                                 If you didn't sign up for this newsletter, you can safely ignore this email.
                               </p>
-                              <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 20px 0 0 0; text-align: center;">
+                              <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 20px 0 0 0; text-align: center; background-color: #000000 !important;">
                                 © ${new Date().getFullYear()} THE LOST+UNFOUNDS. All rights reserved.
                               </p>
                             </td>
