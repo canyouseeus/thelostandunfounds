@@ -5,6 +5,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { authService, User, AuthSession } from '../services/auth';
 import { subscriptionService, SubscriptionTier } from '../services/subscription';
 import { autoPromoteToAdmin, isAdminEmail } from '../utils/admin';
+import { affiliateService } from '../services/affiliate';
 
 interface AuthContextType {
   user: User | null;
@@ -187,6 +188,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string) => {
     try {
+      // Check for referral code in URL before signup
+      const referralCode = affiliateService.getReferralCodeFromUrl();
+      
       const { user: newUser, error } = await authService.signUp(email, password);
       
       if (error) {
@@ -195,6 +199,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (newUser) {
         setUser(newUser);
+        
+        // Track referral if code exists (don't block signup if this fails)
+        if (referralCode && newUser.id) {
+          try {
+            await affiliateService.trackReferral(referralCode, newUser.id);
+          } catch (referralError) {
+            // Silently fail - don't block signup
+            if (import.meta.env.DEV) {
+              console.warn('Failed to track referral:', referralError);
+            }
+          }
+        }
         
         // Auto-promote to admin if email matches admin email
         if (newUser?.id && newUser?.email && isAdminEmail(newUser.email)) {

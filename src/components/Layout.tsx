@@ -175,6 +175,13 @@ export default function Layout() {
                       >
                         Settings
                       </Link>
+                      <Link 
+                        to="/affiliate" 
+                        className="menu-item"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        Affiliate Program
+                      </Link>
                       {userIsAdmin && (
                         <Link 
                           to="/admin" 
