@@ -66,13 +66,11 @@ function App() {
         <Route path="/settings" element={<Layout />}>
           <Route index element={<Settings />} />
         </Route>
-        <Route path="/admin" element={<Layout />}>
-          <Route index element={
-            <ProtectedRoute requireAdmin={true}>
-              <Admin />
-            </ProtectedRoute>
-          } />
-        </Route>
+        <Route path="/admin" element={
+          <ProtectedRoute requireAdmin={true}>
+            <Admin />
+          </ProtectedRoute>
+        } />
         <Route path="/reset-newsletter" element={<ResetNewsletter />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

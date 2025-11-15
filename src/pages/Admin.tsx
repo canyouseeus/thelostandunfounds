@@ -164,9 +164,10 @@ export default function Admin() {
     }
   };
 
-  if (loading || authLoading) {
+  // Show loading while checking auth or admin status
+  if (loading || authLoading || (user && adminStatus === null)) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-black">
         <LoadingSpinner />
       </div>
     );
@@ -202,6 +203,7 @@ export default function Admin() {
     );
   }
 
+  // Show access denied if not admin
   if (adminStatus === false) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -220,6 +222,15 @@ export default function Admin() {
             </button>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // Only show dashboard if adminStatus is true
+  if (adminStatus !== true) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <LoadingSpinner />
       </div>
     );
   }
