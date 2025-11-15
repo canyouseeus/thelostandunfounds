@@ -215,9 +215,9 @@ export default async function handler(
                                 You'll receive updates about:
                               </p>
                               <ul style="color: #ffffff; font-size: 16px; line-height: 1.8; margin: 0 0 30px 0; padding-left: 0; list-style: none; text-align: center;">
-                                <li style="margin: 10px 0;">✨ New tools and features</li>
-                                <li style="margin: 10px 0;">🚀 Platform updates</li>
-                                <li style="margin: 10px 0;">📢 Special announcements</li>
+                                <li style="margin: 10px 0;">New tools and features</li>
+                                <li style="margin: 10px 0;">Platform updates</li>
+                                <li style="margin: 10px 0;">Special announcements</li>
                               </ul>
                               <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0; text-align: center;">
                                 Stay tuned for what's coming next!
