@@ -174,14 +174,23 @@ export default function EmailSignup() {
             <Turnstile
               sitekey={turnstileSiteKey}
               onSuccess={(token) => {
+                console.log('Turnstile verified successfully');
                 setTurnstileToken(token);
               }}
-              onError={() => {
+              onError={(error) => {
+                console.error('Turnstile error:', error);
                 setTurnstileToken(null);
-                alert('Security verification failed. Please try again.');
+                // Don't show alert for 400020 - it's a config issue, not user error
+                if (error?.errorCode !== '400020') {
+                  alert('Security verification failed. Please try again.');
+                }
               }}
               onExpire={() => {
+                console.log('Turnstile token expired');
                 setTurnstileToken(null);
+              }}
+              onLoad={(widgetId) => {
+                console.log('Turnstile loaded:', widgetId);
               }}
               ref={turnstileRef}
               theme="dark"
