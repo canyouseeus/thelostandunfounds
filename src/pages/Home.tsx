@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import EmailSignup from '../components/EmailSignup'
 
 export default function Home() {
@@ -67,9 +68,15 @@ export default function Home() {
         </div>
       </main>
       <footer className="py-6 text-center border-t border-white/10">
-        <p className="text-white/60 text-sm">
+        <p className="text-white/60 text-sm mb-2">
           © {new Date().getFullYear()} THE LOST+UNFOUNDS. All rights reserved.
         </p>
+        <Link 
+          to="/reset-newsletter" 
+          className="text-white/40 hover:text-white/60 text-xs underline transition"
+        >
+          Reset Newsletter (Admin)
+        </Link>
       </footer>
     </div>
   )
