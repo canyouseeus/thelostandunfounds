@@ -260,7 +260,19 @@ export default async function handler(
               fromEmail: fromEmail,
               mailApiUrl: mailApiUrl
             })
-            throw new Error(`Failed to send email: ${emailResponse.status} ${emailResponse.statusText}. Details: ${errorText}`)
+            // Parse Zoho error for better message
+            let errorMessage = `Failed to send email: ${emailResponse.status}`
+            try {
+              const errorJson = JSON.parse(errorText)
+              if (errorJson.data?.moreInfo) {
+                errorMessage = `Zoho Error: ${errorJson.data.moreInfo}`
+              } else if (errorJson.status?.description) {
+                errorMessage = `Zoho Error: ${errorJson.status.description}`
+              }
+            } catch {
+              errorMessage = `Failed to send email: ${emailResponse.status}. Details: ${errorText}`
+            }
+            throw new Error(errorMessage)
           }
         } else {
           console.error('No account ID available for sending email')
