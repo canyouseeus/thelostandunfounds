@@ -111,108 +111,131 @@ export default async function handler(
           }),
         })
 
-        if (tokenResponse.ok) {
-          const tokenData: ZohoTokenResponse = await tokenResponse.json()
-          const accessToken = tokenData.access_token
+        if (!tokenResponse.ok) {
+          const errorText = await tokenResponse.text()
+          console.error('Zoho token refresh failed:', {
+            status: tokenResponse.status,
+            statusText: tokenResponse.statusText,
+            error: errorText
+          })
+          throw new Error(`Failed to refresh Zoho token: ${tokenResponse.status} ${tokenResponse.statusText}`)
+        }
 
-          // Get account ID
-          const accountInfoResponse = await fetch('https://mail.zoho.com/api/accounts', {
-            method: 'GET',
+        const tokenData: ZohoTokenResponse = await tokenResponse.json()
+        const accessToken = tokenData.access_token
+
+        // Get account ID
+        const accountInfoResponse = await fetch('https://mail.zoho.com/api/accounts', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Zoho-oauthtoken ${accessToken}`,
+          },
+        })
+
+        let accountId: string | null = null
+        
+        if (accountInfoResponse.ok) {
+          const accounts = await accountInfoResponse.json()
+          if (accounts.data && accounts.data.length > 0) {
+            accountId = accounts.data[0].accountId || accounts.data[0].account_id
+          }
+        }
+
+        // Fallback: extract account ID from email
+        if (!accountId) {
+          const emailParts = fromEmail.split('@')
+          accountId = emailParts[0]
+        }
+
+        if (accountId) {
+          // Send welcome/confirmation email to user
+          const mailApiUrl = `https://mail.zoho.com/api/accounts/${accountId}/messages`
+          
+          const emailResponse = await fetch(mailApiUrl, {
+            method: 'POST',
             headers: {
               'Authorization': `Zoho-oauthtoken ${accessToken}`,
+              'Content-Type': 'application/json',
             },
+            body: JSON.stringify({
+              fromAddress: fromEmail,
+              toAddress: email,
+              subject: 'Welcome to THE LOST+UNFOUNDS',
+              content: `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                  <meta charset="UTF-8">
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                </head>
+                <body style="margin: 0; padding: 0; background-color: #000000; font-family: Arial, sans-serif;">
+                  <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #000000;">
+                    <tr>
+                      <td align="center" style="padding: 40px 20px;">
+                        <table role="presentation" style="max-width: 600px; width: 100%; border-collapse: collapse; background-color: #000000;">
+                          <!-- Logo -->
+                          <tr>
+                            <td align="center" style="padding: 0 0 30px 0;">
+                              <img src="https://www.thelostandunfounds.com/logo.png" alt="THE LOST+UNFOUNDS" style="max-width: 190px; height: auto; display: block;">
+                            </td>
+                          </tr>
+                          <!-- Main Content -->
+                          <tr>
+                            <td style="padding: 0; color: #ffffff;">
+                              <h1 style="color: #ffffff; font-size: 28px; font-weight: bold; margin: 0 0 20px 0; text-align: center; letter-spacing: 0.1em;">
+                                CAN YOU SEE US?
+                              </h1>
+                              <h2 style="color: #ffffff; font-size: 24px; font-weight: 600; margin: 0 0 20px 0; text-align: center;">
+                                Thanks for subscribing!
+                              </h2>
+                              <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: center;">
+                                We're excited to have you join THE LOST+UNFOUNDS community.
+                              </p>
+                              <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0; text-align: center;">
+                                You'll receive updates about:
+                              </p>
+                              <ul style="color: #ffffff; font-size: 16px; line-height: 1.8; margin: 0 0 30px 0; padding-left: 0; list-style: none; text-align: center;">
+                                <li style="margin: 10px 0;">✨ New tools and features</li>
+                                <li style="margin: 10px 0;">🚀 Platform updates</li>
+                                <li style="margin: 10px 0;">📢 Special announcements</li>
+                              </ul>
+                              <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0; text-align: center;">
+                                Stay tuned for what's coming next!
+                              </p>
+                              <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0;">
+                              <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 0; text-align: center;">
+                                If you didn't sign up for this newsletter, you can safely ignore this email.
+                              </p>
+                              <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 20px 0 0 0; text-align: center;">
+                                © ${new Date().getFullYear()} THE LOST+UNFOUNDS. All rights reserved.
+                              </p>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </body>
+                </html>
+              `,
+              mailFormat: 'html',
+            }),
           })
 
-          let accountId: string | null = null
-          
-          if (accountInfoResponse.ok) {
-            const accounts = await accountInfoResponse.json()
-            if (accounts.data && accounts.data.length > 0) {
-              accountId = accounts.data[0].accountId || accounts.data[0].account_id
-            }
-          }
-
-          // Fallback: extract account ID from email
-          if (!accountId) {
-            const emailParts = fromEmail.split('@')
-            accountId = emailParts[0]
-          }
-
-          if (accountId) {
-            // Send welcome/confirmation email to user
-            const mailApiUrl = `https://mail.zoho.com/api/accounts/${accountId}/messages`
-            
-            await fetch(mailApiUrl, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Zoho-oauthtoken ${accessToken}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                fromAddress: fromEmail,
-                toAddress: email,
-                subject: 'Welcome to THE LOST+UNFOUNDS',
-                content: `
-                  <!DOCTYPE html>
-                  <html>
-                  <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                  </head>
-                  <body style="margin: 0; padding: 0; background-color: #000000; font-family: Arial, sans-serif;">
-                    <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #000000;">
-                      <tr>
-                        <td align="center" style="padding: 40px 20px;">
-                          <table role="presentation" style="max-width: 600px; width: 100%; border-collapse: collapse; background-color: #000000;">
-                            <!-- Logo -->
-                            <tr>
-                              <td align="center" style="padding: 0 0 30px 0;">
-                                <img src="https://www.thelostandunfounds.com/logo.png" alt="THE LOST+UNFOUNDS" style="max-width: 190px; height: auto; display: block;">
-                              </td>
-                            </tr>
-                            <!-- Main Content -->
-                            <tr>
-                              <td style="padding: 0; color: #ffffff;">
-                                <h1 style="color: #ffffff; font-size: 28px; font-weight: bold; margin: 0 0 20px 0; text-align: center; letter-spacing: 0.1em;">
-                                  CAN YOU SEE US?
-                                </h1>
-                                <h2 style="color: #ffffff; font-size: 24px; font-weight: 600; margin: 0 0 20px 0; text-align: center;">
-                                  Thanks for subscribing!
-                                </h2>
-                                <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: center;">
-                                  We're excited to have you join THE LOST+UNFOUNDS community.
-                                </p>
-                                <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0; text-align: center;">
-                                  You'll receive updates about:
-                                </p>
-                                <ul style="color: #ffffff; font-size: 16px; line-height: 1.8; margin: 0 0 30px 0; padding-left: 0; list-style: none; text-align: center;">
-                                  <li style="margin: 10px 0;">✨ New tools and features</li>
-                                  <li style="margin: 10px 0;">🚀 Platform updates</li>
-                                  <li style="margin: 10px 0;">📢 Special announcements</li>
-                                </ul>
-                                <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0; text-align: center;">
-                                  Stay tuned for what's coming next!
-                                </p>
-                                <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0;">
-                                <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 0; text-align: center;">
-                                  If you didn't sign up for this newsletter, you can safely ignore this email.
-                                </p>
-                                <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 20px 0 0 0; text-align: center;">
-                                  © ${new Date().getFullYear()} THE LOST+UNFOUNDS. All rights reserved.
-                                </p>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-                    </table>
-                  </body>
-                  </html>
-                `,
-                mailFormat: 'html',
-              }),
+          if (!emailResponse.ok) {
+            const errorText = await emailResponse.text()
+            console.error('Zoho email API error:', {
+              status: emailResponse.status,
+              statusText: emailResponse.statusText,
+              error: errorText,
+              email: email,
+              accountId: accountId
             })
+            throw new Error(`Failed to send email: ${emailResponse.status} ${emailResponse.statusText}`)
           }
+        } else {
+          console.error('No account ID available for sending email')
+          throw new Error('Failed to get email account ID')
         }
       } catch (emailError) {
         // Log error but don't fail the subscription
