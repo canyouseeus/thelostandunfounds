@@ -61,31 +61,31 @@ export default function EmailSignup() {
         throw new Error(data.error || 'Failed to subscribe');
       }
 
-      // Show diagnostic info if email sending failed or credentials are missing
-      if (data.warning || data.emailConfig || data.missingCredentials) {
-        let diagnosticMessage = data.message || 'Successfully subscribed!\n\n';
-        
-        if (data.warning) {
-          diagnosticMessage += `⚠️ ${data.warning}\n\n`;
-        }
-        
-        if (data.emailConfig) {
-          diagnosticMessage += 'Email Configuration:\n';
-          diagnosticMessage += `- Client ID: ${data.emailConfig.hasClientId ? '✓' : '✗ Missing'}\n`;
-          diagnosticMessage += `- Client Secret: ${data.emailConfig.hasClientSecret ? '✓' : '✗ Missing'}\n`;
-          diagnosticMessage += `- Refresh Token: ${data.emailConfig.hasRefreshToken ? '✓' : '✗ Missing'}\n`;
-          diagnosticMessage += `- From Email: ${data.emailConfig.hasFromEmail ? '✓' : '✗ Missing'}\n`;
-        }
-        
-        if (data.errorDetails) {
-          diagnosticMessage += `\nError: ${data.errorDetails}`;
-        }
-        
-        alert(diagnosticMessage);
-        console.log('Email diagnostic info:', data);
-      } else {
-        alert(data.message || 'Successfully subscribed! Check your email for confirmation.');
+      // Always show diagnostic info
+      let diagnosticMessage = data.message || 'Successfully subscribed!\n\n';
+      
+      if (data.warning) {
+        diagnosticMessage += `⚠️ ${data.warning}\n\n`;
       }
+      
+      if (data.emailConfig) {
+        diagnosticMessage += 'Email Configuration:\n';
+        diagnosticMessage += `- Client ID: ${data.emailConfig.hasClientId ? '✓ Set' : '✗ Missing'}\n`;
+        diagnosticMessage += `- Client Secret: ${data.emailConfig.hasClientSecret ? '✓ Set' : '✗ Missing'}\n`;
+        diagnosticMessage += `- Refresh Token: ${data.emailConfig.hasRefreshToken ? '✓ Set' : '✗ Missing'}\n`;
+        diagnosticMessage += `- From Email: ${data.emailConfig.hasFromEmail ? '✓ Set' : '✗ Missing'}\n`;
+      }
+      
+      if (data.errorDetails) {
+        diagnosticMessage += `\nError Details: ${data.errorDetails}`;
+      }
+      
+      if (data.emailSent) {
+        diagnosticMessage += `\n\n✅ Email sent successfully`;
+      }
+      
+      alert(diagnosticMessage);
+      console.log('Email diagnostic info:', data);
 
       setSuccess(true);
       setEmail('');

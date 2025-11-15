@@ -284,7 +284,8 @@ export default async function handler(
     return res.status(200).json({ 
       success: true, 
       message: 'Successfully subscribed! Check your email for confirmation.',
-      emailConfig: emailConfig
+      emailConfig: emailConfig,
+      emailSent: true
     })
 
   } catch (error: any) {
