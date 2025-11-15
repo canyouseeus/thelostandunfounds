@@ -21,7 +21,7 @@ export default async function handler(
   }
 
   // Test token refresh
-  let tokenTest = { success: false, error: null }
+  let tokenTest: { success: boolean; error: string | null } = { success: false, error: null }
   if (config.hasClientId && config.hasClientSecret && config.hasRefreshToken) {
     try {
       const tokenResponse = await fetch('https://accounts.zoho.com/oauth/v2/token', {
