@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Turnstile } from 'react-turnstile';
+import Turnstile from 'react-turnstile';
 
 export default function EmailSignup() {
   const [email, setEmail] = useState('');
@@ -169,7 +169,7 @@ export default function EmailSignup() {
         </div>
 
         {/* Cloudflare Turnstile */}
-        {turnstileSiteKey && typeof Turnstile !== 'undefined' && (
+        {turnstileSiteKey && (
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <Turnstile
               sitekey={turnstileSiteKey}
