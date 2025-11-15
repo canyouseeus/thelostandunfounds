@@ -237,11 +237,24 @@ export default async function handler(
           console.error('No account ID available for sending email')
           throw new Error('Failed to get email account ID')
         }
-      } catch (emailError) {
+      } catch (emailError: any) {
         // Log error but don't fail the subscription
-        console.error('Failed to send confirmation email:', emailError)
+        console.error('Failed to send confirmation email:', {
+          error: emailError.message,
+          stack: emailError.stack,
+          email: email
+        })
         // Continue - subscription was saved successfully
+        // Return warning in response
+        return res.status(200).json({ 
+          success: true, 
+          message: 'Successfully subscribed! However, confirmation email failed to send.',
+          warning: 'Email sending error: ' + (emailError.message || 'Unknown error'),
+          emailSaved: true
+        })
       }
+    } else {
+      console.warn('Zoho email credentials not configured - skipping email send')
     }
 
     return res.status(200).json({ 
