@@ -159,8 +159,8 @@ export default async function handler(
                   <table role="presentation" style="max-width: 600px !important; width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 auto !important;">
                     <!-- Logo -->
                     <tr>
-                      <td align="center" style="padding: 0 0 30px 0;">
-                        <img src="https://www.thelostandunfounds.com/logo.png" alt="THE LOST+UNFOUNDS" style="max-width: 190px; height: auto; display: block;">
+                      <td align="center" style="padding: 0 0 30px 0; background-color: #000000 !important;">
+                        <img src="https://www.thelostandunfounds.com/logo.png" alt="THE LOST+UNFOUNDS" style="max-width: 190px; height: auto; display: block; filter: brightness(0); -webkit-filter: brightness(0);">
                       </td>
                     </tr>
                     <!-- Main Content -->
