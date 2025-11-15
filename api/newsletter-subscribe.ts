@@ -95,6 +95,14 @@ export default async function handler(
     const refreshToken = process.env.ZOHO_REFRESH_TOKEN
     const fromEmail = process.env.ZOHO_FROM_EMAIL || process.env.ZOHO_EMAIL
 
+    // Diagnostic info
+    const emailConfig = {
+      hasClientId: !!clientId,
+      hasClientSecret: !!clientSecret,
+      hasRefreshToken: !!refreshToken,
+      hasFromEmail: !!fromEmail
+    }
+
     if (clientId && clientSecret && refreshToken && fromEmail) {
       try {
         // Get Zoho access token
@@ -245,21 +253,38 @@ export default async function handler(
           email: email
         })
         // Continue - subscription was saved successfully
-        // Return warning in response
+        // Return warning in response with diagnostic info
         return res.status(200).json({ 
           success: true, 
           message: 'Successfully subscribed! However, confirmation email failed to send.',
           warning: 'Email sending error: ' + (emailError.message || 'Unknown error'),
-          emailSaved: true
+          emailSaved: true,
+          emailConfig: emailConfig,
+          errorDetails: emailError.message
         })
       }
     } else {
       console.warn('Zoho email credentials not configured - skipping email send')
+      // Return diagnostic info when credentials are missing
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Successfully subscribed! However, email sending is not configured.',
+        warning: 'Zoho email credentials are missing. Check Vercel environment variables.',
+        emailSaved: true,
+        emailConfig: emailConfig,
+        missingCredentials: {
+          clientId: !clientId,
+          clientSecret: !clientSecret,
+          refreshToken: !refreshToken,
+          fromEmail: !fromEmail
+        }
+      })
     }
 
     return res.status(200).json({ 
       success: true, 
-      message: 'Successfully subscribed! Check your email for confirmation.' 
+      message: 'Successfully subscribed! Check your email for confirmation.',
+      emailConfig: emailConfig
     })
 
   } catch (error: any) {
