@@ -387,6 +387,46 @@ export async function createSubscription(
       throw new Error(error.message);
     }
 
+    // Calculate commission if subscription was created successfully
+    if (data) {
+      try {
+        const pricing = getPricing();
+        const revenue = tier === 'premium' ? pricing.premium.monthly : tier === 'pro' ? pricing.pro.monthly : 0;
+        
+        if (revenue > 0) {
+          // Call commission calculation API (don't block subscription creation if this fails)
+          const API_BASE = import.meta.env.VITE_API_URL || '';
+          const periodStart = new Date().toISOString();
+          const periodEnd = expiresAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+          
+          fetch(`${API_BASE}/api/affiliate/calculate-commission`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              subscription_id: data.id,
+              user_id: userId,
+              tier,
+              revenue,
+              period_start: periodStart,
+              period_end: periodEnd,
+            }),
+          }).catch((err) => {
+            // Silently fail - commission calculation shouldn't block subscription
+            if (import.meta.env.DEV) {
+              console.warn('Failed to calculate commission:', err);
+            }
+          });
+        }
+      } catch (commissionError) {
+        // Silently fail - commission calculation shouldn't block subscription
+        if (import.meta.env.DEV) {
+          console.warn('Error calculating commission:', commissionError);
+        }
+      }
+    }
+
     return { subscription: data };
   } catch (error) {
     console.warn('Error creating subscription:', error);

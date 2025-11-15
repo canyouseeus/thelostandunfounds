@@ -11,6 +11,7 @@ import ZohoCallback from './pages/ZohoCallback'
 import Profile from './pages/Profile'
 import Settings from './pages/Settings'
 import Admin from './pages/Admin'
+import AffiliateDashboard from './pages/AffiliateDashboard'
 import NotFound from './pages/NotFound'
 import Docs from './pages/Docs'
 import About from './pages/About'
@@ -65,6 +66,13 @@ function App() {
         </Route>
         <Route path="/settings" element={<Layout />}>
           <Route index element={<Settings />} />
+        </Route>
+        <Route path="/affiliate" element={<Layout />}>
+          <Route index element={
+            <ProtectedRoute>
+              <AffiliateDashboard />
+            </ProtectedRoute>
+          } />
         </Route>
         <Route path="/admin" element={<Layout />}>
           <Route index element={
