@@ -122,8 +122,11 @@ export default function EmailSignup() {
       }}>
         <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>✓</div>
         <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.5rem', color: '#ffffff' }}>
-          Thank you for subscribing!
+          Successfully subscribed! Check your email for confirmation.
         </h3>
+        <p style={{ color: 'rgba(255, 255, 255, 0.7)', marginBottom: '1rem' }}>
+          Thank you for subscribing!
+        </p>
         <p style={{ color: 'rgba(255, 255, 255, 0.7)', marginBottom: '1rem' }}>
           We'll keep you updated with the latest news and updates.
         </p>
