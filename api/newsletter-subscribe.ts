@@ -232,14 +232,23 @@ export default async function handler(
 
           if (!emailResponse.ok) {
             const errorText = await emailResponse.text()
+            let errorDetails = errorText
+            try {
+              const errorJson = JSON.parse(errorText)
+              errorDetails = JSON.stringify(errorJson, null, 2)
+            } catch {
+              // Keep as text if not JSON
+            }
             console.error('Zoho email API error:', {
               status: emailResponse.status,
               statusText: emailResponse.statusText,
               error: errorText,
               email: email,
-              accountId: accountId
+              accountId: accountId,
+              fromEmail: fromEmail,
+              mailApiUrl: mailApiUrl
             })
-            throw new Error(`Failed to send email: ${emailResponse.status} ${emailResponse.statusText}`)
+            throw new Error(`Failed to send email: ${emailResponse.status} ${emailResponse.statusText}. Details: ${errorText}`)
           }
         } else {
           console.error('No account ID available for sending email')
