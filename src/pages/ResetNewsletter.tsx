@@ -10,7 +10,7 @@ export default function ResetNewsletter() {
     setResult(null);
 
     try {
-      const response = await fetch('/api/admin/reset-newsletter-simple?token=reset-newsletter-2024', {
+      const response = await fetch('/api/reset-newsletter?token=reset-newsletter-2024', {
         method: 'GET',
       });
 
@@ -97,6 +97,18 @@ export default function ResetNewsletter() {
         <p className="text-white/40 text-xs text-center mt-6">
           This will delete all newsletter subscribers from the database.
         </p>
+        
+        <div className="mt-6 pt-6 border-t border-white/10">
+          <p className="text-white/60 text-xs text-center mb-2">Or use direct link:</p>
+          <a 
+            href="/api/reset-newsletter?token=reset-newsletter-2024"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-white/60 hover:text-white text-xs underline break-all block text-center"
+          >
+            /api/reset-newsletter?token=reset-newsletter-2024
+          </a>
+        </div>
       </div>
     </div>
   );
