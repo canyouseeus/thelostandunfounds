@@ -177,10 +177,15 @@ export default function EmailSignup() {
                 setTurnstileToken(token);
               }}
               onError={(error) => {
-                console.error('Turnstile error:', error);
+                console.error('❌ Turnstile error:', error);
+                console.error('Site key (first 20 chars):', turnstileSiteKey?.substring(0, 20));
+                console.error('Current domain:', window.location.hostname);
+                console.error('Full site key:', turnstileSiteKey);
                 setTurnstileToken(null);
-                // Don't show alert for 400020 - it's a config issue, not user error
-                if (error?.errorCode !== '400020') {
+                // Error 400020 = Invalid sitekey or domain not configured
+                if (error?.errorCode === '400020') {
+                  alert(`Turnstile Configuration Error (400020)\n\nPlease verify:\n1. Site key in Vercel matches Cloudflare exactly\n2. Domain "${window.location.hostname}" is added in Cloudflare\n3. Both thelostandunfounds.com and www.thelostandunfounds.com are configured\n\nCheck console for site key details.`);
+                } else {
                   alert('Security verification failed. Please try again.');
                 }
               }}
