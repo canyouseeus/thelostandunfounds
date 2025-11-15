@@ -1,12 +1,15 @@
-# Conversation Summary: Fourthwall Shop Integration & Email System
+# Conversation Summary: Fourthwall Merch Shop Integration & Email System
 
 ## Main Goal
-Build a shop page that integrates products from the user's existing Fourthwall store (https://thelostandunfounds-shop.fourthwall.com) and allows them to manage products from their admin/settings page.
+Build a **MERCH SHOP** page that integrates products from the user's existing Fourthwall store (https://thelostandunfounds-shop.fourthwall.com) and allows them to manage products from their admin/settings page.
+
+**IMPORTANT**: This is a **MERCH SHOP** (t-shirts, hats, physical products) - separate from the tools/subscription pricing system.
 
 ## What Was Built
 
-### 1. Fourthwall Shop Integration
-- **Shop Page** (`/shop` route) - Displays products from Fourthwall store
+### 1. Fourthwall Merch Shop Integration
+- **Merch Shop Page** (`/shop` route) - Displays MERCH products (t-shirts, hats, etc.) from Fourthwall store
+- **Separate from Tools/Subscriptions** - This shop is for physical merchandise, not tool pricing
 - **API Endpoints** (`/api/fourthwall/products.ts` and `/api/fourthwall/collections/[handle].ts`)
   - Uses official Fourthwall Storefront API: `https://storefront-api.fourthwall.com/v1/collections/{handle}/offers`
   - Requires `FOURTHWALL_STOREFRONT_TOKEN` environment variable
@@ -151,31 +154,37 @@ npm run env:set KEY=value
 
 ## Important Notes
 
-1. **API Routes Only Work With Vercel**
+1. **MERCH SHOP vs TOOLS**
+   - `/shop` = MERCH SHOP (physical products: t-shirts, hats, etc. from Fourthwall)
+   - `/tools` = Tools/Subscriptions (separate pricing system)
+   - These are completely separate systems
+
+2. **API Routes Only Work With Vercel**
    - `/api/*` routes are Vercel serverless functions
    - Use `vercel dev` for local development, not `npm run dev`
    - Or deploy to Vercel for production
 
-2. **Fourthwall Storefront Token Required**
+3. **Fourthwall Storefront Token Required**
    - Get from: https://thelostandunfounds-shop.fourthwall.com/admin/dashboard/settings/for-developers
    - Without it, shop will show empty or error message
 
-3. **Product Names Are ALL CAPS**
+4. **Product Names Are ALL CAPS**
    - User mentioned product names should be in all caps
    - API should preserve the original casing from Fourthwall
 
-4. **Welcome Email Needs Zoho Setup**
+5. **Welcome Email Needs Zoho Setup**
    - Requires Zoho Mail API credentials
    - Email template is ready with brand styling
    - Can be sent via script or API endpoint
 
 ## Next Steps for Another Agent
 
-1. **Help user get their project path** - They're in `~/Desktop/SCOT33` but project location unclear
-2. **Set up Fourthwall token** - Get token and add to `.env.local`
-3. **Test shop with `vercel dev`** - Verify products display correctly
-4. **Send welcome email** - Either via script or after deployment
-5. **Verify product names/prices** - Ensure they match Fourthwall store exactly
+1. **Understand the distinction**: `/shop` = MERCH SHOP (t-shirts, hats, physical products), `/tools` = Tools/Subscriptions (separate system)
+2. **Help user get their project path** - They're in `~/Desktop/SCOT33` but project location unclear
+3. **Set up Fourthwall token** - Get token and add to `.env.local`
+4. **Test shop with `vercel dev`** - Verify MERCH products display correctly
+5. **Send welcome email** - Either via script or after deployment
+6. **Verify product names/prices** - Ensure they match Fourthwall store exactly (product names are ALL CAPS)
 
 ## User's Current Situation
 
@@ -188,4 +197,6 @@ npm run env:set KEY=value
 
 ---
 
-**Goal**: Get the shop displaying real Fourthwall products and send the welcome email to thelostandunfounds@gmail.com with proper branding.
+**Goal**: Get the MERCH SHOP displaying real Fourthwall products (t-shirts, hats, etc.) and send the welcome email to thelostandunfounds@gmail.com with proper branding.
+
+**Key Distinction**: The `/shop` route is for MERCHANDISE (physical products), not tools/subscriptions. Keep this separate from the tools pricing system.

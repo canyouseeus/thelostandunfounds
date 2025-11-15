@@ -118,7 +118,7 @@ export default function Shop() {
           Shop
         </h1>
         <p className="text-xl text-white/80 mb-6">
-          Discover our collection
+          Discover our merch collection
         </p>
         <a
           href={fourthwallService.getStoreUrl()}
