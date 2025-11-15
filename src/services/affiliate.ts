@@ -3,7 +3,9 @@
  * Handles affiliate program operations
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
+// For local development: use VITE_API_URL or default to current origin
+// In production: VITE_API_URL should be set to your API domain
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3001' : '');
 
 export interface Affiliate {
   id: string;
