@@ -114,11 +114,19 @@ export default function Admin() {
       const { data: usersData, error: usersError } = await supabase
         .from('platform_subscriptions')
         .select('user_id, tier, status')
-        .then(r => r)
-        .catch(() => ({ data: null, error: null }));
+        .then(r => {
+          if (r.error) {
+            console.error('❌ Error loading platform_subscriptions:', r.error);
+          }
+          return r;
+        })
+        .catch((err) => {
+          console.error('❌ Error loading platform_subscriptions:', err);
+          return { data: null, error: err };
+        });
 
-      if (usersError && usersError.code !== 'PGRST116') {
-        console.warn('Error loading subscriptions:', usersError);
+      if (usersError) {
+        console.error('❌ Error loading subscriptions:', usersError);
       }
 
       // Calculate stats
@@ -132,29 +140,61 @@ export default function Admin() {
       const { count: totalUsers } = await supabase
         .from('platform_subscriptions')
         .select('*', { count: 'exact', head: true })
-        .then(r => r)
-        .catch(() => ({ count: 0, error: null })) as { count: number | null };
+        .then(r => {
+          if (r.error) {
+            console.error('❌ Error counting platform_subscriptions:', r.error);
+          }
+          return r;
+        })
+        .catch((err) => {
+          console.error('❌ Error counting platform_subscriptions:', err);
+          return { count: 0, error: err };
+        }) as { count: number | null };
 
       // Get tool usage stats
       const { count: toolUsage } = await supabase
         .from('tool_usage')
         .select('*', { count: 'exact', head: true })
-        .then(r => r)
-        .catch(() => ({ count: 0, error: null })) as { count: number | null };
+        .then(r => {
+          if (r.error) {
+            console.error('❌ Error counting tool_usage:', r.error);
+          }
+          return r;
+        })
+        .catch((err) => {
+          console.error('❌ Error counting tool_usage:', err);
+          return { count: 0, error: err };
+        }) as { count: number | null };
 
       // Get product count
       const { count: productCount } = await supabase
         .from('products')
         .select('*', { count: 'exact', head: true })
-        .then(r => r)
-        .catch(() => ({ count: 0, error: null })) as { count: number | null };
+        .then(r => {
+          if (r.error) {
+            console.error('❌ Error counting products:', r.error);
+          }
+          return r;
+        })
+        .catch((err) => {
+          console.error('❌ Error counting products:', err);
+          return { count: 0, error: err };
+        }) as { count: number | null };
 
       // Get blog post count
       const { count: blogPostCount } = await supabase
         .from('blog_posts')
         .select('*', { count: 'exact', head: true })
-        .then(r => r)
-        .catch(() => ({ count: 0, error: null })) as { count: number | null };
+        .then(r => {
+          if (r.error) {
+            console.error('❌ Error counting blog_posts:', r.error);
+          }
+          return r;
+        })
+        .catch((err) => {
+          console.error('❌ Error counting blog_posts:', err);
+          return { count: 0, error: err };
+        }) as { count: number | null };
 
       setStats({
         totalUsers: totalUsers || subscriptions.length,

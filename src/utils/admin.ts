@@ -48,20 +48,41 @@ export async function isAdmin(): Promise<boolean> {
       .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no row exists
 
     if (error) {
-      // Table might not exist yet or RLS blocking, check metadata only
+      // Log ALL errors so we can see what's wrong
+      console.error('❌ Error querying user_roles:', {
+        code: error.code,
+        message: error.message,
+        details: error,
+      });
+      
       const errorMsg = (error.message || '').toLowerCase();
       if (
-        error.code === 'PGRST116' || // No rows returned
-        error.code === '42P01' || // Table doesn't exist
-        errorMsg.includes('does not exist') ||
-        errorMsg.includes('permission denied') ||
-        errorMsg.includes('policy')
+        error.code === 'PGRST116' // No rows returned - this is OK
       ) {
-        // Expected errors - fall back to metadata check
+        // No rows is fine - user just doesn't have a role entry yet
         return userMetadata.role === 'admin' || userMetadata.is_admin === true;
       }
+      
+      if (
+        error.code === '42P01' || // Table doesn't exist
+        errorMsg.includes('does not exist') ||
+        errorMsg.includes('relation')
+      ) {
+        console.error('❌ Table "user_roles" does not exist! Run the SQL schema in Supabase.');
+        return userMetadata.role === 'admin' || userMetadata.is_admin === true;
+      }
+      
+      if (
+        errorMsg.includes('permission denied') ||
+        errorMsg.includes('policy') ||
+        errorMsg.includes('403') ||
+        errorMsg.includes('406')
+      ) {
+        console.error('❌ RLS policy blocking access to "user_roles". Check RLS policies in Supabase.');
+        return userMetadata.role === 'admin' || userMetadata.is_admin === true;
+      }
+      
       // Unexpected error - log it but still check metadata
-      console.warn('Error checking admin status in user_roles:', error);
       return userMetadata.role === 'admin' || userMetadata.is_admin === true;
     }
 

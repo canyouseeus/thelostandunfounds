@@ -61,13 +61,69 @@ export default function DashboardOverview() {
         ideasData,
         affiliatesData,
       ] = await Promise.all([
-        supabase.from('platform_subscriptions').select('tier, status').then(r => r).catch(() => ({ data: [], error: null })),
-        supabase.from('tool_usage').select('*', { count: 'exact', head: true }).then(r => r).catch(() => ({ count: 0, error: null })),
-        supabase.from('products').select('status').then(r => r).catch(() => ({ data: [], error: null })),
-        supabase.from('blog_posts').select('status').then(r => r).catch(() => ({ data: [], error: null })),
-        supabase.from('tasks').select('status').then(r => r).catch(() => ({ data: [], error: null })),
-        supabase.from('ideas').select('status').then(r => r).catch(() => ({ data: [], error: null })),
-        supabase.from('affiliates').select('status').then(r => r).catch(() => ({ data: [], error: null })),
+        supabase.from('platform_subscriptions').select('tier, status').then(r => {
+          if (r.error) {
+            console.error('❌ Error loading platform_subscriptions:', r.error);
+          }
+          return r;
+        }).catch((err) => {
+          console.error('❌ Error loading platform_subscriptions:', err);
+          return { data: [], error: err };
+        }),
+        supabase.from('tool_usage').select('*', { count: 'exact', head: true }).then(r => {
+          if (r.error) {
+            console.error('❌ Error loading tool_usage:', r.error);
+          }
+          return r;
+        }).catch((err) => {
+          console.error('❌ Error loading tool_usage:', err);
+          return { count: 0, error: err };
+        }),
+        supabase.from('products').select('status').then(r => {
+          if (r.error) {
+            console.error('❌ Error loading products:', r.error);
+          }
+          return r;
+        }).catch((err) => {
+          console.error('❌ Error loading products:', err);
+          return { data: [], error: err };
+        }),
+        supabase.from('blog_posts').select('status').then(r => {
+          if (r.error) {
+            console.error('❌ Error loading blog_posts:', r.error);
+          }
+          return r;
+        }).catch((err) => {
+          console.error('❌ Error loading blog_posts:', err);
+          return { data: [], error: err };
+        }),
+        supabase.from('tasks').select('status').then(r => {
+          if (r.error) {
+            console.error('❌ Error loading tasks:', r.error);
+          }
+          return r;
+        }).catch((err) => {
+          console.error('❌ Error loading tasks:', err);
+          return { data: [], error: err };
+        }),
+        supabase.from('ideas').select('status').then(r => {
+          if (r.error) {
+            console.error('❌ Error loading ideas:', r.error);
+          }
+          return r;
+        }).catch((err) => {
+          console.error('❌ Error loading ideas:', err);
+          return { data: [], error: err };
+        }),
+        supabase.from('affiliates').select('status').then(r => {
+          if (r.error) {
+            console.error('❌ Error loading affiliates:', r.error);
+          }
+          return r;
+        }).catch((err) => {
+          console.error('❌ Error loading affiliates:', err);
+          return { data: [], error: err };
+        }),
       ]);
 
       const subscriptions = subscriptionsData.data || [];

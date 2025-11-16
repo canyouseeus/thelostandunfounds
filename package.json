@@ -6,6 +6,8 @@
   "scripts": {
     "predev": "./scripts/kill-port-3000.sh",
     "dev": "vite",
+    "dev:mantis": "./scripts/dev-mantis.sh",
+    "save:mantis": "./scripts/save-mantis-version.sh",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",

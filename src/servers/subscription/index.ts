@@ -32,41 +32,48 @@ export async function getSubscription(userId: string) {
       .limit(1)
       .maybeSingle(); // Use maybeSingle() instead of single() - returns null instead of error when no rows
 
-    // Handle various error codes
+    // Handle errors - log them so we can fix them
     if (error) {
       const errorMsg = (error.message || '').toLowerCase();
       const errorCode = error.code || '';
       const errorStatus = (error as any).status || (error as any).statusCode;
       
-      // Handle 403/406 errors gracefully - table might not exist or RLS blocking
+      // Log ALL errors so we can see what's wrong
+      console.error('❌ Supabase query error:', {
+        table: 'platform_subscriptions',
+        code: errorCode,
+        status: errorStatus,
+        message: error.message,
+        details: error,
+        fullError: JSON.stringify(error, null, 2),
+      });
+      
+      // If table doesn't exist, that's a setup issue - log it clearly
       if (
-        errorStatus === 403 ||
-        errorStatus === 406 ||
         errorCode === '42P01' ||
         errorCode === 'PGRST116' ||
-        errorCode === '42501' ||
-        errorMsg.includes('403') ||
-        errorMsg.includes('406') ||
         errorMsg.includes('does not exist') ||
-        errorMsg.includes('permission denied') ||
-        errorMsg.includes('not acceptable') ||
-        errorMsg.includes('relation') ||
-        errorMsg.includes('policy') ||
-        errorMsg.includes('forbidden')
+        errorMsg.includes('relation')
       ) {
-        // Silently return null - this is expected if tables don't exist yet
+        console.error('❌ Table "platform_subscriptions" does not exist! Run the SQL schema in Supabase.');
         return { subscription: null };
       }
       
-      // Log other errors only in dev mode
-      if (import.meta.env.DEV) {
-        console.warn('Subscription query error:', {
-          code: error.code,
-          message: error.message,
-        });
+      // If RLS is blocking, log it
+      if (
+        errorStatus === 403 ||
+        errorStatus === 406 ||
+        errorCode === '42501' ||
+        errorMsg.includes('permission denied') ||
+        errorMsg.includes('policy') ||
+        errorMsg.includes('forbidden') ||
+        errorMsg.includes('not acceptable')
+      ) {
+        console.error('❌ RLS policy blocking access to "platform_subscriptions". Check RLS policies in Supabase.');
+        return { subscription: null };
       }
       
-      // For any other error, return null to prevent app crash
+      // For any other error, return null but log it
       return { subscription: null };
     }
 
@@ -196,20 +203,33 @@ export async function getToolLimits(toolId: string, tier: SubscriptionTier) {
       .eq('tier', tier);
 
     if (error) {
-      // Table might not exist yet or RLS blocking
+      // Log ALL errors so we can fix them
+      console.error('❌ Supabase query error:', {
+        table: 'tool_limits',
+        code: error.code,
+        message: error.message,
+        details: error,
+      });
+      
       const errorMsg = error.message?.toLowerCase() || '';
       if (
         error.code === '42P01' || 
         errorMsg.includes('does not exist') ||
-        errorMsg.includes('permission denied') ||
-        errorMsg.includes('406') ||
-        errorMsg.includes('not acceptable') ||
         errorMsg.includes('relation')
       ) {
-        // Silently return empty array - table doesn't exist yet (expected)
+        console.error('❌ Table "tool_limits" does not exist! Run the SQL schema in Supabase.');
         return [];
       }
-      console.warn('Error fetching tool limits:', error);
+      
+      if (
+        errorMsg.includes('permission denied') ||
+        errorMsg.includes('406') ||
+        errorMsg.includes('not acceptable')
+      ) {
+        console.error('❌ RLS policy blocking access to "tool_limits". Check RLS policies in Supabase.');
+        return [];
+      }
+      
       return [];
     }
 
@@ -263,20 +283,33 @@ export async function getDailyUsage(userId: string, toolId: string, action: stri
       .lt('created_at', `${today}T23:59:59Z`);
 
     if (error) {
-      // Table might not exist yet or RLS blocking
+      // Log ALL errors so we can fix them
+      console.error('❌ Supabase query error:', {
+        table: 'tool_usage',
+        code: error.code,
+        message: error.message,
+        details: error,
+      });
+      
       const errorMsg = error.message?.toLowerCase() || '';
       if (
         error.code === '42P01' || 
         errorMsg.includes('does not exist') ||
-        errorMsg.includes('permission denied') ||
-        errorMsg.includes('406') ||
-        errorMsg.includes('not acceptable') ||
         errorMsg.includes('relation')
       ) {
-        // Silently return 0 - table doesn't exist yet (expected)
+        console.error('❌ Table "tool_usage" does not exist! Run the SQL schema in Supabase.');
         return 0;
       }
-      console.warn('Error fetching daily usage:', error);
+      
+      if (
+        errorMsg.includes('permission denied') ||
+        errorMsg.includes('406') ||
+        errorMsg.includes('not acceptable')
+      ) {
+        console.error('❌ RLS policy blocking access to "tool_usage". Check RLS policies in Supabase.');
+        return 0;
+      }
+      
       return 0;
     }
 
