@@ -62,6 +62,10 @@ export default defineConfig({
         if (warning.message && (warning.message.includes('@tools') || warning.message.includes('@scot33/tools-registry'))) {
           return;
         }
+        // Suppress warnings for API routes - they're serverless functions
+        if (warning.message && warning.message.includes('api/')) {
+          return;
+        }
         warn(warning);
       },
     },
