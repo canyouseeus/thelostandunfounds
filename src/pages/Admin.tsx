@@ -9,19 +9,35 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
 import { isAdmin } from '../utils/admin';
 import { supabase } from '../lib/supabase';
+import AuthModal from '../components/auth/AuthModal';
 import { 
-  Users, 
   Shield, 
-  BarChart3, 
-  Settings, 
-  Activity,
-  TrendingUp,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  Loader
+  FileText,
+  ShoppingBag,
+  Users,
+  Settings,
+  Wrench,
+  BarChart3,
+  BookOpen,
+  CheckSquare,
+  Lightbulb,
+  HelpCircle,
+  Code,
+  LayoutDashboard,
+  Key
 } from 'lucide-react';
 import { LoadingSpinner } from '../components/Loading';
+import DashboardOverview from '../components/admin/DashboardOverview';
+import BlogPostManagement from '../components/admin/BlogPostManagement';
+import ProductManagement from '../components/admin/ProductManagement';
+import AffiliateManagement from '../components/admin/AffiliateManagement';
+import DailyJournal from '../components/admin/DailyJournal';
+import TaskManagement from '../components/admin/TaskManagement';
+import IdeaBoard from '../components/admin/IdeaBoard';
+import HelpCenter from '../components/admin/HelpCenter';
+import DeveloperTools from '../components/admin/DeveloperTools';
+import AnalyticsCarousel from '../components/admin/AnalyticsCarousel';
+import PasswordGenerator from '../components/admin/PasswordGenerator';
 
 interface DashboardStats {
   totalUsers: number;
@@ -30,24 +46,23 @@ interface DashboardStats {
   premiumUsers: number;
   proUsers: number;
   totalToolUsage: number;
+  totalRevenue?: number;
+  monthlyRevenue?: number;
+  totalProducts?: number;
+  totalBlogPosts?: number;
 }
 
-interface RecentUser {
-  id: string;
-  email: string;
-  tier: string;
-  created_at: string;
-}
+type AdminTab = 'dashboard' | 'blog' | 'products' | 'affiliates' | 'journal' | 'tasks' | 'ideas' | 'tools' | 'analytics' | 'help' | 'developer' | 'password' | 'settings';
 
 export default function Admin() {
   const { user, loading: authLoading } = useAuth();
-  const { success, error: showError } = useToast();
+  const { error: showError } = useToast();
   const navigate = useNavigate();
   const [adminStatus, setAdminStatus] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'subscriptions' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   useEffect(() => {
     checkAdminAccess();
@@ -63,7 +78,8 @@ export default function Admin() {
     if (authLoading) return;
     
     if (!user) {
-      navigate('/');
+      // Don't redirect - show login prompt instead
+      setLoading(false);
       return;
     }
 
@@ -96,7 +112,7 @@ export default function Admin() {
       const premiumCount = activeSubs.filter(s => s.tier === 'premium').length;
       const proCount = activeSubs.filter(s => s.tier === 'pro').length;
 
-      // Get total users (approximate from auth.users)
+      // Get total users
       const { count: totalUsers } = await supabase
         .from('platform_subscriptions')
         .select('*', { count: 'exact', head: true })
@@ -108,6 +124,18 @@ export default function Admin() {
         .select('*', { count: 'exact', head: true })
         .catch(() => ({ count: 0 })) as { count: number | null };
 
+      // Get product count
+      const { count: productCount } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true })
+        .catch(() => ({ count: 0 })) as { count: number | null };
+
+      // Get blog post count
+      const { count: blogPostCount } = await supabase
+        .from('blog_posts')
+        .select('*', { count: 'exact', head: true })
+        .catch(() => ({ count: 0 })) as { count: number | null };
+
       setStats({
         totalUsers: totalUsers || subscriptions.length,
         activeSubscriptions: activeSubs.length,
@@ -115,27 +143,11 @@ export default function Admin() {
         premiumUsers: premiumCount,
         proUsers: proCount,
         totalToolUsage: toolUsage || 0,
+        totalProducts: productCount || 0,
+        totalBlogPosts: blogPostCount || 0,
+        totalRevenue: 0, // TODO: Calculate from orders
+        monthlyRevenue: 0, // TODO: Calculate from orders this month
       });
-
-      // Load recent users
-      const { data: recentData } = await supabase
-        .from('platform_subscriptions')
-        .select('user_id, tier, created_at')
-        .order('created_at', { ascending: false })
-        .limit(10)
-        .catch(() => ({ data: [] })) as { data: any[] | null };
-
-      if (recentData && recentData.length > 0) {
-        // Fetch user emails - Note: This requires admin API access
-        // For now, we'll just show user IDs
-        const usersWithEmails = recentData.map((sub) => ({
-          id: sub.user_id,
-          email: `user-${sub.user_id.substring(0, 8)}`, // Placeholder
-          tier: sub.tier || 'free',
-          created_at: sub.created_at || '',
-        }));
-        setRecentUsers(usersWithEmails);
-      }
     } catch (error) {
       console.warn('Error loading dashboard data:', error);
       // Set default stats if tables don't exist
@@ -146,193 +158,211 @@ export default function Admin() {
         premiumUsers: 0,
         proUsers: 0,
         totalToolUsage: 0,
+        totalProducts: 0,
+        totalBlogPosts: 0,
+        totalRevenue: 0,
+        monthlyRevenue: 0,
       });
     }
   };
 
-  if (loading || authLoading || adminStatus === null) {
+  // Show loading while checking auth or admin status
+  if (loading || authLoading || (user && adminStatus === null)) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <LoadingSpinner />
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  // Show login prompt if not authenticated
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="max-w-md w-full mx-4">
+          <div className="bg-black border border-white/10 rounded-lg p-8 text-center">
+            <Shield className="w-16 h-16 text-white/40 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-white mb-2">Admin Access Required</h1>
+            <p className="text-white/60 mb-6">
+              Please log in with an admin account to access the dashboard.
+            </p>
+            <button
+              onClick={() => setAuthModalOpen(true)}
+              className="w-full px-6 py-3 bg-white text-black rounded-lg hover:bg-white/90 transition font-medium"
+            >
+              Log In
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              className="mt-4 w-full px-6 py-3 bg-white/10 text-white rounded-lg hover:bg-white/20 transition"
+            >
+              Go to Homepage
+            </button>
+          </div>
+        </div>
+        <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
+      </div>
+    );
+  }
+
+  // Show access denied if not admin
+  if (adminStatus === false) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="max-w-md w-full mx-4">
+          <div className="bg-black border border-white/10 rounded-lg p-8 text-center">
+            <Shield className="w-16 h-16 text-red-400/40 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-white mb-2">Access Denied</h1>
+            <p className="text-white/60 mb-6">
+              You don't have admin privileges. Please contact an administrator.
+            </p>
+            <button
+              onClick={() => navigate('/')}
+              className="w-full px-6 py-3 bg-white/10 text-white rounded-lg hover:bg-white/20 transition"
+            >
+              Go to Homepage
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (adminStatus === false) {
-    return null; // Will redirect
+  // Only show dashboard if adminStatus is true
+  if (adminStatus !== true) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
+  const tabs: { id: AdminTab; label: string; icon: any; category?: string }[] = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, category: 'Overview' },
+    { id: 'blog', label: 'Blog Posts', icon: FileText, category: 'Content' },
+    { id: 'products', label: 'Products', icon: ShoppingBag, category: 'E-commerce' },
+    { id: 'affiliates', label: 'Affiliates', icon: Users, category: 'E-commerce' },
+    { id: 'journal', label: 'Daily Journal', icon: BookOpen, category: 'Productivity' },
+    { id: 'tasks', label: 'Tasks', icon: CheckSquare, category: 'Productivity' },
+    { id: 'ideas', label: 'Ideas', icon: Lightbulb, category: 'Productivity' },
+    { id: 'analytics', label: 'Analytics', icon: BarChart3, category: 'Analytics' },
+    { id: 'help', label: 'Help Center', icon: HelpCircle, category: 'Resources' },
+    { id: 'developer', label: 'Developer Tools', icon: Code, category: 'Resources' },
+    { id: 'password', label: 'Password Generator', icon: Key, category: 'Utilities' },
+    { id: 'settings', label: 'Settings', icon: Settings, category: 'Configuration' },
+  ];
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <DashboardOverview />;
+      case 'blog':
+        return <BlogPostManagement />;
+      case 'products':
+        return <ProductManagement />;
+      case 'affiliates':
+        return <AffiliateManagement />;
+      case 'journal':
+        return <DailyJournal />;
+      case 'tasks':
+        return <TaskManagement />;
+      case 'ideas':
+        return <IdeaBoard />;
+      case 'analytics':
+        return stats ? (
+          <AnalyticsCarousel data={stats} />
+        ) : (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <LoadingSpinner />
+          </div>
+        );
+      case 'help':
+        return <HelpCenter />;
+      case 'developer':
+        return <DeveloperTools />;
+      case 'password':
+        return <PasswordGenerator />;
+      case 'settings':
+        return (
+          <div className="bg-black border border-white/10 rounded-lg p-6">
+            <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+              <Settings className="w-6 h-6" />
+              Admin Settings
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-white font-medium mb-2">Platform Configuration</h3>
+                <p className="text-white/60 text-sm">Platform settings and configuration options coming soon...</p>
+              </div>
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  // Group tabs by category
+  const tabsByCategory = tabs.reduce((acc, tab) => {
+    const category = tab.category || 'Other';
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(tab);
+    return acc;
+  }, {} as Record<string, typeof tabs>);
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-black">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-2">
-          <Shield className="w-8 h-8" />
-          Admin Dashboard
-        </h1>
-        <p className="text-white/70">Manage your platform and users</p>
-      </div>
-
-      {/* Tabs */}
-      <div className="mb-6 border-b border-white/10">
-        <div className="flex gap-4">
-          {(['overview', 'users', 'subscriptions', 'settings'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 font-medium transition ${
-                activeTab === tab
-                  ? 'text-white border-b-2 border-white'
-                  : 'text-white/60 hover:text-white'
-              }`}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
+      <div className="border-b border-white/10 bg-black/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-full mx-auto px-6 py-4">
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <Shield className="w-6 h-6" />
+            Admin Dashboard
+          </h1>
         </div>
       </div>
 
-      {/* Overview Tab */}
-      {activeTab === 'overview' && (
-        <div className="space-y-6">
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-black border border-white/10 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-white/60 text-sm">Total Users</span>
-                <Users className="w-5 h-5 text-white/40" />
+      {/* Main Layout */}
+      <div className="flex h-[calc(100vh-73px)]">
+        {/* Left Sidebar - Tabs */}
+        <div className="w-64 border-r border-white/10 bg-black/50 overflow-y-auto">
+          <nav className="p-4 space-y-4">
+            {Object.entries(tabsByCategory).map(([category, categoryTabs]) => (
+              <div key={category}>
+                <div className="px-2 py-1 text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">
+                  {category}
+                </div>
+                <div className="space-y-1">
+                  {categoryTabs.map((tab) => {
+                    const Icon = tab.icon;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+                          activeTab === tab.id
+                            ? 'bg-white text-black'
+                            : 'text-white/60 hover:text-white hover:bg-white/5'
+                        }`}
+                      >
+                        <Icon className="w-5 h-5" />
+                        <span className="font-medium">{tab.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="text-3xl font-bold text-white">{stats?.totalUsers || 0}</div>
-            </div>
+            ))}
+          </nav>
+        </div>
 
-            <div className="bg-black border border-white/10 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-white/60 text-sm">Active Subscriptions</span>
-                <CheckCircle className="w-5 h-5 text-green-400" />
-              </div>
-              <div className="text-3xl font-bold text-white">{stats?.activeSubscriptions || 0}</div>
-            </div>
-
-            <div className="bg-black border border-white/10 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-white/60 text-sm">Tool Usage</span>
-                <Activity className="w-5 h-5 text-blue-400" />
-              </div>
-              <div className="text-3xl font-bold text-white">{stats?.totalToolUsage || 0}</div>
-            </div>
-
-            <div className="bg-black border border-white/10 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-white/60 text-sm">Premium Users</span>
-                <TrendingUp className="w-5 h-5 text-yellow-400" />
-              </div>
-              <div className="text-3xl font-bold text-white">{stats?.premiumUsers || 0}</div>
-            </div>
-          </div>
-
-          {/* Tier Breakdown */}
-          <div className="bg-black border border-white/10 rounded-lg p-6">
-            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              Subscription Tiers
-            </h2>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-white/60 mb-1">{stats?.freeUsers || 0}</div>
-                <div className="text-sm text-white/40">Free</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-400 mb-1">{stats?.premiumUsers || 0}</div>
-                <div className="text-sm text-white/40">Premium</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-purple-400 mb-1">{stats?.proUsers || 0}</div>
-                <div className="text-sm text-white/40">Pro</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Recent Users */}
-          <div className="bg-black border border-white/10 rounded-lg p-6">
-            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              Recent Users
-            </h2>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-white/10">
-                    <th className="text-left py-2 text-white/60 text-sm font-medium">Email</th>
-                    <th className="text-left py-2 text-white/60 text-sm font-medium">Tier</th>
-                    <th className="text-left py-2 text-white/60 text-sm font-medium">Joined</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentUsers.length > 0 ? (
-                    recentUsers.map((user) => (
-                      <tr key={user.id} className="border-b border-white/5">
-                        <td className="py-2 text-white">{user.email}</td>
-                        <td className="py-2">
-                          <span className={`px-2 py-1 rounded text-xs ${
-                            user.tier === 'free' ? 'bg-white/5 text-white/60' :
-                            user.tier === 'premium' ? 'bg-yellow-400/10 text-yellow-400' :
-                            'bg-purple-400/10 text-purple-400'
-                          }`}>
-                            {user.tier}
-                          </span>
-                        </td>
-                        <td className="py-2 text-white/60 text-sm">
-                          {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={3} className="py-4 text-center text-white/60">
-                        No users found
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+        {/* Right Content Area */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-6">
+            {renderTabContent()}
           </div>
         </div>
-      )}
-
-      {/* Users Tab */}
-      {activeTab === 'users' && (
-        <div className="bg-black border border-white/10 rounded-lg p-6">
-          <h2 className="text-xl font-bold text-white mb-4">User Management</h2>
-          <p className="text-white/60">User management features coming soon...</p>
-        </div>
-      )}
-
-      {/* Subscriptions Tab */}
-      {activeTab === 'subscriptions' && (
-        <div className="bg-black border border-white/10 rounded-lg p-6">
-          <h2 className="text-xl font-bold text-white mb-4">Subscription Management</h2>
-          <p className="text-white/60">Subscription management features coming soon...</p>
-        </div>
-      )}
-
-      {/* Settings Tab */}
-      {activeTab === 'settings' && (
-        <div className="bg-black border border-white/10 rounded-lg p-6">
-          <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <Settings className="w-5 h-5" />
-            Admin Settings
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-white font-medium mb-2">Platform Configuration</h3>
-              <p className="text-white/60 text-sm">Platform settings and configuration options coming soon...</p>
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
