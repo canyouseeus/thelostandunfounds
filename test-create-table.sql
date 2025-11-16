@@ -26,3 +26,4 @@ INSERT INTO test_table_creation (name) VALUES ('Test Row');
 -- Verify data was inserted
 SELECT * FROM test_table_creation;
 
+

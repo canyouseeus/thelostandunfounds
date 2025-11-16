@@ -312,6 +312,13 @@ class ErrorMonitor {
     console.log(`✅ Known good version set: ${url}`);
   }
 
+  /**
+   * Public method to report errors from external sources (e.g., ErrorBoundary)
+   */
+  public reportError(type: 'error' | 'warning' | 'unhandledrejection', ...args: any[]) {
+    this.logError(type, args);
+  }
+
   public destroy() {
     if (this.checkInterval) {
       clearInterval(this.checkInterval);

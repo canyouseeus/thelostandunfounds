@@ -46,11 +46,11 @@ export class ErrorBoundary extends Component<Props, State> {
     // Report to error monitor
     const errorMonitor = getErrorMonitor();
     if (errorMonitor) {
-      errorMonitor.logError('error', [
+      errorMonitor.reportError('error',
         `ErrorBoundary: ${error.message}`,
         error,
         errorInfo
-      ]);
+      );
     }
 
     this.setState({

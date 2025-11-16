@@ -70,3 +70,4 @@ LEFT JOIN pg_publication_tables pt ON p.pubname = pt.pubname
 WHERE p.pubname = 'supabase'
 GROUP BY p.pubname;
 
+

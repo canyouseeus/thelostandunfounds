@@ -18,3 +18,4 @@ FROM user_roles ur
 JOIN auth.users u ON ur.user_id = u.id
 WHERE ur.email = 'admin@thelostandunfounds.com' OR u.email = 'admin@thelostandunfounds.com';
 
+

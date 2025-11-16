@@ -108,3 +108,4 @@ SELECT
   'Function Test' as check_type,
   is_user_admin('990e9285-e185-44f8-b8b2-3cbd3bfa4ab5') as is_admin;
 
+

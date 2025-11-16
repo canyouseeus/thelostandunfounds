@@ -3,17 +3,18 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './components/Toast'
+import { initializeErrorMonitor } from './services/error-monitor'
 import App from './App.tsx'
 import './index.css'
 
 console.log('📦 All imports loaded successfully')
 
-// Skip error monitor for now to isolate issue
-// try {
-//   initializeErrorMonitor();
-// } catch (error) {
-//   console.error('Error monitor init failed:', error);
-// }
+// Initialize error monitoring system
+try {
+  initializeErrorMonitor();
+} catch (error) {
+  console.error('Error monitor init failed:', error);
+}
 
 // No error suppression - let all errors show so we can fix them properly
 

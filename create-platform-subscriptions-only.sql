@@ -50,3 +50,4 @@ FROM information_schema.tables
 WHERE table_name = 'platform_subscriptions'
 AND table_schema = 'public';
 
+

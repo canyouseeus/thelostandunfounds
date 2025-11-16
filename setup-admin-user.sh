@@ -164,3 +164,4 @@ echo "🎉 Setup complete! You can now log in with these credentials."
 # Cleanup
 rm "$SQL_FILE"
 
+

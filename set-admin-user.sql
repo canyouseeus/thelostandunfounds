@@ -43,3 +43,4 @@ FROM user_roles ur
 JOIN auth.users u ON ur.user_id = u.id
 WHERE ur.is_admin = true;
 
+

@@ -21,3 +21,4 @@ WHERE table_name IN (
 AND table_schema = 'public'
 ORDER BY table_name;
 
+

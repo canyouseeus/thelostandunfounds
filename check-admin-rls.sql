@@ -52,3 +52,4 @@ SELECT
   COUNT(*) as blog_posts_count
 FROM blog_posts;
 
+
