@@ -1,6 +1,39 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 
 /**
+ * Decode HTML entities in text
+ */
+function decodeHtmlEntities(text: string): string {
+  if (!text) return text
+  return text
+    .replace(/&#34;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)))
+}
+
+/**
+ * Extract image URLs from image objects or strings
+ */
+function extractImageUrls(images: any): string[] {
+  if (!images) return []
+  if (Array.isArray(images)) {
+    return images.map(img => {
+      if (typeof img === 'string') return img
+      if (img && typeof img === 'object' && img.url) return img.url
+      return null
+    }).filter(Boolean) as string[]
+  }
+  if (typeof images === 'string') return [images]
+  return []
+}
+
+/**
  * API endpoint to fetch products from a specific Fourthwall collection
  */
 export default async function handler(
@@ -91,12 +124,12 @@ export default async function handler(
         
         return {
           id: offer.id || offer.slug || '',
-          title: offer.name || offer.title || 'Untitled Product',
-          description: offer.description || '',
+          title: decodeHtmlEntities(offer.name || offer.title || 'Untitled Product'),
+          description: decodeHtmlEntities(offer.description || ''),
           price: price,
           compareAtPrice: compareAtPrice,
           currency: currency,
-          images: offer.images || (offer.image ? [offer.image] : []),
+          images: extractImageUrls(offer.images || offer.image),
           handle: offer.slug || offer.handle || offer.id || '',
           available: offer.available !== false,
           variants: offer.variants || [],

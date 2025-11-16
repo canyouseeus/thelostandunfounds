@@ -63,43 +63,58 @@ export default function Shop() {
       }
 
       const combinedProducts: CombinedProduct[] = []
+      const productIds = new Set<string>() // Track IDs to prevent duplicates
 
       // Add Fourthwall products
       if (fourthwallResult.products && fourthwallResult.products.length > 0) {
-        combinedProducts.push(...fourthwallResult.products.map(p => ({
-          id: `fw-${p.id}`,
-          title: p.title,
-          description: p.description,
-          price: p.price,
-          compareAtPrice: p.compareAtPrice,
-          currency: p.currency,
-          images: p.images,
-          handle: p.handle,
-          available: p.available,
-          url: p.url || fourthwallService.getProductUrl(p.handle),
-          source: 'fourthwall' as const,
-        })))
-        console.log(`Added ${fourthwallResult.products.length} Fourthwall products`)
+        fourthwallResult.products.forEach(p => {
+          const productId = `fw-${p.id}`
+          // Only add if not already added (deduplicate)
+          if (!productIds.has(productId)) {
+            productIds.add(productId)
+            combinedProducts.push({
+              id: productId,
+              title: p.title,
+              description: p.description,
+              price: p.price,
+              compareAtPrice: p.compareAtPrice,
+              currency: p.currency,
+              images: p.images,
+              handle: p.handle,
+              available: p.available,
+              url: p.url || fourthwallService.getProductUrl(p.handle),
+              source: 'fourthwall' as const,
+            })
+          }
+        })
+        console.log(`Added ${combinedProducts.filter(p => p.source === 'fourthwall').length} unique Fourthwall products`)
       } else if (fourthwallResult.error) {
         console.warn('Fourthwall products failed to load:', fourthwallResult.error.message)
       }
 
-      // Add local products
+      // Add local products (only if not already added from Fourthwall)
       if (localResult.products && localResult.products.length > 0) {
-        combinedProducts.push(...localResult.products.map(p => ({
-          id: `local-${p.id}`,
-          title: p.title,
-          description: p.description,
-          price: p.price,
-          compareAtPrice: p.compare_at_price,
-          currency: p.currency || 'USD',
-          images: p.images.length > 0 ? p.images : (p.image_url ? [p.image_url] : []),
-          handle: p.handle,
-          available: p.available,
-          url: p.fourthwall_url || `/products/${p.handle}`,
-          source: 'local' as const,
-        })))
-        console.log(`Added ${localResult.products.length} local products`)
+        localResult.products.forEach(p => {
+          const productId = `local-${p.id}`
+          // Only add if not already added (deduplicate)
+          if (!productIds.has(productId)) {
+            productIds.add(productId)
+            combinedProducts.push({
+              id: productId,
+              title: p.title,
+              description: p.description,
+              price: p.price,
+              compareAtPrice: p.compare_at_price,
+              currency: p.currency || 'USD',
+              images: p.images.length > 0 ? p.images : (p.image_url ? [p.image_url] : []),
+              handle: p.handle,
+              available: p.available,
+              url: p.fourthwall_url || `/products/${p.handle}`,
+              source: 'local' as const,
+            })
+          }
+        })
+        console.log(`Added ${combinedProducts.filter(p => p.source === 'local').length} unique local products`)
       }
 
       setProducts(combinedProducts)
