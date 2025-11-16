@@ -43,9 +43,20 @@ class FourthwallService {
    */
   async getProducts(): Promise<{ products: FourthwallProduct[]; error: Error | null }> {
     try {
+      // In local development, API routes don't work unless using `vercel dev`
+      const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      
       const response = await fetch(`/api/fourthwall/products`)
       
       if (!response.ok) {
+        // Handle 404 in local dev gracefully
+        if (response.status === 404 && isLocalDev) {
+          return { 
+            products: [], 
+            error: new Error('API routes only work in production or when using `npx vercel dev` for local development') 
+          }
+        }
+        
         const errorText = await response.text().catch(() => response.statusText)
         const errorData = (() => {
           try {
@@ -72,8 +83,15 @@ class FourthwallService {
       
       return { products: data.products || [], error: null }
     } catch (error) {
-      // Only log unexpected errors, not network/CORS issues
-      if (error instanceof TypeError && error.message.includes('fetch')) {
+      // Handle CORS and network errors gracefully
+      if (error instanceof TypeError) {
+        const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        if (isLocalDev) {
+          return { 
+            products: [], 
+            error: new Error('API routes only work in production deployment. Use `npx vercel dev` for local API testing.') 
+          }
+        }
         return { products: [], error: new Error('Network error: Unable to reach API') }
       }
       console.error('Error fetching Fourthwall products:', error)
