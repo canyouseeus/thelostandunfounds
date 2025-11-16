@@ -75,13 +75,15 @@ class FourthwallService {
       // Check if API returned an error message
       if (data.error || data.message) {
         const errorMessage = data.error || data.message
-        if (errorMessage.includes('not configured') || errorMessage.includes('token')) {
-          // Don't log as error if it's just a configuration issue
-          return { products: [], error: new Error(errorMessage) }
-        }
+        console.warn('Fourthwall API returned error:', errorMessage)
+        // Always return error if API explicitly says there's an error
+        return { products: data.products || [], error: new Error(errorMessage) }
       }
       
-      return { products: data.products || [], error: null }
+      // Log successful response
+      const products = data.products || []
+      console.log(`Fourthwall service: Received ${products.length} products`)
+      return { products, error: null }
     } catch (error) {
       // Handle CORS and network errors gracefully
       if (error instanceof TypeError) {

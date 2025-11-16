@@ -37,10 +37,21 @@ export default function Shop() {
         productsService.getProducts(),
       ])
 
+      // Debug logging
+      console.log('Fourthwall result:', {
+        productsCount: fourthwallResult.products?.length || 0,
+        hasError: !!fourthwallResult.error,
+        errorMessage: fourthwallResult.error?.message,
+      })
+      console.log('Local products result:', {
+        productsCount: localResult.products?.length || 0,
+        hasError: !!localResult.error,
+      })
+
       const combinedProducts: CombinedProduct[] = []
 
       // Add Fourthwall products
-      if (fourthwallResult.products) {
+      if (fourthwallResult.products && fourthwallResult.products.length > 0) {
         combinedProducts.push(...fourthwallResult.products.map(p => ({
           id: `fw-${p.id}`,
           title: p.title,
@@ -54,10 +65,13 @@ export default function Shop() {
           url: p.url || fourthwallService.getProductUrl(p.handle),
           source: 'fourthwall' as const,
         })))
+        console.log(`Added ${fourthwallResult.products.length} Fourthwall products`)
+      } else if (fourthwallResult.error) {
+        console.warn('Fourthwall products failed to load:', fourthwallResult.error.message)
       }
 
       // Add local products
-      if (localResult.products) {
+      if (localResult.products && localResult.products.length > 0) {
         combinedProducts.push(...localResult.products.map(p => ({
           id: `local-${p.id}`,
           title: p.title,
@@ -71,20 +85,23 @@ export default function Shop() {
           url: p.fourthwall_url || `/products/${p.handle}`,
           source: 'local' as const,
         })))
+        console.log(`Added ${localResult.products.length} local products`)
       }
 
       setProducts(combinedProducts)
+      console.log(`Total products loaded: ${combinedProducts.length}`)
 
-      // Show error if both failed
+      // Show error messages - always show Fourthwall errors for debugging
       if (fourthwallResult.error && localResult.error) {
-        setError('Failed to load products from both sources')
+        setError(`Failed to load products from both sources. Fourthwall: ${fourthwallResult.error.message}`)
       } else if (fourthwallResult.error) {
-        // Only show warning if local products exist
-        if (localResult.products.length === 0) {
-          setError(fourthwallResult.error.message)
-        }
+        // Always show Fourthwall error, even if local products exist
+        setError(`Fourthwall products unavailable: ${fourthwallResult.error.message}`)
+      } else if (localResult.error && combinedProducts.length === 0) {
+        setError(`Failed to load local products: ${localResult.error.message}`)
       }
     } catch (err) {
+      console.error('Error loading products:', err)
       setError(err instanceof Error ? err.message : 'Failed to load products')
       setProducts([])
     }

@@ -26,8 +26,10 @@ export default async function handler(
     const collectionHandle = req.query.collection as string | undefined
     
     if (!storefrontToken) {
+      console.error('FOURTHWALL_STOREFRONT_TOKEN not configured')
       return res.status(200).json({
         products: [],
+        error: 'FOURTHWALL_STOREFRONT_TOKEN not configured',
         message: 'FOURTHWALL_STOREFRONT_TOKEN not configured. Get your token from: https://thelostandunfounds-shop.fourthwall.com/admin/dashboard/settings/for-developers',
       })
     }
@@ -43,15 +45,84 @@ export default async function handler(
     if (collectionHandle && collectionHandle !== 'all') {
       apiUrl = `${baseUrl}/v1/collections/${collectionHandle}/offers`
     } else {
+      // Try fetching all offers directly
       apiUrl = `${baseUrl}/v1/offers`
     }
+    console.log(`Fourthwall API: Fetching from ${apiUrl}`)
     
-    // Try query parameter first (standard approach)
+    // Try query parameter first (standard approach per docs)
+    // Docs: https://docs.fourthwall.com/storefront/getting-started/
     let response = await fetch(`${apiUrl}?storefront_token=${storefrontToken}`, {
       headers: {
         'Accept': 'application/json',
       },
     })
+
+    // If /v1/offers doesn't work, try fetching collections first
+    if (!response.ok && response.status === 404 && !collectionHandle) {
+      console.log('v1/offers endpoint not found, trying to fetch collections first...')
+      const collectionsUrl = `${baseUrl}/v1/collections?storefront_token=${storefrontToken}`
+      const collectionsResponse = await fetch(collectionsUrl, {
+        headers: {
+          'Accept': 'application/json',
+        },
+      })
+      
+      if (collectionsResponse.ok) {
+        const collectionsData = await collectionsResponse.json()
+        const collections = Array.isArray(collectionsData) ? collectionsData : (collectionsData.collections || [])
+        console.log(`Found ${collections.length} collections, fetching offers from each...`)
+        
+        // Fetch offers from all collections
+        const allOffers: any[] = []
+        for (const collection of collections) {
+          const collectionHandle = collection.handle || collection.slug || collection.id
+          if (collectionHandle) {
+            try {
+              const offersUrl = `${baseUrl}/v1/collections/${collectionHandle}/offers?storefront_token=${storefrontToken}`
+              const offersResponse = await fetch(offersUrl, {
+                headers: { 'Accept': 'application/json' },
+              })
+              if (offersResponse.ok) {
+                const offersData = await offersResponse.json()
+                const offers = Array.isArray(offersData) ? offersData : (offersData.offers || [])
+                allOffers.push(...offers)
+                console.log(`Collection ${collectionHandle}: ${offers.length} offers`)
+              }
+            } catch (err) {
+              console.warn(`Failed to fetch offers from collection ${collectionHandle}:`, err)
+            }
+          }
+        }
+        
+        // Return combined offers
+        const transformedProducts = allOffers.map((offer: any) => {
+          const variant = offer.variants && offer.variants.length > 0 ? offer.variants[0] : null
+          const price = variant?.unitPrice?.value || 0
+          const currency = variant?.unitPrice?.currency || 'USD'
+          const compareAtPrice = variant?.compareAtPrice?.value
+          
+          return {
+            id: offer.id || offer.slug || '',
+            title: offer.name || offer.title || 'Untitled Product',
+            description: offer.description || '',
+            price: price,
+            compareAtPrice: compareAtPrice,
+            currency: currency,
+            images: offer.images || (offer.image ? [offer.image] : []),
+            handle: offer.slug || offer.handle || offer.id || '',
+            available: offer.available !== false,
+            variants: offer.variants || [],
+            url: `https://thelostandunfounds-shop.fourthwall.com/products/${offer.slug || offer.handle || offer.id}`,
+          }
+        })
+        
+        console.log(`Fourthwall API: Returning ${transformedProducts.length} products from collections`)
+        return res.status(200).json({
+          products: transformedProducts,
+        })
+      }
+    }
 
     // If that fails, try Authorization header
     if (!response.ok && response.status === 404) {
@@ -87,23 +158,29 @@ export default async function handler(
         errorMessage += '. The endpoint may be incorrect or the storefront may not be properly configured.'
       }
       
+      console.error(`Fourthwall API: Returning error response:`, errorMessage)
       return res.status(200).json({
         products: [],
+        error: errorMessage,
         message: errorMessage,
-        error: errorText.substring(0, 200), // Include first 200 chars of error for debugging
+        errorDetails: errorText.substring(0, 200), // Include first 200 chars of error for debugging
       })
     }
 
     const data = await response.json()
+    console.log(`Fourthwall API: Response status ${response.status}, data type:`, Array.isArray(data) ? 'array' : typeof data)
+    if (!Array.isArray(data)) {
+      console.log(`Fourthwall API: Response keys:`, Object.keys(data))
+    }
 
     // Transform the data to match our interface
     // Fourthwall Storefront API returns offers (products) in a specific format
     // See: https://docs.fourthwall.com/storefront-api/
     // The API may return { offers: [...] } or just an array directly
     const offers = Array.isArray(data) ? data : (data.offers || data.data || [])
+    console.log(`Fourthwall API: Found ${offers.length} offers/products`)
     
-    return res.status(200).json({
-      products: offers.map((offer: any) => {
+    const transformedProducts = offers.map((offer: any) => {
         // Get the first variant for pricing
         const variant = offer.variants && offer.variants.length > 0 ? offer.variants[0] : null
         const price = variant?.unitPrice?.value || 0
@@ -123,7 +200,11 @@ export default async function handler(
           variants: offer.variants || [],
           url: `https://thelostandunfounds-shop.fourthwall.com/products/${offer.slug || offer.handle || offer.id}`,
         }
-      }),
+      })
+    
+    console.log(`Fourthwall API: Returning ${transformedProducts.length} products`)
+    return res.status(200).json({
+      products: transformedProducts,
     })
   } catch (error) {
     console.error('Error fetching Fourthwall products:', error)
