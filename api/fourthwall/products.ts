@@ -58,6 +58,12 @@ export default async function handler(
       },
     })
 
+    // Log the response for debugging
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.log(`Fourthwall API ${apiUrl} returned ${response.status}:`, errorText.substring(0, 500))
+    }
+
     // If /v1/offers doesn't work, try fetching collections first
     if (!response.ok && response.status === 404 && !collectionHandle) {
       console.log('v1/offers endpoint not found, trying to fetch collections first...')
@@ -70,8 +76,53 @@ export default async function handler(
       
       if (collectionsResponse.ok) {
         const collectionsData = await collectionsResponse.json()
-        const collections = Array.isArray(collectionsData) ? collectionsData : (collectionsData.collections || [])
+        console.log('Collections API response:', JSON.stringify(collectionsData).substring(0, 500))
+        const collections = Array.isArray(collectionsData) ? collectionsData : (collectionsData.collections || collectionsData.data || [])
         console.log(`Found ${collections.length} collections, fetching offers from each...`)
+        
+        // If no collections but response was OK, try fetching all products directly
+        if (collections.length === 0) {
+          console.log('No collections found, trying alternative endpoints...')
+          // Try shop feed endpoint
+          const shopFeedUrl = `${baseUrl}/v1/shop/feed?storefront_token=${storefrontToken}`
+          const shopFeedResponse = await fetch(shopFeedUrl, {
+            headers: { 'Accept': 'application/json' },
+          })
+          
+          if (shopFeedResponse.ok) {
+            const shopFeedData = await shopFeedResponse.json()
+            console.log('Shop feed response:', JSON.stringify(shopFeedData).substring(0, 500))
+            const feedOffers = Array.isArray(shopFeedData) ? shopFeedData : (shopFeedData.offers || shopFeedData.products || shopFeedData.data || [])
+            
+            if (feedOffers.length > 0) {
+              const transformedProducts = feedOffers.map((offer: any) => {
+                const variant = offer.variants && offer.variants.length > 0 ? offer.variants[0] : null
+                const price = variant?.unitPrice?.value || 0
+                const currency = variant?.unitPrice?.currency || 'USD'
+                const compareAtPrice = variant?.compareAtPrice?.value
+                
+                return {
+                  id: offer.id || offer.slug || '',
+                  title: offer.name || offer.title || 'Untitled Product',
+                  description: offer.description || '',
+                  price: price,
+                  compareAtPrice: compareAtPrice,
+                  currency: currency,
+                  images: offer.images || (offer.image ? [offer.image] : []),
+                  handle: offer.slug || offer.handle || offer.id || '',
+                  available: offer.available !== false,
+                  variants: offer.variants || [],
+                  url: `https://thelostandunfounds-shop.fourthwall.com/products/${offer.slug || offer.handle || offer.id}`,
+                }
+              })
+              
+              console.log(`Fourthwall API: Returning ${transformedProducts.length} products from shop feed`)
+              return res.status(200).json({
+                products: transformedProducts,
+              })
+            }
+          }
+        }
         
         // Fetch offers from all collections
         const allOffers: any[] = []
