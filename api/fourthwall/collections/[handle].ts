@@ -37,16 +37,40 @@ export default async function handler(
 
     // Use the official Fourthwall Storefront API
     // Docs: https://docs.fourthwall.com/storefront-api/
-    const apiUrl = `https://storefront-api.fourthwall.com/v1/collections/${handle}/offers?storefront_token=${storefrontToken}`
+    const apiUrl = `https://storefront-api.fourthwall.com/v1/collections/${handle}/offers`
     
-    const response = await fetch(apiUrl, {
+    // Try query parameter first (standard approach)
+    let response = await fetch(`${apiUrl}?storefront_token=${storefrontToken}`, {
       headers: {
         'Accept': 'application/json',
       },
     })
 
+    // If that fails, try Authorization header
+    if (!response.ok && response.status === 404) {
+      console.log('Trying Authorization header instead of query parameter...')
+      response = await fetch(apiUrl, {
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${storefrontToken}`,
+        },
+      })
+    }
+
+    // If still fails, try X-Storefront-Token header
+    if (!response.ok && response.status === 404) {
+      console.log('Trying X-Storefront-Token header...')
+      response = await fetch(apiUrl, {
+        headers: {
+          'Accept': 'application/json',
+          'X-Storefront-Token': storefrontToken,
+        },
+      })
+    }
+
     if (!response.ok) {
       console.error(`Fourthwall API error: ${response.status} ${response.statusText}`)
+      console.error(`Attempted URL: ${apiUrl}`)
       return res.status(200).json({
         products: [],
         message: `Collection not found or API error: ${response.status} ${response.statusText}`,

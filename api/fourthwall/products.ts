@@ -34,20 +34,48 @@ export default async function handler(
     
     // Use the official Fourthwall Storefront API
     // Docs: https://docs.fourthwall.com/storefront-api/
-    // For all products, use /offers endpoint. For specific collection, use /collections/{handle}/offers
-    const apiUrl = collectionHandle && collectionHandle !== 'all'
-      ? `https://storefront-api.fourthwall.com/v1/collections/${collectionHandle}/offers?storefront_token=${storefrontToken}`
-      : `https://storefront-api.fourthwall.com/v1/offers?storefront_token=${storefrontToken}`
+    // Try multiple endpoint formats and authentication methods
+    const baseUrl = 'https://storefront-api.fourthwall.com'
+    let apiUrl: string
+    if (collectionHandle && collectionHandle !== 'all') {
+      apiUrl = `${baseUrl}/v1/collections/${collectionHandle}/offers`
+    } else {
+      apiUrl = `${baseUrl}/v1/offers`
+    }
     
-    const response = await fetch(apiUrl, {
+    // Try query parameter first (standard approach)
+    let response = await fetch(`${apiUrl}?storefront_token=${storefrontToken}`, {
       headers: {
         'Accept': 'application/json',
       },
     })
 
+    // If that fails, try Authorization header
+    if (!response.ok && response.status === 404) {
+      console.log('Trying Authorization header instead of query parameter...')
+      response = await fetch(apiUrl, {
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${storefrontToken}`,
+        },
+      })
+    }
+
+    // If still fails, try X-Storefront-Token header
+    if (!response.ok && response.status === 404) {
+      console.log('Trying X-Storefront-Token header...')
+      response = await fetch(apiUrl, {
+        headers: {
+          'Accept': 'application/json',
+          'X-Storefront-Token': storefrontToken,
+        },
+      })
+    }
+
     if (!response.ok) {
       const errorText = await response.text()
       console.error(`Fourthwall API error: ${response.status} ${response.statusText}`, errorText)
+      console.error(`Attempted URL: ${apiUrl}`)
       return res.status(200).json({
         products: [],
         message: `Fourthwall API error: ${response.status} ${response.statusText}. Check your storefront token.`,
