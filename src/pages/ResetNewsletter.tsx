@@ -10,14 +10,9 @@ export default function ResetNewsletter() {
     setResult(null);
 
     try {
-      // Try the direct REST API endpoint first, fallback to regular endpoint
-      const response = await fetch('/api/reset-newsletter-direct?token=reset-newsletter-2024', {
+      const response = await fetch('/api/reset-newsletter?token=reset-newsletter-2024', {
         method: 'GET',
-      }).catch(() => 
-        fetch('/api/reset-newsletter?token=reset-newsletter-2024', {
-          method: 'GET',
-        })
-      );
+      });
 
       if (response.ok) {
         const data = await response.json();
@@ -104,18 +99,15 @@ export default function ResetNewsletter() {
         </p>
         
         <div className="mt-6 pt-6 border-t border-white/10">
-          <p className="text-white/60 text-xs text-center mb-3">Or use direct REST API link:</p>
+          <p className="text-white/60 text-xs text-center mb-3">Or use direct API link:</p>
           <a 
-            href="/api/reset-newsletter-direct?token=reset-newsletter-2024"
+            href="/api/reset-newsletter?token=reset-newsletter-2024"
             target="_blank"
             rel="noopener noreferrer"
             className="text-white hover:text-white/80 text-sm underline break-all block text-center bg-white/5 hover:bg-white/10 px-4 py-2 rounded transition"
           >
-            Reset via REST API
+            Reset via API
           </a>
-          <p className="text-white/40 text-xs text-center mt-2">
-            Uses Supabase REST API directly
-          </p>
         </div>
       </div>
     </div>
