@@ -213,7 +213,170 @@ DO UPDATE SET is_admin = true;
 
 ## Open Bugs
 
-*No open bugs at this time.*
+### BUG-006: Recurring Port Conflict and Process Management Issues
+**Status:** 🔍 INVESTIGATING  
+**Severity:** Medium  
+**Date:** 2025-11-16
+
+**Description:**
+Recurring pattern where multiple dev server processes accumulate, causing port conflicts and 500 errors. This happens when:
+1. Starting `vercel dev` or `npm run dev` without checking for existing processes
+2. Processes don't terminate cleanly
+3. Multiple instances run simultaneously
+4. Ports remain bound after process termination
+
+**Symptoms:**
+- Multiple `vercel dev` or `vite` processes running simultaneously
+- Port 3000 (or other ports) already in use errors
+- 500 Internal Server Errors when accessing dev server
+- Processes accumulating over time
+- Getting stuck in loops trying to test/fix issues
+
+**Root Cause:**
+- Not checking for existing processes before starting new ones
+- Background processes not being properly tracked
+- No cleanup mechanism between attempts
+- Processes started in background not being monitored
+
+**Prevention Pattern (Solution):**
+**ALWAYS follow this pattern before starting dev servers:**
+
+1. **Check for existing processes:**
+   ```bash
+   ps aux | grep -E "vercel|vite" | grep -v grep
+   lsof -i -P | grep LISTEN | grep -E "3000|5173"
+   ```
+
+2. **Kill all related processes:**
+   ```bash
+   pkill -9 -f "vercel dev"
+   pkill -9 -f "vite"
+   lsof -ti:3000 | xargs kill -9 2>/dev/null
+   lsof -ti:5173 | xargs kill -9 2>/dev/null
+   ```
+
+3. **Verify ports are free:**
+   ```bash
+   lsof -i -P | grep LISTEN | grep -E "3000|5173" || echo "Ports free"
+   ```
+
+4. **Then start server:**
+   ```bash
+   npm run dev
+   ```
+
+**Files Changed:**
+- `scripts/kill-port-3000.sh` - Already exists for port 3000
+- Need to create comprehensive cleanup script
+
+**Verification:**
+- No duplicate processes running
+- Ports free before starting
+- Server starts cleanly
+
+**Related Issues:**
+- BUG-007: vercel dev compatibility issues
+- Port conflict with Google Drive MCP (already documented)
+
+---
+
+### BUG-007: vercel dev Not Working with Vite Framework
+**Status:** ❌ WON'T FIX (Known Limitation)  
+**Severity:** Low  
+**Date:** 2025-11-16
+
+**Description:**
+`vercel dev` has compatibility issues with Vite's dev server, causing 500 errors when trying to serve React app. The dev server starts but Vite's HMR endpoints (`/@vite/client`, `/@react-refresh`) return 500 errors.
+
+**Symptoms:**
+- `vercel dev` starts successfully
+- Port 3000 is listening
+- HTML loads but React doesn't mount
+- 500 errors for `/@vite/client`, `/@react-refresh`, `/main.tsx`
+- Console: "Failed to load resource: 500"
+- React doesn't mount after timeout
+
+**Root Cause:**
+`vercel dev` doesn't properly proxy Vite's dev server endpoints. The `devCommand` in `vercel.json` doesn't integrate correctly with Vite's HMR system.
+
+**Solution:**
+**API routes only work in production on Vercel.**
+
+For local development:
+- Use `npm run dev` for frontend development (fast, no API routes)
+- Test API routes in production deployment
+- Document this limitation clearly
+
+**Workaround:**
+1. Local frontend dev: `npm run dev` (Vite only)
+2. API route testing: Deploy to production (`git push`)
+3. Full testing: Use production URL
+
+**Files Changed:**
+- `vercel.json` - Removed `devCommand` (doesn't work)
+- `VERCEL_DEV_SETUP.md` - Updated with reality
+- `src/pages/Shop.tsx` - Already shows helpful local dev message
+
+**Verification:**
+- `npm run dev` works perfectly for frontend
+- API routes work in production
+- Documentation reflects limitations
+
+**Related Issues:**
+- BUG-006: Process management issues (exacerbated by trying to fix this)
+
+---
+
+### BUG-008: Getting Stuck in Testing Loops
+**Status:** 🔍 INVESTIGATING  
+**Severity:** Medium  
+**Date:** 2025-11-16
+
+**Description:**
+Pattern of getting stuck trying to test things that don't work, repeatedly attempting the same approach without recognizing the fundamental issue.
+
+**Symptoms:**
+- Repeatedly trying to test `vercel dev` when it doesn't work
+- Getting stuck on curl commands that hang
+- Not recognizing when something fundamentally won't work
+- Wasting time on approaches that are known to fail
+
+**Root Cause:**
+- Not checking if something is fundamentally broken before testing
+- Not recognizing patterns from previous attempts
+- Not documenting known limitations
+- Not stopping when hitting the same error repeatedly
+
+**Prevention Pattern:**
+**Before testing something that previously failed:**
+
+1. **Check if it's a known limitation:**
+   - Review BUGS.md for related issues
+   - Check documentation for known issues
+   - Don't retry approaches that are documented as not working
+
+2. **Verify prerequisites:**
+   - Is the server actually running?
+   - Are ports free?
+   - Are processes clean?
+
+3. **Set timeout:**
+   - If testing hangs, stop after reasonable timeout
+   - Don't keep retrying the same thing
+
+4. **Document the limitation:**
+   - If something doesn't work, document it
+   - Add to BUGS.md with status "WON'T FIX" if it's a known limitation
+   - Update docs to reflect reality
+
+**Files Changed:**
+- `BUGS.md` - This file (documenting the pattern)
+- Need to create testing checklist
+
+**Verification:**
+- Known limitations documented
+- Testing follows checklist
+- No repeated attempts on broken approaches
 
 ---
 
