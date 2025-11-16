@@ -23,7 +23,8 @@ import {
   Lightbulb,
   HelpCircle,
   Code,
-  LayoutDashboard
+  LayoutDashboard,
+  Key
 } from 'lucide-react';
 import { LoadingSpinner } from '../components/Loading';
 import DashboardOverview from '../components/admin/DashboardOverview';
@@ -36,6 +37,7 @@ import IdeaBoard from '../components/admin/IdeaBoard';
 import HelpCenter from '../components/admin/HelpCenter';
 import DeveloperTools from '../components/admin/DeveloperTools';
 import AnalyticsCarousel from '../components/admin/AnalyticsCarousel';
+import PasswordGenerator from '../components/admin/PasswordGenerator';
 
 interface DashboardStats {
   totalUsers: number;
@@ -50,7 +52,7 @@ interface DashboardStats {
   totalBlogPosts?: number;
 }
 
-type AdminTab = 'dashboard' | 'blog' | 'products' | 'affiliates' | 'journal' | 'tasks' | 'ideas' | 'tools' | 'analytics' | 'help' | 'developer' | 'settings';
+type AdminTab = 'dashboard' | 'blog' | 'products' | 'affiliates' | 'journal' | 'tasks' | 'ideas' | 'tools' | 'analytics' | 'help' | 'developer' | 'password' | 'settings';
 
 export default function Admin() {
   const { user, loading: authLoading } = useAuth();
@@ -246,6 +248,7 @@ export default function Admin() {
     { id: 'analytics', label: 'Analytics', icon: BarChart3, category: 'Analytics' },
     { id: 'help', label: 'Help Center', icon: HelpCircle, category: 'Resources' },
     { id: 'developer', label: 'Developer Tools', icon: Code, category: 'Resources' },
+    { id: 'password', label: 'Password Generator', icon: Key, category: 'Utilities' },
     { id: 'settings', label: 'Settings', icon: Settings, category: 'Configuration' },
   ];
 
@@ -277,6 +280,8 @@ export default function Admin() {
         return <HelpCenter />;
       case 'developer':
         return <DeveloperTools />;
+      case 'password':
+        return <PasswordGenerator />;
       case 'settings':
         return (
           <div className="bg-black border border-white/10 rounded-lg p-6">
