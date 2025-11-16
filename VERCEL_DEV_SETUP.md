@@ -1,18 +1,29 @@
 # Vercel Dev Setup Guide
 
+## ⚠️ Important Note
+
+**API routes (`/api/*`) only work in production on Vercel.** 
+
+`vercel dev` has compatibility issues with Vite's dev server in this setup. For local development:
+- Use `npm run dev` for frontend development (faster, no API routes)
+- Test API routes in production deployment on Vercel
+- The shop page will show a helpful message in local dev explaining this
+
 ## Quick Start
 
-To run the development server with full API route support (including Fourthwall shop):
+### For Frontend Development (Recommended)
 
 ```bash
-npm run dev:api
+npm run dev
 ```
 
-This will:
-- Start Vercel's local development server
-- Execute API routes as serverless functions locally
-- Allow you to test the Fourthwall shop integration locally
-- Use your production environment variables from Vercel
+This uses Vite and is fast, but API routes won't work locally.
+
+### For API Route Testing
+
+API routes must be tested in production:
+1. Deploy to Vercel: `git push` (auto-deploys)
+2. Test on your production URL: `https://thelostandunfounds.com/shop`
 
 ## First Time Setup
 
@@ -97,15 +108,15 @@ npx vercel logout
 npx vercel login
 ```
 
-## Differences: `npm run dev` vs `npm run dev:api`
+## Differences: Local Dev vs Production
 
-| Feature | `npm run dev` (Vite) | `npm run dev:api` (Vercel) |
-|---------|---------------------|---------------------------|
-| Speed | ⚡ Faster | 🐢 Slower (runs serverless functions) |
+| Feature | `npm run dev` (Local) | Production (Vercel) |
+|---------|---------------------|-------------------|
+| Speed | ⚡ Fast | ⚡ Fast |
 | API Routes | ❌ Don't work | ✅ Work |
-| Hot Reload | ✅ Yes | ✅ Yes |
-| Environment | Local `.env.local` | Vercel production env |
-| Use Case | Frontend dev | Full-stack testing |
+| Hot Reload | ✅ Yes | ❌ No (requires redeploy) |
+| Environment | Local `.env.local` | Vercel env vars |
+| Use Case | Frontend dev | Full testing |
 
 ## Notes
 

@@ -31,6 +31,9 @@ export default async function handler(
         message: 'FOURTHWALL_STOREFRONT_TOKEN not configured. Get your token from: https://thelostandunfounds-shop.fourthwall.com/admin/dashboard/settings/for-developers',
       })
     }
+
+    // Log token presence (but not the actual token) for debugging
+    console.log(`Fourthwall API: Token present: ${!!storefrontToken}, Length: ${storefrontToken.length}`)
     
     // Use the official Fourthwall Storefront API
     // Docs: https://docs.fourthwall.com/storefront-api/
@@ -76,9 +79,17 @@ export default async function handler(
       const errorText = await response.text()
       console.error(`Fourthwall API error: ${response.status} ${response.statusText}`, errorText)
       console.error(`Attempted URL: ${apiUrl}`)
+      
+      let errorMessage = `Fourthwall API error: ${response.status} ${response.statusText}`
+      if (response.status === 401) {
+        errorMessage += '. The storefront token may be invalid, expired, or incorrectly formatted. Please verify your token at: https://thelostandunfounds-shop.fourthwall.com/admin/dashboard/settings/for-developers'
+      } else if (response.status === 404) {
+        errorMessage += '. The endpoint may be incorrect or the storefront may not be properly configured.'
+      }
+      
       return res.status(200).json({
         products: [],
-        message: `Fourthwall API error: ${response.status} ${response.statusText}. Check your storefront token.`,
+        message: errorMessage,
         error: errorText.substring(0, 200), // Include first 200 chars of error for debugging
       })
     }
