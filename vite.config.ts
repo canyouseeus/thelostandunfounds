@@ -47,6 +47,30 @@ export default defineConfig({
           });
         },
       },
+      // Proxy API routes to production Vercel deployment for local development
+      // Note: API routes only work as serverless functions when deployed to Vercel
+      // For full API functionality in local dev, use: npx vercel dev
+      '/api/fourthwall': {
+        target: process.env.VERCEL_URL 
+          ? `https://${process.env.VERCEL_URL}` 
+          : 'https://thelostandunfounds.com',
+        changeOrigin: true,
+        secure: true,
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, res) => {
+            console.warn('⚠️ API proxy error (API routes only work in production or with `vercel dev`):', err.message);
+            if (!res.headersSent) {
+              res.writeHead(503, {
+                'Content-Type': 'application/json',
+              });
+              res.end(JSON.stringify({ 
+                products: [],
+                message: 'API routes only work in production deployment or when using `npx vercel dev` for local development'
+              }));
+            }
+          });
+        },
+      },
     },
   },
   build: {

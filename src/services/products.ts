@@ -8,18 +8,18 @@ import type { FourthwallProduct } from './fourthwall'
 
 export interface Product {
   id: string
-  title: string
+  title: string // Maps to 'name' in database
   description?: string
   price: number
   compare_at_price?: number
-  currency: string
+  currency?: string // Not in database schema, defaults to USD
   image_url?: string
   images: string[]
-  handle: string
-  available: boolean
-  fourthwall_product_id?: string
-  fourthwall_url?: string
-  created_by?: string
+  handle: string // Maps to 'slug' in database
+  available: boolean // Maps to status === 'active' in database
+  fourthwall_product_id?: string // Not in database schema
+  fourthwall_url?: string // Not in database schema
+  created_by?: string // Not in database schema
   created_at?: string
   updated_at?: string
 }
@@ -53,10 +53,11 @@ class ProductsService {
         return { products: [], error: null }
       }
 
+      // Map database schema (name, slug, status) to service interface (title, handle, available)
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .eq('available', true)
+        .eq('status', 'active') // Database uses 'status' field, not 'available'
         .order('created_at', { ascending: false })
 
       if (error) {
@@ -67,7 +68,26 @@ class ProductsService {
         throw error
       }
 
-      return { products: (data || []) as Product[], error: null }
+      // Map database schema to service interface
+      const products = (data || []).map((dbProduct: any) => ({
+        id: dbProduct.id,
+        title: dbProduct.name || dbProduct.title || '',
+        description: dbProduct.description,
+        price: parseFloat(dbProduct.price) || 0,
+        compare_at_price: dbProduct.compare_at_price ? parseFloat(dbProduct.compare_at_price) : undefined,
+        currency: 'USD', // Default currency
+        image_url: dbProduct.images?.[0],
+        images: dbProduct.images || [],
+        handle: dbProduct.slug || dbProduct.handle || '',
+        available: dbProduct.status === 'active',
+        fourthwall_product_id: dbProduct.fourthwall_product_id,
+        fourthwall_url: dbProduct.fourthwall_url,
+        created_by: dbProduct.created_by,
+        created_at: dbProduct.created_at,
+        updated_at: dbProduct.updated_at,
+      })) as Product[]
+
+      return { products, error: null }
     } catch (error) {
       // Only log unexpected errors
       const err = error as Error
