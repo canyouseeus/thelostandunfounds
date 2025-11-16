@@ -338,46 +338,89 @@ export default async function handler(
           // First, try standard collection endpoint
           let foundProducts = false
           
-          // Try each possible handle format
-          for (const handle of uniqueHandles) {
-            if (handle) {
-              try {
-                const offersUrl = `${baseUrl}/v1/collections/${handle}/offers?storefront_token=${storefrontToken}`
-                console.log(`Trying to fetch from collection handle: ${handle}`)
-                const offersResponse = await fetch(offersUrl, {
-                  headers: { 'Accept': 'application/json' },
-                })
+          // CRITICAL FIX: Try collection ID first (API likely requires ID, not handle)
+          if (collection.id) {
+            try {
+              const offersUrlById = `${baseUrl}/v1/collections/${collection.id}/offers?storefront_token=${storefrontToken}`
+              console.log(`Trying to fetch from collection ID: ${collection.id}`)
+              const offersResponseById = await fetch(offersUrlById, {
+                headers: { 'Accept': 'application/json' },
+              })
+              
+              if (offersResponseById.ok) {
+                const offersData = await offersResponseById.json()
+                const offers = Array.isArray(offersData) ? offersData : (offersData.offers || offersData.data || [])
                 
-                if (offersResponse.ok) {
-                  const offersData = await offersResponse.json()
-                  const offers = Array.isArray(offersData) ? offersData : (offersData.offers || [])
+                if (offers.length > 0) {
+                  collectionHandle = collection.id
+                  allOffers.push(...offers)
+                  foundProducts = true
                   
-                  if (offers.length > 0) {
-                    collectionHandle = handle
-                    allOffers.push(...offers)
-                    foundProducts = true
-                    
-                    // Step 3: Log collection metadata
-                    const collectionName = collection.name || collection.title || 'Unknown'
-                    const collectionStatus = collection.status || collection.visibility || 'unknown'
-                    collectionMetadata.push({
-                      name: collectionName,
-                      handle: handle,
-                      status: collectionStatus,
-                      productCount: offers.length
-                    })
-                    
-                    console.log(`✓ Collection "${collectionName}" (handle: ${handle}): Found ${offers.length} products`)
-                    break // Success, move to next collection
-                  } else {
-                    console.log(`Collection handle ${handle} returned 0 products`)
-                  }
+                  const collectionName = collection.name || collection.title || 'Unknown'
+                  const collectionStatus = collection.status || collection.visibility || 'unknown'
+                  collectionMetadata.push({
+                    name: collectionName,
+                    handle: collection.slug || collection.id,
+                    status: collectionStatus,
+                    productCount: offers.length
+                  })
+                  
+                  console.log(`✓ Collection "${collectionName}" (ID: ${collection.id}): Found ${offers.length} products`)
+                  // Success with ID, skip trying handles
                 } else {
-                  const errorText = await offersResponse.text().catch(() => '')
-                  console.log(`Collection handle ${handle} returned ${offersResponse.status}: ${errorText.substring(0, 200)}`)
+                  console.log(`Collection ID ${collection.id} returned 0 products`)
                 }
-              } catch (err) {
-                console.warn(`Failed to fetch from collection handle ${handle}:`, err)
+              } else {
+                const errorText = await offersResponseById.text().catch(() => '')
+                console.log(`Collection ID ${collection.id} returned ${offersResponseById.status}: ${errorText.substring(0, 200)}`)
+              }
+            } catch (err) {
+              console.warn(`Failed to fetch from collection ID ${collection.id}:`, err)
+            }
+          }
+          
+          // Fallback: Try each possible handle format if ID didn't work
+          if (!foundProducts) {
+            for (const handle of uniqueHandles) {
+              if (handle) {
+                try {
+                  const offersUrl = `${baseUrl}/v1/collections/${handle}/offers?storefront_token=${storefrontToken}`
+                  console.log(`Trying to fetch from collection handle: ${handle}`)
+                  const offersResponse = await fetch(offersUrl, {
+                    headers: { 'Accept': 'application/json' },
+                  })
+                  
+                  if (offersResponse.ok) {
+                    const offersData = await offersResponse.json()
+                    const offers = Array.isArray(offersData) ? offersData : (offersData.offers || offersData.data || [])
+                    
+                    if (offers.length > 0) {
+                      collectionHandle = handle
+                      allOffers.push(...offers)
+                      foundProducts = true
+                      
+                      // Step 3: Log collection metadata
+                      const collectionName = collection.name || collection.title || 'Unknown'
+                      const collectionStatus = collection.status || collection.visibility || 'unknown'
+                      collectionMetadata.push({
+                        name: collectionName,
+                        handle: handle,
+                        status: collectionStatus,
+                        productCount: offers.length
+                      })
+                      
+                      console.log(`✓ Collection "${collectionName}" (handle: ${handle}): Found ${offers.length} products`)
+                      break // Success, move to next collection
+                    } else {
+                      console.log(`Collection handle ${handle} returned 0 products`)
+                    }
+                  } else {
+                    const errorText = await offersResponse.text().catch(() => '')
+                    console.log(`Collection handle ${handle} returned ${offersResponse.status}: ${errorText.substring(0, 200)}`)
+                  }
+                } catch (err) {
+                  console.warn(`Failed to fetch from collection handle ${handle}:`, err)
+                }
               }
             }
           }
