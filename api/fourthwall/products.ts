@@ -268,11 +268,34 @@ export default async function handler(
           console.log(`Collection "${collection.name || collection.title}" full object:`, JSON.stringify(collection))
           
           // Step 3: Try multiple handle formats based on common Fourthwall patterns
+          // Step 1: Add 'classic' as primary handle (highest priority)
           const possibleHandles = [
+            // Known handle for this collection - try first!
+            'classic',
+            // Extract handle from URL if available
+            collection.url ? (() => {
+              try {
+                const url = new URL(collection.url)
+                const handle = url.pathname.split('/collections/')[1]?.split('/')[0]
+                return handle || null
+              } catch {
+                return null
+              }
+            })() : null,
+            collection.permalink ? (() => {
+              try {
+                const handle = collection.permalink.split('/collections/')[1]?.split('/')[0]
+                return handle || null
+              } catch {
+                return null
+              }
+            })() : null,
+            // Step 3: Detect "classic" in collection name
+            collection.name?.toLowerCase().match(/classic/i) ? 'classic' : null,
+            collection.title?.toLowerCase().match(/classic/i) ? 'classic' : null,
             // Standard fields
             collection.handle,
             collection.slug,
-            collection.permalink,
             collection.url_slug,
             collection.collection_handle,
             collection.collection_slug,
