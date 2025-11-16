@@ -46,12 +46,36 @@ class FourthwallService {
       const response = await fetch(`/api/fourthwall/products`)
       
       if (!response.ok) {
-        throw new Error(`Failed to fetch products: ${response.statusText}`)
+        const errorText = await response.text().catch(() => response.statusText)
+        const errorData = (() => {
+          try {
+            return JSON.parse(errorText)
+          } catch {
+            return { message: errorText }
+          }
+        })()
+        
+        const errorMessage = errorData.message || errorData.error || `Failed to fetch products: ${response.status} ${response.statusText}`
+        return { products: [], error: new Error(errorMessage) }
       }
 
       const data = await response.json()
+      
+      // Check if API returned an error message
+      if (data.error || data.message) {
+        const errorMessage = data.error || data.message
+        if (errorMessage.includes('not configured') || errorMessage.includes('token')) {
+          // Don't log as error if it's just a configuration issue
+          return { products: [], error: new Error(errorMessage) }
+        }
+      }
+      
       return { products: data.products || [], error: null }
     } catch (error) {
+      // Only log unexpected errors, not network/CORS issues
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        return { products: [], error: new Error('Network error: Unable to reach API') }
+      }
       console.error('Error fetching Fourthwall products:', error)
       return { products: [], error: error as Error }
     }

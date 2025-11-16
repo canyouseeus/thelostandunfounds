@@ -49,7 +49,8 @@ class ProductsService {
   async getProducts(): Promise<{ products: Product[]; error: Error | null }> {
     try {
       if (!supabase) {
-        return { products: [], error: new Error('Supabase client not initialized') }
+        // Don't log as error - Supabase might not be configured
+        return { products: [], error: null }
       }
 
       const { data, error } = await supabase
@@ -58,12 +59,22 @@ class ProductsService {
         .eq('available', true)
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        // Don't log RLS or table not found errors as they're expected in some cases
+        if (error.code === 'PGRST116' || error.message.includes('does not exist')) {
+          return { products: [], error: null }
+        }
+        throw error
+      }
 
       return { products: (data || []) as Product[], error: null }
     } catch (error) {
-      console.error('Error fetching products:', error)
-      return { products: [], error: error as Error }
+      // Only log unexpected errors
+      const err = error as Error
+      if (!err.message?.includes('does not exist') && !err.message?.includes('permission denied')) {
+        console.error('Error fetching products:', error)
+      }
+      return { products: [], error: err }
     }
   }
 
