@@ -23,7 +23,9 @@ export default async function handler(
 
   try {
     const storefrontToken = process.env.FOURTHWALL_STOREFRONT_TOKEN
+    // Step 2: Support query parameter for direct collection fetching
     const collectionHandle = req.query.collection as string | undefined
+    console.log('Collection handle from query:', collectionHandle)
     
     if (!storefrontToken) {
       console.error('FOURTHWALL_STOREFRONT_TOKEN not configured')
@@ -74,15 +76,86 @@ export default async function handler(
         },
       })
       
+      // Step 3: Improved error handling for collections API
+      if (!collectionsResponse.ok) {
+        const errorText = await collectionsResponse.text()
+        console.error(`Collections API error: ${collectionsResponse.status} ${collectionsResponse.statusText}`)
+        console.error(`Collections API error response (first 1000 chars):`, errorText.substring(0, 1000))
+        return res.status(200).json({
+          products: [],
+          error: `Failed to fetch collections: ${collectionsResponse.status}`,
+          message: `Collections API returned ${collectionsResponse.status}. Response: ${errorText.substring(0, 200)}`,
+          errorDetails: errorText.substring(0, 500),
+        })
+      }
+      
       if (collectionsResponse.ok) {
         const collectionsData = await collectionsResponse.json()
-        console.log('Collections API response:', JSON.stringify(collectionsData).substring(0, 500))
-        const collections = Array.isArray(collectionsData) ? collectionsData : (collectionsData.collections || collectionsData.data || [])
-        console.log(`Found ${collections.length} collections, fetching offers from each...`)
         
+        // Step 1: Enhanced Collections API Response Parsing
+        // Log the full response structure for debugging
+        console.log('Collections API response type:', Array.isArray(collectionsData) ? 'array' : typeof collectionsData)
+        console.log('Collections API response keys:', Array.isArray(collectionsData) ? `Array with ${collectionsData.length} items` : Object.keys(collectionsData))
+        console.log('Collections API response (first 1000 chars):', JSON.stringify(collectionsData).substring(0, 1000))
+        
+        // Try multiple response format parsings
+        let collections: any[] = []
+        
+        // Format 1: Array directly
+        if (Array.isArray(collectionsData)) {
+          collections = collectionsData
+          console.log('Parsed collections as direct array')
+        }
+        // Format 2: Nested object with collections key
+        else if (collectionsData.collections && Array.isArray(collectionsData.collections)) {
+          collections = collectionsData.collections
+          console.log('Parsed collections from collectionsData.collections')
+        }
+        // Format 3: Data wrapper
+        else if (collectionsData.data && Array.isArray(collectionsData.data)) {
+          collections = collectionsData.data
+          console.log('Parsed collections from collectionsData.data')
+        }
+        // Format 4: Items wrapper
+        else if (collectionsData.items && Array.isArray(collectionsData.items)) {
+          collections = collectionsData.items
+          console.log('Parsed collections from collectionsData.items')
+        }
+        // Format 5: Check for nested structure
+        else if (collectionsData.results && Array.isArray(collectionsData.results)) {
+          collections = collectionsData.results
+          console.log('Parsed collections from collectionsData.results')
+        }
+        // Format 6: Check if it's a single collection object wrapped
+        else if (collectionsData.id || collectionsData.handle || collectionsData.slug) {
+          collections = [collectionsData]
+          console.log('Parsed single collection object')
+        }
+        
+        console.log(`Found ${collections.length} collections after parsing`)
+        
+        // Log collection structure details
+        if (collections.length > 0) {
+          console.log('First collection structure:', JSON.stringify(collections[0]).substring(0, 500))
+          collections.forEach((collection, index) => {
+            console.log(`Collection ${index + 1}:`, {
+              id: collection.id,
+              handle: collection.handle,
+              slug: collection.slug,
+              name: collection.name || collection.title,
+              hasProducts: !!collection.products,
+              productCount: collection.products?.length || collection.product_count || 'unknown'
+            })
+          })
+        }
+        
+        console.log(`Processing ${collections.length} collections, fetching offers from each...`)
+        
+        // Step 2: Add Direct Collection Fetching
         // If no collections but response was OK, try fetching all products directly
         if (collections.length === 0) {
-          console.log('No collections found, trying alternative endpoints...')
+          console.log('No collections found in response, trying alternative approaches...')
+          
           // Try shop feed endpoint
           const shopFeedUrl = `${baseUrl}/v1/shop/feed?storefront_token=${storefrontToken}`
           const shopFeedResponse = await fetch(shopFeedUrl, {
@@ -122,29 +195,145 @@ export default async function handler(
               })
             }
           }
-        }
-        
-        // Fetch offers from all collections
-        const allOffers: any[] = []
-        for (const collection of collections) {
-          const collectionHandle = collection.handle || collection.slug || collection.id
-          if (collectionHandle) {
+          
+          // Try common collection handle formats as fallback
+          const commonHandles = [
+            'classic',
+            'the-lost-unfounds-classic-collection',
+            'the-lost-unfounds-classic',
+            'lost-unfounds-classic',
+            'classic-collection'
+          ]
+          
+          console.log('Trying common collection handles:', commonHandles)
+          for (const handle of commonHandles) {
             try {
-              const offersUrl = `${baseUrl}/v1/collections/${collectionHandle}/offers?storefront_token=${storefrontToken}`
-              const offersResponse = await fetch(offersUrl, {
+              const testUrl = `${baseUrl}/v1/collections/${handle}/offers?storefront_token=${storefrontToken}`
+              console.log(`Trying collection handle: ${handle}`)
+              const testResponse = await fetch(testUrl, {
                 headers: { 'Accept': 'application/json' },
               })
-              if (offersResponse.ok) {
-                const offersData = await offersResponse.json()
-                const offers = Array.isArray(offersData) ? offersData : (offersData.offers || [])
-                allOffers.push(...offers)
-                console.log(`Collection ${collectionHandle}: ${offers.length} offers`)
+              
+              if (testResponse.ok) {
+                const testData = await testResponse.json()
+                const testOffers = Array.isArray(testData) ? testData : (testData.offers || [])
+                if (testOffers.length > 0) {
+                  console.log(`Found ${testOffers.length} products using handle: ${handle}`)
+                  const transformedProducts = testOffers.map((offer: any) => {
+                    const variant = offer.variants && offer.variants.length > 0 ? offer.variants[0] : null
+                    const price = variant?.unitPrice?.value || 0
+                    const currency = variant?.unitPrice?.currency || 'USD'
+                    const compareAtPrice = variant?.compareAtPrice?.value
+                    
+                    return {
+                      id: offer.id || offer.slug || '',
+                      title: offer.name || offer.title || 'Untitled Product',
+                      description: offer.description || '',
+                      price: price,
+                      compareAtPrice: compareAtPrice,
+                      currency: currency,
+                      images: offer.images || (offer.image ? [offer.image] : []),
+                      handle: offer.slug || offer.handle || offer.id || '',
+                      available: offer.available !== false,
+                      variants: offer.variants || [],
+                      url: `https://thelostandunfounds-shop.fourthwall.com/products/${offer.slug || offer.handle || offer.id}`,
+                    }
+                  })
+                  
+                  return res.status(200).json({
+                    products: transformedProducts,
+                    collectionHandle: handle,
+                  })
+                }
+              } else {
+                console.log(`Handle ${handle} returned ${testResponse.status}`)
               }
             } catch (err) {
-              console.warn(`Failed to fetch offers from collection ${collectionHandle}:`, err)
+              console.warn(`Failed to test handle ${handle}:`, err)
             }
           }
         }
+        
+        // Step 3 & 4: Fetch offers from all collections with improved handle detection
+        const allOffers: any[] = []
+        const collectionMetadata: Array<{name: string, handle: string, status: string, productCount: number}> = []
+        
+        for (const collection of collections) {
+          // Step 4: Extract collection handle from various possible fields
+          let collectionHandle: string | null = null
+          const possibleHandles = [
+            collection.handle,
+            collection.slug,
+            collection.id,
+            collection.collection_handle,
+            collection.collection_slug,
+            // Convert name/title to handle format
+            collection.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+            collection.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+          ].filter(Boolean) as string[]
+          
+          // Try each possible handle format
+          for (const handle of possibleHandles) {
+            if (handle) {
+              try {
+                const offersUrl = `${baseUrl}/v1/collections/${handle}/offers?storefront_token=${storefrontToken}`
+                console.log(`Trying to fetch from collection handle: ${handle}`)
+                const offersResponse = await fetch(offersUrl, {
+                  headers: { 'Accept': 'application/json' },
+                })
+                
+                if (offersResponse.ok) {
+                  const offersData = await offersResponse.json()
+                  const offers = Array.isArray(offersData) ? offersData : (offersData.offers || [])
+                  
+                  if (offers.length > 0) {
+                    collectionHandle = handle
+                    allOffers.push(...offers)
+                    
+                    // Step 3: Log collection metadata
+                    const collectionName = collection.name || collection.title || 'Unknown'
+                    const collectionStatus = collection.status || collection.visibility || 'unknown'
+                    collectionMetadata.push({
+                      name: collectionName,
+                      handle: handle,
+                      status: collectionStatus,
+                      productCount: offers.length
+                    })
+                    
+                    console.log(`✓ Collection "${collectionName}" (handle: ${handle}): Found ${offers.length} products`)
+                    break // Success, move to next collection
+                  } else {
+                    console.log(`Collection handle ${handle} returned 0 products`)
+                  }
+                } else {
+                  console.log(`Collection handle ${handle} returned ${offersResponse.status}`)
+                }
+              } catch (err) {
+                console.warn(`Failed to fetch from collection handle ${handle}:`, err)
+              }
+            }
+          }
+          
+          // Step 3: Log if no handle worked
+          if (!collectionHandle) {
+            const collectionName = collection.name || collection.title || 'Unknown'
+            console.warn(`⚠ Could not fetch products from collection "${collectionName}". Tried handles:`, possibleHandles)
+            collectionMetadata.push({
+              name: collectionName,
+              handle: possibleHandles[0] || 'unknown',
+              status: collection.status || 'unknown',
+              productCount: 0
+            })
+          }
+        }
+        
+        // Step 3: Log summary
+        console.log('Collection fetch summary:', {
+          totalCollections: collections.length,
+          successfulCollections: collectionMetadata.filter(c => c.productCount > 0).length,
+          totalProducts: allOffers.length,
+          collections: collectionMetadata
+        })
         
         // Return combined offers
         const transformedProducts = allOffers.map((offer: any) => {
@@ -171,6 +360,8 @@ export default async function handler(
         console.log(`Fourthwall API: Returning ${transformedProducts.length} products from collections`)
         return res.status(200).json({
           products: transformedProducts,
+          collections: collectionMetadata,
+          totalCollections: collections.length,
         })
       }
     }

@@ -47,6 +47,20 @@ export default function Shop() {
         productsCount: localResult.products?.length || 0,
         hasError: !!localResult.error,
       })
+      
+      // Step 5: Extract collection info from API response if available
+      let collectionInfo: string | null = null
+      try {
+        const apiResponse = await fetch('/api/fourthwall/products').then(r => r.json()).catch(() => null)
+        if (apiResponse?.collections && Array.isArray(apiResponse.collections)) {
+          const collections = apiResponse.collections
+          if (collections.length > 0) {
+            collectionInfo = `Found ${collections.length} collection(s): ${collections.map((c: any) => `${c.name} (${c.productCount} products)`).join(', ')}`
+          }
+        }
+      } catch (e) {
+        // Ignore errors when fetching collection info
+      }
 
       const combinedProducts: CombinedProduct[] = []
 
@@ -78,7 +92,7 @@ export default function Shop() {
           description: p.description,
           price: p.price,
           compareAtPrice: p.compare_at_price,
-          currency: p.currency,
+          currency: p.currency || 'USD',
           images: p.images.length > 0 ? p.images : (p.image_url ? [p.image_url] : []),
           handle: p.handle,
           available: p.available,
@@ -91,14 +105,19 @@ export default function Shop() {
       setProducts(combinedProducts)
       console.log(`Total products loaded: ${combinedProducts.length}`)
 
-      // Show error messages - always show Fourthwall errors for debugging
+      // Step 5: Show error messages with collection info
       if (fourthwallResult.error && localResult.error) {
-        setError(`Failed to load products from both sources. Fourthwall: ${fourthwallResult.error.message}`)
+        const errorMsg = `Failed to load products from both sources. Fourthwall: ${fourthwallResult.error.message}`
+        setError(collectionInfo ? `${errorMsg}\n\n${collectionInfo}` : errorMsg)
       } else if (fourthwallResult.error) {
         // Always show Fourthwall error, even if local products exist
-        setError(`Fourthwall products unavailable: ${fourthwallResult.error.message}`)
+        const errorMsg = `Fourthwall products unavailable: ${fourthwallResult.error.message}`
+        setError(collectionInfo ? `${errorMsg}\n\n${collectionInfo}` : errorMsg)
       } else if (localResult.error && combinedProducts.length === 0) {
         setError(`Failed to load local products: ${localResult.error.message}`)
+      } else if (collectionInfo && combinedProducts.length === 0) {
+        // Show collection info even if no products loaded
+        setError(`No products found. ${collectionInfo}`)
       }
     } catch (err) {
       console.error('Error loading products:', err)
@@ -151,13 +170,19 @@ export default function Shop() {
       {/* Error State */}
       {error && (
         <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-4 mb-8">
-          <p className="text-red-400 text-sm">{error}</p>
+          <p className="text-red-400 text-sm whitespace-pre-line">{error}</p>
           <p className="text-white/60 text-xs mt-2">
             {error.includes('vercel dev') || error.includes('production') ? (
               <>
                 <strong>Local Development:</strong> API routes only work in production or when using <code className="bg-white/10 px-1 rounded">npx vercel dev</code>.
                 <br />
                 To test the shop locally, either deploy to Vercel or run: <code className="bg-white/10 px-1 rounded">npx vercel dev</code>
+              </>
+            ) : error.includes('collection') || error.includes('Collection') ? (
+              <>
+                <strong>Collection Info:</strong> Check Vercel function logs to see collection details and handles.
+                <br />
+                If collections exist but products aren't loading, verify the collection handle format matches the API requirements.
               </>
             ) : (
               'Note: You may need to configure API access in your Fourthwall developer settings.'
