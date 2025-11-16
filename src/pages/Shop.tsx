@@ -177,20 +177,11 @@ export default function Shop() {
       {/* Header */}
       <div className="text-center mb-12">
         <h1 className="text-5xl font-bold text-white mb-4">
-          Shop
+          SHOP
         </h1>
         <p className="text-xl text-white/80 mb-6">
           Discover our collection
         </p>
-        <a
-          href={fourthwallService.getStoreUrl()}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors text-sm"
-        >
-          View full store on Fourthwall
-          <ExternalLink className="w-4 h-4" />
-        </a>
       </div>
 
       {/* Error State */}
