@@ -136,7 +136,7 @@ export default async function handler(
         
         // Log collection structure details
         if (collections.length > 0) {
-          console.log('First collection structure:', JSON.stringify(collections[0]).substring(0, 500))
+          console.log('First collection structure (full):', JSON.stringify(collections[0]))
           collections.forEach((collection, index) => {
             console.log(`Collection ${index + 1}:`, {
               id: collection.id,
@@ -144,7 +144,8 @@ export default async function handler(
               slug: collection.slug,
               name: collection.name || collection.title,
               hasProducts: !!collection.products,
-              productCount: collection.products?.length || collection.product_count || 'unknown'
+              productCount: collection.products?.length || collection.product_count || 'unknown',
+              allKeys: Object.keys(collection)
             })
           })
         }
@@ -261,16 +262,34 @@ export default async function handler(
         for (const collection of collections) {
           // Step 4: Extract collection handle from various possible fields
           let collectionHandle: string | null = null
+          
+          // Log all available fields for debugging
+          console.log(`Collection "${collection.name || collection.title}" available fields:`, Object.keys(collection))
+          console.log(`Collection "${collection.name || collection.title}" full object:`, JSON.stringify(collection))
+          
           const possibleHandles = [
             collection.handle,
             collection.slug,
             collection.id,
             collection.collection_handle,
             collection.collection_slug,
-            // Convert name/title to handle format
-            collection.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
-            collection.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+            collection.collection_id,
+            // Try ID without prefix if it starts with col_
+            collection.id?.startsWith('col_') ? collection.id.replace('col_', '') : null,
+            // Convert name/title to handle format (clean version)
+            collection.name?.toLowerCase()
+              .replace(/&#43;/g, '-plus-')
+              .replace(/&#34;/g, '')
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/^-+|-+$/g, ''),
+            collection.title?.toLowerCase()
+              .replace(/&#43;/g, '-plus-')
+              .replace(/&#34;/g, '')
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/^-+|-+$/g, ''),
           ].filter(Boolean) as string[]
+          
+          console.log(`Trying handles for "${collection.name || collection.title}":`, possibleHandles)
           
           // Try each possible handle format
           for (const handle of possibleHandles) {
