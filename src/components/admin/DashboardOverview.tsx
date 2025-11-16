@@ -72,29 +72,59 @@ export default function DashboardOverview() {
         }),
         supabase.from('tool_usage').select('*', { count: 'exact', head: true }).then(r => {
           if (r.error) {
-            console.error('❌ Error loading tool_usage:', r.error);
+            console.error('❌ Error loading tool_usage:', {
+              code: r.error.code,
+              message: r.error.message,
+              details: r.error,
+              status: r.error.status || r.error.statusCode,
+              hint: r.error.hint,
+            });
           }
           return r;
         }).catch((err) => {
-          console.error('❌ Error loading tool_usage:', err);
+          console.error('❌ Error loading tool_usage:', {
+            message: err.message,
+            stack: err.stack,
+            details: err,
+          });
           return { count: 0, error: err };
         }),
         supabase.from('products').select('status').then(r => {
           if (r.error) {
-            console.error('❌ Error loading products:', r.error);
+            console.error('❌ Error loading products:', {
+              code: r.error.code,
+              message: r.error.message,
+              details: r.error,
+              status: r.error.status || r.error.statusCode,
+              hint: r.error.hint,
+            });
           }
           return r;
         }).catch((err) => {
-          console.error('❌ Error loading products:', err);
+          console.error('❌ Error loading products:', {
+            message: err.message,
+            stack: err.stack,
+            details: err,
+          });
           return { data: [], error: err };
         }),
         supabase.from('blog_posts').select('status').then(r => {
           if (r.error) {
-            console.error('❌ Error loading blog_posts:', r.error);
+            console.error('❌ Error loading blog_posts:', {
+              code: r.error.code,
+              message: r.error.message,
+              details: r.error,
+              status: r.error.status || r.error.statusCode,
+              hint: r.error.hint,
+            });
           }
           return r;
         }).catch((err) => {
-          console.error('❌ Error loading blog_posts:', err);
+          console.error('❌ Error loading blog_posts:', {
+            message: err.message,
+            stack: err.stack,
+            details: err,
+          });
           return { data: [], error: err };
         }),
         supabase.from('tasks').select('status').then(r => {
