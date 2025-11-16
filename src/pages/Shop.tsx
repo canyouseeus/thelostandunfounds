@@ -150,6 +150,20 @@ export default function Shop() {
     }).format(price)
   }
 
+  /**
+   * Strip HTML tags from description and decode entities
+   */
+  const cleanDescription = (description: string | undefined): string => {
+    if (!description) return ''
+    // Create a temporary div to parse HTML and extract text
+    const tempDiv = document.createElement('div')
+    tempDiv.innerHTML = description
+    // Get text content and replace multiple spaces/newlines with single space
+    return tempDiv.textContent || tempDiv.innerText || ''
+      .replace(/\s+/g, ' ')
+      .trim()
+  }
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -270,7 +284,7 @@ export default function Shop() {
                 
                 {product.description && (
                   <p className="text-white/60 text-sm mb-3 line-clamp-2 flex-grow">
-                    {product.description}
+                    {cleanDescription(product.description)}
                   </p>
                 )}
 
