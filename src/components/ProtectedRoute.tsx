@@ -24,16 +24,14 @@ export default function ProtectedRoute({ children, requireAdmin = false }: Prote
     );
   }
 
-  if (!user) {
+  // For admin routes, let the Admin component handle the login prompt
+  // For other protected routes, redirect to home if not authenticated
+  if (!user && !requireAdmin) {
     return <Navigate to="/" replace />;
   }
 
-  if (requireAdmin) {
-    // Admin check will be done in the Admin component itself
-    // This just ensures user is authenticated
-    return <>{children}</>;
-  }
-
+  // For admin routes, always render children (Admin component will handle auth)
+  // For other routes, render children if authenticated
   return <>{children}</>;
 }
 
