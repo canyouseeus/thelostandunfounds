@@ -24,25 +24,34 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
   // Redirect admin users after successful login
   useEffect(() => {
-    if (justSignedIn && user && isAdminEmail(user.email || '')) {
+    if (justSignedIn && user) {
       const checkAndRedirect = async () => {
         try {
           const adminStatus = await isAdmin();
           if (adminStatus) {
-            navigate('/admin');
+            // Check if we came from admin page
+            const fromAdmin = window.location.pathname === '/admin' || 
+                            document.referrer.includes('/admin');
+            if (fromAdmin) {
+              navigate('/admin');
+            } else {
+              navigate('/admin');
+            }
             setJustSignedIn(false);
+            onClose();
           }
         } catch (error) {
           // If admin check fails but email matches, still redirect
           if (isAdminEmail(user.email || '')) {
             navigate('/admin');
             setJustSignedIn(false);
+            onClose();
           }
         }
       };
       checkAndRedirect();
     }
-  }, [user, justSignedIn, navigate]);
+  }, [user, justSignedIn, navigate, onClose]);
 
   if (!isOpen) return null;
 

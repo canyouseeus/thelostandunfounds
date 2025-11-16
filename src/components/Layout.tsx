@@ -105,7 +105,6 @@ export default function Layout() {
             <Link to="/" className="flex items-center text-white hover:text-white/80 transition">
               <span className="text-xl font-bold">THE LOST+UNFOUNDS</span>
             </Link>
-            {!isHome && (
             <div className="flex items-center space-x-4">
               <div className="header-nav" ref={menuRef}>
                 <button 
@@ -137,6 +136,13 @@ export default function Layout() {
                     onClick={() => setMenuOpen(false)}
                   >
                     Documentation
+                  </Link>
+                  <Link 
+                    to="/shop" 
+                    className="menu-item"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Shop
                   </Link>
                   <Link 
                     to="/pricing" 
@@ -254,7 +260,6 @@ export default function Layout() {
                 </div>
               </div>
             </div>
-            )}
           </div>
           {/* Logo centered below */}
           <div className="flex justify-center pb-3">

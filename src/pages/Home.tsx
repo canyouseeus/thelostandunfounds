@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { ArrowRight, ShoppingBag, Wrench, DollarSign } from 'lucide-react'
 import EmailSignup from '../components/EmailSignup'
 
 export default function Home() {
@@ -48,9 +49,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
-      <main className="flex-1 flex items-center justify-center">
-        <div className="text-center">
-          <div className="center-text">
+      <main className="flex-1 flex items-center justify-center px-4">
+        <div className="text-center w-full max-w-4xl">
+          <div className="center-text mb-8">
             {displayedText}
             <span 
               className="typing-cursor"
@@ -62,8 +63,39 @@ export default function Home() {
               |
             </span>
           </div>
-          <div className="mt-12 flex justify-center">
+          
+          <div className="mt-12 flex justify-center mb-8">
             <EmailSignup />
+          </div>
+
+          {/* Navigation Links */}
+          <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
+            <Link
+              to="/tools"
+              className="group bg-black border border-white/10 rounded-lg px-6 py-4 hover:border-white/30 transition-all duration-300 flex flex-col items-center gap-2"
+            >
+              <Wrench className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
+              <span className="text-white font-semibold">Explore Tools</span>
+              <ArrowRight className="w-4 h-4 text-white/50 group-hover:text-white/80 group-hover:translate-x-1 transition-all" />
+            </Link>
+            
+            <Link
+              to="/shop"
+              className="group bg-black border border-white/10 rounded-lg px-6 py-4 hover:border-white/30 transition-all duration-300 flex flex-col items-center gap-2"
+            >
+              <ShoppingBag className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
+              <span className="text-white font-semibold">Shop</span>
+              <ArrowRight className="w-4 h-4 text-white/50 group-hover:text-white/80 group-hover:translate-x-1 transition-all" />
+            </Link>
+            
+            <Link
+              to="/pricing"
+              className="group bg-black border border-white/10 rounded-lg px-6 py-4 hover:border-white/30 transition-all duration-300 flex flex-col items-center gap-2"
+            >
+              <DollarSign className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
+              <span className="text-white font-semibold">Pricing</span>
+              <ArrowRight className="w-4 h-4 text-white/50 group-hover:text-white/80 group-hover:translate-x-1 transition-all" />
+            </Link>
           </div>
         </div>
       </main>

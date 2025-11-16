@@ -9,19 +9,38 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
 import { isAdmin } from '../utils/admin';
 import { supabase } from '../lib/supabase';
+import AuthModal from '../components/auth/AuthModal';
 import { 
-  Users, 
   Shield, 
-  BarChart3, 
-  Settings, 
-  Activity,
-  TrendingUp,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  Loader
+  FileText,
+  ShoppingBag,
+  Users,
+  Settings,
+  Wrench,
+  BarChart3,
+  BookOpen,
+  CheckSquare,
+  Lightbulb,
+  HelpCircle,
+  Code,
+  LayoutDashboard,
+  Key,
+  ChevronLeft,
+  ChevronRight,
+  X
 } from 'lucide-react';
 import { LoadingSpinner } from '../components/Loading';
+import DashboardOverview from '../components/admin/DashboardOverview';
+import BlogPostManagement from '../components/admin/BlogPostManagement';
+import ProductManagement from '../components/admin/ProductManagement';
+import AffiliateManagement from '../components/admin/AffiliateManagement';
+import DailyJournal from '../components/admin/DailyJournal';
+import TaskManagement from '../components/admin/TaskManagement';
+import IdeaBoard from '../components/admin/IdeaBoard';
+import HelpCenter from '../components/admin/HelpCenter';
+import DeveloperTools from '../components/admin/DeveloperTools';
+import AnalyticsCarousel from '../components/admin/AnalyticsCarousel';
+import PasswordGenerator from '../components/admin/PasswordGenerator';
 
 interface DashboardStats {
   totalUsers: number;
@@ -30,24 +49,34 @@ interface DashboardStats {
   premiumUsers: number;
   proUsers: number;
   totalToolUsage: number;
+  totalRevenue?: number;
+  monthlyRevenue?: number;
+  totalProducts?: number;
+  totalBlogPosts?: number;
 }
 
-interface RecentUser {
-  id: string;
-  email: string;
-  tier: string;
-  created_at: string;
-}
+type AdminTab = 'dashboard' | 'blog' | 'products' | 'affiliates' | 'journal' | 'tasks' | 'ideas' | 'tools' | 'analytics' | 'help' | 'developer' | 'password' | 'settings';
 
 export default function Admin() {
   const { user, loading: authLoading } = useAuth();
-  const { success, error: showError } = useToast();
+  const { error: showError } = useToast();
   const navigate = useNavigate();
   const [adminStatus, setAdminStatus] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'subscriptions' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [overviewStats, setOverviewStats] = useState<{
+    tasks: { total: number; completed: number };
+    ideas: { total: number };
+    journal: { total: number };
+    affiliates: { total: number; active: number };
+  } | null>(null);
+  
+  // Browser-like tab history
+  const [tabHistory, setTabHistory] = useState<AdminTab[]>(['dashboard']);
+  const [historyIndex, setHistoryIndex] = useState(0);
+  const [openTabs, setOpenTabs] = useState<AdminTab[]>(['dashboard']);
 
   useEffect(() => {
     checkAdminAccess();
@@ -56,6 +85,7 @@ export default function Admin() {
   useEffect(() => {
     if (adminStatus === true) {
       loadDashboardData();
+      loadOverviewStats();
     }
   }, [adminStatus]);
 
@@ -63,7 +93,8 @@ export default function Admin() {
     if (authLoading) return;
     
     if (!user) {
-      navigate('/');
+      // Don't redirect - show login prompt instead
+      setLoading(false);
       return;
     }
 
@@ -83,10 +114,19 @@ export default function Admin() {
       const { data: usersData, error: usersError } = await supabase
         .from('platform_subscriptions')
         .select('user_id, tier, status')
-        .catch(() => ({ data: null, error: null }));
+        .then(r => {
+          if (r.error) {
+            console.error('❌ Error loading platform_subscriptions:', r.error);
+          }
+          return r;
+        })
+        .catch((err) => {
+          console.error('❌ Error loading platform_subscriptions:', err);
+          return { data: null, error: err };
+        });
 
-      if (usersError && usersError.code !== 'PGRST116') {
-        console.warn('Error loading subscriptions:', usersError);
+      if (usersError) {
+        console.error('❌ Error loading subscriptions:', usersError);
       }
 
       // Calculate stats
@@ -96,17 +136,65 @@ export default function Admin() {
       const premiumCount = activeSubs.filter(s => s.tier === 'premium').length;
       const proCount = activeSubs.filter(s => s.tier === 'pro').length;
 
-      // Get total users (approximate from auth.users)
+      // Get total users
       const { count: totalUsers } = await supabase
         .from('platform_subscriptions')
         .select('*', { count: 'exact', head: true })
-        .catch(() => ({ count: 0 })) as { count: number | null };
+        .then(r => {
+          if (r.error) {
+            console.error('❌ Error counting platform_subscriptions:', r.error);
+          }
+          return r;
+        })
+        .catch((err) => {
+          console.error('❌ Error counting platform_subscriptions:', err);
+          return { count: 0, error: err };
+        }) as { count: number | null };
 
       // Get tool usage stats
       const { count: toolUsage } = await supabase
         .from('tool_usage')
         .select('*', { count: 'exact', head: true })
-        .catch(() => ({ count: 0 })) as { count: number | null };
+        .then(r => {
+          if (r.error) {
+            console.error('❌ Error counting tool_usage:', r.error);
+          }
+          return r;
+        })
+        .catch((err) => {
+          console.error('❌ Error counting tool_usage:', err);
+          return { count: 0, error: err };
+        }) as { count: number | null };
+
+      // Get product count
+      const { count: productCount } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true })
+        .then(r => {
+          if (r.error) {
+            console.error('❌ Error counting products:', r.error);
+          }
+          return r;
+        })
+        .catch((err) => {
+          console.error('❌ Error counting products:', err);
+          return { count: 0, error: err };
+        }) as { count: number | null };
+
+      // Get blog post count
+      const { count: blogPostCount } = await supabase
+        .from('blog_posts')
+        .select('*', { count: 'exact', head: true })
+        .then(r => {
+          if (r.error) {
+            console.error('❌ Error counting blog_posts:', r.error);
+          }
+          return r;
+        })
+        .catch((err) => {
+          console.error('❌ Error counting blog_posts:', err);
+          return { count: 0, error: err };
+        }) as { count: number | null };
 
       setStats({
         totalUsers: totalUsers || subscriptions.length,
@@ -115,27 +203,11 @@ export default function Admin() {
         premiumUsers: premiumCount,
         proUsers: proCount,
         totalToolUsage: toolUsage || 0,
+        totalProducts: productCount || 0,
+        totalBlogPosts: blogPostCount || 0,
+        totalRevenue: 0, // TODO: Calculate from orders
+        monthlyRevenue: 0, // TODO: Calculate from orders this month
       });
-
-      // Load recent users
-      const { data: recentData } = await supabase
-        .from('platform_subscriptions')
-        .select('user_id, tier, created_at')
-        .order('created_at', { ascending: false })
-        .limit(10)
-        .catch(() => ({ data: [] })) as { data: any[] | null };
-
-      if (recentData && recentData.length > 0) {
-        // Fetch user emails - Note: This requires admin API access
-        // For now, we'll just show user IDs
-        const usersWithEmails = recentData.map((sub) => ({
-          id: sub.user_id,
-          email: `user-${sub.user_id.substring(0, 8)}`, // Placeholder
-          tier: sub.tier || 'free',
-          created_at: sub.created_at || '',
-        }));
-        setRecentUsers(usersWithEmails);
-      }
     } catch (error) {
       console.warn('Error loading dashboard data:', error);
       // Set default stats if tables don't exist
@@ -146,193 +218,591 @@ export default function Admin() {
         premiumUsers: 0,
         proUsers: 0,
         totalToolUsage: 0,
+        totalProducts: 0,
+        totalBlogPosts: 0,
+        totalRevenue: 0,
+        monthlyRevenue: 0,
       });
     }
   };
 
-  if (loading || authLoading || adminStatus === null) {
+  const loadOverviewStats = async () => {
+    try {
+      // Load tasks stats
+      const { count: tasksCount } = await supabase
+        .from('tasks')
+        .select('*', { count: 'exact', head: true })
+        .then(r => r)
+        .catch(() => ({ count: 0, error: null })) as { count: number | null };
+      
+      const { count: completedTasksCount } = await supabase
+        .from('tasks')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'done')
+        .then(r => r)
+        .catch(() => ({ count: 0, error: null })) as { count: number | null };
+
+      // Load ideas stats
+      const { count: ideasCount } = await supabase
+        .from('ideas')
+        .select('*', { count: 'exact', head: true })
+        .then(r => r)
+        .catch(() => ({ count: 0, error: null })) as { count: number | null };
+
+      // Load journal stats
+      const { count: journalCount } = await supabase
+        .from('journal_entries')
+        .select('*', { count: 'exact', head: true })
+        .then(r => r)
+        .catch(() => ({ count: 0, error: null })) as { count: number | null };
+
+      // Load affiliates stats
+      const { count: affiliatesCount } = await supabase
+        .from('affiliates')
+        .select('*', { count: 'exact', head: true })
+        .then(r => r)
+        .catch(() => ({ count: 0, error: null })) as { count: number | null };
+      
+      const { count: activeAffiliatesCount } = await supabase
+        .from('affiliates')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active')
+        .then(r => r)
+        .catch(() => ({ count: 0, error: null })) as { count: number | null };
+
+      setOverviewStats({
+        tasks: {
+          total: tasksCount || 0,
+          completed: completedTasksCount || 0,
+        },
+        ideas: {
+          total: ideasCount || 0,
+        },
+        journal: {
+          total: journalCount || 0,
+        },
+        affiliates: {
+          total: affiliatesCount || 0,
+          active: activeAffiliatesCount || 0,
+        },
+      });
+    } catch (error) {
+      console.warn('Error loading overview stats:', error);
+      setOverviewStats({
+        tasks: { total: 0, completed: 0 },
+        ideas: { total: 0 },
+        journal: { total: 0 },
+        affiliates: { total: 0, active: 0 },
+      });
+    }
+  };
+
+  // Show loading while checking auth or admin status
+  if (loading || authLoading || (user && adminStatus === null)) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <LoadingSpinner />
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  // Show login prompt if not authenticated
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="max-w-md w-full mx-4">
+          <div className="bg-black border border-white/10 rounded-lg p-8 text-center">
+            <Shield className="w-16 h-16 text-white/40 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-white mb-2">Admin Access Required</h1>
+            <p className="text-white/60 mb-6">
+              Please log in with an admin account to access the dashboard.
+            </p>
+            <button
+              onClick={() => setAuthModalOpen(true)}
+              className="w-full px-6 py-3 bg-white text-black rounded-lg hover:bg-white/90 transition font-medium"
+            >
+              Log In
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              className="mt-4 w-full px-6 py-3 bg-white/10 text-white rounded-lg hover:bg-white/20 transition"
+            >
+              Go to Homepage
+            </button>
+          </div>
+        </div>
+        <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
+      </div>
+    );
+  }
+
+  // Show access denied if not admin
+  if (adminStatus === false) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="max-w-md w-full mx-4">
+          <div className="bg-black border border-white/10 rounded-lg p-8 text-center">
+            <Shield className="w-16 h-16 text-red-400/40 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-white mb-2">Access Denied</h1>
+            <p className="text-white/60 mb-6">
+              You don't have admin privileges. Please contact an administrator.
+            </p>
+            <button
+              onClick={() => navigate('/')}
+              className="w-full px-6 py-3 bg-white/10 text-white rounded-lg hover:bg-white/20 transition"
+            >
+              Go to Homepage
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (adminStatus === false) {
-    return null; // Will redirect
+  // Only show dashboard if adminStatus is true
+  if (adminStatus !== true) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
+  const tabs: { id: AdminTab; label: string; icon: any; category?: string }[] = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, category: 'Overview' },
+    { id: 'blog', label: 'Blog Posts', icon: FileText, category: 'Content' },
+    { id: 'products', label: 'Products', icon: ShoppingBag, category: 'E-commerce' },
+    { id: 'affiliates', label: 'Affiliates', icon: Users, category: 'E-commerce' },
+    { id: 'journal', label: 'Daily Journal', icon: BookOpen, category: 'Productivity' },
+    { id: 'tasks', label: 'Tasks', icon: CheckSquare, category: 'Productivity' },
+    { id: 'ideas', label: 'Ideas', icon: Lightbulb, category: 'Productivity' },
+    { id: 'analytics', label: 'Analytics', icon: BarChart3, category: 'Analytics' },
+    { id: 'help', label: 'Help Center', icon: HelpCircle, category: 'Resources' },
+    { id: 'developer', label: 'Developer Tools', icon: Code, category: 'Resources' },
+    { id: 'password', label: 'Password Generator', icon: Key, category: 'Utilities' },
+    { id: 'settings', label: 'Settings', icon: Settings, category: 'Configuration' },
+  ];
+
+  const handleTabChange = (tabId: AdminTab) => {
+    // Add to open tabs if not already open
+    if (!openTabs.includes(tabId)) {
+      setOpenTabs([...openTabs, tabId]);
+    }
+    
+    // Update history - remove future history if navigating to a new tab
+    const newHistory = tabHistory.slice(0, historyIndex + 1);
+    newHistory.push(tabId);
+    setTabHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+    setActiveTab(tabId);
+  };
+
+  const handleTabClose = (tabId: AdminTab, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (openTabs.length === 1) {
+      // Don't close the last tab
+      return;
+    }
+    
+    const newOpenTabs = openTabs.filter(id => id !== tabId);
+    setOpenTabs(newOpenTabs);
+    
+    // If closing active tab, switch to the previous one
+    if (tabId === activeTab) {
+      const currentIndex = openTabs.indexOf(tabId);
+      const newActiveTab = currentIndex > 0 ? openTabs[currentIndex - 1] : newOpenTabs[0];
+      setActiveTab(newActiveTab);
+    }
+  };
+
+  const goBack = () => {
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1;
+      setHistoryIndex(newIndex);
+      setActiveTab(tabHistory[newIndex]);
+    }
+  };
+
+  const goForward = () => {
+    if (historyIndex < tabHistory.length - 1) {
+      const newIndex = historyIndex + 1;
+      setHistoryIndex(newIndex);
+      setActiveTab(tabHistory[newIndex]);
+    }
+  };
+
+  const canGoBack = historyIndex > 0;
+  const canGoForward = historyIndex < tabHistory.length - 1;
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <DashboardOverview />;
+      case 'blog':
+        return <BlogPostManagement />;
+      case 'products':
+        return <ProductManagement />;
+      case 'affiliates':
+        return <AffiliateManagement />;
+      case 'journal':
+        return <DailyJournal />;
+      case 'tasks':
+        return <TaskManagement />;
+      case 'ideas':
+        return <IdeaBoard />;
+      case 'analytics':
+        return stats ? (
+          <AnalyticsCarousel data={stats} />
+        ) : (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <LoadingSpinner />
+          </div>
+        );
+      case 'help':
+        return <HelpCenter />;
+      case 'developer':
+        return <DeveloperTools />;
+      case 'password':
+        return <PasswordGenerator />;
+      case 'settings':
+        return (
+          <div className="space-y-6">
+            <div className="bg-black border border-white/10 rounded-lg p-6">
+              <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                <Settings className="w-6 h-6" />
+                Admin Settings
+              </h2>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Left Column - Overview Cards */}
+                <div className="lg:col-span-1 space-y-4">
+                  <h3 className="text-lg font-semibold text-white mb-4">Quick Overview</h3>
+                  
+                  {/* Dashboard Overview */}
+                  <div className="bg-black border border-white/10 rounded-lg p-4 hover:border-white/20 transition">
+                    <div className="flex items-center gap-2 mb-2">
+                      <LayoutDashboard className="w-4 h-4 text-blue-400" />
+                      <span className="text-white font-medium text-sm">Dashboard</span>
+                    </div>
+                    {stats && (
+                      <div className="space-y-1 text-xs text-white/60">
+                        <div>Users: {stats.totalUsers}</div>
+                        <div>Active Subs: {stats.activeSubscriptions}</div>
+                        <div>Tool Usage: {stats.totalToolUsage}</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Blog Posts Overview */}
+                  <div className="bg-black border border-white/10 rounded-lg p-4 hover:border-white/20 transition cursor-pointer" onClick={() => setActiveTab('blog')}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <FileText className="w-4 h-4 text-green-400" />
+                      <span className="text-white font-medium text-sm">Blog Posts</span>
+                    </div>
+                    {stats && (
+                      <div className="space-y-1 text-xs text-white/60">
+                        <div>Total Posts: {stats.totalBlogPosts || 0}</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Products Overview */}
+                  <div className="bg-black border border-white/10 rounded-lg p-4 hover:border-white/20 transition cursor-pointer" onClick={() => setActiveTab('products')}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <ShoppingBag className="w-4 h-4 text-purple-400" />
+                      <span className="text-white font-medium text-sm">Products</span>
+                    </div>
+                    {stats && (
+                      <div className="space-y-1 text-xs text-white/60">
+                        <div>Total Products: {stats.totalProducts || 0}</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Affiliates Overview */}
+                  <div className="bg-black border border-white/10 rounded-lg p-4 hover:border-white/20 transition cursor-pointer" onClick={() => setActiveTab('affiliates')}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Users className="w-4 h-4 text-yellow-400" />
+                      <span className="text-white font-medium text-sm">Affiliates</span>
+                    </div>
+                    {overviewStats && (
+                      <div className="space-y-1 text-xs text-white/60">
+                        <div>Total: {overviewStats.affiliates.total}</div>
+                        <div>Active: {overviewStats.affiliates.active}</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Analytics Overview */}
+                  <div className="bg-black border border-white/10 rounded-lg p-4 hover:border-white/20 transition cursor-pointer" onClick={() => setActiveTab('analytics')}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <BarChart3 className="w-4 h-4 text-cyan-400" />
+                      <span className="text-white font-medium text-sm">Analytics</span>
+                    </div>
+                    {stats && (
+                      <div className="space-y-1 text-xs text-white/60">
+                        <div>Free: {stats.freeUsers}</div>
+                        <div>Premium: {stats.premiumUsers}</div>
+                        <div>Pro: {stats.proUsers}</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Tasks Overview */}
+                  <div className="bg-black border border-white/10 rounded-lg p-4 hover:border-white/20 transition cursor-pointer" onClick={() => setActiveTab('tasks')}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckSquare className="w-4 h-4 text-orange-400" />
+                      <span className="text-white font-medium text-sm">Tasks</span>
+                    </div>
+                    {overviewStats && (
+                      <div className="space-y-1 text-xs text-white/60">
+                        <div>Total: {overviewStats.tasks.total}</div>
+                        <div>Completed: {overviewStats.tasks.completed}</div>
+                        {overviewStats.tasks.total > 0 && (
+                          <div className="mt-1">
+                            <div className="w-full bg-white/10 rounded-full h-1.5">
+                              <div 
+                                className="bg-orange-400 h-1.5 rounded-full transition-all" 
+                                style={{ width: `${(overviewStats.tasks.completed / overviewStats.tasks.total) * 100}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Ideas Overview */}
+                  <div className="bg-black border border-white/10 rounded-lg p-4 hover:border-white/20 transition cursor-pointer" onClick={() => setActiveTab('ideas')}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Lightbulb className="w-4 h-4 text-yellow-400" />
+                      <span className="text-white font-medium text-sm">Ideas</span>
+                    </div>
+                    {overviewStats && (
+                      <div className="space-y-1 text-xs text-white/60">
+                        <div>Total Ideas: {overviewStats.ideas.total}</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Journal Overview */}
+                  <div className="bg-black border border-white/10 rounded-lg p-4 hover:border-white/20 transition cursor-pointer" onClick={() => setActiveTab('journal')}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <BookOpen className="w-4 h-4 text-pink-400" />
+                      <span className="text-white font-medium text-sm">Daily Journal</span>
+                    </div>
+                    {overviewStats && (
+                      <div className="space-y-1 text-xs text-white/60">
+                        <div>Total Entries: {overviewStats.journal.total}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right Column - Settings Content */}
+                <div className="lg:col-span-2">
+                  <h3 className="text-lg font-semibold text-white mb-4">Platform Configuration</h3>
+                  <div className="space-y-4">
+                    <div className="bg-black border border-white/10 rounded-lg p-4">
+                      <h4 className="text-white font-medium mb-2">General Settings</h4>
+                      <p className="text-white/60 text-sm">Platform settings and configuration options coming soon...</p>
+                    </div>
+                    <div className="bg-black border border-white/10 rounded-lg p-4">
+                      <h4 className="text-white font-medium mb-2">Security Settings</h4>
+                      <p className="text-white/60 text-sm">Security and access control settings coming soon...</p>
+                    </div>
+                    <div className="bg-black border border-white/10 rounded-lg p-4">
+                      <h4 className="text-white font-medium mb-2">Integration Settings</h4>
+                      <p className="text-white/60 text-sm">Third-party integrations and API settings coming soon...</p>
+                    </div>
+                    <div className="bg-black border border-white/10 rounded-lg p-4">
+                      <h4 className="text-white font-medium mb-3">Open New Tab</h4>
+                      <p className="text-white/60 text-sm mb-4">Click on any section below to open it in a new tab:</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {tabs.filter(tab => tab.id !== 'settings').map((tab) => {
+                          const Icon = tab.icon;
+                          const isOpen = openTabs.includes(tab.id);
+                          return (
+                            <button
+                              key={tab.id}
+                              onClick={() => handleTabChange(tab.id)}
+                              className={`flex items-center gap-2 px-3 py-2 rounded transition text-sm border ${
+                                isOpen
+                                  ? 'border-white/20 text-white/40 cursor-default bg-white/5'
+                                  : 'border-white/10 text-white/60 hover:text-white hover:bg-white/10'
+                              }`}
+                              disabled={isOpen}
+                            >
+                              <Icon className="w-4 h-4" />
+                              <span>{tab.label}</span>
+                              {isOpen && <span className="ml-auto text-xs text-white/30">Open</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  // Group tabs by category
+  const tabsByCategory = tabs.reduce((acc, tab) => {
+    const category = tab.category || 'Other';
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(tab);
+    return acc;
+  }, {} as Record<string, typeof tabs>);
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-black">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-2">
-          <Shield className="w-8 h-8" />
-          Admin Dashboard
-        </h1>
-        <p className="text-white/70">Manage your platform and users</p>
-      </div>
-
-      {/* Tabs */}
-      <div className="mb-6 border-b border-white/10">
-        <div className="flex gap-4">
-          {(['overview', 'users', 'subscriptions', 'settings'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 font-medium transition ${
-                activeTab === tab
-                  ? 'text-white border-b-2 border-white'
-                  : 'text-white/60 hover:text-white'
-              }`}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
+      <div className="border-b border-white/10 bg-black/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-full mx-auto px-6 py-4">
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <Shield className="w-6 h-6" />
+            Admin Dashboard
+          </h1>
         </div>
       </div>
 
-      {/* Overview Tab */}
-      {activeTab === 'overview' && (
-        <div className="space-y-6">
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-black border border-white/10 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-white/60 text-sm">Total Users</span>
-                <Users className="w-5 h-5 text-white/40" />
+      {/* Main Layout */}
+      <div className="flex h-[calc(100vh-73px)]">
+        {/* Left Sidebar */}
+        <div className="w-64 border-r border-white/10 bg-black/50 overflow-y-auto">
+          <nav className="p-4 space-y-4">
+            {Object.entries(tabsByCategory).map(([category, categoryTabs]) => (
+              <div key={category}>
+                <div className="px-2 py-1 text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">
+                  {category}
+                </div>
+                <div className="space-y-1">
+                  {categoryTabs.map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = activeTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => handleTabChange(tab.id)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+                          isActive
+                            ? 'bg-white text-black'
+                            : 'text-white/60 hover:text-white hover:bg-white/5'
+                        }`}
+                      >
+                        <Icon className="w-5 h-5" />
+                        <span className="font-medium">{tab.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="text-3xl font-bold text-white">{stats?.totalUsers || 0}</div>
-            </div>
-
-            <div className="bg-black border border-white/10 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-white/60 text-sm">Active Subscriptions</span>
-                <CheckCircle className="w-5 h-5 text-green-400" />
-              </div>
-              <div className="text-3xl font-bold text-white">{stats?.activeSubscriptions || 0}</div>
-            </div>
-
-            <div className="bg-black border border-white/10 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-white/60 text-sm">Tool Usage</span>
-                <Activity className="w-5 h-5 text-blue-400" />
-              </div>
-              <div className="text-3xl font-bold text-white">{stats?.totalToolUsage || 0}</div>
-            </div>
-
-            <div className="bg-black border border-white/10 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-white/60 text-sm">Premium Users</span>
-                <TrendingUp className="w-5 h-5 text-yellow-400" />
-              </div>
-              <div className="text-3xl font-bold text-white">{stats?.premiumUsers || 0}</div>
-            </div>
-          </div>
-
-          {/* Tier Breakdown */}
-          <div className="bg-black border border-white/10 rounded-lg p-6">
-            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              Subscription Tiers
-            </h2>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-white/60 mb-1">{stats?.freeUsers || 0}</div>
-                <div className="text-sm text-white/40">Free</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-400 mb-1">{stats?.premiumUsers || 0}</div>
-                <div className="text-sm text-white/40">Premium</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-purple-400 mb-1">{stats?.proUsers || 0}</div>
-                <div className="text-sm text-white/40">Pro</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Recent Users */}
-          <div className="bg-black border border-white/10 rounded-lg p-6">
-            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              Recent Users
-            </h2>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-white/10">
-                    <th className="text-left py-2 text-white/60 text-sm font-medium">Email</th>
-                    <th className="text-left py-2 text-white/60 text-sm font-medium">Tier</th>
-                    <th className="text-left py-2 text-white/60 text-sm font-medium">Joined</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentUsers.length > 0 ? (
-                    recentUsers.map((user) => (
-                      <tr key={user.id} className="border-b border-white/5">
-                        <td className="py-2 text-white">{user.email}</td>
-                        <td className="py-2">
-                          <span className={`px-2 py-1 rounded text-xs ${
-                            user.tier === 'free' ? 'bg-white/5 text-white/60' :
-                            user.tier === 'premium' ? 'bg-yellow-400/10 text-yellow-400' :
-                            'bg-purple-400/10 text-purple-400'
-                          }`}>
-                            {user.tier}
-                          </span>
-                        </td>
-                        <td className="py-2 text-white/60 text-sm">
-                          {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={3} className="py-4 text-center text-white/60">
-                        No users found
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+            ))}
+          </nav>
         </div>
-      )}
 
-      {/* Users Tab */}
-      {activeTab === 'users' && (
-        <div className="bg-black border border-white/10 rounded-lg p-6">
-          <h2 className="text-xl font-bold text-white mb-4">User Management</h2>
-          <p className="text-white/60">User management features coming soon...</p>
-        </div>
-      )}
+        {/* Right Main View */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-6">
+            {/* Browser-like Tab Bar */}
+            {openTabs.length > 0 && (
+              <div className="mb-4 border-b border-white/10 pb-2">
+                <div className="flex items-center gap-2">
+                  {/* Navigation Buttons */}
+                  <div className="flex items-center gap-1 border-r border-white/10 pr-2">
+                    <button
+                      onClick={goBack}
+                      disabled={!canGoBack}
+                      className={`p-1.5 rounded transition ${
+                        canGoBack
+                          ? 'text-white/60 hover:text-white hover:bg-white/10'
+                          : 'text-white/20 cursor-not-allowed'
+                      }`}
+                      title="Go back"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={goForward}
+                      disabled={!canGoForward}
+                      className={`p-1.5 rounded transition ${
+                        canGoForward
+                          ? 'text-white/60 hover:text-white hover:bg-white/10'
+                          : 'text-white/20 cursor-not-allowed'
+                      }`}
+                      title="Go forward"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
 
-      {/* Subscriptions Tab */}
-      {activeTab === 'subscriptions' && (
-        <div className="bg-black border border-white/10 rounded-lg p-6">
-          <h2 className="text-xl font-bold text-white mb-4">Subscription Management</h2>
-          <p className="text-white/60">Subscription management features coming soon...</p>
-        </div>
-      )}
+                  {/* Open Tabs */}
+                  <div className="flex items-center gap-1 flex-1 overflow-x-auto">
+                    {openTabs.map((tabId) => {
+                      const tab = tabs.find(t => t.id === tabId);
+                      if (!tab) return null;
+                      const Icon = tab.icon;
+                      const isActive = activeTab === tabId;
+                      
+                      return (
+                        <div
+                          key={tabId}
+                          className={`group flex items-center gap-2 px-3 py-1.5 rounded-t transition min-w-[120px] ${
+                            isActive
+                              ? 'bg-black border-t border-x border-white/10 text-white'
+                              : 'text-white/60 hover:text-white hover:bg-white/5'
+                          }`}
+                        >
+                          <button
+                            onClick={() => handleTabChange(tabId)}
+                            className="flex items-center gap-2 flex-1 min-w-0"
+                          >
+                            <Icon className="w-4 h-4 flex-shrink-0" />
+                            <span className="text-sm font-medium truncate">{tab.label}</span>
+                          </button>
+                          {openTabs.length > 1 && (
+                            <button
+                              onClick={(e) => handleTabClose(tabId, e)}
+                              className={`opacity-0 group-hover:opacity-100 transition p-0.5 rounded hover:bg-white/10 flex-shrink-0 ${
+                                isActive ? 'text-white' : 'text-white/60'
+                              }`}
+                              title="Close tab"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
 
-      {/* Settings Tab */}
-      {activeTab === 'settings' && (
-        <div className="bg-black border border-white/10 rounded-lg p-6">
-          <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <Settings className="w-5 h-5" />
-            Admin Settings
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-white font-medium mb-2">Platform Configuration</h3>
-              <p className="text-white/60 text-sm">Platform settings and configuration options coming soon...</p>
-            </div>
+            {/* Content Area - Cards Stacked */}
+            {activeTab === 'dashboard' ? (
+              <div className="space-y-4">
+                {/* Dashboard Cards Stacked */}
+                <DashboardOverview />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Tab Content as Card */}
+                <div className="bg-black border border-white/10 rounded-lg p-6">
+                  {renderTabContent()}
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

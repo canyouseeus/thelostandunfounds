@@ -3,79 +3,20 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './components/Toast'
+import { initializeErrorMonitor } from './services/error-monitor'
 import App from './App.tsx'
 import './index.css'
 
 console.log('📦 All imports loaded successfully')
 
-// Skip error monitor for now to isolate issue
-// try {
-//   initializeErrorMonitor();
-// } catch (error) {
-//   console.error('Error monitor init failed:', error);
-// }
+// Initialize error monitoring system
+try {
+  initializeErrorMonitor();
+} catch (error) {
+  console.error('Error monitor init failed:', error);
+}
 
-// Temporarily disable error suppression to debug blank page
-// TODO: Re-enable after fixing the issue
-const originalConsoleError = console.error;
-console.error = function(...args: any[]) {
-  // Temporarily show all errors for debugging
-  originalConsoleError.apply(console, args);
-};
-
-// Suppress 403/406 console warnings from Supabase subscription queries
-const originalConsoleWarn = console.warn;
-console.warn = function(...args: any[]) {
-  const message = args.join(' ').toLowerCase();
-  // Suppress 403/406 warnings related to subscription tables
-  if (
-    message.includes('403') || 
-    message.includes('406') || 
-    message.includes('platform_subscriptions') ||
-    message.includes('tool_limits') ||
-    message.includes('tool_usage') ||
-    message.includes('mcp registry tools not available') // Suppress MCP fallback warning
-  ) {
-    // Suppress these warnings - they're expected if database tables don't exist or MCP tools unavailable
-    return;
-  }
-  originalConsoleWarn.apply(console, args);
-};
-
-// Global error handler - suppress 403/406 errors from Supabase subscription queries
-window.addEventListener('error', (event) => {
-  const errorMsg = event.message?.toLowerCase() || '';
-  // Suppress 403/406 errors related to subscription tables (expected if tables don't exist)
-  if (
-    errorMsg.includes('403') || 
-    errorMsg.includes('406') || 
-    errorMsg.includes('platform_subscriptions') ||
-    errorMsg.includes('tool_limits') ||
-    errorMsg.includes('tool_usage')
-  ) {
-    event.preventDefault();
-    return;
-  }
-  // Log other errors
-  originalConsoleError('Error:', event.error);
-});
-
-window.addEventListener('unhandledrejection', (event) => {
-  const reason = event.reason?.toString()?.toLowerCase() || '';
-  // Suppress 403/406 errors related to subscription tables (expected if tables don't exist)
-  if (
-    reason.includes('403') || 
-    reason.includes('406') || 
-    reason.includes('platform_subscriptions') ||
-    reason.includes('tool_limits') ||
-    reason.includes('tool_usage')
-  ) {
-    event.preventDefault();
-    return;
-  }
-  // Log other rejections
-  originalConsoleError('Unhandled rejection:', event.reason);
-});
+// No error suppression - let all errors show so we can fix them properly
 
 // Skip MCP registry for now to isolate issue
 // initializeMCPRegistry()

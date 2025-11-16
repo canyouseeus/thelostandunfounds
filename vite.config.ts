@@ -47,6 +47,9 @@ export default defineConfig({
           });
         },
       },
+      // Note: API routes (/api/*) only work as serverless functions when deployed to Vercel
+      // For local development with API routes, use: npx vercel dev
+      // The Vite dev server cannot execute serverless functions
     },
   },
   build: {
@@ -60,6 +63,10 @@ export default defineConfig({
       onwarn(warning, warn) {
         // Suppress warnings for @tools imports - they're handled at runtime
         if (warning.message && (warning.message.includes('@tools') || warning.message.includes('@scot33/tools-registry'))) {
+          return;
+        }
+        // Suppress warnings for API routes - they're serverless functions
+        if (warning.message && warning.message.includes('api/')) {
           return;
         }
         warn(warning);

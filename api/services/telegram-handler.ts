@@ -104,7 +104,9 @@ export async function transcribeAudio(audioBuffer: Buffer): Promise<string | nul
 
     // Create FormData for multipart/form-data request
     const formData = new FormData()
-    const blob = new Blob([audioBuffer], { type: 'audio/ogg' })
+    // Convert Buffer to Uint8Array for Blob compatibility
+    const uint8Array = new Uint8Array(audioBuffer)
+    const blob = new Blob([uint8Array], { type: 'audio/ogg' })
     formData.append('file', blob, 'voice.ogg')
     formData.append('model', 'whisper-1')
 
