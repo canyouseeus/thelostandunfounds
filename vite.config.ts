@@ -47,35 +47,9 @@ export default defineConfig({
           });
         },
       },
-      // Proxy API routes to production Vercel deployment for local development
-      // Note: API routes only work as serverless functions when deployed to Vercel
-      // For full API functionality in local dev, use: npx vercel dev
-      '/api/fourthwall': {
-        target: 'https://thelostandunfounds.com',
-        changeOrigin: true,
-        secure: true,
-        followRedirects: true,
-        rewrite: (path) => path, // Keep the path as-is
-        configure: (proxy, _options) => {
-          proxy.on('proxyReq', (proxyReq, req, res) => {
-            // Set proper headers for CORS
-            proxyReq.setHeader('Origin', 'https://thelostandunfounds.com');
-          });
-          proxy.on('error', (err, _req, res) => {
-            console.warn('⚠️ API proxy error (API routes only work in production or with `vercel dev`):', err.message);
-            if (!res.headersSent) {
-              res.writeHead(503, {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-              });
-              res.end(JSON.stringify({ 
-                products: [],
-                message: 'API routes only work in production deployment or when using `npx vercel dev` for local development'
-              }));
-            }
-          });
-        },
-      },
+      // Note: API routes (/api/*) only work as serverless functions when deployed to Vercel
+      // For local development with API routes, use: npx vercel dev
+      // The Vite dev server cannot execute serverless functions
     },
   },
   build: {

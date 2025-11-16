@@ -136,7 +136,15 @@ export default function Shop() {
         <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-4 mb-8">
           <p className="text-red-400 text-sm">{error}</p>
           <p className="text-white/60 text-xs mt-2">
-            Note: You may need to configure API access in your Fourthwall developer settings.
+            {error.includes('vercel dev') || error.includes('production') ? (
+              <>
+                <strong>Local Development:</strong> API routes only work in production or when using <code className="bg-white/10 px-1 rounded">npx vercel dev</code>.
+                <br />
+                To test the shop locally, either deploy to Vercel or run: <code className="bg-white/10 px-1 rounded">npx vercel dev</code>
+              </>
+            ) : (
+              'Note: You may need to configure API access in your Fourthwall developer settings.'
+            )}
           </p>
         </div>
       )}
