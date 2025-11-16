@@ -49,9 +49,31 @@ git tag -l "MANTIS-*" | sort -V
 - Email: admin@thelostandunfounds.com
 - Password: Configured via terminal script
 
+### MANTIS-1.0.1 (2025-11-16)
+**Commit:** 6629c5e
+
+**Changes:**
+- ✅ Fixed RLS circular dependency issue
+- ✅ Created `is_user_admin()` SECURITY DEFINER function to bypass RLS for admin checks
+- ✅ Updated all RLS policies to use the new function
+- ✅ All tables now accessible via REST API (200 status codes)
+- ✅ Zero console errors - all database queries working
+- ✅ Admin dashboard fully functional
+
+**Technical Fix:**
+- Problem: RLS policies were checking admin status by querying `user_roles` table, but `user_roles` itself had RLS enabled, creating a circular dependency
+- Solution: Created `is_user_admin()` function with `SECURITY DEFINER` that bypasses RLS to check admin status
+- Result: All RLS policies now work correctly, all tables accessible
+
+**Status:**
+- ✅ All database tables accessible
+- ✅ All REST API requests returning 200
+- ✅ No console errors
+- ✅ Admin dashboard working perfectly
+
 ## Latest Version
 
 The `MANTIS` tag always points to the latest version.
 
-**Current Latest:** MANTIS-1.0.0
+**Current Latest:** MANTIS-1.0.1
 
