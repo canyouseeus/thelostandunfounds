@@ -71,9 +71,42 @@ git tag -l "MANTIS-*" | sort -V
 - ✅ No console errors
 - ✅ Admin dashboard working perfectly
 
+### MANTIS-1.0.2 (2025-11-16)
+**Commit:** 7c81137
+
+**Changes:**
+- ✅ Fixed Fourthwall API integration - Changed from `/offers` to `/products` endpoint (matching fw-setup)
+- ✅ Added HTML entity decoding for product titles and descriptions (handles `&#34;`, emojis, etc.)
+- ✅ Fixed image extraction - Extract URLs from image objects `{id, url, width, height}`
+- ✅ Added product deduplication - Prevents duplicate products from appearing twice
+- ✅ Updated shop UI - Changed header to "SHOP" and removed Fourthwall store link
+- ✅ Fixed product grid - Set to 3 columns maximum layout
+- ✅ Added server-side HTML tag stripping for clean descriptions
+- ✅ Improved response parsing - Handle `{results: [...]}` format from Fourthwall API
+
+**Technical Details:**
+- Switched API endpoints from `/v1/collections/{handle}/offers` to `/v1/collections/{handle}/products`
+- Added `decodeHtmlEntities()` function to decode HTML entities like `&#34;` → `"`
+- Added `extractImageUrls()` function to extract URLs from image objects
+- Added `stripHtmlTags()` function to remove HTML tags from descriptions server-side
+- Implemented deduplication using Map/Set to prevent duplicate products
+- Updated shop page to display clean product descriptions without HTML tags
+
+**Files Modified:**
+- `api/fourthwall/products.ts` - Updated endpoints, added helpers, deduplication
+- `api/fourthwall/collections/[handle].ts` - Updated endpoints and response parsing
+- `src/pages/Shop.tsx` - Updated UI, added description cleaning, deduplication
+
+**Status:**
+- ✅ Products loading correctly from Fourthwall
+- ✅ Images displaying properly
+- ✅ Product names and descriptions rendering cleanly
+- ✅ No duplicate products
+- ✅ Shop page displaying correctly
+
 ## Latest Version
 
 The `MANTIS` tag always points to the latest version.
 
-**Current Latest:** MANTIS-1.0.1
+**Current Latest:** MANTIS-1.0.2
 
