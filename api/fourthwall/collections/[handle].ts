@@ -37,7 +37,8 @@ export default async function handler(
 
     // Use the official Fourthwall Storefront API
     // Docs: https://docs.fourthwall.com/storefront-api/
-    const apiUrl = `https://storefront-api.fourthwall.com/v1/collections/${handle}/offers`
+    // Use /products endpoint (matching fw-setup implementation)
+    const apiUrl = `https://storefront-api.fourthwall.com/v1/collections/${handle}/products`
     
     // Try query parameter first (standard approach)
     let response = await fetch(`${apiUrl}?storefront_token=${storefrontToken}`, {
@@ -78,7 +79,8 @@ export default async function handler(
     }
 
     const data = await response.json()
-    const offers = data.offers || []
+    // Handle {results: [...]} format (matching fw-setup) or fallback to other formats
+    const offers = data.results || data.offers || (Array.isArray(data) ? data : [])
     
     return res.status(200).json({
       products: offers.map((offer: any) => {

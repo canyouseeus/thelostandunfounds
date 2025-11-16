@@ -45,10 +45,10 @@ export default async function handler(
     const baseUrl = 'https://storefront-api.fourthwall.com'
     let apiUrl: string
     if (collectionHandle && collectionHandle !== 'all') {
-      apiUrl = `${baseUrl}/v1/collections/${collectionHandle}/offers`
+      apiUrl = `${baseUrl}/v1/collections/${collectionHandle}/products`
     } else {
-      // Try fetching all offers directly
-      apiUrl = `${baseUrl}/v1/offers`
+      // Try fetching all products directly
+      apiUrl = `${baseUrl}/v1/products`
     }
     console.log(`Fourthwall API: Fetching from ${apiUrl}`)
     
@@ -66,9 +66,9 @@ export default async function handler(
       console.log(`Fourthwall API ${apiUrl} returned ${response.status}:`, errorText.substring(0, 500))
     }
 
-    // If /v1/offers doesn't work, try fetching collections first
+    // If /v1/products doesn't work, try fetching collections first
     if (!response.ok && response.status === 404 && !collectionHandle) {
-      console.log('v1/offers endpoint not found, trying to fetch collections first...')
+      console.log('v1/products endpoint not found, trying to fetch collections first...')
       const collectionsUrl = `${baseUrl}/v1/collections?storefront_token=${storefrontToken}`
       const collectionsResponse = await fetch(collectionsUrl, {
         headers: {
@@ -222,7 +222,7 @@ export default async function handler(
           console.log('Trying common collection handles:', commonHandles)
           for (const handle of commonHandles) {
             try {
-              const testUrl = `${baseUrl}/v1/collections/${handle}/offers?storefront_token=${storefrontToken}`
+              const testUrl = `${baseUrl}/v1/collections/${handle}/products?storefront_token=${storefrontToken}`
               console.log(`Trying collection handle: ${handle}`)
               const testResponse = await fetch(testUrl, {
                 headers: { 'Accept': 'application/json' },
@@ -230,7 +230,7 @@ export default async function handler(
               
               if (testResponse.ok) {
                 const testData = await testResponse.json()
-                const testOffers = Array.isArray(testData) ? testData : (testData.offers || [])
+                const testOffers = testData.results || (Array.isArray(testData) ? testData : (testData.offers || []))
                 if (testOffers.length > 0) {
                   console.log(`Found ${testOffers.length} products using handle: ${handle}`)
                   const transformedProducts = testOffers.map((offer: any) => {
@@ -351,10 +351,10 @@ export default async function handler(
           // First, try standard collection endpoint
           let foundProducts = false
           
-          // CRITICAL FIX: Try collection ID first (API likely requires ID, not handle)
+          // CRITICAL FIX: Try collection ID first using /products endpoint (matching fw-setup)
           if (collection.id) {
             try {
-              const offersUrlById = `${baseUrl}/v1/collections/${collection.id}/offers?storefront_token=${storefrontToken}`
+              const offersUrlById = `${baseUrl}/v1/collections/${collection.id}/products?storefront_token=${storefrontToken}`
               console.log(`Trying to fetch from collection ID: ${collection.id}`)
               const offersResponseById = await fetch(offersUrlById, {
                 headers: { 'Accept': 'application/json' },
@@ -362,7 +362,7 @@ export default async function handler(
               
               if (offersResponseById.ok) {
                 const offersData = await offersResponseById.json()
-                const offers = Array.isArray(offersData) ? offersData : (offersData.offers || offersData.data || [])
+                const offers = offersData.results || (Array.isArray(offersData) ? offersData : (offersData.offers || offersData.data || []))
                 
                 if (offers.length > 0) {
                   collectionHandle = collection.id
@@ -397,7 +397,7 @@ export default async function handler(
             for (const handle of uniqueHandles) {
               if (handle) {
                 try {
-                  const offersUrl = `${baseUrl}/v1/collections/${handle}/offers?storefront_token=${storefrontToken}`
+                  const offersUrl = `${baseUrl}/v1/collections/${handle}/products?storefront_token=${storefrontToken}`
                   console.log(`Trying to fetch from collection handle: ${handle}`)
                   const offersResponse = await fetch(offersUrl, {
                     headers: { 'Accept': 'application/json' },
@@ -405,7 +405,7 @@ export default async function handler(
                   
                   if (offersResponse.ok) {
                     const offersData = await offersResponse.json()
-                    const offers = Array.isArray(offersData) ? offersData : (offersData.offers || offersData.data || [])
+                    const offers = offersData.results || (Array.isArray(offersData) ? offersData : (offersData.offers || offersData.data || []))
                     
                     if (offers.length > 0) {
                       collectionHandle = handle
@@ -591,10 +591,10 @@ export default async function handler(
     }
 
     // Transform the data to match our interface
-    // Fourthwall Storefront API returns offers (products) in a specific format
+    // Fourthwall Storefront API returns products in a specific format
     // See: https://docs.fourthwall.com/storefront-api/
-    // The API may return { offers: [...] } or just an array directly
-    const offers = Array.isArray(data) ? data : (data.offers || data.data || [])
+    // The API may return { results: [...] } (matching fw-setup), { offers: [...] }, or just an array directly
+    const offers = data.results || (Array.isArray(data) ? data : (data.offers || data.data || []))
     console.log(`Fourthwall API: Found ${offers.length} offers/products`)
     
     const transformedProducts = offers.map((offer: any) => {
