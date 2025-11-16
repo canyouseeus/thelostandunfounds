@@ -45,10 +45,28 @@ export async function isAdmin(): Promise<boolean> {
       .from('user_roles')
       .select('is_admin')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no row exists
 
     if (error) {
-      // Table might not exist yet, check metadata only
+      // Table might not exist yet or RLS blocking, check metadata only
+      const errorMsg = (error.message || '').toLowerCase();
+      if (
+        error.code === 'PGRST116' || // No rows returned
+        error.code === '42P01' || // Table doesn't exist
+        errorMsg.includes('does not exist') ||
+        errorMsg.includes('permission denied') ||
+        errorMsg.includes('policy')
+      ) {
+        // Expected errors - fall back to metadata check
+        return userMetadata.role === 'admin' || userMetadata.is_admin === true;
+      }
+      // Unexpected error - log it but still check metadata
+      console.warn('Error checking admin status in user_roles:', error);
+      return userMetadata.role === 'admin' || userMetadata.is_admin === true;
+    }
+
+    // If no data returned, check metadata
+    if (!data) {
       return userMetadata.role === 'admin' || userMetadata.is_admin === true;
     }
 
@@ -83,8 +101,27 @@ export async function autoPromoteToAdmin(userId: string, email: string): Promise
       });
 
     if (roleError) {
-      console.warn('Error setting admin role in user_roles table:', roleError);
-      // Continue anyway to try metadata update
+      // Check if it's a permission error (expected if RLS is blocking)
+      const errorMsg = (roleError.message || '').toLowerCase();
+      const errorCode = roleError.code || '';
+      
+      // Suppress expected errors (RLS blocking, table doesn't exist, etc.)
+      if (
+        errorCode === '42501' || // Permission denied
+        errorCode === '42P01' || // Table doesn't exist
+        errorCode === 'PGRST116' || // No rows returned
+        errorMsg.includes('permission denied') ||
+        errorMsg.includes('policy') ||
+        errorMsg.includes('does not exist') ||
+        errorMsg.includes('forbidden') ||
+        errorMsg.includes('500') // Server error (might be RLS issue)
+      ) {
+        // Expected - RLS might be blocking or table doesn't exist yet
+        // Continue to try metadata update
+      } else {
+        // Unexpected error - log it
+        console.warn('Error setting admin role in user_roles table:', roleError);
+      }
     }
 
     // Also update user metadata
@@ -119,9 +156,26 @@ export async function getAdminUser(email: string): Promise<AdminUser | null> {
       .from('user_roles')
       .select('*')
       .eq('email', email)
-      .single();
+      .maybeSingle(); // Use maybeSingle to avoid errors when no row exists
 
-    if (error) return null;
+    if (error) {
+      // Suppress expected errors
+      const errorMsg = (error.message || '').toLowerCase();
+      const errorCode = error.code || '';
+      if (
+        errorCode === 'PGRST116' || // No rows returned
+        errorCode === '42P01' || // Table doesn't exist
+        errorMsg.includes('does not exist') ||
+        errorMsg.includes('permission denied') ||
+        errorMsg.includes('policy')
+      ) {
+        // Expected - return null silently
+        return null;
+      }
+      // Unexpected error - log it
+      console.warn('Error getting admin user:', error);
+      return null;
+    }
     return data;
   } catch (error) {
     console.warn('Error getting admin user:', error);
@@ -132,22 +186,39 @@ export async function getAdminUser(email: string): Promise<AdminUser | null> {
 /**
  * Set user as admin (requires admin privileges)
  */
-export async function setUserAsAdmin(userId: string, isAdmin: boolean): Promise<{ error: Error | null }> {
+export async function setUserAsAdmin(userId: string, isAdmin: boolean, email?: string): Promise<{ error: Error | null }> {
   try {
+    // Get user email if not provided
+    let userEmail = email;
+    if (!userEmail) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        userEmail = user?.email || '';
+      } catch (emailError) {
+        console.warn('Could not get user email:', emailError);
+        userEmail = '';
+      }
+    }
+
     const { error } = await supabase
       .from('user_roles')
       .upsert({
         user_id: userId,
+        email: userEmail?.toLowerCase().trim() || '',
         is_admin: isAdmin,
         updated_at: new Date().toISOString(),
+      }, {
+        onConflict: 'user_id',
       });
 
     if (error) {
+      console.warn('Error setting user as admin:', error);
       return { error: error as Error };
     }
 
     return { error: null };
   } catch (error) {
+    console.warn('Error setting user as admin:', error);
     return { error: error as Error };
   }
 }

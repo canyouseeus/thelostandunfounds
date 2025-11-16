@@ -4,6 +4,7 @@
   "description": "THE LOST+UNFOUNDS - SCOT33 CLASSIC - Modern web application",
   "type": "module",
   "scripts": {
+    "predev": "./scripts/kill-port-3000.sh",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
@@ -12,7 +13,10 @@
     "generate-env-script": "node scripts/generate-env-script.js",
     "validate-env": "./scripts/validate-env.sh --all",
     "validate-env:local": "./scripts/validate-env.sh --local",
-    "validate-env:vercel": "./scripts/validate-env.sh --vercel"
+    "validate-env:vercel": "./scripts/validate-env.sh --vercel",
+    "kill-mcp": "./scripts/kill-port-3000.sh",
+    "sync:help-articles": "node scripts/sync-help-articles.js",
+    "setup:database": "echo 'Please run comprehensive-admin-schema.sql in Supabase SQL Editor. See DATABASE_SETUP_GUIDE.md for instructions.'"
   },
   "dependencies": {
     "@scot33/tools-registry": "file:../tools-registry",

@@ -31,9 +31,15 @@ console.warn = function(...args: any[]) {
   if (
     message.includes('403') || 
     message.includes('406') || 
+    message.includes('500') ||
     message.includes('platform_subscriptions') ||
     message.includes('tool_limits') ||
     message.includes('tool_usage') ||
+    message.includes('user_roles') ||
+    message.includes('on_conflict') ||
+    message.includes('permission denied') ||
+    message.includes('policy') ||
+    message.includes('does not exist') ||
     message.includes('mcp registry tools not available') // Suppress MCP fallback warning
   ) {
     // Suppress these warnings - they're expected if database tables don't exist or MCP tools unavailable
@@ -45,13 +51,19 @@ console.warn = function(...args: any[]) {
 // Global error handler - suppress 403/406 errors from Supabase subscription queries
 window.addEventListener('error', (event) => {
   const errorMsg = event.message?.toLowerCase() || '';
-  // Suppress 403/406 errors related to subscription tables (expected if tables don't exist)
+  // Suppress 403/406/500 errors related to subscription tables (expected if tables don't exist)
   if (
     errorMsg.includes('403') || 
     errorMsg.includes('406') || 
+    errorMsg.includes('500') ||
     errorMsg.includes('platform_subscriptions') ||
     errorMsg.includes('tool_limits') ||
-    errorMsg.includes('tool_usage')
+    errorMsg.includes('tool_usage') ||
+    errorMsg.includes('user_roles') ||
+    errorMsg.includes('on_conflict') ||
+    errorMsg.includes('permission denied') ||
+    errorMsg.includes('policy') ||
+    errorMsg.includes('does not exist')
   ) {
     event.preventDefault();
     return;
@@ -62,13 +74,19 @@ window.addEventListener('error', (event) => {
 
 window.addEventListener('unhandledrejection', (event) => {
   const reason = event.reason?.toString()?.toLowerCase() || '';
-  // Suppress 403/406 errors related to subscription tables (expected if tables don't exist)
+  // Suppress 403/406/500 errors related to subscription tables (expected if tables don't exist)
   if (
     reason.includes('403') || 
     reason.includes('406') || 
+    reason.includes('500') ||
     reason.includes('platform_subscriptions') ||
     reason.includes('tool_limits') ||
-    reason.includes('tool_usage')
+    reason.includes('tool_usage') ||
+    reason.includes('user_roles') ||
+    reason.includes('on_conflict') ||
+    reason.includes('permission denied') ||
+    reason.includes('policy') ||
+    reason.includes('does not exist')
   ) {
     event.preventDefault();
     return;

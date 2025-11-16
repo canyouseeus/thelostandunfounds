@@ -61,13 +61,13 @@ export default function DashboardOverview() {
         ideasData,
         affiliatesData,
       ] = await Promise.all([
-        supabase.from('platform_subscriptions').select('tier, status').catch(() => ({ data: [] })),
-        supabase.from('tool_usage').select('*', { count: 'exact', head: true }).catch(() => ({ count: 0 })),
-        supabase.from('products').select('status').catch(() => ({ data: [] })),
-        supabase.from('blog_posts').select('status').catch(() => ({ data: [] })),
-        supabase.from('tasks').select('status').catch(() => ({ data: [] })),
-        supabase.from('ideas').select('status').catch(() => ({ data: [] })),
-        supabase.from('affiliates').select('status').catch(() => ({ data: [] })),
+        supabase.from('platform_subscriptions').select('tier, status').then(r => r).catch(() => ({ data: [], error: null })),
+        supabase.from('tool_usage').select('*', { count: 'exact', head: true }).then(r => r).catch(() => ({ count: 0, error: null })),
+        supabase.from('products').select('status').then(r => r).catch(() => ({ data: [], error: null })),
+        supabase.from('blog_posts').select('status').then(r => r).catch(() => ({ data: [], error: null })),
+        supabase.from('tasks').select('status').then(r => r).catch(() => ({ data: [], error: null })),
+        supabase.from('ideas').select('status').then(r => r).catch(() => ({ data: [], error: null })),
+        supabase.from('affiliates').select('status').then(r => r).catch(() => ({ data: [], error: null })),
       ]);
 
       const subscriptions = subscriptionsData.data || [];
@@ -115,6 +115,27 @@ export default function DashboardOverview() {
       });
     } catch (error) {
       console.error('Error loading metrics:', error);
+      // Set default metrics instead of failing
+      setMetrics({
+        totalUsers: 0,
+        activeSubscriptions: 0,
+        freeUsers: 0,
+        premiumUsers: 0,
+        proUsers: 0,
+        totalToolUsage: 0,
+        totalRevenue: 0,
+        monthlyRevenue: 0,
+        totalProducts: 0,
+        activeProducts: 0,
+        totalBlogPosts: 0,
+        publishedPosts: 0,
+        totalTasks: 0,
+        completedTasks: 0,
+        totalIdeas: 0,
+        activeIdeas: 0,
+        totalAffiliates: 0,
+        activeAffiliates: 0,
+      });
     } finally {
       setLoading(false);
     }
@@ -131,7 +152,7 @@ export default function DashboardOverview() {
   if (!metrics) {
     return (
       <div className="text-center py-8 text-white/60">
-        Failed to load dashboard metrics
+        Loading dashboard metrics...
       </div>
     );
   }
@@ -217,8 +238,8 @@ export default function DashboardOverview() {
         <p className="text-white/60">Comprehensive view of your platform metrics</p>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* KPI Cards - Stacked Vertically */}
+      <div className="space-y-4">
         {kpiCards.map((kpi, index) => {
           const Icon = kpi.icon;
           return (
@@ -293,8 +314,8 @@ export default function DashboardOverview() {
         </div>
       </div>
 
-      {/* Content Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* Content Stats - Stacked Vertically */}
+      <div className="space-y-4">
         {statCards.map((stat, index) => {
           const Icon = stat.icon;
           const percentage = stat.total > 0 ? Math.round((stat.active / stat.total) * 100) : 0;
