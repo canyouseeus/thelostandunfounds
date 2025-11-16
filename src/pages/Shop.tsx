@@ -151,28 +151,14 @@ export default function Shop() {
   }
 
   /**
-   * Strip HTML tags from description and decode entities
+   * Clean description (server should already handle this, but keep as fallback)
    */
   const cleanDescription = (description: string | undefined): string => {
     if (!description) return ''
-    
-    // First decode HTML entities (like &#x1f3fc; for emojis)
-    const decodeHtmlEntities = (text: string): string => {
-      const textarea = document.createElement('textarea')
-      textarea.innerHTML = text
-      return textarea.value
-    }
-    
-    // Decode entities first
-    let cleaned = decodeHtmlEntities(description)
-    
-    // Then strip HTML tags by creating a temporary div
-    const tempDiv = document.createElement('div')
-    tempDiv.innerHTML = cleaned
-    cleaned = tempDiv.textContent || tempDiv.innerText || ''
-    
-    // Clean up whitespace
-    return cleaned.replace(/\s+/g, ' ').trim()
+    // Descriptions should already be cleaned by the API, but if not, decode entities
+    const textarea = document.createElement('textarea')
+    textarea.innerHTML = description
+    return (textarea.value || description).trim()
   }
 
   if (loading) {

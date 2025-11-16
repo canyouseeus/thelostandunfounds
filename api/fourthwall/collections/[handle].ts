@@ -34,6 +34,19 @@ function extractImageUrls(images: any): string[] {
 }
 
 /**
+ * Strip HTML tags from text and clean up whitespace
+ */
+function stripHtmlTags(text: string): string {
+  if (!text) return text
+  // Remove HTML tags and decode entities
+  return text
+    .replace(/<[^>]*>/g, '') // Remove HTML tags
+    .replace(/&nbsp;/g, ' ') // Replace &nbsp; with space
+    .replace(/\s+/g, ' ') // Normalize whitespace
+    .trim()
+}
+
+/**
  * API endpoint to fetch products from a specific Fourthwall collection
  */
 export default async function handler(
@@ -125,7 +138,7 @@ export default async function handler(
         return {
           id: offer.id || offer.slug || '',
           title: decodeHtmlEntities(offer.name || offer.title || 'Untitled Product'),
-          description: decodeHtmlEntities(offer.description || ''),
+          description: stripHtmlTags(decodeHtmlEntities(offer.description || '')),
           price: price,
           compareAtPrice: compareAtPrice,
           currency: currency,
