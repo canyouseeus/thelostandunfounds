@@ -4,18 +4,21 @@
  */
 
 import { useState } from 'react';
-import { Key, Copy, Check, RefreshCw, Eye, EyeOff } from 'lucide-react';
+import { Key, Copy, Check, RefreshCw, Eye, EyeOff, User, Mail } from 'lucide-react';
 import { useToast } from '../Toast';
+import { supabase } from '../../lib/supabase';
 import { generateTempPassword, generateMemorablePassword, checkPasswordStrength } from '../../utils/passwordGenerator';
 
 export default function PasswordGenerator() {
-  const { success } = useToast();
+  const { success, error: showError } = useToast();
   const [password, setPassword] = useState('');
   const [length, setLength] = useState(16);
   const [includeSpecial, setIncludeSpecial] = useState(true);
   const [passwordType, setPasswordType] = useState<'secure' | 'memorable'>('secure');
   const [copied, setCopied] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [adminEmail, setAdminEmail] = useState('admin@thelostandunfounds.com');
+  const [resettingPassword, setResettingPassword] = useState(false);
 
   const generatePassword = () => {
     const newPassword = passwordType === 'secure'
@@ -35,6 +38,48 @@ export default function PasswordGenerator() {
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error('Failed to copy:', error);
+    }
+  };
+
+  const resetAdminPassword = async () => {
+    if (!password) {
+      showError('Please generate a password first');
+      return;
+    }
+
+    setResettingPassword(true);
+    try {
+      // Get current user's auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      // Call server-side API endpoint
+      const response = await fetch('/api/admin/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+        },
+        body: JSON.stringify({
+          email: adminEmail,
+          password: password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to reset password');
+      }
+
+      success(`Password reset successfully for ${adminEmail}. Password copied to clipboard.`);
+      copyToClipboard(); // Also copy to clipboard for convenience
+    } catch (error: any) {
+      console.error('Error resetting password:', error);
+      showError(error.message || 'Password reset failed. Generated password copied to clipboard.');
+      copyToClipboard();
+    } finally {
+      setResettingPassword(false);
     }
   };
 
@@ -202,10 +247,46 @@ export default function PasswordGenerator() {
             )}
 
             <div className="pt-4 border-t border-white/10">
-              <p className="text-white/60 text-sm">
+              <p className="text-white/60 text-sm mb-4">
                 <strong className="text-white">Security Note:</strong> This password is generated client-side and is not stored anywhere. 
                 Share it securely with the user and recommend they change it after first login.
               </p>
+
+              {/* Admin Password Reset */}
+              <div className="bg-white/5 rounded-lg p-4">
+                <h4 className="text-white font-medium mb-3 flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Reset Admin Password
+                </h4>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-white/80 text-sm mb-1">Admin Email</label>
+                    <div className="flex gap-2">
+                      <div className="flex-1 relative">
+                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/40" />
+                        <input
+                          type="email"
+                          value={adminEmail}
+                          onChange={(e) => setAdminEmail(e.target.value)}
+                          className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-white/30"
+                          placeholder="admin@example.com"
+                        />
+                      </div>
+                      <button
+                        onClick={resetAdminPassword}
+                        disabled={!password || resettingPassword}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                      >
+                        {resettingPassword ? 'Resetting...' : 'Reset Password'}
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-white/50 text-xs">
+                    Note: Password reset requires Supabase Admin API access. If this doesn't work, 
+                    use the Supabase Dashboard → Authentication → Users to reset the password manually.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
