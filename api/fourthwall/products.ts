@@ -267,18 +267,30 @@ export default async function handler(
           console.log(`Collection "${collection.name || collection.title}" available fields:`, Object.keys(collection))
           console.log(`Collection "${collection.name || collection.title}" full object:`, JSON.stringify(collection))
           
+          // Step 3: Try multiple handle formats based on common Fourthwall patterns
           const possibleHandles = [
+            // Standard fields
             collection.handle,
             collection.slug,
-            collection.id,
+            collection.permalink,
+            collection.url_slug,
             collection.collection_handle,
             collection.collection_slug,
+            // ID formats
+            collection.id,
             collection.collection_id,
             // Try ID without prefix if it starts with col_
             collection.id?.startsWith('col_') ? collection.id.replace('col_', '') : null,
-            // Convert name/title to handle format (clean version)
+            // Try ID with different encoding
+            collection.id ? encodeURIComponent(collection.id) : null,
+            // Convert name/title to handle format (multiple variations)
             collection.name?.toLowerCase()
               .replace(/&#43;/g, '-plus-')
+              .replace(/&#34;/g, '')
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/^-+|-+$/g, ''),
+            collection.name?.toLowerCase()
+              .replace(/&#43;/g, '')
               .replace(/&#34;/g, '')
               .replace(/[^a-z0-9]+/g, '-')
               .replace(/^-+|-+$/g, ''),
@@ -287,12 +299,24 @@ export default async function handler(
               .replace(/&#34;/g, '')
               .replace(/[^a-z0-9]+/g, '-')
               .replace(/^-+|-+$/g, ''),
+            collection.title?.toLowerCase()
+              .replace(/&#43;/g, '')
+              .replace(/&#34;/g, '')
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/^-+|-+$/g, ''),
           ].filter(Boolean) as string[]
           
-          console.log(`Trying handles for "${collection.name || collection.title}":`, possibleHandles)
+          // Remove duplicates
+          const uniqueHandles = [...new Set(possibleHandles)]
+          
+          console.log(`Trying handles for "${collection.name || collection.title}":`, uniqueHandles)
+          
+          // Step 4: Try alternative endpoint formats if standard doesn't work
+          // First, try standard collection endpoint
+          let foundProducts = false
           
           // Try each possible handle format
-          for (const handle of possibleHandles) {
+          for (const handle of uniqueHandles) {
             if (handle) {
               try {
                 const offersUrl = `${baseUrl}/v1/collections/${handle}/offers?storefront_token=${storefrontToken}`
@@ -308,6 +332,7 @@ export default async function handler(
                   if (offers.length > 0) {
                     collectionHandle = handle
                     allOffers.push(...offers)
+                    foundProducts = true
                     
                     // Step 3: Log collection metadata
                     const collectionName = collection.name || collection.title || 'Unknown'
@@ -325,7 +350,8 @@ export default async function handler(
                     console.log(`Collection handle ${handle} returned 0 products`)
                   }
                 } else {
-                  console.log(`Collection handle ${handle} returned ${offersResponse.status}`)
+                  const errorText = await offersResponse.text().catch(() => '')
+                  console.log(`Collection handle ${handle} returned ${offersResponse.status}: ${errorText.substring(0, 200)}`)
                 }
               } catch (err) {
                 console.warn(`Failed to fetch from collection handle ${handle}:`, err)
@@ -333,13 +359,54 @@ export default async function handler(
             }
           }
           
+          // Step 4: Fallback - Try fetching all offers and filtering by collection
+          if (!foundProducts && collection.id) {
+            console.log(`Trying fallback: Fetch all offers and filter by collection ID ${collection.id}`)
+            try {
+              // Try to fetch all offers (if this endpoint exists)
+              const allOffersUrl = `${baseUrl}/v1/offers?storefront_token=${storefrontToken}`
+              const allOffersResponse = await fetch(allOffersUrl, {
+                headers: { 'Accept': 'application/json' },
+              })
+              
+              if (allOffersResponse.ok) {
+                const allOffersData = await allOffersResponse.json()
+                const allOffersList = Array.isArray(allOffersData) ? allOffersData : (allOffersData.offers || [])
+                
+                // Filter offers by collection ID
+                const filteredOffers = allOffersList.filter((offer: any) => {
+                  return offer.collection_id === collection.id || 
+                         offer.collection?.id === collection.id ||
+                         offer.collections?.some((c: any) => c.id === collection.id)
+                })
+                
+                if (filteredOffers.length > 0) {
+                  console.log(`✓ Found ${filteredOffers.length} products via fallback method`)
+                  allOffers.push(...filteredOffers)
+                  foundProducts = true
+                  collectionHandle = collection.id
+                  
+                  const collectionName = collection.name || collection.title || 'Unknown'
+                  collectionMetadata.push({
+                    name: collectionName,
+                    handle: collection.id,
+                    status: collection.status || 'unknown',
+                    productCount: filteredOffers.length
+                  })
+                }
+              }
+            } catch (err) {
+              console.warn(`Fallback method failed:`, err)
+            }
+          }
+          
           // Step 3: Log if no handle worked
-          if (!collectionHandle) {
+          if (!foundProducts) {
             const collectionName = collection.name || collection.title || 'Unknown'
-            console.warn(`⚠ Could not fetch products from collection "${collectionName}". Tried handles:`, possibleHandles)
+            console.warn(`⚠ Could not fetch products from collection "${collectionName}". Tried handles:`, uniqueHandles)
             collectionMetadata.push({
               name: collectionName,
-              handle: possibleHandles[0] || 'unknown',
+              handle: uniqueHandles[0] || 'unknown',
               status: collection.status || 'unknown',
               productCount: 0
             })
