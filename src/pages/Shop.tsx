@@ -154,9 +154,19 @@ export default function Shop() {
         <div className="text-center py-20">
           <ShoppingBag className="w-16 h-16 text-white/50 mx-auto mb-4" />
           <p className="text-white/70 text-lg mb-2">No products found</p>
-          <p className="text-white/50 text-sm">
+          <p className="text-white/50 text-sm mb-4">
             Products will appear here once your Fourthwall store is connected.
           </p>
+          {(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
+            <div className="bg-white/5 border border-white/10 rounded-lg p-4 max-w-md mx-auto mt-4">
+              <p className="text-white/70 text-xs mb-2">
+                <strong>Local Development:</strong> API routes don't work with <code className="bg-white/10 px-1 rounded">npm run dev</code>
+              </p>
+              <p className="text-white/60 text-xs">
+                To see Fourthwall products locally, run: <code className="bg-white/10 px-1 rounded">npm run dev:api</code> or test in production.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
