@@ -18,6 +18,7 @@
     "validate-env:local": "./scripts/validate-env.sh --local",
     "validate-env:vercel": "./scripts/validate-env.sh --vercel",
     "kill-mcp": "./scripts/kill-port-3000.sh",
+    "cleanup": "./scripts/cleanup-dev-processes.sh",
     "sync:help-articles": "node scripts/sync-help-articles.js",
     "setup:database": "echo 'Please run comprehensive-admin-schema.sql in Supabase SQL Editor. See DATABASE_SETUP_GUIDE.md for instructions.'"
   },
