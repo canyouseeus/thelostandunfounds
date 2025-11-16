@@ -155,13 +155,24 @@ export default function Shop() {
    */
   const cleanDescription = (description: string | undefined): string => {
     if (!description) return ''
-    // Create a temporary div to parse HTML and extract text
+    
+    // First decode HTML entities (like &#x1f3fc; for emojis)
+    const decodeHtmlEntities = (text: string): string => {
+      const textarea = document.createElement('textarea')
+      textarea.innerHTML = text
+      return textarea.value
+    }
+    
+    // Decode entities first
+    let cleaned = decodeHtmlEntities(description)
+    
+    // Then strip HTML tags by creating a temporary div
     const tempDiv = document.createElement('div')
-    tempDiv.innerHTML = description
-    // Get text content and replace multiple spaces/newlines with single space
-    return tempDiv.textContent || tempDiv.innerText || ''
-      .replace(/\s+/g, ' ')
-      .trim()
+    tempDiv.innerHTML = cleaned
+    cleaned = tempDiv.textContent || tempDiv.innerText || ''
+    
+    // Clean up whitespace
+    return cleaned.replace(/\s+/g, ' ').trim()
   }
 
   if (loading) {
