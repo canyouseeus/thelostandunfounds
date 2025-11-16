@@ -152,49 +152,62 @@ export default async function handler(
         
         console.log(`Processing ${collections.length} collections, fetching offers from each...`)
         
+        // CRITICAL FIX: Try shop feed endpoint FIRST since /offers endpoints return 404
+        // This endpoint returns all products, which we can then filter by collection
+        console.log('Trying shop feed endpoint to fetch all products...')
+        const shopFeedUrl = `${baseUrl}/v1/shop/feed?storefront_token=${storefrontToken}`
+        const shopFeedResponse = await fetch(shopFeedUrl, {
+          headers: { 'Accept': 'application/json' },
+        })
+        
+        let allProductsFromFeed: any[] = []
+        if (shopFeedResponse.ok) {
+          const shopFeedData = await shopFeedResponse.json()
+          console.log('Shop feed response type:', Array.isArray(shopFeedData) ? 'array' : typeof shopFeedData)
+          console.log('Shop feed response keys:', Array.isArray(shopFeedData) ? `Array with ${shopFeedData.length} items` : Object.keys(shopFeedData))
+          console.log('Shop feed response (first 1000 chars):', JSON.stringify(shopFeedData).substring(0, 1000))
+          
+          allProductsFromFeed = Array.isArray(shopFeedData) 
+            ? shopFeedData 
+            : (shopFeedData.offers || shopFeedData.products || shopFeedData.data || shopFeedData.items || [])
+          
+          console.log(`✓ Shop feed returned ${allProductsFromFeed.length} products`)
+        } else {
+          const errorText = await shopFeedResponse.text().catch(() => '')
+          console.log(`Shop feed endpoint returned ${shopFeedResponse.status}: ${errorText.substring(0, 200)}`)
+        }
+        
         // Step 2: Add Direct Collection Fetching
         // If no collections but response was OK, try fetching all products directly
         if (collections.length === 0) {
           console.log('No collections found in response, trying alternative approaches...')
           
-          // Try shop feed endpoint
-          const shopFeedUrl = `${baseUrl}/v1/shop/feed?storefront_token=${storefrontToken}`
-          const shopFeedResponse = await fetch(shopFeedUrl, {
-            headers: { 'Accept': 'application/json' },
-          })
-          
-          if (shopFeedResponse.ok) {
-            const shopFeedData = await shopFeedResponse.json()
-            console.log('Shop feed response:', JSON.stringify(shopFeedData).substring(0, 500))
-            const feedOffers = Array.isArray(shopFeedData) ? shopFeedData : (shopFeedData.offers || shopFeedData.products || shopFeedData.data || [])
-            
-            if (feedOffers.length > 0) {
-              const transformedProducts = feedOffers.map((offer: any) => {
-                const variant = offer.variants && offer.variants.length > 0 ? offer.variants[0] : null
-                const price = variant?.unitPrice?.value || 0
-                const currency = variant?.unitPrice?.currency || 'USD'
-                const compareAtPrice = variant?.compareAtPrice?.value
-                
-                return {
-                  id: offer.id || offer.slug || '',
-                  title: offer.name || offer.title || 'Untitled Product',
-                  description: offer.description || '',
-                  price: price,
-                  compareAtPrice: compareAtPrice,
-                  currency: currency,
-                  images: offer.images || (offer.image ? [offer.image] : []),
-                  handle: offer.slug || offer.handle || offer.id || '',
-                  available: offer.available !== false,
-                  variants: offer.variants || [],
-                  url: `https://thelostandunfounds-shop.fourthwall.com/products/${offer.slug || offer.handle || offer.id}`,
-                }
-              })
+          if (allProductsFromFeed.length > 0) {
+            const transformedProducts = allProductsFromFeed.map((offer: any) => {
+              const variant = offer.variants && offer.variants.length > 0 ? offer.variants[0] : null
+              const price = variant?.unitPrice?.value || 0
+              const currency = variant?.unitPrice?.currency || 'USD'
+              const compareAtPrice = variant?.compareAtPrice?.value
               
-              console.log(`Fourthwall API: Returning ${transformedProducts.length} products from shop feed`)
-              return res.status(200).json({
-                products: transformedProducts,
-              })
-            }
+              return {
+                id: offer.id || offer.slug || '',
+                title: offer.name || offer.title || 'Untitled Product',
+                description: offer.description || '',
+                price: price,
+                compareAtPrice: compareAtPrice,
+                currency: currency,
+                images: offer.images || (offer.image ? [offer.image] : []),
+                handle: offer.slug || offer.handle || offer.id || '',
+                available: offer.available !== false,
+                variants: offer.variants || [],
+                url: `https://thelostandunfounds-shop.fourthwall.com/products/${offer.slug || offer.handle || offer.id}`,
+              }
+            })
+            
+            console.log(`Fourthwall API: Returning ${transformedProducts.length} products from shop feed`)
+            return res.status(200).json({
+              products: transformedProducts,
+            })
           }
           
           // Try common collection handle formats as fallback
@@ -425,45 +438,55 @@ export default async function handler(
             }
           }
           
-          // Step 4: Fallback - Try fetching all offers and filtering by collection
-          if (!foundProducts && collection.id) {
-            console.log(`Trying fallback: Fetch all offers and filter by collection ID ${collection.id}`)
+          // Step 4: Fallback - Filter products from shop feed by collection ID/slug
+          if (!foundProducts && collection.id && allProductsFromFeed.length > 0) {
+            console.log(`Trying fallback: Filter shop feed products by collection ID ${collection.id} or slug ${collection.slug}`)
             try {
-              // Try to fetch all offers (if this endpoint exists)
-              const allOffersUrl = `${baseUrl}/v1/offers?storefront_token=${storefrontToken}`
-              const allOffersResponse = await fetch(allOffersUrl, {
-                headers: { 'Accept': 'application/json' },
+              // Filter products by collection ID or slug
+              const filteredOffers = allProductsFromFeed.filter((offer: any) => {
+                // Check various collection fields
+                const offerCollectionId = offer.collection_id || offer.collection?.id || offer.collections?.[0]?.id
+                const offerCollectionSlug = offer.collection_slug || offer.collection?.slug || offer.collections?.[0]?.slug
+                const offerCollectionHandle = offer.collection_handle || offer.collection?.handle || offer.collections?.[0]?.handle
+                
+                return offerCollectionId === collection.id ||
+                       offerCollectionId === collection.id.replace('col_', '') ||
+                       offerCollectionSlug === collection.slug ||
+                       offerCollectionHandle === collection.slug ||
+                       offerCollectionHandle === collection.handle ||
+                       // Check if collections array contains this collection
+                       (Array.isArray(offer.collections) && offer.collections.some((c: any) => 
+                         c.id === collection.id || 
+                         c.slug === collection.slug ||
+                         c.handle === collection.slug
+                       ))
               })
               
-              if (allOffersResponse.ok) {
-                const allOffersData = await allOffersResponse.json()
-                const allOffersList = Array.isArray(allOffersData) ? allOffersData : (allOffersData.offers || [])
+              if (filteredOffers.length > 0) {
+                console.log(`✓ Found ${filteredOffers.length} products via shop feed filtering`)
+                allOffers.push(...filteredOffers)
+                foundProducts = true
+                collectionHandle = collection.slug || collection.id
                 
-                // Filter offers by collection ID
-                const filteredOffers = allOffersList.filter((offer: any) => {
-                  return offer.collection_id === collection.id || 
-                         offer.collection?.id === collection.id ||
-                         offer.collections?.some((c: any) => c.id === collection.id)
+                const collectionName = collection.name || collection.title || 'Unknown'
+                collectionMetadata.push({
+                  name: collectionName,
+                  handle: collection.slug || collection.id,
+                  status: collection.status || 'unknown',
+                  productCount: filteredOffers.length
                 })
-                
-                if (filteredOffers.length > 0) {
-                  console.log(`✓ Found ${filteredOffers.length} products via fallback method`)
-                  allOffers.push(...filteredOffers)
-                  foundProducts = true
-                  collectionHandle = collection.id
-                  
-                  const collectionName = collection.name || collection.title || 'Unknown'
-                  collectionMetadata.push({
-                    name: collectionName,
-                    handle: collection.id,
-                    status: collection.status || 'unknown',
-                    productCount: filteredOffers.length
-                  })
-                }
+              } else {
+                console.log(`No products found in shop feed matching collection ${collection.id} (${collection.slug})`)
               }
             } catch (err) {
-              console.warn(`Fallback method failed:`, err)
+              console.warn(`Fallback filtering method failed:`, err)
             }
+          }
+          
+          // If still no products and shop feed has products, log for debugging
+          if (!foundProducts && allProductsFromFeed.length > 0) {
+            console.log(`Collection "${collection.name || collection.title}" has no matching products in shop feed`)
+            console.log(`Sample product structure:`, JSON.stringify(allProductsFromFeed[0]).substring(0, 500))
           }
           
           // Step 3: Log if no handle worked
