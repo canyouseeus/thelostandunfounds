@@ -138,6 +138,13 @@ export default function Layout() {
                     Documentation
                   </Link>
                   <Link 
+                    to="/shop" 
+                    className="menu-item"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Shop
+                  </Link>
+                  <Link 
                     to="/pricing" 
                     className="menu-item"
                     onClick={() => setMenuOpen(false)}
