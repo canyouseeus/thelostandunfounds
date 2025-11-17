@@ -18,7 +18,6 @@ import Contact from './pages/Contact'
 import Pricing from './pages/Pricing'
 import Support from './pages/Support'
 import Shop from './pages/Shop'
-import ResetNewsletter from './pages/ResetNewsletter'
 
 function App() {
   // Video preloader temporarily disabled for debugging
@@ -71,7 +70,6 @@ function App() {
             <Admin />
           </ProtectedRoute>
         } />
-        <Route path="/reset-newsletter" element={<ResetNewsletter />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Analytics />
