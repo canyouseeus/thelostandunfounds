@@ -106,7 +106,7 @@ class FourthwallService {
    */
   async getCollectionProducts(collectionHandle: string): Promise<{ products: FourthwallProduct[]; error: Error | null }> {
     try {
-      const response = await fetch(`/api/fourthwall/collections/${collectionHandle}`)
+      const response = await fetch(`/api/fourthwall/products?collection=${collectionHandle}`)
       
       if (!response.ok) {
         throw new Error(`Failed to fetch collection: ${response.statusText}`)
