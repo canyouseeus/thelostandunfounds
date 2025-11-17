@@ -136,9 +136,9 @@ async function handleOrderCreated(
       .eq('product_id', productId)
       .eq('variant_id', variantId || '')
       .eq('source', 'fourthwall')
-      .single() as { data: { cost: number } | null }
+      .single()
 
-    const cost = (productCost?.cost as number) || 0
+    const cost = productCost ? (productCost.cost as number) : 0
     const profit = (price - cost) * quantity
     totalProfit += profit
 
@@ -203,12 +203,12 @@ async function handleOrderCancelled(
   event: any
 ) {
   const order = event.data || event.order || event
-  const orderId = order.id || order.order_id
+  const orderId = (order.id || order.order_id || '') as string
 
   // Cancel associated commissions
   const { error } = await supabase
     .from('affiliate_commissions')
-    .update({ status: 'cancelled' })
+    .update({ status: 'cancelled' } as any)
     .eq('order_id', orderId)
     .eq('source', 'fourthwall')
 
@@ -252,7 +252,7 @@ async function updateKingMidasStats(
         affiliate_id: affiliateId,
         date,
         profit_generated: profit,
-      })
+      } as any)
   }
 }
 
