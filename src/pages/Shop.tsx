@@ -239,7 +239,7 @@ export default function Shop() {
             const affiliateRef = getAffiliateRef()
             const productUrl = product.source === 'fourthwall' 
               ? getCheckoutUrl(product.handle)
-              : product.url || `/products/${product.handle}`
+              : product.url || `/products/${product.handle}`;
             
             return (
             <a
@@ -319,7 +319,8 @@ export default function Shop() {
                 </div>
               </div>
             </a>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
