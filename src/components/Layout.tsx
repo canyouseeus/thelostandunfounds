@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { Home } from 'lucide-react'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { isAdmin } from '../utils/admin'
 import AuthModal from './auth/AuthModal'
@@ -17,6 +17,7 @@ export default function Layout() {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const isOpeningModalRef = useRef(false)
+  const justClickedRef = useRef(false)
   const { user, tier, signOut, loading, clearAuthStorage } = useAuth()
 
   // Check if user is admin
@@ -85,6 +86,36 @@ export default function Layout() {
     setMenuOpen(false)
   }
 
+  // Handle menu hover behavior
+  const handleMenuMouseEnter = useCallback(() => {
+    // Don't open on hover if we just clicked the button
+    if (!justClickedRef.current) {
+      setMenuOpen(true)
+    }
+  }, [])
+
+  const handleMenuMouseLeave = useCallback(() => {
+    setMenuOpen(false)
+    setMoreMenuOpen(false)
+    setAccountMenuOpen(false)
+  }, [])
+
+  const handleSubmenuMouseEnter = useCallback((submenuType: 'more' | 'account') => {
+    if (submenuType === 'more') {
+      setMoreMenuOpen(true)
+    } else {
+      setAccountMenuOpen(true)
+    }
+  }, [])
+
+  const handleSubmenuMouseLeave = useCallback((submenuType: 'more' | 'account') => {
+    if (submenuType === 'more') {
+      setMoreMenuOpen(false)
+    } else {
+      setAccountMenuOpen(false)
+    }
+  }, [])
+
   const tierColors = {
     free: 'text-white/60',
     premium: 'text-yellow-400',
@@ -99,7 +130,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-black">
-      {!isTikTokDownloader && (
+      {!isHome && (
       <nav className="bg-black/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Top row: Title left, Menu button right */}
@@ -107,17 +138,30 @@ export default function Layout() {
             <Link to="/" className="flex items-center text-white hover:text-white/80 transition">
               <span className="text-xl font-bold">THE LOST+UNFOUNDS</span>
             </Link>
-            {!isHome && (
             <div className="flex items-center space-x-4">
-              <div className="header-nav" ref={menuRef}>
-                <button 
-                  className="menu-toggle flex items-center justify-center"
-                  onClick={() => setMenuOpen(!menuOpen)}
-                  aria-label="Toggle menu"
-                  aria-expanded={menuOpen}
-                >
-                  <span className="menu-icon text-xl">☰</span>
-                </button>
+              <div 
+                className="header-nav" 
+                ref={menuRef}
+                onMouseEnter={handleMenuMouseEnter}
+                onMouseLeave={handleMenuMouseLeave}
+              >
+                  <button 
+                    type="button"
+                    className="menu-toggle flex items-center justify-center"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      justClickedRef.current = true;
+                      setMenuOpen(!menuOpen);
+                      // Reset the flag after a short delay to allow hover to work again
+                      setTimeout(() => {
+                        justClickedRef.current = false;
+                      }, 300);
+                    }}
+                    aria-label="Toggle menu"
+                    aria-expanded={menuOpen}
+                  >
+                    <span className="menu-icon text-xl">☰</span>
+                  </button>
                 <div className={`menu-dropdown ${menuOpen ? 'open' : ''}`}>
                   <Link 
                     to="/" 
@@ -145,10 +189,16 @@ export default function Layout() {
                     type="button"
                     className="menu-item menu-toggle-section"
                     onClick={() => setMoreMenuOpen(!moreMenuOpen)}
+                    onMouseEnter={() => handleSubmenuMouseEnter('more')}
+                    onMouseLeave={() => handleSubmenuMouseLeave('more')}
                   >
                     MORE {moreMenuOpen ? '▼' : '▶'}
                   </button>
-                  <div className={`menu-subsection ${moreMenuOpen ? 'open' : ''}`}>
+                  <div 
+                    className={`menu-subsection ${moreMenuOpen ? 'open' : ''}`}
+                    onMouseEnter={() => handleSubmenuMouseEnter('more')}
+                    onMouseLeave={() => handleSubmenuMouseLeave('more')}
+                  >
                     <Link 
                       to="/docs" 
                       className="menu-item menu-subitem"
@@ -197,10 +247,16 @@ export default function Layout() {
                         type="button"
                         className="menu-item menu-toggle-section"
                         onClick={() => setAccountMenuOpen(!accountMenuOpen)}
+                        onMouseEnter={() => handleSubmenuMouseEnter('account')}
+                        onMouseLeave={() => handleSubmenuMouseLeave('account')}
                       >
                         ACCOUNT {accountMenuOpen ? '▼' : '▶'}
                       </button>
-                      <div className={`menu-subsection ${accountMenuOpen ? 'open' : ''}`}>
+                      <div 
+                        className={`menu-subsection ${accountMenuOpen ? 'open' : ''}`}
+                        onMouseEnter={() => handleSubmenuMouseEnter('account')}
+                        onMouseLeave={() => handleSubmenuMouseLeave('account')}
+                      >
                         <Link 
                           to="/profile" 
                           className="menu-item menu-subitem"
@@ -262,7 +318,7 @@ export default function Layout() {
                   {!loading && user && (
                     <>
                       <div className="menu-item user-info">
-                        <div className="text-white/80 text-xs mb-1">{user.email || 'User'}</div>
+                        <div className="text-white/80 text-xs mb-1 truncate" title={user.email || 'User'}>{user.email || 'User'}</div>
                         {tier === 'free' ? (
                           <button
                             className={`text-xs font-semibold ${tierColors[tier]} hover:text-white transition cursor-pointer bg-transparent border-none p-0 w-full text-left`}
@@ -304,16 +360,11 @@ export default function Layout() {
                 </div>
               </div>
             </div>
-            )}
-          </div>
-          {/* Logo centered below */}
-          <div className="flex justify-center pb-3">
-            <img src="/logo.png" alt="THE LOST+UNFOUNDS Logo" className="max-w-[190px] h-auto" style={{ maxWidth: '190px' }} />
           </div>
         </div>
       </nav>
       )}
-      <main className="pb-6 pt-0">
+      <main className="pb-6">
         <Outlet />
       </main>
       <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
