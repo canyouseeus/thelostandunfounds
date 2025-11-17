@@ -161,8 +161,32 @@ git tag -l "MANTIS-*" | sort -V
 - ✅ No deployment errors
 - ✅ Production deployment successful
 
+### MANTIS-2.0.0 (2025-11-17)
+**Commit:** 37cc408
+
+**Changes:**
+- ✅ Updated Shop page UI improvements
+- ✅ Removed duplicate "Discover our premium products and services" text
+- ✅ Increased SHOP heading size from text-4xl to text-6xl for better visibility
+- ✅ Deployed to production on Vercel
+
+**UI Improvements:**
+- Cleaner shop page header with larger, more prominent SHOP title
+- Removed redundant descriptive text for cleaner design
+- Improved visual hierarchy
+
+**Deployment:**
+- ✅ Production URL: https://thelostandunfounds-kj3hmy74t-joshua-greenes-projects.vercel.app
+- ✅ Build completed successfully
+- ✅ All changes live in production
+
+**Status:**
+- ✅ Shop page updated and deployed
+- ✅ Production deployment successful
+- ✅ UI improvements live
+
 ## Latest Version
 
 The `MANTIS` tag always points to the latest version.
 
-**Current Latest:** MANTIS-1.0.3
+**Current Latest:** MANTIS-2.0.0
