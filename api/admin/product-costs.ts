@@ -30,13 +30,13 @@ export default async function handler(
 
     switch (req.method) {
       case 'GET':
-        return handleGet(supabase, req, res)
+        return handleGet(supabase as any, req, res)
       case 'POST':
-        return handleCreate(supabase, req, res)
+        return handleCreate(supabase as any, req, res)
       case 'PUT':
-        return handleUpdate(supabase, req, res)
+        return handleUpdate(supabase as any, req, res)
       case 'DELETE':
-        return handleDelete(supabase, req, res)
+        return handleDelete(supabase as any, req, res)
       default:
         return res.status(405).json({ error: 'Method not allowed' })
     }

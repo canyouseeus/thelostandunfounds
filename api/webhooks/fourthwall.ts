@@ -136,7 +136,7 @@ async function handleOrderCreated(
       .eq('product_id', productId)
       .eq('variant_id', variantId || '')
       .eq('source', 'fourthwall')
-      .single()
+      .single() as { data: { cost: number } | null }
 
     const cost = productCost ? (productCost.cost as number) : 0
     const profit = (price - cost) * quantity
@@ -175,16 +175,16 @@ async function handleOrderCreated(
   const { data: currentAffiliate } = await supabase
     .from('affiliates')
     .select('total_earnings, total_conversions')
-    .eq('id', affiliate.id)
-    .single()
+    .eq('id', affiliateId)
+    .single() as { data: { total_earnings: number; total_conversions: number } | null }
 
   if (currentAffiliate) {
     await supabase
       .from('affiliates')
       .update({
-        total_earnings: (currentAffiliate.total_earnings || 0) + totalCommission,
-        total_conversions: (currentAffiliate.total_conversions || 0) + 1,
-      })
+        total_earnings: ((currentAffiliate.total_earnings as number) || 0) + totalCommission,
+        total_conversions: ((currentAffiliate.total_conversions as number) || 0) + 1,
+      } as any)
       .eq('id', affiliateId)
   }
 
@@ -232,16 +232,16 @@ async function updateKingMidasStats(
     .select('profit_generated')
     .eq('affiliate_id', affiliateId)
     .eq('date', date)
-    .single()
+    .single() as { data: { profit_generated: number } | null }
 
   if (existingStats) {
     // Update existing record - get current value first
-    const currentProfit = parseFloat(existingStats.profit_generated?.toString() || '0')
+    const currentProfit = parseFloat((existingStats.profit_generated as number)?.toString() || '0')
     await supabase
       .from('king_midas_daily_stats')
       .update({
         profit_generated: currentProfit + profit,
-      })
+      } as any)
       .eq('affiliate_id', affiliateId)
       .eq('date', date)
   } else {
