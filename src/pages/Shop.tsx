@@ -121,13 +121,16 @@ export default function Shop() {
       {/* Search and Filter */}
       <div className="mb-8 flex flex-col sm:flex-row gap-4">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
           <input
             type="text"
             placeholder="Search products..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-black border border-white/10 rounded-lg text-white placeholder-white/40 focus:ring-2 focus:ring-white/20 focus:border-white/30"
+            className="w-full pl-10 pr-4 py-2.5 bg-black/50 border-2 border-white/30 rounded-lg text-white placeholder-white/50 
+                       hover:border-white/50 hover:bg-black/70 
+                       focus:outline-none focus:ring-4 focus:ring-white/30 focus:border-white/60 focus:bg-black/80
+                       transition-all duration-200 shadow-lg hover:shadow-white/10 focus:shadow-white/20"
           />
         </div>
         <div className="flex items-center gap-2">
@@ -135,7 +138,10 @@ export default function Shop() {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-4 py-2 bg-black border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-white/20 focus:border-white/30"
+            className="px-4 py-2.5 bg-black/50 border-2 border-white/30 rounded-lg text-white
+                       hover:border-white/50 hover:bg-black/70 
+                       focus:outline-none focus:ring-4 focus:ring-white/30 focus:border-white/60 focus:bg-black/80
+                       transition-all duration-200 shadow-lg hover:shadow-white/10 focus:shadow-white/20 cursor-pointer"
           >
             {categories.map((cat) => (
               <option key={cat} value={cat}>
