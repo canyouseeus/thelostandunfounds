@@ -130,14 +130,11 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-black">
-      {!isHome && (
       <nav className="bg-black/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Top row: Title left, Menu button right */}
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center text-white hover:text-white/80 transition">
-              <span className="text-xl font-bold">THE LOST+UNFOUNDS</span>
-            </Link>
+          {/* Top row: Menu button right */}
+          <div className="flex items-center justify-end h-16">
+            {!isHome && (
             <div className="flex items-center space-x-4">
               <div 
                 className="header-nav" 
@@ -359,11 +356,10 @@ export default function Layout() {
                   )}
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </nav>
-      )}
       <main className="pb-6">
         <Outlet />
       </main>
