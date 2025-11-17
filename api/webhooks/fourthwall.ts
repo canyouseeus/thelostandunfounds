@@ -96,18 +96,25 @@ async function handleOrderCreated(
   supabase: ReturnType<typeof createClient>,
   event: any
 ) {
-  const order = event.data || event.order || event
-  const orderId = (order.id || order.order_id || '') as string
+  // Log full event structure for debugging
+  console.log('Order event data structure:', JSON.stringify(event, null, 2))
   
-  // Check order status - only process completed/fulfilled orders
-  const orderStatus = order.status || order.order_status
-  if (orderStatus === 'cancelled' || orderStatus === 'refunded') {
+  const order = event.data || event.order || event.payload || event
+  const orderId = (order.id || order.order_id || order.orderId || '') as string
+  
+  // Check order status - Fourthwall may use different status values
+  const orderStatus = order.status || order.order_status || order.orderStatus || order.state
+  
+  if (!orderStatus) {
+    console.log(`Order ${orderId} status is undefined, logging full order structure:`, JSON.stringify(order, null, 2))
+    // For ORDER_PLACED events, assume order is ready to process if status is missing
+    // This handles cases where Fourthwall sends ORDER_PLACED without a status field
+    console.log('Processing order without status (assuming ORDER_PLACED means ready to process)')
+  } else if (orderStatus === 'cancelled' || orderStatus === 'refunded' || orderStatus === 'CANCELLED') {
     await handleOrderCancelled(supabase, event)
     return
-  }
-  
-  // Skip if order is not completed/fulfilled
-  if (orderStatus !== 'fulfilled' && orderStatus !== 'completed' && orderStatus !== 'paid') {
+  } else if (orderStatus !== 'fulfilled' && orderStatus !== 'completed' && orderStatus !== 'paid' && 
+             orderStatus !== 'CONFIRMED' && orderStatus !== 'confirmed') {
     console.log(`Order ${orderId} status is ${orderStatus}, skipping commission creation`)
     return
   }
