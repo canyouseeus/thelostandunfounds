@@ -112,10 +112,7 @@ export default function Shop() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Header */}
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4 text-white">SHOP</h1>
-        <p className="text-lg text-white/70 max-w-2xl mx-auto">
-          Discover our premium products and services
-        </p>
+        <h1 className="text-6xl font-bold mb-4 text-white">SHOP</h1>
       </div>
 
       {/* Search and Filter */}
