@@ -61,32 +61,7 @@ export default function EmailSignup() {
         throw new Error(data.error || 'Failed to subscribe');
       }
 
-      // Always show diagnostic info
-      let diagnosticMessage = data.message || 'Successfully subscribed!\n\n';
-      
-      if (data.warning) {
-        diagnosticMessage += `⚠️ ${data.warning}\n\n`;
-      }
-      
-      if (data.emailConfig) {
-        diagnosticMessage += 'Email Configuration:\n';
-        diagnosticMessage += `- Client ID: ${data.emailConfig.hasClientId ? '✓ Set' : '✗ Missing'}\n`;
-        diagnosticMessage += `- Client Secret: ${data.emailConfig.hasClientSecret ? '✓ Set' : '✗ Missing'}\n`;
-        diagnosticMessage += `- Refresh Token: ${data.emailConfig.hasRefreshToken ? '✓ Set' : '✗ Missing'}\n`;
-        diagnosticMessage += `- From Email: ${data.emailConfig.hasFromEmail ? '✓ Set' : '✗ Missing'}\n`;
-      }
-      
-      if (data.errorDetails) {
-        diagnosticMessage += `\nError Details: ${data.errorDetails}`;
-      }
-      
-      if (data.emailSent) {
-        diagnosticMessage += `\n\n✅ Email sent successfully`;
-      }
-      
-      alert(diagnosticMessage);
-      console.log('Email diagnostic info:', data);
-
+      // Success - no diagnostic info shown to user
       setSuccess(true);
       setEmail('');
       
@@ -114,28 +89,37 @@ export default function EmailSignup() {
       <div className="email-signup-success" style={{
         background: 'rgba(0, 0, 0, 0.5)',
         border: '1px solid rgba(255, 255, 255, 0.1)',
-        borderRadius: '8px',
+        borderRadius: '0',
         padding: '1.5rem',
         textAlign: 'center',
         maxWidth: '500px',
         width: '100%'
       }}>
-        <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>✓</div>
+        <div style={{ fontSize: '2rem', marginBottom: '1rem', color: '#ffffff' }}>✓</div>
         <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.5rem', color: '#ffffff' }}>
           Thank you for subscribing!
         </h3>
         <p style={{ color: 'rgba(255, 255, 255, 0.7)', marginBottom: '1rem' }}>
-          We'll keep you updated with the latest news and updates.
+          Check your email for confirmation.
         </p>
         <button
           onClick={() => setSuccess(false)}
           style={{
-            background: 'transparent',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            color: '#ffffff',
-            padding: '0.5rem 1rem',
-            borderRadius: '4px',
-            cursor: 'pointer'
+            background: '#ffffff',
+            border: 'none',
+            color: '#000000',
+            padding: '0.75rem 1.5rem',
+            borderRadius: '0',
+            cursor: 'pointer',
+            fontSize: '1rem',
+            fontWeight: 600,
+            transition: 'opacity 0.3s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.opacity = '0.9';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.opacity = '1';
           }}
         >
           Subscribe Another Email
@@ -192,8 +176,8 @@ export default function EmailSignup() {
           </button>
         </div>
 
-        {/* Cloudflare Turnstile - Only show in production */}
-        {turnstileSiteKey && !import.meta.env.DEV && (
+        {/* Cloudflare Turnstile */}
+        {turnstileSiteKey && (
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <Turnstile
               sitekey={turnstileSiteKey}
