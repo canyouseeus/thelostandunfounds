@@ -9,14 +9,13 @@ export default function Home() {
   const [textScale, setTextScale] = useState(1)
   const [textBlur, setTextBlur] = useState(0)
   const [showCursor, setShowCursor] = useState(false) // Start hidden, show when typing starts
-  const [logoState, setLogoState] = useState<'fading-in' | 'static' | 'fading-out' | 'hidden'>('fading-in')
+  const [logoState, setLogoState] = useState<'fading-in' | 'static'>('fading-in')
   const [logoOpacity, setLogoOpacity] = useState(0)
   const [showTyping, setShowTyping] = useState(false)
 
-  // Logo animation sequence: fade in (3s) -> static (2s) -> fade out (1s)
+  // Logo animation sequence: fade in (3s) -> static (stays visible)
   useEffect(() => {
     let fadeInIntervalRef: NodeJS.Timeout | null = null
-    let fadeOutIntervalRef: NodeJS.Timeout | null = null
     
     // Start fading in - begin at opacity 0
     setLogoOpacity(0)
@@ -35,42 +34,18 @@ export default function Home() {
           fadeInIntervalRef = null
         }
         setLogoState('static')
+        // Start typing animation after logo fades in + 2s delay
+        setTimeout(() => {
+          setShowTyping(true)
+        }, 2000)
       }
     }, 16) // ~60fps
-    
-    // After 3 seconds fade in + 2 seconds static, fade out
-    const fadeOutTimer = setTimeout(() => {
-      setLogoState('fading-out')
-      const fadeOutStart = Date.now()
-      fadeOutIntervalRef = setInterval(() => {
-        const elapsed = Date.now() - fadeOutStart
-        const progress = Math.min(elapsed / 1000, 1)
-        setLogoOpacity(1 - progress)
-        
-        if (progress >= 1) {
-          if (fadeOutIntervalRef) {
-            clearInterval(fadeOutIntervalRef)
-            fadeOutIntervalRef = null
-          }
-          setLogoState('hidden')
-          // Start typing animation after logo fades out + 1.5s delay
-          setTimeout(() => {
-            setShowTyping(true)
-          }, 1500)
-        }
-      }, 16)
-    }, 5000) // 3s fade in + 2s static = 5s total before fade out
 
     return () => {
       if (fadeInIntervalRef) {
         clearInterval(fadeInIntervalRef)
         fadeInIntervalRef = null
       }
-      if (fadeOutIntervalRef) {
-        clearInterval(fadeOutIntervalRef)
-        fadeOutIntervalRef = null
-      }
-      clearTimeout(fadeOutTimer)
     }
   }, [])
 
@@ -170,22 +145,20 @@ export default function Home() {
 
         {/* Foreground content - all centered at same point, sequential animation */}
         <div className="absolute inset-0 z-10">
-          {/* Logo - first in sequence */}
-          {logoState !== 'hidden' && (
-            <div 
-              className="fixed"
-              style={{
-                opacity: logoOpacity,
-                transition: logoState === 'static' ? 'opacity 0s' : 'opacity 0.016s linear',
-                left: '50%',
-                top: '50%',
-                transform: 'translate(-50%, -50%)',
-                zIndex: 1000,
-              }}
-            >
-              <img src="/logo.png" alt="THE LOST+UNFOUNDS Logo" className="max-w-[570px] h-auto" style={{ maxWidth: '570px' }} />
-            </div>
-          )}
+          {/* Logo - first in sequence, stays visible */}
+          <div 
+            className="fixed"
+            style={{
+              opacity: logoOpacity,
+              transition: logoState === 'static' ? 'opacity 0s' : 'opacity 0.016s linear',
+              left: '50%',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 1000,
+            }}
+          >
+            <img src="/logo.png" alt="THE LOST+UNFOUNDS Logo" className="max-w-[570px] h-auto" style={{ maxWidth: '570px' }} />
+          </div>
           
           {/* Typing text - second in sequence, stays completely fixed */}
           {showTyping && (
