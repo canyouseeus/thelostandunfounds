@@ -12,6 +12,7 @@ export default function Home() {
   const [logoState, setLogoState] = useState<'fading-in' | 'static' | 'fading-out' | 'hidden'>('fading-in')
   const [logoOpacity, setLogoOpacity] = useState(0)
   const [showTyping, setShowTyping] = useState(false)
+  const [showEmailSignupContainer, setShowEmailSignupContainer] = useState(false)
 
   // Logo animation sequence: fade in (3s) -> static (1.5s) -> fade out (1s)
   useEffect(() => {
@@ -129,11 +130,10 @@ export default function Home() {
     }
   }, [showTyping, text])
 
-  // Show email signup after typing completes
+  // Start growing text and add blur when typing completes, and show email signup container (off-screen) so Turnstile can load
   useEffect(() => {
     if (typingComplete) {
-      setShowEmailSignup(true)
-      // Start growing text and add blur when signup appears
+      setShowEmailSignupContainer(true) // Show container off-screen so Turnstile can load
       setTextBlur(2)
       const growStart = Date.now()
       const growInterval = setInterval(() => {
@@ -146,6 +146,11 @@ export default function Home() {
       return () => clearInterval(growInterval)
     }
   }, [typingComplete])
+
+  // Handle Turnstile success - trigger signup modal slide-up animation
+  const handleTurnstileSuccess = () => {
+    setShowEmailSignup(true)
+  }
 
 
   return (
@@ -217,12 +222,12 @@ export default function Home() {
             </div>
           )}
           
-          {/* Email Signup - third in sequence, rises up from bottom to center */}
+          {/* Email Signup - third in sequence, rises up from bottom to center when Turnstile succeeds */}
+          {showEmailSignupContainer && (
           <div 
             className="fixed"
             style={{
               opacity: showEmailSignup ? 1 : 0,
-              visibility: showEmailSignup ? 'visible' : 'hidden',
               left: '50%',
               top: showEmailSignup ? '50%' : '100%',
               transform: showEmailSignup ? 'translate(-50%, -50%)' : 'translate(-50%, 0)',
@@ -230,7 +235,7 @@ export default function Home() {
               maxWidth: '500px',
               padding: '0 1rem',
               zIndex: 1002,
-              transition: 'opacity 1.5s ease-in-out, transform 1.5s ease-in-out, visibility 0s linear',
+              transition: 'opacity 1.5s ease-in-out, transform 1.5s ease-in-out',
               pointerEvents: showEmailSignup ? 'auto' : 'none',
               willChange: 'opacity, transform',
               position: 'fixed',
@@ -239,7 +244,7 @@ export default function Home() {
               gap: '1.5rem',
             }}
           >
-            <EmailSignup />
+            <EmailSignup onTurnstileSuccess={handleTurnstileSuccess} />
             {/* Copy text below subscribe modal */}
             <div style={{
               textAlign: 'center',
@@ -250,6 +255,7 @@ export default function Home() {
               Thanks for stopping by. Sign-up for updates and news!
             </div>
           </div>
+          )}
         </div>
       </main>
     </div>

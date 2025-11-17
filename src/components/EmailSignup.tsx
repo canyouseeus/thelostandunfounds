@@ -1,7 +1,11 @@
 import { useState, useRef } from 'react';
 import Turnstile from 'react-turnstile';
 
-export default function EmailSignup() {
+interface EmailSignupProps {
+  onTurnstileSuccess?: () => void;
+}
+
+export default function EmailSignup({ onTurnstileSuccess }: EmailSignupProps = {}) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -184,6 +188,10 @@ export default function EmailSignup() {
               onSuccess={(token) => {
                 console.log('Turnstile verified successfully');
                 setTurnstileToken(token);
+                // Trigger signup modal animation when Turnstile succeeds
+                if (onTurnstileSuccess) {
+                  onTurnstileSuccess();
+                }
               }}
               onError={(error) => {
                 console.error('❌ Turnstile error:', error);
