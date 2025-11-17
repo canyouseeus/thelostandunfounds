@@ -132,7 +132,7 @@ export default function EmailSignup() {
     <div className="email-signup" style={{
       background: 'rgba(0, 0, 0, 0.5)',
       border: '1px solid rgba(255, 255, 255, 0.1)',
-      borderRadius: '8px',
+      borderRadius: '0',
       padding: '1.5rem',
       maxWidth: '500px',
       width: '100%'
@@ -151,7 +151,7 @@ export default function EmailSignup() {
               padding: '0.75rem',
               background: 'rgba(0, 0, 0, 0.5)',
               border: '1px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: '4px',
+              borderRadius: '0',
               color: '#ffffff',
               fontSize: '1rem'
             }}
@@ -165,7 +165,7 @@ export default function EmailSignup() {
               background: loading || (turnstileSiteKey && !turnstileToken && !import.meta.env.DEV) ? 'rgba(255, 255, 255, 0.3)' : '#ffffff',
               color: loading || (turnstileSiteKey && !turnstileToken && !import.meta.env.DEV) ? 'rgba(0, 0, 0, 0.5)' : '#000000',
               border: 'none',
-              borderRadius: '4px',
+              borderRadius: '0',
               fontSize: '1rem',
               fontWeight: 600,
               cursor: loading || (turnstileSiteKey && !turnstileToken && !import.meta.env.DEV) ? 'not-allowed' : 'pointer',
