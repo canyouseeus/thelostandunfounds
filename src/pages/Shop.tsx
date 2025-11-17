@@ -192,8 +192,8 @@ export default function Shop() {
 function ProductCard({ product }: { product: Product }) {
   const { user } = useAuth();
   const imageUrl = product.images && product.images.length > 0 ? product.images[0] : null;
-  const displayPrice = product.price / 100; // Fourthwall prices are in cents
-  const displayComparePrice = product.compareAtPrice ? product.compareAtPrice / 100 : null;
+  const displayPrice = product.price; // Prices are already in dollars from API
+  const displayComparePrice = product.compareAtPrice || null;
   
   // Get affiliate ref and generate checkout URL with tracking
   const affiliateRef = getAffiliateRef();
