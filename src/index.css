@@ -61,11 +61,12 @@ body {
   outline: none;
   box-shadow: none;
   position: relative;
+  z-index: 99999;
 }
 
 .header-nav {
   position: relative;
-  z-index: 10;
+  z-index: 99999;
   display: flex;
   align-items: center;
 }
@@ -106,13 +107,15 @@ body {
   visibility: hidden;
   transform: translateY(-10px);
   transition: all 0.3s ease;
-  z-index: 1000;
+  z-index: 999999;
+  pointer-events: none;
 }
 
 .menu-dropdown.open {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
+  pointer-events: auto;
 }
 
 .menu-item {
@@ -120,18 +123,24 @@ body {
   padding: 0.625rem 1rem;
   color: white;
   text-decoration: none;
-  transition: background 0.2s ease;
+  transition: background-color 0.3s ease, color 0.3s ease;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: none;
+  background-color: transparent;
   border-left: none;
   border-right: none;
   border-top: none;
   width: 100%;
-  text-align: center;
+  text-align: left;
   cursor: pointer;
   font-size: 0.75rem;
   font-family: inherit;
   letter-spacing: 0.05em;
+  pointer-events: auto;
+}
+
+.menu-item:hover {
+  background-color: white;
+  color: black;
 }
 
 .menu-item.user-info {
@@ -139,6 +148,9 @@ body {
   padding-top: 0.75rem;
   margin-top: 0.5rem;
   cursor: default;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  text-align: left;
 }
 
 .menu-item.user-info:hover {
@@ -147,10 +159,6 @@ body {
 
 .menu-item:last-child {
   border-bottom: none;
-}
-
-.menu-item:hover {
-  background: rgba(255, 255, 255, 0.1);
 }
 
 .menu-toggle-section {
@@ -172,9 +180,9 @@ body {
 
 .menu-subitem {
   padding-left: 1.5rem;
-  font-size: 0.7rem;
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
+  font-size: 0.65rem;
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
 }
 
 .logo-container {
@@ -510,6 +518,11 @@ section h2 {
   color: #ffffff;
 }
 
+/* Make all large headings uppercase */
+h1.text-5xl {
+  text-transform: uppercase;
+}
+
 .status-item {
   display: flex;
   justify-content: space-between;
@@ -627,5 +640,56 @@ section h2 {
   .header {
     padding: 1.5rem 1rem;
   }
+}
+
+/* Card Flip Animation */
+.tool-card {
+  perspective: 1000px;
+  width: 100%;
+}
+
+.tool-card-inner {
+  position: relative;
+  width: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.6s ease-in-out;
+}
+
+.tool-card.flipped .tool-card-inner {
+  transform: rotateY(180deg);
+}
+
+.tool-card-front {
+  position: relative;
+  width: 100%;
+  display: block;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  z-index: 2;
+}
+
+.tool-card-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: rotateY(180deg);
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tool-card.flipped .tool-card-back {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.tool-card.flipped .tool-card-front {
+  opacity: 0;
+  pointer-events: none;
 }
 

@@ -48,7 +48,7 @@ export default function ZohoCallback() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black">
-      <div className="max-w-2xl w-full p-8 bg-gray-900 rounded-lg border border-gray-700">
+      <div className="max-w-2xl w-full p-8 bg-gray-900 rounded-none border border-gray-700">
         <h1 className="text-2xl font-bold text-white mb-4">✅ Authorization Code Received</h1>
         <p className="text-gray-300 mb-6">
           Your authorization code has been copied to your clipboard automatically.

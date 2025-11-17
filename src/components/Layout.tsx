@@ -372,7 +372,7 @@ export default function Layout() {
       {/* Upgrade Modal */}
       {upgradeModalOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="bg-black border border-white/10 rounded-lg p-6 w-full max-w-md mx-4">
+          <div className="bg-black/50 border border-white/10 rounded-none p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-white">Upgrade Your Account</h2>
               <button
@@ -384,7 +384,7 @@ export default function Layout() {
               </button>
             </div>
             <div className="space-y-4">
-              <div className="bg-black border border-white/10 rounded-lg p-4">
+              <div className="bg-black/50 border border-white/10 rounded-none p-4">
                 <h3 className="text-lg font-semibold text-white mb-2">Premium Tier</h3>
                 <p className="text-white/70 text-sm mb-3">Unlimited access to all tools</p>
                 <div className="text-2xl font-bold text-white mb-4">$9.99<span className="text-sm text-white/60">/month</span></div>
@@ -393,12 +393,12 @@ export default function Layout() {
                     window.open('https://paypal.com', '_blank');
                     setUpgradeModalOpen(false);
                   }}
-                  className="w-full px-4 py-2 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition"
+                  className="w-full px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
                 >
                   Upgrade to Premium
                 </button>
               </div>
-              <div className="bg-black border border-white/10 rounded-lg p-4">
+              <div className="bg-black/50 border border-white/10 rounded-none p-4">
                 <h3 className="text-lg font-semibold text-white mb-2">Pro Tier</h3>
                 <p className="text-white/70 text-sm mb-3">Everything + API access</p>
                 <div className="text-2xl font-bold text-white mb-4">$19.99<span className="text-sm text-white/60">/month</span></div>
@@ -407,7 +407,7 @@ export default function Layout() {
                     window.open('https://paypal.com', '_blank');
                     setUpgradeModalOpen(false);
                   }}
-                  className="w-full px-4 py-2 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition"
+                  className="w-full px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
                 >
                   Upgrade to Pro
                 </button>

@@ -6,17 +6,24 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
-import { User, Mail, Calendar, Shield } from 'lucide-react';
+import { User, Mail, Calendar, Shield, Key } from 'lucide-react';
 import { LoadingSpinner, SkeletonCard } from '../components/Loading';
 import { formatDate } from '../utils/helpers';
 import { SubscriptionTier } from '../types/index';
+import { isAdmin } from '../utils/admin';
 
 export default function Profile() {
   const { user, tier, loading: authLoading } = useAuth();
   const { success, error: showError } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [displayName, setDisplayName] = useState('');
+  const [userIsAdmin, setUserIsAdmin] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   useEffect(() => {
     if (user?.email) {
@@ -24,6 +31,16 @@ export default function Profile() {
       const emailName = user.email.split('@')[0];
       setDisplayName(emailName);
     }
+  }, [user]);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (user) {
+        const admin = await isAdmin();
+        setUserIsAdmin(admin);
+      }
+    };
+    checkAdminStatus();
   }, [user]);
 
   const handleSave = async () => {
@@ -39,6 +56,45 @@ export default function Profile() {
       showError('Failed to update profile');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (newPassword !== confirmPassword) {
+      showError('New passwords do not match');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      showError('Password must be at least 6 characters');
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      const { supabase } = await import('../lib/supabase');
+      
+      // Update password using Supabase
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) {
+        showError(error.message || 'Failed to update password');
+        return;
+      }
+
+      success('Password updated successfully');
+      setShowPasswordChange(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      showError('Failed to update password');
+    } finally {
+      setPasswordLoading(false);
     }
   };
 
@@ -75,22 +131,29 @@ export default function Profile() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-white mb-2">Profile</h1>
+        <h1 className="text-4xl font-bold text-white mb-2">PROFILE</h1>
         <p className="text-white/70">Manage your account information</p>
       </div>
 
       <div className="space-y-6">
         {/* Account Information */}
-        <div className="bg-black border border-white/10 rounded-lg p-6">
+        <div className="bg-black/50 border border-white/10 rounded-none p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <User className="w-5 h-5" />
-              Account Information
-            </h2>
+            <div className="flex items-center gap-3">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <User className="w-5 h-5" />
+                Account Information
+              </h2>
+              {userIsAdmin && (
+                <div className="px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white">
+                  ADMIN
+                </div>
+              )}
+            </div>
             {!isEditing && (
               <button
                 onClick={() => setIsEditing(true)}
-                className="px-4 py-2 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition text-sm"
+                className="px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition text-sm"
               >
                 Edit
               </button>
@@ -102,7 +165,7 @@ export default function Profile() {
               <label className="block text-sm font-medium text-white/80 mb-2">
                 Email
               </label>
-              <div className="flex items-center gap-2 px-4 py-2 bg-black border border-white/10 rounded-lg">
+              <div className="flex items-center gap-2 px-4 py-2 bg-black/50 border border-white/10 rounded-none">
                 <Mail className="w-4 h-4 text-white/60" />
                 <span className="text-white">{user.email}</span>
               </div>
@@ -118,11 +181,11 @@ export default function Profile() {
                   type="text"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full px-4 py-2 bg-black border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-white/30"
+                  className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white/30"
                   placeholder="Your display name"
                 />
               ) : (
-                <div className="px-4 py-2 bg-black border border-white/10 rounded-lg text-white">
+                <div className="px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white">
                   {displayName || 'Not set'}
                 </div>
               )}
@@ -133,7 +196,7 @@ export default function Profile() {
                 <button
                   onClick={handleSave}
                   disabled={loading}
-                  className="px-4 py-2 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {loading && <LoadingSpinner size="sm" />}
                   Save Changes
@@ -143,7 +206,7 @@ export default function Profile() {
                     setIsEditing(false);
                     setDisplayName(user.email?.split('@')[0] || '');
                   }}
-                  className="px-4 py-2 bg-black border border-white/10 text-white font-semibold rounded-lg hover:border-white/30 transition"
+                  className="px-4 py-2 bg-black/50 border border-white/10 text-white font-semibold rounded-none hover:border-white/30 transition"
                 >
                   Cancel
                 </button>
@@ -152,14 +215,100 @@ export default function Profile() {
           </div>
         </div>
 
+        {/* Password Change */}
+        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <Key className="w-5 h-5" />
+              Change Password
+            </h2>
+            {!showPasswordChange && (
+              <button
+                onClick={() => setShowPasswordChange(true)}
+                className="px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition text-sm"
+              >
+                Change Password
+              </button>
+            )}
+          </div>
+
+          {showPasswordChange ? (
+            <form onSubmit={handlePasswordChange} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-2">
+                  Current Password
+                </label>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white/30"
+                  placeholder="Enter current password"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-2">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white/30"
+                  placeholder="Enter new password (min. 6 characters)"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-2">
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white/30"
+                  placeholder="Confirm new password"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="submit"
+                  disabled={passwordLoading}
+                  className="px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {passwordLoading && <LoadingSpinner size="sm" />}
+                  Update Password
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPasswordChange(false);
+                    setCurrentPassword('');
+                    setNewPassword('');
+                    setConfirmPassword('');
+                  }}
+                  className="px-4 py-2 bg-black/50 border border-white/10 text-white font-semibold rounded-none hover:border-white/30 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : (
+            <p className="text-white/60 text-sm">Click "Change Password" to update your password</p>
+          )}
+        </div>
+
         {/* Subscription Information */}
-        <div className="bg-black border border-white/10 rounded-lg p-6">
+        <div className="bg-black/50 border border-white/10 rounded-none p-6">
           <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
             <Shield className="w-5 h-5" />
             Subscription
           </h2>
 
-          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border ${tierColors[tier]}`}>
+          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-none border ${tierColors[tier]}`}>
             <span className="font-semibold">{tierLabels[tier]} Tier</span>
           </div>
 
@@ -176,7 +325,7 @@ export default function Profile() {
         </div>
 
         {/* Account Details */}
-        <div className="bg-black border border-white/10 rounded-lg p-6">
+        <div className="bg-black/50 border border-white/10 rounded-none p-6">
           <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
             <Calendar className="w-5 h-5" />
             Account Details

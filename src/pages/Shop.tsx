@@ -124,7 +124,7 @@ export default function Shop() {
             placeholder="Search products..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-black/50 border-2 border-white/30 rounded-lg text-white placeholder-white/50 
+            className="w-full pl-10 pr-4 py-2.5 bg-black/50 border-2 border-white/30 rounded-none text-white placeholder-white/50 
                        hover:border-white/50 hover:bg-black/70 
                        focus:outline-none focus:ring-4 focus:ring-white/30 focus:border-white/60 focus:bg-black/80
                        transition-all duration-200 shadow-lg hover:shadow-white/10 focus:shadow-white/20"
@@ -135,7 +135,7 @@ export default function Shop() {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-4 py-2.5 bg-black/50 border-2 border-white/30 rounded-lg text-white
+            className="px-4 py-2.5 bg-black/50 border-2 border-white/30 rounded-none text-white
                        hover:border-white/50 hover:bg-black/70 
                        focus:outline-none focus:ring-4 focus:ring-white/30 focus:border-white/60 focus:bg-black/80
                        transition-all duration-200 shadow-lg hover:shadow-white/10 focus:shadow-white/20 cursor-pointer"
@@ -206,14 +206,14 @@ function ProductCard({ product }: { product: Product }) {
   };
 
   return (
-    <div className="bg-black border border-white/10 rounded-lg p-6 hover:border-white/30 transition-all">
+    <div className="bg-black/50 border border-white/10 rounded-none p-6 hover:border-white/40 hover:bg-white/5 hover:shadow-[0_8px_30px_rgba(255,255,255,0.12)] hover:-translate-y-1 transition-all duration-300">
       {product.featured && (
-        <div className="bg-yellow-400/20 text-yellow-400 text-xs font-semibold px-2 py-1 rounded-full inline-block mb-3">
+        <div className="bg-yellow-400/20 text-yellow-400 text-xs font-semibold px-2 py-1 rounded-none inline-block mb-3">
           Featured
         </div>
       )}
       {imageUrl && (
-        <div className="mb-4 aspect-square overflow-hidden rounded-lg bg-white/5">
+        <div className="mb-4 aspect-square overflow-hidden rounded-none bg-white/5">
           <img 
             src={imageUrl} 
             alt={product.title}
@@ -245,7 +245,7 @@ function ProductCard({ product }: { product: Product }) {
           target="_blank"
           rel="noopener noreferrer"
           onClick={handleCheckoutClick}
-          className="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-lg hover:bg-white/90 transition-colors font-semibold"
+          className="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-none hover:bg-white/90 transition-colors font-semibold"
         >
           <ShoppingCart className="w-4 h-4" />
           {displayPrice === 0 ? 'View' : 'Buy Now'}

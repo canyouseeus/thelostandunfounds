@@ -31,21 +31,21 @@ export default function About() {
         <section>
           <h2 className="text-3xl font-bold text-white mb-6">Our Values</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-black border border-white/10 rounded-lg p-6">
+            <div className="bg-black/50 border border-white/10 rounded-none p-6">
               <Zap className="w-8 h-8 text-yellow-400 mb-4" />
               <h3 className="text-xl font-bold text-white mb-2">Simplicity</h3>
               <p className="text-white/70">
                 We make complex tools simple and easy to use, so you can focus on what matters.
               </p>
             </div>
-            <div className="bg-black border border-white/10 rounded-lg p-6">
+            <div className="bg-black/50 border border-white/10 rounded-none p-6">
               <Shield className="w-8 h-8 text-green-400 mb-4" />
               <h3 className="text-xl font-bold text-white mb-2">Privacy</h3>
               <p className="text-white/70">
                 Your data is yours. We don't store unnecessary information and respect your privacy.
               </p>
             </div>
-            <div className="bg-black border border-white/10 rounded-lg p-6">
+            <div className="bg-black/50 border border-white/10 rounded-none p-6">
               <Sparkles className="w-8 h-8 text-purple-400 mb-4" />
               <h3 className="text-xl font-bold text-white mb-2">Innovation</h3>
               <p className="text-white/70">
@@ -75,7 +75,7 @@ export default function About() {
         </section>
 
         {/* CTA */}
-        <section className="bg-white/5 border border-white/10 rounded-lg p-8 text-center">
+        <section className="bg-black/50 border border-white/10 rounded-none p-8 text-center">
           <h2 className="text-3xl font-bold text-white mb-4">Ready to Get Started?</h2>
           <p className="text-white/70 mb-6">
             Join thousands of users who are already using THE LOST+UNFOUNDS to streamline their workflow.
@@ -83,13 +83,13 @@ export default function About() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               to="/tools"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
             >
               Explore Tools <ArrowRight className="w-5 h-5" />
             </Link>
             <Link
               to="/docs"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-black border border-white/10 text-white font-semibold rounded-lg hover:border-white/30 transition"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-black/50 border border-white/10 rounded-none text-white font-semibold hover:border-white/30 transition"
             >
               View Documentation
             </Link>

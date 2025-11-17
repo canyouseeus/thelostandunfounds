@@ -80,30 +80,32 @@ export default function Pricing() {
           return (
             <div
               key={plan.name}
-              className={`bg-black border rounded-lg p-8 relative ${
+              className={`bg-black/50 border border-white/10 rounded-none p-8 relative hover:bg-white hover:text-black hover:border-white/40 hover:shadow-[0_8px_30px_rgba(255,255,255,0.12)] hover:-translate-y-1 transition-all duration-300 group ${
                 plan.highlight
                   ? 'border-yellow-400 shadow-lg shadow-yellow-400/20'
-                  : 'border-white/10'
+                  : ''
               }`}
             >
               {plan.highlight && (
                 <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                  <span className="bg-yellow-400 text-black px-4 py-1 rounded-full text-sm font-semibold">
+                  <span className="bg-yellow-400 text-black px-4 py-1 rounded-none text-sm font-semibold">
                     Most Popular
                   </span>
                 </div>
               )}
 
               <div className="text-center mb-6">
-                <Icon className={`w-12 h-12 mx-auto mb-4 ${
-                  plan.highlight ? 'text-yellow-400' : 'text-white/60'
+                <Icon className={`w-12 h-12 mx-auto mb-4 transition-colors ${
+                  plan.highlight 
+                    ? 'text-yellow-400 group-hover:text-yellow-600' 
+                    : 'text-white/60 group-hover:text-black/60'
                 }`} />
-                <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
-                <p className="text-white/60 text-sm mb-4">{plan.description}</p>
+                <h3 className="text-2xl font-bold text-white group-hover:text-black mb-2 transition-colors uppercase">{plan.name}</h3>
+                <p className="text-white/60 group-hover:text-black/60 text-sm mb-4 transition-colors">{plan.description}</p>
                 <div className="mb-4">
-                  <span className="text-4xl font-bold text-white">${plan.price}</span>
+                  <span className="text-4xl font-bold text-white group-hover:text-black transition-colors">${plan.price}</span>
                   {plan.price > 0 && (
-                    <span className="text-white/60">/{plan.period}</span>
+                    <span className="text-white/60 group-hover:text-black/60 transition-colors">/{plan.period}</span>
                   )}
                 </div>
               </div>
@@ -111,20 +113,20 @@ export default function Pricing() {
               <ul className="space-y-3 mb-8">
                 {plan.features.map((feature, index) => (
                   <li key={index} className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-white/80">{feature}</span>
+                    <Check className="w-5 h-5 text-green-400 group-hover:text-green-600 mt-0.5 flex-shrink-0 transition-colors" />
+                    <span className="text-white/80 group-hover:text-black/80 transition-colors">{feature}</span>
                   </li>
                 ))}
               </ul>
 
               {isCurrentPlan ? (
-                <div className="w-full px-6 py-3 bg-white/10 text-white font-semibold rounded-lg text-center">
+                <div className="w-full px-6 py-3 bg-white/10 group-hover:bg-black/10 text-white group-hover:text-black font-semibold text-center transition-colors">
                   Current Plan
                 </div>
               ) : (
                 <Link
                   to={user ? '/settings' : '/tools'}
-                  className="block w-full px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition text-center"
+                  className="block w-full px-6 py-3 bg-white group-hover:bg-black text-black group-hover:text-white font-semibold transition text-center"
                 >
                   {plan.cta}
                 </Link>
@@ -134,14 +136,14 @@ export default function Pricing() {
         })}
       </div>
 
-      <div className="bg-white/5 border border-white/10 rounded-lg p-8 text-center">
+      <div className="bg-black/50 border border-white/10 rounded-none p-8 text-center">
         <h2 className="text-2xl font-bold text-white mb-4">Need a Custom Plan?</h2>
         <p className="text-white/70 mb-6">
           We offer custom enterprise plans for teams and organizations. Contact us to learn more.
         </p>
         <Link
           to="/contact"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-transparent rounded-none text-black font-semibold hover:bg-transparent hover:border-white hover:text-white hover:shadow-[0_8px_30px_rgba(255,255,255,0.12)] hover:-translate-y-1 transition-all duration-300"
         >
           Contact Sales <ArrowRight className="w-5 h-5" />
         </Link>

@@ -33,10 +33,22 @@ if (menuToggle) {
 
 // Close menu when clicking outside
 document.addEventListener('click', (e) => {
+    // Guard against elements that might not have expected properties
+    if (!e.target || typeof e.target.nodeType === 'undefined') {
+        return;
+    }
+    
+    // Only handle clicks on element nodes (not text nodes, etc.)
+    if (e.target.nodeType !== Node.ELEMENT_NODE) {
+        return;
+    }
+    
     if (menuDropdown && !menuDropdown.contains(e.target) && !menuToggle.contains(e.target)) {
         menuDropdown.classList.remove('open');
         menuDropdown.classList.add('hidden');
-        menuToggle.setAttribute('aria-expanded', 'false');
+        if (menuToggle) {
+            menuToggle.setAttribute('aria-expanded', 'false');
+        }
     }
 });
 

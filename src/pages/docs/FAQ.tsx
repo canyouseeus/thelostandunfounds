@@ -59,7 +59,7 @@ export default function FAQ() {
         {faqs.map((faq, index) => (
           <div
             key={index}
-            className="bg-black border border-white/10 rounded-lg overflow-hidden"
+            className="bg-black/50 border border-white/10 rounded-none overflow-hidden"
           >
             <button
               onClick={() => setOpenIndex(openIndex === index ? null : index)}
@@ -81,14 +81,14 @@ export default function FAQ() {
         ))}
       </div>
 
-      <div className="mt-8 p-6 bg-white/5 border border-white/10 rounded-lg">
+      <div className="mt-8 p-6 bg-black/50 border border-white/10 rounded-none">
         <h3 className="text-xl font-bold text-white mb-2">Still have questions?</h3>
         <p className="text-white/70 mb-4">
           If you can't find the answer you're looking for, please contact our support team.
         </p>
         <a
           href="/support"
-          className="inline-block px-4 py-2 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition"
+          className="inline-block px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
         >
           Contact Support
         </a>

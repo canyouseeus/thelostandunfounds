@@ -100,7 +100,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       onClick={onClose}
     >
       <div 
-        className="bg-black border border-white/10 rounded-lg p-6 w-full max-w-md mx-4"
+        className="bg-black/50 border border-white/10 rounded-none p-6 w-full max-w-md mx-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
@@ -127,7 +127,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-2 bg-black border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-white/30"
+              className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white/30"
               placeholder="your@email.com"
             />
           </div>
@@ -143,13 +143,13 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full px-4 py-2 bg-black border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-white/30"
+              className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white/30"
               placeholder="••••••"
             />
           </div>
 
           {error && (
-            <div className="px-4 py-2 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-sm">
+            <div className="px-4 py-2 bg-red-500/20 border border-red-500/50 rounded-none text-red-400 text-sm">
               {error}
             </div>
           )}
@@ -157,7 +157,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full px-4 py-2 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
           </button>
@@ -176,7 +176,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           <button
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="mt-4 w-full px-4 py-2 bg-black border border-white/10 rounded-lg text-white font-medium hover:border-white/30 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="mt-4 w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white font-medium hover:border-white/30 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path

@@ -57,7 +57,7 @@ export default function GettingStarted() {
             </p>
             <Link
               to="/tools"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
             >
               Explore Tools <ArrowRight className="w-4 h-4" />
             </Link>
@@ -96,12 +96,12 @@ export default function GettingStarted() {
               Unlock unlimited access and advanced features by upgrading to Premium or Pro.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+              <div className="bg-black/50 border border-white/10 rounded-none p-4">
                 <h3 className="text-white font-semibold mb-2">Premium</h3>
                 <p className="text-white/70 text-sm mb-3">Unlimited access to all tools</p>
                 <div className="text-xl font-bold text-white">$9.99<span className="text-sm text-white/60">/month</span></div>
               </div>
-              <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+              <div className="bg-black/50 border border-white/10 rounded-none p-4">
                 <h3 className="text-white font-semibold mb-2">Pro</h3>
                 <p className="text-white/70 text-sm mb-3">Everything + API access</p>
                 <div className="text-xl font-bold text-white">$19.99<span className="text-sm text-white/60">/month</span></div>
@@ -111,7 +111,7 @@ export default function GettingStarted() {
         </section>
       </div>
 
-      <div className="mt-12 p-6 bg-white/5 border border-white/10 rounded-lg">
+      <div className="mt-12 p-6 bg-black/50 border border-white/10 rounded-none">
         <h3 className="text-xl font-bold text-white mb-3">Need Help?</h3>
         <p className="text-white/70 mb-4">
           If you have questions or need assistance, check out our <Link to="/docs/faq" className="text-white underline">FAQ</Link> or 
@@ -119,7 +119,7 @@ export default function GettingStarted() {
         </p>
         <Link
           to="/support"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
         >
           Get Support <ArrowRight className="w-4 h-4" />
         </Link>

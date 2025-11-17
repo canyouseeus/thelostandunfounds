@@ -1,6 +1,7 @@
 /**
  * Admin Dashboard Page
  * Admin-only page for managing the platform
+ * Enhanced version with comprehensive platform management
  */
 
 import { useState, useEffect } from 'react';
@@ -19,9 +20,18 @@ import {
   AlertCircle,
   CheckCircle,
   XCircle,
-  Loader
+  Loader,
+  Bell,
+  Clock,
+  DollarSign,
+  Zap,
+  Network,
+  Eye,
+  Mail,
+  Calendar
 } from 'lucide-react';
 import { LoadingSpinner } from '../components/Loading';
+import { ProductCostManagement } from '../components/ProductCostManagement';
 
 interface DashboardStats {
   totalUsers: number;
@@ -30,6 +40,8 @@ interface DashboardStats {
   premiumUsers: number;
   proUsers: number;
   totalToolUsage: number;
+  recentActivity: number;
+  platformHealth: 'healthy' | 'warning' | 'critical';
 }
 
 interface RecentUser {
@@ -37,6 +49,14 @@ interface RecentUser {
   email: string;
   tier: string;
   created_at: string;
+}
+
+interface Alert {
+  id: number;
+  type: 'info' | 'warning' | 'success' | 'error';
+  message: string;
+  time: string;
+  read: boolean;
 }
 
 export default function Admin() {
@@ -47,7 +67,8 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'subscriptions' | 'settings'>('overview');
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'subscriptions' | 'products' | 'settings'>('overview');
 
   useEffect(() => {
     checkAdminAccess();
@@ -108,6 +129,11 @@ export default function Admin() {
         .select('*', { count: 'exact', head: true })
         .catch(() => ({ count: 0 })) as { count: number | null };
 
+      // Calculate platform health
+      const totalSubs = activeSubs.length;
+      const premiumRatio = totalSubs > 0 ? (premiumCount + proCount) / totalSubs : 0;
+      const platformHealth = premiumRatio > 0.3 ? 'healthy' : premiumRatio > 0.1 ? 'warning' : 'critical';
+
       setStats({
         totalUsers: totalUsers || subscriptions.length,
         activeSubscriptions: activeSubs.length,
@@ -115,7 +141,40 @@ export default function Admin() {
         premiumUsers: premiumCount,
         proUsers: proCount,
         totalToolUsage: toolUsage || 0,
+        recentActivity: 0, // Can be enhanced with actual activity tracking
+        platformHealth,
       });
+
+      // Generate alerts based on stats
+      const newAlerts: Alert[] = [];
+      if (platformHealth === 'critical') {
+        newAlerts.push({
+          id: 1,
+          type: 'warning',
+          message: 'Low premium subscription ratio - consider promotional campaigns',
+          time: 'Just now',
+          read: false,
+        });
+      }
+      if (toolUsage === 0) {
+        newAlerts.push({
+          id: 2,
+          type: 'info',
+          message: 'No tool usage recorded yet - tools may need promotion',
+          time: 'Just now',
+          read: false,
+        });
+      }
+      if (activeSubs.length > 0) {
+        newAlerts.push({
+          id: 3,
+          type: 'success',
+          message: `Platform is operational with ${activeSubs.length} active subscriptions`,
+          time: 'Just now',
+          read: true,
+        });
+      }
+      setAlerts(newAlerts);
 
       // Load recent users
       const { data: recentData } = await supabase
@@ -146,7 +205,16 @@ export default function Admin() {
         premiumUsers: 0,
         proUsers: 0,
         totalToolUsage: 0,
+        recentActivity: 0,
+        platformHealth: 'warning',
       });
+      setAlerts([{
+        id: 1,
+        type: 'warning',
+        message: 'Unable to load platform data - check database connection',
+        time: 'Just now',
+        read: false,
+      }]);
     }
   };
 
@@ -178,7 +246,7 @@ export default function Admin() {
       {/* Tabs */}
       <div className="mb-6 border-b border-white/10">
         <div className="flex gap-4">
-          {(['overview', 'users', 'subscriptions', 'settings'] as const).map((tab) => (
+          {(['overview', 'users', 'subscriptions', 'products', 'settings'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -197,43 +265,135 @@ export default function Admin() {
       {/* Overview Tab */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
+          {/* Alerts Section */}
+          {alerts.length > 0 && (
+            <div className="bg-black/50 border border-white/10 rounded-none p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Bell className="w-5 h-5 text-yellow-400" />
+                  <h2 className="text-lg font-bold text-white">Recent Alerts</h2>
+                  <span className="px-2 py-1 bg-yellow-400/20 text-yellow-400 rounded text-xs">
+                    {alerts.filter(a => !a.read).length} New
+                  </span>
+                </div>
+                <button
+                  onClick={() => setAlerts(alerts.map(a => ({ ...a, read: true })))}
+                  className="text-white/60 hover:text-white text-sm"
+                >
+                  Mark all as read
+                </button>
+              </div>
+              <div className="space-y-2">
+                {alerts.slice(0, 4).map(alert => (
+                  <div
+                    key={alert.id}
+                    className={`flex items-start gap-3 p-3 rounded-none ${
+                      !alert.read ? 'bg-white/5' : 'bg-black/30'
+                    }`}
+                  >
+                    <div className={`mt-0.5 ${
+                      alert.type === 'success' ? 'text-green-400' :
+                      alert.type === 'warning' ? 'text-yellow-400' :
+                      alert.type === 'error' ? 'text-red-400' :
+                      'text-blue-400'
+                    }`}>
+                      {alert.type === 'success' && <CheckCircle className="w-4 h-4" />}
+                      {alert.type === 'warning' && <AlertCircle className="w-4 h-4" />}
+                      {alert.type === 'error' && <XCircle className="w-4 h-4" />}
+                      {alert.type === 'info' && <Bell className="w-4 h-4" />}
+                    </div>
+                    <div className="flex-1">
+                      <p className={!alert.read ? 'text-white' : 'text-white/70'}>{alert.message}</p>
+                      <p className="text-xs text-white/50 mt-1">{alert.time}</p>
+                    </div>
+                    {!alert.read && (
+                      <div className="w-2 h-2 rounded-full bg-yellow-400 mt-2"></div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-black border border-white/10 rounded-lg p-6">
+            <div className="bg-black/50 border border-white/10 rounded-none p-6 hover:border-white/20 transition">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white/60 text-sm">Total Users</span>
                 <Users className="w-5 h-5 text-white/40" />
               </div>
               <div className="text-3xl font-bold text-white">{stats?.totalUsers || 0}</div>
+              <div className="text-xs text-white/40 mt-1">All registered users</div>
             </div>
 
-            <div className="bg-black border border-white/10 rounded-lg p-6">
+            <div className="bg-black/50 border border-white/10 rounded-none p-6 hover:border-white/20 transition">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white/60 text-sm">Active Subscriptions</span>
                 <CheckCircle className="w-5 h-5 text-green-400" />
               </div>
               <div className="text-3xl font-bold text-white">{stats?.activeSubscriptions || 0}</div>
+              <div className="text-xs text-white/40 mt-1">Currently active</div>
             </div>
 
-            <div className="bg-black border border-white/10 rounded-lg p-6">
+            <div className="bg-black/50 border border-white/10 rounded-none p-6 hover:border-white/20 transition">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white/60 text-sm">Tool Usage</span>
                 <Activity className="w-5 h-5 text-blue-400" />
               </div>
               <div className="text-3xl font-bold text-white">{stats?.totalToolUsage || 0}</div>
+              <div className="text-xs text-white/40 mt-1">Total tool executions</div>
             </div>
 
-            <div className="bg-black border border-white/10 rounded-lg p-6">
+            <div className="bg-black/50 border border-white/10 rounded-none p-6 hover:border-white/20 transition">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white/60 text-sm">Premium Users</span>
                 <TrendingUp className="w-5 h-5 text-yellow-400" />
               </div>
               <div className="text-3xl font-bold text-white">{stats?.premiumUsers || 0}</div>
+              <div className="text-xs text-white/40 mt-1">Premium + Pro tiers</div>
+            </div>
+          </div>
+
+          {/* Platform Health & Additional Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-black/50 border border-white/10 rounded-none p-6">
+              <div className="flex items-center gap-2 mb-2 text-white/60">
+                <Activity className="w-4 h-4" />
+                <span className="text-sm">Platform Health</span>
+              </div>
+              <div className={`text-2xl font-bold ${
+                stats?.platformHealth === 'healthy' ? 'text-green-400' :
+                stats?.platformHealth === 'warning' ? 'text-yellow-400' :
+                'text-red-400'
+              }`}>
+                {stats?.platformHealth === 'healthy' ? 'Healthy' :
+                 stats?.platformHealth === 'warning' ? 'Warning' : 'Critical'}
+              </div>
+            </div>
+
+            <div className="bg-black/50 border border-white/10 rounded-none p-6">
+              <div className="flex items-center gap-2 mb-2 text-white/60">
+                <Zap className="w-4 h-4" />
+                <span className="text-sm">Tool Usage</span>
+              </div>
+              <div className="text-2xl font-bold text-white">{stats?.totalToolUsage || 0}</div>
+              <div className="text-xs text-white/40 mt-1">Total executions</div>
+            </div>
+
+            <div className="bg-black/50 border border-white/10 rounded-none p-6">
+              <div className="flex items-center gap-2 mb-2 text-white/60">
+                <Network className="w-4 h-4" />
+                <span className="text-sm">Subscription Rate</span>
+              </div>
+              <div className="text-2xl font-bold text-white">
+                {stats?.totalUsers ? Math.round((stats.activeSubscriptions / stats.totalUsers) * 100) : 0}%
+              </div>
+              <div className="text-xs text-white/40 mt-1">Active subscriptions</div>
             </div>
           </div>
 
           {/* Tier Breakdown */}
-          <div className="bg-black border border-white/10 rounded-lg p-6">
+          <div className="bg-black/50 border border-white/10 rounded-none p-6">
             <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
               <BarChart3 className="w-5 h-5" />
               Subscription Tiers
@@ -255,43 +415,61 @@ export default function Admin() {
           </div>
 
           {/* Recent Users */}
-          <div className="bg-black border border-white/10 rounded-lg p-6">
-            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              Recent Users
-            </h2>
+          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                Recent Users
+              </h2>
+              <button className="text-white/60 hover:text-white text-sm flex items-center gap-1">
+                <Eye className="w-4 h-4" />
+                View All
+              </button>
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-white/10">
-                    <th className="text-left py-2 text-white/60 text-sm font-medium">Email</th>
-                    <th className="text-left py-2 text-white/60 text-sm font-medium">Tier</th>
-                    <th className="text-left py-2 text-white/60 text-sm font-medium">Joined</th>
+                    <th className="text-left py-3 text-white/60 text-sm font-medium">User ID</th>
+                    <th className="text-left py-3 text-white/60 text-sm font-medium">Tier</th>
+                    <th className="text-left py-3 text-white/60 text-sm font-medium">Joined</th>
+                    <th className="text-left py-3 text-white/60 text-sm font-medium">Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {recentUsers.length > 0 ? (
                     recentUsers.map((user) => (
-                      <tr key={user.id} className="border-b border-white/5">
-                        <td className="py-2 text-white">{user.email}</td>
-                        <td className="py-2">
-                          <span className={`px-2 py-1 rounded text-xs ${
+                      <tr key={user.id} className="border-b border-white/5 hover:bg-white/5 transition">
+                        <td className="py-3 text-white font-mono text-sm">{user.email}</td>
+                        <td className="py-3">
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${
                             user.tier === 'free' ? 'bg-white/5 text-white/60' :
-                            user.tier === 'premium' ? 'bg-yellow-400/10 text-yellow-400' :
-                            'bg-purple-400/10 text-purple-400'
+                            user.tier === 'premium' ? 'bg-yellow-400/10 text-yellow-400 border border-yellow-400/20' :
+                            'bg-purple-400/10 text-purple-400 border border-purple-400/20'
                           }`}>
-                            {user.tier}
+                            {user.tier.charAt(0).toUpperCase() + user.tier.slice(1)}
                           </span>
                         </td>
-                        <td className="py-2 text-white/60 text-sm">
-                          {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
+                        <td className="py-3 text-white/60 text-sm">
+                          {user.created_at ? (
+                            <div className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              {new Date(user.created_at).toLocaleDateString()}
+                            </div>
+                          ) : 'N/A'}
+                        </td>
+                        <td className="py-3">
+                          <span className="px-2 py-1 rounded text-xs bg-green-400/10 text-green-400 border border-green-400/20">
+                            Active
+                          </span>
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={3} className="py-4 text-center text-white/60">
-                        No users found
+                      <td colSpan={4} className="py-8 text-center text-white/60">
+                        <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                        <p>No users found</p>
                       </td>
                     </tr>
                   )}
@@ -304,31 +482,151 @@ export default function Admin() {
 
       {/* Users Tab */}
       {activeTab === 'users' && (
-        <div className="bg-black border border-white/10 rounded-lg p-6">
-          <h2 className="text-xl font-bold text-white mb-4">User Management</h2>
-          <p className="text-white/60">User management features coming soon...</p>
+        <div className="space-y-6">
+          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                User Management
+              </h2>
+              <button className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded text-white text-sm transition">
+                Export Users
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white/5 rounded-none p-4">
+                  <div className="text-white/60 text-sm mb-1">Total Users</div>
+                  <div className="text-2xl font-bold text-white">{stats?.totalUsers || 0}</div>
+                </div>
+                <div className="bg-white/5 rounded-none p-4">
+                  <div className="text-white/60 text-sm mb-1">Active Users</div>
+                  <div className="text-2xl font-bold text-green-400">{stats?.activeSubscriptions || 0}</div>
+                </div>
+                <div className="bg-white/5 rounded-none p-4">
+                  <div className="text-white/60 text-sm mb-1">Premium Users</div>
+                  <div className="text-2xl font-bold text-yellow-400">{stats?.premiumUsers || stats?.proUsers || 0}</div>
+                </div>
+              </div>
+              <div className="border-t border-white/10 pt-4">
+                <p className="text-white/60">Advanced user management features coming soon...</p>
+                <p className="text-white/40 text-sm mt-2">Features will include: user search, filtering, bulk actions, and detailed user profiles.</p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
       {/* Subscriptions Tab */}
       {activeTab === 'subscriptions' && (
-        <div className="bg-black border border-white/10 rounded-lg p-6">
-          <h2 className="text-xl font-bold text-white mb-4">Subscription Management</h2>
-          <p className="text-white/60">Subscription management features coming soon...</p>
+        <div className="space-y-6">
+          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <BarChart3 className="w-5 h-5" />
+              Subscription Management
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-white/5 rounded-none p-4">
+                <div className="text-white/60 text-sm mb-1">Free Tier</div>
+                <div className="text-2xl font-bold text-white/60">{stats?.freeUsers || 0}</div>
+                <div className="text-xs text-white/40 mt-1">
+                  {stats?.totalUsers ? Math.round((stats.freeUsers / stats.totalUsers) * 100) : 0}% of total
+                </div>
+              </div>
+              <div className="bg-white/5 rounded-none p-4 border border-yellow-400/20">
+                <div className="text-white/60 text-sm mb-1">Premium Tier</div>
+                <div className="text-2xl font-bold text-yellow-400">{stats?.premiumUsers || 0}</div>
+                <div className="text-xs text-white/40 mt-1">
+                  {stats?.totalUsers ? Math.round((stats.premiumUsers / stats.totalUsers) * 100) : 0}% of total
+                </div>
+              </div>
+              <div className="bg-white/5 rounded-none p-4 border border-purple-400/20">
+                <div className="text-white/60 text-sm mb-1">Pro Tier</div>
+                <div className="text-2xl font-bold text-purple-400">{stats?.proUsers || 0}</div>
+                <div className="text-xs text-white/40 mt-1">
+                  {stats?.totalUsers ? Math.round((stats.proUsers / stats.totalUsers) * 100) : 0}% of total
+                </div>
+              </div>
+            </div>
+            <div className="border-t border-white/10 pt-4">
+              <p className="text-white/60">Advanced subscription management features coming soon...</p>
+              <p className="text-white/40 text-sm mt-2">Features will include: subscription analytics, upgrade/downgrade management, and billing history.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Products Tab */}
+      {activeTab === 'products' && (
+        <div className="space-y-6">
+          <ProductCostManagement />
         </div>
       )}
 
       {/* Settings Tab */}
       {activeTab === 'settings' && (
-        <div className="bg-black border border-white/10 rounded-lg p-6">
-          <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <Settings className="w-5 h-5" />
-            Admin Settings
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-white font-medium mb-2">Platform Configuration</h3>
-              <p className="text-white/60 text-sm">Platform settings and configuration options coming soon...</p>
+        <div className="space-y-6">
+          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+              <Settings className="w-5 h-5" />
+              Admin Settings
+            </h2>
+            <div className="space-y-6">
+              <div className="border-b border-white/10 pb-4">
+                <h3 className="text-white font-medium mb-2 flex items-center gap-2">
+                  <Shield className="w-4 h-4" />
+                  Platform Configuration
+                </h3>
+                <p className="text-white/60 text-sm mb-4">Manage platform-wide settings and policies</p>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-3 bg-white/5 rounded">
+                    <span className="text-white/80">Platform Status</span>
+                    <span className="px-2 py-1 bg-green-400/20 text-green-400 rounded text-xs">Operational</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-white/5 rounded">
+                    <span className="text-white/80">Database Connection</span>
+                    <span className="px-2 py-1 bg-green-400/20 text-green-400 rounded text-xs">Connected</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-white/5 rounded">
+                    <span className="text-white/80">Platform Health</span>
+                    <span className={`px-2 py-1 rounded text-xs ${
+                      stats?.platformHealth === 'healthy' ? 'bg-green-400/20 text-green-400' :
+                      stats?.platformHealth === 'warning' ? 'bg-yellow-400/20 text-yellow-400' :
+                      'bg-red-400/20 text-red-400'
+                    }`}>
+                      {stats?.platformHealth === 'healthy' ? 'Healthy' :
+                       stats?.platformHealth === 'warning' ? 'Warning' : 'Critical'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-b border-white/10 pb-4">
+                <h3 className="text-white font-medium mb-2 flex items-center gap-2">
+                  <Activity className="w-4 h-4" />
+                  Tool Management
+                </h3>
+                <p className="text-white/60 text-sm mb-4">Configure tool usage limits and policies</p>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-3 bg-white/5 rounded">
+                    <span className="text-white/80">Total Tool Usage</span>
+                    <span className="text-white font-mono">{stats?.totalToolUsage || 0}</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-white/5 rounded">
+                    <span className="text-white/80">Tool Status</span>
+                    <span className="px-2 py-1 bg-green-400/20 text-green-400 rounded text-xs">Active</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-white font-medium mb-2 flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  User Management
+                </h3>
+                <p className="text-white/60 text-sm mb-4">Advanced user management features</p>
+                <p className="text-white/40 text-sm">Additional configuration options coming soon...</p>
+              </div>
             </div>
           </div>
         </div>

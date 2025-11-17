@@ -123,7 +123,7 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
 
   return (
     <div
-      className={`${colorClass} border rounded-lg p-4 flex items-start gap-3 shadow-lg backdrop-blur-sm animate-slide-in`}
+      className={`${colorClass} border rounded-none p-4 flex items-start gap-3 shadow-lg backdrop-blur-sm animate-slide-in`}
       role="alert"
     >
       <Icon className="w-5 h-5 flex-shrink-0 mt-0.5" />

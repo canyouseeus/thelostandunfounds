@@ -20,14 +20,14 @@ export default function NotFound() {
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             to="/"
-            className="px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition flex items-center justify-center gap-2"
+            className="px-6 py-3 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition flex items-center justify-center gap-2"
           >
             <Home className="w-5 h-5" />
             Go Home
           </Link>
           <Link
             to="/tools"
-            className="px-6 py-3 bg-black border border-white/10 text-white font-semibold rounded-lg hover:border-white/30 transition flex items-center justify-center gap-2"
+            className="px-6 py-3 bg-black/50 border border-white/10 rounded-none text-white font-semibold hover:border-white/30 transition flex items-center justify-center gap-2"
           >
             <Search className="w-5 h-5" />
             Explore Tools

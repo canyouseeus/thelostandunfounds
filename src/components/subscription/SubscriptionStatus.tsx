@@ -40,7 +40,7 @@ export default function SubscriptionStatus() {
 
   if (loading) {
     return (
-      <div className="px-4 py-2 bg-black/50 border border-white/10 rounded-lg">
+      <div className="px-4 py-2 bg-black/50 border border-white/10 rounded-none">
         <div className="text-white/60 text-sm">Loading subscription...</div>
       </div>
     );
@@ -73,9 +73,9 @@ export default function SubscriptionStatus() {
   const info = tierInfo[tier];
 
   return (
-    <div className={`px-4 py-3 bg-black/50 border ${info.border} rounded-lg`}>
+    <div className={`px-4 py-3 bg-black/50 border ${info.border} rounded-none`}>
       <div className="flex items-center justify-between">
-        <div>
+        <div className="text-center flex-1">
           <div className={`text-sm font-semibold ${info.color} mb-1`}>
             {info.label} Tier
           </div>
@@ -93,7 +93,7 @@ export default function SubscriptionStatus() {
         <>
           <button 
             onClick={() => setUpgradeModalOpen(true)}
-            className="mt-3 w-full px-4 py-2 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition text-sm"
+            className="mt-3 w-full px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition text-sm"
           >
             Upgrade to Premium
           </button>
@@ -101,7 +101,7 @@ export default function SubscriptionStatus() {
           {/* Upgrade Modal */}
           {upgradeModalOpen && (
             <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-              <div className="bg-black border border-white/10 rounded-lg p-6 w-full max-w-md mx-4">
+              <div className="bg-black/50 border border-white/10 rounded-none p-6 w-full max-w-md mx-4">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-white">Upgrade Your Account</h2>
                   <button
@@ -113,7 +113,7 @@ export default function SubscriptionStatus() {
                   </button>
                 </div>
                 <div className="space-y-4">
-                  <div className="bg-black border border-white/10 rounded-lg p-4">
+                  <div className="bg-black/50 border border-white/10 rounded-none p-4">
                     <h3 className="text-lg font-semibold text-white mb-2">Premium Tier</h3>
                     <p className="text-white/70 text-sm mb-3">Unlimited access to all tools</p>
                     <div className="text-2xl font-bold text-white mb-4">$9.99<span className="text-sm text-white/60">/month</span></div>
@@ -122,12 +122,12 @@ export default function SubscriptionStatus() {
                         window.open('https://paypal.com', '_blank');
                         setUpgradeModalOpen(false);
                       }}
-                      className="w-full px-4 py-2 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition"
+                      className="w-full px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
                     >
                       Upgrade to Premium
                     </button>
                   </div>
-                  <div className="bg-black border border-white/10 rounded-lg p-4">
+                  <div className="bg-black/50 border border-white/10 rounded-none p-4">
                     <h3 className="text-lg font-semibold text-white mb-2">Pro Tier</h3>
                     <p className="text-white/70 text-sm mb-3">Everything + API access</p>
                     <div className="text-2xl font-bold text-white mb-4">$19.99<span className="text-sm text-white/60">/month</span></div>
@@ -136,7 +136,7 @@ export default function SubscriptionStatus() {
                         window.open('https://paypal.com', '_blank');
                         setUpgradeModalOpen(false);
                       }}
-                      className="w-full px-4 py-2 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition"
+                      className="w-full px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
                     >
                       Upgrade to Pro
                     </button>

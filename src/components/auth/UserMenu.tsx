@@ -64,7 +64,7 @@ export default function UserMenu() {
       <div className="relative" ref={menuRef}>
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className="flex items-center gap-2 px-3 py-2 bg-black border border-white/10 rounded-lg hover:border-white/30 transition"
+          className="flex items-center gap-2 px-3 py-2 bg-black/50 border border-white/10 rounded-none hover:border-white/30 transition"
         >
           <User className="w-4 h-4 text-white" />
           <span className="text-white text-sm">{user.email || 'User'}</span>
@@ -72,7 +72,7 @@ export default function UserMenu() {
         </button>
 
         {menuOpen && (
-          <div className="absolute right-0 mt-2 w-64 bg-black border border-white/10 rounded-lg shadow-lg z-50">
+          <div className="absolute right-0 mt-2 w-64 bg-black/50 border border-white/10 rounded-none shadow-lg z-50">
             <div className="p-4 border-b border-white/10">
               <div className="text-white font-medium text-sm">{user.email || 'User'}</div>
               <div className={`text-xs mt-1 font-semibold ${tierColors[tier]}`}>
@@ -82,7 +82,7 @@ export default function UserMenu() {
             <div className="p-2">
               <button
                 onClick={handleSignOut}
-                className="w-full flex items-center gap-2 px-3 py-2 text-white/80 hover:text-white hover:bg-white/5 rounded transition text-sm"
+                className="w-full flex items-center gap-2 px-3 py-2 text-white/80 hover:text-white hover:bg-white/5 rounded-none transition text-sm"
               >
                 <LogOut className="w-4 h-4" />
                 Sign Out

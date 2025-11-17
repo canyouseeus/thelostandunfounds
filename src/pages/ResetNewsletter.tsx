@@ -46,7 +46,7 @@ export default function ResetNewsletter() {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-4">
-      <div className="max-w-md w-full bg-black border border-white/10 rounded-lg p-8">
+      <div className="max-w-md w-full bg-black/50 border border-white/10 rounded-none p-8">
         <div className="text-center mb-8">
           <Mail className="w-16 h-16 text-white mx-auto mb-4" />
           <h1 className="text-3xl font-bold text-white mb-2">Reset Newsletter List</h1>
@@ -54,7 +54,7 @@ export default function ResetNewsletter() {
         </div>
 
         {result && (
-          <div className={`mb-6 p-4 rounded-lg border ${
+          <div className={`mb-6 p-4 rounded-none border ${
             result.success 
               ? 'bg-green-400/10 border-green-400/20' 
               : 'bg-red-400/10 border-red-400/20'
@@ -84,7 +84,7 @@ export default function ResetNewsletter() {
         <button
           onClick={handleReset}
           disabled={loading}
-          className="w-full bg-white text-black font-semibold py-4 px-6 rounded-lg hover:bg-white/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full bg-white text-black font-semibold py-4 px-6 rounded-none hover:bg-white/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {loading ? (
             <>

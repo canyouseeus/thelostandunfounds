@@ -48,9 +48,14 @@
     <script>
       setTimeout(() => {
         const root = document.getElementById('root');
-        if (root && root.innerHTML.includes('Loading')) {
-          console.error('❌ React did not mount after 3 seconds!');
-          root.innerHTML += '<div style="color: red; margin-top: 20px;">ERROR: React failed to mount. Check console for errors.</div>';
+        // Check if React actually mounted by looking for React root, not just "Loading" text
+        if (root && root.innerHTML.includes('Loading') && !root.querySelector('[data-reactroot]') && !root.querySelector('*[data-react-helmet]')) {
+          // Only show error if React root is definitely not present
+          const hasReactContent = root.children.length > 0 && !root.innerHTML.includes('Loading... If you see this');
+          if (!hasReactContent) {
+            console.error('❌ React did not mount after 3 seconds!');
+            root.innerHTML += '<div style="color: red; margin-top: 20px;">ERROR: React failed to mount. Check console for errors.</div>';
+          }
         }
       }, 3000);
     </script>

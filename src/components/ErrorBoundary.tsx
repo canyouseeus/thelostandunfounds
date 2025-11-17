@@ -77,7 +77,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
       return (
         <div className="min-h-screen bg-black flex items-center justify-center px-4">
-          <div className="max-w-md w-full bg-black border border-white/10 rounded-lg p-8 text-center">
+          <div className="max-w-md w-full bg-black/50 border border-white/10 rounded-none p-8 text-center">
             <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-white mb-2">Something went wrong</h1>
             <p className="text-white/70 mb-6">
@@ -85,7 +85,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </p>
 
             {import.meta.env.DEV && this.state.error && (
-              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-left">
+              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-none text-left">
                 <p className="text-red-400 text-sm font-mono mb-2">
                   {this.state.error.toString()}
                 </p>
@@ -103,14 +103,14 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="flex gap-3 justify-center">
               <button
                 onClick={this.handleReset}
-                className="px-4 py-2 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition flex items-center gap-2"
+                className="px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition flex items-center gap-2"
               >
                 <RefreshCw className="w-4 h-4" />
                 Try Again
               </button>
               <Link
                 to="/"
-                className="px-4 py-2 bg-black border border-white/10 text-white font-semibold rounded-lg hover:border-white/30 transition flex items-center gap-2"
+                className="px-4 py-2 bg-black/50 border border-white/10 text-white font-semibold rounded-none hover:border-white/30 transition flex items-center gap-2"
               >
                 <Home className="w-4 h-4" />
                 Go Home
