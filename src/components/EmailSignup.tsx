@@ -172,7 +172,7 @@ export default function EmailSignup() {
               whiteSpace: 'nowrap'
             }}
           >
-            {loading ? 'Subscribing...' : 'Subscribe'}
+            {loading ? 'Subscribing...' : 'SUBSCRIBE'}
           </button>
         </div>
 
