@@ -79,7 +79,7 @@ async function handleOrderCreated(
   event: any
 ) {
   const order = event.data || event.order || event
-  const orderId = order.id || order.order_id
+  const orderId = (order.id || order.order_id || '') as string
   
   // Check order status - only process completed/fulfilled orders
   const orderStatus = order.status || order.order_status
