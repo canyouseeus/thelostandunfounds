@@ -13,7 +13,7 @@ export default function Home() {
   const [logoOpacity, setLogoOpacity] = useState(0)
   const [showTyping, setShowTyping] = useState(false)
 
-  // Logo animation sequence: fade in (3s) -> static (3s) -> fade out (1s)
+  // Logo animation sequence: fade in (3s) -> static (1.5s) -> fade out (1s)
   useEffect(() => {
     let fadeInIntervalRef: NodeJS.Timeout | null = null
     let fadeOutIntervalRef: NodeJS.Timeout | null = null
@@ -38,7 +38,7 @@ export default function Home() {
       }
     }, 16) // ~60fps
     
-    // After 3 seconds fade in + 3 seconds static, fade out
+    // After 3 seconds fade in + 1.5 seconds static, fade out
     const fadeOutTimer = setTimeout(() => {
       setLogoState('fading-out')
       const fadeOutStart = Date.now()
@@ -59,7 +59,7 @@ export default function Home() {
           }, 1500)
         }
       }, 16)
-    }, 6000) // 3s fade in + 3s static = 6s total before fade out
+    }, 4500) // 3s fade in + 1.5s static = 4.5s total before fade out
 
     return () => {
       if (fadeInIntervalRef) {
