@@ -23,34 +23,39 @@ export default async function handler(
     return res.status(400).json({ error: 'Valid email is required' })
   }
 
-  // Verify Turnstile token if provided
+  // Verify Turnstile token if provided (skip in development)
   // According to Cloudflare docs: https://developers.cloudflare.com/turnstile/get-started/server-side-validation/
   // Siteverify API requires application/x-www-form-urlencoded format, not JSON
+  const isDev = process.env.VERCEL_ENV !== 'production' && process.env.NODE_ENV !== 'production'
   const turnstileSecret = process.env.TURNSTILE_SECRET_KEY
-  if (turnstileSecret && turnstileToken) {
-    const verifyResponse = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        secret: turnstileSecret,
-        response: turnstileToken,
-      }),
-    })
+  
+  // Only verify Turnstile in production
+  if (!isDev && turnstileSecret) {
+    if (turnstileToken) {
+      const verifyResponse = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          secret: turnstileSecret,
+          response: turnstileToken,
+        }),
+      })
 
-    const verifyData = await verifyResponse.json()
-    if (!verifyData.success) {
-      console.error('Turnstile verification failed:', verifyData)
+      const verifyData = await verifyResponse.json()
+      if (!verifyData.success) {
+        console.error('Turnstile verification failed:', verifyData)
+        return res.status(400).json({ 
+          error: 'Security verification failed. Please try again.' 
+        })
+      }
+    } else {
+      // If Turnstile is configured but no token provided in production, reject
       return res.status(400).json({ 
-        error: 'Security verification failed. Please try again.' 
+        error: 'Security verification required. Please refresh and try again.' 
       })
     }
-  } else if (turnstileSecret && !turnstileToken) {
-    // If Turnstile is configured but no token provided, reject
-    return res.status(400).json({ 
-      error: 'Security verification required. Please refresh and try again.' 
-    })
   }
 
   try {

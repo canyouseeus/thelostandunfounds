@@ -192,8 +192,8 @@ export default function EmailSignup() {
           </button>
         </div>
 
-        {/* Cloudflare Turnstile */}
-        {turnstileSiteKey && (
+        {/* Cloudflare Turnstile - Only show in production */}
+        {turnstileSiteKey && !import.meta.env.DEV && (
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <Turnstile
               sitekey={turnstileSiteKey}
