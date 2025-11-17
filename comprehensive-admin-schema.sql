@@ -176,6 +176,12 @@ CREATE TABLE IF NOT EXISTS affiliate_commissions (
 
   amount DECIMAL(10, 2) NOT NULL,
 
+  profit_generated DECIMAL(10, 2), -- Profit from this sale (retail_price - product_cost)
+
+  source TEXT CHECK (source IN ('fourthwall', 'paypal')), -- 'fourthwall' or 'paypal'
+
+  product_cost DECIMAL(10, 2), -- Cost of product for profit calculation
+
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'cancelled')),
 
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -454,11 +460,95 @@ CREATE INDEX IF NOT EXISTS idx_affiliates_user ON affiliates(user_id);
 
 CREATE INDEX IF NOT EXISTS idx_affiliates_status ON affiliates(status);
 
+-- Product Costs Table
+
+CREATE TABLE IF NOT EXISTS product_costs (
+
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  product_id TEXT NOT NULL, -- Fourthwall product ID or local product ID
+
+  variant_id TEXT, -- For Fourthwall variants
+
+  source TEXT NOT NULL CHECK (source IN ('fourthwall', 'local')),
+
+  cost DECIMAL(10, 2) NOT NULL DEFAULT 0,
+
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  UNIQUE(product_id, variant_id, source)
+
+);
+
+-- KING MIDAS Daily Stats Table
+
+CREATE TABLE IF NOT EXISTS king_midas_daily_stats (
+
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  affiliate_id UUID NOT NULL REFERENCES affiliates(id) ON DELETE CASCADE,
+
+  date DATE NOT NULL,
+
+  profit_generated DECIMAL(10, 2) NOT NULL DEFAULT 0,
+
+  rank INTEGER,
+
+  pool_share DECIMAL(10, 2) NOT NULL DEFAULT 0,
+
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  UNIQUE(affiliate_id, date)
+
+);
+
+-- KING MIDAS Payouts Table
+
+CREATE TABLE IF NOT EXISTS king_midas_payouts (
+
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  affiliate_id UUID NOT NULL REFERENCES affiliates(id) ON DELETE CASCADE,
+
+  date DATE NOT NULL,
+
+  rank INTEGER,
+
+  pool_amount DECIMAL(10, 2) NOT NULL,
+
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'cancelled')),
+
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+
+);
+
 -- Affiliate Commissions Indexes
 
 CREATE INDEX IF NOT EXISTS idx_affiliate_commissions_affiliate ON affiliate_commissions(affiliate_id);
 
 CREATE INDEX IF NOT EXISTS idx_affiliate_commissions_status ON affiliate_commissions(status);
+
+CREATE INDEX IF NOT EXISTS idx_affiliate_commissions_source ON affiliate_commissions(source);
+
+-- Product Costs Indexes
+
+CREATE INDEX IF NOT EXISTS idx_product_costs_product ON product_costs(product_id, variant_id, source);
+
+-- KING MIDAS Indexes
+
+CREATE INDEX IF NOT EXISTS idx_king_midas_daily_stats_affiliate ON king_midas_daily_stats(affiliate_id);
+
+CREATE INDEX IF NOT EXISTS idx_king_midas_daily_stats_date ON king_midas_daily_stats(date DESC);
+
+CREATE INDEX IF NOT EXISTS idx_king_midas_daily_stats_rank ON king_midas_daily_stats(date, rank);
+
+CREATE INDEX IF NOT EXISTS idx_king_midas_payouts_affiliate ON king_midas_payouts(affiliate_id);
+
+CREATE INDEX IF NOT EXISTS idx_king_midas_payouts_date ON king_midas_payouts(date DESC);
 
 -- Journal Entries Indexes
 
@@ -576,6 +666,30 @@ BEGIN
       ALTER PUBLICATION supabase ADD TABLE affiliate_commissions;
     END IF;
     
+    -- product_costs
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_publication_tables 
+      WHERE pubname = 'supabase' AND tablename = 'product_costs'
+    ) THEN
+      ALTER PUBLICATION supabase ADD TABLE product_costs;
+    END IF;
+    
+    -- king_midas_daily_stats
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_publication_tables 
+      WHERE pubname = 'supabase' AND tablename = 'king_midas_daily_stats'
+    ) THEN
+      ALTER PUBLICATION supabase ADD TABLE king_midas_daily_stats;
+    END IF;
+    
+    -- king_midas_payouts
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_publication_tables 
+      WHERE pubname = 'supabase' AND tablename = 'king_midas_payouts'
+    ) THEN
+      ALTER PUBLICATION supabase ADD TABLE king_midas_payouts;
+    END IF;
+    
     -- user_roles
     IF NOT EXISTS (
       SELECT 1 FROM pg_publication_tables 
@@ -654,6 +768,12 @@ ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE affiliates ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE affiliate_commissions ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE product_costs ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE king_midas_daily_stats ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE king_midas_payouts ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE journal_entries ENABLE ROW LEVEL SECURITY;
 
@@ -884,6 +1004,112 @@ CREATE POLICY "Affiliates can read their own commissions"
 CREATE POLICY "Admins can manage affiliate commissions"
 
   ON affiliate_commissions FOR ALL
+
+  USING (
+
+    EXISTS (
+
+      SELECT 1 FROM user_roles
+
+      WHERE user_roles.user_id = auth.uid()
+
+      AND user_roles.is_admin = true
+
+    )
+
+  );
+
+-- Product Costs Policies
+
+DROP POLICY IF EXISTS "Admins can manage product costs" ON product_costs;
+
+CREATE POLICY "Admins can manage product costs"
+
+  ON product_costs FOR ALL
+
+  USING (
+
+    EXISTS (
+
+      SELECT 1 FROM user_roles
+
+      WHERE user_roles.user_id = auth.uid()
+
+      AND user_roles.is_admin = true
+
+    )
+
+  );
+
+-- KING MIDAS Daily Stats Policies
+
+DROP POLICY IF EXISTS "Affiliates can read their own KING MIDAS stats" ON king_midas_daily_stats;
+
+DROP POLICY IF EXISTS "Admins can manage KING MIDAS stats" ON king_midas_daily_stats;
+
+CREATE POLICY "Affiliates can read their own KING MIDAS stats"
+
+  ON king_midas_daily_stats FOR SELECT
+
+  USING (
+
+    EXISTS (
+
+      SELECT 1 FROM affiliates
+
+      WHERE affiliates.id = king_midas_daily_stats.affiliate_id
+
+      AND affiliates.user_id = auth.uid()
+
+    )
+
+  );
+
+CREATE POLICY "Admins can manage KING MIDAS stats"
+
+  ON king_midas_daily_stats FOR ALL
+
+  USING (
+
+    EXISTS (
+
+      SELECT 1 FROM user_roles
+
+      WHERE user_roles.user_id = auth.uid()
+
+      AND user_roles.is_admin = true
+
+    )
+
+  );
+
+-- KING MIDAS Payouts Policies
+
+DROP POLICY IF EXISTS "Affiliates can read their own KING MIDAS payouts" ON king_midas_payouts;
+
+DROP POLICY IF EXISTS "Admins can manage KING MIDAS payouts" ON king_midas_payouts;
+
+CREATE POLICY "Affiliates can read their own KING MIDAS payouts"
+
+  ON king_midas_payouts FOR SELECT
+
+  USING (
+
+    EXISTS (
+
+      SELECT 1 FROM affiliates
+
+      WHERE affiliates.id = king_midas_payouts.affiliate_id
+
+      AND affiliates.user_id = auth.uid()
+
+    )
+
+  );
+
+CREATE POLICY "Admins can manage KING MIDAS payouts"
+
+  ON king_midas_payouts FOR ALL
 
   USING (
 
@@ -1175,6 +1401,26 @@ CREATE TRIGGER update_user_roles_updated_at
 
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_product_costs_updated_at ON product_costs;
+
+DROP TRIGGER IF EXISTS update_king_midas_daily_stats_updated_at ON king_midas_daily_stats;
+
+CREATE TRIGGER update_product_costs_updated_at
+
+  BEFORE UPDATE ON product_costs
+
+  FOR EACH ROW
+
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_king_midas_daily_stats_updated_at
+
+  BEFORE UPDATE ON king_midas_daily_stats
+
+  FOR EACH ROW
+
+  EXECUTE FUNCTION update_updated_at_column();
+
 -- ============================================
 
 -- DEFAULT DATA
@@ -1226,6 +1472,54 @@ BEGIN
   SET helpful = helpful + 1
 
   WHERE id = article_id;
+
+END;
+
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to increment affiliate clicks
+
+CREATE OR REPLACE FUNCTION increment_affiliate_clicks(affiliate_id UUID)
+
+RETURNS void AS $$
+
+BEGIN
+
+  UPDATE affiliates
+
+  SET total_clicks = total_clicks + 1,
+
+      updated_at = NOW()
+
+  WHERE id = affiliate_id;
+
+END;
+
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to calculate daily KING MIDAS pool
+
+CREATE OR REPLACE FUNCTION calculate_daily_king_midas_pool(target_date DATE)
+
+RETURNS DECIMAL(10, 2) AS $$
+
+DECLARE
+
+  total_pool DECIMAL(10, 2);
+
+BEGIN
+
+  SELECT COALESCE(SUM(profit_generated * 0.08), 0)
+
+  INTO total_pool
+
+  FROM king_midas_daily_stats
+
+  WHERE date = target_date;
+
+  
+
+  RETURN total_pool;
 
 END;
 

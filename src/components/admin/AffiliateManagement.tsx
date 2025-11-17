@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../Toast';
-import { Users, Plus, Edit, Trash2, Save, X, DollarSign, TrendingUp } from 'lucide-react';
+import { Users, Plus, Edit, Trash2, Save, X, DollarSign, TrendingUp, Trophy, Calendar } from 'lucide-react';
 import { LoadingSpinner } from '../Loading';
 
 export interface Affiliate {
@@ -27,6 +27,29 @@ export interface AffiliateCommission {
   affiliate_id: string;
   order_id?: string;
   amount: number;
+  profit_generated?: number;
+  source?: 'fourthwall' | 'paypal';
+  product_cost?: number;
+  status: 'pending' | 'paid' | 'cancelled';
+  created_at: string;
+}
+
+export interface KingMidasDailyStat {
+  id: string;
+  affiliate_id: string;
+  date: string;
+  profit_generated: number;
+  rank: number | null;
+  pool_share: number;
+  created_at: string;
+}
+
+export interface KingMidasPayout {
+  id: string;
+  affiliate_id: string;
+  date: string;
+  rank: number | null;
+  pool_amount: number;
   status: 'pending' | 'paid' | 'cancelled';
   created_at: string;
 }
@@ -35,7 +58,11 @@ export default function AffiliateManagement() {
   const { success, error: showError } = useToast();
   const [affiliates, setAffiliates] = useState<Affiliate[]>([]);
   const [commissions, setCommissions] = useState<AffiliateCommission[]>([]);
+  const [kingMidasStats, setKingMidasStats] = useState<KingMidasDailyStat[]>([]);
+  const [kingMidasPayouts, setKingMidasPayouts] = useState<KingMidasPayout[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'affiliates' | 'king-midas' | 'payouts'>('affiliates');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [editingAffiliate, setEditingAffiliate] = useState<Affiliate | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
@@ -48,7 +75,9 @@ export default function AffiliateManagement() {
   useEffect(() => {
     loadAffiliates();
     loadCommissions();
-  }, []);
+    loadKingMidasStats();
+    loadKingMidasPayouts();
+  }, [selectedDate]);
 
   const loadAffiliates = async () => {
     try {
@@ -79,6 +108,36 @@ export default function AffiliateManagement() {
       setCommissions(data || []);
     } catch (error: any) {
       console.error('Error loading commissions:', error);
+    }
+  };
+
+  const loadKingMidasStats = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('king_midas_daily_stats')
+        .select('*')
+        .eq('date', selectedDate)
+        .order('rank', { ascending: true, nullsLast: true });
+
+      if (error) throw error;
+      setKingMidasStats(data || []);
+    } catch (error: any) {
+      console.error('Error loading KING MIDAS stats:', error);
+    }
+  };
+
+  const loadKingMidasPayouts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('king_midas_payouts')
+        .select('*')
+        .eq('date', selectedDate)
+        .order('rank', { ascending: true, nullsLast: true });
+
+      if (error) throw error;
+      setKingMidasPayouts(data || []);
+    } catch (error: any) {
+      console.error('Error loading KING MIDAS payouts:', error);
     }
   };
 
@@ -196,7 +255,60 @@ export default function AffiliateManagement() {
         </button>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-2 border-b border-white/10">
+        <button
+          onClick={() => setActiveTab('affiliates')}
+          className={`px-4 py-2 font-medium transition ${
+            activeTab === 'affiliates'
+              ? 'text-white border-b-2 border-white'
+              : 'text-white/60 hover:text-white'
+          }`}
+        >
+          Affiliates
+        </button>
+        <button
+          onClick={() => setActiveTab('king-midas')}
+          className={`px-4 py-2 font-medium transition flex items-center gap-2 ${
+            activeTab === 'king-midas'
+              ? 'text-white border-b-2 border-white'
+              : 'text-white/60 hover:text-white'
+          }`}
+        >
+          <Trophy className="w-4 h-4" />
+          KING MIDAS
+        </button>
+        <button
+          onClick={() => setActiveTab('payouts')}
+          className={`px-4 py-2 font-medium transition flex items-center gap-2 ${
+            activeTab === 'payouts'
+              ? 'text-white border-b-2 border-white'
+              : 'text-white/60 hover:text-white'
+          }`}
+        >
+          <DollarSign className="w-4 h-4" />
+          Payouts
+        </button>
+      </div>
+
+      {/* Date Selector for KING MIDAS */}
+      {(activeTab === 'king-midas' || activeTab === 'payouts') && (
+        <div className="flex items-center gap-4">
+          <label className="text-white/80 flex items-center gap-2">
+            <Calendar className="w-4 h-4" />
+            Date:
+          </label>
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white/30"
+          />
+        </div>
+      )}
+
       {/* Stats */}
+      {activeTab === 'affiliates' && (
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-black border border-white/10 rounded-lg p-4">
           <div className="text-white/60 text-sm mb-1">Total Affiliates</div>
@@ -215,9 +327,123 @@ export default function AffiliateManagement() {
           <div className="text-2xl font-bold text-white">{conversionRate}%</div>
         </div>
       </div>
+      )}
+
+      {/* KING MIDAS Stats */}
+      {activeTab === 'king-midas' && (
+        <div className="space-y-4">
+          <div className="bg-black border border-white/10 rounded-lg p-6">
+            <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <Trophy className="w-5 h-5" />
+              Daily Rankings - {selectedDate}
+            </h3>
+            {kingMidasStats.length === 0 ? (
+              <p className="text-white/60 text-center py-8">No stats for this date</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-white/10">
+                      <th className="text-left py-2 text-white/60 text-sm font-medium">Rank</th>
+                      <th className="text-left py-2 text-white/60 text-sm font-medium">Affiliate</th>
+                      <th className="text-left py-2 text-white/60 text-sm font-medium">Profit Generated</th>
+                      <th className="text-left py-2 text-white/60 text-sm font-medium">Pool Share</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {kingMidasStats.map((stat) => {
+                      const affiliate = affiliates.find(a => a.id === stat.affiliate_id);
+                      return (
+                        <tr key={stat.id} className="border-b border-white/5">
+                          <td className="py-2">
+                            {stat.rank ? (
+                              <span className={`px-2 py-1 rounded text-xs font-bold ${
+                                stat.rank === 1 ? 'bg-yellow-400/20 text-yellow-400' :
+                                stat.rank === 2 ? 'bg-gray-400/20 text-gray-400' :
+                                stat.rank === 3 ? 'bg-orange-400/20 text-orange-400' :
+                                'bg-white/10 text-white/60'
+                              }`}>
+                                #{stat.rank}
+                              </span>
+                            ) : (
+                              <span className="text-white/40">-</span>
+                            )}
+                          </td>
+                          <td className="py-2 text-white font-mono text-sm">{affiliate?.code || 'N/A'}</td>
+                          <td className="py-2 text-white">${parseFloat(stat.profit_generated.toString()).toFixed(2)}</td>
+                          <td className="py-2 text-white">${parseFloat(stat.pool_share.toString()).toFixed(2)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* KING MIDAS Payouts */}
+      {activeTab === 'payouts' && (
+        <div className="space-y-4">
+          <div className="bg-black border border-white/10 rounded-lg p-6">
+            <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <DollarSign className="w-5 h-5" />
+              Daily Payouts - {selectedDate}
+            </h3>
+            {kingMidasPayouts.length === 0 ? (
+              <p className="text-white/60 text-center py-8">No payouts for this date</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-white/10">
+                      <th className="text-left py-2 text-white/60 text-sm font-medium">Rank</th>
+                      <th className="text-left py-2 text-white/60 text-sm font-medium">Affiliate</th>
+                      <th className="text-left py-2 text-white/60 text-sm font-medium">Pool Amount</th>
+                      <th className="text-left py-2 text-white/60 text-sm font-medium">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {kingMidasPayouts.map((payout) => {
+                      const affiliate = affiliates.find(a => a.id === payout.affiliate_id);
+                      return (
+                        <tr key={payout.id} className="border-b border-white/5">
+                          <td className="py-2">
+                            {payout.rank ? (
+                              <span className="px-2 py-1 rounded text-xs font-bold bg-white/10 text-white/60">
+                                #{payout.rank}
+                              </span>
+                            ) : (
+                              <span className="text-white/40">-</span>
+                            )}
+                          </td>
+                          <td className="py-2 text-white font-mono text-sm">{affiliate?.code || 'N/A'}</td>
+                          <td className="py-2 text-white">${parseFloat(payout.pool_amount.toString()).toFixed(2)}</td>
+                          <td className="py-2">
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              payout.status === 'paid' 
+                                ? 'bg-green-400/10 text-green-400' 
+                                : payout.status === 'pending'
+                                ? 'bg-yellow-400/10 text-yellow-400'
+                                : 'bg-red-400/10 text-red-400'
+                            }`}>
+                              {payout.status}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Create/Edit Form */}
-      {isCreating && (
+      {activeTab === 'affiliates' && isCreating && (
         <div className="bg-black border border-white/10 rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-bold text-white">
@@ -309,6 +535,7 @@ export default function AffiliateManagement() {
       )}
 
       {/* Affiliates List */}
+      {activeTab === 'affiliates' && (
       <div className="bg-black border border-white/10 rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -376,9 +603,10 @@ export default function AffiliateManagement() {
           </table>
         </div>
       </div>
+      )}
 
       {/* Recent Commissions */}
-      {commissions.length > 0 && (
+      {activeTab === 'affiliates' && commissions.length > 0 && (
         <div className="bg-black border border-white/10 rounded-lg p-6">
           <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
             <DollarSign className="w-5 h-5" />

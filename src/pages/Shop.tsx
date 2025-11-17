@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { ExternalLink, ShoppingBag, Loader2 } from 'lucide-react'
 import { fourthwallService, type FourthwallProduct } from '../services/fourthwall'
 import { productsService, type Product } from '../services/products'
+import { getAffiliateRef, trackAffiliateClick } from '../utils/affiliate-tracking'
+import { getCheckoutUrl } from '../utils/fourthwall-checkout'
 
 interface CombinedProduct {
   id: string
@@ -24,6 +26,8 @@ export default function Shop() {
 
   useEffect(() => {
     loadProducts()
+    // Initialize affiliate tracking on page load
+    getAffiliateRef()
   }, [])
 
   const loadProducts = async () => {
@@ -231,12 +235,24 @@ export default function Shop() {
 
       {products.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {products.map((product) => (
+          {products.map((product) => {
+            const affiliateRef = getAffiliateRef()
+            const productUrl = product.source === 'fourthwall' 
+              ? getCheckoutUrl(product.handle)
+              : product.url || `/products/${product.handle}`
+            
+            return (
             <a
               key={product.id}
-              href={product.url || (product.source === 'fourthwall' ? fourthwallService.getProductUrl(product.handle) : `/products/${product.handle}`)}
+              href={productUrl}
               target={product.source === 'fourthwall' ? '_blank' : undefined}
               rel={product.source === 'fourthwall' ? 'noopener noreferrer' : undefined}
+              onClick={() => {
+                // Track affiliate click if affiliate ref exists
+                if (affiliateRef) {
+                  trackAffiliateClick(affiliateRef)
+                }
+              }}
               className="group bg-black border border-white/10 rounded-lg overflow-hidden hover:border-white/30 transition-all duration-300 flex flex-col"
             >
               {/* Product Image */}
