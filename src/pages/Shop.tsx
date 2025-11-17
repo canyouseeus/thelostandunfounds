@@ -1,21 +1,26 @@
 /**
  * Shop Page
+ * Fetches products from Fourthwall storefront API
  */
 
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ShoppingCart, Star, Search, Filter } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ShoppingCart, Search, Filter, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { initAffiliateTracking, getAffiliateRef } from '../utils/affiliate-tracking';
+import { getCheckoutUrl } from '../utils/fourthwall-checkout';
 
 interface Product {
-  id: number;
-  name: string;
+  id: string;
+  title: string;
   description: string;
   price: number;
-  image?: string;
-  category: string;
-  rating: number;
-  reviews: number;
+  compareAtPrice?: number;
+  currency: string;
+  images: string[];
+  handle: string;
+  available: boolean;
+  url: string;
+  category?: string;
   featured?: boolean;
 }
 
@@ -23,88 +28,93 @@ export default function Shop() {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const products: Product[] = [
-    {
-      id: 1,
-      name: 'Premium Download Tool',
-      description: 'Unlimited downloads with HD quality and no watermarks',
-      price: 9.99,
-      category: 'tools',
-      rating: 4.8,
-      reviews: 234,
-      featured: true,
-    },
-    {
-      id: 2,
-      name: 'API Access Package',
-      description: '10,000 API requests per day for developers',
-      price: 19.99,
-      category: 'tools',
-      rating: 4.9,
-      reviews: 156,
-      featured: true,
-    },
-    {
-      id: 3,
-      name: 'Video Converter Pro',
-      description: 'Convert videos to any format with batch processing',
-      price: 14.99,
-      category: 'tools',
-      rating: 4.7,
-      reviews: 189,
-    },
-    {
-      id: 4,
-      name: 'Content Creator Bundle',
-      description: 'All tools + priority support + early access',
-      price: 29.99,
-      category: 'bundles',
-      rating: 5.0,
-      reviews: 98,
-      featured: true,
-    },
-    {
-      id: 5,
-      name: 'Basic Download Tool',
-      description: '5 downloads per day with standard quality',
-      price: 0,
-      category: 'tools',
-      rating: 4.5,
-      reviews: 567,
-    },
-    {
-      id: 6,
-      name: 'Enterprise License',
-      description: 'Unlimited everything for teams and businesses',
-      price: 99.99,
-      category: 'enterprise',
-      rating: 4.9,
-      reviews: 45,
-    },
-  ];
+  // Initialize affiliate tracking on page load
+  useEffect(() => {
+    initAffiliateTracking();
+  }, []);
 
-  const categories = ['all', 'tools', 'bundles', 'enterprise'];
+  // Fetch products from Fourthwall API
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch('/api/fourthwall/products');
+        const data = await response.json();
+        
+        if (data.error) {
+          setError(data.message || 'Failed to load products');
+          setProducts([]);
+        } else {
+          setProducts(data.products || []);
+        }
+      } catch (err) {
+        console.error('Error fetching products:', err);
+        setError('Failed to load products. Please try again later.');
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProducts();
+  }, []);
+
+  // Extract unique categories from products
+  const categories = ['all', ...Array.from(new Set(products.map(p => p.category || 'general').filter(Boolean)))];
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory =
-      selectedCategory === 'all' || product.category === selectedCategory;
+      selectedCategory === 'all' || (product.category || 'general') === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
   const featuredProducts = filteredProducts.filter((p) => p.featured);
   const regularProducts = filteredProducts.filter((p) => !p.featured);
 
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-white" />
+            <p className="text-white/70">Loading products...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="text-center py-12">
+          <p className="text-red-400 text-lg mb-2">Error loading products</p>
+          <p className="text-white/60">{error}</p>
+          {error.includes('FOURTHWALL_STOREFRONT_TOKEN') && (
+            <p className="text-white/40 text-sm mt-4">
+              Please configure FOURTHWALL_STOREFRONT_TOKEN in Vercel environment variables.
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Header */}
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">Shop</h1>
-        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-          Discover our premium tools and services to enhance your workflow
+        <h1 className="text-4xl font-bold mb-4 text-white">SHOP</h1>
+        <p className="text-lg text-white/70 max-w-2xl mx-auto">
+          Discover our premium products and services
         </p>
       </div>
 
@@ -117,7 +127,7 @@ export default function Shop() {
             placeholder="Search products..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 bg-black border border-white/10 rounded-lg text-white placeholder-white/40 focus:ring-2 focus:ring-white/20 focus:border-white/30"
           />
         </div>
         <div className="flex items-center gap-2">
@@ -125,7 +135,7 @@ export default function Shop() {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-4 py-2 bg-black border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-white/20 focus:border-white/30"
           >
             {categories.map((cat) => (
               <option key={cat} value={cat}>
@@ -139,7 +149,7 @@ export default function Shop() {
       {/* Featured Products */}
       {featuredProducts.length > 0 && (
         <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">Featured Products</h2>
+          <h2 className="text-2xl font-bold mb-6 text-white">Featured Products</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {featuredProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
@@ -151,7 +161,7 @@ export default function Shop() {
       {/* Regular Products */}
       {regularProducts.length > 0 && (
         <div>
-          <h2 className="text-2xl font-bold mb-6">All Products</h2>
+          <h2 className="text-2xl font-bold mb-6 text-white">All Products</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {regularProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
@@ -163,8 +173,8 @@ export default function Shop() {
       {/* Empty State */}
       {filteredProducts.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-gray-500 text-lg">No products found</p>
-          <p className="text-gray-400 mt-2">
+          <p className="text-white/70 text-lg">No products found</p>
+          <p className="text-white/50 mt-2">
             Try adjusting your search or filter criteria
           </p>
         </div>
@@ -175,47 +185,72 @@ export default function Shop() {
 
 function ProductCard({ product }: { product: Product }) {
   const { user } = useAuth();
+  const imageUrl = product.images && product.images.length > 0 ? product.images[0] : null;
+  const displayPrice = product.price / 100; // Fourthwall prices are in cents
+  const displayComparePrice = product.compareAtPrice ? product.compareAtPrice / 100 : null;
+  
+  // Get affiliate ref and generate checkout URL with tracking
+  const affiliateRef = getAffiliateRef();
+  const checkoutUrl = getCheckoutUrl(product.url, affiliateRef);
+
+  const handleCheckoutClick = () => {
+    // Track click if affiliate ref exists
+    if (affiliateRef) {
+      import('../utils/affiliate-tracking').then(({ trackAffiliateClick }) => {
+        trackAffiliateClick(affiliateRef);
+      });
+    }
+  };
 
   return (
-    <div className="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
+    <div className="bg-black border border-white/10 rounded-lg p-6 hover:border-white/30 transition-all">
       {product.featured && (
-        <div className="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded-full inline-block mb-3">
+        <div className="bg-yellow-400/20 text-yellow-400 text-xs font-semibold px-2 py-1 rounded-full inline-block mb-3">
           Featured
         </div>
       )}
-      <h3 className="text-xl font-semibold mb-2">{product.name}</h3>
-      <p className="text-gray-600 mb-4 text-sm">{product.description}</p>
-      <div className="flex items-center gap-1 mb-4">
-        {[...Array(5)].map((_, i) => (
-          <Star
-            key={i}
-            className={`w-4 h-4 ${
-              i < Math.floor(product.rating)
-                ? 'fill-yellow-400 text-yellow-400'
-                : 'text-gray-300'
-            }`}
+      {imageUrl && (
+        <div className="mb-4 aspect-square overflow-hidden rounded-lg bg-white/5">
+          <img 
+            src={imageUrl} 
+            alt={product.title}
+            className="w-full h-full object-cover"
           />
-        ))}
-        <span className="text-sm text-gray-600 ml-2">
-          {product.rating} ({product.reviews} reviews)
-        </span>
-      </div>
+        </div>
+      )}
+      <h3 className="text-xl font-semibold mb-2 text-white">{product.title}</h3>
+      <p className="text-white/60 mb-4 text-sm line-clamp-2">{product.description}</p>
       <div className="flex items-center justify-between">
         <div>
-          {product.price === 0 ? (
-            <span className="text-2xl font-bold text-green-600">Free</span>
+          {displayPrice === 0 ? (
+            <span className="text-2xl font-bold text-green-400">Free</span>
           ) : (
-            <span className="text-2xl font-bold">${product.price}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-bold text-white">
+                ${displayPrice.toFixed(2)}
+              </span>
+              {displayComparePrice && displayComparePrice > displayPrice && (
+                <span className="text-sm text-white/40 line-through">
+                  ${displayComparePrice.toFixed(2)}
+                </span>
+              )}
+            </div>
           )}
         </div>
-        <Link
-          to={user ? `/pricing` : `/`}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+        <a
+          href={checkoutUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={handleCheckoutClick}
+          className="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-lg hover:bg-white/90 transition-colors font-semibold"
         >
           <ShoppingCart className="w-4 h-4" />
-          {product.price === 0 ? 'Get Started' : 'Buy Now'}
-        </Link>
+          {displayPrice === 0 ? 'View' : 'Buy Now'}
+        </a>
       </div>
+      {!product.available && (
+        <div className="mt-2 text-xs text-red-400">Out of Stock</div>
+      )}
     </div>
   );
 }

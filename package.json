@@ -31,7 +31,7 @@
     "react-turnstile": "^1.1.4"
   },
   "engines": {
-    "node": "20.x"
+    "node": "22.x"
   },
   "devDependencies": {
     "@types/node": "^24.10.0",
