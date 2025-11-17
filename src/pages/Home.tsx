@@ -217,22 +217,22 @@ export default function Home() {
             </div>
           )}
           
-          {/* Email Signup - third in sequence, fades in at exact same position */}
+          {/* Email Signup - third in sequence, rises up from bottom to center */}
           <div 
             className="fixed"
             style={{
               opacity: showEmailSignup ? 1 : 0,
               visibility: showEmailSignup ? 'visible' : 'hidden',
               left: '50%',
-              top: '50%',
-              transform: 'translate(-50%, -50%)',
+              top: showEmailSignup ? '50%' : '100%',
+              transform: showEmailSignup ? 'translate(-50%, -50%)' : 'translate(-50%, 0)',
               width: '100%',
               maxWidth: '500px',
               padding: '0 1rem',
               zIndex: 1002,
-              transition: 'opacity 1.5s ease-in-out, visibility 0s linear',
+              transition: 'opacity 1.5s ease-in-out, transform 1.5s ease-in-out, visibility 0s linear',
               pointerEvents: showEmailSignup ? 'auto' : 'none',
-              willChange: 'opacity',
+              willChange: 'opacity, transform',
               position: 'fixed',
               display: 'flex',
               flexDirection: 'column',
