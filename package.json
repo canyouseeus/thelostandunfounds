@@ -28,6 +28,9 @@
     "react-router-dom": "^6.26.0",
     "react-turnstile": "^1.1.4"
   },
+  "engines": {
+    "node": "20.x"
+  },
   "devDependencies": {
     "@types/node": "^24.10.0",
     "@types/react": "^18.2.43",
