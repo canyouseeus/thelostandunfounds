@@ -12,7 +12,9 @@
     "generate-env-script": "node scripts/generate-env-script.js",
     "validate-env": "./scripts/validate-env.sh --all",
     "validate-env:local": "./scripts/validate-env.sh --local",
-    "validate-env:vercel": "./scripts/validate-env.sh --vercel"
+    "validate-env:vercel": "./scripts/validate-env.sh --vercel",
+    "save:mantis": "./scripts/save-mantis-version.sh",
+    "dev:mantis": "./scripts/dev-mantis.sh"
   },
   "dependencies": {
     "@scot33/tools-registry": "file:../tools-registry",
