@@ -221,7 +221,7 @@ function ProductCard({ product }: { product: Product }) {
           />
         </div>
       )}
-      <h3 className="text-xl font-semibold mb-2 text-white">{product.title}</h3>
+      <h3 className="text-xl font-semibold mb-2 text-white whitespace-nowrap overflow-hidden text-ellipsis" title={product.title}>{product.title.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim()}</h3>
       <p className="text-white/60 mb-4 text-sm line-clamp-2">{product.description}</p>
       <div className="flex items-center justify-between">
         <div>
