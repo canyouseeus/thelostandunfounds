@@ -13,6 +13,8 @@ export default function Layout() {
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
   const [userIsAdmin, setUserIsAdmin] = useState(false)
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false)
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const isOpeningModalRef = useRef(false)
   const { user, tier, signOut, loading, clearAuthStorage } = useAuth()
@@ -122,68 +124,116 @@ export default function Layout() {
                     className="menu-item"
                     onClick={() => setMenuOpen(false)}
                   >
-                    Home
+                    HOME
+                  </Link>
+                  <Link 
+                    to="/shop" 
+                    className="menu-item"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    SHOP
                   </Link>
                   <Link 
                     to="/tools" 
                     className="menu-item"
                     onClick={() => setMenuOpen(false)}
                   >
-                    Explore Tools
+                    EXPLORE TOOLS
                   </Link>
-                  <Link 
-                    to="/docs" 
-                    className="menu-item"
-                    onClick={() => setMenuOpen(false)}
+                  
+                  <button
+                    type="button"
+                    className="menu-item menu-toggle-section"
+                    onClick={() => setMoreMenuOpen(!moreMenuOpen)}
                   >
-                    Documentation
-                  </Link>
-                  <Link 
-                    to="/pricing" 
-                    className="menu-item"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Pricing
-                  </Link>
-                  <Link 
-                    to="/about" 
-                    className="menu-item"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    About
-                  </Link>
-                  <Link 
-                    to="/support" 
-                    className="menu-item"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Support
-                  </Link>
+                    MORE {moreMenuOpen ? '▼' : '▶'}
+                  </button>
+                  <div className={`menu-subsection ${moreMenuOpen ? 'open' : ''}`}>
+                    <Link 
+                      to="/docs" 
+                      className="menu-item menu-subitem"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setMoreMenuOpen(false);
+                      }}
+                    >
+                      DOCUMENTATION
+                    </Link>
+                    <Link 
+                      to="/pricing" 
+                      className="menu-item menu-subitem"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setMoreMenuOpen(false);
+                      }}
+                    >
+                      PRICING
+                    </Link>
+                    <Link 
+                      to="/about" 
+                      className="menu-item menu-subitem"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setMoreMenuOpen(false);
+                      }}
+                    >
+                      ABOUT
+                    </Link>
+                    <Link 
+                      to="/support" 
+                      className="menu-item menu-subitem"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setMoreMenuOpen(false);
+                      }}
+                    >
+                      SUPPORT
+                    </Link>
+                  </div>
+                  
                   {!loading && user && (
                     <>
-                      <Link 
-                        to="/profile" 
-                        className="menu-item"
-                        onClick={() => setMenuOpen(false)}
+                      <button
+                        type="button"
+                        className="menu-item menu-toggle-section"
+                        onClick={() => setAccountMenuOpen(!accountMenuOpen)}
                       >
-                        Profile
-                      </Link>
-                      <Link 
-                        to="/settings" 
-                        className="menu-item"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        Settings
-                      </Link>
-                      {userIsAdmin && (
+                        ACCOUNT {accountMenuOpen ? '▼' : '▶'}
+                      </button>
+                      <div className={`menu-subsection ${accountMenuOpen ? 'open' : ''}`}>
                         <Link 
-                          to="/admin" 
-                          className="menu-item"
-                          onClick={() => setMenuOpen(false)}
+                          to="/profile" 
+                          className="menu-item menu-subitem"
+                          onClick={() => {
+                            setMenuOpen(false);
+                            setAccountMenuOpen(false);
+                          }}
                         >
-                          Admin Dashboard
+                          PROFILE
                         </Link>
-                      )}
+                        <Link 
+                          to="/settings" 
+                          className="menu-item menu-subitem"
+                          onClick={() => {
+                            setMenuOpen(false);
+                            setAccountMenuOpen(false);
+                          }}
+                        >
+                          SETTINGS
+                        </Link>
+                        {userIsAdmin && (
+                          <Link 
+                            to="/admin" 
+                            className="menu-item menu-subitem"
+                            onClick={() => {
+                              setMenuOpen(false);
+                              setAccountMenuOpen(false);
+                            }}
+                          >
+                            ADMIN DASHBOARD
+                          </Link>
+                        )}
+                      </div>
                     </>
                   )}
                   {!loading && !user && (
@@ -205,7 +255,7 @@ export default function Layout() {
                         }}
                         title="Clear all auth cookies and storage"
                       >
-                        Clear Cookies
+                        CLEAR COOKIES
                       </button>
                     </>
                   )}
@@ -247,7 +297,7 @@ export default function Layout() {
                         }}
                         title="Clear all auth cookies and storage"
                       >
-                        Clear Cookies
+                        CLEAR COOKIES
                       </button>
                     </>
                   )}
