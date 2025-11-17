@@ -56,16 +56,26 @@ export default async function handler(
     const supabase = createClient(supabaseUrl, supabaseKey)
 
     // Handle different event types
-    // Fourthwall may send "order.updated" for all order events
+    // Fourthwall sends various event types - normalize them
     switch (eventType) {
+      // Order events (various formats)
       case 'order.created':
       case 'order.fulfilled':
       case 'order.updated':
+      case 'ORDER_PLACED':
+      case 'ORDER_UPDATED':
         await handleOrderCreated(supabase as any, event)
         break
 
       case 'order.cancelled':
+      case 'ORDER_CANCELLED':
         await handleOrderCancelled(supabase as any, event)
+        break
+
+      // Product events - log but don't process (no affiliate tracking needed)
+      case 'PRODUCT_CREATED':
+      case 'PRODUCT_UPDATED':
+        console.log(`Product event received: ${eventType} - No action needed for affiliate tracking`)
         break
 
       default:
