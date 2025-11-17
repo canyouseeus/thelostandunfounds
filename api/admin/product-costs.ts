@@ -139,7 +139,7 @@ async function handleUpdate(
     return res.status(400).json({ error: 'cost must be >= 0' })
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('product_costs')
     .update({ cost: parseFloat(cost) } as any)
     .eq('id', id)

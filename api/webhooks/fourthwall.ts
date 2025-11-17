@@ -53,11 +53,11 @@ export default async function handler(
       case 'order.created':
       case 'order.fulfilled':
       case 'order.updated':
-        await handleOrderCreated(supabase, event)
+        await handleOrderCreated(supabase as any, event)
         break
 
       case 'order.cancelled':
-        await handleOrderCancelled(supabase, event)
+        await handleOrderCancelled(supabase as any, event)
         break
 
       default:
@@ -103,12 +103,12 @@ async function handleOrderCreated(
   }
 
   // Find affiliate by code
-  const { data: affiliate, error: affiliateError } = await supabase
+  const { data: affiliate, error: affiliateError } = await (supabase as any)
     .from('affiliates')
     .select('id, commission_rate')
     .eq('code', affiliateRef)
     .eq('status', 'active')
-    .single()
+    .single() as { data: { id: string; commission_rate: number } | null; error: any }
 
   if (affiliateError || !affiliate) {
     console.warn(`Affiliate not found: ${affiliateRef}`, affiliateError)
@@ -130,7 +130,7 @@ async function handleOrderCreated(
     const price = parseFloat(item.price || item.unit_price || 0)
 
     // Get product cost
-    const { data: productCost } = await supabase
+    const { data: productCost } = await (supabase as any)
       .from('product_costs')
       .select('cost')
       .eq('product_id', productId)
@@ -153,7 +153,7 @@ async function handleOrderCreated(
   }
 
   // Create commission record
-  const { error: commissionError } = await supabase
+  const { error: commissionError } = await (supabase as any)
     .from('affiliate_commissions')
     .insert({
       affiliate_id: affiliateId,
@@ -172,14 +172,14 @@ async function handleOrderCreated(
 
   // Update affiliate total earnings
   // Get current values first, then update
-  const { data: currentAffiliate } = await supabase
+  const { data: currentAffiliate } = await (supabase as any)
     .from('affiliates')
     .select('total_earnings, total_conversions')
     .eq('id', affiliateId)
     .single() as { data: { total_earnings: number; total_conversions: number } | null }
 
   if (currentAffiliate) {
-    await supabase
+    await (supabase as any)
       .from('affiliates')
       .update({
         total_earnings: ((currentAffiliate.total_earnings as number) || 0) + totalCommission,
@@ -190,7 +190,7 @@ async function handleOrderCreated(
 
   // Update KING MIDAS daily stats
   const today = new Date().toISOString().split('T')[0]
-  await updateKingMidasStats(supabase, affiliateId, totalProfit, today)
+  await updateKingMidasStats(supabase as any, affiliateId, totalProfit, today)
 
   console.log(`Commission created: ${totalCommission} for affiliate ${affiliateRef} from order ${orderId}`)
 }
@@ -206,7 +206,7 @@ async function handleOrderCancelled(
   const orderId = (order.id || order.order_id || '') as string
 
   // Cancel associated commissions
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from('affiliate_commissions')
     .update({ status: 'cancelled' } as any)
     .eq('order_id', orderId)
@@ -227,7 +227,7 @@ async function updateKingMidasStats(
   date: string
 ) {
   // Get or create daily stats record
-  const { data: existingStats } = await supabase
+  const { data: existingStats } = await (supabase as any)
     .from('king_midas_daily_stats')
     .select('profit_generated')
     .eq('affiliate_id', affiliateId)
@@ -237,7 +237,7 @@ async function updateKingMidasStats(
   if (existingStats) {
     // Update existing record - get current value first
     const currentProfit = parseFloat((existingStats.profit_generated as number)?.toString() || '0')
-    await supabase
+    await (supabase as any)
       .from('king_midas_daily_stats')
       .update({
         profit_generated: currentProfit + profit,
@@ -246,7 +246,7 @@ async function updateKingMidasStats(
       .eq('date', date)
   } else {
     // Create new record
-    await supabase
+    await (supabase as any)
       .from('king_midas_daily_stats')
       .insert({
         affiliate_id: affiliateId,
