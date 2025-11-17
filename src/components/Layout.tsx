@@ -104,9 +104,11 @@ export default function Layout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Top row: Title left, Menu button right */}
           <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center text-white hover:text-white/80 transition">
-              <span className="text-xl font-bold">THE LOST+UNFOUNDS</span>
-            </Link>
+            {!import.meta.env.DEV && (
+              <Link to="/" className="flex items-center text-white hover:text-white/80 transition">
+                <span className="text-xl font-bold">THE LOST+UNFOUNDS</span>
+              </Link>
+            )}
             {!isHome && (
             <div className="flex items-center space-x-4">
               <div className="header-nav" ref={menuRef}>
@@ -342,7 +344,7 @@ export default function Layout() {
                     window.open('https://paypal.com', '_blank');
                     setUpgradeModalOpen(false);
                   }}
-                  className="w-full px-4 py-2 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition"
+                  className="w-full px-4 py-2 bg-white text-black font-semibold rounded-lg hover:bg-black hover:text-white transition"
                 >
                   Upgrade to Premium
                 </button>
@@ -356,7 +358,7 @@ export default function Layout() {
                     window.open('https://paypal.com', '_blank');
                     setUpgradeModalOpen(false);
                   }}
-                  className="w-full px-4 py-2 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition"
+                  className="w-full px-4 py-2 bg-white text-black font-semibold rounded-lg hover:bg-black hover:text-white transition"
                 >
                   Upgrade to Pro
                 </button>
