@@ -145,23 +145,23 @@ export default function Layout() {
                 onMouseEnter={handleMenuMouseEnter}
                 onMouseLeave={handleMenuMouseLeave}
               >
-                  <button 
-                    type="button"
-                    className="menu-toggle flex items-center justify-center"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      justClickedRef.current = true;
-                      setMenuOpen(!menuOpen);
-                      // Reset the flag after a short delay to allow hover to work again
-                      setTimeout(() => {
-                        justClickedRef.current = false;
-                      }, 300);
-                    }}
-                    aria-label="Toggle menu"
-                    aria-expanded={menuOpen}
-                  >
-                    <span className="menu-icon text-xl">☰</span>
-                  </button>
+                <button 
+                  type="button"
+                  className="menu-toggle flex items-center justify-center"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    justClickedRef.current = true;
+                    setMenuOpen(!menuOpen);
+                    // Reset the flag after a short delay to allow hover to work again
+                    setTimeout(() => {
+                      justClickedRef.current = false;
+                    }, 300);
+                  }}
+                  aria-label="Toggle menu"
+                  aria-expanded={menuOpen}
+                >
+                  <span className="menu-icon text-xl">☰</span>
+                </button>
                 <div className={`menu-dropdown ${menuOpen ? 'open' : ''}`}>
                   <Link 
                     to="/" 
@@ -359,7 +359,6 @@ export default function Layout() {
                   )}
                 </div>
               </div>
-            </div>
             )}
           </div>
         </div>
