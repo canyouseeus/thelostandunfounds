@@ -165,3 +165,5 @@ echo "🎉 Setup complete! You can now log in with these credentials."
 rm "$SQL_FILE"
 
 
+
+

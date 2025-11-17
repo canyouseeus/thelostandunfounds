@@ -72,3 +72,5 @@ echo "📦 To checkout this specific version:"
 echo "   git checkout MANTIS-${NEW_VERSION}"
 
 
+
+

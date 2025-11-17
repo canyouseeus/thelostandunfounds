@@ -74,7 +74,7 @@ export default async function handler(
         .update({
           rank: ranking?.rank || null,
           pool_share: distribution?.amount || 0,
-        })
+        } as any)
         .eq('id', stat.id)
     }
 
@@ -91,7 +91,7 @@ export default async function handler(
             rank: ranking?.rank || null,
             pool_amount: distribution.amount,
             status: 'pending',
-          })
+          } as any)
       }
     }
 

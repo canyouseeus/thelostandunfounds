@@ -10,3 +10,4 @@ cd "$(dirname "$0")/.."
 # Start Vite dev server
 exec npm run vite-dev
 
+

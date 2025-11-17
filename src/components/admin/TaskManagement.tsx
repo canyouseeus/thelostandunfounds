@@ -487,9 +487,9 @@ export default function TaskManagement() {
       <div className="grid grid-cols-4 gap-4 overflow-x-auto">
         {tasksByStatus.map(column => (
           <div key={column.id} className="flex-shrink-0">
-            <div className={`${column.color} rounded-lg p-4 mb-2`}>
-              <h3 className="font-bold text-white mb-1">{column.label}</h3>
-              <span className="text-white/60 text-sm">{column.tasks.length} tasks</span>
+            <div className={`${column.color} rounded-lg p-4 mb-2 h-20 flex flex-col justify-between`}>
+              <h3 className="font-bold text-white text-sm leading-tight truncate">{column.label}</h3>
+              <span className="text-white/60 text-xs leading-tight">{column.tasks.length} tasks</span>
             </div>
             <div className="space-y-3 min-h-[500px]">
               {column.tasks.map(task => {

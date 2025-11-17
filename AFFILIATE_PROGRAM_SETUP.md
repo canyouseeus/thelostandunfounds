@@ -259,3 +259,4 @@ async function handlePurchase(orderId: string, amount: number) {
 - Check that conversion tracking is called on purchases
 - Ensure affiliate status is `active`
 
+

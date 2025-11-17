@@ -74,7 +74,7 @@ async function handleGet(
     return res.status(500).json({ error: error.message })
   }
 
-  return res.status(200).json({ data })
+  return res.status(200).json({ data: data || [] })
 }
 
 /**
@@ -82,7 +82,7 @@ async function handleGet(
  */
 async function handleCreate(
   supabase: ReturnType<typeof createClient>,
-  req: VercelResponse,
+  req: VercelRequest,
   res: VercelResponse
 ) {
   const { productId, variantId, source, cost } = req.body
@@ -102,7 +102,7 @@ async function handleCreate(
       variant_id: variantId || null,
       source,
       cost: parseFloat(cost),
-    })
+    } as any)
     .select()
     .single()
 
@@ -113,7 +113,7 @@ async function handleCreate(
     return res.status(500).json({ error: error.message })
   }
 
-  return res.status(201).json({ data })
+  return res.status(201).json({ data: data as any })
 }
 
 /**
@@ -141,7 +141,7 @@ async function handleUpdate(
 
   const { data, error } = await supabase
     .from('product_costs')
-    .update({ cost: parseFloat(cost) })
+    .update({ cost: parseFloat(cost) } as any)
     .eq('id', id)
     .select()
     .single()
@@ -154,7 +154,7 @@ async function handleUpdate(
     return res.status(404).json({ error: 'Product cost not found' })
   }
 
-  return res.status(200).json({ data })
+  return res.status(200).json({ data: data as any })
 }
 
 /**

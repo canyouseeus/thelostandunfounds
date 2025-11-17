@@ -115,6 +115,9 @@ async function handleOrderCreated(
     return
   }
 
+  const affiliateId = affiliate.id as string
+  const commissionRate = (affiliate.commission_rate as number) / 100
+
   // Calculate commission from order items
   const lineItems = order.line_items || order.items || []
   let totalCommission = 0
@@ -133,14 +136,13 @@ async function handleOrderCreated(
       .eq('product_id', productId)
       .eq('variant_id', variantId || '')
       .eq('source', 'fourthwall')
-      .single()
+      .single() as { data: { cost: number } | null }
 
-    const cost = productCost?.cost || 0
+    const cost = (productCost?.cost as number) || 0
     const profit = (price - cost) * quantity
     totalProfit += profit
 
     // Calculate commission (10% of profit or commission_rate)
-    const commissionRate = affiliate.commission_rate / 100
     const commission = profit * commissionRate
     totalCommission += commission
   }
@@ -154,14 +156,14 @@ async function handleOrderCreated(
   const { error: commissionError } = await supabase
     .from('affiliate_commissions')
     .insert({
-      affiliate_id: affiliate.id,
+      affiliate_id: affiliateId,
       order_id: orderId,
       amount: totalCommission,
       profit_generated: totalProfit,
       source: 'fourthwall',
-      product_cost: totalProfit > 0 ? (totalProfit - totalCommission / (affiliate.commission_rate / 100)) : 0,
+      product_cost: totalProfit > 0 ? (totalProfit - totalCommission / commissionRate) : 0,
       status: 'pending',
-    })
+    } as any)
 
   if (commissionError) {
     console.error('Error creating commission:', commissionError)
@@ -169,17 +171,26 @@ async function handleOrderCreated(
   }
 
   // Update affiliate total earnings
-  await supabase
+  // Get current values first, then update
+  const { data: currentAffiliate } = await supabase
     .from('affiliates')
-    .update({
-      total_earnings: supabase.raw(`total_earnings + ${totalCommission}`),
-      total_conversions: supabase.raw('total_conversions + 1'),
-    })
+    .select('total_earnings, total_conversions')
     .eq('id', affiliate.id)
+    .single()
+
+  if (currentAffiliate) {
+    await supabase
+      .from('affiliates')
+      .update({
+        total_earnings: (currentAffiliate.total_earnings || 0) + totalCommission,
+        total_conversions: (currentAffiliate.total_conversions || 0) + 1,
+      })
+      .eq('id', affiliateId)
+  }
 
   // Update KING MIDAS daily stats
   const today = new Date().toISOString().split('T')[0]
-  await updateKingMidasStats(supabase, affiliate.id, totalProfit, today)
+  await updateKingMidasStats(supabase, affiliateId, totalProfit, today)
 
   console.log(`Commission created: ${totalCommission} for affiliate ${affiliateRef} from order ${orderId}`)
 }
@@ -224,11 +235,12 @@ async function updateKingMidasStats(
     .single()
 
   if (existingStats) {
-    // Update existing record
+    // Update existing record - get current value first
+    const currentProfit = parseFloat(existingStats.profit_generated?.toString() || '0')
     await supabase
       .from('king_midas_daily_stats')
       .update({
-        profit_generated: supabase.raw(`profit_generated + ${profit}`),
+        profit_generated: currentProfit + profit,
       })
       .eq('affiliate_id', affiliateId)
       .eq('date', date)
