@@ -69,15 +69,16 @@ export default function About() {
       const scale = (targetWidth / textWidth) * 0.90;
       const finalFontSize = testFontSize * scale;
       
-      // Apply the calculated font size - keep width at 100% to match body text
+      // Apply the calculated font size and constrain width exactly
       heading.style.fontSize = `${finalFontSize}px`;
-      heading.style.width = '100%';
-      heading.style.maxWidth = '100%';
+      heading.style.width = `${targetWidth}px`;
+      heading.style.maxWidth = `${targetWidth}px`;
       heading.style.marginLeft = '0';
       heading.style.marginRight = '0';
       heading.style.paddingLeft = '0';
       heading.style.paddingRight = '0';
       heading.style.boxSizing = 'border-box';
+      heading.style.overflow = 'hidden';
     };
 
     // Use multiple strategies to ensure it runs after render
