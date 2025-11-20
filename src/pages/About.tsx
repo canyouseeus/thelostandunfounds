@@ -107,7 +107,16 @@ export default function About() {
           And now we're here to reveal our findings from the frontier and beyond.
         </p>
 
-        <p ref={merchRef} className="text-white font-semibold" style={{ perspective: '1000px' }}>
+        <p 
+          ref={merchRef} 
+          className="text-white font-black text-3xl md:text-4xl lg:text-5xl leading-relaxed tracking-wide" 
+          style={{ 
+            perspective: '1000px',
+            textAlign: 'justify',
+            fontWeight: 900,
+            letterSpacing: '0.1em'
+          }}
+        >
           Thank you for buying my{' '}
           <a
             key={animationKey}
@@ -117,6 +126,7 @@ export default function About() {
             }`}
             style={{
               transformStyle: 'preserve-3d',
+              fontWeight: 900,
             }}
           >
             MERCH
