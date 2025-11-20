@@ -328,33 +328,6 @@ export default function Layout() {
                           </Link>
                         )}
                       </div>
-                    </>
-                  )}
-                  {!loading && !user && (
-                    <>
-                      <button
-                        type="button"
-                        className="menu-item"
-                        onClick={handleLoginClick}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        style={{ pointerEvents: 'auto', cursor: 'pointer', position: 'relative', zIndex: 1001 }}
-                      >
-                        LOG IN
-                      </button>
-                      <button
-                        type="button"
-                        className="menu-item text-xs text-white/40"
-                        onClick={async () => {
-                          await clearAuthStorage();
-                        }}
-                        title="Clear all auth cookies and storage"
-                      >
-                        CLEAR COOKIES
-                      </button>
-                    </>
-                  )}
-                  {!loading && user && (
-                    <>
                       <div className="menu-item user-info">
                         <div className="text-white/80 text-xs mb-1 truncate" title={user.email || 'User'}>{user.email || 'User'}</div>
                         {tier === 'free' ? (
@@ -395,6 +368,27 @@ export default function Layout() {
                       </button>
                     </>
                   )}
+                  {!loading && !user && (
+                    <>
+                      <button
+                        type="button"
+                        className="menu-item"
+                        onClick={handleLoginClick}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        style={{ pointerEvents: 'auto', cursor: 'pointer', position: 'relative', zIndex: 1001 }}
+                      >
+                        LOG IN
+                      </button>
+                      <button
+                        type="button"
+                        className="menu-item text-xs text-white/40"
+                        onClick={async () => {
+                          await clearAuthStorage();
+                        }}
+                        title="Clear all auth cookies and storage"
+                      >
+                        CLEAR COOKIES
+                      </button>
                     </>
                   )}
                 </div>
