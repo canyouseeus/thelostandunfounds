@@ -333,7 +333,7 @@ export default function About() {
           </span>
           <br />
           <br />
-          More to come.
+          More to come…
         </p>
         </div>
       </div>
