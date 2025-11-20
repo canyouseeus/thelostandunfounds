@@ -332,6 +332,7 @@ export default function About() {
             ! It's my art.
           </span>
           <br />
+          <br />
           More to come.
         </p>
         </div>
