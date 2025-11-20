@@ -10,6 +10,7 @@ export default function About() {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const bodyTextRef = useRef<HTMLDivElement>(null);
+  const merchFirstLineRef = useRef<HTMLSpanElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -116,6 +117,76 @@ export default function About() {
     return () => {
       window.removeEventListener('resize', handleResize);
       resizeObserver.disconnect();
+    };
+  }, []);
+
+  // Scale MERCH first line to fit on one line
+  useEffect(() => {
+    const scaleMerchLine = () => {
+      if (!merchRef.current || !merchFirstLineRef.current || !bodyTextRef.current) return;
+
+      const merchParagraph = merchRef.current;
+      const firstLineSpan = merchFirstLineRef.current;
+      const bodyText = bodyTextRef.current;
+      
+      // Get the available width from body text container
+      const bodyTextWidth = bodyText.offsetWidth;
+      const bodyTextStyle = window.getComputedStyle(bodyText);
+      const bodyPaddingLeft = parseFloat(bodyTextStyle.paddingLeft) || 0;
+      const bodyPaddingRight = parseFloat(bodyTextStyle.paddingRight) || 0;
+      const availableWidth = bodyTextWidth - bodyPaddingLeft - bodyPaddingRight;
+      
+      // Get computed styles from the first line
+      const computedStyle = window.getComputedStyle(firstLineSpan);
+      const fontWeight = computedStyle.fontWeight;
+      const letterSpacing = computedStyle.letterSpacing;
+      const fontFamily = computedStyle.fontFamily;
+      const textContent = firstLineSpan.textContent || '';
+      
+      // Test font size for measurement
+      const testFontSize = 100;
+      
+      // Create temporary span to measure text width
+      const tempSpan = document.createElement('span');
+      tempSpan.style.visibility = 'hidden';
+      tempSpan.style.position = 'absolute';
+      tempSpan.style.top = '-9999px';
+      tempSpan.style.left = '-9999px';
+      tempSpan.style.whiteSpace = 'nowrap';
+      tempSpan.style.fontSize = `${testFontSize}px`;
+      tempSpan.style.fontWeight = fontWeight;
+      tempSpan.style.letterSpacing = letterSpacing;
+      tempSpan.style.fontFamily = fontFamily;
+      tempSpan.textContent = textContent;
+      document.body.appendChild(tempSpan);
+      
+      const textWidth = tempSpan.offsetWidth;
+      document.body.removeChild(tempSpan);
+      
+      if (textWidth === 0 || availableWidth === 0) return;
+      
+      // Calculate font size to fit on one line (use 95% for safety)
+      const scale = (availableWidth / textWidth) * 0.95;
+      const finalFontSize = testFontSize * scale;
+      
+      // Apply font size to the first line span
+      firstLineSpan.style.fontSize = `${finalFontSize}px`;
+      firstLineSpan.style.whiteSpace = 'nowrap';
+    };
+
+    const runScale = () => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          scaleMerchLine();
+        });
+      });
+    };
+
+    runScale();
+    window.addEventListener('resize', runScale);
+    
+    return () => {
+      window.removeEventListener('resize', runScale);
     };
   }, []);
 
@@ -235,7 +306,7 @@ export default function About() {
 
         <p 
           ref={merchRef} 
-          className="text-white font-black text-2xl md:text-3xl lg:text-4xl leading-relaxed tracking-wide" 
+          className="text-white font-black text-xl md:text-2xl lg:text-3xl leading-relaxed tracking-wide" 
           style={{ 
             perspective: '1000px',
             textAlign: 'justify',
@@ -243,21 +314,24 @@ export default function About() {
             letterSpacing: '0.05em'
           }}
         >
-          Thank you for buying my{' '}
-          <a
-            key={animationKey}
-            href="/shop"
-            className={`inline-block text-white hover:text-green-500 transition-colors duration-200 ${
-              animationKey > 0 ? 'animate-merch-pop' : ''
-            }`}
-            style={{
-              transformStyle: 'preserve-3d',
-              fontWeight: 900,
-            }}
-          >
-            MERCH
-          </a>
-          ! It's my art.<br />
+          <span ref={merchFirstLineRef}>
+            Thank you for buying my{' '}
+            <a
+              key={animationKey}
+              href="/shop"
+              className={`inline-block text-white hover:text-green-500 transition-colors duration-200 ${
+                animationKey > 0 ? 'animate-merch-pop' : ''
+              }`}
+              style={{
+                transformStyle: 'preserve-3d',
+                fontWeight: 900,
+              }}
+            >
+              MERCH
+            </a>
+            ! It's my art.
+          </span>
+          <br />
           More to come.
         </p>
         </div>
