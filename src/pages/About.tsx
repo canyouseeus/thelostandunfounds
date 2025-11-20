@@ -59,10 +59,10 @@ export default function About() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="mb-12">
-        <h1 className="text-5xl font-bold text-white mb-8">ABOUT : THE LOST+UNFOUNDS</h1>
+        <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-white mb-8 tracking-wide" style={{ textAlign: 'justify', fontWeight: 900, letterSpacing: '0.1em' }}>ABOUT : THE LOST+UNFOUNDS</h1>
       </div>
 
-      <div className="space-y-8 text-white/80 text-lg leading-relaxed">
+      <div className="space-y-8 text-white font-black text-xl md:text-2xl lg:text-3xl leading-relaxed tracking-wide" style={{ textAlign: 'justify', fontWeight: 900, letterSpacing: '0.05em' }}>
         <p>
           I am grateful for the ability to be able to share my work with people. I want to be able to give people better opportunities and create systems that can benefit anyone willing to participate.
         </p>
@@ -109,12 +109,12 @@ export default function About() {
 
         <p 
           ref={merchRef} 
-          className="text-white font-black text-3xl md:text-4xl lg:text-5xl leading-relaxed tracking-wide" 
+          className="text-white font-black text-2xl md:text-3xl lg:text-4xl leading-relaxed tracking-wide" 
           style={{ 
             perspective: '1000px',
             textAlign: 'justify',
             fontWeight: 900,
-            letterSpacing: '0.1em'
+            letterSpacing: '0.05em'
           }}
         >
           Thank you for buying my{' '}
