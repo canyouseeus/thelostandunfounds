@@ -20,6 +20,9 @@ export default function Layout() {
   const justClickedRef = useRef(false)
   const { user, tier, signOut, loading, clearAuthStorage } = useAuth()
 
+  // Only show HOME and SHOP in menu for now
+  const showLimitedMenu = true
+
   // Check if user is admin
   useEffect(() => {
     if (user) {
@@ -137,7 +140,6 @@ export default function Layout() {
             <Link to="/" className="flex items-center text-white hover:text-white/80 transition">
               <span className="text-xl font-bold">THE LOST+UNFOUNDS</span>
             </Link>
-            {!isHome && (
             <div className="flex items-center space-x-4">
               <div 
                 className="header-nav" 
@@ -177,13 +179,15 @@ export default function Layout() {
                   >
                     SHOP
                   </Link>
-                  <Link 
-                    to="/tools" 
-                    className="menu-item"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    EXPLORE TOOLS
-                  </Link>
+                  {!showLimitedMenu && (
+                    <>
+                      <Link 
+                        to="/tools" 
+                        className="menu-item"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        EXPLORE TOOLS
+                      </Link>
                   
                   <button
                     type="button"
@@ -357,10 +361,11 @@ export default function Layout() {
                       </button>
                     </>
                   )}
+                    </>
+                  )}
                 </div>
               </div>
             </div>
-            )}
           </div>
         </div>
       </nav>
