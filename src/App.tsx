@@ -19,6 +19,8 @@ import Pricing from './pages/Pricing'
 import Support from './pages/Support'
 import Shop from './pages/Shop'
 import ResetNewsletter from './pages/ResetNewsletter'
+import Privacy from './pages/Privacy'
+import Terms from './pages/Terms'
 
 function App() {
   // Video preloader temporarily disabled for debugging
@@ -55,6 +57,12 @@ function App() {
         </Route>
         <Route path="/docs" element={<Layout />}>
           <Route index element={<Docs />} />
+        </Route>
+        <Route path="/privacy" element={<Layout />}>
+          <Route index element={<Privacy />} />
+        </Route>
+        <Route path="/terms" element={<Layout />}>
+          <Route index element={<Terms />} />
         </Route>
         <Route path="/tools" element={<Layout />}>
           <Route index element={<ToolsDashboard />} />

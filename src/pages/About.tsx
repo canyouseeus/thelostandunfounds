@@ -2,99 +2,61 @@
  * About Page
  */
 
-import { Link } from 'react-router-dom';
-import { ArrowRight, Sparkles, Shield, Zap } from 'lucide-react';
-
 export default function About() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="mb-12 text-center">
-        <h1 className="text-5xl font-bold text-white mb-4">About THE LOST+UNFOUNDS</h1>
-        <p className="text-xl text-white/70">
-          Empowering creators and professionals with powerful digital tools
-        </p>
+      <div className="mb-12">
+        <h1 className="text-5xl font-bold text-white mb-8">ABOUT : THE LOST+UNFOUNDS</h1>
       </div>
 
-      <div className="space-y-12">
-        {/* Mission */}
-        <section>
-          <h2 className="text-3xl font-bold text-white mb-4">Our Mission</h2>
-          <p className="text-white/80 text-lg leading-relaxed">
-            At THE LOST+UNFOUNDS, we believe that everyone should have access to powerful digital tools 
-            that make their work easier and more efficient. We're building a platform that brings together 
-            the best utilities and tools in one place, making them accessible to creators, professionals, 
-            and anyone who needs them.
-          </p>
-        </section>
+      <div className="space-y-8 text-white/80 text-lg leading-relaxed">
+        <p>
+          I am grateful for the ability to be able to share my work with people. I want to be able to give people better opportunities and create systems that can benefit anyone willing to participate.
+        </p>
 
-        {/* Values */}
-        <section>
-          <h2 className="text-3xl font-bold text-white mb-6">Our Values</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-black/50 border border-white/10 rounded-none p-6">
-              <Zap className="w-8 h-8 text-yellow-400 mb-4" />
-              <h3 className="text-xl font-bold text-white mb-2">Simplicity</h3>
-              <p className="text-white/70">
-                We make complex tools simple and easy to use, so you can focus on what matters.
-              </p>
-            </div>
-            <div className="bg-black/50 border border-white/10 rounded-none p-6">
-              <Shield className="w-8 h-8 text-green-400 mb-4" />
-              <h3 className="text-xl font-bold text-white mb-2">Privacy</h3>
-              <p className="text-white/70">
-                Your data is yours. We don't store unnecessary information and respect your privacy.
-              </p>
-            </div>
-            <div className="bg-black/50 border border-white/10 rounded-none p-6">
-              <Sparkles className="w-8 h-8 text-purple-400 mb-4" />
-              <h3 className="text-xl font-bold text-white mb-2">Innovation</h3>
-              <p className="text-white/70">
-                We're constantly adding new tools and features to help you stay ahead.
-              </p>
-            </div>
-          </div>
-        </section>
+        <p>
+          THE LOST+UNFOUNDS is a creative agency, a tech company, and mindset builder all rolled into one. The purpose of building this site is to get people to believe in themselves again. To believe in that random idea they came up with 15 years ago, start a new business, take that risk, and bet it all on themselves.
+        </p>
 
-        {/* What We Offer */}
-        <section>
-          <h2 className="text-3xl font-bold text-white mb-4">What We Offer</h2>
-          <div className="space-y-4 text-white/80">
-            <p>
-              <strong className="text-white">Free Tier:</strong> Get started with 5 downloads per day and access to all basic tools. 
-              No credit card required.
-            </p>
-            <p>
-              <strong className="text-white">Premium Tier:</strong> Unlimited access to all tools for just $9.99/month. 
-              Perfect for regular users and creators.
-            </p>
-            <p>
-              <strong className="text-white">Pro Tier:</strong> Everything in Premium plus API access for developers and power users. 
-              $19.99/month.
-            </p>
-          </div>
-        </section>
+        <p>
+          We aim to lessen that risk by being a place where you can see an example of how to keep going and understand that whatever it is you want is being brought to you. We will share what we know, and if we don't have an answer, we can at least try to help you find the answer.
+        </p>
 
-        {/* CTA */}
-        <section className="bg-black/50 border border-white/10 rounded-none p-8 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">Ready to Get Started?</h2>
-          <p className="text-white/70 mb-6">
-            Join thousands of users who are already using THE LOST+UNFOUNDS to streamline their workflow.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/tools"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
-            >
-              Explore Tools <ArrowRight className="w-5 h-5" />
-            </Link>
-            <Link
-              to="/docs"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-black/50 border border-white/10 rounded-none text-white font-semibold hover:border-white/30 transition"
-            >
-              View Documentation
-            </Link>
-          </div>
-        </section>
+        <p>
+          The only thing we are an expert at is being ourselves, and this whole business is about R&D, like the Luscious Fox for artists, solopreneurs, hobbyists, experimenters, tradesmen and women, gig workers, and big dreamers.
+        </p>
+
+        <p>
+          We must get uncomfortable to learn how to adapt. And how uncomfortable we are willing to get is sometimes the only way to find answers. I know I'm killing it on the Batman references, but Bruce Wayne had to leave Gotham to become the Batman.
+        </p>
+
+        <p>
+          The closer you grow into yourself, the less you are willing to give to the noise.
+        </p>
+
+        <p>
+          The thing about media, comics, literature, movies, tv shows, etc., is that there's a whole bunch of things I've seen in movies or read in a book, as a kid, that didn't exist before and do exist now, and this is a testament to our creative nature. We got flying cars before we got GTA6. Let's keep making more stuff.
+        </p>
+
+        <p>
+          The crazy thing is, learning about something unrelated to the thing you are learning for, that opens up the key to all those projects and ideas on the back burner. And I just want to share things that help people quit their jobs and go to work for themselves.
+        </p>
+
+        <p>
+          It is the Age of Aquarius, and all around us is evidence that fully supports the designs of this stage. We are in the age of information, and information has been propelled by the onset of A.I. chat and coding agents. I'm not a "what about our jobs" kind of person; I'm a "I can make robots work for me now?" kind of person.
+        </p>
+
+        <p>
+          "And I can teach them exactly how to do it, so it's the same every time?"
+        </p>
+
+        <p>
+          And now we're here to reveal our findings from the frontier and beyond.
+        </p>
+
+        <p className="text-white font-semibold">
+          Please buy some MERCH. It's my art. More to come.
+        </p>
       </div>
     </div>
   );

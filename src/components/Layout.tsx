@@ -190,14 +190,14 @@ export default function Layout() {
                     SHOP
                   </Link>
                   {!showLimitedMenu && (
-                    <>
-                      <Link 
-                        to="/tools" 
-                        className="menu-item"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        EXPLORE TOOLS
-                      </Link>
+                    <Link 
+                      to="/tools" 
+                      className="menu-item"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      EXPLORE TOOLS
+                    </Link>
+                  )}
                   
                   <button
                     type="button"
@@ -214,26 +214,6 @@ export default function Layout() {
                     onMouseLeave={() => handleSubmenuMouseLeave('more')}
                   >
                     <Link 
-                      to="/docs" 
-                      className="menu-item menu-subitem"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        setMoreMenuOpen(false);
-                      }}
-                    >
-                      DOCUMENTATION
-                    </Link>
-                    <Link 
-                      to="/pricing" 
-                      className="menu-item menu-subitem"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        setMoreMenuOpen(false);
-                      }}
-                    >
-                      PRICING
-                    </Link>
-                    <Link 
                       to="/about" 
                       className="menu-item menu-subitem"
                       onClick={() => {
@@ -244,15 +224,59 @@ export default function Layout() {
                       ABOUT
                     </Link>
                     <Link 
-                      to="/support" 
+                      to="/privacy" 
                       className="menu-item menu-subitem"
                       onClick={() => {
                         setMenuOpen(false);
                         setMoreMenuOpen(false);
                       }}
                     >
-                      SUPPORT
+                      PRIVACY POLICY
                     </Link>
+                    <Link 
+                      to="/terms" 
+                      className="menu-item menu-subitem"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setMoreMenuOpen(false);
+                      }}
+                    >
+                      TERMS AND CONDITIONS
+                    </Link>
+                    {!showLimitedMenu && (
+                      <>
+                        <Link 
+                          to="/docs" 
+                          className="menu-item menu-subitem"
+                          onClick={() => {
+                            setMenuOpen(false);
+                            setMoreMenuOpen(false);
+                          }}
+                        >
+                          DOCUMENTATION
+                        </Link>
+                        <Link 
+                          to="/pricing" 
+                          className="menu-item menu-subitem"
+                          onClick={() => {
+                            setMenuOpen(false);
+                            setMoreMenuOpen(false);
+                          }}
+                        >
+                          PRICING
+                        </Link>
+                        <Link 
+                          to="/support" 
+                          className="menu-item menu-subitem"
+                          onClick={() => {
+                            setMenuOpen(false);
+                            setMoreMenuOpen(false);
+                          }}
+                        >
+                          SUPPORT
+                        </Link>
+                      </>
+                    )}
                   </div>
                   
                   {!loading && user && (
