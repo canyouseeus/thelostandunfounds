@@ -7,8 +7,68 @@ import { useState, useEffect, useRef } from 'react';
 export default function About() {
   const [animationKey, setAnimationKey] = useState(0);
   const merchRef = useRef<HTMLParagraphElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Scale heading to fit container width perfectly
+  useEffect(() => {
+    const scaleHeading = () => {
+      if (!headingRef.current || !containerRef.current) return;
+
+      const container = containerRef.current;
+      const heading = headingRef.current;
+      const containerWidth = container.offsetWidth;
+      
+      // Get computed styles
+      const computedStyle = window.getComputedStyle(heading);
+      const fontWeight = computedStyle.fontWeight;
+      const letterSpacing = computedStyle.letterSpacing;
+      const fontFamily = computedStyle.fontFamily;
+      const textContent = heading.textContent || '';
+      
+      // Start with a large font size to measure
+      const testFontSize = 100; // Large test size
+      
+      // Create a temporary span to measure text width accurately
+      const tempSpan = document.createElement('span');
+      tempSpan.style.visibility = 'hidden';
+      tempSpan.style.position = 'absolute';
+      tempSpan.style.top = '-9999px';
+      tempSpan.style.whiteSpace = 'nowrap';
+      tempSpan.style.fontSize = `${testFontSize}px`;
+      tempSpan.style.fontWeight = fontWeight;
+      tempSpan.style.letterSpacing = letterSpacing;
+      tempSpan.style.fontFamily = fontFamily;
+      tempSpan.textContent = textContent;
+      document.body.appendChild(tempSpan);
+      
+      const textWidth = tempSpan.offsetWidth;
+      document.body.removeChild(tempSpan);
+      
+      // Calculate the exact font size that fits the container
+      const scale = containerWidth / textWidth;
+      const finalFontSize = testFontSize * scale;
+      
+      // Apply the calculated font size
+      heading.style.fontSize = `${finalFontSize}px`;
+      heading.style.width = '100%';
+    };
+
+    // Small delay to ensure DOM is ready
+    const timeoutId = setTimeout(() => {
+      scaleHeading();
+    }, 100);
+
+    // Scale on resize
+    window.addEventListener('resize', scaleHeading);
+    
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', scaleHeading);
+    };
+  }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -58,8 +118,24 @@ export default function About() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div style={{ width: '100%', boxSizing: 'border-box' }}>
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-8 tracking-wide" style={{ fontWeight: 900, letterSpacing: '0.1em', width: '100%', boxSizing: 'border-box', margin: '0 0 2rem 0', padding: 0, display: 'block' }}>ABOUT : THE LOST+UNFOUNDS</h1>
+      <div ref={containerRef} style={{ width: '100%', boxSizing: 'border-box' }}>
+        <h1 
+          ref={headingRef}
+          className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-8 tracking-wide" 
+          style={{ 
+            fontWeight: 900, 
+            letterSpacing: '0.1em', 
+            width: '100%', 
+            boxSizing: 'border-box', 
+            margin: '0 0 2rem 0', 
+            padding: 0, 
+            display: 'block',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden'
+          }}
+        >
+          ABOUT : THE LOST+UNFOUNDS
+        </h1>
 
         <div className="space-y-8 text-white font-black text-xl md:text-2xl lg:text-3xl leading-relaxed tracking-wide" style={{ textAlign: 'justify', fontWeight: 900, letterSpacing: '0.05em', width: '100%', boxSizing: 'border-box', margin: 0 }}>
         <p>
@@ -138,10 +214,6 @@ export default function About() {
       <style>{`
         h1 {
           max-width: 100%;
-          overflow: hidden;
-          display: block;
-          white-space: nowrap;
-          font-size: clamp(1.75rem, 4.5vw + 1rem, 3.75rem);
         }
 
         @keyframes merch-pop {
