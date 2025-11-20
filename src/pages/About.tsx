@@ -58,11 +58,10 @@ export default function About() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="mb-12">
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-8 tracking-wide" style={{ fontWeight: 900, letterSpacing: '0.1em', whiteSpace: 'nowrap', width: '100%' }}>ABOUT : THE LOST+UNFOUNDS</h1>
-      </div>
+      <div style={{ width: '100%', boxSizing: 'border-box' }}>
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-8 tracking-wide" style={{ fontWeight: 900, letterSpacing: '0.1em', width: '100%', boxSizing: 'border-box', margin: '0 0 2rem 0', padding: 0, display: 'block' }}>ABOUT : THE LOST+UNFOUNDS</h1>
 
-      <div className="space-y-8 text-white font-black text-xl md:text-2xl lg:text-3xl leading-relaxed tracking-wide" style={{ textAlign: 'justify', fontWeight: 900, letterSpacing: '0.05em', width: '100%' }}>
+        <div className="space-y-8 text-white font-black text-xl md:text-2xl lg:text-3xl leading-relaxed tracking-wide" style={{ textAlign: 'justify', fontWeight: 900, letterSpacing: '0.05em', width: '100%', boxSizing: 'border-box', margin: 0 }}>
         <p>
           I am grateful for the ability to be able to share my work with people. I want to be able to give people better opportunities and create systems that can benefit anyone willing to participate.
         </p>
@@ -133,9 +132,18 @@ export default function About() {
           </a>
           ! It's my art. More to come.
         </p>
+        </div>
       </div>
 
       <style>{`
+        h1 {
+          max-width: 100%;
+          overflow: hidden;
+          display: block;
+          white-space: nowrap;
+          font-size: clamp(1.75rem, 4.5vw + 1rem, 3.75rem);
+        }
+
         @keyframes merch-pop {
           0% {
             transform: translateZ(0) scale(1) rotateX(0deg);
