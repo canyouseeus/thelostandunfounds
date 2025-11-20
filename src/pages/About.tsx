@@ -21,42 +21,17 @@ export default function About() {
       const bodyText = bodyTextRef.current;
       const heading = headingRef.current;
       
-      // Get the first paragraph to measure exact rendered text boundaries
-      const firstParagraph = bodyText.querySelector('p');
-      if (!firstParagraph) return;
-      
-      // Measure the body text container's actual content width
+      // Simply measure the body text container width - this is our target
+      // Both heading and body text are siblings, so they share the same container width
       const bodyTextWidth = bodyText.offsetWidth;
       const bodyTextStyle = window.getComputedStyle(bodyText);
+      
+      // Account for any padding on the body text container
       const bodyPaddingLeft = parseFloat(bodyTextStyle.paddingLeft) || 0;
       const bodyPaddingRight = parseFloat(bodyTextStyle.paddingRight) || 0;
       
-      // Calculate the actual content width (container width minus padding)
-      const contentWidth = bodyTextWidth - bodyPaddingLeft - bodyPaddingRight;
-      
-      // Measure the actual rendered width of the paragraph text
-      // Create a temporary element with the same styles to measure text width accurately
-      const tempParagraph = document.createElement('p');
-      tempParagraph.style.visibility = 'hidden';
-      tempParagraph.style.position = 'absolute';
-      tempParagraph.style.top = '-9999px';
-      tempParagraph.style.left = '-9999px';
-      tempParagraph.style.width = `${contentWidth}px`;
-      tempParagraph.style.textAlign = bodyTextStyle.textAlign;
-      tempParagraph.style.fontSize = bodyTextStyle.fontSize;
-      tempParagraph.style.fontFamily = bodyTextStyle.fontFamily;
-      tempParagraph.style.fontWeight = bodyTextStyle.fontWeight;
-      tempParagraph.style.letterSpacing = bodyTextStyle.letterSpacing;
-      tempParagraph.style.lineHeight = bodyTextStyle.lineHeight;
-      tempParagraph.textContent = firstParagraph.textContent || '';
-      document.body.appendChild(tempParagraph);
-      
-      // Get the actual rendered width of the text content
-      const renderedTextWidth = tempParagraph.scrollWidth;
-      document.body.removeChild(tempParagraph);
-      
-      // Use the smaller of content width or rendered text width to ensure no overflow
-      const targetWidth = Math.min(contentWidth, renderedTextWidth);
+      // This is the exact width available for text content
+      const targetWidth = bodyTextWidth - bodyPaddingLeft - bodyPaddingRight;
       
       // Get computed styles from heading
       const headingStyle = window.getComputedStyle(heading);
@@ -90,8 +65,8 @@ export default function About() {
       if (textWidth === 0 || targetWidth === 0 || targetWidth <= 0) return;
       
       // Calculate the exact font size that fits the target width
-      // Use 95% to ensure we're well within the boundaries and account for any measurement discrepancies
-      const scale = (targetWidth / textWidth) * 0.95;
+      // Use 90% to ensure we're well within the boundaries - text should never overflow
+      const scale = (targetWidth / textWidth) * 0.90;
       const finalFontSize = testFontSize * scale;
       
       // Apply the calculated font size - keep width at 100% to match body text
