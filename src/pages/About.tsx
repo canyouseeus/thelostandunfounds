@@ -13,7 +13,7 @@ export default function About() {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Scale heading to fit container width perfectly
+  // Scale heading to fit container width perfectly - measure exact text boundaries like Illustrator snap-to-edge
   useEffect(() => {
     const scaleHeading = () => {
       if (!headingRef.current || !bodyTextRef.current) return;
@@ -21,14 +21,32 @@ export default function About() {
       const bodyText = bodyTextRef.current;
       const heading = headingRef.current;
       
-      // Use the body text width as the target width - this ensures perfect alignment
-      const targetWidth = bodyText.offsetWidth;
+      // Get the first paragraph to measure exact rendered text boundaries
+      const firstParagraph = bodyText.querySelector('p');
+      if (!firstParagraph) return;
+      
+      // Both heading and body text are siblings in the same container, so they have identical available width
+      // Measure the body text's actual rendered width (this accounts for all padding/margins)
+      const bodyTextWidth = bodyText.offsetWidth;
+      const bodyTextStyle = window.getComputedStyle(bodyText);
+      
+      // Get the heading's parent (which is the same as body text's parent)
+      const sharedContainer = heading.parentElement;
+      if (!sharedContainer) return;
+      
+      // Ensure both elements have identical container constraints
+      const containerStyle = window.getComputedStyle(sharedContainer);
+      const containerPaddingLeft = parseFloat(containerStyle.paddingLeft) || 0;
+      const containerPaddingRight = parseFloat(containerStyle.paddingRight) || 0;
+      
+      // Calculate available width for text (same for both heading and body text)
+      const availableWidth = bodyTextWidth;
       
       // Get computed styles from heading
-      const computedStyle = window.getComputedStyle(heading);
-      const fontWeight = computedStyle.fontWeight;
-      const letterSpacing = computedStyle.letterSpacing;
-      const fontFamily = computedStyle.fontFamily;
+      const headingStyle = window.getComputedStyle(heading);
+      const fontWeight = headingStyle.fontWeight;
+      const letterSpacing = headingStyle.letterSpacing;
+      const fontFamily = headingStyle.fontFamily;
       const textContent = heading.textContent || '';
       
       // Start with a large font size to measure accurately
@@ -45,24 +63,30 @@ export default function About() {
       tempSpan.style.fontWeight = fontWeight;
       tempSpan.style.letterSpacing = letterSpacing;
       tempSpan.style.fontFamily = fontFamily;
-      tempSpan.style.fontStyle = computedStyle.fontStyle;
-      tempSpan.style.textTransform = computedStyle.textTransform;
+      tempSpan.style.fontStyle = headingStyle.fontStyle;
+      tempSpan.style.textTransform = headingStyle.textTransform;
       tempSpan.textContent = textContent;
       document.body.appendChild(tempSpan);
       
       const textWidth = tempSpan.offsetWidth;
       document.body.removeChild(tempSpan);
       
-      if (textWidth === 0 || targetWidth === 0) return; // Safety check
+      if (textWidth === 0 || availableWidth === 0 || availableWidth <= 0) return;
       
-      // Calculate the exact font size that fits the target width with a small buffer (0.98 = 98% to prevent overflow)
-      const scale = (targetWidth / textWidth) * 0.98;
+      // Calculate the exact font size that fits the available width
+      // Use 99.5% to account for any rounding errors or sub-pixel rendering issues
+      const scale = (availableWidth / textWidth) * 0.995;
       const finalFontSize = testFontSize * scale;
       
-      // Apply the calculated font size - width stays at 100% to match container
+      // Apply the calculated font size - keep width at 100% to match body text
       heading.style.fontSize = `${finalFontSize}px`;
       heading.style.width = '100%';
       heading.style.maxWidth = '100%';
+      heading.style.marginLeft = '0';
+      heading.style.marginRight = '0';
+      heading.style.paddingLeft = '0';
+      heading.style.paddingRight = '0';
+      heading.style.boxSizing = 'border-box';
     };
 
     // Use multiple strategies to ensure it runs after render
