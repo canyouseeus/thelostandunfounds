@@ -59,7 +59,7 @@ export default function About() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="mb-12">
-        <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-white mb-8 tracking-wide" style={{ textAlign: 'justify', fontWeight: 900, letterSpacing: '0.1em' }}>ABOUT : THE LOST+UNFOUNDS</h1>
+        <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-white mb-8 tracking-wide" style={{ fontWeight: 900, letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>ABOUT : THE LOST+UNFOUNDS</h1>
       </div>
 
       <div className="space-y-8 text-white font-black text-xl md:text-2xl lg:text-3xl leading-relaxed tracking-wide" style={{ textAlign: 'justify', fontWeight: 900, letterSpacing: '0.05em' }}>
