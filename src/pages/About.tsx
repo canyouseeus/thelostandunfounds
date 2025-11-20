@@ -9,64 +9,97 @@ export default function About() {
   const merchRef = useRef<HTMLParagraphElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const bodyTextRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Scale heading to fit container width perfectly
   useEffect(() => {
     const scaleHeading = () => {
-      if (!headingRef.current || !containerRef.current) return;
+      if (!headingRef.current || !bodyTextRef.current) return;
 
-      const container = containerRef.current;
+      const bodyText = bodyTextRef.current;
       const heading = headingRef.current;
-      const containerWidth = container.offsetWidth;
       
-      // Get computed styles
+      // Use the body text width as the target width - this ensures perfect alignment
+      const targetWidth = bodyText.offsetWidth;
+      
+      // Get computed styles from heading
       const computedStyle = window.getComputedStyle(heading);
       const fontWeight = computedStyle.fontWeight;
       const letterSpacing = computedStyle.letterSpacing;
       const fontFamily = computedStyle.fontFamily;
       const textContent = heading.textContent || '';
       
-      // Start with a large font size to measure
-      const testFontSize = 100; // Large test size
+      // Start with a large font size to measure accurately
+      const testFontSize = 100;
       
       // Create a temporary span to measure text width accurately
       const tempSpan = document.createElement('span');
       tempSpan.style.visibility = 'hidden';
       tempSpan.style.position = 'absolute';
       tempSpan.style.top = '-9999px';
+      tempSpan.style.left = '-9999px';
       tempSpan.style.whiteSpace = 'nowrap';
       tempSpan.style.fontSize = `${testFontSize}px`;
       tempSpan.style.fontWeight = fontWeight;
       tempSpan.style.letterSpacing = letterSpacing;
       tempSpan.style.fontFamily = fontFamily;
+      tempSpan.style.fontStyle = computedStyle.fontStyle;
+      tempSpan.style.textTransform = computedStyle.textTransform;
       tempSpan.textContent = textContent;
       document.body.appendChild(tempSpan);
       
       const textWidth = tempSpan.offsetWidth;
       document.body.removeChild(tempSpan);
       
-      // Calculate the exact font size that fits the container
-      const scale = containerWidth / textWidth;
+      if (textWidth === 0 || targetWidth === 0) return; // Safety check
+      
+      // Calculate the exact font size that fits the target width with a small buffer (0.98 = 98% to prevent overflow)
+      const scale = (targetWidth / textWidth) * 0.98;
       const finalFontSize = testFontSize * scale;
       
-      // Apply the calculated font size
+      // Apply the calculated font size - width stays at 100% to match container
       heading.style.fontSize = `${finalFontSize}px`;
       heading.style.width = '100%';
+      heading.style.maxWidth = '100%';
     };
 
-    // Small delay to ensure DOM is ready
-    const timeoutId = setTimeout(() => {
-      scaleHeading();
-    }, 100);
+    // Use multiple strategies to ensure it runs after render
+    const runScale = () => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          scaleHeading();
+        });
+      });
+    };
 
-    // Scale on resize
-    window.addEventListener('resize', scaleHeading);
+    // Initial scale
+    runScale();
+
+    // Scale on resize with debounce
+    let resizeTimeout: NodeJS.Timeout;
+    const handleResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        runScale();
+      }, 100);
+    };
+
+    window.addEventListener('resize', handleResize);
+    
+    // Also use ResizeObserver for more accurate detection
+    const resizeObserver = new ResizeObserver(() => {
+      runScale();
+    });
+    
+    if (bodyTextRef.current) {
+      resizeObserver.observe(bodyTextRef.current);
+    }
     
     return () => {
-      clearTimeout(timeoutId);
-      window.removeEventListener('resize', scaleHeading);
+      window.removeEventListener('resize', handleResize);
+      resizeObserver.disconnect();
     };
   }, []);
 
@@ -126,18 +159,20 @@ export default function About() {
             fontWeight: 900, 
             letterSpacing: '0.1em', 
             width: '100%', 
+            maxWidth: '100%',
             boxSizing: 'border-box', 
             margin: '0 0 2rem 0', 
             padding: 0, 
             display: 'block',
             whiteSpace: 'nowrap',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            textOverflow: 'clip'
           }}
         >
           ABOUT : THE LOST+UNFOUNDS
         </h1>
 
-        <div className="space-y-8 text-white font-black text-xl md:text-2xl lg:text-3xl leading-relaxed tracking-wide" style={{ textAlign: 'justify', fontWeight: 900, letterSpacing: '0.05em', width: '100%', boxSizing: 'border-box', margin: 0 }}>
+        <div ref={bodyTextRef} className="space-y-8 text-white font-black text-xl md:text-2xl lg:text-3xl leading-relaxed tracking-wide" style={{ textAlign: 'justify', fontWeight: 900, letterSpacing: '0.05em', width: '100%', boxSizing: 'border-box', margin: 0 }}>
         <p>
           I am grateful for the ability to be able to share my work with people. I want to be able to give people better opportunities and create systems that can benefit anyone willing to participate.
         </p>
