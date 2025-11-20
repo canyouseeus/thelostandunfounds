@@ -59,10 +59,10 @@ export default function About() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="mb-12">
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-white mb-8 tracking-wide" style={{ fontWeight: 900, letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>ABOUT : THE LOST+UNFOUNDS</h1>
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-8 tracking-wide" style={{ fontWeight: 900, letterSpacing: '0.1em', whiteSpace: 'nowrap', width: '100%' }}>ABOUT : THE LOST+UNFOUNDS</h1>
       </div>
 
-      <div className="space-y-8 text-white font-black text-xl md:text-2xl lg:text-3xl leading-relaxed tracking-wide" style={{ textAlign: 'justify', fontWeight: 900, letterSpacing: '0.05em' }}>
+      <div className="space-y-8 text-white font-black text-xl md:text-2xl lg:text-3xl leading-relaxed tracking-wide" style={{ textAlign: 'justify', fontWeight: 900, letterSpacing: '0.05em', width: '100%' }}>
         <p>
           I am grateful for the ability to be able to share my work with people. I want to be able to give people better opportunities and create systems that can benefit anyone willing to participate.
         </p>
