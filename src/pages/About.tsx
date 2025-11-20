@@ -90,8 +90,8 @@ export default function About() {
       if (textWidth === 0 || targetWidth === 0 || targetWidth <= 0) return;
       
       // Calculate the exact font size that fits the target width
-      // Use 98% to ensure we're well within the boundaries (like Illustrator snap-to-edge with margin)
-      const scale = (targetWidth / textWidth) * 0.98;
+      // Use 95% to ensure we're well within the boundaries and account for any measurement discrepancies
+      const scale = (targetWidth / textWidth) * 0.95;
       const finalFontSize = testFontSize * scale;
       
       // Apply the calculated font size - keep width at 100% to match body text
