@@ -2,7 +2,60 @@
  * About Page
  */
 
+import { useState, useEffect, useRef } from 'react';
+
 export default function About() {
+  const [animationKey, setAnimationKey] = useState(0);
+  const merchRef = useRef<HTMLParagraphElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            // Start animation 3 seconds after section becomes visible
+            timeoutRef.current = setTimeout(() => {
+              setAnimationKey((prev) => prev + 1);
+              
+              // Set up interval to repeat every 3 seconds
+              intervalRef.current = setInterval(() => {
+                setAnimationKey((prev) => prev + 1);
+              }, 3000);
+            }, 3000);
+          } else {
+            // Reset when section is not visible
+            if (timeoutRef.current) {
+              clearTimeout(timeoutRef.current);
+              timeoutRef.current = null;
+            }
+            if (intervalRef.current) {
+              clearInterval(intervalRef.current);
+              intervalRef.current = null;
+            }
+            setAnimationKey(0);
+          }
+        });
+      },
+      { threshold: 0.3 }
+    );
+
+    if (merchRef.current) {
+      observer.observe(merchRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="mb-12">
@@ -54,10 +107,129 @@ export default function About() {
           And now we're here to reveal our findings from the frontier and beyond.
         </p>
 
-        <p className="text-white font-semibold">
-          Thank you for buying my <a href="/shop" className="text-white hover:text-green-500 transition-colors duration-200">MERCH</a>! It's my art. More to come.
+        <p ref={merchRef} className="text-white font-semibold" style={{ perspective: '1000px' }}>
+          Thank you for buying my{' '}
+          <a
+            key={animationKey}
+            href="/shop"
+            className={`inline-block text-white hover:text-green-500 transition-colors duration-200 ${
+              animationKey > 0 ? 'animate-merch-pop' : ''
+            }`}
+            style={{
+              transformStyle: 'preserve-3d',
+            }}
+          >
+            MERCH
+          </a>
+          ! It's my art. More to come.
         </p>
       </div>
+
+      <style>{`
+        @keyframes merch-pop {
+          0% {
+            transform: translateZ(0) scale(1) rotateX(0deg);
+            opacity: 1;
+            filter: brightness(1);
+          }
+          5% {
+            transform: translateZ(20px) scale(1.05) rotateX(5deg);
+            opacity: 0.95;
+            filter: brightness(1.1);
+          }
+          10% {
+            transform: translateZ(60px) scale(1.2) rotateX(10deg);
+            opacity: 0.85;
+            filter: brightness(1.3);
+          }
+          15% {
+            transform: translateZ(100px) scale(1.35) rotateX(15deg);
+            opacity: 0.75;
+            filter: brightness(1.5);
+          }
+          20% {
+            transform: translateZ(120px) scale(1.4) rotateX(12deg);
+            opacity: 0.7;
+            filter: brightness(1.6);
+          }
+          25% {
+            transform: translateZ(100px) scale(1.35) rotateX(8deg);
+            opacity: 0.75;
+            filter: brightness(1.4);
+          }
+          30% {
+            transform: translateZ(80px) scale(1.25) rotateX(5deg);
+            opacity: 0.8;
+            filter: brightness(1.2);
+          }
+          35% {
+            transform: translateZ(60px) scale(1.15) rotateX(3deg);
+            opacity: 0.85;
+            filter: brightness(1.1);
+          }
+          40% {
+            transform: translateZ(40px) scale(1.1) rotateX(2deg);
+            opacity: 0.9;
+            filter: brightness(1.05);
+          }
+          45% {
+            transform: translateZ(60px) scale(1.15) rotateX(4deg);
+            opacity: 0.85;
+            filter: brightness(1.15);
+          }
+          50% {
+            transform: translateZ(40px) scale(1.1) rotateX(2deg);
+            opacity: 0.9;
+            filter: brightness(1.05);
+          }
+          55% {
+            transform: translateZ(30px) scale(1.08) rotateX(1deg);
+            opacity: 0.92;
+            filter: brightness(1.02);
+          }
+          60% {
+            transform: translateZ(20px) scale(1.05) rotateX(0.5deg);
+            opacity: 0.95;
+            filter: brightness(1.01);
+          }
+          65% {
+            transform: translateZ(15px) scale(1.03) rotateX(0deg);
+            opacity: 0.97;
+            filter: brightness(1);
+          }
+          70% {
+            transform: translateZ(10px) scale(1.02) rotateX(0deg);
+            opacity: 0.98;
+            filter: brightness(1);
+          }
+          80% {
+            transform: translateZ(5px) scale(1.01) rotateX(0deg);
+            opacity: 0.99;
+            filter: brightness(1);
+          }
+          90% {
+            transform: translateZ(2px) scale(1.005) rotateX(0deg);
+            opacity: 0.995;
+            filter: brightness(1);
+          }
+          100% {
+            transform: translateZ(0) scale(1) rotateX(0deg);
+            opacity: 1;
+            filter: brightness(1);
+          }
+        }
+
+        .animate-merch-pop {
+          animation: merch-pop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+          text-shadow: 
+            0 0 10px rgba(34, 197, 94, 0.6),
+            0 0 20px rgba(34, 197, 94, 0.4),
+            0 0 30px rgba(34, 197, 94, 0.3),
+            0 0 40px rgba(34, 197, 94, 0.2);
+          transform-style: preserve-3d;
+          backface-visibility: hidden;
+        }
+      `}</style>
     </div>
   );
 }
