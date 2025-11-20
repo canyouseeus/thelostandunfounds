@@ -240,8 +240,7 @@ export default function About() {
             perspective: '1000px',
             textAlign: 'justify',
             fontWeight: 900,
-            letterSpacing: '0.05em',
-            whiteSpace: 'nowrap'
+            letterSpacing: '0.05em'
           }}
         >
           Thank you for buying my{' '}
@@ -258,7 +257,8 @@ export default function About() {
           >
             MERCH
           </a>
-          ! It's my art. More to come.
+          ! It's my art.<br />
+          More to come.
         </p>
         </div>
       </div>
