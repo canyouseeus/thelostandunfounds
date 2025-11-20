@@ -55,7 +55,7 @@ export default function About() {
         </p>
 
         <p className="text-white font-semibold">
-          Thank you for buying my <a href="https://thelostandunfounds-shop.fourthwall.com" target="_blank" rel="noopener noreferrer" className="text-white hover:text-green-500 transition-colors duration-200">MERCH</a>! It's my art. More to come.
+          Thank you for buying my <a href="/shop" className="text-white hover:text-green-500 transition-colors duration-200">MERCH</a>! It's my art. More to come.
         </p>
       </div>
     </div>
