@@ -221,11 +221,6 @@ export default function About() {
 
         .animate-merch-pop {
           animation: merch-pop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-          text-shadow: 
-            0 0 10px rgba(34, 197, 94, 0.6),
-            0 0 20px rgba(34, 197, 94, 0.4),
-            0 0 30px rgba(34, 197, 94, 0.3),
-            0 0 40px rgba(34, 197, 94, 0.2);
           transform-style: preserve-3d;
           backface-visibility: hidden;
         }
