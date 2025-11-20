@@ -12,6 +12,26 @@ export default function Home() {
   const [logoState, setLogoState] = useState<'fading-in' | 'static' | 'fading-out' | 'hidden'>('fading-in')
   const [logoOpacity, setLogoOpacity] = useState(0)
   const [showTyping, setShowTyping] = useState(false)
+  const [showReactWarning, setShowReactWarning] = useState(false)
+
+  // Check if animation has started after 30 seconds
+  useEffect(() => {
+    const warningTimer = setTimeout(() => {
+      // Check if animation hasn't progressed at all
+      // If logo is still at initial state (fading-in with opacity 0) and no other animation has started,
+      // it means React/animations haven't loaded properly
+      const animationHasStarted = logoOpacity > 0 || logoState !== 'fading-in' || showTyping || typingComplete
+      
+      if (!animationHasStarted) {
+        setShowReactWarning(true)
+        console.error('❌ React animation failed: Animation sequence has not started after 30 seconds. React may not have loaded properly.')
+      }
+    }, 30000) // 30 seconds
+
+    return () => {
+      clearTimeout(warningTimer)
+    }
+  }, [logoState, logoOpacity, showTyping, typingComplete])
 
   // Logo animation sequence: fade in (3s) -> static (1.5s) -> fade out (1s)
   useEffect(() => {
@@ -150,6 +170,18 @@ export default function Home() {
 
   return (
     <div className="h-screen bg-black flex flex-col overflow-hidden">
+      {/* React loading warning - only shown if animation hasn't started after 30 seconds */}
+      {showReactWarning && (
+        <div 
+          className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[20000] bg-red-900/90 border border-red-500 text-white px-6 py-4 rounded-none shadow-lg"
+          style={{ maxWidth: '90%', width: 'auto' }}
+        >
+          <div className="font-bold mb-2">⚠️ React Loading Warning</div>
+          <div className="text-sm">
+            Animation sequence has not started after 30 seconds. React may not have loaded properly.
+          </div>
+        </div>
+      )}
       <main className="flex-1 flex items-center justify-center relative h-full">
         {/* Background text - grows and blurs behind modals */}
         <div 
