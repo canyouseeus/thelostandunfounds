@@ -240,7 +240,8 @@ export default function About() {
             perspective: '1000px',
             textAlign: 'justify',
             fontWeight: 900,
-            letterSpacing: '0.05em'
+            letterSpacing: '0.05em',
+            whiteSpace: 'nowrap'
           }}
         >
           Thank you for buying my{' '}
