@@ -133,7 +133,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-black">
-      <nav className="bg-black/80 backdrop-blur-md">
+      <nav className="bg-black/80 backdrop-blur-md relative z-[10000]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Top row: Title left, Menu button right */}
           <div className="flex items-center justify-between h-16">

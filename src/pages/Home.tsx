@@ -169,7 +169,7 @@ export default function Home() {
         </div>
 
         {/* Foreground content - all centered at same point, sequential animation */}
-        <div className="absolute inset-0 z-10">
+        <div className="absolute inset-0 z-10 pointer-events-none">
           {/* Logo - first in sequence */}
           {logoState !== 'hidden' && (
             <div 
