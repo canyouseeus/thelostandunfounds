@@ -28,18 +28,8 @@ export default function About() {
       // Both heading and body text are siblings in the same container, so they have identical available width
       // Measure the body text's actual rendered width (this accounts for all padding/margins)
       const bodyTextWidth = bodyText.offsetWidth;
-      const bodyTextStyle = window.getComputedStyle(bodyText);
       
-      // Get the heading's parent (which is the same as body text's parent)
-      const sharedContainer = heading.parentElement;
-      if (!sharedContainer) return;
-      
-      // Ensure both elements have identical container constraints
-      const containerStyle = window.getComputedStyle(sharedContainer);
-      const containerPaddingLeft = parseFloat(containerStyle.paddingLeft) || 0;
-      const containerPaddingRight = parseFloat(containerStyle.paddingRight) || 0;
-      
-      // Calculate available width for text (same for both heading and body text)
+      // Calculate available width for text (same for both heading and body text since they're siblings)
       const availableWidth = bodyTextWidth;
       
       // Get computed styles from heading
