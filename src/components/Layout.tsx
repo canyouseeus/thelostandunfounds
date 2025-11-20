@@ -20,7 +20,7 @@ export default function Layout() {
   const justClickedRef = useRef(false)
   const { user, tier, signOut, loading, clearAuthStorage } = useAuth()
 
-  // Only show HOME and SHOP in menu for now
+  // Only show HOME and SHOP in menu for now (MORE menu always visible)
   const showLimitedMenu = true
 
   // Check if user is admin
