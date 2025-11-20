@@ -168,14 +168,24 @@ export default function Layout() {
                   <Link 
                     to="/" 
                     className="menu-item"
-                    onClick={() => setMenuOpen(false)}
+                    onClick={() => {
+                      // Allow navigation to happen before closing menu
+                      setTimeout(() => {
+                        setMenuOpen(false);
+                      }, 100);
+                    }}
                   >
                     HOME
                   </Link>
                   <Link 
                     to="/shop" 
                     className="menu-item"
-                    onClick={() => setMenuOpen(false)}
+                    onClick={() => {
+                      // Allow navigation to happen before closing menu
+                      setTimeout(() => {
+                        setMenuOpen(false);
+                      }, 100);
+                    }}
                   >
                     SHOP
                   </Link>
