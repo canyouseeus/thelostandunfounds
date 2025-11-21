@@ -23,6 +23,7 @@ import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
 import Blog from './pages/Blog'
 import BlogPost from './pages/BlogPost'
+import Workspace from './pages/Workspace'
 
 function App() {
   // Video preloader temporarily disabled for debugging
@@ -80,6 +81,11 @@ function App() {
           <Route index element={
             <ProtectedRoute requireAdmin={true}>
               <Admin />
+            </ProtectedRoute>
+          } />
+          <Route path="workspace" element={
+            <ProtectedRoute requireAdmin={true}>
+              <Workspace />
             </ProtectedRoute>
           } />
         </Route>
