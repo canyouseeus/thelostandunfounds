@@ -80,11 +80,12 @@ If Cursor never changed over 10 years, and it was the only A.I. tool you used ev
 $24,000 for four years. That''s not a bad education. Especially, especially if you''re building to be profitable. And there''s so much opportunity out there to make that $24K back before you graduate. $500 a month is worth setting up a system that can receive money for you over time. And if you convert that into Bitcoin? Well, we''ll get into that in the next bit.
 
 But here''s the thing: In reality, it''s not going to stay the same for 10 years. A.I. will get better, smarter, and cheaper. Vibe coding is to coding, as Serato control records is to vinyl DJs. That last connection between seeing and reading the code to just tapping that sync button and letting the transition ride out is upon us. If you hop in now, you might still remember the old way, which will help you be the best translator for the new way to all the late comers who pick up the shovels after all the digging has been done.',
-    'A crash course overview of Cursor IDE and how it''s revolutionizing development for vibe-coders. From MCP servers to Agent-Browser capabilities, discover why Cursor is the IDE of choice for building profitable projects.',
-    admin_user_id,
-    true,
-    NOW(),
-    'Cursor IDE: A Match Made in Heaven - Until I Run Out of AI Credits | THE LOST ARCHIVES',
+      'A crash course overview of Cursor IDE and how it''s revolutionizing development for vibe-coders. From MCP servers to Agent-Browser capabilities, discover why Cursor is the IDE of choice for building profitable projects.',
+      admin_user_id,
+      true,
+      'published',
+      NOW(),
+      'Cursor IDE: A Match Made in Heaven - Until I Run Out of AI Credits | THE LOST ARCHIVES',
       'Discover how Cursor IDE revolutionized development for vibe-coders. Learn about MCP servers, Agent-Browser capabilities, and why Cursor is worth the investment for building profitable projects.',
       'Cursor IDE, AI coding, development tools, MCP servers, vibe coding, IDE comparison, AI agents, coding productivity'
     )
