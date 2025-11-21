@@ -121,10 +121,20 @@ CREATE TRIGGER sync_blog_post_status_trigger
   EXECUTE FUNCTION sync_blog_post_status();
 
 -- Drop ALL existing policies to start fresh and avoid conflicts
-DROP POLICY IF EXISTS "Anyone can view published posts" ON blog_posts;
-DROP POLICY IF EXISTS "Admins can insert posts" ON blog_posts;
-DROP POLICY IF EXISTS "Admins can update posts" ON blog_posts;
-DROP POLICY IF EXISTS "Admins can delete posts" ON blog_posts;
+-- Drop all possible policy names that might exist
+DO $$
+DECLARE
+  r RECORD;
+BEGIN
+  -- Drop all policies on blog_posts table
+  FOR r IN (
+    SELECT policyname 
+    FROM pg_policies 
+    WHERE tablename = 'blog_posts' AND schemaname = 'public'
+  ) LOOP
+    EXECUTE format('DROP POLICY IF EXISTS %I ON blog_posts', r.policyname);
+  END LOOP;
+END $$;
 
 -- Policy: Anyone can view published posts (using published field)
 -- NO user_roles check - completely avoids recursion
