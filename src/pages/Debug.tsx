@@ -12,6 +12,7 @@ interface LogEntry {
   message: string;
   timestamp: Date;
   stack?: string;
+  details?: string;
 }
 
 declare global {
@@ -50,15 +51,29 @@ export default function Debug() {
       addLog('log', args.join(' '));
     };
 
-    // Capture console.error
+    // Capture console.error with full details
     const originalError = console.error;
     console.error = (...args: any[]) => {
       originalError.apply(console, args);
-      const message = args.map(arg => 
-        arg instanceof Error ? arg.message : String(arg)
-      ).join(' ');
-      const stack = args.find(arg => arg instanceof Error)?.stack;
-      addLog('error', message, stack);
+      // Capture full error details
+      const errorDetails = args.map(arg => {
+        if (arg instanceof Error) {
+          return {
+            message: arg.message,
+            stack: arg.stack,
+            name: arg.name,
+            full: JSON.stringify(arg, Object.getOwnPropertyNames(arg), 2)
+          };
+        } else if (typeof arg === 'object') {
+          return JSON.stringify(arg, null, 2);
+        }
+        return String(arg);
+      });
+      const message = errorDetails.map(d => typeof d === 'string' ? d : d.message || JSON.stringify(d)).join(' ');
+      const stack = args.find(arg => arg instanceof Error)?.stack || 
+                    (errorDetails.find(d => typeof d !== 'string' && d.stack) as any)?.stack;
+      const fullDetails = errorDetails.length > 1 ? JSON.stringify(errorDetails, null, 2) : undefined;
+      addLog('error', message, stack || fullDetails);
     };
 
     // Capture console.warn
@@ -68,18 +83,42 @@ export default function Debug() {
       addLog('warn', args.join(' '));
     };
 
-    // Capture unhandled errors
+    // Capture unhandled errors with full details
     const handleError = (event: ErrorEvent) => {
-      addLog('error', event.message || 'Unknown error', event.error?.stack);
+      const errorDetails = {
+        message: event.message || 'Unknown error',
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+        error: event.error ? {
+          message: event.error.message,
+          stack: event.error.stack,
+          name: event.error.name,
+          ...(event.error as any)
+        } : null
+      };
+      addLog('error', 
+        `Unhandled Error: ${errorDetails.message} (${errorDetails.filename}:${errorDetails.lineno}:${errorDetails.colno})`,
+        errorDetails.error?.stack || JSON.stringify(errorDetails, null, 2)
+      );
     };
 
-    // Capture unhandled promise rejections
+    // Capture unhandled promise rejections with full details
     const handleRejection = (event: PromiseRejectionEvent) => {
       const reason = event.reason instanceof Error 
-        ? event.reason.message 
-        : String(event.reason);
-      const stack = event.reason instanceof Error ? event.reason.stack : undefined;
-      addLog('error', `Unhandled Promise Rejection: ${reason}`, stack);
+        ? {
+            message: event.reason.message,
+            stack: event.reason.stack,
+            name: event.reason.name,
+            ...(event.reason as any)
+          }
+        : event.reason;
+      const reasonStr = typeof reason === 'object' 
+        ? JSON.stringify(reason, null, 2)
+        : String(reason);
+      addLog('error', `Unhandled Promise Rejection: ${reasonStr}`, 
+        event.reason instanceof Error ? event.reason.stack : undefined
+      );
     };
 
     window.addEventListener('error', handleError);
@@ -113,7 +152,7 @@ export default function Debug() {
     };
   }, [logs.length, logId]);
 
-  const addLog = (type: LogEntry['type'], message: string, stack?: string) => {
+  const addLog = (type: LogEntry['type'], message: string, stack?: string, details?: string) => {
     setLogs(prev => {
       const newLog: LogEntry = {
         id: logId,
@@ -121,10 +160,11 @@ export default function Debug() {
         message,
         timestamp: new Date(),
         stack,
+        details,
       };
       setLogId(prevId => prevId + 1);
-      // Keep last 100 logs
-      return [...prev.slice(-99), newLog];
+      // Keep last 200 logs for better debugging
+      return [...prev.slice(-199), newLog];
     });
   };
 
@@ -201,12 +241,14 @@ export default function Debug() {
                       {log.timestamp.toLocaleTimeString()}
                     </span>
                   </div>
-                  <p className="text-sm font-mono break-words">{log.message}</p>
-                  {log.stack && (
+                  <p className="text-sm font-mono break-words whitespace-pre-wrap">{log.message}</p>
+                  {(log.stack || log.details) && (
                     <details className="mt-2">
-                      <summary className="text-xs cursor-pointer opacity-60">Stack Trace</summary>
-                      <pre className="text-xs mt-2 overflow-auto bg-black/30 p-2 rounded">
-                        {log.stack}
+                      <summary className="text-xs cursor-pointer opacity-60 hover:opacity-100">
+                        {log.stack ? 'Stack Trace' : 'Details'}
+                      </summary>
+                      <pre className="text-xs mt-2 overflow-auto bg-black/30 p-2 rounded text-left whitespace-pre-wrap">
+                        {log.stack || log.details}
                       </pre>
                     </details>
                   )}

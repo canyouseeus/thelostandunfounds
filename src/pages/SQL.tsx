@@ -120,63 +120,55 @@ CREATE TRIGGER sync_blog_post_status_trigger
   FOR EACH ROW
   EXECUTE FUNCTION sync_blog_post_status();
 
--- Update RLS policies to work with published field
+-- Drop ALL existing policies to start fresh and avoid conflicts
 DROP POLICY IF EXISTS "Anyone can view published posts" ON blog_posts;
+DROP POLICY IF EXISTS "Admins can insert posts" ON blog_posts;
+DROP POLICY IF EXISTS "Admins can update posts" ON blog_posts;
+DROP POLICY IF EXISTS "Admins can delete posts" ON blog_posts;
+
+-- Policy: Anyone can view published posts (using published field)
+-- NO user_roles check - completely avoids recursion
 CREATE POLICY "Anyone can view published posts"
   ON blog_posts
   FOR SELECT
   USING (
-    published = true 
-    OR (author_id IS NOT NULL AND auth.uid() = author_id)
-    OR (author_id IS NULL AND EXISTS (
-      SELECT 1 FROM user_roles
-      WHERE user_id = auth.uid() AND is_admin = true
-    ))
+    -- Anonymous users can read published posts
+    published = true
+    -- OR authenticated users who are the author can read their own posts (even if not published)
+    OR (auth.uid() IS NOT NULL AND author_id IS NOT NULL AND auth.uid() = author_id)
   );
 
 -- Policy: Only admins can insert posts
-DROP POLICY IF EXISTS "Admins can insert posts" ON blog_posts;
+-- Check email directly - NO user_roles table access
 CREATE POLICY "Admins can insert posts"
   ON blog_posts
   FOR INSERT
   WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM user_roles
-      WHERE user_id = auth.uid() AND is_admin = true
-    )
-    OR EXISTS (
+    auth.uid() IS NOT NULL AND EXISTS (
       SELECT 1 FROM auth.users
       WHERE id = auth.uid() AND email = 'admin@thelostandunfounds.com'
     )
   );
 
 -- Policy: Only admins can update posts
-DROP POLICY IF EXISTS "Admins can update posts" ON blog_posts;
+-- Check email directly - NO user_roles table access
 CREATE POLICY "Admins can update posts"
   ON blog_posts
   FOR UPDATE
   USING (
-    EXISTS (
-      SELECT 1 FROM user_roles
-      WHERE user_id = auth.uid() AND is_admin = true
-    )
-    OR EXISTS (
+    auth.uid() IS NOT NULL AND EXISTS (
       SELECT 1 FROM auth.users
       WHERE id = auth.uid() AND email = 'admin@thelostandunfounds.com'
     )
   );
 
 -- Policy: Only admins can delete posts
-DROP POLICY IF EXISTS "Admins can delete posts" ON blog_posts;
+-- Check email directly - NO user_roles table access
 CREATE POLICY "Admins can delete posts"
   ON blog_posts
   FOR DELETE
   USING (
-    EXISTS (
-      SELECT 1 FROM user_roles
-      WHERE user_id = auth.uid() AND is_admin = true
-    )
-    OR EXISTS (
+    auth.uid() IS NOT NULL AND EXISTS (
       SELECT 1 FROM auth.users
       WHERE id = auth.uid() AND email = 'admin@thelostandunfounds.com'
     )
