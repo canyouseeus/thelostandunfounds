@@ -14,11 +14,35 @@ interface LogEntry {
   stack?: string;
 }
 
+declare global {
+  interface Window {
+    __DEBUG_LOGS__?: Array<{
+      type: string;
+      message: string;
+      stack?: string;
+      timestamp: string;
+    }>;
+  }
+}
+
 export default function Debug() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [logId, setLogId] = useState(0);
 
   useEffect(() => {
+    // Load existing logs from window storage (captured before React mounted)
+    if (window.__DEBUG_LOGS__ && window.__DEBUG_LOGS__.length > 0) {
+      const existingLogs: LogEntry[] = window.__DEBUG_LOGS__.map((log, idx) => ({
+        id: idx,
+        type: log.type as LogEntry['type'],
+        message: log.message,
+        timestamp: new Date(log.timestamp),
+        stack: log.stack,
+      }));
+      setLogs(existingLogs);
+      setLogId(existingLogs.length);
+    }
+
     // Capture console.log
     const originalLog = console.log;
     console.log = (...args: any[]) => {
@@ -64,14 +88,30 @@ export default function Debug() {
     // Add initial log
     addLog('info', 'Debug page loaded - capturing console output');
 
+    // Periodically sync with window storage
+    const syncInterval = setInterval(() => {
+      if (window.__DEBUG_LOGS__ && window.__DEBUG_LOGS__.length > logs.length) {
+        const newLogs = window.__DEBUG_LOGS__.slice(logs.length).map((log, idx) => ({
+          id: logId + idx,
+          type: log.type as LogEntry['type'],
+          message: log.message,
+          timestamp: new Date(log.timestamp),
+          stack: log.stack,
+        }));
+        setLogs(prev => [...prev, ...newLogs]);
+        setLogId(prev => prev + newLogs.length);
+      }
+    }, 500);
+
     return () => {
       console.log = originalLog;
       console.error = originalError;
       console.warn = originalWarn;
       window.removeEventListener('error', handleError);
       window.removeEventListener('unhandledrejection', handleRejection);
+      clearInterval(syncInterval);
     };
-  }, []);
+  }, [logs.length, logId]);
 
   const addLog = (type: LogEntry['type'], message: string, stack?: string) => {
     setLogs(prev => {

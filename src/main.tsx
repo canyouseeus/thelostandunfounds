@@ -6,6 +6,46 @@ import { ToastProvider } from './components/Toast'
 import App from './App.tsx'
 import './index.css'
 
+// Initialize debug log storage if not exists
+if (typeof window !== 'undefined') {
+  window.__DEBUG_LOGS__ = window.__DEBUG_LOGS__ || [];
+  
+  const addDebugLog = (type: string, message: string, stack?: string) => {
+    window.__DEBUG_LOGS__.push({
+      type,
+      message,
+      stack,
+      timestamp: new Date().toISOString()
+    });
+    if (window.__DEBUG_LOGS__.length > 200) {
+      window.__DEBUG_LOGS__.shift();
+    }
+  };
+
+  // Override console methods to capture logs
+  const originalLog = console.log;
+  console.log = (...args: any[]) => {
+    originalLog.apply(console, args);
+    addDebugLog('log', args.map(a => String(a)).join(' '));
+  };
+
+  const originalError = console.error;
+  console.error = (...args: any[]) => {
+    originalError.apply(console, args);
+    const message = args.map(arg => 
+      arg instanceof Error ? arg.message : String(arg)
+    ).join(' ');
+    const stack = args.find(arg => arg instanceof Error)?.stack;
+    addDebugLog('error', message, stack);
+  };
+
+  const originalWarn = console.warn;
+  console.warn = (...args: any[]) => {
+    originalWarn.apply(console, args);
+    addDebugLog('warn', args.map(a => String(a)).join(' '));
+  };
+}
+
 console.log('📦 All imports loaded successfully')
 
 // Skip error monitor for now to isolate issue

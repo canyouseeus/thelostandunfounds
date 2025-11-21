@@ -41,7 +41,37 @@
       </div>
     </div>
     <script>
+      // Global error storage for debug page
+      window.__DEBUG_LOGS__ = window.__DEBUG_LOGS__ || [];
+      
+      const addDebugLog = (type, message, stack) => {
+        window.__DEBUG_LOGS__.push({
+          type,
+          message,
+          stack,
+          timestamp: new Date().toISOString()
+        });
+        // Keep last 200 logs
+        if (window.__DEBUG_LOGS__.length > 200) {
+          window.__DEBUG_LOGS__.shift();
+        }
+      };
+
+      // Capture errors before React loads
+      window.addEventListener('error', (event) => {
+        addDebugLog('error', event.message || 'Unknown error', event.error?.stack || event.filename);
+        console.error('Captured error:', event.message, event.error);
+      });
+
+      window.addEventListener('unhandledrejection', (event) => {
+        const reason = event.reason instanceof Error ? event.reason.message : String(event.reason);
+        const stack = event.reason instanceof Error ? event.reason.stack : undefined;
+        addDebugLog('error', `Unhandled Promise Rejection: ${reason}`, stack);
+        console.error('Captured promise rejection:', reason);
+      });
+
       console.log('🔍 Inline script executed - JavaScript is working!');
+      addDebugLog('info', 'HTML loaded - JavaScript is working');
       console.log('Checking if main.tsx will load...');
     </script>
     <script type="module" src="/src/main.tsx"></script>
@@ -53,8 +83,10 @@
           // Only show error if React root is definitely not present
           const hasReactContent = root.children.length > 0 && !root.innerHTML.includes('Loading... If you see this');
           if (!hasReactContent) {
-            console.error('❌ React did not mount after 3 seconds!');
-            root.innerHTML += '<div style="color: red; margin-top: 20px;">ERROR: React failed to mount. Check console for errors.</div>';
+            const errorMsg = '❌ React did not mount after 3 seconds!';
+            console.error(errorMsg);
+            addDebugLog('error', errorMsg, 'React mount timeout');
+            root.innerHTML += '<div style="color: red; margin-top: 20px; padding: 20px; background: black;">ERROR: React failed to mount. <a href="/debug" style="color: yellow;">Go to /debug page</a> to see errors.</div>';
           }
         }
       }, 3000);
