@@ -50,12 +50,17 @@ export default function SQL() {
         console.warn('Could not fetch migration file:', fetchError);
       }
 
+      // If file wasn't loaded, use default content
+      if (!migrationContent) {
+        migrationContent = await getDefaultMigrationContent();
+      }
+
       const loadedScripts: SQLScript[] = [
         {
           name: 'Blog Schema Migration',
           filename: 'blog-schema-migration.sql',
-          content: migrationContent || getDefaultMigrationContent(),
-          description: 'Adds missing fields (published, SEO fields, og_image_url) to blog_posts table. Run this in Supabase SQL Editor.'
+          content: migrationContent,
+          description: 'Adds missing fields (published, SEO fields, og_image_url) to blog_posts table. Handles missing author_id column. Run this in Supabase SQL Editor.'
         }
       ];
 
@@ -65,9 +70,36 @@ export default function SQL() {
     }
   };
 
-  const getDefaultMigrationContent = () => {
+  const getDefaultMigrationContent = async () => {
+    // Try to load from file first
+    try {
+      const response = await fetch('/blog-schema-migration.sql');
+      if (response.ok) {
+        return await response.text();
+      }
+    } catch (e) {
+      // Fall through to default
+    }
+    
+    // Return the updated migration content
     return `-- Migration: Add missing fields to blog_posts table
 -- Run this in Supabase SQL Editor to add SEO fields and published boolean
+-- This migrates the existing blog_posts table to support the new blog functionality
+
+-- First, ensure author_id column exists (it might not if table was created differently)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'blog_posts' AND column_name = 'author_id'
+  ) THEN
+    ALTER TABLE blog_posts 
+    ADD COLUMN author_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+    
+    -- Set author_id to NULL for existing posts (can be updated later)
+    UPDATE blog_posts SET author_id = NULL WHERE author_id IS NULL;
+  END IF;
+END $$;
 
 -- Add published boolean field (derived from status)
 ALTER TABLE blog_posts 
@@ -136,7 +168,14 @@ DROP POLICY IF EXISTS "Anyone can view published posts" ON blog_posts;
 CREATE POLICY "Anyone can view published posts"
   ON blog_posts
   FOR SELECT
-  USING (published = true OR auth.uid() = author_id);
+  USING (
+    published = true 
+    OR (author_id IS NOT NULL AND auth.uid() = author_id)
+    OR (author_id IS NULL AND EXISTS (
+      SELECT 1 FROM user_roles
+      WHERE user_id = auth.uid() AND is_admin = true
+    ))
+  );
 
 -- Policy: Only admins can insert posts
 DROP POLICY IF EXISTS "Admins can insert posts" ON blog_posts;

@@ -2,6 +2,21 @@
 -- Run this in Supabase SQL Editor to add SEO fields and published boolean
 -- This migrates the existing blog_posts table to support the new blog functionality
 
+-- First, ensure author_id column exists (it might not if table was created differently)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'blog_posts' AND column_name = 'author_id'
+  ) THEN
+    ALTER TABLE blog_posts 
+    ADD COLUMN author_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+    
+    -- Set author_id to NULL for existing posts (can be updated later)
+    UPDATE blog_posts SET author_id = NULL WHERE author_id IS NULL;
+  END IF;
+END $$;
+
 -- Add published boolean field (derived from status)
 ALTER TABLE blog_posts 
 ADD COLUMN IF NOT EXISTS published BOOLEAN DEFAULT false;
@@ -72,7 +87,14 @@ DROP POLICY IF EXISTS "Anyone can view published posts" ON blog_posts;
 CREATE POLICY "Anyone can view published posts"
   ON blog_posts
   FOR SELECT
-  USING (published = true OR auth.uid() = author_id);
+  USING (
+    published = true 
+    OR (author_id IS NOT NULL AND auth.uid() = author_id)
+    OR (author_id IS NULL AND EXISTS (
+      SELECT 1 FROM user_roles
+      WHERE user_id = auth.uid() AND is_admin = true
+    ))
+  );
 
 -- Policy: Only admins can insert posts
 DROP POLICY IF EXISTS "Admins can insert posts" ON blog_posts;
