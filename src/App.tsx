@@ -24,6 +24,7 @@ import Terms from './pages/Terms'
 import Blog from './pages/Blog'
 import BlogPost from './pages/BlogPost'
 import SQL from './pages/SQL'
+import Debug from './pages/Debug'
 
 function App() {
   // Video preloader temporarily disabled for debugging
@@ -86,6 +87,9 @@ function App() {
         </Route>
         <Route path="/sql" element={<Layout />}>
           <Route index element={<SQL />} />
+        </Route>
+        <Route path="/debug" element={<Layout />}>
+          <Route index element={<Debug />} />
         </Route>
         <Route path="/thelostarchives" element={<Layout />}>
           <Route index element={<Blog />} />
