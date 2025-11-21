@@ -64,12 +64,25 @@ export default function Blog() {
       setLoading(true);
       setError(null);
       
-      // Try to load all posts first, then filter client-side for backward compatibility
-      let { data, error: fetchError } = await supabase
+      console.log('🔄 Starting to load blog posts...');
+      
+      // Add timeout wrapper
+      const queryPromise = supabase
         .from('blog_posts')
         .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, published, status')
         .order('published_at', { ascending: false })
         .order('created_at', { ascending: false });
+      
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Query timeout after 10 seconds')), 10000)
+      );
+      
+      let { data, error: fetchError } = await Promise.race([
+        queryPromise,
+        timeoutPromise
+      ]) as any;
+      
+      console.log('✅ Query completed:', { dataLength: data?.length, error: fetchError });
 
       if (fetchError) {
         console.error('Error loading blog posts:', fetchError);
@@ -106,12 +119,14 @@ export default function Blog() {
       });
 
       setPosts(publishedPosts || []);
+      console.log('✅ Posts set:', publishedPosts.length);
     } catch (err: any) {
-      console.error('Error loading blog posts:', err);
+      console.error('❌ Error loading blog posts:', err);
       const errorMsg = err?.message || 'Failed to load blog posts';
       setError(errorMsg);
       setPosts([]);
     } finally {
+      console.log('🏁 loadPosts finally block - setting loading to false');
       setLoading(false);
     }
   };
