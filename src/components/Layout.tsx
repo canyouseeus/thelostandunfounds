@@ -189,6 +189,18 @@ export default function Layout() {
                   >
                     SHOP
                   </Link>
+                  <Link 
+                    to="/thelostarchives" 
+                    className="menu-item"
+                    onClick={() => {
+                      // Allow navigation to happen before closing menu
+                      setTimeout(() => {
+                        setMenuOpen(false);
+                      }, 100);
+                    }}
+                  >
+                    THE LOST ARCHIVES
+                  </Link>
                   {!showLimitedMenu && (
                     <Link 
                       to="/tools" 
