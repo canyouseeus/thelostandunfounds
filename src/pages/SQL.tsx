@@ -5,12 +5,8 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { isAdmin } from '../utils/admin';
-import { useNavigate } from 'react-router-dom';
-import { LoadingSpinner } from '../components/Loading';
-import { Shield, Copy, Check, Clock, Lock } from 'lucide-react';
 import { useToast } from '../components/Toast';
+import { Copy, Check, Clock, Lock } from 'lucide-react';
 
 const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes in milliseconds
 
@@ -22,11 +18,7 @@ interface SQLScript {
 }
 
 export default function SQL() {
-  const { user, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
   const { success } = useToast();
-  const [adminStatus, setAdminStatus] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(true);
   const [scripts, setScripts] = useState<SQLScript[]>([]);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isLocked, setIsLocked] = useState(false);
@@ -36,37 +28,14 @@ export default function SQL() {
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    checkAdminAccess();
-  }, [user, authLoading]);
-
-  useEffect(() => {
-    if (adminStatus === true) {
-      loadScripts();
-      startActivityTracking();
-    }
+    loadScripts();
+    startActivityTracking();
 
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       if (countdownRef.current) clearInterval(countdownRef.current);
     };
-  }, [adminStatus]);
-
-  const checkAdminAccess = async () => {
-    if (authLoading) return;
-    
-    if (!user) {
-      navigate('/');
-      return;
-    }
-
-    const admin = await isAdmin();
-    setAdminStatus(admin);
-    setLoading(false);
-
-    if (!admin) {
-      navigate('/');
-    }
-  };
+  }, []);
 
   const loadScripts = async () => {
     try {
@@ -282,12 +251,10 @@ END $$;`;
   };
 
   const handleUnlock = () => {
-    if (adminStatus) {
-      lastActivityRef.current = Date.now();
-      setIsLocked(false);
-      setTimeRemaining(INACTIVITY_TIMEOUT);
-      startActivityTracking();
-    }
+    lastActivityRef.current = Date.now();
+    setIsLocked(false);
+    setTimeRemaining(INACTIVITY_TIMEOUT);
+    startActivityTracking();
   };
 
   const copyToClipboard = async (content: string, index: number) => {
@@ -307,26 +274,11 @@ END $$;`;
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  if (loading || authLoading || adminStatus === null) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <LoadingSpinner />
-        </div>
-      </div>
-    );
-  }
-
-  if (adminStatus === false) {
-    return null; // Will redirect
-  }
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-2">
-          <Shield className="w-8 h-8" />
+        <h1 className="text-4xl font-bold text-white mb-2">
           SQL Scripts
         </h1>
         <div className="flex items-center justify-between">

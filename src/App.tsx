@@ -85,11 +85,7 @@ function App() {
           } />
         </Route>
         <Route path="/sql" element={<Layout />}>
-          <Route index element={
-            <ProtectedRoute requireAdmin={true}>
-              <SQL />
-            </ProtectedRoute>
-          } />
+          <Route index element={<SQL />} />
         </Route>
         <Route path="/thelostarchives" element={<Layout />}>
           <Route index element={<Blog />} />
