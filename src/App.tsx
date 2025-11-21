@@ -23,6 +23,7 @@ import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
 import Blog from './pages/Blog'
 import BlogPost from './pages/BlogPost'
+import SQL from './pages/SQL'
 
 function App() {
   // Video preloader temporarily disabled for debugging
@@ -80,6 +81,13 @@ function App() {
           <Route index element={
             <ProtectedRoute requireAdmin={true}>
               <Admin />
+            </ProtectedRoute>
+          } />
+        </Route>
+        <Route path="/sql" element={<Layout />}>
+          <Route index element={
+            <ProtectedRoute requireAdmin={true}>
+              <SQL />
             </ProtectedRoute>
           } />
         </Route>
