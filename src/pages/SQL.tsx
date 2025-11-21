@@ -428,8 +428,8 @@ END $$;`;
                     )}
                   </button>
                 </div>
-                <pre className="bg-black/50 border border-white/10 rounded-none p-4 overflow-x-auto text-white/90 text-sm font-mono whitespace-pre-wrap break-words">
-                  <code>{script.content}</code>
+                <pre className="bg-black/50 border border-white/10 rounded-none p-4 overflow-x-auto text-white/90 text-sm font-mono whitespace-pre-wrap break-words text-left">
+                  <code className="text-left">{script.content}</code>
                 </pre>
               </div>
             ))
