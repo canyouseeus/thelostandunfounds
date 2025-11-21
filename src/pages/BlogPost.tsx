@@ -19,6 +19,7 @@ interface BlogPost {
   seo_description: string | null;
   seo_keywords: string | null;
   og_image_url: string | null;
+  featured_image?: string | null; // Support existing field
 }
 
 export default function BlogPost() {
@@ -42,6 +43,10 @@ export default function BlogPost() {
       // Set meta description
       const description = post.seo_description || post.excerpt || 
         post.content.substring(0, 160).replace(/\n/g, ' ').trim();
+      
+      // Use og_image_url or fallback to featured_image
+      const ogImage = post.og_image_url || post.featured_image;
+      
       const updateMetaTag = (name: string, content: string, isProperty = false) => {
         const selector = isProperty ? `meta[property="${name}"]` : `meta[name="${name}"]`;
         let meta = document.querySelector(selector);
@@ -65,8 +70,8 @@ export default function BlogPost() {
       updateMetaTag('og:url', `https://www.thelostandunfounds.com/thelostarchives/${post.slug}`, true);
       updateMetaTag('og:type', 'article', true);
       
-      if (post.og_image_url) {
-        updateMetaTag('og:image', post.og_image_url, true);
+      if (ogImage) {
+        updateMetaTag('og:image', ogImage, true);
       }
 
       if (post.seo_keywords) {
@@ -77,8 +82,8 @@ export default function BlogPost() {
       updateMetaTag('twitter:card', 'summary', true);
       updateMetaTag('twitter:title', title, true);
       updateMetaTag('twitter:description', description, true);
-      if (post.og_image_url) {
-        updateMetaTag('twitter:image', post.og_image_url, true);
+      if (ogImage) {
+        updateMetaTag('twitter:image', ogImage, true);
       }
     }
   }, [post]);

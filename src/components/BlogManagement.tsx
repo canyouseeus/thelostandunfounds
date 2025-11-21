@@ -17,12 +17,14 @@ interface BlogPost {
   content: string;
   excerpt: string | null;
   published: boolean;
+  status?: string; // 'draft' | 'published' - optional for backward compatibility
   published_at: string | null;
   created_at: string;
   seo_title: string | null;
   seo_description: string | null;
   seo_keywords: string | null;
   og_image_url: string | null;
+  featured_image?: string | null; // Support existing field
 }
 
 export default function BlogManagement() {
@@ -62,7 +64,15 @@ export default function BlogManagement() {
         return;
       }
 
-      setPosts(data || []);
+      // Ensure published field exists (for backward compatibility with status field)
+      const postsWithPublished = (data || []).map((post: any) => ({
+        ...post,
+        published: post.published !== undefined 
+          ? post.published 
+          : (post.status === 'published')
+      }));
+
+      setPosts(postsWithPublished);
     } catch (err) {
       console.error('Error loading posts:', err);
       showError('Failed to load blog posts');
@@ -97,12 +107,16 @@ export default function BlogManagement() {
     }
 
     try {
+      // Set published_at when publishing for the first time
+      const shouldSetPublishedAt = formData.published && (!editingPost || !editingPost.published_at);
+      
       const postData = {
         ...formData,
         slug: formData.slug || generateSlug(formData.title),
-        published_at: formData.published && !editingPost?.published_at 
+        published_at: shouldSetPublishedAt 
           ? new Date().toISOString() 
           : editingPost?.published_at || null,
+        status: formData.published ? 'published' : 'draft', // Keep status in sync
         author_id: user.id,
         excerpt: formData.excerpt || null,
         seo_title: formData.seo_title || null,
@@ -154,16 +168,21 @@ export default function BlogManagement() {
   const handleEdit = (post: BlogPost) => {
     setEditingPost(post);
     setIsCreating(true);
+    // Handle both published boolean and status field for backward compatibility
+    const isPublished = post.published !== undefined 
+      ? post.published 
+      : (post.status === 'published');
+    
     setFormData({
       title: post.title,
       slug: post.slug,
       content: post.content,
       excerpt: post.excerpt || '',
-      published: post.published,
+      published: isPublished,
       seo_title: post.seo_title || '',
       seo_description: post.seo_description || '',
       seo_keywords: post.seo_keywords || '',
-      og_image_url: post.og_image_url || '',
+      og_image_url: post.og_image_url || post.featured_image || '',
     });
   };
 
