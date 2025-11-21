@@ -21,6 +21,8 @@ import Shop from './pages/Shop'
 import ResetNewsletter from './pages/ResetNewsletter'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
+import Blog from './pages/Blog'
+import BlogPost from './pages/BlogPost'
 
 function App() {
   // Video preloader temporarily disabled for debugging
@@ -80,6 +82,10 @@ function App() {
               <Admin />
             </ProtectedRoute>
           } />
+        </Route>
+        <Route path="/thelostarchives" element={<Layout />}>
+          <Route index element={<Blog />} />
+          <Route path=":slug" element={<BlogPost />} />
         </Route>
         <Route path="/reset-newsletter" element={<ResetNewsletter />} />
         <Route path="*" element={<NotFound />} />

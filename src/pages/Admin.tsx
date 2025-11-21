@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import { LoadingSpinner } from '../components/Loading';
 import { ProductCostManagement } from '../components/ProductCostManagement';
+import BlogManagement from '../components/BlogManagement';
 
 interface DashboardStats {
   totalUsers: number;
@@ -68,7 +69,7 @@ export default function Admin() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'subscriptions' | 'products' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'subscriptions' | 'products' | 'settings' | 'blog'>('overview');
 
   useEffect(() => {
     checkAdminAccess();
@@ -245,8 +246,8 @@ export default function Admin() {
 
       {/* Tabs */}
       <div className="mb-6 border-b border-white/10">
-        <div className="flex gap-4">
-          {(['overview', 'users', 'subscriptions', 'products', 'settings'] as const).map((tab) => (
+        <div className="flex gap-4 flex-wrap">
+          {(['overview', 'users', 'subscriptions', 'products', 'blog', 'settings'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -562,6 +563,9 @@ export default function Admin() {
           <ProductCostManagement />
         </div>
       )}
+
+      {/* Blog Tab */}
+      {activeTab === 'blog' && <BlogManagement />}
 
       {/* Settings Tab */}
       {activeTab === 'settings' && (
