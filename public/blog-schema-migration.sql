@@ -151,7 +151,14 @@ GRANT INSERT, UPDATE, DELETE ON blog_posts TO authenticated;
 -- Ensure table is in publication for realtime (if needed)
 DO $$
 BEGIN
-  ALTER PUBLICATION supabase_realtime ADD TABLE IF NOT EXISTS blog_posts;
+  -- Check if table is already in publication before adding
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' 
+    AND tablename = 'blog_posts'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE blog_posts;
+  END IF;
 EXCEPTION
   WHEN OTHERS THEN NULL;
 END $$;
