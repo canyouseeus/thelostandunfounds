@@ -82,6 +82,35 @@ CREATE TRIGGER sync_blog_post_status_trigger
 -- Ensure RLS is enabled
 ALTER TABLE blog_posts ENABLE ROW LEVEL SECURITY;
 
+-- Create a security definer function to check admin status without RLS recursion
+-- This function runs with the privileges of the function creator, bypassing RLS
+CREATE OR REPLACE FUNCTION is_admin_user(user_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- Check user_roles table (bypasses RLS due to SECURITY DEFINER)
+  IF EXISTS (
+    SELECT 1 FROM user_roles
+    WHERE user_roles.user_id = is_admin_user.user_id AND is_admin = true
+  ) THEN
+    RETURN true;
+  END IF;
+  
+  -- Check if email matches admin email
+  IF EXISTS (
+    SELECT 1 FROM auth.users
+    WHERE id = is_admin_user.user_id AND email = 'admin@thelostandunfounds.com'
+  ) THEN
+    RETURN true;
+  END IF;
+  
+  RETURN false;
+END;
+$$;
+
 -- Update RLS policies to work with published field
 -- The existing policies should still work, but let's ensure they're correct
 
@@ -94,13 +123,10 @@ CREATE POLICY "Anyone can view published posts"
   USING (
     -- Anonymous users can read published posts
     published = true
-    -- OR authenticated users who are the author
+    -- OR authenticated users who are the author can read their own posts
     OR (auth.uid() IS NOT NULL AND author_id IS NOT NULL AND auth.uid() = author_id)
-    -- OR authenticated admin users can read all posts
-    OR (auth.uid() IS NOT NULL AND EXISTS (
-      SELECT 1 FROM user_roles
-      WHERE user_id = auth.uid() AND is_admin = true
-    ))
+    -- OR authenticated admin users can read all posts (using security definer function)
+    OR (auth.uid() IS NOT NULL AND is_admin_user(auth.uid()))
   );
 
 -- Policy: Only admins can insert posts
@@ -109,14 +135,7 @@ CREATE POLICY "Admins can insert posts"
   ON blog_posts
   FOR INSERT
   WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM user_roles
-      WHERE user_id = auth.uid() AND is_admin = true
-    )
-    OR EXISTS (
-      SELECT 1 FROM auth.users
-      WHERE id = auth.uid() AND email = 'admin@thelostandunfounds.com'
-    )
+    auth.uid() IS NOT NULL AND is_admin_user(auth.uid())
   );
 
 -- Policy: Only admins can update posts
@@ -125,14 +144,7 @@ CREATE POLICY "Admins can update posts"
   ON blog_posts
   FOR UPDATE
   USING (
-    EXISTS (
-      SELECT 1 FROM user_roles
-      WHERE user_id = auth.uid() AND is_admin = true
-    )
-    OR EXISTS (
-      SELECT 1 FROM auth.users
-      WHERE id = auth.uid() AND email = 'admin@thelostandunfounds.com'
-    )
+    auth.uid() IS NOT NULL AND is_admin_user(auth.uid())
   );
 
 -- Policy: Only admins can delete posts
@@ -141,14 +153,7 @@ CREATE POLICY "Admins can delete posts"
   ON blog_posts
   FOR DELETE
   USING (
-    EXISTS (
-      SELECT 1 FROM user_roles
-      WHERE user_id = auth.uid() AND is_admin = true
-    )
-    OR EXISTS (
-      SELECT 1 FROM auth.users
-      WHERE id = auth.uid() AND email = 'admin@thelostandunfounds.com'
-    )
+    auth.uid() IS NOT NULL AND is_admin_user(auth.uid())
   );
 
 -- Grant permissions
