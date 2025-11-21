@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { LoadingSpinner } from '../components/Loading';
+import BlogAnalysis from '../components/BlogAnalysis';
 
 interface BlogPost {
   id: string;
@@ -212,6 +213,13 @@ export default function BlogPost() {
         <div className="prose prose-invert max-w-none text-left">
           {formatContent(post.content)}
         </div>
+
+        {/* AI Breakdown Section */}
+        <BlogAnalysis
+          title={post.title}
+          content={post.content}
+          excerpt={post.excerpt}
+        />
       </article>
     </div>
   );
