@@ -79,18 +79,25 @@ CREATE TRIGGER sync_blog_post_status_trigger
   FOR EACH ROW
   EXECUTE FUNCTION sync_blog_post_status();
 
+-- Ensure RLS is enabled
+ALTER TABLE blog_posts ENABLE ROW LEVEL SECURITY;
+
 -- Update RLS policies to work with published field
 -- The existing policies should still work, but let's ensure they're correct
 
 -- Policy: Anyone can view published posts (using published field)
+-- This MUST allow anonymous users to read published posts
 DROP POLICY IF EXISTS "Anyone can view published posts" ON blog_posts;
 CREATE POLICY "Anyone can view published posts"
   ON blog_posts
   FOR SELECT
   USING (
-    published = true 
-    OR (author_id IS NOT NULL AND auth.uid() = author_id)
-    OR (author_id IS NULL AND EXISTS (
+    -- Anonymous users can read published posts
+    published = true
+    -- OR authenticated users who are the author
+    OR (auth.uid() IS NOT NULL AND author_id IS NOT NULL AND auth.uid() = author_id)
+    -- OR authenticated admin users can read all posts
+    OR (auth.uid() IS NOT NULL AND EXISTS (
       SELECT 1 FROM user_roles
       WHERE user_id = auth.uid() AND is_admin = true
     ))
