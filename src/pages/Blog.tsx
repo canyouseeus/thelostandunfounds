@@ -62,6 +62,8 @@ export default function Blog() {
   const loadPosts = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
       // Try to load all posts first, then filter client-side for backward compatibility
       let { data, error: fetchError } = await supabase
         .from('blog_posts')
@@ -71,24 +73,34 @@ export default function Blog() {
 
       if (fetchError) {
         console.error('Error loading blog posts:', fetchError);
-        setError('Failed to load blog posts');
+        // Don't show error if table doesn't exist yet - just show empty state
+        if (fetchError.code !== 'PGRST116' && fetchError.code !== '42P01') {
+          setError('Failed to load blog posts');
+        }
+        setPosts([]);
         return;
       }
 
       // Filter published posts - handle both published boolean and status field
       const publishedPosts = (data || []).filter((post: any) => {
-        // If published field exists, use it
-        if (post.published !== undefined) {
-          return post.published === true;
+        try {
+          // If published field exists, use it
+          if (post.published !== undefined && post.published !== null) {
+            return post.published === true;
+          }
+          // Otherwise check status field
+          return post.status === 'published';
+        } catch (e) {
+          // If filtering fails, exclude the post
+          return false;
         }
-        // Otherwise check status field
-        return post.status === 'published';
       });
 
-      setPosts(publishedPosts);
+      setPosts(publishedPosts || []);
     } catch (err) {
       console.error('Error loading blog posts:', err);
       setError('Failed to load blog posts');
+      setPosts([]);
     } finally {
       setLoading(false);
     }

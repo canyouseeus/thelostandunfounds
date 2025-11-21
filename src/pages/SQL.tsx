@@ -203,54 +203,68 @@ END $$;`;
   };
 
   const startActivityTracking = () => {
-    const resetTimeout = () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (countdownRef.current) clearInterval(countdownRef.current);
+    try {
+      const resetTimeout = () => {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        if (countdownRef.current) clearInterval(countdownRef.current);
 
-      lastActivityRef.current = Date.now();
-      setIsLocked(false);
-      setTimeRemaining(INACTIVITY_TIMEOUT);
+        lastActivityRef.current = Date.now();
+        setIsLocked(false);
+        setTimeRemaining(INACTIVITY_TIMEOUT);
 
-      // Start countdown
-      countdownRef.current = setInterval(() => {
-        const elapsed = Date.now() - lastActivityRef.current;
-        const remaining = Math.max(0, INACTIVITY_TIMEOUT - elapsed);
-        setTimeRemaining(remaining);
+        // Start countdown
+        countdownRef.current = setInterval(() => {
+          const elapsed = Date.now() - lastActivityRef.current;
+          const remaining = Math.max(0, INACTIVITY_TIMEOUT - elapsed);
+          setTimeRemaining(remaining);
 
-        if (remaining === 0) {
+          if (remaining === 0) {
+            setIsLocked(true);
+            if (countdownRef.current) clearInterval(countdownRef.current);
+          }
+        }, 1000);
+
+        // Set lock timeout
+        timeoutRef.current = setTimeout(() => {
           setIsLocked(true);
           if (countdownRef.current) clearInterval(countdownRef.current);
+        }, INACTIVITY_TIMEOUT);
+      };
+
+      // Track user activity - use touch events for iPad
+      const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'touchmove', 'click'];
+      const handleActivity = () => {
+        if (!isLocked) {
+          resetTimeout();
         }
-      }, 1000);
+      };
 
-      // Set lock timeout
-      timeoutRef.current = setTimeout(() => {
-        setIsLocked(true);
-        if (countdownRef.current) clearInterval(countdownRef.current);
-      }, INACTIVITY_TIMEOUT);
-    };
-
-    // Track user activity
-    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
-    const handleActivity = () => {
-      if (!isLocked) {
-        resetTimeout();
-      }
-    };
-
-    activityEvents.forEach(event => {
-      document.addEventListener(event, handleActivity);
-    });
-
-    resetTimeout();
-
-    return () => {
       activityEvents.forEach(event => {
-        document.removeEventListener(event, handleActivity);
+        try {
+          document.addEventListener(event, handleActivity, { passive: true });
+        } catch (e) {
+          // Ignore errors for unsupported events
+        }
       });
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (countdownRef.current) clearInterval(countdownRef.current);
-    };
+
+      resetTimeout();
+
+      return () => {
+        activityEvents.forEach(event => {
+          try {
+            document.removeEventListener(event, handleActivity);
+          } catch (e) {
+            // Ignore cleanup errors
+          }
+        });
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        if (countdownRef.current) clearInterval(countdownRef.current);
+      };
+    } catch (error) {
+      console.error('Error setting up activity tracking:', error);
+      // Don't break the component if activity tracking fails
+      return () => {};
+    }
   };
 
   const loadScripts = async () => {
