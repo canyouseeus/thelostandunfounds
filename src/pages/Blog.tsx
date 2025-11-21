@@ -66,13 +66,20 @@ export default function Blog() {
       
       console.log('🔄 Starting to load blog posts...');
       
-      // Simplified query - only get what we need, filter by published on server side
-      const queryPromise = supabase
+      // Try to filter by published on server side, but fallback if column doesn't exist
+      let queryPromise = supabase
         .from('blog_posts')
         .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, published, status')
-        .eq('published', true) // Filter on server side to reduce data transfer
         .order('published_at', { ascending: false })
-        .limit(100); // Limit results to prevent huge queries
+        .order('created_at', { ascending: false })
+        .limit(100);
+      
+      // Try to add published filter, but it might fail if column doesn't exist
+      try {
+        queryPromise = queryPromise.eq('published', true);
+      } catch (e) {
+        console.warn('Published column filter not available, will filter client-side');
+      }
       
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Query timeout after 15 seconds')), 15000)
