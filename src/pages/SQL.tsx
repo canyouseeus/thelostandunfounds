@@ -27,66 +27,6 @@ export default function SQL() {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    loadScripts();
-    startActivityTracking();
-
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (countdownRef.current) clearInterval(countdownRef.current);
-    };
-  }, []);
-
-  const loadScripts = async () => {
-    try {
-      // Load blog schema migration from public folder
-      let migrationContent = '';
-      try {
-        const migrationResponse = await fetch('/blog-schema-migration.sql');
-        if (migrationResponse.ok) {
-          migrationContent = await migrationResponse.text();
-        }
-      } catch (fetchError) {
-        console.warn('Could not fetch migration file:', fetchError);
-      }
-
-      // If file wasn't loaded, use default content
-      if (!migrationContent) {
-        migrationContent = await getDefaultMigrationContent();
-      }
-
-      // Load create-first-blog-post script
-      let blogPostContent = '';
-      try {
-        const blogPostResponse = await fetch('/create-first-blog-post.sql');
-        if (blogPostResponse.ok) {
-          blogPostContent = await blogPostResponse.text();
-        }
-      } catch (fetchError) {
-        console.warn('Could not fetch blog post file:', fetchError);
-      }
-
-      const loadedScripts: SQLScript[] = [
-        {
-          name: 'Blog Schema Migration',
-          filename: 'blog-schema-migration.sql',
-          content: migrationContent,
-          description: 'Adds missing fields (published, SEO fields, og_image_url) to blog_posts table. Handles missing author_id column. Run this FIRST in Supabase SQL Editor.'
-        },
-        {
-          name: 'Create First Blog Post',
-          filename: 'create-first-blog-post.sql',
-          content: blogPostContent || '// File not found - check public folder',
-          description: 'Creates your first blog post about Cursor IDE. Run this AFTER the migration script. Works with any schema version.'
-        }
-      ];
-
-      setScripts(loadedScripts);
-    } catch (error) {
-      console.error('Error loading SQL scripts:', error);
-    }
-  };
-
   const getDefaultMigrationContent = async () => {
     // Try to load from file first
     try {
@@ -261,6 +201,66 @@ EXCEPTION
   WHEN OTHERS THEN NULL;
 END $$;`;
   };
+
+  const loadScripts = async () => {
+    try {
+      // Load blog schema migration from public folder
+      let migrationContent = '';
+      try {
+        const migrationResponse = await fetch('/blog-schema-migration.sql');
+        if (migrationResponse.ok) {
+          migrationContent = await migrationResponse.text();
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch migration file:', fetchError);
+      }
+
+      // If file wasn't loaded, use default content
+      if (!migrationContent) {
+        migrationContent = await getDefaultMigrationContent();
+      }
+
+      // Load create-first-blog-post script
+      let blogPostContent = '';
+      try {
+        const blogPostResponse = await fetch('/create-first-blog-post.sql');
+        if (blogPostResponse.ok) {
+          blogPostContent = await blogPostResponse.text();
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch blog post file:', fetchError);
+      }
+
+      const loadedScripts: SQLScript[] = [
+        {
+          name: 'Blog Schema Migration',
+          filename: 'blog-schema-migration.sql',
+          content: migrationContent,
+          description: 'Adds missing fields (published, SEO fields, og_image_url) to blog_posts table. Handles missing author_id column. Run this FIRST in Supabase SQL Editor.'
+        },
+        {
+          name: 'Create First Blog Post',
+          filename: 'create-first-blog-post.sql',
+          content: blogPostContent || '// File not found - check public folder',
+          description: 'Creates your first blog post about Cursor IDE. Run this AFTER the migration script. Works with any schema version.'
+        }
+      ];
+
+      setScripts(loadedScripts);
+    } catch (error) {
+      console.error('Error loading SQL scripts:', error);
+    }
+  };
+
+  useEffect(() => {
+    loadScripts();
+    startActivityTracking();
+
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+  }, []);
 
   const startActivityTracking = () => {
     const resetTimeout = () => {
