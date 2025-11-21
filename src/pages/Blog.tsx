@@ -66,15 +66,16 @@ export default function Blog() {
       
       console.log('🔄 Starting to load blog posts...');
       
-      // Add timeout wrapper
+      // Simplified query - only get what we need, filter by published on server side
       const queryPromise = supabase
         .from('blog_posts')
         .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, published, status')
+        .eq('published', true) // Filter on server side to reduce data transfer
         .order('published_at', { ascending: false })
-        .order('created_at', { ascending: false });
+        .limit(100); // Limit results to prevent huge queries
       
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Query timeout after 10 seconds')), 10000)
+        setTimeout(() => reject(new Error('Query timeout after 15 seconds')), 15000)
       );
       
       let { data, error: fetchError } = await Promise.race([
@@ -103,17 +104,16 @@ export default function Blog() {
         return;
       }
 
-      // Filter published posts - handle both published boolean and status field
+      // Data is already filtered by published=true on server side, but double-check for safety
       const publishedPosts = (data || []).filter((post: any) => {
         try {
-          // If published field exists, use it
+          // Server already filtered by published=true, but verify
           if (post.published !== undefined && post.published !== null) {
             return post.published === true;
           }
-          // Otherwise check status field
+          // Fallback to status if published field doesn't exist
           return post.status === 'published';
         } catch (e) {
-          // If filtering fails, exclude the post
           return false;
         }
       });
