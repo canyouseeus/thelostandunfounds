@@ -182,13 +182,13 @@ export default function Blog() {
               className="bg-black/50 border border-white/10 rounded-none p-6 hover:border-white/20 transition"
             >
               <Link to={`/thelostarchives/${post.slug}`}>
-                <h2 className="text-2xl md:text-3xl font-black text-white mb-3 tracking-wide hover:text-white/80 transition">
+                <h2 className="text-2xl md:text-3xl font-black text-white mb-3 tracking-wide hover:text-white/80 transition text-left">
                   {post.title}
                 </h2>
               </Link>
               
               {post.excerpt && (
-                <p className="text-white/70 text-lg mb-4 leading-relaxed">
+                <p className="text-white/70 text-lg mb-4 leading-relaxed text-justify text-left">
                   {post.excerpt}
                 </p>
               )}

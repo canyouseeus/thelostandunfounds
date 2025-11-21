@@ -197,19 +197,19 @@ export default function BlogPost() {
       </Link>
 
       <article>
-        <header className="mb-8">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 tracking-wide">
+        <header className="mb-8 text-left">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 tracking-wide text-left">
             {post.title}
           </h1>
           
           {post.published_at && (
-            <time className="text-white/50 text-sm">
+            <time className="text-white/50 text-sm text-left">
               {formatDate(post.published_at)}
             </time>
           )}
         </header>
 
-        <div className="prose prose-invert max-w-none">
+        <div className="prose prose-invert max-w-none text-left">
           {formatContent(post.content)}
         </div>
       </article>
