@@ -62,10 +62,10 @@ export default function Blog() {
   const loadPosts = async () => {
     try {
       setLoading(true);
-      const { data, error: fetchError } = await supabase
+      // Try to load all posts first, then filter client-side for backward compatibility
+      let { data, error: fetchError } = await supabase
         .from('blog_posts')
-        .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description')
-        .eq('published', true)
+        .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, published, status')
         .order('published_at', { ascending: false })
         .order('created_at', { ascending: false });
 
@@ -75,7 +75,17 @@ export default function Blog() {
         return;
       }
 
-      setPosts(data || []);
+      // Filter published posts - handle both published boolean and status field
+      const publishedPosts = (data || []).filter((post: any) => {
+        // If published field exists, use it
+        if (post.published !== undefined) {
+          return post.published === true;
+        }
+        // Otherwise check status field
+        return post.status === 'published';
+      });
+
+      setPosts(publishedPosts);
     } catch (err) {
       console.error('Error loading blog posts:', err);
       setError('Failed to load blog posts');

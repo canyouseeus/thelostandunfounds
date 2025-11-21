@@ -95,7 +95,6 @@ export default function BlogPost() {
         .from('blog_posts')
         .select('*')
         .eq('slug', postSlug)
-        .eq('published', true)
         .single();
 
       if (fetchError) {
@@ -105,6 +104,14 @@ export default function BlogPost() {
       }
 
       if (!data) {
+        setError('Post not found');
+        return;
+      }
+
+      // Check if post is published - handle both published boolean and status field
+      const isPublished = data.published === true || (data.published === undefined && data.status === 'published');
+      
+      if (!isPublished) {
         setError('Post not found');
         return;
       }
