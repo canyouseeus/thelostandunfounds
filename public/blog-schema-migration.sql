@@ -116,6 +116,7 @@ $$;
 
 -- Policy: Anyone can view published posts (using published field)
 -- This MUST allow anonymous users to read published posts
+-- Simplified to avoid RLS recursion - no user_roles check needed for SELECT
 DROP POLICY IF EXISTS "Anyone can view published posts" ON blog_posts;
 CREATE POLICY "Anyone can view published posts"
   ON blog_posts
@@ -123,10 +124,8 @@ CREATE POLICY "Anyone can view published posts"
   USING (
     -- Anonymous users can read published posts
     published = true
-    -- OR authenticated users who are the author can read their own posts
+    -- OR authenticated users who are the author can read their own posts (even if not published)
     OR (auth.uid() IS NOT NULL AND author_id IS NOT NULL AND auth.uid() = author_id)
-    -- OR authenticated admin users can read all posts (using security definer function)
-    OR (auth.uid() IS NOT NULL AND is_admin_user(auth.uid()))
   );
 
 -- Policy: Only admins can insert posts
