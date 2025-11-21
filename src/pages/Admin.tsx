@@ -237,22 +237,11 @@ export default function Admin() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-2">
-              <Shield className="w-8 h-8" />
-              Admin Dashboard
-            </h1>
-            <p className="text-white/70">Manage your platform and users</p>
-          </div>
-          <a
-            href="/admin/workspace"
-            className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded text-white text-sm transition flex items-center gap-2"
-          >
-            <FileText className="w-4 h-4" />
-            Workspace
-          </a>
-        </div>
+        <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-2">
+          <Shield className="w-8 h-8" />
+          Admin Dashboard
+        </h1>
+        <p className="text-white/70">Manage your platform and users</p>
       </div>
 
       {/* Tabs */}
