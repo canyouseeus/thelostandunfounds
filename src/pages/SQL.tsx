@@ -55,12 +55,29 @@ export default function SQL() {
         migrationContent = await getDefaultMigrationContent();
       }
 
+      // Load create-first-blog-post script
+      let blogPostContent = '';
+      try {
+        const blogPostResponse = await fetch('/create-first-blog-post.sql');
+        if (blogPostResponse.ok) {
+          blogPostContent = await blogPostResponse.text();
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch blog post file:', fetchError);
+      }
+
       const loadedScripts: SQLScript[] = [
         {
           name: 'Blog Schema Migration',
           filename: 'blog-schema-migration.sql',
           content: migrationContent,
-          description: 'Adds missing fields (published, SEO fields, og_image_url) to blog_posts table. Handles missing author_id column. Run this in Supabase SQL Editor.'
+          description: 'Adds missing fields (published, SEO fields, og_image_url) to blog_posts table. Handles missing author_id column. Run this FIRST in Supabase SQL Editor.'
+        },
+        {
+          name: 'Create First Blog Post',
+          filename: 'create-first-blog-post.sql',
+          content: blogPostContent || '// File not found - check public folder',
+          description: 'Creates your first blog post about Cursor IDE. Run this AFTER the migration script. Works with any schema version.'
         }
       ];
 
