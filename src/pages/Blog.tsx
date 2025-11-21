@@ -75,7 +75,16 @@ export default function Blog() {
         console.error('Error loading blog posts:', fetchError);
         // Don't show error if table doesn't exist yet - just show empty state
         if (fetchError.code !== 'PGRST116' && fetchError.code !== '42P01') {
-          setError('Failed to load blog posts');
+          // Show detailed error for debugging
+          const errorMsg = fetchError.message || 'Failed to load blog posts';
+          const errorCode = fetchError.code ? ` (Code: ${fetchError.code})` : '';
+          setError(`${errorMsg}${errorCode}`);
+          console.error('Full error details:', {
+            code: fetchError.code,
+            message: fetchError.message,
+            details: fetchError.details,
+            hint: fetchError.hint
+          });
         }
         setPosts([]);
         return;
@@ -97,9 +106,10 @@ export default function Blog() {
       });
 
       setPosts(publishedPosts || []);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading blog posts:', err);
-      setError('Failed to load blog posts');
+      const errorMsg = err?.message || 'Failed to load blog posts';
+      setError(errorMsg);
       setPosts([]);
     } finally {
       setLoading(false);
