@@ -298,6 +298,17 @@ END $$;`;
         console.warn('Could not fetch blog post file:', fetchError);
       }
 
+      // Load create-blog-post-all-for-a-dream script
+      let allForADreamContent = '';
+      try {
+        const allForADreamResponse = await fetch('/sql/create-blog-post-all-for-a-dream.sql');
+        if (allForADreamResponse.ok) {
+          allForADreamContent = await allForADreamResponse.text();
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch All For A Dream blog post file:', fetchError);
+      }
+
       const loadedScripts: SQLScript[] = [
         {
           name: 'Blog Schema Migration',
@@ -310,6 +321,12 @@ END $$;`;
           filename: 'create-first-blog-post.sql',
           content: blogPostContent || '// File not found - check public folder',
           description: 'Creates your first blog post about Cursor IDE. Run this AFTER the migration script. Works with any schema version.'
+        },
+        {
+          name: 'ALL FOR A DREAM',
+          filename: 'create-blog-post-all-for-a-dream.sql',
+          content: allForADreamContent || '// File not found - check public/sql folder',
+          description: 'Creates the blog post "ALL FOR A DREAM" - a personal reflection on resilience, change, and the pursuit of a dream. Run this AFTER the migration script. Works with any schema version.'
         }
       ];
 
