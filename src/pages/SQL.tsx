@@ -426,13 +426,20 @@ END $$;`;
         console.log('Script filter check:', {
           name: script.name,
           ageHours: ageHours.toFixed(2),
-          shouldShow
+          shouldShow,
+          createdAt: new Date(script.createdAt).toISOString(),
+          now: new Date(now).toISOString()
         });
         // Show if less than 24 hours old
         return shouldShow;
       });
 
-      console.log('Final scripts to display:', recentScripts.map(s => s.name));
+      console.log('SQL Scripts Summary:', {
+        totalScripts: allScripts.length,
+        scriptsWithContent: allScripts.filter(s => s.content && !s.content.includes('File not found')).length,
+        recentScripts: recentScripts.length,
+        scriptNames: recentScripts.map(s => s.name)
+      });
       setScripts(recentScripts);
     } catch (error) {
       console.error('Error loading SQL scripts:', error);
