@@ -8,6 +8,18 @@ import { useState, useEffect, useRef } from 'react';
 import { useToast } from '../components/Toast';
 import { Copy, Check, Clock, Lock } from 'lucide-react';
 
+// Extend window for debug logs
+declare global {
+  interface Window {
+    __DEBUG_LOGS__?: Array<{
+      type: string;
+      message: string;
+      stack?: string;
+      timestamp: string;
+    }>;
+  }
+}
+
 const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 interface SQLScript {
@@ -270,8 +282,24 @@ END $$;`;
     }
   };
 
+  const logToDebug = (type: 'log' | 'error' | 'warn' | 'info', message: string, details?: any) => {
+    // Store logs in window for debug page to capture
+    if (!window.__DEBUG_LOGS__) {
+      window.__DEBUG_LOGS__ = [];
+    }
+    window.__DEBUG_LOGS__.push({
+      type,
+      message: typeof message === 'string' ? message : JSON.stringify(message),
+      stack: details?.stack || (details ? JSON.stringify(details, null, 2) : undefined),
+      timestamp: new Date().toISOString()
+    });
+    // Also log to console
+    console[type](`[SQL Page]`, message, details || '');
+  };
+
   const loadScripts = async () => {
     try {
+      logToDebug('info', 'Starting to load SQL scripts...');
       const now = Date.now();
       const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
       
@@ -523,21 +551,36 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.log('Setting scripts:', recentScripts.length, 'scripts');
         setScripts(recentScripts);
       }
-    } catch (error) {
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Unknown error loading SQL scripts';
+      const errorStack = error?.stack || JSON.stringify(error, null, 2);
+      logToDebug('error', `Failed to load SQL scripts: ${errorMessage}`, { stack: errorStack, error });
       console.error('Error loading SQL scripts:', error);
       // Set empty array on error so user sees "No SQL scripts found"
       setScripts([]);
+      // Redirect to debug page if there's a critical error
+      if (error?.message?.includes('404') || error?.code === 'NOT_FOUND') {
+        logToDebug('error', '404 error detected - SQL page not found. Check routing.', error);
+      }
     }
   };
 
   useEffect(() => {
-    console.log('SQL component mounted, loading scripts...');
-    loadScripts().then(() => {
-      console.log('Scripts loaded, current scripts state:', scripts.length);
-    }).catch(err => {
-      console.error('Failed to load scripts:', err);
-    });
-    startActivityTracking();
+    try {
+      logToDebug('info', 'SQL component mounted, loading scripts...');
+      console.log('SQL component mounted, loading scripts...');
+      loadScripts().then(() => {
+        logToDebug('info', `Scripts loaded, current scripts state: ${scripts.length}`);
+        console.log('Scripts loaded, current scripts state:', scripts.length);
+      }).catch(err => {
+        logToDebug('error', 'Failed to load scripts in useEffect', err);
+        console.error('Failed to load scripts:', err);
+      });
+      startActivityTracking();
+    } catch (error: any) {
+      logToDebug('error', 'Error in SQL component useEffect', error);
+      console.error('Error in SQL component useEffect:', error);
+    }
 
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
