@@ -234,7 +234,7 @@ function analyzeBlogPost(title: string, content: string, excerpt?: string): Anal
 
   return {
     summary,
-    keyPoints,
+    keyPoints: finalKeyPoints,
     toolsMentioned,
     comparableTools,
     alternatives,
