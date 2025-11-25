@@ -517,17 +517,26 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
       // Force set scripts even if array is empty for debugging
       if (recentScripts.length === 0 && allScripts.length > 0) {
         console.error('WARNING: All scripts filtered out! Showing all scripts anyway.');
+        console.log('All scripts:', allScripts);
         setScripts(allScripts);
       } else {
+        console.log('Setting scripts:', recentScripts.length, 'scripts');
         setScripts(recentScripts);
       }
     } catch (error) {
       console.error('Error loading SQL scripts:', error);
+      // Set empty array on error so user sees "No SQL scripts found"
+      setScripts([]);
     }
   };
 
   useEffect(() => {
-    loadScripts();
+    console.log('SQL component mounted, loading scripts...');
+    loadScripts().then(() => {
+      console.log('Scripts loaded, current scripts state:', scripts.length);
+    }).catch(err => {
+      console.error('Failed to load scripts:', err);
+    });
     startActivityTracking();
 
     return () => {
@@ -605,6 +614,7 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
           {scripts.length === 0 ? (
             <div className="bg-black/50 border border-white/10 rounded-none p-6">
               <p className="text-white/60">No SQL scripts found.</p>
+              <p className="text-white/40 text-sm mt-2">Check browser console for debug info.</p>
             </div>
           ) : (
             scripts.map((script, index) => (
