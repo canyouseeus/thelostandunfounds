@@ -18,10 +18,17 @@ interface ToolSuggestion {
   url?: string;
 }
 
+interface TermDefinition {
+  term: string;
+  definition: string;
+  category?: string;
+}
+
 interface AnalysisResult {
   summary: string;
   keyPoints: string[];
   toolsMentioned: string[];
+  termsAndConcepts: TermDefinition[];
   comparableTools: ToolSuggestion[];
   alternatives: ToolSuggestion[];
 }
@@ -42,8 +49,6 @@ function analyzeBlogPost(title: string, content: string, excerpt?: string): Anal
     'Vercel': ['vercel'],
     'GitHub': ['github.com', 'github platform'],
     'Bitcoin': ['bitcoin', 'btc cryptocurrency'],
-    'Moore\'s Law': ['moore\'s law', 'moores law'],
-    'Kurzweil': ['kurzweil', 'law of accelerating returns'],
   };
 
   const toolsMentioned: string[] = [];
@@ -64,8 +69,49 @@ function analyzeBlogPost(title: string, content: string, excerpt?: string): Anal
     }
   }
   
-  // Don't add "Artificial Intelligence" as a tool - it's a concept, not a tool
-  // Only add specific AI tools if they're actually mentioned
+  // Extract terms, concepts, and laws mentioned
+  const termsAndConcepts: TermDefinition[] = [];
+  
+  const conceptKeywords: { [key: string]: { keywords: string[], definition: string, category?: string } } = {
+    'Moore\'s Law': {
+      keywords: ['moore\'s law', 'moores law'],
+      definition: 'The observation that the number of transistors on a computer chip doubles roughly every two years, leading to exponential growth in computing power.',
+      category: 'Technology Law'
+    },
+    'Kurzweil\'s Law of Accelerating Returns': {
+      keywords: ['kurzweil', 'law of accelerating returns', 'kurzweil\'s law'],
+      definition: 'The principle that technological progress speeds up as new tools amplify our ability to create better tools, leading to exponential growth in innovation.',
+      category: 'Technology Law'
+    },
+    'Artificial Intelligence': {
+      keywords: ['artificial intelligence', 'ai', 'machine learning'],
+      definition: 'The simulation of human intelligence in machines that are programmed to think and learn like humans.',
+      category: 'Technology Concept'
+    },
+    'Automation': {
+      keywords: ['automation', 'automated'],
+      definition: 'The use of technology to perform tasks with minimal human intervention.',
+      category: 'Technology Concept'
+    },
+  };
+  
+  for (const [term, data] of Object.entries(conceptKeywords)) {
+    const matched = data.keywords.some(keyword => {
+      if (keyword.includes(' ')) {
+        return fullText.includes(keyword);
+      }
+      const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+      return regex.test(fullText);
+    });
+    
+    if (matched) {
+      termsAndConcepts.push({
+        term,
+        definition: data.definition,
+        category: data.category
+      });
+    }
+  }
 
   // Generate summary based on actual content
   const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 20);
@@ -274,6 +320,7 @@ function analyzeBlogPost(title: string, content: string, excerpt?: string): Anal
     summary,
     keyPoints: finalKeyPoints,
     toolsMentioned,
+    termsAndConcepts,
     comparableTools,
     alternatives,
   };

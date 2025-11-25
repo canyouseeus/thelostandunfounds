@@ -13,10 +13,17 @@ interface ToolSuggestion {
   url?: string;
 }
 
+interface TermDefinition {
+  term: string;
+  definition: string;
+  category?: string;
+}
+
 interface AnalysisResult {
   summary: string;
   keyPoints: string[];
   toolsMentioned: string[];
+  termsAndConcepts: TermDefinition[];
   comparableTools: ToolSuggestion[];
   alternatives: ToolSuggestion[];
 }
@@ -128,6 +135,31 @@ export default function BlogAnalysis({ title, content, excerpt }: BlogAnalysisPr
               >
                 {tool}
               </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Terms & Concepts Glossary */}
+      {analysis.termsAndConcepts.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-xl font-semibold text-white mb-4 text-left">Terms & Concepts</h3>
+          <div className="space-y-4">
+            {analysis.termsAndConcepts.map((term, index) => (
+              <div
+                key={index}
+                className="bg-black/50 border border-white/10 rounded-none p-4 hover:border-white/20 transition"
+              >
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div>
+                    <h4 className="text-lg font-semibold text-white text-left">{term.term}</h4>
+                    {term.category && (
+                      <span className="text-xs text-white/50 text-left">{term.category}</span>
+                    )}
+                  </div>
+                </div>
+                <p className="text-white/70 text-sm leading-relaxed text-left">{term.definition}</p>
+              </div>
             ))}
           </div>
         </div>
