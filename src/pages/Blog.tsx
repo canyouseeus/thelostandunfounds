@@ -159,8 +159,8 @@ export default function Blog() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-8 tracking-wide">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-8 tracking-wide text-center">
         THE LOST ARCHIVES
       </h1>
 
@@ -171,40 +171,47 @@ export default function Blog() {
       )}
 
       {posts.length === 0 ? (
-        <div className="text-white/60 text-lg">
+        <div className="text-white/60 text-lg text-center">
           <p>No posts yet. Check back soon for intel from the field.</p>
         </div>
       ) : (
-        <div className="space-y-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {posts.map((post) => (
-            <article
+            <Link
               key={post.id}
-              className="bg-black/50 border border-white/10 rounded-none p-6 hover:border-white/20 transition"
+              to={`/thelostarchives/${post.slug}`}
+              className="group"
             >
-              <Link to={`/thelostarchives/${post.slug}`}>
-                <h2 className="text-2xl md:text-3xl font-black text-white mb-3 tracking-wide hover:text-white/80 transition text-left">
-                  {post.title}
-                </h2>
-              </Link>
-              
-              {post.excerpt && (
-                <p className="text-white/70 text-lg mb-4 leading-relaxed text-justify text-left">
-                  {post.excerpt}
-                </p>
-              )}
-              
-              <div className="flex items-center justify-between">
-                <time className="text-white/50 text-sm">
-                  {formatDate(post.published_at || post.created_at)}
-                </time>
-                <Link
-                  to={`/thelostarchives/${post.slug}`}
-                  className="text-white hover:text-white/80 text-sm font-medium transition"
-                >
-                  Read more →
-                </Link>
-              </div>
-            </article>
+              <article className="bg-black/50 border-2 border-white/10 rounded-lg p-5 h-full flex flex-col hover:border-white/30 hover:shadow-lg hover:shadow-white/10 transition-all duration-300 transform hover:-translate-y-1">
+                {/* Card Header - Title Area */}
+                <div className="mb-4 pb-3 border-b border-white/10">
+                  <h2 className="text-lg font-black text-white mb-2 tracking-wide group-hover:text-white/90 transition line-clamp-2">
+                    {post.title}
+                  </h2>
+                </div>
+                
+                {/* Card Body - Excerpt */}
+                {post.excerpt && (
+                  <div className="flex-1 mb-4">
+                    <p className="text-white/60 text-sm leading-relaxed line-clamp-4">
+                      {post.excerpt}
+                    </p>
+                  </div>
+                )}
+                
+                {/* Card Footer - Date and Read More */}
+                <div className="mt-auto pt-3 border-t border-white/10">
+                  <div className="flex items-center justify-between">
+                    <time className="text-white/40 text-xs font-medium">
+                      {formatDate(post.published_at || post.created_at)}
+                    </time>
+                    <span className="text-white/60 text-xs font-semibold group-hover:text-white transition">
+                      Read →
+                    </span>
+                  </div>
+                </div>
+              </article>
+            </Link>
           ))}
         </div>
       )}
