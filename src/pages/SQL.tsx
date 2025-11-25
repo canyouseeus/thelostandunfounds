@@ -309,13 +309,6 @@ END $$;`;
 
   const loadScripts = async () => {
     try {
-<<<<<<< HEAD
-      // Fetch the most recent SQL file from the API
-      const response = await fetch('/api/sql/latest');
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch latest SQL: ${response.statusText}`);
-=======
       logToDebug('info', 'Starting to load SQL scripts...');
       const now = Date.now();
       const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
@@ -341,18 +334,34 @@ END $$;`;
         }
       } catch (fetchError) {
         console.warn('Could not fetch migration file:', fetchError);
->>>>>>> cursor/create-and-deploy-new-blog-post-about-ai-composer-1-8d2d
       }
 
-      const data = await response.json();
-      
-      // Format the filename as a display name (remove extension, capitalize words)
-      const displayName = data.filename
-        .replace(/\.sql$/i, '')
-        .replace(/[-_]/g, ' ')
-        .split(' ')
-        .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-        .join(' ');
+      // If file wasn't loaded, use default content
+      if (!migrationContent) {
+        migrationContent = await getDefaultMigrationContent();
+      }
+
+      // Load create-first-blog-post script
+      let blogPostContent = '';
+      try {
+        const blogPostResponse = await fetch('/create-first-blog-post.sql');
+        if (blogPostResponse.ok) {
+          blogPostContent = await blogPostResponse.text();
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch blog post file:', fetchError);
+      }
+
+      // Load create-blog-post-all-for-a-dream script
+      let allForADreamContent = '';
+      try {
+        const allForADreamResponse = await fetch('/sql/create-blog-post-all-for-a-dream.sql');
+        if (allForADreamResponse.ok) {
+          allForADreamContent = await allForADreamResponse.text();
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch All For A Dream blog post file:', fetchError);
+      }
 
       // Load create-blog-post-artificial-intelligence-the-job-killer script
       let aiJobKillerContent = '';
@@ -467,27 +476,6 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
 
       const allScripts: SQLScript[] = [
         {
-<<<<<<< HEAD
-          name: displayName,
-          filename: data.filename,
-          content: data.content,
-          description: `Most recently published SQL file${data.modifiedRelative ? ` (${data.modifiedRelative})` : ''}`,
-          modified: data.modified,
-          modifiedRelative: data.modifiedRelative
-        }
-      ];
-
-      setScripts(loadedScripts);
-    } catch (error) {
-      console.error('Error loading latest SQL script:', error);
-      // Fallback: show error message
-      setScripts([{
-        name: 'Error Loading SQL',
-        filename: 'error',
-        content: `Failed to load the latest SQL file. Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        description: 'Please check the API endpoint or try again later.'
-      }]);
-=======
           name: 'Blog Schema Migration',
           filename: 'blog-schema-migration.sql',
           content: migrationContent,
@@ -584,7 +572,6 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
       if (error?.message?.includes('404') || error?.code === 'NOT_FOUND') {
         logToDebug('error', '404 error detected - SQL page not found. Check routing.', error);
       }
->>>>>>> cursor/create-and-deploy-new-blog-post-about-ai-composer-1-8d2d
     }
   };
 
