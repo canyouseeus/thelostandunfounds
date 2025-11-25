@@ -30,29 +30,42 @@ interface AnalysisResult {
 function analyzeBlogPost(title: string, content: string, excerpt?: string): AnalysisResult {
   const fullText = `${title} ${excerpt || ''} ${content}`.toLowerCase();
   
-  // Extract tools mentioned
+  // Extract tools mentioned - be more specific to avoid false positives
   const toolKeywords: { [key: string]: string[] } = {
-    'Cursor IDE': ['cursor', 'ide', 'mcp servers', 'agent-browser'],
+    'Cursor IDE': ['cursor ide', 'cursor editor', 'cursor code editor'],
     'Figma': ['figma'],
-    'Make': ['make.com', 'make', 'automation'],
-    'Google AI Studio': ['google ai studio', 'google ai', 'gemini'],
-    'Co-Pilot': ['co-pilot', 'github copilot', 'copilot'],
+    'Make': ['make.com', 'make automation platform'],
+    'Google AI Studio': ['google ai studio', 'gemini api'],
+    'Co-Pilot': ['github copilot', 'github co-pilot'],
     'Anti-Gravity': ['anti-gravity', 'google anti-gravity'],
     'Serato': ['serato'],
     'Vercel': ['vercel'],
-    'GitHub': ['github', 'git'],
-    'Bitcoin': ['bitcoin', 'btc', 'crypto'],
-    'Artificial Intelligence': ['artificial intelligence', 'ai', 'machine learning'],
+    'GitHub': ['github.com', 'github platform'],
+    'Bitcoin': ['bitcoin', 'btc cryptocurrency'],
     'Moore\'s Law': ['moore\'s law', 'moores law'],
     'Kurzweil': ['kurzweil', 'law of accelerating returns'],
   };
 
   const toolsMentioned: string[] = [];
   for (const [tool, keywords] of Object.entries(toolKeywords)) {
-    if (keywords.some(keyword => fullText.includes(keyword))) {
+    // Use word boundaries to avoid false matches (e.g., "make" in "make better")
+    const matched = keywords.some(keyword => {
+      // For multi-word keywords, check if they appear as phrases
+      if (keyword.includes(' ')) {
+        return fullText.includes(keyword);
+      }
+      // For single words, use word boundaries to avoid partial matches
+      const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+      return regex.test(fullText);
+    });
+    
+    if (matched) {
       toolsMentioned.push(tool);
     }
   }
+  
+  // Don't add "Artificial Intelligence" as a tool - it's a concept, not a tool
+  // Only add specific AI tools if they're actually mentioned
 
   // Generate summary based on actual content
   const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 20);
@@ -79,36 +92,44 @@ function analyzeBlogPost(title: string, content: string, excerpt?: string): Anal
   };
   
   // Split content into complete sentences (preserve punctuation)
-  const completeSentences = content.match(/[^.!?]+[.!?]+/g) || [];
+  // Match sentences that start with capital letter and end with punctuation
+  const completeSentences = content.match(/[A-Z][^.!?]*[.!?]+/g) || [];
   
   // Look for sentences with key phrases that indicate important points
-  const importantPatterns = [
-    /Will [^.!?]+[.!?]+/gi,
-    /I say[^.!?]+[.!?]+/gi,
-    /I believe[^.!?]+[.!?]+/gi,
-    /Throughout history[^.!?]+[.!?]+/gi,
-    /The power of[^.!?]+[.!?]+/gi,
-    /This is why[^.!?]+[.!?]+/gi,
-    /The purpose of[^.!?]+[.!?]+/gi,
-    /When you[^.!?]+[.!?]+/gi,
-    /Stop [^.!?]+[.!?]+/gi,
-    /Think about[^.!?]+[.!?]+/gi,
+  // Make sure we get complete sentences, not fragments
+  const importantPhrases = [
+    'Will A.I.',
+    'I say,',
+    'I believe',
+    'Throughout history',
+    'The power of',
+    'This is why',
+    'The purpose of',
+    'When you',
+    'Stop sending',
+    'Think about',
+    'Do you not see',
   ];
   
-  importantPatterns.forEach(pattern => {
-    const matches = content.match(pattern);
-    if (matches) {
-      matches.forEach(match => {
-        addKeyPoint(match);
-      });
+  completeSentences.forEach(sentence => {
+    const trimmed = sentence.trim();
+    const hasImportantPhrase = importantPhrases.some(phrase => 
+      trimmed.includes(phrase) || trimmed.toLowerCase().includes(phrase.toLowerCase())
+    );
+    
+    if (hasImportantPhrase) {
+      addKeyPoint(trimmed);
     }
   });
   
-  // Also look for questions (complete questions)
+  // Also look for questions (complete questions that start with capital)
   const questions = content.match(/[A-Z][^.!?]*\?/g);
   if (questions && questions.length > 0) {
     questions.slice(0, 2).forEach(q => {
-      addKeyPoint(q);
+      const trimmed = q.trim();
+      if (trimmed.length >= 30 && trimmed.length <= 200) {
+        addKeyPoint(trimmed);
+      }
     });
   }
   
