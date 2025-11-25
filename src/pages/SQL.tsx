@@ -330,10 +330,19 @@ END $$;`;
       try {
         const aiJobKillerResponse = await fetch('/sql/create-blog-post-artificial-intelligence-the-job-killer.sql');
         if (aiJobKillerResponse.ok) {
+          const contentType = aiJobKillerResponse.headers.get('content-type');
           aiJobKillerContent = await aiJobKillerResponse.text();
+          console.log('AI Job Killer script loaded:', {
+            ok: aiJobKillerResponse.ok,
+            contentType,
+            contentLength: aiJobKillerContent.length,
+            startsWithSQL: aiJobKillerContent.trim().startsWith('--')
+          });
+        } else {
+          console.warn('AI Job Killer script fetch failed:', aiJobKillerResponse.status, aiJobKillerResponse.statusText);
         }
       } catch (fetchError) {
-        console.warn('Could not fetch Artificial Intelligence: The Job Killer blog post file:', fetchError);
+        console.error('Could not fetch Artificial Intelligence: The Job Killer blog post file:', fetchError);
       }
 
       const allScripts: SQLScript[] = [
@@ -371,14 +380,23 @@ END $$;`;
       const recentScripts = allScripts.filter(script => {
         // If content is missing or empty, don't show it
         if (!script.content || script.content.trim() === '' || script.content.includes('File not found')) {
+          console.log('Filtering out script (no content):', script.name);
           return false;
         }
         // Calculate age from when script was first viewed
         const age = now - script.createdAt;
+        const ageHours = age / (1000 * 60 * 60);
+        const shouldShow = age < TWENTY_FOUR_HOURS && age >= 0;
+        console.log('Script filter check:', {
+          name: script.name,
+          ageHours: ageHours.toFixed(2),
+          shouldShow
+        });
         // Show if less than 24 hours old
-        return age < TWENTY_FOUR_HOURS && age >= 0;
+        return shouldShow;
       });
 
+      console.log('Final scripts to display:', recentScripts.map(s => s.name));
       setScripts(recentScripts);
     } catch (error) {
       console.error('Error loading SQL scripts:', error);
