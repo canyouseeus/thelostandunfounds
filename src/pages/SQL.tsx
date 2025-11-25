@@ -345,26 +345,95 @@ END $$;`;
         console.error('Could not fetch Artificial Intelligence: The Job Killer blog post file:', fetchError);
       }
 
-      // Load check-blog-post-exists script
+      // Load check-blog-post-exists script (with fallback)
       let checkPostContent = '';
       try {
         const checkPostResponse = await fetch('/sql/check-blog-post-exists.sql');
         if (checkPostResponse.ok) {
-          checkPostContent = await checkPostResponse.text();
+          const text = await checkPostResponse.text();
+          // Check if we got HTML instead of SQL
+          if (!text.trim().startsWith('<!')) {
+            checkPostContent = text;
+          }
         }
       } catch (fetchError) {
         console.warn('Could not fetch check-blog-post-exists file:', fetchError);
       }
+      
+      // Fallback: embed the diagnostic script directly
+      if (!checkPostContent || checkPostContent.includes('File not found') || checkPostContent.trim().startsWith('<!')) {
+        checkPostContent = `-- Check if the blog post exists and its status
+-- Run this in Supabase SQL Editor to diagnose why posts aren't showing
 
-      // Load update-blog-post-if-exists script
+SELECT 
+  id,
+  title,
+  slug,
+  published,
+  status,
+  published_at,
+  created_at,
+  CASE 
+    WHEN published = true THEN '✅ Published'
+    WHEN published = false THEN '❌ Not Published'
+    ELSE '⚠️ Published field is NULL'
+  END as publish_status,
+  CASE
+    WHEN status = 'published' THEN '✅ Status Published'
+    ELSE '❌ Status: ' || COALESCE(status, 'NULL')
+  END as status_check
+FROM blog_posts
+WHERE slug = 'artificial-intelligence-the-job-killer'
+ORDER BY created_at DESC;
+
+-- Also check all posts
+SELECT 
+  COUNT(*) as total_posts,
+  COUNT(*) FILTER (WHERE published = true) as published_count,
+  COUNT(*) FILTER (WHERE status = 'published') as status_published_count,
+  COUNT(*) FILTER (WHERE published = true AND status = 'published') as both_published_count
+FROM blog_posts;`;
+      }
+
+      // Load update-blog-post-if-exists script (with fallback)
       let updatePostContent = '';
       try {
         const updatePostResponse = await fetch('/sql/update-blog-post-if-exists.sql');
         if (updatePostResponse.ok) {
-          updatePostContent = await updatePostResponse.text();
+          const text = await updatePostResponse.text();
+          // Check if we got HTML instead of SQL
+          if (!text.trim().startsWith('<!')) {
+            updatePostContent = text;
+          }
         }
       } catch (fetchError) {
         console.warn('Could not fetch update-blog-post-if-exists file:', fetchError);
+      }
+      
+      // Fallback: embed the update script directly (truncated for brevity, full version in file)
+      if (!updatePostContent || updatePostContent.includes('File not found') || updatePostContent.trim().startsWith('<!')) {
+        updatePostContent = `-- Update the blog post if it already exists
+-- Run this if the INSERT said "success" but no rows were returned
+
+UPDATE blog_posts
+SET
+  published = true,
+  status = 'published',
+  published_at = COALESCE(published_at, NOW()),
+  updated_at = NOW()
+WHERE slug = 'artificial-intelligence-the-job-killer'
+  AND (published = false OR published IS NULL OR status != 'published');
+
+-- Verify the update
+SELECT 
+  id,
+  title,
+  slug,
+  published,
+  status,
+  published_at
+FROM blog_posts
+WHERE slug = 'artificial-intelligence-the-job-killer';`;
       }
 
       const allScripts: SQLScript[] = [
