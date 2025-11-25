@@ -413,24 +413,28 @@ END $$;`;
       ];
 
       // Filter out scripts older than 24 hours from when they were first viewed
+      // BUT always show scripts even if content failed to load (so user can see what's available)
       const recentScripts = allScripts.filter(script => {
-        // If content is missing or empty, don't show it
-        if (!script.content || script.content.trim() === '' || script.content.includes('File not found')) {
-          console.log('Filtering out script (no content):', script.name);
-          return false;
-        }
         // Calculate age from when script was first viewed
         const age = now - script.createdAt;
         const ageHours = age / (1000 * 60 * 60);
         const shouldShow = age < TWENTY_FOUR_HOURS && age >= 0;
+        
+        // Log for debugging
+        if (!script.content || script.content.includes('File not found')) {
+          console.warn('Script content not loaded (will still show):', script.name);
+        }
+        
         console.log('Script filter check:', {
           name: script.name,
           ageHours: ageHours.toFixed(2),
           shouldShow,
+          hasContent: !!script.content && !script.content.includes('File not found'),
           createdAt: new Date(script.createdAt).toISOString(),
           now: new Date(now).toISOString()
         });
-        // Show if less than 24 hours old
+        
+        // Show if less than 24 hours old (even if content failed to load)
         return shouldShow;
       });
 
