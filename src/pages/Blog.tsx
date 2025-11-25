@@ -185,7 +185,7 @@ export default function Blog() {
               <article className="bg-black/50 border-2 border-white/10 rounded-lg p-5 h-full flex flex-col hover:border-white/30 hover:shadow-lg hover:shadow-white/10 transition-all duration-300 transform hover:-translate-y-1">
                 {/* Card Header - Title Area */}
                 <div className="mb-4 pb-3 border-b border-white/10">
-                  <h2 className="text-lg font-black text-white mb-2 tracking-wide group-hover:text-white/90 transition line-clamp-2">
+                  <h2 className="text-base font-black text-white mb-2 tracking-wide group-hover:text-white/90 transition whitespace-nowrap overflow-hidden text-ellipsis">
                     {post.title}
                   </h2>
                 </div>
