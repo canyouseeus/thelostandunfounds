@@ -275,18 +275,24 @@ END $$;`;
       const now = Date.now();
       const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
       
+      // Get or create script timestamps from localStorage (24-hour timer starts from first view)
+      const getScriptTimestamp = (filename: string): number => {
+        const storageKey = `sql_script_${filename}_timestamp`;
+        const stored = localStorage.getItem(storageKey);
+        if (stored) {
+          return parseInt(stored, 10);
+        }
+        // First time seeing this script - set timestamp to now
+        localStorage.setItem(storageKey, now.toString());
+        return now;
+      };
+      
       // Load blog schema migration from public folder
       let migrationContent = '';
-      let migrationCreatedAt = now;
       try {
         const migrationResponse = await fetch('/blog-schema-migration.sql');
         if (migrationResponse.ok) {
           migrationContent = await migrationResponse.text();
-          // Try to get file modification time from headers
-          const lastModified = migrationResponse.headers.get('last-modified');
-          if (lastModified) {
-            migrationCreatedAt = new Date(lastModified).getTime();
-          }
         }
       } catch (fetchError) {
         console.warn('Could not fetch migration file:', fetchError);
@@ -299,15 +305,10 @@ END $$;`;
 
       // Load create-first-blog-post script
       let blogPostContent = '';
-      let blogPostCreatedAt = now;
       try {
         const blogPostResponse = await fetch('/create-first-blog-post.sql');
         if (blogPostResponse.ok) {
           blogPostContent = await blogPostResponse.text();
-          const lastModified = blogPostResponse.headers.get('last-modified');
-          if (lastModified) {
-            blogPostCreatedAt = new Date(lastModified).getTime();
-          }
         }
       } catch (fetchError) {
         console.warn('Could not fetch blog post file:', fetchError);
@@ -315,15 +316,10 @@ END $$;`;
 
       // Load create-blog-post-all-for-a-dream script
       let allForADreamContent = '';
-      let allForADreamCreatedAt = now;
       try {
         const allForADreamResponse = await fetch('/sql/create-blog-post-all-for-a-dream.sql');
         if (allForADreamResponse.ok) {
           allForADreamContent = await allForADreamResponse.text();
-          const lastModified = allForADreamResponse.headers.get('last-modified');
-          if (lastModified) {
-            allForADreamCreatedAt = new Date(lastModified).getTime();
-          }
         }
       } catch (fetchError) {
         console.warn('Could not fetch All For A Dream blog post file:', fetchError);
@@ -331,15 +327,10 @@ END $$;`;
 
       // Load create-blog-post-artificial-intelligence-the-job-killer script
       let aiJobKillerContent = '';
-      let aiJobKillerCreatedAt = now;
       try {
         const aiJobKillerResponse = await fetch('/sql/create-blog-post-artificial-intelligence-the-job-killer.sql');
         if (aiJobKillerResponse.ok) {
           aiJobKillerContent = await aiJobKillerResponse.text();
-          const lastModified = aiJobKillerResponse.headers.get('last-modified');
-          if (lastModified) {
-            aiJobKillerCreatedAt = new Date(lastModified).getTime();
-          }
         }
       } catch (fetchError) {
         console.warn('Could not fetch Artificial Intelligence: The Job Killer blog post file:', fetchError);
@@ -351,59 +342,41 @@ END $$;`;
           filename: 'blog-schema-migration.sql',
           content: migrationContent,
           description: 'Adds missing fields (published, SEO fields, og_image_url) to blog_posts table. Handles missing author_id column. Run this FIRST in Supabase SQL Editor.',
-          createdAt: migrationCreatedAt
+          createdAt: getScriptTimestamp('blog-schema-migration.sql')
         },
         {
           name: 'Create First Blog Post',
           filename: 'create-first-blog-post.sql',
           content: blogPostContent || '// File not found - check public folder',
           description: 'Creates your first blog post about Cursor IDE. Run this AFTER the migration script. Works with any schema version.',
-          createdAt: blogPostCreatedAt
+          createdAt: getScriptTimestamp('create-first-blog-post.sql')
         },
         {
           name: 'ALL FOR A DREAM',
           filename: 'create-blog-post-all-for-a-dream.sql',
           content: allForADreamContent || '// File not found - check public/sql folder',
           description: 'Creates the blog post "ALL FOR A DREAM" - a personal reflection on resilience, change, and the pursuit of a dream. Run this AFTER the migration script. Works with any schema version.',
-          createdAt: allForADreamCreatedAt
+          createdAt: getScriptTimestamp('create-blog-post-all-for-a-dream.sql')
         },
         {
           name: 'Artificial Intelligence: The Job Killer',
           filename: 'create-blog-post-artificial-intelligence-the-job-killer.sql',
           content: aiJobKillerContent || '// File not found - check public/sql folder',
           description: 'Creates the blog post "Artificial Intelligence: The Job Killer" - a reflection on how AI, like technological progress throughout history, frees humanity from repetitive tasks and opens new possibilities. Run this AFTER the migration script. Works with any schema version.',
-          createdAt: aiJobKillerCreatedAt
+          createdAt: getScriptTimestamp('create-blog-post-artificial-intelligence-the-job-killer.sql')
         }
       ];
 
-      // Filter out scripts older than 24 hours
-      // Only filter if we have valid content and a valid timestamp
+      // Filter out scripts older than 24 hours from when they were first viewed
       const recentScripts = allScripts.filter(script => {
         // If content is missing or empty, don't show it
         if (!script.content || script.content.trim() === '' || script.content.includes('File not found')) {
           return false;
         }
-        // Calculate age
+        // Calculate age from when script was first viewed
         const age = now - script.createdAt;
-        // If createdAt is very close to now (within 1 second), it means we used the fallback
-        // because last-modified header wasn't available - in this case, show the script
-        if (Math.abs(age) < 1000) {
-          return true;
-        }
-        // Otherwise, only show if less than 24 hours old
+        // Show if less than 24 hours old
         return age < TWENTY_FOUR_HOURS && age >= 0;
-      });
-
-      console.log('SQL Scripts Debug:', {
-        total: allScripts.length,
-        filtered: recentScripts.length,
-        scripts: allScripts.map(s => ({
-          name: s.name,
-          hasContent: !!s.content && !s.content.includes('File not found'),
-          createdAt: new Date(s.createdAt).toISOString(),
-          ageHours: ((now - s.createdAt) / (1000 * 60 * 60)).toFixed(2),
-          willShow: recentScripts.includes(s)
-        }))
       });
 
       setScripts(recentScripts);
