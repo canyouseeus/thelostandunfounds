@@ -345,6 +345,28 @@ END $$;`;
         console.error('Could not fetch Artificial Intelligence: The Job Killer blog post file:', fetchError);
       }
 
+      // Load check-blog-post-exists script
+      let checkPostContent = '';
+      try {
+        const checkPostResponse = await fetch('/sql/check-blog-post-exists.sql');
+        if (checkPostResponse.ok) {
+          checkPostContent = await checkPostResponse.text();
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch check-blog-post-exists file:', fetchError);
+      }
+
+      // Load update-blog-post-if-exists script
+      let updatePostContent = '';
+      try {
+        const updatePostResponse = await fetch('/sql/update-blog-post-if-exists.sql');
+        if (updatePostResponse.ok) {
+          updatePostContent = await updatePostResponse.text();
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch update-blog-post-if-exists file:', fetchError);
+      }
+
       const allScripts: SQLScript[] = [
         {
           name: 'Blog Schema Migration',
@@ -373,6 +395,20 @@ END $$;`;
           content: aiJobKillerContent || '// File not found - check public/sql folder',
           description: 'Creates the blog post "Artificial Intelligence: The Job Killer" - a reflection on how AI, like technological progress throughout history, frees humanity from repetitive tasks and opens new possibilities. Run this AFTER the migration script. Works with any schema version.',
           createdAt: getScriptTimestamp('create-blog-post-artificial-intelligence-the-job-killer.sql')
+        },
+        {
+          name: 'Check Blog Post Exists',
+          filename: 'check-blog-post-exists.sql',
+          content: checkPostContent || '// File not found - check public/sql folder',
+          description: 'Diagnostic script to check if a blog post exists and verify its published status. Run this to see why posts might not be showing on your blog page.',
+          createdAt: getScriptTimestamp('check-blog-post-exists.sql')
+        },
+        {
+          name: 'Update Blog Post If Exists',
+          filename: 'update-blog-post-if-exists.sql',
+          content: updatePostContent || '// File not found - check public/sql folder',
+          description: 'Updates the "Artificial Intelligence: The Job Killer" blog post if it already exists. Sets published=true and status=published. Run this if the INSERT script said "success" but no rows were returned.',
+          createdAt: getScriptTimestamp('update-blog-post-if-exists.sql')
         }
       ];
 
