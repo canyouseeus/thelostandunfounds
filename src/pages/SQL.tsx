@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from '../components/Toast';
-import { Copy, Check, Clock, Lock } from 'lucide-react';
+import { Copy, Check, Clock, Lock, RefreshCw } from 'lucide-react';
 
 const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes in milliseconds
 
@@ -25,6 +25,7 @@ export default function SQL() {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isLocked, setIsLocked] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(INACTIVITY_TIMEOUT);
+  const [isLoading, setIsLoading] = useState(false);
   const lastActivityRef = useRef<number>(Date.now());
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
@@ -272,15 +273,32 @@ END $$;`;
   };
 
   const loadScripts = async () => {
+    setIsLoading(true);
     try {
       // Fetch the most recent SQL file from the API
       const response = await fetch('/api/sql/latest');
       
       if (!response.ok) {
-        throw new Error(`Failed to fetch latest SQL: ${response.statusText}`);
+        // Try to parse error details from response
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+          if (errorData.details) {
+            errorMessage += ` - ${errorData.details}`;
+          }
+        } catch {
+          // If response isn't JSON, use status text
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
+      
+      // Validate response data
+      if (!data.filename || !data.content) {
+        throw new Error('Invalid response format from API');
+      }
       
       // Format the filename as a display name (remove extension, capitalize words)
       const displayName = data.filename
@@ -304,13 +322,16 @@ END $$;`;
       setScripts(loadedScripts);
     } catch (error) {
       console.error('Error loading latest SQL script:', error);
-      // Fallback: show error message
+      // Fallback: show error message with retry option
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setScripts([{
         name: 'Error Loading SQL',
         filename: 'error',
-        content: `Failed to load the latest SQL file. Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        description: 'Please check the API endpoint or try again later.'
+        content: `Failed to load the latest SQL file.\n\nError: ${errorMessage}\n\nPlease check the API endpoint or try refreshing the page.`,
+        description: 'Click the refresh button or reload the page to try again.'
       }]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -358,9 +379,20 @@ END $$;`;
         <div className="flex items-center justify-between">
           <p className="text-white/70">Database migration and setup scripts</p>
           {!isLocked && (
-            <div className="flex items-center gap-2 text-white/60 text-sm">
-              <Clock className="w-4 h-4" />
-              <span>Auto-lock in: {formatTime(timeRemaining)}</span>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={loadScripts}
+                disabled={isLoading}
+                className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded text-white text-sm transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Refresh SQL scripts"
+              >
+                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                Refresh
+              </button>
+              <div className="flex items-center gap-2 text-white/60 text-sm">
+                <Clock className="w-4 h-4" />
+                <span>Auto-lock in: {formatTime(timeRemaining)}</span>
+              </div>
             </div>
           )}
         </div>

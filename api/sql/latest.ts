@@ -14,53 +14,111 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const workspacePath = process.cwd();
-    const sqlFiles: Array<{ path: string; mtime: Date; name: string }> = [];
+    const sqlFiles: Array<{ path: string; mtime: Date; name: string; fullPath: string }> = [];
 
-    // Function to recursively find SQL files
-    async function findSQLFiles(dir: string, basePath: string = ''): Promise<void> {
+    // Function to find SQL files in a specific directory (non-recursive)
+    async function findSQLFilesInDir(dir: string, basePath: string = ''): Promise<void> {
       try {
         const entries = await readdir(dir, { withFileTypes: true });
         
         for (const entry of entries) {
-          const fullPath = join(dir, entry.name);
-          const relativePath = basePath ? `${basePath}/${entry.name}` : entry.name;
-          
-          // Skip node_modules, .git, and other common directories
-          if (entry.name.startsWith('.') || 
-              entry.name === 'node_modules' || 
-              entry.name === '.next' ||
-              entry.name === 'dist' ||
-              entry.name === 'build') {
+          // Skip hidden files and common build directories
+          if (entry.name.startsWith('.')) {
             continue;
           }
           
-          if (entry.isDirectory()) {
-            await findSQLFiles(fullPath, relativePath);
-          } else if (entry.isFile() && entry.name.endsWith('.sql')) {
+          if (entry.isFile() && entry.name.endsWith('.sql')) {
             try {
+              const fullPath = join(dir, entry.name);
               const stats = await stat(fullPath);
               sqlFiles.push({
-                path: relativePath,
+                path: basePath ? `${basePath}/${entry.name}` : entry.name,
                 mtime: stats.mtime,
-                name: entry.name
+                name: entry.name,
+                fullPath: fullPath
               });
             } catch (err) {
-              // Skip files we can't stat
-              console.warn(`Could not stat ${fullPath}:`, err);
+              console.warn(`Could not stat ${join(dir, entry.name)}:`, err);
             }
           }
         }
       } catch (err) {
-        // Skip directories we can't read
         console.warn(`Could not read directory ${dir}:`, err);
       }
     }
 
-    // Find all SQL files
-    await findSQLFiles(workspacePath);
+    // Search in specific known directories first (more reliable in serverless)
+    const searchPaths = [
+      { dir: workspacePath, base: '' },
+      { dir: join(workspacePath, 'sql'), base: 'sql' },
+      { dir: join(workspacePath, 'public'), base: 'public' },
+      { dir: join(workspacePath, 'public', 'sql'), base: 'public/sql' }
+    ];
+
+    // Try each search path
+    for (const { dir, base } of searchPaths) {
+      try {
+        await findSQLFilesInDir(dir, base);
+      } catch (err) {
+        // Continue to next path if this one fails
+        console.warn(`Could not search in ${dir}:`, err);
+      }
+    }
+
+    // If we still haven't found files, try a limited recursive search
+    if (sqlFiles.length === 0) {
+      async function findSQLFilesRecursive(dir: string, basePath: string = '', depth: number = 0): Promise<void> {
+        // Limit recursion depth to avoid issues
+        if (depth > 3) return;
+        
+        try {
+          const entries = await readdir(dir, { withFileTypes: true });
+          
+          for (const entry of entries) {
+            const fullPath = join(dir, entry.name);
+            const relativePath = basePath ? `${basePath}/${entry.name}` : entry.name;
+            
+            // Skip node_modules, .git, and other common directories
+            if (entry.name.startsWith('.') || 
+                entry.name === 'node_modules' || 
+                entry.name === '.next' ||
+                entry.name === 'dist' ||
+                entry.name === 'build' ||
+                entry.name === 'objects' ||
+                entry.name === 'refs') {
+              continue;
+            }
+            
+            if (entry.isDirectory()) {
+              await findSQLFilesRecursive(fullPath, relativePath, depth + 1);
+            } else if (entry.isFile() && entry.name.endsWith('.sql')) {
+              try {
+                const stats = await stat(fullPath);
+                sqlFiles.push({
+                  path: relativePath,
+                  mtime: stats.mtime,
+                  name: entry.name,
+                  fullPath: fullPath
+                });
+              } catch (err) {
+                console.warn(`Could not stat ${fullPath}:`, err);
+              }
+            }
+          }
+        } catch (err) {
+          // Skip directories we can't read
+          console.warn(`Could not read directory ${dir}:`, err);
+        }
+      }
+
+      await findSQLFilesRecursive(workspacePath);
+    }
 
     if (sqlFiles.length === 0) {
-      return res.status(404).json({ error: 'No SQL files found' });
+      return res.status(404).json({ 
+        error: 'No SQL files found',
+        details: `Searched in: ${searchPaths.map(p => p.dir).join(', ')}`
+      });
     }
 
     // Sort by modification time (most recent first)
@@ -68,15 +126,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     const mostRecent = sqlFiles[0];
     
-    // Read the file content
-    const fullPath = join(workspacePath, mostRecent.path);
+    // Read the file content using the stored fullPath
     let content: string;
     try {
-      content = await readFile(fullPath, 'utf-8');
+      content = await readFile(mostRecent.fullPath, 'utf-8');
     } catch (err) {
+      console.error(`Error reading file ${mostRecent.fullPath}:`, err);
       return res.status(500).json({ 
         error: 'Could not read SQL file',
-        details: err instanceof Error ? err.message : 'Unknown error'
+        details: err instanceof Error ? err.message : 'Unknown error',
+        path: mostRecent.fullPath
       });
     }
 
@@ -91,7 +150,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.error('Error finding latest SQL file:', error);
     return res.status(500).json({ 
       error: 'Failed to find latest SQL file',
-      details: error.message 
+      details: error?.message || 'Unknown error',
+      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined
     });
   }
 }
