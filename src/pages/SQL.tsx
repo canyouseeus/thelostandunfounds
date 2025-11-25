@@ -481,39 +481,46 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         }
       ];
 
+      // TEMPORARILY DISABLE 24-HOUR FILTER FOR DEBUGGING - Show all scripts
       // Filter out scripts older than 24 hours from when they were first viewed
       // BUT always show scripts even if content failed to load (so user can see what's available)
       const recentScripts = allScripts.filter(script => {
-        // Calculate age from when script was first viewed
-        const age = now - script.createdAt;
-        const ageHours = age / (1000 * 60 * 60);
-        const shouldShow = age < TWENTY_FOUR_HOURS && age >= 0;
+        // TEMPORARY: Show all scripts for debugging
+        // TODO: Re-enable 24-hour filter after confirming scripts show
         
         // Log for debugging
-        if (!script.content || script.content.includes('File not found')) {
-          console.warn('Script content not loaded (will still show):', script.name);
-        }
-        
-        console.log('Script filter check:', {
+        console.log('Script check:', {
           name: script.name,
-          ageHours: ageHours.toFixed(2),
-          shouldShow,
-          hasContent: !!script.content && !script.content.includes('File not found'),
-          createdAt: new Date(script.createdAt).toISOString(),
-          now: new Date(now).toISOString()
+          hasContent: !!script.content && !script.content.includes('File not found') && !script.content.trim().startsWith('<!'),
+          contentLength: script.content?.length || 0,
+          createdAt: new Date(script.createdAt).toISOString()
         });
         
-        // Show if less than 24 hours old (even if content failed to load)
-        return shouldShow;
+        // Show all scripts for now
+        return true;
+        
+        // Original filter logic (disabled temporarily):
+        // const age = now - script.createdAt;
+        // const ageHours = age / (1000 * 60 * 60);
+        // const shouldShow = age < TWENTY_FOUR_HOURS && age >= 0;
+        // return shouldShow;
       });
 
       console.log('SQL Scripts Summary:', {
         totalScripts: allScripts.length,
-        scriptsWithContent: allScripts.filter(s => s.content && !s.content.includes('File not found')).length,
+        scriptsWithContent: allScripts.filter(s => s.content && !s.content.includes('File not found') && !s.content.trim().startsWith('<!')).length,
         recentScripts: recentScripts.length,
-        scriptNames: recentScripts.map(s => s.name)
+        scriptNames: recentScripts.map(s => s.name),
+        allScriptNames: allScripts.map(s => s.name)
       });
-      setScripts(recentScripts);
+      
+      // Force set scripts even if array is empty for debugging
+      if (recentScripts.length === 0 && allScripts.length > 0) {
+        console.error('WARNING: All scripts filtered out! Showing all scripts anyway.');
+        setScripts(allScripts);
+      } else {
+        setScripts(recentScripts);
+      }
     } catch (error) {
       console.error('Error loading SQL scripts:', error);
     }
