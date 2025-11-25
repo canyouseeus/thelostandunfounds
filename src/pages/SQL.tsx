@@ -8,6 +8,18 @@ import { useState, useEffect, useRef } from 'react';
 import { useToast } from '../components/Toast';
 import { Copy, Check, Clock, Lock } from 'lucide-react';
 
+// Extend window for debug logs
+declare global {
+  interface Window {
+    __DEBUG_LOGS__?: Array<{
+      type: string;
+      message: string;
+      stack?: string;
+      timestamp: string;
+    }>;
+  }
+}
+
 const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 interface SQLScript {
@@ -17,9 +29,32 @@ interface SQLScript {
   description?: string;
   modified?: string;
   modifiedRelative?: string;
+  createdAt: number; // Timestamp when script was added
 }
 
 export default function SQL() {
+  // Initialize debug logging immediately
+  if (typeof window !== 'undefined' && !window.__DEBUG_LOGS__) {
+    window.__DEBUG_LOGS__ = [];
+  }
+  
+  const logToDebug = (type: 'log' | 'error' | 'warn' | 'info', message: string, details?: any) => {
+    if (typeof window !== 'undefined') {
+      if (!window.__DEBUG_LOGS__) {
+        window.__DEBUG_LOGS__ = [];
+      }
+      window.__DEBUG_LOGS__.push({
+        type,
+        message: typeof message === 'string' ? message : JSON.stringify(message),
+        stack: details?.stack || (details ? JSON.stringify(details, null, 2) : undefined),
+        timestamp: new Date().toISOString()
+      });
+    }
+    console[type](`[SQL Page]`, message, details || '');
+  };
+
+  logToDebug('info', 'SQL component rendering...');
+  
   const { success } = useToast();
   const [scripts, setScripts] = useState<SQLScript[]>([]);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
@@ -271,13 +306,42 @@ END $$;`;
     }
   };
 
+
   const loadScripts = async () => {
     try {
+<<<<<<< HEAD
       // Fetch the most recent SQL file from the API
       const response = await fetch('/api/sql/latest');
       
       if (!response.ok) {
         throw new Error(`Failed to fetch latest SQL: ${response.statusText}`);
+=======
+      logToDebug('info', 'Starting to load SQL scripts...');
+      const now = Date.now();
+      const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+      
+      // Get or create script timestamps from localStorage (24-hour timer starts from first view)
+      const getScriptTimestamp = (filename: string): number => {
+        const storageKey = `sql_script_${filename}_timestamp`;
+        const stored = localStorage.getItem(storageKey);
+        if (stored) {
+          return parseInt(stored, 10);
+        }
+        // First time seeing this script - set timestamp to now
+        localStorage.setItem(storageKey, now.toString());
+        return now;
+      };
+      
+      // Load blog schema migration from public folder
+      let migrationContent = '';
+      try {
+        const migrationResponse = await fetch('/blog-schema-migration.sql');
+        if (migrationResponse.ok) {
+          migrationContent = await migrationResponse.text();
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch migration file:', fetchError);
+>>>>>>> cursor/create-and-deploy-new-blog-post-about-ai-composer-1-8d2d
       }
 
       const data = await response.json();
@@ -290,8 +354,120 @@ END $$;`;
         .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
         .join(' ');
 
-      const loadedScripts: SQLScript[] = [
+      // Load create-blog-post-artificial-intelligence-the-job-killer script
+      let aiJobKillerContent = '';
+      try {
+        const aiJobKillerResponse = await fetch('/sql/create-blog-post-artificial-intelligence-the-job-killer.sql');
+        if (aiJobKillerResponse.ok) {
+          const contentType = aiJobKillerResponse.headers.get('content-type');
+          aiJobKillerContent = await aiJobKillerResponse.text();
+          console.log('AI Job Killer script loaded:', {
+            ok: aiJobKillerResponse.ok,
+            contentType,
+            contentLength: aiJobKillerContent.length,
+            startsWithSQL: aiJobKillerContent.trim().startsWith('--')
+          });
+        } else {
+          console.warn('AI Job Killer script fetch failed:', aiJobKillerResponse.status, aiJobKillerResponse.statusText);
+        }
+      } catch (fetchError) {
+        console.error('Could not fetch Artificial Intelligence: The Job Killer blog post file:', fetchError);
+      }
+
+      // Load check-blog-post-exists script (with fallback)
+      let checkPostContent = '';
+      try {
+        const checkPostResponse = await fetch('/sql/check-blog-post-exists.sql');
+        if (checkPostResponse.ok) {
+          const text = await checkPostResponse.text();
+          // Check if we got HTML instead of SQL
+          if (!text.trim().startsWith('<!')) {
+            checkPostContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch check-blog-post-exists file:', fetchError);
+      }
+      
+      // Fallback: embed the diagnostic script directly
+      if (!checkPostContent || checkPostContent.includes('File not found') || checkPostContent.trim().startsWith('<!')) {
+        checkPostContent = `-- Check if the blog post exists and its status
+-- Run this in Supabase SQL Editor to diagnose why posts aren't showing
+
+SELECT 
+  id,
+  title,
+  slug,
+  published,
+  status,
+  published_at,
+  created_at,
+  CASE 
+    WHEN published = true THEN '✅ Published'
+    WHEN published = false THEN '❌ Not Published'
+    ELSE '⚠️ Published field is NULL'
+  END as publish_status,
+  CASE
+    WHEN status = 'published' THEN '✅ Status Published'
+    ELSE '❌ Status: ' || COALESCE(status, 'NULL')
+  END as status_check
+FROM blog_posts
+WHERE slug = 'artificial-intelligence-the-job-killer'
+ORDER BY created_at DESC;
+
+-- Also check all posts
+SELECT 
+  COUNT(*) as total_posts,
+  COUNT(*) FILTER (WHERE published = true) as published_count,
+  COUNT(*) FILTER (WHERE status = 'published') as status_published_count,
+  COUNT(*) FILTER (WHERE published = true AND status = 'published') as both_published_count
+FROM blog_posts;`;
+      }
+
+      // Load update-blog-post-if-exists script (with fallback)
+      let updatePostContent = '';
+      try {
+        const updatePostResponse = await fetch('/sql/update-blog-post-if-exists.sql');
+        if (updatePostResponse.ok) {
+          const text = await updatePostResponse.text();
+          // Check if we got HTML instead of SQL
+          if (!text.trim().startsWith('<!')) {
+            updatePostContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch update-blog-post-if-exists file:', fetchError);
+      }
+      
+      // Fallback: embed the update script directly (truncated for brevity, full version in file)
+      if (!updatePostContent || updatePostContent.includes('File not found') || updatePostContent.trim().startsWith('<!')) {
+        updatePostContent = `-- Update the blog post if it already exists
+-- Run this if the INSERT said "success" but no rows were returned
+
+UPDATE blog_posts
+SET
+  published = true,
+  status = 'published',
+  published_at = COALESCE(published_at, NOW()),
+  updated_at = NOW()
+WHERE slug = 'artificial-intelligence-the-job-killer'
+  AND (published = false OR published IS NULL OR status != 'published');
+
+-- Verify the update
+SELECT 
+  id,
+  title,
+  slug,
+  published,
+  status,
+  published_at
+FROM blog_posts
+WHERE slug = 'artificial-intelligence-the-job-killer';`;
+      }
+
+      const allScripts: SQLScript[] = [
         {
+<<<<<<< HEAD
           name: displayName,
           filename: data.filename,
           content: data.content,
@@ -311,12 +487,123 @@ END $$;`;
         content: `Failed to load the latest SQL file. Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
         description: 'Please check the API endpoint or try again later.'
       }]);
+=======
+          name: 'Blog Schema Migration',
+          filename: 'blog-schema-migration.sql',
+          content: migrationContent,
+          description: 'Adds missing fields (published, SEO fields, og_image_url) to blog_posts table. Handles missing author_id column. Run this FIRST in Supabase SQL Editor.',
+          createdAt: getScriptTimestamp('blog-schema-migration.sql')
+        },
+        {
+          name: 'Create First Blog Post',
+          filename: 'create-first-blog-post.sql',
+          content: blogPostContent || '// File not found - check public folder',
+          description: 'Creates your first blog post about Cursor IDE. Run this AFTER the migration script. Works with any schema version.',
+          createdAt: getScriptTimestamp('create-first-blog-post.sql')
+        },
+        {
+          name: 'ALL FOR A DREAM',
+          filename: 'create-blog-post-all-for-a-dream.sql',
+          content: allForADreamContent || '// File not found - check public/sql folder',
+          description: 'Creates the blog post "ALL FOR A DREAM" - a personal reflection on resilience, change, and the pursuit of a dream. Run this AFTER the migration script. Works with any schema version.',
+          createdAt: getScriptTimestamp('create-blog-post-all-for-a-dream.sql')
+        },
+        {
+          name: 'Artificial Intelligence: The Job Killer',
+          filename: 'create-blog-post-artificial-intelligence-the-job-killer.sql',
+          content: aiJobKillerContent || '// File not found - check public/sql folder',
+          description: 'Creates the blog post "Artificial Intelligence: The Job Killer" - a reflection on how AI, like technological progress throughout history, frees humanity from repetitive tasks and opens new possibilities. Run this AFTER the migration script. Works with any schema version.',
+          createdAt: getScriptTimestamp('create-blog-post-artificial-intelligence-the-job-killer.sql')
+        },
+        {
+          name: 'Check Blog Post Exists',
+          filename: 'check-blog-post-exists.sql',
+          content: checkPostContent || '// File not found - check public/sql folder',
+          description: 'Diagnostic script to check if a blog post exists and verify its published status. Run this to see why posts might not be showing on your blog page.',
+          createdAt: getScriptTimestamp('check-blog-post-exists.sql')
+        },
+        {
+          name: 'Update Blog Post If Exists',
+          filename: 'update-blog-post-if-exists.sql',
+          content: updatePostContent || '// File not found - check public/sql folder',
+          description: 'Updates the "Artificial Intelligence: The Job Killer" blog post if it already exists. Sets published=true and status=published. Run this if the INSERT script said "success" but no rows were returned.',
+          createdAt: getScriptTimestamp('update-blog-post-if-exists.sql')
+        }
+      ];
+
+      // TEMPORARILY DISABLE 24-HOUR FILTER FOR DEBUGGING - Show all scripts
+      // Filter out scripts older than 24 hours from when they were first viewed
+      // BUT always show scripts even if content failed to load (so user can see what's available)
+      const recentScripts = allScripts.filter(script => {
+        // TEMPORARY: Show all scripts for debugging
+        // TODO: Re-enable 24-hour filter after confirming scripts show
+        
+        // Log for debugging
+        console.log('Script check:', {
+          name: script.name,
+          hasContent: !!script.content && !script.content.includes('File not found') && !script.content.trim().startsWith('<!'),
+          contentLength: script.content?.length || 0,
+          createdAt: new Date(script.createdAt).toISOString()
+        });
+        
+        // Show all scripts for now
+        return true;
+        
+        // Original filter logic (disabled temporarily):
+        // const age = now - script.createdAt;
+        // const ageHours = age / (1000 * 60 * 60);
+        // const shouldShow = age < TWENTY_FOUR_HOURS && age >= 0;
+        // return shouldShow;
+      });
+
+      console.log('SQL Scripts Summary:', {
+        totalScripts: allScripts.length,
+        scriptsWithContent: allScripts.filter(s => s.content && !s.content.includes('File not found') && !s.content.trim().startsWith('<!')).length,
+        recentScripts: recentScripts.length,
+        scriptNames: recentScripts.map(s => s.name),
+        allScriptNames: allScripts.map(s => s.name)
+      });
+      
+      // Force set scripts even if array is empty for debugging
+      if (recentScripts.length === 0 && allScripts.length > 0) {
+        console.error('WARNING: All scripts filtered out! Showing all scripts anyway.');
+        console.log('All scripts:', allScripts);
+        setScripts(allScripts);
+      } else {
+        console.log('Setting scripts:', recentScripts.length, 'scripts');
+        setScripts(recentScripts);
+      }
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Unknown error loading SQL scripts';
+      const errorStack = error?.stack || JSON.stringify(error, null, 2);
+      logToDebug('error', `Failed to load SQL scripts: ${errorMessage}`, { stack: errorStack, error });
+      console.error('Error loading SQL scripts:', error);
+      // Set empty array on error so user sees "No SQL scripts found"
+      setScripts([]);
+      // Redirect to debug page if there's a critical error
+      if (error?.message?.includes('404') || error?.code === 'NOT_FOUND') {
+        logToDebug('error', '404 error detected - SQL page not found. Check routing.', error);
+      }
+>>>>>>> cursor/create-and-deploy-new-blog-post-about-ai-composer-1-8d2d
     }
   };
 
   useEffect(() => {
-    loadScripts();
-    startActivityTracking();
+    try {
+      logToDebug('info', 'SQL component mounted, loading scripts...');
+      console.log('SQL component mounted, loading scripts...');
+      loadScripts().then(() => {
+        logToDebug('info', `Scripts loaded, current scripts state: ${scripts.length}`);
+        console.log('Scripts loaded, current scripts state:', scripts.length);
+      }).catch(err => {
+        logToDebug('error', 'Failed to load scripts in useEffect', err);
+        console.error('Failed to load scripts:', err);
+      });
+      startActivityTracking();
+    } catch (error: any) {
+      logToDebug('error', 'Error in SQL component useEffect', error);
+      console.error('Error in SQL component useEffect:', error);
+    }
 
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -393,6 +680,7 @@ END $$;`;
           {scripts.length === 0 ? (
             <div className="bg-black/50 border border-white/10 rounded-none p-6">
               <p className="text-white/60">No SQL scripts found.</p>
+              <p className="text-white/40 text-sm mt-2">Check browser console for debug info.</p>
             </div>
           ) : (
             scripts.map((script, index) => (
