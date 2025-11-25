@@ -31,6 +31,28 @@ interface SQLScript {
 }
 
 export default function SQL() {
+  // Initialize debug logging immediately
+  if (typeof window !== 'undefined' && !window.__DEBUG_LOGS__) {
+    window.__DEBUG_LOGS__ = [];
+  }
+  
+  const logToDebug = (type: 'log' | 'error' | 'warn' | 'info', message: string, details?: any) => {
+    if (typeof window !== 'undefined') {
+      if (!window.__DEBUG_LOGS__) {
+        window.__DEBUG_LOGS__ = [];
+      }
+      window.__DEBUG_LOGS__.push({
+        type,
+        message: typeof message === 'string' ? message : JSON.stringify(message),
+        stack: details?.stack || (details ? JSON.stringify(details, null, 2) : undefined),
+        timestamp: new Date().toISOString()
+      });
+    }
+    console[type](`[SQL Page]`, message, details || '');
+  };
+
+  logToDebug('info', 'SQL component rendering...');
+  
   const { success } = useToast();
   const [scripts, setScripts] = useState<SQLScript[]>([]);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
@@ -282,20 +304,6 @@ END $$;`;
     }
   };
 
-  const logToDebug = (type: 'log' | 'error' | 'warn' | 'info', message: string, details?: any) => {
-    // Store logs in window for debug page to capture
-    if (!window.__DEBUG_LOGS__) {
-      window.__DEBUG_LOGS__ = [];
-    }
-    window.__DEBUG_LOGS__.push({
-      type,
-      message: typeof message === 'string' ? message : JSON.stringify(message),
-      stack: details?.stack || (details ? JSON.stringify(details, null, 2) : undefined),
-      timestamp: new Date().toISOString()
-    });
-    // Also log to console
-    console[type](`[SQL Page]`, message, details || '');
-  };
 
   const loadScripts = async () => {
     try {
