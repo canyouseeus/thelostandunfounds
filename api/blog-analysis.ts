@@ -59,60 +59,77 @@ function analyzeBlogPost(title: string, content: string, excerpt?: string): Anal
   const firstFewSentences = sentences.slice(0, 3).join('. ').trim();
   const summary = excerpt || firstFewSentences || `This post explores ${title}, discussing key insights and perspectives on the topic.`;
 
-  // Extract key points from content - look for important statements
+  // Extract key points from content - get complete, meaningful sentences
   const keyPoints: string[] = [];
+  const seenPoints = new Set<string>();
   
-  // Look for questions (often indicate key themes)
-  const questions = content.match(/[^.!?]*\?[^.!?]*/g);
-  if (questions && questions.length > 0) {
-    questions.slice(0, 2).forEach(q => {
-      const trimmed = q.trim();
-      if (trimmed.length > 20 && trimmed.length < 150) {
+  // Helper to add a complete sentence as a key point
+  const addKeyPoint = (sentence: string) => {
+    const trimmed = sentence.trim();
+    const normalized = trimmed.toLowerCase().replace(/\s+/g, ' ');
+    
+    // Check if it's a complete sentence (ends with punctuation or is substantial)
+    if (trimmed.length >= 30 && trimmed.length <= 250 && !seenPoints.has(normalized)) {
+      // Make sure it's a complete thought (not cut off mid-sentence)
+      if (trimmed.match(/^[A-Z]/) && (trimmed.endsWith('.') || trimmed.endsWith('!') || trimmed.endsWith('?') || trimmed.length > 100)) {
         keyPoints.push(trimmed);
+        seenPoints.add(normalized);
       }
-    });
-  }
+    }
+  };
   
-  // Look for statements with key phrases
-  const keyPhrases = [
-    /throughout history[^.!?]*/gi,
-    /the power of[^.!?]*/gi,
-    /i believe[^.!?]*/gi,
-    /i say[^.!?]*/gi,
-    /this is why[^.!?]*/gi,
-    /the purpose of[^.!?]*/gi,
+  // Split content into complete sentences (preserve punctuation)
+  const completeSentences = content.match(/[^.!?]+[.!?]+/g) || [];
+  
+  // Look for sentences with key phrases that indicate important points
+  const importantPatterns = [
+    /Will [^.!?]+[.!?]+/gi,
+    /I say[^.!?]+[.!?]+/gi,
+    /I believe[^.!?]+[.!?]+/gi,
+    /Throughout history[^.!?]+[.!?]+/gi,
+    /The power of[^.!?]+[.!?]+/gi,
+    /This is why[^.!?]+[.!?]+/gi,
+    /The purpose of[^.!?]+[.!?]+/gi,
+    /When you[^.!?]+[.!?]+/gi,
+    /Stop [^.!?]+[.!?]+/gi,
+    /Think about[^.!?]+[.!?]+/gi,
   ];
   
-  keyPhrases.forEach(pattern => {
+  importantPatterns.forEach(pattern => {
     const matches = content.match(pattern);
     if (matches) {
-      matches.slice(0, 2).forEach(match => {
-        const trimmed = match.trim();
-        if (trimmed.length > 20 && trimmed.length < 200 && !keyPoints.includes(trimmed)) {
-          keyPoints.push(trimmed);
-        }
+      matches.forEach(match => {
+        addKeyPoint(match);
       });
     }
   });
   
-  // If we don't have enough key points, extract from sentences
-  if (keyPoints.length < 3) {
-    const importantSentences = sentences.filter(s => {
-      const lower = s.toLowerCase();
-      return lower.length > 50 && lower.length < 200 && 
-             (lower.includes('technology') || lower.includes('ai') || lower.includes('will') || 
-              lower.includes('can') || lower.includes('should') || lower.includes('think'));
+  // Also look for questions (complete questions)
+  const questions = content.match(/[A-Z][^.!?]*\?/g);
+  if (questions && questions.length > 0) {
+    questions.slice(0, 2).forEach(q => {
+      addKeyPoint(q);
     });
-    importantSentences.slice(0, 4 - keyPoints.length).forEach(s => {
-      const trimmed = s.trim();
-      if (trimmed.length > 20 && trimmed.length < 200) {
-        keyPoints.push(trimmed);
+  }
+  
+  // If we don't have enough key points, find sentences with important keywords
+  if (keyPoints.length < 4) {
+    const importantKeywords = ['technology', 'ai', 'artificial intelligence', 'will', 'can', 'should', 'think', 'believe', 'purpose', 'power'];
+    
+    completeSentences.forEach(sentence => {
+      if (keyPoints.length >= 4) return;
+      
+      const lower = sentence.toLowerCase();
+      const hasImportantKeyword = importantKeywords.some(keyword => lower.includes(keyword));
+      
+      if (hasImportantKeyword) {
+        addKeyPoint(sentence);
       }
     });
   }
   
-  // Limit to 4 key points max
-  const finalKeyPoints = keyPoints.slice(0, 4);
+  // Remove duplicates and limit to 4 key points max
+  const finalKeyPoints = Array.from(new Set(keyPoints)).slice(0, 4);
 
   // Generate comparable tools and alternatives based on content themes
   const comparableTools: ToolSuggestion[] = [];
