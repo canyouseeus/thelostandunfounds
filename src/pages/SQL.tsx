@@ -15,6 +15,8 @@ interface SQLScript {
   filename: string;
   content: string;
   description?: string;
+  modified?: string;
+  modifiedRelative?: string;
 }
 
 export default function SQL() {
@@ -271,68 +273,44 @@ END $$;`;
 
   const loadScripts = async () => {
     try {
-      // Load blog schema migration from public folder
-      let migrationContent = '';
-      try {
-        const migrationResponse = await fetch('/blog-schema-migration.sql');
-        if (migrationResponse.ok) {
-          migrationContent = await migrationResponse.text();
-        }
-      } catch (fetchError) {
-        console.warn('Could not fetch migration file:', fetchError);
+      // Fetch the most recent SQL file from the API
+      const response = await fetch('/api/sql/latest');
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch latest SQL: ${response.statusText}`);
       }
 
-      // If file wasn't loaded, use default content
-      if (!migrationContent) {
-        migrationContent = await getDefaultMigrationContent();
-      }
-
-      // Load create-first-blog-post script
-      let blogPostContent = '';
-      try {
-        const blogPostResponse = await fetch('/create-first-blog-post.sql');
-        if (blogPostResponse.ok) {
-          blogPostContent = await blogPostResponse.text();
-        }
-      } catch (fetchError) {
-        console.warn('Could not fetch blog post file:', fetchError);
-      }
-
-      // Load create-blog-post-all-for-a-dream script
-      let allForADreamContent = '';
-      try {
-        const allForADreamResponse = await fetch('/sql/create-blog-post-all-for-a-dream.sql');
-        if (allForADreamResponse.ok) {
-          allForADreamContent = await allForADreamResponse.text();
-        }
-      } catch (fetchError) {
-        console.warn('Could not fetch All For A Dream blog post file:', fetchError);
-      }
+      const data = await response.json();
+      
+      // Format the filename as a display name (remove extension, capitalize words)
+      const displayName = data.filename
+        .replace(/\.sql$/i, '')
+        .replace(/[-_]/g, ' ')
+        .split(' ')
+        .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
 
       const loadedScripts: SQLScript[] = [
         {
-          name: 'Blog Schema Migration',
-          filename: 'blog-schema-migration.sql',
-          content: migrationContent,
-          description: 'Adds missing fields (published, SEO fields, og_image_url) to blog_posts table. Handles missing author_id column. Run this FIRST in Supabase SQL Editor.'
-        },
-        {
-          name: 'Create First Blog Post',
-          filename: 'create-first-blog-post.sql',
-          content: blogPostContent || '// File not found - check public folder',
-          description: 'Creates your first blog post about Cursor IDE. Run this AFTER the migration script. Works with any schema version.'
-        },
-        {
-          name: 'ALL FOR A DREAM',
-          filename: 'create-blog-post-all-for-a-dream.sql',
-          content: allForADreamContent || '// File not found - check public/sql folder',
-          description: 'Creates the blog post "ALL FOR A DREAM" - a personal reflection on resilience, change, and the pursuit of a dream. Run this AFTER the migration script. Works with any schema version.'
+          name: displayName,
+          filename: data.filename,
+          content: data.content,
+          description: `Most recently published SQL file${data.modifiedRelative ? ` (${data.modifiedRelative})` : ''}`,
+          modified: data.modified,
+          modifiedRelative: data.modifiedRelative
         }
       ];
 
       setScripts(loadedScripts);
     } catch (error) {
-      console.error('Error loading SQL scripts:', error);
+      console.error('Error loading latest SQL script:', error);
+      // Fallback: show error message
+      setScripts([{
+        name: 'Error Loading SQL',
+        filename: 'error',
+        content: `Failed to load the latest SQL file. Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        description: 'Please check the API endpoint or try again later.'
+      }]);
     }
   };
 
@@ -428,6 +406,11 @@ END $$;`;
                     <p className="text-white/60 text-sm mb-2">{script.filename}</p>
                     {script.description && (
                       <p className="text-white/70 text-sm">{script.description}</p>
+                    )}
+                    {script.modified && (
+                      <p className="text-white/50 text-xs mt-1">
+                        Modified: {new Date(script.modified).toLocaleString()}
+                      </p>
                     )}
                   </div>
                   <button
