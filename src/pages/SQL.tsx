@@ -309,6 +309,17 @@ END $$;`;
         console.warn('Could not fetch All For A Dream blog post file:', fetchError);
       }
 
+      // Load create-blog-post-artificial-intelligence-the-job-killer script
+      let aiJobKillerContent = '';
+      try {
+        const aiJobKillerResponse = await fetch('/sql/create-blog-post-artificial-intelligence-the-job-killer.sql');
+        if (aiJobKillerResponse.ok) {
+          aiJobKillerContent = await aiJobKillerResponse.text();
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch Artificial Intelligence: The Job Killer blog post file:', fetchError);
+      }
+
       const loadedScripts: SQLScript[] = [
         {
           name: 'Blog Schema Migration',
@@ -327,6 +338,12 @@ END $$;`;
           filename: 'create-blog-post-all-for-a-dream.sql',
           content: allForADreamContent || '// File not found - check public/sql folder',
           description: 'Creates the blog post "ALL FOR A DREAM" - a personal reflection on resilience, change, and the pursuit of a dream. Run this AFTER the migration script. Works with any schema version.'
+        },
+        {
+          name: 'Artificial Intelligence: The Job Killer',
+          filename: 'create-blog-post-artificial-intelligence-the-job-killer.sql',
+          content: aiJobKillerContent || '// File not found - check public/sql folder',
+          description: 'Creates the blog post "Artificial Intelligence: The Job Killer" - a reflection on how AI, like technological progress throughout history, frees humanity from repetitive tasks and opens new possibilities. Run this AFTER the migration script. Works with any schema version.'
         }
       ];
 
