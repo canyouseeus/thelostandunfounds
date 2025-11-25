@@ -199,7 +199,7 @@ export default function BlogPost() {
 
       <article>
         <header className="mb-8 text-left">
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-white mb-4 tracking-wide text-left whitespace-nowrap overflow-hidden text-ellipsis">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-white mb-4 tracking-wide text-left">
             {post.title}
           </h1>
           
