@@ -15,6 +15,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const workspacePath = process.cwd();
     const sqlFiles: Array<{ path: string; mtime: Date; name: string; fullPath: string }> = [];
+    
+    console.log('Searching for SQL files. Workspace path:', workspacePath);
+    console.log('Current working directory:', process.cwd());
 
     // Function to find SQL files in a specific directory (non-recursive)
     async function findSQLFilesInDir(dir: string, basePath: string = ''): Promise<void> {
@@ -58,10 +61,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Try each search path
     for (const { dir, base } of searchPaths) {
       try {
+        // Check if directory exists
+        try {
+          const dirStat = await stat(dir);
+          if (!dirStat.isDirectory()) {
+            console.log(`Path exists but is not a directory: ${dir}`);
+            continue;
+          }
+        } catch (statErr) {
+          console.log(`Directory does not exist or cannot be accessed: ${dir}`);
+          continue;
+        }
+        
         await findSQLFilesInDir(dir, base);
+        console.log(`Searched ${dir}, found ${sqlFiles.length} files so far`);
       } catch (err) {
         // Continue to next path if this one fails
-        console.warn(`Could not search in ${dir}:`, err);
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        console.warn(`Could not search in ${dir}:`, errorMsg);
       }
     }
 
@@ -114,12 +131,64 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       await findSQLFilesRecursive(workspacePath);
     }
 
+    // Fallback: Try to read known SQL files directly if filesystem search failed
     if (sqlFiles.length === 0) {
+      console.log('Filesystem search failed, trying direct file access...');
+      const knownSQLFiles = [
+        'blog-schema-migration.sql',
+        'database-schema.sql',
+        'create-first-blog-post.sql',
+        'admin-setup.sql',
+        'blog-schema.sql',
+      ];
+      
+      const knownPaths = [
+        workspacePath,
+        join(workspacePath, 'public'),
+        join(workspacePath, 'sql'),
+        join(workspacePath, 'public', 'sql'),
+      ];
+      
+      for (const fileName of knownSQLFiles) {
+        for (const basePath of knownPaths) {
+          try {
+            const filePath = join(basePath, fileName);
+            const stats = await stat(filePath);
+            sqlFiles.push({
+              path: fileName,
+              mtime: stats.mtime,
+              name: fileName,
+              fullPath: filePath
+            });
+            console.log(`Found SQL file via direct access: ${filePath}`);
+            break; // Found this file, move to next
+          } catch (e) {
+            // File doesn't exist at this path, try next
+          }
+        }
+      }
+    }
+    
+    if (sqlFiles.length === 0) {
+      console.error('No SQL files found. Searched paths:', searchPaths.map(p => p.dir));
+      // Try to list what's actually in the workspace root
+      try {
+        const rootContents = await readdir(workspacePath);
+        console.log('Workspace root contents:', rootContents.slice(0, 20));
+      } catch (e) {
+        console.error('Could not read workspace root:', e);
+      }
+      
       return res.status(404).json({ 
         error: 'No SQL files found',
-        details: `Searched in: ${searchPaths.map(p => p.dir).join(', ')}`
+        details: `Searched in: ${searchPaths.map(p => p.dir).join(', ')}`,
+        workspacePath: workspacePath,
+        cwd: process.cwd(),
+        debug: 'Filesystem access may be limited in serverless environment'
       });
     }
+    
+    console.log(`Found ${sqlFiles.length} SQL files`);
 
     // Sort by modification time (most recent first)
     sqlFiles.sort((a, b) => b.mtime.getTime() - a.mtime.getTime());

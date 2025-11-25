@@ -276,7 +276,18 @@ END $$;`;
     setIsLoading(true);
     try {
       // Fetch the most recent SQL file from the API
-      const response = await fetch('/api/sql/latest');
+      let response: Response;
+      try {
+        response = await fetch('/api/sql/latest', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+      } catch (fetchError) {
+        // Network error or CORS issue
+        throw new Error(`Network error: ${fetchError instanceof Error ? fetchError.message : 'Failed to connect to API'}`);
+      }
       
       if (!response.ok) {
         // Try to parse error details from response
@@ -287,13 +298,25 @@ END $$;`;
           if (errorData.details) {
             errorMessage += ` - ${errorData.details}`;
           }
+          if (errorData.debug) {
+            console.error('API Debug Info:', errorData);
+          }
         } catch {
           // If response isn't JSON, use status text
+          const text = await response.text().catch(() => '');
+          if (text) {
+            errorMessage += ` - ${text.substring(0, 200)}`;
+          }
         }
         throw new Error(errorMessage);
       }
 
-      const data = await response.json();
+      let data: any;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        throw new Error(`Invalid JSON response from API: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+      }
       
       // Validate response data
       if (!data.filename || !data.content) {
