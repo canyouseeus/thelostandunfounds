@@ -1,11 +1,32 @@
 /**
  * Latest SQL File API
- * Returns the most recently modified SQL file from the workspace
+ * Returns the most recently modified SQL file from the public directory
+ * Uses a manifest file generated at build time, or falls back to fetching files directly
  */
 
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { readdir, stat, readFile } from 'fs/promises';
-import { join } from 'path';
+
+// List of known SQL files in the public directory (fallback if manifest doesn't exist)
+const SQL_FILES = [
+  '/blog-schema-migration.sql',
+  '/create-first-blog-post.sql',
+  '/sql/create-blog-post-all-for-a-dream.sql'
+];
+
+interface SQLFileInfo {
+  filename: string;
+  path: string;
+  content: string;
+  lastModified: Date | null;
+}
+
+interface ManifestEntry {
+  filename: string;
+  path: string;
+  publicPath: string;
+  modified: string;
+  size: number;
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
@@ -13,79 +34,106 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const workspacePath = process.cwd();
-    const sqlFiles: Array<{ path: string; mtime: Date; name: string }> = [];
+    // Get the base URL - use the request host or fallback to environment variable
+    const protocol = req.headers['x-forwarded-proto'] || 'https';
+    const baseUrl = req.headers.host 
+      ? `${protocol}://${req.headers.host}` 
+      : process.env.VERCEL_URL 
+        ? `https://${process.env.VERCEL_URL}`
+        : 'http://localhost:5173'; // Fallback for local dev
 
-    // Function to recursively find SQL files
-    async function findSQLFiles(dir: string, basePath: string = ''): Promise<void> {
-      try {
-        const entries = await readdir(dir, { withFileTypes: true });
+    let sqlFiles: SQLFileInfo[] = [];
+
+    // Try to fetch manifest first
+    try {
+      const manifestUrl = `${baseUrl}/sql-manifest.json`;
+      const manifestResponse = await fetch(manifestUrl, {
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
+
+      if (manifestResponse.ok) {
+        const manifest = await manifestResponse.json() as { files: ManifestEntry[] };
         
-        for (const entry of entries) {
-          const fullPath = join(dir, entry.name);
-          const relativePath = basePath ? `${basePath}/${entry.name}` : entry.name;
+        // Fetch the most recent file from manifest
+        if (manifest.files && manifest.files.length > 0) {
+          const mostRecentManifest = manifest.files[0]; // Already sorted by modified time
+          const fileUrl = `${baseUrl}${mostRecentManifest.publicPath}`;
+          const fileResponse = await fetch(fileUrl);
           
-          // Skip node_modules, .git, and other common directories
-          if (entry.name.startsWith('.') || 
-              entry.name === 'node_modules' || 
-              entry.name === '.next' ||
-              entry.name === 'dist' ||
-              entry.name === 'build') {
-            continue;
-          }
-          
-          if (entry.isDirectory()) {
-            await findSQLFiles(fullPath, relativePath);
-          } else if (entry.isFile() && entry.name.endsWith('.sql')) {
-            try {
-              const stats = await stat(fullPath);
-              sqlFiles.push({
-                path: relativePath,
-                mtime: stats.mtime,
-                name: entry.name
-              });
-            } catch (err) {
-              // Skip files we can't stat
-              console.warn(`Could not stat ${fullPath}:`, err);
-            }
+          if (fileResponse.ok) {
+            const content = await fileResponse.text();
+            sqlFiles.push({
+              filename: mostRecentManifest.filename,
+              path: mostRecentManifest.publicPath,
+              content,
+              lastModified: new Date(mostRecentManifest.modified)
+            });
           }
         }
-      } catch (err) {
-        // Skip directories we can't read
-        console.warn(`Could not read directory ${dir}:`, err);
       }
+    } catch (manifestError) {
+      console.warn('Could not fetch manifest, falling back to direct file fetch:', manifestError);
     }
 
-    // Find all SQL files
-    await findSQLFiles(workspacePath);
+    // Fallback: fetch all SQL files directly if manifest didn't work
+    if (sqlFiles.length === 0) {
+      for (const sqlPath of SQL_FILES) {
+        try {
+          const url = `${baseUrl}${sqlPath}`;
+          const response = await fetch(url, {
+            headers: {
+              'Cache-Control': 'no-cache'
+            }
+          });
+          
+          if (response.ok) {
+            const content = await response.text();
+            const lastModifiedHeader = response.headers.get('last-modified');
+            const lastModified = lastModifiedHeader 
+              ? new Date(lastModifiedHeader) 
+              : new Date(); // Fallback to now if no header
+            
+            const filename = sqlPath.split('/').pop() || sqlPath;
+            
+            sqlFiles.push({
+              filename,
+              path: sqlPath,
+              content,
+              lastModified
+            });
+          }
+        } catch (err) {
+          console.warn(`Could not fetch ${sqlPath}:`, err);
+          // Continue to next file
+        }
+      }
+
+      // Sort by modification time (most recent first) if we fetched multiple
+      if (sqlFiles.length > 1) {
+        sqlFiles.sort((a, b) => {
+          const timeA = a.lastModified?.getTime() || 0;
+          const timeB = b.lastModified?.getTime() || 0;
+          return timeB - timeA;
+        });
+      }
+    }
 
     if (sqlFiles.length === 0) {
       return res.status(404).json({ error: 'No SQL files found' });
     }
-
-    // Sort by modification time (most recent first)
-    sqlFiles.sort((a, b) => b.mtime.getTime() - a.mtime.getTime());
     
     const mostRecent = sqlFiles[0];
-    
-    // Read the file content
-    const fullPath = join(workspacePath, mostRecent.path);
-    let content: string;
-    try {
-      content = await readFile(fullPath, 'utf-8');
-    } catch (err) {
-      return res.status(500).json({ 
-        error: 'Could not read SQL file',
-        details: err instanceof Error ? err.message : 'Unknown error'
-      });
-    }
 
     return res.status(200).json({
-      filename: mostRecent.name,
+      filename: mostRecent.filename,
       path: mostRecent.path,
-      content: content,
-      modified: mostRecent.mtime.toISOString(),
-      modifiedRelative: getRelativeTime(mostRecent.mtime)
+      content: mostRecent.content,
+      modified: mostRecent.lastModified?.toISOString() || new Date().toISOString(),
+      modifiedRelative: mostRecent.lastModified 
+        ? getRelativeTime(mostRecent.lastModified)
+        : 'unknown'
     });
   } catch (error: any) {
     console.error('Error finding latest SQL file:', error);

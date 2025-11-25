@@ -1,0 +1,26 @@
+{
+  "generated": "2025-11-25T20:56:02.225Z",
+  "files": [
+    {
+      "filename": "blog-schema-migration.sql",
+      "path": "public/blog-schema-migration.sql",
+      "publicPath": "/blog-schema-migration.sql",
+      "modified": "2025-11-25T20:31:53.728Z",
+      "size": 5267
+    },
+    {
+      "filename": "create-first-blog-post.sql",
+      "path": "public/create-first-blog-post.sql",
+      "publicPath": "/create-first-blog-post.sql",
+      "modified": "2025-11-25T20:31:53.728Z",
+      "size": 31550
+    },
+    {
+      "filename": "create-blog-post-all-for-a-dream.sql",
+      "path": "public/sql/create-blog-post-all-for-a-dream.sql",
+      "publicPath": "/sql/create-blog-post-all-for-a-dream.sql",
+      "modified": "2025-11-25T20:31:53.728Z",
+      "size": 21047
+    }
+  ]
+}
