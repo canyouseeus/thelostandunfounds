@@ -377,9 +377,33 @@ END $$;`;
       ];
 
       // Filter out scripts older than 24 hours
+      // Only filter if we have valid content and a valid timestamp
       const recentScripts = allScripts.filter(script => {
+        // If content is missing or empty, don't show it
+        if (!script.content || script.content.trim() === '' || script.content.includes('File not found')) {
+          return false;
+        }
+        // Calculate age
         const age = now - script.createdAt;
-        return age < TWENTY_FOUR_HOURS;
+        // If createdAt is very close to now (within 1 second), it means we used the fallback
+        // because last-modified header wasn't available - in this case, show the script
+        if (Math.abs(age) < 1000) {
+          return true;
+        }
+        // Otherwise, only show if less than 24 hours old
+        return age < TWENTY_FOUR_HOURS && age >= 0;
+      });
+
+      console.log('SQL Scripts Debug:', {
+        total: allScripts.length,
+        filtered: recentScripts.length,
+        scripts: allScripts.map(s => ({
+          name: s.name,
+          hasContent: !!s.content && !s.content.includes('File not found'),
+          createdAt: new Date(s.createdAt).toISOString(),
+          ageHours: ((now - s.createdAt) / (1000 * 60 * 60)).toFixed(2),
+          willShow: recentScripts.includes(s)
+        }))
       });
 
       setScripts(recentScripts);
