@@ -8,6 +8,28 @@ import { createClient } from '@supabase/supabase-js';
 import { writeFileSync } from 'fs';
 import { join } from 'path';
 
+/**
+ * Normalize a date to ISO 8601 format for sitemap
+ * Handles null, undefined, and invalid dates
+ */
+function normalizeDate(date: string | null | undefined): string {
+  if (!date) {
+    return new Date().toISOString();
+  }
+  
+  try {
+    const dateObj = new Date(date);
+    // Check if date is valid
+    if (isNaN(dateObj.getTime())) {
+      return new Date().toISOString();
+    }
+    // Return ISO 8601 format (YYYY-MM-DDTHH:mm:ss.sssZ)
+    return dateObj.toISOString();
+  } catch (err) {
+    return new Date().toISOString();
+  }
+}
+
 async function generateSitemap() {
   console.log('🗺️  Generating sitemap.xml...');
 
@@ -36,7 +58,7 @@ async function generateSitemap() {
     }
 
     const baseUrl = 'https://www.thelostandunfounds.com';
-    const currentDate = new Date().toISOString();
+    const currentDate = normalizeDate(new Date().toISOString());
 
     // Start building sitemap XML
     // Only include pages that are in the navigation menu
@@ -97,7 +119,8 @@ async function generateSitemap() {
       
       for (const post of posts) {
         const postUrl = `${baseUrl}/thelostarchives/${post.slug}`;
-        const lastmod = post.updated_at || post.published_at || post.created_at || currentDate;
+        // Normalize the date to ensure it's valid ISO 8601 format
+        const lastmod = normalizeDate(post.updated_at || post.published_at || post.created_at);
         
         sitemap += `
   
