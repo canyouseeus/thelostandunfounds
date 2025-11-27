@@ -39,6 +39,7 @@ async function generateSitemap() {
     const currentDate = new Date().toISOString();
 
     // Start building sitemap XML
+    // Only include pages that are in the navigation menu
     let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
@@ -50,6 +51,14 @@ async function generateSitemap() {
     <priority>1.0</priority>
   </url>
   
+  <!-- Shop -->
+  <url>
+    <loc>${baseUrl}/shop</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
   <!-- Blog listing page -->
   <url>
     <loc>${baseUrl}/thelostarchives</loc>
@@ -58,19 +67,28 @@ async function generateSitemap() {
     <priority>0.9</priority>
   </url>
   
-  <!-- Important pages -->
+  <!-- About (from MORE menu) -->
   <url>
     <loc>${baseUrl}/about</loc>
     <lastmod>${currentDate}</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.6</priority>
   </url>
   
+  <!-- Privacy Policy (from MORE menu) -->
   <url>
-    <loc>${baseUrl}/contact</loc>
+    <loc>${baseUrl}/privacy</loc>
     <lastmod>${currentDate}</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.5</priority>
+  </url>
+  
+  <!-- Terms and Conditions (from MORE menu) -->
+  <url>
+    <loc>${baseUrl}/terms</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
   </url>`;
 
     // Add blog posts
@@ -104,9 +122,10 @@ async function generateSitemap() {
     const sitemapPath = join(distPath, 'sitemap.xml');
     
     writeFileSync(sitemapPath, sitemap, 'utf-8');
-    const totalUrls = (posts?.length || 0) + 4; // Homepage + blog listing + about + contact + blog posts
+    // Count: Homepage + Shop + Blog listing + About + Privacy + Terms + blog posts
+    const totalUrls = (posts?.length || 0) + 6;
     console.log(`✅ Sitemap generated successfully: ${sitemapPath}`);
-    console.log(`   Total URLs: ${totalUrls}`);
+    console.log(`   Total URLs: ${totalUrls} (${posts?.length || 0} blog posts + 6 navigation pages)`);
   } catch (err) {
     console.error('❌ Error generating sitemap:', err);
     process.exit(1);
