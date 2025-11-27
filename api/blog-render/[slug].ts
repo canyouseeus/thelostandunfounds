@@ -5,8 +5,6 @@
 
 import { createClient } from '@supabase/supabase-js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { readFileSync } from 'fs';
-import { join } from 'path';
 
 export default async function handler(
   req: VercelRequest,
@@ -23,15 +21,19 @@ export default async function handler(
   const acceptHeader = req.headers.accept || '';
   const isBot = /bot|crawler|spider|crawling|NotebookLM|Googlebot|Bingbot|Slurp|DuckDuckBot|Baiduspider|YandexBot|Sogou|Exabot|facebot|ia_archiver/i.test(userAgent);
   
-  // For non-bot requests, serve normal index.html and let React handle routing
+  // For non-bot requests, fetch and serve normal index.html and let React handle routing
   if (!isBot && acceptHeader.includes('text/html')) {
     try {
-      const html = readFileSync(join(process.cwd(), 'dist', 'index.html'), 'utf-8');
+      const origin = req.headers.host || 'www.thelostandunfounds.com';
+      const protocol = req.headers['x-forwarded-proto'] || 'https';
+      const htmlResponse = await fetch(`${protocol}://${origin}/`);
+      const html = await htmlResponse.text();
       res.setHeader('Content-Type', 'text/html');
       res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
       return res.send(html);
     } catch (err) {
-      // If dist doesn't exist, continue to bot rendering (will serve fallback HTML)
+      // If fetch fails, continue to bot rendering
+      console.error('Failed to fetch HTML for non-bot:', err);
     }
   }
   
@@ -67,12 +69,15 @@ export default async function handler(
       return res.status(404).send('Post not found');
     }
 
-    // Read index.html template
+    // Fetch HTML template from origin (more reliable than reading filesystem)
     let html: string;
     try {
-      html = readFileSync(join(process.cwd(), 'dist', 'index.html'), 'utf-8');
-    } catch {
-      // Fallback if dist doesn't exist (development)
+      const origin = req.headers.host || 'www.thelostandunfounds.com';
+      const protocol = req.headers['x-forwarded-proto'] || 'https';
+      const htmlResponse = await fetch(`${protocol}://${origin}/`);
+      html = await htmlResponse.text();
+    } catch (err) {
+      // Fallback HTML if fetch fails
       html = `<!doctype html>
 <html lang="en">
   <head>
