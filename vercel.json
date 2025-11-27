@@ -15,7 +15,7 @@
       "destination": "/api/blog-render/:slug"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ],
