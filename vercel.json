@@ -5,6 +5,10 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/thelostarchives/:slug",
+      "destination": "/thelostarchives/:slug.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
