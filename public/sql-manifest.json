@@ -1,26 +1,47 @@
 {
-  "generated": "2025-11-25T20:56:02.225Z",
+  "generated": "2025-11-27T14:03:16.195Z",
   "files": [
+    {
+      "filename": "check-blog-post-exists.sql",
+      "path": "public/sql/check-blog-post-exists.sql",
+      "publicPath": "/sql/check-blog-post-exists.sql",
+      "modified": "2025-11-27T13:58:55.396Z",
+      "size": 920
+    },
+    {
+      "filename": "create-blog-post-artificial-intelligence-the-job-killer.sql",
+      "path": "public/sql/create-blog-post-artificial-intelligence-the-job-killer.sql",
+      "publicPath": "/sql/create-blog-post-artificial-intelligence-the-job-killer.sql",
+      "modified": "2025-11-27T13:58:55.396Z",
+      "size": 29164
+    },
+    {
+      "filename": "update-blog-post-if-exists.sql",
+      "path": "public/sql/update-blog-post-if-exists.sql",
+      "publicPath": "/sql/update-blog-post-if-exists.sql",
+      "modified": "2025-11-27T13:58:55.396Z",
+      "size": 11841
+    },
+    {
+      "filename": "create-blog-post-all-for-a-dream.sql",
+      "path": "public/sql/create-blog-post-all-for-a-dream.sql",
+      "publicPath": "/sql/create-blog-post-all-for-a-dream.sql",
+      "modified": "2025-11-25T22:50:26.875Z",
+      "size": 21047
+    },
     {
       "filename": "blog-schema-migration.sql",
       "path": "public/blog-schema-migration.sql",
       "publicPath": "/blog-schema-migration.sql",
-      "modified": "2025-11-25T20:31:53.728Z",
+      "modified": "2025-11-25T22:50:26.871Z",
       "size": 5267
     },
     {
       "filename": "create-first-blog-post.sql",
       "path": "public/create-first-blog-post.sql",
       "publicPath": "/create-first-blog-post.sql",
-      "modified": "2025-11-25T20:31:53.728Z",
+      "modified": "2025-11-25T22:50:26.871Z",
       "size": 31550
-    },
-    {
-      "filename": "create-blog-post-all-for-a-dream.sql",
-      "path": "public/sql/create-blog-post-all-for-a-dream.sql",
-      "publicPath": "/sql/create-blog-post-all-for-a-dream.sql",
-      "modified": "2025-11-25T20:31:53.728Z",
-      "size": 21047
     }
   ]
 }
