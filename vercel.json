@@ -3,7 +3,17 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "functions": {
+    "api/blog-render/[slug].ts": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  },
   "rewrites": [
+    {
+      "source": "/thelostarchives/:slug",
+      "destination": "/api/blog-render/:slug"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
@@ -34,5 +44,3 @@
     }
   ]
 }
-
-
