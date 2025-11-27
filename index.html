@@ -31,13 +31,56 @@
     <meta name="twitter:description" content="CAN YOU SEE US?" />
     <meta name="twitter:image" content="https://www.thelostandunfounds.com/og-image.png" />
     
-    <title>THE LOST+UNFOUNDS</title>
+    <!-- SEO Meta Description -->
+    <meta name="description" content="CAN YOU SEE US? THE LOST+UNFOUNDS - Revealing findings from the frontier and beyond. Intel from the field on development, AI, and building in the age of information." />
+    <meta name="keywords" content="THE LOST+UNFOUNDS, development, AI, technology, blog, newsletter" />
+    
+    <title>THE LOST+UNFOUNDS - CAN YOU SEE US?</title>
     <!-- reCAPTCHA v3 will be loaded dynamically by React component -->
   </head>
   <body>
+    <!-- Pre-rendered content for bots and SEO - hidden when React loads -->
+    <noscript>
+      <div style="background: black; color: white; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center;">
+        <h1 style="font-size: 3rem; margin-bottom: 2rem;">CAN YOU SEE US?</h1>
+        <p style="font-size: 1.25rem; margin-bottom: 2rem; color: rgba(255, 255, 255, 0.8);">
+          Thanks for stopping by. Sign-up for updates and news!
+        </p>
+        <p style="font-size: 0.875rem; color: rgba(255, 255, 255, 0.6);">
+          THE LOST+UNFOUNDS - Revealing findings from the frontier and beyond.
+        </p>
+      </div>
+    </noscript>
+    
+    <!-- Structured Data for SEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "THE LOST+UNFOUNDS",
+      "url": "https://www.thelostandunfounds.com",
+      "description": "CAN YOU SEE US? Revealing findings from the frontier and beyond. Intel from the field on development, AI, and building in the age of information.",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://www.thelostandunfounds.com/thelostarchives?search={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    
     <div id="root">
-      <div style="color: white; padding: 20px; text-align: center;">
-        Loading... If you see this, HTML loaded but React hasn't mounted yet.
+      <!-- Pre-rendered content visible to bots before React loads -->
+      <div id="pre-render" style="background: black; color: white; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999;">
+        <h1 style="font-size: 3rem; margin-bottom: 2rem; font-weight: normal;">CAN YOU SEE US?</h1>
+        <p style="font-size: 1.25rem; margin-bottom: 2rem; color: rgba(255, 255, 255, 0.8);">
+          Thanks for stopping by. Sign-up for updates and news!
+        </p>
+        <p style="font-size: 0.875rem; color: rgba(255, 255, 255, 0.6);">
+          THE LOST+UNFOUNDS - Revealing findings from the frontier and beyond.
+        </p>
+        <div style="color: rgba(255, 255, 255, 0.4); margin-top: 2rem; font-size: 0.75rem;">
+          Loading... If you see this, HTML loaded but React hasn't mounted yet.
+        </div>
       </div>
     </div>
     <script>
@@ -76,6 +119,43 @@
     </script>
     <script type="module" src="/src/main.tsx"></script>
     <script>
+      // Hide pre-render content when React mounts
+      window.addEventListener('DOMContentLoaded', () => {
+        // Check if React has mounted by looking for React root
+        const checkReactMount = () => {
+          const root = document.getElementById('root');
+          const preRender = document.getElementById('pre-render');
+          
+          if (root && root.querySelector('[data-reactroot]')) {
+            // React has mounted, hide pre-render
+            if (preRender) {
+              preRender.style.display = 'none';
+            }
+            return true;
+          }
+          return false;
+        };
+        
+        // Check immediately
+        if (!checkReactMount()) {
+          // Check periodically until React mounts
+          const checkInterval = setInterval(() => {
+            if (checkReactMount()) {
+              clearInterval(checkInterval);
+            }
+          }, 100);
+          
+          // Fallback: hide after 5 seconds regardless
+          setTimeout(() => {
+            clearInterval(checkInterval);
+            const preRender = document.getElementById('pre-render');
+            if (preRender) {
+              preRender.style.display = 'none';
+            }
+          }, 5000);
+        }
+      });
+      
       setTimeout(() => {
         const root = document.getElementById('root');
         // Check if React actually mounted by looking for React root, not just "Loading" text
@@ -86,7 +166,10 @@
             const errorMsg = '❌ React did not mount after 3 seconds!';
             console.error(errorMsg);
             addDebugLog('error', errorMsg, 'React mount timeout');
-            root.innerHTML += '<div style="color: red; margin-top: 20px; padding: 20px; background: black;">ERROR: React failed to mount. <a href="/debug" style="color: yellow;">Go to /debug page</a> to see errors.</div>';
+            const preRender = document.getElementById('pre-render');
+            if (preRender) {
+              preRender.innerHTML += '<div style="color: red; margin-top: 20px; padding: 20px; background: black;">ERROR: React failed to mount. <a href="/debug" style="color: yellow;">Go to /debug page</a> to see errors.</div>';
+            }
           }
         }
       }, 3000);

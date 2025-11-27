@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
+import { HelmetProvider } from 'react-helmet-async'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './components/Toast'
 import App from './App.tsx'
@@ -144,21 +145,29 @@ console.log('🚀 React is mounting...', { rootElement })
 try {
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
-      <BrowserRouter
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true,
-        }}
-      >
-        <ToastProvider>
-          <AuthProvider>
-            <App />
-          </AuthProvider>
-        </ToastProvider>
-      </BrowserRouter>
+      <HelmetProvider>
+        <BrowserRouter
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
+        >
+          <ToastProvider>
+            <AuthProvider>
+              <App />
+            </AuthProvider>
+          </ToastProvider>
+        </BrowserRouter>
+      </HelmetProvider>
     </React.StrictMode>,
   )
   console.log('✅ React mounted successfully')
+  
+  // Hide pre-render content when React mounts
+  const preRender = document.getElementById('pre-render')
+  if (preRender) {
+    preRender.style.display = 'none'
+  }
 } catch (error) {
   console.error('❌ React mount failed:', error)
   rootElement.innerHTML = `
