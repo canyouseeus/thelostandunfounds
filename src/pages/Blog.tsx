@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabase';
 import { LoadingSpinner } from '../components/Loading';
 
@@ -24,38 +25,6 @@ export default function Blog() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Set page title and meta tags
-    document.title = 'THE LOST ARCHIVES | THE LOST+UNFOUNDS';
-    
-    // Update meta description
-    const metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription) {
-      metaDescription.setAttribute('content', 'Revealing findings from the frontier and beyond. Intel from the field on development, AI, and building in the age of information.');
-    } else {
-      const meta = document.createElement('meta');
-      meta.name = 'description';
-      meta.content = 'Revealing findings from the frontier and beyond. Intel from the field on development, AI, and building in the age of information.';
-      document.head.appendChild(meta);
-    }
-
-    // Update OG tags
-    const updateMetaTag = (property: string, content: string) => {
-      let meta = document.querySelector(`meta[property="${property}"]`);
-      if (meta) {
-        meta.setAttribute('content', content);
-      } else {
-        meta = document.createElement('meta');
-        meta.setAttribute('property', property);
-        meta.setAttribute('content', content);
-        document.head.appendChild(meta);
-      }
-    };
-
-    updateMetaTag('og:title', 'THE LOST ARCHIVES | THE LOST+UNFOUNDS');
-    updateMetaTag('og:description', 'Revealing findings from the frontier and beyond. Intel from the field on development, AI, and building in the age of information.');
-    updateMetaTag('og:url', 'https://www.thelostandunfounds.com/thelostarchives');
-    updateMetaTag('og:type', 'website');
-
     loadPosts();
   }, []);
 
@@ -158,11 +127,39 @@ export default function Blog() {
     );
   }
 
+  const blogDescription = 'Revealing findings from the frontier and beyond. Intel from the field on development, AI, and building in the age of information.';
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-8 tracking-wide text-center">
-        THE LOST ARCHIVES
-      </h1>
+    <>
+      <Helmet>
+        <title>THE LOST ARCHIVES | THE LOST+UNFOUNDS</title>
+        <meta name="description" content={blogDescription} />
+        <meta property="og:title" content="THE LOST ARCHIVES | THE LOST+UNFOUNDS" />
+        <meta property="og:description" content={blogDescription} />
+        <meta property="og:url" content="https://www.thelostandunfounds.com/thelostarchives" />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="THE LOST ARCHIVES | THE LOST+UNFOUNDS" />
+        <meta name="twitter:description" content={blogDescription} />
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Blog",
+            "name": "THE LOST ARCHIVES",
+            "description": blogDescription,
+            "url": "https://www.thelostandunfounds.com/thelostarchives",
+            "publisher": {
+              "@type": "Organization",
+              "name": "THE LOST+UNFOUNDS",
+              "url": "https://www.thelostandunfounds.com"
+            }
+          })}
+        </script>
+      </Helmet>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-8 tracking-wide text-center">
+          THE LOST ARCHIVES
+        </h1>
 
       {error && (
         <div className="bg-red-900/20 border border-red-500/50 rounded-none p-4 mb-6">
@@ -216,5 +213,6 @@ export default function Blog() {
         </div>
       )}
     </div>
+    </>
   );
 }

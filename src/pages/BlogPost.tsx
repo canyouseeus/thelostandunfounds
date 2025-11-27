@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabase';
 import { LoadingSpinner } from '../components/Loading';
 import BlogAnalysis from '../components/BlogAnalysis';
@@ -35,59 +36,7 @@ export default function BlogPost() {
     }
   }, [slug]);
 
-  useEffect(() => {
-    if (post) {
-      // Set page title
-      const title = post.seo_title || post.title;
-      document.title = `${title} | THE LOST ARCHIVES | THE LOST+UNFOUNDS`;
-
-      // Set meta description
-      const description = post.seo_description || post.excerpt || 
-        post.content.substring(0, 160).replace(/\n/g, ' ').trim();
-      
-      // Use og_image_url or fallback to featured_image
-      const ogImage = post.og_image_url || post.featured_image;
-      
-      const updateMetaTag = (name: string, content: string, isProperty = false) => {
-        const selector = isProperty ? `meta[property="${name}"]` : `meta[name="${name}"]`;
-        let meta = document.querySelector(selector);
-        if (meta) {
-          meta.setAttribute('content', content);
-        } else {
-          meta = document.createElement('meta');
-          if (isProperty) {
-            meta.setAttribute('property', name);
-          } else {
-            meta.setAttribute('name', name);
-          }
-          meta.setAttribute('content', content);
-          document.head.appendChild(meta);
-        }
-      };
-
-      updateMetaTag('description', description);
-      updateMetaTag('og:title', title, true);
-      updateMetaTag('og:description', description, true);
-      updateMetaTag('og:url', `https://www.thelostandunfounds.com/thelostarchives/${post.slug}`, true);
-      updateMetaTag('og:type', 'article', true);
-      
-      if (ogImage) {
-        updateMetaTag('og:image', ogImage, true);
-      }
-
-      if (post.seo_keywords) {
-        updateMetaTag('keywords', post.seo_keywords);
-      }
-
-      // Twitter card
-      updateMetaTag('twitter:card', 'summary', true);
-      updateMetaTag('twitter:title', title, true);
-      updateMetaTag('twitter:description', description, true);
-      if (ogImage) {
-        updateMetaTag('twitter:image', ogImage, true);
-      }
-    }
-  }, [post]);
+  // Meta tags are now handled by Helmet component below
 
   const loadPost = async (postSlug: string) => {
     try {
@@ -188,8 +137,63 @@ export default function BlogPost() {
     );
   }
 
+  if (!post) {
+    return null;
+  }
+
+  const title = post.seo_title || post.title;
+  const description = post.seo_description || post.excerpt || 
+    post.content.substring(0, 160).replace(/\n/g, ' ').trim();
+  const ogImage = post.og_image_url || post.featured_image;
+  const publishedDate = post.published_at || post.created_at;
+
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <>
+      <Helmet>
+        <title>{title} | THE LOST ARCHIVES | THE LOST+UNFOUNDS</title>
+        <meta name="description" content={description} />
+        {post.seo_keywords && <meta name="keywords" content={post.seo_keywords} />}
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={description} />
+        <meta property="og:url" content={`https://www.thelostandunfounds.com/thelostarchives/${post.slug}`} />
+        <meta property="og:type" content="article" />
+        {ogImage && <meta property="og:image" content={ogImage} />}
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={title} />
+        <meta name="twitter:description" content={description} />
+        {ogImage && <meta name="twitter:image" content={ogImage} />}
+        <script type="application/ld+json">
+          {JSON.stringify((() => {
+            const structuredData: any = {
+              "@context": "https://schema.org",
+              "@type": "BlogPosting",
+              "headline": title,
+              "description": description,
+              "url": `https://www.thelostandunfounds.com/thelostarchives/${post.slug}`,
+              "datePublished": publishedDate,
+              "dateModified": post.created_at,
+              "author": {
+                "@type": "Organization",
+                "name": "THE LOST+UNFOUNDS"
+              },
+              "publisher": {
+                "@type": "Organization",
+                "name": "THE LOST+UNFOUNDS",
+                "url": "https://www.thelostandunfounds.com"
+              },
+              "mainEntityOfPage": {
+                "@type": "WebPage",
+                "@id": `https://www.thelostandunfounds.com/thelostarchives/${post.slug}`
+              }
+            };
+            if (ogImage) {
+              structuredData.image = ogImage;
+            }
+            return structuredData;
+          })())}
+        </script>
+      </Helmet>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <Link
         to="/thelostarchives"
         className="text-white/60 hover:text-white text-sm mb-6 inline-block transition"
@@ -222,5 +226,6 @@ export default function BlogPost() {
         />
       </article>
     </div>
+    </>
   );
 }
