@@ -25,6 +25,7 @@ import Blog from './pages/Blog'
 import BlogPost from './pages/BlogPost'
 import SQL from './pages/SQL'
 import Debug from './pages/Debug'
+import GoogleDrivePhotos from './pages/GoogleDrivePhotos'
 
 function App() {
   // Video preloader temporarily disabled for debugging
@@ -71,6 +72,9 @@ function App() {
         <Route path="/tools" element={<Layout />}>
           <Route index element={<ToolsDashboard />} />
           <Route path="tiktok-downloader" element={<TikTokDownloader />} />
+        </Route>
+        <Route path="/photos" element={<Layout />}>
+          <Route index element={<GoogleDrivePhotos />} />
         </Route>
         <Route path="/profile" element={<Layout />}>
           <Route index element={<Profile />} />
