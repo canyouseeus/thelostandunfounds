@@ -224,9 +224,10 @@ async function preRenderBlogPosts() {
   }
 }
 
-// Run if called directly (ES module way)
-if (import.meta.url === `file://${process.argv[1]}`) {
-  preRenderBlogPosts();
-}
+// Run the pre-rendering (this script is executed directly)
+preRenderBlogPosts().catch((err) => {
+  console.error('Fatal error:', err);
+  process.exit(1);
+});
 
 export default preRenderBlogPosts;
