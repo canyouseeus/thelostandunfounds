@@ -87,6 +87,17 @@ async function preRenderBlogPosts() {
         `<title>${escapeHtml(fullTitle)}</title>`
       );
 
+      // Add or replace canonical URL
+      const canonicalTag = `<link rel="canonical" href="${escapeHtml(postUrl)}" />`;
+      if (html.includes('rel="canonical"')) {
+        html = html.replace(
+          /<link\s+rel=["']canonical["'][^>]*>/i,
+          canonicalTag
+        );
+      } else {
+        html = html.replace('</head>', `  ${canonicalTag}\n</head>`);
+      }
+
       // Replace meta description
       html = html.replace(
         /<meta\s+name=["']description["'][^>]*>/i,

@@ -151,6 +151,7 @@ export default function BlogPost() {
     <>
       <Helmet>
         <title>{title} | THE LOST ARCHIVES | THE LOST+UNFOUNDS</title>
+        <link rel="canonical" href={`https://www.thelostandunfounds.com/thelostarchives/${post.slug}`} />
         <meta name="description" content={description} />
         {post.seo_keywords && <meta name="keywords" content={post.seo_keywords} />}
         <meta property="og:title" content={title} />

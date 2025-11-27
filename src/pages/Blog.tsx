@@ -133,6 +133,7 @@ export default function Blog() {
     <>
       <Helmet>
         <title>THE LOST ARCHIVES | THE LOST+UNFOUNDS</title>
+        <link rel="canonical" href="https://www.thelostandunfounds.com/thelostarchives" />
         <meta name="description" content={blogDescription} />
         <meta property="og:title" content="THE LOST ARCHIVES | THE LOST+UNFOUNDS" />
         <meta property="og:description" content={blogDescription} />
