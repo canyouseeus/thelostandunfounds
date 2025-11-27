@@ -1,6 +1,6 @@
 /**
  * Vercel Edge Middleware
- * Pre-renders blog posts for bots by injecting content into HTML
+ * Pre-renders blog posts for bots - doesn't count toward serverless function limit
  */
 
 export const config = {
@@ -15,7 +15,7 @@ export default async function middleware(request: Request) {
   const slugMatch = pathname.match(/^\/thelostarchives\/([^\/]+)$/);
   if (!slugMatch) {
     // Not a blog post URL, continue normally
-    return;
+    return new Response(null, { status: 200 });
   }
 
   const slug = slugMatch[1];
@@ -28,7 +28,7 @@ export default async function middleware(request: Request) {
   
   // If not a bot, let the request proceed normally (React will handle it)
   if (!isBot) {
-    return;
+    return new Response(null, { status: 200 });
   }
 
   // Bot detected - fetch blog post and inject content
@@ -39,10 +39,10 @@ export default async function middleware(request: Request) {
 
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       console.error('Supabase credentials not configured');
-      return;
+      return new Response(null, { status: 200 });
     }
 
-    // Fetch blog post from Supabase
+    // Fetch blog post from Supabase REST API
     const response = await fetch(
       `${SUPABASE_URL}/rest/v1/blog_posts?slug=eq.${encodeURIComponent(slug)}&select=*`,
       {
@@ -56,14 +56,14 @@ export default async function middleware(request: Request) {
 
     if (!response.ok) {
       console.error('Failed to fetch blog post:', response.status);
-      return;
+      return new Response(null, { status: 200 });
     }
 
     const data = await response.json();
     const post = Array.isArray(data) ? data[0] : data;
 
     if (!post) {
-      return;
+      return new Response(null, { status: 200 });
     }
 
     // Check if published
@@ -71,7 +71,7 @@ export default async function middleware(request: Request) {
                        (post.published === undefined && post.status === 'published');
     
     if (!isPublished) {
-      return;
+      return new Response(null, { status: 200 });
     }
 
     // Fetch the HTML response from origin
@@ -237,6 +237,6 @@ export default async function middleware(request: Request) {
   } catch (error) {
     console.error('Middleware error:', error);
     // On error, let request proceed normally
-    return;
+    return new Response(null, { status: 200 });
   }
 }
