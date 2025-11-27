@@ -11,11 +11,7 @@
   },
   "rewrites": [
     {
-      "source": "/thelostarchives/:slug",
-      "destination": "/api/blog-render/:slug"
-    },
-    {
-      "source": "/((?!api/).*)",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ],
