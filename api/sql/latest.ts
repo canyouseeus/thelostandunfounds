@@ -10,7 +10,9 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 const SQL_FILES = [
   '/blog-schema-migration.sql',
   '/create-first-blog-post.sql',
-  '/sql/create-blog-post-all-for-a-dream.sql'
+  '/sql/create-blog-post-all-for-a-dream.sql',
+  '/sql/create-blog-post-artificial-intelligence-the-job-killer.sql',
+  '/sql/create-blog-post-our-tech-stack.sql'
 ];
 
 interface SQLFileInfo {

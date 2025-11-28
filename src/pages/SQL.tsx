@@ -383,6 +383,26 @@ END $$;`;
         console.error('Could not fetch Artificial Intelligence: The Job Killer blog post file:', fetchError);
       }
 
+      // Load create-blog-post-our-tech-stack script
+      let techStackContent = '';
+      try {
+        const techStackResponse = await fetch('/sql/create-blog-post-our-tech-stack.sql');
+        if (techStackResponse.ok) {
+          const contentType = techStackResponse.headers.get('content-type');
+          techStackContent = await techStackResponse.text();
+          console.log('Tech Stack script loaded:', {
+            ok: techStackResponse.ok,
+            contentType,
+            contentLength: techStackContent.length,
+            startsWithSQL: techStackContent.trim().startsWith('--')
+          });
+        } else {
+          console.warn('Tech Stack script fetch failed:', techStackResponse.status, techStackResponse.statusText);
+        }
+      } catch (fetchError) {
+        console.error('Could not fetch Our Tech Stack blog post file:', fetchError);
+      }
+
       // Load check-blog-post-exists script (with fallback)
       let checkPostContent = '';
       try {
@@ -502,6 +522,13 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
           content: aiJobKillerContent || '// File not found - check public/sql folder',
           description: 'Creates the blog post "Artificial Intelligence: The Job Killer" - a reflection on how AI, like technological progress throughout history, frees humanity from repetitive tasks and opens new possibilities. Run this AFTER the migration script. Works with any schema version.',
           createdAt: getScriptTimestamp('create-blog-post-artificial-intelligence-the-job-killer.sql')
+        },
+        {
+          name: 'Our Tech Stack: Building with Creativity and Autonomy',
+          filename: 'create-blog-post-our-tech-stack.sql',
+          content: techStackContent || '// File not found - check public/sql folder',
+          description: 'Creates the blog post "Our Tech Stack: Building with Creativity and Autonomy" - an overview of the technology stack powering THE LOST+UNFOUNDS platform. From front-end deployment with Vercel to back-end infrastructure with Supabase and Railway. Run this AFTER the migration script. Works with any schema version.',
+          createdAt: getScriptTimestamp('create-blog-post-our-tech-stack.sql')
         },
         {
           name: 'Check Blog Post Exists',
