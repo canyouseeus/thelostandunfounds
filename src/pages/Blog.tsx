@@ -191,7 +191,7 @@ export default function Blog() {
                 {/* Card Body - Excerpt */}
                 {post.excerpt && (
                   <div className="flex-1 mb-4">
-                    <p className="text-white/60 text-sm leading-relaxed line-clamp-4">
+                    <p className="text-white/60 text-sm leading-relaxed line-clamp-4 text-left">
                       {post.excerpt}
                     </p>
                   </div>
