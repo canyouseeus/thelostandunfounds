@@ -1,0 +1,52 @@
+# BLOG POST PUBLISHING RULE - FOLLOW EVERY TIME
+
+When the user asks to publish a blog post, you MUST follow these steps in order:
+
+## STEP 1: Create SQL File
+- Create the SQL file in `sql/create-blog-post-[slug].sql`
+- Create the same file in `public/sql/create-blog-post-[slug].sql`
+- The SQL file must:
+  - Handle multiple schema versions (published field, author_id vs user_id, etc.)
+  - Use the pattern from existing blog post SQL files
+  - Include proper title, slug, content, excerpt, SEO fields
+  - Set published=true and status='published'
+  - Use ON CONFLICT (slug) DO NOTHING
+
+## STEP 2: Update SQL.tsx
+- Open `src/pages/SQL.tsx`
+- Add fetch code to load the new SQL file (after the last blog post fetch)
+- Add the script to the `allScripts` array with:
+  - name: Blog post title
+  - filename: create-blog-post-[slug].sql
+  - content: The fetched content
+  - description: Clear description of what the script does
+  - createdAt: getScriptTimestamp('create-blog-post-[slug].sql')
+
+## STEP 3: Update API Endpoint
+- Open `api/sql/latest.ts`
+- Add the new SQL file path to the `SQL_FILES` array
+
+## STEP 4: Commit Changes
+- Stage all changed files
+- Commit with descriptive message
+
+## STEP 5: Merge to Production
+- Checkout `main` branch
+- Pull latest from `origin/main`
+- Merge the cursor branch into `main`
+- Push to `origin/main` to deploy
+
+## STEP 6: Verify Deployment
+- The SQL file MUST be accessible at: `https://www.thelostandunfounds.com/sql/create-blog-post-[slug].sql`
+- The script MUST appear on the page: `https://www.thelostandunfounds.com/sql`
+- Verify the script shows up in the list with copy functionality
+
+## CRITICAL RULES:
+1. ALWAYS use the exact URL format: `https://www.thelostandunfounds.com/sql/` (lowercase "sql")
+2. ALWAYS merge to `main` branch and push to deploy
+3. ALWAYS verify the script appears on the `/sql` page after deployment
+4. NEVER skip any of these steps
+5. The `/sql` page is the deployment interface - scripts must appear there
+
+## The Purpose:
+The `/sql` page at `https://www.thelostandunfounds.com/sql` is where SQL scripts are displayed so they can be copied and executed in Supabase SQL Editor. Every blog post SQL script MUST be accessible and visible on this page.
