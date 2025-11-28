@@ -524,13 +524,6 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
           createdAt: getScriptTimestamp('create-blog-post-artificial-intelligence-the-job-killer.sql')
         },
         {
-          name: 'Our Tech Stack: Building with Creativity and Autonomy',
-          filename: 'create-blog-post-our-tech-stack.sql',
-          content: techStackContent || '// File not found - check public/sql folder',
-          description: 'Creates the blog post "Our Tech Stack: Building with Creativity and Autonomy" - an overview of the technology stack powering THE LOST+UNFOUNDS platform. From front-end deployment with Vercel to back-end infrastructure with Supabase and Railway. Run this AFTER the migration script. Works with any schema version.',
-          createdAt: getScriptTimestamp('create-blog-post-our-tech-stack.sql')
-        },
-        {
           name: 'Check Blog Post Exists',
           filename: 'check-blog-post-exists.sql',
           content: checkPostContent || '// File not found - check public/sql folder',
@@ -543,6 +536,13 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
           content: updatePostContent || '// File not found - check public/sql folder',
           description: 'Updates the "Artificial Intelligence: The Job Killer" blog post if it already exists. Sets published=true and status=published. Run this if the INSERT script said "success" but no rows were returned.',
           createdAt: getScriptTimestamp('update-blog-post-if-exists.sql')
+        },
+        {
+          name: 'Our Tech Stack: Building with Creativity and Autonomy',
+          filename: 'create-blog-post-our-tech-stack.sql',
+          content: techStackContent || '// File not found - check public/sql folder',
+          description: 'Creates the blog post "Our Tech Stack: Building with Creativity and Autonomy" - an overview of the technology stack powering THE LOST+UNFOUNDS platform. From front-end deployment with Vercel to back-end infrastructure with Supabase and Railway. Run this AFTER the migration script. Works with any schema version.',
+          createdAt: getScriptTimestamp('create-blog-post-our-tech-stack.sql')
         }
       ];
 
