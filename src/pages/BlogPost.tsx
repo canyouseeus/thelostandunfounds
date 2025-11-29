@@ -224,12 +224,13 @@ export default function BlogPost() {
       'Maktub'
     ];
 
-    // Create a single regex that matches all terms with word boundaries to prevent partial matches
+    // Create a single regex that matches all terms
+    // Escape special regex characters and create pattern that prevents partial matches
     const escapedTerms = emphasisTerms.map(term => 
       term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     );
-    // Use word boundaries for single words, but not for multi-word phrases to avoid issues
-    const combinedRegex = new RegExp(`\\b(${escapedTerms.join('|')})\\b`, 'gi');
+    // Match terms with word boundaries, but handle multi-word phrases properly
+    const combinedRegex = new RegExp(`(?:^|\\s)(${escapedTerms.join('|')})(?=\\s|$|[.,!?;:])`, 'gi');
 
     const parts: (string | JSX.Element)[] = [];
     let lastIndex = 0;
