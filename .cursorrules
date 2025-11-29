@@ -11,6 +11,15 @@
 - DO NOT change alignment unless explicitly asked by the user
 - This applies to: BlogPost.tsx, BlogAnalysis.tsx, and any blog-related components
 
+## BLOG POST FORMATTING VERIFICATION RULE - CRITICAL
+**ALWAYS check the live URL first, NOT the SQL file, when verifying blog post formatting.**
+
+- Before making any formatting changes, check the actual live blog post URL: `https://www.thelostandunfounds.com/thelostarchives/[slug]`
+- Use `curl` or fetch the live page to see how content actually renders
+- The SQL file is just the source - the live page shows the real formatting
+- Remove "⸻" characters from content - they should NOT appear in blog posts
+- Section breaks should use proper paragraph spacing, not "⸻" characters
+
 ## BLOG POST PUBLISHING RULE - FOLLOW EVERY TIME
 
 When the user asks to publish a blog post, you MUST follow these steps in order:
