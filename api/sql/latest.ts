@@ -8,6 +8,7 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 
 // List of known SQL files in the public directory (fallback if manifest doesn't exist)
 const SQL_FILES = [
+  '/sql/create-newsletter-campaigns-table.sql',
   '/blog-schema-migration.sql',
   '/create-first-blog-post.sql',
   '/sql/create-blog-post-all-for-a-dream.sql',

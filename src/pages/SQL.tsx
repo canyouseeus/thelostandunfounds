@@ -514,7 +514,28 @@ FROM blog_posts
 WHERE slug = 'artificial-intelligence-the-job-killer';`;
       }
 
+      // Load create-newsletter-campaigns-table script
+      let newsletterCampaignsContent = '';
+      try {
+        const newsletterCampaignsResponse = await fetch('/sql/create-newsletter-campaigns-table.sql');
+        if (newsletterCampaignsResponse.ok) {
+          const text = await newsletterCampaignsResponse.text();
+          if (!text.trim().startsWith('<!')) {
+            newsletterCampaignsContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch newsletter campaigns table file:', fetchError);
+      }
+
       const allScripts: SQLScript[] = [
+        {
+          name: 'Newsletter Campaigns Table',
+          filename: 'create-newsletter-campaigns-table.sql',
+          content: newsletterCampaignsContent || '// File not found - check public/sql folder',
+          description: 'Creates the newsletter_campaigns table to track newsletter sends, including subject, content, send status, and statistics. Required for the newsletter management feature in the Admin dashboard.',
+          createdAt: getScriptTimestamp('create-newsletter-campaigns-table.sql')
+        },
         {
           name: 'Blog Schema Migration',
           filename: 'blog-schema-migration.sql',
