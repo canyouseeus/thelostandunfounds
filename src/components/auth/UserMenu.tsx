@@ -1,12 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
-import { User, LogOut, ChevronDown } from 'lucide-react';
+import { User, LogOut, ChevronDown, Shield } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { isAdmin } from '../../utils/admin';
 import AuthModal from './AuthModal';
 
 export default function UserMenu() {
   const { user, tier, signOut, loading } = useAuth();
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [userIsAdmin, setUserIsAdmin] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -24,6 +28,15 @@ export default function UserMenu() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [menuOpen]);
+
+  // Check if user is admin
+  useEffect(() => {
+    if (user) {
+      isAdmin().then(setUserIsAdmin).catch(() => setUserIsAdmin(false));
+    } else {
+      setUserIsAdmin(false);
+    }
+  }, [user]);
 
   const handleSignOut = async () => {
     try {
@@ -79,7 +92,19 @@ export default function UserMenu() {
                 {tierLabels[tier]} Tier
               </div>
             </div>
-            <div className="p-2">
+            <div className="p-2 space-y-1">
+              {userIsAdmin && (
+                <button
+                  onClick={() => {
+                    navigate('/admin');
+                    setMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-white/80 hover:text-white hover:bg-white/5 rounded-none transition text-sm"
+                >
+                  <Shield className="w-4 h-4" />
+                  Admin Dashboard
+                </button>
+              )}
               <button
                 onClick={handleSignOut}
                 className="w-full flex items-center gap-2 px-3 py-2 text-white/80 hover:text-white hover:bg-white/5 rounded-none transition text-sm"
