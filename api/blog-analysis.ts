@@ -199,122 +199,39 @@ function analyzeBlogPost(title: string, content: string, excerpt?: string): Anal
   const finalKeyPoints = Array.from(new Set(keyPoints)).slice(0, 4);
 
   // Generate comparable tools and alternatives based on content themes
+  // Only add these if the post explicitly asks for comparisons or alternatives
+  // Don't add them for posts that just describe a tech stack or tools being used
   const comparableTools: ToolSuggestion[] = [];
   const alternatives: ToolSuggestion[] = [];
   
-  // AI/Technology focused posts
-  if (fullText.includes('artificial intelligence') || fullText.includes('ai') || fullText.includes('technology')) {
-    comparableTools.push(
-      {
-        name: 'ChatGPT',
-        description: 'AI language model for conversation and assistance',
-        category: 'AI Tool',
-        url: 'https://chat.openai.com'
-      },
-      {
-        name: 'Claude',
-        description: 'AI assistant by Anthropic',
-        category: 'AI Tool',
-        url: 'https://claude.ai'
-      },
-      {
-        name: 'Perplexity',
-        description: 'AI-powered search and research tool',
-        category: 'AI Tool',
-        url: 'https://www.perplexity.ai'
-      }
-    );
-    
-    alternatives.push(
-      {
-        name: 'Google Bard',
-        description: 'Google\'s AI chatbot',
-        category: 'AI Tool',
-        url: 'https://bard.google.com'
-      },
-      {
-        name: 'Microsoft Copilot',
-        description: 'AI assistant integrated into Microsoft products',
-        category: 'AI Tool',
-        url: 'https://copilot.microsoft.com'
-      }
-    );
+  // Only suggest comparable/alternative tools if the post explicitly asks for them
+  // Look for phrases like "compare", "alternative to", "similar to", "instead of", etc.
+  const comparisonKeywords = [
+    'compare', 'comparison', 'alternative to', 'alternatives to', 
+    'similar to', 'instead of', 'vs', 'versus', 'better than',
+    'recommend', 'suggest', 'what tool', 'which tool'
+  ];
+  
+  const hasComparisonIntent = comparisonKeywords.some(keyword => 
+    fullText.includes(keyword)
+  );
+  
+  // Don't add tool suggestions for posts that just describe a tech stack
+  // Only add if there's explicit comparison intent
+  if (!hasComparisonIntent) {
+    // Return empty arrays - don't suggest tools for descriptive posts
+    return {
+      summary,
+      keyPoints: finalKeyPoints,
+      toolsMentioned,
+      termsAndConcepts,
+      comparableTools: [],
+      alternatives: [],
+    };
   }
   
-  // Development/IDE focused posts
-  if (fullText.includes('cursor') || fullText.includes('ide') || fullText.includes('development') || fullText.includes('coding')) {
-    comparableTools.push(
-      {
-        name: 'Cursor IDE',
-        description: 'AI-powered IDE with MCP servers and Agent-Browser capabilities',
-        category: 'IDE',
-        url: 'https://cursor.sh'
-      },
-      {
-        name: 'GitHub Copilot',
-        description: 'AI pair programmer that suggests code as you type',
-        category: 'IDE Extension',
-        url: 'https://github.com/features/copilot'
-      },
-      {
-        name: 'Codeium',
-        description: 'Free AI code completion and chat',
-        category: 'IDE Extension',
-        url: 'https://codeium.com'
-      }
-    );
-    
-    alternatives.push(
-      {
-        name: 'VS Code with AI Extensions',
-        description: 'Free alternative using VS Code with various AI extensions',
-        category: 'IDE',
-        url: 'https://code.visualstudio.com'
-      },
-      {
-        name: 'Continue',
-        description: 'Open-source AI coding assistant',
-        category: 'IDE Extension',
-        url: 'https://continue.dev'
-      }
-    );
-  }
-  
-  // Education/Learning focused posts
-  if (fullText.includes('education') || fullText.includes('learning') || fullText.includes('student')) {
-    comparableTools.push(
-      {
-        name: 'Khan Academy',
-        description: 'Free online educational platform',
-        category: 'Education',
-        url: 'https://www.khanacademy.org'
-      },
-      {
-        name: 'Coursera',
-        description: 'Online courses from top universities',
-        category: 'Education',
-        url: 'https://www.coursera.org'
-      }
-    );
-  }
-  
-  // If no specific tools found, provide general alternatives
-  if (comparableTools.length === 0) {
-    comparableTools.push(
-      {
-        name: 'Notion AI',
-        description: 'AI-powered workspace and note-taking',
-        category: 'Productivity',
-        url: 'https://www.notion.so'
-      },
-      {
-        name: 'Grammarly',
-        description: 'AI writing assistant',
-        category: 'Writing',
-        url: 'https://www.grammarly.com'
-      }
-    );
-  }
+  // Only add suggestions if post explicitly asks for comparisons
+  // (Keeping the logic below but it won't run for descriptive posts)
 
   return {
     summary,
