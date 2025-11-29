@@ -125,8 +125,8 @@ These tools help us build, prototype, and integrate systems smoothly, from codin
 Cursor: Writing, Refining, and Prototyping Code
 Cursor helps us structure code, prototype new features, and experiment efficiently. It keeps our code organized and lets us iterate quickly. We can test a new layout for the marketplace, refine subscription workflows, or experiment with AI-assisted content generation. Cursor keeps the process flowing and helps maintain clarity while building.
 
-AI Tools — ChatGPT and Claude
-AI tools assist with reasoning, content generation, and organization. ChatGPT helps structure outputs and solve problems efficiently. Claude clarifies concepts and organizes ideas so they can be implemented effectively. Together, these tools make experimentation faster and smarter, allowing us to explore possibilities we couldn''t do alone. We also use AI-powered analysis directly in our blog posts - our system automatically generates intuitive breakdowns, key takeaways, and term definitions from content without requiring external API calls, making our blog posts more accessible and informative for readers.
+AI Tools — Google AI Studio, ChatGPT, and Claude
+AI tools assist with reasoning, content generation, and organization. Google AI Studio allows us to test ideas rapidly. ChatGPT helps structure outputs and solve problems efficiently. Claude clarifies concepts and organizes ideas so they can be implemented effectively. Together, these tools make experimentation faster and smarter, allowing us to explore possibilities we couldn''t do alone. We also use AI-powered analysis directly in our blog posts - our system automatically generates intuitive breakdowns, key takeaways, and term definitions from content without requiring external API calls, making our blog posts more accessible and informative for readers.
 
 Stripe and PayPal: Managing Traditional Payments
 Stripe and PayPal provide secure, reliable infrastructure for payments. They handle subscriptions, purchases, and tips for users who aren''t yet using digital assets. For example, when a user subscribes to a content plan, Stripe manages the payment safely and updates the account automatically.
@@ -151,7 +151,7 @@ Together, these tools give us structure without slowing creativity. They let us 
         NOW(),
         'Our Tech Stack: Building with Creativity and Autonomy | THE LOST ARCHIVES | THE LOST+UNFOUNDS',
         'An overview of the technology stack powering THE LOST+UNFOUNDS platform. From front-end deployment with Vercel to back-end infrastructure with Supabase and Railway, discover how we build with creativity, autonomy, and flexibility.',
-        'tech stack, technology, web development, Vercel, Supabase, GitHub, MCP servers, Railway, Cursor, AI tools, ChatGPT, Claude, Stripe, PayPal, Bitcoin, front-end, back-end, development tools, blog analysis, AI breakdowns'
+        'tech stack, technology, web development, Vercel, Supabase, GitHub, MCP servers, Railway, Cursor, AI tools, Google AI Studio, ChatGPT, Claude, Stripe, PayPal, Bitcoin, front-end, back-end, development tools, blog analysis, AI breakdowns'
       )
       ON CONFLICT (slug) DO NOTHING;
     ELSE
@@ -224,8 +224,8 @@ These tools help us build, prototype, and integrate systems smoothly, from codin
 Cursor: Writing, Refining, and Prototyping Code
 Cursor helps us structure code, prototype new features, and experiment efficiently. It keeps our code organized and lets us iterate quickly. We can test a new layout for the marketplace, refine subscription workflows, or experiment with AI-assisted content generation. Cursor keeps the process flowing and helps maintain clarity while building.
 
-AI Tools — ChatGPT and Claude
-AI tools assist with reasoning, content generation, and organization. ChatGPT helps structure outputs and solve problems efficiently. Claude clarifies concepts and organizes ideas so they can be implemented effectively. Together, these tools make experimentation faster and smarter, allowing us to explore possibilities we couldn''t do alone. We also use AI-powered analysis directly in our blog posts - our system automatically generates intuitive breakdowns, key takeaways, and term definitions from content without requiring external API calls, making our blog posts more accessible and informative for readers.
+AI Tools — Google AI Studio, ChatGPT, and Claude
+AI tools assist with reasoning, content generation, and organization. Google AI Studio allows us to test ideas rapidly. ChatGPT helps structure outputs and solve problems efficiently. Claude clarifies concepts and organizes ideas so they can be implemented effectively. Together, these tools make experimentation faster and smarter, allowing us to explore possibilities we couldn''t do alone. We also use AI-powered analysis directly in our blog posts - our system automatically generates intuitive breakdowns, key takeaways, and term definitions from content without requiring external API calls, making our blog posts more accessible and informative for readers.
 
 Stripe and PayPal: Managing Traditional Payments
 Stripe and PayPal provide secure, reliable infrastructure for payments. They handle subscriptions, purchases, and tips for users who aren''t yet using digital assets. For example, when a user subscribes to a content plan, Stripe manages the payment safely and updates the account automatically.
@@ -250,7 +250,7 @@ Together, these tools give us structure without slowing creativity. They let us 
         NOW(),
         'Our Tech Stack: Building with Creativity and Autonomy | THE LOST ARCHIVES | THE LOST+UNFOUNDS',
         'An overview of the technology stack powering THE LOST+UNFOUNDS platform. From front-end deployment with Vercel to back-end infrastructure with Supabase and Railway, discover how we build with creativity, autonomy, and flexibility.',
-        'tech stack, technology, web development, Vercel, Supabase, GitHub, MCP servers, Railway, Cursor, AI tools, ChatGPT, Claude, Stripe, PayPal, Bitcoin, front-end, back-end, development tools, blog analysis, AI breakdowns'
+        'tech stack, technology, web development, Vercel, Supabase, GitHub, MCP servers, Railway, Cursor, AI tools, Google AI Studio, ChatGPT, Claude, Stripe, PayPal, Bitcoin, front-end, back-end, development tools, blog analysis, AI breakdowns'
       )
       ON CONFLICT (slug) DO NOTHING;
     END IF;
@@ -321,8 +321,8 @@ These tools help us build, prototype, and integrate systems smoothly, from codin
 Cursor: Writing, Refining, and Prototyping Code
 Cursor helps us structure code, prototype new features, and experiment efficiently. It keeps our code organized and lets us iterate quickly. We can test a new layout for the marketplace, refine subscription workflows, or experiment with AI-assisted content generation. Cursor keeps the process flowing and helps maintain clarity while building.
 
-AI Tools — ChatGPT and Claude
-AI tools assist with reasoning, content generation, and organization. ChatGPT helps structure outputs and solve problems efficiently. Claude clarifies concepts and organizes ideas so they can be implemented effectively. Together, these tools make experimentation faster and smarter, allowing us to explore possibilities we couldn''t do alone. We also use AI-powered analysis directly in our blog posts - our system automatically generates intuitive breakdowns, key takeaways, and term definitions from content without requiring external API calls, making our blog posts more accessible and informative for readers.
+AI Tools — Google AI Studio, ChatGPT, and Claude
+AI tools assist with reasoning, content generation, and organization. Google AI Studio allows us to test ideas rapidly. ChatGPT helps structure outputs and solve problems efficiently. Claude clarifies concepts and organizes ideas so they can be implemented effectively. Together, these tools make experimentation faster and smarter, allowing us to explore possibilities we couldn''t do alone. We also use AI-powered analysis directly in our blog posts - our system automatically generates intuitive breakdowns, key takeaways, and term definitions from content without requiring external API calls, making our blog posts more accessible and informative for readers.
 
 Stripe and PayPal: Managing Traditional Payments
 Stripe and PayPal provide secure, reliable infrastructure for payments. They handle subscriptions, purchases, and tips for users who aren''t yet using digital assets. For example, when a user subscribes to a content plan, Stripe manages the payment safely and updates the account automatically.
@@ -412,8 +412,8 @@ These tools help us build, prototype, and integrate systems smoothly, from codin
 Cursor: Writing, Refining, and Prototyping Code
 Cursor helps us structure code, prototype new features, and experiment efficiently. It keeps our code organized and lets us iterate quickly. We can test a new layout for the marketplace, refine subscription workflows, or experiment with AI-assisted content generation. Cursor keeps the process flowing and helps maintain clarity while building.
 
-AI Tools — ChatGPT and Claude
-AI tools assist with reasoning, content generation, and organization. ChatGPT helps structure outputs and solve problems efficiently. Claude clarifies concepts and organizes ideas so they can be implemented effectively. Together, these tools make experimentation faster and smarter, allowing us to explore possibilities we couldn''t do alone. We also use AI-powered analysis directly in our blog posts - our system automatically generates intuitive breakdowns, key takeaways, and term definitions from content without requiring external API calls, making our blog posts more accessible and informative for readers.
+AI Tools — Google AI Studio, ChatGPT, and Claude
+AI tools assist with reasoning, content generation, and organization. Google AI Studio allows us to test ideas rapidly. ChatGPT helps structure outputs and solve problems efficiently. Claude clarifies concepts and organizes ideas so they can be implemented effectively. Together, these tools make experimentation faster and smarter, allowing us to explore possibilities we couldn''t do alone. We also use AI-powered analysis directly in our blog posts - our system automatically generates intuitive breakdowns, key takeaways, and term definitions from content without requiring external API calls, making our blog posts more accessible and informative for readers.
 
 Stripe and PayPal: Managing Traditional Payments
 Stripe and PayPal provide secure, reliable infrastructure for payments. They handle subscriptions, purchases, and tips for users who aren''t yet using digital assets. For example, when a user subscribes to a content plan, Stripe manages the payment safely and updates the account automatically.
@@ -503,8 +503,8 @@ These tools help us build, prototype, and integrate systems smoothly, from codin
 Cursor: Writing, Refining, and Prototyping Code
 Cursor helps us structure code, prototype new features, and experiment efficiently. It keeps our code organized and lets us iterate quickly. We can test a new layout for the marketplace, refine subscription workflows, or experiment with AI-assisted content generation. Cursor keeps the process flowing and helps maintain clarity while building.
 
-AI Tools — ChatGPT and Claude
-AI tools assist with reasoning, content generation, and organization. ChatGPT helps structure outputs and solve problems efficiently. Claude clarifies concepts and organizes ideas so they can be implemented effectively. Together, these tools make experimentation faster and smarter, allowing us to explore possibilities we couldn''t do alone. We also use AI-powered analysis directly in our blog posts - our system automatically generates intuitive breakdowns, key takeaways, and term definitions from content without requiring external API calls, making our blog posts more accessible and informative for readers.
+AI Tools — Google AI Studio, ChatGPT, and Claude
+AI tools assist with reasoning, content generation, and organization. Google AI Studio allows us to test ideas rapidly. ChatGPT helps structure outputs and solve problems efficiently. Claude clarifies concepts and organizes ideas so they can be implemented effectively. Together, these tools make experimentation faster and smarter, allowing us to explore possibilities we couldn''t do alone. We also use AI-powered analysis directly in our blog posts - our system automatically generates intuitive breakdowns, key takeaways, and term definitions from content without requiring external API calls, making our blog posts more accessible and informative for readers.
 
 Stripe and PayPal: Managing Traditional Payments
 Stripe and PayPal provide secure, reliable infrastructure for payments. They handle subscriptions, purchases, and tips for users who aren''t yet using digital assets. For example, when a user subscribes to a content plan, Stripe manages the payment safely and updates the account automatically.
