@@ -124,8 +124,8 @@ function generateKeyPoints(title: string, content: string, allText: string, para
   }
   // All For A Dream - specific insights from the personal story
   else if (slug.includes('all-for-a-dream') || (allTextLower.includes('living in my car') && allTextLower.includes('un-hirable'))) {
-    points.push('Choosing to be "un-hirable" at 40 isn\'t about rejecting work - it\'s about refusing to compromise your values for a paycheck');
-    points.push('Being "un-hirable" isn\'t a failure - it\'s a conscious choice to prioritize values (speaking up about inconsistencies, refusing to compromise) over security');
+    points.push('Choosing to be your own boss at any age or situation isn\'t about rejecting work - it\'s about refusing to compromise your values for a paycheck');
+    points.push('Being your own boss is a conscious choice to prioritize values (speaking up about inconsistencies, refusing to compromise) over security');
     points.push('Living without stability for years while building a vision requires a different kind of faith - not in circumstances, but in yourself');
     points.push('Living in a car for years while building a platform shows that stability and progress aren\'t the same thing - you can make progress without traditional stability');
     points.push('Being an "unofficial agent of change" means speaking up about inconsistencies, even when it costs you opportunities');
@@ -169,7 +169,7 @@ function generatePracticalInsights(title: string, content: string, allText: stri
   }
   // All For A Dream - practical advice
   else if (slug.includes('all-for-a-dream') || (allTextLower.includes('living in my car') && allTextLower.includes('un-hirable'))) {
-    insights.push('If traditional employment conflicts with your values, consider building your own path - it\'s difficult but can align with your principles');
+    insights.push('If traditional employment conflicts with your values, consider becoming your own boss - it\'s difficult but can align with your principles at any age or situation');
     insights.push('Maintain your vision even when circumstances are challenging - stability and progress aren\'t the same thing');
     insights.push('Stop trying to be what others want and start doing what\'s right for yourself - that\'s when things start connecting');
   }
