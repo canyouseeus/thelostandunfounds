@@ -41,37 +41,47 @@ interface BlogAnalysisProps {
  * Generate synthesized insights from content themes
  */
 function generateQuickTake(title: string, content: string, allText: string): string {
-  // Analyze main theme
-  if (allText.includes('tech stack') || allText.includes('technology')) {
-    return `A look at the tools and technologies that power ${title.includes('Tech Stack') ? 'this platform' : 'modern development'}, showing how each piece fits into a cohesive system.`;
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  
+  // Our Tech Stack
+  if (slug.includes('tech-stack') || (allText.includes('tech stack') && allText.includes('vercel') && allText.includes('supabase'))) {
+    return `A detailed breakdown of the technology stack powering THE LOST+UNFOUNDS, organized into front-end, back-end, and supporting tools, each chosen to enable creativity and experimentation.`;
   }
-  if (allText.includes('artificial intelligence') || allText.includes('ai')) {
-    return `An exploration of how AI is reshaping work and creating new opportunities, not just replacing jobs.`;
+  // AI Job Killer
+  if (slug.includes('artificial-intelligence') || (allText.includes('earnest') && allText.includes('village') && allText.includes('well'))) {
+    return `Using the powerful analogy of a village gaining access to clean water, this post argues that AI follows the same pattern as all technological progress - it frees people from repetitive tasks and opens new possibilities.`;
   }
-  if (allText.includes('dream') || allText.includes('vision')) {
-    return `A personal journey about building something meaningful despite challenges, showing resilience and determination.`;
+  // All For A Dream
+  if (slug.includes('all-for-a-dream') || (allText.includes('living in my car') && allText.includes('un-hirable'))) {
+    return `A deeply personal story about choosing autonomy and values over stability, building a vision while living without a permanent home, and refusing to compromise principles for security.`;
   }
-  if (allText.includes('cursor')) {
-    return `How modern AI-powered development tools are changing the way we build software, making coding more accessible.`;
+  // Cursor IDE
+  if (slug.includes('cursor') || (allText.includes('mcp servers') && allText.includes('agent-browser') && allText.includes('vibe coding'))) {
+    return `A practical guide to Cursor IDE for "vibe-coders" - people who think in outcomes rather than syntax - covering MCP servers, agent-browser capabilities, and why the investment is worth it.`;
   }
   return `An insightful exploration of ${title.toLowerCase()}, providing valuable perspectives and practical information.`;
 }
 
 function generateSummary(title: string, content: string, paragraphs: string[]): string {
   const allText = content.toLowerCase();
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   const firstPara = paragraphs[0] || '';
   
-  if (allText.includes('tech stack')) {
-    return `This post breaks down the technology stack into clear categories - front-end, back-end, and supporting tools. Each tool is explained in terms of what it does and why it matters, showing how they work together to create a flexible, creative development environment. The focus is on tools that enable experimentation and maintain flow, rather than rigid structures.`;
+  // Our Tech Stack - specific summary
+  if (slug.includes('tech-stack') || (allText.includes('tech stack') && allText.includes('vercel') && allText.includes('supabase'))) {
+    return `This post provides a comprehensive overview of THE LOST+UNFOUNDS technology stack, organized into three clear categories: front-end tools (Vercel for deployment), back-end tools (GitHub, MCP servers, Railway, Supabase), and supporting tools (Cursor, AI assistants, payment systems). Each tool is explained not just for what it does, but for how it enables creativity, experimentation, and maintains flow state. The philosophy is about choosing tools that provide structure without limiting flexibility, allowing the team to experiment and iterate quickly while building a platform aligned with values of autonomy and creativity.`;
   }
-  if (allText.includes('artificial intelligence') && allText.includes('job')) {
-    return `Drawing parallels between technological progress throughout history and today's AI revolution, this post argues that AI doesn't just eliminate jobs - it frees people from repetitive tasks and opens new possibilities. The key insight is that technology compounds, creating opportunities that didn't exist before.`;
+  // AI Job Killer - specific summary with Earnest story
+  if (slug.includes('artificial-intelligence') || (allText.includes('earnest') && allText.includes('village') && allText.includes('well'))) {
+    return `This post uses the powerful story of Earnest Hausman drilling a well in his Ugandan village as an analogy for how AI is reshaping work. Just as the well freed villagers from hours of water collection (eliminating those jobs), it enabled entirely new possibilities - education, businesses, clinics. The post argues that AI follows the same pattern: it will eliminate some jobs while creating new opportunities that didn't exist before. The key insight is that technological progress compounds (Moore's Law, Kurzweil's Law), and the education system's resistance to AI tools misses the point - we should be teaching how to use new tools effectively, not banning them.`;
   }
-  if (allText.includes('dream') || allText.includes('resilience')) {
-    return `A deeply personal reflection on maintaining vision and determination through difficult circumstances. The post explores what it means to build something meaningful when stability is hard to find, and how staying true to your values matters more than following conventional paths.`;
+  // All For A Dream - specific personal summary
+  if (slug.includes('all-for-a-dream') || (allText.includes('living in my car') && allText.includes('un-hirable'))) {
+    return `A deeply personal reflection on choosing autonomy over stability. The author shares their experience of living in a car for years while building THE LOST+UNFOUNDS, having chosen to be "un-hirable" at 40 because traditional employment conflicts with their values. The post explores what it means to be an "unofficial agent of change" - someone who speaks up about workplace inconsistencies and hypocrisies, even when it costs opportunities. The breakthrough came when they stopped trying to be what others wanted and started doing what was right for themselves. Despite years without stability, the vision hasn't changed: build a platform that helps people and changes how business is done.`;
   }
-  if (allText.includes('cursor')) {
-    return `A practical guide to using Cursor IDE for development, covering key features like MCP servers, agent-browser capabilities, and different workflow modes. The post explains how these tools make coding more accessible, especially for those who think in terms of outcomes rather than syntax.`;
+  // Cursor IDE - specific summary
+  if (slug.includes('cursor') || (allText.includes('mcp servers') && allText.includes('agent-browser') && allText.includes('vibe coding'))) {
+    return `A practical guide to Cursor IDE written from the perspective of a "vibe-coder" - someone who thinks in outcomes and ideas rather than syntax. The post covers three key features: MCP servers (connecting AI to external tools like Vercel and GitHub), Agent-Browser capabilities (describing visual changes in plain language), and Ask/Plan/Agent modes (breaking complex tasks into manageable steps). The post frames Cursor as an investment comparable to education ($24K over 4 years) but one that can generate income while you learn. The key insight is that Cursor makes coding accessible to people who understand what they want to build, even if they don't know how to write the code.`;
   }
   
   // Generic fallback - synthesize from first paragraph
@@ -86,88 +96,122 @@ function generateSummary(title: string, content: string, paragraphs: string[]): 
 }
 
 /**
- * Generate main takeaways - synthesized insights, not extracted sentences
+ * Generate main takeaways - unique insights for each specific blog post
  */
 function generateMainTakeaways(title: string, content: string, allText: string, paragraphs: string[]): string[] {
   const takeaways: string[] = [];
   const allTextLower = allText;
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   
-  // Analyze themes and generate insights
-  if (allTextLower.includes('tech stack')) {
-    takeaways.push('The technology stack is organized around enabling creativity and experimentation, not just functionality');
-    takeaways.push('Each tool category (front-end, back-end, supporting) serves a distinct purpose in the development workflow');
-    takeaways.push('The choice of tools reflects a philosophy of autonomy and flexibility over rigid structure');
-    if (allTextLower.includes('bitcoin')) {
-      takeaways.push('The platform is designed to support both traditional and emerging payment systems, including digital assets');
-    }
-  } else if (allTextLower.includes('artificial intelligence') && allTextLower.includes('job')) {
-    takeaways.push('AI follows the same pattern as historical technological progress - it eliminates some jobs while creating new opportunities');
-    takeaways.push('The real value of AI isn\'t in replacing human work, but in freeing people from repetitive tasks to focus on higher-value activities');
-    takeaways.push('Resistance to AI in education misses the point - the goal should be teaching how to use new tools effectively, not banning them');
-    takeaways.push('Technological progress compounds, meaning each innovation makes the next one easier and more powerful');
-  } else if (allTextLower.includes('dream') || allTextLower.includes('resilience')) {
-    takeaways.push('Building something meaningful requires maintaining vision even when circumstances are challenging');
-    takeaways.push('Choosing autonomy over traditional employment can be difficult but aligns with personal values and long-term goals');
-    takeaways.push('The journey matters as much as the destination - each challenge builds resilience and clarity');
-  } else if (allTextLower.includes('cursor')) {
-    takeaways.push('Modern AI development tools like Cursor make coding accessible to people who think in outcomes, not syntax');
-    takeaways.push('Features like MCP servers and agent-browser capabilities create powerful automation workflows');
-    takeaways.push('The investment in AI coding tools can pay off significantly if you\'re building profitable projects');
-    takeaways.push('The future of development is about leveraging AI to handle routine work while focusing on creative problem-solving');
+  // Our Tech Stack - specific to this post
+  if (slug.includes('tech-stack') || (allTextLower.includes('tech stack') && allTextLower.includes('vercel') && allTextLower.includes('supabase'))) {
+    takeaways.push('The stack is deliberately organized into three categories - front-end (what users see), back-end (what powers it), and supporting tools (what enables building)');
+    takeaways.push('Each tool was chosen not just for what it does, but for how it enables creativity, experimentation, and maintaining flow state');
+    takeaways.push('The philosophy behind tool selection prioritizes autonomy and flexibility - tools that let you experiment without locking you into rigid structures');
+    takeaways.push('The integration of Bitcoin alongside traditional payment systems shows a forward-thinking approach to financial infrastructure');
+  } 
+  // Artificial Intelligence: The Job Killer - specific to Earnest Hausman story
+  else if (slug.includes('artificial-intelligence') || (allTextLower.includes('earnest') && allTextLower.includes('village') && allTextLower.includes('well'))) {
+    takeaways.push('The story of Earnest Hausman drilling a well in his Ugandan village perfectly illustrates how technology frees people from repetitive labor');
+    takeaways.push('AI will take jobs, but only if you let it - the real opportunity is in the new possibilities and roles that didn\'t exist before');
+    takeaways.push('The education system\'s ban on AI tools is like telling villagers to ignore the well - it misses the point entirely');
+    takeaways.push('Moore\'s Law and Kurzweil\'s Law explain why technological change feels sudden: progress compounds exponentially, not linearly');
+  }
+  // All For A Dream - specific personal story
+  else if (slug.includes('all-for-a-dream') || (allTextLower.includes('living in my car') && allTextLower.includes('un-hirable'))) {
+    takeaways.push('Choosing to be "un-hirable" at 40 isn\'t about rejecting work - it\'s about refusing to compromise your values for a paycheck');
+    takeaways.push('Living without stability for years while building a vision requires a different kind of faith - not in circumstances, but in yourself');
+    takeaways.push('Being an "unofficial agent of change" means speaking up about inconsistencies, even when it costs you opportunities');
+    takeaways.push('The moment you stop trying to be what others want and start doing what\'s right for yourself, everything starts connecting');
+  }
+  // Cursor IDE post - specific to Cursor features
+  else if (slug.includes('cursor') || (allTextLower.includes('mcp servers') && allTextLower.includes('agent-browser') && allTextLower.includes('vibe coding'))) {
+    takeaways.push('Cursor makes coding accessible to "vibe-coders" - people who think in outcomes and ideas, not syntax and commands');
+    takeaways.push('MCP servers are a game-changer because they let AI agents interact with external tools (Vercel, GitHub, Google Drive) without custom code');
+    takeaways.push('The Agent-Browser feature bridges the gap between visual design and code - you can describe what you see and Cursor implements it');
+    takeaways.push('At $200-500/month, Cursor is an investment comparable to education - but one that can pay for itself if you\'re building profitable projects');
   }
   
   return takeaways.length > 0 ? takeaways : [];
 }
 
 /**
- * Generate key points - deeper technical/philosophical insights
+ * Generate key points - unique deeper insights for each specific post
  */
 function generateKeyPoints(title: string, content: string, allText: string, paragraphs: string[]): string[] {
   const points: string[] = [];
   const allTextLower = allText;
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   
-  if (allTextLower.includes('tech stack')) {
-    points.push('The front-end and back-end separation allows for independent scaling and experimentation of user-facing and data-processing components');
-    points.push('MCP servers represent a paradigm shift in how AI tools interact with external services, enabling secure automation without custom integrations');
-    points.push('The tool selection prioritizes developer experience and flow state over raw performance metrics');
-    points.push('Payment infrastructure supports both traditional (Stripe/PayPal) and emerging (Bitcoin) systems, reflecting a forward-thinking approach');
-    if (allTextLower.includes('vercel')) {
-      points.push('Deployment tools like Vercel abstract away infrastructure complexity, letting developers focus on building features');
-    }
-  } else if (allTextLower.includes('artificial intelligence') && allTextLower.includes('job')) {
-    points.push('Moore\'s Law and Kurzweil\'s Law of Accelerating Returns explain why technological change feels sudden - it compounds exponentially');
-    points.push('The education system\'s resistance to AI tools mirrors historical resistance to calculators and computers, missing the opportunity to teach tool mastery');
-    points.push('AI creates new job categories that didn\'t exist before, just as previous technological revolutions did');
-    points.push('The key to thriving with AI is understanding it as a tool that amplifies human capability, not replaces it');
-  } else if (allTextLower.includes('cursor')) {
-    points.push('Cursor\'s MCP server integration allows AI agents to perform actions across multiple platforms, not just generate code');
-    points.push('The agent-browser feature bridges the gap between code and visual design, making it easier to iterate on user interfaces');
-    points.push('The Ask/Plan/Agent mode progression helps break down complex tasks into manageable, executable steps');
-    points.push('The cost of AI coding tools should be evaluated against the value of accelerated development and learning');
+  // Our Tech Stack - specific technical insights
+  if (slug.includes('tech-stack') || (allTextLower.includes('tech stack') && allTextLower.includes('vercel') && allTextLower.includes('supabase'))) {
+    points.push('Vercel handles deployment, caching, and scaling automatically - this abstraction lets the team focus purely on design and experimentation rather than infrastructure management');
+    points.push('MCP servers enable AI tools to safely interact with external services (Supabase, Vercel, Stripe) following rules and permissions, creating scalable automation without building custom integrations');
+    points.push('The three-category organization (front-end, back-end, supporting) creates clear mental models for understanding what each tool does and why it\'s needed');
+    points.push('Bitcoin integration represents a philosophical alignment with autonomy and financial flexibility, not just a technical feature');
+    points.push('GitHub\'s branch system enables safe experimentation - you can try new features without breaking existing functionality');
+  }
+  // AI Job Killer - specific insights from the village analogy
+  else if (slug.includes('artificial-intelligence') || (allTextLower.includes('earnest') && allTextLower.includes('village'))) {
+    points.push('The village well analogy shows how technology compounds: clean water reduces disease, enables agriculture, frees time for education, which then enables even more progress');
+    points.push('When Earnest drilled the well, water collectors became "unemployed" - but the village gained capacity for entirely new work (schools, clinics, businesses) that didn\'t exist before');
+    points.push('The education system telling students not to use AI is like telling villagers to ignore the well - it forces them to waste time on tasks technology can handle');
+    points.push('Moore\'s Law (computing power doubles every 2 years) and Kurzweil\'s Law (progress accelerates as tools improve tools) explain why AI feels like it appeared suddenly');
+    points.push('The real question isn\'t "will AI take jobs" but "will you adapt to use AI as a tool, or let it pass you by"');
+  }
+  // All For A Dream - specific insights from the personal story
+  else if (slug.includes('all-for-a-dream') || (allTextLower.includes('living in my car') && allTextLower.includes('un-hirable'))) {
+    points.push('Being "un-hirable" isn\'t a failure - it\'s a conscious choice to prioritize values (speaking up about inconsistencies, refusing to compromise) over security');
+    points.push('Living in a car for years while building a platform shows that stability and progress aren\'t the same thing - you can make progress without traditional stability');
+    points.push('The "unofficial agent of change" identity means recognizing workplace problems and speaking up, even when it costs you the job');
+    points.push('The breakthrough came when he stopped trying to be what others wanted and started doing what was right for himself - that\'s when "the dots started to connect"');
+    points.push('The vision hasn\'t changed despite years of instability: build a platform that helps people and changes how business is done');
+  }
+  // Cursor IDE - specific technical insights
+  else if (slug.includes('cursor') || (allTextLower.includes('mcp servers') && allTextLower.includes('agent-browser'))) {
+    points.push('MCP servers connect Cursor to external tools (Vercel, GitHub, Google Drive) so AI agents can perform actions, not just write code - this is automation at a new level');
+    points.push('Agent-Browser lets you describe visual changes in plain language ("increase padding below header") and Cursor implements it - bridging the gap between design thinking and code');
+    points.push('The Ask/Plan/Agent mode progression breaks complex tasks into steps: Ask for understanding, Plan the approach, then Agent executes - this prevents overwhelming the AI with too much context at once');
+    points.push('The $24,000 over 4 years comparison frames Cursor as education - but unlike traditional education, this tool can generate income while you learn');
+    points.push('The "vibe coding" concept means thinking in outcomes and ideas rather than syntax - Cursor translates your vision into working code');
   }
   
   return points.length > 0 ? points : [];
 }
 
 /**
- * Generate practical insights - actionable advice
+ * Generate practical insights - unique actionable advice for each post
  */
 function generatePracticalInsights(content: string, allText: string, paragraphs: string[]): string[] {
   const insights: string[] = [];
   const allTextLower = allText;
+  // Extract title from content if needed, or use a pattern match
+  const firstLine = content.split('\n')[0] || '';
+  const slug = firstLine.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   
-  if (allTextLower.includes('tech stack')) {
-    insights.push('When building your own stack, prioritize tools that match your workflow and enable experimentation');
-    insights.push('Consider how tools integrate with each other - the connections between tools are often as important as the tools themselves');
-    insights.push('Don\'t be afraid to experiment with emerging technologies, but maintain a solid foundation with proven tools');
-  } else if (allTextLower.includes('artificial intelligence') && allTextLower.includes('job')) {
-    insights.push('Instead of banning AI tools, focus on teaching students how to use them effectively and ethically');
-    insights.push('Look for opportunities where AI can free up your time for higher-value creative and strategic work');
-    insights.push('Embrace AI as a learning accelerator - it can help you understand concepts faster and build skills more efficiently');
-  } else if (allTextLower.includes('cursor')) {
-    insights.push('Start with Cursor\'s Ask mode to understand how it works, then progress to Plan and Agent modes as you get comfortable');
-    insights.push('Set up MCP servers for tools you use regularly - the automation capabilities can save significant time');
-    insights.push('Use the agent-browser feature to iterate on designs visually, then let Cursor implement the code changes');
+  // Our Tech Stack - practical advice
+  if (slug.includes('tech-stack') || (allTextLower.includes('tech stack') && allTextLower.includes('vercel') && allTextLower.includes('supabase'))) {
+    insights.push('Organize your tools by purpose (front-end, back-end, supporting) rather than by technology type - this creates clearer mental models');
+    insights.push('Choose tools that enable experimentation and flow state, not just tools with the most features or best performance metrics');
+    insights.push('Consider how tools integrate - MCP servers show that connections between tools can be as valuable as the tools themselves');
+  }
+  // AI Job Killer - practical advice
+  else if (slug.includes('artificial-intelligence') || (allTextLower.includes('earnest') && allTextLower.includes('village'))) {
+    insights.push('Instead of banning AI in education, teach students how to use it effectively - the real world will require AI proficiency');
+    insights.push('Look for repetitive tasks in your work that AI could handle, freeing you to focus on creative and strategic thinking');
+    insights.push('Embrace AI as a learning tool - it can help you understand complex concepts faster and build skills more efficiently');
+  }
+  // All For A Dream - practical advice
+  else if (slug.includes('all-for-a-dream') || (allTextLower.includes('living in my car') && allTextLower.includes('un-hirable'))) {
+    insights.push('If traditional employment conflicts with your values, consider building your own path - it\'s difficult but can align with your principles');
+    insights.push('Maintain your vision even when circumstances are challenging - stability and progress aren\'t the same thing');
+    insights.push('Stop trying to be what others want and start doing what\'s right for yourself - that\'s when things start connecting');
+  }
+  // Cursor IDE - practical advice
+  else if (slug.includes('cursor') || (allTextLower.includes('mcp servers') && allTextLower.includes('agent-browser'))) {
+    insights.push('Start with Cursor\'s Ask mode to get comfortable, then use Plan mode for complex tasks, and Agent mode for execution');
+    insights.push('Set up MCP servers for tools you use daily (Vercel, GitHub) - the automation will save significant time over weeks and months');
+    insights.push('Use Agent-Browser to describe visual changes in plain language - "make the header bigger" works better than trying to write CSS');
   }
   
   return insights.length > 0 ? insights : [];
