@@ -18,6 +18,8 @@ export default async function handler(
     route = routeParts.join('/')
   }
 
+  console.log('Shop router - query.path:', req.query.path, 'route:', route, 'url:', req.url)
+
   // Route to appropriate handler
   switch (route) {
     case 'fourthwall/products':
