@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Share2, Twitter, Facebook, Linkedin, Link2, Check } from 'lucide-react';
 
 interface ShareButtonsProps {
@@ -9,9 +9,27 @@ interface ShareButtonsProps {
 
 export default function ShareButtons({ title, url, description }: ShareButtonsProps) {
   const [copied, setCopied] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const fullUrl = typeof window !== 'undefined' 
     ? `${window.location.origin}${url}` 
     : url;
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+
+    if (menuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [menuOpen]);
 
   const handleNativeShare = async () => {
     if (navigator.share) {
@@ -21,6 +39,7 @@ export default function ShareButtons({ title, url, description }: ShareButtonsPr
           text: description || title,
           url: fullUrl,
         });
+        setMenuOpen(false);
       } catch (err) {
         // User cancelled or error occurred
         console.log('Share cancelled or failed');
@@ -32,7 +51,10 @@ export default function ShareButtons({ title, url, description }: ShareButtonsPr
     try {
       await navigator.clipboard.writeText(fullUrl);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => {
+        setCopied(false);
+        setMenuOpen(false);
+      }, 1500);
     } catch (err) {
       console.error('Failed to copy link:', err);
       // Fallback for older browsers
@@ -43,7 +65,10 @@ export default function ShareButtons({ title, url, description }: ShareButtonsPr
       try {
         document.execCommand('copy');
         setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        setTimeout(() => {
+          setCopied(false);
+          setMenuOpen(false);
+        }, 1500);
       } catch (fallbackErr) {
         console.error('Fallback copy failed:', fallbackErr);
       }
@@ -55,95 +80,107 @@ export default function ShareButtons({ title, url, description }: ShareButtonsPr
     const text = description ? `${title} - ${description}` : title;
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(fullUrl)}`;
     window.open(twitterUrl, '_blank', 'noopener,noreferrer');
+    setMenuOpen(false);
   };
 
   const shareToFacebook = () => {
     const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(fullUrl)}`;
     window.open(facebookUrl, '_blank', 'noopener,noreferrer');
+    setMenuOpen(false);
   };
 
   const shareToLinkedIn = () => {
     const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(fullUrl)}`;
     window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
+    setMenuOpen(false);
   };
 
   const shareToReddit = () => {
     const redditUrl = `https://reddit.com/submit?title=${encodeURIComponent(title)}&url=${encodeURIComponent(fullUrl)}`;
     window.open(redditUrl, '_blank', 'noopener,noreferrer');
+    setMenuOpen(false);
   };
 
   const supportsNativeShare = typeof navigator !== 'undefined' && navigator.share;
 
   return (
     <div className="mt-8 pt-8 border-t border-white/10">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-        <span className="text-white/60 text-sm font-medium whitespace-nowrap">Share this post:</span>
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          {supportsNativeShare && (
-            <button
-              onClick={handleNativeShare}
-              className="inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-medium transition rounded-none min-w-[60px] sm:min-w-0"
-              aria-label="Share"
-            >
-              <Share2 className="w-4 h-4" />
-              <span className="hidden sm:inline">Share</span>
-            </button>
-          )}
-          <button
-            onClick={shareToTwitter}
-            className="inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-medium transition rounded-none"
-            aria-label="Share on Twitter"
-            title="Share on Twitter"
-          >
-            <Twitter className="w-4 h-4" />
-            <span className="hidden sm:inline">Twitter</span>
-          </button>
-          <button
-            onClick={shareToFacebook}
-            className="inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-medium transition rounded-none"
-            aria-label="Share on Facebook"
-            title="Share on Facebook"
-          >
-            <Facebook className="w-4 h-4" />
-            <span className="hidden sm:inline">Facebook</span>
-          </button>
-          <button
-            onClick={shareToLinkedIn}
-            className="inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-medium transition rounded-none"
-            aria-label="Share on LinkedIn"
-            title="Share on LinkedIn"
-          >
-            <Linkedin className="w-4 h-4" />
-            <span className="hidden sm:inline">LinkedIn</span>
-          </button>
-          <button
-            onClick={shareToReddit}
-            className="inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-medium transition rounded-none"
-            aria-label="Share on Reddit"
-            title="Share on Reddit"
-          >
-            <span className="text-base leading-none">🔴</span>
-            <span className="hidden sm:inline">Reddit</span>
-          </button>
-          <button
-            onClick={handleCopyLink}
-            className="inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-medium transition rounded-none"
-            aria-label="Copy link"
-            title="Copy link to clipboard"
-          >
-            {copied ? (
-              <>
-                <Check className="w-4 h-4" />
-                <span className="hidden sm:inline">Copied!</span>
-              </>
-            ) : (
-              <>
-                <Link2 className="w-4 h-4" />
-                <span className="hidden sm:inline">Copy Link</span>
-              </>
-            )}
-          </button>
-        </div>
+      <div className="relative inline-block" ref={menuRef}>
+        <button
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-medium transition rounded-none"
+          aria-label="Share this post"
+          aria-expanded={menuOpen}
+        >
+          <Share2 className="w-4 h-4" />
+          <span>Share</span>
+        </button>
+        
+        {menuOpen && (
+          <div className="absolute top-full left-0 mt-2 bg-black/95 border border-white/20 rounded-none min-w-[180px] z-50 shadow-lg">
+            <div className="py-1">
+              {supportsNativeShare && (
+                <button
+                  onClick={handleNativeShare}
+                  className="w-full px-4 py-2 text-left text-white hover:bg-white hover:text-black transition flex items-center gap-3 text-sm"
+                  aria-label="Share via native share"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span>Share via...</span>
+                </button>
+              )}
+              <button
+                onClick={shareToTwitter}
+                className="w-full px-4 py-2 text-left text-white hover:bg-white hover:text-black transition flex items-center gap-3 text-sm"
+                aria-label="Share on Twitter"
+              >
+                <Twitter className="w-4 h-4" />
+                <span>Twitter</span>
+              </button>
+              <button
+                onClick={shareToFacebook}
+                className="w-full px-4 py-2 text-left text-white hover:bg-white hover:text-black transition flex items-center gap-3 text-sm"
+                aria-label="Share on Facebook"
+              >
+                <Facebook className="w-4 h-4" />
+                <span>Facebook</span>
+              </button>
+              <button
+                onClick={shareToLinkedIn}
+                className="w-full px-4 py-2 text-left text-white hover:bg-white hover:text-black transition flex items-center gap-3 text-sm"
+                aria-label="Share on LinkedIn"
+              >
+                <Linkedin className="w-4 h-4" />
+                <span>LinkedIn</span>
+              </button>
+              <button
+                onClick={shareToReddit}
+                className="w-full px-4 py-2 text-left text-white hover:bg-white hover:text-black transition flex items-center gap-3 text-sm"
+                aria-label="Share on Reddit"
+              >
+                <span className="text-base leading-none">🔴</span>
+                <span>Reddit</span>
+              </button>
+              <button
+                onClick={handleCopyLink}
+                className="w-full px-4 py-2 text-left text-white hover:bg-white hover:text-black transition flex items-center gap-3 text-sm"
+                aria-label="Copy link"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span>Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Link2 className="w-4 h-4" />
+                    <span>Copy Link</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
