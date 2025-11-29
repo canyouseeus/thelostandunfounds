@@ -8,6 +8,7 @@ import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabase';
 import { LoadingSpinner } from '../components/Loading';
 import BlogAnalysis from '../components/BlogAnalysis';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 interface BlogPost {
   id: string;
@@ -24,15 +25,24 @@ interface BlogPost {
   featured_image?: string | null; // Support existing field
 }
 
+interface BlogPostListItem {
+  slug: string;
+  title: string;
+  published_at: string | null;
+  created_at: string;
+}
+
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
   const [post, setPost] = useState<BlogPost | null>(null);
+  const [nextPost, setNextPost] = useState<BlogPostListItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (slug) {
       loadPost(slug);
+      loadNextPost(slug);
     }
   }, [slug]);
 
@@ -72,6 +82,41 @@ export default function BlogPost() {
       setError('Failed to load post');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadNextPost = async (currentSlug: string) => {
+    try {
+      // Get all published posts ordered by published_at (oldest first for reading order)
+      const { data: allPosts, error: fetchError } = await supabase
+        .from('blog_posts')
+        .select('slug, title, published_at, created_at')
+        .order('published_at', { ascending: true, nullsFirst: false })
+        .order('created_at', { ascending: true });
+
+      if (fetchError) {
+        console.error('Error loading posts for next button:', fetchError);
+        return;
+      }
+
+      // Filter to only published posts
+      const publishedPosts = allPosts?.filter((p: any) => {
+        // Check if published field exists and is true, or if status is 'published'
+        return p.published === true || (p.published === undefined && p.status === 'published');
+      }) || [];
+
+      // Find current post index
+      const currentIndex = publishedPosts.findIndex((p: BlogPostListItem) => p.slug === currentSlug);
+      
+      // Get next post (previous in chronological order since we're reading oldest to newest)
+      if (currentIndex >= 0 && currentIndex < publishedPosts.length - 1) {
+        setNextPost(publishedPosts[currentIndex + 1]);
+      } else {
+        setNextPost(null);
+      }
+    } catch (err) {
+      console.error('Error finding next post:', err);
+      setNextPost(null);
     }
   };
 
@@ -237,12 +282,24 @@ export default function BlogPost() {
         </script>
       </Helmet>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <Link
-        to="/thelostarchives"
-        className="text-white/60 hover:text-white text-sm mb-6 inline-block transition"
-      >
-        ← Back to THE LOST ARCHIVES
-      </Link>
+      <div className="flex items-center justify-between mb-6">
+        <Link
+          to="/thelostarchives"
+          className="text-white/60 hover:text-white text-sm inline-flex items-center gap-2 transition"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to THE LOST ARCHIVES
+        </Link>
+        {nextPost && (
+          <Link
+            to={`/thelostarchives/${nextPost.slug}`}
+            className="text-white/60 hover:text-white text-sm inline-flex items-center gap-2 transition"
+          >
+            Next Post
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        )}
+      </div>
 
       <article>
         <header className="mb-8 text-left">
