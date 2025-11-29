@@ -1,5 +1,16 @@
 # Cursor Rules for THE LOST+UNFOUNDS
 
+## TEXT ALIGNMENT RULE - CRITICAL
+**NEVER change text alignment to center or justify. ALWAYS use left alignment.**
+
+- Blog post content MUST be `text-left` (NOT `text-center`, NOT `text-justify`)
+- Blog post paragraphs MUST be `text-left`
+- Blog analysis components MUST be `text-left`
+- Headers and titles can be `text-left` or centered based on design, but body text is ALWAYS `text-left`
+- If you see `text-justify` or `text-center` on blog content, change it to `text-left`
+- DO NOT change alignment unless explicitly asked by the user
+- This applies to: BlogPost.tsx, BlogAnalysis.tsx, and any blog-related components
+
 ## BLOG POST PUBLISHING RULE - FOLLOW EVERY TIME
 
 When the user asks to publish a blog post, you MUST follow these steps in order:

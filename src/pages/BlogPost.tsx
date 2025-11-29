@@ -96,14 +96,14 @@ export default function BlogPost() {
       const numberedMatch = trimmed.match(/^(\d+)\.\s+(.+)$/);
       if (numberedMatch) {
         return (
-          <p key={index} className="mb-6 text-white/90 text-lg leading-relaxed text-justify">
+          <p key={index} className="mb-6 text-white/90 text-lg leading-relaxed text-left">
             <span className="font-bold">{numberedMatch[1]}.</span> {numberedMatch[2]}
           </p>
         );
       }
       
       return (
-        <p key={index} className="mb-6 text-white/90 text-lg leading-relaxed text-justify">
+        <p key={index} className="mb-6 text-white/90 text-lg leading-relaxed text-left">
           {trimmed}
         </p>
       );

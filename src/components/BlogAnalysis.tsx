@@ -298,7 +298,7 @@ export default function BlogAnalysis({ title, content, excerpt }: BlogAnalysisPr
       {/* Summary */}
       <div className="mb-8">
         <h3 className="text-xl font-semibold text-white mb-3 text-left">Summary</h3>
-        <p className="text-white/80 text-lg leading-relaxed text-justify text-left">
+        <p className="text-white/80 text-lg leading-relaxed text-left">
           {analysis.summary}
         </p>
       </div>
@@ -311,7 +311,7 @@ export default function BlogAnalysis({ title, content, excerpt }: BlogAnalysisPr
             {analysis.mainTakeaways.map((takeaway, index) => (
               <li key={index} className="text-white/90 flex items-start gap-3">
                 <span className="text-white/60 mt-1.5 text-lg">→</span>
-                <span className="text-lg leading-relaxed text-justify">{takeaway}</span>
+                <span className="text-lg leading-relaxed text-left">{takeaway}</span>
               </li>
             ))}
           </ul>
@@ -326,7 +326,7 @@ export default function BlogAnalysis({ title, content, excerpt }: BlogAnalysisPr
             {analysis.keyPoints.map((point, index) => (
               <li key={index} className="text-white/80 flex items-start gap-2">
                 <span className="text-white/60 mt-1">•</span>
-                <span className="text-justify">{point}</span>
+                <span className="text-left">{point}</span>
               </li>
             ))}
           </ul>
@@ -341,7 +341,7 @@ export default function BlogAnalysis({ title, content, excerpt }: BlogAnalysisPr
             {analysis.practicalInsights.map((insight, index) => (
               <li key={index} className="text-white/90 flex items-start gap-2">
                 <span className="text-white/60 mt-1">✓</span>
-                <span className="text-justify">{insight}</span>
+                <span className="text-left">{insight}</span>
               </li>
             ))}
           </ul>
