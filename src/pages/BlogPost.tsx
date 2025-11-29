@@ -363,7 +363,40 @@ export default function BlogPost() {
 
   const formatContent = (content: string) => {
     // Split by double newlines to create paragraphs
-    const paragraphs = content.split(/\n\n+/);
+    let paragraphs = content.split(/\n\n+/);
+    
+    // Also split paragraphs that contain a heading followed by body text on separate lines
+    // This handles cases where heading and body are separated by single newline
+    const expandedParagraphs: string[] = [];
+    paragraphs.forEach(para => {
+      const lines = para.split('\n').map(l => l.trim()).filter(l => l !== '');
+      if (lines.length >= 2) {
+        const firstLine = lines[0];
+        // Check if first line looks like a heading
+        const looksLikeHeading = (
+          firstLine.length < 100 &&
+          !firstLine.match(/[.!?]$/) &&
+          firstLine.split(' ').length < 15 &&
+          (
+            firstLine.match(/^(Conclusion|Introduction|Early|The E-Myth|Contagious|This Is Not|The Alchemist|Bitcoin)/i) ||
+            (firstLine.split(' ').every(word => word.length === 0 || word[0] === word[0].toUpperCase()) && 
+             firstLine.length < 80 && firstLine.split(' ').length < 10)
+          )
+        );
+        
+        if (looksLikeHeading) {
+          // Split: heading is first line, body is the rest
+          expandedParagraphs.push(firstLine);
+          expandedParagraphs.push(lines.slice(1).join(' '));
+        } else {
+          expandedParagraphs.push(para);
+        }
+      } else {
+        expandedParagraphs.push(para);
+      }
+    });
+    
+    paragraphs = expandedParagraphs;
     const elements: JSX.Element[] = [];
     
     // Track book link counts (max 2 per book: once in intro, once in section)
