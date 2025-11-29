@@ -203,7 +203,7 @@ export default function BlogPost() {
 
   // Function to format text with bold emphasis for book titles and brand names
   const formatTextWithEmphasis = (text: string) => {
-    // Book titles with their affiliate links
+    // Book titles with their affiliate links (order matters - longer titles first to avoid partial matches)
     const bookLinks: Record<string, string> = {
       'The E-Myth Revisited': 'https://amzn.to/49LFRbv',
       'This Is Not a T-Shirt': 'https://amzn.to/4rJCNn1',
@@ -211,7 +211,7 @@ export default function BlogPost() {
       'Contagious': 'https://amzn.to/3XoOv8A'
     };
 
-    // List of terms to bold (in order of specificity - longer phrases first)
+    // List of terms to bold (in order of specificity - longer phrases first to avoid partial matches)
     const emphasisTerms = [
       'THE LOST+UNFOUNDS',
       'The E-Myth Revisited',
@@ -224,30 +224,58 @@ export default function BlogPost() {
       'Maktub'
     ];
 
-    // Create a single regex that matches all terms
+    // Create a single regex that matches all terms with word boundaries to prevent partial matches
     const escapedTerms = emphasisTerms.map(term => 
       term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     );
-    const combinedRegex = new RegExp(`(${escapedTerms.join('|')})`, 'gi');
+    // Use word boundaries for single words, but not for multi-word phrases to avoid issues
+    const combinedRegex = new RegExp(`\\b(${escapedTerms.join('|')})\\b`, 'gi');
 
     const parts: (string | JSX.Element)[] = [];
     let lastIndex = 0;
     let match;
     let keyCounter = 0;
+    const processedIndices = new Set<number>(); // Track processed positions to avoid duplicates
 
     // Reset regex lastIndex
     combinedRegex.lastIndex = 0;
 
+    // Collect all matches first to avoid overlapping
+    const matches: Array<{index: number, length: number, text: string}> = [];
     while ((match = combinedRegex.exec(text)) !== null) {
+      // Check if this match overlaps with a previous one
+      const matchStart = match.index;
+      const matchEnd = match.index + match[0].length;
+      const isOverlapping = matches.some(m => 
+        (matchStart >= m.index && matchStart < m.index + m.length) ||
+        (matchEnd > m.index && matchEnd <= m.index + m.length) ||
+        (matchStart <= m.index && matchEnd >= m.index + m.length)
+      );
+      
+      if (!isOverlapping && !processedIndices.has(matchStart)) {
+        matches.push({
+          index: matchStart,
+          length: match[0].length,
+          text: match[1]
+        });
+        processedIndices.add(matchStart);
+      }
+    }
+
+    // Sort matches by index
+    matches.sort((a, b) => a.index - b.index);
+
+    // Process matches
+    matches.forEach((matchInfo) => {
       // Add text before the match
-      if (match.index > lastIndex) {
-        const beforeText = text.substring(lastIndex, match.index);
+      if (matchInfo.index > lastIndex) {
+        const beforeText = text.substring(lastIndex, matchInfo.index);
         if (beforeText) {
           parts.push(beforeText);
         }
       }
       
-      const matchedText = match[1];
+      const matchedText = matchInfo.text;
       // Find the affiliate link (case-insensitive lookup)
       const bookKey = Object.keys(bookLinks).find(
         key => key.toLowerCase() === matchedText.toLowerCase()
@@ -276,8 +304,8 @@ export default function BlogPost() {
         );
       }
       
-      lastIndex = match.index + match[0].length;
-    }
+      lastIndex = matchInfo.index + matchInfo.length;
+    });
 
     // Add remaining text
     if (lastIndex < text.length) {
@@ -326,12 +354,9 @@ export default function BlogPost() {
       
       if (isLikelyHeading) {
         const headingContent = formatTextWithEmphasis(trimmed);
-        const formattedHeading = Array.isArray(headingContent)
-          ? convertUrlsToLinks(headingContent)
-          : convertUrlsToLinks([headingContent]);
         elements.push(
           <h2 key={`heading-${index}`} className="text-2xl font-bold text-white mt-12 mb-6 text-left first:mt-0">
-            {formattedHeading}
+            {Array.isArray(headingContent) ? headingContent : headingContent}
           </h2>
         );
         return;
@@ -341,13 +366,10 @@ export default function BlogPost() {
       const numberedMatch = trimmed.match(/^(\d+)\.\s+(.+)$/);
       if (numberedMatch) {
         const content = formatTextWithEmphasis(numberedMatch[2]);
-        const formattedContent = Array.isArray(content)
-          ? convertUrlsToLinks(content)
-          : convertUrlsToLinks([content]);
         elements.push(
           <p key={index} className="mb-6 text-white/90 text-lg leading-relaxed text-left">
             <span className="font-bold">{numberedMatch[1]}.</span>{' '}
-            {formattedContent}
+            {Array.isArray(content) ? content : content}
           </p>
         );
         return;
@@ -357,26 +379,20 @@ export default function BlogPost() {
       if (trimmed.match(/^[•\-\*]\s+/)) {
         const bulletText = trimmed.replace(/^[•\-\*]\s+/, '');
         const content = formatTextWithEmphasis(bulletText);
-        const formattedContent = Array.isArray(content)
-          ? convertUrlsToLinks(content)
-          : convertUrlsToLinks([content]);
         elements.push(
           <p key={index} className="mb-4 text-white/90 text-lg leading-relaxed text-left pl-4">
             <span className="text-white/60 mr-2">•</span>
-            {formattedContent}
+            {Array.isArray(content) ? content : content}
           </p>
         );
         return;
       }
       
-      // Regular paragraph with emphasis formatting and link conversion
+      // Regular paragraph with emphasis formatting (book titles are already links, no need for URL conversion)
       const content = formatTextWithEmphasis(trimmed);
-      const formattedContent = Array.isArray(content) 
-        ? convertUrlsToLinks(content)
-        : convertUrlsToLinks([content]);
       elements.push(
         <p key={index} className="mb-6 text-white/90 text-lg leading-relaxed text-left">
-          {formattedContent}
+          {Array.isArray(content) ? content : content}
         </p>
       );
     });
