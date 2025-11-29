@@ -8,6 +8,7 @@ import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabase';
 import { LoadingSpinner } from '../components/Loading';
 import BlogAnalysis from '../components/BlogAnalysis';
+import ShareButtons from '../components/ShareButtons';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 interface BlogPost {
@@ -653,6 +654,13 @@ export default function BlogPost() {
         <div className="prose prose-invert max-w-none text-left">
           {formatContent(post.content)}
         </div>
+
+        {/* Share Buttons */}
+        <ShareButtons
+          title={post.title}
+          url={`/thelostarchives/${post.slug}`}
+          description={post.excerpt || post.seo_description || undefined}
+        />
 
         {/* AI Breakdown Section */}
         <BlogAnalysis
