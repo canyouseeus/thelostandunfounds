@@ -244,9 +244,14 @@ export default function BlogPost() {
     // Collect all matches first to avoid overlapping
     const matches: Array<{index: number, length: number, text: string}> = [];
     while ((match = combinedRegex.exec(text)) !== null) {
+      // The regex includes leading space/start, so adjust the index
+      const fullMatch = match[0];
+      const actualText = match[1]; // The captured group (the term itself)
+      const leadingSpace = fullMatch.length - actualText.length;
+      const matchStart = match.index + leadingSpace; // Actual start of the term
+      const matchEnd = matchStart + actualText.length;
+      
       // Check if this match overlaps with a previous one
-      const matchStart = match.index;
-      const matchEnd = match.index + match[0].length;
       const isOverlapping = matches.some(m => 
         (matchStart >= m.index && matchStart < m.index + m.length) ||
         (matchEnd > m.index && matchEnd <= m.index + m.length) ||
@@ -256,8 +261,8 @@ export default function BlogPost() {
       if (!isOverlapping && !processedIndices.has(matchStart)) {
         matches.push({
           index: matchStart,
-          length: match[0].length,
-          text: match[1]
+          length: actualText.length,
+          text: actualText
         });
         processedIndices.add(matchStart);
       }
