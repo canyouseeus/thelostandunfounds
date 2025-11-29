@@ -7,10 +7,6 @@
     {
       "source": "/thelostarchives/:slug",
       "destination": "/thelostarchives/:slug.html"
-    },
-    {
-      "source": "/((?!api).*)",
-      "destination": "/index.html"
     }
   ],
   "headers": [
