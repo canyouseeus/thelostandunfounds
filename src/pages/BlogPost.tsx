@@ -249,11 +249,10 @@ export default function BlogPost() {
       
       const matchedText = match[1];
       // Find the affiliate link (case-insensitive lookup)
-      const affiliateLink = Object.keys(bookLinks).find(
+      const bookKey = Object.keys(bookLinks).find(
         key => key.toLowerCase() === matchedText.toLowerCase()
-      ) ? bookLinks[Object.keys(bookLinks).find(
-        key => key.toLowerCase() === matchedText.toLowerCase()
-      )!] : undefined;
+      );
+      const affiliateLink = bookKey ? bookLinks[bookKey] : undefined;
       
       // If it's a book title with an affiliate link, make it a clickable link
       if (affiliateLink) {
