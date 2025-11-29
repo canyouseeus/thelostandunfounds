@@ -203,7 +203,15 @@ export default function BlogPost() {
 
   // Function to format text with bold emphasis for book titles and brand names
   const formatTextWithEmphasis = (text: string) => {
-    // List of book titles and important terms to bold (in order of specificity - longer phrases first)
+    // Book titles with their affiliate links
+    const bookLinks: Record<string, string> = {
+      'The E-Myth Revisited': 'https://amzn.to/49LFRbv',
+      'This Is Not a T-Shirt': 'https://amzn.to/4rJCNn1',
+      'The Alchemist': 'https://amzn.to/49HqnFx',
+      'Contagious': 'https://amzn.to/3XoOv8A'
+    };
+
+    // List of terms to bold (in order of specificity - longer phrases first)
     const emphasisTerms = [
       'THE LOST+UNFOUNDS',
       'The E-Myth Revisited',
@@ -238,12 +246,37 @@ export default function BlogPost() {
           parts.push(beforeText);
         }
       }
-      // Add the bold element
-      parts.push(
-        <strong key={`bold-${keyCounter++}`} className="font-bold text-white">
-          {match[1]}
-        </strong>
-      );
+      
+      const matchedText = match[1];
+      // Find the affiliate link (case-insensitive lookup)
+      const affiliateLink = Object.keys(bookLinks).find(
+        key => key.toLowerCase() === matchedText.toLowerCase()
+      ) ? bookLinks[Object.keys(bookLinks).find(
+        key => key.toLowerCase() === matchedText.toLowerCase()
+      )!] : undefined;
+      
+      // If it's a book title with an affiliate link, make it a clickable link
+      if (affiliateLink) {
+        parts.push(
+          <a
+            key={`link-${keyCounter++}`}
+            href={affiliateLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-bold text-white underline hover:text-white/80 transition"
+          >
+            {matchedText}
+          </a>
+        );
+      } else {
+        // Otherwise, just make it bold
+        parts.push(
+          <strong key={`bold-${keyCounter++}`} className="font-bold text-white">
+            {matchedText}
+          </strong>
+        );
+      }
+      
       lastIndex = match.index + match[0].length;
     }
 
