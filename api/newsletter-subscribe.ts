@@ -147,6 +147,7 @@ export default async function handler(
 
         let accountId: string | null = null
         let accountInfo: any = null
+        let actualFromEmail: string = fromEmail
         
         if (accountInfoResponse.ok) {
           const accounts = await accountInfoResponse.json()
@@ -154,6 +155,8 @@ export default async function handler(
           if (accounts.data && accounts.data.length > 0) {
             accountInfo = accounts.data[0]
             accountId = accounts.data[0].accountId || accounts.data[0].account_id || accounts.data[0].accountId
+            // Get the actual email from the account response
+            actualFromEmail = accountInfo.emailAddress || accountInfo.email || accountInfo.accountName || fromEmail
           }
         } else {
           const accountErrorText = await accountInfoResponse.text()
@@ -170,7 +173,7 @@ export default async function handler(
           accountId = emailParts[0]
         }
         
-        console.log('Using account ID:', accountId, 'for email:', fromEmail)
+        console.log('Using account ID:', accountId, 'configured email:', fromEmail, 'actual email:', actualFromEmail)
 
         if (accountId) {
           // Send welcome/confirmation email to user
@@ -183,7 +186,7 @@ export default async function handler(
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              fromAddress: fromEmail,
+              fromAddress: actualFromEmail,
               toAddress: email,
               subject: 'Welcome to THE LOST+UNFOUNDS',
               content: `

@@ -47,9 +47,9 @@ async function getZohoAccessToken(): Promise<string> {
 }
 
 /**
- * Get Zoho account ID
+ * Get Zoho account ID and email
  */
-async function getZohoAccountId(accessToken: string, fromEmail: string): Promise<string> {
+async function getZohoAccountInfo(accessToken: string, fallbackEmail: string): Promise<{ accountId: string; email: string }> {
   const accountInfoResponse = await fetch('https://mail.zoho.com/api/accounts', {
     method: 'GET',
     headers: {
@@ -60,14 +60,20 @@ async function getZohoAccountId(accessToken: string, fromEmail: string): Promise
   if (accountInfoResponse.ok) {
     const accounts = await accountInfoResponse.json()
     if (accounts.data && accounts.data.length > 0) {
-      const accountId = accounts.data[0].accountId || accounts.data[0].account_id
-      if (accountId) return accountId
+      const account = accounts.data[0]
+      const accountId = account.accountId || account.account_id
+      // Try to get the actual email from the account response
+      const accountEmail = account.emailAddress || account.email || account.accountName || fallbackEmail
+      
+      if (accountId) {
+        return { accountId, email: accountEmail }
+      }
     }
   }
 
   // Fallback: extract account ID from email
-  const emailParts = fromEmail.split('@')
-  return emailParts[0]
+  const emailParts = fallbackEmail.split('@')
+  return { accountId: emailParts[0], email: fallbackEmail }
 }
 
 /**
@@ -204,13 +210,24 @@ export default async function handler(
       campaignRecord = data
     }
 
-    // Get Zoho access token and account ID
+    // Get Zoho access token and account info
     let accessToken: string
     let accountId: string
+    let actualFromEmail: string
 
     try {
       accessToken = await getZohoAccessToken()
-      accountId = await getZohoAccountId(accessToken, fromEmail)
+      const accountInfo = await getZohoAccountInfo(accessToken, fromEmail)
+      accountId = accountInfo.accountId
+      actualFromEmail = accountInfo.email
+      
+      // Log the email being used for debugging
+      console.log('Zoho account info:', {
+        accountId,
+        configuredEmail: fromEmail,
+        actualEmail: actualFromEmail,
+        usingActualEmail: actualFromEmail !== fromEmail
+      })
     } catch (error: any) {
       // Update campaign status to failed
       await supabase
@@ -237,7 +254,7 @@ export default async function handler(
             const result = await sendZohoEmail(
               accessToken,
               accountId,
-              fromEmail,
+              actualFromEmail,
               subscriber.email,
               subject,
               contentHtml
