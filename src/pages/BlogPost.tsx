@@ -139,6 +139,73 @@ export default function BlogPost() {
     });
   };
 
+  // Function to format text with bold emphasis for book titles and brand names
+  const formatTextWithEmphasis = (text: string) => {
+    // List of book titles and important terms to bold (in order of specificity - longer phrases first)
+    const emphasisTerms = [
+      'THE LOST+UNFOUNDS',
+      'The E-Myth Revisited',
+      'This Is Not a T-Shirt',
+      'The Alchemist',
+      'The Hundreds',
+      'Personal Legend',
+      'Contagious',
+      'Bitcoin',
+      'Maktub'
+    ];
+
+    // Create a single regex that matches all terms
+    const escapedTerms = emphasisTerms.map(term => 
+      term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    );
+    const combinedRegex = new RegExp(`(${escapedTerms.join('|')})`, 'gi');
+
+    const parts: (string | JSX.Element)[] = [];
+    let lastIndex = 0;
+    let match;
+    let keyCounter = 0;
+
+    // Reset regex lastIndex
+    combinedRegex.lastIndex = 0;
+
+    while ((match = combinedRegex.exec(text)) !== null) {
+      // Add text before the match
+      if (match.index > lastIndex) {
+        const beforeText = text.substring(lastIndex, match.index);
+        if (beforeText) {
+          parts.push(beforeText);
+        }
+      }
+      // Add the bold element
+      parts.push(
+        <strong key={`bold-${keyCounter++}`} className="font-bold text-white">
+          {match[1]}
+        </strong>
+      );
+      lastIndex = match.index + match[0].length;
+    }
+
+    // Add remaining text
+    if (lastIndex < text.length) {
+      const afterText = text.substring(lastIndex);
+      if (afterText) {
+        parts.push(afterText);
+      }
+    }
+
+    // If no matches were found, return original text as string
+    if (parts.length === 0) {
+      return text;
+    }
+
+    // If only one part and it's a string matching the original, return as string
+    if (parts.length === 1 && typeof parts[0] === 'string' && parts[0] === text) {
+      return text;
+    }
+
+    return parts;
+  };
+
   const formatContent = (content: string) => {
     // Split by double newlines to create paragraphs
     const paragraphs = content.split(/\n\n+/);
@@ -164,9 +231,10 @@ export default function BlogPost() {
                               (index === 0 || paragraphs[index - 1]?.trim() === '⸻' || paragraphs[index - 1]?.trim() === '');
       
       if (isLikelyHeading) {
+        const headingContent = formatTextWithEmphasis(trimmed);
         elements.push(
           <h2 key={`heading-${index}`} className="text-2xl font-bold text-white mt-12 mb-6 text-left first:mt-0">
-            {trimmed}
+            {Array.isArray(headingContent) ? headingContent : headingContent}
           </h2>
         );
         return;
@@ -175,9 +243,11 @@ export default function BlogPost() {
       // Check if paragraph starts with a number followed by a period (numbered list)
       const numberedMatch = trimmed.match(/^(\d+)\.\s+(.+)$/);
       if (numberedMatch) {
+        const content = formatTextWithEmphasis(numberedMatch[2]);
         elements.push(
           <p key={index} className="mb-6 text-white/90 text-lg leading-relaxed text-left">
-            <span className="font-bold">{numberedMatch[1]}.</span> {numberedMatch[2]}
+            <span className="font-bold">{numberedMatch[1]}.</span>{' '}
+            {Array.isArray(content) ? content : content}
           </p>
         );
         return;
@@ -186,19 +256,21 @@ export default function BlogPost() {
       // Check for bullet points (lines starting with • or -)
       if (trimmed.match(/^[•\-\*]\s+/)) {
         const bulletText = trimmed.replace(/^[•\-\*]\s+/, '');
+        const content = formatTextWithEmphasis(bulletText);
         elements.push(
           <p key={index} className="mb-4 text-white/90 text-lg leading-relaxed text-left pl-4">
             <span className="text-white/60 mr-2">•</span>
-            {bulletText}
+            {Array.isArray(content) ? content : content}
           </p>
         );
         return;
       }
       
-      // Regular paragraph
+      // Regular paragraph with emphasis formatting
+      const content = formatTextWithEmphasis(trimmed);
       elements.push(
         <p key={index} className="mb-6 text-white/90 text-lg leading-relaxed text-left">
-          {trimmed}
+          {Array.isArray(content) ? content : content}
         </p>
       );
     });
