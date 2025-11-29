@@ -92,7 +92,7 @@ Funny enough, I know and accept that perhaps I was the one that hasn''t been wor
 
 As soon as I started doing that, the dots started to connect. The inner work started inner working and the outer experience started to improve. I still have trouble reaching an understanding with people, but I am comfortable enough with myself to not let it shake my confidence.
 
-I am resilient and resourceful, and I have a vision that has not changed throughout this time. To run this website, help people, and build a brand that changes the way people do business. In short, I want to build the best "job" on the planet. We''ll see how that goes.',
+I am resilient and resourceful, and I have a vision that has not changed throughout this time. To run this website, help people, and build a brand that changes the way people do business. Today, we''re building features that make content more accessible - like automatic AI breakdowns that help readers understand complex topics through intuitive summaries and definitions. In short, I want to build the best "job" on the planet. We''ll see how that goes.',
         'A personal reflection on resilience, change, and the pursuit of a dream. From living in a car to building a vision, this is a story about refusing to give up and staying true to yourself.',
         admin_user_id,
         true,
@@ -140,7 +140,7 @@ Funny enough, I know and accept that perhaps I was the one that hasn''t been wor
 
 As soon as I started doing that, the dots started to connect. The inner work started inner working and the outer experience started to improve. I still have trouble reaching an understanding with people, but I am comfortable enough with myself to not let it shake my confidence.
 
-I am resilient and resourceful, and I have a vision that has not changed throughout this time. To run this website, help people, and build a brand that changes the way people do business. In short, I want to build the best "job" on the planet. We''ll see how that goes.',
+I am resilient and resourceful, and I have a vision that has not changed throughout this time. To run this website, help people, and build a brand that changes the way people do business. Today, we''re building features that make content more accessible - like automatic AI breakdowns that help readers understand complex topics through intuitive summaries and definitions. In short, I want to build the best "job" on the planet. We''ll see how that goes.',
         'A personal reflection on resilience, change, and the pursuit of a dream. From living in a car to building a vision, this is a story about refusing to give up and staying true to yourself.',
         admin_user_id,
         true,
@@ -186,7 +186,7 @@ Funny enough, I know and accept that perhaps I was the one that hasn''t been wor
 
 As soon as I started doing that, the dots started to connect. The inner work started inner working and the outer experience started to improve. I still have trouble reaching an understanding with people, but I am comfortable enough with myself to not let it shake my confidence.
 
-I am resilient and resourceful, and I have a vision that has not changed throughout this time. To run this website, help people, and build a brand that changes the way people do business. In short, I want to build the best "job" on the planet. We''ll see how that goes.',
+I am resilient and resourceful, and I have a vision that has not changed throughout this time. To run this website, help people, and build a brand that changes the way people do business. Today, we''re building features that make content more accessible - like automatic AI breakdowns that help readers understand complex topics through intuitive summaries and definitions. In short, I want to build the best "job" on the planet. We''ll see how that goes.',
         'A personal reflection on resilience, change, and the pursuit of a dream. From living in a car to building a vision, this is a story about refusing to give up and staying true to yourself.',
         admin_user_id,
         'published',
@@ -226,7 +226,7 @@ Funny enough, I know and accept that perhaps I was the one that hasn''t been wor
 
 As soon as I started doing that, the dots started to connect. The inner work started inner working and the outer experience started to improve. I still have trouble reaching an understanding with people, but I am comfortable enough with myself to not let it shake my confidence.
 
-I am resilient and resourceful, and I have a vision that has not changed throughout this time. To run this website, help people, and build a brand that changes the way people do business. In short, I want to build the best "job" on the planet. We''ll see how that goes.',
+I am resilient and resourceful, and I have a vision that has not changed throughout this time. To run this website, help people, and build a brand that changes the way people do business. Today, we''re building features that make content more accessible - like automatic AI breakdowns that help readers understand complex topics through intuitive summaries and definitions. In short, I want to build the best "job" on the planet. We''ll see how that goes.',
         'A personal reflection on resilience, change, and the pursuit of a dream. From living in a car to building a vision, this is a story about refusing to give up and staying true to yourself.',
         admin_user_id,
         'published',
@@ -266,7 +266,7 @@ Funny enough, I know and accept that perhaps I was the one that hasn''t been wor
 
 As soon as I started doing that, the dots started to connect. The inner work started inner working and the outer experience started to improve. I still have trouble reaching an understanding with people, but I am comfortable enough with myself to not let it shake my confidence.
 
-I am resilient and resourceful, and I have a vision that has not changed throughout this time. To run this website, help people, and build a brand that changes the way people do business. In short, I want to build the best "job" on the planet. We''ll see how that goes.',
+I am resilient and resourceful, and I have a vision that has not changed throughout this time. To run this website, help people, and build a brand that changes the way people do business. Today, we''re building features that make content more accessible - like automatic AI breakdowns that help readers understand complex topics through intuitive summaries and definitions. In short, I want to build the best "job" on the planet. We''ll see how that goes.',
       'A personal reflection on resilience, change, and the pursuit of a dream. From living in a car to building a vision, this is a story about refusing to give up and staying true to yourself.',
       'published',
       NOW()
