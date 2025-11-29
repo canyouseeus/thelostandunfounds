@@ -4,14 +4,19 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
-  // Extract path from URL
-  const urlPath = req.url?.split('?')[0] || ''
-  const pathParts = urlPath.split('/').filter(p => p)
-  // Remove 'api' and 'utils' from path parts, join the rest
-  const apiIndex = pathParts.indexOf('api')
-  const utilsIndex = pathParts.indexOf('utils')
-  const routeParts = pathParts.slice(Math.max(apiIndex, utilsIndex) + 1)
-  const route = routeParts.join('/')
+  // Extract route from path parameter (Vercel catch-all)
+  let route = ''
+  if (req.query.path) {
+    route = Array.isArray(req.query.path) ? req.query.path.join('/') : req.query.path
+  } else {
+    // Fallback: extract from URL
+    const urlPath = req.url?.split('?')[0] || ''
+    const pathParts = urlPath.split('/').filter(p => p)
+    const apiIndex = pathParts.indexOf('api')
+    const utilsIndex = pathParts.indexOf('utils')
+    const routeParts = pathParts.slice(Math.max(apiIndex, utilsIndex) + 1)
+    route = routeParts.join('/')
+  }
 
   // Route to appropriate handler
   switch (route) {

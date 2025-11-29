@@ -4,10 +4,16 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
-  // Extract path from URL
-  const urlPath = req.url?.split('?')[0] || ''
-  const pathParts = urlPath.split('/').filter(p => p)
-  const route = pathParts[pathParts.length - 1] || ''
+  // Extract route from path parameter (Vercel catch-all)
+  let route = ''
+  if (req.query.path) {
+    route = Array.isArray(req.query.path) ? req.query.path[0] : req.query.path
+  } else {
+    // Fallback: extract from URL
+    const urlPath = req.url?.split('?')[0] || ''
+    const pathParts = urlPath.split('/').filter(p => p)
+    route = pathParts[pathParts.length - 1] || ''
+  }
 
   // Route to appropriate handler
   switch (route) {
