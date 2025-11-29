@@ -231,15 +231,16 @@ function analyzeBlogPost(title: string, content: string, excerpt?: string): Anal
   }
   
   // Only add suggestions if post explicitly asks for comparisons
-  // (Keeping the logic below but it won't run for descriptive posts)
-
+  // For now, we're not adding any suggestions - only show tools that are actually mentioned
+  // This prevents cluttering the analysis with irrelevant tool suggestions
+  
   return {
     summary,
     keyPoints: finalKeyPoints,
     toolsMentioned,
     termsAndConcepts,
-    comparableTools,
-    alternatives,
+    comparableTools: [],
+    alternatives: [],
   };
 }
 
