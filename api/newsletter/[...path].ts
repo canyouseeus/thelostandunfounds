@@ -4,10 +4,12 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
-  const { path } = req.query
-  const route = Array.isArray(path) ? path[0] : path
+  // Extract path from URL since query param might not work
+  const urlPath = req.url?.split('?')[0] || ''
+  const pathParts = urlPath.split('/').filter(p => p)
+  const route = pathParts[pathParts.length - 1] || ''
 
-  console.log('Newsletter router - path:', path, 'route:', route, 'method:', req.method)
+  console.log('Newsletter router - urlPath:', urlPath, 'pathParts:', pathParts, 'route:', route, 'method:', req.method)
 
   // Route to appropriate handler
   try {
