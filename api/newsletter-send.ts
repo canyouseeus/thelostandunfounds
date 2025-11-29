@@ -64,8 +64,15 @@ async function getZohoAccountInfo(accessToken: string, fallbackEmail: string): P
       const account = accounts.data[0]
       // Match the exact format from newsletter-subscribe (which works)
       const accountId = account.accountId || account.account_id || account.accountId
-      // Try to get the actual email from the account response
-      const accountEmail = account.emailAddress || account.email || account.accountName || fallbackEmail
+      // Try to get the actual email from the account response - ensure it's a string
+      let accountEmail = fallbackEmail
+      if (account.emailAddress && typeof account.emailAddress === 'string') {
+        accountEmail = account.emailAddress
+      } else if (account.email && typeof account.email === 'string') {
+        accountEmail = account.email
+      } else if (account.accountName && typeof account.accountName === 'string') {
+        accountEmail = account.accountName
+      }
       
       if (accountId) {
         console.log('Using account ID:', accountId, 'email:', accountEmail)
