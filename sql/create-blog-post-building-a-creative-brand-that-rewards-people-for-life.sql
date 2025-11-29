@@ -79,6 +79,8 @@ These insights helped clarify how to value contributors, nurture culture, and cr
 
 By integrating these ideas, THE LOST+UNFOUNDS became a creative brand that prioritizes meaningful contributions, encourages collaboration, and embraces innovation.
 
+Amazon Affiliate Disclosure: As an Amazon Associate, we earn from qualifying purchases. Some links in this post are affiliate links, which means we may earn a commission if you click through and make a purchase. This helps support THE LOST+UNFOUNDS and allows us to continue creating content. Thank you for your support!
+
 
 
 Early Inspiration and Learning
@@ -91,7 +93,7 @@ Integrating these lessons allowed me to develop a clearer vision for the brand. 
 
 
 The E-Myth Revisited: Systems, Roles, and Leadership
-Michael Gerber''s The E-Myth Revisited tells the story of Sarah, the owner of All About Pies, who loved baking but struggled with running every aspect of her business. Gerber explains that most entrepreneurs spend time working in their business rather than on it, writing, "Most people who start small businesses are working in their business, not on their business." This insight highlighted the importance of clear roles, delegation, and building systems to support growth.
+Michael Gerber''s The E-Myth Revisited (https://amzn.to/49LFRbv) tells the story of Sarah, the owner of All About Pies, who loved baking but struggled with running every aspect of her business. Gerber explains that most entrepreneurs spend time working in their business rather than on it, writing, "Most people who start small businesses are working in their business, not on their business." This insight highlighted the importance of clear roles, delegation, and building systems to support growth.
 
 Understanding the distinction between the Entrepreneur, the Manager, and the Technician reshaped my thinking. Businesses thrive when contributors focus on what they do best, while systems coordinate and amplify their efforts. At THE LOST+UNFOUNDS, we aim to empower people to create, contribute, and collaborate without being burdened by every operational detail.
 
@@ -100,7 +102,7 @@ The emphasis on repeatable systems also inspired me to think about lasting value
 
 
 Contagious: Word-of-Mouth, Engagement, and Influence
-Jonah Berger''s Contagious shifted how I view influence and growth. One striking insight is that the majority of word-of-mouth occurs offline, in real-world interactions, rather than online. This underscores the importance of authentic engagement and meaningful relationships in building a brand.
+Jonah Berger''s Contagious (https://amzn.to/3XoOv8A) shifted how I view influence and growth. One striking insight is that the majority of word-of-mouth occurs offline, in real-world interactions, rather than online. This underscores the importance of authentic engagement and meaningful relationships in building a brand.
 
 For THE LOST+UNFOUNDS, this confirmed that people who introduce others to the brand through genuine connections and shared experiences are driving real impact. Recognizing and valuing these contributions became central to our philosophy.
 
@@ -109,7 +111,7 @@ Berger also highlights the social and emotional triggers that make ideas contagi
 
 
 This Is Not a T-Shirt: People Over Product and Lifelong Contribution
-This Is Not a T-Shirt had a profound personal impact. Listening to Bobby Hundreds'' story during a long road trip, I connected with his journey of building a brand through culture, community, and creativity. The principle of "People over Product" resonated strongly—what defines a brand are the people and relationships that bring it to life.
+This Is Not a T-Shirt (https://amzn.to/4rJCNn1) had a profound personal impact. Listening to Bobby Hundreds'' story during a long road trip, I connected with his journey of building a brand through culture, community, and creativity. The principle of "People over Product" resonated strongly—what defines a brand are the people and relationships that bring it to life.
 
 Bobby Hundreds also writes, "Never underestimate the power of influence in one-on-one encounters." This insight shaped my thinking about long-term recognition. Those who bring others into a brand, nurture relationships, and contribute to its culture create lasting value that should be acknowledged.
 
@@ -118,7 +120,7 @@ Reading about the closure of The Hundreds'' stores and how employees could no lo
 
 
 The Alchemist: Vision, Purpose, and Santiago''s Journey
-Paulo Coelho''s The Alchemist reinforced the importance of vision, purpose, and pursuing meaningful goals. Santiago''s journey begins with a dream about treasure near the Egyptian pyramids, leading him to leave his familiar life behind. Along the way, he encounters challenges that test his courage and resolve.
+Paulo Coelho''s The Alchemist (https://amzn.to/49HqnFx) reinforced the importance of vision, purpose, and pursuing meaningful goals. Santiago''s journey begins with a dream about treasure near the Egyptian pyramids, leading him to leave his familiar life behind. Along the way, he encounters challenges that test his courage and resolve.
 
 Santiago meets a king who teaches him about following his Personal Legend, a crystal merchant who shows the cost of abandoning dreams, and Fatima, whose love teaches him the harmony of ambition and meaningful relationships. The desert, representing trials and lessons, and the concept of Maktub, meaning "it is written," illustrate how the universe guides those committed to their true path.
 
@@ -173,6 +175,8 @@ These insights helped clarify how to value contributors, nurture culture, and cr
 
 By integrating these ideas, THE LOST+UNFOUNDS became a creative brand that prioritizes meaningful contributions, encourages collaboration, and embraces innovation.
 
+Amazon Affiliate Disclosure: As an Amazon Associate, we earn from qualifying purchases. Some links in this post are affiliate links, which means we may earn a commission if you click through and make a purchase. This helps support THE LOST+UNFOUNDS and allows us to continue creating content. Thank you for your support!
+
 
 
 Early Inspiration and Learning
@@ -185,7 +189,7 @@ Integrating these lessons allowed me to develop a clearer vision for the brand. 
 
 
 The E-Myth Revisited: Systems, Roles, and Leadership
-Michael Gerber''s The E-Myth Revisited tells the story of Sarah, the owner of All About Pies, who loved baking but struggled with running every aspect of her business. Gerber explains that most entrepreneurs spend time working in their business rather than on it, writing, "Most people who start small businesses are working in their business, not on their business." This insight highlighted the importance of clear roles, delegation, and building systems to support growth.
+Michael Gerber''s The E-Myth Revisited (https://amzn.to/49LFRbv) tells the story of Sarah, the owner of All About Pies, who loved baking but struggled with running every aspect of her business. Gerber explains that most entrepreneurs spend time working in their business rather than on it, writing, "Most people who start small businesses are working in their business, not on their business." This insight highlighted the importance of clear roles, delegation, and building systems to support growth.
 
 Understanding the distinction between the Entrepreneur, the Manager, and the Technician reshaped my thinking. Businesses thrive when contributors focus on what they do best, while systems coordinate and amplify their efforts. At THE LOST+UNFOUNDS, we aim to empower people to create, contribute, and collaborate without being burdened by every operational detail.
 
@@ -194,7 +198,7 @@ The emphasis on repeatable systems also inspired me to think about lasting value
 
 
 Contagious: Word-of-Mouth, Engagement, and Influence
-Jonah Berger''s Contagious shifted how I view influence and growth. One striking insight is that the majority of word-of-mouth occurs offline, in real-world interactions, rather than online. This underscores the importance of authentic engagement and meaningful relationships in building a brand.
+Jonah Berger''s Contagious (https://amzn.to/3XoOv8A) shifted how I view influence and growth. One striking insight is that the majority of word-of-mouth occurs offline, in real-world interactions, rather than online. This underscores the importance of authentic engagement and meaningful relationships in building a brand.
 
 For THE LOST+UNFOUNDS, this confirmed that people who introduce others to the brand through genuine connections and shared experiences are driving real impact. Recognizing and valuing these contributions became central to our philosophy.
 
@@ -203,7 +207,7 @@ Berger also highlights the social and emotional triggers that make ideas contagi
 
 
 This Is Not a T-Shirt: People Over Product and Lifelong Contribution
-This Is Not a T-Shirt had a profound personal impact. Listening to Bobby Hundreds'' story during a long road trip, I connected with his journey of building a brand through culture, community, and creativity. The principle of "People over Product" resonated strongly—what defines a brand are the people and relationships that bring it to life.
+This Is Not a T-Shirt (https://amzn.to/4rJCNn1) had a profound personal impact. Listening to Bobby Hundreds'' story during a long road trip, I connected with his journey of building a brand through culture, community, and creativity. The principle of "People over Product" resonated strongly—what defines a brand are the people and relationships that bring it to life.
 
 Bobby Hundreds also writes, "Never underestimate the power of influence in one-on-one encounters." This insight shaped my thinking about long-term recognition. Those who bring others into a brand, nurture relationships, and contribute to its culture create lasting value that should be acknowledged.
 
@@ -212,7 +216,7 @@ Reading about the closure of The Hundreds'' stores and how employees could no lo
 
 
 The Alchemist: Vision, Purpose, and Santiago''s Journey
-Paulo Coelho''s The Alchemist reinforced the importance of vision, purpose, and pursuing meaningful goals. Santiago''s journey begins with a dream about treasure near the Egyptian pyramids, leading him to leave his familiar life behind. Along the way, he encounters challenges that test his courage and resolve.
+Paulo Coelho''s The Alchemist (https://amzn.to/49HqnFx) reinforced the importance of vision, purpose, and pursuing meaningful goals. Santiago''s journey begins with a dream about treasure near the Egyptian pyramids, leading him to leave his familiar life behind. Along the way, he encounters challenges that test his courage and resolve.
 
 Santiago meets a king who teaches him about following his Personal Legend, a crystal merchant who shows the cost of abandoning dreams, and Fatima, whose love teaches him the harmony of ambition and meaningful relationships. The desert, representing trials and lessons, and the concept of Maktub, meaning "it is written," illustrate how the universe guides those committed to their true path.
 
@@ -265,6 +269,8 @@ These insights helped clarify how to value contributors, nurture culture, and cr
 
 By integrating these ideas, THE LOST+UNFOUNDS became a creative brand that prioritizes meaningful contributions, encourages collaboration, and embraces innovation.
 
+Amazon Affiliate Disclosure: As an Amazon Associate, we earn from qualifying purchases. Some links in this post are affiliate links, which means we may earn a commission if you click through and make a purchase. This helps support THE LOST+UNFOUNDS and allows us to continue creating content. Thank you for your support!
+
 
 
 Early Inspiration and Learning
@@ -277,7 +283,7 @@ Integrating these lessons allowed me to develop a clearer vision for the brand. 
 
 
 The E-Myth Revisited: Systems, Roles, and Leadership
-Michael Gerber''s The E-Myth Revisited tells the story of Sarah, the owner of All About Pies, who loved baking but struggled with running every aspect of her business. Gerber explains that most entrepreneurs spend time working in their business rather than on it, writing, "Most people who start small businesses are working in their business, not on their business." This insight highlighted the importance of clear roles, delegation, and building systems to support growth.
+Michael Gerber''s The E-Myth Revisited (https://amzn.to/49LFRbv) tells the story of Sarah, the owner of All About Pies, who loved baking but struggled with running every aspect of her business. Gerber explains that most entrepreneurs spend time working in their business rather than on it, writing, "Most people who start small businesses are working in their business, not on their business." This insight highlighted the importance of clear roles, delegation, and building systems to support growth.
 
 Understanding the distinction between the Entrepreneur, the Manager, and the Technician reshaped my thinking. Businesses thrive when contributors focus on what they do best, while systems coordinate and amplify their efforts. At THE LOST+UNFOUNDS, we aim to empower people to create, contribute, and collaborate without being burdened by every operational detail.
 
@@ -286,7 +292,7 @@ The emphasis on repeatable systems also inspired me to think about lasting value
 
 
 Contagious: Word-of-Mouth, Engagement, and Influence
-Jonah Berger''s Contagious shifted how I view influence and growth. One striking insight is that the majority of word-of-mouth occurs offline, in real-world interactions, rather than online. This underscores the importance of authentic engagement and meaningful relationships in building a brand.
+Jonah Berger''s Contagious (https://amzn.to/3XoOv8A) shifted how I view influence and growth. One striking insight is that the majority of word-of-mouth occurs offline, in real-world interactions, rather than online. This underscores the importance of authentic engagement and meaningful relationships in building a brand.
 
 For THE LOST+UNFOUNDS, this confirmed that people who introduce others to the brand through genuine connections and shared experiences are driving real impact. Recognizing and valuing these contributions became central to our philosophy.
 
@@ -295,7 +301,7 @@ Berger also highlights the social and emotional triggers that make ideas contagi
 
 
 This Is Not a T-Shirt: People Over Product and Lifelong Contribution
-This Is Not a T-Shirt had a profound personal impact. Listening to Bobby Hundreds'' story during a long road trip, I connected with his journey of building a brand through culture, community, and creativity. The principle of "People over Product" resonated strongly—what defines a brand are the people and relationships that bring it to life.
+This Is Not a T-Shirt (https://amzn.to/4rJCNn1) had a profound personal impact. Listening to Bobby Hundreds'' story during a long road trip, I connected with his journey of building a brand through culture, community, and creativity. The principle of "People over Product" resonated strongly—what defines a brand are the people and relationships that bring it to life.
 
 Bobby Hundreds also writes, "Never underestimate the power of influence in one-on-one encounters." This insight shaped my thinking about long-term recognition. Those who bring others into a brand, nurture relationships, and contribute to its culture create lasting value that should be acknowledged.
 
@@ -304,7 +310,7 @@ Reading about the closure of The Hundreds'' stores and how employees could no lo
 
 
 The Alchemist: Vision, Purpose, and Santiago''s Journey
-Paulo Coelho''s The Alchemist reinforced the importance of vision, purpose, and pursuing meaningful goals. Santiago''s journey begins with a dream about treasure near the Egyptian pyramids, leading him to leave his familiar life behind. Along the way, he encounters challenges that test his courage and resolve.
+Paulo Coelho''s The Alchemist (https://amzn.to/49HqnFx) reinforced the importance of vision, purpose, and pursuing meaningful goals. Santiago''s journey begins with a dream about treasure near the Egyptian pyramids, leading him to leave his familiar life behind. Along the way, he encounters challenges that test his courage and resolve.
 
 Santiago meets a king who teaches him about following his Personal Legend, a crystal merchant who shows the cost of abandoning dreams, and Fatima, whose love teaches him the harmony of ambition and meaningful relationships. The desert, representing trials and lessons, and the concept of Maktub, meaning "it is written," illustrate how the universe guides those committed to their true path.
 
@@ -351,6 +357,8 @@ These insights helped clarify how to value contributors, nurture culture, and cr
 
 By integrating these ideas, THE LOST+UNFOUNDS became a creative brand that prioritizes meaningful contributions, encourages collaboration, and embraces innovation.
 
+Amazon Affiliate Disclosure: As an Amazon Associate, we earn from qualifying purchases. Some links in this post are affiliate links, which means we may earn a commission if you click through and make a purchase. This helps support THE LOST+UNFOUNDS and allows us to continue creating content. Thank you for your support!
+
 
 
 Early Inspiration and Learning
@@ -363,7 +371,7 @@ Integrating these lessons allowed me to develop a clearer vision for the brand. 
 
 
 The E-Myth Revisited: Systems, Roles, and Leadership
-Michael Gerber''s The E-Myth Revisited tells the story of Sarah, the owner of All About Pies, who loved baking but struggled with running every aspect of her business. Gerber explains that most entrepreneurs spend time working in their business rather than on it, writing, "Most people who start small businesses are working in their business, not on their business." This insight highlighted the importance of clear roles, delegation, and building systems to support growth.
+Michael Gerber''s The E-Myth Revisited (https://amzn.to/49LFRbv) tells the story of Sarah, the owner of All About Pies, who loved baking but struggled with running every aspect of her business. Gerber explains that most entrepreneurs spend time working in their business rather than on it, writing, "Most people who start small businesses are working in their business, not on their business." This insight highlighted the importance of clear roles, delegation, and building systems to support growth.
 
 Understanding the distinction between the Entrepreneur, the Manager, and the Technician reshaped my thinking. Businesses thrive when contributors focus on what they do best, while systems coordinate and amplify their efforts. At THE LOST+UNFOUNDS, we aim to empower people to create, contribute, and collaborate without being burdened by every operational detail.
 
@@ -372,7 +380,7 @@ The emphasis on repeatable systems also inspired me to think about lasting value
 
 
 Contagious: Word-of-Mouth, Engagement, and Influence
-Jonah Berger''s Contagious shifted how I view influence and growth. One striking insight is that the majority of word-of-mouth occurs offline, in real-world interactions, rather than online. This underscores the importance of authentic engagement and meaningful relationships in building a brand.
+Jonah Berger''s Contagious (https://amzn.to/3XoOv8A) shifted how I view influence and growth. One striking insight is that the majority of word-of-mouth occurs offline, in real-world interactions, rather than online. This underscores the importance of authentic engagement and meaningful relationships in building a brand.
 
 For THE LOST+UNFOUNDS, this confirmed that people who introduce others to the brand through genuine connections and shared experiences are driving real impact. Recognizing and valuing these contributions became central to our philosophy.
 
@@ -381,7 +389,7 @@ Berger also highlights the social and emotional triggers that make ideas contagi
 
 
 This Is Not a T-Shirt: People Over Product and Lifelong Contribution
-This Is Not a T-Shirt had a profound personal impact. Listening to Bobby Hundreds'' story during a long road trip, I connected with his journey of building a brand through culture, community, and creativity. The principle of "People over Product" resonated strongly—what defines a brand are the people and relationships that bring it to life.
+This Is Not a T-Shirt (https://amzn.to/4rJCNn1) had a profound personal impact. Listening to Bobby Hundreds'' story during a long road trip, I connected with his journey of building a brand through culture, community, and creativity. The principle of "People over Product" resonated strongly—what defines a brand are the people and relationships that bring it to life.
 
 Bobby Hundreds also writes, "Never underestimate the power of influence in one-on-one encounters." This insight shaped my thinking about long-term recognition. Those who bring others into a brand, nurture relationships, and contribute to its culture create lasting value that should be acknowledged.
 
@@ -390,7 +398,7 @@ Reading about the closure of The Hundreds'' stores and how employees could no lo
 
 
 The Alchemist: Vision, Purpose, and Santiago''s Journey
-Paulo Coelho''s The Alchemist reinforced the importance of vision, purpose, and pursuing meaningful goals. Santiago''s journey begins with a dream about treasure near the Egyptian pyramids, leading him to leave his familiar life behind. Along the way, he encounters challenges that test his courage and resolve.
+Paulo Coelho''s The Alchemist (https://amzn.to/49HqnFx) reinforced the importance of vision, purpose, and pursuing meaningful goals. Santiago''s journey begins with a dream about treasure near the Egyptian pyramids, leading him to leave his familiar life behind. Along the way, he encounters challenges that test his courage and resolve.
 
 Santiago meets a king who teaches him about following his Personal Legend, a crystal merchant who shows the cost of abandoning dreams, and Fatima, whose love teaches him the harmony of ambition and meaningful relationships. The desert, representing trials and lessons, and the concept of Maktub, meaning "it is written," illustrate how the universe guides those committed to their true path.
 
@@ -437,6 +445,8 @@ These insights helped clarify how to value contributors, nurture culture, and cr
 
 By integrating these ideas, THE LOST+UNFOUNDS became a creative brand that prioritizes meaningful contributions, encourages collaboration, and embraces innovation.
 
+Amazon Affiliate Disclosure: As an Amazon Associate, we earn from qualifying purchases. Some links in this post are affiliate links, which means we may earn a commission if you click through and make a purchase. This helps support THE LOST+UNFOUNDS and allows us to continue creating content. Thank you for your support!
+
 
 
 Early Inspiration and Learning
@@ -449,7 +459,7 @@ Integrating these lessons allowed me to develop a clearer vision for the brand. 
 
 
 The E-Myth Revisited: Systems, Roles, and Leadership
-Michael Gerber''s The E-Myth Revisited tells the story of Sarah, the owner of All About Pies, who loved baking but struggled with running every aspect of her business. Gerber explains that most entrepreneurs spend time working in their business rather than on it, writing, "Most people who start small businesses are working in their business, not on their business." This insight highlighted the importance of clear roles, delegation, and building systems to support growth.
+Michael Gerber''s The E-Myth Revisited (https://amzn.to/49LFRbv) tells the story of Sarah, the owner of All About Pies, who loved baking but struggled with running every aspect of her business. Gerber explains that most entrepreneurs spend time working in their business rather than on it, writing, "Most people who start small businesses are working in their business, not on their business." This insight highlighted the importance of clear roles, delegation, and building systems to support growth.
 
 Understanding the distinction between the Entrepreneur, the Manager, and the Technician reshaped my thinking. Businesses thrive when contributors focus on what they do best, while systems coordinate and amplify their efforts. At THE LOST+UNFOUNDS, we aim to empower people to create, contribute, and collaborate without being burdened by every operational detail.
 
@@ -458,7 +468,7 @@ The emphasis on repeatable systems also inspired me to think about lasting value
 
 
 Contagious: Word-of-Mouth, Engagement, and Influence
-Jonah Berger''s Contagious shifted how I view influence and growth. One striking insight is that the majority of word-of-mouth occurs offline, in real-world interactions, rather than online. This underscores the importance of authentic engagement and meaningful relationships in building a brand.
+Jonah Berger''s Contagious (https://amzn.to/3XoOv8A) shifted how I view influence and growth. One striking insight is that the majority of word-of-mouth occurs offline, in real-world interactions, rather than online. This underscores the importance of authentic engagement and meaningful relationships in building a brand.
 
 For THE LOST+UNFOUNDS, this confirmed that people who introduce others to the brand through genuine connections and shared experiences are driving real impact. Recognizing and valuing these contributions became central to our philosophy.
 
@@ -467,7 +477,7 @@ Berger also highlights the social and emotional triggers that make ideas contagi
 
 
 This Is Not a T-Shirt: People Over Product and Lifelong Contribution
-This Is Not a T-Shirt had a profound personal impact. Listening to Bobby Hundreds'' story during a long road trip, I connected with his journey of building a brand through culture, community, and creativity. The principle of "People over Product" resonated strongly—what defines a brand are the people and relationships that bring it to life.
+This Is Not a T-Shirt (https://amzn.to/4rJCNn1) had a profound personal impact. Listening to Bobby Hundreds'' story during a long road trip, I connected with his journey of building a brand through culture, community, and creativity. The principle of "People over Product" resonated strongly—what defines a brand are the people and relationships that bring it to life.
 
 Bobby Hundreds also writes, "Never underestimate the power of influence in one-on-one encounters." This insight shaped my thinking about long-term recognition. Those who bring others into a brand, nurture relationships, and contribute to its culture create lasting value that should be acknowledged.
 
@@ -476,7 +486,7 @@ Reading about the closure of The Hundreds'' stores and how employees could no lo
 
 
 The Alchemist: Vision, Purpose, and Santiago''s Journey
-Paulo Coelho''s The Alchemist reinforced the importance of vision, purpose, and pursuing meaningful goals. Santiago''s journey begins with a dream about treasure near the Egyptian pyramids, leading him to leave his familiar life behind. Along the way, he encounters challenges that test his courage and resolve.
+Paulo Coelho''s The Alchemist (https://amzn.to/49HqnFx) reinforced the importance of vision, purpose, and pursuing meaningful goals. Santiago''s journey begins with a dream about treasure near the Egyptian pyramids, leading him to leave his familiar life behind. Along the way, he encounters challenges that test his courage and resolve.
 
 Santiago meets a king who teaches him about following his Personal Legend, a crystal merchant who shows the cost of abandoning dreams, and Fatima, whose love teaches him the harmony of ambition and meaningful relationships. The desert, representing trials and lessons, and the concept of Maktub, meaning "it is written," illustrate how the universe guides those committed to their true path.
 

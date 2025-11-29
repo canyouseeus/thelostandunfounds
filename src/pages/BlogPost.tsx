@@ -2,7 +2,7 @@
  * Blog Post Detail Page
  */
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabase';
@@ -139,6 +139,68 @@ export default function BlogPost() {
     });
   };
 
+  // Function to convert URLs to clickable links in text
+  const convertUrlsToLinks = (parts: (string | JSX.Element)[]): (string | JSX.Element)[] => {
+    const urlRegex = /(https?:\/\/[^\s\)]+)/g;
+    const result: (string | JSX.Element)[] = [];
+    let keyCounter = 0;
+
+    parts.forEach((part) => {
+      if (typeof part === 'string') {
+        let lastIndex = 0;
+        let match;
+        const matches: RegExpExecArray[] = [];
+        
+        // Collect all matches first
+        while ((match = urlRegex.exec(part)) !== null) {
+          matches.push(match);
+        }
+
+        // Process matches
+        matches.forEach((match) => {
+          // Add text before the URL
+          if (match.index > lastIndex) {
+            const beforeText = part.substring(lastIndex, match.index);
+            if (beforeText) {
+              result.push(beforeText);
+            }
+          }
+          // Add the link element
+          result.push(
+            <a
+              key={`link-${keyCounter++}`}
+              href={match[1]}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white underline hover:text-white/80 transition"
+            >
+              {match[1]}
+            </a>
+          );
+          lastIndex = match.index + match[0].length;
+        });
+
+        // Add remaining text
+        if (lastIndex < part.length) {
+          const afterText = part.substring(lastIndex);
+          if (afterText) {
+            result.push(afterText);
+          }
+        }
+
+        // If no URLs found, add the original string
+        if (matches.length === 0) {
+          result.push(part);
+        }
+      } else {
+        // If it's already a JSX element, keep it as is
+        result.push(part);
+      }
+    });
+
+    return result.length > 0 ? result : parts;
+  };
+
   // Function to format text with bold emphasis for book titles and brand names
   const formatTextWithEmphasis = (text: string) => {
     // List of book titles and important terms to bold (in order of specificity - longer phrases first)
@@ -232,9 +294,12 @@ export default function BlogPost() {
       
       if (isLikelyHeading) {
         const headingContent = formatTextWithEmphasis(trimmed);
+        const formattedHeading = Array.isArray(headingContent)
+          ? convertUrlsToLinks(headingContent)
+          : convertUrlsToLinks([headingContent]);
         elements.push(
           <h2 key={`heading-${index}`} className="text-2xl font-bold text-white mt-12 mb-6 text-left first:mt-0">
-            {Array.isArray(headingContent) ? headingContent : headingContent}
+            {formattedHeading}
           </h2>
         );
         return;
@@ -244,10 +309,13 @@ export default function BlogPost() {
       const numberedMatch = trimmed.match(/^(\d+)\.\s+(.+)$/);
       if (numberedMatch) {
         const content = formatTextWithEmphasis(numberedMatch[2]);
+        const formattedContent = Array.isArray(content)
+          ? convertUrlsToLinks(content)
+          : convertUrlsToLinks([content]);
         elements.push(
           <p key={index} className="mb-6 text-white/90 text-lg leading-relaxed text-left">
             <span className="font-bold">{numberedMatch[1]}.</span>{' '}
-            {Array.isArray(content) ? content : content}
+            {formattedContent}
           </p>
         );
         return;
@@ -257,20 +325,26 @@ export default function BlogPost() {
       if (trimmed.match(/^[•\-\*]\s+/)) {
         const bulletText = trimmed.replace(/^[•\-\*]\s+/, '');
         const content = formatTextWithEmphasis(bulletText);
+        const formattedContent = Array.isArray(content)
+          ? convertUrlsToLinks(content)
+          : convertUrlsToLinks([content]);
         elements.push(
           <p key={index} className="mb-4 text-white/90 text-lg leading-relaxed text-left pl-4">
             <span className="text-white/60 mr-2">•</span>
-            {Array.isArray(content) ? content : content}
+            {formattedContent}
           </p>
         );
         return;
       }
       
-      // Regular paragraph with emphasis formatting
+      // Regular paragraph with emphasis formatting and link conversion
       const content = formatTextWithEmphasis(trimmed);
+      const formattedContent = Array.isArray(content) 
+        ? convertUrlsToLinks(content)
+        : convertUrlsToLinks([content]);
       elements.push(
         <p key={index} className="mb-6 text-white/90 text-lg leading-relaxed text-left">
-          {Array.isArray(content) ? content : content}
+          {formattedContent}
         </p>
       );
     });
