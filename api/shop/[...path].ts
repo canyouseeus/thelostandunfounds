@@ -5,20 +5,30 @@ export default async function handler(
   res: VercelResponse
 ) {
   // Extract route from path parameter (Vercel catch-all)
+  // For /api/shop/fourthwall/products, req.query.path should be ['fourthwall', 'products']
   let route = ''
+  
+  // First try query.path (Vercel catch-all parameter)
   if (req.query.path) {
-    route = Array.isArray(req.query.path) ? req.query.path.join('/') : req.query.path
-  } else {
-    // Fallback: extract from URL
-    const urlPath = req.url?.split('?')[0] || ''
+    if (Array.isArray(req.query.path)) {
+      route = req.query.path.join('/')
+    } else {
+      route = req.query.path
+    }
+  }
+  
+  // Fallback: extract from URL
+  if (!route && req.url) {
+    const urlPath = req.url.split('?')[0]
     const pathParts = urlPath.split('/').filter(p => p)
-    const apiIndex = pathParts.indexOf('api')
+    // Find 'shop' index and get everything after it
     const shopIndex = pathParts.indexOf('shop')
-    const routeParts = pathParts.slice(Math.max(apiIndex, shopIndex) + 1)
-    route = routeParts.join('/')
+    if (shopIndex >= 0 && shopIndex < pathParts.length - 1) {
+      route = pathParts.slice(shopIndex + 1).join('/')
+    }
   }
 
-  console.log('Shop router - query.path:', req.query.path, 'route:', route, 'url:', req.url)
+  console.log('Shop router - query:', JSON.stringify(req.query), 'query.path:', req.query.path, 'route:', route, 'url:', req.url, 'method:', req.method)
 
   // Route to appropriate handler
   switch (route) {
