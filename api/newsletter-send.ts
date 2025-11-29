@@ -303,7 +303,7 @@ export default async function handler(
               emailsSent++
             } else {
               emailsFailed++
-              errors.push(`${subscriber.email}: ${result.error || 'Unknown error'}`)
+              errors.push(`${subscriber.email}: ${result.error || 'Unknown error'} (accountId: ${accountId}, fromEmail: ${actualFromEmail})`)
             }
           } catch (error: any) {
             emailsFailed++
