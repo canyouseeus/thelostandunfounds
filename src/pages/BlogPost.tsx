@@ -400,6 +400,12 @@ export default function BlogPost() {
       const isAfterEmptyLine = prevPara === '' || prevPara === '⸻';
       const startsWithHeadingWord = trimmed.match(/^(Conclusion|Introduction|Early|The E-Myth|Contagious|This Is Not|The Alchemist|Bitcoin)/i);
       
+      // Also check if it looks like a section title (title case, short, no ending punctuation)
+      const isTitleCase = trimmed.split(' ').every(word => 
+        word.length === 0 || word[0] === word[0].toUpperCase()
+      );
+      const isShortTitle = trimmed.length < 80 && trimmed.split(' ').length < 10;
+      
       const isLikelyHeading = (
         trimmed.length < 100 && 
         !trimmed.match(/[.!?]$/) && 
@@ -407,7 +413,8 @@ export default function BlogPost() {
         (
           index === 0 || 
           isAfterEmptyLine ||
-          startsWithHeadingWord !== null
+          startsWithHeadingWord !== null ||
+          (isTitleCase && isShortTitle && isAfterEmptyLine)
         )
       );
       
@@ -420,7 +427,7 @@ export default function BlogPost() {
         // Format with emphasis, allowing links in section headings
         const headingContent = formatTextWithEmphasis(trimmed, bookLinkCounts, isBookSection);
         elements.push(
-          <h2 key={`heading-${index}`} className="text-2xl font-bold text-white mt-12 mb-6 text-left first:mt-0">
+          <h2 key={`heading-${index}`} className="text-2xl font-bold text-white mt-12 mb-8 text-left first:mt-0">
             {Array.isArray(headingContent) ? headingContent : headingContent}
           </h2>
         );
