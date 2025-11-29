@@ -396,15 +396,18 @@ export default function BlogPost() {
       // - Have fewer than 15 words
       // - Appear after empty lines or at the start
       // - Or start with common heading words like "Conclusion", "Introduction", "Early", etc.
+      const prevPara = paragraphs[index - 1]?.trim() || '';
+      const isAfterEmptyLine = prevPara === '' || prevPara === '⸻';
+      const startsWithHeadingWord = trimmed.match(/^(Conclusion|Introduction|Early|The E-Myth|Contagious|This Is Not|The Alchemist|Bitcoin)/i);
+      
       const isLikelyHeading = (
         trimmed.length < 100 && 
         !trimmed.match(/[.!?]$/) && 
         trimmed.split(' ').length < 15 &&
         (
           index === 0 || 
-          paragraphs[index - 1]?.trim() === '⸻' || 
-          paragraphs[index - 1]?.trim() === '' ||
-          trimmed.match(/^(Conclusion|Introduction|Early|The E-Myth|Contagious|This Is Not|The Alchemist|Bitcoin):/i)
+          isAfterEmptyLine ||
+          startsWithHeadingWord !== null
         )
       );
       
