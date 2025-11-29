@@ -132,11 +132,16 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { subject, content, contentHtml, campaignId } = req.body
+  const { subject, content, contentHtml, campaignId, testEmail } = req.body
 
   // Validate input
   if (!subject || !content || !contentHtml) {
     return res.status(400).json({ error: 'Subject, content, and contentHtml are required' })
+  }
+
+  // If testEmail is provided, validate it
+  if (testEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testEmail)) {
+    return res.status(400).json({ error: 'Invalid testEmail format' })
   }
 
   try {
@@ -150,21 +155,32 @@ export default async function handler(
 
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // Get all verified subscribers
-    const { data: subscribers, error: subscribersError } = await supabase
-      .from('newsletter_subscribers')
-      .select('email')
-      .eq('verified', true)
+    // If testEmail is provided, only send to that email
+    let subscribers: { email: string }[]
+    let totalSubscribers: number
 
-    if (subscribersError) {
-      throw subscribersError
+    if (testEmail) {
+      // Test mode: only send to the specified email
+      subscribers = [{ email: testEmail }]
+      totalSubscribers = 1
+    } else {
+      // Normal mode: get all verified subscribers
+      const { data: subscribersData, error: subscribersError } = await supabase
+        .from('newsletter_subscribers')
+        .select('email')
+        .eq('verified', true)
+
+      if (subscribersError) {
+        throw subscribersError
+      }
+
+      if (!subscribersData || subscribersData.length === 0) {
+        return res.status(400).json({ error: 'No subscribers found' })
+      }
+
+      subscribers = subscribersData
+      totalSubscribers = subscribersData.length
     }
-
-    if (!subscribers || subscribers.length === 0) {
-      return res.status(400).json({ error: 'No subscribers found' })
-    }
-
-    const totalSubscribers = subscribers.length
 
     // Check Zoho configuration
     const fromEmail = process.env.ZOHO_FROM_EMAIL || process.env.ZOHO_EMAIL
