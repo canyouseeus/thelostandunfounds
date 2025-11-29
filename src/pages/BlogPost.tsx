@@ -88,26 +88,68 @@ export default function BlogPost() {
   const formatContent = (content: string) => {
     // Split by double newlines to create paragraphs
     const paragraphs = content.split(/\n\n+/);
-    return paragraphs.map((para, index) => {
+    const elements: JSX.Element[] = [];
+    
+    paragraphs.forEach((para, index) => {
       const trimmed = para.trim();
-      if (trimmed === '') return null;
+      if (trimmed === '') return;
+      
+      // Handle section separator (⸻)
+      if (trimmed === '⸻' || trimmed.match(/^⸻\s*$/)) {
+        elements.push(
+          <hr key={`separator-${index}`} className="my-8 border-white/10" />
+        );
+        return;
+      }
+      
+      // Check if it's a section heading (short line, likely a heading)
+      // Headings are usually short, on their own line, and don't end with punctuation
+      const isLikelyHeading = trimmed.length < 100 && 
+                              !trimmed.match(/[.!?]$/) && 
+                              trimmed.split(' ').length < 10 &&
+                              (index === 0 || paragraphs[index - 1]?.trim() === '⸻' || paragraphs[index - 1]?.trim() === '');
+      
+      if (isLikelyHeading) {
+        elements.push(
+          <h2 key={`heading-${index}`} className="text-2xl font-bold text-white mt-12 mb-6 text-left first:mt-0">
+            {trimmed}
+          </h2>
+        );
+        return;
+      }
       
       // Check if paragraph starts with a number followed by a period (numbered list)
       const numberedMatch = trimmed.match(/^(\d+)\.\s+(.+)$/);
       if (numberedMatch) {
-        return (
+        elements.push(
           <p key={index} className="mb-6 text-white/90 text-lg leading-relaxed text-left">
             <span className="font-bold">{numberedMatch[1]}.</span> {numberedMatch[2]}
           </p>
         );
+        return;
       }
       
-      return (
+      // Check for bullet points (lines starting with • or -)
+      if (trimmed.match(/^[•\-\*]\s+/)) {
+        const bulletText = trimmed.replace(/^[•\-\*]\s+/, '');
+        elements.push(
+          <p key={index} className="mb-4 text-white/90 text-lg leading-relaxed text-left pl-4">
+            <span className="text-white/60 mr-2">•</span>
+            {bulletText}
+          </p>
+        );
+        return;
+      }
+      
+      // Regular paragraph
+      elements.push(
         <p key={index} className="mb-6 text-white/90 text-lg leading-relaxed text-left">
           {trimmed}
         </p>
       );
     });
+    
+    return elements;
   };
 
   if (loading) {
