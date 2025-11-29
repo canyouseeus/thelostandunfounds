@@ -1,6 +1,6 @@
 /**
  * Blog Post AI Analysis API
- * Analyzes blog posts and suggests comparable tools/alternatives
+ * Uses AI to analyze blog posts with senior programmer-level insights
  */
 
 import { VercelRequest, VercelResponse } from '@vercel/node';
@@ -33,33 +33,149 @@ interface AnalysisResult {
   alternatives: ToolSuggestion[];
 }
 
-// Simple keyword-based analysis (can be enhanced with AI API later)
-function analyzeBlogPost(title: string, content: string, excerpt?: string): AnalysisResult {
+/**
+ * Analyze blog post using AI with senior programmer perspective
+ */
+async function analyzeBlogPostWithAI(title: string, content: string, excerpt?: string): Promise<AnalysisResult> {
+  const apiKey = process.env.GOOGLE_GEMINI_API_KEY;
+  
+  if (!apiKey) {
+    // Fallback to basic analysis if no API key
+    return analyzeBlogPostBasic(title, content, excerpt);
+  }
+
+  const prompt = `You are a senior-level software engineer and technical writer analyzing a blog post. Provide deep, insightful analysis that would be valuable to other developers and technical readers.
+
+Blog Post Title: ${title}
+${excerpt ? `Excerpt: ${excerpt}\n` : ''}
+Content:
+${content}
+
+Analyze this blog post and provide:
+
+1. **Summary** (2-3 sentences): A concise, insightful summary that captures the core message and technical context. Think about what a senior engineer would want to know.
+
+2. **Key Points** (3-5 points): Extract the most important technical insights, architectural decisions, or philosophical points. These should be:
+   - Actionable insights, not just random sentences
+   - Technical depth where relevant
+   - Clear value propositions
+   - Patterns or principles being demonstrated
+   Format each as a complete, meaningful insight (not just a sentence fragment).
+
+3. **Tools Mentioned**: List only tools/platforms/services explicitly named in the post (e.g., Vercel, Supabase, GitHub, Cursor, etc.). Be precise - don't infer tools that aren't mentioned.
+
+4. **Terms & Concepts**: Define technical terms, concepts, laws, or principles mentioned (e.g., "Moore's Law", "MCP servers", "RLS policies"). Include:
+   - The term name
+   - A clear, technical definition
+   - Category (e.g., "Technology Law", "Architecture Pattern", "Development Concept")
+
+5. **Comparable Tools**: Only include if the post explicitly asks for comparisons or alternatives. Otherwise, leave empty.
+
+6. **Alternatives**: Only include if the post explicitly asks for alternatives. Otherwise, leave empty.
+
+Return your response as a JSON object with this exact structure:
+{
+  "summary": "string",
+  "keyPoints": ["insight 1", "insight 2", ...],
+  "toolsMentioned": ["Tool1", "Tool2", ...],
+  "termsAndConcepts": [
+    {
+      "term": "Term Name",
+      "definition": "Clear technical definition",
+      "category": "Category Name"
+    }
+  ],
+  "comparableTools": [],
+  "alternatives": []
+}
+
+Focus on technical depth, architectural insights, and practical value. Think like a senior engineer reviewing this for their team.`;
+
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 2048,
+        }
+      })
+    });
+
+    if (!response.ok) {
+      console.error('Gemini API error:', response.status, response.statusText);
+      return analyzeBlogPostBasic(title, content, excerpt);
+    }
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    if (!text) {
+      return analyzeBlogPostBasic(title, content, excerpt);
+    }
+
+    // Extract JSON from response (handle markdown code blocks)
+    const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/) || text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const jsonText = jsonMatch[1] || jsonMatch[0];
+      const parsed = JSON.parse(jsonText);
+      
+      // Validate and return
+      return {
+        summary: parsed.summary || excerpt || `Analysis of ${title}`,
+        keyPoints: Array.isArray(parsed.keyPoints) ? parsed.keyPoints : [],
+        toolsMentioned: Array.isArray(parsed.toolsMentioned) ? parsed.toolsMentioned : [],
+        termsAndConcepts: Array.isArray(parsed.termsAndConcepts) ? parsed.termsAndConcepts : [],
+        comparableTools: [],
+        alternatives: [],
+      };
+    }
+  } catch (error) {
+    console.error('Error calling Gemini API:', error);
+  }
+
+  // Fallback to basic analysis
+  return analyzeBlogPostBasic(title, content, excerpt);
+}
+
+/**
+ * Basic keyword-based analysis (fallback when AI is not available)
+ */
+function analyzeBlogPostBasic(title: string, content: string, excerpt?: string): AnalysisResult {
   const fullText = `${title} ${excerpt || ''} ${content}`.toLowerCase();
   
   // Extract tools mentioned - be more specific to avoid false positives
   const toolKeywords: { [key: string]: string[] } = {
-    'Cursor IDE': ['cursor ide', 'cursor editor', 'cursor code editor'],
-    'Figma': ['figma'],
-    'Make': ['make.com', 'make automation platform'],
-    'Google AI Studio': ['google ai studio', 'gemini api'],
-    'Co-Pilot': ['github copilot', 'github co-pilot'],
-    'Anti-Gravity': ['anti-gravity', 'google anti-gravity'],
-    'Serato': ['serato'],
+    'Cursor': ['cursor ide', 'cursor editor', 'cursor code editor'],
     'Vercel': ['vercel'],
+    'Supabase': ['supabase'],
     'GitHub': ['github.com', 'github platform'],
+    'Railway': ['railway'],
+    'Stripe': ['stripe'],
+    'PayPal': ['paypal'],
     'Bitcoin': ['bitcoin', 'btc cryptocurrency'],
+    'Google AI Studio': ['google ai studio', 'gemini api'],
+    'ChatGPT': ['chatgpt'],
+    'Claude': ['claude'],
+    'MCP Servers': ['mcp server', 'model context protocol'],
   };
 
   const toolsMentioned: string[] = [];
   for (const [tool, keywords] of Object.entries(toolKeywords)) {
-    // Use word boundaries to avoid false matches (e.g., "make" in "make better")
     const matched = keywords.some(keyword => {
-      // For multi-word keywords, check if they appear as phrases
       if (keyword.includes(' ')) {
         return fullText.includes(keyword);
       }
-      // For single words, use word boundaries to avoid partial matches
       const regex = new RegExp(`\\b${keyword}\\b`, 'i');
       return regex.test(fullText);
     });
@@ -69,7 +185,7 @@ function analyzeBlogPost(title: string, content: string, excerpt?: string): Anal
     }
   }
   
-  // Extract terms, concepts, and laws mentioned
+  // Extract terms and concepts
   const termsAndConcepts: TermDefinition[] = [];
   
   const conceptKeywords: { [key: string]: { keywords: string[], definition: string, category?: string } } = {
@@ -83,8 +199,13 @@ function analyzeBlogPost(title: string, content: string, excerpt?: string): Anal
       definition: 'The principle that technological progress speeds up as new tools amplify our ability to create better tools, leading to exponential growth in innovation.',
       category: 'Technology Law'
     },
+    'MCP (Model Context Protocol)': {
+      keywords: ['mcp', 'model context protocol'],
+      definition: 'A protocol that allows AI tools to safely access external services and data, acting as bridges for AI to read/write data and interact with APIs while following rules and permissions.',
+      category: 'Technology Protocol'
+    },
     'Artificial Intelligence': {
-      keywords: ['artificial intelligence', 'ai', 'machine learning'],
+      keywords: ['artificial intelligence', 'ai'],
       definition: 'The simulation of human intelligence in machines that are programmed to think and learn like humans.',
       category: 'Technology Concept'
     },
@@ -113,130 +234,33 @@ function analyzeBlogPost(title: string, content: string, excerpt?: string): Anal
     }
   }
 
-  // Generate summary based on actual content
-  const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 20);
-  const firstFewSentences = sentences.slice(0, 3).join('. ').trim();
-  const summary = excerpt || firstFewSentences || `This post explores ${title}, discussing key insights and perspectives on the topic.`;
+  // Generate summary
+  const summary = excerpt || `An analysis of ${title}, exploring key technical concepts and insights.`;
 
-  // Extract key points from content - get complete, meaningful sentences
+  // Extract meaningful key points (better than before, but still basic)
+  const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 20);
   const keyPoints: string[] = [];
-  const seenPoints = new Set<string>();
   
-  // Helper to add a complete sentence as a key point
-  const addKeyPoint = (sentence: string) => {
-    const trimmed = sentence.trim();
-    const normalized = trimmed.toLowerCase().replace(/\s+/g, ' ');
-    
-    // Check if it's a complete sentence (ends with punctuation or is substantial)
-    if (trimmed.length >= 30 && trimmed.length <= 250 && !seenPoints.has(normalized)) {
-      // Make sure it's a complete thought (not cut off mid-sentence)
-      if (trimmed.match(/^[A-Z]/) && (trimmed.endsWith('.') || trimmed.endsWith('!') || trimmed.endsWith('?') || trimmed.length > 100)) {
-        keyPoints.push(trimmed);
-        seenPoints.add(normalized);
-      }
-    }
-  };
-  
-  // Split content into complete sentences (preserve punctuation)
-  // Match sentences that start with capital letter and end with punctuation
-  const completeSentences = content.match(/[A-Z][^.!?]*[.!?]+/g) || [];
-  
-  // Look for sentences with key phrases that indicate important points
-  // Make sure we get complete sentences, not fragments
-  const importantPhrases = [
-    'Will A.I.',
-    'I say,',
-    'I believe',
-    'Throughout history',
-    'The power of',
-    'This is why',
-    'The purpose of',
-    'When you',
-    'Stop sending',
-    'Think about',
-    'Do you not see',
+  // Look for sentences with technical depth indicators
+  const technicalIndicators = [
+    'architecture', 'design', 'pattern', 'principle', 'decision', 'strategy',
+    'enables', 'allows', 'provides', 'ensures', 'implements', 'leverages'
   ];
   
-  completeSentences.forEach(sentence => {
+  sentences.forEach(sentence => {
     const trimmed = sentence.trim();
-    const hasImportantPhrase = importantPhrases.some(phrase => 
-      trimmed.includes(phrase) || trimmed.toLowerCase().includes(phrase.toLowerCase())
-    );
-    
-    if (hasImportantPhrase) {
-      addKeyPoint(trimmed);
+    const lower = trimmed.toLowerCase();
+    if (trimmed.length >= 40 && trimmed.length <= 200 && 
+        technicalIndicators.some(indicator => lower.includes(indicator))) {
+      if (keyPoints.length < 4) {
+        keyPoints.push(trimmed);
+      }
     }
   });
-  
-  // Also look for questions (complete questions that start with capital)
-  const questions = content.match(/[A-Z][^.!?]*\?/g);
-  if (questions && questions.length > 0) {
-    questions.slice(0, 2).forEach(q => {
-      const trimmed = q.trim();
-      if (trimmed.length >= 30 && trimmed.length <= 200) {
-        addKeyPoint(trimmed);
-      }
-    });
-  }
-  
-  // If we don't have enough key points, find sentences with important keywords
-  if (keyPoints.length < 4) {
-    const importantKeywords = ['technology', 'ai', 'artificial intelligence', 'will', 'can', 'should', 'think', 'believe', 'purpose', 'power'];
-    
-    completeSentences.forEach(sentence => {
-      if (keyPoints.length >= 4) return;
-      
-      const lower = sentence.toLowerCase();
-      const hasImportantKeyword = importantKeywords.some(keyword => lower.includes(keyword));
-      
-      if (hasImportantKeyword) {
-        addKeyPoint(sentence);
-      }
-    });
-  }
-  
-  // Remove duplicates and limit to 4 key points max
-  const finalKeyPoints = Array.from(new Set(keyPoints)).slice(0, 4);
 
-  // Generate comparable tools and alternatives based on content themes
-  // Only add these if the post explicitly asks for comparisons or alternatives
-  // Don't add them for posts that just describe a tech stack or tools being used
-  const comparableTools: ToolSuggestion[] = [];
-  const alternatives: ToolSuggestion[] = [];
-  
-  // Only suggest comparable/alternative tools if the post explicitly asks for them
-  // Look for phrases like "compare", "alternative to", "similar to", "instead of", etc.
-  const comparisonKeywords = [
-    'compare', 'comparison', 'alternative to', 'alternatives to', 
-    'similar to', 'instead of', 'vs', 'versus', 'better than',
-    'recommend', 'suggest', 'what tool', 'which tool'
-  ];
-  
-  const hasComparisonIntent = comparisonKeywords.some(keyword => 
-    fullText.includes(keyword)
-  );
-  
-  // Don't add tool suggestions for posts that just describe a tech stack
-  // Only add if there's explicit comparison intent
-  if (!hasComparisonIntent) {
-    // Return empty arrays - don't suggest tools for descriptive posts
-    return {
-      summary,
-      keyPoints: finalKeyPoints,
-      toolsMentioned,
-      termsAndConcepts,
-      comparableTools: [],
-      alternatives: [],
-    };
-  }
-  
-  // Only add suggestions if post explicitly asks for comparisons
-  // For now, we're not adding any suggestions - only show tools that are actually mentioned
-  // This prevents cluttering the analysis with irrelevant tool suggestions
-  
   return {
     summary,
-    keyPoints: finalKeyPoints,
+    keyPoints: keyPoints.length > 0 ? keyPoints : [summary],
     toolsMentioned,
     termsAndConcepts,
     comparableTools: [],
@@ -256,7 +280,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Title and content are required' });
     }
 
-    const analysis = analyzeBlogPost(title, content, excerpt);
+    const analysis = await analyzeBlogPostWithAI(title, content, excerpt);
 
     return res.status(200).json(analysis);
   } catch (error: any) {
