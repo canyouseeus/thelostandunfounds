@@ -440,15 +440,28 @@ export default function BlogPost() {
         return;
       }
       
+      // Check if this is the Amazon Affiliate Disclosure
+      const isAffiliateDisclosure = trimmed.startsWith('Amazon Affiliate Disclosure:');
+      
       // Regular paragraph with emphasis formatting
       // Only allow links in intro (first 3 paragraphs) or in book sections
       const isInIntro = index < introEndIndex;
       const content = formatTextWithEmphasis(trimmed, bookLinkCounts, isInIntro);
-      elements.push(
-        <p key={index} className="mb-6 text-white/90 text-lg leading-relaxed text-left">
-          {Array.isArray(content) ? content : content}
-        </p>
-      );
+      
+      if (isAffiliateDisclosure) {
+        // Style the disclosure differently: smaller, italic, distinct
+        elements.push(
+          <p key={index} className="mb-6 text-white/60 text-sm italic leading-relaxed text-left border-l-2 border-white/20 pl-4 py-2">
+            {Array.isArray(content) ? content : content}
+          </p>
+        );
+      } else {
+        elements.push(
+          <p key={index} className="mb-6 text-white/90 text-lg leading-relaxed text-left">
+            {Array.isArray(content) ? content : content}
+          </p>
+        );
+      }
     });
     
     return elements;
