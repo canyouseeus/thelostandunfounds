@@ -88,11 +88,20 @@ export default function BlogPost() {
   const loadNextPost = async (currentSlug: string) => {
     try {
       // Get all published posts ordered by published_at (oldest first for reading order)
-      const { data: allPosts, error: fetchError } = await supabase
+      let query = supabase
         .from('blog_posts')
-        .select('slug, title, published_at, created_at')
+        .select('slug, title, published_at, created_at, published, status')
         .order('published_at', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: true });
+
+      // Try to filter by published field if it exists
+      try {
+        query = query.eq('published', true);
+      } catch (e) {
+        // Column might not exist, will filter client-side
+      }
+
+      const { data: allPosts, error: fetchError } = await query;
 
       if (fetchError) {
         console.error('Error loading posts for next button:', fetchError);
@@ -108,7 +117,7 @@ export default function BlogPost() {
       // Find current post index
       const currentIndex = publishedPosts.findIndex((p: BlogPostListItem) => p.slug === currentSlug);
       
-      // Get next post (previous in chronological order since we're reading oldest to newest)
+      // Get next post (next in chronological order - oldest to newest)
       if (currentIndex >= 0 && currentIndex < publishedPosts.length - 1) {
         setNextPost(publishedPosts[currentIndex + 1]);
       } else {
@@ -295,7 +304,8 @@ export default function BlogPost() {
             to={`/thelostarchives/${nextPost.slug}`}
             className="text-white/60 hover:text-white text-sm inline-flex items-center gap-2 transition"
           >
-            Next Post
+            <span className="hidden sm:inline">Next: {nextPost.title}</span>
+            <span className="sm:hidden">Next Post</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         )}
