@@ -443,6 +443,7 @@ export default function BlogPost() {
       );
       const isShortTitle = trimmed.length < 100 && trimmed.split(' ').length < 12;
       
+      // More lenient heading detection - if it matches a heading pattern, it's likely a heading
       const isLikelyHeading = (
         trimmed.length < 100 && 
         !trimmed.match(/[.!?]$/) && 
@@ -451,7 +452,7 @@ export default function BlogPost() {
           index === 0 || 
           isAfterEmptyLine ||
           startsWithHeadingWord !== null ||
-          (isTitleCase && isShortTitle && isAfterEmptyLine)
+          (isTitleCase && isShortTitle && (isAfterEmptyLine || startsWithHeadingWord !== null))
         )
       );
       
