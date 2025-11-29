@@ -77,7 +77,28 @@ export default function ShareButtons({ title, url, description }: ShareButtonsPr
   };
 
   const shareToTwitter = () => {
-    const text = description ? `${title} - ${description}` : title;
+    // Twitter/X has a 280 character limit
+    // URL typically takes ~23 chars when shortened, but we'll reserve ~30 for safety
+    const maxTextLength = 250;
+    
+    let text = title;
+    if (description) {
+      const combined = `${title} - ${description}`;
+      if (combined.length <= maxTextLength) {
+        text = combined;
+      } else {
+        // If too long, use just title, or truncate title if it's still too long
+        if (title.length > maxTextLength) {
+          text = title.substring(0, maxTextLength - 3) + '...';
+        } else {
+          // Use title only if adding description would exceed limit
+          text = title;
+        }
+      }
+    } else if (text.length > maxTextLength) {
+      text = text.substring(0, maxTextLength - 3) + '...';
+    }
+    
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(fullUrl)}`;
     const width = 550;
     const height = 420;
