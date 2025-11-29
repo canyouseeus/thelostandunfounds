@@ -389,12 +389,24 @@ export default function BlogPost() {
         return;
       }
       
-      // Check if it's a section heading (short line, likely a heading)
-      // Headings are usually short, on their own line, and don't end with punctuation
-      const isLikelyHeading = trimmed.length < 100 && 
-                              !trimmed.match(/[.!?]$/) && 
-                              trimmed.split(' ').length < 10 &&
-                              (index === 0 || paragraphs[index - 1]?.trim() === '⸻' || paragraphs[index - 1]?.trim() === '');
+      // Check if it's a section heading
+      // Headings are usually:
+      // - Short lines (under 100 chars)
+      // - Don't end with period/question/exclamation (but can have colon)
+      // - Have fewer than 15 words
+      // - Appear after empty lines or at the start
+      // - Or start with common heading words like "Conclusion", "Introduction", "Early", etc.
+      const isLikelyHeading = (
+        trimmed.length < 100 && 
+        !trimmed.match(/[.!?]$/) && 
+        trimmed.split(' ').length < 15 &&
+        (
+          index === 0 || 
+          paragraphs[index - 1]?.trim() === '⸻' || 
+          paragraphs[index - 1]?.trim() === '' ||
+          trimmed.match(/^(Conclusion|Introduction|Early|The E-Myth|Contagious|This Is Not|The Alchemist|Bitcoin):/i)
+        )
+      );
       
       if (isLikelyHeading) {
         // Check if this is a book's dedicated section
