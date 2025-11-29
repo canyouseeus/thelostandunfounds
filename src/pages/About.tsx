@@ -265,7 +265,7 @@ export default function About() {
         </p>
 
         <p>
-          THE LOST+UNFOUNDS is a creative agency, a tech company, and mindset builder all rolled into one. The purpose of building this site is to get people to believe in themselves again. To believe in that random idea they came up with 15 years ago, start a new business, take that risk, and bet it all on themselves.
+          THE LOST+UNFOUNDS is a creative brand, a tech company, and mindset builder all rolled into one. The purpose of building this site is to get people to believe in themselves again. To believe in that random idea they came up with 15 years ago, start a new business, take that risk, and bet it all on themselves.
         </p>
 
         <p>
