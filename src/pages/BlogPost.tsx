@@ -378,7 +378,7 @@ export default function BlogPost() {
           !firstLine.match(/[.!?]$/) &&
           firstLine.split(' ').length < 15 &&
           (
-            firstLine.match(/^(Conclusion|Introduction|Early|The E-Myth|Contagious|This Is Not|The Alchemist|Bitcoin)/i) ||
+            firstLine.match(/^(Conclusion|Early|The E-Myth|Contagious|This Is Not|The Alchemist|Bitcoin|A Creative Brand)/i) ||
             (firstLine.split(' ').every(word => word.length === 0 || word[0] === word[0].toUpperCase()) && 
              firstLine.length < 80 && firstLine.split(' ').length < 10)
           )
@@ -431,7 +431,7 @@ export default function BlogPost() {
       // - Or start with common heading words like "Conclusion", "Introduction", "Early", etc.
       const prevPara = paragraphs[index - 1]?.trim() || '';
       const isAfterEmptyLine = prevPara === '' || prevPara === '⸻';
-      const startsWithHeadingWord = trimmed.match(/^(Conclusion|Introduction|Early|The E-Myth|Contagious|This Is Not|The Alchemist|Bitcoin)/i);
+      const startsWithHeadingWord = trimmed.match(/^(Conclusion|Early|The E-Myth|Contagious|This Is Not|The Alchemist|Bitcoin|A Creative Brand)/i);
       
       // Also check if it looks like a section title (title case, short, no ending punctuation)
       const isTitleCase = trimmed.split(' ').every(word => 
