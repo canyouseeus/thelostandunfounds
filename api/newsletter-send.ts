@@ -109,6 +109,15 @@ async function sendZohoEmail(
 
   if (!emailResponse.ok) {
     const errorText = await emailResponse.text()
+    console.error('Zoho email API error:', {
+      status: emailResponse.status,
+      statusText: emailResponse.statusText,
+      error: errorText,
+      accountId,
+      fromEmail,
+      toEmail,
+      mailApiUrl
+    })
     let errorMessage = `Failed to send email: ${emailResponse.status}`
     try {
       const errorJson = JSON.parse(errorText)
