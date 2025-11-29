@@ -182,12 +182,10 @@ function generateKeyPoints(title: string, content: string, allText: string, para
 /**
  * Generate practical insights - unique actionable advice for each post
  */
-function generatePracticalInsights(content: string, allText: string, paragraphs: string[]): string[] {
+function generatePracticalInsights(title: string, content: string, allText: string, paragraphs: string[]): string[] {
   const insights: string[] = [];
   const allTextLower = allText;
-  // Extract title from content if needed, or use a pattern match
-  const firstLine = content.split('\n')[0] || '';
-  const slug = firstLine.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   
   // Our Tech Stack - practical advice
   if (slug.includes('tech-stack') || (allTextLower.includes('tech stack') && allTextLower.includes('vercel') && allTextLower.includes('supabase'))) {
@@ -350,7 +348,7 @@ function generateIntuitiveBreakdown(title: string, content: string, excerpt?: st
   const keyPoints = generateKeyPoints(title, content, allText, paragraphs);
   
   // Generate practical insights - actionable advice
-  const practicalInsights = generatePracticalInsights(content, allText, paragraphs);
+  const practicalInsights = generatePracticalInsights(title, content, allText, paragraphs);
 
   return {
     quickTake,
