@@ -373,15 +373,19 @@ export default function BlogPost() {
       if (lines.length >= 2) {
         const firstLine = lines[0];
         // Check if first line looks like a heading
+        // Match common heading patterns or title case short phrases
+        const matchesHeadingPattern = firstLine.match(/^(Conclusion|Early|The E-Myth|Contagious|This Is Not|The Alchemist|Bitcoin|A Creative Brand)/i);
+        const isTitleCaseShort = (
+          firstLine.split(' ').every(word => word.length === 0 || word[0] === word[0].toUpperCase()) && 
+          firstLine.length < 100 && 
+          firstLine.split(' ').length < 12
+        );
+        
         const looksLikeHeading = (
           firstLine.length < 100 &&
           !firstLine.match(/[.!?]$/) &&
           firstLine.split(' ').length < 15 &&
-          (
-            firstLine.match(/^(Conclusion|Early|The E-Myth|Contagious|This Is Not|The Alchemist|Bitcoin|A Creative Brand)/i) ||
-            (firstLine.split(' ').every(word => word.length === 0 || word[0] === word[0].toUpperCase()) && 
-             firstLine.length < 80 && firstLine.split(' ').length < 10)
-          )
+          (matchesHeadingPattern !== null || isTitleCaseShort)
         );
         
         if (looksLikeHeading) {
@@ -437,7 +441,7 @@ export default function BlogPost() {
       const isTitleCase = trimmed.split(' ').every(word => 
         word.length === 0 || word[0] === word[0].toUpperCase()
       );
-      const isShortTitle = trimmed.length < 80 && trimmed.split(' ').length < 10;
+      const isShortTitle = trimmed.length < 100 && trimmed.split(' ').length < 12;
       
       const isLikelyHeading = (
         trimmed.length < 100 && 
