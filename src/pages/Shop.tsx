@@ -43,7 +43,7 @@ export default function Shop() {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch('/api/fourthwall/products');
+        const response = await fetch('/api/shop/fourthwall/products');
         const data = await response.json();
         
         if (data.error) {

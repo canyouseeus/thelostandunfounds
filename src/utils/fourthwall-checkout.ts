@@ -100,7 +100,7 @@ export async function getPayPalCheckoutUrl(params: {
     affiliateRef = getAffiliateRef()
   }
 
-  const response = await fetch('/api/payments/paypal', {
+  const response = await fetch('/api/shop/payments/paypal', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

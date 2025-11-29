@@ -77,7 +77,7 @@ export async function trackAffiliateClick(affiliateCode: string): Promise<boolea
   if (!affiliateCode) return false
 
   try {
-    const response = await fetch('/api/affiliates/track-click', {
+    const response = await fetch('/api/shop/affiliates/track-click', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
