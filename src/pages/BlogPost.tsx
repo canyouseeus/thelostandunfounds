@@ -202,7 +202,9 @@ export default function BlogPost() {
   };
 
   // Function to format text with bold emphasis for book titles and brand names
-  const formatTextWithEmphasis = (text: string) => {
+  // bookLinkCounts: tracks how many times each book has been linked
+  // allowLinks: whether to allow creating new links (true for intro and book sections)
+  const formatTextWithEmphasis = (text: string, bookLinkCounts?: Record<string, number>, allowLinks: boolean = false) => {
     // Book titles with their affiliate links (order matters - longer titles first to avoid partial matches)
     const bookLinks: Record<string, string> = {
       'The E-Myth Revisited': 'https://amzn.to/49LFRbv',
@@ -288,8 +290,33 @@ export default function BlogPost() {
       );
       const affiliateLink = bookKey ? bookLinks[bookKey] : undefined;
       
-      // If it's a book title with an affiliate link, make it a clickable link
-      if (affiliateLink) {
+      // If it's a book title with an affiliate link
+      if (affiliateLink && bookLinkCounts) {
+        const currentCount = bookLinkCounts[bookKey!] || 0;
+        // Only create link if: we're allowed to link AND we haven't exceeded 2 links for this book
+        if (allowLinks && currentCount < 2) {
+          bookLinkCounts[bookKey!] = currentCount + 1;
+          parts.push(
+            <a
+              key={`link-${keyCounter++}`}
+              href={affiliateLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold text-white underline hover:text-white/80 transition"
+            >
+              {matchedText}
+            </a>
+          );
+        } else {
+          // Otherwise, just make it bold (no link)
+          parts.push(
+            <strong key={`bold-${keyCounter++}`} className="font-bold text-white">
+              {matchedText}
+            </strong>
+          );
+        }
+      } else if (affiliateLink && !bookLinkCounts) {
+        // Fallback: if bookLinkCounts not provided, allow link (for backwards compatibility)
         parts.push(
           <a
             key={`link-${keyCounter++}`}
@@ -339,6 +366,17 @@ export default function BlogPost() {
     const paragraphs = content.split(/\n\n+/);
     const elements: JSX.Element[] = [];
     
+    // Track book link counts (max 2 per book: once in intro, once in section)
+    const bookLinkCounts: Record<string, number> = {
+      'The E-Myth Revisited': 0,
+      'This Is Not a T-Shirt': 0,
+      'The Alchemist': 0,
+      'Contagious': 0
+    };
+    
+    // Determine intro section (first 3 paragraphs)
+    const introEndIndex = Math.min(3, paragraphs.length);
+    
     paragraphs.forEach((para, index) => {
       const trimmed = para.trim();
       if (trimmed === '') return;
@@ -359,7 +397,13 @@ export default function BlogPost() {
                               (index === 0 || paragraphs[index - 1]?.trim() === '⸻' || paragraphs[index - 1]?.trim() === '');
       
       if (isLikelyHeading) {
-        const headingContent = formatTextWithEmphasis(trimmed);
+        // Check if this is a book's dedicated section
+        const isBookSection = Object.keys(bookLinkCounts).some(bookTitle => 
+          trimmed.includes(bookTitle) && trimmed.includes(':')
+        );
+        
+        // Format with emphasis, allowing links in section headings
+        const headingContent = formatTextWithEmphasis(trimmed, bookLinkCounts, isBookSection);
         elements.push(
           <h2 key={`heading-${index}`} className="text-2xl font-bold text-white mt-12 mb-6 text-left first:mt-0">
             {Array.isArray(headingContent) ? headingContent : headingContent}
@@ -371,7 +415,8 @@ export default function BlogPost() {
       // Check if paragraph starts with a number followed by a period (numbered list)
       const numberedMatch = trimmed.match(/^(\d+)\.\s+(.+)$/);
       if (numberedMatch) {
-        const content = formatTextWithEmphasis(numberedMatch[2]);
+        const isInIntro = index < introEndIndex;
+        const content = formatTextWithEmphasis(numberedMatch[2], bookLinkCounts, isInIntro);
         elements.push(
           <p key={index} className="mb-6 text-white/90 text-lg leading-relaxed text-left">
             <span className="font-bold">{numberedMatch[1]}.</span>{' '}
@@ -384,7 +429,8 @@ export default function BlogPost() {
       // Check for bullet points (lines starting with • or -)
       if (trimmed.match(/^[•\-\*]\s+/)) {
         const bulletText = trimmed.replace(/^[•\-\*]\s+/, '');
-        const content = formatTextWithEmphasis(bulletText);
+        const isInIntro = index < introEndIndex;
+        const content = formatTextWithEmphasis(bulletText, bookLinkCounts, isInIntro);
         elements.push(
           <p key={index} className="mb-4 text-white/90 text-lg leading-relaxed text-left pl-4">
             <span className="text-white/60 mr-2">•</span>
@@ -394,8 +440,10 @@ export default function BlogPost() {
         return;
       }
       
-      // Regular paragraph with emphasis formatting (book titles are already links, no need for URL conversion)
-      const content = formatTextWithEmphasis(trimmed);
+      // Regular paragraph with emphasis formatting
+      // Only allow links in intro (first 3 paragraphs) or in book sections
+      const isInIntro = index < introEndIndex;
+      const content = formatTextWithEmphasis(trimmed, bookLinkCounts, isInIntro);
       elements.push(
         <p key={index} className="mb-6 text-white/90 text-lg leading-relaxed text-left">
           {Array.isArray(content) ? content : content}
