@@ -25,12 +25,15 @@ interface TermDefinition {
 }
 
 interface AnalysisResult {
+  quickTake?: string;
   summary: string;
+  mainTakeaways?: string[];
   keyPoints: string[];
   toolsMentioned: string[];
   termsAndConcepts: TermDefinition[];
   comparableTools: ToolSuggestion[];
   alternatives: ToolSuggestion[];
+  practicalInsights?: string[];
 }
 
 /**
@@ -44,52 +47,66 @@ async function analyzeBlogPostWithAI(title: string, content: string, excerpt?: s
     return analyzeBlogPostBasic(title, content, excerpt);
   }
 
-  const prompt = `You are a senior-level software engineer and technical writer analyzing a blog post. Provide deep, insightful analysis that would be valuable to other developers and technical readers.
+  const prompt = `You are an expert technical communicator analyzing a blog post. Your goal is to make complex technical content accessible and intuitive for readers of all technical levels, while maintaining depth for experienced developers.
 
 Blog Post Title: ${title}
 ${excerpt ? `Excerpt: ${excerpt}\n` : ''}
 Content:
 ${content}
 
-Analyze this blog post and provide:
+Analyze this blog post and provide an intuitive breakdown:
 
-1. **Summary** (2-3 sentences): A concise, insightful summary that captures the core message and technical context. Think about what a senior engineer would want to know.
+1. **Quick Take** (1 sentence): A super-concise, plain-language summary that anyone can understand. What's the one thing readers should know? Make it conversational and clear.
 
-2. **Key Points** (3-5 points): Extract the most important technical insights, architectural decisions, or philosophical points. These should be:
-   - Actionable insights, not just random sentences
-   - Technical depth where relevant
-   - Clear value propositions
+2. **Summary** (2-3 sentences): A more detailed but still accessible summary that captures the core message. Use clear language, avoid unnecessary jargon, and focus on what matters most.
+
+3. **Main Takeaways** (3-4 points): The most important insights in simple, actionable language. Each should:
+   - Be easy to understand without technical background
+   - Highlight practical value or key insight
+   - Use everyday language when possible
+   - Be complete thoughts, not fragments
+   Format: "What it means" or "Why it matters" style insights.
+
+4. **Key Points** (3-5 points): More detailed technical insights for readers who want depth. These can include:
+   - Technical details and architectural decisions
    - Patterns or principles being demonstrated
-   Format each as a complete, meaningful insight (not just a sentence fragment).
+   - Implementation considerations
+   - Deeper context for technical readers
 
-3. **Tools Mentioned**: List only tools/platforms/services explicitly named in the post (e.g., Vercel, Supabase, GitHub, Cursor, etc.). Be precise - don't infer tools that aren't mentioned.
+5. **Tools Mentioned**: List only tools/platforms/services explicitly named in the post (e.g., Vercel, Supabase, GitHub, Cursor, etc.). Be precise - don't infer tools that aren't mentioned.
 
-4. **Terms & Concepts**: Define technical terms, concepts, laws, or principles mentioned (e.g., "Moore's Law", "MCP servers", "RLS policies"). Include:
-   - The term name
-   - A clear, technical definition
+6. **Terms & Concepts**: Define technical terms in an intuitive, accessible way. For each term:
+   - Use analogies or real-world examples when helpful
+   - Start with simple explanation, then add technical detail
+   - Make it clear why the concept matters
    - Category (e.g., "Technology Law", "Architecture Pattern", "Development Concept")
 
-5. **Comparable Tools**: Only include if the post explicitly asks for comparisons or alternatives. Otherwise, leave empty.
+7. **Practical Insights** (2-3 points, optional): Real-world applications, use cases, or actionable advice readers can apply. Focus on "how this helps you" or "when to use this."
 
-6. **Alternatives**: Only include if the post explicitly asks for alternatives. Otherwise, leave empty.
+8. **Comparable Tools**: Only include if the post explicitly asks for comparisons or alternatives. Otherwise, leave empty.
+
+9. **Alternatives**: Only include if the post explicitly asks for alternatives. Otherwise, leave empty.
 
 Return your response as a JSON object with this exact structure:
 {
-  "summary": "string",
-  "keyPoints": ["insight 1", "insight 2", ...],
+  "quickTake": "One sentence summary in plain language",
+  "summary": "2-3 sentence accessible summary",
+  "mainTakeaways": ["Simple insight 1", "Simple insight 2", ...],
+  "keyPoints": ["Detailed technical insight 1", "Detailed technical insight 2", ...],
   "toolsMentioned": ["Tool1", "Tool2", ...],
   "termsAndConcepts": [
     {
       "term": "Term Name",
-      "definition": "Clear technical definition",
+      "definition": "Intuitive definition with examples/analogies when helpful",
       "category": "Category Name"
     }
   ],
+  "practicalInsights": ["Actionable insight 1", "Actionable insight 2", ...],
   "comparableTools": [],
   "alternatives": []
 }
 
-Focus on technical depth, architectural insights, and practical value. Think like a senior engineer reviewing this for their team.`;
+Remember: Make it intuitive first, technical second. Use analogies, real examples, and clear language. Help readers understand not just what, but why it matters.`;
 
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
@@ -132,10 +149,13 @@ Focus on technical depth, architectural insights, and practical value. Think lik
       
       // Validate and return
       return {
+        quickTake: parsed.quickTake || undefined,
         summary: parsed.summary || excerpt || `Analysis of ${title}`,
+        mainTakeaways: Array.isArray(parsed.mainTakeaways) ? parsed.mainTakeaways : undefined,
         keyPoints: Array.isArray(parsed.keyPoints) ? parsed.keyPoints : [],
         toolsMentioned: Array.isArray(parsed.toolsMentioned) ? parsed.toolsMentioned : [],
         termsAndConcepts: Array.isArray(parsed.termsAndConcepts) ? parsed.termsAndConcepts : [],
+        practicalInsights: Array.isArray(parsed.practicalInsights) ? parsed.practicalInsights : undefined,
         comparableTools: [],
         alternatives: [],
       };
@@ -259,10 +279,13 @@ function analyzeBlogPostBasic(title: string, content: string, excerpt?: string):
   });
 
   return {
+    quickTake: excerpt ? excerpt.split('.')[0] + '.' : `An overview of ${title}`,
     summary,
+    mainTakeaways: keyPoints.length > 0 ? keyPoints.slice(0, 3) : undefined,
     keyPoints: keyPoints.length > 0 ? keyPoints : [summary],
     toolsMentioned,
     termsAndConcepts,
+    practicalInsights: undefined,
     comparableTools: [],
     alternatives: [],
   };

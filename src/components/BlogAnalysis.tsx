@@ -20,12 +20,15 @@ interface TermDefinition {
 }
 
 interface AnalysisResult {
+  quickTake?: string;
   summary: string;
+  mainTakeaways?: string[];
   keyPoints: string[];
   toolsMentioned: string[];
   termsAndConcepts: TermDefinition[];
   comparableTools: ToolSuggestion[];
   alternatives: ToolSuggestion[];
+  practicalInsights?: string[];
 }
 
 interface BlogAnalysisProps {
@@ -100,6 +103,16 @@ export default function BlogAnalysis({ title, content, excerpt }: BlogAnalysisPr
         AI Breakdown
       </h2>
 
+      {/* Quick Take - Prominent at top */}
+      {analysis.quickTake && (
+        <div className="mb-8 p-4 bg-white/5 border border-white/10 rounded-none">
+          <h3 className="text-sm font-semibold text-white/70 mb-2 text-left uppercase tracking-wide">Quick Take</h3>
+          <p className="text-white text-lg leading-relaxed text-left font-medium">
+            {analysis.quickTake}
+          </p>
+        </div>
+      )}
+
       {/* Summary */}
       <div className="mb-8">
         <h3 className="text-xl font-semibold text-white mb-3 text-left">Summary</h3>
@@ -108,7 +121,22 @@ export default function BlogAnalysis({ title, content, excerpt }: BlogAnalysisPr
         </p>
       </div>
 
-      {/* Key Points */}
+      {/* Main Takeaways - Simple insights first */}
+      {analysis.mainTakeaways && analysis.mainTakeaways.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-xl font-semibold text-white mb-3 text-left">Main Takeaways</h3>
+          <ul className="space-y-3 text-left">
+            {analysis.mainTakeaways.map((takeaway, index) => (
+              <li key={index} className="text-white/90 flex items-start gap-3">
+                <span className="text-white/60 mt-1.5 text-lg">→</span>
+                <span className="text-lg leading-relaxed text-justify">{takeaway}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Key Points - Detailed technical insights */}
       {analysis.keyPoints.length > 0 && (
         <div className="mb-8">
           <h3 className="text-xl font-semibold text-white mb-3 text-left">Key Points</h3>
@@ -117,6 +145,21 @@ export default function BlogAnalysis({ title, content, excerpt }: BlogAnalysisPr
               <li key={index} className="text-white/80 flex items-start gap-2">
                 <span className="text-white/60 mt-1">•</span>
                 <span className="text-justify">{point}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Practical Insights */}
+      {analysis.practicalInsights && analysis.practicalInsights.length > 0 && (
+        <div className="mb-8 p-4 bg-white/5 border border-white/10 rounded-none">
+          <h3 className="text-xl font-semibold text-white mb-3 text-left">Practical Insights</h3>
+          <ul className="space-y-2 text-left">
+            {analysis.practicalInsights.map((insight, index) => (
+              <li key={index} className="text-white/90 flex items-start gap-2">
+                <span className="text-white/60 mt-1">✓</span>
+                <span className="text-justify">{insight}</span>
               </li>
             ))}
           </ul>
@@ -151,14 +194,16 @@ export default function BlogAnalysis({ title, content, excerpt }: BlogAnalysisPr
                 className="bg-black/50 border border-white/10 rounded-none p-4 hover:border-white/20 transition"
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <div>
-                    <h4 className="text-lg font-semibold text-white text-left">{term.term}</h4>
+                  <div className="flex-1">
+                    <h4 className="text-lg font-semibold text-white text-left mb-1">{term.term}</h4>
                     {term.category && (
-                      <span className="text-xs text-white/50 text-left">{term.category}</span>
+                      <span className="text-xs text-white/50 text-left inline-block px-2 py-0.5 bg-white/5 rounded">
+                        {term.category}
+                      </span>
                     )}
                   </div>
                 </div>
-                <p className="text-white/70 text-sm leading-relaxed text-left">{term.definition}</p>
+                <p className="text-white/80 text-base leading-relaxed text-left mt-2">{term.definition}</p>
               </div>
             ))}
           </div>
