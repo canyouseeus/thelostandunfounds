@@ -444,15 +444,20 @@ export default function BlogPost() {
       const isShortTitle = trimmed.length < 100 && trimmed.split(' ').length < 12;
       
       // More lenient heading detection - if it matches a heading pattern, it's likely a heading
-      const isLikelyHeading = (
+      // If it starts with a known heading word, it's definitely a heading
+      const isDefiniteHeading = startsWithHeadingWord !== null && 
+                                trimmed.length < 100 && 
+                                !trimmed.match(/[.!?]$/) &&
+                                trimmed.split(' ').length < 15;
+      
+      const isLikelyHeading = isDefiniteHeading || (
         trimmed.length < 100 && 
         !trimmed.match(/[.!?]$/) && 
         trimmed.split(' ').length < 15 &&
         (
           index === 0 || 
           isAfterEmptyLine ||
-          startsWithHeadingWord !== null ||
-          (isTitleCase && isShortTitle && (isAfterEmptyLine || startsWithHeadingWord !== null))
+          (isTitleCase && isShortTitle && isAfterEmptyLine)
         )
       );
       
