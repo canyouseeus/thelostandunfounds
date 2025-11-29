@@ -383,6 +383,26 @@ END $$;`;
         console.error('Could not fetch Artificial Intelligence: The Job Killer blog post file:', fetchError);
       }
 
+      // Load create-blog-post-building-a-creative-brand-that-rewards-people-for-life script
+      let creativeBrandContent = '';
+      try {
+        const creativeBrandResponse = await fetch('/sql/create-blog-post-building-a-creative-brand-that-rewards-people-for-life.sql');
+        if (creativeBrandResponse.ok) {
+          const contentType = creativeBrandResponse.headers.get('content-type');
+          creativeBrandContent = await creativeBrandResponse.text();
+          console.log('Creative Brand script loaded:', {
+            ok: creativeBrandResponse.ok,
+            contentType,
+            contentLength: creativeBrandContent.length,
+            startsWithSQL: creativeBrandContent.trim().startsWith('--')
+          });
+        } else {
+          console.warn('Creative Brand script fetch failed:', creativeBrandResponse.status, creativeBrandResponse.statusText);
+        }
+      } catch (fetchError) {
+        console.error('Could not fetch Building a Creative Brand blog post file:', fetchError);
+      }
+
       // Load create-blog-post-our-tech-stack script
       let techStackContent = '';
       try {
@@ -501,6 +521,13 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
           content: migrationContent,
           description: 'Adds missing fields (published, SEO fields, og_image_url) to blog_posts table. Handles missing author_id column. Run this FIRST in Supabase SQL Editor.',
           createdAt: getScriptTimestamp('blog-schema-migration.sql')
+        },
+        {
+          name: 'Building a Creative Brand That Rewards People for Life: Lessons That Shaped THE LOST+UNFOUNDS',
+          filename: 'create-blog-post-building-a-creative-brand-that-rewards-people-for-life.sql',
+          content: creativeBrandContent || '// File not found - check public/sql folder',
+          description: 'Creates the blog post "Building a Creative Brand That Rewards People for Life: Lessons That Shaped THE LOST+UNFOUNDS" - exploring how books like The E-Myth Revisited, Contagious, This Is Not a T-Shirt, and The Alchemist shaped the brand philosophy. Run this AFTER the migration script. Works with any schema version.',
+          createdAt: getScriptTimestamp('create-blog-post-building-a-creative-brand-that-rewards-people-for-life.sql')
         },
         {
           name: 'Our Tech Stack: Building with Creativity and Autonomy',

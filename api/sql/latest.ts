@@ -12,7 +12,8 @@ const SQL_FILES = [
   '/create-first-blog-post.sql',
   '/sql/create-blog-post-all-for-a-dream.sql',
   '/sql/create-blog-post-artificial-intelligence-the-job-killer.sql',
-  '/sql/create-blog-post-our-tech-stack.sql'
+  '/sql/create-blog-post-our-tech-stack.sql',
+  '/sql/create-blog-post-building-a-creative-brand-that-rewards-people-for-life.sql'
 ];
 
 interface SQLFileInfo {
