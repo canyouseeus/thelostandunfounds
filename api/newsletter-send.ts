@@ -62,7 +62,7 @@ async function getZohoAccountInfo(accessToken: string, fallbackEmail: string): P
     console.log('Zoho accounts response:', JSON.stringify(accounts, null, 2))
     if (accounts.data && accounts.data.length > 0) {
       const account = accounts.data[0]
-      // Match the exact format from newsletter-subscribe
+      // Match the exact format from newsletter-subscribe (which works)
       const accountId = account.accountId || account.account_id || account.accountId
       // Try to get the actual email from the account response
       const accountEmail = account.emailAddress || account.email || account.accountName || fallbackEmail
@@ -71,12 +71,23 @@ async function getZohoAccountInfo(accessToken: string, fallbackEmail: string): P
         console.log('Using account ID:', accountId, 'email:', accountEmail)
         return { accountId, email: accountEmail }
       }
+    } else {
+      console.warn('No accounts found in Zoho response')
     }
+  } else {
+    const accountErrorText = await accountInfoResponse.text()
+    console.error('Failed to get Zoho accounts:', {
+      status: accountInfoResponse.status,
+      error: accountErrorText
+    })
   }
 
-  // Fallback: extract account ID from email
+  // Fallback: extract account ID from email (this might not work for all Zoho setups)
+  console.warn('Account ID not found from API, using email prefix as fallback')
   const emailParts = fallbackEmail.split('@')
-  return { accountId: emailParts[0], email: fallbackEmail }
+  const fallbackAccountId = emailParts[0]
+  console.log('Using fallback account ID:', fallbackAccountId, 'from email:', fallbackEmail)
+  return { accountId: fallbackAccountId, email: fallbackEmail }
 }
 
 /**
