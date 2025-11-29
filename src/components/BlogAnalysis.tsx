@@ -22,7 +22,6 @@ interface TermDefinition {
 interface AnalysisResult {
   quickTake?: string;
   summary: string;
-  mainTakeaways?: string[];
   keyPoints: string[];
   toolsMentioned: string[];
   termsAndConcepts: TermDefinition[];
@@ -96,83 +95,52 @@ function generateSummary(title: string, content: string, paragraphs: string[]): 
 }
 
 /**
- * Generate main takeaways - unique insights for each specific blog post
- */
-function generateMainTakeaways(title: string, content: string, allText: string, paragraphs: string[]): string[] {
-  const takeaways: string[] = [];
-  const allTextLower = allText;
-  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  
-  // Our Tech Stack - specific to this post
-  if (slug.includes('tech-stack') || (allTextLower.includes('tech stack') && allTextLower.includes('vercel') && allTextLower.includes('supabase'))) {
-    takeaways.push('The stack is deliberately organized into three categories - front-end (what users see), back-end (what powers it), and supporting tools (what enables building)');
-    takeaways.push('Each tool was chosen not just for what it does, but for how it enables creativity, experimentation, and maintaining flow state');
-    takeaways.push('The philosophy behind tool selection prioritizes autonomy and flexibility - tools that let you experiment without locking you into rigid structures');
-    takeaways.push('The integration of Bitcoin alongside traditional payment systems shows a forward-thinking approach to financial infrastructure');
-  } 
-  // Artificial Intelligence: The Job Killer - specific to Earnest Hausman story
-  else if (slug.includes('artificial-intelligence') || (allTextLower.includes('earnest') && allTextLower.includes('village') && allTextLower.includes('well'))) {
-    takeaways.push('The story of Earnest Hausman drilling a well in his Ugandan village perfectly illustrates how technology frees people from repetitive labor');
-    takeaways.push('AI will take jobs, but only if you let it - the real opportunity is in the new possibilities and roles that didn\'t exist before');
-    takeaways.push('The education system\'s ban on AI tools is like telling villagers to ignore the well - it misses the point entirely');
-    takeaways.push('Moore\'s Law and Kurzweil\'s Law explain why technological change feels sudden: progress compounds exponentially, not linearly');
-  }
-  // All For A Dream - specific personal story
-  else if (slug.includes('all-for-a-dream') || (allTextLower.includes('living in my car') && allTextLower.includes('un-hirable'))) {
-    takeaways.push('Choosing to be "un-hirable" at 40 isn\'t about rejecting work - it\'s about refusing to compromise your values for a paycheck');
-    takeaways.push('Living without stability for years while building a vision requires a different kind of faith - not in circumstances, but in yourself');
-    takeaways.push('Being an "unofficial agent of change" means speaking up about inconsistencies, even when it costs you opportunities');
-    takeaways.push('The moment you stop trying to be what others want and start doing what\'s right for yourself, everything starts connecting');
-  }
-  // Cursor IDE post - specific to Cursor features
-  else if (slug.includes('cursor') || (allTextLower.includes('mcp servers') && allTextLower.includes('agent-browser') && allTextLower.includes('vibe coding'))) {
-    takeaways.push('Cursor makes coding accessible to "vibe-coders" - people who think in outcomes and ideas, not syntax and commands');
-    takeaways.push('MCP servers are a game-changer because they let AI agents interact with external tools (Vercel, GitHub, Google Drive) without custom code');
-    takeaways.push('The Agent-Browser feature bridges the gap between visual design and code - you can describe what you see and Cursor implements it');
-    takeaways.push('At $200-500/month, Cursor is an investment comparable to education - but one that can pay for itself if you\'re building profitable projects');
-  }
-  
-  return takeaways.length > 0 ? takeaways : [];
-}
-
-/**
- * Generate key points - unique deeper insights for each specific post
+ * Generate key points - unique synthesized insights for each specific post
  */
 function generateKeyPoints(title: string, content: string, allText: string, paragraphs: string[]): string[] {
   const points: string[] = [];
   const allTextLower = allText;
   const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   
-  // Our Tech Stack - specific technical insights
+  // Our Tech Stack - specific insights
   if (slug.includes('tech-stack') || (allTextLower.includes('tech stack') && allTextLower.includes('vercel') && allTextLower.includes('supabase'))) {
+    points.push('The stack is deliberately organized into three categories - front-end (what users see), back-end (what powers it), and supporting tools (what enables building)');
+    points.push('Each tool was chosen not just for what it does, but for how it enables creativity, experimentation, and maintaining flow state');
     points.push('Vercel handles deployment, caching, and scaling automatically - this abstraction lets the team focus purely on design and experimentation rather than infrastructure management');
     points.push('MCP servers enable AI tools to safely interact with external services (Supabase, Vercel, Stripe) following rules and permissions, creating scalable automation without building custom integrations');
-    points.push('The three-category organization (front-end, back-end, supporting) creates clear mental models for understanding what each tool does and why it\'s needed');
+    points.push('The philosophy behind tool selection prioritizes autonomy and flexibility - tools that let you experiment without locking you into rigid structures');
     points.push('Bitcoin integration represents a philosophical alignment with autonomy and financial flexibility, not just a technical feature');
     points.push('GitHub\'s branch system enables safe experimentation - you can try new features without breaking existing functionality');
   }
   // AI Job Killer - specific insights from the village analogy
   else if (slug.includes('artificial-intelligence') || (allTextLower.includes('earnest') && allTextLower.includes('village'))) {
+    points.push('The story of Earnest Hausman drilling a well in his Ugandan village perfectly illustrates how technology frees people from repetitive labor');
     points.push('The village well analogy shows how technology compounds: clean water reduces disease, enables agriculture, frees time for education, which then enables even more progress');
     points.push('When Earnest drilled the well, water collectors became "unemployed" - but the village gained capacity for entirely new work (schools, clinics, businesses) that didn\'t exist before');
-    points.push('The education system telling students not to use AI is like telling villagers to ignore the well - it forces them to waste time on tasks technology can handle');
+    points.push('AI will take jobs, but only if you let it - the real opportunity is in the new possibilities and roles that didn\'t exist before');
+    points.push('The education system\'s ban on AI tools is like telling villagers to ignore the well - it misses the point entirely');
     points.push('Moore\'s Law (computing power doubles every 2 years) and Kurzweil\'s Law (progress accelerates as tools improve tools) explain why AI feels like it appeared suddenly');
     points.push('The real question isn\'t "will AI take jobs" but "will you adapt to use AI as a tool, or let it pass you by"');
   }
   // All For A Dream - specific insights from the personal story
   else if (slug.includes('all-for-a-dream') || (allTextLower.includes('living in my car') && allTextLower.includes('un-hirable'))) {
+    points.push('Choosing to be "un-hirable" at 40 isn\'t about rejecting work - it\'s about refusing to compromise your values for a paycheck');
     points.push('Being "un-hirable" isn\'t a failure - it\'s a conscious choice to prioritize values (speaking up about inconsistencies, refusing to compromise) over security');
+    points.push('Living without stability for years while building a vision requires a different kind of faith - not in circumstances, but in yourself');
     points.push('Living in a car for years while building a platform shows that stability and progress aren\'t the same thing - you can make progress without traditional stability');
-    points.push('The "unofficial agent of change" identity means recognizing workplace problems and speaking up, even when it costs you the job');
+    points.push('Being an "unofficial agent of change" means speaking up about inconsistencies, even when it costs you opportunities');
     points.push('The breakthrough came when he stopped trying to be what others wanted and started doing what was right for himself - that\'s when "the dots started to connect"');
     points.push('The vision hasn\'t changed despite years of instability: build a platform that helps people and changes how business is done');
   }
-  // Cursor IDE - specific technical insights
+  // Cursor IDE - specific insights
   else if (slug.includes('cursor') || (allTextLower.includes('mcp servers') && allTextLower.includes('agent-browser'))) {
-    points.push('MCP servers connect Cursor to external tools (Vercel, GitHub, Google Drive) so AI agents can perform actions, not just write code - this is automation at a new level');
+    points.push('Cursor makes coding accessible to "vibe-coders" - people who think in outcomes and ideas, not syntax and commands');
+    points.push('MCP servers are a game-changer because they let AI agents interact with external tools (Vercel, GitHub, Google Drive) without custom code');
+    points.push('MCP servers connect Cursor to external tools so AI agents can perform actions, not just write code - this is automation at a new level');
+    points.push('The Agent-Browser feature bridges the gap between visual design and code - you can describe what you see and Cursor implements it');
     points.push('Agent-Browser lets you describe visual changes in plain language ("increase padding below header") and Cursor implements it - bridging the gap between design thinking and code');
     points.push('The Ask/Plan/Agent mode progression breaks complex tasks into steps: Ask for understanding, Plan the approach, then Agent executes - this prevents overwhelming the AI with too much context at once');
-    points.push('The $24,000 over 4 years comparison frames Cursor as education - but unlike traditional education, this tool can generate income while you learn');
+    points.push('At $200-500/month, Cursor is an investment comparable to education - but one that can pay for itself if you\'re building profitable projects');
     points.push('The "vibe coding" concept means thinking in outcomes and ideas rather than syntax - Cursor translates your vision into working code');
   }
   
@@ -341,10 +309,7 @@ function generateIntuitiveBreakdown(title: string, content: string, excerpt?: st
     }
   }
 
-  // Generate main takeaways - synthesize insights from content themes
-  const mainTakeaways = generateMainTakeaways(title, content, allText, paragraphs);
-  
-  // Generate key points - deeper technical/philosophical insights
+  // Generate key points - synthesized insights from content themes
   const keyPoints = generateKeyPoints(title, content, allText, paragraphs);
   
   // Generate practical insights - actionable advice
@@ -353,7 +318,6 @@ function generateIntuitiveBreakdown(title: string, content: string, excerpt?: st
   return {
     quickTake,
     summary,
-    mainTakeaways: mainTakeaways.length > 0 ? mainTakeaways : undefined,
     keyPoints: keyPoints.length > 0 ? keyPoints : [summary],
     toolsMentioned,
     termsAndConcepts,
@@ -397,22 +361,7 @@ export default function BlogAnalysis({ title, content, excerpt }: BlogAnalysisPr
         </p>
       </div>
 
-      {/* Main Takeaways - Simple insights first */}
-      {analysis.mainTakeaways && analysis.mainTakeaways.length > 0 && (
-        <div className="mb-8">
-          <h3 className="text-xl font-semibold text-white mb-3 text-left">Main Takeaways</h3>
-          <ul className="space-y-3 text-left">
-            {analysis.mainTakeaways.map((takeaway, index) => (
-              <li key={index} className="text-white/90 flex items-start gap-3">
-                <span className="text-white/60 mt-1.5 text-lg">→</span>
-                <span className="text-lg leading-relaxed text-left">{takeaway}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Key Points - Detailed technical insights */}
+      {/* Key Points */}
       {analysis.keyPoints.length > 0 && (
         <div className="mb-8">
           <h3 className="text-xl font-semibold text-white mb-3 text-left">Key Points</h3>
