@@ -79,25 +79,57 @@ export default function ShareButtons({ title, url, description }: ShareButtonsPr
   const shareToTwitter = () => {
     const text = description ? `${title} - ${description}` : title;
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(fullUrl)}`;
-    window.open(twitterUrl, '_blank', 'noopener,noreferrer');
+    const width = 550;
+    const height = 420;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+    window.open(
+      twitterUrl,
+      'twitter-share',
+      `width=${width},height=${height},left=${left},top=${top},toolbar=0,status=0`
+    );
     setMenuOpen(false);
   };
 
   const shareToFacebook = () => {
     const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(fullUrl)}`;
-    window.open(facebookUrl, '_blank', 'noopener,noreferrer');
+    const width = 600;
+    const height = 400;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+    window.open(
+      facebookUrl,
+      'facebook-share',
+      `width=${width},height=${height},left=${left},top=${top},toolbar=0,status=0`
+    );
     setMenuOpen(false);
   };
 
   const shareToLinkedIn = () => {
     const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(fullUrl)}`;
-    window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
+    const width = 600;
+    const height = 500;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+    window.open(
+      linkedInUrl,
+      'linkedin-share',
+      `width=${width},height=${height},left=${left},top=${top},toolbar=0,status=0`
+    );
     setMenuOpen(false);
   };
 
   const shareToReddit = () => {
     const redditUrl = `https://reddit.com/submit?title=${encodeURIComponent(title)}&url=${encodeURIComponent(fullUrl)}`;
-    window.open(redditUrl, '_blank', 'noopener,noreferrer');
+    const width = 600;
+    const height = 500;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+    window.open(
+      redditUrl,
+      'reddit-share',
+      `width=${width},height=${height},left=${left},top=${top},toolbar=0,status=0`
+    );
     setMenuOpen(false);
   };
 
