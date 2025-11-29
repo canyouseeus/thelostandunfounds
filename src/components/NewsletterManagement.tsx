@@ -155,7 +155,7 @@ export default function NewsletterManagement() {
 
     try {
       setSending(true);
-      const response = await fetch('/api/newsletter-send', {
+      const response = await fetch('/api/newsletter/send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

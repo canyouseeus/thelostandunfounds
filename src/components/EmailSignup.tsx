@@ -33,7 +33,7 @@ export default function EmailSignup() {
 
     try {
       // Call API endpoint to save email and send confirmation
-      const response = await fetch('/api/newsletter-subscribe', {
+      const response = await fetch('/api/newsletter/subscribe', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
