@@ -265,12 +265,16 @@ export default async function handler(
       accessToken = await getZohoAccessToken()
       const accountInfo = await getZohoAccountInfo(accessToken, fromEmail)
       accountId = accountInfo.accountId
-      actualFromEmail = accountInfo.email
+      // Use the email from account info, but fallback to configured email if it's invalid
+      actualFromEmail = (accountInfo.email && typeof accountInfo.email === 'string' && accountInfo.email.includes('@')) 
+        ? accountInfo.email 
+        : fromEmail
       
       // Log the email being used for debugging
       console.log('Zoho account info:', {
         accountId,
         configuredEmail: fromEmail,
+        accountInfoEmail: accountInfo.email,
         actualEmail: actualFromEmail,
         usingActualEmail: actualFromEmail !== fromEmail
       })
