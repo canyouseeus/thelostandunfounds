@@ -63,8 +63,7 @@ BEGIN
     ) VALUES (
     'Building a Creative Brand That Rewards People for Life: Lessons That Shaped THE LOST+UNFOUNDS',
     'building-a-creative-brand-that-rewards-people-for-life-lessons-that-shaped-the-lost-and-unfounds',
-    'Introduction
-THE LOST+UNFOUNDS began as an idea to create a creative brand, a platform where contributions matter and people can grow alongside the vision. Books like The E-Myth Revisited, Contagious, This Is Not a T-Shirt, and The Alchemist offered lessons about leadership, influence, and purpose that shaped how I approached building the brand.
+    'THE LOST+UNFOUNDS began as an idea to create a creative brand, a platform where contributions matter and people can grow alongside the vision. Books like The E-Myth Revisited, Contagious, This Is Not a T-Shirt, and The Alchemist offered lessons about leadership, influence, and purpose that shaped how I approached building the brand.
 
 These insights helped clarify how to value contributors, nurture culture, and create frameworks that support long-term engagement and growth.
 
@@ -128,7 +127,7 @@ By adopting a future-focused mindset, THE LOST+UNFOUNDS seeks to foster a cultur
 
 
 
-Conclusion: A Creative Brand That Rewards People for Life
+A Creative Brand That Rewards People for Life
 The lessons from these books and our philosophy around technology and Bitcoin inform how THE LOST+UNFOUNDS operates. By valuing contributors, nurturing culture, encouraging meaningful engagement, and pursuing a clear vision, we aim to create a platform that rewards effort and influence for the long term.
 
 THE LOST+UNFOUNDS is a creative brand where contributions matter, relationships thrive, and people benefit from shared success. By combining insight, culture, vision, and forward-thinking principles, we are designing a brand that empowers people and encourages lasting impact.',
@@ -168,8 +167,7 @@ THE LOST+UNFOUNDS is a creative brand where contributions matter, relationships 
     ) VALUES (
       'Building a Creative Brand That Rewards People for Life: Lessons That Shaped THE LOST+UNFOUNDS',
       'building-a-creative-brand-that-rewards-people-for-life-lessons-that-shaped-the-lost-and-unfounds',
-      'Introduction
-THE LOST+UNFOUNDS began as an idea to create a creative brand, a platform where contributions matter and people can grow alongside the vision. Books like The E-Myth Revisited, Contagious, This Is Not a T-Shirt, and The Alchemist offered lessons about leadership, influence, and purpose that shaped how I approached building the brand.
+      'THE LOST+UNFOUNDS began as an idea to create a creative brand, a platform where contributions matter and people can grow alongside the vision. Books like The E-Myth Revisited, Contagious, This Is Not a T-Shirt, and The Alchemist offered lessons about leadership, influence, and purpose that shaped how I approached building the brand.
 
 These insights helped clarify how to value contributors, nurture culture, and create frameworks that support long-term engagement and growth.
 
@@ -233,7 +231,7 @@ By adopting a future-focused mindset, THE LOST+UNFOUNDS seeks to foster a cultur
 
 
 
-Conclusion: A Creative Brand That Rewards People for Life
+A Creative Brand That Rewards People for Life
 The lessons from these books and our philosophy around technology and Bitcoin inform how THE LOST+UNFOUNDS operates. By valuing contributors, nurturing culture, encouraging meaningful engagement, and pursuing a clear vision, we aim to create a platform that rewards effort and influence for the long term.
 
 THE LOST+UNFOUNDS is a creative brand where contributions matter, relationships thrive, and people benefit from shared success. By combining insight, culture, vision, and forward-thinking principles, we are designing a brand that empowers people and encourages lasting impact.',
@@ -273,8 +271,7 @@ THE LOST+UNFOUNDS is a creative brand where contributions matter, relationships 
     ) VALUES (
       'Building a Creative Brand That Rewards People for Life: Lessons That Shaped THE LOST+UNFOUNDS',
       'building-a-creative-brand-that-rewards-people-for-life-lessons-that-shaped-the-lost-and-unfounds',
-      'Introduction
-THE LOST+UNFOUNDS began as an idea to create a creative brand, a platform where contributions matter and people can grow alongside the vision. Books like The E-Myth Revisited, Contagious, This Is Not a T-Shirt, and The Alchemist offered lessons about leadership, influence, and purpose that shaped how I approached building the brand.
+      'THE LOST+UNFOUNDS began as an idea to create a creative brand, a platform where contributions matter and people can grow alongside the vision. Books like The E-Myth Revisited, Contagious, This Is Not a T-Shirt, and The Alchemist offered lessons about leadership, influence, and purpose that shaped how I approached building the brand.
 
 These insights helped clarify how to value contributors, nurture culture, and create frameworks that support long-term engagement and growth.
 
@@ -338,7 +335,7 @@ By adopting a future-focused mindset, THE LOST+UNFOUNDS seeks to foster a cultur
 
 
 
-Conclusion: A Creative Brand That Rewards People for Life
+A Creative Brand That Rewards People for Life
 The lessons from these books and our philosophy around technology and Bitcoin inform how THE LOST+UNFOUNDS operates. By valuing contributors, nurturing culture, encouraging meaningful engagement, and pursuing a clear vision, we aim to create a platform that rewards effort and influence for the long term.
 
 THE LOST+UNFOUNDS is a creative brand where contributions matter, relationships thrive, and people benefit from shared success. By combining insight, culture, vision, and forward-thinking principles, we are designing a brand that empowers people and encourages lasting impact.',
