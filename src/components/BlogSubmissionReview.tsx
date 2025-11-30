@@ -187,6 +187,7 @@ export default function BlogSubmissionReview() {
           published_at: new Date().toISOString(),
           status: 'published',
           author_id: authorId,
+          author_name: submission.author_name, // Store author name for disclosure
           subdomain: submission.subdomain || null, // User subdomain
           amazon_affiliate_links: submission.amazon_affiliate_links || [], // Store Amazon links
           amazon_storefront_id: submission.amazon_storefront_id || null, // Store Amazon storefront ID
