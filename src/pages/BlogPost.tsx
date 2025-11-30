@@ -603,8 +603,9 @@ export default function BlogPost() {
       // Check if disclosure already exists in content
       const hasDisclosure = post.content.toLowerCase().includes('amazon affiliate disclosure');
       if (!hasDisclosure) {
-        // Use the standard format with "we" as specified
-        const disclosureText = `Amazon Affiliate Disclosure: As an Amazon Associate, we earn from qualifying purchases. Some links in this post are affiliate links, which means we may earn a commission if you click through and make a purchase. This helps support THE LOST+UNFOUNDS and allows us to continue creating content. Thank you for your support!`;
+        // Use the author's name in the standard format
+        const authorName = post.author_name || 'THE LOST+UNFOUNDS';
+        const disclosureText = `Amazon Affiliate Disclosure: As an Amazon Associate, ${authorName} earns from qualifying purchases. Some links in this post are affiliate links, which means ${authorName} may earn a commission if you click through and make a purchase. This helps support ${authorName} and allows us to continue creating content. Thank you for your support!`;
         
         elements.push(
           <div key="affiliate-disclosure" className="mb-6 mx-auto max-w-2xl mt-8">
