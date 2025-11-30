@@ -149,8 +149,8 @@ export default function Layout() {
               <span className="text-xl font-bold">THE LOST+UNFOUNDS</span>
             </Link>
             <div className="flex items-center space-x-4">
-              {/* User Profile Menu or Login Button */}
-              {user ? (
+              {/* User Profile Menu */}
+              {user && (
                 <div className="relative">
                   <button
                     type="button"
@@ -169,14 +169,6 @@ export default function Layout() {
                     </span>
                   </button>
                 </div>
-              ) : (
-                <button
-                  type="button"
-                  className="px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition text-sm"
-                  onClick={handleLoginClick}
-                >
-                  LOG IN
-                </button>
               )}
               <div 
                 className="header-nav" 
