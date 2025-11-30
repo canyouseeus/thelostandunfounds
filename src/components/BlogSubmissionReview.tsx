@@ -292,7 +292,7 @@ export default function BlogSubmissionReview() {
       {/* Submissions List */}
       <div className="bg-black/50 border border-white/10 rounded-none p-6">
         {submissions.length === 0 ? (
-          <p className="text-white/60 text-center py-8">No submissions found</p>
+          <p className="text-white/60 text-left py-8">No submissions found</p>
         ) : (
           <div className="space-y-4">
             {submissions.map((submission) => (

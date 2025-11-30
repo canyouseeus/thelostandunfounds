@@ -428,7 +428,7 @@ export default function Admin() {
   if (adminStatus === false) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center py-12">
+        <div className="text-left py-12">
           <p className="text-white/70">Access denied. Admin privileges required.</p>
         </div>
       </div>
@@ -653,15 +653,15 @@ export default function Admin() {
               Subscription Tiers
             </h2>
             <div className="grid grid-cols-3 gap-4">
-              <div className="text-center">
+              <div className="text-left">
                 <div className="text-2xl font-bold text-white/60 mb-1">{stats?.freeUsers || 0}</div>
                 <div className="text-sm text-white/40">Free</div>
               </div>
-              <div className="text-center">
+              <div className="text-left">
                 <div className="text-2xl font-bold text-yellow-400 mb-1">{stats?.premiumUsers || 0}</div>
                 <div className="text-sm text-white/40">Premium</div>
               </div>
-              <div className="text-center">
+              <div className="text-left">
                 <div className="text-2xl font-bold text-purple-400 mb-1">{stats?.proUsers || 0}</div>
                 <div className="text-sm text-white/40">Pro</div>
               </div>
@@ -732,9 +732,11 @@ export default function Admin() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-white/60">
-                        <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                        <p>No users found</p>
+                      <td colSpan={5} className="py-8 text-left text-white/60">
+                        <div className="flex items-center gap-2">
+                          <Users className="w-8 h-8 opacity-50" />
+                          <p>No users found</p>
+                        </div>
                       </td>
                     </tr>
                   )}

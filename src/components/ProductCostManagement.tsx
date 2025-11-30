@@ -322,7 +322,7 @@ export function ProductCostManagement() {
             <tbody className="divide-y divide-white/10">
               {filteredCosts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-white/60">
+                  <td colSpan={6} className="px-6 py-12 text-left text-white/60">
                     {costs.length === 0 ? 'No product costs found. Add one to get started.' : 'No costs match your search.'}
                   </td>
                 </tr>
