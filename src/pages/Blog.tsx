@@ -35,20 +35,28 @@ export default function Blog() {
       
       console.log('🔄 Starting to load blog posts...');
       
-      // Load only main blog posts (no subdomain) - user blogs are in BOOK CLUB
+      // Load main blog posts - filter out user blogs (those with subdomain) if column exists
+      // This query works whether subdomain column exists or not
       let queryPromise = supabase
         .from('blog_posts')
         .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, published, status, subdomain')
-        .is('subdomain', null) // Only main blog posts, not user blogs
         .order('published_at', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(100);
       
-      // Try to add published filter, but it might fail if column doesn't exist
+      // Try to filter by published and subdomain, but handle gracefully if columns don't exist
       try {
         queryPromise = queryPromise.eq('published', true);
       } catch (e) {
         console.warn('Published column filter not available, will filter client-side');
+      }
+      
+      // Try to filter out user blogs (those with subdomain), but don't fail if column doesn't exist
+      try {
+        queryPromise = queryPromise.is('subdomain', null);
+      } catch (e) {
+        // Subdomain column might not exist yet - that's okay, just load all posts
+        console.warn('Subdomain column not available, loading all posts');
       }
       
       const timeoutPromise = new Promise((_, reject) => 
@@ -81,15 +89,23 @@ export default function Blog() {
         return;
       }
 
-      // Data is already filtered by published=true on server side, but double-check for safety
+      // Filter posts: only published, and only main blog posts (no subdomain or subdomain is null)
       const publishedPosts = (data || []).filter((post: any) => {
         try {
-          // Server already filtered by published=true, but verify
-          if (post.published !== undefined && post.published !== null) {
-            return post.published === true;
+          // Check if published
+          const isPublished = post.published === true || 
+            (post.published === undefined && post.status === 'published');
+          
+          if (!isPublished) return false;
+          
+          // If subdomain column exists, only show posts without subdomain (main blog posts)
+          // If subdomain column doesn't exist, show all posts (backward compatibility)
+          if (post.subdomain !== undefined) {
+            return post.subdomain === null || post.subdomain === '';
           }
-          // Fallback to status if published field doesn't exist
-          return post.status === 'published';
+          
+          // Subdomain column doesn't exist - show all published posts (existing articles)
+          return true;
         } catch (e) {
           return false;
         }
