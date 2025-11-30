@@ -37,6 +37,8 @@ export default function BlogManagement() {
   const [loading, setLoading] = useState(true);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [isBookClubPost, setIsBookClubPost] = useState(false);
+  const [userSubdomain, setUserSubdomain] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -51,7 +53,27 @@ export default function BlogManagement() {
 
   useEffect(() => {
     loadPosts();
+    loadUserSubdomain();
   }, []);
+
+  const loadUserSubdomain = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_subdomains')
+        .select('subdomain')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (data?.subdomain) {
+        setUserSubdomain(data.subdomain);
+      }
+    } catch (err) {
+      // Table might not exist - that's okay
+      console.warn('Error loading subdomain:', err);
+    }
+  };
 
   const loadPosts = async () => {
     try {
@@ -126,6 +148,8 @@ export default function BlogManagement() {
         seo_description: formData.seo_description || null,
         seo_keywords: formData.seo_keywords || null,
         og_image_url: formData.og_image_url || null,
+        // Set subdomain if creating a book club post
+        subdomain: isBookClubPost && userSubdomain ? userSubdomain : (editingPost?.subdomain || null),
       };
 
       if (editingPost) {
@@ -161,6 +185,7 @@ export default function BlogManagement() {
       });
       setEditingPost(null);
       setIsCreating(false);
+      setIsBookClubPost(false);
       loadPosts();
     } catch (err: any) {
       console.error('Error saving post:', err);
@@ -171,6 +196,7 @@ export default function BlogManagement() {
   const handleEdit = (post: BlogPost) => {
     setEditingPost(post);
     setIsCreating(true);
+    setIsBookClubPost(!!post.subdomain);
     // Handle both published boolean and status field for backward compatibility
     const isPublished = post.published !== undefined 
       ? post.published 
@@ -257,8 +283,15 @@ export default function BlogManagement() {
       {isCreating && (
         <div className="bg-black/50 border border-white/10 rounded-none p-6">
           <h3 className="text-lg font-bold text-white mb-4">
-            {editingPost ? 'Edit Post' : 'Create New Post'}
+            {editingPost ? 'Edit Post' : isBookClubPost ? 'Create New Book Club Post' : 'Create New Post'}
           </h3>
+          {isBookClubPost && !editingPost && userSubdomain && (
+            <div className="mb-4 p-3 bg-blue-900/20 border border-blue-500/30 rounded-none">
+              <p className="text-blue-300 text-sm">
+                This post will be published to the Book Club with subdomain: <span className="font-mono">{userSubdomain}</span>
+              </p>
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-white/80 text-sm mb-2">Title</label>
@@ -370,6 +403,7 @@ export default function BlogManagement() {
                 type="button"
                 onClick={() => {
                   setIsCreating(false);
+                  setIsBookClubPost(false);
                   setEditingPost(null);
                   setFormData({
                     title: '',
@@ -468,6 +502,7 @@ export default function BlogManagement() {
           <button
             onClick={() => {
               setIsCreating(true);
+              setIsBookClubPost(true);
               setEditingPost(null);
               setFormData({
                 title: '',
