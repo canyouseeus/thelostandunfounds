@@ -25,6 +25,9 @@ interface BlogPost {
   seo_keywords: string | null;
   og_image_url: string | null;
   featured_image?: string | null; // Support existing field
+  subdomain?: string | null;
+  author_id?: string | null;
+  user_id?: string | null;
 }
 
 export default function BlogManagement() {
@@ -55,7 +58,7 @@ export default function BlogManagement() {
       setLoading(true);
       const { data, error } = await supabase
         .from('blog_posts')
-        .select('*')
+        .select('*, author_id, user_id, subdomain')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -222,6 +225,25 @@ export default function BlogManagement() {
     );
   }
 
+  // Separate posts into categories
+  const adminPosts = posts.filter((post) => {
+    const postAuthorId = post.author_id || post.user_id;
+    const currentUserId = user?.id;
+    return postAuthorId === currentUserId;
+  });
+
+  const bookClubPosts = posts.filter((post) => {
+    const postAuthorId = post.author_id || post.user_id;
+    const currentUserId = user?.id;
+    return post.subdomain && postAuthorId !== currentUserId;
+  });
+
+  const regularPosts = posts.filter((post) => {
+    const postAuthorId = post.author_id || post.user_id;
+    const currentUserId = user?.id;
+    return !post.subdomain && postAuthorId !== currentUserId;
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -229,27 +251,6 @@ export default function BlogManagement() {
           <FileText className="w-5 h-5" />
           Blog Management
         </h2>
-        <button
-          onClick={() => {
-            setIsCreating(true);
-            setEditingPost(null);
-            setFormData({
-              title: '',
-              slug: '',
-              content: '',
-              excerpt: '',
-              published: false,
-              seo_title: '',
-              seo_description: '',
-              seo_keywords: '',
-              og_image_url: '',
-            });
-          }}
-          className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded text-white text-sm transition flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          New Post
-        </button>
       </div>
 
       {/* Create/Edit Form */}
@@ -391,14 +392,175 @@ export default function BlogManagement() {
         </div>
       )}
 
-      {/* Posts List */}
+      {/* Admin Posts Section */}
+      {adminPosts.length > 0 && (
+        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <h3 className="text-lg font-bold text-white mb-4">My Posts (Admin)</h3>
+          <div className="space-y-4">
+            {adminPosts.map((post) => (
+              <div
+                key={post.id}
+                className="bg-black/30 border border-white/10 rounded-none p-4 hover:border-white/20 transition"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h4 className="text-white font-bold text-lg mb-2">{post.title}</h4>
+                    <div className="flex items-center gap-4 text-sm text-white/60 mb-2">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {formatDate(post.published_at || post.created_at)}
+                      </span>
+                      <span className={`px-2 py-1 rounded text-xs ${
+                        post.published
+                          ? 'bg-green-400/20 text-green-400 border border-green-400/20'
+                          : 'bg-yellow-400/20 text-yellow-400 border border-yellow-400/20'
+                      }`}>
+                        {post.published ? 'Published' : 'Draft'}
+                      </span>
+                      {post.subdomain && (
+                        <span className="px-2 py-1 rounded text-xs bg-blue-400/20 text-blue-400 border border-blue-400/20">
+                          Book Club
+                        </span>
+                      )}
+                    </div>
+                    {post.excerpt && (
+                      <p className="text-white/70 text-sm">{post.excerpt.substring(0, 100)}...</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 ml-4">
+                    {post.published && (
+                      <a
+                        href={post.subdomain ? `/blog/${post.subdomain}/${post.slug}` : `/thelostarchives/${post.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 hover:bg-white/10 rounded transition"
+                        title="View post"
+                      >
+                        <Eye className="w-4 h-4 text-white/60" />
+                      </a>
+                    )}
+                    <button
+                      onClick={() => handleEdit(post)}
+                      className="p-2 hover:bg-white/10 rounded transition"
+                      title="Edit post"
+                    >
+                      <Edit className="w-4 h-4 text-white/60" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(post.id)}
+                      className="p-2 hover:bg-red-500/20 rounded transition"
+                      title="Delete post"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-400" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Book Club Posts Section */}
       <div className="bg-black/50 border border-white/10 rounded-none p-6">
-        <h3 className="text-lg font-bold text-white mb-4">All Posts</h3>
-        {posts.length === 0 ? (
-          <p className="text-white/60">No posts yet. Create your first post!</p>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-white">Book Club Posts</h3>
+          <button
+            onClick={() => {
+              setIsCreating(true);
+              setEditingPost(null);
+              setFormData({
+                title: '',
+                slug: '',
+                content: '',
+                excerpt: '',
+                published: false,
+                seo_title: '',
+                seo_description: '',
+                seo_keywords: '',
+                og_image_url: '',
+              });
+            }}
+            className="px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            NEW BOOK CLUB POST
+          </button>
+        </div>
+        {bookClubPosts.length === 0 ? (
+          <p className="text-white/60">No book club posts yet.</p>
         ) : (
           <div className="space-y-4">
-            {posts.map((post) => (
+            {bookClubPosts.map((post) => (
+              <div
+                key={post.id}
+                className="bg-black/30 border border-white/10 rounded-none p-4 hover:border-white/20 transition"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h4 className="text-white font-bold text-lg mb-2">{post.title}</h4>
+                    <div className="flex items-center gap-4 text-sm text-white/60 mb-2">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {formatDate(post.published_at || post.created_at)}
+                      </span>
+                      <span className={`px-2 py-1 rounded text-xs ${
+                        post.published
+                          ? 'bg-green-400/20 text-green-400 border border-green-400/20'
+                          : 'bg-yellow-400/20 text-yellow-400 border border-yellow-400/20'
+                      }`}>
+                        {post.published ? 'Published' : 'Draft'}
+                      </span>
+                      {post.subdomain && (
+                        <span className="px-2 py-1 rounded text-xs bg-blue-400/20 text-blue-400 border border-blue-400/20">
+                          {post.subdomain}
+                        </span>
+                      )}
+                    </div>
+                    {post.excerpt && (
+                      <p className="text-white/70 text-sm">{post.excerpt.substring(0, 100)}...</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 ml-4">
+                    {post.published && (
+                      <a
+                        href={`/blog/${post.subdomain}/${post.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 hover:bg-white/10 rounded transition"
+                        title="View post"
+                      >
+                        <Eye className="w-4 h-4 text-white/60" />
+                      </a>
+                    )}
+                    <button
+                      onClick={() => handleEdit(post)}
+                      className="p-2 hover:bg-white/10 rounded transition"
+                      title="Edit post"
+                    >
+                      <Edit className="w-4 h-4 text-white/60" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(post.id)}
+                      className="p-2 hover:bg-red-500/20 rounded transition"
+                      title="Delete post"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-400" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Regular Posts Section */}
+      {regularPosts.length > 0 && (
+        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <h3 className="text-lg font-bold text-white mb-4">Regular Posts</h3>
+          <div className="space-y-4">
+            {regularPosts.map((post) => (
               <div
                 key={post.id}
                 className="bg-black/30 border border-white/10 rounded-none p-4 hover:border-white/20 transition"
@@ -454,8 +616,15 @@ export default function BlogManagement() {
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {adminPosts.length === 0 && bookClubPosts.length === 0 && regularPosts.length === 0 && (
+        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <p className="text-white/60">No posts yet.</p>
+        </div>
+      )}
     </div>
   );
 }
