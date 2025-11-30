@@ -542,6 +542,20 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch blog submissions table file:', fetchError);
       }
 
+      // Load create-user-subdomains-table script
+      let userSubdomainsContent = '';
+      try {
+        const userSubdomainsResponse = await fetch('/sql/create-user-subdomains-table.sql');
+        if (userSubdomainsResponse.ok) {
+          const text = await userSubdomainsResponse.text();
+          if (!text.trim().startsWith('<!')) {
+            userSubdomainsContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch user subdomains table file:', fetchError);
+      }
+
       // Load add-user-subdomain-support script
       let subdomainSupportContent = '';
       try {
@@ -558,10 +572,17 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
 
       const allScripts: SQLScript[] = [
         {
+          name: 'User Subdomains Table',
+          filename: 'create-user-subdomains-table.sql',
+          content: userSubdomainsContent || '// File not found - check public/sql folder',
+          description: 'Creates the user_subdomains table to store each user\'s custom subdomain. Each user can set their subdomain once during signup. This table is required for the subdomain registration feature. Run this BEFORE the User Subdomain Support script.',
+          createdAt: getScriptTimestamp('create-user-subdomains-table.sql')
+        },
+        {
           name: 'User Subdomain Support',
           filename: 'add-user-subdomain-support.sql',
           content: subdomainSupportContent || '// File not found - check public/sql folder',
-          description: 'Adds subdomain and Amazon affiliate links support to blog_posts table. Allows users to have their own blogs with subdomains. Updates RLS policies to allow users to create their own posts. Run this AFTER creating the blog_posts table.',
+          description: 'Adds subdomain and Amazon affiliate links support to blog_posts table. Allows users to have their own blogs with subdomains. Updates RLS policies to allow users to create their own posts. Run this AFTER creating the blog_posts table and user_subdomains table.',
           createdAt: getScriptTimestamp('add-user-subdomain-support.sql')
         },
         {

@@ -4,6 +4,8 @@ import { X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../Toast';
 import { isAdminEmail, isAdmin } from '../../utils/admin';
+import SubdomainRegistration from '../SubdomainRegistration';
+import { supabase } from '../../lib/supabase';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -21,35 +23,70 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const { success, error: showError } = useToast();
   const navigate = useNavigate();
   const [justSignedIn, setJustSignedIn] = useState(false);
+  const [showSubdomainModal, setShowSubdomainModal] = useState(false);
+  const [justSignedUp, setJustSignedUp] = useState(false);
 
-  // Redirect users after successful login
+  // Check for subdomain after signup
   useEffect(() => {
-    if (justSignedIn && user) {
-      const checkAndRedirect = async () => {
+    if (justSignedUp && user) {
+      const checkSubdomain = async () => {
         try {
-          // Check if user is admin
-          const adminStatus = await isAdmin();
-          if (adminStatus || isAdminEmail(user.email || '')) {
-            navigate('/admin');
-          } else {
-            // Regular users go to submit article page
-            navigate('/submit-article');
+          // Check if user already has a subdomain
+          const { data, error } = await supabase
+            .from('user_subdomains')
+            .select('subdomain')
+            .eq('user_id', user.id)
+            .single();
+
+          if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+            console.error('Error checking subdomain:', error);
           }
-          setJustSignedIn(false);
-        } catch (error) {
-          // If admin check fails but email matches, redirect to admin
-          if (isAdminEmail(user.email || '')) {
-            navigate('/admin');
-          } else {
-            // Otherwise redirect to submit article
-            navigate('/submit-article');
+
+          // If no subdomain exists, show registration modal
+          if (!data) {
+            setShowSubdomainModal(true);
+            return;
           }
-          setJustSignedIn(false);
+
+          // If subdomain exists, proceed with redirect
+          setJustSignedUp(false);
+          handleRedirect();
+        } catch (err) {
+          console.error('Error in subdomain check:', err);
+          // On error, still proceed with redirect
+          setJustSignedUp(false);
+          handleRedirect();
         }
       };
-      checkAndRedirect();
+      checkSubdomain();
+    } else if (justSignedIn && user && !justSignedUp) {
+      // Regular sign-in (not sign-up), just redirect
+      handleRedirect();
     }
-  }, [user, justSignedIn, navigate]);
+  }, [user, justSignedIn, justSignedUp]);
+
+  const handleRedirect = async () => {
+    try {
+      // Check if user is admin
+      const adminStatus = await isAdmin();
+      if (adminStatus || isAdminEmail(user?.email || '')) {
+        navigate('/admin');
+      } else {
+        // Regular users go to submit article page
+        navigate('/submit-article');
+      }
+      setJustSignedIn(false);
+    } catch (error) {
+      // If admin check fails but email matches, redirect to admin
+      if (isAdminEmail(user?.email || '')) {
+        navigate('/admin');
+      } else {
+        // Otherwise redirect to submit article
+        navigate('/submit-article');
+      }
+      setJustSignedIn(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -66,10 +103,11 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           showError(error.message);
         } else {
           success('Account created successfully!');
-          onClose();
           setEmail('');
           setPassword('');
+          setJustSignedUp(true);
           setJustSignedIn(true);
+          // Don't close modal yet - wait for subdomain registration
         }
       } else {
         const { error } = await signIn(email, password);
@@ -98,18 +136,41 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     if (error) {
       setError(error.message);
       setLoading(false);
+    } else {
+      // For OAuth, we'll check subdomain in AuthCallback
+      // This will be handled by the OAuth callback flow
     }
   };
 
+  const handleSubdomainSuccess = (subdomain: string) => {
+    setShowSubdomainModal(false);
+    setJustSignedUp(false);
+    onClose();
+    handleRedirect();
+  };
+
   return (
-    <div 
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
-      onClick={onClose}
-    >
+    <>
+      <SubdomainRegistration
+        isOpen={showSubdomainModal}
+        onClose={() => {
+          // If required (during signup), don't allow closing
+          if (justSignedUp) {
+            return;
+          }
+          setShowSubdomainModal(false);
+        }}
+        onSuccess={handleSubdomainSuccess}
+        required={justSignedUp}
+      />
       <div 
-        className="bg-black/50 border border-white/10 rounded-none p-6 w-full max-w-md mx-4"
-        onClick={(e) => e.stopPropagation()}
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+        onClick={onClose}
       >
+        <div 
+          className="bg-black/50 border border-white/10 rounded-none p-6 w-full max-w-md mx-4"
+          onClick={(e) => e.stopPropagation()}
+        >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-white">
             {isSignUp ? 'Sign Up' : 'Sign In'}
@@ -216,7 +277,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           </button>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
