@@ -298,7 +298,7 @@ export default function SubmitArticle() {
     <>
       <Helmet>
         <title>Submit Article | THE LOST ARCHIVES | THE LOST+UNFOUNDS</title>
-        <meta name="description" content="Submit your article to THE LOST ARCHIVES. Share your insights on development, AI, and building in the age of information." />
+        <meta name="description" content="Submit your article to THE LOST ARCHIVES. Share your insights on books and how they've shaped your thinking. Feature four books with Amazon affiliate links." />
       </Helmet>
       <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -321,8 +321,8 @@ export default function SubmitArticle() {
             Submit to THE LOST ARCHIVES
           </h1>
           <p className="text-white/70 text-lg max-w-2xl mx-auto mb-4">
-            Share your insights on development, AI, and building in the age of information. 
-            If your article includes book recommendations, you can include your Amazon affiliate links.
+            Share your insights on books and how they've shaped your thinking. 
+            Submit an article featuring four books with your Amazon affiliate links.
           </p>
           <details className="max-w-2xl mx-auto text-left">
             <summary className="text-white/80 text-sm cursor-pointer hover:text-white transition mb-2">
