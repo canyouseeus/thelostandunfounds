@@ -77,17 +77,17 @@ export default function SubmitArticle() {
 
       fetchUserSubdomain();
 
-      // Get user's email for default
-      // Set author name to "THE LOST+UNFOUNDS" for admin, otherwise use user's name
-      const isAdminUser = user.email === 'thelostandunfounds@gmail.com' || user.email === 'admin@thelostandunfounds.com';
-      const defaultAuthorName = isAdminUser 
-        ? 'THE LOST+UNFOUNDS' 
-        : (user.user_metadata?.full_name || user.email?.split('@')[0] || '');
+      // Get user's email and pre-filled registration data
+      // Author name and storefront ID should be set during registration
+      const userMetadata = user.user_metadata || {};
+      const authorName = userMetadata.author_name || '';
+      const storefrontId = userMetadata.amazon_storefront_id || '';
       
       setFormData(prev => ({
         ...prev,
         author_email: user.email || '',
-        author_name: defaultAuthorName,
+        author_name: authorName,
+        amazon_storefront_id: storefrontId,
       }));
     } else if (!authLoading && !user) {
       // Open login modal instead of redirecting
