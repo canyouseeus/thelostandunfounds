@@ -5,10 +5,10 @@
 
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
+import AuthModal from '../components/auth/AuthModal';
 import { FileText, Plus, X, BookOpen, Mail, User } from 'lucide-react';
 
 interface AffiliateLink {
@@ -19,11 +19,11 @@ interface AffiliateLink {
 export default function SubmitArticle() {
   const { user, loading: authLoading } = useAuth();
   const { success, error: showError } = useToast();
-  const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
   const [subdomain, setSubdomain] = useState('');
   const [subdomainError, setSubdomainError] = useState('');
   const [checkingSubdomain, setCheckingSubdomain] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -34,9 +34,8 @@ export default function SubmitArticle() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      // Redirect to login or show message
-      showError('Please sign in to submit articles');
-      navigate('/');
+      // Open login modal instead of redirecting
+      setAuthModalOpen(true);
     } else if (user) {
       // Get user's email for default
       setFormData(prev => ({
@@ -51,7 +50,14 @@ export default function SubmitArticle() {
         setSubdomain(emailSubdomain);
       }
     }
-  }, [user, authLoading, navigate, showError]);
+  }, [user, authLoading, showError]);
+
+  // Close auth modal when user successfully logs in
+  useEffect(() => {
+    if (user && authModalOpen) {
+      setAuthModalOpen(false);
+    }
+  }, [user, authModalOpen]);
 
   const validateSubdomain = (value: string): boolean => {
     // Subdomain rules: lowercase alphanumeric and hyphens only, 3-63 characters
@@ -288,7 +294,22 @@ export default function SubmitArticle() {
         <title>Submit Article | THE LOST ARCHIVES | THE LOST+UNFOUNDS</title>
         <meta name="description" content="Submit your article to THE LOST ARCHIVES. Share your insights on development, AI, and building in the age of information." />
       </Helmet>
+      <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {!user && !authLoading && (
+          <div className="mb-8 text-center bg-yellow-900/20 border border-yellow-500/50 rounded-none p-6">
+            <h2 className="text-xl font-bold text-white mb-2">Sign In Required</h2>
+            <p className="text-white/70 mb-4">
+              Please sign in or create an account to submit articles to THE LOST ARCHIVES.
+            </p>
+            <button
+              onClick={() => setAuthModalOpen(true)}
+              className="px-6 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
+            >
+              Sign In / Sign Up
+            </button>
+          </div>
+        )}
         <div className="mb-8 text-center">
           <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-wide">
             Submit to THE LOST ARCHIVES
@@ -320,8 +341,9 @@ export default function SubmitArticle() {
           </details>
         </div>
 
-        <div className="bg-black/50 border border-white/10 rounded-none p-6 md:p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        {user && (
+          <div className="bg-black/50 border border-white/10 rounded-none p-6 md:p-8">
+            <form onSubmit={handleSubmit} className="space-y-6">
             {/* Author Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -545,6 +567,7 @@ Use double line breaks between sections. Book titles mentioned in the text will 
             </div>
           </form>
         </div>
+        )}
       </div>
     </>
   );
