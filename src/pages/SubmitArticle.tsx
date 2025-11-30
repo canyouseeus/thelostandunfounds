@@ -425,7 +425,7 @@ export default function SubmitArticle() {
                 href="/AI_WRITING_PROMPT_FOR_CONTRIBUTORS.md"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-300 underline"
+                className="text-white hover:text-white/80 underline"
               >
                 View AI Writing Prompt Guide →
               </a>
