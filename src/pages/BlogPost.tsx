@@ -604,7 +604,7 @@ export default function BlogPost() {
         // Get author name for disclosure, fallback to "we" if not available
         const authorName = post.author_name;
         const disclosureText = authorName
-          ? `Amazon Affiliate Disclosure: As an Amazon Associate, ${authorName} earns from qualifying purchases. Some links in this post are affiliate links, which means ${authorName} may earn a commission if you click through and make a purchase. This helps support THE LOST+UNFOUNDS and allows us to continue creating content. Thank you for your support!`
+          ? `Amazon Affiliate Disclosure: As an Amazon Associate, ${authorName} earns from qualifying purchases. Some links in this post are affiliate links, which means ${authorName} may earn a commission if you click through and make a purchase. This helps support ${authorName} and allows us to continue creating content. Thank you for your support!`
           : `Amazon Affiliate Disclosure: As an Amazon Associate, we earn from qualifying purchases. Some links in this post are affiliate links, which means we may earn a commission if you click through and make a purchase. This helps support THE LOST+UNFOUNDS and allows us to continue creating content. Thank you for your support!`;
         
         elements.push(
