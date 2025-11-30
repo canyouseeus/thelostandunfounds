@@ -382,11 +382,12 @@ export default function BlogPost() {
           firstLine.split(' ').length < 12
         );
         
-        const looksLikeHeading = (
+        // More aggressive: if it matches heading pattern, definitely split it
+        const looksLikeHeading = matchesHeadingPattern !== null || (
           firstLine.length < 100 &&
           !firstLine.match(/[.!?]$/) &&
           firstLine.split(' ').length < 15 &&
-          (matchesHeadingPattern !== null || isTitleCaseShort)
+          isTitleCaseShort
         );
         
         if (looksLikeHeading) {
