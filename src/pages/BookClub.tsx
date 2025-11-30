@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabase';
 import { LoadingSpinner } from '../components/Loading';
-import { BookOpen, User, Calendar } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 
 interface BlogPost {
   id: string;
@@ -72,15 +72,7 @@ export default function BookClub() {
     });
   };
 
-  // Group posts by subdomain (author)
-  const postsByAuthor = posts.reduce((acc, post) => {
-    const author = post.subdomain || 'unknown';
-    if (!acc[author]) {
-      acc[author] = [];
-    }
-    acc[author].push(post);
-    return acc;
-  }, {} as Record<string, BlogPost[]>);
+  // No longer grouping by author - show all posts in a flat list
 
   if (loading) {
     return (
@@ -144,73 +136,47 @@ export default function BookClub() {
             </Link>
           </div>
         ) : (
-          <div className="space-y-12">
-            {/* Show all posts in a grid, grouped by author */}
-            {Object.entries(postsByAuthor).map(([author, authorPosts]) => (
-              <div key={author} className="space-y-6">
-                {/* Author Header */}
-                <div className="border-b border-white/10 pb-4">
-                  <div className="flex items-center gap-3">
-                    <User className="w-5 h-5 text-white/60" />
-                    <div>
-                      <h2 className="text-xl font-bold text-white">
-                        {author.charAt(0).toUpperCase() + author.slice(1)}'s Articles
-                      </h2>
-                      <Link
-                        to={`/blog/${author}`}
-                        className="text-white/60 hover:text-white text-sm transition"
-                      >
-                        View {author}'s blog →
-                      </Link>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {posts.map((post) => (
+              <Link
+                key={post.id}
+                to={`/blog/${post.subdomain}/${post.slug}`}
+                className="group"
+              >
+                <article className="bg-black/50 border-2 border-white/10 rounded-lg p-5 h-full flex flex-col hover:border-white/30 hover:shadow-lg hover:shadow-white/10 transition-all duration-300 transform hover:-translate-y-1">
+                  <div className="mb-4 pb-3 border-b border-white/10">
+                    <h3 className="text-base font-black text-white mb-2 tracking-wide group-hover:text-white/90 transition line-clamp-2">
+                      {post.title}
+                    </h3>
+                  </div>
+
+                  {post.excerpt && (
+                    <div className="flex-1 mb-4">
+                      <p className="text-white/60 text-sm leading-relaxed line-clamp-4 text-left">
+                        {post.excerpt}
+                      </p>
+                    </div>
+                  )}
+
+                  {post.amazon_affiliate_links && post.amazon_affiliate_links.length > 0 && (
+                    <div className="mb-4 flex items-center gap-2 text-xs text-white/50">
+                      <BookOpen className="w-3 h-3" />
+                      <span>{post.amazon_affiliate_links.length} book{post.amazon_affiliate_links.length !== 1 ? 's' : ''}</span>
+                    </div>
+                  )}
+
+                  <div className="mt-auto pt-3 border-t border-white/10">
+                    <div className="flex items-center justify-between">
+                      <time className="text-white/40 text-xs font-medium">
+                        {formatDate(post.published_at || post.created_at)}
+                      </time>
+                      <span className="text-white/60 text-xs font-semibold group-hover:text-white transition">
+                        Read →
+                      </span>
                     </div>
                   </div>
-                </div>
-
-                {/* Author's Posts Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {authorPosts.map((post) => (
-                    <Link
-                      key={post.id}
-                      to={`/blog/${post.subdomain}/${post.slug}`}
-                      className="group"
-                    >
-                      <article className="bg-black/50 border-2 border-white/10 rounded-lg p-5 h-full flex flex-col hover:border-white/30 hover:shadow-lg hover:shadow-white/10 transition-all duration-300 transform hover:-translate-y-1">
-                        <div className="mb-4 pb-3 border-b border-white/10">
-                          <h3 className="text-base font-black text-white mb-2 tracking-wide group-hover:text-white/90 transition line-clamp-2">
-                            {post.title}
-                          </h3>
-                        </div>
-
-                        {post.excerpt && (
-                          <div className="flex-1 mb-4">
-                            <p className="text-white/60 text-sm leading-relaxed line-clamp-4 text-left">
-                              {post.excerpt}
-                            </p>
-                          </div>
-                        )}
-
-                        {post.amazon_affiliate_links && post.amazon_affiliate_links.length > 0 && (
-                          <div className="mb-4 flex items-center gap-2 text-xs text-white/50">
-                            <BookOpen className="w-3 h-3" />
-                            <span>{post.amazon_affiliate_links.length} book{post.amazon_affiliate_links.length !== 1 ? 's' : ''}</span>
-                          </div>
-                        )}
-
-                        <div className="mt-auto pt-3 border-t border-white/10">
-                          <div className="flex items-center justify-between">
-                            <time className="text-white/40 text-xs font-medium">
-                              {formatDate(post.published_at || post.created_at)}
-                            </time>
-                            <span className="text-white/60 text-xs font-semibold group-hover:text-white transition">
-                              Read →
-                            </span>
-                          </div>
-                        </div>
-                      </article>
-                    </Link>
-                  ))}
-                </div>
-              </div>
+                </article>
+              </Link>
             ))}
           </div>
         )}
