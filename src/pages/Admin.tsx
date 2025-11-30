@@ -52,7 +52,9 @@ interface DashboardStats {
 interface RecentUser {
   id: string;
   email: string;
+  username: string | null;
   tier: string;
+  isAdmin: boolean;
   created_at: string;
 }
 
@@ -246,20 +248,142 @@ export default function Admin() {
           .limit(10);
         recentData = result.data;
       } catch (err: any) {
-        // Table might not exist - that's okay
-        recentData = [];
+        // Table might not exist - try to get users from auth.users via RPC or fallback
+        try {
+          // Try to get recent users from user_roles or user_subdomains as fallback
+          const fallbackResult = await supabase
+            .from('user_subdomains')
+            .select('user_id, created_at')
+            .order('created_at', { ascending: false })
+            .limit(10);
+          if (fallbackResult.data) {
+            recentData = fallbackResult.data.map((row: any) => ({
+              user_id: row.user_id,
+              tier: 'free',
+              created_at: row.created_at,
+            }));
+          }
+        } catch (fallbackErr) {
+          recentData = [];
+        }
       }
 
       if (recentData && recentData.length > 0) {
-        // Fetch user emails - Note: This requires admin API access
-        // For now, we'll just show user IDs
-        const usersWithEmails = recentData.map((sub) => ({
-          id: sub.user_id,
-          email: `user-${sub.user_id.substring(0, 8)}`, // Placeholder
-          tier: sub.tier || 'free',
-          created_at: sub.created_at || '',
-        }));
-        setRecentUsers(usersWithEmails);
+        // Fetch user info including metadata
+        const usersWithInfo = await Promise.all(
+          recentData.map(async (sub: any) => {
+            const userId = sub.user_id;
+            
+            // Try to get user metadata and admin status
+            let username = null;
+            let isAdmin = false;
+            let email = `user-${userId.substring(0, 8)}`;
+            
+            try {
+              // Check user_roles for admin status
+              const roleResult = await supabase
+                .from('user_roles')
+                .select('is_admin, email')
+                .eq('user_id', userId)
+                .maybeSingle();
+              
+              if (roleResult.data) {
+                isAdmin = roleResult.data.is_admin === true;
+                if (roleResult.data.email) {
+                  email = roleResult.data.email;
+                }
+              }
+              
+              // Check user_subdomains for username (author_name might be in metadata)
+              // We can't directly query auth.users, but we can check user_metadata via user_subdomains
+              // For now, we'll use email as fallback and check if we can get author_name
+              
+              // Check if user has author_name in user_subdomains or try to infer from email
+              const subdomainResult = await supabase
+                .from('user_subdomains')
+                .select('subdomain')
+                .eq('user_id', userId)
+                .maybeSingle();
+              
+              if (subdomainResult.data?.subdomain) {
+                // Use subdomain as username hint, but we need actual author_name
+                // Since we can't query auth.users directly, we'll use email prefix
+                username = subdomainResult.data.subdomain;
+              }
+            } catch (metaErr: any) {
+              // If we can't get metadata, that's okay - use defaults
+              console.warn('Error fetching user metadata:', metaErr);
+            }
+            
+            // Check admin email list
+            if (email === 'thelostandunfounds@gmail.com' || email === 'admin@thelostandunfounds.com') {
+              isAdmin = true;
+            }
+            
+            return {
+              id: userId,
+              email: email,
+              username: username || email.split('@')[0] || 'Unknown',
+              tier: sub.tier || 'free',
+              isAdmin: isAdmin,
+              created_at: sub.created_at || '',
+            };
+          })
+        );
+        
+        setRecentUsers(usersWithInfo);
+      } else {
+        // If no subscription data, try to show users from user_subdomains
+        try {
+          const subdomainResult = await supabase
+            .from('user_subdomains')
+            .select('user_id, subdomain, created_at')
+            .order('created_at', { ascending: false })
+            .limit(10);
+          
+          if (subdomainResult.data && subdomainResult.data.length > 0) {
+            const usersFromSubdomains = await Promise.all(
+              subdomainResult.data.map(async (row: any) => {
+                const userId = row.user_id;
+                let isAdmin = false;
+                let email = `user-${userId.substring(0, 8)}`;
+                
+                try {
+                  const roleResult = await supabase
+                    .from('user_roles')
+                    .select('is_admin, email')
+                    .eq('user_id', userId)
+                    .maybeSingle();
+                  
+                  if (roleResult.data) {
+                    isAdmin = roleResult.data.is_admin === true;
+                    if (roleResult.data.email) {
+                      email = roleResult.data.email;
+                    }
+                  }
+                  
+                  if (email === 'thelostandunfounds@gmail.com' || email === 'admin@thelostandunfounds.com') {
+                    isAdmin = true;
+                  }
+                } catch (e) {
+                  // Ignore
+                }
+                
+                return {
+                  id: userId,
+                  email: email,
+                  username: row.subdomain || email.split('@')[0],
+                  tier: 'free',
+                  isAdmin: isAdmin,
+                  created_at: row.created_at || '',
+                };
+              })
+            );
+            setRecentUsers(usersFromSubdomains);
+          }
+        } catch (subdomainErr) {
+          // Ignore - no users to show
+        }
       }
     } catch (error: any) {
       console.error('Error loading dashboard data:', error);
@@ -560,6 +684,7 @@ export default function Admin() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-white/10">
+                    <th className="text-left py-3 text-white/60 text-sm font-medium">Username</th>
                     <th className="text-left py-3 text-white/60 text-sm font-medium">User ID</th>
                     <th className="text-left py-3 text-white/60 text-sm font-medium">Tier</th>
                     <th className="text-left py-3 text-white/60 text-sm font-medium">Joined</th>
@@ -570,7 +695,17 @@ export default function Admin() {
                   {recentUsers.length > 0 ? (
                     recentUsers.map((user) => (
                       <tr key={user.id} className="border-b border-white/5 hover:bg-white/5 transition">
-                        <td className="py-3 text-white font-mono text-sm">{user.email}</td>
+                        <td className="py-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-white font-medium">{user.username}</span>
+                            {user.isAdmin && (
+                              <span className="px-2 py-0.5 rounded text-xs bg-purple-400/20 text-purple-400 border border-purple-400/30 font-semibold">
+                                ADMIN
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3 text-white/60 font-mono text-xs">{user.id.substring(0, 8)}...</td>
                         <td className="py-3">
                           <span className={`px-2 py-1 rounded text-xs font-medium ${
                             user.tier === 'free' ? 'bg-white/5 text-white/60' :
@@ -597,7 +732,7 @@ export default function Admin() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={4} className="py-8 text-center text-white/60">
+                      <td colSpan={5} className="py-8 text-center text-white/60">
                         <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
                         <p>No users found</p>
                       </td>
