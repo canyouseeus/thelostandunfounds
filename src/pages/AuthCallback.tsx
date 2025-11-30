@@ -52,8 +52,20 @@ export default function AuthCallback() {
                 .eq('user_id', currentUser.id)
                 .single();
 
-              if (subdomainError && subdomainError.code !== 'PGRST116') {
-                console.error('Error checking subdomain:', subdomainError);
+              // Handle table not found error gracefully
+              if (subdomainError) {
+                if (subdomainError.code === 'PGRST116') {
+                  // No rows returned - user doesn't have subdomain yet
+                  setShowSubdomainModal(true);
+                  return;
+                } else if (subdomainError.message?.includes('does not exist') || subdomainError.message?.includes('schema cache')) {
+                  // Table doesn't exist yet - show subdomain modal
+                  console.warn('user_subdomains table not found. Please run the SQL migration script.');
+                  setShowSubdomainModal(true);
+                  return;
+                } else {
+                  console.error('Error checking subdomain:', subdomainError);
+                }
               }
 
               if (!subdomainData) {

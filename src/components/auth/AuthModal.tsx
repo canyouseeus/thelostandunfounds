@@ -38,8 +38,20 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             .eq('user_id', user.id)
             .single();
 
-          if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-            console.error('Error checking subdomain:', error);
+          // Handle table not found error gracefully
+          if (error) {
+            if (error.code === 'PGRST116') {
+              // No rows returned - user doesn't have subdomain yet
+              setShowSubdomainModal(true);
+              return;
+            } else if (error.message?.includes('does not exist') || error.message?.includes('schema cache')) {
+              // Table doesn't exist yet - show subdomain modal anyway
+              console.warn('user_subdomains table not found. Please run the SQL migration script.');
+              setShowSubdomainModal(true);
+              return;
+            } else {
+              console.error('Error checking subdomain:', error);
+            }
           }
 
           // If no subdomain exists, show registration modal
@@ -51,9 +63,14 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           // If subdomain exists, proceed with redirect
           setJustSignedUp(false);
           handleRedirect();
-        } catch (err) {
+        } catch (err: any) {
           console.error('Error in subdomain check:', err);
-          // On error, still proceed with redirect
+          // If table doesn't exist, show subdomain modal
+          if (err?.message?.includes('does not exist') || err?.message?.includes('schema cache')) {
+            setShowSubdomainModal(true);
+            return;
+          }
+          // On other errors, still proceed with redirect
           setJustSignedUp(false);
           handleRedirect();
         }

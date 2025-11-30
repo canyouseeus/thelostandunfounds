@@ -46,18 +46,30 @@ export default function SubmitArticle() {
             .eq('user_id', user.id)
             .single();
 
-          if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-            console.error('Error fetching subdomain:', error);
-          }
-
-          if (data) {
+          // Handle table not found error gracefully
+          if (error) {
+            if (error.code === 'PGRST116') {
+              // No rows returned - user doesn't have subdomain yet
+              setShowSubdomainModal(true);
+            } else if (error.message?.includes('does not exist') || error.message?.includes('schema cache')) {
+              // Table doesn't exist yet - show subdomain modal
+              console.warn('user_subdomains table not found. Please run the SQL migration script.');
+              setShowSubdomainModal(true);
+            } else {
+              console.error('Error fetching subdomain:', error);
+            }
+          } else if (data) {
             setUserSubdomain(data.subdomain);
           } else {
             // User doesn't have a subdomain - show registration modal
             setShowSubdomainModal(true);
           }
-        } catch (err) {
+        } catch (err: any) {
           console.error('Error in subdomain check:', err);
+          // If table doesn't exist, show subdomain modal
+          if (err?.message?.includes('does not exist') || err?.message?.includes('schema cache')) {
+            setShowSubdomainModal(true);
+          }
         } finally {
           setLoadingSubdomain(false);
         }

@@ -96,6 +96,16 @@ export default function SubdomainRegistration({
           .limit(1)
       ]);
 
+      // Handle table not found error gracefully
+      if (subdomainsResult.error) {
+        if (subdomainsResult.error.message?.includes('does not exist') || subdomainsResult.error.message?.includes('schema cache')) {
+          // Table doesn't exist - allow registration to proceed (will fail on insert if table missing)
+          console.warn('user_subdomains table not found. Please run the SQL migration script.');
+        } else {
+          console.error('Error checking subdomain availability:', subdomainsResult.error);
+        }
+      }
+
       if (subdomainsResult.data && subdomainsResult.data.length > 0) {
         setSubdomainError('This subdomain is already taken');
         setCheckingSubdomain(false);
@@ -155,9 +165,13 @@ export default function SubdomainRegistration({
       if (error) {
         if (error.code === '23505') { // Unique constraint violation
           setSubdomainError('This subdomain is already taken');
+        } else if (error.message?.includes('does not exist') || error.message?.includes('schema cache')) {
+          setSubdomainError('The user_subdomains table has not been created yet. Please contact an administrator to run the SQL migration script.');
+          showError('Database table missing. Please run the SQL migration script in Supabase.');
         } else {
           throw error;
         }
+        setRegistering(false);
         return;
       }
 
@@ -166,7 +180,12 @@ export default function SubdomainRegistration({
       onClose();
     } catch (err: any) {
       console.error('Error registering subdomain:', err);
-      showError(err.message || 'Failed to register subdomain. Please try again.');
+      if (err?.message?.includes('does not exist') || err?.message?.includes('schema cache')) {
+        setSubdomainError('The user_subdomains table has not been created yet. Please contact an administrator to run the SQL migration script.');
+        showError('Database table missing. Please run the SQL migration script in Supabase.');
+      } else {
+        showError(err.message || 'Failed to register subdomain. Please try again.');
+      }
     } finally {
       setRegistering(false);
     }
