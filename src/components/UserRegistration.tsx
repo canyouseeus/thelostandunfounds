@@ -32,14 +32,28 @@ export default function UserRegistration({
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (isOpen && user?.email) {
-      // Set default username based on email for non-admin users
-      const isAdminUser = user.email === 'thelostandunfounds@gmail.com' || user.email === 'admin@thelostandunfounds.com';
-      if (isAdminUser) {
-        setUsername('THE LOST+UNFOUNDS');
+    if (isOpen && user) {
+      // Check if user already has registration data
+      const userMetadata = user.user_metadata || {};
+      const existingUsername = userMetadata.author_name;
+      const existingStorefrontId = userMetadata.amazon_storefront_id;
+
+      // If already set, populate fields (read-only mode)
+      if (existingUsername) {
+        setUsername(existingUsername);
       } else {
-        const emailUsername = user.email.split('@')[0];
-        setUsername(emailUsername);
+        // Set default username based on email for non-admin users
+        const isAdminUser = user.email === 'thelostandunfounds@gmail.com' || user.email === 'admin@thelostandunfounds.com';
+        if (isAdminUser) {
+          setUsername('THE LOST+UNFOUNDS');
+        } else {
+          const emailUsername = user.email?.split('@')[0] || '';
+          setUsername(emailUsername);
+        }
+      }
+
+      if (existingStorefrontId) {
+        setStorefrontId(existingStorefrontId);
       }
     }
   }, [isOpen, user]);
@@ -135,6 +149,18 @@ export default function UserRegistration({
   };
 
   const handleSubmit = async () => {
+    // Check if already set - if so, just proceed without saving
+    const userMetadata = user?.user_metadata || {};
+    const existingUsername = userMetadata.author_name;
+    const existingStorefrontId = userMetadata.amazon_storefront_id;
+
+    if (existingUsername && existingStorefrontId) {
+      // Already set, just proceed
+      onSuccess(existingUsername, existingStorefrontId);
+      onClose();
+      return;
+    }
+
     // Validate username
     if (!validateUsername(username)) {
       return;
@@ -156,8 +182,8 @@ export default function UserRegistration({
       // Extract and normalize storefront ID
       const normalizedStorefrontId = extractStorefrontId(storefrontId);
 
-      // Store username and storefront ID in user metadata or a user_profile table
-      // For now, we'll store it in user metadata and it will be used when submitting articles
+      // Store username and storefront ID in user metadata
+      // This can only be set once
       if (user) {
         const { error } = await supabase.auth.updateUser({
           data: {
@@ -215,22 +241,33 @@ export default function UserRegistration({
           <div>
             <label className="block text-white/80 text-sm mb-2">
               Username (Author Name) *
+              {user?.user_metadata?.author_name && (
+                <span className="text-white/50 text-xs font-normal ml-2">(Cannot be changed)</span>
+              )}
             </label>
             <input
               type="text"
               value={username}
               onChange={(e) => {
+                // Prevent changes if already set
+                if (user?.user_metadata?.author_name) {
+                  return;
+                }
                 setUsername(e.target.value);
                 setUsernameError('');
               }}
               onBlur={() => validateUsername(username)}
-              className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+              className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="THE LOST+UNFOUNDS or Your Name"
               required
-              disabled={saving}
+              disabled={saving || !!user?.user_metadata?.author_name}
+              readOnly={!!user?.user_metadata?.author_name}
             />
             {usernameError && (
               <p className="text-red-400 text-xs mt-1">{usernameError}</p>
+            )}
+            {user?.user_metadata?.author_name && (
+              <p className="text-yellow-400 text-xs mt-1">This value is set and cannot be changed.</p>
             )}
             <p className="text-white/50 text-xs mt-2">
               This will be your author name displayed in articles and the Amazon Affiliate Disclosure.
@@ -240,22 +277,35 @@ export default function UserRegistration({
           <div>
             <label className="block text-white/80 text-sm mb-2">
               Amazon Storefront ID or URL *
+              {user?.user_metadata?.amazon_storefront_id && (
+                <span className="text-white/50 text-xs font-normal ml-2">(Cannot be changed)</span>
+              )}
             </label>
             <input
               type="text"
               value={storefrontId}
-              onChange={(e) => handleStorefrontChange(e.target.value)}
+              onChange={(e) => {
+                // Prevent changes if already set
+                if (user?.user_metadata?.amazon_storefront_id) {
+                  return;
+                }
+                handleStorefrontChange(e.target.value);
+              }}
               onBlur={handleStorefrontBlur}
-              className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+              className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="https://www.amazon.com/shop/yourstorefront or yourstorefront"
               required
-              disabled={saving}
+              disabled={saving || !!user?.user_metadata?.amazon_storefront_id}
+              readOnly={!!user?.user_metadata?.amazon_storefront_id}
             />
             {storefrontError && (
               <p className="text-red-400 text-xs mt-1">{storefrontError}</p>
             )}
             {storefrontId && validateAmazonStorefront(storefrontId) && !storefrontError && (
               <p className="text-green-400 text-xs mt-1">Valid storefront format</p>
+            )}
+            {user?.user_metadata?.amazon_storefront_id && (
+              <p className="text-yellow-400 text-xs mt-1">This value is set and cannot be changed.</p>
             )}
             <p className="text-white/50 text-xs mt-2">
               Enter your Amazon Associates Storefront ID or full URL. Examples:

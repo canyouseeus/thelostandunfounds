@@ -10,6 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
 import AuthModal from '../components/auth/AuthModal';
 import SubdomainRegistration from '../components/SubdomainRegistration';
+import UserRegistration from '../components/UserRegistration';
 import { FileText, Plus, X, BookOpen, Mail, User } from 'lucide-react';
 
 interface AffiliateLink {
@@ -23,6 +24,7 @@ export default function SubmitArticle() {
   const [submitting, setSubmitting] = useState(false);
   const [userSubdomain, setUserSubdomain] = useState<string | null>(null);
   const [loadingSubdomain, setLoadingSubdomain] = useState(true);
+  const [showUserRegistrationModal, setShowUserRegistrationModal] = useState(false);
   const [showSubdomainModal, setShowSubdomainModal] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -34,61 +36,77 @@ export default function SubmitArticle() {
     amazon_storefront_id: '',
   });
 
-  // Check if user has a subdomain
+  // Check if user has completed registration and subdomain
   useEffect(() => {
     if (user && !authLoading) {
-      const fetchUserSubdomain = async () => {
-        setLoadingSubdomain(true);
-        try {
-          const { data, error } = await supabase
-            .from('user_subdomains')
-            .select('subdomain')
-            .eq('user_id', user.id)
-            .single();
+      const checkRegistration = async () => {
+        // First check if username and storefront are set
+        const userMetadata = user.user_metadata || {};
+        const hasAuthorName = userMetadata.author_name;
+        const hasStorefrontId = userMetadata.amazon_storefront_id;
 
-          // Handle table not found error gracefully
-          if (error) {
-            if (error.code === 'PGRST116') {
-              // No rows returned - user doesn't have subdomain yet
-              setShowSubdomainModal(true);
-            } else if (error.message?.includes('does not exist') || error.message?.includes('schema cache')) {
-              // Table doesn't exist yet - show subdomain modal
-              console.warn('user_subdomains table not found. Please run the SQL migration script.');
-              setShowSubdomainModal(true);
-            } else {
-              console.error('Error fetching subdomain:', error);
-            }
-          } else if (data) {
-            setUserSubdomain(data.subdomain);
-          } else {
-            // User doesn't have a subdomain - show registration modal
-            setShowSubdomainModal(true);
-          }
-        } catch (err: any) {
-          console.error('Error in subdomain check:', err);
-          // If table doesn't exist, show subdomain modal
-          if (err?.message?.includes('does not exist') || err?.message?.includes('schema cache')) {
-            setShowSubdomainModal(true);
-          }
-        } finally {
-          setLoadingSubdomain(false);
+        // If missing, show user registration modal
+        if (!hasAuthorName || !hasStorefrontId) {
+          setShowSubdomainModal(false); // Don't show subdomain modal yet
+          setShowUserRegistrationModal(true); // Show user registration modal
+          return;
         }
+
+        // Registration complete, now check subdomain
+        const fetchUserSubdomain = async () => {
+          setLoadingSubdomain(true);
+          try {
+            const { data, error } = await supabase
+              .from('user_subdomains')
+              .select('subdomain')
+              .eq('user_id', user.id)
+              .single();
+
+            // Handle table not found error gracefully
+            if (error) {
+              if (error.code === 'PGRST116') {
+                // No rows returned - user doesn't have subdomain yet
+                setShowSubdomainModal(true);
+              } else if (error.message?.includes('does not exist') || error.message?.includes('schema cache')) {
+                // Table doesn't exist yet - show subdomain modal
+                console.warn('user_subdomains table not found. Please run the SQL migration script.');
+                setShowSubdomainModal(true);
+              } else {
+                console.error('Error fetching subdomain:', error);
+              }
+            } else if (data) {
+              setUserSubdomain(data.subdomain);
+            } else {
+              // User doesn't have a subdomain - show registration modal
+              setShowSubdomainModal(true);
+            }
+          } catch (err: any) {
+            console.error('Error in subdomain check:', err);
+            // If table doesn't exist, show subdomain modal
+            if (err?.message?.includes('does not exist') || err?.message?.includes('schema cache')) {
+              setShowSubdomainModal(true);
+            }
+          } finally {
+            setLoadingSubdomain(false);
+          }
+        };
+
+        fetchUserSubdomain();
+
+        // Get user's email and pre-filled registration data
+        // Author name and storefront ID should be set during registration
+        const authorName = userMetadata.author_name || '';
+        const storefrontId = userMetadata.amazon_storefront_id || '';
+        
+        setFormData(prev => ({
+          ...prev,
+          author_email: user.email || '',
+          author_name: authorName,
+          amazon_storefront_id: storefrontId,
+        }));
       };
 
-      fetchUserSubdomain();
-
-      // Get user's email and pre-filled registration data
-      // Author name and storefront ID should be set during registration
-      const userMetadata = user.user_metadata || {};
-      const authorName = userMetadata.author_name || '';
-      const storefrontId = userMetadata.amazon_storefront_id || '';
-      
-      setFormData(prev => ({
-        ...prev,
-        author_email: user.email || '',
-        author_name: authorName,
-        amazon_storefront_id: storefrontId,
-      }));
+      checkRegistration();
     } else if (!authLoading && !user) {
       // Open login modal instead of redirecting
       setAuthModalOpen(true);
@@ -330,6 +348,36 @@ export default function SubmitArticle() {
         <meta name="description" content="Submit your article to THE LOST ARCHIVES. Share your insights on books and how they've shaped your thinking. Feature four books with Amazon affiliate links." />
       </Helmet>
       <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
+      <UserRegistration
+        isOpen={showUserRegistrationModal}
+        onClose={() => {
+          // Don't allow closing if registration is incomplete
+          const userMetadata = user?.user_metadata || {};
+          if (!userMetadata.author_name || !userMetadata.amazon_storefront_id) {
+            return;
+          }
+          setShowUserRegistrationModal(false);
+        }}
+        onSuccess={(username, storefrontId) => {
+          setShowUserRegistrationModal(false);
+          // After registration, check for subdomain
+          const checkSubdomain = async () => {
+            if (user) {
+              const { data } = await supabase
+                .from('user_subdomains')
+                .select('subdomain')
+                .eq('user_id', user.id)
+                .single();
+              
+              if (!data) {
+                setShowSubdomainModal(true);
+              }
+            }
+          };
+          checkSubdomain();
+        }}
+        required={true}
+      />
       <SubdomainRegistration
         isOpen={showSubdomainModal}
         onClose={() => {
@@ -396,16 +444,30 @@ export default function SubmitArticle() {
               <div>
                 <label className="block text-white/80 text-sm mb-2 flex items-center gap-2">
                   <User className="w-4 h-4" />
-                  Author Name * <span className="text-white/50 text-xs font-normal">(Required)</span>
+                  Author Name * 
+                  {user?.user_metadata?.author_name && (
+                    <span className="text-white/50 text-xs font-normal">(Set during registration - cannot be changed)</span>
+                  )}
                 </label>
                 <input
                   type="text"
                   value={formData.author_name}
-                  onChange={(e) => setFormData({ ...formData, author_name: e.target.value })}
-                  className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+                  onChange={(e) => {
+                    // Prevent changes if set during registration
+                    if (user?.user_metadata?.author_name) {
+                      return;
+                    }
+                    setFormData({ ...formData, author_name: e.target.value });
+                  }}
+                  className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="THE LOST+UNFOUNDS or Your Name"
                   required
+                  disabled={!!user?.user_metadata?.author_name}
+                  readOnly={!!user?.user_metadata?.author_name}
                 />
+                {user?.user_metadata?.author_name && (
+                  <p className="text-yellow-400 text-xs mt-1">This value was set during registration and cannot be changed.</p>
+                )}
                 <p className="text-white/50 text-xs mt-1">
                   This name will appear in the Amazon Affiliate Disclosure on your published article.
                 </p>
@@ -430,21 +492,36 @@ export default function SubmitArticle() {
             {/* Amazon Storefront ID */}
             <div>
               <label className="block text-white/80 text-sm mb-2">
-                Amazon Storefront ID or URL * <span className="text-white/50 text-xs font-normal">(Internal - Not displayed publicly)</span>
+                Amazon Storefront ID or URL * 
+                <span className="text-white/50 text-xs font-normal">(Internal - Not displayed publicly)</span>
+                {user?.user_metadata?.amazon_storefront_id && (
+                  <span className="text-white/50 text-xs font-normal ml-2">(Set during registration - cannot be changed)</span>
+                )}
               </label>
               <input
                 type="text"
                 value={formData.amazon_storefront_id}
-                onChange={(e) => setFormData({ ...formData, amazon_storefront_id: e.target.value })}
+                onChange={(e) => {
+                  // Prevent changes if set during registration
+                  if (user?.user_metadata?.amazon_storefront_id) {
+                    return;
+                  }
+                  setFormData({ ...formData, amazon_storefront_id: e.target.value });
+                }}
                 onBlur={() => {
                   if (formData.amazon_storefront_id && !validateAmazonStorefront(formData.amazon_storefront_id)) {
                     showError('Please enter a valid Amazon Storefront ID or URL');
                   }
                 }}
-                className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+                className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="https://www.amazon.com/shop/yourstorefront or yourstorefront"
                 required
+                disabled={!!user?.user_metadata?.amazon_storefront_id}
+                readOnly={!!user?.user_metadata?.amazon_storefront_id}
               />
+              {user?.user_metadata?.amazon_storefront_id && (
+                <p className="text-yellow-400 text-xs mt-1">This value was set during registration and cannot be changed.</p>
+              )}
               <p className="text-white/50 text-xs mt-2">
                 Enter your Amazon Associates Storefront ID or full URL. This is used for internal tracking only and will not be displayed on your published article.
               </p>
