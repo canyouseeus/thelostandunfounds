@@ -91,13 +91,28 @@ export default function Admin() {
       return;
     }
 
-    const admin = await isAdmin();
-    setAdminStatus(admin);
-    setLoading(false);
+    try {
+      const admin = await isAdmin();
+      setAdminStatus(admin);
+      setLoading(false);
 
-    if (!admin) {
-      showError('Access denied. Admin privileges required.');
-      navigate('/');
+      if (!admin) {
+        showError('Access denied. Admin privileges required.');
+        navigate('/');
+      }
+    } catch (error: any) {
+      console.error('Error checking admin access:', error);
+      // If error checking admin, still allow access if email matches
+      const email = user?.email || '';
+      if (email === 'thelostandunfounds@gmail.com' || email === 'admin@thelostandunfounds.com') {
+        setAdminStatus(true);
+        setLoading(false);
+      } else {
+        setAdminStatus(false);
+        setLoading(false);
+        showError('Access denied. Admin privileges required.');
+        navigate('/');
+      }
     }
   };
 
