@@ -276,6 +276,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
           </button>
         </div>
+        </div>
       </div>
     </>
   );
