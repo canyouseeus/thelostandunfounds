@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
 import { User, Mail, Calendar, Shield, Key } from 'lucide-react';
@@ -15,6 +16,7 @@ import { isAdmin } from '../utils/admin';
 export default function Profile() {
   const { user, tier, loading: authLoading } = useAuth();
   const { success, error: showError } = useToast();
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [userIsAdmin, setUserIsAdmin] = useState(false);
@@ -27,9 +29,10 @@ export default function Profile() {
 
   useEffect(() => {
     if (user?.email) {
-      // Extract name from email (before @) as default display name
+      // Use author_name from user_metadata if available, otherwise extract from email
+      const authorName = user.user_metadata?.author_name;
       const emailName = user.email.split('@')[0];
-      setDisplayName(emailName);
+      setDisplayName(authorName || emailName);
     }
   }, [user]);
 
@@ -38,10 +41,14 @@ export default function Profile() {
       if (user) {
         const admin = await isAdmin();
         setUserIsAdmin(admin);
+        // Redirect admins to admin dashboard
+        if (admin) {
+          navigate('/admin', { replace: true });
+        }
       }
     };
     checkAdminStatus();
-  }, [user]);
+  }, [user, navigate]);
 
   const handleSave = async () => {
     if (!user) return;
@@ -174,16 +181,22 @@ export default function Profile() {
 
             <div>
               <label className="block text-sm font-medium text-white/80 mb-2">
-                Display Name
+                Author Name (Username)
               </label>
               {isEditing ? (
-                <input
-                  type="text"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white/30"
-                  placeholder="Your display name"
-                />
+                <div>
+                  <input
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white/30"
+                    placeholder="Your author name"
+                    disabled={!!user.user_metadata?.author_name}
+                  />
+                  {user.user_metadata?.author_name && (
+                    <p className="text-xs text-yellow-400 mt-1">Author name cannot be changed after registration</p>
+                  )}
+                </div>
               ) : (
                 <div className="px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white">
                   {displayName || 'Not set'}

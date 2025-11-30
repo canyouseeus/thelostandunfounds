@@ -1,5 +1,5 @@
-import { Link, Outlet, useLocation } from 'react-router-dom'
-import { Home } from 'lucide-react'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Home, User, LogOut } from 'lucide-react'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { isAdmin } from '../utils/admin'
@@ -20,6 +20,7 @@ export default function Layout() {
   const isOpeningModalRef = useRef(false)
   const justClickedRef = useRef(false)
   const { user, tier, signOut, loading, clearAuthStorage } = useAuth()
+  const navigate = useNavigate()
 
   // Only show HOME and SHOP in menu for now (MORE menu always visible)
   const showLimitedMenu = true
@@ -88,6 +89,7 @@ export default function Layout() {
   const handleSignOut = async () => {
     await signOut()
     setMenuOpen(false)
+    navigate('/')
   }
 
   // Handle menu hover behavior
@@ -147,6 +149,27 @@ export default function Layout() {
               <span className="text-xl font-bold">THE LOST+UNFOUNDS</span>
             </Link>
             <div className="flex items-center space-x-4">
+              {/* User Profile Menu */}
+              {user && (
+                <div className="relative">
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 text-white/80 hover:text-white transition"
+                    onClick={() => {
+                      if (userIsAdmin) {
+                        navigate('/admin')
+                      } else {
+                        navigate('/profile')
+                      }
+                    }}
+                  >
+                    <User className="w-5 h-5" />
+                    <span className="text-sm font-medium">
+                      {user.user_metadata?.author_name || user.email?.split('@')[0] || 'Profile'}
+                    </span>
+                  </button>
+                </div>
+              )}
               <div 
                 className="header-nav" 
                 ref={menuRef}
@@ -319,6 +342,42 @@ export default function Layout() {
                       </>
                     )}
                   </div>
+                  {user && (
+                    <>
+                      <div className="border-t border-white/10 my-2"></div>
+                      <Link
+                        to={userIsAdmin ? "/admin" : "/profile"}
+                        className="menu-item"
+                        onClick={() => {
+                          setMenuOpen(false);
+                        }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <User className="w-4 h-4" />
+                          {userIsAdmin ? 'ADMIN DASHBOARD' : 'PROFILE'}
+                        </div>
+                      </Link>
+                      <button
+                        type="button"
+                        className="menu-item w-full text-left"
+                        onClick={handleSignOut}
+                      >
+                        <div className="flex items-center gap-2">
+                          <LogOut className="w-4 h-4" />
+                          LOG OUT
+                        </div>
+                      </button>
+                    </>
+                  )}
+                  {!user && (
+                    <button
+                      type="button"
+                      className="menu-item"
+                      onClick={handleLoginClick}
+                    >
+                      LOG IN
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
