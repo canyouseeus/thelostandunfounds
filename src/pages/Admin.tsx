@@ -31,6 +31,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { LoadingSpinner } from '../components/Loading';
+import ErrorBoundary from '../components/ErrorBoundary';
 import { ProductCostManagement } from '../components/ProductCostManagement';
 import BlogManagement from '../components/BlogManagement';
 import NewsletterManagement from '../components/NewsletterManagement';
@@ -588,18 +589,32 @@ export default function Admin() {
       {/* Products Tab */}
       {activeTab === 'products' && (
         <div className="space-y-6">
-          <ProductCostManagement />
+          <ErrorBoundary>
+            <ProductCostManagement />
+          </ErrorBoundary>
         </div>
       )}
 
       {/* Blog Tab */}
-      {activeTab === 'blog' && <BlogManagement />}
+      {activeTab === 'blog' && (
+        <ErrorBoundary>
+          <BlogManagement />
+        </ErrorBoundary>
+      )}
 
       {/* Newsletter Tab */}
-      {activeTab === 'newsletter' && <NewsletterManagement />}
+      {activeTab === 'newsletter' && (
+        <ErrorBoundary>
+          <NewsletterManagement />
+        </ErrorBoundary>
+      )}
 
       {/* Submissions Tab */}
-      {activeTab === 'submissions' && <BlogSubmissionReview />}
+      {activeTab === 'submissions' && (
+        <ErrorBoundary>
+          <BlogSubmissionReview />
+        </ErrorBoundary>
+      )}
 
       {/* Settings Tab */}
       {activeTab === 'settings' && (
