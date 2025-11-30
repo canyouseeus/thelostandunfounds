@@ -320,6 +320,25 @@ export default function Admin() {
     );
   }
 
+  // Default to overview tab if admin status is confirmed
+  if (!stats && adminStatus === true) {
+    // Stats haven't loaded yet, but we're confirmed admin - show loading state
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-2">
+            <Shield className="w-8 h-8" />
+            Admin Dashboard
+          </h1>
+          <p className="text-white/70">Manage your platform and users</p>
+        </div>
+        <div className="flex items-center justify-center min-h-[40vh]">
+          <LoadingSpinner />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
