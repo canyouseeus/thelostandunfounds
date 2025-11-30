@@ -83,9 +83,11 @@ function App() {
         </Route>
         <Route path="/admin" element={<Layout />}>
           <Route index element={
-            <ProtectedRoute requireAdmin={true}>
-              <Admin />
-            </ProtectedRoute>
+            <ErrorBoundary>
+              <ProtectedRoute requireAdmin={true}>
+                <Admin />
+              </ProtectedRoute>
+            </ErrorBoundary>
           } />
         </Route>
         <Route path="/sql" element={<Layout />}>

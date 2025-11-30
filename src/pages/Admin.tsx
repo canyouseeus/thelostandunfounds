@@ -28,7 +28,8 @@ import {
   Network,
   Eye,
   Mail,
-  Calendar
+  Calendar,
+  FileText
 } from 'lucide-react';
 import { LoadingSpinner } from '../components/Loading';
 import ErrorBoundary from '../components/ErrorBoundary';
