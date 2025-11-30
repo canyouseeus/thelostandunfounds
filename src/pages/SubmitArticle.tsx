@@ -31,6 +31,7 @@ export default function SubmitArticle() {
     excerpt: '',
     author_name: '',
     author_email: '',
+    amazon_storefront_id: '',
   });
 
   // Check if user has a subdomain
@@ -116,6 +117,63 @@ export default function SubmitArticle() {
     setAffiliateLinks(updated);
   };
 
+  const validateAmazonStorefront = (value: string): boolean => {
+    if (!value || !value.trim()) {
+      return false;
+    }
+
+    const trimmed = value.trim();
+    
+    // Check if it's a full Amazon storefront URL
+    const storefrontUrlPatterns = [
+      /^https?:\/\/(www\.)?amazon\.(com|co\.uk|ca|de|fr|it|es|jp|in|au|br|mx|nl|sg|ae|sa)\/(shop|stores)\/[a-zA-Z0-9_-]+/i,
+      /^https?:\/\/(www\.)?amazon\.(com|co\.uk|ca|de|fr|it|es|jp|in|au|br|mx|nl|sg|ae|sa)\/.*[?&]me=([a-zA-Z0-9_-]+)/i,
+    ];
+
+    // Check if it matches any storefront URL pattern
+    for (const pattern of storefrontUrlPatterns) {
+      if (pattern.test(trimmed)) {
+        return true;
+      }
+    }
+
+    // Check if it's just a storefront ID (alphanumeric, hyphens, underscores, typically 10-20 chars)
+    const storefrontIdPattern = /^[a-zA-Z0-9_-]{3,50}$/;
+    if (storefrontIdPattern.test(trimmed)) {
+      return true;
+    }
+
+    return false;
+  };
+
+  const extractStorefrontId = (value: string): string => {
+    if (!value || !value.trim()) {
+      return '';
+    }
+
+    const trimmed = value.trim();
+
+    // If it's a URL, extract the ID
+    const urlMatch = trimmed.match(/\/(shop|stores)\/([a-zA-Z0-9_-]+)/i);
+    if (urlMatch && urlMatch[2]) {
+      return urlMatch[2];
+    }
+
+    // Check for ?me= parameter
+    const meMatch = trimmed.match(/[?&]me=([a-zA-Z0-9_-]+)/i);
+    if (meMatch && meMatch[1]) {
+      return meMatch[1];
+    }
+
+    // If it's just an ID, return as-is
+    const storefrontIdPattern = /^[a-zA-Z0-9_-]{3,50}$/;
+    if (storefrontIdPattern.test(trimmed)) {
+      return trimmed;
+    }
+
+    return trimmed;
+  };
+
   const validateForm = async () => {
     if (!userSubdomain) {
       showError('Please register your subdomain first');
@@ -136,6 +194,17 @@ export default function SubmitArticle() {
     }
     if (!formData.author_email.trim() || !formData.author_email.includes('@')) {
       showError('Please enter a valid email address');
+      return false;
+    }
+    
+    // Validate Amazon storefront ID
+    if (!formData.amazon_storefront_id.trim()) {
+      showError('Please enter your Amazon Storefront ID or URL');
+      return false;
+    }
+    
+    if (!validateAmazonStorefront(formData.amazon_storefront_id)) {
+      showError('Please enter a valid Amazon Storefront ID or URL (e.g., https://www.amazon.com/shop/yourstorefront or just your storefront ID)');
       return false;
     }
     
@@ -190,6 +259,9 @@ export default function SubmitArticle() {
         return;
       }
 
+      // Extract and normalize storefront ID
+      const storefrontId = extractStorefrontId(formData.amazon_storefront_id);
+
       const submissionData = {
         title: formData.title.trim(),
         content: formData.content.trim(),
@@ -197,6 +269,7 @@ export default function SubmitArticle() {
         author_name: formData.author_name.trim(),
         author_email: formData.author_email.trim(),
         amazon_affiliate_links: validLinks.slice(0, 4), // Only use first 4 valid links
+        amazon_storefront_id: storefrontId,
         status: 'pending',
         subdomain: userSubdomain, // Use the registered subdomain
       };
@@ -216,6 +289,7 @@ export default function SubmitArticle() {
         excerpt: '',
         author_name: '',
         author_email: '',
+        amazon_storefront_id: '',
       });
       setAffiliateLinks([
         { book_title: '', link: '' },
@@ -330,6 +404,36 @@ export default function SubmitArticle() {
                   required
                 />
               </div>
+            </div>
+
+            {/* Amazon Storefront ID */}
+            <div>
+              <label className="block text-white/80 text-sm mb-2">
+                Amazon Storefront ID or URL *
+              </label>
+              <input
+                type="text"
+                value={formData.amazon_storefront_id}
+                onChange={(e) => setFormData({ ...formData, amazon_storefront_id: e.target.value })}
+                onBlur={() => {
+                  if (formData.amazon_storefront_id && !validateAmazonStorefront(formData.amazon_storefront_id)) {
+                    showError('Please enter a valid Amazon Storefront ID or URL');
+                  }
+                }}
+                className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+                placeholder="https://www.amazon.com/shop/yourstorefront or yourstorefront"
+                required
+              />
+              <p className="text-white/50 text-xs mt-2">
+                Enter your Amazon Associates Storefront ID or full URL. Examples:
+              </p>
+              <ul className="text-white/40 text-xs mt-1 list-disc list-inside space-y-1">
+                <li>Full URL: <span className="font-mono text-white/60">https://www.amazon.com/shop/yourstorefront</span></li>
+                <li>Storefront ID only: <span className="font-mono text-white/60">yourstorefront</span></li>
+              </ul>
+              {formData.amazon_storefront_id && validateAmazonStorefront(formData.amazon_storefront_id) && (
+                <p className="text-green-400 text-xs mt-1">Valid storefront format</p>
+              )}
             </div>
 
             {/* Subdomain Display (read-only) */}

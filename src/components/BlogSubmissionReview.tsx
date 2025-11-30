@@ -24,6 +24,7 @@ interface BlogSubmission {
   author_email: string;
   subdomain: string | null;
   amazon_affiliate_links: AffiliateLink[];
+  amazon_storefront_id: string | null;
   status: 'pending' | 'approved' | 'rejected' | 'published';
   admin_notes: string | null;
   rejected_reason: string | null;
@@ -188,6 +189,7 @@ export default function BlogSubmissionReview() {
           author_id: authorId,
           subdomain: submission.subdomain || null, // User subdomain
           amazon_affiliate_links: submission.amazon_affiliate_links || [], // Store Amazon links
+          amazon_storefront_id: submission.amazon_storefront_id || null, // Store Amazon storefront ID
           seo_title: null,
           seo_description: submission.excerpt || null,
           seo_keywords: null,
@@ -325,6 +327,11 @@ export default function BlogSubmissionReview() {
                         <span>Subdomain: {submission.subdomain}</span>
                       </div>
                     )}
+                    {submission.amazon_storefront_id && (
+                      <div className="flex items-center gap-2 text-xs text-white/50">
+                        <span>Storefront: {submission.amazon_storefront_id}</span>
+                      </div>
+                    )}
                   </div>
                   <button
                     onClick={() => {
@@ -385,6 +392,22 @@ export default function BlogSubmissionReview() {
                     {selectedSubmission.content}
                   </pre>
                 </div>
+
+                {selectedSubmission.amazon_storefront_id && (
+                  <>
+                    <h4 className="text-white font-bold mb-2">Amazon Storefront ID</h4>
+                    <div className="bg-black/30 border border-white/10 rounded-none p-3 mb-4">
+                      <a
+                        href={`https://www.amazon.com/shop/${selectedSubmission.amazon_storefront_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-400 hover:text-blue-300 text-sm break-all"
+                      >
+                        {selectedSubmission.amazon_storefront_id}
+                      </a>
+                    </div>
+                  </>
+                )}
 
                 {selectedSubmission.amazon_affiliate_links && selectedSubmission.amazon_affiliate_links.length > 0 && (
                   <>

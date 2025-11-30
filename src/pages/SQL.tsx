@@ -542,6 +542,20 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch blog submissions table file:', fetchError);
       }
 
+      // Load add-amazon-storefront-id script
+      let amazonStorefrontContent = '';
+      try {
+        const amazonStorefrontResponse = await fetch('/sql/add-amazon-storefront-id.sql');
+        if (amazonStorefrontResponse.ok) {
+          const text = await amazonStorefrontResponse.text();
+          if (!text.trim().startsWith('<!')) {
+            amazonStorefrontContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch Amazon storefront ID file:', fetchError);
+      }
+
       // Load create-user-subdomains-table script
       let userSubdomainsContent = '';
       try {
@@ -571,6 +585,13 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
       }
 
       const allScripts: SQLScript[] = [
+        {
+          name: 'Add Amazon Storefront ID',
+          filename: 'add-amazon-storefront-id.sql',
+          content: amazonStorefrontContent || '// File not found - check public/sql folder',
+          description: 'Adds amazon_storefront_id column to blog_submissions and blog_posts tables. Required for tracking Amazon Associates storefront IDs. Run this to enable storefront ID requirement in article submissions.',
+          createdAt: getScriptTimestamp('add-amazon-storefront-id.sql')
+        },
         {
           name: 'User Subdomains Table',
           filename: 'create-user-subdomains-table.sql',
