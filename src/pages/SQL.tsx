@@ -528,7 +528,28 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch newsletter campaigns table file:', fetchError);
       }
 
+      // Load create-blog-submissions-table script
+      let blogSubmissionsContent = '';
+      try {
+        const blogSubmissionsResponse = await fetch('/sql/create-blog-submissions-table.sql');
+        if (blogSubmissionsResponse.ok) {
+          const text = await blogSubmissionsResponse.text();
+          if (!text.trim().startsWith('<!')) {
+            blogSubmissionsContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch blog submissions table file:', fetchError);
+      }
+
       const allScripts: SQLScript[] = [
+        {
+          name: 'Blog Submissions Table',
+          filename: 'create-blog-submissions-table.sql',
+          content: blogSubmissionsContent || '// File not found - check public/sql folder',
+          description: 'Creates the blog_submissions table to allow people to submit articles to THE LOST ARCHIVES. Includes fields for title, content, author info, Amazon affiliate links, and review status. Required for the article submission feature.',
+          createdAt: getScriptTimestamp('create-blog-submissions-table.sql')
+        },
         {
           name: 'Newsletter Campaigns Table',
           filename: 'create-newsletter-campaigns-table.sql',

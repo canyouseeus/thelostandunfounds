@@ -34,6 +34,7 @@ import { LoadingSpinner } from '../components/Loading';
 import { ProductCostManagement } from '../components/ProductCostManagement';
 import BlogManagement from '../components/BlogManagement';
 import NewsletterManagement from '../components/NewsletterManagement';
+import BlogSubmissionReview from '../components/BlogSubmissionReview';
 
 interface DashboardStats {
   totalUsers: number;
@@ -70,7 +71,7 @@ export default function Admin() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'subscriptions' | 'products' | 'settings' | 'blog' | 'newsletter'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'subscriptions' | 'products' | 'settings' | 'blog' | 'newsletter' | 'submissions'>('overview');
 
   useEffect(() => {
     checkAdminAccess();
@@ -248,7 +249,7 @@ export default function Admin() {
       {/* Tabs */}
       <div className="mb-6 border-b border-white/10">
         <div className="flex gap-4 flex-wrap">
-          {(['overview', 'users', 'subscriptions', 'products', 'blog', 'newsletter', 'settings'] as const).map((tab) => (
+          {(['overview', 'users', 'subscriptions', 'products', 'blog', 'newsletter', 'submissions', 'settings'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -570,6 +571,9 @@ export default function Admin() {
 
       {/* Newsletter Tab */}
       {activeTab === 'newsletter' && <NewsletterManagement />}
+
+      {/* Submissions Tab */}
+      {activeTab === 'submissions' && <BlogSubmissionReview />}
 
       {/* Settings Tab */}
       {activeTab === 'settings' && (

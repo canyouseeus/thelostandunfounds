@@ -158,9 +158,17 @@ export default function Blog() {
         </script>
       </Helmet>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-8 tracking-wide text-center">
-          THE LOST ARCHIVES
-        </h1>
+        <div className="text-center mb-8">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 tracking-wide">
+            THE LOST ARCHIVES
+          </h1>
+          <Link
+            to="/submit-article"
+            className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition"
+          >
+            Submit Your Article →
+          </Link>
+        </div>
 
       {error && (
         <div className="bg-red-900/20 border border-red-500/50 rounded-none p-4 mb-6">
