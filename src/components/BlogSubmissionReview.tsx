@@ -175,6 +175,12 @@ export default function BlogSubmissionReview() {
         // For now, we'll leave it null and let the admin set it if needed
       }
 
+      // Ensure author_name is set (required)
+      if (!submission.author_name || !submission.author_name.trim()) {
+        showError('Author name is required. Please update the submission with an author name before publishing.');
+        return;
+      }
+
       // Create blog post with subdomain and Amazon links
       const { data: blogPost, error: blogError } = await supabase
         .from('blog_posts')
@@ -187,7 +193,7 @@ export default function BlogSubmissionReview() {
           published_at: new Date().toISOString(),
           status: 'published',
           author_id: authorId,
-          author_name: submission.author_name, // Store author name for disclosure
+          author_name: submission.author_name.trim(), // Store author name for disclosure (required)
           subdomain: submission.subdomain || null, // User subdomain
           amazon_affiliate_links: submission.amazon_affiliate_links || [], // Store Amazon links
           amazon_storefront_id: submission.amazon_storefront_id || null, // Store Amazon storefront ID

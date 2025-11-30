@@ -78,10 +78,16 @@ export default function SubmitArticle() {
       fetchUserSubdomain();
 
       // Get user's email for default
+      // Set author name to "THE LOST+UNFOUNDS" for admin, otherwise use user's name
+      const isAdminUser = user.email === 'thelostandunfounds@gmail.com' || user.email === 'admin@thelostandunfounds.com';
+      const defaultAuthorName = isAdminUser 
+        ? 'THE LOST+UNFOUNDS' 
+        : (user.user_metadata?.full_name || user.email?.split('@')[0] || '');
+      
       setFormData(prev => ({
         ...prev,
         author_email: user.email || '',
-        author_name: user.user_metadata?.full_name || user.email?.split('@')[0] || '',
+        author_name: defaultAuthorName,
       }));
     } else if (!authLoading && !user) {
       // Open login modal instead of redirecting
@@ -200,8 +206,8 @@ export default function SubmitArticle() {
       showError('Please enter article content');
       return false;
     }
-    if (!formData.author_name.trim()) {
-      showError('Please enter your name');
+    if (!formData.author_name || !formData.author_name.trim()) {
+      showError('Author name is required');
       return false;
     }
     if (!formData.author_email.trim() || !formData.author_email.includes('@')) {
@@ -390,16 +396,19 @@ export default function SubmitArticle() {
               <div>
                 <label className="block text-white/80 text-sm mb-2 flex items-center gap-2">
                   <User className="w-4 h-4" />
-                  Your Name *
+                  Author Name * <span className="text-white/50 text-xs font-normal">(Required)</span>
                 </label>
                 <input
                   type="text"
                   value={formData.author_name}
                   onChange={(e) => setFormData({ ...formData, author_name: e.target.value })}
                   className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
-                  placeholder="John Doe"
+                  placeholder="THE LOST+UNFOUNDS or Your Name"
                   required
                 />
+                <p className="text-white/50 text-xs mt-1">
+                  This name will appear in the Amazon Affiliate Disclosure on your published article.
+                </p>
               </div>
 
               <div>
