@@ -35,28 +35,20 @@ export default function Blog() {
       
       console.log('🔄 Starting to load blog posts...');
       
-      // Load main blog posts - filter out user blogs (those with subdomain) if column exists
-      // This query works whether subdomain column exists or not
+      // Load main blog posts - don't select subdomain since column doesn't exist yet
+      // This will show all existing articles (backward compatible)
       let queryPromise = supabase
         .from('blog_posts')
-        .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, published, status, subdomain')
+        .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, published, status')
         .order('published_at', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(100);
       
-      // Try to filter by published and subdomain, but handle gracefully if columns don't exist
+      // Try to filter by published
       try {
         queryPromise = queryPromise.eq('published', true);
       } catch (e) {
         console.warn('Published column filter not available, will filter client-side');
-      }
-      
-      // Try to filter out user blogs (those with subdomain), but don't fail if column doesn't exist
-      try {
-        queryPromise = queryPromise.is('subdomain', null);
-      } catch (e) {
-        // Subdomain column might not exist yet - that's okay, just load all posts
-        console.warn('Subdomain column not available, loading all posts');
       }
       
       const timeoutPromise = new Promise((_, reject) => 
@@ -69,6 +61,7 @@ export default function Blog() {
       ]) as any;
       
       console.log('✅ Query completed:', { dataLength: data?.length, error: fetchError });
+
 
       if (fetchError) {
         console.error('Error loading blog posts:', fetchError);
@@ -89,23 +82,16 @@ export default function Blog() {
         return;
       }
 
-      // Filter posts: only published, and only main blog posts (no subdomain or subdomain is null)
+      // Filter posts: only published posts
+      // Note: We're not filtering by subdomain here since the column doesn't exist yet
+      // Once you run the migration, we can add subdomain filtering
       const publishedPosts = (data || []).filter((post: any) => {
         try {
           // Check if published
           const isPublished = post.published === true || 
             (post.published === undefined && post.status === 'published');
           
-          if (!isPublished) return false;
-          
-          // If subdomain column exists, only show posts without subdomain (main blog posts)
-          // If subdomain column doesn't exist, show all posts (backward compatibility)
-          if (post.subdomain !== undefined) {
-            return post.subdomain === null || post.subdomain === '';
-          }
-          
-          // Subdomain column doesn't exist - show all published posts (existing articles)
-          return true;
+          return isPublished;
         } catch (e) {
           return false;
         }
