@@ -37,14 +37,14 @@ export default function Blog() {
       
       console.log('🔄 Starting to load blog posts...');
       
-      // Load native posts (subdomain IS NULL) - only the most recent one
+      // Load native posts (subdomain IS NULL) - all native posts
       let nativeQueryPromise = supabase
         .from('blog_posts')
         .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, published, status, subdomain')
         .is('subdomain', null)
         .order('published_at', { ascending: false })
         .order('created_at', { ascending: false })
-        .limit(1);
+        .limit(100);
       
       // Try to filter by published
       try {
@@ -224,10 +224,10 @@ export default function Blog() {
         </div>
       )}
 
-      {/* Native Posts Section - Most Recent Only */}
+      {/* Native Posts Section - All Native Posts */}
       {nativePosts.length > 0 && (
         <div className="mb-12">
-          <h2 className="text-2xl font-bold text-white mb-6">Latest from THE LOST ARCHIVES</h2>
+          <h2 className="text-2xl font-bold text-white mb-6">THE LOST ARCHIVES</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {nativePosts.map((post) => (
               <Link
