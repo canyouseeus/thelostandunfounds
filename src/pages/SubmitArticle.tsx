@@ -409,7 +409,7 @@ export default function SubmitArticle() {
             {/* Amazon Storefront ID */}
             <div>
               <label className="block text-white/80 text-sm mb-2">
-                Amazon Storefront ID or URL *
+                Amazon Storefront ID or URL * <span className="text-white/50 text-xs font-normal">(Internal - Not displayed publicly)</span>
               </label>
               <input
                 type="text"
@@ -425,7 +425,7 @@ export default function SubmitArticle() {
                 required
               />
               <p className="text-white/50 text-xs mt-2">
-                Enter your Amazon Associates Storefront ID or full URL. Examples:
+                Enter your Amazon Associates Storefront ID or full URL. This is used for internal tracking only and will not be displayed on your published article.
               </p>
               <ul className="text-white/40 text-xs mt-1 list-disc list-inside space-y-1">
                 <li>Full URL: <span className="font-mono text-white/60">https://www.amazon.com/shop/yourstorefront</span></li>

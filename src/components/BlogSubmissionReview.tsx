@@ -329,7 +329,7 @@ export default function BlogSubmissionReview() {
                     )}
                     {submission.amazon_storefront_id && (
                       <div className="flex items-center gap-2 text-xs text-white/50">
-                        <span>Storefront: {submission.amazon_storefront_id}</span>
+                        <span>Storefront ID: {submission.amazon_storefront_id} <span className="text-white/30">(internal)</span></span>
                       </div>
                     )}
                   </div>
@@ -395,8 +395,9 @@ export default function BlogSubmissionReview() {
 
                 {selectedSubmission.amazon_storefront_id && (
                   <>
-                    <h4 className="text-white font-bold mb-2">Amazon Storefront ID</h4>
+                    <h4 className="text-white font-bold mb-2">Amazon Storefront ID <span className="text-white/50 text-xs font-normal">(Internal - Not displayed publicly)</span></h4>
                     <div className="bg-black/30 border border-white/10 rounded-none p-3 mb-4">
+                      <p className="text-white/70 text-sm mb-2">This storefront ID is stored for tracking purposes only and will not be displayed on the published blog post.</p>
                       <a
                         href={`https://www.amazon.com/shop/${selectedSubmission.amazon_storefront_id}`}
                         target="_blank"
