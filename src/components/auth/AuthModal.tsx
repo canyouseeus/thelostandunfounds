@@ -6,6 +6,7 @@ import { useToast } from '../Toast';
 import { isAdminEmail, isAdmin } from '../../utils/admin';
 import SubdomainRegistration from '../SubdomainRegistration';
 import UserRegistration from '../UserRegistration';
+import StorefrontRegistration from '../StorefrontRegistration';
 import { supabase } from '../../lib/supabase';
 
 interface AuthModalProps {
@@ -26,55 +27,63 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [justSignedIn, setJustSignedIn] = useState(false);
   const [showUserRegistrationModal, setShowUserRegistrationModal] = useState(false);
   const [showSubdomainModal, setShowSubdomainModal] = useState(false);
+  const [showStorefrontModal, setShowStorefrontModal] = useState(false);
   const [justSignedUp, setJustSignedUp] = useState(false);
-  const [userRegistrationData, setUserRegistrationData] = useState<{ username: string; storefrontId: string } | null>(null);
+  const [userSubdomain, setUserSubdomain] = useState<string | null>(null);
 
-  // Check for user registration and subdomain after signup
+  // Check for user registration, subdomain, and storefront after signup
   useEffect(() => {
     if (justSignedUp && user) {
       const checkRegistration = async () => {
         try {
-          // First, check if user has completed registration (username and storefront)
+          // Step 1: Check if user has username
           const userMetadata = user.user_metadata || {};
           const hasAuthorName = userMetadata.author_name;
-          const hasStorefrontId = userMetadata.amazon_storefront_id;
 
-          // If missing registration info, show user registration modal first
-          if (!hasAuthorName || !hasStorefrontId) {
+          // If missing username, show user registration modal first
+          if (!hasAuthorName) {
             setShowUserRegistrationModal(true);
             return;
           }
 
-          // Registration complete, now check for subdomain
-          const { data, error } = await supabase
+          // Step 2: Check for subdomain
+          const { data: subdomainData, error: subdomainError } = await supabase
             .from('user_subdomains')
             .select('subdomain')
             .eq('user_id', user.id)
             .single();
 
           // Handle table not found error gracefully
-          if (error) {
-            if (error.code === 'PGRST116') {
+          if (subdomainError) {
+            if (subdomainError.code === 'PGRST116') {
               // No rows returned - user doesn't have subdomain yet
               setShowSubdomainModal(true);
               return;
-            } else if (error.message?.includes('does not exist') || error.message?.includes('schema cache')) {
+            } else if (subdomainError.message?.includes('does not exist') || subdomainError.message?.includes('schema cache')) {
               // Table doesn't exist yet - show subdomain modal anyway
               console.warn('user_subdomains table not found. Please run the SQL migration script.');
               setShowSubdomainModal(true);
               return;
             } else {
-              console.error('Error checking subdomain:', error);
+              console.error('Error checking subdomain:', subdomainError);
             }
           }
 
-          // If no subdomain exists, show registration modal
-          if (!data) {
+          // If no subdomain exists, show subdomain registration modal
+          if (!subdomainData) {
             setShowSubdomainModal(true);
             return;
           }
 
-          // If subdomain exists, proceed with redirect
+          // Step 3: Check for storefront ID (after subdomain is set)
+          const hasStorefrontId = userMetadata.amazon_storefront_id;
+          if (!hasStorefrontId) {
+            setUserSubdomain(subdomainData.subdomain);
+            setShowStorefrontModal(true);
+            return;
+          }
+
+          // All registration complete, proceed with redirect
           setJustSignedUp(false);
           handleRedirect();
         } catch (err: any) {
@@ -173,15 +182,21 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
   };
 
-  const handleUserRegistrationSuccess = (username: string, storefrontId: string) => {
-    setUserRegistrationData({ username, storefrontId });
+  const handleUserRegistrationSuccess = (username: string) => {
     setShowUserRegistrationModal(false);
     // Now show subdomain registration modal
     setShowSubdomainModal(true);
   };
 
   const handleSubdomainSuccess = (subdomain: string) => {
+    setUserSubdomain(subdomain);
     setShowSubdomainModal(false);
+    // Now show storefront registration modal
+    setShowStorefrontModal(true);
+  };
+
+  const handleStorefrontSuccess = (storefrontId: string) => {
+    setShowStorefrontModal(false);
     setJustSignedUp(false);
     onClose();
     handleRedirect();
@@ -211,6 +226,19 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           setShowSubdomainModal(false);
         }}
         onSuccess={handleSubdomainSuccess}
+        required={justSignedUp}
+      />
+      <StorefrontRegistration
+        isOpen={showStorefrontModal}
+        onClose={() => {
+          // If required (during signup), don't allow closing
+          if (justSignedUp) {
+            return;
+          }
+          setShowStorefrontModal(false);
+        }}
+        onSuccess={handleStorefrontSuccess}
+        subdomain={userSubdomain || ''}
         required={justSignedUp}
       />
       <div 

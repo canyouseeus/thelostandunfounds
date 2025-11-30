@@ -8,13 +8,15 @@ import { supabase } from '../lib/supabase';
 import { isAdminEmail, isAdmin } from '../utils/admin';
 import SubdomainRegistration from '../components/SubdomainRegistration';
 import UserRegistration from '../components/UserRegistration';
+import StorefrontRegistration from '../components/StorefrontRegistration';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
   const [showUserRegistrationModal, setShowUserRegistrationModal] = useState(false);
   const [showSubdomainModal, setShowSubdomainModal] = useState(false);
+  const [showStorefrontModal, setShowStorefrontModal] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [userRegistrationData, setUserRegistrationData] = useState<{ username: string; storefrontId: string } | null>(null);
+  const [userSubdomain, setUserSubdomain] = useState<string | null>(null);
 
   useEffect(() => {
     handleCallback();
@@ -48,18 +50,17 @@ export default function AuthCallback() {
                 return;
               }
 
-              // First, check if user has completed registration (username and storefront)
+              // Step 1: Check if user has username
               const userMetadata = currentUser.user_metadata || {};
               const hasAuthorName = userMetadata.author_name;
-              const hasStorefrontId = userMetadata.amazon_storefront_id;
 
-              // If missing registration info, show user registration modal first
-              if (!hasAuthorName || !hasStorefrontId) {
+              // If missing username, show user registration modal first
+              if (!hasAuthorName) {
                 setShowUserRegistrationModal(true);
                 return;
               }
 
-              // Registration complete, now check for subdomain
+              // Step 2: Check for subdomain
               const { data: subdomainData, error: subdomainError } = await supabase
                 .from('user_subdomains')
                 .select('subdomain')
@@ -85,10 +86,19 @@ export default function AuthCallback() {
               if (!subdomainData) {
                 // User doesn't have a subdomain - show registration modal
                 setShowSubdomainModal(true);
-              } else {
-                // User has subdomain - redirect to submit article
-                navigate('/submit-article');
+                return;
               }
+
+              // Step 3: Check for storefront ID (after subdomain is set)
+              const hasStorefrontId = userMetadata.amazon_storefront_id;
+              if (!hasStorefrontId) {
+                setUserSubdomain(subdomainData.subdomain);
+                setShowStorefrontModal(true);
+                return;
+              }
+
+              // All registration complete - redirect to submit article
+              navigate('/submit-article');
             } else {
               navigate('/submit-article');
             }
@@ -100,17 +110,16 @@ export default function AuthCallback() {
               if (isAdminEmail(currentUser.email || '')) {
                 navigate('/admin');
               } else {
-                // Check for registration info first
+                // Step 1: Check for username
                 const userMetadata = currentUser.user_metadata || {};
                 const hasAuthorName = userMetadata.author_name;
-                const hasStorefrontId = userMetadata.amazon_storefront_id;
 
-                if (!hasAuthorName || !hasStorefrontId) {
+                if (!hasAuthorName) {
                   setShowUserRegistrationModal(true);
                   return;
                 }
 
-                // Check for subdomain
+                // Step 2: Check for subdomain
                 const { data: subdomainData } = await supabase
                   .from('user_subdomains')
                   .select('subdomain')
@@ -119,9 +128,19 @@ export default function AuthCallback() {
 
                 if (!subdomainData) {
                   setShowSubdomainModal(true);
-                } else {
-                  navigate('/submit-article');
+                  return;
                 }
+
+                // Step 3: Check for storefront ID
+                const hasStorefrontId = userMetadata.amazon_storefront_id;
+                if (!hasStorefrontId) {
+                  setUserSubdomain(subdomainData.subdomain);
+                  setShowStorefrontModal(true);
+                  return;
+                }
+
+                // All complete - redirect
+                navigate('/submit-article');
               }
             } else {
               navigate('/submit-article');
@@ -139,15 +158,21 @@ export default function AuthCallback() {
     }
   };
 
-  const handleUserRegistrationSuccess = (username: string, storefrontId: string) => {
-    setUserRegistrationData({ username, storefrontId });
+  const handleUserRegistrationSuccess = (username: string) => {
     setShowUserRegistrationModal(false);
     // Now show subdomain registration modal
     setShowSubdomainModal(true);
   };
 
   const handleSubdomainSuccess = (subdomain: string) => {
+    setUserSubdomain(subdomain);
     setShowSubdomainModal(false);
+    // Now show storefront registration modal
+    setShowStorefrontModal(true);
+  };
+
+  const handleStorefrontSuccess = (storefrontId: string) => {
+    setShowStorefrontModal(false);
     navigate('/submit-article');
   };
 
@@ -181,6 +206,16 @@ export default function AuthCallback() {
           }
         }}
         onSuccess={handleSubdomainSuccess}
+        required={true}
+      />
+      <StorefrontRegistration
+        isOpen={showStorefrontModal}
+        onClose={() => {
+          // Don't allow closing during required registration
+          return;
+        }}
+        onSuccess={handleStorefrontSuccess}
+        subdomain={userSubdomain || ''}
         required={true}
       />
       <div className="min-h-screen flex items-center justify-center">

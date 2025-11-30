@@ -11,6 +11,7 @@ import { useToast } from '../components/Toast';
 import AuthModal from '../components/auth/AuthModal';
 import SubdomainRegistration from '../components/SubdomainRegistration';
 import UserRegistration from '../components/UserRegistration';
+import StorefrontRegistration from '../components/StorefrontRegistration';
 import { FileText, Plus, X, BookOpen, Mail, User } from 'lucide-react';
 
 interface AffiliateLink {
@@ -26,6 +27,7 @@ export default function SubmitArticle() {
   const [loadingSubdomain, setLoadingSubdomain] = useState(true);
   const [showUserRegistrationModal, setShowUserRegistrationModal] = useState(false);
   const [showSubdomainModal, setShowSubdomainModal] = useState(false);
+  const [showStorefrontModal, setShowStorefrontModal] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -40,19 +42,19 @@ export default function SubmitArticle() {
   useEffect(() => {
     if (user && !authLoading) {
       const checkRegistration = async () => {
-        // First check if username and storefront are set
+        // Step 1: Check if username is set
         const userMetadata = user.user_metadata || {};
         const hasAuthorName = userMetadata.author_name;
-        const hasStorefrontId = userMetadata.amazon_storefront_id;
 
-        // If missing, show user registration modal
-        if (!hasAuthorName || !hasStorefrontId) {
-          setShowSubdomainModal(false); // Don't show subdomain modal yet
-          setShowUserRegistrationModal(true); // Show user registration modal
+        // If missing username, show user registration modal
+        if (!hasAuthorName) {
+          setShowSubdomainModal(false);
+          setShowStorefrontModal(false);
+          setShowUserRegistrationModal(true);
           return;
         }
 
-        // Registration complete, now check subdomain
+        // Step 2: Check subdomain
         const fetchUserSubdomain = async () => {
           setLoadingSubdomain(true);
           try {
@@ -76,6 +78,12 @@ export default function SubmitArticle() {
               }
             } else if (data) {
               setUserSubdomain(data.subdomain);
+              
+              // Step 3: Check for storefront ID (after subdomain is set)
+              const hasStorefrontId = userMetadata.amazon_storefront_id;
+              if (!hasStorefrontId) {
+                setShowStorefrontModal(true);
+              }
             } else {
               // User doesn't have a subdomain - show registration modal
               setShowSubdomainModal(true);
@@ -358,9 +366,9 @@ export default function SubmitArticle() {
           }
           setShowUserRegistrationModal(false);
         }}
-        onSuccess={(username, storefrontId) => {
+        onSuccess={(username) => {
           setShowUserRegistrationModal(false);
-          // After registration, check for subdomain
+          // After username registration, check for subdomain
           const checkSubdomain = async () => {
             if (user) {
               const { data } = await supabase
@@ -371,6 +379,13 @@ export default function SubmitArticle() {
               
               if (!data) {
                 setShowSubdomainModal(true);
+              } else {
+                // Subdomain exists, check for storefront
+                const userMetadata = user.user_metadata || {};
+                if (!userMetadata.amazon_storefront_id) {
+                  setUserSubdomain(data.subdomain);
+                  setShowStorefrontModal(true);
+                }
               }
             }
           };
@@ -387,8 +402,34 @@ export default function SubmitArticle() {
           }
           setShowSubdomainModal(false);
         }}
-        onSuccess={handleSubdomainSuccess}
+        onSuccess={(subdomain) => {
+          setUserSubdomain(subdomain);
+          setShowSubdomainModal(false);
+          // After subdomain, check for storefront
+          const userMetadata = user?.user_metadata || {};
+          if (!userMetadata.amazon_storefront_id) {
+            setShowStorefrontModal(true);
+          }
+        }}
         required={!userSubdomain}
+      />
+      <StorefrontRegistration
+        isOpen={showStorefrontModal}
+        onClose={() => {
+          // Don't allow closing if registration is incomplete
+          const userMetadata = user?.user_metadata || {};
+          if (!userMetadata.amazon_storefront_id) {
+            return;
+          }
+          setShowStorefrontModal(false);
+        }}
+        onSuccess={(storefrontId) => {
+          setShowStorefrontModal(false);
+          // Refresh user data to get updated metadata
+          window.location.reload();
+        }}
+        subdomain={userSubdomain || ''}
+        required={true}
       />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {!user && !authLoading && (
