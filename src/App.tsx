@@ -23,6 +23,9 @@ import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
 import Blog from './pages/Blog'
 import BlogPost from './pages/BlogPost'
+import UserBlog from './pages/UserBlog'
+import BookClub from './pages/BookClub'
+import SubmitArticle from './pages/SubmitArticle'
 import SQL from './pages/SQL'
 import Debug from './pages/Debug'
 
@@ -94,6 +97,19 @@ function App() {
         <Route path="/thelostarchives" element={<Layout />}>
           <Route index element={<Blog />} />
           <Route path=":slug" element={<BlogPost />} />
+        </Route>
+        <Route path="/book-club" element={<Layout />}>
+          <Route index element={<BookClub />} />
+        </Route>
+        {/* User blog routes - subdomain routing handled in component */}
+        <Route path="/blog/:subdomain" element={<Layout />}>
+          <Route index element={<UserBlog />} />
+        </Route>
+        <Route path="/blog/:subdomain/:slug" element={<Layout />}>
+          <Route index element={<BlogPost />} />
+        </Route>
+        <Route path="/submit-article" element={<Layout />}>
+          <Route index element={<SubmitArticle />} />
         </Route>
         <Route path="/reset-newsletter" element={<ResetNewsletter />} />
         <Route path="*" element={<NotFound />} />

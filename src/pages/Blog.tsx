@@ -35,10 +35,11 @@ export default function Blog() {
       
       console.log('🔄 Starting to load blog posts...');
       
-      // Try to filter by published on server side, but fallback if column doesn't exist
+      // Load only main blog posts (no subdomain) - user blogs are in BOOK CLUB
       let queryPromise = supabase
         .from('blog_posts')
-        .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, published, status')
+        .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, published, status, subdomain')
+        .is('subdomain', null) // Only main blog posts, not user blogs
         .order('published_at', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(100);
@@ -158,9 +159,28 @@ export default function Blog() {
         </script>
       </Helmet>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-8 tracking-wide text-center">
-          THE LOST ARCHIVES
-        </h1>
+        <div className="text-center mb-8">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 tracking-wide">
+            THE LOST ARCHIVES
+          </h1>
+          <p className="text-white/60 text-sm mb-4">
+            Official articles from THE LOST+UNFOUNDS
+          </p>
+          <div className="flex items-center justify-center gap-4 flex-wrap">
+            <Link
+              to="/book-club"
+              className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition"
+            >
+              View BOOK CLUB →
+            </Link>
+            <Link
+              to="/submit-article"
+              className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition"
+            >
+              Submit Your Article →
+            </Link>
+          </div>
+        </div>
 
       {error && (
         <div className="bg-red-900/20 border border-red-500/50 rounded-none p-4 mb-6">

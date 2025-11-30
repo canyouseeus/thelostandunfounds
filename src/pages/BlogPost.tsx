@@ -11,6 +11,11 @@ import BlogAnalysis from '../components/BlogAnalysis';
 import ShareButtons from '../components/ShareButtons';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
+interface AffiliateLink {
+  book_title: string;
+  link: string;
+}
+
 interface BlogPost {
   id: string;
   title: string;
@@ -24,6 +29,9 @@ interface BlogPost {
   seo_keywords: string | null;
   og_image_url: string | null;
   featured_image?: string | null; // Support existing field
+  amazon_affiliate_links?: AffiliateLink[] | null; // Amazon links from submission
+  subdomain?: string | null; // User subdomain
+  author_id?: string | null; // Author ID
 }
 
 interface BlogPostListItem {
@@ -34,7 +42,7 @@ interface BlogPostListItem {
 }
 
 export default function BlogPost() {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug, subdomain } = useParams<{ slug: string; subdomain?: string }>();
   const [post, setPost] = useState<BlogPost | null>(null);
   const [nextPost, setNextPost] = useState<BlogPostListItem | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,21 +50,38 @@ export default function BlogPost() {
 
   useEffect(() => {
     if (slug) {
-      loadPost(slug);
-      loadNextPost(slug);
+      loadPost(slug, subdomain || null);
+      loadNextPost(slug, subdomain || null);
     }
-  }, [slug]);
+  }, [slug, subdomain]);
 
   // Meta tags are now handled by Helmet component below
 
-  const loadPost = async (postSlug: string) => {
+  const loadPost = async (postSlug: string, urlSubdomain: string | null = null) => {
     try {
       setLoading(true);
-      const { data, error: fetchError } = await supabase
+      // Get subdomain from URL params, then fallback to hostname
+      let subdomain = urlSubdomain;
+      if (!subdomain) {
+        const hostname = window.location.hostname;
+        subdomain = hostname.split('.')[0] !== 'www' && hostname.split('.')[0] !== 'thelostandunfounds' 
+          ? hostname.split('.')[0] 
+          : null;
+      }
+      
+      let query = supabase
         .from('blog_posts')
         .select('*')
-        .eq('slug', postSlug)
-        .single();
+        .eq('slug', postSlug);
+      
+      // Filter by subdomain if present
+      if (subdomain) {
+        query = query.eq('subdomain', subdomain);
+      } else {
+        query = query.is('subdomain', null); // Main blog posts have NULL subdomain
+      }
+      
+      const { data, error: fetchError } = await query.single();
 
       if (fetchError) {
         console.error('Error loading blog post:', fetchError);
@@ -86,14 +111,30 @@ export default function BlogPost() {
     }
   };
 
-  const loadNextPost = async (currentSlug: string) => {
+  const loadNextPost = async (currentSlug: string, urlSubdomain: string | null = null) => {
     try {
+      // Get subdomain from URL params, then fallback to hostname
+      let subdomain = urlSubdomain;
+      if (!subdomain) {
+        const hostname = window.location.hostname;
+        subdomain = hostname.split('.')[0] !== 'www' && hostname.split('.')[0] !== 'thelostandunfounds' 
+          ? hostname.split('.')[0] 
+          : null;
+      }
+      
       // Get all published posts ordered by published_at (oldest first for reading order)
       let query = supabase
         .from('blog_posts')
         .select('slug, title, published_at, created_at, published, status')
         .order('published_at', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: true });
+      
+      // Filter by subdomain if present
+      if (subdomain) {
+        query = query.eq('subdomain', subdomain);
+      } else {
+        query = query.is('subdomain', null);
+      }
 
       // Try to filter by published field if it exists
       try {
@@ -206,26 +247,49 @@ export default function BlogPost() {
   // bookLinkCounts: tracks how many times each book has been linked
   // allowLinks: whether to allow creating new links (true for intro and book sections)
   const formatTextWithEmphasis = (text: string, bookLinkCounts?: Record<string, number>, allowLinks: boolean = false) => {
-    // Book titles with their affiliate links (order matters - longer titles first to avoid partial matches)
-    const bookLinks: Record<string, string> = {
+    // Build book links from post data or use defaults
+    const defaultBookLinks: Record<string, string> = {
       'The E-Myth Revisited': 'https://amzn.to/49LFRbv',
       'This Is Not a T-Shirt': 'https://amzn.to/4rJCNn1',
       'The Alchemist': 'https://amzn.to/49HqnFx',
       'Contagious': 'https://amzn.to/3XoOv8A'
     };
 
-    // List of terms to bold (in order of specificity - longer phrases first to avoid partial matches)
-    const emphasisTerms = [
+    // Use Amazon links from post data if available, otherwise use defaults
+    const bookLinks: Record<string, string> = {};
+    
+    if (post?.amazon_affiliate_links && Array.isArray(post.amazon_affiliate_links)) {
+      // Build map from submitted affiliate links
+      post.amazon_affiliate_links.forEach((link: AffiliateLink) => {
+        if (link.book_title && link.link) {
+          bookLinks[link.book_title] = link.link;
+        }
+      });
+    }
+    
+    // Merge with defaults (submitted links take precedence)
+    Object.assign(bookLinks, defaultBookLinks);
+
+    // Build emphasis terms list - include all book titles from links, plus defaults
+    const emphasisTerms: string[] = [
       'THE LOST+UNFOUNDS',
-      'The E-Myth Revisited',
-      'This Is Not a T-Shirt',
-      'The Alchemist',
       'The Hundreds',
       'Personal Legend',
-      'Contagious',
       'Bitcoin',
       'Maktub'
     ];
+    
+    // Add all book titles from links (longer titles first to avoid partial matches)
+    const bookTitles = Object.keys(bookLinks).sort((a, b) => b.length - a.length);
+    emphasisTerms.push(...bookTitles);
+    
+    // Add default terms that might not be in links
+    const defaultTerms = ['The E-Myth Revisited', 'This Is Not a T-Shirt', 'The Alchemist', 'Contagious'];
+    defaultTerms.forEach(term => {
+      if (!emphasisTerms.includes(term)) {
+        emphasisTerms.push(term);
+      }
+    });
 
     // Create a single regex that matches all terms
     // Escape special regex characters and create pattern that prevents partial matches
@@ -531,6 +595,19 @@ export default function BlogPost() {
       }
     });
     
+    // Add Amazon Affiliate Disclosure at the end if post has affiliate links
+    if (post?.amazon_affiliate_links && post.amazon_affiliate_links.length > 0) {
+      // Check if disclosure already exists in content
+      const hasDisclosure = post.content.toLowerCase().includes('amazon affiliate disclosure');
+      if (!hasDisclosure) {
+        elements.push(
+          <p key="affiliate-disclosure" className="mb-6 text-white/60 text-sm italic leading-relaxed text-left border-l-2 border-white/20 pl-4 py-2 mt-8">
+            Amazon Affiliate Disclosure: As an Amazon Associate, we earn from qualifying purchases. Some links in this post are affiliate links, which means we may earn a commission if you click through and make a purchase. This helps support THE LOST+UNFOUNDS and allows us to continue creating content. Thank you for your support!
+          </p>
+        );
+      }
+    }
+    
     return elements;
   };
 
@@ -621,15 +698,15 @@ export default function BlogPost() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="flex items-center justify-between mb-6">
         <Link
-          to="/thelostarchives"
+          to={post.subdomain ? `/blog/${post.subdomain}` : "/thelostarchives"}
           className="text-white/60 hover:text-white text-sm inline-flex items-center gap-2 transition"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to THE LOST ARCHIVES
+          {post.subdomain ? `Back to ${post.subdomain}'s Blog` : 'Back to THE LOST ARCHIVES'}
         </Link>
         {nextPost && (
           <Link
-            to={`/thelostarchives/${nextPost.slug}`}
+            to={post.subdomain ? `/blog/${post.subdomain}/${nextPost.slug}` : `/thelostarchives/${nextPost.slug}`}
             className="text-white/60 hover:text-white text-sm inline-flex items-center gap-2 transition"
           >
             <span className="hidden sm:inline">Next: {nextPost.title}</span>

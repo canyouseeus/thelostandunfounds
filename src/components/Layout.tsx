@@ -15,6 +15,7 @@ export default function Layout() {
   const [userIsAdmin, setUserIsAdmin] = useState(false)
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
+  const [archivesMenuOpen, setArchivesMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const isOpeningModalRef = useRef(false)
   const justClickedRef = useRef(false)
@@ -101,21 +102,26 @@ export default function Layout() {
     setMenuOpen(false)
     setMoreMenuOpen(false)
     setAccountMenuOpen(false)
+    setArchivesMenuOpen(false)
   }, [])
 
-  const handleSubmenuMouseEnter = useCallback((submenuType: 'more' | 'account') => {
+  const handleSubmenuMouseEnter = useCallback((submenuType: 'more' | 'account' | 'archives') => {
     if (submenuType === 'more') {
       setMoreMenuOpen(true)
-    } else {
+    } else if (submenuType === 'account') {
       setAccountMenuOpen(true)
+    } else if (submenuType === 'archives') {
+      setArchivesMenuOpen(true)
     }
   }, [])
 
-  const handleSubmenuMouseLeave = useCallback((submenuType: 'more' | 'account') => {
+  const handleSubmenuMouseLeave = useCallback((submenuType: 'more' | 'account' | 'archives') => {
     if (submenuType === 'more') {
       setMoreMenuOpen(false)
-    } else {
+    } else if (submenuType === 'account') {
       setAccountMenuOpen(false)
+    } else if (submenuType === 'archives') {
+      setArchivesMenuOpen(false)
     }
   }, [])
 
@@ -189,18 +195,41 @@ export default function Layout() {
                   >
                     SHOP
                   </Link>
-                  <Link 
-                    to="/thelostarchives" 
-                    className="menu-item"
-                    onClick={() => {
-                      // Allow navigation to happen before closing menu
-                      setTimeout(() => {
-                        setMenuOpen(false);
-                      }, 100);
-                    }}
+                  <button
+                    type="button"
+                    className="menu-item menu-toggle-section"
+                    onClick={() => setArchivesMenuOpen(!archivesMenuOpen)}
+                    onMouseEnter={() => handleSubmenuMouseEnter('archives')}
+                    onMouseLeave={() => handleSubmenuMouseLeave('archives')}
                   >
-                    THE LOST ARCHIVES
-                  </Link>
+                    THE LOST ARCHIVES {archivesMenuOpen ? '▼' : '▶'}
+                  </button>
+                  <div 
+                    className={`menu-subsection ${archivesMenuOpen ? 'open' : ''}`}
+                    onMouseEnter={() => handleSubmenuMouseEnter('archives')}
+                    onMouseLeave={() => handleSubmenuMouseLeave('archives')}
+                  >
+                    <Link 
+                      to="/thelostarchives" 
+                      className="menu-item menu-subitem"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setArchivesMenuOpen(false);
+                      }}
+                    >
+                      ALL ARTICLES
+                    </Link>
+                    <Link 
+                      to="/book-club" 
+                      className="menu-item menu-subitem"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setArchivesMenuOpen(false);
+                      }}
+                    >
+                      BOOK CLUB
+                    </Link>
+                  </div>
                   {!showLimitedMenu && (
                     <Link 
                       to="/tools" 
