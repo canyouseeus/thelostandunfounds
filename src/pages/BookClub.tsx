@@ -92,7 +92,7 @@ export default function BookClub() {
     );
   }
 
-  const description = 'A collection of articles from contributors sharing insights on books, development, AI, and building in the age of information. Each article features four books with Amazon affiliate links.';
+  const description = 'A collection of articles from contributors. Each article features four books with Amazon affiliate links.';
 
   return (
     <>
@@ -110,9 +110,6 @@ export default function BookClub() {
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 tracking-wide">
             BOOK CLUB
           </h1>
-          <p className="text-white/70 text-lg max-w-3xl mx-auto mb-6">
-            A collection of articles from contributors sharing insights on books, development, AI, and building in the age of information.
-          </p>
           <p className="text-white/60 text-sm max-w-2xl mx-auto">
             Each article features four books with Amazon affiliate links, connecting ideas across different works and sharing personal reflections.
           </p>
