@@ -581,11 +581,13 @@ export default function BlogPost() {
       const content = formatTextWithEmphasis(trimmed, bookLinkCounts, isInIntro);
       
       if (isAffiliateDisclosure) {
-        // Style the disclosure differently: smaller, italic, distinct
+        // Style the disclosure differently: smaller, italic, in a box, center-justified
         elements.push(
-          <p key={index} className="mb-6 text-white/60 text-sm italic leading-relaxed text-left border-l-2 border-white/20 pl-4 py-2">
-            {Array.isArray(content) ? content : content}
-          </p>
+          <div key={index} className="mb-6 mx-auto max-w-2xl">
+            <p className="text-white/60 text-xs italic leading-relaxed text-center border border-white/20 rounded p-4 bg-white/5">
+              {Array.isArray(content) ? content : content}
+            </p>
+          </div>
         );
       } else {
         elements.push(
@@ -606,9 +608,11 @@ export default function BlogPost() {
         const disclosureText = `Amazon Affiliate Disclosure: As an Amazon Associate, ${authorName} earns from qualifying purchases. Some links in this post are affiliate links, which means ${authorName} may earn a commission if you click through and make a purchase. This helps support ${authorName} and allows us to continue creating content. Thank you for your support!`;
         
         elements.push(
-          <p key="affiliate-disclosure" className="mb-6 text-white/60 text-sm italic leading-relaxed text-left border-l-2 border-white/20 pl-4 py-2 mt-8">
-            {disclosureText}
-          </p>
+          <div key="affiliate-disclosure" className="mb-6 mx-auto max-w-2xl mt-8">
+            <p className="text-white/60 text-xs italic leading-relaxed text-center border border-white/20 rounded p-4 bg-white/5">
+              {disclosureText}
+            </p>
+          </div>
         );
       }
     }
