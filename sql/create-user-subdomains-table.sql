@@ -73,9 +73,17 @@ GRANT SELECT, INSERT ON user_subdomains TO anon, authenticated;
 GRANT UPDATE ON user_subdomains TO authenticated;
 
 -- Add to publication for realtime (optional)
+-- Note: ALTER PUBLICATION doesn't support IF NOT EXISTS, so we check first
 DO $$
 BEGIN
-  ALTER PUBLICATION supabase_realtime ADD TABLE IF NOT EXISTS user_subdomains;
+  -- Check if table is already in the publication
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' 
+    AND tablename = 'user_subdomains'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE user_subdomains;
+  END IF;
 EXCEPTION
   WHEN OTHERS THEN NULL;
 END $$;
