@@ -542,6 +542,20 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch blog submissions table file:', fetchError);
       }
 
+      // Load update-admin-username-and-subdomain script
+      let updateAdminContent = '';
+      try {
+        const updateAdminResponse = await fetch('/sql/update-admin-username-and-subdomain.sql');
+        if (updateAdminResponse.ok) {
+          const text = await updateAdminResponse.text();
+          if (!text.trim().startsWith('<!')) {
+            updateAdminContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch update-admin-username-and-subdomain file:', fetchError);
+      }
+
       // Load move-post-to-book-club script
       let movePostContent = '';
       try {
@@ -599,6 +613,13 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
       }
 
       const allScripts: SQLScript[] = [
+        {
+          name: 'Update Admin Username and Subdomain',
+          filename: 'update-admin-username-and-subdomain.sql',
+          content: updateAdminContent || '// File not found - check public/sql folder',
+          description: 'Updates the username for thelostandunfounds@gmail.com to "THE LOST+UNFOUNDS" and sets the subdomain to "mrjetstream". Also updates the "Building a Creative Brand" post to use the mrjetstream subdomain.',
+          createdAt: getScriptTimestamp('update-admin-username-and-subdomain.sql')
+        },
         {
           name: 'Move Post to Book Club',
           filename: 'move-post-to-book-club.sql',
