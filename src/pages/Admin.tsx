@@ -73,6 +73,7 @@ export default function Admin() {
   const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'subscriptions' | 'products' | 'settings' | 'blog' | 'newsletter' | 'submissions'>('overview');
+  const [componentError, setComponentError] = useState<string | null>(null);
 
   useEffect(() => {
     checkAdminAccess();
@@ -119,11 +120,27 @@ export default function Admin() {
 
   const loadDashboardData = async () => {
     try {
-      // Load user stats
-      const { data: usersData, error: usersError } = await supabase
-        .from('platform_subscriptions')
-        .select('user_id, tier, status')
-        .catch(() => ({ data: null, error: null }));
+      setComponentError(null);
+      
+      // Load user stats with better error handling
+      let usersData = null;
+      let usersError = null;
+      try {
+        const result = await supabase
+          .from('platform_subscriptions')
+          .select('user_id, tier, status');
+        usersData = result.data;
+        usersError = result.error;
+      } catch (err: any) {
+        // Table might not exist - that's okay, continue with defaults
+        if (err?.message?.includes('does not exist') || err?.code === '42P01') {
+          console.warn('platform_subscriptions table does not exist, using defaults');
+          usersError = null;
+          usersData = [];
+        } else {
+          usersError = err;
+        }
+      }
 
       if (usersError && usersError.code !== 'PGRST116') {
         console.warn('Error loading subscriptions:', usersError);
@@ -137,16 +154,28 @@ export default function Admin() {
       const proCount = activeSubs.filter(s => s.tier === 'pro').length;
 
       // Get total users (approximate from auth.users)
-      const { count: totalUsers } = await supabase
-        .from('platform_subscriptions')
-        .select('*', { count: 'exact', head: true })
-        .catch(() => ({ count: 0 })) as { count: number | null };
+      let totalUsers = 0;
+      try {
+        const result = await supabase
+          .from('platform_subscriptions')
+          .select('*', { count: 'exact', head: true });
+        totalUsers = result.count || 0;
+      } catch (err: any) {
+        // Table might not exist - use length of subscriptions array
+        totalUsers = subscriptions.length;
+      }
 
       // Get tool usage stats
-      const { count: toolUsage } = await supabase
-        .from('tool_usage')
-        .select('*', { count: 'exact', head: true })
-        .catch(() => ({ count: 0 })) as { count: number | null };
+      let toolUsage = 0;
+      try {
+        const result = await supabase
+          .from('tool_usage')
+          .select('*', { count: 'exact', head: true });
+        toolUsage = result.count || 0;
+      } catch (err: any) {
+        // Table might not exist - that's okay
+        toolUsage = 0;
+      }
 
       // Calculate platform health
       const totalSubs = activeSubs.length;
@@ -196,12 +225,18 @@ export default function Admin() {
       setAlerts(newAlerts);
 
       // Load recent users
-      const { data: recentData } = await supabase
-        .from('platform_subscriptions')
-        .select('user_id, tier, created_at')
-        .order('created_at', { ascending: false })
-        .limit(10)
-        .catch(() => ({ data: [] })) as { data: any[] | null };
+      let recentData = null;
+      try {
+        const result = await supabase
+          .from('platform_subscriptions')
+          .select('user_id, tier, created_at')
+          .order('created_at', { ascending: false })
+          .limit(10);
+        recentData = result.data;
+      } catch (err: any) {
+        // Table might not exist - that's okay
+        recentData = [];
+      }
 
       if (recentData && recentData.length > 0) {
         // Fetch user emails - Note: This requires admin API access
@@ -214,8 +249,10 @@ export default function Admin() {
         }));
         setRecentUsers(usersWithEmails);
       }
-    } catch (error) {
-      console.warn('Error loading dashboard data:', error);
+    } catch (error: any) {
+      console.error('Error loading dashboard data:', error);
+      const errorMsg = error?.message || 'Unknown error';
+      
       // Set default stats if tables don't exist
       setStats({
         totalUsers: 0,
@@ -230,10 +267,15 @@ export default function Admin() {
       setAlerts([{
         id: 1,
         type: 'warning',
-        message: 'Unable to load platform data - check database connection',
+        message: 'Some platform data could not be loaded. This is normal if database tables are still being set up.',
         time: 'Just now',
         read: false,
       }]);
+      
+      // Only set component error for unexpected errors
+      if (!errorMsg.includes('does not exist') && !errorMsg.includes('permission denied') && !errorMsg.includes('403')) {
+        setComponentError(`Error loading dashboard: ${errorMsg}`);
+      }
     }
   };
 
@@ -248,7 +290,34 @@ export default function Admin() {
   }
 
   if (adminStatus === false) {
-    return null; // Will redirect
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="text-center py-12">
+          <p className="text-white/70">Access denied. Admin privileges required.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If there's a component error, show it
+  if (componentError) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
+          <h2 className="text-xl font-bold text-red-400 mb-2">Error Loading Admin Dashboard</h2>
+          <p className="text-red-300 mb-4">{componentError}</p>
+          <button
+            onClick={() => {
+              setComponentError(null);
+              window.location.reload();
+            }}
+            className="px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
+          >
+            Reload Page
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -589,7 +658,13 @@ export default function Admin() {
       {/* Products Tab */}
       {activeTab === 'products' && (
         <div className="space-y-6">
-          <ErrorBoundary>
+          <ErrorBoundary
+            fallback={
+              <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
+                <p className="text-red-400">Error loading Product Cost Management. Please refresh the page.</p>
+              </div>
+            }
+          >
             <ProductCostManagement />
           </ErrorBoundary>
         </div>
@@ -597,21 +672,39 @@ export default function Admin() {
 
       {/* Blog Tab */}
       {activeTab === 'blog' && (
-        <ErrorBoundary>
+        <ErrorBoundary
+          fallback={
+            <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
+              <p className="text-red-400">Error loading Blog Management. Please refresh the page.</p>
+            </div>
+          }
+        >
           <BlogManagement />
         </ErrorBoundary>
       )}
 
       {/* Newsletter Tab */}
       {activeTab === 'newsletter' && (
-        <ErrorBoundary>
+        <ErrorBoundary
+          fallback={
+            <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
+              <p className="text-red-400">Error loading Newsletter Management. Please refresh the page.</p>
+            </div>
+          }
+        >
           <NewsletterManagement />
         </ErrorBoundary>
       )}
 
       {/* Submissions Tab */}
       {activeTab === 'submissions' && (
-        <ErrorBoundary>
+        <ErrorBoundary
+          fallback={
+            <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
+              <p className="text-red-400">Error loading Article Submissions Review. Please refresh the page.</p>
+            </div>
+          }
+        >
           <BlogSubmissionReview />
         </ErrorBoundary>
       )}
