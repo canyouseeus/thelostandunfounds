@@ -4,6 +4,8 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/auth';
+import { supabase } from '../lib/supabase';
+import { isAdminEmail, isAdmin } from '../utils/admin';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -25,8 +27,31 @@ export default function AuthCallback() {
       }
 
       if (session) {
-        // Success - redirect to submit article page
-        navigate('/submit-article');
+        // Check if user is admin and redirect accordingly
+        const checkAdminAndRedirect = async () => {
+          try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              const adminStatus = await isAdmin();
+              if (adminStatus || isAdminEmail(user.email || '')) {
+                navigate('/admin');
+              } else {
+                navigate('/submit-article');
+              }
+            } else {
+              navigate('/submit-article');
+            }
+          } catch (error) {
+            // If admin check fails, check email directly
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user && isAdminEmail(user.email || '')) {
+              navigate('/admin');
+            } else {
+              navigate('/submit-article');
+            }
+          }
+        };
+        checkAdminAndRedirect();
       } else {
         // No session - redirect to home
         navigate('/');

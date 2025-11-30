@@ -6,6 +6,7 @@
 import { supabase } from '../lib/supabase';
 
 export const ADMIN_EMAIL = 'admin@thelostandunfounds.com';
+export const ADMIN_EMAIL_ALT = 'thelostandunfounds@gmail.com';
 
 export interface AdminUser {
   id: string;
@@ -18,7 +19,9 @@ export interface AdminUser {
  * Check if email matches admin email
  */
 export function isAdminEmail(email: string): boolean {
-  return email?.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase();
+  const normalizedEmail = email?.toLowerCase().trim();
+  return normalizedEmail === ADMIN_EMAIL.toLowerCase() || 
+         normalizedEmail === ADMIN_EMAIL_ALT.toLowerCase();
 }
 
 /**
@@ -29,7 +32,7 @@ export async function isAdmin(): Promise<boolean> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
 
-    // Check if email matches admin email
+    // Check if email matches admin email (including thelostandunfounds@gmail.com)
     if (isAdminEmail(user.email || '')) {
       return true;
     }
