@@ -22,6 +22,8 @@ export default function SubmitArticle() {
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
   const [subdomain, setSubdomain] = useState('');
+  const [subdomainError, setSubdomainError] = useState('');
+  const [checkingSubdomain, setCheckingSubdomain] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -43,13 +45,111 @@ export default function SubmitArticle() {
         author_name: user.user_metadata?.full_name || user.email?.split('@')[0] || '',
       }));
       
-      // Generate subdomain from email (username part)
-      if (user.email) {
+      // Generate suggested subdomain from email (username part) as default
+      if (user.email && !subdomain) {
         const emailSubdomain = user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
         setSubdomain(emailSubdomain);
       }
     }
   }, [user, authLoading, navigate, showError]);
+
+  const validateSubdomain = (value: string): boolean => {
+    // Subdomain rules: lowercase alphanumeric and hyphens only, 3-63 characters
+    const subdomainRegex = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
+    
+    if (!value) {
+      setSubdomainError('Subdomain is required');
+      return false;
+    }
+    
+    if (value.length < 3) {
+      setSubdomainError('Subdomain must be at least 3 characters');
+      return false;
+    }
+    
+    if (value.length > 63) {
+      setSubdomainError('Subdomain must be 63 characters or less');
+      return false;
+    }
+    
+    if (!subdomainRegex.test(value)) {
+      setSubdomainError('Subdomain can only contain lowercase letters, numbers, and hyphens. Cannot start or end with a hyphen.');
+      return false;
+    }
+    
+    // Reserved subdomains
+    const reserved = ['www', 'api', 'admin', 'blog', 'mail', 'ftp', 'localhost', 'test', 'staging', 'dev', 'app', 'thelostarchives', 'thelostandunfounds'];
+    if (reserved.includes(value.toLowerCase())) {
+      setSubdomainError('This subdomain is reserved and cannot be used');
+      return false;
+    }
+    
+    setSubdomainError('');
+    return true;
+  };
+
+  const checkSubdomainAvailability = async (value: string) => {
+    if (!validateSubdomain(value)) {
+      return false;
+    }
+
+    setCheckingSubdomain(true);
+    try {
+      // Check if subdomain is already used in blog_posts or blog_submissions
+      const [postsResult, submissionsResult] = await Promise.all([
+        supabase
+          .from('blog_posts')
+          .select('id')
+          .eq('subdomain', value.toLowerCase())
+          .limit(1),
+        supabase
+          .from('blog_submissions')
+          .select('id')
+          .eq('subdomain', value.toLowerCase())
+          .limit(1)
+      ]);
+
+      if (postsResult.data && postsResult.data.length > 0) {
+        setSubdomainError('This subdomain is already taken');
+        setCheckingSubdomain(false);
+        return false;
+      }
+
+      if (submissionsResult.data && submissionsResult.data.length > 0) {
+        // Check if it's the current user's submission
+        const isCurrentUser = submissionsResult.data.some((sub: any) => 
+          sub.author_email === formData.author_email
+        );
+        if (!isCurrentUser) {
+          setSubdomainError('This subdomain is already taken');
+          setCheckingSubdomain(false);
+          return false;
+        }
+      }
+
+      setSubdomainError('');
+      return true;
+    } catch (err) {
+      console.error('Error checking subdomain:', err);
+      // Don't block submission if check fails, but warn user
+      setSubdomainError('Could not verify subdomain availability. Please try again.');
+      return false;
+    } finally {
+      setCheckingSubdomain(false);
+    }
+  };
+
+  const handleSubdomainChange = (value: string) => {
+    // Convert to lowercase and remove invalid characters as user types
+    const cleaned = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    setSubdomain(cleaned);
+    setSubdomainError('');
+    
+    // Validate format (but don't check availability until blur)
+    if (cleaned && !validateSubdomain(cleaned)) {
+      // Error already set by validateSubdomain
+    }
+  };
   const [affiliateLinks, setAffiliateLinks] = useState<AffiliateLink[]>([
     { book_title: '', link: '' }
   ]);
@@ -68,7 +168,7 @@ export default function SubmitArticle() {
     setAffiliateLinks(updated);
   };
 
-  const validateForm = () => {
+  const validateForm = async () => {
     if (!formData.title.trim()) {
       showError('Please enter a title');
       return false;
@@ -83,6 +183,13 @@ export default function SubmitArticle() {
     }
     if (!formData.author_email.trim() || !formData.author_email.includes('@')) {
       showError('Please enter a valid email address');
+      return false;
+    }
+    
+    // Validate subdomain
+    const isSubdomainValid = await checkSubdomainAvailability(subdomain);
+    if (!isSubdomainValid) {
+      showError(subdomainError || 'Please choose a valid subdomain');
       return false;
     }
     
@@ -104,7 +211,7 @@ export default function SubmitArticle() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) {
+    if (!(await validateForm())) {
       return;
     }
 
@@ -124,7 +231,7 @@ export default function SubmitArticle() {
         author_email: formData.author_email.trim(),
         amazon_affiliate_links: validLinks.length > 0 ? validLinks : [],
         status: 'pending',
-        subdomain: subdomain || null, // Store subdomain for user blog
+        subdomain: subdomain.toLowerCase().trim() || null, // Store subdomain for user blog
       };
 
       const { error } = await supabase
@@ -223,6 +330,40 @@ export default function SubmitArticle() {
                   required
                 />
               </div>
+            </div>
+
+            {/* Subdomain */}
+            <div>
+              <label className="block text-white/80 text-sm mb-2">
+                Your Blog Subdomain *
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={subdomain}
+                  onChange={(e) => handleSubdomainChange(e.target.value)}
+                  onBlur={() => checkSubdomainAvailability(subdomain)}
+                  className="flex-1 px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+                  placeholder="your-blog-name"
+                  required
+                />
+                <span className="text-white/60 text-sm whitespace-nowrap">.thelostandunfounds.com</span>
+              </div>
+              {subdomainError && (
+                <p className="text-red-400 text-xs mt-1">{subdomainError}</p>
+              )}
+              {checkingSubdomain && (
+                <p className="text-white/50 text-xs mt-1">Checking availability...</p>
+              )}
+              {!subdomainError && subdomain && !checkingSubdomain && (
+                <p className="text-green-400 text-xs mt-1">✓ Available</p>
+              )}
+              <p className="text-white/50 text-xs mt-2">
+                Choose a unique subdomain for your blog. This will be your custom URL: <span className="text-white/70 font-mono">{subdomain || 'your-blog-name'}.thelostandunfounds.com</span>
+              </p>
+              <p className="text-white/40 text-xs mt-1">
+                • 3-63 characters • Lowercase letters, numbers, and hyphens only • Cannot start or end with hyphen
+              </p>
             </div>
 
             {/* Article Title */}
