@@ -542,6 +542,20 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch blog submissions table file:', fetchError);
       }
 
+      // Load move-post-to-book-club script
+      let movePostContent = '';
+      try {
+        const movePostResponse = await fetch('/sql/move-post-to-book-club.sql');
+        if (movePostResponse.ok) {
+          const text = await movePostResponse.text();
+          if (!text.trim().startsWith('<!')) {
+            movePostContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch move-post-to-book-club file:', fetchError);
+      }
+
       // Load add-amazon-storefront-id script
       let amazonStorefrontContent = '';
       try {
@@ -585,6 +599,13 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
       }
 
       const allScripts: SQLScript[] = [
+        {
+          name: 'Move Post to Book Club',
+          filename: 'move-post-to-book-club.sql',
+          content: movePostContent || '// File not found - check public/sql folder',
+          description: 'Moves the "Building a Creative Brand That Rewards People for Life" post to the Book Club collection by adding a subdomain. This makes it appear in the Book Club section instead of the main blog.',
+          createdAt: getScriptTimestamp('move-post-to-book-club.sql')
+        },
         {
           name: 'Add Amazon Storefront ID',
           filename: 'add-amazon-storefront-id.sql',
