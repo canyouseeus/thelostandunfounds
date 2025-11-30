@@ -584,7 +584,7 @@ export default function BlogPost() {
         // Style the disclosure differently: smaller, italic, in a box, center-justified
         elements.push(
           <div key={index} className="mb-6 mx-auto max-w-2xl">
-            <p className="text-white/60 text-xs italic leading-relaxed text-center border border-white/20 rounded p-4 bg-white/5">
+            <p className="text-white/60 text-xs italic leading-relaxed text-center border border-white/20 p-4 bg-white/5">
               {Array.isArray(content) ? content : content}
             </p>
           </div>
@@ -609,7 +609,7 @@ export default function BlogPost() {
         
         elements.push(
           <div key="affiliate-disclosure" className="mb-6 mx-auto max-w-2xl mt-8">
-            <p className="text-white/60 text-xs italic leading-relaxed text-center border border-white/20 rounded p-4 bg-white/5">
+            <p className="text-white/60 text-xs italic leading-relaxed text-center border border-white/20 p-4 bg-white/5">
               {disclosureText}
             </p>
           </div>
