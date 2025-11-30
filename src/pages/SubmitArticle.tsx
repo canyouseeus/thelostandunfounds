@@ -164,11 +164,17 @@ export default function SubmitArticle() {
   ]);
 
   const addAffiliateLink = () => {
-    setAffiliateLinks([...affiliateLinks, { book_title: '', link: '' }]);
+    // Only allow up to 4 books total
+    if (affiliateLinks.length < 4) {
+      setAffiliateLinks([...affiliateLinks, { book_title: '', link: '' }]);
+    }
   };
 
   const removeAffiliateLink = (index: number) => {
-    setAffiliateLinks(affiliateLinks.filter((_, i) => i !== index));
+    // Don't allow removing if we only have 4 (exactly 4 required)
+    if (affiliateLinks.length > 4) {
+      setAffiliateLinks(affiliateLinks.filter((_, i) => i !== index));
+    }
   };
 
   const updateAffiliateLink = (index: number, field: keyof AffiliateLink, value: string) => {
@@ -475,22 +481,22 @@ Use double line breaks between sections. Book titles mentioned in the text will 
               <div className="flex items-center justify-between mb-4">
                 <label className="block text-white/80 text-sm flex items-center gap-2">
                   <BookOpen className="w-4 h-4" />
-                  Amazon Affiliate Links (Required - 4 Books) *
+                  Amazon Affiliate Links (Required - Exactly 4 Books) *
                 </label>
-                {affiliateLinks.length < 10 && (
+                {affiliateLinks.length < 4 && (
                   <button
                     type="button"
                     onClick={addAffiliateLink}
                     className="px-3 py-1 bg-white/10 hover:bg-white/20 rounded text-white text-sm transition flex items-center gap-1"
                   >
                     <Plus className="w-3 h-3" />
-                    Add Another
+                    Add Book
                   </button>
                 )}
               </div>
               
               <p className="text-white/60 text-sm mb-4">
-                Please provide exactly <strong className="text-white">4 books</strong> that your article discusses. 
+                You must provide exactly <strong className="text-white">4 books</strong> (no more, no less). 
                 Each book needs both a title and an Amazon affiliate link. These will be automatically linked in your article.
               </p>
               
@@ -499,18 +505,9 @@ Use double line breaks between sections. Book titles mentioned in the text will 
                   <div key={index} className="bg-black/30 border border-white/10 rounded-none p-4">
                     <div className="flex items-start justify-between mb-3">
                       <span className="text-white/80 text-sm font-medium">
-                        Book {index + 1} {index < 4 && <span className="text-white/50">(Required)</span>}
+                        Book {index + 1} <span className="text-white/50">(Required)</span>
                       </span>
-                      {affiliateLinks.length > 4 && (
-                        <button
-                          type="button"
-                          onClick={() => removeAffiliateLink(index)}
-                          className="text-red-400 hover:text-red-300 transition"
-                          title="Remove this book"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      )}
+                      {/* No remove button - exactly 4 books required */}
                     </div>
                     <div className="space-y-3">
                       <div>
