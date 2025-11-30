@@ -252,21 +252,29 @@ export default function BlogManagement() {
   }
 
   // Separate posts into categories
+  const currentUserId = user?.id;
+  
+  // All admin posts (including book club posts)
   const adminPosts = posts.filter((post) => {
     const postAuthorId = post.author_id || post.user_id;
-    const currentUserId = user?.id;
     return postAuthorId === currentUserId;
   });
 
+  // Admin's book club posts (admin posts with subdomain)
+  const adminBookClubPosts = posts.filter((post) => {
+    const postAuthorId = post.author_id || post.user_id;
+    return postAuthorId === currentUserId && post.subdomain;
+  });
+
+  // Other users' book club posts (not admin)
   const bookClubPosts = posts.filter((post) => {
     const postAuthorId = post.author_id || post.user_id;
-    const currentUserId = user?.id;
     return post.subdomain && postAuthorId !== currentUserId;
   });
 
+  // Other users' regular posts (not admin, no subdomain)
   const regularPosts = posts.filter((post) => {
     const postAuthorId = post.author_id || post.user_id;
-    const currentUserId = user?.id;
     return !post.subdomain && postAuthorId !== currentUserId;
   });
 
@@ -426,12 +434,81 @@ export default function BlogManagement() {
         </div>
       )}
 
-      {/* Admin Posts Section */}
-      {adminPosts.length > 0 && (
+      {/* My Book Club Posts Section (Admin's book club posts) */}
+      {adminBookClubPosts.length > 0 && (
+        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <h3 className="text-lg font-bold text-white mb-4">MY BOOK CLUB POSTS</h3>
+          <div className="space-y-4">
+            {adminBookClubPosts.map((post) => (
+              <div
+                key={post.id}
+                className="bg-black/30 border border-white/10 rounded-none p-4 hover:border-white/20 transition"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h4 className="text-white font-bold text-lg mb-2">{post.title}</h4>
+                    <div className="flex items-center gap-4 text-sm text-white/60 mb-2">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {formatDate(post.published_at || post.created_at)}
+                      </span>
+                      <span className={`px-2 py-1 rounded text-xs ${
+                        post.published
+                          ? 'bg-green-400/20 text-green-400 border border-green-400/20'
+                          : 'bg-yellow-400/20 text-yellow-400 border border-yellow-400/20'
+                      }`}>
+                        {post.published ? 'Published' : 'Draft'}
+                      </span>
+                      {post.subdomain && (
+                        <span className="px-2 py-1 rounded text-xs bg-blue-400/20 text-blue-400 border border-blue-400/20">
+                          {post.subdomain}
+                        </span>
+                      )}
+                    </div>
+                    {post.excerpt && (
+                      <p className="text-white/70 text-sm">{post.excerpt.substring(0, 100)}...</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 ml-4">
+                    {post.published && (
+                      <a
+                        href={`/blog/${post.subdomain}/${post.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 hover:bg-white/10 rounded transition"
+                        title="View post"
+                      >
+                        <Eye className="w-4 h-4 text-white/60" />
+                      </a>
+                    )}
+                    <button
+                      onClick={() => handleEdit(post)}
+                      className="p-2 hover:bg-white/10 rounded transition"
+                      title="Edit post"
+                    >
+                      <Edit className="w-4 h-4 text-white/60" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(post.id)}
+                      className="p-2 hover:bg-red-500/20 rounded transition"
+                      title="Delete post"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-400" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Admin Posts Section (Admin's regular posts - no subdomain) */}
+      {adminPosts.filter(post => !post.subdomain).length > 0 && (
         <div className="bg-black/50 border border-white/10 rounded-none p-6">
           <h3 className="text-lg font-bold text-white mb-4">My Posts (Admin)</h3>
           <div className="space-y-4">
-            {adminPosts.map((post) => (
+            {adminPosts.filter(post => !post.subdomain).map((post) => (
               <div
                 key={post.id}
                 className="bg-black/30 border border-white/10 rounded-none p-4 hover:border-white/20 transition"
