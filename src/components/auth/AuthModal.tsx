@@ -22,22 +22,29 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const navigate = useNavigate();
   const [justSignedIn, setJustSignedIn] = useState(false);
 
-  // Redirect admin users after successful login
+  // Redirect users after successful login
   useEffect(() => {
-    if (justSignedIn && user && isAdminEmail(user.email || '')) {
+    if (justSignedIn && user) {
       const checkAndRedirect = async () => {
         try {
+          // Check if user is admin
           const adminStatus = await isAdmin();
-          if (adminStatus) {
+          if (adminStatus || isAdminEmail(user.email || '')) {
             navigate('/admin');
-            setJustSignedIn(false);
+          } else {
+            // Regular users go to submit article page
+            navigate('/submit-article');
           }
+          setJustSignedIn(false);
         } catch (error) {
-          // If admin check fails but email matches, still redirect
+          // If admin check fails but email matches, redirect to admin
           if (isAdminEmail(user.email || '')) {
             navigate('/admin');
-            setJustSignedIn(false);
+          } else {
+            // Otherwise redirect to submit article
+            navigate('/submit-article');
           }
+          setJustSignedIn(false);
         }
       };
       checkAndRedirect();

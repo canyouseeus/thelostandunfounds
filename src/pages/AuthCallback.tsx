@@ -25,8 +25,8 @@ export default function AuthCallback() {
       }
 
       if (session) {
-        // Success - redirect to dashboard
-        navigate('/tools');
+        // Success - redirect to submit article page
+        navigate('/submit-article');
       } else {
         // No session - redirect to home
         navigate('/');
