@@ -29,35 +29,68 @@ export function isAdminEmail(email: string): boolean {
  */
 export async function isAdmin(): Promise<boolean> {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: getUserError } = await supabase.auth.getUser();
+    
+    if (getUserError) {
+      console.warn('Error getting user:', getUserError);
+      return false;
+    }
+    
     if (!user) return false;
 
-    // Check if email matches admin email (including thelostandunfounds@gmail.com)
+    // First check: email matches admin email (fastest check)
     if (isAdminEmail(user.email || '')) {
       return true;
     }
 
-    // Check user metadata for admin role
+    // Second check: user metadata for admin role
     const userMetadata = user.user_metadata || {};
     if (userMetadata.role === 'admin' || userMetadata.is_admin === true) {
       return true;
     }
 
-    // Also check in user_roles table if it exists
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('is_admin')
-      .eq('user_id', user.id)
-      .single();
+    // Third check: user_roles table (with error handling)
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('is_admin')
+        .eq('user_id', user.id)
+        .maybeSingle(); // Use maybeSingle instead of single to avoid errors if no row
 
-    if (error) {
-      // Table might not exist yet, check metadata only
-      return userMetadata.role === 'admin' || userMetadata.is_admin === true;
+      if (error) {
+        // If table doesn't exist or permission denied, fall back to metadata/email check
+        if (error.code === '42P01' || error.code === 'PGRST301' || error.message?.includes('does not exist')) {
+          // Table doesn't exist, use metadata/email check
+          return userMetadata.role === 'admin' || userMetadata.is_admin === true || isAdminEmail(user.email || '');
+        }
+        // Other errors - log but don't fail
+        console.warn('Error checking user_roles table:', error);
+        return userMetadata.role === 'admin' || userMetadata.is_admin === true || isAdminEmail(user.email || '');
+      }
+
+      // If we got data and is_admin is true, return true
+      if (data?.is_admin === true) {
+        return true;
+      }
+    } catch (tableError: any) {
+      // Table might not exist or other error - fall back to email/metadata check
+      console.warn('Exception checking user_roles table:', tableError);
+      return userMetadata.role === 'admin' || userMetadata.is_admin === true || isAdminEmail(user.email || '');
     }
 
-    return data?.is_admin === true;
+    // Final fallback: email check (should have been caught above, but just in case)
+    return isAdminEmail(user.email || '');
   } catch (error) {
     console.warn('Error checking admin status:', error);
+    // On any error, try to get user email and check it
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        return isAdminEmail(user.email);
+      }
+    } catch (e) {
+      // Ignore
+    }
     return false;
   }
 }

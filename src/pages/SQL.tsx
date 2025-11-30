@@ -542,6 +542,20 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch blog submissions table file:', fetchError);
       }
 
+      // Load setup-admin-user script
+      let setupAdminContent = '';
+      try {
+        const setupAdminResponse = await fetch('/sql/setup-admin-user.sql');
+        if (setupAdminResponse.ok) {
+          const text = await setupAdminResponse.text();
+          if (!text.trim().startsWith('<!')) {
+            setupAdminContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch setup-admin-user file:', fetchError);
+      }
+
       // Load update-admin-username-and-subdomain script
       let updateAdminContent = '';
       try {
@@ -613,6 +627,13 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
       }
 
       const allScripts: SQLScript[] = [
+        {
+          name: 'Setup Admin User',
+          filename: 'setup-admin-user.sql',
+          content: setupAdminContent || '// File not found - check public/sql folder',
+          description: 'Ensures thelostandunfounds@gmail.com is properly recognized as admin. Creates user_roles table if needed, sets admin flags in metadata and database, and ensures subdomain is set to mrjetstream. Run this if admin recognition is failing.',
+          createdAt: getScriptTimestamp('setup-admin-user.sql')
+        },
         {
           name: 'Update Admin Username and Subdomain',
           filename: 'update-admin-username-and-subdomain.sql',
