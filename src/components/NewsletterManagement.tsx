@@ -312,8 +312,10 @@ export default function NewsletterManagement() {
           </div>
         ) : campaigns.length === 0 ? (
           <div className="text-left py-8 text-white/60">
-            <Mail className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>No campaigns yet</p>
+            <div className="flex items-center gap-3">
+              <Mail className="w-12 h-12 opacity-50" />
+              <p>No campaigns yet</p>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
