@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS blog_submissions (
   author_email TEXT NOT NULL,
   subdomain TEXT, -- User subdomain for their blog (e.g., username from email)
   amazon_affiliate_links JSONB DEFAULT '[]', -- Array of affiliate link objects: [{"book_title": "...", "link": "https://..."}]
+  amazon_storefront_id TEXT, -- Amazon Associates Storefront ID (internal tracking only)
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'published')),
   admin_notes TEXT, -- Admin can add notes during review
   rejected_reason TEXT, -- Reason for rejection if rejected
@@ -92,9 +93,17 @@ GRANT SELECT, INSERT ON blog_submissions TO anon, authenticated;
 GRANT UPDATE, DELETE ON blog_submissions TO authenticated;
 
 -- Add to publication for realtime (optional)
+-- Note: ALTER PUBLICATION doesn't support IF NOT EXISTS, so we check first
 DO $$
 BEGIN
-  ALTER PUBLICATION supabase_realtime ADD TABLE IF NOT EXISTS blog_submissions;
+  -- Check if table is already in the publication
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' 
+    AND tablename = 'blog_submissions'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE blog_submissions;
+  END IF;
 EXCEPTION
   WHEN OTHERS THEN NULL;
 END $$;
