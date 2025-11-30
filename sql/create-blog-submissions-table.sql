@@ -29,6 +29,12 @@ CREATE INDEX IF NOT EXISTS idx_blog_submissions_author_email ON blog_submissions
 -- Enable Row Level Security
 ALTER TABLE blog_submissions ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist (to allow re-running this script)
+DROP POLICY IF EXISTS "Anyone can submit articles" ON blog_submissions;
+DROP POLICY IF EXISTS "Submitters can view their own submissions" ON blog_submissions;
+DROP POLICY IF EXISTS "Admins can update submissions" ON blog_submissions;
+DROP POLICY IF EXISTS "Admins can delete submissions" ON blog_submissions;
+
 -- Policy: Anyone can insert submissions (public submission form)
 CREATE POLICY "Anyone can submit articles"
   ON blog_submissions
@@ -52,7 +58,7 @@ CREATE POLICY "Admins can update submissions"
     )
     OR EXISTS (
       SELECT 1 FROM auth.users
-      WHERE id = auth.uid() AND email = 'admin@thelostandunfounds.com'
+      WHERE id = auth.uid() AND (email = 'admin@thelostandunfounds.com' OR email = 'thelostandunfounds@gmail.com')
     )
   );
 
@@ -67,7 +73,7 @@ CREATE POLICY "Admins can delete submissions"
     )
     OR EXISTS (
       SELECT 1 FROM auth.users
-      WHERE id = auth.uid() AND email = 'admin@thelostandunfounds.com'
+      WHERE id = auth.uid() AND (email = 'admin@thelostandunfounds.com' OR email = 'thelostandunfounds@gmail.com')
     )
   );
 
