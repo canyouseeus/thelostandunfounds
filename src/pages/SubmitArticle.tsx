@@ -163,10 +163,31 @@ export default function SubmitArticle() {
           <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-wide">
             Submit to THE LOST ARCHIVES
           </h1>
-          <p className="text-white/70 text-lg max-w-2xl mx-auto">
+          <p className="text-white/70 text-lg max-w-2xl mx-auto mb-4">
             Share your insights on development, AI, and building in the age of information. 
             If your article includes book recommendations, you can include your Amazon affiliate links.
           </p>
+          <details className="max-w-2xl mx-auto text-left">
+            <summary className="text-white/80 text-sm cursor-pointer hover:text-white transition mb-2">
+              📝 Need help? View AI Writing Prompt Guide
+            </summary>
+            <div className="bg-black/30 border border-white/10 rounded-none p-4 mt-2 text-white/70 text-sm">
+              <p className="mb-3">
+                <strong className="text-white">Using AI to help write your article?</strong> We have a comprehensive prompt guide that will help you create content that matches our format and style.
+              </p>
+              <a
+                href="/AI_WRITING_PROMPT_FOR_CONTRIBUTORS.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-400 hover:text-blue-300 underline"
+              >
+                View AI Writing Prompt Guide →
+              </a>
+              <p className="mt-3 text-xs text-white/50">
+                This guide shows you exactly how to structure your article, format book sections, and ensure your Amazon links are properly integrated.
+              </p>
+            </div>
+          </details>
         </div>
 
         <div className="bg-black/50 border border-white/10 rounded-none p-6 md:p-8">
@@ -228,14 +249,25 @@ export default function SubmitArticle() {
               <textarea
                 value={formData.content}
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+                className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none font-mono text-sm"
                 rows={20}
-                placeholder="Write your article here. Use double line breaks for paragraphs..."
+                placeholder="Write your article here. Use double line breaks for paragraphs...
+
+Example structure:
+- Introduction (3-4 paragraphs)
+- Amazon Affiliate Disclosure
+- Book sections (each with 3-4 paragraphs)
+- Conclusion
+
+Use double line breaks between sections. Book titles mentioned in the text will automatically become clickable links if you add them in the Amazon Affiliate Links section below."
                 required
               />
-              <p className="text-white/50 text-xs mt-2">
-                Use double line breaks (press Enter twice) to create paragraphs. Headings should be on their own line.
-              </p>
+              <div className="text-white/50 text-xs mt-2 space-y-1">
+                <p>• Use double line breaks (press Enter twice) to create paragraphs</p>
+                <p>• Headings should be on their own line</p>
+                <p>• Book titles mentioned in your text will automatically become clickable links</p>
+                <p>• See the <a href="/AI_WRITING_PROMPT_FOR_CONTRIBUTORS.md" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">AI Writing Prompt Guide</a> for detailed formatting instructions</p>
+              </div>
             </div>
 
             {/* Excerpt */}
