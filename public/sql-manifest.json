@@ -1,47 +1,61 @@
 {
-  "generated": "2025-11-29T15:12:31.871Z",
+  "generated": "2025-11-30T01:50:46.846Z",
   "files": [
     {
       "filename": "create-first-blog-post.sql",
       "path": "public/create-first-blog-post.sql",
       "publicPath": "/create-first-blog-post.sql",
-      "modified": "2025-11-29T15:11:26.831Z",
+      "modified": "2025-11-30T01:48:10.447Z",
       "size": 32310
+    },
+    {
+      "filename": "check-blog-post-exists.sql",
+      "path": "public/sql/check-blog-post-exists.sql",
+      "publicPath": "/sql/check-blog-post-exists.sql",
+      "modified": "2025-11-30T01:48:10.447Z",
+      "size": 920
     },
     {
       "filename": "create-blog-post-all-for-a-dream.sql",
       "path": "public/sql/create-blog-post-all-for-a-dream.sql",
       "publicPath": "/sql/create-blog-post-all-for-a-dream.sql",
-      "modified": "2025-11-29T15:11:26.831Z",
+      "modified": "2025-11-30T01:48:10.447Z",
       "size": 21977
     },
     {
       "filename": "create-blog-post-artificial-intelligence-the-job-killer.sql",
       "path": "public/sql/create-blog-post-artificial-intelligence-the-job-killer.sql",
       "publicPath": "/sql/create-blog-post-artificial-intelligence-the-job-killer.sql",
-      "modified": "2025-11-29T15:11:26.831Z",
+      "modified": "2025-11-30T01:48:10.447Z",
       "size": 30894
     },
     {
       "filename": "create-blog-post-building-a-creative-brand-that-rewards-people-for-life.sql",
       "path": "public/sql/create-blog-post-building-a-creative-brand-that-rewards-people-for-life.sql",
       "publicPath": "/sql/create-blog-post-building-a-creative-brand-that-rewards-people-for-life.sql",
-      "modified": "2025-11-29T15:11:26.831Z",
+      "modified": "2025-11-30T01:48:10.447Z",
       "size": 30060
     },
     {
       "filename": "create-blog-post-our-tech-stack.sql",
       "path": "public/sql/create-blog-post-our-tech-stack.sql",
       "publicPath": "/sql/create-blog-post-our-tech-stack.sql",
-      "modified": "2025-11-29T15:11:26.831Z",
+      "modified": "2025-11-30T01:48:10.447Z",
       "size": 41747
     },
     {
       "filename": "create-newsletter-campaigns-table.sql",
       "path": "public/sql/create-newsletter-campaigns-table.sql",
       "publicPath": "/sql/create-newsletter-campaigns-table.sql",
-      "modified": "2025-11-29T15:11:26.831Z",
+      "modified": "2025-11-30T01:48:10.447Z",
       "size": 2734
+    },
+    {
+      "filename": "update-blog-post-if-exists.sql",
+      "path": "public/sql/update-blog-post-if-exists.sql",
+      "publicPath": "/sql/update-blog-post-if-exists.sql",
+      "modified": "2025-11-30T01:48:10.447Z",
+      "size": 11841
     },
     {
       "filename": "blog-schema-migration.sql",
@@ -49,20 +63,6 @@
       "publicPath": "/blog-schema-migration.sql",
       "modified": "2025-11-28T23:35:12.719Z",
       "size": 5267
-    },
-    {
-      "filename": "check-blog-post-exists.sql",
-      "path": "public/sql/check-blog-post-exists.sql",
-      "publicPath": "/sql/check-blog-post-exists.sql",
-      "modified": "2025-11-28T23:35:12.719Z",
-      "size": 920
-    },
-    {
-      "filename": "update-blog-post-if-exists.sql",
-      "path": "public/sql/update-blog-post-if-exists.sql",
-      "publicPath": "/sql/update-blog-post-if-exists.sql",
-      "modified": "2025-11-28T23:35:12.715Z",
-      "size": 11841
     }
   ]
 }

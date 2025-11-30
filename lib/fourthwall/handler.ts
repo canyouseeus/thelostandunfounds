@@ -364,14 +364,20 @@ export async function handleFourthwallProducts(
 
     console.log(`Fourthwall API: Token present: ${!!storefrontToken}, Length: ${storefrontToken.length}`)
     
-    // Strategy 1: Try direct products fetch first
-    const directResult = await handleDirectProducts(storefrontToken, collectionHandle)
-    if (directResult) {
-      res.status(200).json(directResult)
-      return
+    // Strategy 1: Always try direct products fetch first
+    try {
+      const directResult = await handleDirectProducts(storefrontToken, collectionHandle)
+      if (directResult && directResult.products.length > 0) {
+        res.status(200).json(directResult)
+        return
+      }
+    } catch (error) {
+      // If direct fetch throws (non-404 error), log but continue to fallback
+      console.warn('Direct products fetch error (will try fallback):', error)
     }
     
-    // Strategy 2: If direct fetch fails and no specific collection, try collections approach
+    // Strategy 2: If direct fetch failed or returned no products, try collections approach
+    // Only do this if no specific collection was requested (original behavior)
     if (!collectionHandle || collectionHandle === 'all') {
       const collectionsResult = await handleCollections(storefrontToken)
       res.status(200).json(collectionsResult)
@@ -379,12 +385,10 @@ export async function handleFourthwallProducts(
     }
     
     // Strategy 3: Specific collection requested but direct fetch failed
-    const errorMessage = `Failed to fetch products from collection: ${collectionHandle}`
-    console.error(`Fourthwall API: ${errorMessage}`)
     res.status(200).json({
       products: [],
-      error: errorMessage,
-      message: errorMessage,
+      error: `Failed to fetch products from collection: ${collectionHandle}`,
+      message: `Failed to fetch products from collection: ${collectionHandle}`,
     })
     
   } catch (error) {
