@@ -151,6 +151,9 @@ export default function SubmitArticle() {
     }
   };
   const [affiliateLinks, setAffiliateLinks] = useState<AffiliateLink[]>([
+    { book_title: '', link: '' },
+    { book_title: '', link: '' },
+    { book_title: '', link: '' },
     { book_title: '', link: '' }
   ]);
 
@@ -193,14 +196,24 @@ export default function SubmitArticle() {
       return false;
     }
     
-    // Validate affiliate links
-    for (const link of affiliateLinks) {
-      if (link.book_title.trim() && !link.link.trim()) {
-        showError('Please provide a link for all book titles');
+    // Validate affiliate links - require at least 4 books
+    const validLinks = affiliateLinks.filter(
+      link => link.book_title.trim() && link.link.trim()
+    );
+    
+    if (validLinks.length < 4) {
+      showError('Please provide exactly 4 books with both title and Amazon affiliate link');
+      return false;
+    }
+    
+    // Validate each link
+    for (const link of validLinks) {
+      if (!link.link.trim().startsWith('http')) {
+        showError('Please provide valid URLs (starting with http:// or https://) for all Amazon affiliate links');
         return false;
       }
-      if (link.link.trim() && !link.link.startsWith('http')) {
-        showError('Please provide valid URLs for affiliate links');
+      if (!link.link.includes('amazon') && !link.link.includes('amzn.to')) {
+        showError('Please provide valid Amazon affiliate links (amazon.com or amzn.to)');
         return false;
       }
     }
@@ -218,10 +231,15 @@ export default function SubmitArticle() {
     setSubmitting(true);
 
     try {
-      // Filter out empty affiliate links
+      // Filter out empty affiliate links - must have exactly 4
       const validLinks = affiliateLinks.filter(
         link => link.book_title.trim() && link.link.trim()
       );
+
+      if (validLinks.length < 4) {
+        showError('Please provide exactly 4 books with both title and Amazon affiliate link');
+        return;
+      }
 
       const submissionData = {
         title: formData.title.trim(),
@@ -229,7 +247,7 @@ export default function SubmitArticle() {
         excerpt: formData.excerpt.trim() || null,
         author_name: formData.author_name.trim(),
         author_email: formData.author_email.trim(),
-        amazon_affiliate_links: validLinks.length > 0 ? validLinks : [],
+        amazon_affiliate_links: validLinks.slice(0, 4), // Only use first 4 valid links
         status: 'pending',
         subdomain: subdomain.toLowerCase().trim() || null, // Store subdomain for user blog
       };
@@ -250,7 +268,12 @@ export default function SubmitArticle() {
         author_name: '',
         author_email: '',
       });
-      setAffiliateLinks([{ book_title: '', link: '' }]);
+      setAffiliateLinks([
+        { book_title: '', link: '' },
+        { book_title: '', link: '' },
+        { book_title: '', link: '' },
+        { book_title: '', link: '' }
+      ]);
     } catch (err: any) {
       console.error('Error submitting article:', err);
       showError(err.message || 'Failed to submit article. Please try again.');
@@ -430,28 +453,38 @@ Use double line breaks between sections. Book titles mentioned in the text will 
               <div className="flex items-center justify-between mb-4">
                 <label className="block text-white/80 text-sm flex items-center gap-2">
                   <BookOpen className="w-4 h-4" />
-                  Amazon Affiliate Links (Optional)
+                  Amazon Affiliate Links (Required - 4 Books) *
                 </label>
-                <button
-                  type="button"
-                  onClick={addAffiliateLink}
-                  className="px-3 py-1 bg-white/10 hover:bg-white/20 rounded text-white text-sm transition flex items-center gap-1"
-                >
-                  <Plus className="w-3 h-3" />
-                  Add Book
-                </button>
+                {affiliateLinks.length < 10 && (
+                  <button
+                    type="button"
+                    onClick={addAffiliateLink}
+                    className="px-3 py-1 bg-white/10 hover:bg-white/20 rounded text-white text-sm transition flex items-center gap-1"
+                  >
+                    <Plus className="w-3 h-3" />
+                    Add Another
+                  </button>
+                )}
               </div>
+              
+              <p className="text-white/60 text-sm mb-4">
+                Please provide exactly <strong className="text-white">4 books</strong> that your article discusses. 
+                Each book needs both a title and an Amazon affiliate link. These will be automatically linked in your article.
+              </p>
               
               <div className="space-y-3">
                 {affiliateLinks.map((link, index) => (
                   <div key={index} className="bg-black/30 border border-white/10 rounded-none p-4">
                     <div className="flex items-start justify-between mb-3">
-                      <span className="text-white/60 text-sm">Book {index + 1}</span>
-                      {affiliateLinks.length > 1 && (
+                      <span className="text-white/80 text-sm font-medium">
+                        Book {index + 1} {index < 4 && <span className="text-white/50">(Required)</span>}
+                      </span>
+                      {affiliateLinks.length > 4 && (
                         <button
                           type="button"
                           onClick={() => removeAffiliateLink(index)}
                           className="text-red-400 hover:text-red-300 transition"
+                          title="Remove this book"
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -459,33 +492,41 @@ Use double line breaks between sections. Book titles mentioned in the text will 
                     </div>
                     <div className="space-y-3">
                       <div>
-                        <label className="block text-white/70 text-xs mb-1">Book Title</label>
+                        <label className="block text-white/70 text-xs mb-1">Book Title *</label>
                         <input
                           type="text"
                           value={link.book_title}
                           onChange={(e) => updateAffiliateLink(index, 'book_title', e.target.value)}
                           className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-none text-white text-sm focus:border-white/30 focus:outline-none"
-                          placeholder="The Book Title"
+                          placeholder="e.g., The E-Myth Revisited"
+                          required={index < 4}
                         />
                       </div>
                       <div>
-                        <label className="block text-white/70 text-xs mb-1">Amazon Affiliate Link</label>
+                        <label className="block text-white/70 text-xs mb-1">Amazon Affiliate Link *</label>
                         <input
                           type="url"
                           value={link.link}
                           onChange={(e) => updateAffiliateLink(index, 'link', e.target.value)}
                           className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-none text-white text-sm focus:border-white/30 focus:outline-none"
-                          placeholder="https://amzn.to/..."
+                          placeholder="https://amzn.to/... or https://amazon.com/..."
+                          required={index < 4}
                         />
+                        <p className="text-white/40 text-xs mt-1">
+                          Use your Amazon Associates affiliate link (amzn.to short links or full amazon.com URLs)
+                        </p>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
-              <p className="text-white/50 text-xs mt-2">
-                If your article mentions books, you can include your Amazon affiliate links here. 
-                These will be integrated into the published article.
-              </p>
+              <div className="bg-blue-900/20 border border-blue-500/30 rounded-none p-3 mt-4">
+                <p className="text-blue-300 text-xs">
+                  <strong>💡 Tip:</strong> Make sure to mention these book titles in your article content. 
+                  When you mention a book title (e.g., "The E-Myth Revisited"), it will automatically become a clickable link 
+                  using the affiliate link you provide here. Each book can be linked up to 2 times in your article.
+                </p>
+              </div>
             </div>
 
             {/* Submit Button */}
