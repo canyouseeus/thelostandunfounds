@@ -17,6 +17,12 @@ CREATE INDEX IF NOT EXISTS idx_user_subdomains_subdomain ON user_subdomains(subd
 -- Enable Row Level Security
 ALTER TABLE user_subdomains ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist (to allow re-running this script)
+DROP POLICY IF EXISTS "Users can view their own subdomain" ON user_subdomains;
+DROP POLICY IF EXISTS "Users can insert their own subdomain" ON user_subdomains;
+DROP POLICY IF EXISTS "Admins can update subdomains" ON user_subdomains;
+DROP POLICY IF EXISTS "Anyone can check subdomain availability" ON user_subdomains;
+
 -- Policy: Users can view their own subdomain
 CREATE POLICY "Users can view their own subdomain"
   ON user_subdomains
