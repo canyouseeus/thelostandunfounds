@@ -326,7 +326,7 @@ export default function SubmitArticle() {
           </p>
           <details className="max-w-2xl mx-auto text-left">
             <summary className="text-white/80 text-sm cursor-pointer hover:text-white transition mb-2">
-              📝 Need help? View AI Writing Prompt Guide
+              Need help? View AI Writing Prompt Guide
             </summary>
             <div className="bg-black/30 border border-white/10 rounded-none p-4 mt-2 text-white/70 text-sm">
               <p className="mb-3">
@@ -407,7 +407,7 @@ export default function SubmitArticle() {
                 <p className="text-white/50 text-xs mt-1">Checking availability...</p>
               )}
               {!subdomainError && subdomain && !checkingSubdomain && (
-                <p className="text-green-400 text-xs mt-1">✓ Available</p>
+                <p className="text-green-400 text-xs mt-1">Available</p>
               )}
               <p className="text-white/50 text-xs mt-2">
                 Choose a unique subdomain for your blog. This will be your custom URL: <span className="text-white/70 font-mono">{subdomain || 'your-blog-name'}.thelostandunfounds.com</span>
@@ -541,7 +541,7 @@ Use double line breaks between sections. Book titles mentioned in the text will 
               </div>
               <div className="bg-blue-900/20 border border-blue-500/30 rounded-none p-3 mt-4">
                 <p className="text-blue-300 text-xs">
-                  <strong>💡 Tip:</strong> Make sure to mention these book titles in your article content. 
+                  <strong>Tip:</strong> Make sure to mention these book titles in your article content. 
                   When you mention a book title (e.g., "The E-Myth Revisited"), it will automatically become a clickable link 
                   using the affiliate link you provide here. Each book can be linked up to 2 times in your article.
                 </p>
