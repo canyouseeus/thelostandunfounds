@@ -576,28 +576,13 @@ export default function BlogManagement() {
       <div className="bg-black/50 border border-white/10 rounded-none p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-white">Book Club Posts</h3>
-          <button
-            onClick={() => {
-              setIsCreating(true);
-              setIsBookClubPost(true);
-              setEditingPost(null);
-              setFormData({
-                title: '',
-                slug: '',
-                content: '',
-                excerpt: '',
-                published: false,
-                seo_title: '',
-                seo_description: '',
-                seo_keywords: '',
-                og_image_url: '',
-              });
-            }}
+          <a
+            href="/submit-article"
             className="px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             NEW BOOK CLUB POST
-          </button>
+          </a>
         </div>
         {bookClubPosts.length === 0 ? (
           <p className="text-white/60">No book club posts yet.</p>
