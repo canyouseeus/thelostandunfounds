@@ -47,11 +47,25 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           }
 
           // Step 2: Check for subdomain
-          const { data: subdomainData, error: subdomainError } = await supabase
-            .from('user_subdomains')
-            .select('subdomain')
-            .eq('user_id', user.id)
-            .single();
+          let subdomainData = null;
+          let subdomainError = null;
+          try {
+            const result = await supabase
+              .from('user_subdomains')
+              .select('subdomain')
+              .eq('user_id', user.id)
+              .single();
+            subdomainData = result.data;
+            subdomainError = result.error;
+          } catch (err: any) {
+            // Table might not exist
+            if (err?.message?.includes('does not exist') || err?.message?.includes('schema cache')) {
+              console.warn('user_subdomains table not found. Please run the SQL migration script.');
+              setShowSubdomainModal(true);
+              return;
+            }
+            subdomainError = err;
+          }
 
           // Handle table not found error gracefully
           if (subdomainError) {
@@ -66,6 +80,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               return;
             } else {
               console.error('Error checking subdomain:', subdomainError);
+              // Continue anyway - don't block login
             }
           }
 
@@ -93,15 +108,25 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             setShowSubdomainModal(true);
             return;
           }
-          // On other errors, still proceed with redirect
+          // On other errors, still proceed with redirect to avoid blocking login
           setJustSignedUp(false);
-          handleRedirect();
+          try {
+            handleRedirect();
+          } catch (redirectError) {
+            console.error('Error in redirect after registration check error:', redirectError);
+            navigate('/');
+          }
         }
       };
       checkRegistration();
     } else if (justSignedIn && user && !justSignedUp) {
       // Regular sign-in (not sign-up), just redirect
-      handleRedirect();
+      try {
+        handleRedirect();
+      } catch (redirectError) {
+        console.error('Error in redirect after sign-in:', redirectError);
+        navigate('/');
+      }
     }
   }, [user, justSignedIn, justSignedUp]);
 
