@@ -94,6 +94,18 @@ export default function Admin() {
       return;
     }
 
+    // First check: email match (fastest, no database query)
+    const email = user?.email || '';
+    const isAdminEmail = email === 'thelostandunfounds@gmail.com' || email === 'admin@thelostandunfounds.com';
+    
+    if (isAdminEmail) {
+      // Email matches admin - allow access immediately
+      setAdminStatus(true);
+      setLoading(false);
+      return;
+    }
+
+    // Second check: try database check
     try {
       const admin = await isAdmin();
       setAdminStatus(admin);
@@ -105,9 +117,8 @@ export default function Admin() {
       }
     } catch (error: any) {
       console.error('Error checking admin access:', error);
-      // If error checking admin, still allow access if email matches
-      const email = user?.email || '';
-      if (email === 'thelostandunfounds@gmail.com' || email === 'admin@thelostandunfounds.com') {
+      // If database check fails, fall back to email check
+      if (isAdminEmail) {
         setAdminStatus(true);
         setLoading(false);
       } else {
