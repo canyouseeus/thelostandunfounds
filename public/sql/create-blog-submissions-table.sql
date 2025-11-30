@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS blog_submissions (
   excerpt TEXT,
   author_name TEXT NOT NULL,
   author_email TEXT NOT NULL,
+  subdomain TEXT, -- User subdomain for their blog (e.g., username from email)
   amazon_affiliate_links JSONB DEFAULT '[]', -- Array of affiliate link objects: [{"book_title": "...", "link": "https://..."}]
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'published')),
   admin_notes TEXT, -- Admin can add notes during review

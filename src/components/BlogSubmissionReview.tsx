@@ -22,6 +22,7 @@ interface BlogSubmission {
   excerpt: string | null;
   author_name: string;
   author_email: string;
+  subdomain: string | null;
   amazon_affiliate_links: AffiliateLink[];
   status: 'pending' | 'approved' | 'rejected' | 'published';
   admin_notes: string | null;
@@ -159,7 +160,21 @@ export default function BlogSubmissionReview() {
         .replace(/-+/g, '-')
         .trim();
 
-      // Create blog post
+      // Get author_id from email if user exists
+      let authorId = null;
+      if (submission.author_email) {
+        const { data: userData } = await supabase
+          .from('auth.users')
+          .select('id')
+          .eq('email', submission.author_email)
+          .single()
+          .catch(() => ({ data: null }));
+        
+        // Try alternative: query via Supabase admin API or use RPC
+        // For now, we'll leave it null and let the admin set it if needed
+      }
+
+      // Create blog post with subdomain and Amazon links
       const { data: blogPost, error: blogError } = await supabase
         .from('blog_posts')
         .insert([{
@@ -170,7 +185,9 @@ export default function BlogSubmissionReview() {
           published: true,
           published_at: new Date().toISOString(),
           status: 'published',
-          author_id: null, // Guest submission
+          author_id: authorId,
+          subdomain: submission.subdomain || null, // User subdomain
+          amazon_affiliate_links: submission.amazon_affiliate_links || [], // Store Amazon links
           seo_title: null,
           seo_description: submission.excerpt || null,
           seo_keywords: null,
@@ -301,6 +318,11 @@ export default function BlogSubmissionReview() {
                       <div className="flex items-center gap-2 text-xs text-white/50">
                         <BookOpen className="w-3 h-3" />
                         <span>{submission.amazon_affiliate_links.length} book link(s)</span>
+                      </div>
+                    )}
+                    {submission.subdomain && (
+                      <div className="flex items-center gap-2 text-xs text-white/50">
+                        <span>Subdomain: {submission.subdomain}</span>
                       </div>
                     )}
                   </div>

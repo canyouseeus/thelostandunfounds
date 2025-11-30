@@ -542,12 +542,33 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch blog submissions table file:', fetchError);
       }
 
+      // Load add-user-subdomain-support script
+      let subdomainSupportContent = '';
+      try {
+        const subdomainSupportResponse = await fetch('/sql/add-user-subdomain-support.sql');
+        if (subdomainSupportResponse.ok) {
+          const text = await subdomainSupportResponse.text();
+          if (!text.trim().startsWith('<!')) {
+            subdomainSupportContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch user subdomain support file:', fetchError);
+      }
+
       const allScripts: SQLScript[] = [
+        {
+          name: 'User Subdomain Support',
+          filename: 'add-user-subdomain-support.sql',
+          content: subdomainSupportContent || '// File not found - check public/sql folder',
+          description: 'Adds subdomain and Amazon affiliate links support to blog_posts table. Allows users to have their own blogs with subdomains. Updates RLS policies to allow users to create their own posts. Run this AFTER creating the blog_posts table.',
+          createdAt: getScriptTimestamp('add-user-subdomain-support.sql')
+        },
         {
           name: 'Blog Submissions Table',
           filename: 'create-blog-submissions-table.sql',
           content: blogSubmissionsContent || '// File not found - check public/sql folder',
-          description: 'Creates the blog_submissions table to allow people to submit articles to THE LOST ARCHIVES. Includes fields for title, content, author info, Amazon affiliate links, and review status. Required for the article submission feature.',
+          description: 'Creates the blog_submissions table to allow people to submit articles to THE LOST ARCHIVES. Includes fields for title, content, author info, Amazon affiliate links, subdomain, and review status. Required for the article submission feature.',
           createdAt: getScriptTimestamp('create-blog-submissions-table.sql')
         },
         {

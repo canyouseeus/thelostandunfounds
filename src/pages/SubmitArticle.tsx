@@ -3,9 +3,11 @@
  * Public form for submitting articles with Amazon affiliate links
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
 import { FileText, Plus, X, BookOpen, Mail, User } from 'lucide-react';
 
@@ -15,8 +17,11 @@ interface AffiliateLink {
 }
 
 export default function SubmitArticle() {
+  const { user, loading: authLoading } = useAuth();
   const { success, error: showError } = useToast();
+  const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
+  const [subdomain, setSubdomain] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -24,6 +29,27 @@ export default function SubmitArticle() {
     author_name: '',
     author_email: '',
   });
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      // Redirect to login or show message
+      showError('Please sign in to submit articles');
+      navigate('/');
+    } else if (user) {
+      // Get user's email for default
+      setFormData(prev => ({
+        ...prev,
+        author_email: user.email || '',
+        author_name: user.user_metadata?.full_name || user.email?.split('@')[0] || '',
+      }));
+      
+      // Generate subdomain from email (username part)
+      if (user.email) {
+        const emailSubdomain = user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+        setSubdomain(emailSubdomain);
+      }
+    }
+  }, [user, authLoading, navigate, showError]);
   const [affiliateLinks, setAffiliateLinks] = useState<AffiliateLink[]>([
     { book_title: '', link: '' }
   ]);
@@ -98,6 +124,7 @@ export default function SubmitArticle() {
         author_email: formData.author_email.trim(),
         amazon_affiliate_links: validLinks.length > 0 ? validLinks : [],
         status: 'pending',
+        subdomain: subdomain || null, // Store subdomain for user blog
       };
 
       const { error } = await supabase
