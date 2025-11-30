@@ -503,12 +503,12 @@ export default function BlogManagement() {
         </div>
       )}
 
-      {/* Admin Posts Section (Admin's regular posts - no subdomain) */}
-      {adminPosts.filter(post => !post.subdomain).length > 0 && (
+      {/* Admin Posts Section (All admin posts - including book club posts) */}
+      {adminPosts.length > 0 && (
         <div className="bg-black/50 border border-white/10 rounded-none p-6">
           <h3 className="text-lg font-bold text-white mb-4">My Posts (Admin)</h3>
           <div className="space-y-4">
-            {adminPosts.filter(post => !post.subdomain).map((post) => (
+            {adminPosts.map((post) => (
               <div
                 key={post.id}
                 className="bg-black/30 border border-white/10 rounded-none p-4 hover:border-white/20 transition"
