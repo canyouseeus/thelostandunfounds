@@ -120,30 +120,55 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       };
       checkRegistration();
     } else if (justSignedIn && user && !justSignedUp) {
-      // Regular sign-in (not sign-up), just redirect
+      // Regular sign-in (not sign-up), just redirect immediately
+      // Don't check for registration - existing users should be able to log in
+      setJustSignedIn(false);
       try {
         handleRedirect();
       } catch (redirectError) {
         console.error('Error in redirect after sign-in:', redirectError);
-        navigate('/');
+        // Fallback redirect
+        const email = user?.email || '';
+        if (email === 'thelostandunfounds@gmail.com' || email === 'admin@thelostandunfounds.com') {
+          navigate('/admin');
+        } else {
+          navigate('/submit-article');
+        }
       }
     }
-  }, [user, justSignedIn, justSignedUp]);
+  }, [user, justSignedIn, justSignedUp, navigate]);
 
   const handleRedirect = async () => {
+    if (!user) {
+      navigate('/');
+      return;
+    }
+
     try {
       // Check if user is admin
-      const adminStatus = await isAdmin();
-      if (adminStatus || isAdminEmail(user?.email || '')) {
+      let adminStatus = false;
+      try {
+        adminStatus = await isAdmin();
+      } catch (adminError) {
+        console.warn('Error checking admin status:', adminError);
+        // Fallback to email check
+        adminStatus = isAdminEmail(user?.email || '');
+      }
+
+      const isAdminUser = adminStatus || isAdminEmail(user?.email || '');
+      
+      if (isAdminUser) {
         navigate('/admin');
       } else {
         // Regular users go to submit article page
         navigate('/submit-article');
       }
       setJustSignedIn(false);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error in handleRedirect:', error);
       // If admin check fails but email matches, redirect to admin
-      if (isAdminEmail(user?.email || '')) {
+      const email = user?.email || '';
+      if (email === 'thelostandunfounds@gmail.com' || email === 'admin@thelostandunfounds.com') {
         navigate('/admin');
       } else {
         // Otherwise redirect to submit article
