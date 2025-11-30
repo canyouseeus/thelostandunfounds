@@ -149,27 +149,6 @@ export default function Layout() {
               <span className="text-xl font-bold">THE LOST+UNFOUNDS</span>
             </Link>
             <div className="flex items-center space-x-4">
-              {/* User Profile Menu */}
-              {user && (
-                <div className="relative">
-                  <button
-                    type="button"
-                    className="flex items-center gap-2 text-white/80 hover:text-white transition"
-                    onClick={() => {
-                      if (userIsAdmin) {
-                        navigate('/admin')
-                      } else {
-                        navigate('/profile')
-                      }
-                    }}
-                  >
-                    <User className="w-5 h-5" />
-                    <span className="text-sm font-medium">
-                      {user.user_metadata?.author_name || user.email?.split('@')[0] || 'Profile'}
-                    </span>
-                  </button>
-                </div>
-              )}
               <div 
                 className="header-nav" 
                 ref={menuRef}
@@ -367,6 +346,13 @@ export default function Layout() {
                           LOG OUT
                         </div>
                       </button>
+                      <div className="border-t border-white/10 my-2"></div>
+                      <div className="menu-item user-info">
+                        <div className="text-white/60 text-xs mb-1">Logged in as:</div>
+                        <div className="text-white text-sm font-medium">
+                          {user.user_metadata?.author_name || user.email?.split('@')[0] || 'User'}
+                        </div>
+                      </div>
                     </>
                   )}
                   {!user && (
