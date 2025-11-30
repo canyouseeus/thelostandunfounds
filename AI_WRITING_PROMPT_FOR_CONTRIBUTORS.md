@@ -11,11 +11,6 @@ You are helping a human author write an article for **The Lost Archives**, a pla
 #### **Introduction**
 Introduce the overall theme of the four books and why this selection matters to the author. This should be 3-4 paragraphs that set the context and personal connection.
 
-#### **Amazon Affiliate Disclaimer**
-Include a custom disclaimer that mentions the author's blog URL (their subdomain on thelostandunfounds.com). Example:
-
-> "Amazon Affiliate Disclosure: As an Amazon Associate, we earn from qualifying purchases. Some links in this post are affiliate links, which means we may earn a commission if you click through and make a purchase. This helps support [AUTHOR'S BLOG URL] and allows us to continue creating content. Thank you for your support!"
-
 #### **Book Analysis Sections**
 For each of the four books, write 3-4 paragraphs that include:
 - A concise summary of the book's content
@@ -65,13 +60,12 @@ See the example post: [Building a Creative Brand That Rewards People for Life: L
 - Clear paragraph breaks (double line breaks)
 - Section headings that are short and descriptive
 - Book titles mentioned naturally in the text (they'll be auto-linked)
-- Amazon Affiliate Disclosure at the end (or integrated naturally)
+- Amazon Affiliate Disclosure is automatically added at the end (no need to include it in your content)
 
 ## Final Instruction for the AI:
 
 Generate a full draft of the article following the above instructions. Include placeholders for:
 - `[AUTHOR'S NAME]` - The contributor's name
-- `[AUTHOR'S BLOG URL]` - Their subdomain (e.g., `username.thelostandunfounds.com`)
 - `[BOOK TITLE 1]`, `[BOOK TITLE 2]`, `[BOOK TITLE 3]`, `[BOOK TITLE 4]` - The four book titles
 - `[AMAZON LINK 1]`, `[AMAZON LINK 2]`, `[AMAZON LINK 3]`, `[AMAZON LINK 4]` - The Amazon affiliate links
 
@@ -86,8 +80,6 @@ Ensure the content is:
 
 ```
 [Introduction - 3-4 paragraphs]
-
-Amazon Affiliate Disclosure: [Custom disclaimer with author's blog URL]
 
 ⸻
 
@@ -122,7 +114,7 @@ Amazon Affiliate Disclosure: [Custom disclaimer with author's blog URL]
 
 1. **Book titles in the text will automatically become clickable links** - just mention them naturally where relevant
 2. **Each book should be linked a maximum of 2 times** - once in the introduction and once in its dedicated section
-3. **The disclosure will be automatically added** if you include Amazon affiliate links, but you can customize it
+3. **The Amazon Affiliate Disclosure is automatically added at the end** - you don't need to include it in your content
 4. **Use double line breaks (⸻)** to separate major sections
 5. **Keep paragraphs focused** - one main idea per paragraph
 6. **Write for humans, not algorithms** - prioritize genuine insights over keyword stuffing
