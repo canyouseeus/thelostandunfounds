@@ -70,6 +70,16 @@ interface BookClubPost {
   published: boolean;
 }
 
+interface LostArchivesPost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  published_at: string | null;
+  created_at: string;
+  published: boolean;
+}
+
 interface Alert {
   id: number;
   type: 'info' | 'warning' | 'success' | 'error';
@@ -90,6 +100,8 @@ export default function Admin() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [bookClubPosts, setBookClubPosts] = useState<BookClubPost[]>([]);
   const [loadingBookClubPosts, setLoadingBookClubPosts] = useState(false);
+  const [lostArchivesPosts, setLostArchivesPosts] = useState<LostArchivesPost[]>([]);
+  const [loadingLostArchivesPosts, setLoadingLostArchivesPosts] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'subscriptions' | 'products' | 'settings' | 'blog' | 'newsletter' | 'submissions'>('overview');
   const [componentError, setComponentError] = useState<string | null>(null);
 
@@ -101,8 +113,9 @@ export default function Admin() {
     if (adminStatus === true) {
       loadDashboardData();
       loadBookClubPosts();
+      loadLostArchivesPosts();
     }
-  }, [adminStatus]);
+  }, [adminStatus, user]);
 
   // Load user subdomain for profile link
   useEffect(() => {
@@ -481,6 +494,41 @@ export default function Admin() {
     }
   };
 
+  const loadLostArchivesPosts = async () => {
+    try {
+      setLoadingLostArchivesPosts(true);
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('id, title, slug, excerpt, published_at, created_at, published, status, author_id, user_id, subdomain')
+        .is('subdomain', null)
+        .order('published_at', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) {
+        console.error('Error loading THE LOST ARCHIVES posts:', error);
+        return;
+      }
+
+      // Filter to only admin's published posts (no subdomain)
+      const adminPosts = (data || []).filter((post: any) => {
+        const postAuthorId = post.author_id || post.user_id;
+        const isAdminPost = postAuthorId === user.id;
+        const isPublished = post.published === true || 
+          (post.published === undefined && post.status === 'published');
+        return isAdminPost && isPublished;
+      });
+
+      setLostArchivesPosts(adminPosts);
+    } catch (err: any) {
+      console.error('Error loading THE LOST ARCHIVES posts:', err);
+    } finally {
+      setLoadingLostArchivesPosts(false);
+    }
+  };
+
   if (loading || authLoading || adminStatus === null) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -734,6 +782,77 @@ export default function Admin() {
                 <div className="text-sm text-white/40">Pro</div>
               </div>
             </div>
+          </div>
+
+          {/* THE LOST ARCHIVES Section */}
+          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                THE LOST ARCHIVES
+              </h2>
+              {lostArchivesPosts.length > 3 && (
+                <Link
+                  to="/thelostarchives"
+                  className="text-white/60 hover:text-white text-sm flex items-center gap-1"
+                >
+                  <Eye className="w-4 h-4" />
+                  View All
+                </Link>
+              )}
+            </div>
+            {loadingLostArchivesPosts ? (
+              <div className="flex items-center justify-center py-8">
+                <LoadingSpinner />
+              </div>
+            ) : lostArchivesPosts.length === 0 ? (
+              <p className="text-white/60">No THE LOST ARCHIVES posts yet.</p>
+            ) : (
+              <div className="space-y-4">
+                {lostArchivesPosts.slice(0, 3).map((post) => (
+                  <div
+                    key={post.id}
+                    className="bg-black/30 border border-white/10 rounded-none p-4 hover:border-white/20 transition"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="text-white font-bold text-lg mb-2">{post.title}</h3>
+                        {post.excerpt && (
+                          <p className="text-white/70 text-sm mb-2">{post.excerpt.substring(0, 150)}...</p>
+                        )}
+                        <div className="flex items-center gap-4 text-xs text-white/60">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {post.published_at 
+                              ? new Date(post.published_at).toLocaleDateString('en-US', { 
+                                  year: 'numeric', 
+                                  month: 'short', 
+                                  day: 'numeric' 
+                                })
+                              : new Date(post.created_at).toLocaleDateString('en-US', { 
+                                  year: 'numeric', 
+                                  month: 'short', 
+                                  day: 'numeric' 
+                                })}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="ml-4">
+                        <a
+                          href={`/thelostarchives/${post.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 hover:bg-white/10 rounded transition"
+                          title="View post"
+                        >
+                          <Eye className="w-4 h-4 text-white/60" />
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Book Club Posts Section */}

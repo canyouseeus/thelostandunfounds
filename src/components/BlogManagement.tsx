@@ -81,6 +81,7 @@ export default function BlogManagement() {
       const { data, error } = await supabase
         .from('blog_posts')
         .select('*, author_id, user_id, subdomain')
+        .order('published_at', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -434,10 +435,10 @@ export default function BlogManagement() {
         </div>
       )}
 
-      {/* THE LOST ARCHIVES Posts Section (Admin's regular posts - no subdomain) */}
+      {/* THE LOST ARCHIVES Section (Admin's regular posts - no subdomain) */}
       <div className="bg-black/50 border border-white/10 rounded-none p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-white">THE LOST ARCHIVES Posts</h3>
+          <h3 className="text-lg font-bold text-white">THE LOST ARCHIVES</h3>
           <button
             onClick={() => {
               setIsCreating(true);
@@ -465,7 +466,14 @@ export default function BlogManagement() {
           <p className="text-white/60">No THE LOST ARCHIVES posts yet. Create your first post above.</p>
         ) : (
           <div className="space-y-4">
-            {adminPosts.filter(post => !post.subdomain).map((post) => (
+            {adminPosts
+              .filter(post => !post.subdomain)
+              .sort((a, b) => {
+                const dateA = a.published_at || a.created_at;
+                const dateB = b.published_at || b.created_at;
+                return new Date(dateB).getTime() - new Date(dateA).getTime();
+              })
+              .map((post) => (
               <div
                 key={post.id}
                 className="bg-black/30 border border-white/10 rounded-none p-4 hover:border-white/20 transition"
