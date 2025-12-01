@@ -520,7 +520,7 @@ export default function Profile() {
             <p className="text-white/60 mb-4">Submit your first article with four book recommendations.</p>
             <div className="flex items-center justify-center gap-3 flex-wrap">
               <Link
-                to="/ai-writing-prompt"
+                to="/bookclub/prompt"
                 className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition"
               >
                 View Getting Started Guide →
@@ -545,7 +545,7 @@ export default function Profile() {
               </p>
             </div>
             <Link
-              to="/ai-writing-prompt"
+              to="/bookclub/prompt"
               className="px-6 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition flex items-center gap-2 whitespace-nowrap"
             >
               <FileText className="w-4 h-4" />
