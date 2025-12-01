@@ -28,6 +28,7 @@ import BookClub from './pages/BookClub'
 import SubmitArticle from './pages/SubmitArticle'
 import SQL from './pages/SQL'
 import Debug from './pages/Debug'
+import AIWritingPrompt from './pages/AIWritingPrompt'
 
 function App() {
   // Video preloader temporarily disabled for debugging
@@ -92,6 +93,9 @@ function App() {
         </Route>
         <Route path="/sql" element={<Layout />}>
           <Route index element={<SQL />} />
+        </Route>
+        <Route path="/AI_WRITING_PROMPT_FOR_CONTRIBUTORS.md" element={<Layout />}>
+          <Route index element={<AIWritingPrompt />} />
         </Route>
         <Route path="/debug" element={<Layout />}>
           <Route index element={<Debug />} />

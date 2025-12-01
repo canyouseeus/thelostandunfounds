@@ -9,6 +9,10 @@
       "destination": "/thelostarchives/:slug.html"
     },
     {
+      "source": "/AI_WRITING_PROMPT_FOR_CONTRIBUTORS.md",
+      "destination": "/index.html"
+    },
+    {
       "source": "/:path((?!api).*)",
       "destination": "/index.html"
     }
