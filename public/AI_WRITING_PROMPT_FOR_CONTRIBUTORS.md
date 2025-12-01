@@ -62,14 +62,60 @@ See the example post: [Building a Creative Brand That Rewards People for Life: L
 - Book titles mentioned naturally in the text (they'll be auto-linked)
 - Amazon Affiliate Disclosure is automatically added at the end (no need to include it in your content)
 
+## Step-by-Step Article Creation Process:
+
+Guide the author through creating their article by following these steps in order:
+
+### Step 1: Identify the Four Books
+**Ask the author:**
+- "What are the four books you want to feature in your article?"
+- "Please provide the exact book titles and their Amazon SiteStripe affiliate links"
+- "What is the common theme or connection between these four books?"
+
+**Collect:**
+- Book Title 1: [exact title] - Amazon Link: [SiteStripe link]
+- Book Title 2: [exact title] - Amazon Link: [SiteStripe link]
+- Book Title 3: [exact title] - Amazon Link: [SiteStripe link]
+- Book Title 4: [exact title] - Amazon Link: [SiteStripe link]
+
+### Step 2: Write the Introduction
+**Ask the author:**
+- "What is the overall theme connecting these four books?"
+- "Why did you choose these specific books to discuss together?"
+- "What personal experience or journey led you to these books?"
+
+**Generate:** 3-4 paragraphs introducing the theme and personal connection. Mention all four book titles naturally in the introduction.
+
+### Step 3: Write Book Breakdowns
+**For each book, ask the author:**
+- "What are the key insights or lessons from [Book Title]?"
+- "How does this book connect to the other three books?"
+- "What real-world applications or solutions did you derive from this book?"
+- "How did this book shape your thinking?"
+- "Why is this book personally meaningful to you?"
+
+**Generate:** For each of the four books, write 3-4 paragraphs following the format:
+```
+[Book Title]: [Subtitle or Key Theme]
+
+[3-4 paragraphs of analysis connecting to other books, personal reflections, and real-world applications]
+```
+
+### Step 4: Write the Conclusion
+**Ask the author:**
+- "What are the key takeaways from all four books combined?"
+- "What actionable insights or guidance would you give to readers?"
+- "How do these books work together to form a complete picture?"
+
+**Generate:** 2-3 paragraphs that tie together all four books and provide actionable insights for readers.
+
 ## Final Instruction for the AI:
 
-Generate a full draft of the article following the above instructions. Include placeholders for:
-- `[AUTHOR'S NAME]` - The contributor's name
-- `[BOOK TITLE 1]`, `[BOOK TITLE 2]`, `[BOOK TITLE 3]`, `[BOOK TITLE 4]` - The four book titles
-- `[AMAZON LINK 1]`, `[AMAZON LINK 2]`, `[AMAZON LINK 3]`, `[AMAZON LINK 4]` - The Amazon affiliate links
+Guide the author through each step above, asking questions and collecting information before moving to the next step. Once you have all the information, generate a full draft of the article following the above instructions.
 
-Ensure the content is:
+**Important:** Do not skip steps. Work through them sequentially, asking questions and gathering information before writing each section.
+
+Ensure the final content is:
 - Coherent and well-structured
 - Insightful and thoughtful
 - Reads as if a thoughtful human wrote it

@@ -12,7 +12,7 @@ import AuthModal from '../components/auth/AuthModal';
 import SubdomainRegistration from '../components/SubdomainRegistration';
 import UserRegistration from '../components/UserRegistration';
 import StorefrontRegistration from '../components/StorefrontRegistration';
-import { FileText, Plus, X, BookOpen, Mail, User } from 'lucide-react';
+import { FileText, Plus, X, BookOpen, Mail, User, Copy, Check, AlertTriangle } from 'lucide-react';
 
 interface AffiliateLink {
   book_title: string;
@@ -29,6 +29,9 @@ export default function SubmitArticle() {
   const [showSubdomainModal, setShowSubdomainModal] = useState(false);
   const [showStorefrontModal, setShowStorefrontModal] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [promptContent, setPromptContent] = useState<string>('');
+  const [loadingPrompt, setLoadingPrompt] = useState(true);
+  const [copiedPrompt, setCopiedPrompt] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -37,6 +40,26 @@ export default function SubmitArticle() {
     author_email: '',
     amazon_storefront_id: '',
   });
+
+  // Load the AI writing prompt
+  useEffect(() => {
+    const loadPrompt = async () => {
+      try {
+        const response = await fetch('/AI_WRITING_PROMPT_FOR_CONTRIBUTORS.md');
+        if (response.ok) {
+          const text = await response.text();
+          setPromptContent(text);
+        } else {
+          console.error('Failed to load prompt file');
+        }
+      } catch (error) {
+        console.error('Error loading prompt:', error);
+      } finally {
+        setLoadingPrompt(false);
+      }
+    };
+    loadPrompt();
+  }, []);
 
   // Check if user has completed registration and subdomain
   useEffect(() => {
@@ -159,6 +182,18 @@ export default function SubmitArticle() {
     const updated = [...affiliateLinks];
     updated[index][field] = value;
     setAffiliateLinks(updated);
+  };
+
+  const copyPromptToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(promptContent);
+      setCopiedPrompt(true);
+      success('AI Writing Prompt copied to clipboard!');
+      setTimeout(() => setCopiedPrompt(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      showError('Failed to copy prompt to clipboard');
+    }
   };
 
   const validateAmazonStorefront = (value: string): boolean => {
@@ -454,27 +489,93 @@ export default function SubmitArticle() {
             Share your insights on books and how they've shaped your thinking. 
             Submit an article featuring four books with your Amazon affiliate links.
           </p>
-          <details className="max-w-2xl mx-auto text-left">
-            <summary className="text-white/80 text-sm cursor-pointer hover:text-white transition mb-2">
-              Need help? View AI Writing Prompt Guide
-            </summary>
-            <div className="bg-black/30 border border-white/10 rounded-none p-4 mt-2 text-white/70 text-sm">
-              <p className="mb-3">
-                <strong className="text-white">Using AI to help write your article?</strong> We have a comprehensive prompt guide that will help you create content that matches our format and style.
-              </p>
-              <a
-                href="/AI_WRITING_PROMPT_FOR_CONTRIBUTORS.md"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-white hover:text-white/80 underline"
+        </div>
+
+        {/* AI Writing Prompt Box */}
+        <div className="mb-8">
+          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-white mb-1">AI Writing Prompt for Contributors</h2>
+                <p className="text-white/60 text-sm mb-2">Copy this prompt to use with your AI assistant</p>
+                <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-none p-3 mt-3 flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-yellow-300 text-xs">
+                    <strong>Important:</strong> Do not modify this prompt. Use it exactly as provided to ensure your article matches our format and style requirements.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={copyPromptToClipboard}
+                className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded text-white text-sm transition flex items-center gap-2 flex-shrink-0"
               >
-                View AI Writing Prompt Guide →
-              </a>
-              <p className="mt-3 text-xs text-white/50">
-                This guide shows you exactly how to structure your article, format book sections, and ensure your Amazon links are properly integrated.
-              </p>
+                {copiedPrompt ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4" />
+                    Copy Prompt
+                  </>
+                )}
+              </button>
             </div>
-          </details>
+            {loadingPrompt ? (
+              <div className="bg-black/50 border border-white/10 rounded-none p-4">
+                <p className="text-white/60 text-sm">Loading prompt...</p>
+              </div>
+            ) : (
+              <pre className="bg-black/50 border border-white/10 rounded-none p-4 overflow-x-auto text-white/90 text-sm font-mono whitespace-pre-wrap break-words text-left max-h-96 overflow-y-auto">
+                <code className="text-left">{promptContent || 'Failed to load prompt. Please refresh the page.'}</code>
+              </pre>
+            )}
+          </div>
+
+          {/* Tips Section */}
+          <div className="bg-black/30 border border-white/10 rounded-none p-6 mt-6">
+            <h3 className="text-lg font-bold text-white mb-4">Important Tips for Contributors</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-white font-semibold mb-2">How Book Linking Works:</h4>
+                <ul className="text-white/70 text-sm space-y-1 list-disc list-inside">
+                  <li>Book titles in the text will automatically become clickable links - just mention them naturally where relevant</li>
+                  <li>Each book should be linked a maximum of 2 times - once in the introduction and once in its dedicated section</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="text-white font-semibold mb-2">What's Automated:</h4>
+                <ul className="text-white/70 text-sm space-y-1 list-disc list-inside">
+                  <li>The Amazon Affiliate Disclosure is automatically added at the end - you don't need to include it in your content</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="text-white font-semibold mb-2">Formatting Tips:</h4>
+                <ul className="text-white/70 text-sm space-y-1 list-disc list-inside">
+                  <li>Use double line breaks (⸻) to separate major sections</li>
+                  <li>Keep paragraphs focused - one main idea per paragraph</li>
+                  <li>Write for humans, not algorithms - prioritize genuine insights over keyword stuffing</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="text-white font-semibold mb-2">Ready to Submit?</h4>
+                <p className="text-white/70 text-sm mb-2">
+                  Once you have your draft, paste your content in the form below. Make sure to:
+                </p>
+                <ul className="text-white/70 text-sm space-y-1 list-disc list-inside">
+                  <li>Fill in all placeholders with actual information</li>
+                  <li>Add your Amazon affiliate links in the form</li>
+                  <li>Review the formatting matches the example post</li>
+                  <li>Add your personal touches and experiences</li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
 
         {user && (
