@@ -41,14 +41,11 @@ export default function Profile() {
       if (user) {
         const admin = await isAdmin();
         setUserIsAdmin(admin);
-        // Redirect admins to admin dashboard
-        if (admin) {
-          navigate('/admin', { replace: true });
-        }
+        // Don't redirect - allow admins to view their profile
       }
     };
     checkAdminStatus();
-  }, [user, navigate]);
+  }, [user]);
 
   const handleSave = async () => {
     if (!user) return;
