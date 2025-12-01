@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
-import { User, Mail, Calendar, Shield, Key, BookOpen, FileText, ExternalLink } from 'lucide-react';
+import { User, Mail, Calendar, Shield, Key, BookOpen, FileText, ExternalLink, Copy, Check } from 'lucide-react';
 import { LoadingSpinner, SkeletonCard } from '../components/Loading';
 import { formatDate } from '../utils/helpers';
 import { SubscriptionTier } from '../types/index';
@@ -54,6 +54,7 @@ export default function Profile() {
   };
   const [userPosts, setUserPosts] = useState<BlogPost[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (user?.email) {
@@ -319,9 +320,53 @@ export default function Profile() {
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-2">Your Blog URL</label>
-                <div className="px-4 py-2 bg-black/50 border border-white/10 rounded-none">
-                  <p className="text-white font-mono text-sm">
-                    {userSubdomain}.thelostandunfounds.com
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={`https://www.thelostandunfounds.com/blog/${userSubdomain}`}
+                    readOnly
+                    className="flex-1 px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white font-mono text-sm focus:outline-none focus:border-white/30"
+                  />
+                  <button
+                    onClick={async () => {
+                      const blogUrl = `https://www.thelostandunfounds.com/blog/${userSubdomain}`;
+                      try {
+                        await navigator.clipboard.writeText(blogUrl);
+                        setCopied(true);
+                        success('Blog URL copied to clipboard!');
+                        setTimeout(() => setCopied(false), 2000);
+                      } catch (err) {
+                        showError('Failed to copy URL. Please copy manually.');
+                      }
+                    }}
+                    className="px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition flex items-center gap-2"
+                    title="Copy blog URL"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        Copy
+                      </>
+                    )}
+                  </button>
+                </div>
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-none p-3 mt-3">
+                  <p className="text-blue-400 text-xs font-semibold mb-2 flex items-center gap-1">
+                    <Copy className="w-3 h-3" /> For Amazon Associates Registration
+                  </p>
+                  <ol className="text-white/80 text-xs space-y-1 list-decimal list-inside">
+                    <li>Click "Copy" above to copy your blog URL</li>
+                    <li>Go to your Amazon Associates account</li>
+                    <li>When asked for your website URL, paste: <code className="bg-black/50 px-1 py-0.5 rounded-none font-mono text-xs">https://www.thelostandunfounds.com/blog/{userSubdomain}</code></li>
+                    <li>Complete your Amazon Associates registration</li>
+                  </ol>
+                  <p className="text-white/60 text-xs mt-2">
+                    💡 This is your permanent blog URL. Use it when registering with Amazon Associates.
                   </p>
                 </div>
               </div>
