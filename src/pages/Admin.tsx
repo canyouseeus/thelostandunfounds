@@ -90,6 +90,25 @@ export default function Admin() {
     }
   }, [adminStatus]);
 
+  // Load user subdomain for profile link
+  useEffect(() => {
+    if (user) {
+      supabase
+        .from('user_subdomains')
+        .select('subdomain')
+        .eq('user_id', user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data?.subdomain) {
+            setUserSubdomain(data.subdomain);
+          }
+        })
+        .catch(() => {
+          // Ignore errors
+        });
+    }
+  }, [user]);
+
   const checkAdminAccess = async () => {
     if (authLoading) return;
     
