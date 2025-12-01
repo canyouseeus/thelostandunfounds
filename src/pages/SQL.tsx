@@ -617,10 +617,18 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
       try {
         const blogTitleResponse = await fetch('/sql/add-blog-title-to-user-subdomains.sql');
         if (blogTitleResponse.ok) {
-          blogTitleContent = await blogTitleResponse.text();
+          const text = await blogTitleResponse.text();
+          // Check if we got HTML instead of SQL
+          if (!text.trim().startsWith('<!')) {
+            blogTitleContent = text;
+          } else {
+            console.warn('Got HTML instead of SQL for add-blog-title-to-user-subdomains.sql');
+          }
+        } else {
+          console.warn('Blog title script fetch failed:', blogTitleResponse.status, blogTitleResponse.statusText);
         }
       } catch (fetchError) {
-        console.warn('Could not fetch add-blog-title-to-user-subdomains file:', fetchError);
+        console.error('Could not fetch add-blog-title-to-user-subdomains file:', fetchError);
       }
 
       // Load add-user-subdomain-support script
