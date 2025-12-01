@@ -21,6 +21,7 @@ export default function Layout() {
   const menuRef = useRef<HTMLDivElement>(null)
   const isOpeningModalRef = useRef(false)
   const justClickedRef = useRef(false)
+  const menuCloseTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const { user, tier, signOut, loading, clearAuthStorage } = useAuth()
   const navigate = useNavigate()
   
@@ -55,6 +56,15 @@ export default function Layout() {
     }
   }, [user])
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (menuCloseTimeoutRef.current) {
+        clearTimeout(menuCloseTimeoutRef.current)
+      }
+    }
+  }, [])
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       // Don't close if we're in the process of opening a modal
@@ -74,6 +84,11 @@ export default function Layout() {
       }
       
       if (menuRef.current && !menuRef.current.contains(target)) {
+        // Clear any pending timeout before closing
+        if (menuCloseTimeoutRef.current) {
+          clearTimeout(menuCloseTimeoutRef.current)
+          menuCloseTimeoutRef.current = null
+        }
         setMenuOpen(false)
       }
     }
@@ -115,6 +130,11 @@ export default function Layout() {
 
   // Handle menu hover behavior
   const handleMenuMouseEnter = useCallback(() => {
+    // Clear any pending close timeout
+    if (menuCloseTimeoutRef.current) {
+      clearTimeout(menuCloseTimeoutRef.current)
+      menuCloseTimeoutRef.current = null
+    }
     // Don't open on hover if we just clicked the button
     if (!justClickedRef.current) {
       setMenuOpen(true)
@@ -122,10 +142,14 @@ export default function Layout() {
   }, [])
 
   const handleMenuMouseLeave = useCallback(() => {
-    setMenuOpen(false)
-    setMoreMenuOpen(false)
-    setAccountMenuOpen(false)
-    setArchivesMenuOpen(false)
+    // Add a small delay before closing to allow mouse to move to dropdown
+    menuCloseTimeoutRef.current = setTimeout(() => {
+      setMenuOpen(false)
+      setMoreMenuOpen(false)
+      setAccountMenuOpen(false)
+      setArchivesMenuOpen(false)
+      menuCloseTimeoutRef.current = null
+    }, 150) // 150ms delay to allow mouse movement
   }, [])
 
   const handleSubmenuMouseEnter = useCallback((submenuType: 'more' | 'account' | 'archives') => {
@@ -193,7 +217,11 @@ export default function Layout() {
                   >
                     <span className="menu-icon text-xl">☰</span>
                   </button>
-                <div className={`menu-dropdown ${menuOpen ? 'open' : ''}`}>
+                <div 
+                  className={`menu-dropdown ${menuOpen ? 'open' : ''}`}
+                  onMouseEnter={handleMenuMouseEnter}
+                  onMouseLeave={handleMenuMouseLeave}
+                >
                   <Link 
                     to="/" 
                     className="menu-item"

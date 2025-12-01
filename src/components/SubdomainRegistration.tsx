@@ -202,19 +202,19 @@ export default function SubdomainRegistration({
 
   return (
     <div 
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto"
       onClick={required ? undefined : onClose}
     >
       <div 
-        className="bg-black/50 border border-white/10 rounded-none p-6 w-full max-w-md mx-4"
+        className="bg-black/50 border border-white/10 rounded-none p-4 sm:p-6 w-full max-w-md my-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-white">
+        <div className="flex items-start justify-between mb-4 sm:mb-6 gap-2">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-xl sm:text-2xl font-bold text-white">
               Choose Your Blog Subdomain
             </h2>
-            <p className="text-white/60 text-sm mt-1">
+            <p className="text-white/60 text-xs sm:text-sm mt-1">
               This will be your permanent blog URL. You can only set this once.
             </p>
           </div>
@@ -262,14 +262,14 @@ export default function SubdomainRegistration({
             
             {/* Display CORRECT path-based URL */}
             {blogUrl && !subdomainError && (
-              <div className="mt-4 p-4 bg-black/30 border border-white/10 rounded-none">
-                <p className="text-sm text-white/60 mb-2">Your blog will be available at:</p>
-                <div className="flex gap-2">
+              <div className="mt-4 p-3 sm:p-4 bg-black/30 border border-white/10 rounded-none">
+                <p className="text-xs sm:text-sm text-white/60 mb-2">Your blog will be available at:</p>
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="text"
                     value={blogUrl}
                     readOnly
-                    className="flex-1 px-4 py-3 bg-black/50 border border-white/20 rounded-none text-white text-sm font-mono"
+                    className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-black/50 border border-white/20 rounded-none text-white text-xs sm:text-sm font-mono"
                   />
                   <button
                     type="button"
@@ -283,7 +283,7 @@ export default function SubdomainRegistration({
                         showError('Failed to copy URL. Please copy manually.');
                       }
                     }}
-                    className="bg-white text-black px-4 py-3 rounded-none hover:bg-white/90 transition-colors font-semibold flex items-center gap-2"
+                    className="bg-white text-black px-4 py-2 sm:py-3 rounded-none hover:bg-white/90 transition-colors font-semibold flex items-center justify-center gap-2 text-sm"
                   >
                     {copied ? (
                       <>
@@ -308,11 +308,11 @@ export default function SubdomainRegistration({
 
           {/* Amazon Associates Instructions */}
           {blogUrl && !subdomainError && (
-            <div className="bg-blue-500/10 border-2 border-blue-500/30 rounded-none p-4">
-              <h3 className="text-base font-bold text-blue-400 mb-2 flex items-center gap-2">
+            <div className="bg-blue-500/10 border-2 border-blue-500/30 rounded-none p-3 sm:p-4">
+              <h3 className="text-sm sm:text-base font-bold text-blue-400 mb-2 flex items-center gap-2">
                 📋 For Amazon Associates Registration
               </h3>
-              <p className="text-white/80 text-sm mb-3">
+              <p className="text-white/80 text-xs sm:text-sm mb-3">
                 Copy your blog URL above and use it when registering with Amazon Associates:
               </p>
               <ol className="text-white/80 text-xs space-y-1.5 list-decimal list-inside mb-3">
@@ -325,27 +325,27 @@ export default function SubdomainRegistration({
                 </li>
                 <li>Complete your Amazon Associates registration</li>
               </ol>
-              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-none p-2.5 mt-3">
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-none p-2 sm:p-2.5 mt-3">
                 <p className="text-yellow-400 text-xs font-semibold mb-1">💡 Important:</p>
                 <p className="text-white/70 text-xs">
-                  Use the full URL shown above (<code className="bg-black/50 px-1 py-0.5 rounded-none">{blogUrl}</code>) when registering with Amazon Associates. This is your permanent blog URL.
+                  Use the full URL shown above (<code className="bg-black/50 px-1 py-0.5 rounded-none break-all">{blogUrl}</code>) when registering with Amazon Associates. This is your permanent blog URL.
                 </p>
               </div>
             </div>
           )}
 
-          <div className="flex gap-4 pt-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
             <button
               onClick={handleRegister}
               disabled={registering || checkingSubdomain || !!subdomainError || !subdomain}
-              className="flex-1 px-6 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 sm:px-6 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
             >
               {registering ? 'Registering...' : 'Register Subdomain'}
             </button>
             {!required && (
               <button
                 onClick={onClose}
-                className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded text-white transition"
+                className="px-4 sm:px-6 py-2 bg-white/10 hover:bg-white/20 rounded text-white transition text-sm sm:text-base"
               >
                 Cancel
               </button>
