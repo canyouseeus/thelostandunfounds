@@ -488,15 +488,15 @@ export default function Admin() {
             </h1>
             <p className="text-white/70">Manage your platform and users</p>
           </div>
-          <div className="flex items-center gap-3">
-            <Link
-              to="/profile"
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition flex items-center gap-2"
-            >
-              <User className="w-4 h-4" />
-              Profile
-            </Link>
-          </div>
+              <div className="flex items-center gap-3">
+                <Link
+                  to="/bookclubprofile"
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition flex items-center gap-2"
+                >
+                  <User className="w-4 h-4" />
+                  Profile
+                </Link>
+              </div>
         </div>
       </div>
 

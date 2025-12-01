@@ -324,18 +324,18 @@ export default function Layout() {
                   {user && (
                     <>
                       <div className="border-t border-white/10 my-2"></div>
-                      <Link
-                        to={userIsAdmin ? "/admin" : "/profile"}
-                        className="menu-item"
-                        onClick={() => {
-                          setMenuOpen(false);
-                        }}
-                      >
-                        <div className="flex items-center gap-2">
-                          <User className="w-4 h-4" />
-                          {userIsAdmin ? 'ADMIN DASHBOARD' : 'PROFILE'}
-                        </div>
-                      </Link>
+                <Link
+                  to={userIsAdmin ? "/admin" : "/bookclubprofile"}
+                  className="menu-item"
+                  onClick={() => {
+                    setMenuOpen(false);
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    {userIsAdmin ? 'ADMIN DASHBOARD' : 'PROFILE'}
+                  </div>
+                </Link>
                       <button
                         type="button"
                         className="menu-item w-full text-left"
