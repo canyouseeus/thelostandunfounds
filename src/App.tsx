@@ -92,7 +92,13 @@ function App() {
           } />
         </Route>
         <Route path="/sql" element={<Layout />}>
-          <Route index element={<SQL />} />
+          <Route index element={
+            <ErrorBoundary>
+              <ProtectedRoute requireAdmin={true}>
+                <SQL />
+              </ProtectedRoute>
+            </ErrorBoundary>
+          } />
         </Route>
         <Route path="/bookclub/prompt" element={<Layout />}>
           <Route index element={<AIWritingPrompt />} />

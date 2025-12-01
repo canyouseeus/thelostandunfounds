@@ -30,7 +30,8 @@ import {
   Mail,
   Calendar,
   FileText,
-  User
+  User,
+  Database
 } from 'lucide-react';
 import { LoadingSpinner } from '../components/Loading';
 import ErrorBoundary from '../components/ErrorBoundary';
@@ -489,6 +490,13 @@ export default function Admin() {
             <p className="text-white/70">Manage your platform and users</p>
           </div>
               <div className="flex items-center gap-3">
+                <Link
+                  to="/sql"
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition flex items-center gap-2"
+                >
+                  <Database className="w-4 h-4" />
+                  SQL Scripts
+                </Link>
                 <Link
                   to="/bookclubprofile"
                   className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition flex items-center gap-2"
