@@ -475,6 +475,7 @@ export default function BlogManagement() {
         {lostArchivesPosts.length === 0 ? (
           <p className="text-white/60">No THE LOST ARCHIVES posts yet. Create your first post above.</p>
         ) : (
+          // Displaying {lostArchivesPosts.length} THE LOST ARCHIVES posts
           <div className="space-y-4">
             {lostArchivesPosts
               .sort((a, b) => {
