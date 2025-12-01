@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, Copy, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from './Toast';
@@ -28,6 +28,12 @@ export default function SubdomainRegistration({
   const [subdomainError, setSubdomainError] = useState('');
   const [checkingSubdomain, setCheckingSubdomain] = useState(false);
   const [registering, setRegistering] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  // Generate blog URL in path-based format (NOT subdomain)
+  const blogUrl = subdomain && subdomain.length >= 3
+    ? `https://www.thelostandunfounds.com/blog/${subdomain}`
+    : '';
 
   useEffect(() => {
     if (isOpen && user?.email) {
@@ -175,8 +181,9 @@ export default function SubdomainRegistration({
         return;
       }
 
-      success(`Your subdomain ${subdomain}.thelostandunfounds.com has been registered!`);
-      onSuccess(subdomain.toLowerCase().trim());
+      const registeredSubdomain = subdomain.toLowerCase().trim();
+      success(`Your blog URL ${blogUrl} has been registered!`);
+      onSuccess(registeredSubdomain);
       onClose();
     } catch (err: any) {
       console.error('Error registering subdomain:', err);
@@ -247,15 +254,85 @@ export default function SubdomainRegistration({
               <p className="text-white/50 text-xs mt-1">Checking availability...</p>
             )}
             {!subdomainError && subdomain && !checkingSubdomain && (
-              <p className="text-green-400 text-xs mt-1">Available</p>
+              <p className="text-green-400 text-xs mt-1 flex items-center gap-1">
+                <Check className="w-3 h-3" />
+                Available
+              </p>
             )}
-            <p className="text-white/50 text-xs mt-2">
-              Your blog will be available at: <span className="text-white/70 font-mono">{subdomain || 'your-blog-name'}.thelostandunfounds.com</span>
-            </p>
-            <p className="text-white/40 text-xs mt-1">
+            
+            {/* Display CORRECT path-based URL */}
+            {blogUrl && !subdomainError && (
+              <div className="mt-4 p-4 bg-black/30 border border-white/10 rounded-none">
+                <p className="text-sm text-white/60 mb-2">Your blog will be available at:</p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={blogUrl}
+                    readOnly
+                    className="flex-1 px-4 py-3 bg-black/50 border border-white/20 rounded-none text-white text-sm font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(blogUrl);
+                        setCopied(true);
+                        success('Blog URL copied to clipboard!');
+                        setTimeout(() => setCopied(false), 2000);
+                      } catch (err) {
+                        showError('Failed to copy URL. Please copy manually.');
+                      }
+                    }}
+                    className="bg-white text-black px-4 py-3 rounded-none hover:bg-white/90 transition-colors font-semibold flex items-center gap-2"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        Copy
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            <p className="text-white/40 text-xs mt-2">
               • 3-63 characters • Lowercase letters, numbers, and hyphens only • Cannot start or end with hyphen
             </p>
           </div>
+
+          {/* Amazon Associates Instructions */}
+          {blogUrl && !subdomainError && (
+            <div className="bg-blue-500/10 border-2 border-blue-500/30 rounded-none p-4">
+              <h3 className="text-base font-bold text-blue-400 mb-2 flex items-center gap-2">
+                📋 For Amazon Associates Registration
+              </h3>
+              <p className="text-white/80 text-sm mb-3">
+                Copy your blog URL above and use it when registering with Amazon Associates:
+              </p>
+              <ol className="text-white/80 text-xs space-y-1.5 list-decimal list-inside mb-3">
+                <li>Click the "Copy" button above to copy your blog URL</li>
+                <li>Go to your Amazon Associates account</li>
+                <li>When asked for your website URL, paste:
+                  <code className="block mt-1.5 px-2 py-1.5 bg-black/50 border border-white/10 rounded-none font-mono text-xs break-all">
+                    {blogUrl}
+                  </code>
+                </li>
+                <li>Complete your Amazon Associates registration</li>
+              </ol>
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-none p-2.5 mt-3">
+                <p className="text-yellow-400 text-xs font-semibold mb-1">💡 Important:</p>
+                <p className="text-white/70 text-xs">
+                  Use the full URL shown above (<code className="bg-black/50 px-1 py-0.5 rounded-none">{blogUrl}</code>) when registering with Amazon Associates. This is your permanent blog URL.
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-4 pt-4">
             <button
