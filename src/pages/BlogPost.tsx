@@ -33,7 +33,8 @@ interface BlogPost {
   subdomain?: string | null; // User subdomain
   author_id?: string | null; // Author ID
   author_name?: string | null; // Author name for disclosure
-  blog_title?: string | null; // Blog title from user_subdomains
+  blog_title?: string | null; // Blog title from user_subdomains (normalized)
+  blog_title_display?: string | null; // Styled blog title for display
 }
 
 interface BlogPostListItem {
@@ -111,11 +112,14 @@ export default function BlogPost() {
       if (data.subdomain) {
         const { data: subdomainData } = await supabase
           .from('user_subdomains')
-          .select('blog_title')
+          .select('blog_title, blog_title_display')
           .eq('subdomain', data.subdomain)
           .maybeSingle();
         
-        if (subdomainData?.blog_title) {
+        // Use display version for UI, normalized version as fallback
+        if (subdomainData?.blog_title_display) {
+          setBlogTitle(subdomainData.blog_title_display);
+        } else if (subdomainData?.blog_title) {
           setBlogTitle(subdomainData.blog_title);
         }
       }

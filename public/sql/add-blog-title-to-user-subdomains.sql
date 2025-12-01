@@ -1,9 +1,13 @@
 -- Add blog_title and author_name fields to user_subdomains table
 -- Allows users to set a custom title for their blog and stores their author name
 
--- Add the blog_title column if it doesn't exist
+-- Add the blog_title column if it doesn't exist (normalized version for database)
 ALTER TABLE user_subdomains 
 ADD COLUMN IF NOT EXISTS blog_title TEXT;
+
+-- Add the blog_title_display column if it doesn't exist (styled version for display)
+ALTER TABLE user_subdomains 
+ADD COLUMN IF NOT EXISTS blog_title_display TEXT;
 
 -- Add the author_name column if it doesn't exist (for displaying username on blog page)
 ALTER TABLE user_subdomains 
@@ -44,5 +48,6 @@ CREATE POLICY "Admins can update subdomains"
   USING (is_admin_user());
 
 -- Add comments to document the fields
-COMMENT ON COLUMN user_subdomains.blog_title IS 'Custom title for the user''s blog. Displayed as "[BLOG TITLE] BOOK CLUB" on the blog page.';
+COMMENT ON COLUMN user_subdomains.blog_title IS 'Normalized blog title (symbols removed, + converted to AND) for database storage and URLs.';
+COMMENT ON COLUMN user_subdomains.blog_title_display IS 'Styled blog title (as typed by user) for display on the blog page.';
 COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from user metadata. Displayed on blog page if blog_title is not set.';

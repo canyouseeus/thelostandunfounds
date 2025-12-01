@@ -28,6 +28,7 @@ export default function UserBlog() {
   const [error, setError] = useState<string | null>(null);
   const [userInfo, setUserInfo] = useState<{ name?: string; email?: string } | null>(null);
   const [blogTitle, setBlogTitle] = useState<string | null>(null);
+  const [blogTitleDisplay, setBlogTitleDisplay] = useState<string | null>(null);
   const [authorName, setAuthorName] = useState<string | null>(null);
 
   useEffect(() => {
@@ -129,12 +130,17 @@ export default function UserBlog() {
       // Load blog title and author_name from user_subdomains
       const { data: subdomainData } = await supabase
         .from('user_subdomains')
-        .select('blog_title, author_name, user_id')
+        .select('blog_title, blog_title_display, author_name, user_id')
         .eq('subdomain', userSubdomain)
         .maybeSingle();
 
-      if (subdomainData?.blog_title) {
+      // Use display version for UI, normalized version for SEO/metadata
+      if (subdomainData?.blog_title_display) {
+        setBlogTitleDisplay(subdomainData.blog_title_display);
+        setBlogTitle(subdomainData.blog_title || subdomainData.blog_title_display);
+      } else if (subdomainData?.blog_title) {
         setBlogTitle(subdomainData.blog_title);
+        setBlogTitleDisplay(subdomainData.blog_title);
       }
       
       // Get author_name from user_subdomains if available
@@ -207,8 +213,8 @@ export default function UserBlog() {
     );
   }
 
-  // Use blog_title if set, otherwise use author_name, otherwise fallback to subdomain
-  const displayTitle = blogTitle || authorName || subdomain || 'User';
+  // Use styled display title for UI, normalized title for SEO/metadata
+  const displayTitle = blogTitleDisplay || blogTitle || authorName || subdomain || 'User';
   const pageTitle = blogTitle 
     ? `${blogTitle} | BOOK CLUB | THE LOST ARCHIVES`
     : authorName

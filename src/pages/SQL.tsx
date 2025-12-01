@@ -649,12 +649,17 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         {
           name: 'Add Blog Title to User Subdomains',
           filename: 'add-blog-title-to-user-subdomains.sql',
-          content: blogTitleContent || `-- Add blog_title and author_name fields to user_subdomains table
+          content: blogTitleContent || `-- Add blog_title, blog_title_display, and author_name fields to user_subdomains table
 -- Allows users to set a custom title for their blog and stores their author name
+-- blog_title_display stores the styled version (as typed by user), blog_title stores normalized version
 
--- Add the blog_title column if it doesn't exist
+-- Add the blog_title column if it doesn't exist (normalized version for database)
 ALTER TABLE user_subdomains 
 ADD COLUMN IF NOT EXISTS blog_title TEXT;
+
+-- Add the blog_title_display column if it doesn't exist (styled version for display)
+ALTER TABLE user_subdomains 
+ADD COLUMN IF NOT EXISTS blog_title_display TEXT;
 
 -- Add the author_name column if it doesn't exist (for displaying username on blog page)
 ALTER TABLE user_subdomains 
@@ -666,7 +671,7 @@ DROP POLICY IF EXISTS "Admins can update subdomains" ON user_subdomains;
 DROP POLICY IF EXISTS "Users can update their own blog title" ON user_subdomains;
 
 -- Create policy that allows ALL users to update their own row
--- This policy allows regular users to update blog_title and author_name on their own row
+-- This policy allows regular users to update blog_title, blog_title_display, and author_name on their own row
 CREATE POLICY "Users can update their own blog title"
   ON user_subdomains
   FOR UPDATE
@@ -695,7 +700,8 @@ CREATE POLICY "Admins can update subdomains"
   USING (is_admin_user());
 
 -- Add comments to document the fields
-COMMENT ON COLUMN user_subdomains.blog_title IS 'Custom title for the user''s blog. Displayed as "[BLOG TITLE] BOOK CLUB" on the blog page.';
+COMMENT ON COLUMN user_subdomains.blog_title IS 'Normalized blog title (symbols removed, + converted to AND) for database storage and URLs.';
+COMMENT ON COLUMN user_subdomains.blog_title_display IS 'Styled blog title (as typed by user) for display on the blog page.';
 COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from user metadata. Displayed on blog page if blog_title is not set.';`,
           description: 'Adds blog_title field to user_subdomains table. Allows users to set a custom title for their blog, which will be displayed as "[BLOG TITLE] BOOK CLUB" on their blog page. Run this AFTER creating the user_subdomains table.',
           createdAt: getScriptTimestamp('add-blog-title-to-user-subdomains.sql')
