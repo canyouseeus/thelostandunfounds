@@ -647,6 +647,32 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
 
       const allScripts: SQLScript[] = [
         {
+          name: 'Add Blog Title to User Subdomains',
+          filename: 'add-blog-title-to-user-subdomains.sql',
+          content: blogTitleContent || `-- Add blog_title field to user_subdomains table
+-- Allows users to set a custom title for their blog
+
+-- Add the blog_title column if it doesn't exist
+ALTER TABLE user_subdomains 
+ADD COLUMN IF NOT EXISTS blog_title TEXT;
+
+-- Update RLS policy to allow users to update their own blog_title
+-- Drop the existing update policy
+DROP POLICY IF EXISTS "Users can update their own blog title" ON user_subdomains;
+
+-- Create new policy that allows users to update their own blog_title
+CREATE POLICY "Users can update their own blog title"
+  ON user_subdomains
+  FOR UPDATE
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- Add comment to document the field
+COMMENT ON COLUMN user_subdomains.blog_title IS 'Custom title for the user''s blog. Displayed as "[BLOG TITLE] BOOK CLUB" on the blog page.';`,
+          description: 'Adds blog_title field to user_subdomains table. Allows users to set a custom title for their blog, which will be displayed as "[BLOG TITLE] BOOK CLUB" on their blog page. Run this AFTER creating the user_subdomains table.',
+          createdAt: getScriptTimestamp('add-blog-title-to-user-subdomains.sql')
+        },
+        {
           name: 'Setup Admin User',
           filename: 'setup-admin-user.sql',
           content: setupAdminContent || '// File not found - check public/sql folder',
@@ -687,32 +713,6 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
           content: subdomainSupportContent || '// File not found - check public/sql folder',
           description: 'Adds subdomain and Amazon affiliate links support to blog_posts table. Allows users to have their own blogs with subdomains. Updates RLS policies to allow users to create their own posts. Run this AFTER creating the blog_posts table and user_subdomains table.',
           createdAt: getScriptTimestamp('add-user-subdomain-support.sql')
-        },
-        {
-          name: 'Add Blog Title to User Subdomains',
-          filename: 'add-blog-title-to-user-subdomains.sql',
-          content: blogTitleContent || `-- Add blog_title field to user_subdomains table
--- Allows users to set a custom title for their blog
-
--- Add the blog_title column if it doesn't exist
-ALTER TABLE user_subdomains 
-ADD COLUMN IF NOT EXISTS blog_title TEXT;
-
--- Update RLS policy to allow users to update their own blog_title
--- Drop the existing update policy
-DROP POLICY IF EXISTS "Users can update their own blog title" ON user_subdomains;
-
--- Create new policy that allows users to update their own blog_title
-CREATE POLICY "Users can update their own blog title"
-  ON user_subdomains
-  FOR UPDATE
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
-
--- Add comment to document the field
-COMMENT ON COLUMN user_subdomains.blog_title IS 'Custom title for the user''s blog. Displayed as "[BLOG TITLE] BOOK CLUB" on the blog page.';`,
-          description: 'Adds blog_title field to user_subdomains table. Allows users to set a custom title for their blog, which will be displayed as "[BLOG TITLE] BOOK CLUB" on their blog page. Run this AFTER creating the user_subdomains table.',
-          createdAt: getScriptTimestamp('add-blog-title-to-user-subdomains.sql')
         },
         {
           name: 'Blog Submissions Table',
