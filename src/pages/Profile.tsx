@@ -4,14 +4,24 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
-import { User, Mail, Calendar, Shield, Key } from 'lucide-react';
+import { User, Mail, Calendar, Shield, Key, BookOpen, FileText, ExternalLink } from 'lucide-react';
 import { LoadingSpinner, SkeletonCard } from '../components/Loading';
 import { formatDate } from '../utils/helpers';
 import { SubscriptionTier } from '../types/index';
 import { isAdmin } from '../utils/admin';
+import { supabase } from '../lib/supabase';
+
+interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  published: boolean;
+  published_at: string | null;
+  subdomain: string | null;
+}
 
 export default function Profile() {
   const { user, tier, loading: authLoading } = useAuth();
@@ -26,6 +36,9 @@ export default function Profile() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [userSubdomain, setUserSubdomain] = useState<string | null>(null);
+  const [userPosts, setUserPosts] = useState<BlogPost[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(false);
 
   useEffect(() => {
     if (user?.email) {
@@ -46,6 +59,56 @@ export default function Profile() {
     };
     checkAdminStatus();
   }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      loadUserSubdomain();
+      loadUserPosts();
+    }
+  }, [user]);
+
+  const loadUserSubdomain = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_subdomains')
+        .select('subdomain')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (data?.subdomain) {
+        setUserSubdomain(data.subdomain);
+      }
+    } catch (err) {
+      console.warn('Error loading subdomain:', err);
+    }
+  };
+
+  const loadUserPosts = async () => {
+    if (!user) return;
+    
+    setLoadingPosts(true);
+    try {
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('id, title, slug, published, published_at, subdomain')
+        .or(`author_id.eq.${user.id},user_id.eq.${user.id}`)
+        .order('published_at', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) {
+        console.error('Error loading posts:', error);
+      } else {
+        setUserPosts(data || []);
+      }
+    } catch (err) {
+      console.error('Error loading user posts:', err);
+    } finally {
+      setLoadingPosts(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!user) return;
@@ -136,10 +199,124 @@ export default function Profile() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-white mb-2">PROFILE</h1>
-        <p className="text-white/70">Manage your account information</p>
+        <p className="text-white/70">Manage your account information and view your articles</p>
       </div>
 
       <div className="space-y-6">
+        {/* Book Club Info Section */}
+        {userSubdomain && (
+          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <BookOpen className="w-5 h-5" />
+                Your Book Club Blog
+              </h2>
+              <Link
+                to={`/blog/${userSubdomain}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition flex items-center gap-2"
+              >
+                <ExternalLink className="w-4 h-4" />
+                View Blog
+              </Link>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-2">Your Blog URL</label>
+                <div className="px-4 py-2 bg-black/50 border border-white/10 rounded-none">
+                  <p className="text-white font-mono text-sm">
+                    {userSubdomain}.thelostandunfounds.com
+                  </p>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-2">Subdomain</label>
+                <div className="px-4 py-2 bg-black/50 border border-white/10 rounded-none">
+                  <p className="text-white font-mono text-sm">{userSubdomain}</p>
+                </div>
+                <p className="text-white/50 text-xs mt-1">Set during registration - cannot be changed</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* My Articles Section */}
+        {userPosts.length > 0 && (
+          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                My Articles
+              </h2>
+              <Link
+                to="/submit-article"
+                className="px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition flex items-center gap-2"
+              >
+                <FileText className="w-4 h-4" />
+                Submit New Article
+              </Link>
+            </div>
+            <div className="space-y-3">
+              {userPosts.map((post) => (
+                <div
+                  key={post.id}
+                  className="bg-black/30 border border-white/10 rounded-none p-4 hover:border-white/20 transition"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-white font-bold mb-2">{post.title}</h3>
+                      <div className="flex items-center gap-3 text-sm text-white/60">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {post.published_at ? formatDate(post.published_at) : 'Draft'}
+                        </span>
+                        <span className={`px-2 py-1 rounded text-xs ${
+                          post.published
+                            ? 'bg-green-400/20 text-green-400 border border-green-400/20'
+                            : 'bg-yellow-400/20 text-yellow-400 border border-yellow-400/20'
+                        }`}>
+                          {post.published ? 'Published' : 'Draft'}
+                        </span>
+                        {post.subdomain && (
+                          <span className="px-2 py-1 rounded text-xs bg-blue-400/20 text-blue-400 border border-blue-400/20">
+                            Book Club
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {post.published && (
+                      <Link
+                        to={post.subdomain ? `/blog/${post.subdomain}/${post.slug}` : `/thelostarchives/${post.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 hover:bg-white/10 rounded transition"
+                        title="View post"
+                      >
+                        <ExternalLink className="w-4 h-4 text-white/60" />
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Submit Article CTA if no posts */}
+        {userPosts.length === 0 && (
+          <div className="bg-black/50 border border-white/10 rounded-none p-6 text-center">
+            <BookOpen className="w-12 h-12 text-white/40 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-white mb-2">Start Your Book Club Journey</h3>
+            <p className="text-white/60 mb-4">Submit your first article with four book recommendations.</p>
+            <Link
+              to="/submit-article"
+              className="inline-block px-6 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
+            >
+              Submit Your First Article
+            </Link>
+          </div>
+        )}
         {/* Account Information */}
         <div className="bg-black/50 border border-white/10 rounded-none p-6">
           <div className="flex items-center justify-between mb-6">
