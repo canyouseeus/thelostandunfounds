@@ -94,7 +94,7 @@ function App() {
         <Route path="/sql" element={<Layout />}>
           <Route index element={<SQL />} />
         </Route>
-        <Route path="/AI_WRITING_PROMPT_FOR_CONTRIBUTORS.md" element={<Layout />}>
+        <Route path="/ai-writing-prompt" element={<Layout />}>
           <Route index element={<AIWritingPrompt />} />
         </Route>
         <Route path="/debug" element={<Layout />}>

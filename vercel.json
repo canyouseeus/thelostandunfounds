@@ -3,14 +3,17 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "redirects": [
+    {
+      "source": "/AI_WRITING_PROMPT_FOR_CONTRIBUTORS.md",
+      "destination": "/ai-writing-prompt",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/thelostarchives/:slug",
       "destination": "/thelostarchives/:slug.html"
-    },
-    {
-      "source": "/AI_WRITING_PROMPT_FOR_CONTRIBUTORS.md",
-      "destination": "/index.html"
     },
     {
       "source": "/:path((?!api).*)",
