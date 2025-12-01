@@ -667,6 +667,13 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
 
       const allScripts: SQLScript[] = [
         {
+          name: 'Join THE LOST ARCHIVES BOOK CLUB and Share Your Love of Books',
+          filename: 'create-blog-post-join-the-lost-archives-book-club.sql',
+          content: bookClubContent || '// File not found - check public/sql folder',
+          description: 'Creates the blog post "Join THE LOST ARCHIVES BOOK CLUB and Share Your Love of Books" - inviting readers and writers to join the book club community, share insights, and earn as Amazon affiliates. Run this AFTER the migration script. Works with any schema version.',
+          createdAt: getScriptTimestamp('create-blog-post-join-the-lost-archives-book-club.sql')
+        },
+        {
           name: 'Add Blog Title to User Subdomains',
           filename: 'add-blog-title-to-user-subdomains.sql',
           content: blogTitleContent || `-- Add blog_title, blog_title_display, and author_name fields to user_subdomains table
@@ -794,13 +801,6 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
           content: migrationContent,
           description: 'Adds missing fields (published, SEO fields, og_image_url) to blog_posts table. Handles missing author_id column. Run this FIRST in Supabase SQL Editor.',
           createdAt: getScriptTimestamp('blog-schema-migration.sql')
-        },
-        {
-          name: 'Join THE LOST ARCHIVES BOOK CLUB and Share Your Love of Books',
-          filename: 'create-blog-post-join-the-lost-archives-book-club.sql',
-          content: bookClubContent || '// File not found - check public/sql folder',
-          description: 'Creates the blog post "Join THE LOST ARCHIVES BOOK CLUB and Share Your Love of Books" - inviting readers and writers to join the book club community, share insights, and earn as Amazon affiliates. Run this AFTER the migration script. Works with any schema version.',
-          createdAt: getScriptTimestamp('create-blog-post-join-the-lost-archives-book-club.sql')
         },
         {
           name: 'Building a Creative Brand That Rewards People for Life: Lessons That Shaped THE LOST+UNFOUNDS',
