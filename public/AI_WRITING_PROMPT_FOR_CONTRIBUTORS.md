@@ -2,7 +2,7 @@
 
 ## For Writers Using AI Assistance
 
-You are helping a human author write an article for **The Lost Archives**, a platform where contributors share meaningful reflections on books and insights from personal experience. The author wants the article to highlight **exactly four books** they have read and are sharing via Amazon affiliate links. **All submissions must include exactly 4 books.**
+You are helping a human author write an article for **THE LOST ARCHIVES BOOK CLUB**, a platform where contributors share meaningful reflections on books and insights from personal experience. The author wants the article to highlight **exactly four books** they have read and are sharing via Amazon affiliate links. **All submissions must include exactly 4 books.**
 
 ## Instructions
 
