@@ -257,20 +257,10 @@ export default function BlogManagement() {
   const currentUserId = user?.id;
   const isAdmin = user?.email ? isAdminEmail(user.email) : false;
   
-  // For THE LOST ARCHIVES posts: if admin, show ALL posts without subdomain
-  // Otherwise, show only posts where author matches current user
+  // THE LOST ARCHIVES posts: ALL posts without subdomain
+  // Since admin is the only writer, show all posts without subdomain
   const lostArchivesPosts = posts.filter((post) => {
-    const hasNoSubdomain = !post.subdomain;
-    if (!hasNoSubdomain) return false;
-    
-    if (isAdmin) {
-      // Admin sees all THE LOST ARCHIVES posts (no subdomain)
-      return true;
-    } else {
-      // Non-admin only sees their own posts
-      const postAuthorId = post.author_id || post.user_id;
-      return postAuthorId === currentUserId;
-    }
+    return !post.subdomain; // All posts without subdomain are THE LOST ARCHIVES
   });
 
   // All admin posts (including book club posts) - for admin, this is all posts

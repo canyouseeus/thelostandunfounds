@@ -512,26 +512,12 @@ export default function Admin() {
         return;
       }
 
-      // Check if user is admin
-      const email = user?.email || '';
-      const isAdmin = email === 'thelostandunfounds@gmail.com' || email === 'admin@thelostandunfounds.com';
-
       // Filter to published posts (no subdomain)
-      // If admin, show all published posts without subdomain
-      // Otherwise, show only posts where author matches current user
+      // Since admin is the only writer for THE LOST ARCHIVES, show all published posts without subdomain
       const filteredPosts = (data || []).filter((post: any) => {
         const isPublished = post.published === true || 
           (post.published === undefined && post.status === 'published');
-        if (!isPublished) return false;
-
-        if (isAdmin) {
-          // Admin sees all THE LOST ARCHIVES posts (no subdomain)
-          return true;
-        } else {
-          // Non-admin only sees their own posts
-          const postAuthorId = post.author_id || post.user_id;
-          return postAuthorId === user.id;
-        }
+        return isPublished; // All published posts without subdomain are THE LOST ARCHIVES
       });
 
       setLostArchivesPosts(filteredPosts);
