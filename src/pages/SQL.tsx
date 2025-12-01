@@ -4,9 +4,13 @@
  * Auto-locks after 5 minutes of inactivity
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
+import { isAdmin } from '../utils/admin';
 import { Copy, Check, Clock, Lock } from 'lucide-react';
+import { LoadingSpinner } from '../components/Loading';
 
 // Extend window for debug logs
 declare global {
@@ -55,7 +59,10 @@ export default function SQL() {
 
   logToDebug('info', 'SQL component rendering...');
   
-  const { success } = useToast();
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const { success, error: showError } = useToast();
+  const [adminStatus, setAdminStatus] = useState<boolean | null>(null);
   const [scripts, setScripts] = useState<SQLScript[]>([]);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isLocked, setIsLocked] = useState(false);
@@ -63,6 +70,51 @@ export default function SQL() {
   const lastActivityRef = useRef<number>(Date.now());
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
+
+  const checkAdminAccess = useCallback(async () => {
+    if (authLoading) return;
+    
+    if (!user) {
+      navigate('/');
+      return;
+    }
+
+    // First check: email match (fastest, no database query)
+    const email = user?.email || '';
+    const isAdminEmail = email === 'thelostandunfounds@gmail.com' || email === 'admin@thelostandunfounds.com';
+    
+    if (isAdminEmail) {
+      // Email matches admin - allow access immediately
+      setAdminStatus(true);
+      return;
+    }
+
+    // Second check: try database check
+    try {
+      const admin = await isAdmin();
+      setAdminStatus(admin);
+
+      if (!admin) {
+        showError('Access denied. Admin privileges required.');
+        navigate('/');
+      }
+    } catch (error: any) {
+      console.error('Error checking admin access:', error);
+      // If database check fails, fall back to email check
+      if (isAdminEmail) {
+        setAdminStatus(true);
+      } else {
+        setAdminStatus(false);
+        showError('Access denied. Admin privileges required.');
+        navigate('/');
+      }
+    }
+  }, [user, authLoading, navigate, showError]);
+
+  // Check admin access
+  useEffect(() => {
+    checkAdminAccess();
+  }, [checkAdminAccess]);
 
   const getDefaultMigrationContent = async () => {
     // Try to load from file first
@@ -888,6 +940,28 @@ COMMENT ON COLUMN user_subdomains.blog_title IS 'Custom title for the user''s bl
     const seconds = Math.floor((ms % 60000) / 1000);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
+
+  // Show loading while checking admin status
+  if (authLoading || adminStatus === null) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <LoadingSpinner />
+        </div>
+      </div>
+    );
+  }
+
+  // Show access denied if not admin
+  if (adminStatus === false) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="text-left py-12">
+          <p className="text-white/70">Access denied. Admin privileges required.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
