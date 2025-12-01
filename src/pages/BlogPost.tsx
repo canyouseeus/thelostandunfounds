@@ -707,11 +707,11 @@ export default function BlogPost() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="flex items-center justify-between mb-6">
         <Link
-          to={post.subdomain ? `/blog/${post.subdomain}` : "/thelostarchives"}
+          to="/thelostarchives"
           className="text-white/60 hover:text-white text-sm inline-flex items-center gap-2 transition"
         >
           <ArrowLeft className="w-4 h-4" />
-          {post.subdomain ? `Back to ${post.subdomain}'s Blog` : 'Back to THE LOST ARCHIVES'}
+          Back to THE LOST ARCHIVES
         </Link>
         {nextPost && (
           <Link
@@ -724,6 +724,18 @@ export default function BlogPost() {
           </Link>
         )}
       </div>
+      
+      {/* View More Posts from Author */}
+      {post.subdomain && (
+        <div className="mb-6">
+          <Link
+            to={`/blog/${post.subdomain}`}
+            className="text-white/70 hover:text-white text-sm inline-flex items-center gap-2 transition underline"
+          >
+            View more posts from {post.subdomain}
+          </Link>
+        </div>
+      )}
 
       <article>
         <header className="mb-8 text-left">
