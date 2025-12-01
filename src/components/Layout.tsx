@@ -142,14 +142,15 @@ export default function Layout() {
   }, [])
 
   const handleMenuMouseLeave = useCallback(() => {
-    // Add a small delay before closing to allow mouse to move to dropdown
+    // Add a longer delay before closing to allow mouse to move to dropdown
+    // This accounts for the gap between button and dropdown
     menuCloseTimeoutRef.current = setTimeout(() => {
       setMenuOpen(false)
       setMoreMenuOpen(false)
       setAccountMenuOpen(false)
       setArchivesMenuOpen(false)
       menuCloseTimeoutRef.current = null
-    }, 150) // 150ms delay to allow mouse movement
+    }, 300) // 300ms delay to allow mouse movement across gap
   }, [])
 
   const handleSubmenuMouseEnter = useCallback((submenuType: 'more' | 'account' | 'archives') => {
@@ -217,6 +218,15 @@ export default function Layout() {
                   >
                     <span className="menu-icon text-xl">☰</span>
                   </button>
+                  {/* Bridge element to cover gap between button and dropdown */}
+                  {menuOpen && (
+                    <div 
+                      className="absolute top-full right-0 w-full h-2"
+                      onMouseEnter={handleMenuMouseEnter}
+                      onMouseLeave={handleMenuMouseLeave}
+                      style={{ zIndex: 999998 }}
+                    />
+                  )}
                 <div 
                   className={`menu-dropdown ${menuOpen ? 'open' : ''}`}
                   onMouseEnter={handleMenuMouseEnter}
