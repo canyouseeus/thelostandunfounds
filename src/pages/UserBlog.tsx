@@ -42,14 +42,28 @@ export default function UserBlog() {
       setError(null);
 
       // Load posts for this subdomain
-      // Try to select author_name, but handle if column doesn't exist
+      // Try multiple query strategies to handle different schema versions
       let postsData;
       let postsError;
       
-      try {
-        const result = await supabase
+      // Strategy 1: Try with published field and author_name
+      let result = await supabase
+        .from('blog_posts')
+        .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, author_id, author_name')
+        .eq('subdomain', userSubdomain)
+        .eq('published', true)
+        .order('published_at', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(100);
+      
+      postsData = result.data;
+      postsError = result.error;
+      
+      // Strategy 2: If that failed, try without author_name
+      if (postsError && (postsError.message?.includes('author_name') || postsError.message?.includes('column'))) {
+        result = await supabase
           .from('blog_posts')
-          .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, author_id, author_name')
+          .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, author_id')
           .eq('subdomain', userSubdomain)
           .eq('published', true)
           .order('published_at', { ascending: false })
@@ -58,28 +72,47 @@ export default function UserBlog() {
         
         postsData = result.data;
         postsError = result.error;
-      } catch (err: any) {
-        // If author_name column doesn't exist, try without it
-        if (err.message?.includes('author_name') || err.message?.includes('column')) {
-          const result = await supabase
-            .from('blog_posts')
-            .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, author_id')
-            .eq('subdomain', userSubdomain)
-            .eq('published', true)
-            .order('published_at', { ascending: false })
-            .order('created_at', { ascending: false })
-            .limit(100);
-          
-          postsData = result.data;
-          postsError = result.error;
+      }
+      
+      // Strategy 3: If published column doesn't exist, try with status field
+      if (postsError && (postsError.message?.includes('published') || postsError.message?.includes('column'))) {
+        result = await supabase
+          .from('blog_posts')
+          .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, author_id, author_name')
+          .eq('subdomain', userSubdomain)
+          .eq('status', 'published')
+          .order('published_at', { ascending: false })
+          .order('created_at', { ascending: false })
+          .limit(100);
+        
+        postsData = result.data;
+        postsError = result.error;
+      }
+      
+      // Strategy 4: Last resort - get all posts for this subdomain and filter client-side
+      if (postsError) {
+        result = await supabase
+          .from('blog_posts')
+          .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, author_id, author_name, published, status')
+          .eq('subdomain', userSubdomain)
+          .order('published_at', { ascending: false })
+          .order('created_at', { ascending: false })
+          .limit(100);
+        
+        if (result.data) {
+          // Filter client-side for published posts
+          postsData = result.data.filter((post: any) => 
+            post.published === true || (post.published === undefined && post.status === 'published')
+          );
+          postsError = null;
         } else {
-          postsError = err;
+          postsError = result.error;
         }
       }
 
       if (postsError) {
         console.error('Error loading user blog posts:', postsError);
-        setError('Failed to load blog posts');
+        setError(`Failed to load blog posts: ${postsError.message || 'Unknown error'}`);
         return;
       }
 
