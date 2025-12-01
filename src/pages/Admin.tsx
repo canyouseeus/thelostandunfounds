@@ -512,16 +512,29 @@ export default function Admin() {
         return;
       }
 
-      // Filter to only admin's published posts (no subdomain)
-      const adminPosts = (data || []).filter((post: any) => {
-        const postAuthorId = post.author_id || post.user_id;
-        const isAdminPost = postAuthorId === user.id;
+      // Check if user is admin
+      const email = user?.email || '';
+      const isAdmin = email === 'thelostandunfounds@gmail.com' || email === 'admin@thelostandunfounds.com';
+
+      // Filter to published posts (no subdomain)
+      // If admin, show all published posts without subdomain
+      // Otherwise, show only posts where author matches current user
+      const filteredPosts = (data || []).filter((post: any) => {
         const isPublished = post.published === true || 
           (post.published === undefined && post.status === 'published');
-        return isAdminPost && isPublished;
+        if (!isPublished) return false;
+
+        if (isAdmin) {
+          // Admin sees all THE LOST ARCHIVES posts (no subdomain)
+          return true;
+        } else {
+          // Non-admin only sees their own posts
+          const postAuthorId = post.author_id || post.user_id;
+          return postAuthorId === user.id;
+        }
       });
 
-      setLostArchivesPosts(adminPosts);
+      setLostArchivesPosts(filteredPosts);
     } catch (err: any) {
       console.error('Error loading THE LOST ARCHIVES posts:', err);
     } finally {

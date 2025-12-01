@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useToast } from './Toast';
 import { LoadingSpinner } from './Loading';
+import { isAdminEmail } from '../utils/admin';
 import { FileText, Plus, Edit, Trash2, Eye, Calendar } from 'lucide-react';
 
 interface BlogPost {
@@ -254,12 +255,31 @@ export default function BlogManagement() {
 
   // Separate posts into categories
   const currentUserId = user?.id;
+  const isAdmin = user?.email ? isAdminEmail(user.email) : false;
   
-  // All admin posts (including book club posts)
-  const adminPosts = posts.filter((post) => {
-    const postAuthorId = post.author_id || post.user_id;
-    return postAuthorId === currentUserId;
+  // For THE LOST ARCHIVES posts: if admin, show ALL posts without subdomain
+  // Otherwise, show only posts where author matches current user
+  const lostArchivesPosts = posts.filter((post) => {
+    const hasNoSubdomain = !post.subdomain;
+    if (!hasNoSubdomain) return false;
+    
+    if (isAdmin) {
+      // Admin sees all THE LOST ARCHIVES posts (no subdomain)
+      return true;
+    } else {
+      // Non-admin only sees their own posts
+      const postAuthorId = post.author_id || post.user_id;
+      return postAuthorId === currentUserId;
+    }
   });
+
+  // All admin posts (including book club posts) - for admin, this is all posts
+  const adminPosts = isAdmin 
+    ? posts 
+    : posts.filter((post) => {
+        const postAuthorId = post.author_id || post.user_id;
+        return postAuthorId === currentUserId;
+      });
 
   // Admin's book club posts (admin posts with subdomain)
   const adminBookClubPosts = posts.filter((post) => {
@@ -462,12 +482,11 @@ export default function BlogManagement() {
             NEW POST
           </button>
         </div>
-        {adminPosts.filter(post => !post.subdomain).length === 0 ? (
+        {lostArchivesPosts.length === 0 ? (
           <p className="text-white/60">No THE LOST ARCHIVES posts yet. Create your first post above.</p>
         ) : (
           <div className="space-y-4">
-            {adminPosts
-              .filter(post => !post.subdomain)
+            {lostArchivesPosts
               .sort((a, b) => {
                 const dateA = a.published_at || a.created_at;
                 const dateB = b.published_at || b.created_at;
