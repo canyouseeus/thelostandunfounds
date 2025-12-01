@@ -36,12 +36,12 @@ export default async function handler(
 
 // Import and re-export newsletter-send handler
 async function handleNewsletterSend(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/_newsletter-send-handler')
+  const handler = await import('../../lib/api-handlers/_newsletter-send-handler.js')
   return await handler.default(req, res)
 }
 
 // Import and re-export newsletter-subscribe handler
 async function handleNewsletterSubscribe(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/_newsletter-subscribe-handler')
+  const handler = await import('../../lib/api-handlers/_newsletter-subscribe-handler.js')
   return await handler.default(req, res)
 }
