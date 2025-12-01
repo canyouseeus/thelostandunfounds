@@ -434,6 +434,96 @@ export default function BlogManagement() {
         </div>
       )}
 
+      {/* THE LOST ARCHIVES Posts Section (Admin's regular posts - no subdomain) */}
+      <div className="bg-black/50 border border-white/10 rounded-none p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-white">THE LOST ARCHIVES Posts</h3>
+          <button
+            onClick={() => {
+              setIsCreating(true);
+              setIsBookClubPost(false);
+              setEditingPost(null);
+              setFormData({
+                title: '',
+                slug: '',
+                content: '',
+                excerpt: '',
+                published: false,
+                seo_title: '',
+                seo_description: '',
+                seo_keywords: '',
+                og_image_url: '',
+              });
+            }}
+            className="px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            NEW POST
+          </button>
+        </div>
+        {adminPosts.filter(post => !post.subdomain).length === 0 ? (
+          <p className="text-white/60">No THE LOST ARCHIVES posts yet. Create your first post above.</p>
+        ) : (
+          <div className="space-y-4">
+            {adminPosts.filter(post => !post.subdomain).map((post) => (
+              <div
+                key={post.id}
+                className="bg-black/30 border border-white/10 rounded-none p-4 hover:border-white/20 transition"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h4 className="text-white font-bold text-lg mb-2">{post.title}</h4>
+                    <div className="flex items-center gap-4 text-sm text-white/60 mb-2">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {formatDate(post.published_at || post.created_at)}
+                      </span>
+                      <span className={`px-2 py-1 rounded text-xs ${
+                        post.published
+                          ? 'bg-green-400/20 text-green-400 border border-green-400/20'
+                          : 'bg-yellow-400/20 text-yellow-400 border border-yellow-400/20'
+                      }`}>
+                        {post.published ? 'Published' : 'Draft'}
+                      </span>
+                    </div>
+                    {post.excerpt && (
+                      <p className="text-white/70 text-sm">{post.excerpt.substring(0, 100)}...</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 ml-4">
+                    {post.published && (
+                      <a
+                        href={`/thelostarchives/${post.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 hover:bg-white/10 rounded transition"
+                        title="View post"
+                      >
+                        <Eye className="w-4 h-4 text-white/60" />
+                      </a>
+                    )}
+                    <button
+                      onClick={() => handleEdit(post)}
+                      className="p-2 hover:bg-white/10 rounded transition"
+                      title="Edit post"
+                    >
+                      <Edit className="w-4 h-4 text-white/60" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(post.id)}
+                      className="p-2 hover:bg-red-500/20 rounded transition"
+                      title="Delete post"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-400" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* My Book Club Posts Section (Admin's book club posts) */}
       {adminBookClubPosts.length > 0 && (
         <div className="bg-black/50 border border-white/10 rounded-none p-6">
@@ -473,75 +563,6 @@ export default function BlogManagement() {
                     {post.published && (
                       <a
                         href={`/blog/${post.subdomain}/${post.slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 hover:bg-white/10 rounded transition"
-                        title="View post"
-                      >
-                        <Eye className="w-4 h-4 text-white/60" />
-                      </a>
-                    )}
-                    <button
-                      onClick={() => handleEdit(post)}
-                      className="p-2 hover:bg-white/10 rounded transition"
-                      title="Edit post"
-                    >
-                      <Edit className="w-4 h-4 text-white/60" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(post.id)}
-                      className="p-2 hover:bg-red-500/20 rounded transition"
-                      title="Delete post"
-                    >
-                      <Trash2 className="w-4 h-4 text-red-400" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* THE LOST ARCHIVES Posts Section (Admin's regular posts - no subdomain) */}
-      {adminPosts.filter(post => !post.subdomain).length > 0 && (
-        <div className="bg-black/50 border border-white/10 rounded-none p-6">
-          <h3 className="text-lg font-bold text-white mb-4">THE LOST ARCHIVES Posts</h3>
-          <div className="space-y-4">
-            {adminPosts.filter(post => !post.subdomain).map((post) => (
-              <div
-                key={post.id}
-                className="bg-black/30 border border-white/10 rounded-none p-4 hover:border-white/20 transition"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h4 className="text-white font-bold text-lg mb-2">{post.title}</h4>
-                    <div className="flex items-center gap-4 text-sm text-white/60 mb-2">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {formatDate(post.published_at || post.created_at)}
-                      </span>
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        post.published
-                          ? 'bg-green-400/20 text-green-400 border border-green-400/20'
-                          : 'bg-yellow-400/20 text-yellow-400 border border-yellow-400/20'
-                      }`}>
-                        {post.published ? 'Published' : 'Draft'}
-                      </span>
-                      {post.subdomain && (
-                        <span className="px-2 py-1 rounded text-xs bg-blue-400/20 text-blue-400 border border-blue-400/20">
-                          Book Club
-                        </span>
-                      )}
-                    </div>
-                    {post.excerpt && (
-                      <p className="text-white/70 text-sm">{post.excerpt.substring(0, 100)}...</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 ml-4">
-                    {post.published && (
-                      <a
-                        href={post.subdomain ? `/blog/${post.subdomain}/${post.slug}` : `/thelostarchives/${post.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="p-2 hover:bg-white/10 rounded transition"
