@@ -194,24 +194,23 @@ export default function Layout() {
   }, [])
 
   const handleSubmenuMouseEnter = useCallback((submenuType: 'more' | 'account' | 'archives') => {
+    // Close other submenus when opening one (accordion style)
     if (submenuType === 'more') {
       setMoreMenuOpen(true)
+      setAccountMenuOpen(false)
+      setArchivesMenuOpen(false)
     } else if (submenuType === 'account') {
       setAccountMenuOpen(true)
+      setMoreMenuOpen(false)
+      setArchivesMenuOpen(false)
     } else if (submenuType === 'archives') {
       setArchivesMenuOpen(true)
+      setMoreMenuOpen(false)
+      setAccountMenuOpen(false)
     }
   }, [])
 
-  const handleSubmenuMouseLeave = useCallback((submenuType: 'more' | 'account' | 'archives') => {
-    if (submenuType === 'more') {
-      setMoreMenuOpen(false)
-    } else if (submenuType === 'account') {
-      setAccountMenuOpen(false)
-    } else if (submenuType === 'archives') {
-      setArchivesMenuOpen(false)
-    }
-  }, [])
+  // Removed handleSubmenuMouseLeave to prevent menu resizing while navigating
 
   const tierColors = {
     free: 'text-white/60',
@@ -293,14 +292,12 @@ export default function Layout() {
                     className="menu-item menu-toggle-section"
                     onClick={() => setArchivesMenuOpen(!archivesMenuOpen)}
                     onMouseEnter={() => handleSubmenuMouseEnter('archives')}
-                    onMouseLeave={() => handleSubmenuMouseLeave('archives')}
                   >
                     THE LOST ARCHIVES {archivesMenuOpen ? '▼' : '▶'}
                   </button>
                   <div 
                     className={`menu-subsection ${archivesMenuOpen ? 'open' : ''}`}
                     onMouseEnter={() => handleSubmenuMouseEnter('archives')}
-                    onMouseLeave={() => handleSubmenuMouseLeave('archives')}
                   >
                     <Link 
                       to="/thelostarchives" 
@@ -338,14 +335,12 @@ export default function Layout() {
                     className="menu-item menu-toggle-section"
                     onClick={() => setMoreMenuOpen(!moreMenuOpen)}
                     onMouseEnter={() => handleSubmenuMouseEnter('more')}
-                    onMouseLeave={() => handleSubmenuMouseLeave('more')}
                   >
                     MORE {moreMenuOpen ? '▼' : '▶'}
                   </button>
                   <div 
                     className={`menu-subsection ${moreMenuOpen ? 'open' : ''}`}
                     onMouseEnter={() => handleSubmenuMouseEnter('more')}
-                    onMouseLeave={() => handleSubmenuMouseLeave('more')}
                   >
                     <Link 
                       to="/about" 
