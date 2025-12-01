@@ -661,6 +661,12 @@ ADD COLUMN IF NOT EXISTS blog_title TEXT;
 ALTER TABLE user_subdomains 
 ADD COLUMN IF NOT EXISTS blog_title_display TEXT;
 
+-- Migrate existing blog_title values to blog_title_display if blog_title_display is NULL
+-- This ensures existing titles display correctly
+UPDATE user_subdomains 
+SET blog_title_display = blog_title 
+WHERE blog_title IS NOT NULL AND blog_title_display IS NULL;
+
 -- Add the author_name column if it doesn't exist (for displaying username on blog page)
 ALTER TABLE user_subdomains 
 ADD COLUMN IF NOT EXISTS author_name TEXT;

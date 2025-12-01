@@ -137,19 +137,38 @@ export default function Profile() {
     try {
       // Normalize the styled title for database storage
       const normalizedTitle = normalizeBlogTitle(blogTitleDisplay);
+      const displayTitle = blogTitleDisplay.trim() || null;
+      
+      // Try to update both fields
+      const updateData: { blog_title?: string | null; blog_title_display?: string | null } = {
+        blog_title: normalizedTitle || null
+      };
+      
+      // Only include blog_title_display if the column might exist
+      // If it doesn't exist, the migration needs to be run first
+      try {
+        updateData.blog_title_display = displayTitle;
+      } catch (e) {
+        // Column might not exist yet - that's okay, migration will add it
+      }
       
       const { error } = await supabase
         .from('user_subdomains')
-        .update({ 
-          blog_title: normalizedTitle || null,
-          blog_title_display: blogTitleDisplay.trim() || null
-        })
+        .update(updateData)
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        // If error is about missing column, provide helpful message
+        if (error.message?.includes('blog_title_display') || error.message?.includes('column')) {
+          throw new Error('The blog_title_display column does not exist yet. Please run the SQL migration from /sql first, then try saving again.');
+        }
+        throw error;
+      }
 
-      // Update local state with normalized version
+      // Update local state
       setBlogTitle(normalizedTitle);
+      // Reload to get the saved display version
+      await loadUserSubdomain();
       
       success('Blog title updated successfully');
       setIsEditingBlogTitle(false);
