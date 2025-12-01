@@ -18,6 +18,7 @@ interface BlogPost {
   seo_title: string | null;
   seo_description: string | null;
   author_id: string | null;
+  author_name: string | null;
 }
 
 export default function UserBlog() {
@@ -27,6 +28,7 @@ export default function UserBlog() {
   const [error, setError] = useState<string | null>(null);
   const [userInfo, setUserInfo] = useState<{ name?: string; email?: string } | null>(null);
   const [blogTitle, setBlogTitle] = useState<string | null>(null);
+  const [authorName, setAuthorName] = useState<string | null>(null);
 
   useEffect(() => {
     if (subdomain) {
@@ -42,7 +44,7 @@ export default function UserBlog() {
       // Load posts for this subdomain
       const { data: postsData, error: postsError } = await supabase
         .from('blog_posts')
-        .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, author_id')
+        .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, author_id, author_name')
         .eq('subdomain', userSubdomain)
         .eq('published', true)
         .order('published_at', { ascending: false })
@@ -57,10 +59,15 @@ export default function UserBlog() {
 
       setPosts(postsData || []);
 
-      // Load blog title from user_subdomains
+      // Get author_name from the first post if available
+      if (postsData && postsData.length > 0 && postsData[0].author_name) {
+        setAuthorName(postsData[0].author_name);
+      }
+
+      // Load blog title and user info from user_subdomains
       const { data: subdomainData } = await supabase
         .from('user_subdomains')
-        .select('blog_title')
+        .select('blog_title, user_id')
         .eq('subdomain', userSubdomain)
         .maybeSingle();
 
@@ -68,14 +75,19 @@ export default function UserBlog() {
         setBlogTitle(subdomainData.blog_title);
       }
 
-      // Try to get user info from the first post's author_id
-      if (postsData && postsData.length > 0 && postsData[0].author_id) {
-        // Note: We can't directly query auth.users, but we can try to get email from user metadata
-        // For now, we'll just use the subdomain as the display name
-        setUserInfo({ name: userSubdomain });
-      } else {
-        setUserInfo({ name: userSubdomain });
+      // Try to get author_name from blog posts if not already set
+      if (!authorName && postsData && postsData.length > 0) {
+        // Check all posts for author_name
+        for (const post of postsData) {
+          if (post.author_name) {
+            setAuthorName(post.author_name);
+            break;
+          }
+        }
       }
+
+      // Set user info
+      setUserInfo({ name: authorName || userSubdomain });
     } catch (err: any) {
       console.error('Error loading user blog:', err);
       setError(err.message || 'Failed to load blog');
@@ -121,13 +133,18 @@ export default function UserBlog() {
     );
   }
 
-  const displayName = userInfo?.name || subdomain || 'User';
+  // Use blog_title if set, otherwise use author_name, otherwise fallback to subdomain
+  const displayTitle = blogTitle || authorName || subdomain || 'User';
   const pageTitle = blogTitle 
     ? `${blogTitle} | BOOK CLUB | THE LOST ARCHIVES`
-    : `${displayName}'s Blog | THE LOST ARCHIVES`;
+    : authorName
+    ? `${authorName} | BOOK CLUB | THE LOST ARCHIVES`
+    : `${subdomain}'s Blog | THE LOST ARCHIVES`;
   const blogDescription = blogTitle
     ? `Articles and insights from ${blogTitle} on THE LOST ARCHIVES BOOK CLUB.`
-    : `Articles and insights from ${displayName} on THE LOST ARCHIVES.`;
+    : authorName
+    ? `Articles and insights from ${authorName} on THE LOST ARCHIVES BOOK CLUB.`
+    : `Articles and insights from ${subdomain} on THE LOST ARCHIVES.`;
 
   return (
     <>
@@ -142,18 +159,10 @@ export default function UserBlog() {
       </Helmet>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-8">
-          {blogTitle ? (
-            <>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-2 tracking-wide">
-                {blogTitle}
-              </h1>
-              <p className="text-white/60 text-lg md:text-xl mb-4">BOOK CLUB</p>
-            </>
-          ) : (
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 tracking-wide">
-              {displayName}'s Blog
-            </h1>
-          )}
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-2 tracking-wide">
+            {displayTitle}
+          </h1>
+          <p className="text-white/60 text-lg md:text-xl mb-4">BOOK CLUB</p>
           <Link
             to="/thelostarchives"
             className="text-white/60 hover:text-white text-sm transition"
