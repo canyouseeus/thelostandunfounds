@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, Copy, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from './Toast';
@@ -29,6 +29,7 @@ export default function StorefrontRegistration({
   const [storefrontId, setStorefrontId] = useState('');
   const [storefrontError, setStorefrontError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (isOpen && user) {
@@ -167,7 +168,8 @@ export default function StorefrontRegistration({
 
   if (!isOpen) return null;
 
-  const blogUrl = `${subdomain}.thelostandunfounds.com`;
+  // Generate blog URL in path-based format (NOT subdomain)
+  const blogUrl = subdomain ? `https://www.thelostandunfounds.com/blog/${subdomain}` : '';
 
   return (
     <div 
@@ -199,13 +201,54 @@ export default function StorefrontRegistration({
         </div>
 
         <div className="space-y-4">
-          <div className="bg-green-900/20 border border-green-500/30 rounded-none p-4">
-            <p className="text-white/80 text-sm mb-1">Your Blog URL:</p>
-            <p className="text-white/90 font-mono text-sm">{blogUrl}</p>
-            <p className="text-white/50 text-xs mt-2">
-              Use this URL when registering for Amazon Associates: <a href="https://affiliate-program.amazon.com/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">affiliate-program.amazon.com</a>
-            </p>
-          </div>
+          {blogUrl && (
+            <div className="bg-green-900/20 border border-green-500/30 rounded-none p-4">
+              <p className="text-white/80 text-sm mb-2">Your Blog URL:</p>
+              <div className="flex gap-2 mb-3">
+                <input
+                  type="text"
+                  value={blogUrl}
+                  readOnly
+                  className="flex-1 px-4 py-2 bg-black/50 border border-white/20 rounded-none text-white text-sm font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(blogUrl);
+                      setCopied(true);
+                      success('Blog URL copied to clipboard!');
+                      setTimeout(() => setCopied(false), 2000);
+                    } catch (err) {
+                      showError('Failed to copy URL. Please copy manually.');
+                    }
+                  }}
+                  className="bg-white text-black px-4 py-2 rounded-none hover:bg-white/90 transition-colors font-semibold flex items-center gap-2"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      Copy
+                    </>
+                  )}
+                </button>
+              </div>
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-none p-3 mt-3">
+                <p className="text-blue-300 text-xs font-semibold mb-1.5">📋 For Amazon Associates Registration:</p>
+                <ol className="text-white/80 text-xs space-y-1 list-decimal list-inside">
+                  <li>Click the "Copy" button above to copy your blog URL</li>
+                  <li>Go to <a href="https://affiliate-program.amazon.com/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">affiliate-program.amazon.com</a></li>
+                  <li>When asked for your website URL, paste: <code className="block mt-1 px-2 py-1 bg-black/50 border border-white/10 rounded-none font-mono text-xs break-all">{blogUrl}</code></li>
+                  <li>Complete your Amazon Associates registration</li>
+                </ol>
+              </div>
+            </div>
+          )}
 
           <div>
             <label className="block text-white/80 text-sm mb-2">
