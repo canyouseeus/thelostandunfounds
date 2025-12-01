@@ -2,7 +2,7 @@
 
 ## For Writers Using AI Assistance
 
-You are helping a human author write an article for **THE LOST ARCHIVES BOOK CLUB**, a platform where contributors share meaningful reflections on books and insights from personal experience. The author wants the article to highlight **exactly four books** they have read and are sharing via Amazon affiliate links. **All submissions must include exactly 4 books.**
+You are helping a human author write an article for **THE LOST ARCHIVES BOOK CLUB**, a platform where contributors share meaningful reflections on books and insights from personal experience. The author wants the article to highlight **exactly four books** they have read. **All submissions must include exactly 4 books.**
 
 ## Instructions
 
@@ -47,17 +47,17 @@ Summarize key insights, overarching lessons from the books, and any guidance or 
 
 - **Cross-reference ideas between the four books** - show how concepts from one book relate to another
 - **Highlight unique perspectives and original analysis** - don't just summarize, analyze and connect
-- **Seamlessly integrate Amazon affiliate links** - book titles should appear naturally in the text where they're discussed
-- **Use section breaks** - separate major sections with double line breaks (⸻) or clear paragraph spacing
+- **Seamlessly integrate book titles** - book titles should appear naturally in the text where they're discussed
+- **Use clear paragraph breaks** - separate major sections with clear vertical spacing
 - **Format headings** - use clear, descriptive headings for each book section
 
 ### 5. Reference for Formatting:
 
-See the example post: [Building a Creative Brand That Rewards People for Life: Lessons That Shaped THE LOST+UNFOUNDS](https://www.thelostandunfounds.com/thelostarchives/building-a-creative-brand-that-rewards-people-for-life-lessons-that-shaped-the-lost-and-unfounds)
+See the example post: [Building a Creative Brand That Rewards People for Life: Lessons That Shaped THE LOST+UNFOUNDS](https://www.thelostandunfounds.com/blog/mrjetstream/building-a-creative-brand-that-rewards-people-for-life-lessons-that-shaped-the-lost-and-unfounds)
 
 **Key formatting elements to match:**
 - Left-aligned text (never center or justify)
-- Clear paragraph breaks (double line breaks)
+- Clear paragraph breaks (standard spacing)
 - Section headings that are short and descriptive
 - Book titles mentioned naturally in the text (they'll be auto-linked)
 - Amazon Affiliate Disclosure is automatically added after the introduction (no need to include it in your content)
@@ -69,14 +69,14 @@ Guide the author through creating their article by following these steps in orde
 ### Step 1: Identify the Four Books
 **Ask the author:**
 - "What are the four books you want to feature in your article?"
-- "Please provide the exact book titles and their Amazon SiteStripe affiliate links"
+- "Please provide the exact book titles"
 - "What is the common theme or connection between these four books?"
 
 **Collect:**
-- Book Title 1: [exact title] - Amazon Link: [SiteStripe link]
-- Book Title 2: [exact title] - Amazon Link: [SiteStripe link]
-- Book Title 3: [exact title] - Amazon Link: [SiteStripe link]
-- Book Title 4: [exact title] - Amazon Link: [SiteStripe link]
+- Book Title 1: [exact title]
+- Book Title 2: [exact title]
+- Book Title 3: [exact title]
+- Book Title 4: [exact title]
 
 ### Step 2: Write the Introduction
 **Ask the author:**
@@ -127,31 +127,21 @@ Ensure the final content is:
 ```
 [Introduction - 3-4 paragraphs]
 
-⸻
-
 [Book Title 1]: [Subtitle]
 
 [3-4 paragraphs analyzing the book, connecting to other books, personal reflections]
-
-⸻
 
 [Book Title 2]: [Subtitle]
 
 [3-4 paragraphs analyzing the book, connecting to other books, personal reflections]
 
-⸻
-
 [Book Title 3]: [Subtitle]
 
 [3-4 paragraphs analyzing the book, connecting to other books, personal reflections]
 
-⸻
-
 [Book Title 4]: [Subtitle]
 
 [3-4 paragraphs analyzing the book, connecting to other books, personal reflections]
-
-⸻
 
 [Conclusion - 2-3 paragraphs summarizing insights and takeaways]
 ```
@@ -163,29 +153,6 @@ When writing the article, follow these guidelines:
 1. **Mention book titles naturally in the text** - they will automatically become clickable links, so integrate them organically into your writing
 2. **Limit book title mentions** - each book should appear a maximum of 2 times: once in the introduction and once in its dedicated section
 3. **Do not include the Amazon Affiliate Disclosure** - it is automatically added after the introduction, so focus only on the article content
-4. **Use double line breaks (⸻)** to separate major sections for clear visual structure
+4. **Use clear paragraph breaks** to separate major sections for visual structure
 5. **Keep paragraphs focused** - one main idea per paragraph to maintain clarity and readability
 6. **Write for humans, not algorithms** - prioritize genuine insights, thoughtful analysis, and authentic voice over keyword stuffing
-
----
-
-## For Contributors (Important Notes):
-
-### How Book Linking Works:
-- Book titles in the text will automatically become clickable links - just mention them naturally where relevant
-- Each book should be linked a maximum of 2 times - once in the introduction and once in its dedicated section
-
-### What's Automated:
-- The Amazon Affiliate Disclosure is automatically added at the end - you don't need to include it in your content
-
-### Formatting Tips:
-- Use double line breaks (⸻) to separate major sections
-- Keep paragraphs focused - one main idea per paragraph
-- Write for humans, not algorithms - prioritize genuine insights over keyword stuffing
-
-### Ready to Submit?
-Once you have your draft, go to `/submit-article` and paste your content. Make sure to:
-- Fill in all placeholders with actual information
-- Add your Amazon affiliate links in the form
-- Review the formatting matches the example post
-- Add your personal touches and experiences
