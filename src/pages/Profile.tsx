@@ -76,7 +76,7 @@ export default function Profile() {
     try {
       const { data, error } = await supabase
         .from('user_subdomains')
-        .select('subdomain, blog_title')
+        .select('subdomain, blog_title, author_name')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -86,6 +86,13 @@ export default function Profile() {
         }
         if (data.blog_title) {
           setBlogTitle(data.blog_title);
+        }
+        // Update author_name in user_subdomains if it's not set but we have it in metadata
+        if (!data.author_name && user.user_metadata?.author_name) {
+          await supabase
+            .from('user_subdomains')
+            .update({ author_name: user.user_metadata.author_name })
+            .eq('user_id', user.id);
         }
       }
     } catch (err) {

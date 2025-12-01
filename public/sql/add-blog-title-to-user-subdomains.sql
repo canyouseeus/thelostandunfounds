@@ -1,20 +1,25 @@
--- Add blog_title field to user_subdomains table
--- Allows users to set a custom title for their blog
+-- Add blog_title and author_name fields to user_subdomains table
+-- Allows users to set a custom title for their blog and stores their author name
 
 -- Add the blog_title column if it doesn't exist
 ALTER TABLE user_subdomains 
 ADD COLUMN IF NOT EXISTS blog_title TEXT;
 
--- Update RLS policy to allow users to update their own blog_title
+-- Add the author_name column if it doesn't exist (for displaying username on blog page)
+ALTER TABLE user_subdomains 
+ADD COLUMN IF NOT EXISTS author_name TEXT;
+
+-- Update RLS policy to allow users to update their own blog_title and author_name
 -- Drop the existing update policy
 DROP POLICY IF EXISTS "Users can update their own blog title" ON user_subdomains;
 
--- Create new policy that allows users to update their own blog_title
+-- Create new policy that allows users to update their own blog_title and author_name
 CREATE POLICY "Users can update their own blog title"
   ON user_subdomains
   FOR UPDATE
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
--- Add comment to document the field
+-- Add comments to document the fields
 COMMENT ON COLUMN user_subdomains.blog_title IS 'Custom title for the user''s blog. Displayed as "[BLOG TITLE] BOOK CLUB" on the blog page.';
+COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from user metadata. Displayed on blog page if blog_title is not set.';

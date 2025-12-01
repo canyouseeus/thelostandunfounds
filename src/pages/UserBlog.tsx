@@ -93,15 +93,20 @@ export default function UserBlog() {
         }
       }
 
-      // Load blog title and try to get author_name from user metadata via user_subdomains
+      // Load blog title and author_name from user_subdomains
       const { data: subdomainData } = await supabase
         .from('user_subdomains')
-        .select('blog_title, user_id')
+        .select('blog_title, author_name, user_id')
         .eq('subdomain', userSubdomain)
         .maybeSingle();
 
       if (subdomainData?.blog_title) {
         setBlogTitle(subdomainData.blog_title);
+      }
+      
+      // Get author_name from user_subdomains if available
+      if (subdomainData?.author_name && !authorName) {
+        setAuthorName(subdomainData.author_name);
       }
 
       // If we have posts but no author_name yet, try to get it from the posts
