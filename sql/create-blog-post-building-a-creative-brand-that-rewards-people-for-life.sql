@@ -5,6 +5,7 @@
 DO $$
 DECLARE
   admin_user_id UUID;
+  existing_post_id UUID;
   has_author_id_field BOOLEAN;
   has_user_id_field BOOLEAN;
   user_column_name TEXT;
