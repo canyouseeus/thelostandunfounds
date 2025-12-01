@@ -19,6 +19,7 @@ export default function Layout() {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const [archivesMenuOpen, setArchivesMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const isOpeningModalRef = useRef(false)
   const justClickedRef = useRef(false)
   const menuCloseTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -154,18 +155,31 @@ export default function Layout() {
   const handleMenuMouseLeave = useCallback(() => {
     // Add delay before closing - check if mouse is still over menu before closing
     menuCloseTimeoutRef.current = setTimeout(() => {
-      // Check if mouse is still over the menu area
-      if (mousePositionRef.current && menuRef.current) {
-        const rect = menuRef.current.getBoundingClientRect()
+      // Check if mouse is still over the menu area (button OR dropdown)
+      if (mousePositionRef.current) {
         const { x, y } = mousePositionRef.current
+        let isOver = false
+
+        // Check button/container
+        if (menuRef.current) {
+          const rect = menuRef.current.getBoundingClientRect()
+          if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+            isOver = true
+          }
+        }
+
+        // Check dropdown
+        if (!isOver && dropdownRef.current) {
+          const rect = dropdownRef.current.getBoundingClientRect()
+          // Add a small buffer (20px) around dropdown to handle fast movements/gaps
+          const buffer = 20
+          if (x >= rect.left - buffer && x <= rect.right + buffer && y >= rect.top - buffer && y <= rect.bottom + buffer) {
+            isOver = true
+          }
+        }
         
-        // If mouse is still within menu bounds, don't close
-        if (
-          x >= rect.left &&
-          x <= rect.right &&
-          y >= rect.top &&
-          y <= rect.bottom
-        ) {
+        // If mouse is still within bounds, don't close
+        if (isOver) {
           menuCloseTimeoutRef.current = null
           return
         }
@@ -176,7 +190,7 @@ export default function Layout() {
       setAccountMenuOpen(false)
       setArchivesMenuOpen(false)
       menuCloseTimeoutRef.current = null
-    }, 300) // 300ms delay - check actual position before closing
+    }, 300)
   }, [])
 
   const handleSubmenuMouseEnter = useCallback((submenuType: 'more' | 'account' | 'archives') => {
@@ -246,6 +260,7 @@ export default function Layout() {
                   </button>
                 <div 
                   className={`menu-dropdown ${menuOpen ? 'open' : ''}`}
+                  ref={dropdownRef}
                   onMouseEnter={handleMenuMouseEnter}
                   onMouseLeave={handleMenuMouseLeave}
                 >
