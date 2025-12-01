@@ -423,6 +423,26 @@ END $$;`;
         console.error('Could not fetch Our Tech Stack blog post file:', fetchError);
       }
 
+      // Load create-blog-post-join-the-lost-archives-book-club script
+      let bookClubContent = '';
+      try {
+        const bookClubResponse = await fetch('/sql/create-blog-post-join-the-lost-archives-book-club.sql');
+        if (bookClubResponse.ok) {
+          const contentType = bookClubResponse.headers.get('content-type');
+          bookClubContent = await bookClubResponse.text();
+          console.log('Book Club script loaded:', {
+            ok: bookClubResponse.ok,
+            contentType,
+            contentLength: bookClubContent.length,
+            startsWithSQL: bookClubContent.trim().startsWith('--')
+          });
+        } else {
+          console.warn('Book Club script fetch failed:', bookClubResponse.status, bookClubResponse.statusText);
+        }
+      } catch (fetchError) {
+        console.error('Could not fetch Join THE LOST ARCHIVES BOOK CLUB blog post file:', fetchError);
+      }
+
       // Load check-blog-post-exists script (with fallback)
       let checkPostContent = '';
       try {
@@ -774,6 +794,13 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
           content: migrationContent,
           description: 'Adds missing fields (published, SEO fields, og_image_url) to blog_posts table. Handles missing author_id column. Run this FIRST in Supabase SQL Editor.',
           createdAt: getScriptTimestamp('blog-schema-migration.sql')
+        },
+        {
+          name: 'Join THE LOST ARCHIVES BOOK CLUB and Share Your Love of Books',
+          filename: 'create-blog-post-join-the-lost-archives-book-club.sql',
+          content: bookClubContent || '// File not found - check public/sql folder',
+          description: 'Creates the blog post "Join THE LOST ARCHIVES BOOK CLUB and Share Your Love of Books" - inviting readers and writers to join the book club community, share insights, and earn as Amazon affiliates. Run this AFTER the migration script. Works with any schema version.',
+          createdAt: getScriptTimestamp('create-blog-post-join-the-lost-archives-book-club.sql')
         },
         {
           name: 'Building a Creative Brand That Rewards People for Life: Lessons That Shaped THE LOST+UNFOUNDS',
