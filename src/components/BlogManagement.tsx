@@ -503,10 +503,10 @@ export default function BlogManagement() {
         </div>
       )}
 
-      {/* Admin Posts Section (Admin's regular posts - no subdomain) */}
+      {/* THE LOST ARCHIVES Posts Section (Admin's regular posts - no subdomain) */}
       {adminPosts.filter(post => !post.subdomain).length > 0 && (
         <div className="bg-black/50 border border-white/10 rounded-none p-6">
-          <h3 className="text-lg font-bold text-white mb-4">My Posts (Admin)</h3>
+          <h3 className="text-lg font-bold text-white mb-4">THE LOST ARCHIVES Posts</h3>
           <div className="space-y-4">
             {adminPosts.filter(post => !post.subdomain).map((post) => (
               <div
@@ -652,72 +652,9 @@ export default function BlogManagement() {
         )}
       </div>
 
-      {/* Regular Posts Section */}
-      {regularPosts.length > 0 && (
-        <div className="bg-black/50 border border-white/10 rounded-none p-6">
-          <h3 className="text-lg font-bold text-white mb-4">Regular Posts</h3>
-          <div className="space-y-4">
-            {regularPosts.map((post) => (
-              <div
-                key={post.id}
-                className="bg-black/30 border border-white/10 rounded-none p-4 hover:border-white/20 transition"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h4 className="text-white font-bold text-lg mb-2">{post.title}</h4>
-                    <div className="flex items-center gap-4 text-sm text-white/60 mb-2">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {formatDate(post.published_at || post.created_at)}
-                      </span>
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        post.published
-                          ? 'bg-green-400/20 text-green-400 border border-green-400/20'
-                          : 'bg-yellow-400/20 text-yellow-400 border border-yellow-400/20'
-                      }`}>
-                        {post.published ? 'Published' : 'Draft'}
-                      </span>
-                    </div>
-                    {post.excerpt && (
-                      <p className="text-white/70 text-sm">{post.excerpt.substring(0, 100)}...</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 ml-4">
-                    {post.published && (
-                      <a
-                        href={`/thelostarchives/${post.slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 hover:bg-white/10 rounded transition"
-                        title="View post"
-                      >
-                        <Eye className="w-4 h-4 text-white/60" />
-                      </a>
-                    )}
-                    <button
-                      onClick={() => handleEdit(post)}
-                      className="p-2 hover:bg-white/10 rounded transition"
-                      title="Edit post"
-                    >
-                      <Edit className="w-4 h-4 text-white/60" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(post.id)}
-                      className="p-2 hover:bg-red-500/20 rounded transition"
-                      title="Delete post"
-                    >
-                      <Trash2 className="w-4 h-4 text-red-400" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Empty State */}
-      {adminPosts.length === 0 && bookClubPosts.length === 0 && regularPosts.length === 0 && (
+      {adminPosts.length === 0 && bookClubPosts.length === 0 && (
         <div className="bg-black/50 border border-white/10 rounded-none p-6">
           <p className="text-white/60">No posts yet.</p>
         </div>
