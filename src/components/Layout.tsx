@@ -22,6 +22,7 @@ export default function Layout() {
   const isOpeningModalRef = useRef(false)
   const justClickedRef = useRef(false)
   const menuCloseTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const mousePositionRef = useRef<{ x: number; y: number } | null>(null)
   const { user, tier, signOut, loading, clearAuthStorage } = useAuth()
   const navigate = useNavigate()
   
@@ -128,6 +129,15 @@ export default function Layout() {
     navigate('/')
   }
 
+  // Track mouse position globally
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      mousePositionRef.current = { x: e.clientX, y: e.clientY }
+    }
+    document.addEventListener('mousemove', handleMouseMove)
+    return () => document.removeEventListener('mousemove', handleMouseMove)
+  }, [])
+
   // Handle menu hover behavior
   const handleMenuMouseEnter = useCallback(() => {
     // Clear any pending close timeout
@@ -142,14 +152,31 @@ export default function Layout() {
   }, [])
 
   const handleMenuMouseLeave = useCallback(() => {
-    // Add delay before closing - this allows mouse to move between button and dropdown
+    // Add delay before closing - check if mouse is still over menu before closing
     menuCloseTimeoutRef.current = setTimeout(() => {
+      // Check if mouse is still over the menu area
+      if (mousePositionRef.current && menuRef.current) {
+        const rect = menuRef.current.getBoundingClientRect()
+        const { x, y } = mousePositionRef.current
+        
+        // If mouse is still within menu bounds, don't close
+        if (
+          x >= rect.left &&
+          x <= rect.right &&
+          y >= rect.top &&
+          y <= rect.bottom
+        ) {
+          menuCloseTimeoutRef.current = null
+          return
+        }
+      }
+      
       setMenuOpen(false)
       setMoreMenuOpen(false)
       setAccountMenuOpen(false)
       setArchivesMenuOpen(false)
       menuCloseTimeoutRef.current = null
-    }, 500) // 500ms delay - enough time to move mouse across gap
+    }, 300) // 300ms delay - check actual position before closing
   }, [])
 
   const handleSubmenuMouseEnter = useCallback((submenuType: 'more' | 'account' | 'archives') => {
