@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { isAdmin } from '../utils/admin'
 import AuthModal from './auth/AuthModal'
+import { supabase } from '../lib/supabase'
 
 export default function Layout() {
   const location = useLocation()
@@ -13,6 +14,7 @@ export default function Layout() {
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
   const [userIsAdmin, setUserIsAdmin] = useState(false)
+  const [userSubdomain, setUserSubdomain] = useState<string | null>(null)
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const [archivesMenuOpen, setArchivesMenuOpen] = useState(false)
@@ -21,6 +23,25 @@ export default function Layout() {
   const justClickedRef = useRef(false)
   const { user, tier, signOut, loading, clearAuthStorage } = useAuth()
   const navigate = useNavigate()
+  
+  // Load user subdomain for profile link
+  useEffect(() => {
+    if (user) {
+      supabase
+        .from('user_subdomains')
+        .select('subdomain')
+        .eq('user_id', user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data?.subdomain) {
+            setUserSubdomain(data.subdomain);
+          }
+        })
+        .catch(() => {
+          // Ignore errors
+        });
+    }
+  }, [user]);
 
   // Only show HOME and SHOP in menu for now (MORE menu always visible)
   const showLimitedMenu = true
@@ -325,7 +346,7 @@ export default function Layout() {
                     <>
                       <div className="border-t border-white/10 my-2"></div>
                 <Link
-                  to={userIsAdmin ? "/admin" : "/bookclubprofile"}
+                  to={userIsAdmin ? "/admin" : userSubdomain ? `/${userSubdomain}/bookclubprofile` : "/bookclubprofile"}
                   className="menu-item"
                   onClick={() => {
                     setMenuOpen(false);

@@ -10,15 +10,28 @@ ALTER TABLE user_subdomains
 ADD COLUMN IF NOT EXISTS author_name TEXT;
 
 -- Update RLS policy to allow users to update their own blog_title and author_name
--- Drop the existing update policy
+-- Drop existing update policies to avoid conflicts
 DROP POLICY IF EXISTS "Users can update their own blog title" ON user_subdomains;
+DROP POLICY IF EXISTS "Admins can update subdomains" ON user_subdomains;
 
 -- Create new policy that allows users to update their own blog_title and author_name
+-- This avoids infinite recursion by not checking user_roles
 CREATE POLICY "Users can update their own blog title"
   ON user_subdomains
   FOR UPDATE
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
+
+-- Recreate admin policy (for subdomain changes if needed) - check email directly to avoid recursion
+CREATE POLICY "Admins can update subdomains"
+  ON user_subdomains
+  FOR UPDATE
+  USING (
+    auth.uid() IS NOT NULL AND EXISTS (
+      SELECT 1 FROM auth.users
+      WHERE id = auth.uid() AND (email = 'admin@thelostandunfounds.com' OR email = 'thelostandunfounds@gmail.com')
+    )
+  );
 
 -- Add comments to document the fields
 COMMENT ON COLUMN user_subdomains.blog_title IS 'Custom title for the user''s blog. Displayed as "[BLOG TITLE] BOOK CLUB" on the blog page.';

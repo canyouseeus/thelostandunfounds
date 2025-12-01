@@ -76,7 +76,7 @@ function App() {
           <Route index element={<ToolsDashboard />} />
           <Route path="tiktok-downloader" element={<TikTokDownloader />} />
         </Route>
-        <Route path="/bookclubprofile" element={<Layout />}>
+        <Route path="/:username/bookclubprofile" element={<Layout />}>
           <Route index element={<Profile />} />
         </Route>
         <Route path="/settings" element={<Layout />}>

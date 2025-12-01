@@ -71,6 +71,7 @@ export default function Admin() {
   const { user, loading: authLoading } = useAuth();
   const { success, error: showError } = useToast();
   const navigate = useNavigate();
+  const [userSubdomain, setUserSubdomain] = useState<string | null>(null);
   const [adminStatus, setAdminStatus] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -490,7 +491,7 @@ export default function Admin() {
           </div>
               <div className="flex items-center gap-3">
                 <Link
-                  to="/bookclubprofile"
+                  to={userSubdomain ? `/${userSubdomain}/bookclubprofile` : "/bookclubprofile"}
                   className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition flex items-center gap-2"
                 >
                   <User className="w-4 h-4" />

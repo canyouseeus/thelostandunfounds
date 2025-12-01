@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
 import { User, Mail, Calendar, Shield, Key, BookOpen, FileText, ExternalLink } from 'lucide-react';
@@ -24,6 +24,7 @@ interface BlogPost {
 }
 
 export default function Profile() {
+  const { username } = useParams<{ username: string }>();
   const { user, tier, loading: authLoading } = useAuth();
   const { success, error: showError } = useToast();
   const navigate = useNavigate();
@@ -69,6 +70,19 @@ export default function Profile() {
       loadUserPosts();
     }
   }, [user]);
+
+  // Redirect to correct URL after subdomain is loaded
+  useEffect(() => {
+    if (user && userSubdomain) {
+      if (username && username !== userSubdomain) {
+        // If URL has wrong username, redirect to correct one
+        navigate(`/${userSubdomain}/bookclubprofile`, { replace: true });
+      } else if (!username) {
+        // If no username in URL but we have subdomain, redirect to include it
+        navigate(`/${userSubdomain}/bookclubprofile`, { replace: true });
+      }
+    }
+  }, [user, username, userSubdomain, navigate]);
 
   const loadUserSubdomain = async () => {
     if (!user) return;
