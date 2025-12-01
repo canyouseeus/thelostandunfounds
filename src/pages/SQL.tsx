@@ -667,6 +667,7 @@ DROP POLICY IF EXISTS "Admins can update subdomains" ON user_subdomains;
 
 -- Create new policy that allows users to update their own blog_title and author_name
 -- This avoids infinite recursion by not checking user_roles
+-- Users can update their own row (for blog_title and author_name)
 CREATE POLICY "Users can update their own blog title"
   ON user_subdomains
   FOR UPDATE
@@ -678,7 +679,7 @@ CREATE POLICY "Users can update their own blog title"
 CREATE OR REPLACE FUNCTION is_admin_user()
 RETURNS BOOLEAN AS $$
 BEGIN
-  -- Check if current user is admin by checking their email in metadata
+  -- Check if current user is admin by checking their email in JWT
   -- This uses auth.jwt() which is accessible without querying auth.users table
   RETURN (
     (auth.jwt() ->> 'email')::text IN ('admin@thelostandunfounds.com', 'thelostandunfounds@gmail.com')
@@ -686,6 +687,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Admin policy allows admins to update any row (including subdomain)
 CREATE POLICY "Admins can update subdomains"
   ON user_subdomains
   FOR UPDATE
