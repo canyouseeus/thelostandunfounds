@@ -5,6 +5,7 @@
 DO $$
 DECLARE
   admin_user_id UUID;
+  existing_post_id UUID;
   has_published_field BOOLEAN;
   has_author_id_field BOOLEAN;
   has_user_id_field BOOLEAN;
@@ -51,7 +52,12 @@ BEGIN
     -- If it doesn't, we need to find any user or raise an error
     -- For now, we'll allow NULL if the column permits it
     RAISE NOTICE 'Admin user not found. Will use NULL for author_id/user_id if column allows it.';
-  END IF;
+
+  -- Check if post already exists
+  SELECT id INTO existing_post_id
+  FROM blog_posts
+  WHERE slug = 'artificial-intelligence-the-job-killer'
+  LIMIT 1;
 
   -- Insert the blog post (handle both schema versions)
   IF has_published_field AND user_column_name IS NOT NULL THEN

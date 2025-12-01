@@ -293,6 +293,8 @@ export default function BlogPost() {
     // Build emphasis terms list - include all book titles from links, plus defaults
     const emphasisTerms: string[] = [
       'THE LOST+UNFOUNDS',
+      'THE LOST ARCHIVES BOOK CLUB',
+      'BOOK CLUB',
       'The Hundreds',
       'Personal Legend',
       'Bitcoin',

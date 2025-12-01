@@ -37,14 +37,14 @@ export default function Blog() {
       
       console.log('🔄 Starting to load blog posts...');
       
-      // Load native posts (subdomain IS NULL) - all native posts
+      // Load native posts (subdomain IS NULL) - only 3 most recent
       let nativeQueryPromise = supabase
         .from('blog_posts')
         .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, published, status, subdomain')
         .is('subdomain', null)
         .order('published_at', { ascending: false })
         .order('created_at', { ascending: false })
-        .limit(100);
+        .limit(3);
       
       // Try to filter by published
       try {
@@ -224,11 +224,19 @@ export default function Blog() {
         </div>
       )}
 
-      {/* Native Posts Section - All Native Posts */}
+      {/* Native Posts Section - 3 Most Recent */}
       {nativePosts.length > 0 && (
         <div className="mb-12">
-          <h2 className="text-2xl font-bold text-white mb-6">THE LOST ARCHIVES</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-white">THE LOST ARCHIVES</h2>
+            <Link
+              to="/thelostarchives/all"
+              className="text-white/60 hover:text-white text-sm font-medium transition"
+            >
+              View All Articles →
+            </Link>
+          </div>
+          <div className="grid grid-cols-3 gap-6">
             {nativePosts.map((post) => (
               <Link
                 key={post.id}
@@ -282,7 +290,7 @@ export default function Blog() {
               View All →
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-3 gap-6">
             {bookClubPosts.map((post) => (
               <Link
                 key={post.id}

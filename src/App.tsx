@@ -22,6 +22,7 @@ import ResetNewsletter from './pages/ResetNewsletter'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
 import Blog from './pages/Blog'
+import AllArticles from './pages/AllArticles'
 import BlogPost from './pages/BlogPost'
 import UserBlog from './pages/UserBlog'
 import BookClub from './pages/BookClub'
@@ -106,6 +107,7 @@ function App() {
         </Route>
         <Route path="/thelostarchives" element={<Layout />}>
           <Route index element={<Blog />} />
+          <Route path="all" element={<AllArticles />} />
           <Route path=":slug" element={<BlogPost />} />
         </Route>
         <Route path="/book-club" element={<Layout />}>

@@ -518,14 +518,41 @@ export default function Profile() {
             <BookOpen className="w-12 h-12 text-white/40 mx-auto mb-4" />
             <h3 className="text-lg font-bold text-white mb-2">Start Your Book Club Journey</h3>
             <p className="text-white/60 mb-4">Submit your first article with four book recommendations.</p>
-            <Link
-              to="/submit-article"
-              className="inline-block px-6 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
-            >
-              Submit Your First Article
-            </Link>
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              <Link
+                to="/bookclub/prompt"
+                className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition"
+              >
+                View Getting Started Guide →
+              </Link>
+              <Link
+                to="/submit-article"
+                className="inline-block px-6 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
+              >
+                Submit Your First Article
+              </Link>
+            </div>
           </div>
         )}
+
+        {/* Getting Started Guide Link - Always visible */}
+        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-white mb-2">Contributor Getting Started Guide</h3>
+              <p className="text-white/60 text-sm mb-4">
+                Learn how to write high-quality articles, use AI responsibly with Human-In-The-Loop principles, and adhere to Google's E‑E‑A‑T standards.
+              </p>
+            </div>
+            <Link
+              to="/bookclub/prompt"
+              className="px-6 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition flex items-center gap-2 whitespace-nowrap"
+            >
+              <FileText className="w-4 h-4" />
+              View Guide
+            </Link>
+          </div>
+        </div>
         {/* Account Information */}
         <div className="bg-black/50 border border-white/10 rounded-none p-6">
           <div className="flex items-center justify-between mb-6">

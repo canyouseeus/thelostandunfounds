@@ -423,6 +423,26 @@ END $$;`;
         console.error('Could not fetch Our Tech Stack blog post file:', fetchError);
       }
 
+      // Load create-blog-post-join-the-lost-archives-book-club script
+      let bookClubContent = '';
+      try {
+        const bookClubResponse = await fetch('/sql/create-blog-post-join-the-lost-archives-book-club.sql');
+        if (bookClubResponse.ok) {
+          const contentType = bookClubResponse.headers.get('content-type');
+          bookClubContent = await bookClubResponse.text();
+          console.log('Book Club script loaded:', {
+            ok: bookClubResponse.ok,
+            contentType,
+            contentLength: bookClubContent.length,
+            startsWithSQL: bookClubContent.trim().startsWith('--')
+          });
+        } else {
+          console.warn('Book Club script fetch failed:', bookClubResponse.status, bookClubResponse.statusText);
+        }
+      } catch (fetchError) {
+        console.error('Could not fetch Join THE LOST ARCHIVES BOOK CLUB blog post file:', fetchError);
+      }
+
       // Load check-blog-post-exists script (with fallback)
       let checkPostContent = '';
       try {
@@ -647,6 +667,13 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
 
       const allScripts: SQLScript[] = [
         {
+          name: 'Join THE LOST ARCHIVES BOOK CLUB and Share Your Love of Books',
+          filename: 'create-blog-post-join-the-lost-archives-book-club.sql',
+          content: bookClubContent || '// File not found - check public/sql folder',
+          description: 'Creates the blog post "Join THE LOST ARCHIVES BOOK CLUB and Share Your Love of Books" - inviting readers and writers to join the book club community, share insights, and earn as Amazon affiliates. Run this AFTER the migration script. Works with any schema version.',
+          createdAt: getScriptTimestamp('create-blog-post-join-the-lost-archives-book-club.sql')
+        },
+        {
           name: 'Add Blog Title to User Subdomains',
           filename: 'add-blog-title-to-user-subdomains.sql',
           content: blogTitleContent || `-- Add blog_title, blog_title_display, and author_name fields to user_subdomains table
@@ -826,10 +853,17 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
         }
       ];
 
+      // Sort scripts by createdAt timestamp (newest first) - NEWEST SCRIPTS AUTOMATICALLY AT TOP
+      // This ensures that whenever a new script is added with a current timestamp, it appears at the top
+      const sortedScripts = [...allScripts].sort((a, b) => {
+        // Sort by createdAt descending (newest first)
+        return b.createdAt - a.createdAt;
+      });
+
       // TEMPORARILY DISABLE 24-HOUR FILTER FOR DEBUGGING - Show all scripts
       // Filter out scripts older than 24 hours from when they were first viewed
       // BUT always show scripts even if content failed to load (so user can see what's available)
-      const recentScripts = allScripts.filter(script => {
+      const recentScripts = sortedScripts.filter(script => {
         // TEMPORARY: Show all scripts for debugging
         // TODO: Re-enable 24-hour filter after confirming scripts show
         
@@ -856,7 +890,8 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
         scriptsWithContent: allScripts.filter(s => s.content && !s.content.includes('File not found') && !s.content.trim().startsWith('<!')).length,
         recentScripts: recentScripts.length,
         scriptNames: recentScripts.map(s => s.name),
-        allScriptNames: allScripts.map(s => s.name)
+        allScriptNames: allScripts.map(s => s.name),
+        sortedOrder: recentScripts.map(s => ({ name: s.name, createdAt: new Date(s.createdAt).toISOString() }))
       });
       
       // Force set scripts even if array is empty for debugging

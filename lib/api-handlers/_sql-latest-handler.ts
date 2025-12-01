@@ -14,6 +14,7 @@ const SQL_FILES = [
   '/sql/create-newsletter-campaigns-table.sql',
   '/blog-schema-migration.sql',
   '/create-first-blog-post.sql',
+  '/sql/create-blog-post-join-the-lost-archives-book-club.sql',
   '/sql/create-blog-post-all-for-a-dream.sql',
   '/sql/create-blog-post-artificial-intelligence-the-job-killer.sql',
   '/sql/create-blog-post-our-tech-stack.sql',
