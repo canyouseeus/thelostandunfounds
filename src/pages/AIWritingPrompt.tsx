@@ -16,7 +16,7 @@ export default function AIWritingPrompt() {
   useEffect(() => {
     const loadPrompt = async () => {
       try {
-        const response = await fetch('/AI_WRITING_PROMPT_FOR_CONTRIBUTORS.md');
+        const response = await fetch('/prompts/AI_WRITING_PROMPT_FOR_CONTRIBUTORS.md');
         if (response.ok) {
           const text = await response.text();
           setPromptContent(text);
