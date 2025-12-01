@@ -745,7 +745,7 @@ Use double line breaks between sections. Book titles mentioned in the text will 
                 <p>• Use double line breaks (press Enter twice) to create paragraphs</p>
                 <p>• Headings should be on their own line</p>
                 <p>• Book titles mentioned in your text will automatically become clickable links</p>
-                <p>• See the <a href="/ai-writing-prompt" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">AI Writing Prompt Guide</a> for detailed formatting instructions</p>
+                <p>• See the <a href="/bookclub/prompt" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">AI Writing Prompt Guide</a> for detailed formatting instructions</p>
               </div>
             </div>
 

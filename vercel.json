@@ -6,7 +6,7 @@
   "redirects": [
     {
       "source": "/AI_WRITING_PROMPT_FOR_CONTRIBUTORS.md",
-      "destination": "/ai-writing-prompt",
+      "destination": "/bookclub/prompt",
       "permanent": false
     }
   ],
