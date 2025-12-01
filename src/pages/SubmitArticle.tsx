@@ -448,7 +448,7 @@ export default function SubmitArticle() {
         )}
         <div className="mb-8 text-center">
           <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-wide">
-            Submit to THE LOST ARCHIVES
+            SUBMIT TO BOOK CLUB
           </h1>
           <p className="text-white/70 text-lg max-w-2xl mx-auto mb-4">
             Share your insights on books and how they've shaped your thinking. 
