@@ -141,22 +141,15 @@ export default function Layout() {
     }
   }, [])
 
-  const handleMenuMouseLeave = useCallback((e: React.MouseEvent) => {
-    // Check if mouse is moving to a child element within the menu
-    const relatedTarget = e.relatedTarget as HTMLElement | null
-    if (relatedTarget && menuRef.current?.contains(relatedTarget)) {
-      // Mouse is moving to another part of the menu, don't close
-      return
-    }
-    
-    // Mouse is leaving the menu area, close after a short delay
+  const handleMenuMouseLeave = useCallback(() => {
+    // Add delay before closing - this allows mouse to move between button and dropdown
     menuCloseTimeoutRef.current = setTimeout(() => {
       setMenuOpen(false)
       setMoreMenuOpen(false)
       setAccountMenuOpen(false)
       setArchivesMenuOpen(false)
       menuCloseTimeoutRef.current = null
-    }, 100)
+    }, 500) // 500ms delay - enough time to move mouse across gap
   }, [])
 
   const handleSubmenuMouseEnter = useCallback((submenuType: 'more' | 'account' | 'archives') => {
@@ -205,6 +198,7 @@ export default function Layout() {
                 className="header-nav" 
                 ref={menuRef}
                 onMouseEnter={handleMenuMouseEnter}
+                onMouseLeave={handleMenuMouseLeave}
               >
                   <button 
                     type="button"
