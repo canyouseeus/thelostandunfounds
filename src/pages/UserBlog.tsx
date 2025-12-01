@@ -42,14 +42,40 @@ export default function UserBlog() {
       setError(null);
 
       // Load posts for this subdomain
-      const { data: postsData, error: postsError } = await supabase
-        .from('blog_posts')
-        .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, author_id, author_name')
-        .eq('subdomain', userSubdomain)
-        .eq('published', true)
-        .order('published_at', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(100);
+      // Try to select author_name, but handle if column doesn't exist
+      let postsData;
+      let postsError;
+      
+      try {
+        const result = await supabase
+          .from('blog_posts')
+          .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, author_id, author_name')
+          .eq('subdomain', userSubdomain)
+          .eq('published', true)
+          .order('published_at', { ascending: false })
+          .order('created_at', { ascending: false })
+          .limit(100);
+        
+        postsData = result.data;
+        postsError = result.error;
+      } catch (err: any) {
+        // If author_name column doesn't exist, try without it
+        if (err.message?.includes('author_name') || err.message?.includes('column')) {
+          const result = await supabase
+            .from('blog_posts')
+            .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, author_id')
+            .eq('subdomain', userSubdomain)
+            .eq('published', true)
+            .order('published_at', { ascending: false })
+            .order('created_at', { ascending: false })
+            .limit(100);
+          
+          postsData = result.data;
+          postsError = result.error;
+        } else {
+          postsError = err;
+        }
+      }
 
       if (postsError) {
         console.error('Error loading user blog posts:', postsError);
@@ -60,11 +86,14 @@ export default function UserBlog() {
       setPosts(postsData || []);
 
       // Get author_name from the first post if available
-      if (postsData && postsData.length > 0 && postsData[0].author_name) {
-        setAuthorName(postsData[0].author_name);
+      if (postsData && postsData.length > 0) {
+        const firstPost = postsData[0] as any;
+        if (firstPost.author_name) {
+          setAuthorName(firstPost.author_name);
+        }
       }
 
-      // Load blog title and user info from user_subdomains
+      // Load blog title and try to get author_name from user metadata via user_subdomains
       const { data: subdomainData } = await supabase
         .from('user_subdomains')
         .select('blog_title, user_id')
@@ -75,15 +104,22 @@ export default function UserBlog() {
         setBlogTitle(subdomainData.blog_title);
       }
 
-      // Try to get author_name from blog posts if not already set
+      // If we have posts but no author_name yet, try to get it from the posts
       if (!authorName && postsData && postsData.length > 0) {
         // Check all posts for author_name
         for (const post of postsData) {
-          if (post.author_name) {
-            setAuthorName(post.author_name);
+          const postAny = post as any;
+          if (postAny.author_name) {
+            setAuthorName(postAny.author_name);
             break;
           }
         }
+      }
+
+      // If still no author_name, try to get it from user metadata via a post's author_id
+      if (!authorName && postsData && postsData.length > 0 && postsData[0].author_id) {
+        // We can't directly query auth.users, but we can check if there's a way to get it
+        // For now, we'll use the subdomain as fallback
       }
 
       // Set user info
