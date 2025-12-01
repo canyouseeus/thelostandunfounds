@@ -1,5 +1,5 @@
 /**
- * Blog Listing Page - THE LOST ARCHIVES
+ * All Articles Page - Shows all blog posts
  */
 
 import { useState, useEffect } from 'react';
@@ -20,8 +20,8 @@ interface BlogPost {
   subdomain?: string | null;
 }
 
-export default function Blog() {
-  const [nativePosts, setNativePosts] = useState<BlogPost[]>([]);
+export default function AllArticles() {
+  const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,20 +34,20 @@ export default function Blog() {
       setLoading(true);
       setError(null);
       
-      console.log('🔄 Starting to load blog posts...');
+      console.log('🔄 Loading all blog posts...');
       
-      // Load native posts (subdomain IS NULL) - only 3 most recent
-      let nativeQueryPromise = supabase
+      // Load all native posts (subdomain IS NULL)
+      let queryPromise = supabase
         .from('blog_posts')
         .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, published, status, subdomain')
         .is('subdomain', null)
         .order('published_at', { ascending: false })
         .order('created_at', { ascending: false })
-        .limit(3);
+        .limit(100);
       
       // Try to filter by published
       try {
-        nativeQueryPromise = nativeQueryPromise.eq('published', true);
+        queryPromise = queryPromise.eq('published', true);
       } catch (e) {
         console.warn('Published column filter not available, will filter client-side');
       }
@@ -57,24 +57,24 @@ export default function Blog() {
       );
       
       // Execute query
-      const nativeResult = await Promise.race([nativeQueryPromise, timeoutPromise]) as Promise<any>;
+      const result = await Promise.race([queryPromise, timeoutPromise]) as Promise<any>;
       
-      const { data: nativeData, error: nativeError } = nativeResult;
+      const { data, error: queryError } = result;
       
       console.log('✅ Query completed:', { 
-        nativeLength: nativeData?.length, 
-        nativeError
+        length: data?.length, 
+        queryError
       });
 
-      if (nativeError && nativeError.code !== 'PGRST116' && nativeError.code !== '42P01') {
-        console.error('Error loading native posts:', nativeError);
-        const errorMsg = nativeError.message || 'Failed to load blog posts';
-        const errorCode = nativeError.code ? ` (Code: ${nativeError.code})` : '';
+      if (queryError && queryError.code !== 'PGRST116' && queryError.code !== '42P01') {
+        console.error('Error loading posts:', queryError);
+        const errorMsg = queryError.message || 'Failed to load blog posts';
+        const errorCode = queryError.code ? ` (Code: ${queryError.code})` : '';
         setError(`${errorMsg}${errorCode}`);
       }
 
-      // Filter native posts: only published posts
-      const publishedNativePosts = (nativeData || []).filter((post: any) => {
+      // Filter posts: only published posts
+      const publishedPosts = (data || []).filter((post: any) => {
         try {
           const isPublished = post.published === true || 
             (post.published === undefined && post.status === 'published');
@@ -84,16 +84,15 @@ export default function Blog() {
         }
       });
 
-      setNativePosts(publishedNativePosts || []);
+      setPosts(publishedPosts || []);
       console.log('✅ Posts set:', { 
-        native: publishedNativePosts.length
+        count: publishedPosts.length
       });
     } catch (err: any) {
       console.error('❌ Error loading blog posts:', err);
       const errorMsg = err?.message || 'Failed to load blog posts';
       setError(errorMsg);
-      setNativePosts([]);
-      setBookClubPosts([]);
+      setPosts([]);
     } finally {
       console.log('🏁 loadPosts finally block - setting loading to false');
       setLoading(false);
@@ -120,80 +119,52 @@ export default function Blog() {
     );
   }
 
-  const blogDescription = 'Revealing findings from the frontier and beyond. Intel from the field on development, AI, and building in the age of information.';
+  const blogDescription = 'All articles from THE LOST ARCHIVES. Revealing findings from the frontier and beyond. Intel from the field on development, AI, and building in the age of information.';
 
   return (
     <>
       <Helmet>
-        <title>THE LOST ARCHIVES | THE LOST+UNFOUNDS</title>
-        <link rel="canonical" href="https://www.thelostandunfounds.com/thelostarchives" />
+        <title>All Articles | THE LOST ARCHIVES | THE LOST+UNFOUNDS</title>
+        <link rel="canonical" href="https://www.thelostandunfounds.com/thelostarchives/all" />
         <meta name="description" content={blogDescription} />
-        <meta property="og:title" content="THE LOST ARCHIVES | THE LOST+UNFOUNDS" />
+        <meta property="og:title" content="All Articles | THE LOST ARCHIVES | THE LOST+UNFOUNDS" />
         <meta property="og:description" content={blogDescription} />
-        <meta property="og:url" content="https://www.thelostandunfounds.com/thelostarchives" />
+        <meta property="og:url" content="https://www.thelostandunfounds.com/thelostarchives/all" />
         <meta property="og:type" content="website" />
         <meta name="twitter:card" content="summary" />
-        <meta name="twitter:title" content="THE LOST ARCHIVES | THE LOST+UNFOUNDS" />
+        <meta name="twitter:title" content="All Articles | THE LOST ARCHIVES | THE LOST+UNFOUNDS" />
         <meta name="twitter:description" content={blogDescription} />
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Blog",
-            "name": "THE LOST ARCHIVES",
-            "description": blogDescription,
-            "url": "https://www.thelostandunfounds.com/thelostarchives",
-            "publisher": {
-              "@type": "Organization",
-              "name": "THE LOST+UNFOUNDS",
-              "url": "https://www.thelostandunfounds.com"
-            }
-          })}
-        </script>
       </Helmet>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 tracking-wide">
-            THE LOST ARCHIVES
-          </h1>
-          <p className="text-white/60 text-sm mb-4">
-            Official articles from THE LOST+UNFOUNDS
-          </p>
-          <div className="flex items-center justify-center gap-4 flex-wrap">
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-2 tracking-wide">
+                All Articles
+              </h1>
+              <p className="text-white/60 text-sm">
+                THE LOST ARCHIVES
+              </p>
+            </div>
             <Link
-              to="/book-club"
-              className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition"
-            >
-              View BOOK CLUB →
-            </Link>
-            <Link
-              to="/submit-article"
-              className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition"
-            >
-              Submit Your Article →
-            </Link>
-          </div>
-        </div>
-
-      {error && (
-        <div className="bg-red-900/20 border border-red-500/50 rounded-none p-4 mb-6">
-          <p className="text-red-400">{error}</p>
-        </div>
-      )}
-
-      {/* Native Posts Section - 3 Most Recent */}
-      {nativePosts.length > 0 && (
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white">THE LOST ARCHIVES</h2>
-            <Link
-              to="/thelostarchives/all"
+              to="/thelostarchives"
               className="text-white/60 hover:text-white text-sm font-medium transition"
             >
-              View All Articles →
+              ← Back to Latest
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {nativePosts.map((post) => (
+        </div>
+
+        {error && (
+          <div className="bg-red-900/20 border border-red-500/50 rounded-none p-4 mb-6">
+            <p className="text-red-400">{error}</p>
+          </div>
+        )}
+
+        {/* All Posts Grid */}
+        {posts.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {posts.map((post) => (
               <Link
                 key={post.id}
                 to={`/thelostarchives/${post.slug}`}
@@ -231,16 +202,15 @@ export default function Blog() {
               </Link>
             ))}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Empty State */}
-      {nativePosts.length === 0 && (
-        <div className="text-white/60 text-lg text-center">
-          <p>No posts yet. Check back soon for intel from the field.</p>
-        </div>
-      )}
-    </div>
+        {/* Empty State */}
+        {posts.length === 0 && (
+          <div className="text-white/60 text-lg text-center">
+            <p>No posts yet. Check back soon for intel from the field.</p>
+          </div>
+        )}
+      </div>
     </>
   );
 }
