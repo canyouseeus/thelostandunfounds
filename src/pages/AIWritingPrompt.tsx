@@ -108,13 +108,6 @@ export default function AIWritingPrompt() {
           </div>
 
           <div>
-            <h4 className="text-white font-semibold mb-2">What's Automated:</h4>
-            <ul className="text-white/70 text-sm space-y-1 list-disc list-inside">
-              <li>The Amazon Affiliate Disclosure is automatically added at the end - you don't need to include it in your content</li>
-            </ul>
-          </div>
-
-          <div>
             <h4 className="text-white font-semibold mb-2">Formatting Tips:</h4>
             <ul className="text-white/70 text-sm space-y-1 list-disc list-inside">
               <li>Use double line breaks (⸻) to separate major sections</li>

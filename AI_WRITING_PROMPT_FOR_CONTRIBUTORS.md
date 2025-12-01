@@ -60,7 +60,7 @@ See the example post: [Building a Creative Brand That Rewards People for Life: L
 - Clear paragraph breaks (double line breaks)
 - Section headings that are short and descriptive
 - Book titles mentioned naturally in the text (they'll be auto-linked)
-- Amazon Affiliate Disclosure is automatically added at the end (no need to include it in your content)
+- Amazon Affiliate Disclosure is automatically added after the introduction (no need to include it in your content)
 
 ## Step-by-Step Article Creation Process:
 
@@ -162,7 +162,7 @@ When writing the article, follow these guidelines:
 
 1. **Mention book titles naturally in the text** - they will automatically become clickable links, so integrate them organically into your writing
 2. **Limit book title mentions** - each book should appear a maximum of 2 times: once in the introduction and once in its dedicated section
-3. **Do not include the Amazon Affiliate Disclosure** - it is automatically added at the end, so focus only on the article content
+3. **Do not include the Amazon Affiliate Disclosure** - it is automatically added after the introduction, so focus only on the article content
 4. **Use double line breaks (⸻)** to separate major sections for clear visual structure
 5. **Keep paragraphs focused** - one main idea per paragraph to maintain clarity and readability
 6. **Write for humans, not algorithms** - prioritize genuine insights, thoughtful analysis, and authentic voice over keyword stuffing

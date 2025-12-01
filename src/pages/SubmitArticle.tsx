@@ -547,13 +547,6 @@ export default function SubmitArticle() {
               </div>
 
               <div>
-                <h4 className="text-white font-semibold mb-2">What's Automated:</h4>
-                <ul className="text-white/70 text-sm space-y-1 list-disc list-inside">
-                  <li>The Amazon Affiliate Disclosure is automatically added at the end - you don't need to include it in your content</li>
-                </ul>
-              </div>
-
-              <div>
                 <h4 className="text-white font-semibold mb-2">Formatting Tips:</h4>
                 <ul className="text-white/70 text-sm space-y-1 list-disc list-inside">
                   <li>Use double line breaks (⸻) to separate major sections</li>
@@ -738,7 +731,7 @@ Example structure:
 - Book sections (each with 3-4 paragraphs)
 - Conclusion
 
-Use double line breaks between sections. Book titles mentioned in the text will automatically become clickable links if you add them in the Amazon Affiliate Links section below. The Amazon Affiliate Disclosure will be added automatically at the end of your article."
+Use double line breaks between sections. Book titles mentioned in the text will automatically become clickable links if you add them in the Amazon Affiliate Links section below. The Amazon Affiliate Disclosure will be added automatically after the introduction."
                 required
               />
               <div className="text-white/50 text-xs mt-2 space-y-1">

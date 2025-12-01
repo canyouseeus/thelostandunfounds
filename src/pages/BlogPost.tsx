@@ -481,6 +481,18 @@ export default function BlogPost() {
     // Determine intro section (first 3 paragraphs)
     const introEndIndex = Math.min(3, paragraphs.length);
     
+    // Add Amazon Affiliate Disclosure after introduction if post has affiliate links
+    let disclosureAdded = false;
+    let lastIntroElementIndex = -1;
+    if (post?.amazon_affiliate_links && post.amazon_affiliate_links.length > 0) {
+      // Check if disclosure already exists in content
+      const hasDisclosure = post.content.toLowerCase().includes('amazon affiliate disclosure');
+      if (!hasDisclosure) {
+        // We'll add it after the intro section
+        disclosureAdded = true;
+      }
+    }
+    
     paragraphs.forEach((para, index) => {
       const trimmed = para.trim();
       if (trimmed === '') return;
@@ -490,6 +502,24 @@ export default function BlogPost() {
         elements.push(
           <hr key={`separator-${index}`} className="my-8 border-white/10" />
         );
+        
+        // Track if this is the last intro element and add disclosure if needed
+        if (index < introEndIndex) {
+          lastIntroElementIndex = elements.length - 1;
+        }
+        if (disclosureAdded && index === introEndIndex - 1) {
+          const authorName = post.author_name || 'THE LOST+UNFOUNDS';
+          const disclosureText = `Amazon Affiliate Disclosure: As an Amazon Associate, ${authorName} earns from qualifying purchases. Some links in this post are affiliate links, which means ${authorName} may earn a commission if you click through and make a purchase. This helps support ${authorName} and allows us to continue creating content. Thank you for your support!`;
+          
+          elements.push(
+            <div key="affiliate-disclosure" className="mb-6 mx-auto max-w-2xl mt-8">
+              <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white/20 p-4 bg-white/5">
+                {disclosureText}
+              </p>
+            </div>
+          );
+          disclosureAdded = false;
+        }
         return;
       }
       
@@ -541,6 +571,27 @@ export default function BlogPost() {
             {Array.isArray(headingContent) ? headingContent : headingContent}
           </h2>
         );
+        
+        // Track if this is the last intro element
+        if (index < introEndIndex) {
+          lastIntroElementIndex = elements.length - 1;
+        }
+        
+        // Add disclosure after intro if needed
+        if (disclosureAdded && index === introEndIndex - 1) {
+          const authorName = post.author_name || 'THE LOST+UNFOUNDS';
+          const disclosureText = `Amazon Affiliate Disclosure: As an Amazon Associate, ${authorName} earns from qualifying purchases. Some links in this post are affiliate links, which means ${authorName} may earn a commission if you click through and make a purchase. This helps support ${authorName} and allows us to continue creating content. Thank you for your support!`;
+          
+          elements.push(
+            <div key="affiliate-disclosure" className="mb-6 mx-auto max-w-2xl mt-8">
+              <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white/20 p-4 bg-white/5">
+                {disclosureText}
+              </p>
+            </div>
+          );
+          disclosureAdded = false;
+        }
+        
         return;
       }
       
@@ -555,6 +606,24 @@ export default function BlogPost() {
             {Array.isArray(content) ? content : content}
           </p>
         );
+        
+        // Track if this is the last intro element and add disclosure if needed
+        if (isInIntro) {
+          lastIntroElementIndex = elements.length - 1;
+        }
+        if (disclosureAdded && index === introEndIndex - 1) {
+          const authorName = post.author_name || 'THE LOST+UNFOUNDS';
+          const disclosureText = `Amazon Affiliate Disclosure: As an Amazon Associate, ${authorName} earns from qualifying purchases. Some links in this post are affiliate links, which means ${authorName} may earn a commission if you click through and make a purchase. This helps support ${authorName} and allows us to continue creating content. Thank you for your support!`;
+          
+          elements.push(
+            <div key="affiliate-disclosure" className="mb-6 mx-auto max-w-2xl mt-8">
+              <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white/20 p-4 bg-white/5">
+                {disclosureText}
+              </p>
+            </div>
+          );
+          disclosureAdded = false;
+        }
         return;
       }
       
@@ -569,6 +638,24 @@ export default function BlogPost() {
             {Array.isArray(content) ? content : content}
           </p>
         );
+        
+        // Track if this is the last intro element and add disclosure if needed
+        if (isInIntro) {
+          lastIntroElementIndex = elements.length - 1;
+        }
+        if (disclosureAdded && index === introEndIndex - 1) {
+          const authorName = post.author_name || 'THE LOST+UNFOUNDS';
+          const disclosureText = `Amazon Affiliate Disclosure: As an Amazon Associate, ${authorName} earns from qualifying purchases. Some links in this post are affiliate links, which means ${authorName} may earn a commission if you click through and make a purchase. This helps support ${authorName} and allows us to continue creating content. Thank you for your support!`;
+          
+          elements.push(
+            <div key="affiliate-disclosure" className="mb-6 mx-auto max-w-2xl mt-8">
+              <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white/20 p-4 bg-white/5">
+                {disclosureText}
+              </p>
+            </div>
+          );
+          disclosureAdded = false;
+        }
         return;
       }
       
@@ -595,27 +682,26 @@ export default function BlogPost() {
             {Array.isArray(content) ? content : content}
           </p>
         );
+        
+        // Track if this is the last intro element and add disclosure if needed
+        if (isInIntro) {
+          lastIntroElementIndex = elements.length - 1;
+        }
+        if (disclosureAdded && index === introEndIndex - 1) {
+          const authorName = post.author_name || 'THE LOST+UNFOUNDS';
+          const disclosureText = `Amazon Affiliate Disclosure: As an Amazon Associate, ${authorName} earns from qualifying purchases. Some links in this post are affiliate links, which means ${authorName} may earn a commission if you click through and make a purchase. This helps support ${authorName} and allows us to continue creating content. Thank you for your support!`;
+          
+          elements.push(
+            <div key="affiliate-disclosure" className="mb-6 mx-auto max-w-2xl mt-8">
+              <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white/20 p-4 bg-white/5">
+                {disclosureText}
+              </p>
+            </div>
+          );
+          disclosureAdded = false;
+        }
       }
     });
-    
-    // Add Amazon Affiliate Disclosure at the end if post has affiliate links
-    if (post?.amazon_affiliate_links && post.amazon_affiliate_links.length > 0) {
-      // Check if disclosure already exists in content
-      const hasDisclosure = post.content.toLowerCase().includes('amazon affiliate disclosure');
-      if (!hasDisclosure) {
-        // Use the author's name in the standard format
-        const authorName = post.author_name || 'THE LOST+UNFOUNDS';
-        const disclosureText = `Amazon Affiliate Disclosure: As an Amazon Associate, ${authorName} earns from qualifying purchases. Some links in this post are affiliate links, which means ${authorName} may earn a commission if you click through and make a purchase. This helps support ${authorName} and allows us to continue creating content. Thank you for your support!`;
-        
-        elements.push(
-          <div key="affiliate-disclosure" className="mb-6 mx-auto max-w-2xl mt-8">
-            <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white/20 p-4 bg-white/5">
-              {disclosureText}
-            </p>
-          </div>
-        );
-      }
-    }
     
     return elements;
   };
