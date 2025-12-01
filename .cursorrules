@@ -32,7 +32,12 @@ When the user asks to publish a blog post, you MUST follow these steps in order:
   - Use the pattern from existing blog post SQL files
   - Include proper title, slug, content, excerpt, SEO fields
   - Set published=true and status='published'
-  - Use ON CONFLICT (slug) DO NOTHING
+  - **CRITICAL: NEVER use ON CONFLICT (slug) - the slug column may not have a unique constraint**
+  - **MUST use check-and-insert/update pattern:**
+    1. Declare `existing_post_id UUID;` in the DECLARE block
+    2. Check if post exists: `SELECT id INTO existing_post_id FROM blog_posts WHERE slug = '[slug]' LIMIT 1;`
+    3. For each INSERT statement, wrap it in: `IF existing_post_id IS NOT NULL THEN UPDATE ... ELSE INSERT ... END IF;`
+  - This pattern works regardless of whether a unique constraint exists on the slug column
 
 ### STEP 2: Update SQL.tsx
 - Open `src/pages/SQL.tsx`
