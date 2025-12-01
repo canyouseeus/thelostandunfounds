@@ -110,18 +110,35 @@ Ensure the content is:
 [Conclusion - 2-3 paragraphs summarizing insights and takeaways]
 ```
 
-## Important Notes:
+## Writing Guidelines for the AI:
 
-1. **Book titles in the text will automatically become clickable links** - just mention them naturally where relevant
-2. **Each book should be linked a maximum of 2 times** - once in the introduction and once in its dedicated section
-3. **The Amazon Affiliate Disclosure is automatically added at the end** - you don't need to include it in your content
-4. **Use double line breaks (⸻)** to separate major sections
-5. **Keep paragraphs focused** - one main idea per paragraph
-6. **Write for humans, not algorithms** - prioritize genuine insights over keyword stuffing
+When writing the article, follow these guidelines:
+
+1. **Mention book titles naturally in the text** - they will automatically become clickable links, so integrate them organically into your writing
+2. **Limit book title mentions** - each book should appear a maximum of 2 times: once in the introduction and once in its dedicated section
+3. **Do not include the Amazon Affiliate Disclosure** - it is automatically added at the end, so focus only on the article content
+4. **Use double line breaks (⸻)** to separate major sections for clear visual structure
+5. **Keep paragraphs focused** - one main idea per paragraph to maintain clarity and readability
+6. **Write for humans, not algorithms** - prioritize genuine insights, thoughtful analysis, and authentic voice over keyword stuffing
 
 ---
 
-**Ready to submit?** Once you have your draft, go to `/submit-article` and paste your content. Make sure to:
+## For Contributors (Important Notes):
+
+### How Book Linking Works:
+- Book titles in the text will automatically become clickable links - just mention them naturally where relevant
+- Each book should be linked a maximum of 2 times - once in the introduction and once in its dedicated section
+
+### What's Automated:
+- The Amazon Affiliate Disclosure is automatically added at the end - you don't need to include it in your content
+
+### Formatting Tips:
+- Use double line breaks (⸻) to separate major sections
+- Keep paragraphs focused - one main idea per paragraph
+- Write for humans, not algorithms - prioritize genuine insights over keyword stuffing
+
+### Ready to Submit?
+Once you have your draft, go to `/submit-article` and paste your content. Make sure to:
 - Fill in all placeholders with actual information
 - Add your Amazon affiliate links in the form
 - Review the formatting matches the example post
