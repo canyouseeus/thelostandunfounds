@@ -673,16 +673,23 @@ CREATE POLICY "Users can update their own blog title"
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
--- Recreate admin policy (for subdomain changes if needed) - check email directly to avoid recursion
+-- Recreate admin policy (for subdomain changes if needed) - use a function to check admin status
+-- This avoids permission issues with querying auth.users directly
+CREATE OR REPLACE FUNCTION is_admin_user()
+RETURNS BOOLEAN AS $$
+BEGIN
+  -- Check if current user is admin by checking their email in metadata
+  -- This uses auth.jwt() which is accessible without querying auth.users table
+  RETURN (
+    (auth.jwt() ->> 'email')::text IN ('admin@thelostandunfounds.com', 'thelostandunfounds@gmail.com')
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 CREATE POLICY "Admins can update subdomains"
   ON user_subdomains
   FOR UPDATE
-  USING (
-    auth.uid() IS NOT NULL AND EXISTS (
-      SELECT 1 FROM auth.users
-      WHERE id = auth.uid() AND (email = 'admin@thelostandunfounds.com' OR email = 'thelostandunfounds@gmail.com')
-    )
-  );
+  USING (is_admin_user());
 
 -- Add comments to document the fields
 COMMENT ON COLUMN user_subdomains.blog_title IS 'Custom title for the user''s blog. Displayed as "[BLOG TITLE] BOOK CLUB" on the blog page.';
