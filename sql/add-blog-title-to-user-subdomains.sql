@@ -10,33 +10,34 @@ ALTER TABLE user_subdomains
 ADD COLUMN IF NOT EXISTS author_name TEXT;
 
 -- Update RLS policy to allow users to update their own blog_title and author_name
--- Drop existing update policies to avoid conflicts
-DROP POLICY IF EXISTS "Users can update their own blog title" ON user_subdomains;
+-- IMPORTANT: Drop the existing restrictive admin-only update policy first
 DROP POLICY IF EXISTS "Admins can update subdomains" ON user_subdomains;
+DROP POLICY IF EXISTS "Users can update their own blog title" ON user_subdomains;
 
--- Create new policy that allows users to update their own blog_title and author_name
--- This avoids infinite recursion by not checking user_roles
--- Users can update their own row (for blog_title and author_name)
+-- Create policy that allows ALL users to update their own row
+-- This policy allows regular users to update blog_title and author_name on their own row
 CREATE POLICY "Users can update their own blog title"
   ON user_subdomains
   FOR UPDATE
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
--- Recreate admin policy (for subdomain changes if needed) - use a function to check admin status
--- This avoids permission issues with querying auth.users directly
+-- Create separate admin policy for subdomain updates (if needed in future)
+-- Use a simple function that doesn't query tables
 CREATE OR REPLACE FUNCTION is_admin_user()
 RETURNS BOOLEAN AS $$
 BEGIN
-  -- Check if current user is admin by checking their email in JWT
-  -- This uses auth.jwt() which is accessible without querying auth.users table
-  RETURN (
-    (auth.jwt() ->> 'email')::text IN ('admin@thelostandunfounds.com', 'thelostandunfounds@gmail.com')
+  -- Try to get email from JWT claims
+  -- Fallback: return false if JWT doesn't have email
+  RETURN COALESCE(
+    (auth.jwt() ->> 'email')::text IN ('admin@thelostandunfounds.com', 'thelostandunfounds@gmail.com'),
+    false
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Admin policy allows admins to update any row (including subdomain)
+-- This is separate from the user policy - both can coexist
 CREATE POLICY "Admins can update subdomains"
   ON user_subdomains
   FOR UPDATE
