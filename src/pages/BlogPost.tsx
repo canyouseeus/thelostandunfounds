@@ -294,6 +294,7 @@ export default function BlogPost() {
     const emphasisTerms: string[] = [
       'THE LOST+UNFOUNDS',
       'THE LOST ARCHIVES BOOK CLUB',
+      'BOOK CLUB',
       'The Hundreds',
       'Personal Legend',
       'Bitcoin',
