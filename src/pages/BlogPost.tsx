@@ -33,6 +33,7 @@ interface BlogPost {
   subdomain?: string | null; // User subdomain
   author_id?: string | null; // Author ID
   author_name?: string | null; // Author name for disclosure
+  blog_title?: string | null; // Blog title from user_subdomains
 }
 
 interface BlogPostListItem {
@@ -48,6 +49,7 @@ export default function BlogPost() {
   const [nextPost, setNextPost] = useState<BlogPostListItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [blogTitle, setBlogTitle] = useState<string | null>(null);
 
   useEffect(() => {
     if (slug) {
@@ -104,6 +106,19 @@ export default function BlogPost() {
       }
 
       setPost(data);
+
+      // Load blog title if post has a subdomain
+      if (data.subdomain) {
+        const { data: subdomainData } = await supabase
+          .from('user_subdomains')
+          .select('blog_title')
+          .eq('subdomain', data.subdomain)
+          .maybeSingle();
+        
+        if (subdomainData?.blog_title) {
+          setBlogTitle(subdomainData.blog_title);
+        }
+      }
     } catch (err) {
       console.error('Error loading blog post:', err);
       setError('Failed to load post');
@@ -818,7 +833,7 @@ export default function BlogPost() {
             to={`/blog/${post.subdomain}`}
             className="text-white/70 hover:text-white text-sm inline-flex items-center gap-2 transition underline"
           >
-            View more posts from {post.subdomain}
+            View more posts from {blogTitle || post.subdomain}
           </Link>
         </div>
       )}

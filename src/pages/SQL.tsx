@@ -612,6 +612,17 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch user subdomains table file:', fetchError);
       }
 
+      // Load add-blog-title-to-user-subdomains script
+      let blogTitleContent = '';
+      try {
+        const blogTitleResponse = await fetch('/sql/add-blog-title-to-user-subdomains.sql');
+        if (blogTitleResponse.ok) {
+          blogTitleContent = await blogTitleResponse.text();
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch add-blog-title-to-user-subdomains file:', fetchError);
+      }
+
       // Load add-user-subdomain-support script
       let subdomainSupportContent = '';
       try {
@@ -668,6 +679,13 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
           content: subdomainSupportContent || '// File not found - check public/sql folder',
           description: 'Adds subdomain and Amazon affiliate links support to blog_posts table. Allows users to have their own blogs with subdomains. Updates RLS policies to allow users to create their own posts. Run this AFTER creating the blog_posts table and user_subdomains table.',
           createdAt: getScriptTimestamp('add-user-subdomain-support.sql')
+        },
+        {
+          name: 'Add Blog Title to User Subdomains',
+          filename: 'add-blog-title-to-user-subdomains.sql',
+          content: blogTitleContent || '// File not found - check public/sql folder',
+          description: 'Adds blog_title field to user_subdomains table. Allows users to set a custom title for their blog, which will be displayed as "[BLOG TITLE] BOOK CLUB" on their blog page. Run this AFTER creating the user_subdomains table.',
+          createdAt: getScriptTimestamp('add-blog-title-to-user-subdomains.sql')
         },
         {
           name: 'Blog Submissions Table',

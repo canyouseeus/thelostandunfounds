@@ -37,6 +37,9 @@ export default function Profile() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [userSubdomain, setUserSubdomain] = useState<string | null>(null);
+  const [blogTitle, setBlogTitle] = useState<string>('');
+  const [isEditingBlogTitle, setIsEditingBlogTitle] = useState(false);
+  const [savingBlogTitle, setSavingBlogTitle] = useState(false);
   const [userPosts, setUserPosts] = useState<BlogPost[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
 
@@ -73,15 +76,42 @@ export default function Profile() {
     try {
       const { data, error } = await supabase
         .from('user_subdomains')
-        .select('subdomain')
+        .select('subdomain, blog_title')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (data?.subdomain) {
-        setUserSubdomain(data.subdomain);
+      if (data) {
+        if (data.subdomain) {
+          setUserSubdomain(data.subdomain);
+        }
+        if (data.blog_title) {
+          setBlogTitle(data.blog_title);
+        }
       }
     } catch (err) {
       console.warn('Error loading subdomain:', err);
+    }
+  };
+
+  const handleSaveBlogTitle = async () => {
+    if (!user || !userSubdomain) return;
+
+    setSavingBlogTitle(true);
+    try {
+      const { error } = await supabase
+        .from('user_subdomains')
+        .update({ blog_title: blogTitle.trim() || null })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      success('Blog title updated successfully');
+      setIsEditingBlogTitle(false);
+    } catch (err: any) {
+      console.error('Error saving blog title:', err);
+      showError(err.message || 'Failed to update blog title');
+    } finally {
+      setSavingBlogTitle(false);
     }
   };
 
@@ -236,6 +266,59 @@ export default function Profile() {
                   <p className="text-white font-mono text-sm">{userSubdomain}</p>
                 </div>
                 <p className="text-white/50 text-xs mt-1">Set during registration - cannot be changed</p>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-white/80">Blog Title</label>
+                  {!isEditingBlogTitle ? (
+                    <button
+                      onClick={() => setIsEditingBlogTitle(true)}
+                      className="text-sm text-white/60 hover:text-white transition"
+                    >
+                      Edit
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setIsEditingBlogTitle(false);
+                          // Reset to saved value
+                          loadUserSubdomain();
+                        }}
+                        className="text-sm text-white/60 hover:text-white transition"
+                        disabled={savingBlogTitle}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSaveBlogTitle}
+                        className="text-sm text-white hover:text-white/80 transition px-3 py-1 bg-white/10 hover:bg-white/20 rounded"
+                        disabled={savingBlogTitle}
+                      >
+                        {savingBlogTitle ? 'Saving...' : 'Save'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+                {isEditingBlogTitle ? (
+                  <input
+                    type="text"
+                    value={blogTitle}
+                    onChange={(e) => setBlogTitle(e.target.value)}
+                    placeholder="Enter your blog title"
+                    className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+                    disabled={savingBlogTitle}
+                  />
+                ) : (
+                  <div className="px-4 py-2 bg-black/50 border border-white/10 rounded-none">
+                    <p className="text-white text-sm">
+                      {blogTitle || <span className="text-white/50 italic">No title set</span>}
+                    </p>
+                  </div>
+                )}
+                <p className="text-white/50 text-xs mt-1">
+                  This title will be displayed as "[BLOG TITLE] BOOK CLUB" on your blog page
+                </p>
               </div>
             </div>
           </div>

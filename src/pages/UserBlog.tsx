@@ -26,6 +26,7 @@ export default function UserBlog() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userInfo, setUserInfo] = useState<{ name?: string; email?: string } | null>(null);
+  const [blogTitle, setBlogTitle] = useState<string | null>(null);
 
   useEffect(() => {
     if (subdomain) {
@@ -55,6 +56,17 @@ export default function UserBlog() {
       }
 
       setPosts(postsData || []);
+
+      // Load blog title from user_subdomains
+      const { data: subdomainData } = await supabase
+        .from('user_subdomains')
+        .select('blog_title')
+        .eq('subdomain', userSubdomain)
+        .maybeSingle();
+
+      if (subdomainData?.blog_title) {
+        setBlogTitle(subdomainData.blog_title);
+      }
 
       // Try to get user info from the first post's author_id
       if (postsData && postsData.length > 0 && postsData[0].author_id) {
@@ -110,25 +122,38 @@ export default function UserBlog() {
   }
 
   const displayName = userInfo?.name || subdomain || 'User';
-  const blogTitle = `${displayName}'s Blog | THE LOST ARCHIVES`;
-  const blogDescription = `Articles and insights from ${displayName} on THE LOST ARCHIVES.`;
+  const pageTitle = blogTitle 
+    ? `${blogTitle} | BOOK CLUB | THE LOST ARCHIVES`
+    : `${displayName}'s Blog | THE LOST ARCHIVES`;
+  const blogDescription = blogTitle
+    ? `Articles and insights from ${blogTitle} on THE LOST ARCHIVES BOOK CLUB.`
+    : `Articles and insights from ${displayName} on THE LOST ARCHIVES.`;
 
   return (
     <>
       <Helmet>
-        <title>{blogTitle}</title>
+        <title>{pageTitle}</title>
         <link rel="canonical" href={`https://${subdomain}.thelostandunfounds.com`} />
         <meta name="description" content={blogDescription} />
-        <meta property="og:title" content={blogTitle} />
+        <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={blogDescription} />
         <meta property="og:url" content={`https://${subdomain}.thelostandunfounds.com`} />
         <meta property="og:type" content="website" />
       </Helmet>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 tracking-wide">
-            {displayName}'s Blog
-          </h1>
+          {blogTitle ? (
+            <>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-2 tracking-wide">
+                {blogTitle}
+              </h1>
+              <p className="text-white/60 text-lg md:text-xl mb-4">BOOK CLUB</p>
+            </>
+          ) : (
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 tracking-wide">
+              {displayName}'s Blog
+            </h1>
+          )}
           <Link
             to="/thelostarchives"
             className="text-white/60 hover:text-white text-sm transition"
