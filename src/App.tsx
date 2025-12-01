@@ -29,6 +29,7 @@ import SubmitArticle from './pages/SubmitArticle'
 import SQL from './pages/SQL'
 import Debug from './pages/Debug'
 import AIWritingPrompt from './pages/AIWritingPrompt'
+import HelloWorld from './pages/HelloWorld'
 
 function App() {
   // Video preloader temporarily disabled for debugging
@@ -96,6 +97,9 @@ function App() {
         </Route>
         <Route path="/bookclub/prompt" element={<Layout />}>
           <Route index element={<AIWritingPrompt />} />
+        </Route>
+        <Route path="/helloworld" element={<Layout />}>
+          <Route index element={<HelloWorld />} />
         </Route>
         <Route path="/debug" element={<Layout />}>
           <Route index element={<Debug />} />
