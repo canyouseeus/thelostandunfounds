@@ -202,11 +202,11 @@ export default function SubdomainRegistration({
 
   return (
     <div 
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 py-8 sm:py-12 overflow-y-auto"
       onClick={required ? undefined : onClose}
     >
       <div 
-        className="bg-black/50 border border-white/10 rounded-none p-4 sm:p-6 w-full max-w-md my-auto"
+        className="bg-black/50 border border-white/10 rounded-none p-4 sm:p-6 w-full max-w-md my-auto max-h-[calc(100vh-4rem)] sm:max-h-[calc(100vh-6rem)] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between mb-4 sm:mb-6 gap-2">
