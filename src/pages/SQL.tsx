@@ -853,10 +853,17 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
         }
       ];
 
+      // Sort scripts by createdAt timestamp (newest first) - NEWEST SCRIPTS AUTOMATICALLY AT TOP
+      // This ensures that whenever a new script is added with a current timestamp, it appears at the top
+      const sortedScripts = [...allScripts].sort((a, b) => {
+        // Sort by createdAt descending (newest first)
+        return b.createdAt - a.createdAt;
+      });
+
       // TEMPORARILY DISABLE 24-HOUR FILTER FOR DEBUGGING - Show all scripts
       // Filter out scripts older than 24 hours from when they were first viewed
       // BUT always show scripts even if content failed to load (so user can see what's available)
-      const recentScripts = allScripts.filter(script => {
+      const recentScripts = sortedScripts.filter(script => {
         // TEMPORARY: Show all scripts for debugging
         // TODO: Re-enable 24-hour filter after confirming scripts show
         
@@ -883,7 +890,8 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
         scriptsWithContent: allScripts.filter(s => s.content && !s.content.includes('File not found') && !s.content.trim().startsWith('<!')).length,
         recentScripts: recentScripts.length,
         scriptNames: recentScripts.map(s => s.name),
-        allScriptNames: allScripts.map(s => s.name)
+        allScriptNames: allScripts.map(s => s.name),
+        sortedOrder: recentScripts.map(s => ({ name: s.name, createdAt: new Date(s.createdAt).toISOString() }))
       });
       
       // Force set scripts even if array is empty for debugging

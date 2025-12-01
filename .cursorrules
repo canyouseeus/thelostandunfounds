@@ -42,13 +42,15 @@ When the user asks to publish a blog post, you MUST follow these steps in order:
 ### STEP 2: Update SQL.tsx
 - Open `src/pages/SQL.tsx`
 - Add fetch code to load the new SQL file (after the last blog post fetch)
-- Add the script to the `allScripts` array at the TOP (right after the migration script) - newest scripts appear first:
+- Add the script to the `allScripts` array (order in array doesn't matter - scripts are auto-sorted by createdAt):
   - name: Blog post title
   - filename: create-blog-post-[slug].sql
   - content: The fetched content
   - description: Clear description of what the script does
   - createdAt: getScriptTimestamp('create-blog-post-[slug].sql')
-- CRITICAL: The most recent SQL file MUST be at the top of the page, not the bottom
+- **CRITICAL: Scripts are automatically sorted by createdAt timestamp (newest first)**
+- **New scripts with current timestamps will automatically appear at the top of the page**
+- For code organization, you can add new scripts near the top of the array, but the display order is determined by createdAt
 
 ### STEP 3: Update API Endpoint
 - Open `api/sql/latest.ts`
