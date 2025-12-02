@@ -809,20 +809,6 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch user subdomain support file:', fetchError);
       }
 
-      // Load create-brand-assets-storage-bucket script
-      let brandAssetsBucketContent = '';
-      try {
-        const brandAssetsBucketResponse = await fetch('/sql/create-brand-assets-storage-bucket.sql');
-        if (brandAssetsBucketResponse.ok) {
-          const text = await brandAssetsBucketResponse.text();
-          if (!text.trim().startsWith('<!')) {
-            brandAssetsBucketContent = text;
-          }
-        }
-      } catch (fetchError) {
-        console.warn('Could not fetch brand assets bucket file:', fetchError);
-      }
-
       const allScripts: SQLScript[] = [
         {
           name: 'Join THE LOST ARCHIVES BOOK CLUB and Share Your Love of Books',
@@ -994,13 +980,6 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
           content: checkEmailStatusContent || '// File not found - check public/sql folder',
           description: 'Diagnostic query to check if users are linked to subdomains, what emails are available, and whether welcome emails have been sent. Use this to debug email sending issues.',
           createdAt: getScriptTimestamp('check-user-subdomain-email-status.sql')
-        },
-        {
-          name: 'Create Brand Assets Storage Bucket',
-          filename: 'create-brand-assets-storage-bucket.sql',
-          content: brandAssetsBucketContent || '// File not found - check public/sql folder',
-          description: 'Creates the "brand-assets" storage bucket in Supabase Storage for storing brand assets like logos, images, and videos. Sets up public read access and authenticated user upload/update/delete permissions. Required for the Brand Assets management feature.',
-          createdAt: getScriptTimestamp('create-brand-assets-storage-bucket.sql')
         },
         {
           name: 'Add Emails to user_roles from blog_submissions',
