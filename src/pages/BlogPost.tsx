@@ -378,6 +378,9 @@ export default function BlogPost() {
       );
       const affiliateLink = bookKey ? bookLinks[bookKey] : undefined;
       
+      // Display book titles in uppercase to match book club style
+      const displayText = bookKey ? bookKey.toUpperCase() : matchedText.toUpperCase();
+      
       // If it's a book title with an affiliate link
       if (affiliateLink && bookLinkCounts) {
         const currentCount = bookLinkCounts[bookKey!] || 0;
@@ -392,14 +395,14 @@ export default function BlogPost() {
               rel="noopener noreferrer"
               className="font-bold text-white underline hover:text-white/80 transition"
             >
-              {matchedText}
+              {displayText}
             </a>
           );
         } else {
-          // Otherwise, just make it bold (no link)
+          // Otherwise, just make it bold (no link) - uppercase
           parts.push(
             <strong key={`bold-${keyCounter++}`} className="font-bold text-white">
-              {matchedText}
+              {displayText}
             </strong>
           );
         }
@@ -413,14 +416,14 @@ export default function BlogPost() {
             rel="noopener noreferrer"
             className="font-bold text-white underline hover:text-white/80 transition"
           >
-            {matchedText}
+            {displayText}
           </a>
         );
       } else {
-        // Otherwise, just make it bold
+        // Otherwise, just make it bold - uppercase for book titles
         parts.push(
           <strong key={`bold-${keyCounter++}`} className="font-bold text-white">
-            {matchedText}
+            {displayText}
           </strong>
         );
       }
@@ -493,12 +496,22 @@ export default function BlogPost() {
     const elements: JSX.Element[] = [];
     
     // Track book link counts (max 2 per book: once in intro, once in section)
-    const bookLinkCounts: Record<string, number> = {
-      'The E-Myth Revisited': 0,
-      'This Is Not a T-Shirt': 0,
-      'The Alchemist': 0,
-      'Contagious': 0
-    };
+    // Initialize with books from post's amazon_affiliate_links
+    const bookLinkCounts: Record<string, number> = {};
+    if (post?.amazon_affiliate_links && Array.isArray(post.amazon_affiliate_links)) {
+      post.amazon_affiliate_links.forEach((link: AffiliateLink) => {
+        if (link.book_title) {
+          bookLinkCounts[link.book_title] = 0;
+        }
+      });
+    }
+    // Also add defaults if not already present
+    const defaultBooks = ['The E-Myth Revisited', 'This Is Not a T-Shirt', 'The Alchemist', 'Contagious'];
+    defaultBooks.forEach(book => {
+      if (!bookLinkCounts[book]) {
+        bookLinkCounts[book] = 0;
+      }
+    });
     
     // Determine intro section (first 3 paragraphs)
     const introEndIndex = Math.min(3, paragraphs.length);
@@ -582,9 +595,12 @@ export default function BlogPost() {
       
       if (isLikelyHeading) {
         // Check if this is a book's dedicated section
-        const isBookSection = Object.keys(bookLinkCounts).some(bookTitle => 
-          trimmed.includes(bookTitle) && trimmed.includes(':')
-        );
+        // Look for book titles in the heading (case-insensitive) and check for colon
+        const isBookSection = Object.keys(bookLinkCounts).some(bookTitle => {
+          const headingLower = trimmed.toLowerCase();
+          const bookLower = bookTitle.toLowerCase();
+          return headingLower.includes(bookLower) && trimmed.includes(':');
+        });
         
         // Format with emphasis, allowing links in section headings
         const headingContent = formatTextWithEmphasis(trimmed, bookLinkCounts, isBookSection);
@@ -621,7 +637,25 @@ export default function BlogPost() {
       const numberedMatch = trimmed.match(/^(\d+)\.\s+(.+)$/);
       if (numberedMatch) {
         const isInIntro = index < introEndIndex;
-        const content = formatTextWithEmphasis(numberedMatch[2], bookLinkCounts, isInIntro);
+        // Check if this is in a book section
+        let isInBookSection = false;
+        for (let i = index - 1; i >= 0; i--) {
+          const prevPara = paragraphs[i]?.trim() || '';
+          if (prevPara === '' || prevPara === '⸻') continue;
+          const prevParaLower = prevPara.toLowerCase();
+          const containsBookTitle = Object.keys(bookLinkCounts).some(bookTitle => {
+            return prevParaLower.includes(bookTitle.toLowerCase()) && prevPara.includes(':');
+          });
+          if (containsBookTitle) {
+            isInBookSection = true;
+            break;
+          }
+          if (prevPara.length < 100 && !prevPara.match(/[.!?]$/) && prevPara.split(' ').length < 15) {
+            break;
+          }
+        }
+        const allowLinks = isInIntro || isInBookSection;
+        const content = formatTextWithEmphasis(numberedMatch[2], bookLinkCounts, allowLinks);
         elements.push(
           <p key={index} className="mb-6 text-white/90 text-lg leading-relaxed text-left">
             <span className="font-bold">{numberedMatch[1]}.</span>{' '}
@@ -653,7 +687,25 @@ export default function BlogPost() {
       if (trimmed.match(/^[•\-\*]\s+/)) {
         const bulletText = trimmed.replace(/^[•\-\*]\s+/, '');
         const isInIntro = index < introEndIndex;
-        const content = formatTextWithEmphasis(bulletText, bookLinkCounts, isInIntro);
+        // Check if this is in a book section
+        let isInBookSection = false;
+        for (let i = index - 1; i >= 0; i--) {
+          const prevPara = paragraphs[i]?.trim() || '';
+          if (prevPara === '' || prevPara === '⸻') continue;
+          const prevParaLower = prevPara.toLowerCase();
+          const containsBookTitle = Object.keys(bookLinkCounts).some(bookTitle => {
+            return prevParaLower.includes(bookTitle.toLowerCase()) && prevPara.includes(':');
+          });
+          if (containsBookTitle) {
+            isInBookSection = true;
+            break;
+          }
+          if (prevPara.length < 100 && !prevPara.match(/[.!?]$/) && prevPara.split(' ').length < 15) {
+            break;
+          }
+        }
+        const allowLinks = isInIntro || isInBookSection;
+        const content = formatTextWithEmphasis(bulletText, bookLinkCounts, allowLinks);
         elements.push(
           <p key={index} className="mb-4 text-white/90 text-lg leading-relaxed text-left pl-4">
             <span className="text-white/60 mr-2">•</span>
@@ -685,9 +737,30 @@ export default function BlogPost() {
       const isAffiliateDisclosure = trimmed.startsWith('Amazon Affiliate Disclosure:');
       
       // Regular paragraph with emphasis formatting
-      // Only allow links in intro (first 3 paragraphs) or in book sections
+      // Allow links in intro (first 3 paragraphs) or in book sections
       const isInIntro = index < introEndIndex;
-      const content = formatTextWithEmphasis(trimmed, bookLinkCounts, isInIntro);
+      // Check if this paragraph is in a book section (after a heading that contains a book title)
+      // Look backwards to find the most recent heading
+      let isInBookSection = false;
+      for (let i = index - 1; i >= 0; i--) {
+        const prevPara = paragraphs[i]?.trim() || '';
+        if (prevPara === '' || prevPara === '⸻') continue;
+        // Check if previous paragraph is a heading that contains a book title
+        const prevParaLower = prevPara.toLowerCase();
+        const containsBookTitle = Object.keys(bookLinkCounts).some(bookTitle => {
+          return prevParaLower.includes(bookTitle.toLowerCase()) && prevPara.includes(':');
+        });
+        if (containsBookTitle) {
+          isInBookSection = true;
+          break;
+        }
+        // Stop looking if we hit another heading or section break
+        if (prevPara.length < 100 && !prevPara.match(/[.!?]$/) && prevPara.split(' ').length < 15) {
+          break;
+        }
+      }
+      const allowLinks = isInIntro || isInBookSection;
+      const content = formatTextWithEmphasis(trimmed, bookLinkCounts, allowLinks);
       
       if (isAffiliateDisclosure) {
         // Style the disclosure differently: smaller, italic, in a box, center-justified
@@ -840,7 +913,7 @@ export default function BlogPost() {
             to={`/blog/${post.subdomain}`}
             className="text-white/70 hover:text-white text-sm inline-flex items-center gap-2 transition underline"
           >
-            View more posts from {blogTitle || post.subdomain}
+            View more posts from {blogTitle || post.subdomain.toUpperCase()}
           </Link>
         </div>
       )}

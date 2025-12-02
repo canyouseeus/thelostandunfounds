@@ -37,7 +37,7 @@ export default function BookPreview({ books }: BookPreviewProps) {
             <div className="flex items-start justify-between gap-2 mb-2">
               <div className="flex-1">
                 <h3 className="text-base font-bold text-white mb-2 tracking-wide group-hover:text-white/90 transition line-clamp-3 text-left">
-                  {book.book_title}
+                  {book.book_title.toUpperCase()}
                 </h3>
               </div>
               <ExternalLink className="w-4 h-4 text-white/40 group-hover:text-white/70 transition flex-shrink-0 mt-1" />

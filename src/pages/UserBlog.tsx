@@ -214,7 +214,8 @@ export default function UserBlog() {
   }
 
   // Use styled display title for UI, normalized title for SEO/metadata
-  const displayTitle = blogTitleDisplay || blogTitle || authorName || subdomain || 'User';
+  // If using subdomain as fallback, display it in uppercase
+  const displayTitle = blogTitleDisplay || blogTitle || authorName || (subdomain ? subdomain.toUpperCase() : null) || 'User';
   const pageTitle = blogTitle 
     ? `${blogTitle} | BOOK CLUB | THE LOST ARCHIVES`
     : authorName
