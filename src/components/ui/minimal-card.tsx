@@ -1,5 +1,5 @@
 import * as React from "react";
-import { cn } from "./utils";
+import { cn } from "@/components/ui/utils";
 
 interface MinimalCardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
