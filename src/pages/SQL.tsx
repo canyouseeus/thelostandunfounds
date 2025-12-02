@@ -566,6 +566,24 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch create-brand-assets-storage-bucket file:', fetchError);
       }
 
+      // Load comprehensive-admin-setup script
+      let comprehensiveAdminSetupContent = '';
+      try {
+        const comprehensiveAdminSetupResponse = await fetch('/sql/comprehensive-admin-setup.sql');
+        if (comprehensiveAdminSetupResponse.ok) {
+          const text = await comprehensiveAdminSetupResponse.text();
+          if (text && !text.includes('<!DOCTYPE html>')) {
+            comprehensiveAdminSetupContent = text;
+          } else {
+            console.warn('Got HTML instead of SQL for comprehensive-admin-setup.sql');
+          }
+        } else {
+          console.warn('Comprehensive admin setup script fetch failed:', comprehensiveAdminSetupResponse.status, comprehensiveAdminSetupResponse.statusText);
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch comprehensive-admin-setup file:', fetchError);
+      }
+
       // Load create-blog-submissions-table script
       let blogSubmissionsContent = '';
       try {
@@ -810,6 +828,13 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
       }
 
       const allScripts: SQLScript[] = [
+        {
+          name: 'Comprehensive Admin Setup - FIX ALL ADMIN PERMISSIONS',
+          filename: 'comprehensive-admin-setup.sql',
+          content: comprehensiveAdminSetupContent || '// File not found - check public/sql folder',
+          description: 'CRITICAL: Run this first if you\'re having admin permission issues. Sets up both thelostandunfounds@gmail.com and admin@thelostandunfounds.com as admins, creates the is_admin_user() function used by RLS policies, sets up mrjetstream subdomain, and ensures all admin privileges work correctly. This fixes permission errors for storage, blog posts, and all admin operations.',
+          createdAt: getScriptTimestamp('comprehensive-admin-setup.sql')
+        },
         {
           name: 'Join THE LOST ARCHIVES BOOK CLUB and Share Your Love of Books',
           filename: 'create-blog-post-join-the-lost-archives-book-club.sql',

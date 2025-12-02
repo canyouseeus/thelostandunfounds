@@ -44,8 +44,32 @@ DROP POLICY IF EXISTS "Allow authenticated users to delete brand assets" ON stor
 DROP POLICY IF EXISTS "Allow public read access to brand assets" ON storage.objects;
 DROP POLICY IF EXISTS "Allow authenticated users to list brand assets" ON storage.objects;
 
+-- Ensure is_admin_user function exists (from comprehensive-admin-setup.sql)
+CREATE OR REPLACE FUNCTION is_admin_user()
+RETURNS BOOLEAN AS $$
+BEGIN
+  -- Check JWT email claim first (fastest, no database query)
+  IF (auth.jwt() ->> 'email')::text IN ('admin@thelostandunfounds.com', 'thelostandunfounds@gmail.com') THEN
+    RETURN true;
+  END IF;
+
+  -- Check user_roles table
+  IF EXISTS (
+    SELECT 1 FROM user_roles
+    WHERE user_id = auth.uid() AND is_admin = true
+  ) THEN
+    RETURN true;
+  END IF;
+
+  RETURN false;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+GRANT EXECUTE ON FUNCTION is_admin_user() TO authenticated, anon;
+
 -- Create RLS policies for the bucket
 -- Allow authenticated users to upload files (any authenticated user can upload)
+-- Admins have full access, regular users can upload
 CREATE POLICY "Allow authenticated users to upload brand assets"
 ON storage.objects
 FOR INSERT
