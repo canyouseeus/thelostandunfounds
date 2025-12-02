@@ -173,6 +173,18 @@ export default function BlogSubmissionReview() {
         return;
       }
 
+      // Warn if subdomain is missing (post won't show on Book Club page)
+      if (!submission.subdomain) {
+        const proceed = confirm(
+          'Warning: This submission has no subdomain. The post will be published but may not appear on the Book Club page.\n\n' +
+          'Posts without subdomains are typically for THE LOST ARCHIVES main blog.\n\n' +
+          'Do you want to continue publishing?'
+        );
+        if (!proceed) {
+          return;
+        }
+      }
+
       // Create blog post with subdomain and Amazon links
       const { data: blogPost, error: blogError } = await supabase
         .from('blog_posts')
@@ -212,10 +224,19 @@ export default function BlogSubmissionReview() {
 
       if (updateError) throw updateError;
 
-      success('Article published successfully!');
+      const postUrl = submission.subdomain 
+        ? `/blog/${submission.subdomain}/${slug}`
+        : `/thelostarchives/${slug}`;
+      
+      success(`Article published successfully! ${submission.subdomain ? 'It should appear on the Book Club page.' : 'Note: Without a subdomain, it may not appear on the Book Club page.'}`);
       setSelectedSubmission(null);
       setReviewNotes('');
       loadSubmissions();
+      
+      // Optionally open the published post in a new tab
+      setTimeout(() => {
+        window.open(postUrl, '_blank');
+      }, 1000);
     } catch (err: any) {
       console.error('Error publishing submission:', err);
       showError(err.message || 'Failed to publish article');
@@ -310,6 +331,11 @@ export default function BlogSubmissionReview() {
                       </span>
                       <span className={`px-2 py-1 rounded text-xs border ${getStatusColor(submission.status)}`}>
                         {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
+                        {submission.status === 'approved' && (
+                          <span className="ml-1 text-yellow-400" title="Approved but not yet published - click to publish">
+                            ⚠️ Needs Publishing
+                          </span>
+                        )}
                       </span>
                     </div>
                     {submission.excerpt && (
@@ -484,13 +510,22 @@ export default function BlogSubmissionReview() {
                   </>
                 )}
                 {selectedSubmission.status === 'approved' && (
-                  <button
-                    onClick={() => handlePublish(selectedSubmission)}
-                    className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-none transition flex items-center gap-2"
-                  >
-                    <CheckCircle className="w-4 h-4" />
-                    Publish to Blog
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    {!selectedSubmission.subdomain && (
+                      <div className="bg-yellow-900/20 border border-yellow-500/50 rounded-none p-3 mb-2">
+                        <p className="text-yellow-400 text-sm">
+                          ⚠️ No subdomain set. This post may not appear on the Book Club page. Consider setting a subdomain before publishing.
+                        </p>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => handlePublish(selectedSubmission)}
+                      className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-none transition flex items-center gap-2"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      Publish to Blog
+                    </button>
+                  </div>
                 )}
                 <button
                   onClick={() => {
