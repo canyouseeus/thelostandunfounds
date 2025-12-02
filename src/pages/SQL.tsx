@@ -835,7 +835,7 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
           name: 'Create Brand Assets Storage Bucket',
           filename: 'create-brand-assets-storage-bucket.sql',
           content: brandAssetsBucketContent || '// File not found - check public/sql folder',
-          description: 'Creates the brand-assets storage bucket in Supabase Storage for uploading and managing brand assets (PNG, JPG images and MP4 videos). Sets up RLS policies for authenticated users to upload, update, and delete assets, and allows public read access. Run this to enable the Brand Assets feature in the Admin Dashboard.',
+          description: 'IMPORTANT: Storage buckets must be created through the Supabase Dashboard (Storage > New bucket). This script sets up RLS policies. Steps: 1) Create "brand-assets" bucket in Dashboard (public, 50MB limit), 2) Then run this script to set up policies for authenticated upload/update/delete and public read access.',
           createdAt: getScriptTimestamp('create-brand-assets-storage-bucket.sql')
         },
         {
