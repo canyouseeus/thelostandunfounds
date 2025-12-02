@@ -5,7 +5,6 @@ import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
 import Home from './pages/Home'
 import ToolsDashboard from './pages/ToolsDashboard'
-import TikTokDownloader from './pages/TikTokDownloader'
 import AuthCallback from './pages/AuthCallback'
 import ZohoCallback from './pages/ZohoCallback'
 import Profile from './pages/Profile'
@@ -77,7 +76,6 @@ function App() {
         </Route>
         <Route path="/tools" element={<Layout />}>
           <Route index element={<ToolsDashboard />} />
-          <Route path="tiktok-downloader" element={<TikTokDownloader />} />
         </Route>
         <Route path="/:username/bookclubprofile" element={<Layout />}>
           <Route index element={<Profile />} />

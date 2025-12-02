@@ -12,13 +12,6 @@ interface Tool {
 }
 
 const tools: Tool[] = [
-  {
-    id: 'tiktok-downloader',
-    name: 'TikTok Downloader',
-    description: 'Download TikTok videos without watermarks',
-    icon: <Download className="w-5 h-5 text-white" />,
-    path: '/tools/tiktok-downloader',
-  },
   // Add more tools here as you create them
 ]
 
