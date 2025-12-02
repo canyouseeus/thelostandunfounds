@@ -185,13 +185,26 @@ export default function BlogSubmissionReview() {
         }
       }
 
+      // Clean content: remove ⸻ characters and normalize line breaks
+      let cleanedContent = submission.content
+        // Remove all ⸻ characters (em dashes used as separators)
+        .replace(/⸻/g, '')
+        // Remove standalone em dashes on their own line
+        .replace(/^[—–-]\s*$/gm, '')
+        // Normalize multiple line breaks to double line breaks (paragraph breaks)
+        .replace(/\n{3,}/g, '\n\n')
+        // Remove trailing whitespace from lines
+        .split('\n').map(line => line.trimEnd()).join('\n')
+        // Remove leading/trailing whitespace
+        .trim();
+
       // Create blog post with subdomain and Amazon links
       const { data: blogPost, error: blogError } = await supabase
         .from('blog_posts')
         .insert([{
           title: submission.title,
           slug: slug,
-          content: submission.content,
+          content: cleanedContent, // Use cleaned content
           excerpt: submission.excerpt,
           published: true,
           published_at: new Date().toISOString(),
