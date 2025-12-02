@@ -660,6 +660,20 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch add-emails-to-user-roles-from-submissions file:', fetchError);
       }
 
+      // Load ensure-author-name-column-exists script
+      let ensureAuthorNameContent = '';
+      try {
+        const ensureAuthorNameResponse = await fetch('/sql/ensure-author-name-column-exists.sql');
+        if (ensureAuthorNameResponse.ok) {
+          const text = await ensureAuthorNameResponse.text();
+          if (!text.trim().startsWith('<!')) {
+            ensureAuthorNameContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch ensure-author-name-column-exists file:', fetchError);
+      }
+
       // Load setup-admin-user script
       let setupAdminContent = '';
       try {
@@ -934,6 +948,13 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
           content: addEmailsToRolesContent || '// File not found - check public/sql folder',
           description: 'Populates user_roles.email for users who have subdomains but no email in user_roles. Finds emails from blog_submissions by matching subdomain. Run this if emails are NULL in user_roles but exist in blog_submissions.',
           createdAt: getScriptTimestamp('add-emails-to-user-roles-from-submissions.sql')
+        },
+        {
+          name: 'Ensure author_name Column Exists in blog_posts',
+          filename: 'ensure-author-name-column-exists.sql',
+          content: ensureAuthorNameContent || '// File not found - check public/sql folder',
+          description: 'Ensures the author_name column exists in blog_posts table. This column stores the author name from blog_submissions when a post is published. Safe to run multiple times. Run this if you get "column author_name does not exist" errors when publishing.',
+          createdAt: getScriptTimestamp('ensure-author-name-column-exists.sql')
         },
         {
           name: 'Newsletter Campaigns Table',

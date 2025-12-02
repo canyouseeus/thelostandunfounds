@@ -242,30 +242,72 @@ export default function BlogSubmissionReview() {
         .trim();
 
       // Create blog post with subdomain and Amazon links
-      const { data: blogPost, error: blogError } = await supabase
+      // Build insert object conditionally to handle missing columns gracefully
+      const blogPostData: any = {
+        title: submission.title,
+        slug: slug,
+        content: cleanedContent, // Use cleaned content
+        excerpt: submission.excerpt,
+        published: true,
+        published_at: new Date().toISOString(),
+        status: 'published',
+        author_id: authorId,
+        subdomain: submission.subdomain || null, // User subdomain
+        amazon_affiliate_links: submission.amazon_affiliate_links || [], // Store Amazon links
+        amazon_storefront_id: submission.amazon_storefront_id || null, // Store Amazon storefront ID
+        seo_title: null,
+        seo_description: submission.excerpt || null,
+        seo_keywords: null,
+        og_image_url: null,
+      }
+
+      // Only include author_name if the column exists (handled via try-catch fallback)
+      // The author_name column may not exist in all schema versions
+      // We'll try with it first, and if it fails, retry without it
+      
+      let blogPost
+      let blogError
+      
+      // First attempt: try with author_name
+      const firstAttempt = await supabase
         .from('blog_posts')
         .insert([{
-          title: submission.title,
-          slug: slug,
-          content: cleanedContent, // Use cleaned content
-          excerpt: submission.excerpt,
-          published: true,
-          published_at: new Date().toISOString(),
-          status: 'published',
-          author_id: authorId,
-          author_name: submission.author_name.trim(), // Store author name for disclosure (required)
-          subdomain: submission.subdomain || null, // User subdomain
-          amazon_affiliate_links: submission.amazon_affiliate_links || [], // Store Amazon links
-          amazon_storefront_id: submission.amazon_storefront_id || null, // Store Amazon storefront ID
-          seo_title: null,
-          seo_description: submission.excerpt || null,
-          seo_keywords: null,
-          og_image_url: null,
+          ...blogPostData,
+          author_name: submission.author_name.trim(), // Store author name for disclosure
         }])
         .select()
-        .single();
+        .single()
 
-      if (blogError) throw blogError;
+      if (firstAttempt.error) {
+        // If error mentions author_name, retry without it
+        if (firstAttempt.error.message?.includes('author_name') || 
+            firstAttempt.error.message?.includes('column') ||
+            firstAttempt.error.code === '42703') {
+          console.warn('author_name column not found, retrying without it:', firstAttempt.error.message)
+          // Second attempt: without author_name
+          const secondAttempt = await supabase
+            .from('blog_posts')
+            .insert([blogPostData])
+            .select()
+            .single()
+          
+          blogPost = secondAttempt.data
+          blogError = secondAttempt.error
+        } else {
+          // Different error, use the original
+          blogPost = firstAttempt.data
+          blogError = firstAttempt.error
+        }
+      } else {
+        // Success on first attempt
+        blogPost = firstAttempt.data
+        blogError = null
+      }
+
+      if (blogError) {
+        console.error('Error creating blog post:', blogError)
+        throw blogError
+      }
 
       // Update submission status (email sent timestamp will be set by the API)
       const { error: updateError } = await supabase
