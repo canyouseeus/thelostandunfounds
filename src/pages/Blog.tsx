@@ -274,9 +274,9 @@ export default function Blog() {
                         }}
                       >
                         <ExpandableCard
-                          className="bg-black/50 border-0 rounded-none h-full flex flex-col hover:shadow-lg hover:shadow-white/20 relative overflow-hidden"
+                          className="border-0 rounded-none h-full flex flex-col hover:shadow-lg hover:shadow-white/20 relative overflow-hidden"
                           style={{
-                            background: 'linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.5) 100%)',
+                            background: 'linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.7) 100%)',
                           }}
                           collapsedSize={{ height: 220 }}
                           expandedSize={{ height: 400 }}
@@ -285,10 +285,9 @@ export default function Blog() {
                           collapseDelay={300}
                         >
                           <div 
-                            className="absolute inset-0 rounded-none pointer-events-none z-10 opacity-50"
+                            className="absolute inset-0 rounded-none pointer-events-none z-10"
                             style={{
-                              background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 30%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.02) 70%, rgba(255,255,255,0.08) 100%)',
-                              mixBlendMode: 'overlay',
+                              background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 70%)',
                             }}
                           />
                           <ExpandableCardHeader className="mb-2 pb-2">
@@ -385,9 +384,9 @@ export default function Blog() {
                         style={{ background: 'linear-gradient(135deg, rgba(255,255,255,1), rgba(255,255,255,0.6), rgba(255,255,255,1))' }}
                       >
                         <ExpandableCard
-                          className="bg-black/50 border-0 rounded-none h-full flex flex-col hover:shadow-lg hover:shadow-white/20 relative overflow-hidden"
+                          className="border-0 rounded-none h-full flex flex-col hover:shadow-lg hover:shadow-white/20 relative overflow-hidden"
                           style={{
-                            background: 'linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.5) 100%)',
+                            background: 'linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.7) 100%)',
                           }}
                           collapsedSize={{ height: 220 }}
                           expandedSize={{ height: 400 }}
@@ -396,10 +395,9 @@ export default function Blog() {
                           collapseDelay={300}
                         >
                           <div 
-                            className="absolute inset-0 rounded-none pointer-events-none z-10 opacity-50"
+                            className="absolute inset-0 rounded-none pointer-events-none z-10"
                             style={{
-                              background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 30%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.02) 70%, rgba(255,255,255,0.08) 100%)',
-                              mixBlendMode: 'overlay',
+                              background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 70%)',
                             }}
                           />
                           <ExpandableCardHeader className="mb-2 pb-2">
