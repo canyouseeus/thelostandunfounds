@@ -632,6 +632,20 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch fix-user-subdomain-connections file:', fetchError);
       }
 
+      // Load check-user-subdomain-email-status script
+      let checkEmailStatusContent = '';
+      try {
+        const checkResponse = await fetch('/sql/check-user-subdomain-email-status.sql');
+        if (checkResponse.ok) {
+          const text = await checkResponse.text();
+          if (!text.trim().startsWith('<!')) {
+            checkEmailStatusContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch check-user-subdomain-email-status file:', fetchError);
+      }
+
       // Load setup-admin-user script
       let setupAdminContent = '';
       try {
@@ -892,6 +906,13 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
           content: fixSubdomainContent || '// File not found - check public/sql folder',
           description: 'Automatically links users to their subdomains by matching emails from blog_submissions and blog_posts. Creates missing user_subdomains entries and fixes incorrect user_id mappings. Run this AFTER running the diagnose script.',
           createdAt: getScriptTimestamp('fix-user-subdomain-connections.sql')
+        },
+        {
+          name: 'Check User-Subdomain-Email Status',
+          filename: 'check-user-subdomain-email-status.sql',
+          content: checkEmailStatusContent || '// File not found - check public/sql folder',
+          description: 'Diagnostic query to check if users are linked to subdomains, what emails are available, and whether welcome emails have been sent. Use this to debug email sending issues.',
+          createdAt: getScriptTimestamp('check-user-subdomain-email-status.sql')
         },
         {
           name: 'Newsletter Campaigns Table',

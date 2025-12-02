@@ -454,8 +454,33 @@ export default async function handler(
           source: emailData.source,
         })
       } else {
-        // Log users without emails for debugging
+        // Log users without emails for debugging with more details
         console.warn(`No email found for user ${subdomain.user_id} with subdomain ${subdomain.subdomain}`)
+        console.warn(`  - Checking if subdomain exists in blog_submissions...`)
+        // Try one more time to find email by subdomain directly
+        const { data: lastResortSubmission } = await supabase
+          .from('blog_submissions')
+          .select('author_email')
+          .eq('subdomain', subdomain.subdomain)
+          .not('author_email', 'is', null)
+          .limit(1)
+          .maybeSingle()
+        
+        if (lastResortSubmission?.author_email) {
+          console.warn(`  - Found email ${lastResortSubmission.author_email} in blog_submissions for subdomain ${subdomain.subdomain}`)
+          emailMap.set(subdomain.user_id, {
+            email: lastResortSubmission.author_email,
+            source: 'blog_submissions_fallback'
+          })
+          usersWithEmails.push({
+            userId: subdomain.user_id,
+            email: lastResortSubmission.author_email,
+            subdomain: subdomain.subdomain,
+            source: 'blog_submissions_fallback',
+          })
+        } else {
+          console.warn(`  - No email found in blog_submissions either for subdomain ${subdomain.subdomain}`)
+        }
       }
     }
 

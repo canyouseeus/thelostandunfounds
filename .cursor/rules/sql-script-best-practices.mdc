@@ -1,0 +1,106 @@
+# SQL Script Best Practices - Lessons Learned
+
+## Critical Rules for Writing PostgreSQL PL/pgSQL Scripts
+
+### 1. Column Existence Verification
+**NEVER assume a column exists without checking the schema first.**
+- Always verify column names in the actual database schema
+- Use `grep` to search for `CREATE TABLE` statements before referencing columns
+- Check both the table definition and any migration scripts
+- Common mistake: Referencing `author_name` in `blog_posts` when it might not exist
+
+### 2. ON CONFLICT Clause Limitations
+**PostgreSQL only allows ONE `ON CONFLICT` clause per INSERT statement.**
+- ❌ WRONG: `ON CONFLICT (user_id) DO NOTHING ON CONFLICT (subdomain) DO NOTHING;`
+- ✅ CORRECT: Check for conflicts first, then use single ON CONFLICT:
+  ```sql
+  IF NOT EXISTS (SELECT 1 FROM table WHERE column = value) THEN
+    INSERT INTO table (...) VALUES (...)
+    ON CONFLICT (primary_key) DO NOTHING;
+  END IF;
+  ```
+
+### 3. Record Variable Initialization
+**NEVER assign to individual fields of an uninitialized RECORD variable.**
+- ❌ WRONG: `user_record.id := some_value;` (if user_record not initialized)
+- ✅ CORRECT: Initialize entire record at once:
+  ```sql
+  SELECT id, email INTO user_record FROM table WHERE ...;
+  ```
+- Or use temporary variables first, then SELECT INTO the record
+
+### 4. DECLARE Block Placement
+**DECLARE blocks CANNOT be nested inside FOR loops or other control structures.**
+- ❌ WRONG:
+  ```sql
+  FOR record IN ... LOOP
+    DECLARE
+      var TYPE;
+    BEGIN
+      ...
+    END;
+  END LOOP;
+  ```
+- ✅ CORRECT: Declare all variables at the top level:
+  ```sql
+  DECLARE
+    var TYPE;
+  BEGIN
+    FOR record IN ... LOOP
+      -- use var here
+    END LOOP;
+  END;
+  ```
+
+### 5. Testing SQL Scripts
+**ALWAYS test SQL scripts incrementally:**
+- Test each section separately before combining
+- Use diagnostic queries first to understand the data
+- Verify table schemas before writing scripts
+- Test with a small subset of data first
+
+### 6. Schema Verification Checklist
+Before writing SQL scripts that reference tables:
+- [ ] Check `CREATE TABLE` statements for exact column names
+- [ ] Verify column types match your expectations
+- [ ] Check for indexes and constraints (especially UNIQUE constraints)
+- [ ] Look for migration scripts that might have changed the schema
+- [ ] Verify foreign key relationships
+
+### 7. Error Prevention Workflow
+1. **Read the schema first** - Use `grep` to find table definitions
+2. **Write diagnostic queries** - Understand the data structure
+3. **Test incrementally** - Build the script piece by piece
+4. **Verify syntax** - Check PostgreSQL version compatibility
+5. **Test with sample data** - Use a small subset first
+
+### 8. Common PostgreSQL PL/pgSQL Patterns
+
+**Pattern: Check before insert**
+```sql
+IF NOT EXISTS (SELECT 1 FROM table WHERE condition) THEN
+  INSERT INTO table (...) VALUES (...);
+END IF;
+```
+
+**Pattern: Initialize record properly**
+```sql
+DECLARE
+  my_record RECORD;
+  temp_id UUID;
+BEGIN
+  temp_id := some_value;
+  SELECT id, name INTO my_record FROM table WHERE id = temp_id;
+  -- Now can use my_record.id, my_record.name
+END;
+```
+
+**Pattern: Handle conflicts**
+```sql
+-- Check both conditions first
+IF NOT EXISTS (SELECT 1 FROM table WHERE col1 = val1) 
+   AND NOT EXISTS (SELECT 1 FROM table WHERE col2 = val2) THEN
+  INSERT INTO table (col1, col2) VALUES (val1, val2)
+  ON CONFLICT (primary_key) DO NOTHING;
+END IF;
+```
