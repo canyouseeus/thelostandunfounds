@@ -508,28 +508,51 @@ export default function BlogPost() {
             if (!pattern) continue;
             
             try {
-              const phraseRegex = new RegExp(`(?:^|\\s|[.,!?;:()\\[\\]"])(${pattern})(?=\\s|$|[.,!?;:()\\[\\]"])`, 'gi');
-              phraseRegex.lastIndex = 0; // Reset
-              const phraseMatch = phraseRegex.exec(text);
+              // Try multiple regex patterns with different word boundaries
+              const regexPatterns = [
+                `(?:^|\\s|[.,!?;:()\\[\\]"])(${pattern})(?=\\s|$|[.,!?;:()\\[\\]"])`, // With punctuation
+                `(?:^|\\s)(${pattern})(?=\\s|$|[.,!?;:])`, // Simpler boundaries
+                `\\b(${pattern})\\b`, // Word boundaries only
+                `(${pattern})` // No boundaries (most permissive)
+              ];
               
-              if (phraseMatch && phraseMatch[1] && phraseMatch.index !== undefined) {
-                const matchStart = phraseMatch.index + (phraseMatch[0].length - phraseMatch[1].length);
-                if (matchStart >= 0 && matchStart < text.length) {
-                  // Check if this overlaps with existing matches
-                  const isOverlapping = matches.some(m => 
-                    (matchStart >= m.index && matchStart < m.index + m.length) ||
-                    (matchStart + phraseMatch[1].length > m.index && matchStart + phraseMatch[1].length <= m.index + m.length) ||
-                    (matchStart <= m.index && matchStart + phraseMatch[1].length >= m.index + m.length)
-                  );
-                  
-                  if (!isOverlapping) {
-                    matches.push({
-                      index: matchStart,
-                      length: phraseMatch[1].length,
-                      text: phraseMatch[1]
-                    });
-                    break; // Found a match for this book, move to next book
+              for (const regexPattern of regexPatterns) {
+                const phraseRegex = new RegExp(regexPattern, 'gi');
+                phraseRegex.lastIndex = 0; // Reset
+                let phraseMatch;
+                let attempts = 0;
+                
+                // Try to find all occurrences, not just the first
+                while ((phraseMatch = phraseRegex.exec(text)) !== null && attempts < 10) {
+                  attempts++;
+                  if (phraseMatch && phraseMatch[1] && phraseMatch.index !== undefined) {
+                    const matchStart = phraseMatch.index + (phraseMatch[0].length - phraseMatch[1].length);
+                    if (matchStart >= 0 && matchStart < text.length) {
+                      // Check if this overlaps with existing matches
+                      const isOverlapping = matches.some(m => 
+                        (matchStart >= m.index && matchStart < m.index + m.length) ||
+                        (matchStart + phraseMatch[1].length > m.index && matchStart + phraseMatch[1].length <= m.index + m.length) ||
+                        (matchStart <= m.index && matchStart + phraseMatch[1].length >= m.index + m.length)
+                      );
+                      
+                      if (!isOverlapping) {
+                        matches.push({
+                          index: matchStart,
+                          length: phraseMatch[1].length,
+                          text: phraseMatch[1]
+                        });
+                        // Don't break - continue to find all occurrences
+                      }
+                    }
                   }
+                }
+                
+                // If we found at least one match, we can move to next book
+                if (matches.some(m => {
+                  const mNormalized = normalizeBookTitle(m.text);
+                  return mNormalized === normalizedTitle || findBookTitleMatch(m.text, [bookTitle]) === bookTitle;
+                })) {
+                  break; // Found this book, move to next
                 }
               }
             } catch (e) {
