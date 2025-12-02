@@ -182,6 +182,8 @@ const ExpandableCard = ({
     },
   }
 
+  const { onDrag, onDragStart, onDragEnd, ...motionProps } = props;
+  
   return (
     <motion.div
       // @ts-ignore
@@ -196,7 +198,7 @@ const ExpandableCard = ({
       transition={transition}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      {...props}
+      {...motionProps}
     >
       {children}
     </motion.div>
