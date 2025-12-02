@@ -468,7 +468,7 @@ export default function BlogPost() {
     combinedRegex.lastIndex = 0;
 
     // Collect all matches first to avoid overlapping
-    const matches: Array<{index: number, length: number, text: string}> = [];
+    let matches: Array<{index: number, length: number, text: string}> = [];
     try {
       // Reset regex lastIndex to avoid issues
       combinedRegex.lastIndex = 0;
