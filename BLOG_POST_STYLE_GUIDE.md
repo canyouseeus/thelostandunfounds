@@ -48,10 +48,10 @@ This document defines the consistent style and formatting rules for all blog pos
 ## Book Title Formatting
 
 ### Display Style
-- **All book titles are displayed in Title Case** (proper case: "The Hobbit", "The Hunger Games")
+- **Book titles preserve the author's original case** - if author wrote "THE HOBBIT" it displays as "THE HOBBIT", if "The Hobbit" it displays as "The Hobbit"
 - **All book titles are bold** (`font-bold`)
-- **Linked book titles**: Title case, bold, underlined, white text
-- **Non-linked book titles**: Title case, bold, white text (no underline)
+- **Linked book titles**: Original case preserved, bold, underlined, white text
+- **Non-linked book titles**: Original case preserved, bold, white text (no underline)
 
 ### Matching Rules
 The system uses intelligent fuzzy matching to find book titles in text, handling:
@@ -75,7 +75,11 @@ The system uses intelligent fuzzy matching to find book titles in text, handling
 ```
 Text: "I read THE HOBBIT right after I got my deployment orders."
 Database: "The Hobbit"
-Result: [The Hobbit] (linked, title case, bold, underlined)
+Result: [THE HOBBIT] (linked, preserves author's uppercase, bold, underlined)
+
+Text: "I read The Hobbit right after I got my deployment orders."
+Database: "The Hobbit"
+Result: [The Hobbit] (linked, preserves author's title case, bold, underlined)
 ```
 
 ---
@@ -238,8 +242,8 @@ Both paragraphs are in "THE HOBBIT" section, so book title mentions can be linke
 When publishing a blog post, ensure:
 
 - [ ] All 4 books have affiliate links in `amazon_affiliate_links`
-- [ ] Each book has exactly 2 links (one in intro, one in section)
-- [ ] Book titles display in Title Case and bold (e.g., "The Hobbit", "The Hunger Games")
+- [ ] Each book has exactly 2 links (one in intro, one in section) - automatically added when publishing
+- [ ] Book titles preserve author's original case formatting (uppercase if author wrote uppercase, title case if author wrote title case)
 - [ ] Author name in disclosure is UPPERCASE and bold
 - [ ] Excerpt/preview text is displayed (if available)
 - [ ] Headers are properly detected and formatted
@@ -270,7 +274,7 @@ When publishing a blog post, ensure:
 ### Example 1: Book Title in Intro
 ```
 Content: "I read THE HOBBIT right after I got my deployment orders."
-Result: [The Hobbit] (linked, title case, bold, underlined)
+Result: [THE HOBBIT] (linked, preserves author's uppercase, bold, underlined)
 Count: 1/2 for "The Hobbit"
 ```
 
@@ -278,14 +282,14 @@ Count: 1/2 for "The Hobbit"
 ```
 Heading: "THE HOBBIT: A Journey Begins"
 Content: "This book taught me about courage..."
-Result: [The Hobbit] (linked, title case, bold, underlined)
+Result: [THE HOBBIT] (linked, preserves author's uppercase, bold, underlined)
 Count: 2/2 for "The Hobbit"
 ```
 
 ### Example 3: Book Title After 2 Links
 ```
 Content: "I still think about THE HOBBIT today."
-Result: **The Hobbit** (bold, title case, no link)
+Result: **THE HOBBIT** (bold, preserves author's uppercase, no link)
 Count: 2/2 (limit reached)
 ```
 

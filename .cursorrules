@@ -106,7 +106,7 @@ For detailed verification workflow and code examples, see: `.cursor/rules/deploy
 
 ### Key Style Rules:
 1. **Book Title Linking**: Maximum 2 links per book (1 in intro, 1 in section). After 2 links, display as bold title case text only.
-2. **Book Title Formatting**: All book titles MUST be displayed in Title Case (proper case) and bold. Examples: "The Hobbit", "The Hunger Games", "Ender's Game". Linked titles are underlined.
+2. **Book Title Formatting**: Book titles MUST preserve the author's original case formatting from the article content. If author wrote "THE HOBBIT" it displays as "THE HOBBIT", if "The Hobbit" it displays as "The Hobbit". All book titles are bold. Linked titles are underlined.
 3. **Author Name in Disclosure**: Author names in Amazon Affiliate Disclosure MUST be UPPERCASE and bold.
 4. **Excerpt Display**: Excerpt/preview text displays in header after title and date (if available).
 5. **Header Detection**: Headers are auto-detected (short, title case, no ending punctuation). Book titles in headers can be linked.
