@@ -312,7 +312,7 @@ export default function Blog() {
                           </ExpandableContent>
                         </ExpandableCardContent>
                         
-                        <ExpandableCardFooter className="mt-auto pt-3 border-t border-white/20">
+                        <ExpandableCardFooter className="mt-auto pt-3">
                           <div className="flex items-center justify-between">
                             <time className="text-white/40 text-xs font-medium">
                               {formatDate(post.published_at || post.created_at)}
