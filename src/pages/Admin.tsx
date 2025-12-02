@@ -42,6 +42,7 @@ import BlogSubmissionReview from '../components/BlogSubmissionReview';
 import SendExistingPublicationEmailsButton from '../components/SendExistingPublicationEmailsButton';
 import SendWelcomeEmailsButton from '../components/SendWelcomeEmailsButton';
 import BrandAssets from '../components/BrandAssets';
+import { BentoGrid, BentoCard } from '../components/ui/bento-grid';
 
 interface DashboardStats {
   totalUsers: number;
@@ -219,16 +220,40 @@ export default function Admin() {
       const premiumCount = activeSubs.filter(s => s.tier === 'premium').length;
       const proCount = activeSubs.filter(s => s.tier === 'pro').length;
 
-      // Get total users (approximate from auth.users)
+      // Get total users - count from user_subdomains (all registered users)
       let totalUsers = 0;
       try {
-        const result = await supabase
-          .from('platform_subscriptions')
-          .select('*', { count: 'exact', head: true });
-        totalUsers = result.count || 0;
+        // First try user_subdomains (most accurate - all registered users)
+        const userSubdomainsResult = await supabase
+          .from('user_subdomains')
+          .select('user_id', { count: 'exact', head: true });
+        if (userSubdomainsResult.count !== null) {
+          totalUsers = userSubdomainsResult.count;
+        } else {
+          // Fallback: try user_profiles if it exists
+          try {
+            const profilesResult = await supabase
+              .from('user_profiles')
+              .select('user_id', { count: 'exact', head: true });
+            totalUsers = profilesResult.count || 0;
+          } catch (profilesErr: any) {
+            // Last resort: count unique user_ids from platform_subscriptions
+            const uniqueUserIds = new Set(subscriptions.map((s: any) => s.user_id));
+            totalUsers = uniqueUserIds.size || subscriptions.length;
+          }
+        }
       } catch (err: any) {
-        // Table might not exist - use length of subscriptions array
-        totalUsers = subscriptions.length;
+        // If user_subdomains doesn't exist, try user_profiles
+        try {
+          const profilesResult = await supabase
+            .from('user_profiles')
+            .select('user_id', { count: 'exact', head: true });
+          totalUsers = profilesResult.count || 0;
+        } catch (profilesErr: any) {
+          // Last resort: count unique user_ids from subscriptions
+          const uniqueUserIds = new Set(subscriptions.map((s: any) => s.user_id));
+          totalUsers = uniqueUserIds.size || subscriptions.length;
+        }
       }
 
       // Get tool usage stats
@@ -688,44 +713,93 @@ export default function Admin() {
             </div>
           )}
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-black/50 border border-white/10 rounded-none p-6 hover:border-white/20 transition">
+          {/* Stats Grid - Using BentoGrid */}
+          <BentoGrid columns={4} gap="md">
+            <BentoCard colSpan={1} rowSpan={1} expandable={true} expandedContent={
+              <div className="space-y-2 pt-2">
+                <div className="text-xs text-white/60">Breakdown:</div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-white/70">Free Users</span>
+                  <span className="text-sm font-semibold text-white">{stats?.freeUsers || 0}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-white/70">Premium Users</span>
+                  <span className="text-sm font-semibold text-yellow-400">{stats?.premiumUsers || 0}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-white/70">Pro Users</span>
+                  <span className="text-sm font-semibold text-purple-400">{stats?.proUsers || 0}</span>
+                </div>
+              </div>
+            }>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white/60 text-sm">Total Users</span>
                 <Users className="w-5 h-5 text-white/40" />
               </div>
               <div className="text-3xl font-bold text-white">{stats?.totalUsers || 0}</div>
               <div className="text-xs text-white/40 mt-1">All registered users</div>
-            </div>
+            </BentoCard>
 
-            <div className="bg-black/50 border border-white/10 rounded-none p-6 hover:border-white/20 transition">
+            <BentoCard colSpan={1} rowSpan={1} expandable={true} expandedContent={
+              <div className="space-y-2 pt-2">
+                <div className="text-xs text-white/60">Subscription Status:</div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-white/70">Active</span>
+                  <span className="text-sm font-semibold text-green-400">{stats?.activeSubscriptions || 0}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-white/70">Conversion Rate</span>
+                  <span className="text-sm font-semibold text-white">
+                    {stats?.totalUsers ? Math.round((stats.activeSubscriptions / stats.totalUsers) * 100) : 0}%
+                  </span>
+                </div>
+              </div>
+            }>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white/60 text-sm">Active Subscriptions</span>
                 <CheckCircle className="w-5 h-5 text-green-400" />
               </div>
               <div className="text-3xl font-bold text-white">{stats?.activeSubscriptions || 0}</div>
               <div className="text-xs text-white/40 mt-1">Currently active</div>
-            </div>
+            </BentoCard>
 
-            <div className="bg-black/50 border border-white/10 rounded-none p-6 hover:border-white/20 transition">
+            <BentoCard colSpan={1} rowSpan={1} expandable={true} expandedContent={
+              <div className="space-y-2 pt-2">
+                <div className="text-xs text-white/60">Usage Details:</div>
+                <div className="text-xs text-white/70">
+                  Total tool executions across all users and tools
+                </div>
+              </div>
+            }>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white/60 text-sm">Tool Usage</span>
                 <Activity className="w-5 h-5 text-blue-400" />
               </div>
               <div className="text-3xl font-bold text-white">{stats?.totalToolUsage || 0}</div>
               <div className="text-xs text-white/40 mt-1">Total tool executions</div>
-            </div>
+            </BentoCard>
 
-            <div className="bg-black/50 border border-white/10 rounded-none p-6 hover:border-white/20 transition">
+            <BentoCard colSpan={1} rowSpan={1} expandable={true} expandedContent={
+              <div className="space-y-2 pt-2">
+                <div className="text-xs text-white/60">Premium Breakdown:</div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-white/70">Premium</span>
+                  <span className="text-sm font-semibold text-yellow-400">{stats?.premiumUsers || 0}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-white/70">Pro</span>
+                  <span className="text-sm font-semibold text-purple-400">{stats?.proUsers || 0}</span>
+                </div>
+              </div>
+            }>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white/60 text-sm">Premium Users</span>
                 <TrendingUp className="w-5 h-5 text-yellow-400" />
               </div>
               <div className="text-3xl font-bold text-white">{stats?.premiumUsers || 0}</div>
               <div className="text-xs text-white/40 mt-1">Premium + Pro tiers</div>
-            </div>
-          </div>
+            </BentoCard>
+          </BentoGrid>
 
           {/* Platform Health & Additional Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
