@@ -162,18 +162,10 @@ export default function BlogSubmissionReview() {
         .trim();
 
       // Get author_id from email if user exists
+      // Note: We cannot directly query auth.users via PostgREST
+      // The author_id will be set to null and can be updated later if needed
+      // The author_name field is used for display instead
       let authorId = null;
-      if (submission.author_email) {
-        const { data: userData } = await supabase
-          .from('auth.users')
-          .select('id')
-          .eq('email', submission.author_email)
-          .single()
-          .catch(() => ({ data: null }));
-        
-        // Try alternative: query via Supabase admin API or use RPC
-        // For now, we'll leave it null and let the admin set it if needed
-      }
 
       // Ensure author_name is set (required)
       if (!submission.author_name || !submission.author_name.trim()) {
