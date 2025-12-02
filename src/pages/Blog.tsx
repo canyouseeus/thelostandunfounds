@@ -263,7 +263,8 @@ export default function Blog() {
                   key={post.id}
                   expandDirection="vertical"
                   expandBehavior="replace"
-                  initialDelay={0.1}
+                  initialDelay={0}
+                  transition={{ type: "spring", damping: 25, stiffness: 400 }}
                 >
                   {({ isExpanded }) => (
                     <ExpandableTrigger>
@@ -274,12 +275,12 @@ export default function Blog() {
                         }}
                       >
                         <ExpandableCard
-                          className="bg-black/50 border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-white/30 hover:-translate-y-1 hover:scale-[1.02]"
+                          className="bg-black/47 border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-white/30 hover:-translate-y-1 hover:scale-[1.02]"
                           collapsedSize={{ height: 220 }}
                           expandedSize={{ height: 400 }}
                           hoverToExpand={false}
-                          expandDelay={200}
-                          collapseDelay={300}
+                          expandDelay={0}
+                          collapseDelay={0}
                         >
                           <ExpandableCardHeader className="mb-1 pb-1">
                             <h2 className="text-base font-black text-white mb-0 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
@@ -371,7 +372,8 @@ export default function Blog() {
                   key={post.id}
                   expandDirection="vertical"
                   expandBehavior="replace"
-                  initialDelay={0.1}
+                  initialDelay={0}
+                  transition={{ type: "spring", damping: 25, stiffness: 400 }}
                 >
                   {({ isExpanded }) => (
                     <ExpandableTrigger>
@@ -380,12 +382,12 @@ export default function Blog() {
                         style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15), rgba(255,255,255,0.3))' }}
                       >
                         <ExpandableCard
-                          className="bg-black/50 border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-white/30 hover:-translate-y-1 hover:scale-[1.02]"
+                          className="bg-black/47 border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-white/30 hover:-translate-y-1 hover:scale-[1.02]"
                           collapsedSize={{ height: 220 }}
                           expandedSize={{ height: 400 }}
                           hoverToExpand={false}
-                          expandDelay={200}
-                          collapseDelay={300}
+                          expandDelay={0}
+                          collapseDelay={0}
                         >
                           <ExpandableCardHeader className="mb-1 pb-1">
                             <h2 className="text-base font-black text-white mb-0 tracking-wide transition line-clamp-2">
