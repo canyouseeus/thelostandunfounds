@@ -41,6 +41,7 @@ async function countPublishedPosts(authorEmail: string): Promise<number> {
     const supabase = createClient(supabaseUrl, supabaseKey)
 
     // Count published submissions for this author
+    // Note: This query runs after the submission status is updated to 'published'
     const { count, error } = await supabase
       .from('blog_submissions')
       .select('*', { count: 'exact', head: true })
@@ -52,7 +53,10 @@ async function countPublishedPosts(authorEmail: string): Promise<number> {
       return 1 // Default to 1st if query fails
     }
 
-    return count || 0
+    // Return the count, ensuring it's at least 1 (since this post is being published)
+    // If count is 0 or null, this is their first post
+    const postCount = count && count > 0 ? count : 1
+    return postCount
   } catch (error) {
     console.error('Error counting published posts:', error)
     return 1 // Default to 1st if query fails
