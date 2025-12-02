@@ -204,38 +204,89 @@ export default function BlogSubmissionReview() {
         .replace(/-+/g, '-')
         .trim();
 
-      // Get user_id/author_id from submission or current user
+      // Get user_id/author_id from the submission author (NOT the admin)
       // The schema may use either user_id or author_id, and one may be required
-      // Try to get user_id from the submission's subdomain or use current user
+      // We need to find the author's user_id from their email or subdomain
       let userId = null;
       let authorId = null;
       
-      // If submission has a subdomain, try to find the user_id from user_subdomains
+      // Method 1: If submission has a subdomain, find the user_id from user_subdomains
       if (submission.subdomain) {
         try {
-          const { data: subdomainData } = await supabase
+          const { data: subdomainData, error: subdomainError } = await supabase
             .from('user_subdomains')
             .select('user_id')
             .eq('subdomain', submission.subdomain)
-            .single();
+            .maybeSingle();
           
-          if (subdomainData?.user_id) {
+          if (subdomainError) {
+            console.warn('Error looking up user_id from subdomain:', subdomainError);
+          } else if (subdomainData?.user_id) {
             userId = subdomainData.user_id;
-            authorId = subdomainData.user_id; // Use same value for both
+            authorId = subdomainData.user_id;
+            console.log(`Found author user_id ${userId} from subdomain ${submission.subdomain}`);
           }
         } catch (err) {
           console.warn('Could not find user_id from subdomain:', err);
         }
       }
       
-      // Fallback: use current user if available
-      if (!userId && user?.id) {
-        userId = user.id;
-        authorId = user.id;
+      // Method 2: If we still don't have user_id, try to find it from user_roles by email
+      if (!userId && submission.author_email) {
+        try {
+          const { data: roleData, error: roleError } = await supabase
+            .from('user_roles')
+            .select('user_id')
+            .eq('email', submission.author_email)
+            .maybeSingle();
+          
+          if (roleError) {
+            console.warn('Error looking up user_id from user_roles:', roleError);
+          } else if (roleData?.user_id) {
+            userId = roleData.user_id;
+            authorId = roleData.user_id;
+            console.log(`Found author user_id ${userId} from email ${submission.author_email} in user_roles`);
+          }
+        } catch (err) {
+          console.warn('Could not find user_id from user_roles:', err);
+        }
       }
       
-      // If still no user_id, we'll need to handle this in the insert
-      // Some schemas require user_id, others allow null
+      // Method 3: Try to find from blog_submissions (if the author has other submissions)
+      if (!userId && submission.author_email) {
+        try {
+          const { data: otherSubmissions, error: submissionsError } = await supabase
+            .from('blog_submissions')
+            .select('subdomain')
+            .eq('author_email', submission.author_email)
+            .not('subdomain', 'is', null)
+            .limit(1)
+            .maybeSingle();
+          
+          if (!submissionsError && otherSubmissions?.subdomain) {
+            // Try to get user_id from that subdomain
+            const { data: subdomainData } = await supabase
+              .from('user_subdomains')
+              .select('user_id')
+              .eq('subdomain', otherSubmissions.subdomain)
+              .maybeSingle();
+            
+            if (subdomainData?.user_id) {
+              userId = subdomainData.user_id;
+              authorId = subdomainData.user_id;
+              console.log(`Found author user_id ${userId} from other submission's subdomain`);
+            }
+          }
+        } catch (err) {
+          console.warn('Could not find user_id from other submissions:', err);
+        }
+      }
+      
+      // If we still don't have user_id, we cannot proceed - user_id is required
+      if (!userId) {
+        showError(`Could not find user_id for author ${submission.author_email} (subdomain: ${submission.subdomain || 'none'}). Please ensure the author has a subdomain registered or their email is in user_roles.`);
+        return;
+      }
 
       // Ensure author_name is set (required)
       if (!submission.author_name || !submission.author_name.trim()) {
@@ -288,21 +339,10 @@ export default function BlogSubmissionReview() {
         og_image_url: null,
       }
 
-      // Add user_id and/or author_id based on what we found
-      // Try to set both to handle different schema versions
-      if (userId) {
-        blogPostData.user_id = userId;
-        blogPostData.author_id = authorId || userId; // Use userId as fallback for author_id
-      } else if (authorId) {
-        blogPostData.author_id = authorId;
-        blogPostData.user_id = authorId; // Use authorId as fallback for user_id
-      }
-      
-      // If we still don't have a user_id and it's required, use current user as last resort
-      if (!blogPostData.user_id && !blogPostData.author_id && user?.id) {
-        blogPostData.user_id = user.id;
-        blogPostData.author_id = user.id;
-      }
+      // Set both user_id and author_id to the author's user_id
+      // This handles different schema versions (some use user_id, others use author_id)
+      blogPostData.user_id = userId;
+      blogPostData.author_id = authorId || userId; // Use same value for both
 
       // Only include author_name if the column exists (handled via try-catch fallback)
       // The author_name column may not exist in all schema versions
@@ -337,27 +377,12 @@ export default function BlogSubmissionReview() {
           
           blogPost = secondAttempt.data
           blogError = secondAttempt.error
-        } else if (errorMsg.includes('user_id') && errorMsg.includes('null') && !blogPostData.user_id) {
-          // user_id is required but we don't have it - try with current user
-          console.warn('user_id is required but not found, using current user:', errorMsg)
-          if (user?.id) {
-            const thirdAttempt = await supabase
-              .from('blog_posts')
-              .insert([{
-                ...blogPostData,
-                user_id: user.id,
-                author_id: user.id, // Set both to be safe
-              }])
-              .select()
-              .single()
-            
-            blogPost = thirdAttempt.data
-            blogError = thirdAttempt.error
-          } else {
-            // Can't proceed without user_id
-            blogPost = null
-            blogError = firstAttempt.error
-          }
+        } else if (errorMsg.includes('user_id') && errorMsg.includes('null')) {
+          // user_id is required but we don't have it - this should not happen if we did the lookup correctly
+          console.error('user_id is required but not found. This should not happen after lookup:', errorMsg)
+          // Don't use admin user - fail with error
+          blogPost = null
+          blogError = firstAttempt.error
         } else if (errorMsg.includes('author_id') && errorMsg.includes('null') && !blogPostData.author_id && blogPostData.user_id) {
           // author_id might be required but we have user_id - try setting author_id to user_id
           console.warn('author_id may be required, setting to user_id:', errorMsg)
