@@ -288,15 +288,15 @@ export default function Blog() {
                           expandDelay={200}
                           collapseDelay={300}
                         >
-                          <ExpandableCardHeader className="mb-4 pb-3">
-                            <h2 className="text-base font-black text-white mb-2 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
+                          <ExpandableCardHeader className="mb-2 pb-2">
+                            <h2 className="text-base font-black text-white mb-1 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
                               {post.title}
                             </h2>
                           </ExpandableCardHeader>
                         
-                        <ExpandableCardContent className="flex-1">
+                        <ExpandableCardContent className="flex-1 min-h-0">
                           {excerpt && (
-                            <div className="mb-4">
+                            <div className="mb-2">
                               <p className="text-white/60 text-sm leading-relaxed line-clamp-4 text-left">
                                 {excerpt}
                               </p>
@@ -305,7 +305,7 @@ export default function Blog() {
                           
                           <ExpandableContent preset="fade" stagger staggerChildren={0.1}>
                             {post.content && (
-                              <div className="mb-4">
+                              <div className="mb-2">
                                 <p className="text-white/50 text-xs leading-relaxed text-left line-clamp-6">
                                   {post.content.replace(/\n/g, ' ').substring(0, 300)}...
                                 </p>
@@ -321,13 +321,13 @@ export default function Blog() {
                           </ExpandableContent>
                         </ExpandableCardContent>
                         
-                        <ExpandableCardFooter className="mt-auto pt-3">
-                          <div className="flex items-center justify-between">
-                            <time className="text-white/40 text-xs font-medium">
+                        <ExpandableCardFooter className="mt-auto p-4 pt-2 pb-4">
+                          <div className="flex items-center justify-between gap-2 min-w-0 w-full">
+                            <time className="text-white/70 text-xs font-medium truncate min-w-0 flex-1">
                               {formatDate(post.published_at || post.created_at)}
                             </time>
                             {!isExpanded && (
-                              <span className="text-white/60 text-xs font-semibold transition">
+                              <span className="text-white/90 text-xs font-semibold transition flex-shrink-0 whitespace-nowrap">
                                 Click to expand →
                               </span>
                             )}
@@ -389,15 +389,15 @@ export default function Blog() {
                           expandDelay={200}
                           collapseDelay={300}
                         >
-                          <ExpandableCardHeader className="mb-4 pb-3 border-b border-white/20">
-                            <h2 className="text-base font-black text-white mb-2 tracking-wide transition line-clamp-2">
+                          <ExpandableCardHeader className="mb-2 pb-2">
+                            <h2 className="text-base font-black text-white mb-1 tracking-wide transition line-clamp-2">
                               {post.title}
                             </h2>
                           </ExpandableCardHeader>
                           
-                          <ExpandableCardContent className="flex-1">
+                          <ExpandableCardContent className="flex-1 min-h-0">
                             {excerpt && (
-                              <div className="mb-4">
+                              <div className="mb-2">
                                 <p className="text-white/60 text-sm leading-relaxed line-clamp-4 text-left">
                                   {excerpt}
                                 </p>
@@ -406,7 +406,7 @@ export default function Blog() {
                             
                             <ExpandableContent preset="fade" stagger staggerChildren={0.1}>
                               {post.content && (
-                                <div className="mb-4">
+                                <div className="mb-2">
                                   <p className="text-white/50 text-xs leading-relaxed text-left line-clamp-6">
                                     {post.content.replace(/\n/g, ' ').substring(0, 300)}...
                                   </p>
@@ -422,7 +422,7 @@ export default function Blog() {
                             </ExpandableContent>
                           </ExpandableCardContent>
                           
-                          <ExpandableCardFooter className="mt-auto p-5 pt-3">
+                          <ExpandableCardFooter className="mt-auto p-4 pt-2 pb-4">
                             <div className="flex items-center justify-between gap-2 min-w-0 w-full">
                               <time className="text-white/70 text-xs font-medium truncate min-w-0 flex-1">
                                 {formatDate(post.published_at || post.created_at)}
