@@ -21,6 +21,7 @@ interface BlogPost {
   subdomain: string | null;
   author_id: string | null;
   amazon_affiliate_links?: any[] | null;
+  column?: string | null;
 }
 
 export default function BookClub() {
@@ -37,16 +38,31 @@ export default function BookClub() {
       setLoading(true);
       setError(null);
 
-      // Load all published posts that have a subdomain (user blogs)
-      // These are the "Book Club" articles - user-submitted content
-      const { data, error: fetchError } = await supabase
+      // Load all published posts for BookClub column
+      // Try to filter by column field first, fallback to subdomain for backward compatibility
+      let query = supabase
         .from('blog_posts')
-        .select('id, title, slug, excerpt, content, published_at, created_at, subdomain, author_id, amazon_affiliate_links')
-        .not('subdomain', 'is', null) // Only posts with subdomains (user blogs)
-        .eq('published', true)
+        .select('id, title, slug, excerpt, content, published_at, created_at, subdomain, author_id, amazon_affiliate_links, column')
+        .eq('published', true);
+
+      // Try to filter by column field if it exists
+      try {
+        query = query.eq('column', 'bookclub');
+      } catch (e) {
+        // Column field might not exist yet - use fallback
+        query = query.not('subdomain', 'is', null);
+      }
+
+      const { data, error: fetchError } = await query
         .order('published_at', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(100);
+
+      // Filter by column if column field exists in data (for backward compatibility)
+      let filteredData = data || [];
+      if (data && data.length > 0 && data[0].column !== undefined) {
+        filteredData = data.filter((post: any) => post.column === 'bookclub');
+      }
 
       if (fetchError) {
         console.error('Error loading book club posts:', fetchError);
@@ -54,7 +70,7 @@ export default function BookClub() {
         return;
       }
 
-      setPosts(data || []);
+      setPosts(filteredData);
     } catch (err: any) {
       console.error('Error loading book club:', err);
       setError(err.message || 'Failed to load articles');

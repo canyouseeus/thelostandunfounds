@@ -319,6 +319,46 @@ export default function Layout() {
                     >
                       BOOK CLUB
                     </Link>
+                    <Link 
+                      to="/gearheads" 
+                      className="menu-item menu-subitem"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setArchivesMenuOpen(false);
+                      }}
+                    >
+                      GEARHEADS
+                    </Link>
+                    <Link 
+                      to="/borderlands" 
+                      className="menu-item menu-subitem"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setArchivesMenuOpen(false);
+                      }}
+                    >
+                      EDGE OF THE BORDERLANDS
+                    </Link>
+                    <Link 
+                      to="/science" 
+                      className="menu-item menu-subitem"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setArchivesMenuOpen(false);
+                      }}
+                    >
+                      SCIENCE COLUMN
+                    </Link>
+                    <Link 
+                      to="/newtheory" 
+                      className="menu-item menu-subitem"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setArchivesMenuOpen(false);
+                      }}
+                    >
+                      NEW THEORY
+                    </Link>
                   </div>
                   {!showLimitedMenu && (
                     <Link 

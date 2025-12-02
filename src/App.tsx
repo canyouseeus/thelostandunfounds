@@ -26,6 +26,10 @@ import AllArticles from './pages/AllArticles'
 import BlogPost from './pages/BlogPost'
 import UserBlog from './pages/UserBlog'
 import BookClub from './pages/BookClub'
+import GearHeads from './pages/GearHeads'
+import Borderlands from './pages/Borderlands'
+import Science from './pages/Science'
+import NewTheory from './pages/NewTheory'
 import SubmitArticle from './pages/SubmitArticle'
 import SQL from './pages/SQL'
 import Debug from './pages/Debug'
@@ -113,6 +117,18 @@ function App() {
         </Route>
         <Route path="/book-club" element={<Layout />}>
           <Route index element={<BookClub />} />
+        </Route>
+        <Route path="/gearheads" element={<Layout />}>
+          <Route index element={<GearHeads />} />
+        </Route>
+        <Route path="/borderlands" element={<Layout />}>
+          <Route index element={<Borderlands />} />
+        </Route>
+        <Route path="/science" element={<Layout />}>
+          <Route index element={<Science />} />
+        </Route>
+        <Route path="/newtheory" element={<Layout />}>
+          <Route index element={<NewTheory />} />
         </Route>
         <Route path="/blog/getting-started" element={<Layout />}>
           <Route index element={<BlogGettingStarted />} />
