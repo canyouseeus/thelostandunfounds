@@ -986,23 +986,22 @@ export default function BlogPost() {
           {Array.isArray(content) ? content : content}
         </p>
       );
+      
+      // Track if this is the last intro element and add disclosure if needed
+      if (isInIntro) {
+        lastIntroElementIndex = elements.length - 1;
+      }
+      if (disclosureAdded && index === introEndIndex - 1) {
+        const authorName = post.author_name || 'THE LOST+UNFOUNDS';
         
-        // Track if this is the last intro element and add disclosure if needed
-        if (isInIntro) {
-          lastIntroElementIndex = elements.length - 1;
-        }
-        if (disclosureAdded && index === introEndIndex - 1) {
-          const authorName = post.author_name || 'THE LOST+UNFOUNDS';
-          
-          elements.push(
-            <div key="affiliate-disclosure" className="mb-6 mx-auto max-w-2xl mt-8">
-              <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white/20 p-4 bg-white/5">
-                {formatDisclosure(authorName)}
-              </p>
-            </div>
-          );
-          disclosureAdded = false;
-        }
+        elements.push(
+          <div key="affiliate-disclosure" className="mb-6 mx-auto max-w-2xl mt-8">
+            <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white/20 p-4 bg-white/5">
+              {formatDisclosure(authorName)}
+            </p>
+          </div>
+        );
+        disclosureAdded = false;
       }
     });
     
