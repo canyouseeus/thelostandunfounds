@@ -42,6 +42,7 @@ import BlogSubmissionReview from '../components/BlogSubmissionReview';
 import SendExistingPublicationEmailsButton from '../components/SendExistingPublicationEmailsButton';
 import SendWelcomeEmailsButton from '../components/SendWelcomeEmailsButton';
 import BrandAssets from '../components/BrandAssets';
+import AdminSQLScripts from '../components/AdminSQLScripts';
 
 interface DashboardStats {
   totalUsers: number;
@@ -106,7 +107,7 @@ export default function Admin() {
   const [loadingBookClubPosts, setLoadingBookClubPosts] = useState(false);
   const [lostArchivesPosts, setLostArchivesPosts] = useState<LostArchivesPost[]>([]);
   const [loadingLostArchivesPosts, setLoadingLostArchivesPosts] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'subscriptions' | 'products' | 'settings' | 'blog' | 'newsletter' | 'submissions' | 'assets'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'subscriptions' | 'products' | 'settings' | 'blog' | 'newsletter' | 'submissions' | 'assets' | 'sql'>('overview');
   const [componentError, setComponentError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -619,7 +620,7 @@ export default function Admin() {
       {/* Tabs */}
       <div className="mb-6 border-b border-white/10">
         <div className="flex gap-4 flex-wrap">
-          {(['overview', 'users', 'subscriptions', 'products', 'blog', 'newsletter', 'submissions', 'assets', 'settings'] as const).map((tab) => (
+          {(['overview', 'users', 'subscriptions', 'products', 'blog', 'newsletter', 'submissions', 'assets', 'sql', 'settings'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -629,7 +630,7 @@ export default function Admin() {
                   : 'text-white/60 hover:text-white'
               }`}
             >
-              {tab === 'assets' ? 'Brand Assets' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === 'assets' ? 'Brand Assets' : tab === 'sql' ? 'SQL Scripts' : tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
           ))}
         </div>
@@ -1252,6 +1253,28 @@ export default function Admin() {
           }
         >
           <BrandAssets />
+        </ErrorBoundary>
+      )}
+
+      {/* SQL Scripts Tab */}
+      {activeTab === 'sql' && (
+        <ErrorBoundary
+          fallback={
+            <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
+              <p className="text-red-400">Error loading SQL Scripts. Please refresh the page.</p>
+            </div>
+          }
+        >
+          <div className="space-y-6">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
+                <FileText className="w-6 h-6" />
+                SQL Scripts
+              </h2>
+              <p className="text-white/70">Database migration and setup scripts organized by category</p>
+            </div>
+            <AdminSQLScripts />
+          </div>
         </ErrorBoundary>
       )}
 
