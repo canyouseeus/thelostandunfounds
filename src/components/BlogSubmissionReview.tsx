@@ -245,7 +245,7 @@ export default function BlogSubmissionReview() {
       
       // Send notification email to the author
       try {
-        const emailResponse = await fetch('/api/blog-post-published/notify', {
+        const emailResponse = await fetch('/api/blog/post-published', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
