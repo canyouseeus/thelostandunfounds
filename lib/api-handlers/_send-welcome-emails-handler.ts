@@ -13,6 +13,13 @@ interface UserSubdomain {
   welcome_email_sent_at: string | null
 }
 
+interface UserWithEmail {
+  userId: string
+  email: string
+  subdomain: string
+  source: string
+}
+
 /**
  * Get Zoho access token
  */
@@ -231,13 +238,21 @@ export default async function handler(
   try {
     // Initialize Supabase client
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
+    const supabaseKey = supabaseServiceKey || supabaseAnonKey
 
     if (!supabaseUrl || !supabaseKey) {
       return res.status(500).json({ error: 'Database service not configured' })
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey)
+    // Use service role key for admin operations (auth.admin) if available
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    })
 
     // Test mode: send to specific email
     if (testEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testEmail)) {
@@ -321,8 +336,8 @@ export default async function handler(
       : fromEmail
 
     // Get user emails from multiple sources: user_roles, blog_submissions, blog_posts
-    const usersWithEmails: Array<{ userId: string; email: string; subdomain: string }> = []
-    const emailMap = new Map<string, string>() // userId -> email
+    const usersWithEmails: UserWithEmail[] = []
+    const emailMap = new Map<string, { email: string; source: string }>() // userId -> { email, source }
     
     // First, try user_roles table
     for (const subdomain of userSubdomains) {
@@ -333,51 +348,114 @@ export default async function handler(
         .maybeSingle()
 
       if (roleData?.email) {
-        emailMap.set(subdomain.user_id, roleData.email)
+        emailMap.set(subdomain.user_id, { email: roleData.email, source: 'user_roles' })
       }
     }
 
-    // Fallback: get emails from blog_submissions (for users who submitted articles)
+    // Second: get emails from blog_submissions by matching subdomain (case-insensitive)
     const { data: submissionsData } = await supabase
       .from('blog_submissions')
-      .select('author_email, author_name')
+      .select('author_email, subdomain')
       .not('author_email', 'is', null)
+      .not('subdomain', 'is', null)
 
     if (submissionsData) {
-      // Try to match by subdomain or user_id if we can
-      // For now, we'll use submissions as a source but need to match to user_id
-      // This is a fallback - we'll use it if user_roles doesn't have the email
+      // Create a map of subdomain (lowercase) -> email from submissions
+      const submissionEmailMap = new Map<string, string>()
+      for (const submission of submissionsData) {
+        if (submission.subdomain && submission.author_email) {
+          const normalizedSubdomain = submission.subdomain.toLowerCase().trim()
+          // Store the first email we find for each subdomain
+          if (!submissionEmailMap.has(normalizedSubdomain)) {
+            submissionEmailMap.set(normalizedSubdomain, submission.author_email)
+          }
+        }
+      }
+
+      // Match subdomains to get emails (case-insensitive)
+      for (const subdomain of userSubdomains) {
+        if (!emailMap.has(subdomain.user_id) && subdomain.subdomain) {
+          const normalizedSubdomain = subdomain.subdomain.toLowerCase().trim()
+          if (submissionEmailMap.has(normalizedSubdomain)) {
+            emailMap.set(subdomain.user_id, { 
+              email: submissionEmailMap.get(normalizedSubdomain)!, 
+              source: 'blog_submissions' 
+            })
+          }
+        }
+      }
     }
+
+    // Fourth: Apply manual email mappings if provided (for users we know the emails for)
+    if (manualEmails && Array.isArray(manualEmails)) {
+      for (const manual of manualEmails) {
+        if (manual.subdomain && manual.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(manual.email)) {
+          // Find the user with this subdomain
+          const matchingUser = userSubdomains.find(
+            u => u.subdomain && u.subdomain.toLowerCase().trim() === manual.subdomain.toLowerCase().trim()
+          )
+          if (matchingUser && !emailMap.has(matchingUser.user_id)) {
+            emailMap.set(matchingUser.user_id, {
+              email: manual.email,
+              source: 'manual'
+            })
+          }
+        }
+      }
+    }
+
+    // Third: For users still without emails, try to query auth.users directly (using service role)
+    const usersStillWithoutEmails = userSubdomains.filter(u => !emailMap.has(u.user_id))
+    if (usersStillWithoutEmails.length > 0 && supabaseServiceKey) {
+      // Try to get emails from auth.users table (requires service role key)
+      for (const user of usersStillWithoutEmails) {
+        try {
+          // Use admin API to get user by ID (requires service role key)
+          if (supabase.auth && supabase.auth.admin) {
+            const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(user.user_id)
+            
+            if (!authError && authUser?.user?.email) {
+              emailMap.set(user.user_id, {
+                email: authUser.user.email,
+                source: 'auth.users'
+              })
+            } else if (authError) {
+              console.warn(`Could not get email from auth.users for user ${user.user_id} (${user.subdomain}):`, authError.message)
+            }
+          }
+        } catch (err: any) {
+          // If admin API is not available, log for manual review
+          console.warn(`Could not get email from auth.users for user ${user.user_id} (${user.subdomain}):`, err?.message || err)
+        }
+      }
+    } else if (usersStillWithoutEmails.length > 0 && !supabaseServiceKey) {
+      console.warn(`Service role key not available - cannot query auth.users for ${usersStillWithoutEmails.length} users without emails`)
+    }
+
+    // Third: try to get from blog_posts by matching subdomain and author_name
+    const { data: blogPostsData } = await supabase
+      .from('blog_posts')
+      .select('author_name, subdomain')
+      .not('subdomain', 'is', null)
+      .not('author_name', 'is', null)
+
+    // Note: blog_posts doesn't have email, but we can try to match author_name to submissions
+    // This is a more complex matching that we'll skip for now
 
     // Build final list with emails
     for (const subdomain of userSubdomains) {
-      const email = emailMap.get(subdomain.user_id)
+      const emailData = emailMap.get(subdomain.user_id)
       
-      // If no email in user_roles, try to find from blog_submissions by matching subdomain
-      if (!email) {
-        // Try to find email from blog_submissions where subdomain matches
-        const { data: submissionMatch } = await supabase
-          .from('blog_submissions')
-          .select('author_email')
-          .eq('subdomain', subdomain.subdomain)
-          .not('author_email', 'is', null)
-          .limit(1)
-          .maybeSingle()
-
-        if (submissionMatch?.author_email) {
-          usersWithEmails.push({
-            userId: subdomain.user_id,
-            email: submissionMatch.author_email,
-            subdomain: subdomain.subdomain,
-          })
-          continue
-        }
-      } else {
+      if (emailData) {
         usersWithEmails.push({
           userId: subdomain.user_id,
-          email: email,
+          email: emailData.email,
           subdomain: subdomain.subdomain,
+          source: emailData.source,
         })
+      } else {
+        // Log users without emails for debugging
+        console.warn(`No email found for user ${subdomain.user_id} with subdomain ${subdomain.subdomain}`)
       }
     }
 
@@ -392,7 +470,8 @@ export default async function handler(
         },
         debug: {
           usersWithSubdomains: userSubdomains.length,
-          usersWithEmailsInRoles: emailMap.size,
+          usersWithEmailsFound: emailMap.size,
+          subdomainsWithoutEmails: userSubdomains.map(u => u.subdomain).filter(Boolean),
         },
       })
     }
@@ -453,12 +532,17 @@ export default async function handler(
         totalUsers: usersWithEmails.length,
         emailsSent,
         emailsFailed,
-        usersProcessed: usersWithEmails.map(u => u.email),
+        usersProcessed: usersWithEmails.map(u => `${u.email} (${u.subdomain}, source: ${u.source})`),
       },
       errors: errors.length > 0 ? errors.slice(0, 20) : undefined,
       debug: {
         totalUsersWithSubdomains: userSubdomains.length,
         usersWithEmailsFound: usersWithEmails.length,
+        subdomainsProcessed: usersWithEmails.map(u => u.subdomain),
+        subdomainsWithoutEmails: userSubdomains
+          .filter(u => !usersWithEmails.find(e => e.userId === u.user_id))
+          .map(u => u.subdomain)
+          .filter(Boolean),
       },
     })
 

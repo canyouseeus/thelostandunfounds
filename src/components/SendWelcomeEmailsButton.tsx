@@ -11,6 +11,11 @@ export default function SendWelcomeEmailsButton() {
   const [loading, setLoading] = useState(false);
   const [testEmail, setTestEmail] = useState('');
   const [showTestMode, setShowTestMode] = useState(false);
+  const [showManualMode, setShowManualMode] = useState(false);
+  const [manualEmails, setManualEmails] = useState<Array<{ subdomain: string; email: string }>>([
+    { subdomain: 'plutonium', email: '' },
+    { subdomain: 'mrjetstream', email: '' },
+  ]);
   const [result, setResult] = useState<{
     emailsSent: number;
     emailsFailed: number;
@@ -39,12 +44,27 @@ export default function SendWelcomeEmailsButton() {
     setResult(null);
 
     try {
+      const body: any = isTest ? { testEmail: testEmail.trim() } : {};
+      
+      // Add manual email mappings if in manual mode
+      if (showManualMode && manualEmails.length > 0) {
+        const validManualEmails = manualEmails.filter(
+          m => m.subdomain.trim() && m.email.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m.email.trim())
+        );
+        if (validManualEmails.length > 0) {
+          body.manualEmails = validManualEmails.map(m => ({
+            subdomain: m.subdomain.trim(),
+            email: m.email.trim(),
+          }));
+        }
+      }
+
       const response = await fetch('/api/admin/send-welcome-emails', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(isTest ? { testEmail: testEmail.trim() } : {}),
+        body: JSON.stringify(body),
       });
 
       const data = await response.json();
@@ -98,6 +118,12 @@ export default function SendWelcomeEmailsButton() {
         >
           {showTestMode ? 'Hide' : 'Show'} Test Mode
         </button>
+        <button
+          onClick={() => setShowManualMode(!showManualMode)}
+          className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm rounded-none transition"
+        >
+          {showManualMode ? 'Hide' : 'Show'} Manual Email Mapping
+        </button>
       </div>
 
       {showTestMode && (
@@ -118,6 +144,57 @@ export default function SendWelcomeEmailsButton() {
               className="px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-500/50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-none transition"
             >
               Send Test Email
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showManualMode && (
+        <div className="bg-black/30 border border-white/10 rounded-none p-4">
+          <h5 className="text-white font-semibold mb-2 text-sm">Manual Email Mapping</h5>
+          <p className="text-white/60 text-xs mb-3">
+            Manually specify email addresses for specific subdomains. This is useful when automatic email lookup fails.
+          </p>
+          <div className="space-y-2">
+            {manualEmails.map((manual, index) => (
+              <div key={index} className="flex gap-2">
+                <input
+                  type="text"
+                  value={manual.subdomain}
+                  onChange={(e) => {
+                    const updated = [...manualEmails];
+                    updated[index].subdomain = e.target.value;
+                    setManualEmails(updated);
+                  }}
+                  placeholder="subdomain"
+                  className="w-32 px-3 py-2 bg-black/50 border border-white/10 rounded-none text-white placeholder-white/40 focus:border-white/30 focus:outline-none"
+                />
+                <input
+                  type="email"
+                  value={manual.email}
+                  onChange={(e) => {
+                    const updated = [...manualEmails];
+                    updated[index].email = e.target.value;
+                    setManualEmails(updated);
+                  }}
+                  placeholder="email@example.com"
+                  className="flex-1 px-3 py-2 bg-black/50 border border-white/10 rounded-none text-white placeholder-white/40 focus:border-white/30 focus:outline-none"
+                />
+                {manualEmails.length > 1 && (
+                  <button
+                    onClick={() => setManualEmails(manualEmails.filter((_, i) => i !== index))}
+                    className="px-3 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm rounded-none transition"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              onClick={() => setManualEmails([...manualEmails, { subdomain: '', email: '' }])}
+              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm rounded-none transition"
+            >
+              + Add Another Mapping
             </button>
           </div>
         </div>
@@ -144,10 +221,23 @@ export default function SendWelcomeEmailsButton() {
             <div className="mb-4">
               <h5 className="text-white/80 text-sm font-bold mb-2">Emails Sent To:</h5>
               <div className="space-y-1 max-h-32 overflow-y-auto">
-                {result.usersProcessed.map((email, index) => (
-                  <p key={index} className="text-white/60 text-xs">{email}</p>
+                {result.usersProcessed.map((info, index) => (
+                  <p key={index} className="text-white/60 text-xs">{info}</p>
                 ))}
               </div>
+            </div>
+          )}
+          {result.debug?.subdomainsWithoutEmails && result.debug.subdomainsWithoutEmails.length > 0 && (
+            <div className="mb-4">
+              <h5 className="text-yellow-400/80 text-sm font-bold mb-2">⚠️ Subdomains Without Emails Found:</h5>
+              <div className="space-y-1 max-h-32 overflow-y-auto">
+                {result.debug.subdomainsWithoutEmails.map((subdomain, index) => (
+                  <p key={index} className="text-yellow-400/60 text-xs">{subdomain}</p>
+                ))}
+              </div>
+              <p className="text-yellow-400/60 text-xs mt-2">
+                These users need emails added to user_roles table or have submissions in blog_submissions.
+              </p>
             </div>
           )}
           {result.errors && result.errors.length > 0 && (
