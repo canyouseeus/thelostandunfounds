@@ -275,7 +275,7 @@ export default function Blog() {
                         }}
                       >
                         <ExpandableCard
-                          className="bg-black/47 border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-white/30 hover:-translate-y-1 hover:scale-[1.02]"
+                          className="bg-black/47 border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-black/50 hover:-translate-y-1 hover:scale-[1.02]"
                           collapsedSize={{ height: 220 }}
                           expandedSize={{ height: 400 }}
                           hoverToExpand={false}
@@ -382,7 +382,7 @@ export default function Blog() {
                         style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15), rgba(255,255,255,0.3))' }}
                       >
                         <ExpandableCard
-                          className="bg-black/47 border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-white/30 hover:-translate-y-1 hover:scale-[1.02]"
+                          className="bg-black/47 border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-black/50 hover:-translate-y-1 hover:scale-[1.02]"
                           collapsedSize={{ height: 220 }}
                           expandedSize={{ height: 400 }}
                           hoverToExpand={false}
