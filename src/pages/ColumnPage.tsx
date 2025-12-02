@@ -79,7 +79,8 @@ export default function ColumnPage({ column, title, description, submitPath, ico
 
       if (fetchError) {
         console.error(`Error loading ${column} posts:`, fetchError);
-        setError('Failed to load articles');
+        // Don't set error - just show empty state with encouraging message
+        setPosts([]);
         return;
       }
 
@@ -100,7 +101,8 @@ export default function ColumnPage({ column, title, description, submitPath, ico
       setPosts(filteredData);
     } catch (err: any) {
       console.error(`Error loading ${column}:`, err);
-      setError(err.message || 'Failed to load articles');
+      // Don't set error - just show empty state with encouraging message
+      setPosts([]);
     } finally {
       setLoading(false);
     }
@@ -158,24 +160,23 @@ export default function ColumnPage({ column, title, description, submitPath, ico
           </div>
         </div>
 
-        {error && (
-          <div className="bg-red-900/20 border border-red-500/50 rounded-none p-4 mb-6">
-            <p className="text-red-400">{error}</p>
-          </div>
-        )}
-
         {posts.length === 0 ? (
-          <div className="text-center py-12">
-            {displayIcon && <div className="flex justify-center mb-4 text-white/20">{displayIcon}</div>}
-            <p className="text-white/60 text-lg mb-4">No articles yet.</p>
-            <p className="text-white/50 text-sm mb-6">
-              Be the first to contribute! Submit your article to this column.
+          <div className="text-center py-16">
+            {displayIcon && <div className="flex justify-center mb-6 text-white/30 scale-150">{displayIcon}</div>}
+            <h2 className="text-2xl md:text-3xl font-black text-white mb-4 tracking-wide">
+              Be the First to Share
+            </h2>
+            <p className="text-white/70 text-lg mb-2 max-w-xl mx-auto">
+              This column is waiting for its first story.
+            </p>
+            <p className="text-white/50 text-sm mb-8 max-w-lg mx-auto">
+              {description}
             </p>
             <Link
               to={submitPath}
-              className="inline-block px-6 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
+              className="inline-block px-8 py-3 bg-white text-black font-bold rounded-none hover:bg-white/90 transition text-base"
             >
-              Submit Your First Article
+              Submit Your First Article →
             </Link>
           </div>
         ) : (
