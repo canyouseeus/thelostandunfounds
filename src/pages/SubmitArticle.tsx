@@ -575,7 +575,7 @@ export default function SubmitArticle() {
         author_name: formData.author_name.trim(),
         author_email: formData.author_email.trim(),
         status: 'pending',
-        column: column,
+        blog_column: column,
       };
 
       // Add optional fields
