@@ -173,6 +173,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  white-space: nowrap;
 }
 
 .menu-subsection {
@@ -687,9 +688,19 @@ h1.text-5xl {
 @media (hover: none) and (pointer: coarse) {
   .menu-item:hover {
     background-color: transparent;
+    color: white;
   }
 
   .menu-item:active {
+    background-color: white;
+    color: black;
+  }
+
+  .menu-toggle-section {
+    color: white;
+  }
+
+  .menu-toggle-section:active {
     background-color: white;
     color: black;
   }
