@@ -640,6 +640,20 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch add-welcome-email-tracking file:', fetchError);
       }
 
+      // Load add-column-to-blog-submissions script
+      let addColumnContent = '';
+      try {
+        const addColumnResponse = await fetch('/sql/add-column-to-blog-submissions.sql');
+        if (addColumnResponse.ok) {
+          const text = await addColumnResponse.text();
+          if (!text.trim().startsWith('<!')) {
+            addColumnContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch add-column-to-blog-submissions file:', fetchError);
+      }
+
       // Load diagnose-user-subdomain-connections script
       let diagnoseSubdomainContent = '';
       try {
@@ -984,6 +998,13 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
           content: welcomeEmailTrackingContent || '// File not found - check public/sql folder',
           description: 'Adds welcome_email_sent_at column to user_subdomains table to track when welcome emails with getting started guide have been sent. Required for the welcome email system. Run this before sending welcome emails to existing users.',
           createdAt: getScriptTimestamp('add-welcome-email-tracking.sql')
+        },
+        {
+          name: 'Add Column Field to Blog Submissions',
+          filename: 'add-column-to-blog-submissions.sql',
+          content: addColumnContent || '// File not found - check public/sql folder',
+          description: 'Adds column field to blog_submissions table to track which blog column (main, bookclub, gearheads, borderlands, science, homescience) the submission is for. Required for column-specific submission routing. Run this to enable column-specific submission forms.',
+          createdAt: getScriptTimestamp('add-column-to-blog-submissions.sql')
         },
         {
           name: 'Diagnose User-Subdomain Connections',

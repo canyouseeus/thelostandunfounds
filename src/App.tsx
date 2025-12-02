@@ -127,6 +127,25 @@ function App() {
         <Route path="/submit-article" element={<Layout />}>
           <Route index element={<SubmitArticle />} />
         </Route>
+        {/* Column-specific submission routes */}
+        <Route path="/submit/main" element={<Layout />}>
+          <Route index element={<SubmitArticle />} />
+        </Route>
+        <Route path="/submit/bookclub" element={<Layout />}>
+          <Route index element={<SubmitArticle />} />
+        </Route>
+        <Route path="/submit/gearheads" element={<Layout />}>
+          <Route index element={<SubmitArticle />} />
+        </Route>
+        <Route path="/submit/borderlands" element={<Layout />}>
+          <Route index element={<SubmitArticle />} />
+        </Route>
+        <Route path="/submit/science" element={<Layout />}>
+          <Route index element={<SubmitArticle />} />
+        </Route>
+        <Route path="/submit/homescience" element={<Layout />}>
+          <Route index element={<SubmitArticle />} />
+        </Route>
         <Route path="/reset-newsletter" element={<ResetNewsletter />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

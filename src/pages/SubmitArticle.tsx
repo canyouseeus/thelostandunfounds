@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
@@ -15,11 +16,131 @@ import StorefrontRegistration from '../components/StorefrontRegistration';
 import { FileText, Plus, X, BookOpen, Mail, User, Copy, Check, AlertTriangle } from 'lucide-react';
 
 interface AffiliateLink {
-  book_title: string;
+  book_title?: string;
+  product_title?: string;
+  item_title?: string;
   link: string;
 }
 
+type BlogColumn = 'main' | 'bookclub' | 'gearheads' | 'borderlands' | 'science' | 'homescience';
+
+interface ColumnConfig {
+  name: string;
+  title: string;
+  description: string;
+  requiresAffiliates: boolean;
+  requiresStorefront: boolean;
+  requiresSubdomain: boolean;
+  minItems: number;
+  maxItems: number;
+  itemLabel: string;
+  linkLabel: string;
+  promptPath?: string;
+}
+
+const COLUMN_CONFIGS: Record<BlogColumn, ColumnConfig> = {
+  main: {
+    name: 'Main Blog',
+    title: 'SUBMIT TO THE LOST ARCHIVES',
+    description: 'Pure writing and personal expression. Essays, reflections, stories, and philosophical or cultural commentary.',
+    requiresAffiliates: false,
+    requiresStorefront: false,
+    requiresSubdomain: false,
+    minItems: 0,
+    maxItems: 0,
+    itemLabel: '',
+    linkLabel: '',
+  },
+  bookclub: {
+    name: 'BookClub',
+    title: 'SUBMIT TO BOOK CLUB',
+    description: 'Share your insights on books and how they\'ve shaped your thinking. Submit an article featuring four books with your Amazon affiliate links.',
+    requiresAffiliates: true,
+    requiresStorefront: true,
+    requiresSubdomain: true,
+    minItems: 4,
+    maxItems: 4,
+    itemLabel: 'Book',
+    linkLabel: 'Amazon Affiliate Link',
+    promptPath: '/prompts/AI_WRITING_PROMPT_FOR_CONTRIBUTORS.md',
+  },
+  gearheads: {
+    name: 'GearHeads',
+    title: 'SUBMIT TO GEARHEADS',
+    description: 'Explore tools, setups, kits, and combinations that create experiences. Share how items combine to support workflows, hobbies, or lifestyle practices.',
+    requiresAffiliates: true,
+    requiresStorefront: true,
+    requiresSubdomain: true,
+    minItems: 1,
+    maxItems: 8,
+    itemLabel: 'Product',
+    linkLabel: 'Amazon Affiliate Link',
+  },
+  borderlands: {
+    name: 'Edge of the Borderlands',
+    title: 'SUBMIT TO EDGE OF THE BORDERLANDS',
+    description: 'Share travel experiences and practical adventure insights. Stories of journeys, what you brought, how you navigated spaces, and lessons learned.',
+    requiresAffiliates: true,
+    requiresStorefront: true,
+    requiresSubdomain: true,
+    minItems: 1,
+    maxItems: 8,
+    itemLabel: 'Item',
+    linkLabel: 'Affiliate Link',
+  },
+  science: {
+    name: 'Science Column',
+    title: 'SUBMIT TO SCIENCE COLUMN',
+    description: 'Deep dives into scientific concepts and discoveries. Physics, quantum theory, biology, emerging sciences, and applied innovation.',
+    requiresAffiliates: false,
+    requiresStorefront: false,
+    requiresSubdomain: false,
+    minItems: 0,
+    maxItems: 0,
+    itemLabel: '',
+    linkLabel: '',
+  },
+  homescience: {
+    name: 'Home Science',
+    title: 'SUBMIT TO HOME SCIENCE',
+    description: 'Practical application of scientific and systems thinking in everyday life. Nutrition, household systems, habit-building, resource management, and DIY experiments.',
+    requiresAffiliates: false,
+    requiresStorefront: false,
+    requiresSubdomain: false,
+    minItems: 0,
+    maxItems: 8,
+    itemLabel: 'Item',
+    linkLabel: 'Affiliate Link',
+  },
+};
+
 export default function SubmitArticle() {
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  // Check URL path first, then query param, then default to bookclub
+  const pathname = location.pathname;
+  let columnParam: string | null = null;
+  
+  if (pathname.includes('/submit/main')) {
+    columnParam = 'main';
+  } else if (pathname.includes('/submit/bookclub')) {
+    columnParam = 'bookclub';
+  } else if (pathname.includes('/submit/gearheads')) {
+    columnParam = 'gearheads';
+  } else if (pathname.includes('/submit/borderlands')) {
+    columnParam = 'borderlands';
+  } else if (pathname.includes('/submit/science')) {
+    columnParam = 'science';
+  } else if (pathname.includes('/submit/homescience')) {
+    columnParam = 'homescience';
+  } else {
+    columnParam = searchParams.get('column') || 'bookclub';
+  }
+  
+  const column = (Object.keys(COLUMN_CONFIGS).includes(columnParam.toLowerCase()) 
+    ? columnParam.toLowerCase() 
+    : 'bookclub') as BlogColumn;
+  const config = COLUMN_CONFIGS[column];
   const { user, loading: authLoading } = useAuth();
   const { success, error: showError } = useToast();
   const [submitting, setSubmitting] = useState(false);
@@ -44,8 +165,12 @@ export default function SubmitArticle() {
   // Load the AI writing prompt
   useEffect(() => {
     const loadPrompt = async () => {
+      if (!config.promptPath) {
+        setLoadingPrompt(false);
+        return;
+      }
       try {
-        const response = await fetch('/prompts/AI_WRITING_PROMPT_FOR_CONTRIBUTORS.md');
+        const response = await fetch(config.promptPath);
         if (response.ok) {
           const text = await response.text();
           setPromptContent(text);
@@ -59,7 +184,7 @@ export default function SubmitArticle() {
       }
     };
     loadPrompt();
-  }, []);
+  }, [config.promptPath]);
 
   // Check if user has completed registration and subdomain
   useEffect(() => {
@@ -157,12 +282,13 @@ export default function SubmitArticle() {
     success(`Your subdomain ${subdomain}.thelostandunfounds.com is now active!`);
   };
 
-  const [affiliateLinks, setAffiliateLinks] = useState<AffiliateLink[]>([
-    { book_title: '', link: '' },
-    { book_title: '', link: '' },
-    { book_title: '', link: '' },
-    { book_title: '', link: '' }
-  ]);
+  const [affiliateLinks, setAffiliateLinks] = useState<AffiliateLink[]>([]);
+
+  // Initialize affiliate links when column changes
+  useEffect(() => {
+    const initialCount = config.minItems;
+    setAffiliateLinks(Array(initialCount).fill(null).map(() => ({ link: '' })));
+  }, [column]);
 
   const addAffiliateLink = () => {
     // Only allow up to 4 books total
@@ -178,10 +304,31 @@ export default function SubmitArticle() {
     }
   };
 
-  const updateAffiliateLink = (index: number, field: keyof AffiliateLink, value: string) => {
+  const updateAffiliateLink = (index: number, field: 'book_title' | 'product_title' | 'item_title' | 'link', value: string) => {
     const updated = [...affiliateLinks];
-    updated[index][field] = value;
+    // Clear all title fields and set the appropriate one
+    if (field === 'book_title' || field === 'product_title' || field === 'item_title') {
+      updated[index] = {
+        ...updated[index],
+        book_title: undefined,
+        product_title: undefined,
+        item_title: undefined,
+        [field]: value,
+      };
+    } else {
+      updated[index] = { ...updated[index], [field]: value };
+    }
     setAffiliateLinks(updated);
+  };
+
+  const getTitleField = (): 'book_title' | 'product_title' | 'item_title' => {
+    if (column === 'bookclub') return 'book_title';
+    if (column === 'gearheads') return 'product_title';
+    return 'item_title';
+  };
+
+  const getTitleValue = (link: AffiliateLink): string => {
+    return link.book_title || link.product_title || link.item_title || '';
   };
 
   const [bulkAffiliateInput, setBulkAffiliateInput] = useState('');
@@ -218,10 +365,10 @@ export default function SubmitArticle() {
         // Clean up title
         title = title.replace(/^[-*•\d.]+\s+/, ''); // Remove bullet points/numbers
 
-        extracted.push({ 
-          book_title: title || '', 
-          link: url 
-        });
+        const titleField = getTitleField();
+        const linkObj: AffiliateLink = { link: url };
+        linkObj[titleField] = title || '';
+        extracted.push(linkObj);
         
         bufferTitle = ''; // Title consumed
       } else {
@@ -230,15 +377,16 @@ export default function SubmitArticle() {
       }
     }
 
-    // Update state: Ensure exactly 4 items structure
+    // Update state: Ensure proper item count
     const newLinks = [...extracted];
-    // Pad if less than 4
-    while (newLinks.length < 4) {
-      newLinks.push({ book_title: '', link: '' });
+    // Pad if less than minimum
+    while (newLinks.length < config.minItems) {
+      const linkObj: AffiliateLink = { link: '' };
+      newLinks.push(linkObj);
     }
-    // Truncate if more than 4 (we only accept 4)
-    if (newLinks.length > 4) {
-      newLinks.length = 4;
+    // Truncate if more than maximum
+    if (newLinks.length > config.maxItems) {
+      newLinks.length = config.maxItems;
     }
     
     setAffiliateLinks(newLinks);
@@ -314,7 +462,7 @@ export default function SubmitArticle() {
   };
 
   const validateForm = async () => {
-    if (!userSubdomain) {
+    if (config.requiresSubdomain && !userSubdomain) {
       showError('Please register your subdomain first');
       setShowSubdomainModal(true);
       return false;
@@ -336,36 +484,45 @@ export default function SubmitArticle() {
       return false;
     }
     
-    // Validate Amazon storefront ID
-    if (!formData.amazon_storefront_id.trim()) {
-      showError('Please enter your Amazon Storefront ID or URL');
-      return false;
-    }
-    
-    if (!validateAmazonStorefront(formData.amazon_storefront_id)) {
-      showError('Please enter a valid Amazon Storefront ID or URL (e.g., https://www.amazon.com/shop/yourstorefront or just your storefront ID)');
-      return false;
-    }
-    
-    // Validate affiliate links - require at least 4 books
-    const validLinks = affiliateLinks.filter(
-      link => link.book_title.trim() && link.link.trim()
-    );
-    
-    if (validLinks.length < 4) {
-      showError('Please provide exactly 4 books with both title and Amazon affiliate link');
-      return false;
-    }
-    
-    // Validate each link
-    for (const link of validLinks) {
-      if (!link.link.trim().startsWith('http')) {
-        showError('Please provide valid URLs (starting with http:// or https://) for all Amazon affiliate links');
+    // Validate Amazon storefront ID if required
+    if (config.requiresStorefront) {
+      if (!formData.amazon_storefront_id.trim()) {
+        showError('Please enter your Amazon Storefront ID or URL');
         return false;
       }
-      if (!link.link.includes('amazon') && !link.link.includes('amzn.to')) {
-        showError('Please provide valid Amazon affiliate links (amazon.com or amzn.to)');
+      
+      if (!validateAmazonStorefront(formData.amazon_storefront_id)) {
+        showError('Please enter a valid Amazon Storefront ID or URL (e.g., https://www.amazon.com/shop/yourstorefront or just your storefront ID)');
         return false;
+      }
+    }
+    
+    // Validate affiliate links if required
+    if (config.requiresAffiliates) {
+      const titleField = getTitleField();
+      const validLinks = affiliateLinks.filter(
+        link => {
+          const title = getTitleValue(link);
+          return title.trim() && link.link.trim();
+        }
+      );
+      
+      if (validLinks.length < config.minItems) {
+        showError(`Please provide at least ${config.minItems} ${config.itemLabel.toLowerCase()}${config.minItems > 1 ? 's' : ''} with both title and affiliate link`);
+        return false;
+      }
+      
+      // Validate each link
+      for (const link of validLinks) {
+        if (!link.link.trim().startsWith('http')) {
+          showError('Please provide valid URLs (starting with http:// or https://) for all affiliate links');
+          return false;
+        }
+        // For bookclub, require Amazon links
+        if (column === 'bookclub' && !link.link.includes('amazon') && !link.link.includes('amzn.to')) {
+          showError('Please provide valid Amazon affiliate links (amazon.com or amzn.to)');
+          return false;
+        }
       }
     }
 
@@ -382,36 +539,55 @@ export default function SubmitArticle() {
     setSubmitting(true);
 
     try {
-      // Filter out empty affiliate links - must have exactly 4
-      const validLinks = affiliateLinks.filter(
-        link => link.book_title.trim() && link.link.trim()
-      );
+      // Filter out empty affiliate links if required
+      let validLinks: AffiliateLink[] = [];
+      if (config.requiresAffiliates) {
+        validLinks = affiliateLinks.filter(
+          link => {
+            const title = getTitleValue(link);
+            return title.trim() && link.link.trim();
+          }
+        );
 
-      if (validLinks.length < 4) {
-        showError('Please provide exactly 4 books with both title and Amazon affiliate link');
-        return;
+        if (validLinks.length < config.minItems) {
+          showError(`Please provide at least ${config.minItems} ${config.itemLabel.toLowerCase()}${config.minItems > 1 ? 's' : ''} with both title and affiliate link`);
+          setSubmitting(false);
+          return;
+        }
       }
 
-      if (!userSubdomain) {
+      if (config.requiresSubdomain && !userSubdomain) {
         showError('Please register your subdomain first');
         setShowSubdomainModal(true);
+        setSubmitting(false);
         return;
       }
 
-      // Extract and normalize storefront ID
-      const storefrontId = extractStorefrontId(formData.amazon_storefront_id);
+      // Extract and normalize storefront ID if required
+      const storefrontId = config.requiresStorefront 
+        ? extractStorefrontId(formData.amazon_storefront_id)
+        : null;
 
-      const submissionData = {
+      const submissionData: any = {
         title: formData.title.trim(),
         content: formData.content.trim(),
         excerpt: formData.excerpt.trim() || null,
         author_name: formData.author_name.trim(),
         author_email: formData.author_email.trim(),
-        amazon_affiliate_links: validLinks.slice(0, 4), // Only use first 4 valid links
-        amazon_storefront_id: storefrontId,
         status: 'pending',
-        subdomain: userSubdomain, // Use the registered subdomain
+        column: column,
       };
+
+      // Add optional fields
+      if (config.requiresAffiliates && validLinks.length > 0) {
+        submissionData.amazon_affiliate_links = validLinks.slice(0, config.maxItems);
+      }
+      if (config.requiresStorefront && storefrontId) {
+        submissionData.amazon_storefront_id = storefrontId;
+      }
+      if (config.requiresSubdomain && userSubdomain) {
+        submissionData.subdomain = userSubdomain;
+      }
 
       const { error } = await supabase
         .from('blog_submissions')
@@ -451,12 +627,11 @@ export default function SubmitArticle() {
         author_email: '',
         amazon_storefront_id: '',
       });
-      setAffiliateLinks([
-        { book_title: '', link: '' },
-        { book_title: '', link: '' },
-        { book_title: '', link: '' },
-        { book_title: '', link: '' }
-      ]);
+      // Reset affiliate links to initial state
+      setAffiliateLinks(() => {
+        const initialCount = config.minItems;
+        return Array(initialCount).fill(null).map(() => ({ link: '' }));
+      });
     } catch (err: any) {
       console.error('Error submitting article:', err);
       showError(err.message || 'Failed to submit article. Please try again.');
@@ -468,8 +643,8 @@ export default function SubmitArticle() {
   return (
     <>
       <Helmet>
-        <title>Submit Article | THE LOST ARCHIVES | THE LOST+UNFOUNDS</title>
-        <meta name="description" content="Submit your article to THE LOST ARCHIVES. Share your insights on books and how they've shaped your thinking. Feature four books with Amazon affiliate links." />
+        <title>Submit to {config.name} | THE LOST ARCHIVES | THE LOST+UNFOUNDS</title>
+        <meta name="description" content={config.description} />
       </Helmet>
       <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
       <UserRegistration
@@ -564,15 +739,15 @@ export default function SubmitArticle() {
         )}
         <div className="mb-8 text-center">
           <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white mb-4 tracking-wide whitespace-nowrap">
-            SUBMIT TO BOOK CLUB
+            {config.title}
           </h1>
-          <p className="text-white/70 text-lg max-w-2xl mx-auto mb-4 text-justify">
-            Share your insights on books and how they've shaped your thinking. 
-            Submit an article featuring four books with your Amazon affiliate links.
+          <p className="text-white/70 text-lg max-w-2xl mx-auto mb-4 text-left">
+            {config.description}
           </p>
         </div>
 
         {/* AI Writing Prompt Box */}
+        {config.promptPath && (
         <div className="mb-8">
           <div className="bg-black/50 border border-white/10 rounded-none p-6">
             <div className="mb-4">
@@ -626,6 +801,7 @@ export default function SubmitArticle() {
               </>
             )}
           </div>
+        )}
 
           {/* Tips Section */}
           <div className="bg-black/30 border border-white/10 rounded-none p-6 mt-6">
@@ -667,10 +843,16 @@ export default function SubmitArticle() {
 
         {user && (
           <div className="bg-black/50 border border-white/10 rounded-none p-6 md:p-8">
+            {/* Column indicator */}
+            <div className="mb-6 pb-4 border-b border-white/10">
+              <p className="text-white/60 text-sm">
+                Submitting to: <span className="text-white font-semibold">{config.name}</span>
+              </p>
+            </div>
             <form onSubmit={handleSubmit} className="space-y-6">
 
-            {/* Subdomain Display (read-only) */}
-            {userSubdomain && (
+            {/* Subdomain Display (read-only) - only show if required */}
+            {config.requiresSubdomain && userSubdomain && (
               <div className="bg-green-900/20 border border-green-500/30 rounded-none p-4">
                 <label className="block text-white/80 text-sm mb-2">
                   Your Blog Subdomain
@@ -683,7 +865,7 @@ export default function SubmitArticle() {
                 </p>
               </div>
             )}
-            {!userSubdomain && !loadingSubdomain && (
+            {config.requiresSubdomain && !userSubdomain && !loadingSubdomain && (
               <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-none p-4">
                 <p className="text-yellow-300 text-sm mb-2">
                   You need to register a subdomain before submitting articles.
@@ -756,21 +938,36 @@ Use double line breaks between sections. Book titles mentioned in the text will 
               />
             </div>
 
-            {/* Amazon Affiliate Links */}
+            {/* Affiliate Links - only show if required */}
+            {config.requiresAffiliates && (
             <div>
               <div className="flex items-center justify-between mb-4">
                 <label className="block text-white/80 text-sm flex items-center gap-2">
                   <BookOpen className="w-4 h-4" />
-                  Amazon Affiliate Links (Required - Exactly 4 Books) *
+                  {config.itemLabel} Affiliate Links {config.minItems === config.maxItems ? `(Required - Exactly ${config.minItems} ${config.itemLabel}${config.minItems > 1 ? 's' : ''})` : `(Required - ${config.minItems} to ${config.maxItems} ${config.itemLabel}${config.maxItems > 1 ? 's' : ''})`} *
                 </label>
+                {affiliateLinks.length < config.maxItems && (
+                  <button
+                    type="button"
+                    onClick={addAffiliateLink}
+                    className="px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-xs font-medium transition flex items-center gap-1"
+                  >
+                    <Plus className="w-3 h-3" />
+                    Add {config.itemLabel}
+                  </button>
+                )}
               </div>
               
               <p className="text-white/60 text-sm mb-4">
-                You must provide exactly <strong className="text-white">4 books</strong>. 
-                Paste your list below (Title and Link) to auto-fill, or enter them manually.
+                {config.minItems === config.maxItems 
+                  ? `You must provide exactly ${config.minItems} ${config.itemLabel.toLowerCase()}${config.minItems > 1 ? 's' : ''}.`
+                  : `You must provide between ${config.minItems} and ${config.maxItems} ${config.itemLabel.toLowerCase()}${config.maxItems > 1 ? 's' : ''}.`
+                }
+                {column === 'bookclub' && ' Paste your list below (Title and Link) to auto-fill, or enter them manually.'}
               </p>
 
-              {/* Bulk Paste Box */}
+              {/* Bulk Paste Box - only for bookclub */}
+              {column === 'bookclub' && (
               <div className="bg-black/30 border border-white/10 rounded-none p-4 mb-6">
                 <label className="block text-white/80 text-xs mb-2 font-semibold">
                   QUICK ADD: Paste your book list here to auto-fill
@@ -787,42 +984,53 @@ https://amzn.to/3...
 Atomic Habits - https://amzn.to/4...`}
                 />
               </div>
+              )}
               
               <div className="space-y-3">
                 {affiliateLinks.map((link, index) => (
                   <div key={index} className="bg-black/30 border border-white/10 rounded-none p-4">
                     <div className="flex items-start justify-between mb-3">
                       <span className="text-white/80 text-sm font-medium">
-                        Book {index + 1} <span className="text-white/50">(Required)</span>
+                        {config.itemLabel} {index + 1} {index < config.minItems && <span className="text-white/50">(Required)</span>}
                       </span>
+                      {affiliateLinks.length > config.minItems && (
+                        <button
+                          type="button"
+                          onClick={() => removeAffiliateLink(index)}
+                          className="text-red-400 hover:text-red-300 text-xs"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                     <div className="space-y-3">
                       <div>
-                        <label className="block text-white/70 text-xs mb-1">Book Title *</label>
+                        <label className="block text-white/70 text-xs mb-1">{config.itemLabel} Title {index < config.minItems && '*'}</label>
                         <input
                           type="text"
-                          value={link.book_title}
-                          onChange={(e) => updateAffiliateLink(index, 'book_title', e.target.value)}
+                          value={getTitleValue(link)}
+                          onChange={(e) => updateAffiliateLink(index, getTitleField(), e.target.value)}
                           className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-none text-white text-sm focus:border-white/30 focus:outline-none"
-                          placeholder="e.g., The E-Myth Revisited"
-                          required={index < 4}
+                          placeholder={`e.g., ${column === 'bookclub' ? 'The E-Myth Revisited' : column === 'gearheads' ? 'MacBook Pro 16"' : 'Travel Backpack'}`}
+                          required={index < config.minItems}
                         />
                       </div>
                       <div>
-                        <label className="block text-white/70 text-xs mb-1">Amazon Affiliate Link *</label>
+                        <label className="block text-white/70 text-xs mb-1">{config.linkLabel} {index < config.minItems && '*'}</label>
                         <input
                           type="url"
                           value={link.link}
                           onChange={(e) => updateAffiliateLink(index, 'link', e.target.value)}
                           className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-none text-white text-sm focus:border-white/30 focus:outline-none"
-                          placeholder="https://amzn.to/... or https://amazon.com/..."
-                          required={index < 4}
+                          placeholder={column === 'bookclub' ? 'https://amzn.to/... or https://amazon.com/...' : 'https://...'}
+                          required={index < config.minItems}
                         />
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
+              {column === 'bookclub' && (
               <div className="bg-blue-900/20 border border-blue-500/30 rounded-none p-3 mt-4">
                 <p className="text-blue-300 text-xs">
                   <strong>Tip:</strong> Make sure to mention these book titles in your article content. 
@@ -830,7 +1038,9 @@ Atomic Habits - https://amzn.to/4...`}
                   using the affiliate link you provide here. Each book can be linked up to 2 times in your article.
                 </p>
               </div>
+              )}
             </div>
+            )}
 
             {/* Submit Button */}
             <div className="pt-4 border-t border-white/10">

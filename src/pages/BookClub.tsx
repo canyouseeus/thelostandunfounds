@@ -108,7 +108,7 @@ export default function BookClub() {
           </p>
           <div className="mt-6">
             <Link
-              to="/submit-article"
+              to="/submit/bookclub"
               className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition"
             >
               Submit Your Article →
@@ -130,7 +130,7 @@ export default function BookClub() {
               Be the first to contribute! Submit your article with four book recommendations.
             </p>
             <Link
-              to="/submit-article"
+              to="/submit/bookclub"
               className="inline-block px-6 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
             >
               Submit Your First Article

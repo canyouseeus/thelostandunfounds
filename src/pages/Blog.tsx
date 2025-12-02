@@ -211,7 +211,7 @@ export default function Blog() {
               View BOOK CLUB →
             </Link>
             <Link
-              to="/submit-article"
+              to="/submit/main"
               className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition"
             >
               Submit Your Article →
