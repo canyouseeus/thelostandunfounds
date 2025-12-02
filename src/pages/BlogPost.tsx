@@ -623,12 +623,32 @@ export default function BlogPost() {
           </a>
         );
       } else {
-        // Otherwise, just make it bold - title case for book titles
-        parts.push(
-          <strong key={`bold-${keyCounter++}`} className="font-bold text-white">
-            {displayText}
-          </strong>
-        );
+        // Not a book title with link, but check if it's a book title that should be bold
+        // If it matched a book title from our list, make it bold even without link
+        const isBookTitle = bookKey !== null;
+        if (isBookTitle) {
+          // It's a book title but no link - make it bold
+          parts.push(
+            <strong key={`bold-${keyCounter++}`} className="font-bold text-white">
+              {displayText}
+            </strong>
+          );
+        } else {
+          // Check if it's an emphasis term (THE LOST+UNFOUNDS, etc.)
+          const isEmphasisTerm = emphasisTerms.some(term => 
+            normalizeBookTitle(term) === normalizeBookTitle(matchedText)
+          );
+          if (isEmphasisTerm) {
+            parts.push(
+              <strong key={`bold-${keyCounter++}`} className="font-bold text-white">
+                {displayText}
+              </strong>
+            );
+          } else {
+            // Regular text - return as-is
+            parts.push(displayText);
+          }
+        }
       }
       
       lastIndex = matchInfo.index + matchInfo.length;
@@ -660,12 +680,12 @@ export default function BlogPost() {
     }
   };
 
-  // Helper function to format Amazon Affiliate Disclosure with bold, uppercase author name
+  // Helper function to format Amazon Affiliate Disclosure with bold, uppercase author name (mentioned once)
   const formatDisclosure = (authorName: string) => {
     const authorNameUpper = authorName.toUpperCase();
     return (
       <>
-        Amazon Affiliate Disclosure: As an Amazon Associate, <strong className="font-bold text-white">{authorNameUpper}</strong> earns from qualifying purchases. Some links in this post are affiliate links, which means <strong className="font-bold text-white">{authorNameUpper}</strong> may earn a commission if you click through and make a purchase. This helps support <strong className="font-bold text-white">{authorNameUpper}</strong> and allows us to continue creating content. Thank you for your support!
+        Amazon Affiliate Disclosure: As an Amazon Associate, <strong className="font-bold text-white">{authorNameUpper}</strong> earns from qualifying purchases. Some links in this post are affiliate links, which means a commission may be earned if you click through and make a purchase. This helps support the author and allows us to continue creating content. Thank you for your support!
       </>
     );
   };
