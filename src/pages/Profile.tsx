@@ -566,21 +566,12 @@ export default function Profile() {
             <BookOpen className="w-12 h-12 text-white/40 mx-auto mb-4" />
             <h3 className="text-lg font-bold text-white mb-2">Start Your Book Club Journey</h3>
             <p className="text-white/60 mb-4">Submit your first article with four book recommendations.</p>
-<<<<<<< Updated upstream
             <div className="flex items-center justify-center gap-3 flex-wrap">
               <Link
                 to="/bookclub/prompt"
                 className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition"
               >
                 View Getting Started Guide →
-=======
-            <div className="flex flex-wrap justify-center gap-4">
-              <Link
-                to="/blog/getting-started"
-                className="inline-block px-6 py-2 bg-white/10 text-white font-semibold rounded-none hover:bg-white/20 transition"
-              >
-                Read Getting Started Guide
->>>>>>> Stashed changes
               </Link>
               <Link
                 to="/submit-article"
