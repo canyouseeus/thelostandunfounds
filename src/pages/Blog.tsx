@@ -365,17 +365,17 @@ export default function Blog() {
                 }
                 return '';
               })() : '');
-              
+
               return (
-                <Expandable
+                <div 
                   key={post.id}
-                  expandDirection="vertical"
-                  expandBehavior="replace"
-                  initialDelay={0.1}
+                  className="rounded-none p-[1px] h-full relative"
+                  style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15), rgba(255,255,255,0.3))' }}
                 >
-                  <div 
-                    className="rounded-none p-[1px] h-full relative"
-                    style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15), rgba(255,255,255,0.3))' }}
+                  <Expandable
+                    expandDirection="vertical"
+                    expandBehavior="replace"
+                    initialDelay={0.1}
                   >
                     {({ isExpanded }) => (
                       <ExpandableTrigger>
