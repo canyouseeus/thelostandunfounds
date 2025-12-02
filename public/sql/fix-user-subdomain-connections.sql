@@ -44,15 +44,22 @@ BEGIN
       ) THEN
         RAISE NOTICE 'User % already has a subdomain. Skipping subdomain %', user_record.email, subdomain_record.subdomain;
       ELSE
-        -- Create user_subdomains entry
-        INSERT INTO user_subdomains (user_id, subdomain, created_at)
-        VALUES (user_record.id, subdomain_record.subdomain, subdomain_record.first_used_at)
-        ON CONFLICT (user_id) DO NOTHING
-        ON CONFLICT (subdomain) DO NOTHING;
-        
-        IF FOUND THEN
-          created_count := created_count + 1;
-          RAISE NOTICE 'Linked user % to subdomain %', user_record.email, subdomain_record.subdomain;
+        -- Check if subdomain is already taken by another user
+        IF NOT EXISTS (
+          SELECT 1 FROM user_subdomains 
+          WHERE subdomain = subdomain_record.subdomain
+        ) THEN
+          -- Create user_subdomains entry
+          INSERT INTO user_subdomains (user_id, subdomain, created_at)
+          VALUES (user_record.id, subdomain_record.subdomain, subdomain_record.first_used_at)
+          ON CONFLICT (user_id) DO NOTHING;
+          
+          IF FOUND THEN
+            created_count := created_count + 1;
+            RAISE NOTICE 'Linked user % to subdomain %', user_record.email, subdomain_record.subdomain;
+          END IF;
+        ELSE
+          RAISE NOTICE 'Subdomain % is already taken. Skipping for user %', subdomain_record.subdomain, user_record.email;
         END IF;
       END IF;
     ELSE
@@ -96,15 +103,22 @@ BEGIN
         ) THEN
           RAISE NOTICE 'User % already has a subdomain. Skipping subdomain %', user_record.email, subdomain_record.subdomain;
         ELSE
-          -- Create user_subdomains entry
-          INSERT INTO user_subdomains (user_id, subdomain, created_at)
-          VALUES (user_record.id, subdomain_record.subdomain, subdomain_record.first_used_at)
-          ON CONFLICT (user_id) DO NOTHING
-          ON CONFLICT (subdomain) DO NOTHING;
-          
-          IF FOUND THEN
-            created_count := created_count + 1;
-            RAISE NOTICE 'Linked user % to subdomain % (from blog_posts)', user_record.email, subdomain_record.subdomain;
+          -- Check if subdomain is already taken by another user
+          IF NOT EXISTS (
+            SELECT 1 FROM user_subdomains 
+            WHERE subdomain = subdomain_record.subdomain
+          ) THEN
+            -- Create user_subdomains entry
+            INSERT INTO user_subdomains (user_id, subdomain, created_at)
+            VALUES (user_record.id, subdomain_record.subdomain, subdomain_record.first_used_at)
+            ON CONFLICT (user_id) DO NOTHING;
+            
+            IF FOUND THEN
+              created_count := created_count + 1;
+              RAISE NOTICE 'Linked user % to subdomain % (from blog_posts)', user_record.email, subdomain_record.subdomain;
+            END IF;
+          ELSE
+            RAISE NOTICE 'Subdomain % is already taken. Skipping for user %', subdomain_record.subdomain, user_record.email;
           END IF;
         END IF;
       END IF;
