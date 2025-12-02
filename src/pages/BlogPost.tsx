@@ -278,40 +278,84 @@ export default function BlogPost() {
       .replace(/,\s*/g, ', ');
   };
 
-  // Find book title match using fuzzy/normalized matching
+  // Find book title match using intelligent fuzzy matching
+  // Handles: case variations, apostrophes, punctuation, word order
   const findBookTitleMatch = (text: string, bookTitles: string[]): string | null => {
+    if (!text || !bookTitles || bookTitles.length === 0) return null;
+    
     const normalizedText = normalizeBookTitle(text);
     
-    // First try exact normalized match
+    // Strategy 1: Exact normalized match
     for (const title of bookTitles) {
       if (normalizeBookTitle(title) === normalizedText) {
         return title;
       }
     }
     
-    // Then try partial match (for cases like "THE HOBBIT" matching "The Hobbit")
-    // Remove common words and compare core title
+    // Strategy 2: Remove apostrophes and compare (Ender's Game = Enders Game)
+    const removeApostrophes = (t: string) => normalizeBookTitle(t).replace(/'/g, '');
+    const textNoApostrophe = removeApostrophes(text);
+    for (const title of bookTitles) {
+      if (removeApostrophes(title) === textNoApostrophe) {
+        return title;
+      }
+    }
+    
+    // Strategy 3: Word-by-word matching (handle punctuation differences)
+    // Split into words, normalize each word, compare
+    const getWords = (t: string) => {
+      return normalizeBookTitle(t)
+        .replace(/[.,!?;:()\[\]{}'"]/g, ' ') // Remove punctuation
+        .split(/\s+/)
+        .filter(w => w.length > 0);
+    };
+    
+    const textWords = getWords(text);
+    for (const title of bookTitles) {
+      const titleWords = getWords(title);
+      
+      // Check if all significant words from title appear in text (or vice versa)
+      // Allow for some flexibility - at least 80% of words must match
+      const significantTitleWords = titleWords.filter(w => w.length > 2);
+      const significantTextWords = textWords.filter(w => w.length > 2);
+      
+      if (significantTitleWords.length === 0 || significantTextWords.length === 0) continue;
+      
+      // Count how many title words appear in text
+      const matchingWords = significantTitleWords.filter(tw => 
+        significantTextWords.some(txt => txt === tw || txt.includes(tw) || tw.includes(txt))
+      );
+      
+      // Also check reverse - text words in title (for partial matches)
+      const reverseMatch = significantTextWords.filter(txt =>
+        significantTitleWords.some(tw => txt === tw || txt.includes(tw) || tw.includes(txt))
+      );
+      
+      // If most words match in either direction, it's a match
+      const matchRatio = Math.max(
+        matchingWords.length / significantTitleWords.length,
+        reverseMatch.length / significantTextWords.length
+      );
+      
+      if (matchRatio >= 0.7) { // 70% word match threshold
+        return title;
+      }
+    }
+    
+    // Strategy 4: Core title matching (remove "the", "a", "an")
     const getCoreTitle = (t: string) => {
       return normalizeBookTitle(t)
         .replace(/^(the|a|an)\s+/i, '')
-        .replace(/\s+(the|a|an)$/i, '');
+        .replace(/\s+(the|a|an)$/i, '')
+        .replace(/'/g, ''); // Also remove apostrophes for core matching
     };
     
     const coreText = getCoreTitle(text);
     for (const title of bookTitles) {
       const coreTitle = getCoreTitle(title);
-      if (coreTitle === coreText || coreTitle.includes(coreText) || coreText.includes(coreTitle)) {
-        return title;
-      }
-    }
-    
-    // Finally try word-by-word matching (for cases with punctuation differences)
-    const textWords = normalizedText.split(/\s+/).filter(w => w.length > 2);
-    for (const title of bookTitles) {
-      const titleWords = normalizeBookTitle(title).split(/\s+/).filter(w => w.length > 2);
-      // If most words match, consider it a match
-      const matchingWords = textWords.filter(w => titleWords.some(tw => tw.includes(w) || w.includes(tw)));
-      if (matchingWords.length >= Math.min(textWords.length, titleWords.length) * 0.8) {
+      if (coreTitle === coreText || 
+          (coreTitle.length > 5 && coreText.includes(coreTitle)) ||
+          (coreText.length > 5 && coreTitle.includes(coreText))) {
         return title;
       }
     }
@@ -475,88 +519,110 @@ export default function BlogPost() {
       return text;
     }
 
-    // ALWAYS try fallback approach for book titles (even if regex found some matches)
-    // This ensures we catch all book titles, especially those with punctuation variations
+    // ALWAYS try intelligent fallback matching for ALL book titles from database
+    // This ensures we catch all books, especially those with punctuation variations like "Ender's Game"
     if (Object.keys(bookLinks).length > 0) {
-      // Try to find ALL book titles using a simpler word-based approach
+      // For each book title in the database, search the text intelligently
       for (const bookTitle of Object.keys(bookLinks)) {
-        const normalizedTitle = normalizeBookTitle(bookTitle);
-        const titleWords = normalizedTitle.split(/\s+/).filter(w => w.length > 2);
-        
-        // Skip if we already found this book title
+        // Skip if we already found this book title in regex matches
         const alreadyFound = matches.some(m => {
-          const matchedNormalized = normalizeBookTitle(m.text);
-          return matchedNormalized === normalizedTitle || 
-                 findBookTitleMatch(m.text, [bookTitle]) === bookTitle;
+          const matchResult = findBookTitleMatch(m.text, [bookTitle]);
+          return matchResult === bookTitle;
         });
         
         if (alreadyFound) continue;
         
-        // Look for sequences of words from the book title in the text
+        // Use intelligent word-based search that handles apostrophes, punctuation, case
+        const normalizedTitle = normalizeBookTitle(bookTitle);
+        const titleWords = normalizedTitle
+          .replace(/'/g, ' ') // Replace apostrophes with space for word splitting
+          .split(/\s+/)
+          .filter(w => w.length > 2); // Only significant words
+        
+        // Intelligent search: look for the book title in text using multiple strategies
         if (titleWords.length > 0) {
-          // Try multiple patterns to catch variations
-          const patterns = [
-            // Pattern 1: Exact phrase match
-            titleWords.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+'),
-            // Pattern 2: Allow optional "the" at start
-            `(?:the\\s+)?${titleWords.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+')}`,
-            // Pattern 3: Just the main words (skip "the", "a", "an")
-            titleWords.filter(w => !['the', 'a', 'an'].includes(w.toLowerCase())).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+')
-          ];
+          // Strategy 1: Search for the book title as a phrase (handles apostrophes, case, punctuation)
+          // Build flexible patterns that match the title with variations
+          const searchPatterns: string[] = [];
           
-          for (const pattern of patterns) {
+          // Pattern 1: Exact title with optional apostrophes
+          const exactPattern = bookTitle
+            .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // Escape regex chars
+            .replace(/'/g, "[''`]?"); // Apostrophe variations
+          searchPatterns.push(exactPattern);
+          
+          // Pattern 2: Title without apostrophes (Ender's Game = Enders Game)
+          const noApostrophe = bookTitle.replace(/'/g, '');
+          if (noApostrophe !== bookTitle) {
+            searchPatterns.push(noApostrophe.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+          }
+          
+          // Pattern 3: Word sequence (handles punctuation differences)
+          const wordPattern = titleWords
+            .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+            .join('\\s+[,\\s]*'); // Allow commas/spaces between words
+          searchPatterns.push(wordPattern);
+          
+          // Pattern 4: Core words only (skip "the", "a", "an")
+          const coreWords = titleWords.filter(w => !['the', 'a', 'an'].includes(w.toLowerCase()));
+          if (coreWords.length > 0 && coreWords.length < titleWords.length) {
+            searchPatterns.push(coreWords.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+[,\\s]*'));
+          }
+          
+          // Try each pattern to find the book title in text
+          for (const pattern of searchPatterns) {
             if (!pattern) continue;
             
             try {
-              // Try multiple regex patterns with different word boundaries
-              const regexPatterns = [
+              // Try multiple regex approaches
+              const regexVariants = [
+                `\\b(${pattern})\\b`, // Word boundaries
                 `(?:^|\\s|[.,!?;:()\\[\\]"])(${pattern})(?=\\s|$|[.,!?;:()\\[\\]"])`, // With punctuation
-                `(?:^|\\s)(${pattern})(?=\\s|$|[.,!?;:])`, // Simpler boundaries
-                `\\b(${pattern})\\b`, // Word boundaries only
-                `(${pattern})` // No boundaries (most permissive)
+                `(${pattern})` // Most permissive
               ];
               
-              for (const regexPattern of regexPatterns) {
-                const phraseRegex = new RegExp(regexPattern, 'gi');
-                phraseRegex.lastIndex = 0; // Reset
-                let phraseMatch;
+              for (const regexPattern of regexVariants) {
+                const searchRegex = new RegExp(regexPattern, 'gi');
+                searchRegex.lastIndex = 0;
+                let match;
                 let attempts = 0;
                 
-                // Try to find all occurrences, not just the first
-                while ((phraseMatch = phraseRegex.exec(text)) !== null && attempts < 10) {
+                while ((match = searchRegex.exec(text)) !== null && attempts < 20) {
                   attempts++;
-                  if (phraseMatch && phraseMatch[1] && phraseMatch.index !== undefined) {
-                    const matchStart = phraseMatch.index + (phraseMatch[0].length - phraseMatch[1].length);
+                  if (match && match[1] && match.index !== undefined) {
+                    const matchStart = match.index + (match[0].length - match[1].length);
                     if (matchStart >= 0 && matchStart < text.length) {
-                      // Check if this overlaps with existing matches
-                      const isOverlapping = matches.some(m => 
-                        (matchStart >= m.index && matchStart < m.index + m.length) ||
-                        (matchStart + phraseMatch[1].length > m.index && matchStart + phraseMatch[1].length <= m.index + m.length) ||
-                        (matchStart <= m.index && matchStart + phraseMatch[1].length >= m.index + m.length)
-                      );
+                      // Verify this actually matches the book title using intelligent matching
+                      const matchedText = match[1];
+                      const verifiedMatch = findBookTitleMatch(matchedText, [bookTitle]);
                       
-                      if (!isOverlapping) {
-                        matches.push({
-                          index: matchStart,
-                          length: phraseMatch[1].length,
-                          text: phraseMatch[1]
-                        });
-                        // Don't break - continue to find all occurrences
+                      if (verifiedMatch === bookTitle) {
+                        // Check for overlaps
+                        const isOverlapping = matches.some(m => 
+                          (matchStart >= m.index && matchStart < m.index + m.length) ||
+                          (matchStart + matchedText.length > m.index && matchStart + matchedText.length <= m.index + m.length) ||
+                          (matchStart <= m.index && matchStart + matchedText.length >= m.index + m.length)
+                        );
+                        
+                        if (!isOverlapping) {
+                          matches.push({
+                            index: matchStart,
+                            length: matchedText.length,
+                            text: matchedText
+                          });
+                        }
                       }
                     }
                   }
                 }
                 
-                // If we found at least one match, we can move to next book
-                if (matches.some(m => {
-                  const mNormalized = normalizeBookTitle(m.text);
-                  return mNormalized === normalizedTitle || findBookTitleMatch(m.text, [bookTitle]) === bookTitle;
-                })) {
-                  break; // Found this book, move to next
+                // If we found this book, move to next book
+                if (matches.some(m => findBookTitleMatch(m.text, [bookTitle]) === bookTitle)) {
+                  break;
                 }
               }
             } catch (e) {
-              console.warn('Error in fallback pattern matching:', e, 'Pattern:', pattern);
+              console.warn('Error in intelligent book title search:', e, 'Book:', bookTitle);
             }
           }
         }
