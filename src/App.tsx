@@ -101,19 +101,7 @@ function App() {
         <Route path="/sql" element={<Layout />}>
           <Route index element={<SQL />} />
         </Route>
-        <Route path="/bookclub/prompt" element={<Layout />}>
-          <Route index element={<AIWritingPrompt />} />
-        </Route>
-        <Route path="/gearheads/prompt" element={<Layout />}>
-          <Route index element={<AIWritingPrompt />} />
-        </Route>
-        <Route path="/borderlands/prompt" element={<Layout />}>
-          <Route index element={<AIWritingPrompt />} />
-        </Route>
-        <Route path="/science/prompt" element={<Layout />}>
-          <Route index element={<AIWritingPrompt />} />
-        </Route>
-        <Route path="/newtheory/prompt" element={<Layout />}>
+        <Route path="/:column/prompt" element={<Layout />}>
           <Route index element={<AIWritingPrompt />} />
         </Route>
         <Route path="/helloworld" element={<Layout />}>
