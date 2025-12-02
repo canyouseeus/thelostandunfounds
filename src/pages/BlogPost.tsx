@@ -263,6 +263,62 @@ export default function BlogPost() {
     return result.length > 0 ? result : parts;
   };
 
+  // Normalize book title for matching - handles case, punctuation, and common variations
+  const normalizeBookTitle = (title: string): string => {
+    return title
+      .toLowerCase()
+      .trim()
+      // Normalize apostrophes and quotes
+      .replace(/[''`]/g, "'")
+      // Normalize hyphens and dashes
+      .replace(/[—–-]/g, '-')
+      // Remove extra whitespace
+      .replace(/\s+/g, ' ')
+      // Normalize commas and spacing
+      .replace(/,\s*/g, ', ');
+  };
+
+  // Find book title match using fuzzy/normalized matching
+  const findBookTitleMatch = (text: string, bookTitles: string[]): string | null => {
+    const normalizedText = normalizeBookTitle(text);
+    
+    // First try exact normalized match
+    for (const title of bookTitles) {
+      if (normalizeBookTitle(title) === normalizedText) {
+        return title;
+      }
+    }
+    
+    // Then try partial match (for cases like "THE HOBBIT" matching "The Hobbit")
+    // Remove common words and compare core title
+    const getCoreTitle = (t: string) => {
+      return normalizeBookTitle(t)
+        .replace(/^(the|a|an)\s+/i, '')
+        .replace(/\s+(the|a|an)$/i, '');
+    };
+    
+    const coreText = getCoreTitle(text);
+    for (const title of bookTitles) {
+      const coreTitle = getCoreTitle(title);
+      if (coreTitle === coreText || coreTitle.includes(coreText) || coreText.includes(coreTitle)) {
+        return title;
+      }
+    }
+    
+    // Finally try word-by-word matching (for cases with punctuation differences)
+    const textWords = normalizedText.split(/\s+/).filter(w => w.length > 2);
+    for (const title of bookTitles) {
+      const titleWords = normalizeBookTitle(title).split(/\s+/).filter(w => w.length > 2);
+      // If most words match, consider it a match
+      const matchingWords = textWords.filter(w => titleWords.some(tw => tw.includes(w) || w.includes(tw)));
+      if (matchingWords.length >= Math.min(textWords.length, titleWords.length) * 0.8) {
+        return title;
+      }
+    }
+    
+    return null;
+  };
+
   // Function to format text with bold emphasis for book titles and brand names
   // bookLinkCounts: tracks how many times each book has been linked
   // allowLinks: whether to allow creating new links (true for intro and book sections)
@@ -313,13 +369,25 @@ export default function BlogPost() {
       }
     });
 
-    // Create a single regex that matches all terms
-    // Escape special regex characters and create pattern that prevents partial matches
-    const escapedTerms = emphasisTerms.map(term => 
-      term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    // Create improved regex that handles punctuation and apostrophes better
+    // Build patterns that match book titles with flexible punctuation handling
+    const escapedTerms = emphasisTerms.map(term => {
+      // Escape special regex characters
+      let escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      // Handle apostrophes - allow both straight and curly quotes (make optional)
+      escaped = escaped.replace(/'/g, "[''`]?");
+      // Handle hyphens - allow various dash types (make optional)
+      escaped = escaped.replace(/-/g, '[—–-]?');
+      return escaped;
+    });
+    
+    // Improved regex: more flexible word boundaries, handles punctuation better
+    // Allows for apostrophes, commas, and various punctuation
+    // Use word boundaries more flexibly - allow punctuation before/after
+    const combinedRegex = new RegExp(
+      `(?:^|\\s|[.,!?;:()\\[\\]"])(${escapedTerms.join('|')})(?=\\s|$|[.,!?;:()\\[\\]"])`,
+      'gi'
     );
-    // Match terms with word boundaries, but handle multi-word phrases properly
-    const combinedRegex = new RegExp(`(?:^|\\s)(${escapedTerms.join('|')})(?=\\s|$|[.,!?;:])`, 'gi');
 
     const parts: (string | JSX.Element)[] = [];
     let lastIndex = 0;
@@ -357,6 +425,46 @@ export default function BlogPost() {
       }
     }
 
+    // If no regex matches found, try a fallback approach for book titles
+    // This handles cases where the regex might miss due to punctuation variations
+    if (matches.length === 0 && Object.keys(bookLinks).length > 0) {
+      // Try to find book titles using a simpler word-based approach
+      const textLower = text.toLowerCase();
+      for (const bookTitle of Object.keys(bookLinks)) {
+        const normalizedTitle = normalizeBookTitle(bookTitle);
+        const titleWords = normalizedTitle.split(/\s+/).filter(w => w.length > 2);
+        
+        // Look for sequences of words from the book title in the text
+        if (titleWords.length > 0) {
+          // Try to find the title as a phrase
+          const titlePattern = titleWords.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+');
+          const phraseRegex = new RegExp(`(?:^|\\s)(${titlePattern})(?=\\s|$|[.,!?;:])`, 'gi');
+          const phraseMatch = phraseRegex.exec(text);
+          
+          if (phraseMatch) {
+            const matchStart = phraseMatch.index + (phraseMatch[0].length - phraseMatch[1].length);
+            matches.push({
+              index: matchStart,
+              length: phraseMatch[1].length,
+              text: phraseMatch[1]
+            });
+          }
+        }
+      }
+      
+      // Remove duplicates and sort
+      const uniqueMatches: Array<{index: number, length: number, text: string}> = [];
+      matches.forEach(m => {
+        if (!uniqueMatches.some(um => 
+          (m.index >= um.index && m.index < um.index + um.length) ||
+          (um.index >= m.index && um.index < m.index + m.length)
+        )) {
+          uniqueMatches.push(m);
+        }
+      });
+      matches = uniqueMatches.sort((a, b) => a.index - b.index);
+    }
+
     // Sort matches by index
     matches.sort((a, b) => a.index - b.index);
 
@@ -371,10 +479,8 @@ export default function BlogPost() {
       }
       
       const matchedText = matchInfo.text;
-      // Find the affiliate link (case-insensitive lookup)
-      const bookKey = Object.keys(bookLinks).find(
-        key => key.toLowerCase() === matchedText.toLowerCase()
-      );
+      // Find the affiliate link using improved fuzzy matching
+      const bookKey = findBookTitleMatch(matchedText, Object.keys(bookLinks));
       const affiliateLink = bookKey ? bookLinks[bookKey] : undefined;
       
       // Display book titles in uppercase to match book club style
@@ -597,12 +703,12 @@ export default function BlogPost() {
       );
       
       if (isLikelyHeading) {
-        // Check if this heading contains any book titles (case-insensitive)
+        // Check if this heading contains any book titles using improved fuzzy matching
         // Allow links in headings that contain book titles
+        const headingNormalized = normalizeBookTitle(trimmed);
         const containsBookTitle = Object.keys(bookLinkCounts).some(bookTitle => {
-          const headingLower = trimmed.toLowerCase();
-          const bookLower = bookTitle.toLowerCase();
-          return headingLower.includes(bookLower);
+          const normalizedTitle = normalizeBookTitle(bookTitle);
+          return headingNormalized.includes(normalizedTitle) || normalizedTitle.includes(headingNormalized);
         });
         
         // Format with emphasis, allowing links in headings that contain book titles
@@ -690,19 +796,31 @@ export default function BlogPost() {
       if (trimmed.match(/^[•\-\*]\s+/)) {
         const bulletText = trimmed.replace(/^[•\-\*]\s+/, '');
         const isInIntro = index < introEndIndex;
-        // Check if this is in a book section
+        // Check if this is in a book section - improved detection
         let isInBookSection = false;
         for (let i = index - 1; i >= 0; i--) {
           const prevPara = paragraphs[i]?.trim() || '';
           if (prevPara === '' || prevPara === '⸻') continue;
-          const prevParaLower = prevPara.toLowerCase();
-          const containsBookTitle = Object.keys(bookLinkCounts).some(bookTitle => {
-            return prevParaLower.includes(bookTitle.toLowerCase()) && prevPara.includes(':');
-          });
-          if (containsBookTitle) {
-            isInBookSection = true;
-            break;
+          
+          // Check if previous paragraph is a heading that contains a book title
+          const prevParaLower = normalizeBookTitle(prevPara);
+          const isHeading = prevPara.length < 100 && 
+                           !prevPara.match(/[.!?]$/) && 
+                           prevPara.split(' ').length < 15;
+          
+          if (isHeading) {
+            // Use fuzzy matching to find book titles in heading
+            const containsBookTitle = Object.keys(bookLinkCounts).some(bookTitle => {
+              const normalizedTitle = normalizeBookTitle(bookTitle);
+              return prevParaLower.includes(normalizedTitle) || normalizedTitle.includes(prevParaLower);
+            });
+            if (containsBookTitle) {
+              isInBookSection = true;
+              break;
+            }
           }
+          
+          // Stop looking if we hit another heading or section break
           if (prevPara.length < 100 && !prevPara.match(/[.!?]$/) && prevPara.split(' ').length < 15) {
             break;
           }
@@ -743,20 +861,30 @@ export default function BlogPost() {
       // Allow links in intro (first 3 paragraphs) or in book sections
       const isInIntro = index < introEndIndex;
       // Check if this paragraph is in a book section (after a heading that contains a book title)
-      // Look backwards to find the most recent heading
+      // Look backwards to find the most recent heading - improved detection
       let isInBookSection = false;
       for (let i = index - 1; i >= 0; i--) {
         const prevPara = paragraphs[i]?.trim() || '';
         if (prevPara === '' || prevPara === '⸻') continue;
+        
         // Check if previous paragraph is a heading that contains a book title
-        const prevParaLower = prevPara.toLowerCase();
-        const containsBookTitle = Object.keys(bookLinkCounts).some(bookTitle => {
-          return prevParaLower.includes(bookTitle.toLowerCase()) && prevPara.includes(':');
-        });
-        if (containsBookTitle) {
-          isInBookSection = true;
-          break;
+        const prevParaLower = normalizeBookTitle(prevPara);
+        const isHeading = prevPara.length < 100 && 
+                         !prevPara.match(/[.!?]$/) && 
+                         prevPara.split(' ').length < 15;
+        
+        if (isHeading) {
+          // Use fuzzy matching to find book titles in heading
+          const containsBookTitle = Object.keys(bookLinkCounts).some(bookTitle => {
+            const normalizedTitle = normalizeBookTitle(bookTitle);
+            return prevParaLower.includes(normalizedTitle) || normalizedTitle.includes(prevParaLower);
+          });
+          if (containsBookTitle) {
+            isInBookSection = true;
+            break;
+          }
         }
+        
         // Stop looking if we hit another heading or section break
         if (prevPara.length < 100 && !prevPara.match(/[.!?]$/) && prevPara.split(' ').length < 15) {
           break;
