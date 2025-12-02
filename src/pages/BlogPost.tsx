@@ -970,12 +970,11 @@ export default function BlogPost() {
       const allowLinks = isInIntro || isInBookSection;
       const content = formatTextWithEmphasis(trimmed, bookLinkCounts, allowLinks);
       
-      {
-        elements.push(
-          <p key={index} className="mb-6 text-white/90 text-lg leading-relaxed text-left">
-            {Array.isArray(content) ? content : content}
-          </p>
-        );
+      elements.push(
+        <p key={index} className="mb-6 text-white/90 text-lg leading-relaxed text-left">
+          {Array.isArray(content) ? content : content}
+        </p>
+      );
         
         // Track if this is the last intro element and add disclosure if needed
         if (isInIntro) {
