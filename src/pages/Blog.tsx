@@ -268,11 +268,20 @@ export default function Blog() {
                   {({ isExpanded }) => (
                     <ExpandableTrigger>
                       <div 
-                        className="rounded-none p-[2px] bg-gradient-to-br from-white via-white/50 to-white"
-                        style={{ background: 'linear-gradient(135deg, rgba(255,255,255,1), rgba(255,255,255,0.6), rgba(255,255,255,1))' }}
+                        className="rounded-none p-[2px] relative"
+                        style={{ 
+                          background: 'linear-gradient(135deg, rgba(255,255,255,1), rgba(255,255,255,0.6), rgba(255,255,255,1))',
+                        }}
                       >
+                        <div 
+                          className="absolute inset-0 rounded-none opacity-30 pointer-events-none"
+                          style={{
+                            background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.4) 100%)',
+                            mixBlendMode: 'overlay',
+                          }}
+                        />
                         <ExpandableCard
-                          className="bg-black/50 border-0 rounded-none h-full flex flex-col hover:shadow-lg hover:shadow-white/20"
+                          className="bg-black/50 border-0 rounded-none h-full flex flex-col hover:shadow-lg hover:shadow-white/20 relative"
                           collapsedSize={{ height: 220 }}
                           expandedSize={{ height: 400 }}
                           hoverToExpand={false}
@@ -414,12 +423,12 @@ export default function Blog() {
                           </ExpandableCardContent>
                           
                           <ExpandableCardFooter className="mt-auto pt-3">
-                            <div className="flex items-center justify-between">
-                              <time className="text-white/40 text-xs font-medium">
+                            <div className="flex items-center justify-between gap-2 min-w-0">
+                              <time className="text-white/40 text-xs font-medium truncate min-w-0 flex-1">
                                 {formatDate(post.published_at || post.created_at)}
                               </time>
                               {!isExpanded && (
-                                <span className="text-white/60 text-xs font-semibold transition">
+                                <span className="text-white/60 text-xs font-semibold transition flex-shrink-0 whitespace-nowrap">
                                   Click to expand →
                                 </span>
                               )}
