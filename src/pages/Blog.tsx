@@ -259,20 +259,20 @@ export default function Blog() {
               })() : '');
               
               return (
-                <div 
+                <Expandable
                   key={post.id}
-                  className="rounded-none p-[1px] relative"
-                  style={{ 
-                    background: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15), rgba(255,255,255,0.3))',
-                  }}
+                  expandDirection="vertical"
+                  expandBehavior="replace"
+                  initialDelay={0.1}
                 >
-                  <Expandable
-                    expandDirection="vertical"
-                    expandBehavior="replace"
-                    initialDelay={0.1}
-                  >
-                    {({ isExpanded }) => (
-                      <ExpandableTrigger>
+                  {({ isExpanded }) => (
+                    <ExpandableTrigger>
+                      <div 
+                        className="rounded-none p-[1px] relative"
+                        style={{ 
+                          background: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15), rgba(255,255,255,0.3))',
+                        }}
+                      >
                         <ExpandableCard
                           className="bg-black/50 border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-white/30 hover:-translate-y-1 hover:scale-[1.02]"
                           collapsedSize={{ height: 220 }}
@@ -367,18 +367,18 @@ export default function Blog() {
               })() : '');
 
               return (
-                <div 
+                <Expandable
                   key={post.id}
-                  className="rounded-none p-[1px] h-full relative"
-                  style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15), rgba(255,255,255,0.3))' }}
+                  expandDirection="vertical"
+                  expandBehavior="replace"
+                  initialDelay={0.1}
                 >
-                  <Expandable
-                    expandDirection="vertical"
-                    expandBehavior="replace"
-                    initialDelay={0.1}
-                  >
-                    {({ isExpanded }) => (
-                      <ExpandableTrigger>
+                  {({ isExpanded }) => (
+                    <ExpandableTrigger>
+                      <div 
+                        className="rounded-none p-[1px] h-full relative"
+                        style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15), rgba(255,255,255,0.3))' }}
+                      >
                         <ExpandableCard
                           className="bg-black/50 border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-white/30 hover:-translate-y-1 hover:scale-[1.02]"
                           collapsedSize={{ height: 220 }}
@@ -438,10 +438,10 @@ export default function Blog() {
                             </div>
                           </ExpandableCardFooter>
                         </ExpandableCard>
+                      </div>
                     </ExpandableTrigger>
                   )}
                 </Expandable>
-                </div>
               );
             })}
           </div>
