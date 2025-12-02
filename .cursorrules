@@ -80,3 +80,23 @@ When the user asks to publish a blog post, you MUST follow these steps in order:
 
 ### The Purpose:
 The `/sql` page at `https://www.thelostandunfounds.com/sql` is where SQL scripts are displayed so they can be copied and executed in Supabase SQL Editor. Every blog post SQL script MUST be accessible and visible on this page.
+
+## DEPLOYMENT VERIFICATION RULE - CRITICAL
+**ALWAYS verify deployments are successful before marking tasks as complete.**
+
+When creating any deployment (Vercel, Railway, or other platforms), you MUST:
+
+1. ✅ **Check Deployment Status** - Verify state is "READY", "SUCCESS", or "ACTIVE"
+2. ✅ **Review Build Logs** - Check for errors, warnings, or failures
+3. ✅ **Verify Deployment URL** - Test that the deployed application is accessible
+4. ✅ **Confirm Functionality** - Ensure key features work on the deployed version
+
+**CRITICAL REMINDERS:**
+- ❌ **NEVER** mark a deployment as complete without verification
+- ❌ **NEVER** skip checking build logs
+- ❌ **NEVER** assume deployment is successful based on creation alone
+- ✅ **ALWAYS** verify status, logs, and URL
+- ✅ **ALWAYS** wait for final state (not intermediate states like "BUILDING")
+- ✅ **ALWAYS** report verification results clearly
+
+For detailed verification workflow and code examples, see: `.cursor/rules/deployment-verification-rule.mdc`
