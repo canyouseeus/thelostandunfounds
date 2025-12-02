@@ -9,6 +9,7 @@ import { supabase } from '../lib/supabase';
 import { LoadingSpinner } from '../components/Loading';
 import BlogAnalysis from '../components/BlogAnalysis';
 import ShareButtons from '../components/ShareButtons';
+import BookPreview from '../components/BookPreview';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 interface AffiliateLink {
@@ -856,6 +857,11 @@ export default function BlogPost() {
             </time>
           )}
         </header>
+
+        {/* Book Preview Section */}
+        {post.amazon_affiliate_links && post.amazon_affiliate_links.length > 0 && (
+          <BookPreview books={post.amazon_affiliate_links} />
+        )}
 
         <div className="prose prose-invert max-w-none text-left">
           {formatContent(post.content)}
