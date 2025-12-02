@@ -422,13 +422,13 @@ export default function Blog() {
                             </ExpandableContent>
                           </ExpandableCardContent>
                           
-                          <ExpandableCardFooter className="mt-auto pt-3">
-                            <div className="flex items-center justify-between gap-2 min-w-0">
-                              <time className="text-white/40 text-xs font-medium truncate min-w-0 flex-1">
+                          <ExpandableCardFooter className="mt-auto p-5 pt-3">
+                            <div className="flex items-center justify-between gap-2 min-w-0 w-full">
+                              <time className="text-white/70 text-xs font-medium truncate min-w-0 flex-1">
                                 {formatDate(post.published_at || post.created_at)}
                               </time>
                               {!isExpanded && (
-                                <span className="text-white/60 text-xs font-semibold transition flex-shrink-0 whitespace-nowrap">
+                                <span className="text-white/90 text-xs font-semibold transition flex-shrink-0 whitespace-nowrap">
                                   Click to expand →
                                 </span>
                               )}
