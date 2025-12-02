@@ -332,10 +332,10 @@ export default function Blog() {
                             </div>
                           </ExpandableCardFooter>
                         </ExpandableCard>
-                      </div>
                     </ExpandableTrigger>
                   )}
                 </Expandable>
+                </div>
               );
             })}
           </div>
@@ -438,10 +438,10 @@ export default function Blog() {
                             </div>
                           </ExpandableCardFooter>
                         </ExpandableCard>
-                      </div>
                     </ExpandableTrigger>
                   )}
                 </Expandable>
+                </div>
               );
             })}
           </div>
