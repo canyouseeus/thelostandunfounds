@@ -204,11 +204,38 @@ export default function BlogSubmissionReview() {
         .replace(/-+/g, '-')
         .trim();
 
-      // Get author_id from email if user exists
-      // Note: We cannot directly query auth.users via PostgREST
-      // The author_id will be set to null and can be updated later if needed
-      // The author_name field is used for display instead
+      // Get user_id/author_id from submission or current user
+      // The schema may use either user_id or author_id, and one may be required
+      // Try to get user_id from the submission's subdomain or use current user
+      let userId = null;
       let authorId = null;
+      
+      // If submission has a subdomain, try to find the user_id from user_subdomains
+      if (submission.subdomain) {
+        try {
+          const { data: subdomainData } = await supabase
+            .from('user_subdomains')
+            .select('user_id')
+            .eq('subdomain', submission.subdomain)
+            .single();
+          
+          if (subdomainData?.user_id) {
+            userId = subdomainData.user_id;
+            authorId = subdomainData.user_id; // Use same value for both
+          }
+        } catch (err) {
+          console.warn('Could not find user_id from subdomain:', err);
+        }
+      }
+      
+      // Fallback: use current user if available
+      if (!userId && user?.id) {
+        userId = user.id;
+        authorId = user.id;
+      }
+      
+      // If still no user_id, we'll need to handle this in the insert
+      // Some schemas require user_id, others allow null
 
       // Ensure author_name is set (required)
       if (!submission.author_name || !submission.author_name.trim()) {
@@ -242,7 +269,8 @@ export default function BlogSubmissionReview() {
         .trim();
 
       // Create blog post with subdomain and Amazon links
-      // Build insert object conditionally to handle missing columns gracefully
+      // Build insert object conditionally to handle different schema versions
+      // Some schemas use user_id, others use author_id, and one may be required
       const blogPostData: any = {
         title: submission.title,
         slug: slug,
@@ -251,7 +279,6 @@ export default function BlogSubmissionReview() {
         published: true,
         published_at: new Date().toISOString(),
         status: 'published',
-        author_id: authorId,
         subdomain: submission.subdomain || null, // User subdomain
         amazon_affiliate_links: submission.amazon_affiliate_links || [], // Store Amazon links
         amazon_storefront_id: submission.amazon_storefront_id || null, // Store Amazon storefront ID
@@ -259,6 +286,22 @@ export default function BlogSubmissionReview() {
         seo_description: submission.excerpt || null,
         seo_keywords: null,
         og_image_url: null,
+      }
+
+      // Add user_id and/or author_id based on what we found
+      // Try to set both to handle different schema versions
+      if (userId) {
+        blogPostData.user_id = userId;
+        blogPostData.author_id = authorId || userId; // Use userId as fallback for author_id
+      } else if (authorId) {
+        blogPostData.author_id = authorId;
+        blogPostData.user_id = authorId; // Use authorId as fallback for user_id
+      }
+      
+      // If we still don't have a user_id and it's required, use current user as last resort
+      if (!blogPostData.user_id && !blogPostData.author_id && user?.id) {
+        blogPostData.user_id = user.id;
+        blogPostData.author_id = user.id;
       }
 
       // Only include author_name if the column exists (handled via try-catch fallback)
@@ -279,12 +322,13 @@ export default function BlogSubmissionReview() {
         .single()
 
       if (firstAttempt.error) {
-        // If error mentions author_name, retry without it
-        if (firstAttempt.error.message?.includes('author_name') || 
-            firstAttempt.error.message?.includes('column') ||
-            firstAttempt.error.code === '42703') {
-          console.warn('author_name column not found, retrying without it:', firstAttempt.error.message)
-          // Second attempt: without author_name
+        const errorMsg = firstAttempt.error.message || '';
+        const errorCode = firstAttempt.error.code;
+        
+        // Handle different error types with appropriate fallbacks
+        if (errorMsg.includes('author_name') || errorCode === '42703') {
+          // Column doesn't exist - retry without author_name
+          console.warn('author_name column not found, retrying without it:', errorMsg)
           const secondAttempt = await supabase
             .from('blog_posts')
             .insert([blogPostData])
@@ -293,6 +337,41 @@ export default function BlogSubmissionReview() {
           
           blogPost = secondAttempt.data
           blogError = secondAttempt.error
+        } else if (errorMsg.includes('user_id') && errorMsg.includes('null') && !blogPostData.user_id) {
+          // user_id is required but we don't have it - try with current user
+          console.warn('user_id is required but not found, using current user:', errorMsg)
+          if (user?.id) {
+            const thirdAttempt = await supabase
+              .from('blog_posts')
+              .insert([{
+                ...blogPostData,
+                user_id: user.id,
+                author_id: user.id, // Set both to be safe
+              }])
+              .select()
+              .single()
+            
+            blogPost = thirdAttempt.data
+            blogError = thirdAttempt.error
+          } else {
+            // Can't proceed without user_id
+            blogPost = null
+            blogError = firstAttempt.error
+          }
+        } else if (errorMsg.includes('author_id') && errorMsg.includes('null') && !blogPostData.author_id && blogPostData.user_id) {
+          // author_id might be required but we have user_id - try setting author_id to user_id
+          console.warn('author_id may be required, setting to user_id:', errorMsg)
+          const fourthAttempt = await supabase
+            .from('blog_posts')
+            .insert([{
+              ...blogPostData,
+              author_id: blogPostData.user_id,
+            }])
+            .select()
+            .single()
+          
+          blogPost = fourthAttempt.data
+          blogError = fourthAttempt.error
         } else {
           // Different error, use the original
           blogPost = firstAttempt.data
