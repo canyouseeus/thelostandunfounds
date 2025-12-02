@@ -50,11 +50,12 @@ export default function BrandAssets() {
         });
 
       if (error) {
-        // If bucket doesn't exist, create it
+        // If bucket doesn't exist, show helpful message
         if (error.message.includes('not found') || error.message.includes('does not exist')) {
-          console.log('Bucket does not exist, will be created on first upload');
+          console.log('Bucket does not exist');
           setAssets([]);
           setLoading(false);
+          // Don't throw - we'll show a message in the UI
           return;
         }
         throw error;
@@ -151,9 +152,9 @@ export default function BrandAssets() {
         });
 
       if (error) {
-        // If bucket doesn't exist, try to create it (requires admin privileges)
+        // If bucket doesn't exist, provide helpful instructions
         if (error.message.includes('not found') || error.message.includes('does not exist')) {
-          showError('Storage bucket does not exist. Please create a "brand-assets" bucket in Supabase Storage first.');
+          showError('Storage bucket does not exist. Please run the "Create Brand Assets Storage Bucket" script from the SQL page (/sql) to set it up.');
           return;
         }
         throw error;
@@ -288,13 +289,17 @@ export default function BrandAssets() {
           </h2>
         </div>
 
-        {assets.length === 0 ? (
+        {assets.length === 0 && !loading ? (
           <div className="text-center py-12">
             <Image className="w-16 h-16 text-white/20 mx-auto mb-4" />
             <p className="text-white/60 mb-2">No assets uploaded yet</p>
-            <p className="text-white/40 text-sm">Upload your first brand asset to get started</p>
+            <p className="text-white/40 text-sm mb-4">Upload your first brand asset to get started</p>
+            <p className="text-white/40 text-xs">
+              If you see an error, make sure to run the "Create Brand Assets Storage Bucket" script from the{' '}
+              <a href="/sql" className="text-white underline hover:text-white/80">SQL page</a> first.
+            </p>
           </div>
-        ) : (
+        ) : assets.length === 0 ? null : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {assets.map((asset) => (
               <div
