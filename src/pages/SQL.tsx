@@ -791,6 +791,20 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch user subdomain support file:', fetchError);
       }
 
+      // Load create-brand-assets-storage-bucket script
+      let brandAssetsBucketContent = '';
+      try {
+        const brandAssetsBucketResponse = await fetch('/sql/create-brand-assets-storage-bucket.sql');
+        if (brandAssetsBucketResponse.ok) {
+          const text = await brandAssetsBucketResponse.text();
+          if (!text.trim().startsWith('<!')) {
+            brandAssetsBucketContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch brand assets bucket file:', fetchError);
+      }
+
       const allScripts: SQLScript[] = [
         {
           name: 'Join THE LOST ARCHIVES BOOK CLUB and Share Your Love of Books',
@@ -798,6 +812,13 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
           content: bookClubContent || '// File not found - check public/sql folder',
           description: 'Creates the blog post "Join THE LOST ARCHIVES BOOK CLUB and Share Your Love of Books" - inviting readers and writers to join the book club community, share insights, and earn as Amazon affiliates. Run this AFTER the migration script. Works with any schema version.',
           createdAt: getScriptTimestamp('create-blog-post-join-the-lost-archives-book-club.sql')
+        },
+        {
+          name: 'Create Brand Assets Storage Bucket',
+          filename: 'create-brand-assets-storage-bucket.sql',
+          content: brandAssetsBucketContent || '// File not found - check public/sql folder',
+          description: 'Creates the brand-assets storage bucket in Supabase Storage for uploading and managing brand assets (PNG, JPG images and MP4 videos). Sets up RLS policies for authenticated users to upload, update, and delete assets, and allows public read access. Run this to enable the Brand Assets feature in the Admin Dashboard.',
+          createdAt: getScriptTimestamp('create-brand-assets-storage-bucket.sql')
         },
         {
           name: 'Add Blog Title to User Subdomains',

@@ -8,6 +8,7 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 
 // List of known SQL files in the public directory (fallback if manifest doesn't exist)
 const SQL_FILES = [
+  '/sql/create-brand-assets-storage-bucket.sql',
   '/sql/setup-admin-user.sql',
   '/sql/update-admin-username-and-subdomain.sql',
   '/sql/move-post-to-book-club.sql',
