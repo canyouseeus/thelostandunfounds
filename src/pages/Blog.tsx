@@ -13,6 +13,7 @@ interface BlogPost {
   title: string;
   slug: string;
   excerpt: string | null;
+  content?: string | null; // Content field for generating excerpt if missing
   published_at: string | null;
   created_at: string;
   seo_title: string | null;
@@ -40,7 +41,7 @@ export default function Blog() {
       // Load native posts (subdomain IS NULL) - only 3 most recent
       let nativeQueryPromise = supabase
         .from('blog_posts')
-        .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, published, status, subdomain')
+        .select('id, title, slug, excerpt, content, published_at, created_at, seo_title, seo_description, published, status, subdomain')
         .is('subdomain', null)
         .order('published_at', { ascending: false })
         .order('created_at', { ascending: false })
@@ -56,7 +57,7 @@ export default function Blog() {
       // Load book club posts (subdomain IS NOT NULL) - 3 most recent
       let bookClubQueryPromise = supabase
         .from('blog_posts')
-        .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, published, status, subdomain')
+        .select('id, title, slug, excerpt, content, published_at, created_at, seo_title, seo_description, published, status, subdomain')
         .not('subdomain', 'is', null)
         .order('published_at', { ascending: false })
         .order('created_at', { ascending: false })
@@ -252,13 +253,26 @@ export default function Blog() {
                   </div>
                   
                   {/* Card Body - Excerpt */}
-                  {post.excerpt && (
-                    <div className="flex-1 mb-4">
-                      <p className="text-white/60 text-sm leading-relaxed line-clamp-4 text-left">
-                        {post.excerpt}
-                      </p>
-                    </div>
-                  )}
+                  {(() => {
+                    // Generate excerpt: use existing excerpt or generate from first paragraph
+                    const excerpt = post.excerpt || (post.content ? (() => {
+                      const firstParagraph = post.content.split(/\n\n+/)[0]?.trim() || '';
+                      if (firstParagraph.length > 0) {
+                        return firstParagraph.length > 200 
+                          ? firstParagraph.substring(0, 200).replace(/\s+\S*$/, '') + '...'
+                          : firstParagraph;
+                      }
+                      return '';
+                    })() : '');
+                    
+                    return excerpt ? (
+                      <div className="flex-1 mb-4">
+                        <p className="text-white/60 text-sm leading-relaxed line-clamp-4 text-left">
+                          {excerpt}
+                        </p>
+                      </div>
+                    ) : null;
+                  })()}
                   
                   {/* Card Footer - Date and Read More */}
                   <div className="mt-auto pt-3 border-t border-white/10">
@@ -306,13 +320,26 @@ export default function Blog() {
                   </div>
                   
                   {/* Card Body - Excerpt */}
-                  {post.excerpt && (
-                    <div className="flex-1 mb-4">
-                      <p className="text-white/60 text-sm leading-relaxed line-clamp-4 text-left">
-                        {post.excerpt}
-                      </p>
-                    </div>
-                  )}
+                  {(() => {
+                    // Generate excerpt: use existing excerpt or generate from first paragraph
+                    const excerpt = post.excerpt || (post.content ? (() => {
+                      const firstParagraph = post.content.split(/\n\n+/)[0]?.trim() || '';
+                      if (firstParagraph.length > 0) {
+                        return firstParagraph.length > 200 
+                          ? firstParagraph.substring(0, 200).replace(/\s+\S*$/, '') + '...'
+                          : firstParagraph;
+                      }
+                      return '';
+                    })() : '');
+                    
+                    return excerpt ? (
+                      <div className="flex-1 mb-4">
+                        <p className="text-white/60 text-sm leading-relaxed line-clamp-4 text-left">
+                          {excerpt}
+                        </p>
+                      </div>
+                    ) : null;
+                  })()}
                   
                   {/* Card Footer - Date and Read More */}
                   <div className="mt-auto pt-3 border-t border-white/10">
