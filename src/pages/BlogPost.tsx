@@ -323,6 +323,12 @@ export default function BlogPost() {
   // bookLinkCounts: tracks how many times each book has been linked
   // allowLinks: whether to allow creating new links (true for intro and book sections)
   const formatTextWithEmphasis = (text: string, bookLinkCounts?: Record<string, number>, allowLinks: boolean = false) => {
+    // Safety check - return original text if invalid input
+    if (!text || typeof text !== 'string') {
+      return text || '';
+    }
+    
+    try {
     // Build book links from post data or use defaults
     const defaultBookLinks: Record<string, string> = {
       'The E-Myth Revisited': 'https://amzn.to/49LFRbv',
@@ -612,6 +618,11 @@ export default function BlogPost() {
     }
 
     return parts;
+    } catch (error: any) {
+      console.error('Error in formatTextWithEmphasis:', error, 'Text:', text?.substring(0, 100));
+      // Return original text if formatting fails
+      return text;
+    }
   };
 
   // Helper function to format Amazon Affiliate Disclosure with bold, uppercase author name
