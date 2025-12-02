@@ -287,45 +287,52 @@ export default function Blog() {
                             </h2>
                           </ExpandableCardHeader>
                         
-                        <ExpandableCardContent className="flex-1 min-h-0">
-                          {excerpt && (
-                            <div className="mb-2">
-                              <p className="text-white/60 text-sm leading-relaxed line-clamp-4 text-left">
-                                {excerpt}
-                              </p>
-                            </div>
-                          )}
-                          
-                          <ExpandableContent preset="fade" stagger staggerChildren={0.1}>
-                            {post.content && (
+                          <ExpandableCardContent className="flex-1 min-h-0">
+                            {excerpt && (
                               <div className="mb-2">
-                                <p className="text-white/50 text-xs leading-relaxed text-left line-clamp-6">
-                                  {post.content.replace(/\n/g, ' ').substring(0, 300)}...
+                                <p className="text-white/60 text-sm leading-relaxed line-clamp-4 text-left">
+                                  {excerpt}
                                 </p>
                               </div>
                             )}
-                            <Link
-                              to={`/thelostarchives/${post.slug}`}
-                              className="inline-block mt-2 text-white/80 hover:text-white text-xs font-semibold transition"
-                              onClick={(e) => e.stopPropagation()}
+                            
+                            <ExpandableContent 
+                              preset="fade" 
+                              stagger 
+                              staggerChildren={0.1}
+                              keepMounted={false}
                             >
-                              Read Full Article →
-                            </Link>
+                              {post.content && (
+                                <div className="mb-2">
+                                  <p className="text-white/50 text-xs leading-relaxed text-left line-clamp-6">
+                                    {post.content.replace(/\n/g, ' ').substring(0, 300)}...
+                                  </p>
+                                </div>
+                              )}
+                              <Link
+                                to={`/thelostarchives/${post.slug}`}
+                                className="inline-block mt-2 text-white/80 hover:text-white text-xs font-semibold transition"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                Read Full Article →
+                              </Link>
+                            </ExpandableContent>
+                          </ExpandableCardContent>
+                          
+                          <ExpandableContent preset="slide-up">
+                            <ExpandableCardFooter className="mt-auto p-4 pt-2 pb-4">
+                              <div className="flex items-center justify-between gap-2 min-w-0 w-full">
+                                <time className="text-white/70 text-xs font-medium truncate min-w-0 flex-1">
+                                  {formatDate(post.published_at || post.created_at)}
+                                </time>
+                                {!isExpanded && (
+                                  <span className="text-white/90 text-xs font-semibold transition flex-shrink-0 whitespace-nowrap">
+                                    Click to expand →
+                                  </span>
+                                )}
+                              </div>
+                            </ExpandableCardFooter>
                           </ExpandableContent>
-                        </ExpandableCardContent>
-                        
-                        <ExpandableCardFooter className="mt-auto p-4 pt-2 pb-4">
-                          <div className="flex items-center justify-between gap-2 min-w-0 w-full">
-                            <time className="text-white/70 text-xs font-medium truncate min-w-0 flex-1">
-                              {formatDate(post.published_at || post.created_at)}
-                            </time>
-                            {!isExpanded && (
-                              <span className="text-white/90 text-xs font-semibold transition flex-shrink-0 whitespace-nowrap">
-                                Click to expand →
-                              </span>
-                            )}
-                          </div>
-                        </ExpandableCardFooter>
                         </ExpandableCard>
                       </div>
                     </ExpandableTrigger>
@@ -397,7 +404,12 @@ export default function Blog() {
                               </div>
                             )}
                             
-                            <ExpandableContent preset="fade" stagger staggerChildren={0.1}>
+                            <ExpandableContent 
+                              preset="fade" 
+                              stagger 
+                              staggerChildren={0.1}
+                              keepMounted={false}
+                            >
                               {post.content && (
                                 <div className="mb-2">
                                   <p className="text-white/50 text-xs leading-relaxed text-left line-clamp-6">
@@ -415,18 +427,20 @@ export default function Blog() {
                             </ExpandableContent>
                           </ExpandableCardContent>
                           
-                          <ExpandableCardFooter className="mt-auto p-4 pt-2 pb-4">
-                            <div className="flex items-center justify-between gap-2 min-w-0 w-full">
-                              <time className="text-white/70 text-xs font-medium truncate min-w-0 flex-1">
-                                {formatDate(post.published_at || post.created_at)}
-                              </time>
-                              {!isExpanded && (
-                                <span className="text-white/90 text-xs font-semibold transition flex-shrink-0 whitespace-nowrap">
-                                  Click to expand →
-                                </span>
-                              )}
-                            </div>
-                          </ExpandableCardFooter>
+                          <ExpandableContent preset="slide-up">
+                            <ExpandableCardFooter className="mt-auto p-4 pt-2 pb-4">
+                              <div className="flex items-center justify-between gap-2 min-w-0 w-full">
+                                <time className="text-white/70 text-xs font-medium truncate min-w-0 flex-1">
+                                  {formatDate(post.published_at || post.created_at)}
+                                </time>
+                                {!isExpanded && (
+                                  <span className="text-white/90 text-xs font-semibold transition flex-shrink-0 whitespace-nowrap">
+                                    Click to expand →
+                                  </span>
+                                )}
+                              </div>
+                            </ExpandableCardFooter>
+                          </ExpandableContent>
                         </ExpandableCard>
                       </div>
                     </ExpandableTrigger>
