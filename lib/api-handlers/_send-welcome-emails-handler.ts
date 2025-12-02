@@ -362,6 +362,7 @@ export default async function handler(
 
     // Second: get emails from blog_submissions by matching subdomain (case-insensitive)
     // This is the PRIMARY source for emails when users don't have emails in auth.users
+    // IMPORTANT: Get ALL submissions first, then match by subdomain
     const { data: submissionsData, error: submissionsError } = await supabase
       .from('blog_submissions')
       .select('author_email, subdomain')
@@ -469,7 +470,7 @@ export default async function handler(
     // Note: blog_posts doesn't have email, but we can try to match author_name to submissions
     // This is a more complex matching that we'll skip for now
 
-    // Build final list with emails
+    // Build final list with emails - ensure we check blog_submissions for EVERY user
     console.log(`Building final email list. Email map has ${emailMap.size} entries`)
     for (const subdomain of userSubdomains) {
       const emailData = emailMap.get(subdomain.user_id)
@@ -482,54 +483,63 @@ export default async function handler(
           source: emailData.source,
         })
         console.log(`✓ Added user ${subdomain.user_id} (${subdomain.subdomain}) with email ${emailData.email} from ${emailData.source}`)
-      } else {
-        // Log users without emails for debugging with more details
+      } else if (subdomain.subdomain) {
+        // CRITICAL: If email not found yet, do a direct lookup in blog_submissions
+        // This is the most reliable way to find emails
         console.warn(`✗ No email found for user ${subdomain.user_id} with subdomain ${subdomain.subdomain}`)
-        console.warn(`  - Checking if subdomain exists in blog_submissions...`)
-        // Try one more time to find email by subdomain directly (case-insensitive)
-        const { data: lastResortSubmissions, error: lastResortError } = await supabase
+        console.warn(`  - Doing direct lookup in blog_submissions for subdomain "${subdomain.subdomain}"...`)
+        
+        const { data: directLookup, error: directError } = await supabase
           .from('blog_submissions')
           .select('author_email, subdomain')
+          .eq('subdomain', subdomain.subdomain)
           .not('author_email', 'is', null)
-          .not('subdomain', 'is', null)
+          .limit(1)
+          .maybeSingle()
         
-        if (lastResortError) {
-          console.error(`  - Error fetching submissions:`, lastResortError)
+        if (directError) {
+          console.error(`  - Error in direct lookup:`, directError)
         }
         
-        if (lastResortSubmissions && subdomain.subdomain) {
-          const normalizedSubdomain = subdomain.subdomain.toLowerCase().trim()
-          console.warn(`  - Searching for subdomain "${normalizedSubdomain}" in ${lastResortSubmissions.length} submissions`)
-          const matchingSubmission = lastResortSubmissions.find(
-            s => s.subdomain && s.subdomain.toLowerCase().trim() === normalizedSubdomain
-          )
-          
-          if (matchingSubmission?.author_email) {
-            console.warn(`  ✓ Found email ${matchingSubmission.author_email} in blog_submissions for subdomain ${subdomain.subdomain}`)
-            emailMap.set(subdomain.user_id, {
-              email: matchingSubmission.author_email,
-              source: 'blog_submissions_fallback'
-            })
-            usersWithEmails.push({
-              userId: subdomain.user_id,
-              email: matchingSubmission.author_email,
-              subdomain: subdomain.subdomain,
-              source: 'blog_submissions_fallback',
-            })
-          } else {
-            console.warn(`  ✗ No email found in blog_submissions for subdomain "${normalizedSubdomain}"`)
-            if (lastResortSubmissions.length > 0) {
-              const availableSubdomains = lastResortSubmissions.map(s => s.subdomain).filter(Boolean)
-              console.warn(`  - Available subdomains in blog_submissions:`, availableSubdomains)
-            }
-          }
+        if (directLookup?.author_email) {
+          console.warn(`  ✓ FOUND email ${directLookup.author_email} via direct lookup for subdomain ${subdomain.subdomain}`)
+          usersWithEmails.push({
+            userId: subdomain.user_id,
+            email: directLookup.author_email,
+            subdomain: subdomain.subdomain,
+            source: 'blog_submissions_direct',
+          })
         } else {
-          console.warn(`  - No submissions found or subdomain is null`)
+          // Try case-insensitive match as last resort
+          if (submissionsData && submissionsData.length > 0) {
+            const normalizedSubdomain = subdomain.subdomain.toLowerCase().trim()
+            const matchingSubmission = submissionsData.find(
+              s => s.subdomain && s.subdomain.toLowerCase().trim() === normalizedSubdomain
+            )
+            
+            if (matchingSubmission?.author_email) {
+              console.warn(`  ✓ FOUND email ${matchingSubmission.author_email} via case-insensitive match for subdomain ${subdomain.subdomain}`)
+              usersWithEmails.push({
+                userId: subdomain.user_id,
+                email: matchingSubmission.author_email,
+                subdomain: subdomain.subdomain,
+                source: 'blog_submissions_case_insensitive',
+              })
+            } else {
+              console.error(`  ✗✗✗ NO EMAIL FOUND for subdomain "${subdomain.subdomain}" after all attempts`)
+              console.error(`  - Available subdomains in submissions:`, submissionsData.map(s => s.subdomain).filter(Boolean).slice(0, 10))
+            }
+          } else {
+            console.error(`  ✗✗✗ NO SUBMISSIONS DATA AVAILABLE for lookup`)
+          }
         }
       }
     }
 
     console.log(`Final usersWithEmails count: ${usersWithEmails.length}`)
+    if (usersWithEmails.length > 0) {
+      console.log(`Users to send emails to:`, usersWithEmails.map(u => `${u.subdomain} -> ${u.email}`))
+    }
 
     if (usersWithEmails.length === 0) {
       return res.status(200).json({
