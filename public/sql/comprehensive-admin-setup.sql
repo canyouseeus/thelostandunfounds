@@ -4,7 +4,6 @@
 -- Run this script to fix all admin recognition issues
 
 -- Create or replace the is_admin_user function (used by RLS policies)
--- This must be outside the DO block
 CREATE OR REPLACE FUNCTION is_admin_user()
 RETURNS BOOLEAN AS $$
 BEGIN
@@ -40,7 +39,46 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Grant execute permission
 GRANT EXECUTE ON FUNCTION is_admin_user() TO authenticated, anon;
 
--- Now run the setup in a DO block
+-- Create user_roles table if it doesn't exist (DDL must be outside DO block)
+CREATE TABLE IF NOT EXISTS user_roles (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL UNIQUE,
+  email TEXT NOT NULL,
+  is_admin BOOLEAN DEFAULT false,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Create indexes if they don't exist (DDL must be outside DO block)
+CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON user_roles(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_roles_email ON user_roles(email);
+CREATE INDEX IF NOT EXISTS idx_user_roles_is_admin ON user_roles(is_admin);
+
+-- Enable RLS (DDL must be outside DO block)
+ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies (DDL must be outside DO block)
+DROP POLICY IF EXISTS "Admins can view all roles" ON user_roles;
+DROP POLICY IF EXISTS "Users can view their own role" ON user_roles;
+DROP POLICY IF EXISTS "Service role can manage roles" ON user_roles;
+DROP POLICY IF EXISTS "Public can view roles" ON user_roles;
+
+-- Create RLS policies (DDL must be outside DO block)
+CREATE POLICY "Users can view their own role"
+  ON user_roles FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Admins can view all roles"
+  ON user_roles FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_roles
+      WHERE user_id = auth.uid() AND is_admin = true
+    )
+    OR (auth.jwt() ->> 'email')::text IN ('thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com')
+  );
+
+-- Now run the data setup in a DO block (only DML statements here)
 DO $$
 DECLARE
   admin_user_id_1 UUID;
@@ -58,45 +96,6 @@ BEGIN
   FROM auth.users
   WHERE email = admin_email_2
   LIMIT 1;
-
-  -- Create user_roles table if it doesn't exist
-  CREATE TABLE IF NOT EXISTS user_roles (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL UNIQUE,
-    email TEXT NOT NULL,
-    is_admin BOOLEAN DEFAULT false,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-  );
-
-  -- Create index if it doesn't exist
-  CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON user_roles(user_id);
-  CREATE INDEX IF NOT EXISTS idx_user_roles_email ON user_roles(email);
-  CREATE INDEX IF NOT EXISTS idx_user_roles_is_admin ON user_roles(is_admin);
-
-  -- Enable RLS
-  ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
-
-  -- Drop existing policies
-  DROP POLICY IF EXISTS "Admins can view all roles" ON user_roles;
-  DROP POLICY IF EXISTS "Users can view their own role" ON user_roles;
-  DROP POLICY IF EXISTS "Service role can manage roles" ON user_roles;
-  DROP POLICY IF EXISTS "Public can view roles" ON user_roles;
-
-  -- Create RLS policies for user_roles
-  CREATE POLICY "Users can view their own role"
-    ON user_roles FOR SELECT
-    USING (auth.uid() = user_id);
-
-  CREATE POLICY "Admins can view all roles"
-    ON user_roles FOR SELECT
-    USING (
-      EXISTS (
-        SELECT 1 FROM user_roles
-        WHERE user_id = auth.uid() AND is_admin = true
-      )
-      OR (auth.jwt() ->> 'email')::text IN (admin_email_1, admin_email_2)
-    );
 
   -- Set up admin for thelostandunfounds@gmail.com
   IF admin_user_id_1 IS NOT NULL THEN
