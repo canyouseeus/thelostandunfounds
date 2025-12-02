@@ -562,6 +562,20 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch blog submissions table file:', fetchError);
       }
 
+      // Load fix-blog-submissions-rls-policies script
+      let fixRLSContent = '';
+      try {
+        const fixRLSResponse = await fetch('/sql/fix-blog-submissions-rls-policies.sql');
+        if (fixRLSResponse.ok) {
+          const text = await fixRLSResponse.text();
+          if (!text.trim().startsWith('<!')) {
+            fixRLSContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch fix-blog-submissions-rls-policies file:', fetchError);
+      }
+
       // Load setup-admin-user script
       let setupAdminContent = '';
       try {
@@ -787,6 +801,13 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
           content: blogSubmissionsContent || '// File not found - check public/sql folder',
           description: 'Creates the blog_submissions table to allow people to submit articles to THE LOST ARCHIVES. Includes fields for title, content, author info, Amazon affiliate links, subdomain, and review status. Required for the article submission feature.',
           createdAt: getScriptTimestamp('create-blog-submissions-table.sql')
+        },
+        {
+          name: 'Fix Blog Submissions RLS Policies',
+          filename: 'fix-blog-submissions-rls-policies.sql',
+          content: fixRLSContent || '// File not found - check public/sql folder',
+          description: 'Fixes the "permission denied for table users" error when approving blog submissions. Creates a SECURITY DEFINER function to safely check admin status and updates RLS policies to use it. Run this if you get permission errors when approving submissions in the admin dashboard.',
+          createdAt: getScriptTimestamp('fix-blog-submissions-rls-policies.sql')
         },
         {
           name: 'Newsletter Campaigns Table',
