@@ -267,7 +267,7 @@ export default function BlogSubmissionReview() {
 
       if (blogError) throw blogError;
 
-      // Update submission status
+      // Update submission status (email sent timestamp will be set by the API)
       const { error: updateError } = await supabase
         .from('blog_submissions')
         .update({
@@ -298,6 +298,7 @@ export default function BlogSubmissionReview() {
             authorName: submission.author_name.trim(),
             postTitle: submission.title,
             postUrl: fullPostUrl,
+            submissionId: submission.id, // Pass submission ID to mark email as sent
           }),
         });
 

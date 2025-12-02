@@ -38,6 +38,7 @@ import { ProductCostManagement } from '../components/ProductCostManagement';
 import BlogManagement from '../components/BlogManagement';
 import NewsletterManagement from '../components/NewsletterManagement';
 import BlogSubmissionReview from '../components/BlogSubmissionReview';
+import SendExistingPublicationEmailsButton from '../components/SendExistingPublicationEmailsButton';
 
 interface DashboardStats {
   totalUsers: number;
@@ -1207,7 +1208,20 @@ export default function Admin() {
             </div>
           }
         >
-          <BlogSubmissionReview />
+          <div className="space-y-6">
+            <BlogSubmissionReview />
+            {/* Send Emails to Existing Published Posts */}
+            <div className="bg-black/50 border border-white/10 rounded-none p-6">
+              <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                <Mail className="w-5 h-5" />
+                Send Emails to Existing Published Posts
+              </h3>
+              <p className="text-white/60 text-sm mb-4">
+                Send publication notification emails to authors of existing published posts that haven't received an email yet.
+              </p>
+              <SendExistingPublicationEmailsButton />
+            </div>
+          </div>
         </ErrorBoundary>
       )}
 

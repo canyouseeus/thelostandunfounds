@@ -249,7 +249,7 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { authorEmail, authorName, postTitle, postUrl } = req.body
+  const { authorEmail, authorName, postTitle, postUrl, submissionId } = req.body
 
   // Validate input
   if (!authorEmail || !authorName || !postTitle || !postUrl) {
@@ -298,6 +298,25 @@ export default async function handler(
         error: result.error || 'Failed to send email',
         success: false
       })
+    }
+
+    // If submissionId is provided, mark email as sent
+    if (submissionId) {
+      try {
+        const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
+
+        if (supabaseUrl && supabaseKey) {
+          const supabase = createClient(supabaseUrl, supabaseKey)
+          await supabase
+            .from('blog_submissions')
+            .update({ publication_email_sent_at: new Date().toISOString() })
+            .eq('id', submissionId)
+        }
+      } catch (updateError) {
+        console.error('Failed to update email sent timestamp:', updateError)
+        // Don't fail the request if timestamp update fails
+      }
     }
 
     return res.status(200).json({

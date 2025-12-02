@@ -576,6 +576,20 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch fix-blog-submissions-rls-policies file:', fetchError);
       }
 
+      // Load add-publication-email-tracking script
+      let emailTrackingContent = '';
+      try {
+        const emailTrackingResponse = await fetch('/sql/add-publication-email-tracking.sql');
+        if (emailTrackingResponse.ok) {
+          const text = await emailTrackingResponse.text();
+          if (!text.trim().startsWith('<!')) {
+            emailTrackingContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch add-publication-email-tracking file:', fetchError);
+      }
+
       // Load setup-admin-user script
       let setupAdminContent = '';
       try {
@@ -808,6 +822,13 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
           content: fixRLSContent || '// File not found - check public/sql folder',
           description: 'Fixes the "permission denied for table users" error when approving blog submissions. Creates a SECURITY DEFINER function to safely check admin status and updates RLS policies to use it. Run this if you get permission errors when approving submissions in the admin dashboard.',
           createdAt: getScriptTimestamp('fix-blog-submissions-rls-policies.sql')
+        },
+        {
+          name: 'Add Publication Email Tracking',
+          filename: 'add-publication-email-tracking.sql',
+          content: emailTrackingContent || '// File not found - check public/sql folder',
+          description: 'Adds publication_email_sent_at column to blog_submissions table to track when publication notification emails have been sent. Required for the email notification system. Run this before sending emails to existing published posts.',
+          createdAt: getScriptTimestamp('add-publication-email-tracking.sql')
         },
         {
           name: 'Newsletter Campaigns Table',
