@@ -37,25 +37,24 @@ EXCEPTION
     RAISE NOTICE 'Error creating bucket: %. Please create the "brand-assets" bucket through the Supabase Dashboard first, then run this script to set up policies.', SQLERRM;
 END $$;
 
--- Create RLS policies for the bucket
--- Drop existing policies if they exist (to allow re-running this script)
+-- Drop existing policies if they exist (to avoid conflicts)
 DROP POLICY IF EXISTS "Allow authenticated users to upload brand assets" ON storage.objects;
 DROP POLICY IF EXISTS "Allow authenticated users to update brand assets" ON storage.objects;
 DROP POLICY IF EXISTS "Allow authenticated users to delete brand assets" ON storage.objects;
 DROP POLICY IF EXISTS "Allow public read access to brand assets" ON storage.objects;
 DROP POLICY IF EXISTS "Allow authenticated users to list brand assets" ON storage.objects;
 
--- Allow authenticated users to upload files
+-- Create RLS policies for the bucket
+-- Allow authenticated users to upload files (any authenticated user can upload)
 CREATE POLICY "Allow authenticated users to upload brand assets"
 ON storage.objects
 FOR INSERT
 TO authenticated
 WITH CHECK (
-  bucket_id = 'brand-assets' AND
-  (storage.foldername(name))[1] = '' -- Allow uploads to root or any folder
+  bucket_id = 'brand-assets'
 );
 
--- Allow authenticated users to update their own files
+-- Allow authenticated users to update files (any authenticated user can update)
 CREATE POLICY "Allow authenticated users to update brand assets"
 ON storage.objects
 FOR UPDATE
@@ -67,7 +66,7 @@ WITH CHECK (
   bucket_id = 'brand-assets'
 );
 
--- Allow authenticated users to delete files
+-- Allow authenticated users to delete files (any authenticated user can delete)
 CREATE POLICY "Allow authenticated users to delete brand assets"
 ON storage.objects
 FOR DELETE
@@ -103,3 +102,7 @@ BEGIN
     RAISE WARNING 'Bucket "brand-assets" does not exist. Please create it through the Supabase Dashboard first.';
   END IF;
 END $$;
+
+COMMENT ON TABLE storage.buckets IS 'Storage buckets for file uploads. The brand-assets bucket stores brand images and videos.';
+COMMENT ON POLICY "Allow authenticated users to upload brand assets" ON storage.objects IS 'Allows authenticated users to upload brand assets (PNG, JPG, MP4)';
+COMMENT ON POLICY "Allow public read access to brand assets" ON storage.objects IS 'Allows public read access to brand assets for use in the site';
