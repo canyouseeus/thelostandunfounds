@@ -607,6 +607,11 @@ export default function BlogPost() {
       // Fallback to matchedText if bookKey exists but we want to preserve original formatting
       const displayText = matchedText || '';
       
+      // Check if it's an emphasis term (THE LOST+UNFOUNDS, etc.) - these should always be bold
+      const isEmphasisTerm = emphasisTerms.some(term => 
+        normalizeBookTitle(term) === normalizeBookTitle(matchedText)
+      );
+      
       // If it's a book title with an affiliate link
       if (affiliateLink && bookLinkCounts) {
         const currentCount = bookLinkCounts[bookKey!] || 0;
@@ -625,7 +630,7 @@ export default function BlogPost() {
             </a>
           );
         } else {
-          // Otherwise, just make it bold (no link) - title case
+          // Exceeded link limit or not allowed - make it bold (no link)
           parts.push(
             <strong key={`bold-${keyCounter++}`} className="font-bold text-white">
               {displayText}
@@ -645,33 +650,16 @@ export default function BlogPost() {
             {displayText}
           </a>
         );
+      } else if (bookKey || isEmphasisTerm) {
+        // It's a book title (with or without link) OR an emphasis term - make it bold
+        parts.push(
+          <strong key={`bold-${keyCounter++}`} className="font-bold text-white">
+            {displayText}
+          </strong>
+        );
       } else {
-        // Not a book title with link, but check if it's a book title that should be bold
-        // If it matched a book title from our list, make it bold even without link
-        const isBookTitle = bookKey !== null;
-        if (isBookTitle) {
-          // It's a book title but no link - make it bold
-          parts.push(
-            <strong key={`bold-${keyCounter++}`} className="font-bold text-white">
-              {displayText}
-            </strong>
-          );
-        } else {
-          // Check if it's an emphasis term (THE LOST+UNFOUNDS, etc.)
-          const isEmphasisTerm = emphasisTerms.some(term => 
-            normalizeBookTitle(term) === normalizeBookTitle(matchedText)
-          );
-          if (isEmphasisTerm) {
-            parts.push(
-              <strong key={`bold-${keyCounter++}`} className="font-bold text-white">
-                {displayText}
-              </strong>
-            );
-          } else {
-            // Regular text - return as-is
-            parts.push(displayText);
-          }
-        }
+        // Regular text - return as-is
+        parts.push(displayText);
       }
       
       lastIndex = matchInfo.index + matchInfo.length;
