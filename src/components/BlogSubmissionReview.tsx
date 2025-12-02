@@ -241,7 +241,33 @@ export default function BlogSubmissionReview() {
         ? `/blog/${submission.subdomain}/${slug}`
         : `/thelostarchives/${slug}`;
       
-      success(`Article published successfully! ${submission.subdomain ? 'It should appear on the Book Club page.' : 'Note: Without a subdomain, it may not appear on the Book Club page.'}`);
+      const fullPostUrl = `${window.location.origin}${postUrl}`;
+      
+      // Send notification email to the author
+      try {
+        const emailResponse = await fetch('/api/blog-post-published/notify', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            authorEmail: submission.author_email,
+            authorName: submission.author_name.trim(),
+            postTitle: submission.title,
+            postUrl: fullPostUrl,
+          }),
+        });
+
+        if (!emailResponse.ok) {
+          console.warn('Failed to send notification email:', await emailResponse.text());
+          // Don't fail the publish if email fails - just log it
+        }
+      } catch (emailError) {
+        console.error('Error sending notification email:', emailError);
+        // Don't fail the publish if email fails - just log it
+      }
+      
+      success(`Article published successfully! ${submission.subdomain ? 'It should appear on the Book Club page.' : 'Note: Without a subdomain, it may not appear on the Book Club page.'} A notification email has been sent to ${submission.author_email}.`);
       setSelectedSubmission(null);
       setReviewNotes('');
       loadSubmissions();
