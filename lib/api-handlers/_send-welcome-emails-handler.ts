@@ -233,7 +233,10 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { testEmail } = req.body // Optional: send to specific email for testing
+  const { testEmail, manualEmails } = req.body as { 
+    testEmail?: string
+    manualEmails?: Array<{ subdomain: string; email: string }>
+  }
 
   try {
     // Initialize Supabase client
