@@ -143,7 +143,7 @@ function App() {
         <Route path="/submit/science" element={<Layout />}>
           <Route index element={<SubmitArticle />} />
         </Route>
-        <Route path="/submit/homescience" element={<Layout />}>
+        <Route path="/submit/newtheory" element={<Layout />}>
           <Route index element={<SubmitArticle />} />
         </Route>
         <Route path="/reset-newsletter" element={<ResetNewsletter />} />

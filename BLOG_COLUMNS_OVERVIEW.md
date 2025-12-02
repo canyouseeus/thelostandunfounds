@@ -13,7 +13,7 @@
 | **GearHeads** | Tools, setups, kits, combinations | Up to 8 products | ✔ Amazon products | Workflows, hobbies, lifestyle systems |
 | **Edge of the Borderlands** | Travel & adventure insights | 4–8 items per post | ✔ Amazon/travel/Bitcoin | Journey stories, navigation, practical takeaways |
 | **Science Column** | Deep scientific dives | 6–8 paragraphs (flexible) | ❌ None | Physics, quantum theory, biology, emerging sciences |
-| **Home Science** | Practical science in daily life | 4–8 items or 6–8 paragraphs | Optional (gear/tools) | Nutrition, systems, habits, DIY experiments |
+| **NEW THEORY** | Practical science in daily life | 4–8 items or 6–8 paragraphs | Optional (gear/tools) | Nutrition, systems, habits, DIY experiments |
 
 ---
 
@@ -157,7 +157,7 @@
 
 ---
 
-### 6. Home Science / Home Scientists
+### 6. NEW THEORY
 
 **Purpose:** Practical application of scientific and systems thinking in everyday life
 
@@ -199,11 +199,11 @@
 ### Affiliate Integration
 - **No Affiliates:** Main Blog, Science Column (pure knowledge/expression)
 - **With Affiliates:** BookClub, GearHeads, Edge of the Borderlands (product/service recommendations)
-- **Optional Affiliates:** Home Science (tools/products for experiments)
+- **Optional Affiliates:** NEW THEORY (tools/products for experiments)
 
 ### Content Approach
 - **Narrative-Driven:** Main Blog, Science Column (idea-focused)
-- **Collection-Driven:** BookClub, GearHeads, Edge of the Borderlands, Home Science (curated items with narrative)
+- **Collection-Driven:** BookClub, GearHeads, Edge of the Borderlands, NEW THEORY (curated items with narrative)
 - **Hybrid:** Some columns blend narrative with curated collections
 
 ### Contributor Freedom
@@ -213,7 +213,7 @@
 
 ### Experience-Centered Design
 - **Intellectual:** Main Blog, Science Column
-- **Practical:** GearHeads, Home Science
+- **Practical:** GearHeads, NEW THEORY
 - **Exploratory:** Edge of the Borderlands
 - **Curated Discovery:** BookClub
 
@@ -246,7 +246,7 @@
 - Sharing research or technical knowledge
 - No product recommendations needed
 
-**Choose Home Science if:**
+**Choose NEW THEORY if:**
 - Applying science/systems thinking to daily life
 - Sharing experiments, habits, or household systems
 - Practical optimization with optional product links

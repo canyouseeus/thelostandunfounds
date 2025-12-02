@@ -22,7 +22,7 @@ interface AffiliateLink {
   link: string;
 }
 
-type BlogColumn = 'main' | 'bookclub' | 'gearheads' | 'borderlands' | 'science' | 'homescience';
+type BlogColumn = 'main' | 'bookclub' | 'gearheads' | 'borderlands' | 'science' | 'newtheory';
 
 interface ColumnConfig {
   name: string;
@@ -100,9 +100,9 @@ const COLUMN_CONFIGS: Record<BlogColumn, ColumnConfig> = {
     itemLabel: '',
     linkLabel: '',
   },
-  homescience: {
-    name: 'Home Science',
-    title: 'SUBMIT TO HOME SCIENCE',
+  newtheory: {
+    name: 'NEW THEORY',
+    title: 'SUBMIT TO NEW THEORY',
     description: 'Practical application of scientific and systems thinking in everyday life. Nutrition, household systems, habit-building, resource management, and DIY experiments.',
     requiresAffiliates: false,
     requiresStorefront: false,
@@ -131,8 +131,8 @@ export default function SubmitArticle() {
     columnParam = 'borderlands';
   } else if (pathname.includes('/submit/science')) {
     columnParam = 'science';
-  } else if (pathname.includes('/submit/homescience')) {
-    columnParam = 'homescience';
+  } else if (pathname.includes('/submit/newtheory')) {
+    columnParam = 'newtheory';
   } else {
     columnParam = searchParams.get('column') || 'bookclub';
   }

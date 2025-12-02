@@ -9,7 +9,7 @@ BEGIN
     WHERE table_name = 'blog_submissions' AND column_name = 'column'
   ) THEN
     ALTER TABLE blog_submissions 
-    ADD COLUMN column TEXT CHECK (column IN ('main', 'bookclub', 'gearheads', 'borderlands', 'science', 'homescience'));
+    ADD COLUMN column TEXT CHECK (column IN ('main', 'bookclub', 'gearheads', 'borderlands', 'science', 'newtheory'));
     
     -- Create index for filtering by column
     CREATE INDEX IF NOT EXISTS idx_blog_submissions_column ON blog_submissions(column);

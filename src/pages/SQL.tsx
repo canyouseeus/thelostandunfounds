@@ -654,6 +654,20 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch add-column-to-blog-submissions file:', fetchError);
       }
 
+      // Load update-homescience-to-newtheory script
+      let updateHomeScienceContent = '';
+      try {
+        const updateHomeScienceResponse = await fetch('/sql/update-homescience-to-newtheory.sql');
+        if (updateHomeScienceResponse.ok) {
+          const text = await updateHomeScienceResponse.text();
+          if (!text.trim().startsWith('<!')) {
+            updateHomeScienceContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch update-homescience-to-newtheory file:', fetchError);
+      }
+
       // Load diagnose-user-subdomain-connections script
       let diagnoseSubdomainContent = '';
       try {
@@ -1003,8 +1017,15 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
           name: 'Add Column Field to Blog Submissions',
           filename: 'add-column-to-blog-submissions.sql',
           content: addColumnContent || '// File not found - check public/sql folder',
-          description: 'Adds column field to blog_submissions table to track which blog column (main, bookclub, gearheads, borderlands, science, homescience) the submission is for. Required for column-specific submission routing. Run this to enable column-specific submission forms.',
+          description: 'Adds column field to blog_submissions table to track which blog column (main, bookclub, gearheads, borderlands, science, newtheory) the submission is for. Required for column-specific submission routing. Run this to enable column-specific submission forms.',
           createdAt: getScriptTimestamp('add-column-to-blog-submissions.sql')
+        },
+        {
+          name: 'Update Home Science to NEW THEORY',
+          filename: 'update-homescience-to-newtheory.sql',
+          content: updateHomeScienceContent || '// File not found - check public/sql folder',
+          description: 'Updates any existing "homescience" column references to "newtheory" and updates the database constraint. Run this if you already have the column field with the old "homescience" value.',
+          createdAt: getScriptTimestamp('update-homescience-to-newtheory.sql')
         },
         {
           name: 'Diagnose User-Subdomain Connections',
