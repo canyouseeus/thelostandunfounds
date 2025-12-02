@@ -285,9 +285,9 @@ export default function Blog() {
                           collapseDelay={300}
                         >
                           <div 
-                            className="absolute inset-0 rounded-none pointer-events-none z-10"
+                            className="absolute inset-0 rounded-none pointer-events-none z-10 opacity-50"
                             style={{
-                              background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 30%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.05) 70%, rgba(255,255,255,0.15) 100%)',
+                              background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 30%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.02) 70%, rgba(255,255,255,0.08) 100%)',
                               mixBlendMode: 'overlay',
                             }}
                           />
@@ -396,9 +396,9 @@ export default function Blog() {
                           collapseDelay={300}
                         >
                           <div 
-                            className="absolute inset-0 rounded-none pointer-events-none z-10"
+                            className="absolute inset-0 rounded-none pointer-events-none z-10 opacity-50"
                             style={{
-                              background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 30%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.05) 70%, rgba(255,255,255,0.15) 100%)',
+                              background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 30%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.02) 70%, rgba(255,255,255,0.08) 100%)',
                               mixBlendMode: 'overlay',
                             }}
                           />
