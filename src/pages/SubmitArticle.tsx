@@ -545,7 +545,7 @@ export default function SubmitArticle() {
           <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white mb-4 tracking-wide whitespace-nowrap">
             SUBMIT TO BOOK CLUB
           </h1>
-          <p className="text-white/70 text-lg max-w-2xl mx-auto mb-4">
+          <p className="text-white/70 text-lg max-w-2xl mx-auto mb-4 text-justify">
             Share your insights on books and how they've shaped your thinking. 
             Submit an article featuring four books with your Amazon affiliate links.
           </p>
