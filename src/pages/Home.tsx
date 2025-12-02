@@ -198,7 +198,7 @@ export default function Home() {
       <main className="flex-1 flex items-center justify-center relative h-full">
         {/* Background text - grows and blurs behind modals */}
         <div 
-          className="center-text fixed"
+          className="center-text fixed text-base sm:text-2xl md:text-3xl"
           style={{
             left: '50%',
             top: '50%',
@@ -208,6 +208,10 @@ export default function Home() {
             zIndex: 1,
             pointerEvents: 'none',
             opacity: typingComplete ? 0.3 : 0,
+            padding: '0 1rem',
+            maxWidth: '100vw',
+            wordBreak: 'break-word',
+            whiteSpace: 'normal',
           }}
         >
           {text}
@@ -228,14 +232,19 @@ export default function Home() {
                 zIndex: 1000,
               }}
             >
-              <img src="/logo.png" alt="THE LOST+UNFOUNDS Logo" className="max-w-[570px] h-auto" style={{ maxWidth: '570px' }} />
+              <img 
+                src="/logo.png" 
+                alt="THE LOST+UNFOUNDS Logo" 
+                className="max-w-[570px] h-auto sm:max-w-[570px] max-w-[80vw] sm:max-w-[570px]" 
+                style={{ maxWidth: 'min(570px, 80vw)' }} 
+              />
             </div>
           )}
           
           {/* Typing text - second in sequence, stays completely fixed */}
           {showTyping && (
             <div 
-              className="center-text fixed"
+              className="center-text fixed text-base sm:text-2xl md:text-3xl"
               style={{
                 opacity: showEmailSignup ? 0 : 1,
                 visibility: showEmailSignup ? 'hidden' : 'visible',
@@ -247,6 +256,10 @@ export default function Home() {
                 pointerEvents: showEmailSignup ? 'none' : 'auto',
                 willChange: 'opacity',
                 position: 'fixed',
+                padding: '0 1rem',
+                maxWidth: '100vw',
+                wordBreak: 'break-word',
+                whiteSpace: 'normal',
               }}
             >
               {displayedText}
@@ -272,7 +285,7 @@ export default function Home() {
               top: showEmailSignup ? '50%' : '100%',
               transform: showEmailSignup ? 'translate(-50%, -50%)' : 'translate(-50%, 0)',
               width: '100%',
-              maxWidth: '500px',
+              maxWidth: 'min(500px, 90vw)',
               padding: '0 1rem',
               zIndex: 1002,
               transition: 'opacity 1.5s ease-in-out, transform 1.5s ease-in-out, visibility 0s linear',
@@ -289,8 +302,9 @@ export default function Home() {
             <div style={{
               textAlign: 'center',
               color: 'rgba(255, 255, 255, 0.6)',
-              fontSize: '0.875rem',
+              fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
               lineHeight: '1.5',
+              padding: '0 0.5rem',
             }}>
               Thanks for stopping by. Sign-up for updates and news!
             </div>

@@ -111,8 +111,8 @@ export default function Shop() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Header */}
-      <div className="text-center mb-12">
-        <h1 className="text-6xl font-bold mb-4 text-white">SHOP</h1>
+      <div className="text-center mb-8 sm:mb-12">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 text-white">SHOP</h1>
       </div>
 
       {/* Search and Filter */}
@@ -124,21 +124,23 @@ export default function Shop() {
             placeholder="Search products..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-black/50 border-2 border-white/30 rounded-none text-white placeholder-white/50 
+            className="w-full pl-10 pr-4 py-3 sm:py-2.5 bg-black/50 border-2 border-white/30 rounded-none text-white placeholder-white/50 text-base
                        hover:border-white/50 hover:bg-black/70 
                        focus:outline-none focus:ring-4 focus:ring-white/30 focus:border-white/60 focus:bg-black/80
-                       transition-all duration-200 shadow-lg hover:shadow-white/10 focus:shadow-white/20"
+                       transition-all duration-200 shadow-lg hover:shadow-white/10 focus:shadow-white/20
+                       min-h-[44px] touch-action: manipulation"
           />
         </div>
         <div className="flex items-center gap-2">
-          <Filter className="text-gray-400 w-5 h-5" />
+          <Filter className="text-gray-400 w-5 h-5 flex-shrink-0" />
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-4 py-2.5 bg-black/50 border-2 border-white/30 rounded-none text-white
+            className="flex-1 sm:flex-none px-4 py-3 sm:py-2.5 bg-black/50 border-2 border-white/30 rounded-none text-white text-base
                        hover:border-white/50 hover:bg-black/70 
                        focus:outline-none focus:ring-4 focus:ring-white/30 focus:border-white/60 focus:bg-black/80
-                       transition-all duration-200 shadow-lg hover:shadow-white/10 focus:shadow-white/20 cursor-pointer"
+                       transition-all duration-200 shadow-lg hover:shadow-white/10 focus:shadow-white/20 cursor-pointer
+                       min-h-[44px] touch-action: manipulation"
           >
             {categories.map((cat) => (
               <option key={cat} value={cat}>
@@ -221,15 +223,15 @@ function ProductCard({ product }: { product: Product }) {
           />
         </div>
       )}
-      <h3 className="text-xl font-semibold mb-2 text-white whitespace-nowrap overflow-hidden text-ellipsis" title={product.title}>{product.title.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim()}</h3>
+      <h3 className="text-lg sm:text-xl font-semibold mb-2 text-white line-clamp-2" title={product.title}>{product.title.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim()}</h3>
       <p className="text-white/60 mb-4 text-sm line-clamp-2">{product.description}</p>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
         <div>
           {displayPrice === 0 ? (
-            <span className="text-2xl font-bold text-green-400">Free</span>
+            <span className="text-xl sm:text-2xl font-bold text-green-400">Free</span>
           ) : (
-            <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold text-white">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xl sm:text-2xl font-bold text-white">
                 ${displayPrice.toFixed(2)}
               </span>
               {displayComparePrice && displayComparePrice > displayPrice && (
@@ -245,7 +247,7 @@ function ProductCard({ product }: { product: Product }) {
           target="_blank"
           rel="noopener noreferrer"
           onClick={handleCheckoutClick}
-          className="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-none hover:bg-white/90 transition-colors font-semibold"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white text-black px-4 py-3 sm:py-2 rounded-none hover:bg-white/90 transition-colors font-semibold text-sm sm:text-base min-h-[44px] touch-action: manipulation"
         >
           <ShoppingCart className="w-4 h-4" />
           {displayPrice === 0 ? 'View' : 'Buy Now'}

@@ -64,16 +64,30 @@ export default function AIWritingPrompt() {
         </div>
       ) : (
         <div className="bg-black/50 border border-white/10 rounded-none p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h2 className="text-xl font-bold text-white mb-1">AI Writing Prompt</h2>
-              <p className="text-white/60 text-sm mb-2">
-                Use this prompt exactly as provided to ensure your article matches our format and style requirements.
-              </p>
-            </div>
+          <div className="mb-4">
+            <h2 className="text-xl font-bold text-white mb-1">AI Writing Prompt</h2>
+            <p className="text-white/60 text-sm mb-2">
+              Use this prompt exactly as provided to ensure your article matches our format and style requirements.
+            </p>
+          </div>
+          <pre className="bg-black/50 border border-white/10 rounded-none p-4 overflow-x-auto text-white/90 text-sm font-mono whitespace-pre-wrap break-words text-left max-h-[600px] overflow-y-auto relative">
             <button
               onClick={copyToClipboard}
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded text-white text-sm transition flex items-center gap-2 flex-shrink-0"
+              className="absolute top-2 right-2 p-1.5 bg-white/10 hover:bg-white/20 rounded text-white transition flex items-center justify-center flex-shrink-0 z-10"
+              title={copied ? "Copied!" : "Copy Prompt"}
+            >
+              {copied ? (
+                <Check className="w-3 h-3" />
+              ) : (
+                <Copy className="w-3 h-3" />
+              )}
+            </button>
+            <code className="text-left">{promptContent}</code>
+          </pre>
+          <div className="flex justify-center mt-4">
+            <button
+              onClick={copyToClipboard}
+              className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-none text-white text-sm transition flex items-center gap-2"
             >
               {copied ? (
                 <>
@@ -88,9 +102,6 @@ export default function AIWritingPrompt() {
               )}
             </button>
           </div>
-          <pre className="bg-black/50 border border-white/10 rounded-none p-4 overflow-x-auto text-white/90 text-sm font-mono whitespace-pre-wrap break-words text-left max-h-[600px] overflow-y-auto">
-            <code className="text-left">{promptContent}</code>
-          </pre>
         </div>
       )}
 

@@ -84,6 +84,9 @@ body {
   justify-content: center;
   height: 2.5rem;
   width: 2.5rem;
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
 }
 
 .menu-toggle:hover {
@@ -103,7 +106,8 @@ body {
   background: rgba(0, 0, 0, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 4px;
-  width: 140px;
+  width: 200px;
+  max-width: 85vw;
   opacity: 0;
   visibility: hidden;
   transform: translateY(-10px);
@@ -121,7 +125,7 @@ body {
 
 .menu-item {
   display: block;
-  padding: 0.625rem 1rem;
+  padding: 0.75rem 1rem;
   color: white;
   text-decoration: none;
   transition: background-color 0.3s ease, color 0.3s ease;
@@ -133,10 +137,12 @@ body {
   width: 100%;
   text-align: left;
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   font-family: inherit;
   letter-spacing: 0.05em;
   pointer-events: auto;
+  min-height: 44px;
+  touch-action: manipulation;
 }
 
 .menu-item:hover {
@@ -640,6 +646,60 @@ h1.text-5xl {
   
   .header {
     padding: 1.5rem 1rem;
+  }
+
+  .center-text {
+    font-size: 1.2em;
+    padding: 0 1rem;
+    word-break: break-word;
+    white-space: normal;
+  }
+
+  .menu-dropdown {
+    width: 85vw;
+    max-width: 300px;
+  }
+
+  .menu-item {
+    font-size: 0.875rem;
+    padding: 0.875rem 1rem;
+  }
+
+  .menu-subitem {
+    font-size: 0.75rem;
+    padding-left: 1.25rem;
+  }
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 640px) {
+  .center-text {
+    font-size: 1em;
+  }
+
+  .menu-dropdown {
+    width: 90vw;
+    right: 0.5rem;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .menu-item:hover {
+    background-color: transparent;
+  }
+
+  .menu-item:active {
+    background-color: white;
+    color: black;
+  }
+
+  .menu-toggle:hover {
+    opacity: 1;
+  }
+
+  .menu-toggle:active {
+    opacity: 0.7;
   }
 }
 

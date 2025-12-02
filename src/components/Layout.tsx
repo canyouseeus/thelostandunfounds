@@ -231,7 +231,7 @@ export default function Layout() {
           {/* Top row: Title left, Menu button right */}
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center text-white hover:text-white/80 transition">
-              <span className="text-xl font-bold">THE LOST+UNFOUNDS</span>
+              <span className="text-sm sm:text-lg md:text-xl font-bold">THE LOST+UNFOUNDS</span>
             </Link>
             <div className="flex items-center space-x-4">
               <div 

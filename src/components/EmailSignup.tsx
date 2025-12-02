@@ -90,16 +90,16 @@ export default function EmailSignup() {
         background: 'rgba(0, 0, 0, 0.5)',
         border: '1px solid rgba(255, 255, 255, 0.1)',
         borderRadius: '0',
-        padding: '1.5rem',
+        padding: '1.25rem',
         textAlign: 'center',
         maxWidth: '500px',
         width: '100%'
       }}>
         <div style={{ fontSize: '2rem', marginBottom: '1rem', color: '#ffffff' }}>✓</div>
-        <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.5rem', color: '#ffffff' }}>
+        <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '0.5rem', color: '#ffffff' }}>
           Thank you for subscribing!
         </h3>
-        <p style={{ color: 'rgba(255, 255, 255, 0.7)', marginBottom: '1rem' }}>
+        <p style={{ color: 'rgba(255, 255, 255, 0.7)', marginBottom: '1rem', fontSize: '0.875rem' }}>
           Check your email for confirmation.
         </p>
         <button
@@ -108,12 +108,15 @@ export default function EmailSignup() {
             background: '#ffffff',
             border: 'none',
             color: '#000000',
-            padding: '0.75rem 1.5rem',
+            padding: '0.875rem 1.5rem',
             borderRadius: '0',
             cursor: 'pointer',
             fontSize: '1rem',
             fontWeight: 600,
-            transition: 'opacity 0.3s ease'
+            transition: 'opacity 0.3s ease',
+            minHeight: '44px',
+            touchAction: 'manipulation',
+            width: '100%'
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.opacity = '0.9';
@@ -133,7 +136,7 @@ export default function EmailSignup() {
       background: 'rgba(0, 0, 0, 0.5)',
       border: '1px solid rgba(255, 255, 255, 0.1)',
       borderRadius: '0',
-      padding: '1.5rem',
+      padding: '1.25rem',
       maxWidth: '500px',
       width: '100%'
     }}>
@@ -148,12 +151,14 @@ export default function EmailSignup() {
             disabled={loading}
             style={{
               width: '100%',
-              padding: '0.75rem',
+              padding: '0.875rem',
               background: 'rgba(0, 0, 0, 0.5)',
               border: '1px solid rgba(255, 255, 255, 0.2)',
               borderRadius: '0',
               color: '#ffffff',
-              fontSize: '1rem'
+              fontSize: '16px',
+              minHeight: '44px',
+              touchAction: 'manipulation'
             }}
           />
           <button
@@ -161,7 +166,7 @@ export default function EmailSignup() {
             disabled={loading || (turnstileSiteKey && !turnstileToken && !import.meta.env.DEV)}
             style={{
               width: '100%',
-              padding: '0.75rem',
+              padding: '0.875rem',
               background: loading || (turnstileSiteKey && !turnstileToken && !import.meta.env.DEV) ? 'rgba(255, 255, 255, 0.3)' : '#ffffff',
               color: loading || (turnstileSiteKey && !turnstileToken && !import.meta.env.DEV) ? 'rgba(0, 0, 0, 0.5)' : '#000000',
               border: 'none',
@@ -169,7 +174,9 @@ export default function EmailSignup() {
               fontSize: '1rem',
               fontWeight: 600,
               cursor: loading || (turnstileSiteKey && !turnstileToken && !import.meta.env.DEV) ? 'not-allowed' : 'pointer',
-              whiteSpace: 'nowrap'
+              whiteSpace: 'nowrap',
+              minHeight: '44px',
+              touchAction: 'manipulation'
             }}
           >
             {loading ? 'Subscribing...' : 'SUBSCRIBE'}

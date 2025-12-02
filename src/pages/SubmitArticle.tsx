@@ -554,42 +554,55 @@ export default function SubmitArticle() {
         {/* AI Writing Prompt Box */}
         <div className="mb-8">
           <div className="bg-black/50 border border-white/10 rounded-none p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h2 className="text-xl font-bold text-white mb-1">AI Writing Prompt for Contributors</h2>
-                <p className="text-white/60 text-sm mb-2">Copy this prompt to use with your AI assistant</p>
-                <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-none p-3 mt-3 flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-yellow-300 text-xs">
-                    <strong>Important:</strong> Do not modify this prompt. Use it exactly as provided to ensure your article matches our format and style requirements.
-                  </p>
-                </div>
+            <div className="mb-4">
+              <h2 className="text-xl font-bold text-white mb-1">AI Writing Prompt for Contributors</h2>
+              <p className="text-white/60 text-sm mb-2">Copy this prompt to use with your AI assistant</p>
+              <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-none p-3 mt-3 flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+                <p className="text-yellow-300 text-xs">
+                  <strong>Important:</strong> Do not modify this prompt. Use it exactly as provided to ensure your article matches our format and style requirements.
+                </p>
               </div>
-              <button
-                onClick={copyPromptToClipboard}
-                className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded text-white text-sm transition flex items-center gap-2 flex-shrink-0"
-              >
-                {copiedPrompt ? (
-                  <>
-                    <Check className="w-4 h-4" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-4 h-4" />
-                    Copy Prompt
-                  </>
-                )}
-              </button>
             </div>
             {loadingPrompt ? (
               <div className="bg-black/50 border border-white/10 rounded-none p-4">
                 <p className="text-white/60 text-sm">Loading prompt...</p>
               </div>
             ) : (
-              <pre className="bg-black/50 border border-white/10 rounded-none p-4 overflow-x-auto text-white/90 text-sm font-mono whitespace-pre-wrap break-words text-left max-h-96 overflow-y-auto">
-                <code className="text-left">{promptContent || 'Failed to load prompt. Please refresh the page.'}</code>
-              </pre>
+              <>
+                <pre className="bg-black/50 border border-white/10 rounded-none p-4 overflow-x-auto text-white/90 text-sm font-mono whitespace-pre-wrap break-words text-left max-h-96 overflow-y-auto relative">
+                  <button
+                    onClick={copyPromptToClipboard}
+                    className="absolute top-2 right-2 p-1.5 bg-white/10 hover:bg-white/20 rounded text-white transition flex items-center justify-center flex-shrink-0 z-10"
+                    title={copiedPrompt ? "Copied!" : "Copy Prompt"}
+                  >
+                    {copiedPrompt ? (
+                      <Check className="w-3 h-3" />
+                    ) : (
+                      <Copy className="w-3 h-3" />
+                    )}
+                  </button>
+                  <code className="text-left">{promptContent || 'Failed to load prompt. Please refresh the page.'}</code>
+                </pre>
+                <div className="flex justify-center mt-4">
+                  <button
+                    onClick={copyPromptToClipboard}
+                    className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-none text-white text-sm transition flex items-center gap-2"
+                  >
+                    {copiedPrompt ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        Copy Prompt
+                      </>
+                    )}
+                  </button>
+                </div>
+              </>
             )}
           </div>
 

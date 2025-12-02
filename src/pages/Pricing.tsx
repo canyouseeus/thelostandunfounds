@@ -62,9 +62,9 @@ export default function Pricing() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="mb-12 text-center">
-        <h1 className="text-5xl font-bold text-white mb-4">Pricing</h1>
-        <p className="text-xl text-white/70">
+      <div className="mb-8 sm:mb-12 text-center">
+        <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">Pricing</h1>
+        <p className="text-lg sm:text-xl text-white/70 px-4">
           Choose the plan that's right for you
         </p>
       </div>
@@ -95,17 +95,17 @@ export default function Pricing() {
               )}
 
               <div className="text-center mb-6">
-                <Icon className={`w-12 h-12 mx-auto mb-4 transition-colors ${
+                <Icon className={`w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4 transition-colors ${
                   plan.highlight 
                     ? 'text-yellow-400 group-hover:text-yellow-600' 
                     : 'text-white/60 group-hover:text-black/60'
                 }`} />
-                <h3 className="text-2xl font-bold text-white group-hover:text-black mb-2 transition-colors uppercase">{plan.name}</h3>
-                <p className="text-white/60 group-hover:text-black/60 text-sm mb-4 transition-colors">{plan.description}</p>
+                <h3 className="text-xl sm:text-2xl font-bold text-white group-hover:text-black mb-2 transition-colors uppercase">{plan.name}</h3>
+                <p className="text-white/60 group-hover:text-black/60 text-sm mb-4 transition-colors px-2">{plan.description}</p>
                 <div className="mb-4">
-                  <span className="text-4xl font-bold text-white group-hover:text-black transition-colors">${plan.price}</span>
+                  <span className="text-3xl sm:text-4xl font-bold text-white group-hover:text-black transition-colors">${plan.price}</span>
                   {plan.price > 0 && (
-                    <span className="text-white/60 group-hover:text-black/60 transition-colors">/{plan.period}</span>
+                    <span className="text-white/60 group-hover:text-black/60 transition-colors text-sm sm:text-base">/{plan.period}</span>
                   )}
                 </div>
               </div>
@@ -120,13 +120,13 @@ export default function Pricing() {
               </ul>
 
               {isCurrentPlan ? (
-                <div className="w-full px-6 py-3 bg-white/10 group-hover:bg-black/10 text-white group-hover:text-black font-semibold text-center transition-colors">
+                <div className="w-full px-6 py-3 sm:py-3 bg-white/10 group-hover:bg-black/10 text-white group-hover:text-black font-semibold text-center transition-colors min-h-[44px] flex items-center justify-center">
                   Current Plan
                 </div>
               ) : (
                 <Link
                   to={user ? '/settings' : '/tools'}
-                  className="block w-full px-6 py-3 bg-white group-hover:bg-black text-black group-hover:text-white font-semibold transition text-center"
+                  className="block w-full px-6 py-3 sm:py-3 bg-white group-hover:bg-black text-black group-hover:text-white font-semibold transition text-center min-h-[44px] flex items-center justify-center touch-action: manipulation"
                 >
                   {plan.cta}
                 </Link>
