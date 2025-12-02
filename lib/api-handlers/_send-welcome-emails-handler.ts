@@ -226,6 +226,8 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
+  const { testEmail } = req.body // Optional: send to specific email for testing
+
   try {
     // Initialize Supabase client
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
@@ -236,6 +238,51 @@ export default async function handler(
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey)
+
+    // Test mode: send to specific email
+    if (testEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testEmail)) {
+      const fromEmail = process.env.ZOHO_FROM_EMAIL || process.env.ZOHO_EMAIL
+      if (!fromEmail) {
+        return res.status(500).json({ error: 'Zoho email not configured' })
+      }
+
+      const accessToken = await getZohoAccessToken()
+      const accountInfo = await getZohoAccountInfo(accessToken, fromEmail)
+      const actualFromEmail = (accountInfo.email && typeof accountInfo.email === 'string' && accountInfo.email.includes('@')) 
+        ? accountInfo.email 
+        : fromEmail
+
+      const userName = testEmail.split('@')[0] || 'Contributor'
+      const gettingStartedUrl = 'https://www.thelostandunfounds.com/blog/getting-started'
+      const subject = 'Welcome to THE LOST ARCHIVES BOOK CLUB'
+      const htmlContent = generateWelcomeEmailHtml(userName, gettingStartedUrl)
+
+      const result = await sendZohoEmail(
+        accessToken,
+        accountInfo.accountId,
+        actualFromEmail,
+        testEmail,
+        subject,
+        htmlContent
+      )
+
+      if (!result.success) {
+        return res.status(500).json({ 
+          error: result.error || 'Failed to send test email',
+          success: false
+        })
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: `Test welcome email sent successfully to ${testEmail}`,
+        stats: {
+          totalUsers: 1,
+          emailsSent: 1,
+          emailsFailed: 0,
+        },
+      })
+    }
 
     // Get all users with subdomains who haven't received welcome emails
     const { data: userSubdomains, error: subdomainsError } = await supabase
@@ -273,9 +320,11 @@ export default async function handler(
       ? accountInfo.email 
       : fromEmail
 
-    // Get user emails from user_roles
+    // Get user emails from multiple sources: user_roles, blog_submissions, blog_posts
     const usersWithEmails: Array<{ userId: string; email: string; subdomain: string }> = []
+    const emailMap = new Map<string, string>() // userId -> email
     
+    // First, try user_roles table
     for (const subdomain of userSubdomains) {
       const { data: roleData } = await supabase
         .from('user_roles')
@@ -284,9 +333,49 @@ export default async function handler(
         .maybeSingle()
 
       if (roleData?.email) {
+        emailMap.set(subdomain.user_id, roleData.email)
+      }
+    }
+
+    // Fallback: get emails from blog_submissions (for users who submitted articles)
+    const { data: submissionsData } = await supabase
+      .from('blog_submissions')
+      .select('author_email, author_name')
+      .not('author_email', 'is', null)
+
+    if (submissionsData) {
+      // Try to match by subdomain or user_id if we can
+      // For now, we'll use submissions as a source but need to match to user_id
+      // This is a fallback - we'll use it if user_roles doesn't have the email
+    }
+
+    // Build final list with emails
+    for (const subdomain of userSubdomains) {
+      const email = emailMap.get(subdomain.user_id)
+      
+      // If no email in user_roles, try to find from blog_submissions by matching subdomain
+      if (!email) {
+        // Try to find email from blog_submissions where subdomain matches
+        const { data: submissionMatch } = await supabase
+          .from('blog_submissions')
+          .select('author_email')
+          .eq('subdomain', subdomain.subdomain)
+          .not('author_email', 'is', null)
+          .limit(1)
+          .maybeSingle()
+
+        if (submissionMatch?.author_email) {
+          usersWithEmails.push({
+            userId: subdomain.user_id,
+            email: submissionMatch.author_email,
+            subdomain: subdomain.subdomain,
+          })
+          continue
+        }
+      } else {
         usersWithEmails.push({
           userId: subdomain.user_id,
-          email: roleData.email,
+          email: email,
           subdomain: subdomain.subdomain,
         })
       }
@@ -295,11 +384,15 @@ export default async function handler(
     if (usersWithEmails.length === 0) {
       return res.status(200).json({
         success: true,
-        message: 'No users with email addresses found',
+        message: `No users with email addresses found. Found ${userSubdomains.length} users with subdomains, but none have emails in user_roles or blog_submissions.`,
         stats: {
           totalUsers: userSubdomains.length,
           emailsSent: 0,
           emailsFailed: 0,
+        },
+        debug: {
+          usersWithSubdomains: userSubdomains.length,
+          usersWithEmailsInRoles: emailMap.size,
         },
       })
     }
@@ -360,8 +453,13 @@ export default async function handler(
         totalUsers: usersWithEmails.length,
         emailsSent,
         emailsFailed,
+        usersProcessed: usersWithEmails.map(u => u.email),
       },
       errors: errors.length > 0 ? errors.slice(0, 20) : undefined,
+      debug: {
+        totalUsersWithSubdomains: userSubdomains.length,
+        usersWithEmailsFound: usersWithEmails.length,
+      },
     })
 
   } catch (error: any) {
