@@ -542,7 +542,7 @@ export default function SubmitArticle() {
           </div>
         )}
         <div className="mb-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-wide">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white mb-4 tracking-wide whitespace-nowrap">
             SUBMIT TO BOOK CLUB
           </h1>
           <p className="text-white/70 text-lg max-w-2xl mx-auto mb-4">
