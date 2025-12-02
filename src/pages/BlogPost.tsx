@@ -441,7 +441,7 @@ export default function BlogPost() {
           const phraseRegex = new RegExp(`(?:^|\\s)(${titlePattern})(?=\\s|$|[.,!?;:])`, 'gi');
           const phraseMatch = phraseRegex.exec(text);
           
-          if (phraseMatch) {
+          if (phraseMatch && phraseMatch[1]) {
             const matchStart = phraseMatch.index + (phraseMatch[0].length - phraseMatch[1].length);
             matches.push({
               index: matchStart,
@@ -485,7 +485,8 @@ export default function BlogPost() {
       
       // Preserve original case from article content - don't change the author's formatting
       // If we found a match, use the original matched text (preserves author's case)
-      const displayText = matchedText;
+      // Fallback to matchedText if bookKey exists but we want to preserve original formatting
+      const displayText = matchedText || '';
       
       // If it's a book title with an affiliate link
       if (affiliateLink && bookLinkCounts) {
