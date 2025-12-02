@@ -590,6 +590,20 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch add-publication-email-tracking file:', fetchError);
       }
 
+      // Load add-welcome-email-tracking script
+      let welcomeEmailTrackingContent = '';
+      try {
+        const welcomeEmailTrackingResponse = await fetch('/sql/add-welcome-email-tracking.sql');
+        if (welcomeEmailTrackingResponse.ok) {
+          const text = await welcomeEmailTrackingResponse.text();
+          if (!text.trim().startsWith('<!')) {
+            welcomeEmailTrackingContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch add-welcome-email-tracking file:', fetchError);
+      }
+
       // Load setup-admin-user script
       let setupAdminContent = '';
       try {
@@ -829,6 +843,13 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
           content: emailTrackingContent || '// File not found - check public/sql folder',
           description: 'Adds publication_email_sent_at column to blog_submissions table to track when publication notification emails have been sent. Required for the email notification system. Run this before sending emails to existing published posts.',
           createdAt: getScriptTimestamp('add-publication-email-tracking.sql')
+        },
+        {
+          name: 'Add Welcome Email Tracking',
+          filename: 'add-welcome-email-tracking.sql',
+          content: welcomeEmailTrackingContent || '// File not found - check public/sql folder',
+          description: 'Adds welcome_email_sent_at column to user_subdomains table to track when welcome emails with getting started guide have been sent. Required for the welcome email system. Run this before sending welcome emails to existing users.',
+          createdAt: getScriptTimestamp('add-welcome-email-tracking.sql')
         },
         {
           name: 'Newsletter Campaigns Table',

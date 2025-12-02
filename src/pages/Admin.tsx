@@ -39,6 +39,7 @@ import BlogManagement from '../components/BlogManagement';
 import NewsletterManagement from '../components/NewsletterManagement';
 import BlogSubmissionReview from '../components/BlogSubmissionReview';
 import SendExistingPublicationEmailsButton from '../components/SendExistingPublicationEmailsButton';
+import SendWelcomeEmailsButton from '../components/SendWelcomeEmailsButton';
 
 interface DashboardStats {
   totalUsers: number;
@@ -1210,16 +1211,30 @@ export default function Admin() {
         >
           <div className="space-y-6">
             <BlogSubmissionReview />
-            {/* Send Emails to Existing Published Posts */}
+            {/* Email Management Section */}
             <div className="bg-black/50 border border-white/10 rounded-none p-6">
-              <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                 <Mail className="w-5 h-5" />
-                Send Emails to Existing Published Posts
+                Email Management
               </h3>
-              <p className="text-white/60 text-sm mb-4">
-                Send publication notification emails to authors of existing published posts that haven't received an email yet.
-              </p>
-              <SendExistingPublicationEmailsButton />
+              <div className="space-y-6">
+                {/* Send Welcome Emails - Should be sent first */}
+                <div className="border-b border-white/10 pb-6">
+                  <h4 className="text-white font-semibold mb-2">Step 1: Send Welcome Emails</h4>
+                  <p className="text-white/60 text-sm mb-4">
+                    Send welcome emails with the getting started guide link to existing users. This should be done first, before sending submission update emails.
+                  </p>
+                  <SendWelcomeEmailsButton />
+                </div>
+                {/* Send Publication Emails - Should be sent after welcome emails */}
+                <div>
+                  <h4 className="text-white font-semibold mb-2">Step 2: Send Publication Emails</h4>
+                  <p className="text-white/60 text-sm mb-4">
+                    Send publication notification emails to authors of existing published posts that haven't received an email yet. Run this after sending welcome emails.
+                  </p>
+                  <SendExistingPublicationEmailsButton />
+                </div>
+              </div>
             </div>
           </div>
         </ErrorBoundary>

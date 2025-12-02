@@ -24,6 +24,8 @@ export default async function handler(
       return handleResetPassword(req, res)
     case 'send-existing-publication-emails':
       return handleSendExistingPublicationEmails(req, res)
+    case 'send-welcome-emails':
+      return handleSendWelcomeEmails(req, res)
     default:
       return res.status(404).json({ error: `Admin route not found: ${route}` })
   }
@@ -50,5 +52,13 @@ async function handleResetPassword(req: VercelRequest, res: VercelResponse) {
  */
 async function handleSendExistingPublicationEmails(req: VercelRequest, res: VercelResponse) {
   const handler = await import('../../lib/api-handlers/_send-existing-publication-emails-handler.js')
+  return await handler.default(req, res)
+}
+
+/**
+ * Send Welcome Emails Handler
+ */
+async function handleSendWelcomeEmails(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/_send-welcome-emails-handler.js')
   return await handler.default(req, res)
 }
