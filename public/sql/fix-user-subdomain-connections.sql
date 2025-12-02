@@ -166,8 +166,9 @@ BEGIN
         updated_count := updated_count + 1;
         RAISE NOTICE 'Updated subdomain % from user % to user %', 
           subdomain_record.subdomain, subdomain_record.current_user_email, user_record.email;
+        END IF;
       END IF;
-    END IF;
+    END;
   END LOOP;
 
   RAISE NOTICE 'Fix complete! Created: %, Updated: %', created_count, updated_count;
