@@ -279,7 +279,7 @@ export default function Blog() {
                           expandDelay={200}
                           collapseDelay={300}
                         >
-                          <ExpandableCardHeader className="mb-4 pb-3 border-b border-white/20">
+                          <ExpandableCardHeader className="mb-4 pb-3">
                             <h2 className="text-base font-black text-white mb-2 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
                               {post.title}
                             </h2>
@@ -413,7 +413,7 @@ export default function Blog() {
                             </ExpandableContent>
                           </ExpandableCardContent>
                           
-                          <ExpandableCardFooter className="mt-auto pt-3 border-t border-white/20">
+                          <ExpandableCardFooter className="mt-auto pt-3">
                             <div className="flex items-center justify-between">
                               <time className="text-white/40 text-xs font-medium">
                                 {formatDate(post.published_at || post.created_at)}
