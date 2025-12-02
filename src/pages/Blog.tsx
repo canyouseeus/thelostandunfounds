@@ -274,22 +274,13 @@ export default function Blog() {
                         }}
                       >
                         <ExpandableCard
-                          className="border-0 rounded-none h-full flex flex-col hover:shadow-lg hover:shadow-white/20 relative overflow-hidden"
-                          style={{
-                            background: 'linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.7) 100%)',
-                          }}
+                          className="bg-black/50 border-0 rounded-none h-full flex flex-col hover:shadow-lg hover:shadow-white/20 relative overflow-hidden"
                           collapsedSize={{ height: 220 }}
                           expandedSize={{ height: 400 }}
                           hoverToExpand={false}
                           expandDelay={200}
                           collapseDelay={300}
                         >
-                          <div 
-                            className="absolute inset-0 rounded-none pointer-events-none z-10"
-                            style={{
-                              background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 70%)',
-                            }}
-                          />
                           <ExpandableCardHeader className="mb-2 pb-2">
                             <h2 className="text-base font-black text-white mb-1 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
                               {post.title}
@@ -384,22 +375,13 @@ export default function Blog() {
                         style={{ background: 'linear-gradient(135deg, rgba(255,255,255,1), rgba(255,255,255,0.6), rgba(255,255,255,1))' }}
                       >
                         <ExpandableCard
-                          className="border-0 rounded-none h-full flex flex-col hover:shadow-lg hover:shadow-white/20 relative overflow-hidden"
-                          style={{
-                            background: 'linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.7) 100%)',
-                          }}
+                          className="bg-black/50 border-0 rounded-none h-full flex flex-col hover:shadow-lg hover:shadow-white/20 relative overflow-hidden"
                           collapsedSize={{ height: 220 }}
                           expandedSize={{ height: 400 }}
                           hoverToExpand={false}
                           expandDelay={200}
                           collapseDelay={300}
                         >
-                          <div 
-                            className="absolute inset-0 rounded-none pointer-events-none z-10"
-                            style={{
-                              background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 70%)',
-                            }}
-                          />
                           <ExpandableCardHeader className="mb-2 pb-2">
                             <h2 className="text-base font-black text-white mb-1 tracking-wide transition line-clamp-2">
                               {post.title}
