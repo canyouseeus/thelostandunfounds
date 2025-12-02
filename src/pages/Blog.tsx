@@ -273,15 +273,11 @@ export default function Blog() {
                           background: 'linear-gradient(135deg, rgba(255,255,255,1), rgba(255,255,255,0.6), rgba(255,255,255,1))',
                         }}
                       >
-                        <div 
-                          className="absolute inset-0 rounded-none opacity-30 pointer-events-none"
-                          style={{
-                            background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.4) 100%)',
-                            mixBlendMode: 'overlay',
-                          }}
-                        />
                         <ExpandableCard
                           className="bg-black/50 border-0 rounded-none h-full flex flex-col hover:shadow-lg hover:shadow-white/20 relative overflow-hidden"
+                          style={{
+                            background: 'linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.5) 100%)',
+                          }}
                           collapsedSize={{ height: 220 }}
                           expandedSize={{ height: 400 }}
                           hoverToExpand={false}
@@ -378,11 +374,14 @@ export default function Blog() {
                   {({ isExpanded }) => (
                     <ExpandableTrigger>
                       <div 
-                        className="rounded-none p-[2px] h-full"
+                        className="rounded-none p-[2px] h-full relative"
                         style={{ background: 'linear-gradient(135deg, rgba(255,255,255,1), rgba(255,255,255,0.6), rgba(255,255,255,1))' }}
                       >
                         <ExpandableCard
-                          className="bg-black/50 border-0 rounded-none h-full flex flex-col hover:shadow-lg hover:shadow-white/20"
+                          className="bg-black/50 border-0 rounded-none h-full flex flex-col hover:shadow-lg hover:shadow-white/20 relative overflow-hidden"
+                          style={{
+                            background: 'linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.5) 100%)',
+                          }}
                           collapsedSize={{ height: 220 }}
                           expandedSize={{ height: 400 }}
                           hoverToExpand={false}
