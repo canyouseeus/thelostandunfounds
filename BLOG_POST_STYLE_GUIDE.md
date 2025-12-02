@@ -48,10 +48,10 @@ This document defines the consistent style and formatting rules for all blog pos
 ## Book Title Formatting
 
 ### Display Style
-- **All book titles are displayed in UPPERCASE**
+- **All book titles are displayed in Title Case** (proper case: "The Hobbit", "The Hunger Games")
 - **All book titles are bold** (`font-bold`)
-- **Linked book titles**: Uppercase, bold, underlined, white text
-- **Non-linked book titles**: Uppercase, bold, white text (no underline)
+- **Linked book titles**: Title case, bold, underlined, white text
+- **Non-linked book titles**: Title case, bold, white text (no underline)
 
 ### Matching Rules
 The system uses intelligent fuzzy matching to find book titles in text, handling:
@@ -75,7 +75,7 @@ The system uses intelligent fuzzy matching to find book titles in text, handling
 ```
 Text: "I read THE HOBBIT right after I got my deployment orders."
 Database: "The Hobbit"
-Result: [THE HOBBIT] (linked, uppercase, bold, underlined)
+Result: [The Hobbit] (linked, title case, bold, underlined)
 ```
 
 ---
@@ -239,7 +239,7 @@ When publishing a blog post, ensure:
 
 - [ ] All 4 books have affiliate links in `amazon_affiliate_links`
 - [ ] Each book has exactly 2 links (one in intro, one in section)
-- [ ] Book titles display in UPPERCASE and bold
+- [ ] Book titles display in Title Case and bold (e.g., "The Hobbit", "The Hunger Games")
 - [ ] Author name in disclosure is UPPERCASE and bold
 - [ ] Excerpt/preview text is displayed (if available)
 - [ ] Headers are properly detected and formatted
@@ -270,7 +270,7 @@ When publishing a blog post, ensure:
 ### Example 1: Book Title in Intro
 ```
 Content: "I read THE HOBBIT right after I got my deployment orders."
-Result: [THE HOBBIT] (linked, uppercase, bold, underlined)
+Result: [The Hobbit] (linked, title case, bold, underlined)
 Count: 1/2 for "The Hobbit"
 ```
 
@@ -278,14 +278,14 @@ Count: 1/2 for "The Hobbit"
 ```
 Heading: "THE HOBBIT: A Journey Begins"
 Content: "This book taught me about courage..."
-Result: [THE HOBBIT] (linked, uppercase, bold, underlined)
+Result: [The Hobbit] (linked, title case, bold, underlined)
 Count: 2/2 for "The Hobbit"
 ```
 
 ### Example 3: Book Title After 2 Links
 ```
 Content: "I still think about THE HOBBIT today."
-Result: **THE HOBBIT** (bold, uppercase, no link)
+Result: **The Hobbit** (bold, title case, no link)
 Count: 2/2 (limit reached)
 ```
 

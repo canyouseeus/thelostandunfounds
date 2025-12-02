@@ -263,6 +263,22 @@ export default function BlogPost() {
     return result.length > 0 ? result : parts;
   };
 
+  // Convert text to title case (proper case) - capitalizes first letter of each word
+  const toTitleCase = (text: string): string => {
+    if (!text) return text;
+    // Split by words, capitalize first letter of each word
+    return text
+      .split(/\s+/)
+      .map(word => {
+        if (word.length === 0) return word;
+        // Handle words with apostrophes, hyphens, etc.
+        const firstChar = word[0];
+        const rest = word.slice(1);
+        return firstChar.toUpperCase() + rest.toLowerCase();
+      })
+      .join(' ');
+  };
+
   // Normalize book title for matching - handles case, punctuation, and common variations
   const normalizeBookTitle = (title: string): string => {
     return title
@@ -483,8 +499,8 @@ export default function BlogPost() {
       const bookKey = findBookTitleMatch(matchedText, Object.keys(bookLinks));
       const affiliateLink = bookKey ? bookLinks[bookKey] : undefined;
       
-      // Display book titles in uppercase to match book club style
-      const displayText = bookKey ? bookKey.toUpperCase() : matchedText.toUpperCase();
+      // Display book titles in title case (proper case) - use original book title from database if found
+      const displayText = bookKey ? toTitleCase(bookKey) : toTitleCase(matchedText);
       
       // If it's a book title with an affiliate link
       if (affiliateLink && bookLinkCounts) {
@@ -504,7 +520,7 @@ export default function BlogPost() {
             </a>
           );
         } else {
-          // Otherwise, just make it bold (no link) - uppercase
+          // Otherwise, just make it bold (no link) - title case
           parts.push(
             <strong key={`bold-${keyCounter++}`} className="font-bold text-white">
               {displayText}
@@ -525,7 +541,7 @@ export default function BlogPost() {
           </a>
         );
       } else {
-        // Otherwise, just make it bold - uppercase for book titles
+        // Otherwise, just make it bold - title case for book titles
         parts.push(
           <strong key={`bold-${keyCounter++}`} className="font-bold text-white">
             {displayText}
