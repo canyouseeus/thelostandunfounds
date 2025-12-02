@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
-import { User, Mail, Calendar, Shield, Key, BookOpen, FileText, ExternalLink, Copy, Check } from 'lucide-react';
+import { User, Mail, Calendar, Shield, Key, BookOpen, FileText, ExternalLink, Copy, Check, HelpCircle } from 'lucide-react';
 import { LoadingSpinner, SkeletonCard } from '../components/Loading';
 import { formatDate } from '../utils/helpers';
 import { SubscriptionTier } from '../types/index';
@@ -307,15 +307,24 @@ export default function Profile() {
                 <BookOpen className="w-5 h-5" />
                 Your Book Club Blog
               </h2>
-              <Link
-                to={`/blog/${userSubdomain}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition flex items-center gap-2"
-              >
-                <ExternalLink className="w-4 h-4" />
-                View Blog
-              </Link>
+              <div className="flex gap-2">
+                <Link
+                  to="/blog/getting-started"
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition flex items-center gap-2"
+                >
+                  <HelpCircle className="w-4 h-4" />
+                  Contributor Guide
+                </Link>
+                <Link
+                  to={`/blog/${userSubdomain}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition flex items-center gap-2"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  View Blog
+                </Link>
+              </div>
             </div>
             <div className="space-y-3">
               <div>
@@ -450,6 +459,45 @@ export default function Profile() {
           </div>
         )}
 
+        {/* Book Club Settings */}
+        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+            <BookOpen className="w-5 h-5" />
+            Book Club Settings
+          </h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-white/80 mb-2">
+                Author Name
+              </label>
+              <div className="px-4 py-2 bg-black/50 border border-white/10 rounded-none">
+                <span className="text-white text-sm">{user.user_metadata?.author_name || user.email?.split('@')[0] || 'Not set'}</span>
+              </div>
+              <p className="text-xs text-white/40 mt-1">Set during registration - cannot be changed</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-white/80 mb-2">
+                Email
+              </label>
+              <div className="px-4 py-2 bg-black/50 border border-white/10 rounded-none">
+                <span className="text-white text-sm">{user.email || 'Not set'}</span>
+              </div>
+              <p className="text-xs text-white/40 mt-1">Email cannot be changed</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-white/80 mb-2">
+                Amazon Storefront ID
+              </label>
+              <div className="px-4 py-2 bg-black/50 border border-white/10 rounded-none">
+                <span className="text-white text-sm font-mono">{user.user_metadata?.amazon_storefront_id || 'Not set'}</span>
+              </div>
+              <p className="text-xs text-white/40 mt-1">Set during registration - cannot be changed</p>
+            </div>
+          </div>
+        </div>
+
         {/* My Articles Section */}
         {userPosts.length > 0 && (
           <div className="bg-black/50 border border-white/10 rounded-none p-6">
@@ -518,12 +566,21 @@ export default function Profile() {
             <BookOpen className="w-12 h-12 text-white/40 mx-auto mb-4" />
             <h3 className="text-lg font-bold text-white mb-2">Start Your Book Club Journey</h3>
             <p className="text-white/60 mb-4">Submit your first article with four book recommendations.</p>
+<<<<<<< Updated upstream
             <div className="flex items-center justify-center gap-3 flex-wrap">
               <Link
                 to="/bookclub/prompt"
                 className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition"
               >
                 View Getting Started Guide →
+=======
+            <div className="flex flex-wrap justify-center gap-4">
+              <Link
+                to="/blog/getting-started"
+                className="inline-block px-6 py-2 bg-white/10 text-white font-semibold rounded-none hover:bg-white/20 transition"
+              >
+                Read Getting Started Guide
+>>>>>>> Stashed changes
               </Link>
               <Link
                 to="/submit-article"

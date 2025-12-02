@@ -184,6 +184,66 @@ export default function SubmitArticle() {
     setAffiliateLinks(updated);
   };
 
+  const [bulkAffiliateInput, setBulkAffiliateInput] = useState('');
+
+  const handleBulkInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const input = e.target.value;
+    setBulkAffiliateInput(input);
+
+    const extracted: AffiliateLink[] = [];
+    // Split by newlines but keep content
+    const lines = input.split(/\n+/).map(l => l.trim()).filter(l => l);
+    // Regex to find http/https/amzn.to links
+    const urlRegex = /((https?:\/\/)|(www\.)|(amzn\.to))[^\s]+/;
+
+    let bufferTitle = '';
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const match = line.match(urlRegex);
+
+      if (match) {
+        const url = match[0];
+        // Check for title on same line (e.g. "Title - Link")
+        const textBefore = line.replace(url, '')
+          .replace(/[-:|–]\s*$/, '') // Remove trailing separators
+          .trim();
+        
+        let title = textBefore;
+        // If no title on same line, use the previous buffer line
+        if (!title && bufferTitle) {
+          title = bufferTitle;
+        }
+        
+        // Clean up title
+        title = title.replace(/^[-*•\d.]+\s+/, ''); // Remove bullet points/numbers
+
+        extracted.push({ 
+          book_title: title || '', 
+          link: url 
+        });
+        
+        bufferTitle = ''; // Title consumed
+      } else {
+        // Likely a title for the next link
+        bufferTitle = line;
+      }
+    }
+
+    // Update state: Ensure exactly 4 items structure
+    const newLinks = [...extracted];
+    // Pad if less than 4
+    while (newLinks.length < 4) {
+      newLinks.push({ book_title: '', link: '' });
+    }
+    // Truncate if more than 4 (we only accept 4)
+    if (newLinks.length > 4) {
+      newLinks.length = 4;
+    }
+    
+    setAffiliateLinks(newLinks);
+  };
+
   const copyPromptToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(promptContent);
@@ -574,100 +634,6 @@ export default function SubmitArticle() {
         {user && (
           <div className="bg-black/50 border border-white/10 rounded-none p-6 md:p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Author Information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-white/80 text-sm mb-2 flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  Author Name * 
-                  {user?.user_metadata?.author_name && (
-                    <span className="text-white/50 text-xs font-normal">(Set during registration - cannot be changed)</span>
-                  )}
-                </label>
-                <input
-                  type="text"
-                  value={formData.author_name}
-                  onChange={(e) => {
-                    // Prevent changes if set during registration
-                    if (user?.user_metadata?.author_name) {
-                      return;
-                    }
-                    setFormData({ ...formData, author_name: e.target.value });
-                  }}
-                  className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                  placeholder="THE LOST+UNFOUNDS or Your Name"
-                  required
-                  disabled={!!user?.user_metadata?.author_name}
-                  readOnly={!!user?.user_metadata?.author_name}
-                />
-                {user?.user_metadata?.author_name && (
-                  <p className="text-yellow-400 text-xs mt-1">This value was set during registration and cannot be changed.</p>
-                )}
-                <p className="text-white/50 text-xs mt-1">
-                  This name will appear in the Amazon Affiliate Disclosure on your published article.
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-white/80 text-sm mb-2 flex items-center gap-2">
-                  <Mail className="w-4 h-4" />
-                  Your Email *
-                </label>
-                <input
-                  type="email"
-                  value={formData.author_email}
-                  onChange={(e) => setFormData({ ...formData, author_email: e.target.value })}
-                  className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
-                  placeholder="john@example.com"
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Amazon Storefront ID */}
-            <div>
-              <label className="block text-white/80 text-sm mb-2">
-                Amazon Storefront ID or URL * 
-                <span className="text-white/50 text-xs font-normal">(Internal - Not displayed publicly)</span>
-                {user?.user_metadata?.amazon_storefront_id && (
-                  <span className="text-white/50 text-xs font-normal ml-2">(Set during registration - cannot be changed)</span>
-                )}
-              </label>
-              <input
-                type="text"
-                value={formData.amazon_storefront_id}
-                onChange={(e) => {
-                  // Prevent changes if set during registration
-                  if (user?.user_metadata?.amazon_storefront_id) {
-                    return;
-                  }
-                  setFormData({ ...formData, amazon_storefront_id: e.target.value });
-                }}
-                onBlur={() => {
-                  if (formData.amazon_storefront_id && !validateAmazonStorefront(formData.amazon_storefront_id)) {
-                    showError('Please enter a valid Amazon Storefront ID or URL');
-                  }
-                }}
-                className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                placeholder="https://www.amazon.com/shop/yourstorefront or yourstorefront"
-                required
-                disabled={!!user?.user_metadata?.amazon_storefront_id}
-                readOnly={!!user?.user_metadata?.amazon_storefront_id}
-              />
-              {user?.user_metadata?.amazon_storefront_id && (
-                <p className="text-yellow-400 text-xs mt-1">This value was set during registration and cannot be changed.</p>
-              )}
-              <p className="text-white/50 text-xs mt-2">
-                Enter your Amazon Associates Storefront ID or full URL. This is used for internal tracking only and will not be displayed on your published article.
-              </p>
-              <ul className="text-white/40 text-xs mt-1 list-disc list-inside space-y-1">
-                <li>Full URL: <span className="font-mono text-white/60">https://www.amazon.com/shop/yourstorefront</span></li>
-                <li>Storefront ID only: <span className="font-mono text-white/60">yourstorefront</span></li>
-              </ul>
-              {formData.amazon_storefront_id && validateAmazonStorefront(formData.amazon_storefront_id) && (
-                <p className="text-green-400 text-xs mt-1">Valid storefront format</p>
-              )}
-            </div>
 
             {/* Subdomain Display (read-only) */}
             {userSubdomain && (
@@ -763,22 +729,30 @@ Use double line breaks between sections. Book titles mentioned in the text will 
                   <BookOpen className="w-4 h-4" />
                   Amazon Affiliate Links (Required - Exactly 4 Books) *
                 </label>
-                {affiliateLinks.length < 4 && (
-                  <button
-                    type="button"
-                    onClick={addAffiliateLink}
-                    className="px-3 py-1 bg-white/10 hover:bg-white/20 rounded text-white text-sm transition flex items-center gap-1"
-                  >
-                    <Plus className="w-3 h-3" />
-                    Add Book
-                  </button>
-                )}
               </div>
               
               <p className="text-white/60 text-sm mb-4">
-                You must provide exactly <strong className="text-white">4 books</strong> (no more, no less). 
-                Each book needs both a title and an Amazon affiliate link. These will be automatically linked in your article.
+                You must provide exactly <strong className="text-white">4 books</strong>. 
+                Paste your list below (Title and Link) to auto-fill, or enter them manually.
               </p>
+
+              {/* Bulk Paste Box */}
+              <div className="bg-black/30 border border-white/10 rounded-none p-4 mb-6">
+                <label className="block text-white/80 text-xs mb-2 font-semibold">
+                  QUICK ADD: Paste your book list here to auto-fill
+                </label>
+                <textarea
+                  value={bulkAffiliateInput}
+                  onChange={handleBulkInput}
+                  className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-none text-white text-sm focus:border-white/30 focus:outline-none font-mono placeholder-white/30"
+                  rows={6}
+                  placeholder={`Paste format example:
+The E-Myth Revisited
+https://amzn.to/3...
+
+Atomic Habits - https://amzn.to/4...`}
+                />
+              </div>
               
               <div className="space-y-3">
                 {affiliateLinks.map((link, index) => (
@@ -787,7 +761,6 @@ Use double line breaks between sections. Book titles mentioned in the text will 
                       <span className="text-white/80 text-sm font-medium">
                         Book {index + 1} <span className="text-white/50">(Required)</span>
                       </span>
-                      {/* No remove button - exactly 4 books required */}
                     </div>
                     <div className="space-y-3">
                       <div>
@@ -811,9 +784,6 @@ Use double line breaks between sections. Book titles mentioned in the text will 
                           placeholder="https://amzn.to/... or https://amazon.com/..."
                           required={index < 4}
                         />
-                        <p className="text-white/40 text-xs mt-1">
-                          Use your Amazon Associates affiliate link (amzn.to short links or full amazon.com URLs)
-                        </p>
                       </div>
                     </div>
                   </div>

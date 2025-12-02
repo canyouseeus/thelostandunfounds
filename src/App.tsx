@@ -31,6 +31,7 @@ import SQL from './pages/SQL'
 import Debug from './pages/Debug'
 import AIWritingPrompt from './pages/AIWritingPrompt'
 import HelloWorld from './pages/HelloWorld'
+import BlogGettingStarted from './pages/BlogGettingStarted'
 
 function App() {
   // Video preloader temporarily disabled for debugging
@@ -112,6 +113,9 @@ function App() {
         </Route>
         <Route path="/book-club" element={<Layout />}>
           <Route index element={<BookClub />} />
+        </Route>
+        <Route path="/blog/getting-started" element={<Layout />}>
+          <Route index element={<BlogGettingStarted />} />
         </Route>
         {/* User blog routes - subdomain routing handled in component */}
         <Route path="/blog/:subdomain" element={<Layout />}>

@@ -803,6 +803,13 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
           createdAt: getScriptTimestamp('blog-schema-migration.sql')
         },
         {
+          name: 'Join THE LOST ARCHIVES BOOK CLUB and Share Your Love of Books',
+          filename: 'create-blog-post-join-the-lost-archives-book-club.sql',
+          content: bookClubContent || '// File not found - check public/sql folder',
+          description: 'Creates the blog post "Join THE LOST ARCHIVES BOOK CLUB and Share Your Love of Books" - inviting readers and writers to join the book club community, share insights, and earn as Amazon affiliates. Run this AFTER the migration script. Works with any schema version.',
+          createdAt: getScriptTimestamp('create-blog-post-join-the-lost-archives-book-club.sql')
+        },
+        {
           name: 'Building a Creative Brand That Rewards People for Life: Lessons That Shaped THE LOST+UNFOUNDS',
           filename: 'create-blog-post-building-a-creative-brand-that-rewards-people-for-life.sql',
           content: creativeBrandContent || '// File not found - check public/sql folder',
