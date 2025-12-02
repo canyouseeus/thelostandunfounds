@@ -913,12 +913,10 @@ export default function BlogPost() {
       );
       
       if (isLikelyHeading) {
-        // Check if this heading contains any book titles using improved fuzzy matching
+        // Check if this heading contains any book titles using intelligent fuzzy matching
         // Allow links in headings that contain book titles
-        const headingNormalized = normalizeBookTitle(trimmed);
         const containsBookTitle = Object.keys(bookLinkCounts).some(bookTitle => {
-          const normalizedTitle = normalizeBookTitle(bookTitle);
-          return headingNormalized.includes(normalizedTitle) || normalizedTitle.includes(headingNormalized);
+          return findBookTitleMatch(trimmed, [bookTitle]) === bookTitle;
         });
         
         // Format with emphasis, allowing links in headings that contain book titles
@@ -955,19 +953,25 @@ export default function BlogPost() {
       const numberedMatch = trimmed.match(/^(\d+)\.\s+(.+)$/);
       if (numberedMatch) {
         const isInIntro = index < introEndIndex;
-        // Check if this is in a book section
+        // Check if this is in a book section using intelligent matching
         let isInBookSection = false;
         for (let i = index - 1; i >= 0; i--) {
           const prevPara = paragraphs[i]?.trim() || '';
           if (prevPara === '' || prevPara === '⸻') continue;
-          const prevParaLower = prevPara.toLowerCase();
-          const containsBookTitle = Object.keys(bookLinkCounts).some(bookTitle => {
-            return prevParaLower.includes(bookTitle.toLowerCase()) && prevPara.includes(':');
-          });
-          if (containsBookTitle) {
-            isInBookSection = true;
-            break;
+          // Check if previous paragraph is a heading that contains a book title
+          const isHeading = prevPara.length < 100 && 
+                           !prevPara.match(/[.!?]$/) && 
+                           prevPara.split(' ').length < 15;
+          if (isHeading) {
+            const containsBookTitle = Object.keys(bookLinkCounts).some(bookTitle => {
+              return findBookTitleMatch(prevPara, [bookTitle]) === bookTitle;
+            });
+            if (containsBookTitle) {
+              isInBookSection = true;
+              break;
+            }
           }
+          // Stop searching if we hit another heading
           if (prevPara.length < 100 && !prevPara.match(/[.!?]$/) && prevPara.split(' ').length < 15) {
             break;
           }
@@ -1017,10 +1021,9 @@ export default function BlogPost() {
                            prevPara.split(' ').length < 15;
           
           if (isHeading) {
-            // Use fuzzy matching to find book titles in heading
+            // Use intelligent fuzzy matching to find book titles in heading
             const containsBookTitle = Object.keys(bookLinkCounts).some(bookTitle => {
-              const normalizedTitle = normalizeBookTitle(bookTitle);
-              return prevParaLower.includes(normalizedTitle) || normalizedTitle.includes(prevParaLower);
+              return findBookTitleMatch(prevPara, [bookTitle]) === bookTitle;
             });
             if (containsBookTitle) {
               isInBookSection = true;
@@ -1094,10 +1097,9 @@ export default function BlogPost() {
                          prevPara.split(' ').length < 15;
         
         if (isHeading) {
-          // Use fuzzy matching to find book titles in heading
+          // Use intelligent fuzzy matching to find book titles in heading
           const containsBookTitle = Object.keys(bookLinkCounts).some(bookTitle => {
-            const normalizedTitle = normalizeBookTitle(bookTitle);
-            return prevParaLower.includes(normalizedTitle) || normalizedTitle.includes(prevParaLower);
+            return findBookTitleMatch(prevPara, [bookTitle]) === bookTitle;
           });
           if (containsBookTitle) {
             isInBookSection = true;
