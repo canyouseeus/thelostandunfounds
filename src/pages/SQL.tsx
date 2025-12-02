@@ -674,6 +674,20 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch ensure-author-name-column-exists file:', fetchError);
       }
 
+      // Load fix-blog-posts-rls-policies script
+      let fixBlogPostsRLSContent = '';
+      try {
+        const fixBlogPostsRLSResponse = await fetch('/sql/fix-blog-posts-rls-policies.sql');
+        if (fixBlogPostsRLSResponse.ok) {
+          const text = await fixBlogPostsRLSResponse.text();
+          if (!text.trim().startsWith('<!')) {
+            fixBlogPostsRLSContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch fix-blog-posts-rls-policies file:', fetchError);
+      }
+
       // Load setup-admin-user script
       let setupAdminContent = '';
       try {
@@ -955,6 +969,13 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
           content: ensureAuthorNameContent || '// File not found - check public/sql folder',
           description: 'Ensures the author_name column exists in blog_posts table. This column stores the author name from blog_submissions when a post is published. Safe to run multiple times. Run this if you get "column author_name does not exist" errors when publishing.',
           createdAt: getScriptTimestamp('ensure-author-name-column-exists.sql')
+        },
+        {
+          name: 'Fix Blog Posts RLS Policies',
+          filename: 'fix-blog-posts-rls-policies.sql',
+          content: fixBlogPostsRLSContent || '// File not found - check public/sql folder',
+          description: 'Fixes the "permission denied for table users" error when publishing blog posts from the admin dashboard. Updates RLS policies to use the is_admin_user() function instead of directly querying auth.users. Run this if you get permission errors when publishing.',
+          createdAt: getScriptTimestamp('fix-blog-posts-rls-policies.sql')
         },
         {
           name: 'Newsletter Campaigns Table',
