@@ -259,20 +259,20 @@ export default function Blog() {
               })() : '');
               
               return (
-                <Expandable
+                <div 
                   key={post.id}
-                  expandDirection="vertical"
-                  expandBehavior="replace"
-                  initialDelay={0.1}
+                  className="rounded-none p-[1px] relative"
+                  style={{ 
+                    background: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15), rgba(255,255,255,0.3))',
+                  }}
                 >
-                  {({ isExpanded }) => (
-                    <ExpandableTrigger>
-                      <div 
-                        className="rounded-none p-[2px] relative"
-                        style={{ 
-                          background: 'linear-gradient(135deg, rgba(255,255,255,1), rgba(255,255,255,0.6), rgba(255,255,255,1))',
-                        }}
-                      >
+                  <Expandable
+                    expandDirection="vertical"
+                    expandBehavior="replace"
+                    initialDelay={0.1}
+                  >
+                    {({ isExpanded }) => (
+                      <ExpandableTrigger>
                         <ExpandableCard
                           className="bg-black/50 border-0 rounded-none h-full flex flex-col hover:shadow-lg hover:shadow-white/20 relative overflow-hidden"
                           collapsedSize={{ height: 220 }}
@@ -373,12 +373,12 @@ export default function Blog() {
                   expandBehavior="replace"
                   initialDelay={0.1}
                 >
-                  {({ isExpanded }) => (
-                    <ExpandableTrigger>
-                      <div 
-                        className="rounded-none p-[2px] h-full relative"
-                        style={{ background: 'linear-gradient(135deg, rgba(255,255,255,1), rgba(255,255,255,0.6), rgba(255,255,255,1))' }}
-                      >
+                  <div 
+                    className="rounded-none p-[1px] h-full relative"
+                    style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15), rgba(255,255,255,0.3))' }}
+                  >
+                    {({ isExpanded }) => (
+                      <ExpandableTrigger>
                         <ExpandableCard
                           className="bg-black/50 border-0 rounded-none h-full flex flex-col hover:shadow-lg hover:shadow-white/20 relative overflow-hidden"
                           collapsedSize={{ height: 220 }}
