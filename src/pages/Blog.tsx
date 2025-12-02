@@ -274,7 +274,7 @@ export default function Blog() {
                     {({ isExpanded }) => (
                       <ExpandableTrigger>
                         <ExpandableCard
-                          className="bg-black/50 border-0 rounded-none h-full flex flex-col hover:shadow-lg hover:shadow-white/20 relative overflow-hidden"
+                          className="bg-black/50 border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-white/30 hover:-translate-y-1 hover:scale-[1.02]"
                           collapsedSize={{ height: 220 }}
                           expandedSize={{ height: 400 }}
                           hoverToExpand={false}
@@ -380,7 +380,7 @@ export default function Blog() {
                     {({ isExpanded }) => (
                       <ExpandableTrigger>
                         <ExpandableCard
-                          className="bg-black/50 border-0 rounded-none h-full flex flex-col hover:shadow-lg hover:shadow-white/20 relative overflow-hidden"
+                          className="bg-black/50 border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-white/30 hover:-translate-y-1 hover:scale-[1.02]"
                           collapsedSize={{ height: 220 }}
                           expandedSize={{ height: 400 }}
                           hoverToExpand={false}
