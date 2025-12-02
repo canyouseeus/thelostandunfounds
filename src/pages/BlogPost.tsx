@@ -475,30 +475,65 @@ export default function BlogPost() {
       return text;
     }
 
-    // If no regex matches found, try a fallback approach for book titles
-    // This handles cases where the regex might miss due to punctuation variations
-    if (matches.length === 0 && Object.keys(bookLinks).length > 0) {
-      // Try to find book titles using a simpler word-based approach
-      const textLower = text.toLowerCase();
+    // ALWAYS try fallback approach for book titles (even if regex found some matches)
+    // This ensures we catch all book titles, especially those with punctuation variations
+    if (Object.keys(bookLinks).length > 0) {
+      // Try to find ALL book titles using a simpler word-based approach
       for (const bookTitle of Object.keys(bookLinks)) {
         const normalizedTitle = normalizeBookTitle(bookTitle);
         const titleWords = normalizedTitle.split(/\s+/).filter(w => w.length > 2);
         
+        // Skip if we already found this book title
+        const alreadyFound = matches.some(m => {
+          const matchedNormalized = normalizeBookTitle(m.text);
+          return matchedNormalized === normalizedTitle || 
+                 findBookTitleMatch(m.text, [bookTitle]) === bookTitle;
+        });
+        
+        if (alreadyFound) continue;
+        
         // Look for sequences of words from the book title in the text
         if (titleWords.length > 0) {
-          // Try to find the title as a phrase
-          const titlePattern = titleWords.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+');
-          const phraseRegex = new RegExp(`(?:^|\\s)(${titlePattern})(?=\\s|$|[.,!?;:])`, 'gi');
-          const phraseMatch = phraseRegex.exec(text);
+          // Try multiple patterns to catch variations
+          const patterns = [
+            // Pattern 1: Exact phrase match
+            titleWords.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+'),
+            // Pattern 2: Allow optional "the" at start
+            `(?:the\\s+)?${titleWords.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+')}`,
+            // Pattern 3: Just the main words (skip "the", "a", "an")
+            titleWords.filter(w => !['the', 'a', 'an'].includes(w.toLowerCase())).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+')
+          ];
           
-          if (phraseMatch && phraseMatch[1] && phraseMatch.index !== undefined) {
-            const matchStart = phraseMatch.index + (phraseMatch[0].length - phraseMatch[1].length);
-            if (matchStart >= 0 && matchStart < text.length) {
-              matches.push({
-                index: matchStart,
-                length: phraseMatch[1].length,
-                text: phraseMatch[1]
-              });
+          for (const pattern of patterns) {
+            if (!pattern) continue;
+            
+            try {
+              const phraseRegex = new RegExp(`(?:^|\\s|[.,!?;:()\\[\\]"])(${pattern})(?=\\s|$|[.,!?;:()\\[\\]"])`, 'gi');
+              phraseRegex.lastIndex = 0; // Reset
+              const phraseMatch = phraseRegex.exec(text);
+              
+              if (phraseMatch && phraseMatch[1] && phraseMatch.index !== undefined) {
+                const matchStart = phraseMatch.index + (phraseMatch[0].length - phraseMatch[1].length);
+                if (matchStart >= 0 && matchStart < text.length) {
+                  // Check if this overlaps with existing matches
+                  const isOverlapping = matches.some(m => 
+                    (matchStart >= m.index && matchStart < m.index + m.length) ||
+                    (matchStart + phraseMatch[1].length > m.index && matchStart + phraseMatch[1].length <= m.index + m.length) ||
+                    (matchStart <= m.index && matchStart + phraseMatch[1].length >= m.index + m.length)
+                  );
+                  
+                  if (!isOverlapping) {
+                    matches.push({
+                      index: matchStart,
+                      length: phraseMatch[1].length,
+                      text: phraseMatch[1]
+                    });
+                    break; // Found a match for this book, move to next book
+                  }
+                }
+              }
+            } catch (e) {
+              console.warn('Error in fallback pattern matching:', e, 'Pattern:', pattern);
             }
           }
         }
