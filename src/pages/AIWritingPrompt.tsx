@@ -4,10 +4,28 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useToast } from '../components/Toast';
 import { Copy, Check } from 'lucide-react';
 
+const COLUMN_PROMPT_PATHS: Record<string, string> = {
+  bookclub: '/prompts/AI_WRITING_PROMPT_FOR_CONTRIBUTORS.md',
+  gearheads: '/prompts/GEARHEADS_WRITING_PROMPT.md',
+  borderlands: '/prompts/BORDERLANDS_WRITING_PROMPT.md',
+  science: '/prompts/SCIENCE_WRITING_PROMPT.md',
+  newtheory: '/prompts/NEW_THEORY_WRITING_PROMPT.md',
+};
+
+const COLUMN_NAMES: Record<string, string> = {
+  bookclub: 'BOOK CLUB',
+  gearheads: 'GEARHEADS',
+  borderlands: 'EDGE OF THE BORDERLANDS',
+  science: 'SCIENCE COLUMN',
+  newtheory: 'NEW THEORY',
+};
+
 export default function AIWritingPrompt() {
+  const { column = 'bookclub' } = useParams<{ column?: string }>();
   const { success } = useToast();
   const [promptContent, setPromptContent] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -16,7 +34,8 @@ export default function AIWritingPrompt() {
   useEffect(() => {
     const loadPrompt = async () => {
       try {
-        const response = await fetch('/prompts/AI_WRITING_PROMPT_FOR_CONTRIBUTORS.md');
+        const promptPath = COLUMN_PROMPT_PATHS[column || 'bookclub'] || COLUMN_PROMPT_PATHS.bookclub;
+        const response = await fetch(promptPath);
         if (response.ok) {
           const text = await response.text();
           setPromptContent(text);
@@ -32,7 +51,7 @@ export default function AIWritingPrompt() {
       }
     };
     loadPrompt();
-  }, []);
+  }, [column]);
 
   const copyToClipboard = async () => {
     try {
@@ -50,10 +69,10 @@ export default function AIWritingPrompt() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-white mb-2">
-          AI Writing Prompt for Contributors
+          AI Writing Prompt for {COLUMN_NAMES[column || 'bookclub'] || 'Contributors'}
         </h1>
         <p className="text-white/70">
-          Copy this prompt to use with your AI assistant when writing articles for THE LOST ARCHIVES BOOK CLUB
+          Copy this prompt to use with your AI assistant when writing articles for {COLUMN_NAMES[column || 'bookclub'] || 'THE LOST ARCHIVES'}
         </p>
       </div>
 
