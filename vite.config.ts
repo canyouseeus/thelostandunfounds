@@ -55,6 +55,32 @@ export default defineConfig({
     rollupOptions: {
       // Externalize @scot33/tools-registry - it's optional and loaded dynamically
       external: ['@scot33/tools-registry'],
+      output: {
+        manualChunks(id) {
+          // Split node_modules into vendor chunks
+          if (id.includes('node_modules')) {
+            // React and React DOM
+            if (id.includes('react') || id.includes('react-dom') || id.includes('scheduler')) {
+              return 'vendor-react';
+            }
+            // React Router
+            if (id.includes('react-router')) {
+              return 'vendor-router';
+            }
+            // Supabase
+            if (id.includes('@supabase')) {
+              return 'vendor-supabase';
+            }
+            // Lucide icons
+            if (id.includes('lucide-react')) {
+              return 'vendor-icons';
+            }
+            // Other vendor libraries
+            return 'vendor';
+          }
+        },
+        chunkSizeWarningLimit: 1000, // Increase limit to 1MB per chunk
+      },
       // Handle @tools imports gracefully - they're optional dependencies
       // wrapped in try-catch blocks, so Rollup warnings are expected
       onwarn(warning, warn) {

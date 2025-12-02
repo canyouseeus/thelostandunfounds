@@ -237,8 +237,6 @@ export default function Profile() {
 
     setPasswordLoading(true);
     try {
-      const { supabase } = await import('../lib/supabase');
-      
       // Update password using Supabase
       const { error } = await supabase.auth.updateUser({
         password: newPassword

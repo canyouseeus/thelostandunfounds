@@ -1,0 +1,367 @@
+# Deployment Log Cleanup Rule
+
+## CRITICAL: Zero Warnings and Errors in Deployment Logs
+
+**ALWAYS check deployment logs for ALL warnings and errors, and fix them so there are NONE.**
+
+### Rule: Mandatory Log Cleanup
+
+After any deployment, you MUST:
+
+1. ✅ **Extract All Warnings and Errors** - Parse deployment logs for any warnings or errors
+2. ✅ **Identify Root Causes** - Determine what code/config is causing each issue
+3. ✅ **Fix All Issues** - Resolve every warning and error found
+4. ✅ **Verify Clean Logs** - Re-deploy and confirm zero warnings/errors
+5. ✅ **Document Fixes** - Note what was fixed and why
+
+### Common Deployment Log Issues to Fix
+
+#### 1. CSS Syntax Errors
+
+**Pattern:**
+```
+[WARNING] Expected identifier but found "-" [css-syntax-error]
+    <stdin>:1803:2:
+      1803 │   -: |–;
+```
+
+**Fix:**
+- Search for invalid CSS syntax in all `.css` files
+- Look for patterns like `-: |–;` or other invalid identifiers
+- Remove or fix malformed CSS rules
+- Check generated CSS files in `dist/` if applicable
+- Verify CSS minification isn't creating invalid syntax
+
+**Action:**
+```bash
+# Search for problematic CSS patterns
+grep -r "[-:].*[|–]" src/ public/ --include="*.css"
+# Fix any found issues
+```
+
+#### 2. Dynamic Import Warnings
+
+**Pattern:**
+```
+(!) /path/to/module is dynamically imported by X but also statically imported by Y, dynamic import will not move module into another chunk.
+```
+
+**Fix:**
+- Identify modules that are both dynamically and statically imported
+- Convert all imports to either static OR dynamic (be consistent)
+- Use dynamic imports (`import()`) only for code splitting
+- Use static imports for shared/common modules
+- Consider using `build.rollupOptions.output.manualChunks` for better chunking
+
+**Action:**
+- Review all files that import the problematic module
+- Decide: should it be static or dynamic?
+- Update all imports to be consistent
+- If it's a shared utility, make it static
+- If it's a heavy feature, make it dynamic everywhere
+
+#### 3. Large Chunk Size Warnings
+
+**Pattern:**
+```
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks
+```
+
+**Fix:**
+- Identify large dependencies (check bundle analyzer if available)
+- Split large libraries into separate chunks
+- Use dynamic imports for heavy features
+- Configure `manualChunks` in `vite.config.ts` or `rollup.config.js`
+- Lazy load routes and heavy components
+
+**Action:**
+```typescript
+// vite.config.ts
+export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-router': ['react-router-dom'],
+          'vendor-supabase': ['@supabase/supabase-js'],
+          // Split other large dependencies
+        }
+      }
+    }
+  }
+})
+```
+
+#### 4. Build Errors
+
+**Pattern:**
+```
+[ERROR] ...
+Build failed
+```
+
+**Fix:**
+- Read the full error message
+- Identify the failing file and line
+- Fix syntax errors, type errors, or missing dependencies
+- Re-run build locally to verify fix
+- Never deploy with build errors
+
+#### 5. TypeScript Errors
+
+**Pattern:**
+```
+error TS[number]: ...
+```
+
+**Fix:**
+- Fix all TypeScript compilation errors
+- Ensure `tsconfig.json` is properly configured
+- Add missing type definitions
+- Fix type mismatches
+
+### Log Analysis Workflow
+
+#### Step 1: Extract Warnings and Errors
+
+When reviewing deployment logs, extract:
+
+1. **All WARNING lines** - Even if build succeeds
+2. **All ERROR lines** - These must be fixed
+3. **Build status** - Should be successful
+4. **File paths and line numbers** - For fixing issues
+
+#### Step 2: Categorize Issues
+
+Group issues by type:
+- CSS syntax errors
+- Import/dynamic import warnings
+- Bundle size warnings
+- TypeScript errors
+- Build errors
+- Other warnings
+
+#### Step 3: Fix Each Issue
+
+For each issue:
+
+1. **Locate the source** - Find the file causing the issue
+2. **Understand the cause** - Why is this warning/error occurring?
+3. **Apply fix** - Make the necessary code changes
+4. **Test locally** - Run build locally to verify fix
+5. **Document** - Note what was changed
+
+#### Step 4: Verify Fix
+
+After fixing:
+
+1. **Build locally** - `npm run build` or equivalent
+2. **Check output** - Verify no warnings/errors in local build
+3. **Re-deploy** - Push changes and deploy
+4. **Review new logs** - Confirm all issues are resolved
+5. **Repeat if needed** - If new issues appear, fix them too
+
+### Implementation Pattern
+
+```typescript
+// Example: Parse deployment logs for issues
+function analyzeDeploymentLogs(logs: string): {
+  warnings: Array<{ type: string; message: string; file?: string; line?: number }>;
+  errors: Array<{ type: string; message: string; file?: string; line?: number }>;
+} {
+  const warnings: Array<any> = [];
+  const errors: Array<any> = [];
+
+  // Extract CSS syntax errors
+  const cssErrorRegex = /\[WARNING\].*css-syntax-error.*\n.*<stdin>:(\d+):/g;
+  let match;
+  while ((match = cssErrorRegex.exec(logs)) !== null) {
+    warnings.push({
+      type: 'css-syntax-error',
+      message: match[0],
+      line: parseInt(match[1])
+    });
+  }
+
+  // Extract dynamic import warnings
+  const dynamicImportRegex = /\(!\)\s+(.+?)\s+is dynamically imported/g;
+  while ((match = dynamicImportRegex.exec(logs)) !== null) {
+    warnings.push({
+      type: 'dynamic-import-warning',
+      message: match[0],
+      file: match[1]
+    });
+  }
+
+  // Extract chunk size warnings
+  if (logs.includes('chunks are larger than')) {
+    warnings.push({
+      type: 'chunk-size-warning',
+      message: 'Some chunks exceed 500 kB'
+    });
+  }
+
+  // Extract errors
+  const errorRegex = /\[ERROR\].*?\n/g;
+  while ((match = errorRegex.exec(logs)) !== null) {
+    errors.push({
+      type: 'build-error',
+      message: match[0]
+    });
+  }
+
+  return { warnings, errors };
+}
+
+// After deployment, analyze and fix
+async function ensureCleanDeployment(deploymentId: string) {
+  const logs = await getDeploymentLogs(deploymentId);
+  const { warnings, errors } = analyzeDeploymentLogs(logs);
+
+  if (errors.length > 0) {
+    throw new Error(`Deployment has ${errors.length} errors that must be fixed`);
+  }
+
+  if (warnings.length > 0) {
+    console.warn(`Found ${warnings.length} warnings - fixing...`);
+    
+    for (const warning of warnings) {
+      await fixWarning(warning);
+    }
+
+    // Re-deploy after fixes
+    await redeploy();
+    const newLogs = await getDeploymentLogs(newDeploymentId);
+    const { warnings: newWarnings, errors: newErrors } = analyzeDeploymentLogs(newLogs);
+
+    if (newErrors.length > 0 || newWarnings.length > 0) {
+      throw new Error(`Still have issues after fix attempt`);
+    }
+  }
+
+  return { success: true, warningsFixed: warnings.length };
+}
+```
+
+### Specific Fixes for Common Issues
+
+#### Fix CSS Syntax Errors
+
+```bash
+# 1. Find the problematic CSS
+grep -rn "[-:].*[|–]" src/ public/ --include="*.css"
+
+# 2. Check generated CSS in dist/ (if exists)
+# 3. Fix the source file
+# 4. Remove any invalid CSS rules
+```
+
+#### Fix Dynamic Import Warnings
+
+```typescript
+// Before (inconsistent):
+// File A: import { supabase } from '@/lib/supabase';
+// File B: const { supabase } = await import('@/lib/supabase');
+
+// After (consistent - all static):
+// File A: import { supabase } from '@/lib/supabase';
+// File B: import { supabase } from '@/lib/supabase';
+
+// OR (consistent - all dynamic):
+// File A: const { supabase } = await import('@/lib/supabase');
+// File B: const { supabase } = await import('@/lib/supabase');
+```
+
+#### Fix Chunk Size Warnings
+
+```typescript
+// vite.config.ts
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          // Split node_modules
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'vendor-react';
+            }
+            if (id.includes('@supabase')) {
+              return 'vendor-supabase';
+            }
+            return 'vendor';
+          }
+        },
+        chunkSizeWarningLimit: 1000 // Or fix the chunks to be smaller
+      }
+    }
+  }
+});
+```
+
+### Verification Checklist
+
+After fixing issues, verify:
+
+- [ ] Local build completes with zero warnings
+- [ ] Local build completes with zero errors
+- [ ] All CSS files are valid
+- [ ] No dynamic import warnings
+- [ ] Chunk sizes are reasonable (< 500 kB each, or configured limit)
+- [ ] TypeScript compiles without errors
+- [ ] Re-deployment logs show zero warnings
+- [ ] Re-deployment logs show zero errors
+
+### Reporting Format
+
+When reporting log cleanup:
+
+```
+✅ Deployment Logs Clean
+- Platform: Vercel/Railway
+- Deployment ID: [id]
+- Warnings Found: 0
+- Errors Found: 0
+- Build Status: SUCCESS
+- All issues resolved
+```
+
+Or if issues were fixed:
+
+```
+🔧 Fixed Deployment Log Issues
+- Platform: Vercel/Railway
+- Deployment ID: [id]
+- Issues Found: [count]
+- Issues Fixed:
+  - [Issue 1]: [Fix applied]
+  - [Issue 2]: [Fix applied]
+- Re-deployed: Yes
+- New Logs: Clean (0 warnings, 0 errors)
+```
+
+### CRITICAL REMINDERS
+
+- ❌ **NEVER** ignore warnings in deployment logs
+- ❌ **NEVER** deploy with errors (even if build "succeeds")
+- ❌ **NEVER** assume warnings are harmless
+- ✅ **ALWAYS** check ALL log lines for warnings/errors
+- ✅ **ALWAYS** fix every warning and error found
+- ✅ **ALWAYS** verify fixes with a clean re-deployment
+- ✅ **ALWAYS** aim for zero warnings and zero errors
+- ✅ **ALWAYS** document what was fixed
+
+### Integration with Deployment Verification
+
+This rule works together with the Deployment Verification Rule:
+
+1. **Deployment Verification Rule** - Checks deployment status and logs
+2. **This Rule** - Fixes all warnings/errors found in logs
+3. **Re-verify** - After fixes, verify again with Deployment Verification Rule
+
+Both rules must pass for a deployment to be considered complete.
