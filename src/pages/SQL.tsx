@@ -604,6 +604,34 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch add-welcome-email-tracking file:', fetchError);
       }
 
+      // Load diagnose-user-subdomain-connections script
+      let diagnoseSubdomainContent = '';
+      try {
+        const diagnoseResponse = await fetch('/sql/diagnose-user-subdomain-connections.sql');
+        if (diagnoseResponse.ok) {
+          const text = await diagnoseResponse.text();
+          if (!text.trim().startsWith('<!')) {
+            diagnoseSubdomainContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch diagnose-user-subdomain-connections file:', fetchError);
+      }
+
+      // Load fix-user-subdomain-connections script
+      let fixSubdomainContent = '';
+      try {
+        const fixResponse = await fetch('/sql/fix-user-subdomain-connections.sql');
+        if (fixResponse.ok) {
+          const text = await fixResponse.text();
+          if (!text.trim().startsWith('<!')) {
+            fixSubdomainContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch fix-user-subdomain-connections file:', fetchError);
+      }
+
       // Load setup-admin-user script
       let setupAdminContent = '';
       try {
@@ -850,6 +878,20 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
           content: welcomeEmailTrackingContent || '// File not found - check public/sql folder',
           description: 'Adds welcome_email_sent_at column to user_subdomains table to track when welcome emails with getting started guide have been sent. Required for the welcome email system. Run this before sending welcome emails to existing users.',
           createdAt: getScriptTimestamp('add-welcome-email-tracking.sql')
+        },
+        {
+          name: 'Diagnose User-Subdomain Connections',
+          filename: 'diagnose-user-subdomain-connections.sql',
+          content: diagnoseSubdomainContent || '// File not found - check public/sql folder',
+          description: 'Diagnostic script to identify why users aren\'t connected to their subdomains. Shows all users with subdomains, orphaned subdomains, and potential matches. Run this first to understand the issue.',
+          createdAt: getScriptTimestamp('diagnose-user-subdomain-connections.sql')
+        },
+        {
+          name: 'Fix User-Subdomain Connections',
+          filename: 'fix-user-subdomain-connections.sql',
+          content: fixSubdomainContent || '// File not found - check public/sql folder',
+          description: 'Automatically links users to their subdomains by matching emails from blog_submissions and blog_posts. Creates missing user_subdomains entries and fixes incorrect user_id mappings. Run this AFTER running the diagnose script.',
+          createdAt: getScriptTimestamp('fix-user-subdomain-connections.sql')
         },
         {
           name: 'Newsletter Campaigns Table',
