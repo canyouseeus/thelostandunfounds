@@ -21,7 +21,7 @@ interface BlogPost {
   subdomain: string | null;
   author_id: string | null;
   amazon_affiliate_links?: any[] | null;
-  column?: string | null;
+  blog_column?: string | null;
 }
 
 export default function BookClub() {
@@ -42,14 +42,14 @@ export default function BookClub() {
       // Try to filter by column field first, fallback to subdomain for backward compatibility
       let query = supabase
         .from('blog_posts')
-        .select('id, title, slug, excerpt, content, published_at, created_at, subdomain, author_id, amazon_affiliate_links, column')
+        .select('id, title, slug, excerpt, content, published_at, created_at, subdomain, author_id, amazon_affiliate_links, blog_column')
         .eq('published', true);
 
-      // Try to filter by column field if it exists
+      // Try to filter by blog_column field if it exists
       try {
-        query = query.eq('column', 'bookclub');
+        query = query.eq('blog_column', 'bookclub');
       } catch (e) {
-        // Column field might not exist yet - use fallback
+        // blog_column field might not exist yet - use fallback
         query = query.not('subdomain', 'is', null);
       }
 
@@ -58,10 +58,10 @@ export default function BookClub() {
         .order('created_at', { ascending: false })
         .limit(100);
 
-      // Filter by column if column field exists in data (for backward compatibility)
+      // Filter by blog_column if blog_column field exists in data (for backward compatibility)
       let filteredData = data || [];
-      if (data && data.length > 0 && data[0].column !== undefined) {
-        filteredData = data.filter((post: any) => post.column === 'bookclub');
+      if (data && data.length > 0 && data[0].blog_column !== undefined) {
+        filteredData = data.filter((post: any) => post.blog_column === 'bookclub');
       }
 
       if (fetchError) {

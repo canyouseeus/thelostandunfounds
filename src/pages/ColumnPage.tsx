@@ -57,14 +57,14 @@ export default function ColumnPage({ column, title, description, submitPath, ico
       // Try to filter by column field first, fallback to subdomain for bookclub
       let query = supabase
         .from('blog_posts')
-        .select('id, title, slug, excerpt, content, published_at, created_at, subdomain, author_id, amazon_affiliate_links, column')
+        .select('id, title, slug, excerpt, content, published_at, created_at, subdomain, author_id, amazon_affiliate_links, blog_column')
         .eq('published', true);
 
-      // Filter by column if it exists, otherwise use fallback logic
+      // Filter by blog_column if it exists, otherwise use fallback logic
       try {
-        query = query.eq('column', column);
+        query = query.eq('blog_column', column);
       } catch (e) {
-        // Column field might not exist yet - use fallback
+        // blog_column field might not exist yet - use fallback
         if (column === 'bookclub') {
           query = query.not('subdomain', 'is', null);
         } else if (column === 'main') {
@@ -83,12 +83,12 @@ export default function ColumnPage({ column, title, description, submitPath, ico
         return;
       }
 
-      // Filter by column if column field exists in data
+      // Filter by blog_column if blog_column field exists in data
       const filteredData = data?.filter((post: any) => {
-        if (post.column) {
-          return post.column === column;
+        if (post.blog_column) {
+          return post.blog_column === column;
         }
-        // Fallback logic if column field doesn't exist
+        // Fallback logic if blog_column field doesn't exist
         if (column === 'bookclub') {
           return post.subdomain !== null;
         } else if (column === 'main') {
