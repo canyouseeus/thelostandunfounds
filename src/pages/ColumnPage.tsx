@@ -162,7 +162,6 @@ export default function ColumnPage({ column, title, description, submitPath, ico
 
         {posts.length === 0 ? (
           <div className="text-center py-16">
-            {displayIcon && <div className="flex justify-center mb-6 text-white/30 scale-150">{displayIcon}</div>}
             <h2 className="text-2xl md:text-3xl font-black text-white mb-4 tracking-wide">
               Be the First to Share
             </h2>
