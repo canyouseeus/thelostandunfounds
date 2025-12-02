@@ -284,6 +284,13 @@ export default function Blog() {
                           expandDelay={200}
                           collapseDelay={300}
                         >
+                          <div 
+                            className="absolute inset-0 rounded-none pointer-events-none z-10"
+                            style={{
+                              background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 30%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.05) 70%, rgba(255,255,255,0.15) 100%)',
+                              mixBlendMode: 'overlay',
+                            }}
+                          />
                           <ExpandableCardHeader className="mb-2 pb-2">
                             <h2 className="text-base font-black text-white mb-1 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
                               {post.title}
@@ -388,6 +395,13 @@ export default function Blog() {
                           expandDelay={200}
                           collapseDelay={300}
                         >
+                          <div 
+                            className="absolute inset-0 rounded-none pointer-events-none z-10"
+                            style={{
+                              background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 30%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.05) 70%, rgba(255,255,255,0.15) 100%)',
+                              mixBlendMode: 'overlay',
+                            }}
+                          />
                           <ExpandableCardHeader className="mb-2 pb-2">
                             <h2 className="text-base font-black text-white mb-1 tracking-wide transition line-clamp-2">
                               {post.title}
