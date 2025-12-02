@@ -441,13 +441,15 @@ export default function BlogPost() {
           const phraseRegex = new RegExp(`(?:^|\\s)(${titlePattern})(?=\\s|$|[.,!?;:])`, 'gi');
           const phraseMatch = phraseRegex.exec(text);
           
-          if (phraseMatch && phraseMatch[1]) {
+          if (phraseMatch && phraseMatch[1] && phraseMatch.index !== undefined) {
             const matchStart = phraseMatch.index + (phraseMatch[0].length - phraseMatch[1].length);
-            matches.push({
-              index: matchStart,
-              length: phraseMatch[1].length,
-              text: phraseMatch[1]
-            });
+            if (matchStart >= 0 && matchStart < text.length) {
+              matches.push({
+                index: matchStart,
+                length: phraseMatch[1].length,
+                text: phraseMatch[1]
+              });
+            }
           }
         }
       }
@@ -470,6 +472,11 @@ export default function BlogPost() {
 
     // Process matches
     matches.forEach((matchInfo) => {
+      // Validate match info
+      if (!matchInfo || matchInfo.index === undefined || !matchInfo.text) {
+        return;
+      }
+      
       // Add text before the match
       if (matchInfo.index > lastIndex) {
         const beforeText = text.substring(lastIndex, matchInfo.index);
@@ -479,6 +486,10 @@ export default function BlogPost() {
       }
       
       const matchedText = matchInfo.text;
+      if (!matchedText) {
+        return;
+      }
+      
       // Find the affiliate link using improved fuzzy matching
       const bookKey = findBookTitleMatch(matchedText, Object.keys(bookLinks));
       const affiliateLink = bookKey ? bookLinks[bookKey] : undefined;
@@ -570,8 +581,9 @@ export default function BlogPost() {
   };
 
   const formatContent = (content: string) => {
-    // Split by double newlines to create paragraphs
-    let paragraphs = content.split(/\n\n+/);
+    try {
+      // Split by double newlines to create paragraphs
+      let paragraphs = content.split(/\n\n+/);
     
     // Also split paragraphs that contain a heading followed by body text on separate lines
     // This handles cases where heading and body are separated by single newline
@@ -941,6 +953,15 @@ export default function BlogPost() {
     });
     
     return elements;
+    } catch (error: any) {
+      console.error('Error formatting content:', error);
+      // Return a simple error message wrapped in a paragraph
+      return [
+        <p key="error" className="mb-6 text-red-400 text-lg leading-relaxed text-left">
+          Error formatting content. Please refresh the page.
+        </p>
+      ];
+    }
   };
 
   if (loading) {
@@ -1073,9 +1094,20 @@ export default function BlogPost() {
           )}
           
           {/* Excerpt/Preview Text */}
-          {post.excerpt && (
+          {(post.excerpt || (post.content && post.content.length > 0)) && (
             <p className="text-white/80 text-lg leading-relaxed mt-4 text-left">
-              {post.excerpt}
+              {post.excerpt || (() => {
+                // Generate excerpt from first paragraph if no excerpt exists
+                const firstParagraph = post.content.split(/\n\n+/)[0]?.trim() || '';
+                if (firstParagraph.length > 0) {
+                  // Take first 200 characters, cut at word boundary
+                  const excerpt = firstParagraph.length > 200 
+                    ? firstParagraph.substring(0, 200).replace(/\s+\S*$/, '') + '...'
+                    : firstParagraph;
+                  return excerpt;
+                }
+                return '';
+              })()}
             </p>
           )}
         </header>
