@@ -557,6 +557,16 @@ export default function BlogPost() {
     return parts;
   };
 
+  // Helper function to format Amazon Affiliate Disclosure with bold, uppercase author name
+  const formatDisclosure = (authorName: string) => {
+    const authorNameUpper = authorName.toUpperCase();
+    return (
+      <>
+        Amazon Affiliate Disclosure: As an Amazon Associate, <strong className="font-bold text-white">{authorNameUpper}</strong> earns from qualifying purchases. Some links in this post are affiliate links, which means <strong className="font-bold text-white">{authorNameUpper}</strong> may earn a commission if you click through and make a purchase. This helps support <strong className="font-bold text-white">{authorNameUpper}</strong> and allows us to continue creating content. Thank you for your support!
+      </>
+    );
+  };
+
   const formatContent = (content: string) => {
     // Split by double newlines to create paragraphs
     let paragraphs = content.split(/\n\n+/);
@@ -649,12 +659,11 @@ export default function BlogPost() {
         }
         if (disclosureAdded && index === introEndIndex - 1) {
           const authorName = post.author_name || 'THE LOST+UNFOUNDS';
-          const disclosureText = `Amazon Affiliate Disclosure: As an Amazon Associate, ${authorName} earns from qualifying purchases. Some links in this post are affiliate links, which means ${authorName} may earn a commission if you click through and make a purchase. This helps support ${authorName} and allows us to continue creating content. Thank you for your support!`;
           
           elements.push(
             <div key="affiliate-disclosure" className="mb-6 mx-auto max-w-2xl mt-8">
               <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white/20 p-4 bg-white/5">
-                {disclosureText}
+                {formatDisclosure(authorName)}
               </p>
             </div>
           );
@@ -727,12 +736,11 @@ export default function BlogPost() {
         // Add disclosure after intro if needed
         if (disclosureAdded && index === introEndIndex - 1) {
           const authorName = post.author_name || 'THE LOST+UNFOUNDS';
-          const disclosureText = `Amazon Affiliate Disclosure: As an Amazon Associate, ${authorName} earns from qualifying purchases. Some links in this post are affiliate links, which means ${authorName} may earn a commission if you click through and make a purchase. This helps support ${authorName} and allows us to continue creating content. Thank you for your support!`;
           
           elements.push(
             <div key="affiliate-disclosure" className="mb-6 mx-auto max-w-2xl mt-8">
               <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white/20 p-4 bg-white/5">
-                {disclosureText}
+                {formatDisclosure(authorName)}
               </p>
             </div>
           );
@@ -778,12 +786,11 @@ export default function BlogPost() {
         }
         if (disclosureAdded && index === introEndIndex - 1) {
           const authorName = post.author_name || 'THE LOST+UNFOUNDS';
-          const disclosureText = `Amazon Affiliate Disclosure: As an Amazon Associate, ${authorName} earns from qualifying purchases. Some links in this post are affiliate links, which means ${authorName} may earn a commission if you click through and make a purchase. This helps support ${authorName} and allows us to continue creating content. Thank you for your support!`;
           
           elements.push(
             <div key="affiliate-disclosure" className="mb-6 mx-auto max-w-2xl mt-8">
               <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white/20 p-4 bg-white/5">
-                {disclosureText}
+                {formatDisclosure(authorName)}
               </p>
             </div>
           );
@@ -840,12 +847,11 @@ export default function BlogPost() {
         }
         if (disclosureAdded && index === introEndIndex - 1) {
           const authorName = post.author_name || 'THE LOST+UNFOUNDS';
-          const disclosureText = `Amazon Affiliate Disclosure: As an Amazon Associate, ${authorName} earns from qualifying purchases. Some links in this post are affiliate links, which means ${authorName} may earn a commission if you click through and make a purchase. This helps support ${authorName} and allows us to continue creating content. Thank you for your support!`;
           
           elements.push(
             <div key="affiliate-disclosure" className="mb-6 mx-auto max-w-2xl mt-8">
               <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white/20 p-4 bg-white/5">
-                {disclosureText}
+                {formatDisclosure(authorName)}
               </p>
             </div>
           );
@@ -856,6 +862,19 @@ export default function BlogPost() {
       
       // Check if this is the Amazon Affiliate Disclosure
       const isAffiliateDisclosure = trimmed.startsWith('Amazon Affiliate Disclosure:');
+      
+      // If it's a disclosure in the content, format it with bold uppercase author name
+      if (isAffiliateDisclosure) {
+        const authorName = post.author_name || 'THE LOST+UNFOUNDS';
+        elements.push(
+          <div key={index} className="mb-6 mx-auto max-w-2xl">
+            <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white/20 p-4 bg-white/5">
+              {formatDisclosure(authorName)}
+            </p>
+          </div>
+        );
+        return;
+      }
       
       // Regular paragraph with emphasis formatting
       // Allow links in intro (first 3 paragraphs) or in book sections
@@ -893,16 +912,7 @@ export default function BlogPost() {
       const allowLinks = isInIntro || isInBookSection;
       const content = formatTextWithEmphasis(trimmed, bookLinkCounts, allowLinks);
       
-      if (isAffiliateDisclosure) {
-        // Style the disclosure differently: smaller, italic, in a box, center-justified
-        elements.push(
-          <div key={index} className="mb-6 mx-auto max-w-2xl">
-            <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white/20 p-4 bg-white/5">
-              {Array.isArray(content) ? content : content}
-            </p>
-          </div>
-        );
-      } else {
+      {
         elements.push(
           <p key={index} className="mb-6 text-white/90 text-lg leading-relaxed text-left">
             {Array.isArray(content) ? content : content}
@@ -915,12 +925,11 @@ export default function BlogPost() {
         }
         if (disclosureAdded && index === introEndIndex - 1) {
           const authorName = post.author_name || 'THE LOST+UNFOUNDS';
-          const disclosureText = `Amazon Affiliate Disclosure: As an Amazon Associate, ${authorName} earns from qualifying purchases. Some links in this post are affiliate links, which means ${authorName} may earn a commission if you click through and make a purchase. This helps support ${authorName} and allows us to continue creating content. Thank you for your support!`;
           
           elements.push(
             <div key="affiliate-disclosure" className="mb-6 mx-auto max-w-2xl mt-8">
               <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white/20 p-4 bg-white/5">
-                {disclosureText}
+                {formatDisclosure(authorName)}
               </p>
             </div>
           );
