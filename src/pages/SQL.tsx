@@ -646,6 +646,20 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch check-user-subdomain-email-status file:', fetchError);
       }
 
+      // Load add-emails-to-user-roles-from-submissions script
+      let addEmailsToRolesContent = '';
+      try {
+        const addEmailsResponse = await fetch('/sql/add-emails-to-user-roles-from-submissions.sql');
+        if (addEmailsResponse.ok) {
+          const text = await addEmailsResponse.text();
+          if (!text.trim().startsWith('<!')) {
+            addEmailsToRolesContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch add-emails-to-user-roles-from-submissions file:', fetchError);
+      }
+
       // Load setup-admin-user script
       let setupAdminContent = '';
       try {
@@ -913,6 +927,13 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
           content: checkEmailStatusContent || '// File not found - check public/sql folder',
           description: 'Diagnostic query to check if users are linked to subdomains, what emails are available, and whether welcome emails have been sent. Use this to debug email sending issues.',
           createdAt: getScriptTimestamp('check-user-subdomain-email-status.sql')
+        },
+        {
+          name: 'Add Emails to user_roles from blog_submissions',
+          filename: 'add-emails-to-user-roles-from-submissions.sql',
+          content: addEmailsToRolesContent || '// File not found - check public/sql folder',
+          description: 'Populates user_roles.email for users who have subdomains but no email in user_roles. Finds emails from blog_submissions by matching subdomain. Run this if emails are NULL in user_roles but exist in blog_submissions.',
+          createdAt: getScriptTimestamp('add-emails-to-user-roles-from-submissions.sql')
         },
         {
           name: 'Newsletter Campaigns Table',
