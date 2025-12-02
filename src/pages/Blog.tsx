@@ -264,7 +264,7 @@ export default function Blog() {
                   expandDirection="vertical"
                   expandBehavior="replace"
                   initialDelay={0}
-                  transition={{ type: "spring", damping: 25, stiffness: 400 }}
+                  transition={{ type: "spring", damping: 30, stiffness: 600 }}
                 >
                   {({ isExpanded }) => (
                     <ExpandableTrigger>
@@ -373,7 +373,7 @@ export default function Blog() {
                   expandDirection="vertical"
                   expandBehavior="replace"
                   initialDelay={0}
-                  transition={{ type: "spring", damping: 25, stiffness: 400 }}
+                  transition={{ type: "spring", damping: 30, stiffness: 600 }}
                 >
                   {({ isExpanded }) => (
                     <ExpandableTrigger>
