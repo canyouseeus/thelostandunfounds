@@ -25,6 +25,7 @@ interface BlogSubmission {
   subdomain: string | null;
   amazon_affiliate_links: AffiliateLink[];
   amazon_storefront_id: string | null;
+  column: string | null;
   status: 'pending' | 'approved' | 'rejected' | 'published';
   admin_notes: string | null;
   rejected_reason: string | null;
@@ -333,6 +334,7 @@ export default function BlogSubmissionReview() {
         subdomain: submission.subdomain || null, // User subdomain
         amazon_affiliate_links: submission.amazon_affiliate_links || [], // Store Amazon links
         amazon_storefront_id: submission.amazon_storefront_id || null, // Store Amazon storefront ID
+        column: submission.column || null, // Copy column from submission
         seo_title: null,
         seo_description: submission.excerpt || null,
         seo_keywords: null,
