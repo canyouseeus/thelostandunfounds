@@ -63,10 +63,18 @@ Your app only needs basic authentication information:
 - **OpenID**: Standard protocol for authentication
 
 These are the **minimum required scopes** for user authentication. Your app does NOT request access to:
-- Google Drive files
+- Google Drive files (Drive integration uses a separate OAuth client)
 - Gmail messages
 - Calendar events
 - Any other sensitive Google data
+
+## OAuth Client Separation
+
+**Important**: We are using **separate OAuth clients** for different features:
+- **This OAuth client**: User authentication only (openid, email, profile)
+- **Future OAuth client**: Google Drive API (for TikTok downloader, if needed)
+
+This separation follows security best practices and ensures users only grant the minimum permissions needed for each feature.
 
 ## Code Reference
 

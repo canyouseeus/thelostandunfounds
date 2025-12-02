@@ -68,12 +68,13 @@ The main app requests these **non-sensitive scopes** for user authentication:
 The TikTok downloader feature (separate service on Railway) uses Google Drive API to upload downloaded videos. This feature:
 - Runs on a separate backend: `https://tiktok-downloader-production-ab40.up.railway.app`
 - Uses Google Drive API via MCP server integration
-- May require additional Google Drive scopes (if using the same OAuth client)
 
-**Note**: If the TikTok downloader uses the same OAuth client ID, you would need to add Google Drive scopes:
-- `https://www.googleapis.com/auth/drive.file` (to upload files to user's Drive)
+**Important**: We are **separating the OAuth clients** for better security and compliance:
+- **This OAuth client** (`817758642642-j65tb1kscmmaiaocg5jg1qc4qbu4rsbt`) is **ONLY for user authentication** (openid, email, profile)
+- **Google Drive integration** will use a **separate OAuth client** (to be created later if needed)
+- This separation ensures users only grant the minimum permissions needed for each feature
 
-However, since it's a separate backend service, it may have its own OAuth client configuration. Please verify whether the TikTok downloader uses the same OAuth client (`817758642642-j65tb1kscmmaiaocg5jg1qc4qbu4rsbt`) or a separate one.
+**Current Status**: The TikTok downloader Google Drive feature is currently disabled or uses a separate OAuth configuration. We are requesting verification for the authentication OAuth client only.
 
 ## Related Projects
 
@@ -83,6 +84,11 @@ However, since it's a separate backend service, it may have its own OAuth client
 - **OAuth Integration**: Supabase handles the Google OAuth flow on our behalf
 
 **Note**: We do not have any other Google Cloud projects that use this OAuth client. This is the only project using Google OAuth for authentication.
+
+**Separation Strategy**: We are keeping OAuth clients separate:
+- **This OAuth client**: User authentication only (openid, email, profile scopes)
+- **Future OAuth client** (if needed): Google Drive API access for TikTok downloader feature
+- This separation follows security best practices and minimizes user permissions
 
 ## Application URLs
 
@@ -143,7 +149,8 @@ If you need additional information for verification:
 For Google Cloud Console verification, please ensure:
 
 - ✅ OAuth consent screen is published ("In production")
-- ✅ Scopes `openid`, `email`, and `profile` are added
+- ✅ Scopes `openid`, `email`, and `profile` are added (authentication only)
+- ✅ **No Google Drive scopes** - Drive integration will use separate OAuth client
 - ✅ Redirect URI `https://nonaqhllakrckbtbawrb.supabase.co/auth/v1/callback` is configured
 - ✅ Test users can sign in successfully
 - ✅ App description clearly explains OAuth usage
@@ -157,8 +164,9 @@ For Google Cloud Console verification, please ensure:
 - The main app uses Google OAuth **only for user authentication** (no Drive, Gmail, Calendar access)
 - **TikTok Downloader Feature**: A separate service that uploads videos to Google Drive
   - Backend URL: `https://tiktok-downloader-production-ab40.up.railway.app`
-  - May use the same OAuth client or a separate one (needs verification)
-  - If using the same client, requires Google Drive API scopes
+  - **Will use a separate OAuth client** for Google Drive API access (to be configured later)
+  - This OAuth client verification is **only for user authentication**, not Drive access
+  - Separating OAuth clients ensures users only grant minimum required permissions
 
 ---
 
