@@ -182,11 +182,19 @@ const ExpandableCard = ({
     },
   }
 
-  const { onDrag, onDragStart, onDragEnd, ...motionProps } = props;
+  // Exclude conflicting HTML event handlers that conflict with motion props
+  const {
+    onDrag,
+    onDragStart,
+    onDragEnd,
+    onAnimationStart,
+    onAnimationEnd,
+    onAnimationIteration,
+    ...motionProps
+  } = props;
   
   return (
     <motion.div
-      // @ts-ignore
       ref={ref}
       className={cn(
         "relative overflow-hidden bg-white dark:bg-black border border-white/10 shadow-sm",
@@ -198,7 +206,7 @@ const ExpandableCard = ({
       transition={transition}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      {...motionProps}
+      {...(motionProps as any)}
     >
       {children}
     </motion.div>
