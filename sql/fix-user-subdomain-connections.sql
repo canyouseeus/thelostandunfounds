@@ -9,6 +9,8 @@ DECLARE
   updated_count INTEGER := 0;
   subdomain_record RECORD;
   user_record RECORD;
+  target_user_id UUID;
+  author_email_found TEXT;
 BEGIN
   RAISE NOTICE 'Starting user-subdomain connection fix...';
 
@@ -86,19 +88,16 @@ BEGIN
     ORDER BY first_used_at
   LOOP
     -- Try to find user by author_id or user_id
-    DECLARE
-      target_user_id UUID;
-    BEGIN
-      target_user_id := COALESCE(subdomain_record.author_id, subdomain_record.user_id);
-      
-      IF target_user_id IS NOT NULL THEN
-        -- Verify user exists and get email
-        SELECT id, email INTO user_record
-        FROM auth.users
-        WHERE id = target_user_id
-        LIMIT 1;
+    target_user_id := COALESCE(subdomain_record.author_id, subdomain_record.user_id);
+    
+    IF target_user_id IS NOT NULL THEN
+      -- Verify user exists and get email
+      SELECT id, email INTO user_record
+      FROM auth.users
+      WHERE id = target_user_id
+      LIMIT 1;
 
-        IF user_record.id IS NOT NULL AND user_record.email IS NOT NULL THEN
+      IF user_record.id IS NOT NULL AND user_record.email IS NOT NULL THEN
         -- Check if user already has a different subdomain
         IF EXISTS (
           SELECT 1 FROM user_subdomains 
@@ -125,7 +124,7 @@ BEGIN
           END IF;
         END IF;
       END IF;
-    END;
+    END IF;
   END LOOP;
 
   -- Step 3: Fix any user_subdomains entries that point to wrong users
@@ -141,23 +140,20 @@ BEGIN
     WHERE us.subdomain IN ('plutonium', 'mrjetstream')
   LOOP
     -- Try to find the correct user by matching email from blog_submissions
-    DECLARE
-      author_email_found TEXT;
-    BEGIN
-      SELECT DISTINCT bs.author_email INTO author_email_found
-      FROM blog_submissions bs
-      WHERE bs.subdomain = subdomain_record.subdomain
-        AND bs.author_email IS NOT NULL
+    SELECT DISTINCT bs.author_email INTO author_email_found
+    FROM blog_submissions bs
+    WHERE bs.subdomain = subdomain_record.subdomain
+      AND bs.author_email IS NOT NULL
+    LIMIT 1;
+
+    IF author_email_found IS NOT NULL THEN
+      -- Find user by email
+      SELECT id, email INTO user_record
+      FROM auth.users
+      WHERE LOWER(TRIM(email)) = LOWER(TRIM(author_email_found))
       LIMIT 1;
 
-      IF author_email_found IS NOT NULL THEN
-        -- Find user by email
-        SELECT id, email INTO user_record
-        FROM auth.users
-        WHERE LOWER(TRIM(email)) = LOWER(TRIM(author_email_found))
-        LIMIT 1;
-
-        IF user_record.id IS NOT NULL AND user_record.id != subdomain_record.current_user_id THEN
+      IF user_record.id IS NOT NULL AND user_record.id != subdomain_record.current_user_id THEN
         -- Update to correct user
         UPDATE user_subdomains
         SET user_id = user_record.id
@@ -166,9 +162,8 @@ BEGIN
         updated_count := updated_count + 1;
         RAISE NOTICE 'Updated subdomain % from user % to user %', 
           subdomain_record.subdomain, subdomain_record.current_user_email, user_record.email;
-        END IF;
       END IF;
-    END;
+    END IF;
   END LOOP;
 
   RAISE NOTICE 'Fix complete! Created: %, Updated: %', created_count, updated_count;
