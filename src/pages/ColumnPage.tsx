@@ -143,11 +143,10 @@ export default function ColumnPage({ column, title, description, submitPath, ico
       </Helmet>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 tracking-wide flex items-center justify-center gap-3">
-            {displayIcon}
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 tracking-wide">
             {title}
           </h1>
-          <p className="text-white/60 text-sm max-w-2xl mx-auto">
+          <p className="text-white/60 text-sm max-w-2xl mx-auto text-center">
             {description}
           </p>
           <div className="mt-6">
@@ -220,7 +219,6 @@ export default function ColumnPage({ column, title, description, submitPath, ico
 
                     {post.amazon_affiliate_links && post.amazon_affiliate_links.length > 0 && (
                       <div className="mb-4 flex items-center gap-2 text-xs text-white/50">
-                        {displayIcon}
                         <span>{post.amazon_affiliate_links.length} item{post.amazon_affiliate_links.length !== 1 ? 's' : ''}</span>
                       </div>
                     )}
