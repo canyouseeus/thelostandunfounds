@@ -801,9 +801,11 @@ export default function SubmitArticle() {
               </>
             )}
           </div>
+        </div>
         )}
 
-          {/* Tips Section */}
+        {/* Tips Section */}
+        <div className="mb-8">
           <div className="bg-black/30 border border-white/10 rounded-none p-6 mt-6">
             <h3 className="text-lg font-bold text-white mb-4">Important Tips for Contributors</h3>
             
