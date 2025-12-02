@@ -281,7 +281,7 @@ export default function Blog() {
                           }}
                         />
                         <ExpandableCard
-                          className="bg-black/50 border-0 rounded-none h-full flex flex-col hover:shadow-lg hover:shadow-white/20 relative"
+                          className="bg-black/50 border-0 rounded-none h-full flex flex-col hover:shadow-lg hover:shadow-white/20 relative overflow-hidden"
                           collapsedSize={{ height: 220 }}
                           expandedSize={{ height: 400 }}
                           hoverToExpand={false}
