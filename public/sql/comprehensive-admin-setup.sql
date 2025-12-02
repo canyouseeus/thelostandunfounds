@@ -3,6 +3,44 @@
 -- Also sets up mrjetstream subdomain and ensures all admin privileges work correctly
 -- Run this script to fix all admin recognition issues
 
+-- Create or replace the is_admin_user function (used by RLS policies)
+-- This must be outside the DO block
+CREATE OR REPLACE FUNCTION is_admin_user()
+RETURNS BOOLEAN AS $$
+BEGIN
+  -- Check JWT email claim first (fastest, no database query)
+  IF (auth.jwt() ->> 'email')::text IN ('admin@thelostandunfounds.com', 'thelostandunfounds@gmail.com') THEN
+    RETURN true;
+  END IF;
+
+  -- Check user_roles table
+  IF EXISTS (
+    SELECT 1 FROM user_roles
+    WHERE user_id = auth.uid() AND is_admin = true
+  ) THEN
+    RETURN true;
+  END IF;
+
+  -- Check user metadata
+  IF EXISTS (
+    SELECT 1 FROM auth.users
+    WHERE id = auth.uid() 
+    AND (
+      (raw_user_meta_data->>'role')::text = 'admin'
+      OR (raw_user_meta_data->>'is_admin')::text = 'true'
+    )
+  ) THEN
+    RETURN true;
+  END IF;
+
+  RETURN false;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Grant execute permission
+GRANT EXECUTE ON FUNCTION is_admin_user() TO authenticated, anon;
+
+-- Now run the setup in a DO block
 DO $$
 DECLARE
   admin_user_id_1 UUID;
@@ -59,42 +97,6 @@ BEGIN
       )
       OR (auth.jwt() ->> 'email')::text IN (admin_email_1, admin_email_2)
     );
-
-  -- Create or replace the is_admin_user function (used by RLS policies)
-  CREATE OR REPLACE FUNCTION is_admin_user()
-  RETURNS BOOLEAN AS $$
-  BEGIN
-    -- Check JWT email claim first (fastest, no database query)
-    IF (auth.jwt() ->> 'email')::text IN ('admin@thelostandunfounds.com', 'thelostandunfounds@gmail.com') THEN
-      RETURN true;
-    END IF;
-
-    -- Check user_roles table
-    IF EXISTS (
-      SELECT 1 FROM user_roles
-      WHERE user_id = auth.uid() AND is_admin = true
-    ) THEN
-      RETURN true;
-    END IF;
-
-    -- Check user metadata
-    IF EXISTS (
-      SELECT 1 FROM auth.users
-      WHERE id = auth.uid() 
-      AND (
-        (raw_user_meta_data->>'role')::text = 'admin'
-        OR (raw_user_meta_data->>'is_admin')::text = 'true'
-      )
-    ) THEN
-      RETURN true;
-    END IF;
-
-    RETURN false;
-  END;
-  $$ LANGUAGE plpgsql SECURITY DEFINER;
-
-  -- Grant execute permission
-  GRANT EXECUTE ON FUNCTION is_admin_user() TO authenticated, anon;
 
   -- Set up admin for thelostandunfounds@gmail.com
   IF admin_user_id_1 IS NOT NULL THEN
@@ -168,8 +170,7 @@ SELECT
   u.raw_user_meta_data->>'is_admin' as is_admin_metadata,
   u.raw_user_meta_data->>'author_name' as author_name,
   ur.is_admin as is_admin_role,
-  us.subdomain,
-  is_admin_user() as function_check
+  us.subdomain
 FROM auth.users u
 LEFT JOIN user_roles ur ON ur.user_id = u.id
 LEFT JOIN user_subdomains us ON us.user_id = u.id
