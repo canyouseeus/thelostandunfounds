@@ -306,6 +306,11 @@ export default async function handler(
       .is('welcome_email_sent_at', null)
       .order('created_at', { ascending: true })
 
+    console.log(`Found ${userSubdomains?.length || 0} users with subdomains who need welcome emails`)
+    if (userSubdomains && userSubdomains.length > 0) {
+      console.log('Subdomains found:', userSubdomains.map(u => u.subdomain).filter(Boolean))
+    }
+
     if (subdomainsError) {
       throw new Error(`Failed to fetch user subdomains: ${subdomainsError.message}`)
     }
@@ -354,13 +359,19 @@ export default async function handler(
 
     // Second: get emails from blog_submissions by matching subdomain (case-insensitive)
     // This is the PRIMARY source for emails when users don't have emails in auth.users
-    const { data: submissionsData } = await supabase
+    const { data: submissionsData, error: submissionsError } = await supabase
       .from('blog_submissions')
       .select('author_email, subdomain')
       .not('author_email', 'is', null)
       .not('subdomain', 'is', null)
 
-    if (submissionsData) {
+    if (submissionsError) {
+      console.error('Error fetching blog_submissions:', submissionsError)
+    }
+
+    console.log(`Found ${submissionsData?.length || 0} submissions with emails and subdomains`)
+
+    if (submissionsData && submissionsData.length > 0) {
       // Create a map of subdomain (lowercase) -> email from submissions
       const submissionEmailMap = new Map<string, string>()
       for (const submission of submissionsData) {
@@ -369,24 +380,34 @@ export default async function handler(
           // Store the first email we find for each subdomain
           if (!submissionEmailMap.has(normalizedSubdomain)) {
             submissionEmailMap.set(normalizedSubdomain, submission.author_email)
+            console.log(`Mapped subdomain "${normalizedSubdomain}" to email "${submission.author_email}"`)
           }
         }
       }
+
+      console.log(`Created email map for ${submissionEmailMap.size} unique subdomains`)
 
       // Match subdomains to get emails (case-insensitive)
       // This should work even if user_id doesn't have an email in auth.users
       for (const subdomain of userSubdomains) {
         if (!emailMap.has(subdomain.user_id) && subdomain.subdomain) {
           const normalizedSubdomain = subdomain.subdomain.toLowerCase().trim()
+          console.log(`Looking for email for subdomain "${normalizedSubdomain}" (user_id: ${subdomain.user_id})`)
           if (submissionEmailMap.has(normalizedSubdomain)) {
+            const foundEmail = submissionEmailMap.get(normalizedSubdomain)!
             emailMap.set(subdomain.user_id, { 
-              email: submissionEmailMap.get(normalizedSubdomain)!, 
+              email: foundEmail, 
               source: 'blog_submissions' 
             })
-            console.log(`Found email ${submissionEmailMap.get(normalizedSubdomain)} for subdomain ${subdomain.subdomain} from blog_submissions`)
+            console.log(`✓ Found email ${foundEmail} for subdomain ${subdomain.subdomain} from blog_submissions`)
+          } else {
+            console.warn(`✗ No email found in submissionEmailMap for subdomain "${normalizedSubdomain}"`)
+            console.warn(`  Available subdomains in map:`, Array.from(submissionEmailMap.keys()))
           }
         }
       }
+    } else {
+      console.warn('No submissions data found or submissions array is empty')
     }
 
     // Fourth: Apply manual email mappings if provided (for users we know the emails for)
@@ -446,6 +467,7 @@ export default async function handler(
     // This is a more complex matching that we'll skip for now
 
     // Build final list with emails
+    console.log(`Building final email list. Email map has ${emailMap.size} entries`)
     for (const subdomain of userSubdomains) {
       const emailData = emailMap.get(subdomain.user_id)
       
@@ -456,25 +478,31 @@ export default async function handler(
           subdomain: subdomain.subdomain,
           source: emailData.source,
         })
+        console.log(`✓ Added user ${subdomain.user_id} (${subdomain.subdomain}) with email ${emailData.email} from ${emailData.source}`)
       } else {
         // Log users without emails for debugging with more details
-        console.warn(`No email found for user ${subdomain.user_id} with subdomain ${subdomain.subdomain}`)
+        console.warn(`✗ No email found for user ${subdomain.user_id} with subdomain ${subdomain.subdomain}`)
         console.warn(`  - Checking if subdomain exists in blog_submissions...`)
         // Try one more time to find email by subdomain directly (case-insensitive)
-        const { data: lastResortSubmissions } = await supabase
+        const { data: lastResortSubmissions, error: lastResortError } = await supabase
           .from('blog_submissions')
           .select('author_email, subdomain')
           .not('author_email', 'is', null)
           .not('subdomain', 'is', null)
         
+        if (lastResortError) {
+          console.error(`  - Error fetching submissions:`, lastResortError)
+        }
+        
         if (lastResortSubmissions && subdomain.subdomain) {
           const normalizedSubdomain = subdomain.subdomain.toLowerCase().trim()
+          console.warn(`  - Searching for subdomain "${normalizedSubdomain}" in ${lastResortSubmissions.length} submissions`)
           const matchingSubmission = lastResortSubmissions.find(
             s => s.subdomain && s.subdomain.toLowerCase().trim() === normalizedSubdomain
           )
           
           if (matchingSubmission?.author_email) {
-            console.warn(`  - Found email ${matchingSubmission.author_email} in blog_submissions for subdomain ${subdomain.subdomain}`)
+            console.warn(`  ✓ Found email ${matchingSubmission.author_email} in blog_submissions for subdomain ${subdomain.subdomain}`)
             emailMap.set(subdomain.user_id, {
               email: matchingSubmission.author_email,
               source: 'blog_submissions_fallback'
@@ -486,14 +514,19 @@ export default async function handler(
               source: 'blog_submissions_fallback',
             })
           } else {
-            console.warn(`  - No email found in blog_submissions for subdomain ${subdomain.subdomain}`)
-            console.warn(`  - Available subdomains in blog_submissions:`, lastResortSubmissions.map(s => s.subdomain).filter(Boolean))
+            console.warn(`  ✗ No email found in blog_submissions for subdomain "${normalizedSubdomain}"`)
+            if (lastResortSubmissions.length > 0) {
+              const availableSubdomains = lastResortSubmissions.map(s => s.subdomain).filter(Boolean)
+              console.warn(`  - Available subdomains in blog_submissions:`, availableSubdomains)
+            }
           }
         } else {
           console.warn(`  - No submissions found or subdomain is null`)
         }
       }
     }
+
+    console.log(`Final usersWithEmails count: ${usersWithEmails.length}`)
 
     if (usersWithEmails.length === 0) {
       return res.status(200).json({
