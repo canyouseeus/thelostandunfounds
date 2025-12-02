@@ -1,6 +1,6 @@
 import * as React from "react"
 import { AnimatePresence, motion, MotionConfig, Transition, Variant, Variants } from "framer-motion"
-import { cn } from "@/components/ui/utils"
+import { cn } from "./utils"
 import { useMeasure } from "@uidotdev/usehooks"
 
 interface ExpandableContextType {
