@@ -419,7 +419,28 @@ export default function SubmitArticle() {
 
       if (error) throw error;
 
-      success('Your article has been submitted successfully! We\'ll review it and get back to you soon.');
+      // Send submission confirmation email
+      try {
+        const emailResponse = await fetch('/api/blog/submission-confirmation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            authorEmail: formData.author_email.trim(),
+            authorName: formData.author_name.trim(),
+            articleTitle: formData.title.trim(),
+          }),
+        });
+
+        if (!emailResponse.ok) {
+          console.warn('Failed to send submission confirmation email:', await emailResponse.text());
+        }
+      } catch (emailError) {
+        console.error('Error sending submission confirmation email:', emailError);
+      }
+
+      success('Your article has been submitted successfully! A confirmation email has been sent. We\'ll review it and get back to you soon.');
       
       // Reset form
       setFormData({

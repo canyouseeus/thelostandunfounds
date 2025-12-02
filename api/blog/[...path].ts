@@ -23,6 +23,15 @@ export default async function handler(
       case 'post-published':
       case 'notify':
         return await handlePostPublishedNotify(req, res)
+      case 'submission-confirmation':
+      case 'submitted':
+        return await handleSubmissionConfirmation(req, res)
+      case 'submission-approved':
+      case 'approved':
+        return await handleSubmissionApproved(req, res)
+      case 'submission-rejected':
+      case 'rejected':
+        return await handleSubmissionRejected(req, res)
       default:
         return res.status(404).json({ error: `Blog route not found: ${route}` })
     }
@@ -37,5 +46,29 @@ export default async function handler(
  */
 async function handlePostPublishedNotify(req: VercelRequest, res: VercelResponse) {
   const handler = await import('../../lib/api-handlers/_blog-post-published-notify-handler.js')
+  return await handler.default(req, res)
+}
+
+/**
+ * Submission Confirmation Handler
+ */
+async function handleSubmissionConfirmation(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/_blog-submission-confirmation-handler.js')
+  return await handler.default(req, res)
+}
+
+/**
+ * Submission Approved Handler
+ */
+async function handleSubmissionApproved(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/_blog-submission-approved-handler.js')
+  return await handler.default(req, res)
+}
+
+/**
+ * Submission Rejected Handler
+ */
+async function handleSubmissionRejected(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/_blog-submission-rejected-handler.js')
   return await handler.default(req, res)
 }

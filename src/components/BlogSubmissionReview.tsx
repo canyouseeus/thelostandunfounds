@@ -96,7 +96,28 @@ export default function BlogSubmissionReview() {
 
       if (error) throw error;
 
-      success('Submission approved successfully');
+      // Send approval notification email
+      try {
+        const emailResponse = await fetch('/api/blog/submission-approved', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            authorEmail: submission.author_email,
+            authorName: submission.author_name.trim(),
+            articleTitle: submission.title,
+          }),
+        });
+
+        if (!emailResponse.ok) {
+          console.warn('Failed to send approval notification email:', await emailResponse.text());
+        }
+      } catch (emailError) {
+        console.error('Error sending approval notification email:', emailError);
+      }
+
+      success('Submission approved successfully. A notification email has been sent to the author.');
       setSelectedSubmission(null);
       setReviewNotes('');
       loadSubmissions();
@@ -131,7 +152,29 @@ export default function BlogSubmissionReview() {
 
       if (error) throw error;
 
-      success('Submission rejected');
+      // Send rejection notification email with reason
+      try {
+        const emailResponse = await fetch('/api/blog/submission-rejected', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            authorEmail: submission.author_email,
+            authorName: submission.author_name.trim(),
+            articleTitle: submission.title,
+            rejectionReason: rejectionReason.trim(),
+          }),
+        });
+
+        if (!emailResponse.ok) {
+          console.warn('Failed to send rejection notification email:', await emailResponse.text());
+        }
+      } catch (emailError) {
+        console.error('Error sending rejection notification email:', emailError);
+      }
+
+      success('Submission rejected. A notification email with the rejection reason has been sent to the author.');
       setSelectedSubmission(null);
       setReviewNotes('');
       setRejectionReason('');
