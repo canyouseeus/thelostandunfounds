@@ -371,23 +371,42 @@ export default function BlogPost() {
 
     // Create improved regex that handles punctuation and apostrophes better
     // Build patterns that match book titles with flexible punctuation handling
-    const escapedTerms = emphasisTerms.map(term => {
-      // Escape special regex characters
-      let escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      // Handle apostrophes - allow both straight and curly quotes (make optional)
-      escaped = escaped.replace(/'/g, "[''`]?");
-      // Handle hyphens - allow various dash types (make optional)
-      escaped = escaped.replace(/-/g, '[—–-]?');
-      return escaped;
-    });
+    const escapedTerms = emphasisTerms
+      .filter(term => term && term.length > 0) // Filter out empty terms
+      .map(term => {
+        try {
+          // Escape special regex characters
+          let escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          // Handle apostrophes - allow both straight and curly quotes (make optional)
+          escaped = escaped.replace(/'/g, "[''`]?");
+          // Handle hyphens - allow various dash types (make optional)
+          escaped = escaped.replace(/-/g, '[—–-]?');
+          return escaped;
+        } catch (e) {
+          console.warn('Error escaping term:', term, e);
+          return term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Fallback to basic escaping
+        }
+      })
+      .filter(term => term && term.length > 0); // Filter out any empty results
+    
+    // Only create regex if we have terms to match
+    if (escapedTerms.length === 0) {
+      return text; // Return original text if no terms to match
+    }
     
     // Improved regex: more flexible word boundaries, handles punctuation better
     // Allows for apostrophes, commas, and various punctuation
     // Use word boundaries more flexibly - allow punctuation before/after
-    const combinedRegex = new RegExp(
-      `(?:^|\\s|[.,!?;:()\\[\\]"])(${escapedTerms.join('|')})(?=\\s|$|[.,!?;:()\\[\\]"])`,
-      'gi'
-    );
+    let combinedRegex: RegExp;
+    try {
+      combinedRegex = new RegExp(
+        `(?:^|\\s|[.,!?;:()\\[\\]"])(${escapedTerms.join('|')})(?=\\s|$|[.,!?;:()\\[\\]"])`,
+        'gi'
+      );
+    } catch (e) {
+      console.error('Error creating regex:', e, 'Terms:', escapedTerms);
+      return text; // Return original text if regex creation fails
+    }
 
     const parts: (string | JSX.Element)[] = [];
     let lastIndex = 0;
@@ -400,29 +419,54 @@ export default function BlogPost() {
 
     // Collect all matches first to avoid overlapping
     const matches: Array<{index: number, length: number, text: string}> = [];
-    while ((match = combinedRegex.exec(text)) !== null) {
-      // The regex includes leading space/start, so adjust the index
-      const fullMatch = match[0];
-      const actualText = match[1]; // The captured group (the term itself)
-      const leadingSpace = fullMatch.length - actualText.length;
-      const matchStart = match.index + leadingSpace; // Actual start of the term
-      const matchEnd = matchStart + actualText.length;
+    try {
+      // Reset regex lastIndex to avoid issues
+      combinedRegex.lastIndex = 0;
       
-      // Check if this match overlaps with a previous one
-      const isOverlapping = matches.some(m => 
-        (matchStart >= m.index && matchStart < m.index + m.length) ||
-        (matchEnd > m.index && matchEnd <= m.index + m.length) ||
-        (matchStart <= m.index && matchEnd >= m.index + m.length)
-      );
-      
-      if (!isOverlapping && !processedIndices.has(matchStart)) {
-        matches.push({
-          index: matchStart,
-          length: actualText.length,
-          text: actualText
-        });
-        processedIndices.add(matchStart);
+      while ((match = combinedRegex.exec(text)) !== null) {
+        // Safety check - prevent infinite loops
+        if (matches.length > 1000) {
+          console.warn('Too many matches, stopping to prevent infinite loop');
+          break;
+        }
+        
+        // The regex includes leading space/start, so adjust the index
+        const fullMatch = match[0];
+        const actualText = match[1]; // The captured group (the term itself)
+        
+        if (!actualText || match.index === undefined) {
+          continue;
+        }
+        
+        const leadingSpace = fullMatch.length - actualText.length;
+        const matchStart = match.index + leadingSpace; // Actual start of the term
+        const matchEnd = matchStart + actualText.length;
+        
+        // Validate indices
+        if (matchStart < 0 || matchStart >= text.length || matchEnd > text.length) {
+          continue;
+        }
+        
+        // Check if this match overlaps with a previous one
+        const isOverlapping = matches.some(m => 
+          (matchStart >= m.index && matchStart < m.index + m.length) ||
+          (matchEnd > m.index && matchEnd <= m.index + m.length) ||
+          (matchStart <= m.index && matchEnd >= m.index + m.length)
+        );
+        
+        if (!isOverlapping && !processedIndices.has(matchStart)) {
+          matches.push({
+            index: matchStart,
+            length: actualText.length,
+            text: actualText
+          });
+          processedIndices.add(matchStart);
+        }
       }
+    } catch (regexError: any) {
+      console.error('Error in regex matching:', regexError);
+      // Return original text if regex matching fails
+      return text;
     }
 
     // If no regex matches found, try a fallback approach for book titles
@@ -955,11 +999,24 @@ export default function BlogPost() {
     return elements;
     } catch (error: any) {
       console.error('Error formatting content:', error);
-      // Return a simple error message wrapped in a paragraph
+      console.error('Error details:', {
+        message: error?.message,
+        stack: error?.stack,
+        contentLength: content?.length,
+        postId: post?.id
+      });
+      // Return a simple error message wrapped in a paragraph, plus the raw content
       return [
         <p key="error" className="mb-6 text-red-400 text-lg leading-relaxed text-left">
           Error formatting content. Please refresh the page.
-        </p>
+        </p>,
+        <div key="raw-content" className="prose prose-invert max-w-none text-left">
+          {content.split('\n\n').map((para, idx) => (
+            <p key={idx} className="mb-6 text-white/90 text-lg leading-relaxed text-left">
+              {para}
+            </p>
+          ))}
+        </div>
       ];
     }
   };
