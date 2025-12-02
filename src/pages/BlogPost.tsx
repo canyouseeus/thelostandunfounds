@@ -64,13 +64,38 @@ export default function BlogPost() {
   const loadPost = async (postSlug: string, urlSubdomain: string | null = null) => {
     try {
       setLoading(true);
-      // Get subdomain from URL params, then fallback to hostname
+      // Get subdomain from URL params, then fallback to pathname
       let subdomain = urlSubdomain;
       if (!subdomain) {
-        const hostname = window.location.hostname;
-        subdomain = hostname.split('.')[0] !== 'www' && hostname.split('.')[0] !== 'thelostandunfounds' 
-          ? hostname.split('.')[0] 
-          : null;
+        // Extract subdomain from URL path (e.g., /thelostarchives/... or /blog/subdomain/...)
+        const pathname = window.location.pathname;
+        const pathParts = pathname.split('/').filter(Boolean);
+        
+        // IMPORTANT: /thelostarchives/ is the main blog route, NOT a subdomain
+        // Posts in THE LOST ARCHIVES have subdomain IS NULL
+        if (pathParts[0] === 'thelostarchives') {
+          // This is a main blog post, subdomain should be NULL
+          subdomain = null;
+        } else if (pathParts[0] === 'blog' && pathParts[1]) {
+          // /blog/:subdomain/:slug format
+          subdomain = pathParts[1];
+        } else if (pathParts[0] === 'book-club' || 
+                   pathParts[0] === 'gearheads' || 
+                   pathParts[0] === 'borderlands' || 
+                   pathParts[0] === 'science' || 
+                   pathParts[0] === 'newtheory') {
+          // These are actual subdomains
+          subdomain = pathParts[0];
+        } else {
+          // Try hostname as fallback (but exclude localhost, www, and main domain)
+          const hostname = window.location.hostname;
+          const hostnameParts = hostname.split('.');
+          if (hostnameParts.length > 1 && hostnameParts[0] !== 'www' && hostnameParts[0] !== 'thelostandunfounds') {
+            subdomain = hostnameParts[0];
+          } else {
+            subdomain = null; // Main blog posts have NULL subdomain
+          }
+        }
       }
       
       let query = supabase
@@ -133,13 +158,38 @@ export default function BlogPost() {
 
   const loadNextPost = async (currentSlug: string, urlSubdomain: string | null = null) => {
     try {
-      // Get subdomain from URL params, then fallback to hostname
+      // Get subdomain from URL params, then fallback to pathname
       let subdomain = urlSubdomain;
       if (!subdomain) {
-        const hostname = window.location.hostname;
-        subdomain = hostname.split('.')[0] !== 'www' && hostname.split('.')[0] !== 'thelostandunfounds' 
-          ? hostname.split('.')[0] 
-          : null;
+        // Extract subdomain from URL path (e.g., /thelostarchives/... or /blog/subdomain/...)
+        const pathname = window.location.pathname;
+        const pathParts = pathname.split('/').filter(Boolean);
+        
+        // IMPORTANT: /thelostarchives/ is the main blog route, NOT a subdomain
+        // Posts in THE LOST ARCHIVES have subdomain IS NULL
+        if (pathParts[0] === 'thelostarchives') {
+          // This is a main blog post, subdomain should be NULL
+          subdomain = null;
+        } else if (pathParts[0] === 'blog' && pathParts[1]) {
+          // /blog/:subdomain/:slug format
+          subdomain = pathParts[1];
+        } else if (pathParts[0] === 'book-club' || 
+                   pathParts[0] === 'gearheads' || 
+                   pathParts[0] === 'borderlands' || 
+                   pathParts[0] === 'science' || 
+                   pathParts[0] === 'newtheory') {
+          // These are actual subdomains
+          subdomain = pathParts[0];
+        } else {
+          // Try hostname as fallback (but exclude localhost, www, and main domain)
+          const hostname = window.location.hostname;
+          const hostnameParts = hostname.split('.');
+          if (hostnameParts.length > 1 && hostnameParts[0] !== 'www' && hostnameParts[0] !== 'thelostandunfounds') {
+            subdomain = hostnameParts[0];
+          } else {
+            subdomain = null; // Main blog posts have NULL subdomain
+          }
+        }
       }
       
       // Get all published posts ordered by published_at (oldest first for reading order)
