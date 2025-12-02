@@ -100,3 +100,23 @@ When creating any deployment (Vercel, Railway, or other platforms), you MUST:
 - ✅ **ALWAYS** report verification results clearly
 
 For detailed verification workflow and code examples, see: `.cursor/rules/deployment-verification-rule.mdc`
+
+## BLOG POST STYLE GUIDE - CRITICAL
+**ALWAYS follow the style guide when formatting blog posts. See `BLOG_POST_STYLE_GUIDE.md` for complete documentation.**
+
+### Key Style Rules:
+1. **Book Title Linking**: Maximum 2 links per book (1 in intro, 1 in section). After 2 links, display as bold uppercase text only.
+2. **Book Title Formatting**: All book titles MUST be displayed in UPPERCASE and bold. Linked titles are underlined.
+3. **Author Name in Disclosure**: Author names in Amazon Affiliate Disclosure MUST be UPPERCASE and bold.
+4. **Excerpt Display**: Excerpt/preview text displays in header after title and date (if available).
+5. **Header Detection**: Headers are auto-detected (short, title case, no ending punctuation). Book titles in headers can be linked.
+6. **Section Detection**: Book sections are detected by looking backwards for headings containing book titles (fuzzy matching, no colon required).
+7. **Text Alignment**: All body text MUST be left-aligned. Disclosure text is justified (only exception).
+
+### Implementation:
+- Book title matching uses fuzzy matching to handle case, punctuation, and apostrophe variations
+- Section detection uses normalized title matching (doesn't require exact case or colons)
+- Author name formatting is handled by `formatDisclosure()` function
+- All formatting is automatic based on content structure
+
+**For complete documentation, see: `BLOG_POST_STYLE_GUIDE.md`**
