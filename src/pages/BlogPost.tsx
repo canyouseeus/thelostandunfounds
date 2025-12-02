@@ -9,7 +9,6 @@ import { supabase } from '../lib/supabase';
 import { LoadingSpinner } from '../components/Loading';
 import BlogAnalysis from '../components/BlogAnalysis';
 import ShareButtons from '../components/ShareButtons';
-import BookPreview from '../components/BookPreview';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 interface AffiliateLink {
@@ -567,13 +566,16 @@ export default function BlogPost() {
       // - Or start with common heading words like "Conclusion", "Introduction", "Early", etc.
       const prevPara = paragraphs[index - 1]?.trim() || '';
       const isAfterEmptyLine = prevPara === '' || prevPara === '⸻';
-      const startsWithHeadingWord = trimmed.match(/^(Conclusion|Early|The E-Myth|Contagious|This Is Not|The Alchemist|Bitcoin|A Creative Brand)/i);
+      const startsWithHeadingWord = trimmed.match(/^(Conclusion|Early|The E-Myth|Contagious|This Is Not|The Alchemist|Bitcoin|A Creative Brand|Building|Leaders|How|What|When|Where|Why)/i);
       
       // Also check if it looks like a section title (title case, short, no ending punctuation)
       const isTitleCase = trimmed.split(' ').every(word => 
         word.length === 0 || word[0] === word[0].toUpperCase()
       );
       const isShortTitle = trimmed.length < 100 && trimmed.split(' ').length < 12;
+      
+      // Check if it contains a colon (common for book section headings like "Book Title: Subtitle")
+      const hasColon = trimmed.includes(':');
       
       // More lenient heading detection - if it matches a heading pattern, it's likely a heading
       // If it starts with a known heading word, it's definitely a heading
@@ -589,21 +591,22 @@ export default function BlogPost() {
         (
           index === 0 || 
           isAfterEmptyLine ||
-          (isTitleCase && isShortTitle && isAfterEmptyLine)
+          (isTitleCase && isShortTitle && isAfterEmptyLine) ||
+          (hasColon && isShortTitle) // Headings with colons are likely section headers
         )
       );
       
       if (isLikelyHeading) {
-        // Check if this is a book's dedicated section
-        // Look for book titles in the heading (case-insensitive) and check for colon
-        const isBookSection = Object.keys(bookLinkCounts).some(bookTitle => {
+        // Check if this heading contains any book titles (case-insensitive)
+        // Allow links in headings that contain book titles
+        const containsBookTitle = Object.keys(bookLinkCounts).some(bookTitle => {
           const headingLower = trimmed.toLowerCase();
           const bookLower = bookTitle.toLowerCase();
-          return headingLower.includes(bookLower) && trimmed.includes(':');
+          return headingLower.includes(bookLower);
         });
         
-        // Format with emphasis, allowing links in section headings
-        const headingContent = formatTextWithEmphasis(trimmed, bookLinkCounts, isBookSection);
+        // Format with emphasis, allowing links in headings that contain book titles
+        const headingContent = formatTextWithEmphasis(trimmed, bookLinkCounts, containsBookTitle);
         elements.push(
           <h2 key={`heading-${index}`} className="text-2xl font-bold text-white mt-12 mb-8 text-left first:mt-0">
             {Array.isArray(headingContent) ? headingContent : headingContent}
@@ -929,12 +932,14 @@ export default function BlogPost() {
               {formatDate(post.published_at)}
             </time>
           )}
+          
+          {/* Excerpt/Preview Text */}
+          {post.excerpt && (
+            <p className="text-white/80 text-lg leading-relaxed mt-4 text-left">
+              {post.excerpt}
+            </p>
+          )}
         </header>
-
-        {/* Book Preview Section */}
-        {post.amazon_affiliate_links && post.amazon_affiliate_links.length > 0 && (
-          <BookPreview books={post.amazon_affiliate_links} />
-        )}
 
         <div className="prose prose-invert max-w-none text-left">
           {formatContent(post.content)}
