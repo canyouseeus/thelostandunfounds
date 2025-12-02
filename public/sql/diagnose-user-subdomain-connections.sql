@@ -34,7 +34,6 @@ ORDER BY bs.subdomain, bs.created_at DESC;
 SELECT 
   'Subdomains in blog_posts' as check_type,
   bp.subdomain,
-  bp.author_name,
   bp.author_id,
   bp.user_id,
   bp.created_at,
@@ -52,7 +51,8 @@ SELECT
   COALESCE(bs.subdomain, bp.subdomain) as subdomain,
   bs.author_email,
   bs.author_name,
-  bp.author_name as post_author_name,
+  bp.author_id as post_author_id,
+  bp.user_id as post_user_id,
   'Missing from user_subdomains' as issue
 FROM (
   SELECT DISTINCT subdomain, author_email, author_name
@@ -60,7 +60,7 @@ FROM (
   WHERE subdomain IS NOT NULL
 ) bs
 FULL OUTER JOIN (
-  SELECT DISTINCT subdomain, author_name
+  SELECT DISTINCT subdomain, author_id, user_id
   FROM blog_posts
   WHERE subdomain IS NOT NULL
 ) bp ON bs.subdomain = bp.subdomain

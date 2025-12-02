@@ -68,7 +68,6 @@ BEGIN
       bp.subdomain,
       bp.author_id,
       bp.user_id,
-      bp.author_name,
       MIN(bp.created_at) as first_used_at
     FROM blog_posts bp
     WHERE bp.subdomain IS NOT NULL
@@ -76,7 +75,7 @@ BEGIN
         SELECT 1 FROM user_subdomains us 
         WHERE us.subdomain = bp.subdomain
       )
-    GROUP BY bp.subdomain, bp.author_id, bp.user_id, bp.author_name
+    GROUP BY bp.subdomain, bp.author_id, bp.user_id
     ORDER BY first_used_at
   LOOP
     -- Try to find user by author_id or user_id
