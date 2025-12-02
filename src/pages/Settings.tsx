@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
 import { Settings, Bell, Shield, Trash2, Key } from 'lucide-react';
 import { LoadingSpinner } from '../components/Loading';
+import { supabase } from '../lib/supabase';
 
 export default function SettingsPage() {
   const { user, signOut } = useAuth();
@@ -52,8 +53,6 @@ export default function SettingsPage() {
 
     setPasswordLoading(true);
     try {
-      const { supabase } = await import('../lib/supabase');
-      
       // Update password using Supabase
       const { error } = await supabase.auth.updateUser({
         password: newPassword

@@ -100,3 +100,32 @@ When creating any deployment (Vercel, Railway, or other platforms), you MUST:
 - ✅ **ALWAYS** report verification results clearly
 
 For detailed verification workflow and code examples, see: `.cursor/rules/deployment-verification-rule.mdc`
+
+## DEPLOYMENT LOG CLEANUP RULE - CRITICAL
+**ALWAYS check deployment logs for ALL warnings and errors, and fix them so there are NONE.**
+
+When reviewing deployment logs, you MUST:
+
+1. ✅ **Extract All Warnings and Errors** - Parse logs for any warnings or errors (not just failures)
+2. ✅ **Identify Root Causes** - Determine what code/config is causing each issue
+3. ✅ **Fix All Issues** - Resolve every warning and error found
+4. ✅ **Verify Clean Logs** - Re-deploy and confirm zero warnings/errors
+5. ✅ **Document Fixes** - Note what was fixed and why
+
+**Common Issues to Fix:**
+- CSS syntax errors (e.g., `Expected identifier but found "-"`)
+- Dynamic import warnings (inconsistent static/dynamic imports)
+- Large chunk size warnings (> 500 kB chunks)
+- TypeScript compilation errors
+- Build errors of any kind
+
+**CRITICAL REMINDERS:**
+- ❌ **NEVER** ignore warnings in deployment logs
+- ❌ **NEVER** deploy with errors (even if build "succeeds")
+- ❌ **NEVER** assume warnings are harmless
+- ✅ **ALWAYS** check ALL log lines for warnings/errors
+- ✅ **ALWAYS** fix every warning and error found
+- ✅ **ALWAYS** verify fixes with a clean re-deployment
+- ✅ **ALWAYS** aim for zero warnings and zero errors
+
+For detailed cleanup workflow and fix examples, see: `.cursor/rules/deployment-log-cleanup-rule.mdc`

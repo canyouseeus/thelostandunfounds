@@ -3,6 +3,7 @@
 
 import * as authTools from '../servers/auth/index';
 import type { User, AuthSession } from '../servers/auth/index';
+import { supabase } from '../lib/supabase';
 
 // Re-export types
 export type { User, AuthSession };
@@ -100,7 +101,6 @@ export class UnifiedAuthService {
   async clearAuthStorage(): Promise<void> {
     try {
       // Clear Supabase auth session
-      const { supabase } = await import('../lib/supabase');
       await supabase.auth.signOut();
       
       // Clear all localStorage items related to Supabase
