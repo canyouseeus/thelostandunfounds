@@ -281,15 +281,15 @@ export default function Blog() {
                           expandDelay={200}
                           collapseDelay={300}
                         >
-                          <ExpandableCardHeader className="mb-2 pb-2">
-                            <h2 className="text-base font-black text-white mb-1 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
+                          <ExpandableCardHeader className="mb-1 pb-1">
+                            <h2 className="text-base font-black text-white mb-0 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
                               {post.title}
                             </h2>
                           </ExpandableCardHeader>
                         
                           <ExpandableCardContent className="flex-1 min-h-0">
                             {excerpt && (
-                              <div className="mb-2">
+                              <div className="mb-1">
                                 <p className="text-white/60 text-sm leading-relaxed line-clamp-4 text-left">
                                   {excerpt}
                                 </p>
@@ -319,20 +319,18 @@ export default function Blog() {
                             </ExpandableContent>
                           </ExpandableCardContent>
                           
-                          <ExpandableContent preset="slide-up">
-                            <ExpandableCardFooter className="mt-auto p-4 pt-2 pb-4">
-                              <div className="flex items-center justify-between gap-2 min-w-0 w-full">
-                                <time className="text-white/70 text-xs font-medium truncate min-w-0 flex-1">
-                                  {formatDate(post.published_at || post.created_at)}
-                                </time>
-                                {!isExpanded && (
-                                  <span className="text-white/90 text-xs font-semibold transition flex-shrink-0 whitespace-nowrap">
-                                    Click to expand →
-                                  </span>
-                                )}
-                              </div>
-                            </ExpandableCardFooter>
-                          </ExpandableContent>
+                          <ExpandableCardFooter className="mt-auto p-3 pt-2 pb-3">
+                            <div className="flex items-center justify-between gap-2 min-w-0 w-full">
+                              <time className="text-white/70 text-xs font-medium truncate min-w-0 flex-1">
+                                {formatDate(post.published_at || post.created_at)}
+                              </time>
+                              {!isExpanded && (
+                                <span className="text-white/90 text-xs font-semibold transition flex-shrink-0 whitespace-nowrap">
+                                  Click to expand →
+                                </span>
+                              )}
+                            </div>
+                          </ExpandableCardFooter>
                         </ExpandableCard>
                       </div>
                     </ExpandableTrigger>
@@ -389,15 +387,15 @@ export default function Blog() {
                           expandDelay={200}
                           collapseDelay={300}
                         >
-                          <ExpandableCardHeader className="mb-2 pb-2">
-                            <h2 className="text-base font-black text-white mb-1 tracking-wide transition line-clamp-2">
+                          <ExpandableCardHeader className="mb-1 pb-1">
+                            <h2 className="text-base font-black text-white mb-0 tracking-wide transition line-clamp-2">
                               {post.title}
                             </h2>
                           </ExpandableCardHeader>
                           
                           <ExpandableCardContent className="flex-1 min-h-0">
                             {excerpt && (
-                              <div className="mb-2">
+                              <div className="mb-1">
                                 <p className="text-white/60 text-sm leading-relaxed line-clamp-4 text-left">
                                   {excerpt}
                                 </p>
@@ -427,20 +425,18 @@ export default function Blog() {
                             </ExpandableContent>
                           </ExpandableCardContent>
                           
-                          <ExpandableContent preset="slide-up">
-                            <ExpandableCardFooter className="mt-auto p-4 pt-2 pb-4">
-                              <div className="flex items-center justify-between gap-2 min-w-0 w-full">
-                                <time className="text-white/70 text-xs font-medium truncate min-w-0 flex-1">
-                                  {formatDate(post.published_at || post.created_at)}
-                                </time>
-                                {!isExpanded && (
-                                  <span className="text-white/90 text-xs font-semibold transition flex-shrink-0 whitespace-nowrap">
-                                    Click to expand →
-                                  </span>
-                                )}
-                              </div>
-                            </ExpandableCardFooter>
-                          </ExpandableContent>
+                          <ExpandableCardFooter className="mt-auto p-3 pt-2 pb-3">
+                            <div className="flex items-center justify-between gap-2 min-w-0 w-full">
+                              <time className="text-white/70 text-xs font-medium truncate min-w-0 flex-1">
+                                {formatDate(post.published_at || post.created_at)}
+                              </time>
+                              {!isExpanded && (
+                                <span className="text-white/90 text-xs font-semibold transition flex-shrink-0 whitespace-nowrap">
+                                  Click to expand →
+                                </span>
+                              )}
+                            </div>
+                          </ExpandableCardFooter>
                         </ExpandableCard>
                       </div>
                     </ExpandableTrigger>
