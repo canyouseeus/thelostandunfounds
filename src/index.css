@@ -180,16 +180,17 @@ body {
 
 .menu-toggle-text {
   flex: 1;
+  padding-right: 0.5rem;
 }
 
 .menu-toggle-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 0.75rem;
+  width: 1rem;
   text-align: center;
   flex-shrink: 0;
-  margin-left: 0.25rem;
+  margin-left: auto;
 }
 
 .menu-subsection {
