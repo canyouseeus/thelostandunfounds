@@ -10,6 +10,7 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 const SQL_FILES = [
   '/sql/comprehensive-admin-setup.sql',
   '/sql/create-brand-assets-storage-bucket.sql',
+  '/sql/fix-brand-assets-rls-policies.sql',
   '/sql/setup-admin-user.sql',
   '/sql/update-admin-username-and-subdomain.sql',
   '/sql/move-post-to-book-club.sql',
