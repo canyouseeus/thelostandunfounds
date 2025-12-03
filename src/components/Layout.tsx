@@ -294,7 +294,8 @@ export default function Layout() {
                     onClick={() => setArchivesMenuOpen(!archivesMenuOpen)}
                     onMouseEnter={() => handleSubmenuMouseEnter('archives')}
                   >
-                    THE LOST ARCHIVES {archivesMenuOpen ? '▼' : '▶'}
+                    <span className="menu-toggle-text">THE LOST ARCHIVES</span>
+                    <span className="menu-toggle-icon">{archivesMenuOpen ? '▼' : '▶'}</span>
                   </button>
                   <div 
                     className={`menu-subsection ${archivesMenuOpen ? 'open' : ''}`}
@@ -377,7 +378,8 @@ export default function Layout() {
                     onClick={() => setMoreMenuOpen(!moreMenuOpen)}
                     onMouseEnter={() => handleSubmenuMouseEnter('more')}
                   >
-                    MORE {moreMenuOpen ? '▼' : '▶'}
+                    <span className="menu-toggle-text">MORE</span>
+                    <span className="menu-toggle-icon">{moreMenuOpen ? '▼' : '▶'}</span>
                   </button>
                   <div 
                     className={`menu-subsection ${moreMenuOpen ? 'open' : ''}`}

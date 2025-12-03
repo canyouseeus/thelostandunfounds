@@ -124,8 +124,9 @@ body {
 }
 
 .menu-item {
-  display: block;
-  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  padding: 0.875rem 1rem;
   color: white;
   text-decoration: none;
   transition: background-color 0.3s ease, color 0.3s ease;
@@ -143,6 +144,7 @@ body {
   pointer-events: auto;
   min-height: 44px;
   touch-action: manipulation;
+  line-height: 1.5;
 }
 
 .menu-item:hover {
@@ -174,6 +176,19 @@ body {
   justify-content: space-between;
   align-items: center;
   white-space: nowrap;
+}
+
+.menu-toggle-text {
+  flex: 1;
+}
+
+.menu-toggle-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.75rem;
+  text-align: center;
+  flex-shrink: 0;
 }
 
 .menu-subsection {
