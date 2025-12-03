@@ -903,6 +903,13 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
 
       const allScripts: SQLScript[] = [
         {
+          name: 'Fix Brand Assets RLS Policies - FIX UPLOAD ERRORS',
+          filename: 'fix-brand-assets-rls-policies.sql',
+          content: fixBrandAssetsRLSContent || '// File not found - check public/sql folder',
+          description: 'FIXES: "new row violates row-level security policy" errors when uploading brand assets. Run this script if you\'re getting RLS policy violations when trying to upload files from the admin dashboard. This recreates the RLS policies with the correct permissions for authenticated users to upload, update, and delete brand assets.',
+          createdAt: getScriptTimestamp('fix-brand-assets-rls-policies.sql')
+        },
+        {
           name: 'Comprehensive Admin Setup - FIX ALL ADMIN PERMISSIONS',
           filename: 'comprehensive-admin-setup.sql',
           content: comprehensiveAdminSetupContent || '// File not found - check public/sql folder',
@@ -922,13 +929,6 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
           content: brandAssetsBucketContent || '// File not found - check public/sql folder',
           description: 'IMPORTANT: Storage buckets must be created through the Supabase Dashboard (Storage > New bucket). This script sets up RLS policies. Steps: 1) Create "brand-assets" bucket in Dashboard (public, 50MB limit), 2) Then run this script to set up policies for authenticated upload/update/delete and public read access.',
           createdAt: getScriptTimestamp('create-brand-assets-storage-bucket.sql')
-        },
-        {
-          name: 'Fix Brand Assets RLS Policies - FIX UPLOAD ERRORS',
-          filename: 'fix-brand-assets-rls-policies.sql',
-          content: fixBrandAssetsRLSContent || '// File not found - check public/sql folder',
-          description: 'FIXES: "new row violates row-level security policy" errors when uploading brand assets. Run this script if you\'re getting RLS policy violations when trying to upload files from the admin dashboard. This recreates the RLS policies with the correct permissions for authenticated users to upload, update, and delete brand assets.',
-          createdAt: getScriptTimestamp('fix-brand-assets-rls-policies.sql')
         },
         {
           name: 'Add Blog Title to User Subdomains',

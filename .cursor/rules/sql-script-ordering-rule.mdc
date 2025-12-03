@@ -1,0 +1,50 @@
+# SQL Script Ordering Rule
+
+## CRITICAL: New Scripts Must Appear at Top of Page
+
+**When adding a new SQL script to the `/sql` page, it MUST be added at the TOP of the `allScripts` array in `src/pages/SQL.tsx`.**
+
+### Why This Matters
+
+- Scripts are automatically sorted by `createdAt` timestamp (newest first)
+- New scripts with current timestamps will appear at the top of the page
+- Users expect to see the most recent/fix scripts first
+- This ensures new scripts are immediately visible without scrolling
+
+### Implementation
+
+1. **Add new script at the TOP of `allScripts` array** (right after the opening bracket)
+2. **Use `getScriptTimestamp(filename)` for `createdAt`** - this ensures the script gets the current timestamp
+3. **Scripts are automatically sorted** by `createdAt` descending in the code (line ~1201)
+4. **Order in array doesn't matter for display** - sorting is automatic, but adding at top is best practice
+
+### Example
+
+```typescript
+const allScripts: SQLScript[] = [
+  {
+    name: 'New Fix Script - FIXES ISSUE',
+    filename: 'fix-new-issue.sql',
+    content: newScriptContent || '// File not found',
+    description: 'Fixes the new issue...',
+    createdAt: getScriptTimestamp('fix-new-issue.sql')  // Gets current timestamp
+  },
+  // ... existing scripts below
+];
+```
+
+### Related Files
+
+- `src/pages/SQL.tsx` - Main SQL scripts page
+- `sql/` - SQL script files
+- `public/sql/` - Public SQL script files (must match `sql/` folder)
+
+### Deployment
+
+After adding a new script:
+1. ✅ Add script file to `sql/` folder
+2. ✅ Copy to `public/sql/` folder
+3. ✅ Add fetch code in `SQL.tsx` to load the script
+4. ✅ Add script to `allScripts` array at the TOP
+5. ✅ Add to `lib/api-handlers/_sql-latest-handler.ts` SQL_FILES array
+6. ✅ Deploy to make script accessible
