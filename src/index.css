@@ -187,12 +187,12 @@ body {
 }
 
 .menu-item:last-child {
-  border-bottom: none;
+  border-bottom: none !important;
 }
 
 .menu-dropdown button.menu-item:last-of-type,
 .menu-dropdown .menu-item:last-of-type {
-  border-bottom: none;
+  border-bottom: none !important;
 }
 
 .menu-separator {
