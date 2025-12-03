@@ -163,19 +163,22 @@ body {
   min-width: 0;
   width: 100%;
   box-sizing: border-box;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .menu-item.user-info > div:first-child {
   white-space: nowrap;
   width: 100%;
   overflow: hidden;
+  margin-bottom: 0.25rem;
 }
 
 .menu-item.user-info > div:last-child {
   white-space: nowrap;
   width: 100%;
   overflow: hidden;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   line-height: 1.2;
 }
 
