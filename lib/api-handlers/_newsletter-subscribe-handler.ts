@@ -239,9 +239,12 @@ export default async function handler(
                               <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 0; text-align: center; background-color: #000000 !important;">
                                 If you didn't sign up for this newsletter, you can safely ignore this email.
                               </p>
-                              <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 20px 0 0 0; text-align: center; background-color: #000000 !important;">
-                                © ${new Date().getFullYear()} THE LOST+UNFOUNDS. All rights reserved.
-                              </p>
+              <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 20px 0 10px 0; text-align: center; background-color: #000000 !important;">
+                © ${new Date().getFullYear()} THE LOST+UNFOUNDS. All rights reserved.
+              </p>
+              <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: center; background-color: #000000 !important;">
+                <a href="https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(email)}" style="color: rgba(255, 255, 255, 0.6) !important; text-decoration: underline;">Unsubscribe from this newsletter</a>
+              </p>
                             </td>
                           </tr>
                         </table>

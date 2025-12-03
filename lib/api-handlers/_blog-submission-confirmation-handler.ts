@@ -120,7 +120,7 @@ async function sendZohoEmail(
 /**
  * Generate email HTML for submission confirmation
  */
-function generateEmailHtml(articleTitle: string, authorName: string): string {
+function generateEmailHtml(articleTitle: string, authorName: string, authorEmail?: string): string {
   const currentYear = new Date().getFullYear()
   
   return `<!DOCTYPE html>
@@ -159,8 +159,11 @@ function generateEmailHtml(articleTitle: string, authorName: string): string {
                 We appreciate your contribution to THE LOST ARCHIVES community.
               </p>
               <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0;">
-              <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 0; text-align: left; font-family: Arial, sans-serif;">
+              <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 0 0 10px 0; text-align: left; font-family: Arial, sans-serif;">
                 © ${currentYear} THE LOST+UNFOUNDS. All rights reserved.
+              </p>
+              <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: left; font-family: Arial, sans-serif;">
+                <a href="https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(authorEmail || '')}" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe from emails</a>
               </p>
             </td>
           </tr>
@@ -203,7 +206,7 @@ export default async function handler(
       : fromEmail
 
     const subject = `Article Submitted: ${articleTitle}`
-    const htmlContent = generateEmailHtml(articleTitle, authorName)
+    const htmlContent = generateEmailHtml(articleTitle, authorName, authorEmail)
 
     const result = await sendZohoEmail(
       accessToken,

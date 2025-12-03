@@ -121,7 +121,7 @@ async function sendZohoEmail(
 /**
  * Generate welcome email HTML
  */
-function generateWelcomeEmailHtml(userName: string, gettingStartedUrl: string): string {
+function generateWelcomeEmailHtml(userName: string, gettingStartedUrl: string, userEmail?: string): string {
   const currentYear = new Date().getFullYear()
   
   return `<!DOCTYPE html>
@@ -193,7 +193,7 @@ function generateWelcomeEmailHtml(userName: string, gettingStartedUrl: string): 
 /**
  * Generate newsletter confirmation email HTML
  */
-function generateNewsletterConfirmationHtml(): string {
+function generateNewsletterConfirmationHtml(subscriberEmail?: string): string {
   const currentYear = new Date().getFullYear()
   
   return `<!DOCTYPE html>
@@ -245,8 +245,11 @@ function generateNewsletterConfirmationHtml(): string {
               <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 0; text-align: center; background-color: #000000 !important;">
                 If you didn't sign up for this newsletter, you can safely ignore this email.
               </p>
-              <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 20px 0 0 0; text-align: center; background-color: #000000 !important;">
+              <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 20px 0 10px 0; text-align: center; background-color: #000000 !important;">
                 © ${currentYear} THE LOST+UNFOUNDS. All rights reserved.
+              </p>
+              <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: center; background-color: #000000 !important;">
+                <a href="https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(subscriberEmail || '')}" style="color: rgba(255, 255, 255, 0.6) !important; text-decoration: underline;">Unsubscribe from this newsletter</a>
               </p>
             </td>
           </tr>
@@ -276,7 +279,7 @@ function getOrdinalSuffix(num: number): string {
   return num + 'th'
 }
 
-function generatePublicationEmailHtml(postTitle: string, postUrl: string, authorName: string, postNumber: number): string {
+function generatePublicationEmailHtml(postTitle: string, postUrl: string, authorName: string, postNumber: number, authorEmail?: string): string {
   const currentYear = new Date().getFullYear()
   const ordinal = getOrdinalSuffix(postNumber)
   
@@ -437,7 +440,7 @@ export default async function handler(
           const userName = user.subdomain || user.email.split('@')[0] || 'Contributor'
           const gettingStartedUrl = 'https://www.thelostandunfounds.com/blog/getting-started'
           const subject = 'Welcome to THE LOST ARCHIVES BOOK CLUB'
-          const htmlContent = generateWelcomeEmailHtml(userName, gettingStartedUrl)
+          const htmlContent = generateWelcomeEmailHtml(userName, gettingStartedUrl, user.email)
 
           const result = await sendZohoEmail(
             accessToken,
@@ -514,7 +517,7 @@ export default async function handler(
                 : `https://www.thelostandunfounds.com/thelostarchives/${post.slug}`
 
               const subject = `Congratulations! Your ${getOrdinalSuffix(postNumber)} Article Has Been Published: ${post.title}`
-              const htmlContent = generatePublicationEmailHtml(post.title, postUrl, matchingSubmission.author_name, postNumber)
+              const htmlContent = generatePublicationEmailHtml(post.title, postUrl, matchingSubmission.author_name, postNumber, matchingSubmission.author_email)
 
               const result = await sendZohoEmail(
                 accessToken,
@@ -566,7 +569,7 @@ export default async function handler(
       for (const subscriber of subscribers) {
         try {
           const subject = 'Welcome to THE LOST+UNFOUNDS'
-          const htmlContent = generateNewsletterConfirmationHtml()
+          const htmlContent = generateNewsletterConfirmationHtml(subscriber.email)
 
           const result = await sendZohoEmail(
             accessToken,
