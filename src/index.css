@@ -145,6 +145,7 @@ body {
   min-height: 44px;
   touch-action: manipulation;
   line-height: 1.5;
+  position: relative;
 }
 
 .menu-item:hover {
