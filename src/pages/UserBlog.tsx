@@ -199,7 +199,7 @@ export default function UserBlog() {
   if (error) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
+        <div className="bg-red-900/20 border border-white rounded-none p-6">
           <h1 className="text-2xl font-bold text-white mb-4">Error</h1>
           <p className="text-red-400 mb-4">{error}</p>
           <Link
@@ -264,8 +264,8 @@ export default function UserBlog() {
                 to={`/blog/${post.slug}`}
                 className="group"
               >
-                <article className="bg-black/50 border-2 border-white/10 rounded-lg p-5 h-full flex flex-col hover:border-white/30 hover:shadow-lg hover:shadow-white/10 transition-all duration-300 transform hover:-translate-y-1">
-                  <div className="mb-4 pb-3 border-b border-white/10">
+                <article className="bg-black/50 border-2 border-white rounded-none p-5 h-full flex flex-col hover:border-white hover:shadow-lg hover:shadow-white/10 transition-all duration-300 transform hover:-translate-y-1">
+                  <div className="mb-4 pb-3 border-b border-white">
                     <h2 className="text-base font-black text-white mb-2 tracking-wide group-hover:text-white/90 transition whitespace-nowrap overflow-hidden text-ellipsis">
                       {post.title}
                     </h2>
@@ -279,7 +279,7 @@ export default function UserBlog() {
                     </div>
                   )}
 
-                  <div className="mt-auto pt-3 border-t border-white/10">
+                  <div className="mt-auto pt-3 border-t border-white">
                     <div className="flex items-center justify-between">
                       <time className="text-white/40 text-xs font-medium">
                         {formatDate(post.published_at || post.created_at)}

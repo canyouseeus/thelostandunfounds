@@ -556,7 +556,7 @@ export default function Admin() {
   if (componentError) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
+        <div className="bg-red-900/20 border border-white rounded-none p-6">
           <h2 className="text-xl font-bold text-red-400 mb-2">Error Loading Admin Dashboard</h2>
           <p className="text-red-300 mb-4">{componentError}</p>
           <button
@@ -607,7 +607,7 @@ export default function Admin() {
               <div className="flex items-center gap-3">
                 <Link
                   to={userSubdomain ? `/${userSubdomain}/bookclubprofile` : "/bookclubprofile"}
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition flex items-center gap-2"
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white rounded-none text-white text-sm font-medium transition flex items-center gap-2"
                 >
                   <User className="w-4 h-4" />
                   Profile
@@ -617,7 +617,7 @@ export default function Admin() {
       </div>
 
       {/* Tabs */}
-      <div className="mb-6 border-b border-white/10">
+      <div className="mb-6 border-b border-white">
         <div className="flex gap-4 flex-wrap">
           {(['overview', 'users', 'subscriptions', 'products', 'blog', 'newsletter', 'submissions', 'assets', 'settings'] as const).map((tab) => (
             <button
@@ -640,12 +640,12 @@ export default function Admin() {
         <div className="space-y-6">
           {/* Alerts Section */}
           {alerts.length > 0 && (
-            <div className="bg-black/50 border border-white/10 rounded-none p-6">
+            <div className="bg-black/50 border border-white rounded-none p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <Bell className="w-5 h-5 text-yellow-400" />
                   <h2 className="text-lg font-bold text-white">Recent Alerts</h2>
-                  <span className="px-2 py-1 bg-yellow-400/20 text-yellow-400 rounded text-xs">
+                  <span className="px-2 py-1 bg-yellow-400/20 text-yellow-400 rounded-none text-xs">
                     {alerts.filter(a => !a.read).length} New
                   </span>
                 </div>
@@ -680,7 +680,7 @@ export default function Admin() {
                       <p className="text-xs text-white/50 mt-1">{alert.time}</p>
                     </div>
                     {!alert.read && (
-                      <div className="w-2 h-2 rounded-full bg-yellow-400 mt-2"></div>
+                      <div className="w-2 h-2 rounded-none bg-yellow-400 mt-2"></div>
                     )}
                   </div>
                 ))}
@@ -690,7 +690,7 @@ export default function Admin() {
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-black/50 border border-white/10 rounded-none p-6 hover:border-white/20 transition">
+            <div className="bg-black/50 border border-white rounded-none p-6 hover:border-white transition">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white/60 text-sm">Total Users</span>
                 <Users className="w-5 h-5 text-white/40" />
@@ -699,7 +699,7 @@ export default function Admin() {
               <div className="text-xs text-white/40 mt-1">All registered users</div>
             </div>
 
-            <div className="bg-black/50 border border-white/10 rounded-none p-6 hover:border-white/20 transition">
+            <div className="bg-black/50 border border-white rounded-none p-6 hover:border-white transition">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white/60 text-sm">Active Subscriptions</span>
                 <CheckCircle className="w-5 h-5 text-green-400" />
@@ -708,7 +708,7 @@ export default function Admin() {
               <div className="text-xs text-white/40 mt-1">Currently active</div>
             </div>
 
-            <div className="bg-black/50 border border-white/10 rounded-none p-6 hover:border-white/20 transition">
+            <div className="bg-black/50 border border-white rounded-none p-6 hover:border-white transition">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white/60 text-sm">Tool Usage</span>
                 <Activity className="w-5 h-5 text-blue-400" />
@@ -717,7 +717,7 @@ export default function Admin() {
               <div className="text-xs text-white/40 mt-1">Total tool executions</div>
             </div>
 
-            <div className="bg-black/50 border border-white/10 rounded-none p-6 hover:border-white/20 transition">
+            <div className="bg-black/50 border border-white rounded-none p-6 hover:border-white transition">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white/60 text-sm">Premium Users</span>
                 <TrendingUp className="w-5 h-5 text-yellow-400" />
@@ -729,7 +729,7 @@ export default function Admin() {
 
           {/* Platform Health & Additional Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-black/50 border border-white/10 rounded-none p-6">
+            <div className="bg-black/50 border border-white rounded-none p-6">
               <div className="flex items-center gap-2 mb-2 text-white/60">
                 <Activity className="w-4 h-4" />
                 <span className="text-sm">Platform Health</span>
@@ -744,7 +744,7 @@ export default function Admin() {
               </div>
             </div>
 
-            <div className="bg-black/50 border border-white/10 rounded-none p-6">
+            <div className="bg-black/50 border border-white rounded-none p-6">
               <div className="flex items-center gap-2 mb-2 text-white/60">
                 <Zap className="w-4 h-4" />
                 <span className="text-sm">Tool Usage</span>
@@ -753,7 +753,7 @@ export default function Admin() {
               <div className="text-xs text-white/40 mt-1">Total executions</div>
             </div>
 
-            <div className="bg-black/50 border border-white/10 rounded-none p-6">
+            <div className="bg-black/50 border border-white rounded-none p-6">
               <div className="flex items-center gap-2 mb-2 text-white/60">
                 <Network className="w-4 h-4" />
                 <span className="text-sm">Subscription Rate</span>
@@ -766,7 +766,7 @@ export default function Admin() {
           </div>
 
           {/* Tier Breakdown */}
-          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <div className="bg-black/50 border border-white rounded-none p-6">
             <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
               <BarChart3 className="w-5 h-5" />
               Subscription Tiers
@@ -788,7 +788,7 @@ export default function Admin() {
           </div>
 
           {/* THE LOST ARCHIVES Section */}
-          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <div className="bg-black/50 border border-white rounded-none p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <FileText className="w-5 h-5" />
@@ -815,7 +815,7 @@ export default function Admin() {
                 {lostArchivesPosts.slice(0, 3).map((post) => (
                   <div
                     key={post.id}
-                    className="bg-black/30 border border-white/10 rounded-none p-4 hover:border-white/20 transition"
+                    className="bg-black/30 border border-white rounded-none p-4 hover:border-white transition"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -845,7 +845,7 @@ export default function Admin() {
                           href={`/thelostarchives/${post.slug}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-2 hover:bg-white/10 rounded transition"
+                          className="p-2 hover:bg-white/10 rounded-none transition"
                           title="View post"
                         >
                           <Eye className="w-4 h-4 text-white/60" />
@@ -859,7 +859,7 @@ export default function Admin() {
           </div>
 
           {/* Book Club Posts Section */}
-          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <div className="bg-black/50 border border-white rounded-none p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <FileText className="w-5 h-5" />
@@ -883,15 +883,15 @@ export default function Admin() {
               <div className="space-y-6">
                 {/* Most Recent Post - Featured */}
                 {bookClubPosts[0] && (
-                  <div className="bg-black/30 border border-white/20 rounded-none p-6 hover:border-white/30 transition">
+                  <div className="bg-black/30 border border-white rounded-none p-6 hover:border-white transition">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="px-2 py-1 bg-blue-400/20 text-blue-400 border border-blue-400/30 rounded text-xs font-semibold">
+                          <span className="px-2 py-1 bg-blue-400/20 text-blue-400 border border-white rounded-none text-xs font-semibold">
                             MOST RECENT
                           </span>
                           {bookClubPosts[0].subdomain && (
-                            <span className="px-2 py-1 bg-white/10 text-white/80 border border-white/20 rounded text-xs">
+                            <span className="px-2 py-1 bg-white/10 text-white/80 border border-white rounded-none text-xs">
                               {bookClubPosts[0].subdomain}
                             </span>
                           )}
@@ -940,13 +940,13 @@ export default function Admin() {
                       {bookClubPosts.slice(1, 4).map((post) => (
                         <div
                           key={post.id}
-                          className="bg-black/30 border border-white/10 rounded-none p-4 hover:border-white/20 transition"
+                          className="bg-black/30 border border-white rounded-none p-4 hover:border-white transition"
                         >
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-2">
                                 {post.subdomain && (
-                                  <span className="px-2 py-1 bg-white/10 text-white/80 border border-white/20 rounded text-xs">
+                                  <span className="px-2 py-1 bg-white/10 text-white/80 border border-white rounded-none text-xs">
                                     {post.subdomain}
                                   </span>
                                 )}
@@ -977,7 +977,7 @@ export default function Admin() {
                                 href={`/blog/${post.subdomain}/${post.slug}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="p-2 hover:bg-white/10 rounded transition"
+                                className="p-2 hover:bg-white/10 rounded-none transition"
                                 title="View post"
                               >
                                 <Eye className="w-4 h-4 text-white/60" />
@@ -992,7 +992,7 @@ export default function Admin() {
 
                 {/* View All Link if more than 4 posts */}
                 {bookClubPosts.length > 4 && (
-                  <div className="text-center pt-4 border-t border-white/10">
+                  <div className="text-center pt-4 border-t border-white">
                     <Link
                       to="/bookclub"
                       className="text-white/60 hover:text-white text-sm flex items-center justify-center gap-2"
@@ -1007,7 +1007,7 @@ export default function Admin() {
           </div>
 
           {/* Recent Users */}
-          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <div className="bg-black/50 border border-white rounded-none p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <Users className="w-5 h-5" />
@@ -1021,7 +1021,7 @@ export default function Admin() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-white/10">
+                  <tr className="border-b border-white">
                     <th className="text-left py-3 text-white/60 text-sm font-medium">Username</th>
                     <th className="text-left py-3 text-white/60 text-sm font-medium">User ID</th>
                     <th className="text-left py-3 text-white/60 text-sm font-medium">Tier</th>
@@ -1032,12 +1032,12 @@ export default function Admin() {
                 <tbody>
                   {recentUsers.length > 0 ? (
                     recentUsers.map((user) => (
-                      <tr key={user.id} className="border-b border-white/5 hover:bg-white/5 transition">
+                      <tr key={user.id} className="border-b border-white hover:bg-white/5 transition">
                         <td className="py-3">
                           <div className="flex items-center gap-2">
                             <span className="text-white font-medium">{user.username}</span>
                             {user.isAdmin && (
-                              <span className="px-2 py-0.5 rounded text-xs bg-purple-400/20 text-purple-400 border border-purple-400/30 font-semibold">
+                              <span className="px-2 py-0.5 rounded-none text-xs bg-purple-400/20 text-purple-400 border border-white font-semibold">
                                 ADMIN
                               </span>
                             )}
@@ -1045,10 +1045,10 @@ export default function Admin() {
                         </td>
                         <td className="py-3 text-white/60 font-mono text-xs">{user.id.substring(0, 8)}...</td>
                         <td className="py-3">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          <span className={`px-2 py-1 rounded-none text-xs font-medium ${
                             user.tier === 'free' ? 'bg-white/5 text-white/60' :
-                            user.tier === 'premium' ? 'bg-yellow-400/10 text-yellow-400 border border-yellow-400/20' :
-                            'bg-purple-400/10 text-purple-400 border border-purple-400/20'
+                            user.tier === 'premium' ? 'bg-yellow-400/10 text-yellow-400 border border-white' :
+                            'bg-purple-400/10 text-purple-400 border border-white'
                           }`}>
                             {user.tier.charAt(0).toUpperCase() + user.tier.slice(1)}
                           </span>
@@ -1062,7 +1062,7 @@ export default function Admin() {
                           ) : 'N/A'}
                         </td>
                         <td className="py-3">
-                          <span className="px-2 py-1 rounded text-xs bg-green-400/10 text-green-400 border border-green-400/20">
+                          <span className="px-2 py-1 rounded-none text-xs bg-green-400/10 text-green-400 border border-white">
                             Active
                           </span>
                         </td>
@@ -1088,13 +1088,13 @@ export default function Admin() {
       {/* Users Tab */}
       {activeTab === 'users' && (
         <div className="space-y-6">
-          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <div className="bg-black/50 border border-white rounded-none p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <Users className="w-5 h-5" />
                 User Management
               </h2>
-              <button className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded text-white text-sm transition">
+              <button className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-none text-white text-sm transition">
                 Export Users
               </button>
             </div>
@@ -1113,7 +1113,7 @@ export default function Admin() {
                   <div className="text-2xl font-bold text-yellow-400">{stats?.premiumUsers || stats?.proUsers || 0}</div>
                 </div>
               </div>
-              <div className="border-t border-white/10 pt-4">
+              <div className="border-t border-white pt-4">
                 <p className="text-white/60">Advanced user management features coming soon...</p>
                 <p className="text-white/40 text-sm mt-2">Features will include: user search, filtering, bulk actions, and detailed user profiles.</p>
               </div>
@@ -1125,7 +1125,7 @@ export default function Admin() {
       {/* Subscriptions Tab */}
       {activeTab === 'subscriptions' && (
         <div className="space-y-6">
-          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <div className="bg-black/50 border border-white rounded-none p-6">
             <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
               <BarChart3 className="w-5 h-5" />
               Subscription Management
@@ -1138,14 +1138,14 @@ export default function Admin() {
                   {stats?.totalUsers ? Math.round((stats.freeUsers / stats.totalUsers) * 100) : 0}% of total
                 </div>
               </div>
-              <div className="bg-white/5 rounded-none p-4 border border-yellow-400/20">
+              <div className="bg-white/5 rounded-none p-4 border border-white">
                 <div className="text-white/60 text-sm mb-1">Premium Tier</div>
                 <div className="text-2xl font-bold text-yellow-400">{stats?.premiumUsers || 0}</div>
                 <div className="text-xs text-white/40 mt-1">
                   {stats?.totalUsers ? Math.round((stats.premiumUsers / stats.totalUsers) * 100) : 0}% of total
                 </div>
               </div>
-              <div className="bg-white/5 rounded-none p-4 border border-purple-400/20">
+              <div className="bg-white/5 rounded-none p-4 border border-white">
                 <div className="text-white/60 text-sm mb-1">Pro Tier</div>
                 <div className="text-2xl font-bold text-purple-400">{stats?.proUsers || 0}</div>
                 <div className="text-xs text-white/40 mt-1">
@@ -1153,7 +1153,7 @@ export default function Admin() {
                 </div>
               </div>
             </div>
-            <div className="border-t border-white/10 pt-4">
+            <div className="border-t border-white pt-4">
               <p className="text-white/60">Advanced subscription management features coming soon...</p>
               <p className="text-white/40 text-sm mt-2">Features will include: subscription analytics, upgrade/downgrade management, and billing history.</p>
             </div>
@@ -1166,7 +1166,7 @@ export default function Admin() {
         <div className="space-y-6">
           <ErrorBoundary
             fallback={
-              <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
+              <div className="bg-red-900/20 border border-white rounded-none p-6">
                 <p className="text-red-400">Error loading Product Cost Management. Please refresh the page.</p>
               </div>
             }
@@ -1180,7 +1180,7 @@ export default function Admin() {
       {activeTab === 'blog' && (
         <ErrorBoundary
           fallback={
-            <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
+            <div className="bg-red-900/20 border border-white rounded-none p-6">
               <p className="text-red-400">Error loading Blog Management. Please refresh the page.</p>
             </div>
           }
@@ -1193,7 +1193,7 @@ export default function Admin() {
       {activeTab === 'newsletter' && (
         <ErrorBoundary
           fallback={
-            <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
+            <div className="bg-red-900/20 border border-white rounded-none p-6">
               <p className="text-red-400">Error loading Newsletter Management. Please refresh the page.</p>
             </div>
           }
@@ -1206,7 +1206,7 @@ export default function Admin() {
       {activeTab === 'submissions' && (
         <ErrorBoundary
           fallback={
-            <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
+            <div className="bg-red-900/20 border border-white rounded-none p-6">
               <p className="text-red-400">Error loading Article Submissions Review. Please refresh the page.</p>
             </div>
           }
@@ -1214,14 +1214,14 @@ export default function Admin() {
           <div className="space-y-6">
             <BlogSubmissionReview />
             {/* Email Management Section */}
-            <div className="bg-black/50 border border-white/10 rounded-none p-6">
+            <div className="bg-black/50 border border-white rounded-none p-6">
               <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                 <Mail className="w-5 h-5" />
                 Email Management
               </h3>
               <div className="space-y-6">
                 {/* Send Welcome Emails - Should be sent first */}
-                <div className="border-b border-white/10 pb-6">
+                <div className="border-b border-white pb-6">
                   <h4 className="text-white font-semibold mb-2">Step 1: Send Welcome Emails</h4>
                   <p className="text-white/60 text-sm mb-4">
                     Send welcome emails with the getting started guide link to existing users. This should be done first, before sending submission update emails.
@@ -1246,7 +1246,7 @@ export default function Admin() {
       {activeTab === 'assets' && (
         <ErrorBoundary
           fallback={
-            <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
+            <div className="bg-red-900/20 border border-white rounded-none p-6">
               <p className="text-red-400">Error loading Brand Assets. Please refresh the page.</p>
             </div>
           }
@@ -1258,13 +1258,13 @@ export default function Admin() {
       {/* Settings Tab */}
       {activeTab === 'settings' && (
         <div className="space-y-6">
-          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <div className="bg-black/50 border border-white rounded-none p-6">
             <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
               <Settings className="w-5 h-5" />
               Admin Settings
             </h2>
             <div className="space-y-6">
-              <div className="border-b border-white/10 pb-4">
+              <div className="border-b border-white pb-4">
                 <h3 className="text-white font-medium mb-2 flex items-center gap-2">
                   <Shield className="w-4 h-4" />
                   Platform Configuration
@@ -1273,15 +1273,15 @@ export default function Admin() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between p-3 bg-white/5 rounded">
                     <span className="text-white/80">Platform Status</span>
-                    <span className="px-2 py-1 bg-green-400/20 text-green-400 rounded text-xs">Operational</span>
+                    <span className="px-2 py-1 bg-green-400/20 text-green-400 rounded-none text-xs">Operational</span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-white/5 rounded">
                     <span className="text-white/80">Database Connection</span>
-                    <span className="px-2 py-1 bg-green-400/20 text-green-400 rounded text-xs">Connected</span>
+                    <span className="px-2 py-1 bg-green-400/20 text-green-400 rounded-none text-xs">Connected</span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-white/5 rounded">
                     <span className="text-white/80">Platform Health</span>
-                    <span className={`px-2 py-1 rounded text-xs ${
+                    <span className={`px-2 py-1 rounded-none text-xs ${
                       stats?.platformHealth === 'healthy' ? 'bg-green-400/20 text-green-400' :
                       stats?.platformHealth === 'warning' ? 'bg-yellow-400/20 text-yellow-400' :
                       'bg-red-400/20 text-red-400'
@@ -1293,7 +1293,7 @@ export default function Admin() {
                 </div>
               </div>
 
-              <div className="border-b border-white/10 pb-4">
+              <div className="border-b border-white pb-4">
                 <h3 className="text-white font-medium mb-2 flex items-center gap-2">
                   <Activity className="w-4 h-4" />
                   Tool Management
@@ -1306,7 +1306,7 @@ export default function Admin() {
                   </div>
                   <div className="flex items-center justify-between p-3 bg-white/5 rounded">
                     <span className="text-white/80">Tool Status</span>
-                    <span className="px-2 py-1 bg-green-400/20 text-green-400 rounded text-xs">Active</span>
+                    <span className="px-2 py-1 bg-green-400/20 text-green-400 rounded-none text-xs">Active</span>
                   </div>
                 </div>
               </div>

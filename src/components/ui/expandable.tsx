@@ -197,7 +197,7 @@ const ExpandableCard = ({
     <motion.div
       ref={ref}
       className={cn(
-        "relative overflow-hidden bg-white dark:bg-black border border-white/10 shadow-sm",
+        "relative overflow-hidden bg-white dark:bg-black border border-white shadow-sm",
         className
       )}
       variants={variants}

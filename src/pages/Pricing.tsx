@@ -80,9 +80,9 @@ export default function Pricing() {
           return (
             <div
               key={plan.name}
-              className={`bg-black/50 border border-white/10 rounded-none p-8 relative hover:bg-white hover:text-black hover:border-white/40 hover:shadow-[0_8px_30px_rgba(255,255,255,0.12)] hover:-translate-y-1 transition-all duration-300 group ${
+              className={`bg-black/50 border border-white rounded-none p-8 relative hover:bg-white hover:text-black hover:border-white hover:shadow-[0_8px_30px_rgba(255,255,255,0.12)] hover:-translate-y-1 transition-all duration-300 group ${
                 plan.highlight
-                  ? 'border-yellow-400 shadow-lg shadow-yellow-400/20'
+                  ? 'border-white shadow-lg shadow-yellow-400/20'
                   : ''
               }`}
             >
@@ -136,7 +136,7 @@ export default function Pricing() {
         })}
       </div>
 
-      <div className="bg-black/50 border border-white/10 rounded-none p-8 text-center">
+      <div className="bg-black/50 border border-white rounded-none p-8 text-center">
         <h2 className="text-2xl font-bold text-white mb-4">Need a Custom Plan?</h2>
         <p className="text-white/70 mb-6">
           We offer custom enterprise plans for teams and organizations. Contact us to learn more.

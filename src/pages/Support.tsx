@@ -18,10 +18,10 @@ export default function Support() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
         <Link
           to="/docs/faq"
-          className="group relative bg-black/50 border border-white/10 rounded-none px-6 py-4 hover:border-white/40 hover:bg-white/5 hover:shadow-[0_8px_30px_rgba(255,255,255,0.12)] hover:-translate-y-1 transition-all duration-300 flex items-center justify-between cursor-pointer"
+          className="group relative bg-black/50 border border-white rounded-none px-6 py-4 hover:border-white hover:bg-white/5 hover:shadow-[0_8px_30px_rgba(255,255,255,0.12)] hover:-translate-y-1 transition-all duration-300 flex items-center justify-between cursor-pointer"
         >
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 border border-white/20 flex items-center justify-center text-white group-hover:border-white/50 group-hover:scale-110 transition-all flex-shrink-0">
+            <div className="w-10 h-10 border border-white flex items-center justify-center text-white group-hover:border-white group-hover:scale-110 transition-all flex-shrink-0">
               <HelpCircle className="w-5 h-5" />
             </div>
             <div className="flex flex-col justify-center min-h-[40px]">
@@ -36,10 +36,10 @@ export default function Support() {
 
         <Link
           to="/docs"
-          className="group relative bg-black/50 border border-white/10 rounded-none px-6 py-4 hover:border-white/40 hover:bg-white/5 hover:shadow-[0_8px_30px_rgba(255,255,255,0.12)] hover:-translate-y-1 transition-all duration-300 flex items-center justify-between cursor-pointer"
+          className="group relative bg-black/50 border border-white rounded-none px-6 py-4 hover:border-white hover:bg-white/5 hover:shadow-[0_8px_30px_rgba(255,255,255,0.12)] hover:-translate-y-1 transition-all duration-300 flex items-center justify-between cursor-pointer"
         >
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 border border-white/20 flex items-center justify-center text-white group-hover:border-white/50 group-hover:scale-110 transition-all flex-shrink-0">
+            <div className="w-10 h-10 border border-white flex items-center justify-center text-white group-hover:border-white group-hover:scale-110 transition-all flex-shrink-0">
               <Book className="w-5 h-5" />
             </div>
             <div className="flex flex-col justify-center min-h-[40px]">
@@ -54,10 +54,10 @@ export default function Support() {
 
         <Link
           to="/contact"
-          className="group relative bg-black/50 border border-white/10 rounded-none px-6 py-4 hover:border-white/40 hover:bg-white/5 hover:shadow-[0_8px_30px_rgba(255,255,255,0.12)] hover:-translate-y-1 transition-all duration-300 flex items-center justify-between cursor-pointer"
+          className="group relative bg-black/50 border border-white rounded-none px-6 py-4 hover:border-white hover:bg-white/5 hover:shadow-[0_8px_30px_rgba(255,255,255,0.12)] hover:-translate-y-1 transition-all duration-300 flex items-center justify-between cursor-pointer"
         >
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 border border-white/20 flex items-center justify-center text-white group-hover:border-white/50 group-hover:scale-110 transition-all flex-shrink-0">
+            <div className="w-10 h-10 border border-white flex items-center justify-center text-white group-hover:border-white group-hover:scale-110 transition-all flex-shrink-0">
               <Mail className="w-5 h-5" />
             </div>
             <div className="flex flex-col justify-center min-h-[40px]">
@@ -70,9 +70,9 @@ export default function Support() {
           <ArrowRight className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-2 transition-all" />
         </Link>
 
-        <div className="group relative bg-black/50 border border-white/10 rounded-none px-6 py-4 flex items-center justify-between">
+        <div className="group relative bg-black/50 border border-white rounded-none px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 border border-white/20 flex items-center justify-center text-white flex-shrink-0">
+            <div className="w-10 h-10 border border-white flex items-center justify-center text-white flex-shrink-0">
               <MessageCircle className="w-5 h-5" />
             </div>
             <div className="flex flex-col justify-center min-h-[40px]">
@@ -86,7 +86,7 @@ export default function Support() {
         </div>
       </div>
 
-      <div className="bg-black/50 border border-white/10 rounded-none p-8">
+      <div className="bg-black/50 border border-white rounded-none p-8">
         <h2 className="text-2xl font-bold text-white mb-4">Common Issues</h2>
         <div className="space-y-4">
           <div>
@@ -112,7 +112,7 @@ export default function Support() {
         </div>
       </div>
 
-      <div className="mt-8 p-6 bg-black/50 border border-white/10 rounded-none text-center">
+      <div className="mt-8 p-6 bg-black/50 border border-white rounded-none text-center">
         <h3 className="text-xl font-bold text-white mb-2">Still Need Help?</h3>
         <p className="text-white/70 mb-4">
           Our support team is available to assist you with any questions or issues.

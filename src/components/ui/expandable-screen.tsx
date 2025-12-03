@@ -62,7 +62,7 @@ export function ExpandableScreen({
         className={cn(
           'fixed inset-0 z-50',
           'bg-black/95 backdrop-blur-xl',
-          'border border-white/10',
+          'border border-white',
           'shadow-2xl',
           isAnimating ? 'animate-in zoom-in-95 duration-300' : '',
           className
@@ -71,7 +71,7 @@ export function ExpandableScreen({
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-white/10 border border-white/10 transition-colors"
+          className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-white/10 border border-white transition-colors"
         >
           <X className="w-5 h-5 text-white" />
         </button>

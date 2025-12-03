@@ -176,13 +176,13 @@ export default function Debug() {
   const getLogColor = (type: LogEntry['type']) => {
     switch (type) {
       case 'error':
-        return 'text-red-400 border-red-500/50 bg-red-900/20';
+        return 'text-red-400 border-white bg-red-900/20';
       case 'warn':
-        return 'text-yellow-400 border-yellow-500/50 bg-yellow-900/20';
+        return 'text-yellow-400 border-white bg-yellow-900/20';
       case 'info':
-        return 'text-blue-400 border-blue-500/50 bg-blue-900/20';
+        return 'text-blue-400 border-white bg-blue-900/20';
       default:
-        return 'text-white/70 border-white/10 bg-black/30';
+        return 'text-white/70 border-white bg-black/30';
     }
   };
 
@@ -214,7 +214,7 @@ export default function Debug() {
         </div>
       </div>
 
-      <div className="bg-black/50 border border-white/10 rounded-none p-4 mb-4">
+      <div className="bg-black/50 border border-white rounded-none p-4 mb-4">
         <div className="flex items-center gap-4 text-sm text-white/60">
           <span>Total Logs: {logs.length}</span>
           <span>Errors: {logs.filter(l => l.type === 'error').length}</span>
@@ -224,7 +224,7 @@ export default function Debug() {
 
       <div className="space-y-2 max-h-[70vh] overflow-y-auto">
         {logs.length === 0 ? (
-          <div className="bg-black/50 border border-white/10 rounded-none p-8 text-center">
+          <div className="bg-black/50 border border-white rounded-none p-8 text-center">
             <p className="text-white/60">No logs captured yet. Errors and console output will appear here.</p>
           </div>
         ) : (

@@ -215,13 +215,13 @@ export default function Blog() {
           <div className="flex items-center justify-center gap-4 flex-wrap">
             <Link
               to="/book-club"
-              className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition"
+              className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white rounded-none text-white text-sm font-medium transition"
             >
               View BOOK CLUB →
             </Link>
             <Link
               to="/submit/main"
-              className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition"
+              className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white rounded-none text-white text-sm font-medium transition"
             >
               Submit Your Article →
             </Link>
@@ -229,7 +229,7 @@ export default function Blog() {
         </div>
 
       {error && (
-        <div className="bg-red-900/20 border border-red-500/50 rounded-none p-4 mb-6">
+        <div className="bg-red-900/20 border border-white rounded-none p-4 mb-6">
           <p className="text-red-400">{error}</p>
         </div>
       )}
@@ -345,7 +345,7 @@ export default function Blog() {
 
       {/* Book Club Posts Section - 3 Most Recent */}
       {bookClubPosts.length > 0 && (
-        <div className="mt-12 pt-12 border-t border-white/10">
+        <div className="mt-12 pt-12 border-t border-white">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-white">From the BOOK CLUB</h2>
             <Link

@@ -1294,7 +1294,7 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
       {/* Lock Screen */}
       {isLocked && (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center">
-          <div className="bg-black/50 border border-white/10 rounded-none p-8 max-w-md w-full mx-4">
+          <div className="bg-black/50 border border-white rounded-none p-8 max-w-md w-full mx-4">
             <div className="flex flex-col items-center text-center">
               <Lock className="w-16 h-16 text-yellow-400 mb-4" />
               <h2 className="text-2xl font-bold text-white mb-2">Session Locked</h2>
@@ -1316,7 +1316,7 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
       {!isLocked && (
         <div className="space-y-6">
           {scripts.length === 0 ? (
-            <div className="bg-black/50 border border-white/10 rounded-none p-6">
+            <div className="bg-black/50 border border-white rounded-none p-6">
               <p className="text-white/60">No SQL scripts found.</p>
               <p className="text-white/40 text-sm mt-2">Check browser console for debug info.</p>
             </div>
@@ -1324,7 +1324,7 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
             scripts.map((script, index) => (
               <div
                 key={index}
-                className="bg-black/50 border border-white/10 rounded-none p-6"
+                className="bg-black/50 border border-white rounded-none p-6"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div>
@@ -1341,7 +1341,7 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
                   </div>
                   <button
                     onClick={() => copyToClipboard(script.content, index)}
-                    className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded text-white text-sm transition flex items-center gap-2"
+                    className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-none text-white text-sm transition flex items-center gap-2"
                   >
                     {copiedIndex === index ? (
                       <>
@@ -1356,7 +1356,7 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
                     )}
                   </button>
                 </div>
-                <pre className="bg-black/50 border border-white/10 rounded-none p-4 overflow-x-auto text-white/90 text-sm font-mono whitespace-pre-wrap break-words text-left">
+                <pre className="bg-black/50 border border-white rounded-none p-4 overflow-x-auto text-white/90 text-sm font-mono whitespace-pre-wrap break-words text-left">
                   <code className="text-left">{script.content}</code>
                 </pre>
               </div>

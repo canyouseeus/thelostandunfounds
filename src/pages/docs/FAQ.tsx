@@ -59,7 +59,7 @@ export default function FAQ() {
         {faqs.map((faq, index) => (
           <div
             key={index}
-            className="bg-black/50 border border-white/10 rounded-none overflow-hidden"
+            className="bg-black/50 border border-white rounded-none overflow-hidden"
           >
             <button
               onClick={() => setOpenIndex(openIndex === index ? null : index)}
@@ -73,7 +73,7 @@ export default function FAQ() {
               />
             </button>
             {openIndex === index && (
-              <div className="px-6 py-4 border-t border-white/10">
+              <div className="px-6 py-4 border-t border-white">
                 <p className="text-white/80">{faq.answer}</p>
               </div>
             )}
@@ -81,7 +81,7 @@ export default function FAQ() {
         ))}
       </div>
 
-      <div className="mt-8 p-6 bg-black/50 border border-white/10 rounded-none">
+      <div className="mt-8 p-6 bg-black/50 border border-white rounded-none">
         <h3 className="text-xl font-bold text-white mb-2">Still have questions?</h3>
         <p className="text-white/70 mb-4">
           If you can't find the answer you're looking for, please contact our support team.

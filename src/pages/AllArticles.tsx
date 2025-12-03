@@ -156,7 +156,7 @@ export default function AllArticles() {
         </div>
 
         {error && (
-          <div className="bg-red-900/20 border border-red-500/50 rounded-none p-4 mb-6">
+          <div className="bg-red-900/20 border border-white rounded-none p-4 mb-6">
             <p className="text-red-400">{error}</p>
           </div>
         )}
@@ -170,9 +170,9 @@ export default function AllArticles() {
                 to={`/thelostarchives/${post.slug}`}
                 className="group"
               >
-                <article className="bg-black/50 border-2 border-white/10 rounded-lg p-5 h-full flex flex-col hover:border-white/30 hover:shadow-lg hover:shadow-white/10 transition-all duration-300 transform hover:-translate-y-1">
+                <article className="bg-black/50 border-2 border-white rounded-none p-5 h-full flex flex-col hover:border-white hover:shadow-lg hover:shadow-white/10 transition-all duration-300 transform hover:-translate-y-1">
                   {/* Card Header - Title Area */}
-                  <div className="mb-4 pb-3 border-b border-white/10">
+                  <div className="mb-4 pb-3 border-b border-white">
                     <h2 className="text-base font-black text-white mb-2 tracking-wide group-hover:text-white/90 transition whitespace-nowrap overflow-hidden text-ellipsis">
                       {post.title}
                     </h2>
@@ -188,7 +188,7 @@ export default function AllArticles() {
                   )}
                   
                   {/* Card Footer - Date and Read More */}
-                  <div className="mt-auto pt-3 border-t border-white/10">
+                  <div className="mt-auto pt-3 border-t border-white">
                     <div className="flex items-center justify-between">
                       <time className="text-white/40 text-xs font-medium">
                         {formatDate(post.published_at || post.created_at)}

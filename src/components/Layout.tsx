@@ -452,7 +452,7 @@ export default function Layout() {
                   </div>
                   {user && (
                     <>
-                      <div className="border-t border-white/10 my-2"></div>
+                      <div className="border-t border-white my-2"></div>
                 <Link
                   to={userIsAdmin ? "/admin" : userSubdomain ? `/${userSubdomain}/bookclubprofile` : "/bookclubprofile"}
                   className="menu-item"
@@ -475,7 +475,7 @@ export default function Layout() {
                           LOG OUT
                         </div>
                       </button>
-                      <div className="border-t border-white/10 my-2"></div>
+                      <div className="border-t border-white my-2"></div>
                       <div className="menu-item user-info">
                         <div className="text-white/60 text-xs mb-1">Logged in as:</div>
                         <div className="text-white text-sm font-medium">
@@ -508,7 +508,7 @@ export default function Layout() {
       {/* Upgrade Modal */}
       {upgradeModalOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="bg-black/50 border border-white/10 rounded-none p-6 w-full max-w-md mx-4">
+          <div className="bg-black/50 border border-white rounded-none p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-white">Upgrade Your Account</h2>
               <button
@@ -520,7 +520,7 @@ export default function Layout() {
               </button>
             </div>
             <div className="space-y-4">
-              <div className="bg-black/50 border border-white/10 rounded-none p-4">
+              <div className="bg-black/50 border border-white rounded-none p-4">
                 <h3 className="text-lg font-semibold text-white mb-2">Premium Tier</h3>
                 <p className="text-white/70 text-sm mb-3">Unlimited access to all tools</p>
                 <div className="text-2xl font-bold text-white mb-4">$9.99<span className="text-sm text-white/60">/month</span></div>
@@ -534,7 +534,7 @@ export default function Layout() {
                   Upgrade to Premium
                 </button>
               </div>
-              <div className="bg-black/50 border border-white/10 rounded-none p-4">
+              <div className="bg-black/50 border border-white rounded-none p-4">
                 <h3 className="text-lg font-semibold text-white mb-2">Pro Tier</h3>
                 <p className="text-white/70 text-sm mb-3">Everything + API access</p>
                 <div className="text-2xl font-bold text-white mb-4">$19.99<span className="text-sm text-white/60">/month</span></div>

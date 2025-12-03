@@ -60,7 +60,7 @@ export default function Docs() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Sidebar Navigation */}
         <div className="lg:col-span-1">
-          <nav className="bg-black/50 border border-white/10 rounded-none p-4">
+          <nav className="bg-black/50 border border-white rounded-none p-4">
             <h2 className="text-white font-semibold mb-4">Documentation</h2>
             <ul className="space-y-2">
               {docSections.map((section) => {
@@ -93,7 +93,7 @@ export default function Docs() {
 
         {/* Main Content */}
         <div className="lg:col-span-3">
-          <div className="bg-black/50 border border-white/10 rounded-none p-6 space-y-12">
+          <div className="bg-black/50 border border-white rounded-none p-6 space-y-12">
             <section id="getting-started" className="scroll-mt-8">
               <GettingStarted />
             </section>

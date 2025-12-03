@@ -337,7 +337,7 @@ export default function BlogAnalysis({ title, content, excerpt }: BlogAnalysisPr
   }
 
   return (
-    <div className="mt-12 border-t border-white/10 pt-8">
+    <div className="mt-12 border-t border-white pt-8">
       <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2 text-left">
         <Sparkles className="w-6 h-6" />
         AI Breakdown
@@ -345,7 +345,7 @@ export default function BlogAnalysis({ title, content, excerpt }: BlogAnalysisPr
 
       {/* Quick Take - Prominent at top */}
       {analysis.quickTake && (
-        <div className="mb-8 p-4 bg-white/5 border border-white/10 rounded-none">
+        <div className="mb-8 p-4 bg-white/5 border border-white rounded-none">
           <h3 className="text-sm font-semibold text-white/70 mb-2 text-left uppercase tracking-wide">Quick Take</h3>
           <p className="text-white text-lg leading-relaxed text-left font-medium">
             {analysis.quickTake}
@@ -378,7 +378,7 @@ export default function BlogAnalysis({ title, content, excerpt }: BlogAnalysisPr
 
       {/* Practical Insights */}
       {analysis.practicalInsights && analysis.practicalInsights.length > 0 && (
-        <div className="mb-8 p-4 bg-white/5 border border-white/10 rounded-none">
+        <div className="mb-8 p-4 bg-white/5 border border-white rounded-none">
           <h3 className="text-xl font-semibold text-white mb-3 text-left">Practical Insights</h3>
           <ul className="space-y-2 text-left">
             {analysis.practicalInsights.map((insight, index) => (
@@ -399,7 +399,7 @@ export default function BlogAnalysis({ title, content, excerpt }: BlogAnalysisPr
             {analysis.toolsMentioned.map((tool, index) => (
               <span
                 key={index}
-                className="px-3 py-1 bg-white/10 border border-white/20 rounded text-white/90 text-sm"
+                className="px-3 py-1 bg-white/10 border border-white rounded-none text-white/90 text-sm"
               >
                 {tool}
               </span>
@@ -416,7 +416,7 @@ export default function BlogAnalysis({ title, content, excerpt }: BlogAnalysisPr
             {analysis.termsAndConcepts.map((term, index) => (
               <div
                 key={index}
-                className="bg-black/50 border border-white/10 rounded-none p-4 hover:border-white/20 transition"
+                className="bg-black/50 border border-white rounded-none p-4 hover:border-white transition"
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex-1">
@@ -443,7 +443,7 @@ export default function BlogAnalysis({ title, content, excerpt }: BlogAnalysisPr
             {analysis.comparableTools.map((tool, index) => (
               <div
                 key={index}
-                className="bg-black/50 border border-white/10 rounded-none p-4 hover:border-white/20 transition"
+                className="bg-black/50 border border-white rounded-none p-4 hover:border-white transition"
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <h4 className="text-lg font-semibold text-white text-left">{tool.name}</h4>
@@ -474,7 +474,7 @@ export default function BlogAnalysis({ title, content, excerpt }: BlogAnalysisPr
             {analysis.alternatives.map((tool, index) => (
               <div
                 key={index}
-                className="bg-black/50 border border-white/10 rounded-none p-4 hover:border-white/20 transition"
+                className="bg-black/50 border border-white rounded-none p-4 hover:border-white transition"
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <h4 className="text-lg font-semibold text-white text-left">{tool.name}</h4>

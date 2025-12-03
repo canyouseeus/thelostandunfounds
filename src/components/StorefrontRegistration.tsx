@@ -177,7 +177,7 @@ export default function StorefrontRegistration({
       onClick={required ? undefined : onClose}
     >
       <div 
-        className="bg-black/50 border border-white/10 rounded-none p-6 w-full max-w-md mx-4"
+        className="bg-black/50 border border-white rounded-none p-6 w-full max-w-md mx-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
@@ -202,14 +202,14 @@ export default function StorefrontRegistration({
 
         <div className="space-y-4">
           {blogUrl && (
-            <div className="bg-green-900/20 border border-green-500/30 rounded-none p-4">
+            <div className="bg-green-900/20 border border-white rounded-none p-4">
               <p className="text-white/80 text-sm mb-2">Your Blog URL:</p>
               <div className="flex gap-2 mb-3">
                 <input
                   type="text"
                   value={blogUrl}
                   readOnly
-                  className="flex-1 px-4 py-2 bg-black/50 border border-white/20 rounded-none text-white text-sm font-mono"
+                  className="flex-1 px-4 py-2 bg-black/50 border border-white rounded-none text-white text-sm font-mono"
                 />
                 <button
                   type="button"
@@ -238,12 +238,12 @@ export default function StorefrontRegistration({
                   )}
                 </button>
               </div>
-              <div className="bg-blue-500/10 border border-blue-500/30 rounded-none p-3 mt-3">
+              <div className="bg-blue-500/10 border border-white rounded-none p-3 mt-3">
                 <p className="text-blue-300 text-xs font-semibold mb-1.5">📋 For Amazon Associates Registration:</p>
                 <ol className="text-white/80 text-xs space-y-1 list-decimal list-inside">
                   <li>Click the "Copy" button above to copy your blog URL</li>
                   <li>Go to <a href="https://affiliate-program.amazon.com/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">affiliate-program.amazon.com</a></li>
-                  <li>When asked for your website URL, paste: <code className="block mt-1 px-2 py-1 bg-black/50 border border-white/10 rounded-none font-mono text-xs break-all">{blogUrl}</code></li>
+                  <li>When asked for your website URL, paste: <code className="block mt-1 px-2 py-1 bg-black/50 border border-white rounded-none font-mono text-xs break-all">{blogUrl}</code></li>
                   <li>Complete your Amazon Associates registration</li>
                 </ol>
               </div>
@@ -262,7 +262,7 @@ export default function StorefrontRegistration({
               value={storefrontId}
               onChange={(e) => handleStorefrontChange(e.target.value)}
               onBlur={handleStorefrontBlur}
-              className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="https://www.amazon.com/shop/yourstorefront or yourstorefront"
               required
               disabled={saving || !!user?.user_metadata?.amazon_storefront_id}
@@ -286,7 +286,7 @@ export default function StorefrontRegistration({
             </ul>
           </div>
 
-          <div className="bg-blue-900/20 border border-blue-500/30 rounded-none p-3">
+          <div className="bg-blue-900/20 border border-white rounded-none p-3">
             <p className="text-blue-300 text-xs">
               <strong>Don't have an Amazon Associates account yet?</strong> Register at <a href="https://affiliate-program.amazon.com/" target="_blank" rel="noopener noreferrer" className="underline">affiliate-program.amazon.com</a> using your blog URL: <span className="font-mono">{blogUrl}</span>
             </p>

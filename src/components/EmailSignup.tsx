@@ -88,7 +88,7 @@ export default function EmailSignup() {
     return (
       <div className="email-signup-success" style={{
         background: 'rgba(0, 0, 0, 0.5)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        border: '1px solid rgba(255, 255, 255, 1)',
         borderRadius: '0',
         padding: '1.25rem',
         textAlign: 'center',
@@ -153,7 +153,7 @@ export default function EmailSignup() {
               width: '100%',
               padding: '0.875rem',
               background: 'rgba(0, 0, 0, 0.5)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
+              border: '1px solid rgba(255, 255, 255, 1)',
               borderRadius: '0',
               color: '#ffffff',
               fontSize: '16px',

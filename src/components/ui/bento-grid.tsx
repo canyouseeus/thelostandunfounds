@@ -33,12 +33,12 @@ export function BentoCard({
   return (
     <div
       className={cn(
-        'bg-black/50 border border-white/10 backdrop-blur-md',
-        'hover:border-white/30 hover:bg-white/5',
+        'bg-black/50 border border-white backdrop-blur-md',
+        'hover:border-white hover:bg-white/5',
         'transition-all duration-300',
         'p-6',
         expandable && 'cursor-pointer relative',
-        isExpanded && expandable && 'border-white/40 bg-white/10',
+        isExpanded && expandable && 'border-white bg-white/10',
         className
       )}
       style={{
@@ -68,7 +68,7 @@ export function BentoCard({
       {expandable && isExpanded && expandedContent && (
         <div
           className={cn(
-            'mt-4 pt-4 border-t border-white/10',
+            'mt-4 pt-4 border-t border-white',
             'animate-in fade-in slide-in-from-top-2 duration-300'
           )}
         >

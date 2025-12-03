@@ -12,13 +12,13 @@ export default function Tools() {
 
       <div className="space-y-8">
         {/* TikTok Downloader */}
-        <section className="border-b border-white/10 pb-8">
+        <section className="border-b border-white pb-8">
           <h2 className="text-2xl font-bold text-white mb-4">TikTok Downloader</h2>
           <div className="space-y-4">
             <p className="text-white/80">
               Download TikTok videos without watermarks. Simply paste a TikTok URL and download the video.
             </p>
-            <div className="bg-black/50 border border-white/10 rounded-none p-4">
+            <div className="bg-black/50 border border-white rounded-none p-4">
               <h3 className="text-white font-semibold mb-2">How to Use</h3>
               <ol className="list-decimal list-inside space-y-2 text-white/70">
                 <li>Copy the TikTok video URL from the app or website</li>
@@ -28,7 +28,7 @@ export default function Tools() {
                 <li>Download the video file</li>
               </ol>
             </div>
-            <div className="bg-black/50 border border-white/10 rounded-none p-4">
+            <div className="bg-black/50 border border-white rounded-none p-4">
               <h3 className="text-white font-semibold mb-2">Limits</h3>
               <ul className="space-y-2 text-white/70">
                 <li><strong>Free:</strong> 5 downloads per day</li>

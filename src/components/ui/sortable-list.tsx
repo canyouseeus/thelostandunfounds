@@ -47,9 +47,9 @@ function SortableItem({ id, children, className }: SortableItemProps) {
       style={style}
       className={cn(
         'flex items-center gap-3',
-        'bg-black/50 border border-white/10',
+        'bg-black/50 border border-white',
         'p-4',
-        'hover:border-white/30 hover:bg-white/5',
+        'hover:border-white hover:bg-white/5',
         'transition-all duration-200',
         isDragging && 'z-50 shadow-lg',
         className

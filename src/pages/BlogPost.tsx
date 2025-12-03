@@ -901,7 +901,7 @@ export default function BlogPost() {
       // Handle section separator (⸻)
       if (trimmed === '⸻' || trimmed.match(/^⸻\s*$/)) {
         elements.push(
-          <hr key={`separator-${index}`} className="my-8 border-white/10" />
+          <hr key={`separator-${index}`} className="my-8 border-white" />
         );
         
         // Track if this is the last intro element and add disclosure if needed
@@ -913,7 +913,7 @@ export default function BlogPost() {
           
           elements.push(
             <div key="affiliate-disclosure" className="mb-6 mx-auto max-w-2xl mt-8">
-              <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white/20 p-4 bg-white/5">
+              <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white p-4 bg-white/5">
                 {formatDisclosure(authorName)}
               </p>
             </div>
@@ -988,7 +988,7 @@ export default function BlogPost() {
           
           elements.push(
             <div key="affiliate-disclosure" className="mb-6 mx-auto max-w-2xl mt-8">
-              <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white/20 p-4 bg-white/5">
+              <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white p-4 bg-white/5">
                 {formatDisclosure(authorName)}
               </p>
             </div>
@@ -1044,7 +1044,7 @@ export default function BlogPost() {
           
           elements.push(
             <div key="affiliate-disclosure" className="mb-6 mx-auto max-w-2xl mt-8">
-              <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white/20 p-4 bg-white/5">
+              <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white p-4 bg-white/5">
                 {formatDisclosure(authorName)}
               </p>
             </div>
@@ -1104,7 +1104,7 @@ export default function BlogPost() {
           
           elements.push(
             <div key="affiliate-disclosure" className="mb-6 mx-auto max-w-2xl mt-8">
-              <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white/20 p-4 bg-white/5">
+              <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white p-4 bg-white/5">
                 {formatDisclosure(authorName)}
               </p>
             </div>
@@ -1122,7 +1122,7 @@ export default function BlogPost() {
         const authorName = post.author_name || 'THE LOST+UNFOUNDS';
         elements.push(
           <div key={index} className="mb-6 mx-auto max-w-2xl">
-            <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white/20 p-4 bg-white/5">
+            <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white p-4 bg-white/5">
               {formatDisclosure(authorName)}
             </p>
           </div>
@@ -1180,7 +1180,7 @@ export default function BlogPost() {
         
         elements.push(
           <div key="affiliate-disclosure" className="mb-6 mx-auto max-w-2xl mt-8">
-            <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white/20 p-4 bg-white/5">
+            <p className="text-white/60 text-xs italic leading-relaxed text-justify border border-white p-4 bg-white/5">
               {formatDisclosure(authorName)}
             </p>
           </div>
@@ -1227,7 +1227,7 @@ export default function BlogPost() {
   if (error || !post) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
+        <div className="bg-red-900/20 border border-white rounded-none p-6">
           <h1 className="text-2xl font-bold text-white mb-4">Post Not Found</h1>
           <p className="text-red-400 mb-4">{error || 'The post you are looking for does not exist.'}</p>
           <Link

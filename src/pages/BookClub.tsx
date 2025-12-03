@@ -125,7 +125,7 @@ export default function BookClub() {
           <div className="mt-6">
             <Link
               to="/submit/bookclub"
-              className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition"
+              className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white rounded-none text-white text-sm font-medium transition"
             >
               Submit Your Article →
             </Link>
@@ -133,7 +133,7 @@ export default function BookClub() {
         </div>
 
         {error && (
-          <div className="bg-red-900/20 border border-red-500/50 rounded-none p-4 mb-6">
+          <div className="bg-red-900/20 border border-white rounded-none p-4 mb-6">
             <p className="text-red-400">{error}</p>
           </div>
         )}
@@ -160,8 +160,8 @@ export default function BookClub() {
                 to={`/blog/${post.subdomain}/${post.slug}`}
                 className="group"
               >
-                <article className="bg-black/50 border-2 border-white/10 rounded-lg p-5 h-full flex flex-col hover:border-white/30 hover:shadow-lg hover:shadow-white/10 transition-all duration-300 transform hover:-translate-y-1">
-                  <div className="mb-4 pb-3 border-b border-white/10">
+                <article className="bg-black/50 border-2 border-white rounded-none p-5 h-full flex flex-col hover:border-white hover:shadow-lg hover:shadow-white/10 transition-all duration-300 transform hover:-translate-y-1">
+                  <div className="mb-4 pb-3 border-b border-white">
                     <h3 className="text-base font-black text-white mb-2 tracking-wide group-hover:text-white/90 transition line-clamp-2">
                       {post.title}
                     </h3>
@@ -195,7 +195,7 @@ export default function BookClub() {
                     </div>
                   )}
 
-                  <div className="mt-auto pt-3 border-t border-white/10">
+                  <div className="mt-auto pt-3 border-t border-white">
                     <div className="flex items-center justify-between">
                       <time className="text-white/40 text-xs font-medium">
                         {formatDate(post.published_at || post.created_at)}

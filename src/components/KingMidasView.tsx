@@ -74,9 +74,9 @@ export function KingMidasView() {
 
   const getRankBadgeColor = (rank: number | null) => {
     if (!rank) return 'bg-white/10 text-white';
-    if (rank === 1) return 'bg-yellow-400/20 text-yellow-400 border-yellow-400/50';
-    if (rank === 2) return 'bg-gray-300/20 text-gray-300 border-gray-300/50';
-    if (rank === 3) return 'bg-orange-400/20 text-orange-400 border-orange-400/50';
+    if (rank === 1) return 'bg-yellow-400/20 text-yellow-400 border-white';
+    if (rank === 2) return 'bg-gray-300/20 text-gray-300 border-white';
+    if (rank === 3) return 'bg-orange-400/20 text-orange-400 border-white';
     return 'bg-white/10 text-white';
   };
 
@@ -118,20 +118,20 @@ export function KingMidasView() {
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:ring-2 focus:ring-white/20 focus:border-white/30"
+            className="px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:ring-2 focus:ring-white/20 focus:border-white"
           />
         </div>
       </div>
 
       {error && (
-        <div className="bg-red-400/20 border border-red-400/50 text-red-400 px-4 py-3 rounded-none">
+        <div className="bg-red-400/20 border border-white text-red-400 px-4 py-3 rounded-none">
           {error}
         </div>
       )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-black/50 border border-white/10 rounded-none p-4">
+        <div className="bg-black/50 border border-white rounded-none p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-white/60 text-sm">Total Profit</span>
             <TrendingUp className="w-5 h-5 text-green-400" />
@@ -140,7 +140,7 @@ export function KingMidasView() {
           <div className="text-xs text-white/40 mt-1">All affiliates</div>
         </div>
 
-        <div className="bg-black/50 border border-white/10 rounded-none p-4">
+        <div className="bg-black/50 border border-white rounded-none p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-white/60 text-sm">Pool Size</span>
             <DollarSign className="w-5 h-5 text-yellow-400" />
@@ -149,7 +149,7 @@ export function KingMidasView() {
           <div className="text-xs text-white/40 mt-1">8% of profit</div>
         </div>
 
-        <div className="bg-black/50 border border-white/10 rounded-none p-4">
+        <div className="bg-black/50 border border-white rounded-none p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-white/60 text-sm">Your Rank</span>
             <Trophy className="w-5 h-5 text-yellow-400" />
@@ -162,7 +162,7 @@ export function KingMidasView() {
           </div>
         </div>
 
-        <div className="bg-black/50 border border-white/10 rounded-none p-4">
+        <div className="bg-black/50 border border-white rounded-none p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-white/60 text-sm">Your Share</span>
             <DollarSign className="w-5 h-5 text-green-400" />
@@ -177,8 +177,8 @@ export function KingMidasView() {
       </div>
 
       {/* Rankings Table */}
-      <div className="bg-black/50 border border-white/10 rounded-none overflow-hidden">
-        <div className="p-4 border-b border-white/10">
+      <div className="bg-black/50 border border-white rounded-none overflow-hidden">
+        <div className="p-4 border-b border-white">
           <h3 className="text-lg font-bold text-white flex items-center gap-2">
             <Trophy className="w-5 h-5 text-yellow-400" />
             Daily Rankings - {new Date(selectedDate).toLocaleDateString()}
@@ -186,7 +186,7 @@ export function KingMidasView() {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-white/5 border-b border-white/10">
+            <thead className="bg-white/5 border-b border-white">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">Rank</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">Profit Generated</th>
@@ -242,8 +242,8 @@ export function KingMidasView() {
 
       {/* Payouts Section */}
       {payouts.length > 0 && (
-        <div className="bg-black/50 border border-white/10 rounded-none overflow-hidden">
-          <div className="p-4 border-b border-white/10">
+        <div className="bg-black/50 border border-white rounded-none overflow-hidden">
+          <div className="p-4 border-b border-white">
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
               <DollarSign className="w-5 h-5 text-green-400" />
               Payouts
@@ -295,7 +295,7 @@ export function KingMidasView() {
       )}
 
       {/* Info Box */}
-      <div className="bg-yellow-400/10 border border-yellow-400/30 rounded-none p-4">
+      <div className="bg-yellow-400/10 border border-white rounded-none p-4">
         <div className="flex items-start gap-3">
           <Award className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" />
           <div>

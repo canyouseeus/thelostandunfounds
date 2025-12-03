@@ -300,12 +300,12 @@ export default function BlogManagement() {
 
       {/* Create/Edit Form */}
       {isCreating && (
-        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+        <div className="bg-black/50 border border-white rounded-none p-6">
           <h3 className="text-lg font-bold text-white mb-4">
             {editingPost ? 'Edit Post' : isBookClubPost ? 'Create New Book Club Post' : 'Create New Post'}
           </h3>
           {isBookClubPost && !editingPost && userSubdomain && (
-            <div className="mb-4 p-3 bg-blue-900/20 border border-blue-500/30 rounded-none">
+            <div className="mb-4 p-3 bg-blue-900/20 border border-white rounded-none">
               <p className="text-blue-300 text-sm">
                 This post will be published to the Book Club with subdomain: <span className="font-mono">{userSubdomain}</span>
               </p>
@@ -318,7 +318,7 @@ export default function BlogManagement() {
                 type="text"
                 value={formData.title}
                 onChange={(e) => handleTitleChange(e.target.value)}
-                className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+                className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none"
                 required
               />
             </div>
@@ -329,7 +329,7 @@ export default function BlogManagement() {
                 type="text"
                 value={formData.slug}
                 onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+                className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none"
                 placeholder="auto-generated-from-title"
               />
             </div>
@@ -339,7 +339,7 @@ export default function BlogManagement() {
               <textarea
                 value={formData.content}
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+                className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none"
                 rows={15}
                 required
               />
@@ -350,7 +350,7 @@ export default function BlogManagement() {
               <textarea
                 value={formData.excerpt}
                 onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+                className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none"
                 rows={3}
               />
             </div>
@@ -362,7 +362,7 @@ export default function BlogManagement() {
                   type="text"
                   value={formData.seo_title}
                   onChange={(e) => setFormData({ ...formData, seo_title: e.target.value })}
-                  className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+                  className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none"
                 />
               </div>
 
@@ -372,7 +372,7 @@ export default function BlogManagement() {
                   type="url"
                   value={formData.og_image_url}
                   onChange={(e) => setFormData({ ...formData, og_image_url: e.target.value })}
-                  className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+                  className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none"
                 />
               </div>
             </div>
@@ -382,7 +382,7 @@ export default function BlogManagement() {
               <textarea
                 value={formData.seo_description}
                 onChange={(e) => setFormData({ ...formData, seo_description: e.target.value })}
-                className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+                className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none"
                 rows={2}
               />
             </div>
@@ -393,7 +393,7 @@ export default function BlogManagement() {
                 type="text"
                 value={formData.seo_keywords}
                 onChange={(e) => setFormData({ ...formData, seo_keywords: e.target.value })}
-                className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+                className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none"
                 placeholder="keyword1, keyword2, keyword3"
               />
             </div>
@@ -436,7 +436,7 @@ export default function BlogManagement() {
                     og_image_url: '',
                   });
                 }}
-                className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded text-white transition"
+                className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded-none text-white transition"
               >
                 Cancel
               </button>
@@ -446,7 +446,7 @@ export default function BlogManagement() {
       )}
 
       {/* THE LOST ARCHIVES Section (Admin's regular posts - no subdomain) */}
-      <div className="bg-black/50 border border-white/10 rounded-none p-6">
+      <div className="bg-black/50 border border-white rounded-none p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-white">THE LOST ARCHIVES</h3>
           <button
@@ -485,7 +485,7 @@ export default function BlogManagement() {
               .map((post) => (
               <div
                 key={post.id}
-                className="bg-black/30 border border-white/10 rounded-none p-4 hover:border-white/20 transition"
+                className="bg-black/30 border border-white rounded-none p-4 hover:border-white transition"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -495,10 +495,10 @@ export default function BlogManagement() {
                         <Calendar className="w-3 h-3" />
                         {formatDate(post.published_at || post.created_at)}
                       </span>
-                      <span className={`px-2 py-1 rounded text-xs ${
+                      <span className={`px-2 py-1 rounded-none text-xs ${
                         post.published
-                          ? 'bg-green-400/20 text-green-400 border border-green-400/20'
-                          : 'bg-yellow-400/20 text-yellow-400 border border-yellow-400/20'
+                          ? 'bg-green-400/20 text-green-400 border border-white'
+                          : 'bg-yellow-400/20 text-yellow-400 border border-white'
                       }`}>
                         {post.published ? 'Published' : 'Draft'}
                       </span>
@@ -513,7 +513,7 @@ export default function BlogManagement() {
                         href={`/thelostarchives/${post.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-2 hover:bg-white/10 rounded transition"
+                        className="p-2 hover:bg-white/10 rounded-none transition"
                         title="View post"
                       >
                         <Eye className="w-4 h-4 text-white/60" />
@@ -521,14 +521,14 @@ export default function BlogManagement() {
                     )}
                     <button
                       onClick={() => handleEdit(post)}
-                      className="p-2 hover:bg-white/10 rounded transition"
+                      className="p-2 hover:bg-white/10 rounded-none transition"
                       title="Edit post"
                     >
                       <Edit className="w-4 h-4 text-white/60" />
                     </button>
                     <button
                       onClick={() => handleDelete(post.id)}
-                      className="p-2 hover:bg-red-500/20 rounded transition"
+                      className="p-2 hover:bg-red-500/20 rounded-none transition"
                       title="Delete post"
                     >
                       <Trash2 className="w-4 h-4 text-red-400" />
@@ -543,13 +543,13 @@ export default function BlogManagement() {
 
       {/* My Book Club Posts Section (Admin's book club posts) */}
       {adminBookClubPosts.length > 0 && (
-        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+        <div className="bg-black/50 border border-white rounded-none p-6">
           <h3 className="text-lg font-bold text-white mb-4">MY BOOK CLUB POSTS</h3>
           <div className="space-y-4">
             {adminBookClubPosts.map((post) => (
               <div
                 key={post.id}
-                className="bg-black/30 border border-white/10 rounded-none p-4 hover:border-white/20 transition"
+                className="bg-black/30 border border-white rounded-none p-4 hover:border-white transition"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -559,15 +559,15 @@ export default function BlogManagement() {
                         <Calendar className="w-3 h-3" />
                         {formatDate(post.published_at || post.created_at)}
                       </span>
-                      <span className={`px-2 py-1 rounded text-xs ${
+                      <span className={`px-2 py-1 rounded-none text-xs ${
                         post.published
-                          ? 'bg-green-400/20 text-green-400 border border-green-400/20'
-                          : 'bg-yellow-400/20 text-yellow-400 border border-yellow-400/20'
+                          ? 'bg-green-400/20 text-green-400 border border-white'
+                          : 'bg-yellow-400/20 text-yellow-400 border border-white'
                       }`}>
                         {post.published ? 'Published' : 'Draft'}
                       </span>
                       {post.subdomain && (
-                        <span className="px-2 py-1 rounded text-xs bg-blue-400/20 text-blue-400 border border-blue-400/20">
+                        <span className="px-2 py-1 rounded-none text-xs bg-blue-400/20 text-blue-400 border border-white">
                           {post.subdomain}
                         </span>
                       )}
@@ -582,7 +582,7 @@ export default function BlogManagement() {
                         href={`/blog/${post.subdomain}/${post.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-2 hover:bg-white/10 rounded transition"
+                        className="p-2 hover:bg-white/10 rounded-none transition"
                         title="View post"
                       >
                         <Eye className="w-4 h-4 text-white/60" />
@@ -590,14 +590,14 @@ export default function BlogManagement() {
                     )}
                     <button
                       onClick={() => handleEdit(post)}
-                      className="p-2 hover:bg-white/10 rounded transition"
+                      className="p-2 hover:bg-white/10 rounded-none transition"
                       title="Edit post"
                     >
                       <Edit className="w-4 h-4 text-white/60" />
                     </button>
                     <button
                       onClick={() => handleDelete(post.id)}
-                      className="p-2 hover:bg-red-500/20 rounded transition"
+                      className="p-2 hover:bg-red-500/20 rounded-none transition"
                       title="Delete post"
                     >
                       <Trash2 className="w-4 h-4 text-red-400" />
@@ -611,7 +611,7 @@ export default function BlogManagement() {
       )}
 
       {/* Book Club Posts Section */}
-      <div className="bg-black/50 border border-white/10 rounded-none p-6">
+      <div className="bg-black/50 border border-white rounded-none p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-white">Book Club Posts</h3>
           <a
@@ -629,7 +629,7 @@ export default function BlogManagement() {
             {bookClubPosts.map((post) => (
               <div
                 key={post.id}
-                className="bg-black/30 border border-white/10 rounded-none p-4 hover:border-white/20 transition"
+                className="bg-black/30 border border-white rounded-none p-4 hover:border-white transition"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -639,15 +639,15 @@ export default function BlogManagement() {
                         <Calendar className="w-3 h-3" />
                         {formatDate(post.published_at || post.created_at)}
                       </span>
-                      <span className={`px-2 py-1 rounded text-xs ${
+                      <span className={`px-2 py-1 rounded-none text-xs ${
                         post.published
-                          ? 'bg-green-400/20 text-green-400 border border-green-400/20'
-                          : 'bg-yellow-400/20 text-yellow-400 border border-yellow-400/20'
+                          ? 'bg-green-400/20 text-green-400 border border-white'
+                          : 'bg-yellow-400/20 text-yellow-400 border border-white'
                       }`}>
                         {post.published ? 'Published' : 'Draft'}
                       </span>
                       {post.subdomain && (
-                        <span className="px-2 py-1 rounded text-xs bg-blue-400/20 text-blue-400 border border-blue-400/20">
+                        <span className="px-2 py-1 rounded-none text-xs bg-blue-400/20 text-blue-400 border border-white">
                           {post.subdomain}
                         </span>
                       )}
@@ -662,7 +662,7 @@ export default function BlogManagement() {
                         href={`/blog/${post.subdomain}/${post.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-2 hover:bg-white/10 rounded transition"
+                        className="p-2 hover:bg-white/10 rounded-none transition"
                         title="View post"
                       >
                         <Eye className="w-4 h-4 text-white/60" />
@@ -670,14 +670,14 @@ export default function BlogManagement() {
                     )}
                     <button
                       onClick={() => handleEdit(post)}
-                      className="p-2 hover:bg-white/10 rounded transition"
+                      className="p-2 hover:bg-white/10 rounded-none transition"
                       title="Edit post"
                     >
                       <Edit className="w-4 h-4 text-white/60" />
                     </button>
                     <button
                       onClick={() => handleDelete(post.id)}
-                      className="p-2 hover:bg-red-500/20 rounded transition"
+                      className="p-2 hover:bg-red-500/20 rounded-none transition"
                       title="Delete post"
                     >
                       <Trash2 className="w-4 h-4 text-red-400" />
@@ -693,7 +693,7 @@ export default function BlogManagement() {
 
       {/* Empty State */}
       {adminPosts.length === 0 && bookClubPosts.length === 0 && (
-        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+        <div className="bg-black/50 border border-white rounded-none p-6">
           <p className="text-white/60">No posts yet.</p>
         </div>
       )}
