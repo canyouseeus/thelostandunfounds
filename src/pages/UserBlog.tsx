@@ -290,9 +290,11 @@ export default function UserBlog() {
                   {({ isExpanded }) => (
                     <ExpandableTrigger>
                       <div 
-                        className="rounded-none p-[1px] relative h-full"
+                        className="rounded-none p-[1px] relative"
                         style={{ 
                           background: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15), rgba(255,255,255,0.3))',
+                          minHeight: isExpanded ? '400px' : '220px',
+                          transition: 'min-height 0.2s ease-out',
                         }}
                       >
                         <ExpandableCard
