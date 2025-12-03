@@ -452,7 +452,7 @@ export default function Layout() {
                   </div>
                   {user && (
                     <>
-                      <div className="border-t border-white my-2"></div>
+                      <div className="menu-item menu-separator"></div>
                 <Link
                   to={userIsAdmin ? "/admin" : userSubdomain ? `/${userSubdomain}/bookclubprofile` : "/bookclubprofile"}
                   className="menu-item"
@@ -475,7 +475,7 @@ export default function Layout() {
                           <LogOut className="w-4 h-4" />
                         </span>
                       </button>
-                      <div className="border-t border-white my-2"></div>
+                      <div className="menu-item menu-separator"></div>
                       <div className="menu-item user-info">
                         <div className="text-white/60 text-xs mb-1">Logged in as:</div>
                         <div className="text-white text-xs font-medium">
