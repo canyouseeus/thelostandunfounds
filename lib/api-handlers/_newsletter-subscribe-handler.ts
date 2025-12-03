@@ -206,10 +206,10 @@ export default async function handler(
                     <tr>
                       <td align="center" style="padding: 40px 20px !important; background-color: #000000 !important;">
                         <table role="presentation" style="max-width: 600px !important; width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 auto !important;">
-                          <!-- Logo -->
+                          <!-- Branding Header -->
                           <tr>
                             <td align="left" style="padding: 0 0 30px 0; background-color: #000000 !important;">
-                              <div style="color: #000000 !important; font-size: 24px; font-weight: bold; font-family: Arial, sans-serif;">THE LOST+UNFOUNDS</div>
+                              <img src="https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
                             </td>
                           </tr>
                           <!-- Main Content -->

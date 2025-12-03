@@ -151,9 +151,7 @@ function generateWelcomeEmailHtml(userName: string, gettingStartedUrl: string): 
           <!-- Branding Header -->
           <tr>
             <td align="left" style="padding: 0 0 30px 0;">
-              <h1 style="color: #ffffff; font-size: 24px; font-weight: bold; margin: 0; text-align: left; letter-spacing: 0.05em; font-family: Arial, sans-serif;">
-                THE LOST+UNFOUNDS
-              </h1>
+              <img src="https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
             </td>
           </tr>
           <!-- Main Content -->
