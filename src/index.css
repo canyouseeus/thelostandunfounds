@@ -162,6 +162,10 @@ body {
   min-width: 0;
 }
 
+.menu-item.user-info > div:first-child {
+  white-space: nowrap;
+}
+
 .menu-item.user-info > div:last-child {
   white-space: nowrap;
   max-width: 100%;
