@@ -268,25 +268,19 @@ export default function Blog() {
                 >
                   {({ isExpanded }) => (
                     <ExpandableTrigger>
-                      <div 
-                        className="rounded-none p-[1px] relative"
-                        style={{ 
-                          background: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15), rgba(255,255,255,0.3))',
-                        }}
+                      <ExpandableCard
+                        className="bg-black/50 border-2 border-white rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-white hover:shadow-lg hover:shadow-white/10"
+                        collapsedSize={{ height: 220 }}
+                        expandedSize={{ height: 400 }}
+                        hoverToExpand={false}
+                        expandDelay={0}
+                        collapseDelay={0}
                       >
-                        <ExpandableCard
-                          className="bg-black/50 border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02]"
-                          collapsedSize={{ height: 220 }}
-                          expandedSize={{ height: 400 }}
-                          hoverToExpand={false}
-                          expandDelay={0}
-                          collapseDelay={0}
-                        >
-                          <ExpandableCardHeader className="mb-1 pb-1">
-                            <h2 className="text-base font-black text-white mb-0 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
-                              {post.title}
-                            </h2>
-                          </ExpandableCardHeader>
+                        <ExpandableCardHeader className="mb-1 pb-1">
+                          <h2 className="text-base font-black text-white mb-0 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
+                            {post.title}
+                          </h2>
+                        </ExpandableCardHeader>
                         
                           <ExpandableCardContent className="flex-1 min-h-0">
                             {excerpt && (
