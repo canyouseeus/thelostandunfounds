@@ -333,7 +333,6 @@ export default function Blog() {
                             </div>
                           </ExpandableCardFooter>
                         </ExpandableCard>
-                      </div>
                     </ExpandableTrigger>
                   )}
                 </Expandable>
@@ -366,7 +365,7 @@ export default function Blog() {
                 }
                 return '';
               })() : '');
-
+              
               return (
                 <Expandable
                   key={post.id}
@@ -377,14 +376,8 @@ export default function Blog() {
                 >
                   {({ isExpanded }) => (
                     <ExpandableTrigger>
-                      <div 
-                        className="rounded-none p-[1px] relative"
-                        style={{ 
-                          background: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15), rgba(255,255,255,0.3))',
-                        }}
-                      >
-                        <ExpandableCard
-                          className="bg-black/47 border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02]"
+                      <ExpandableCard
+                        className="bg-black/50 border-2 border-white rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-white hover:shadow-lg hover:shadow-white/10"
                           collapsedSize={{ height: 220 }}
                           expandedSize={{ height: 400 }}
                           hoverToExpand={false}
@@ -442,7 +435,6 @@ export default function Blog() {
                             </div>
                           </ExpandableCardFooter>
                         </ExpandableCard>
-                      </div>
                     </ExpandableTrigger>
                   )}
                 </Expandable>
