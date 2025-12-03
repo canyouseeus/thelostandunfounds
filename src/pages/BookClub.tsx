@@ -205,7 +205,7 @@ export default function BookClub() {
                   {({ isExpanded }) => (
                     <ExpandableTrigger>
                       <div 
-                        className="rounded-none p-[1px] relative"
+                        className="rounded-none p-[1px] relative h-full"
                         style={{ 
                           background: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15), rgba(255,255,255,0.3))',
                         }}
