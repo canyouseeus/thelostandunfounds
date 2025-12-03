@@ -325,8 +325,9 @@ export default function Blog() {
                                 </span>
                               )}
                             </div>
-                          </ExpandableCardFooter>
-                        </ExpandableCard>
+                        </ExpandableCardFooter>
+                      </ExpandableCard>
+                      </div>
                     </ExpandableTrigger>
                   )}
                 </Expandable>
@@ -427,8 +428,9 @@ export default function Blog() {
                                 </span>
                               )}
                             </div>
-                          </ExpandableCardFooter>
-                        </ExpandableCard>
+                        </ExpandableCardFooter>
+                      </ExpandableCard>
+                      </div>
                     </ExpandableTrigger>
                   )}
                 </Expandable>
