@@ -460,11 +460,12 @@ export default function Layout() {
                     setMenuOpen(false);
                   }}
                 >
-                  <span className="menu-toggle-text">{userIsAdmin ? 'ADMIN DASHBOARD' : 'PROFILE'}</span>
+                  <span className={`menu-toggle-text ${userIsAdmin ? 'font-bold' : ''}`}>{userIsAdmin ? 'ADMIN DASHBOARD' : 'PROFILE'}</span>
                   <span className="menu-toggle-icon">
                     <User className="w-4 h-4" />
                   </span>
                 </Link>
+                      <div className="menu-item menu-separator"></div>
                       <button
                         type="button"
                         className="menu-item w-full text-left"

@@ -218,6 +218,7 @@ body {
 .menu-toggle-text {
   flex: 1;
   padding-right: 1.75rem;
+  white-space: nowrap;
 }
 
 .menu-toggle-icon {
