@@ -285,7 +285,7 @@ export default function About() {
         </p>
 
         <p>
-          The thing about media, comics, literature, movies, tv shows, etc., is that there's a whole bunch of things I've seen in movies or read in a book, as a kid, that didn't exist before and do exist now, and this is a testament to our creative nature. We got flying cars before we got GTA6. Let's keep making more stuff.
+          The beauty of media, comics, literature, movies, TV shows, and so on, lies in the fact that we've witnessed the portrayal of numerous concepts that didn't exist before but now do. This is a testament to our creative prowess. We had flying cars before we had GTA6. Let's continue to create more of these wonders and build the world of tomorrow together.
         </p>
 
         <p>
