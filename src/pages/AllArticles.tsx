@@ -140,7 +140,7 @@ export default function AllArticles() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-2 tracking-wide">
-                All Articles
+                ALL ARTICLES
               </h1>
               <p className="text-white/60 text-sm">
                 THE LOST ARCHIVES
