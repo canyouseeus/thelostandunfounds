@@ -164,8 +164,6 @@ body {
 
 .menu-item.user-info > div:last-child {
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   max-width: 100%;
 }
 

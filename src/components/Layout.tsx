@@ -478,7 +478,7 @@ export default function Layout() {
                       <div className="border-t border-white my-2"></div>
                       <div className="menu-item user-info">
                         <div className="text-white/60 text-xs mb-1">Logged in as:</div>
-                        <div className="text-white text-sm font-medium">
+                        <div className="text-white text-xs font-medium">
                           {user.user_metadata?.author_name || user.email?.split('@')[0] || 'User'}
                         </div>
                       </div>
