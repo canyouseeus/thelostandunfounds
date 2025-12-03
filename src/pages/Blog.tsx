@@ -378,8 +378,10 @@ export default function Blog() {
                   {({ isExpanded }) => (
                     <ExpandableTrigger>
                       <div 
-                        className="rounded-none p-[1px] h-full relative"
-                        style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15), rgba(255,255,255,0.3))' }}
+                        className="rounded-none p-[1px] relative"
+                        style={{ 
+                          background: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15), rgba(255,255,255,0.3))',
+                        }}
                       >
                         <ExpandableCard
                           className="bg-black/47 border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02]"
@@ -390,11 +392,11 @@ export default function Blog() {
                           collapseDelay={0}
                         >
                           <ExpandableCardHeader className="mb-1 pb-1">
-                            <h2 className="text-base font-black text-white mb-0 tracking-wide transition line-clamp-2">
+                            <h2 className="text-base font-black text-white mb-0 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
                               {post.title}
                             </h2>
                           </ExpandableCardHeader>
-                          
+                        
                           <ExpandableCardContent className="flex-1 min-h-0">
                             {excerpt && (
                               <div className="mb-1">
