@@ -189,6 +189,7 @@ body {
   width: 0.75rem;
   text-align: center;
   flex-shrink: 0;
+  margin-left: 0.25rem;
 }
 
 .menu-subsection {
