@@ -213,8 +213,14 @@ export default function ColumnPage({ column, title, description, submitPath, ico
                 >
                   {({ isExpanded }) => (
                     <ExpandableTrigger>
-                      <ExpandableCard
-                        className="bg-black/50 border-2 border-white rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-white hover:shadow-lg hover:shadow-white/10"
+                      <div 
+                        className="rounded-none p-[1px] relative"
+                        style={{ 
+                          background: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15), rgba(255,255,255,0.3))',
+                        }}
+                      >
+                        <ExpandableCard
+                          className="bg-black/50 border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02]"
                           collapsedSize={{ height: 220 }}
                           expandedSize={{ height: 400 }}
                           hoverToExpand={false}
@@ -278,6 +284,7 @@ export default function ColumnPage({ column, title, description, submitPath, ico
                             </div>
                         </ExpandableCardFooter>
                       </ExpandableCard>
+                      </div>
                     </ExpandableTrigger>
                   )}
                 </Expandable>
