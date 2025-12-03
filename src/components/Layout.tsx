@@ -468,7 +468,7 @@ export default function Layout() {
                       <div className="menu-item menu-separator"></div>
                       <button
                         type="button"
-                        className="menu-item w-full text-left"
+                        className="menu-item"
                         onClick={handleSignOut}
                       >
                         <span className="menu-toggle-text">LOG OUT</span>
