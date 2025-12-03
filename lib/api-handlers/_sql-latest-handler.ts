@@ -13,6 +13,7 @@ const SQL_FILES = [
   '/sql/setup-admin-user.sql',
   '/sql/update-admin-username-and-subdomain.sql',
   '/sql/move-post-to-book-club.sql',
+  '/sql/fix-book-club-posts-blog-column.sql',
   '/sql/create-newsletter-campaigns-table.sql',
   '/blog-schema-migration.sql',
   '/create-first-blog-post.sql',

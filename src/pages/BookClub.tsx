@@ -39,32 +39,52 @@ export default function BookClub() {
       setError(null);
 
       // Load all published posts for BookClub column
-      // Try to filter by column field first, fallback to subdomain for backward compatibility
+      // Try to filter by blog_column first, with fallback to subdomain for backward compatibility
       let query = supabase
         .from('blog_posts')
         .select('id, title, slug, excerpt, content, published_at, created_at, subdomain, author_id, amazon_affiliate_links, blog_column')
         .eq('published', true);
 
-      // Try to filter by blog_column field if it exists
-      try {
-        query = query.eq('blog_column', 'bookclub');
-      } catch (e) {
-        // blog_column field might not exist yet - use fallback
-        query = query.not('subdomain', 'is', null);
-      }
+      // Try to filter by blog_column field
+      query = query.eq('blog_column', 'bookclub');
 
       const { data, error: fetchError } = await query
         .order('published_at', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(100);
 
-      // Filter by blog_column if blog_column field exists in data (for backward compatibility)
+      // If query failed or returned no results, try fallback to subdomain-based filtering
       let filteredData = data || [];
-      if (data && data.length > 0 && data[0].blog_column !== undefined) {
-        filteredData = data.filter((post: any) => post.blog_column === 'bookclub');
+      if (fetchError || !data || data.length === 0) {
+        console.log('blog_column filter returned no results, trying subdomain fallback');
+        // Fallback: get posts with subdomain (book club posts)
+        const fallbackQuery = supabase
+          .from('blog_posts')
+          .select('id, title, slug, excerpt, content, published_at, created_at, subdomain, author_id, amazon_affiliate_links, blog_column')
+          .eq('published', true)
+          .not('subdomain', 'is', null)
+          .order('published_at', { ascending: false })
+          .order('created_at', { ascending: false })
+          .limit(100);
+        
+        const { data: fallbackData, error: fallbackError } = await fallbackQuery;
+        
+        if (fallbackError) {
+          console.error('Error loading book club posts (fallback):', fallbackError);
+          setError('Failed to load articles');
+          return;
+        }
+        
+        filteredData = fallbackData || [];
+      } else {
+        // Filter to ensure we only show posts with blog_column='bookclub' or NULL (for backward compatibility)
+        filteredData = data.filter((post: any) => 
+          post.blog_column === 'bookclub' || 
+          (post.blog_column === null && post.subdomain !== null)
+        );
       }
 
-      if (fetchError) {
+      if (fetchError && filteredData.length === 0) {
         console.error('Error loading book club posts:', fetchError);
         setError('Failed to load articles');
         return;

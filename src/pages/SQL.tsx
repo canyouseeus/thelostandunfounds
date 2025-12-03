@@ -808,6 +808,20 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch move-post-to-book-club file:', fetchError);
       }
 
+      // Load fix-book-club-posts-blog-column script
+      let fixBookClubPostsContent = '';
+      try {
+        const fixBookClubPostsResponse = await fetch('/sql/fix-book-club-posts-blog-column.sql');
+        if (fixBookClubPostsResponse.ok) {
+          const text = await fixBookClubPostsResponse.text();
+          if (!text.trim().startsWith('<!')) {
+            fixBookClubPostsContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch fix-book-club-posts-blog-column file:', fetchError);
+      }
+
       // Load add-amazon-storefront-id script
       let amazonStorefrontContent = '';
       try {
@@ -1103,13 +1117,6 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
           content: migrationContent,
           description: 'Adds missing fields (published, SEO fields, og_image_url) to blog_posts table. Handles missing author_id column. Run this FIRST in Supabase SQL Editor.',
           createdAt: getScriptTimestamp('blog-schema-migration.sql')
-        },
-        {
-          name: 'Join THE LOST ARCHIVES BOOK CLUB and Share Your Love of Books',
-          filename: 'create-blog-post-join-the-lost-archives-book-club.sql',
-          content: bookClubContent || '// File not found - check public/sql folder',
-          description: 'Creates the blog post "Join THE LOST ARCHIVES BOOK CLUB and Share Your Love of Books" - inviting readers and writers to join the book club community, share insights, and earn as Amazon affiliates. Run this AFTER the migration script. Works with any schema version.',
-          createdAt: getScriptTimestamp('create-blog-post-join-the-lost-archives-book-club.sql')
         },
         {
           name: 'Building a Creative Brand That Rewards People for Life: Lessons That Shaped THE LOST+UNFOUNDS',
