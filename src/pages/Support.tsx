@@ -9,7 +9,7 @@ export default function Support() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="mb-12 text-center">
-        <h1 className="text-5xl font-bold text-white mb-4">Support Center</h1>
+        <h1 className="text-5xl font-bold text-white mb-4">SUPPORT CENTER</h1>
         <p className="text-xl text-white/70">
           We're here to help you get the most out of THE LOST+UNFOUNDS
         </p>

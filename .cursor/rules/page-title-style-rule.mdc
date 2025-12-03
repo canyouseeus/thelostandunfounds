@@ -1,0 +1,73 @@
+# Page Title Style Rule - CRITICAL
+
+## UPPERCASE PAGE TITLES RULE
+
+**ALL main page titles (h1 headings) MUST be in UPPERCASE.**
+
+### Rule Application
+
+This rule applies to:
+- ✅ Main page headings (h1 elements with large font sizes)
+- ✅ Page titles displayed prominently at the top of pages
+- ✅ Navigation/landing page titles
+- ✅ Section titles for major content areas
+
+### Examples of Correct Usage
+
+```tsx
+// ✅ CORRECT - Uppercase main page title
+<h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-2 tracking-wide">
+  ALL ARTICLES
+</h1>
+
+// ✅ CORRECT - Uppercase column title
+<h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 tracking-wide">
+  BOOK CLUB
+</h1>
+
+// ✅ CORRECT - Uppercase submit page title
+title: 'SUBMIT TO THE LOST ARCHIVES'
+```
+
+### What This Rule Does NOT Apply To
+
+- ❌ Error messages (e.g., "Error", "Post Not Found")
+- ❌ Loading states (e.g., "Loading...")
+- ❌ Success messages (e.g., "✅ Authorization Code Received")
+- ❌ Subheadings (h2, h3, etc.)
+- ❌ Body text and descriptions
+- ❌ Button labels
+- ❌ Form labels
+
+### Implementation Checklist
+
+When creating or updating a page:
+
+1. ✅ Check if the page has a main h1 heading
+2. ✅ Verify the heading is in UPPERCASE
+3. ✅ Ensure consistency with other page titles
+4. ✅ Update meta tags (og:title, twitter:title) to match if needed
+
+### Current Pages Following This Rule
+
+- `/thelostarchives/all` - "ALL ARTICLES"
+- `/thelostarchives` - "THE LOST ARCHIVES"
+- `/book-club` - "BOOK CLUB"
+- `/submit/main` - "SUBMIT TO THE LOST ARCHIVES"
+- `/submit/bookclub` - "SUBMIT TO BOOK CLUB"
+- `/gearheads` - "GEARHEADS"
+- `/science` - "SCIENCE COLUMN"
+- `/borderlands` - "EDGE OF THE BORDERLANDS"
+- `/newtheory` - "NEW THEORY"
+
+### Enforcement
+
+- **ALWAYS** use UPPERCASE for main page titles
+- **ALWAYS** check existing pages when making changes
+- **ALWAYS** update this rule document if adding new page types
+- **NEVER** use title case or sentence case for main page headings
+
+---
+
+**Last Updated**: 2025-01-XX
+**Status**: Active
