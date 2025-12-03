@@ -26,6 +26,8 @@ export default async function handler(
       return handleSendExistingPublicationEmails(req, res)
     case 'send-welcome-emails':
       return handleSendWelcomeEmails(req, res)
+    case 'send-all-missing-emails':
+      return handleSendAllMissingEmails(req, res)
     default:
       return res.status(404).json({ error: `Admin route not found: ${route}` })
   }
@@ -60,5 +62,13 @@ async function handleSendExistingPublicationEmails(req: VercelRequest, res: Verc
  */
 async function handleSendWelcomeEmails(req: VercelRequest, res: VercelResponse) {
   const handler = await import('../../lib/api-handlers/_send-welcome-emails-handler.js')
+  return await handler.default(req, res)
+}
+
+/**
+ * Send All Missing Emails Handler
+ */
+async function handleSendAllMissingEmails(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/_send-all-missing-emails-handler.js')
   return await handler.default(req, res)
 }
