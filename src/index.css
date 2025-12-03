@@ -181,7 +181,7 @@ body {
 
 .menu-toggle-text {
   flex: 1;
-  padding-right: 1.5rem;
+  padding-right: 1.75rem;
 }
 
 .menu-toggle-icon {
@@ -192,7 +192,7 @@ body {
   text-align: center;
   flex-shrink: 0;
   position: absolute;
-  right: 0;
+  right: 0.5rem;
 }
 
 .menu-subsection {
