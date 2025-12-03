@@ -460,20 +460,20 @@ export default function Layout() {
                     setMenuOpen(false);
                   }}
                 >
-                  <div className="flex items-center gap-2">
+                  <span className="menu-toggle-text">{userIsAdmin ? 'ADMIN DASHBOARD' : 'PROFILE'}</span>
+                  <span className="menu-toggle-icon">
                     <User className="w-4 h-4" />
-                    {userIsAdmin ? 'ADMIN DASHBOARD' : 'PROFILE'}
-                  </div>
+                  </span>
                 </Link>
                       <button
                         type="button"
                         className="menu-item w-full text-left"
                         onClick={handleSignOut}
                       >
-                        <div className="flex items-center gap-2">
+                        <span className="menu-toggle-text">LOG OUT</span>
+                        <span className="menu-toggle-icon">
                           <LogOut className="w-4 h-4" />
-                          LOG OUT
-                        </div>
+                        </span>
                       </button>
                       <div className="border-t border-white my-2"></div>
                       <div className="menu-item user-info">
