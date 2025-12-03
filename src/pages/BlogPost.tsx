@@ -447,10 +447,17 @@ export default function BlogPost() {
     Object.assign(bookLinks, defaultBookLinks);
 
     // Build emphasis terms list - include all book titles from links, plus defaults
+    // Column titles should be bold in all body text (branding style rule)
     const emphasisTerms: string[] = [
       'THE LOST+UNFOUNDS',
       'THE LOST ARCHIVES BOOK CLUB',
+      'EDGE OF THE BORDERLANDS',
+      'SCIENCE COLUMN',
+      'NEW THEORY',
+      'THE LOST ARCHIVES',
+      'GEARHEADS',
       'BOOK CLUB',
+      'BORDERLANDS',
       'The Hundreds',
       'Personal Legend',
       'Bitcoin',
