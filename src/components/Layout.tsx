@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { isAdmin } from '../utils/admin'
 import AuthModal from './auth/AuthModal'
 import { supabase } from '../lib/supabase'
+import Footer from './Footer'
 
 export default function Layout() {
   const location = useLocation()
@@ -225,7 +226,7 @@ export default function Layout() {
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-black flex flex-col">
       <nav className="bg-black/80 backdrop-blur-md relative z-[10000]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Top row: Title left, Menu button right */}
@@ -496,9 +497,10 @@ export default function Layout() {
           </div>
         </div>
       </nav>
-      <main className="pb-6">
+      <main className="pb-6 flex-1">
         <Outlet />
       </main>
+      <Footer />
       <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
       
       {/* Upgrade Modal */}
