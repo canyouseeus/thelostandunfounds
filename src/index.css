@@ -190,6 +190,11 @@ body {
   border-bottom: none;
 }
 
+.menu-dropdown button.menu-item:last-of-type,
+.menu-dropdown .menu-item:last-of-type {
+  border-bottom: none;
+}
+
 .menu-separator {
   border-top: 1px solid rgba(255, 255, 255, 1);
   padding: 0.5rem 1rem;
