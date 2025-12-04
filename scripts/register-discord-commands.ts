@@ -7,7 +7,7 @@
 
 import { registerGuildCommands } from '../lib/discord/utils'
 
-const GUILD_ID = process.env.DISCORD_GUILD_ID || '1428346383772942346'
+const GUILD_ID = process.env.DISCORD_GUILD_ID || '833383219083608084'
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID
 

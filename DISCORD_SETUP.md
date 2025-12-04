@@ -27,8 +27,8 @@ Discord integration provides:
      - **Public Key** → `DISCORD_PUBLIC_KEY`
    
    **Note**: The Application ID (Client ID) is different from your Server ID (Guild ID):
-   - **Client ID** = Your bot application's unique identifier
-   - **Guild ID** = Your Discord server's unique identifier (`1428346383772942346`)
+   - **Client ID** = Your bot application's unique identifier (`1428346383772942346`)
+   - **Guild ID** = Your Discord server's unique identifier (`833383219083608084`)
 
 ### Step 2: Create Discord Bot
 
@@ -118,13 +118,14 @@ Add these to your Vercel environment variables:
    DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
    
    # Discord Server ID (Guild ID) - Different from Client ID!
-   # Right-click your Discord server → Copy Server ID (Developer Mode must be enabled)
-   DISCORD_GUILD_ID=1428346383772942346  # Your server's ID (NOT the same as Client ID)
+   # Extract from channel URL: https://discord.com/channels/GUILD_ID/CHANNEL_ID
+   # Or: Right-click your Discord server → Copy Server ID (Developer Mode must be enabled)
+   DISCORD_GUILD_ID=833383219083608084  # Your server's ID (from channel URL)
    ```
    
    **Important**: 
-   - `DISCORD_CLIENT_ID` = Your bot application ID (from Developer Portal)
-   - `DISCORD_GUILD_ID` = Your Discord server ID (`1428346383772942346`)
+   - `DISCORD_CLIENT_ID` = Your bot application ID (`1428346383772942346` - from Developer Portal)
+   - `DISCORD_GUILD_ID` = Your Discord server ID (`833383219083608084` - from your channel URL)
    - These are **two different IDs** - don't confuse them!
 
 3. **Set for All Environments**
@@ -342,7 +343,7 @@ npm run discord:register-commands
 
 This will register the default commands (`/ping`, `/info`, `/blog`) to your Discord server.
 
-**Your Server ID**: `1428346383772942346`
+**Your Server ID**: `833383219083608084`
 
 To customize commands, edit `scripts/register-discord-commands.ts`.
 
