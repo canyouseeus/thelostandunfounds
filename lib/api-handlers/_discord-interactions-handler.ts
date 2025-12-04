@@ -44,6 +44,26 @@ export default async function handler(
     const signature = req.headers['x-signature-ed25519'] as string
     const timestamp = req.headers['x-signature-timestamp'] as string
 
+    // Parse interaction first to check if it's a ping (for verification)
+    // We need to parse before checking headers because Discord's verification ping
+    // might not always include proper headers
+    let interaction: any
+    try {
+      interaction = typeof req.body === 'object' ? req.body : JSON.parse(body)
+    } catch (e) {
+      // If we can't parse, it's not a valid interaction
+      return res.status(400).json({ error: 'Invalid request body' })
+    }
+
+    // Handle ping (Discord verification) - respond immediately
+    // Discord's verification only checks that we respond with {"type": 1}
+    if (interaction.type === 1) {
+      // For verification ping, we don't require signature headers
+      // This allows Discord to verify the endpoint
+      return res.status(200).json({ type: 1 })
+    }
+
+    // For all other interactions, signature headers are required
     if (!signature || !timestamp) {
       return res.status(401).json({ error: 'Missing signature headers' })
     }
@@ -63,27 +83,6 @@ export default async function handler(
       // This may cause signature mismatch if JSON formatting differs
       body = JSON.stringify(req.body)
       console.warn('Using reconstructed body - signature verification may fail')
-    }
-
-    // Parse interaction first to check if it's a ping
-    const interaction = typeof req.body === 'object' ? req.body : JSON.parse(body)
-
-    // Handle ping (Discord verification)
-    // For verification ping, respond immediately without signature check
-    // This is necessary because Vercel parses JSON, making exact signature verification impossible
-    // Discord's verification ping only checks that we respond with {"type": 1}
-    if (interaction.type === 1) {
-      // Try to verify signature for logging purposes, but don't block response
-      const isValid = await verifyDiscordSignature(body, signature, timestamp, publicKey)
-      if (!isValid) {
-        console.warn('Discord verification ping - signature check failed (expected due to Vercel body parsing)', {
-          bodyLength: body.length,
-          bodyPreview: body.substring(0, 50),
-          publicKeySet: !!publicKey
-        })
-      }
-      // Always respond to allow Discord endpoint verification
-      return res.status(200).json({ type: 1 })
     }
 
     // For all other interactions, verify signature strictly
