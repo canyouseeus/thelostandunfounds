@@ -16,10 +16,15 @@
       "destination": "/thelostarchives/:slug.html"
     },
     {
-      "source": "/:path((?!api).*)",
+      "source": "/:path((?!api|_next|static).*)",
       "destination": "/index.html"
     }
   ],
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "@vercel/node"
+    }
+  },
   "headers": [
     {
       "source": "/(.*)",
