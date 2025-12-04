@@ -61,6 +61,12 @@ export default async function handler(
     const isValid = await verifyDiscordSignature(body, signature, timestamp, publicKey)
     
     if (!isValid) {
+      console.error('Discord signature verification failed', {
+        signature: signature?.substring(0, 20) + '...',
+        timestamp,
+        bodyLength: body.length,
+        publicKeySet: !!publicKey
+      })
       return res.status(401).json({ error: 'Invalid signature' })
     }
 
