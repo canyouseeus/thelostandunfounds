@@ -43,7 +43,7 @@ export default function Home() {
     setLogoOpacity(0)
     setLogoState('fading-in')
     
-    // Fade in over 1 second (3x faster: 3000ms / 3 = 1000ms)
+    // Fade in over 1 second (3x faster: 3s / 3 = 1s)
     const fadeInStart = Date.now()
     fadeInIntervalRef = setInterval(() => {
       const elapsed = Date.now() - fadeInStart
@@ -60,13 +60,13 @@ export default function Home() {
       }
     }, 16) // ~60fps
     
-    // After 1 second fade in + 0.5 seconds static, fade out (3x faster: 4500ms / 3 = 1500ms)
+    // After 1 second fade in + 0.5 seconds static, fade out (3x faster)
     const fadeOutTimer = setTimeout(() => {
       setLogoState('fading-out')
       const fadeOutStart = Date.now()
       fadeOutIntervalRef = setInterval(() => {
         const elapsed = Date.now() - fadeOutStart
-        const progress = Math.min(elapsed / 333, 1) // 3x faster: 1000ms / 3 = 333ms
+        const progress = Math.min(elapsed / 333, 1) // 1s / 3 = 0.33s
         setLogoOpacity(1 - progress)
         
         if (progress >= 1) {
@@ -75,13 +75,13 @@ export default function Home() {
             fadeOutIntervalRef = null
           }
           setLogoState('hidden')
-          // Start typing animation after logo fades out + 0.5s delay (3x faster: 1500ms / 3 = 500ms)
+          // Start typing animation after logo fades out + 0.5s delay (3x faster: 1.5s / 3 = 0.5s)
           setTimeout(() => {
             setShowTyping(true)
           }, 500)
         }
       }, 16)
-    }, 1500) // 1s fade in + 0.5s static = 1.5s total before fade out
+    }, 1500) // 1s fade in + 0.5s static = 1.5s total before fade out (3x faster)
 
     return () => {
       if (fadeInIntervalRef) {
@@ -144,7 +144,7 @@ export default function Home() {
         setDisplayedText(text) // Ensure full text is displayed
         setTypingComplete(true)
       }
-    }, 33) // 3x faster: 100ms / 3 = 33ms per character
+    }, 33) // 3x faster: 100ms / 3 = ~33ms per character
 
     return () => {
       clearInterval(typeInterval)
