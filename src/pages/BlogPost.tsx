@@ -996,8 +996,17 @@ export default function BlogPost() {
       if (isLikelyHeading) {
         // Check if this heading contains any book titles using intelligent fuzzy matching
         // Allow links in headings that contain book titles
+        // For headings with colons, try matching both the full heading and the part before the colon
+        const headingToMatch = trimmed.includes(':') ? trimmed.split(':')[0].trim() : trimmed;
         const containsBookTitle = Object.keys(bookLinkCounts).some(bookTitle => {
-          return findBookTitleMatch(trimmed, [bookTitle]) === bookTitle;
+          // Try matching the full heading first
+          const fullMatch = findBookTitleMatch(trimmed, [bookTitle]) === bookTitle;
+          if (fullMatch) return true;
+          // If heading has a colon, try matching just the part before the colon
+          if (trimmed.includes(':')) {
+            return findBookTitleMatch(headingToMatch, [bookTitle]) === bookTitle;
+          }
+          return false;
         });
         
         // Format with emphasis, allowing links in headings that contain book titles
@@ -1044,8 +1053,17 @@ export default function BlogPost() {
                            !prevPara.match(/[.!?]$/) && 
                            prevPara.split(' ').length < 15;
           if (isHeading) {
+            // For headings with colons, try matching both the full heading and the part before the colon
+            const headingToMatch = prevPara.includes(':') ? prevPara.split(':')[0].trim() : prevPara;
             const containsBookTitle = Object.keys(bookLinkCounts).some(bookTitle => {
-              return findBookTitleMatch(prevPara, [bookTitle]) === bookTitle;
+              // Try matching the full heading first
+              const fullMatch = findBookTitleMatch(prevPara, [bookTitle]) === bookTitle;
+              if (fullMatch) return true;
+              // If heading has a colon, try matching just the part before the colon
+              if (prevPara.includes(':')) {
+                return findBookTitleMatch(headingToMatch, [bookTitle]) === bookTitle;
+              }
+              return false;
             });
             if (containsBookTitle) {
               isInBookSection = true;
@@ -1179,8 +1197,17 @@ export default function BlogPost() {
         
         if (isHeading) {
           // Use intelligent fuzzy matching to find book titles in heading
+          // For headings with colons, try matching both the full heading and the part before the colon
+          const headingToMatch = prevPara.includes(':') ? prevPara.split(':')[0].trim() : prevPara;
           const containsBookTitle = Object.keys(bookLinkCounts).some(bookTitle => {
-            return findBookTitleMatch(prevPara, [bookTitle]) === bookTitle;
+            // Try matching the full heading first
+            const fullMatch = findBookTitleMatch(prevPara, [bookTitle]) === bookTitle;
+            if (fullMatch) return true;
+            // If heading has a colon, try matching just the part before the colon
+            if (prevPara.includes(':')) {
+              return findBookTitleMatch(headingToMatch, [bookTitle]) === bookTitle;
+            }
+            return false;
           });
           if (containsBookTitle) {
             isInBookSection = true;
