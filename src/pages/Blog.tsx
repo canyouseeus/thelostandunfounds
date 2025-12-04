@@ -331,9 +331,10 @@ export default function Blog() {
                             </div>
                           </ExpandableCardFooter>
                         </ExpandableCard>
-                    </ExpandableTrigger>
-                  )}
-                </Expandable>
+                      </ExpandableTrigger>
+                    )}
+                  </Expandable>
+                </Link>
               );
             })}
           </div>
@@ -437,9 +438,10 @@ export default function Blog() {
                             </div>
                           </ExpandableCardFooter>
                         </ExpandableCard>
-                    </ExpandableTrigger>
-                  )}
-                </Expandable>
+                      </ExpandableTrigger>
+                    )}
+                  </Expandable>
+                </Link>
               );
             })}
           </div>
