@@ -57,8 +57,11 @@ export default async function handler(
       console.warn('Using reconstructed body - signature verification may fail')
     }
 
+    // Get signature headers (required for all POST requests including verification ping)
+    const signature = req.headers['x-signature-ed25519'] as string
+    const timestamp = req.headers['x-signature-timestamp'] as string
+
     // Parse interaction to check if it's a ping (for verification)
-    // Discord's verification ping should be handled immediately
     let interaction: any
     try {
       interaction = typeof req.body === 'object' ? req.body : JSON.parse(body)
@@ -67,23 +70,32 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid request body' })
     }
 
-    // Handle ping (Discord verification) - respond immediately
-    // Discord's verification only checks that we respond with {"type": 1}
+    // Handle ping (Discord verification) - requires signature verification
     if (interaction.type === 1) {
-      // For verification ping, we don't require signature headers
-      // This allows Discord to verify the endpoint
+      // Discord's verification ping requires signature verification
+      // If signature headers are present, verify them
+      if (signature && timestamp) {
+        const isValid = await verifyDiscordSignature(body, signature, timestamp, publicKey)
+        if (!isValid) {
+          console.error('Discord verification ping signature failed', {
+            signature: signature?.substring(0, 20) + '...',
+            timestamp,
+            bodyLength: body.length,
+            bodyPreview: body.substring(0, 100),
+          })
+          return res.status(401).json({ error: 'Invalid signature' })
+        }
+      }
+      // Respond with ping acknowledgment
       return res.status(200).json({ type: 1 })
     }
 
     // For all other interactions, signature headers are required
-    const signature = req.headers['x-signature-ed25519'] as string
-    const timestamp = req.headers['x-signature-timestamp'] as string
-
     if (!signature || !timestamp) {
       return res.status(401).json({ error: 'Missing signature headers' })
     }
 
-    // For all other interactions, verify signature strictly
+    // Verify signature for all other interactions
     const isValid = await verifyDiscordSignature(body, signature, timestamp, publicKey)
     
     if (!isValid) {
