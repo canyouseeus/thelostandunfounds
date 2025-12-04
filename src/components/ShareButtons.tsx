@@ -157,11 +157,11 @@ export default function ShareButtons({ title, url, description }: ShareButtonsPr
   const supportsNativeShare = typeof navigator !== 'undefined' && navigator.share;
 
   return (
-    <div className="mt-8 pt-8 border-t border-white/10">
+    <div className="mt-8 pt-8 border-t border-white">
       <div className="relative inline-block" ref={menuRef}>
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-medium transition rounded-none"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white text-white text-sm font-medium transition rounded-none"
           aria-label="Share this post"
           aria-expanded={menuOpen}
         >
@@ -170,7 +170,7 @@ export default function ShareButtons({ title, url, description }: ShareButtonsPr
         </button>
         
         {menuOpen && (
-          <div className="absolute top-full left-0 mt-2 bg-black/95 border border-white/20 rounded-none min-w-[180px] z-50 shadow-lg">
+          <div className="absolute top-full left-0 mt-2 bg-black/95 border border-white rounded-none min-w-[180px] z-50 shadow-lg">
             <div className="py-1">
               {supportsNativeShare && (
                 <button

@@ -53,14 +53,14 @@ export default function Docs() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-white mb-2">Documentation</h1>
+        <h1 className="text-4xl font-bold text-white mb-2">DOCUMENTATION</h1>
         <p className="text-white/70">Everything you need to know about THE LOST+UNFOUNDS</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Sidebar Navigation */}
         <div className="lg:col-span-1">
-          <nav className="bg-black/50 border border-white/10 rounded-none p-4">
+          <nav className="bg-black/50 border border-white rounded-none p-4">
             <h2 className="text-white font-semibold mb-4">Documentation</h2>
             <ul className="space-y-2">
               {docSections.map((section) => {
@@ -93,7 +93,7 @@ export default function Docs() {
 
         {/* Main Content */}
         <div className="lg:col-span-3">
-          <div className="bg-black/50 border border-white/10 rounded-none p-6 space-y-12">
+          <div className="bg-black/50 border border-white rounded-none p-6 space-y-12">
             <section id="getting-started" className="scroll-mt-8">
               <GettingStarted />
             </section>

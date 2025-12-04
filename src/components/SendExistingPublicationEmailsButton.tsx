@@ -70,7 +70,7 @@ export default function SendExistingPublicationEmailsButton() {
       </button>
 
       {result && (
-        <div className="bg-black/30 border border-white/10 rounded-none p-4">
+        <div className="bg-black/30 border border-white rounded-none p-4">
           <h4 className="text-white font-bold mb-3">Results:</h4>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div>

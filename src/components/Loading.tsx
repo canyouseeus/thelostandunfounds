@@ -49,7 +49,7 @@ export function SkeletonText({ lines = 3 }: { lines?: number }) {
 
 export function SkeletonCard() {
   return (
-    <div className="bg-black/50 border border-white/10 rounded-none p-6">
+    <div className="bg-black/50 border border-white rounded-none p-6">
       <Skeleton className="h-6 w-1/2 mb-4" />
       <SkeletonText lines={3} />
       <div className="mt-4 flex gap-2">

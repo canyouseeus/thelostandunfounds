@@ -108,7 +108,7 @@ async function sendZohoEmail(
   return { success: true }
 }
 
-function generateEmailHtml(articleTitle: string, authorName: string): string {
+function generateEmailHtml(articleTitle: string, authorName: string, authorEmail?: string): string {
   const currentYear = new Date().getFullYear()
   
   return `<!DOCTYPE html>
@@ -125,9 +125,7 @@ function generateEmailHtml(articleTitle: string, authorName: string): string {
           <!-- Branding Header -->
           <tr>
             <td align="left" style="padding: 0 0 30px 0;">
-              <h1 style="color: #ffffff; font-size: 24px; font-weight: bold; margin: 0; text-align: left; letter-spacing: 0.05em; font-family: Arial, sans-serif;">
-                THE LOST+UNFOUNDS
-              </h1>
+              <img src="https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
             </td>
           </tr>
           <!-- Main Content -->
@@ -149,8 +147,11 @@ function generateEmailHtml(articleTitle: string, authorName: string): string {
                 Thank you for your contribution!
               </p>
               <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0;">
-              <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 0; text-align: left; font-family: Arial, sans-serif;">
+              <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 0 0 10px 0; text-align: left; font-family: Arial, sans-serif;">
                 © ${currentYear} THE LOST+UNFOUNDS. All rights reserved.
+              </p>
+              <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: left; font-family: Arial, sans-serif;">
+                <a href="https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(authorEmail || '')}" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe from emails</a>
               </p>
             </td>
           </tr>
@@ -193,7 +194,7 @@ export default async function handler(
       : fromEmail
 
     const subject = `Article Approved: ${articleTitle}`
-    const htmlContent = generateEmailHtml(articleTitle, authorName)
+    const htmlContent = generateEmailHtml(articleTitle, authorName, authorEmail)
 
     const result = await sendZohoEmail(
       accessToken,

@@ -7,12 +7,22 @@ import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabase';
 import { LoadingSpinner } from '../components/Loading';
+import {
+  Expandable,
+  ExpandableCard,
+  ExpandableCardHeader,
+  ExpandableCardContent,
+  ExpandableCardFooter,
+  ExpandableContent,
+  ExpandableTrigger,
+} from '../components/ui/expandable';
 
 interface BlogPost {
   id: string;
   title: string;
   slug: string;
   excerpt: string | null;
+  content?: string | null; // Content field for generating excerpt if missing
   published_at: string | null;
   created_at: string;
   seo_title: string | null;
@@ -50,7 +60,7 @@ export default function UserBlog() {
       // Strategy 1: Try with published field and author_name
       let result = await supabase
         .from('blog_posts')
-        .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, author_id, author_name')
+        .select('id, title, slug, excerpt, content, published_at, created_at, seo_title, seo_description, author_id, author_name')
         .eq('subdomain', userSubdomain)
         .eq('published', true)
         .order('published_at', { ascending: false })
@@ -64,7 +74,7 @@ export default function UserBlog() {
       if (postsError && (postsError.message?.includes('author_name') || postsError.message?.includes('column'))) {
         result = await supabase
           .from('blog_posts')
-          .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, author_id')
+          .select('id, title, slug, excerpt, content, published_at, created_at, seo_title, seo_description, author_id')
           .eq('subdomain', userSubdomain)
           .eq('published', true)
           .order('published_at', { ascending: false })
@@ -79,7 +89,7 @@ export default function UserBlog() {
       if (postsError && (postsError.message?.includes('published') || postsError.message?.includes('column'))) {
         result = await supabase
           .from('blog_posts')
-          .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, author_id, author_name')
+          .select('id, title, slug, excerpt, content, published_at, created_at, seo_title, seo_description, author_id, author_name')
           .eq('subdomain', userSubdomain)
           .eq('status', 'published')
           .order('published_at', { ascending: false })
@@ -94,7 +104,7 @@ export default function UserBlog() {
       if (postsError) {
         result = await supabase
           .from('blog_posts')
-          .select('id, title, slug, excerpt, published_at, created_at, seo_title, seo_description, author_id, author_name, published, status')
+          .select('id, title, slug, excerpt, content, published_at, created_at, seo_title, seo_description, author_id, author_name, published, status')
           .eq('subdomain', userSubdomain)
           .order('published_at', { ascending: false })
           .order('created_at', { ascending: false })
@@ -199,7 +209,7 @@ export default function UserBlog() {
   if (error) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
+        <div className="bg-red-900/20 border border-white rounded-none p-6">
           <h1 className="text-2xl font-bold text-white mb-4">Error</h1>
           <p className="text-red-400 mb-4">{error}</p>
           <Link
@@ -257,41 +267,101 @@ export default function UserBlog() {
             <p>No posts yet. Check back soon!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {posts.map((post) => (
-              <Link
-                key={post.id}
-                to={`/blog/${post.slug}`}
-                className="group"
-              >
-                <article className="bg-black/50 border-2 border-white/10 rounded-lg p-5 h-full flex flex-col hover:border-white/30 hover:shadow-lg hover:shadow-white/10 transition-all duration-300 transform hover:-translate-y-1">
-                  <div className="mb-4 pb-3 border-b border-white/10">
-                    <h2 className="text-base font-black text-white mb-2 tracking-wide group-hover:text-white/90 transition whitespace-nowrap overflow-hidden text-ellipsis">
-                      {post.title}
-                    </h2>
-                  </div>
-
-                  {post.excerpt && (
-                    <div className="flex-1 mb-4">
-                      <p className="text-white/60 text-sm leading-relaxed line-clamp-4 text-left">
-                        {post.excerpt}
-                      </p>
-                    </div>
+          <div className="grid grid-cols-3 gap-6">
+            {posts.map((post) => {
+              const excerpt = post.excerpt || (post.content ? (() => {
+                const firstParagraph = post.content.split(/\n\n+/)[0]?.trim() || '';
+                if (firstParagraph.length > 0) {
+                  return firstParagraph.length > 200 
+                    ? firstParagraph.substring(0, 200).replace(/\s+\S*$/, '') + '...'
+                    : firstParagraph;
+                }
+                return '';
+              })() : '');
+              
+              return (
+                <Expandable
+                  key={post.id}
+                  expandDirection="vertical"
+                  expandBehavior="replace"
+                  initialDelay={0}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                >
+                  {({ isExpanded }) => (
+                    <ExpandableTrigger>
+                      <div 
+                        className="rounded-none p-[1px] relative"
+                        style={{ 
+                          background: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15), rgba(255,255,255,0.3))',
+                          minHeight: isExpanded ? '400px' : '220px',
+                          transition: 'min-height 0.2s ease-out',
+                        }}
+                      >
+                        <ExpandableCard
+                          className="bg-black border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02]"
+                          collapsedSize={{ height: 220 }}
+                          expandedSize={{ height: 400 }}
+                          hoverToExpand={false}
+                          expandDelay={0}
+                          collapseDelay={0}
+                        >
+                          <ExpandableCardHeader className="mb-1 pb-1">
+                            <h2 className="text-base font-black text-white mb-0 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
+                              {post.title}
+                            </h2>
+                          </ExpandableCardHeader>
+                        
+                          <ExpandableCardContent className="flex-1 min-h-0">
+                            {excerpt && (
+                              <div className="mb-1">
+                                <p className="text-white/60 text-sm leading-relaxed line-clamp-4 text-left">
+                                  {excerpt}
+                                </p>
+                              </div>
+                            )}
+                            
+                            <ExpandableContent 
+                              preset="fade" 
+                              stagger 
+                              staggerChildren={0.1}
+                              keepMounted={false}
+                            >
+                              {post.content && (
+                                <div className="mb-2">
+                                  <p className="text-white/50 text-xs leading-relaxed text-left line-clamp-6">
+                                    {post.content.replace(/\n/g, ' ').substring(0, 300)}...
+                                  </p>
+                                </div>
+                              )}
+                              <Link
+                                to={`/blog/${post.slug}`}
+                                className="inline-block mt-2 text-white/80 hover:text-white text-xs font-semibold transition"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                Read Full Article →
+                              </Link>
+                            </ExpandableContent>
+                          </ExpandableCardContent>
+                          
+                          <ExpandableCardFooter className="mt-auto p-3 pt-2 pb-3">
+                            <div className="flex items-center justify-between gap-2 min-w-0 w-full">
+                              <time className="text-white/70 text-xs font-medium truncate min-w-0 flex-1">
+                                {formatDate(post.published_at || post.created_at)}
+                              </time>
+                              {!isExpanded && (
+                                <span className="text-white/90 text-xs font-semibold transition flex-shrink-0 whitespace-nowrap">
+                                  Click to expand →
+                                </span>
+                              )}
+                            </div>
+                        </ExpandableCardFooter>
+                      </ExpandableCard>
+                      </div>
+                    </ExpandableTrigger>
                   )}
-
-                  <div className="mt-auto pt-3 border-t border-white/10">
-                    <div className="flex items-center justify-between">
-                      <time className="text-white/40 text-xs font-medium">
-                        {formatDate(post.published_at || post.created_at)}
-                      </time>
-                      <span className="text-white/60 text-xs font-semibold group-hover:text-white transition">
-                        Read →
-                      </span>
-                    </div>
-                  </div>
-                </article>
-              </Link>
-            ))}
+                </Expandable>
+              );
+            })}
           </div>
         )}
       </div>

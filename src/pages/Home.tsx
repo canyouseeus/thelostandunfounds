@@ -186,7 +186,7 @@ export default function Home() {
       {/* React loading warning - only shown if animation hasn't started after 30 seconds */}
       {showReactWarning && (
         <div 
-          className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[20000] bg-red-900/90 border border-red-500 text-white px-6 py-4 rounded-none shadow-lg"
+          className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[20000] bg-red-900/90 border border-white text-white px-6 py-4 rounded-none shadow-lg"
           style={{ maxWidth: '90%', width: 'auto' }}
         >
           <div className="font-bold mb-2">⚠️ React Loading Warning</div>

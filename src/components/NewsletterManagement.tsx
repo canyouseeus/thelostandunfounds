@@ -197,7 +197,7 @@ export default function NewsletterManagement() {
   return (
     <div className="space-y-6">
       {/* Compose Newsletter */}
-      <div className="bg-black/50 border border-white/10 rounded-none p-6">
+      <div className="bg-black/50 border border-white rounded-none p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <Mail className="w-5 h-5" />
@@ -221,7 +221,7 @@ export default function NewsletterManagement() {
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder="Newsletter subject line"
-              className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white/30"
+              className="w-full px-4 py-2 bg-white/5 border border-white rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white"
               disabled={sending}
             />
           </div>
@@ -237,7 +237,7 @@ export default function NewsletterManagement() {
               onChange={(e) => handleContentChange(e.target.value)}
               placeholder="Write your newsletter content here. Use double line breaks for paragraphs."
               rows={12}
-              className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white/30 font-mono text-sm"
+              className="w-full px-4 py-2 bg-white/5 border border-white rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white font-mono text-sm"
               disabled={sending}
             />
             <p className="text-white/40 text-xs mt-2">
@@ -275,9 +275,9 @@ export default function NewsletterManagement() {
 
           {/* Preview */}
           {showPreview && (
-            <div className="mt-4 p-4 bg-white/5 border border-white/10 rounded-none">
+            <div className="mt-4 p-4 bg-white/5 border border-white rounded-none">
               <h3 className="text-white font-medium mb-2">Email Preview</h3>
-              <div className="bg-black border border-white/10 p-4 rounded-none">
+              <div className="bg-black border border-white p-4 rounded-none">
                 <div className="text-white/60 text-sm mb-2">Subject: {subject || '(No subject)'}</div>
                 <div 
                   className="text-white text-left"
@@ -291,7 +291,7 @@ export default function NewsletterManagement() {
       </div>
 
       {/* Past Campaigns */}
-      <div className="bg-black/50 border border-white/10 rounded-none p-6">
+      <div className="bg-black/50 border border-white rounded-none p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <Clock className="w-5 h-5" />
@@ -322,7 +322,7 @@ export default function NewsletterManagement() {
             {campaigns.map((campaign) => (
               <div
                 key={campaign.id}
-                className="bg-white/5 border border-white/10 rounded-none p-4 hover:bg-white/10 transition"
+                className="bg-white/5 border border-white rounded-none p-4 hover:bg-white/10 transition"
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1">

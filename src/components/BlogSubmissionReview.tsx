@@ -489,15 +489,15 @@ export default function BlogSubmissionReview() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-yellow-400/20 text-yellow-400 border-yellow-400/20';
+        return 'bg-yellow-400/20 text-yellow-400 border-white';
       case 'approved':
-        return 'bg-blue-400/20 text-blue-400 border-blue-400/20';
+        return 'bg-blue-400/20 text-blue-400 border-white';
       case 'rejected':
-        return 'bg-red-400/20 text-red-400 border-red-400/20';
+        return 'bg-red-400/20 text-red-400 border-white';
       case 'published':
-        return 'bg-green-400/20 text-green-400 border-green-400/20';
+        return 'bg-green-400/20 text-green-400 border-white';
       default:
-        return 'bg-white/10 text-white/60 border-white/10';
+        return 'bg-white/10 text-white/60 border-white';
     }
   };
 
@@ -534,7 +534,7 @@ export default function BlogSubmissionReview() {
       </div>
 
       {/* Submissions List */}
-      <div className="bg-black/50 border border-white/10 rounded-none p-6">
+      <div className="bg-black/50 border border-white rounded-none p-6">
         {submissions.length === 0 ? (
           <p className="text-white/60 text-left py-8">No submissions found</p>
         ) : (
@@ -542,7 +542,7 @@ export default function BlogSubmissionReview() {
             {submissions.map((submission) => (
               <div
                 key={submission.id}
-                className="bg-black/30 border border-white/10 rounded-none p-4 hover:border-white/20 transition"
+                className="bg-black/30 border border-white rounded-none p-4 hover:border-white transition"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -610,7 +610,7 @@ export default function BlogSubmissionReview() {
       {/* Review Modal */}
       {selectedSubmission && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-black border border-white/10 rounded-none p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-black border border-white rounded-none p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-white">Review Submission</h3>
               <button
@@ -627,7 +627,7 @@ export default function BlogSubmissionReview() {
 
             <div className="space-y-6">
               {/* Submission Details */}
-              <div className="bg-black/50 border border-white/10 rounded-none p-4">
+              <div className="bg-black/50 border border-white rounded-none p-4">
                 <h4 className="text-white font-bold mb-2">Title</h4>
                 <p className="text-white/90 mb-4">{selectedSubmission.title}</p>
 
@@ -643,7 +643,7 @@ export default function BlogSubmissionReview() {
                 )}
 
                 <h4 className="text-white font-bold mb-2">Content</h4>
-                <div className="bg-black/30 border border-white/10 rounded-none p-4 mb-4">
+                <div className="bg-black/30 border border-white rounded-none p-4 mb-4">
                   <pre className="text-white/90 text-sm whitespace-pre-wrap font-sans">
                     {selectedSubmission.content}
                   </pre>
@@ -652,7 +652,7 @@ export default function BlogSubmissionReview() {
                 {selectedSubmission.amazon_storefront_id && (
                   <>
                     <h4 className="text-white font-bold mb-2">Amazon Storefront ID <span className="text-white/50 text-xs font-normal">(Internal - Not displayed publicly)</span></h4>
-                    <div className="bg-black/30 border border-white/10 rounded-none p-3 mb-4">
+                    <div className="bg-black/30 border border-white rounded-none p-3 mb-4">
                       <p className="text-white/70 text-sm mb-2">This storefront ID is stored for tracking purposes only and will not be displayed on the published blog post.</p>
                       <a
                         href={`https://www.amazon.com/shop/${selectedSubmission.amazon_storefront_id}`}
@@ -674,7 +674,7 @@ export default function BlogSubmissionReview() {
                     </h4>
                     <div className="space-y-2 mb-4">
                       {selectedSubmission.amazon_affiliate_links.map((link, index) => (
-                        <div key={index} className="bg-black/30 border border-white/10 rounded-none p-3">
+                        <div key={index} className="bg-black/30 border border-white rounded-none p-3">
                           <p className="text-white/90 font-medium mb-1">{link.book_title}</p>
                           <a
                             href={link.link}
@@ -700,7 +700,7 @@ export default function BlogSubmissionReview() {
                 <textarea
                   value={reviewNotes}
                   onChange={(e) => setReviewNotes(e.target.value)}
-                  className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+                  className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none"
                   rows={3}
                   placeholder="Internal notes about this submission..."
                 />
@@ -713,7 +713,7 @@ export default function BlogSubmissionReview() {
                   <textarea
                     value={rejectionReason}
                     onChange={(e) => setRejectionReason(e.target.value)}
-                    className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+                    className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none"
                     rows={2}
                     placeholder="Reason for rejection (will be shared with submitter)..."
                   />
@@ -721,7 +721,7 @@ export default function BlogSubmissionReview() {
               )}
 
               {/* Actions */}
-              <div className="flex gap-4 pt-4 border-t border-white/10">
+              <div className="flex gap-4 pt-4 border-t border-white">
                 {selectedSubmission.status === 'pending' && (
                   <>
                     <button
@@ -743,7 +743,7 @@ export default function BlogSubmissionReview() {
                 {selectedSubmission.status === 'approved' && (
                   <div className="flex flex-col gap-2">
                     {!selectedSubmission.subdomain && (
-                      <div className="bg-yellow-900/20 border border-yellow-500/50 rounded-none p-3 mb-2">
+                      <div className="bg-yellow-900/20 border border-white rounded-none p-3 mb-2">
                         <p className="text-yellow-400 text-sm">
                           ⚠️ No subdomain set. This post may not appear on the Book Club page. Consider setting a subdomain before publishing.
                         </p>

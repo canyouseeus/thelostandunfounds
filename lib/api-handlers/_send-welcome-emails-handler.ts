@@ -134,7 +134,7 @@ async function sendZohoEmail(
 /**
  * Generate welcome email HTML
  */
-function generateWelcomeEmailHtml(userName: string, gettingStartedUrl: string): string {
+function generateWelcomeEmailHtml(userName: string, gettingStartedUrl: string, userEmail?: string): string {
   const currentYear = new Date().getFullYear()
   
   return `<!DOCTYPE html>
@@ -151,9 +151,7 @@ function generateWelcomeEmailHtml(userName: string, gettingStartedUrl: string): 
           <!-- Branding Header -->
           <tr>
             <td align="left" style="padding: 0 0 30px 0;">
-              <h1 style="color: #ffffff; font-size: 24px; font-weight: bold; margin: 0; text-align: left; letter-spacing: 0.05em; font-family: Arial, sans-serif;">
-                THE LOST+UNFOUNDS
-              </h1>
+              <img src="https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
             </td>
           </tr>
           <!-- Main Content -->
@@ -192,8 +190,11 @@ function generateWelcomeEmailHtml(userName: string, gettingStartedUrl: string): 
                 If you have any questions or need assistance, feel free to reach out. We're here to help you succeed!
               </p>
               <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0;">
-              <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 0; text-align: left; font-family: Arial, sans-serif;">
+              <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 0 0 10px 0; text-align: left; font-family: Arial, sans-serif;">
                 © ${currentYear} THE LOST+UNFOUNDS. All rights reserved.
+              </p>
+              <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: left; font-family: Arial, sans-serif;">
+                <a href="https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(userEmail || '')}" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe from emails</a>
               </p>
             </td>
           </tr>
@@ -273,7 +274,7 @@ export default async function handler(
       const userName = testEmail.split('@')[0] || 'Contributor'
       const gettingStartedUrl = 'https://www.thelostandunfounds.com/blog/getting-started'
       const subject = 'Welcome to THE LOST ARCHIVES BOOK CLUB'
-      const htmlContent = generateWelcomeEmailHtml(userName, gettingStartedUrl)
+      const htmlContent = generateWelcomeEmailHtml(userName, gettingStartedUrl, testEmail)
 
       const result = await sendZohoEmail(
         accessToken,
@@ -570,7 +571,7 @@ export default async function handler(
         const userName = user.subdomain || user.email.split('@')[0] || 'Contributor'
 
         const subject = 'Welcome to THE LOST ARCHIVES BOOK CLUB'
-        const htmlContent = generateWelcomeEmailHtml(userName, gettingStartedUrl)
+        const htmlContent = generateWelcomeEmailHtml(userName, gettingStartedUrl, user.email)
 
         // Send email
         const result = await sendZohoEmail(

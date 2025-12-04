@@ -280,9 +280,9 @@ export default function Profile() {
   }
 
   const tierColors: Record<SubscriptionTier, string> = {
-    free: 'text-white/60 bg-white/5 border-white/10',
-    premium: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/30',
-    pro: 'text-purple-400 bg-purple-400/10 border-purple-400/30',
+    free: 'text-white/60 bg-white/5 border-white',
+    premium: 'text-yellow-400 bg-yellow-400/10 border-white',
+    pro: 'text-purple-400 bg-purple-400/10 border-white',
   };
 
   const tierLabels: Record<SubscriptionTier, string> = {
@@ -301,7 +301,7 @@ export default function Profile() {
       <div className="space-y-6">
         {/* Book Club Info Section */}
         {userSubdomain && (
-          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <div className="bg-black/50 border border-white rounded-none p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <BookOpen className="w-5 h-5" />
@@ -310,7 +310,7 @@ export default function Profile() {
               <div className="flex gap-2">
                 <Link
                   to="/blog/getting-started"
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition flex items-center gap-2"
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white rounded-none text-white text-sm font-medium transition flex items-center gap-2"
                 >
                   <HelpCircle className="w-4 h-4" />
                   Contributor Guide
@@ -319,7 +319,7 @@ export default function Profile() {
                   to={`/blog/${userSubdomain}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition flex items-center gap-2"
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white rounded-none text-white text-sm font-medium transition flex items-center gap-2"
                 >
                   <ExternalLink className="w-4 h-4" />
                   View Blog
@@ -334,7 +334,7 @@ export default function Profile() {
                     type="text"
                     value={`https://www.thelostandunfounds.com/blog/${userSubdomain}`}
                     readOnly
-                    className="flex-1 px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white font-mono text-sm focus:outline-none focus:border-white/30"
+                    className="flex-1 px-4 py-2 bg-black/50 border border-white rounded-none text-white font-mono text-sm focus:outline-none focus:border-white"
                   />
                   <button
                     onClick={async () => {
@@ -364,7 +364,7 @@ export default function Profile() {
                     )}
                   </button>
                 </div>
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded-none p-3 mt-3">
+                <div className="bg-blue-500/10 border border-white rounded-none p-3 mt-3">
                   <p className="text-blue-400 text-xs font-semibold mb-2 flex items-center gap-1">
                     <Copy className="w-3 h-3" /> For Amazon Associates Registration
                   </p>
@@ -381,7 +381,7 @@ export default function Profile() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-2">Subdomain</label>
-                <div className="px-4 py-2 bg-black/50 border border-white/10 rounded-none">
+                <div className="px-4 py-2 bg-black/50 border border-white rounded-none">
                   <p className="text-white font-mono text-sm">{userSubdomain}</p>
                 </div>
                 <p className="text-white/50 text-xs mt-1">Set during registration - cannot be changed</p>
@@ -441,11 +441,11 @@ export default function Profile() {
                     value={blogTitleDisplay}
                     onChange={(e) => setBlogTitleDisplay(e.target.value)}
                     placeholder="Enter your blog title (e.g., THE LOST+UNFOUNDS)"
-                    className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+                    className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none"
                     disabled={savingBlogTitle}
                   />
                 ) : (
-                  <div className="px-4 py-2 bg-black/50 border border-white/10 rounded-none">
+                  <div className="px-4 py-2 bg-black/50 border border-white rounded-none">
                     <p className="text-white text-sm">
                       {blogTitleDisplay || blogTitle || <span className="text-white/50 italic">No title set</span>}
                     </p>
@@ -460,7 +460,7 @@ export default function Profile() {
         )}
 
         {/* Book Club Settings */}
-        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+        <div className="bg-black/50 border border-white rounded-none p-6">
           <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
             <BookOpen className="w-5 h-5" />
             Book Club Settings
@@ -470,7 +470,7 @@ export default function Profile() {
               <label className="block text-sm font-medium text-white/80 mb-2">
                 Author Name
               </label>
-              <div className="px-4 py-2 bg-black/50 border border-white/10 rounded-none">
+              <div className="px-4 py-2 bg-black/50 border border-white rounded-none">
                 <span className="text-white text-sm">{user.user_metadata?.author_name || user.email?.split('@')[0] || 'Not set'}</span>
               </div>
               <p className="text-xs text-white/40 mt-1">Set during registration - cannot be changed</p>
@@ -480,7 +480,7 @@ export default function Profile() {
               <label className="block text-sm font-medium text-white/80 mb-2">
                 Email
               </label>
-              <div className="px-4 py-2 bg-black/50 border border-white/10 rounded-none">
+              <div className="px-4 py-2 bg-black/50 border border-white rounded-none">
                 <span className="text-white text-sm">{user.email || 'Not set'}</span>
               </div>
               <p className="text-xs text-white/40 mt-1">Email cannot be changed</p>
@@ -490,7 +490,7 @@ export default function Profile() {
               <label className="block text-sm font-medium text-white/80 mb-2">
                 Amazon Storefront ID
               </label>
-              <div className="px-4 py-2 bg-black/50 border border-white/10 rounded-none">
+              <div className="px-4 py-2 bg-black/50 border border-white rounded-none">
                 <span className="text-white text-sm font-mono">{user.user_metadata?.amazon_storefront_id || 'Not set'}</span>
               </div>
               <p className="text-xs text-white/40 mt-1">Set during registration - cannot be changed</p>
@@ -500,7 +500,7 @@ export default function Profile() {
 
         {/* My Articles Section */}
         {userPosts.length > 0 && (
-          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <div className="bg-black/50 border border-white rounded-none p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <FileText className="w-5 h-5" />
@@ -518,7 +518,7 @@ export default function Profile() {
               {userPosts.map((post) => (
                 <div
                   key={post.id}
-                  className="bg-black/30 border border-white/10 rounded-none p-4 hover:border-white/20 transition"
+                  className="bg-black/30 border border-white rounded-none p-4 hover:border-white transition"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -528,15 +528,15 @@ export default function Profile() {
                           <Calendar className="w-3 h-3" />
                           {post.published_at ? formatDate(post.published_at) : 'Draft'}
                         </span>
-                        <span className={`px-2 py-1 rounded text-xs ${
+                        <span className={`px-2 py-1 rounded-none text-xs ${
                           post.published
-                            ? 'bg-green-400/20 text-green-400 border border-green-400/20'
-                            : 'bg-yellow-400/20 text-yellow-400 border border-yellow-400/20'
+                            ? 'bg-green-400/20 text-green-400 border border-white'
+                            : 'bg-yellow-400/20 text-yellow-400 border border-white'
                         }`}>
                           {post.published ? 'Published' : 'Draft'}
                         </span>
                         {post.subdomain && (
-                          <span className="px-2 py-1 rounded text-xs bg-blue-400/20 text-blue-400 border border-blue-400/20">
+                          <span className="px-2 py-1 rounded-none text-xs bg-blue-400/20 text-blue-400 border border-white">
                             Book Club
                           </span>
                         )}
@@ -547,7 +547,7 @@ export default function Profile() {
                         to={post.subdomain ? `/blog/${post.subdomain}/${post.slug}` : `/thelostarchives/${post.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-2 hover:bg-white/10 rounded transition"
+                        className="p-2 hover:bg-white/10 rounded-none transition"
                         title="View post"
                       >
                         <ExternalLink className="w-4 h-4 text-white/60" />
@@ -562,14 +562,14 @@ export default function Profile() {
 
         {/* Submit Article CTA if no posts */}
         {userPosts.length === 0 && (
-          <div className="bg-black/50 border border-white/10 rounded-none p-6 text-center">
+          <div className="bg-black/50 border border-white rounded-none p-6 text-center">
             <BookOpen className="w-12 h-12 text-white/40 mx-auto mb-4" />
             <h3 className="text-lg font-bold text-white mb-2">Start Your Book Club Journey</h3>
             <p className="text-white/60 mb-4">Submit your first article with four book recommendations.</p>
             <div className="flex items-center justify-center gap-3 flex-wrap">
               <Link
                 to="/bookclub/prompt"
-                className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition"
+                className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white rounded-none text-white text-sm font-medium transition"
               >
                 View Getting Started Guide →
               </Link>
@@ -584,7 +584,7 @@ export default function Profile() {
         )}
 
         {/* Getting Started Guide Link - Always visible */}
-        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+        <div className="bg-black/50 border border-white rounded-none p-6">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-bold text-white mb-2">Contributor Getting Started Guide</h3>
@@ -602,7 +602,7 @@ export default function Profile() {
           </div>
         </div>
         {/* Account Information */}
-        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+        <div className="bg-black/50 border border-white rounded-none p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -610,7 +610,7 @@ export default function Profile() {
                 Account Information
               </h2>
               {userIsAdmin && (
-                <div className="px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white">
+                <div className="px-4 py-2 bg-black/50 border border-white rounded-none text-white">
                   ADMIN
                 </div>
               )}
@@ -630,7 +630,7 @@ export default function Profile() {
               <label className="block text-sm font-medium text-white/80 mb-2">
                 Email
               </label>
-              <div className="flex items-center gap-2 px-4 py-2 bg-black/50 border border-white/10 rounded-none">
+              <div className="flex items-center gap-2 px-4 py-2 bg-black/50 border border-white rounded-none">
                 <Mail className="w-4 h-4 text-white/60" />
                 <span className="text-white">{user.email}</span>
               </div>
@@ -647,7 +647,7 @@ export default function Profile() {
                     type="text"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
-                    className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white/30"
+                    className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white"
                     placeholder="Your author name"
                     disabled={!!user.user_metadata?.author_name}
                   />
@@ -656,7 +656,7 @@ export default function Profile() {
                   )}
                 </div>
               ) : (
-                <div className="px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white">
+                <div className="px-4 py-2 bg-black/50 border border-white rounded-none text-white">
                   {displayName || 'Not set'}
                 </div>
               )}
@@ -677,7 +677,7 @@ export default function Profile() {
                     setIsEditing(false);
                     setDisplayName(user.email?.split('@')[0] || '');
                   }}
-                  className="px-4 py-2 bg-black/50 border border-white/10 text-white font-semibold rounded-none hover:border-white/30 transition"
+                  className="px-4 py-2 bg-black/50 border border-white text-white font-semibold rounded-none hover:border-white transition"
                 >
                   Cancel
                 </button>
@@ -687,7 +687,7 @@ export default function Profile() {
         </div>
 
         {/* Password Change */}
-        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+        <div className="bg-black/50 border border-white rounded-none p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               <Key className="w-5 h-5" />
@@ -713,7 +713,7 @@ export default function Profile() {
                   type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white/30"
+                  className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white"
                   placeholder="Enter current password"
                 />
               </div>
@@ -726,7 +726,7 @@ export default function Profile() {
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white/30"
+                  className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white"
                   placeholder="Enter new password (min. 6 characters)"
                 />
               </div>
@@ -739,7 +739,7 @@ export default function Profile() {
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white/30"
+                  className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white"
                   placeholder="Confirm new password"
                 />
               </div>
@@ -761,7 +761,7 @@ export default function Profile() {
                     setNewPassword('');
                     setConfirmPassword('');
                   }}
-                  className="px-4 py-2 bg-black/50 border border-white/10 text-white font-semibold rounded-none hover:border-white/30 transition"
+                  className="px-4 py-2 bg-black/50 border border-white text-white font-semibold rounded-none hover:border-white transition"
                 >
                   Cancel
                 </button>
@@ -773,7 +773,7 @@ export default function Profile() {
         </div>
 
         {/* Subscription Information */}
-        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+        <div className="bg-black/50 border border-white rounded-none p-6">
           <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
             <Shield className="w-5 h-5" />
             Subscription
@@ -796,7 +796,7 @@ export default function Profile() {
         </div>
 
         {/* Account Details */}
-        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+        <div className="bg-black/50 border border-white rounded-none p-6">
           <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
             <Calendar className="w-5 h-5" />
             Account Details

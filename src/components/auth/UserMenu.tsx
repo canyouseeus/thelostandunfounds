@@ -77,7 +77,7 @@ export default function UserMenu() {
       <div className="relative" ref={menuRef}>
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className="flex items-center gap-2 px-3 py-2 bg-black/50 border border-white/10 rounded-none hover:border-white/30 transition"
+          className="flex items-center gap-2 px-3 py-2 bg-black/50 border border-white rounded-none hover:border-white transition"
         >
           <User className="w-4 h-4 text-white" />
           <span className="text-white text-sm">{user.email || 'User'}</span>
@@ -85,8 +85,8 @@ export default function UserMenu() {
         </button>
 
         {menuOpen && (
-          <div className="absolute right-0 mt-2 w-64 bg-black/50 border border-white/10 rounded-none shadow-lg z-50">
-            <div className="p-4 border-b border-white/10">
+          <div className="absolute right-0 mt-2 w-64 bg-black/50 border border-white rounded-none shadow-lg z-50">
+            <div className="p-4 border-b border-white">
               <div className="text-white font-medium text-sm">{user.email || 'User'}</div>
               <div className={`text-xs mt-1 font-semibold ${tierColors[tier]}`}>
                 {tierLabels[tier]} Tier

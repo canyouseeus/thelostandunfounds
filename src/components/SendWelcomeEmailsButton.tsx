@@ -127,7 +127,7 @@ export default function SendWelcomeEmailsButton() {
       </div>
 
       {showTestMode && (
-        <div className="bg-black/30 border border-white/10 rounded-none p-4">
+        <div className="bg-black/30 border border-white rounded-none p-4">
           <h5 className="text-white font-semibold mb-2 text-sm">Test Mode - Send to Specific Email</h5>
           <p className="text-white/60 text-xs mb-3">Send a test welcome email to verify the email system is working.</p>
           <div className="flex gap-2">
@@ -136,7 +136,7 @@ export default function SendWelcomeEmailsButton() {
               value={testEmail}
               onChange={(e) => setTestEmail(e.target.value)}
               placeholder="your-email@example.com"
-              className="flex-1 px-3 py-2 bg-black/50 border border-white/10 rounded-none text-white placeholder-white/40 focus:border-white/30 focus:outline-none"
+              className="flex-1 px-3 py-2 bg-black/50 border border-white rounded-none text-white placeholder-white/40 focus:border-white focus:outline-none"
             />
             <button
               onClick={() => handleSendEmails(true)}
@@ -150,7 +150,7 @@ export default function SendWelcomeEmailsButton() {
       )}
 
       {showManualMode && (
-        <div className="bg-black/30 border border-white/10 rounded-none p-4">
+        <div className="bg-black/30 border border-white rounded-none p-4">
           <h5 className="text-white font-semibold mb-2 text-sm">Manual Email Mapping</h5>
           <p className="text-white/60 text-xs mb-3">
             Manually specify email addresses for specific subdomains. This is useful when automatic email lookup fails.
@@ -167,7 +167,7 @@ export default function SendWelcomeEmailsButton() {
                     setManualEmails(updated);
                   }}
                   placeholder="subdomain"
-                  className="w-32 px-3 py-2 bg-black/50 border border-white/10 rounded-none text-white placeholder-white/40 focus:border-white/30 focus:outline-none"
+                  className="w-32 px-3 py-2 bg-black/50 border border-white rounded-none text-white placeholder-white/40 focus:border-white focus:outline-none"
                 />
                 <input
                   type="email"
@@ -178,7 +178,7 @@ export default function SendWelcomeEmailsButton() {
                     setManualEmails(updated);
                   }}
                   placeholder="email@example.com"
-                  className="flex-1 px-3 py-2 bg-black/50 border border-white/10 rounded-none text-white placeholder-white/40 focus:border-white/30 focus:outline-none"
+                  className="flex-1 px-3 py-2 bg-black/50 border border-white rounded-none text-white placeholder-white/40 focus:border-white focus:outline-none"
                 />
                 {manualEmails.length > 1 && (
                   <button
@@ -201,7 +201,7 @@ export default function SendWelcomeEmailsButton() {
       )}
 
       {result && (
-        <div className="bg-black/30 border border-white/10 rounded-none p-4">
+        <div className="bg-black/30 border border-white rounded-none p-4">
           <h4 className="text-white font-bold mb-3">Results:</h4>
           <div className="grid grid-cols-3 gap-4 text-sm mb-4">
             <div>

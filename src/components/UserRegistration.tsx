@@ -121,7 +121,7 @@ export default function UserRegistration({
       onClick={required ? undefined : onClose}
     >
       <div 
-        className="bg-black/50 border border-white/10 rounded-none p-6 w-full max-w-md mx-4"
+        className="bg-black/50 border border-white rounded-none p-6 w-full max-w-md mx-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
@@ -164,7 +164,7 @@ export default function UserRegistration({
                 setUsernameError('');
               }}
               onBlur={() => validateUsername(username)}
-              className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="THE LOST+UNFOUNDS or Your Name"
               required
               disabled={saving || !!user?.user_metadata?.author_name}

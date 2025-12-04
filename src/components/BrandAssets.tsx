@@ -223,7 +223,7 @@ export default function BrandAssets() {
   return (
     <div className="space-y-6">
       {/* Upload Section */}
-      <div className="bg-black/50 border border-white/10 rounded-none p-6">
+      <div className="bg-black/50 border border-white rounded-none p-6">
         <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
           <Upload className="w-5 h-5" />
           Upload Brand Assets
@@ -281,7 +281,7 @@ export default function BrandAssets() {
       </div>
 
       {/* Assets Gallery */}
-      <div className="bg-black/50 border border-white/10 rounded-none p-6">
+      <div className="bg-black/50 border border-white rounded-none p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <Image className="w-5 h-5" />
@@ -304,7 +304,7 @@ export default function BrandAssets() {
             {assets.map((asset) => (
               <div
                 key={asset.id}
-                className="bg-black/30 border border-white/10 rounded-none p-4 hover:border-white/20 transition group"
+                className="bg-black/30 border border-white rounded-none p-4 hover:border-white transition group"
               >
                 {/* Preview */}
                 <div className="relative aspect-square mb-3 bg-black/50 rounded-none overflow-hidden">
@@ -328,12 +328,12 @@ export default function BrandAssets() {
                   {/* Type Badge */}
                   <div className="absolute top-2 right-2">
                     {asset.type === 'image' ? (
-                      <div className="px-2 py-1 bg-blue-400/20 text-blue-400 border border-blue-400/30 rounded text-xs flex items-center gap-1">
+                      <div className="px-2 py-1 bg-blue-400/20 text-blue-400 border border-white rounded-none text-xs flex items-center gap-1">
                         <Image className="w-3 h-3" />
                         Image
                       </div>
                     ) : (
-                      <div className="px-2 py-1 bg-purple-400/20 text-purple-400 border border-purple-400/30 rounded text-xs flex items-center gap-1">
+                      <div className="px-2 py-1 bg-purple-400/20 text-purple-400 border border-white rounded-none text-xs flex items-center gap-1">
                         <Video className="w-3 h-3" />
                         Video
                       </div>
@@ -344,14 +344,14 @@ export default function BrandAssets() {
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                     <button
                       onClick={() => handleDownload(asset)}
-                      className="p-2 bg-white/20 hover:bg-white/30 rounded transition"
+                      className="p-2 bg-white/20 hover:bg-white/30 rounded-none transition"
                       title="Download"
                     >
                       <Download className="w-4 h-4 text-white" />
                     </button>
                     <button
                       onClick={() => handleDelete(asset)}
-                      className="p-2 bg-red-500/20 hover:bg-red-500/30 rounded transition"
+                      className="p-2 bg-red-500/20 hover:bg-red-500/30 rounded-none transition"
                       title="Delete"
                     >
                       <Trash2 className="w-4 h-4 text-white" />
@@ -382,7 +382,7 @@ export default function BrandAssets() {
                     navigator.clipboard.writeText(asset.url);
                     success('URL copied to clipboard!');
                   }}
-                  className="w-full mt-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-xs transition"
+                  className="w-full mt-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white rounded-none text-white text-xs transition"
                 >
                   Copy URL
                 </button>

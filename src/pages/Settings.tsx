@@ -116,7 +116,7 @@ export default function SettingsPage() {
 
       <div className="space-y-6">
         {/* Notifications */}
-        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+        <div className="bg-black/50 border border-white rounded-none p-6">
           <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
             <Bell className="w-5 h-5" />
             Notifications
@@ -132,7 +132,7 @@ export default function SettingsPage() {
                 type="checkbox"
                 checked={notifications.email}
                 onChange={() => handleNotificationsChange('email')}
-                className="w-5 h-5 rounded border-white/20 bg-black text-white focus:ring-2 focus:ring-white/20"
+                className="w-5 h-5 rounded-none border-white bg-black text-white focus:ring-2 focus:ring-white/20"
               />
             </label>
 
@@ -145,7 +145,7 @@ export default function SettingsPage() {
                 type="checkbox"
                 checked={notifications.push}
                 onChange={() => handleNotificationsChange('push')}
-                className="w-5 h-5 rounded border-white/20 bg-black text-white focus:ring-2 focus:ring-white/20"
+                className="w-5 h-5 rounded-none border-white bg-black text-white focus:ring-2 focus:ring-white/20"
               />
             </label>
 
@@ -158,14 +158,14 @@ export default function SettingsPage() {
                 type="checkbox"
                 checked={notifications.marketing}
                 onChange={() => handleNotificationsChange('marketing')}
-                className="w-5 h-5 rounded border-white/20 bg-black text-white focus:ring-2 focus:ring-white/20"
+                className="w-5 h-5 rounded-none border-white bg-black text-white focus:ring-2 focus:ring-white/20"
               />
             </label>
           </div>
         </div>
 
         {/* Security */}
-        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+        <div className="bg-black/50 border border-white rounded-none p-6">
           <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
             <Shield className="w-5 h-5" />
             Security
@@ -174,7 +174,7 @@ export default function SettingsPage() {
           <div className="space-y-4">
             <button
               onClick={handleChangePassword}
-              className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-none text-white font-medium hover:border-white/30 transition flex items-center justify-between"
+              className="w-full px-4 py-3 bg-black/50 border border-white rounded-none text-white font-medium hover:border-white transition flex items-center justify-between"
             >
               <div className="flex items-center gap-3">
                 <Key className="w-5 h-5 text-white/60" />
@@ -189,7 +189,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Danger Zone */}
-        <div className="bg-black/50 border border-red-500/30 rounded-none p-6">
+        <div className="bg-black/50 border border-white rounded-none p-6">
           <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
             <Trash2 className="w-5 h-5 text-red-500" />
             Danger Zone
@@ -204,7 +204,7 @@ export default function SettingsPage() {
               <button
                 onClick={handleDeleteAccount}
                 disabled={loading}
-                className="px-4 py-2 bg-red-500/20 border border-red-500/50 text-red-400 font-semibold rounded-none hover:bg-red-500/30 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-4 py-2 bg-red-500/20 border border-white text-red-400 font-semibold rounded-none hover:bg-red-500/30 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {loading && <LoadingSpinner size="sm" />}
                 Delete Account
@@ -217,7 +217,7 @@ export default function SettingsPage() {
       {/* Password Change Modal */}
       {showPasswordModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="bg-black/50 border border-white/10 rounded-none p-6 w-full max-w-md mx-4">
+          <div className="bg-black/50 border border-white rounded-none p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-white">Change Password</h2>
               <button
@@ -246,7 +246,7 @@ export default function SettingsPage() {
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
                   minLength={6}
-                  className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white/30"
+                  className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white"
                   placeholder="Enter new password"
                 />
               </div>
@@ -262,7 +262,7 @@ export default function SettingsPage() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   minLength={6}
-                  className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white/30"
+                  className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white"
                   placeholder="Confirm new password"
                 />
               </div>
@@ -284,7 +284,7 @@ export default function SettingsPage() {
                     setNewPassword('');
                     setConfirmPassword('');
                   }}
-                  className="px-4 py-2 bg-black/50 border border-white/10 text-white font-semibold rounded-none hover:border-white/30 transition"
+                  className="px-4 py-2 bg-black/50 border border-white text-white font-semibold rounded-none hover:border-white transition"
                 >
                   Cancel
                 </button>

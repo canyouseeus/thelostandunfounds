@@ -206,10 +206,10 @@ export default async function handler(
                     <tr>
                       <td align="center" style="padding: 40px 20px !important; background-color: #000000 !important;">
                         <table role="presentation" style="max-width: 600px !important; width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 auto !important;">
-                          <!-- Logo -->
+                          <!-- Branding Header -->
                           <tr>
                             <td align="left" style="padding: 0 0 30px 0; background-color: #000000 !important;">
-                              <div style="color: #000000 !important; font-size: 24px; font-weight: bold; font-family: Arial, sans-serif;">THE LOST+UNFOUNDS</div>
+                              <img src="https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
                             </td>
                           </tr>
                           <!-- Main Content -->
@@ -239,9 +239,12 @@ export default async function handler(
                               <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 0; text-align: center; background-color: #000000 !important;">
                                 If you didn't sign up for this newsletter, you can safely ignore this email.
                               </p>
-                              <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 20px 0 0 0; text-align: center; background-color: #000000 !important;">
-                                © ${new Date().getFullYear()} THE LOST+UNFOUNDS. All rights reserved.
-                              </p>
+              <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 20px 0 10px 0; text-align: center; background-color: #000000 !important;">
+                © ${new Date().getFullYear()} THE LOST+UNFOUNDS. All rights reserved.
+              </p>
+              <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: center; background-color: #000000 !important;">
+                <a href="https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(email)}" style="color: rgba(255, 255, 255, 0.6) !important; text-decoration: underline;">Unsubscribe from this newsletter</a>
+              </p>
                             </td>
                           </tr>
                         </table>

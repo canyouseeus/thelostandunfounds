@@ -46,7 +46,7 @@ export default function ResetNewsletter() {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-4">
-      <div className="max-w-md w-full bg-black/50 border border-white/10 rounded-none p-8">
+      <div className="max-w-md w-full bg-black/50 border border-white rounded-none p-8">
         <div className="text-center mb-8">
           <Mail className="w-16 h-16 text-white mx-auto mb-4" />
           <h1 className="text-3xl font-bold text-white mb-2">Reset Newsletter List</h1>
@@ -56,8 +56,8 @@ export default function ResetNewsletter() {
         {result && (
           <div className={`mb-6 p-4 rounded-none border ${
             result.success 
-              ? 'bg-green-400/10 border-green-400/20' 
-              : 'bg-red-400/10 border-red-400/20'
+              ? 'bg-green-400/10 border-white' 
+              : 'bg-red-400/10 border-white'
           }`}>
             <div className="flex items-start gap-3">
               {result.success ? (
@@ -103,7 +103,7 @@ export default function ResetNewsletter() {
           This will delete all newsletter subscribers from the database.
         </p>
         
-        <div className="mt-6 pt-6 border-t border-white/10">
+        <div className="mt-6 pt-6 border-t border-white">
           <p className="text-white/60 text-xs text-center mb-3">Or use direct REST API link:</p>
           <a 
             href="/api/reset-newsletter-direct?token=reset-newsletter-2024"

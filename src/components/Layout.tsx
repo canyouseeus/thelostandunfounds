@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { isAdmin } from '../utils/admin'
 import AuthModal from './auth/AuthModal'
 import { supabase } from '../lib/supabase'
+import Footer from './Footer'
 
 export default function Layout() {
   const location = useLocation()
@@ -225,7 +226,7 @@ export default function Layout() {
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-black flex flex-col">
       <nav className="bg-black/80 backdrop-blur-md relative z-[10000]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Top row: Title left, Menu button right */}
@@ -293,7 +294,8 @@ export default function Layout() {
                     onClick={() => setArchivesMenuOpen(!archivesMenuOpen)}
                     onMouseEnter={() => handleSubmenuMouseEnter('archives')}
                   >
-                    THE LOST ARCHIVES {archivesMenuOpen ? '▼' : '▶'}
+                    <span className="menu-toggle-text">THE LOST ARCHIVES</span>
+                    <span className="menu-toggle-icon">{archivesMenuOpen ? '▼' : '▶'}</span>
                   </button>
                   <div 
                     className={`menu-subsection ${archivesMenuOpen ? 'open' : ''}`}
@@ -376,7 +378,8 @@ export default function Layout() {
                     onClick={() => setMoreMenuOpen(!moreMenuOpen)}
                     onMouseEnter={() => handleSubmenuMouseEnter('more')}
                   >
-                    MORE {moreMenuOpen ? '▼' : '▶'}
+                    <span className="menu-toggle-text">MORE</span>
+                    <span className="menu-toggle-icon">{moreMenuOpen ? '▼' : '▶'}</span>
                   </button>
                   <div 
                     className={`menu-subsection ${moreMenuOpen ? 'open' : ''}`}
@@ -449,7 +452,7 @@ export default function Layout() {
                   </div>
                   {user && (
                     <>
-                      <div className="border-t border-white/10 my-2"></div>
+                      <div className="menu-item menu-separator"></div>
                 <Link
                   to={userIsAdmin ? "/admin" : userSubdomain ? `/${userSubdomain}/bookclubprofile` : "/bookclubprofile"}
                   className="menu-item"
@@ -457,25 +460,26 @@ export default function Layout() {
                     setMenuOpen(false);
                   }}
                 >
-                  <div className="flex items-center gap-2">
+                  <span className={`menu-toggle-text ${userIsAdmin ? 'font-bold' : ''}`}>{userIsAdmin ? 'ADMIN DASHBOARD' : 'PROFILE'}</span>
+                  <span className="menu-toggle-icon">
                     <User className="w-4 h-4" />
-                    {userIsAdmin ? 'ADMIN DASHBOARD' : 'PROFILE'}
-                  </div>
+                  </span>
                 </Link>
+                      <div className="menu-item menu-separator"></div>
                       <button
                         type="button"
-                        className="menu-item w-full text-left"
+                        className="menu-item"
                         onClick={handleSignOut}
                       >
-                        <div className="flex items-center gap-2">
+                        <span className="menu-toggle-text">LOG OUT</span>
+                        <span className="menu-toggle-icon">
                           <LogOut className="w-4 h-4" />
-                          LOG OUT
-                        </div>
+                        </span>
                       </button>
-                      <div className="border-t border-white/10 my-2"></div>
+                      <div className="menu-item menu-separator"></div>
                       <div className="menu-item user-info">
                         <div className="text-white/60 text-xs mb-1">Logged in as:</div>
-                        <div className="text-white text-sm font-medium">
+                        <div className="text-white text-xs font-medium">
                           {user.user_metadata?.author_name || user.email?.split('@')[0] || 'User'}
                         </div>
                       </div>
@@ -496,15 +500,16 @@ export default function Layout() {
           </div>
         </div>
       </nav>
-      <main className="pb-6">
+      <main className="pb-6 flex-1">
         <Outlet />
       </main>
+      <Footer />
       <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
       
       {/* Upgrade Modal */}
       {upgradeModalOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="bg-black/50 border border-white/10 rounded-none p-6 w-full max-w-md mx-4">
+          <div className="bg-black/50 border border-white rounded-none p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-white">Upgrade Your Account</h2>
               <button
@@ -516,7 +521,7 @@ export default function Layout() {
               </button>
             </div>
             <div className="space-y-4">
-              <div className="bg-black/50 border border-white/10 rounded-none p-4">
+              <div className="bg-black/50 border border-white rounded-none p-4">
                 <h3 className="text-lg font-semibold text-white mb-2">Premium Tier</h3>
                 <p className="text-white/70 text-sm mb-3">Unlimited access to all tools</p>
                 <div className="text-2xl font-bold text-white mb-4">$9.99<span className="text-sm text-white/60">/month</span></div>
@@ -530,7 +535,7 @@ export default function Layout() {
                   Upgrade to Premium
                 </button>
               </div>
-              <div className="bg-black/50 border border-white/10 rounded-none p-4">
+              <div className="bg-black/50 border border-white rounded-none p-4">
                 <h3 className="text-lg font-semibold text-white mb-2">Pro Tier</h3>
                 <p className="text-white/70 text-sm mb-3">Everything + API access</p>
                 <div className="text-2xl font-bold text-white mb-4">$19.99<span className="text-sm text-white/60">/month</span></div>

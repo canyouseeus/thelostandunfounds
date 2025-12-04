@@ -20,7 +20,7 @@ export default function BookPreview({ books }: BookPreviewProps) {
   }
 
   return (
-    <div className="my-12 border-t border-b border-white/20 py-8">
+    <div className="my-12 border-t border-b border-white py-8">
       <div className="flex items-center gap-2 mb-6">
         <BookOpen className="w-5 h-5 text-white/70" />
         <h2 className="text-xl font-bold text-white text-left">Books Featured in This Article</h2>
@@ -32,7 +32,7 @@ export default function BookPreview({ books }: BookPreviewProps) {
             href={book.link}
             target="_blank"
             rel="noopener noreferrer"
-            className="group bg-black/50 border-2 border-white/10 rounded-lg p-4 hover:border-white/30 hover:shadow-lg hover:shadow-white/10 transition-all duration-300 transform hover:-translate-y-1"
+            className="group bg-black/50 border-2 border-white rounded-none p-4 hover:border-white hover:shadow-lg hover:shadow-white/10 transition-all duration-300 transform hover:-translate-y-1"
           >
             <div className="flex items-start justify-between gap-2 mb-2">
               <div className="flex-1">

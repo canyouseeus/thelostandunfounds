@@ -215,13 +215,13 @@ export default function Blog() {
           <div className="flex items-center justify-center gap-4 flex-wrap">
             <Link
               to="/book-club"
-              className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition"
+              className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white rounded-none text-white text-sm font-medium transition"
             >
               View BOOK CLUB →
             </Link>
             <Link
               to="/submit/main"
-              className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition"
+              className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white rounded-none text-white text-sm font-medium transition"
             >
               Submit Your Article →
             </Link>
@@ -229,7 +229,7 @@ export default function Blog() {
         </div>
 
       {error && (
-        <div className="bg-red-900/20 border border-red-500/50 rounded-none p-4 mb-6">
+        <div className="bg-red-900/20 border border-white rounded-none p-4 mb-6">
           <p className="text-red-400">{error}</p>
         </div>
       )}
@@ -272,10 +272,12 @@ export default function Blog() {
                         className="rounded-none p-[1px] relative"
                         style={{ 
                           background: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15), rgba(255,255,255,0.3))',
+                          minHeight: isExpanded ? '400px' : '220px',
+                          transition: 'min-height 0.2s ease-out',
                         }}
                       >
                         <ExpandableCard
-                          className="bg-black/47 border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02]"
+                          className="bg-black border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02]"
                           collapsedSize={{ height: 220 }}
                           expandedSize={{ height: 400 }}
                           hoverToExpand={false}
@@ -331,8 +333,8 @@ export default function Blog() {
                                 </span>
                               )}
                             </div>
-                          </ExpandableCardFooter>
-                        </ExpandableCard>
+                        </ExpandableCardFooter>
+                      </ExpandableCard>
                       </div>
                     </ExpandableTrigger>
                   )}
@@ -345,7 +347,7 @@ export default function Blog() {
 
       {/* Book Club Posts Section - 3 Most Recent */}
       {bookClubPosts.length > 0 && (
-        <div className="mt-12 pt-12 border-t border-white/10">
+        <div className="mt-12 pt-12 border-t border-white">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-white">From the BOOK CLUB</h2>
             <Link
@@ -366,7 +368,7 @@ export default function Blog() {
                 }
                 return '';
               })() : '');
-
+              
               return (
                 <Expandable
                   key={post.id}
@@ -378,11 +380,15 @@ export default function Blog() {
                   {({ isExpanded }) => (
                     <ExpandableTrigger>
                       <div 
-                        className="rounded-none p-[1px] h-full relative"
-                        style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15), rgba(255,255,255,0.3))' }}
+                        className="rounded-none p-[1px] relative"
+                        style={{ 
+                          background: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15), rgba(255,255,255,0.3))',
+                          minHeight: isExpanded ? '400px' : '220px',
+                          transition: 'min-height 0.2s ease-out',
+                        }}
                       >
                         <ExpandableCard
-                          className="bg-black/47 border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02]"
+                          className="bg-black border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02]"
                           collapsedSize={{ height: 220 }}
                           expandedSize={{ height: 400 }}
                           hoverToExpand={false}
@@ -390,11 +396,11 @@ export default function Blog() {
                           collapseDelay={0}
                         >
                           <ExpandableCardHeader className="mb-1 pb-1">
-                            <h2 className="text-base font-black text-white mb-0 tracking-wide transition line-clamp-2">
+                            <h2 className="text-base font-black text-white mb-0 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
                               {post.title}
                             </h2>
                           </ExpandableCardHeader>
-                          
+                        
                           <ExpandableCardContent className="flex-1 min-h-0">
                             {excerpt && (
                               <div className="mb-1">
@@ -438,8 +444,8 @@ export default function Blog() {
                                 </span>
                               )}
                             </div>
-                          </ExpandableCardFooter>
-                        </ExpandableCard>
+                        </ExpandableCardFooter>
+                      </ExpandableCard>
                       </div>
                     </ExpandableTrigger>
                   )}

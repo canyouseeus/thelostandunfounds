@@ -75,14 +75,14 @@ export default function ToolsDashboard() {
               <div className="tool-card-inner">
                 <Link
                   to={tool.path}
-                  className="tool-card-front group bg-black/50 border border-white/10 rounded-none px-6 py-4 hover:border-white/40 hover:bg-white/5 hover:shadow-[0_8px_30px_rgba(255,255,255,0.12)] transition-all duration-300 flex items-center gap-4 cursor-pointer w-full no-underline"
+                  className="tool-card-front group bg-black/50 border border-white rounded-none px-6 py-4 hover:border-white hover:bg-white/5 hover:shadow-[0_8px_30px_rgba(255,255,255,0.12)] transition-all duration-300 flex items-center gap-4 cursor-pointer w-full no-underline"
                   onClick={(e) => {
                     e.preventDefault();
                     handleCardClick(tool.id, e);
                   }}
                 >
                   {/* Icon Container - Fixed width, doesn't shrink */}
-                  <div className="w-10 h-10 border border-white/20 flex items-center justify-center group-hover:border-white/50 group-hover:scale-110 transition-all flex-shrink-0">
+                  <div className="w-10 h-10 border border-white flex items-center justify-center group-hover:border-white group-hover:scale-110 transition-all flex-shrink-0">
                     {tool.icon}
                   </div>
                   
@@ -92,9 +92,9 @@ export default function ToolsDashboard() {
                     <p className="text-sm text-white/70 leading-tight text-left m-0">{tool.description}</p>
                   </div>
                 </Link>
-                <div className="tool-card-back bg-black/50 border border-white/10 rounded-none px-6 py-4 flex items-center justify-center cursor-pointer">
+                <div className="tool-card-back bg-black/50 border border-white rounded-none px-6 py-4 flex items-center justify-center cursor-pointer">
                   <div className="text-center">
-                    <div className="w-16 h-16 border-2 border-white/40 rounded-full flex items-center justify-center text-white mx-auto mb-4 animate-spin">
+                    <div className="w-16 h-16 border-2 border-white rounded-none flex items-center justify-center text-white mx-auto mb-4 animate-spin">
                       <ArrowRight className="w-8 h-8" />
                     </div>
                     <p className="text-white/80 text-sm">Loading...</p>

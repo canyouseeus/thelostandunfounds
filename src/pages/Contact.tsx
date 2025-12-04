@@ -39,7 +39,7 @@ export default function Contact() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="mb-8 sm:mb-12 text-center">
-        <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">Contact Us</h1>
+        <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">CONTACT US</h1>
         <p className="text-lg sm:text-xl text-white/70 px-4">
           Have a question? We'd love to hear from you.
         </p>
@@ -48,14 +48,14 @@ export default function Contact() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Contact Info */}
         <div className="space-y-6">
-          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <div className="bg-black/50 border border-white rounded-none p-6">
             <Mail className="w-6 h-6 text-white mb-3" />
             <h3 className="text-white font-semibold mb-2">Email</h3>
             <a href="mailto:support@thelostandunfounds.com" className="text-white/70 hover:text-white transition">
               support@thelostandunfounds.com
             </a>
           </div>
-          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <div className="bg-black/50 border border-white rounded-none p-6">
             <h3 className="text-white font-semibold mb-2">Response Time</h3>
             <p className="text-white/70 text-sm">
               We typically respond within 24-48 hours during business days.
@@ -65,7 +65,7 @@ export default function Contact() {
 
         {/* Contact Form */}
         <div className="lg:col-span-2">
-          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <div className="bg-black/50 border border-white rounded-none p-6">
             {submitted ? (
               <div className="text-center py-8">
                 <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
@@ -92,7 +92,7 @@ export default function Contact() {
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-3 sm:py-2 bg-black/50 border border-white/10 rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white/30 text-base min-h-[44px] touch-action: manipulation"
+                    className="w-full px-4 py-3 sm:py-2 bg-black/50 border border-white rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white text-base min-h-[44px] touch-action: manipulation"
                     placeholder="Your name"
                   />
                 </div>
@@ -107,7 +107,7 @@ export default function Contact() {
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-4 py-3 sm:py-2 bg-black/50 border border-white/10 rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white/30 text-base min-h-[44px] touch-action: manipulation"
+                    className="w-full px-4 py-3 sm:py-2 bg-black/50 border border-white rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white text-base min-h-[44px] touch-action: manipulation"
                     placeholder="your@email.com"
                   />
                 </div>
@@ -122,7 +122,7 @@ export default function Contact() {
                     required
                     value={formData.subject}
                     onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                    className="w-full px-4 py-3 sm:py-2 bg-black/50 border border-white/10 rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white/30 text-base min-h-[44px] touch-action: manipulation"
+                    className="w-full px-4 py-3 sm:py-2 bg-black/50 border border-white rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white text-base min-h-[44px] touch-action: manipulation"
                     placeholder="What's this about?"
                   />
                 </div>
@@ -137,7 +137,7 @@ export default function Contact() {
                     rows={6}
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="w-full px-4 py-3 sm:py-2 bg-black/50 border border-white/10 rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white/30 resize-none text-base touch-action: manipulation"
+                    className="w-full px-4 py-3 sm:py-2 bg-black/50 border border-white rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white resize-none text-base touch-action: manipulation"
                     placeholder="Tell us more..."
                   />
                 </div>

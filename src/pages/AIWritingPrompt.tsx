@@ -78,18 +78,18 @@ export default function AIWritingPrompt() {
 
       {/* Prompt Box */}
       {loading ? (
-        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+        <div className="bg-black/50 border border-white rounded-none p-6">
           <p className="text-white/60">Loading prompt...</p>
         </div>
       ) : (
-        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+        <div className="bg-black/50 border border-white rounded-none p-6">
           <div className="mb-4">
             <h2 className="text-xl font-bold text-white mb-1">AI Writing Prompt</h2>
             <p className="text-white/60 text-sm mb-2">
               Use this prompt exactly as provided to ensure your article matches our format and style requirements.
             </p>
           </div>
-          <pre className="bg-black/50 border border-white/10 rounded-none p-4 overflow-x-auto text-white/90 text-sm font-mono whitespace-pre-wrap break-words text-left max-h-[600px] overflow-y-auto relative">
+          <pre className="bg-black/50 border border-white rounded-none p-4 overflow-x-auto text-white/90 text-sm font-mono whitespace-pre-wrap break-words text-left max-h-[600px] overflow-y-auto relative">
             <button
               onClick={copyToClipboard}
               className="absolute top-2 right-2 p-1.5 bg-white/10 hover:bg-white/20 rounded text-white transition flex items-center justify-center flex-shrink-0 z-10"
@@ -125,7 +125,7 @@ export default function AIWritingPrompt() {
       )}
 
       {/* Tips Section */}
-      <div className="bg-black/30 border border-white/10 rounded-none p-6 mt-6">
+      <div className="bg-black/30 border border-white rounded-none p-6 mt-6">
         <h3 className="text-lg font-bold text-white mb-4">Important Tips for Contributors</h3>
         
         <div className="space-y-4">

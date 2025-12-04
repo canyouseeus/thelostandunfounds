@@ -566,6 +566,24 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch create-brand-assets-storage-bucket file:', fetchError);
       }
 
+      // Load fix-brand-assets-rls-policies script
+      let fixBrandAssetsRLSContent = '';
+      try {
+        const fixBrandAssetsRLSResponse = await fetch('/sql/fix-brand-assets-rls-policies.sql');
+        if (fixBrandAssetsRLSResponse.ok) {
+          const text = await fixBrandAssetsRLSResponse.text();
+          if (text && !text.includes('<!DOCTYPE html>')) {
+            fixBrandAssetsRLSContent = text;
+          } else {
+            console.warn('Got HTML instead of SQL for fix-brand-assets-rls-policies.sql');
+          }
+        } else {
+          console.warn('Fix brand assets RLS script fetch failed:', fixBrandAssetsRLSResponse.status, fixBrandAssetsRLSResponse.statusText);
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch fix-brand-assets-rls-policies file:', fetchError);
+      }
+
       // Load comprehensive-admin-setup script
       let comprehensiveAdminSetupContent = '';
       try {
@@ -808,6 +826,20 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch move-post-to-book-club file:', fetchError);
       }
 
+      // Load fix-book-club-posts-blog-column script
+      let fixBookClubPostsContent = '';
+      try {
+        const fixBookClubPostsResponse = await fetch('/sql/fix-book-club-posts-blog-column.sql');
+        if (fixBookClubPostsResponse.ok) {
+          const text = await fixBookClubPostsResponse.text();
+          if (!text.trim().startsWith('<!')) {
+            fixBookClubPostsContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch fix-book-club-posts-blog-column file:', fetchError);
+      }
+
       // Load add-amazon-storefront-id script
       let amazonStorefrontContent = '';
       try {
@@ -870,6 +902,13 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
       }
 
       const allScripts: SQLScript[] = [
+        {
+          name: 'Fix Brand Assets RLS Policies - FIX UPLOAD ERRORS',
+          filename: 'fix-brand-assets-rls-policies.sql',
+          content: fixBrandAssetsRLSContent || '// File not found - check public/sql folder',
+          description: 'FIXES: "new row violates row-level security policy" errors when uploading brand assets. Run this script if you\'re getting RLS policy violations when trying to upload files from the admin dashboard. This recreates the RLS policies with the correct permissions for authenticated users to upload, update, and delete brand assets.',
+          createdAt: getScriptTimestamp('fix-brand-assets-rls-policies.sql')
+        },
         {
           name: 'Comprehensive Admin Setup - FIX ALL ADMIN PERMISSIONS',
           filename: 'comprehensive-admin-setup.sql',
@@ -1105,13 +1144,6 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
           createdAt: getScriptTimestamp('blog-schema-migration.sql')
         },
         {
-          name: 'Join THE LOST ARCHIVES BOOK CLUB and Share Your Love of Books',
-          filename: 'create-blog-post-join-the-lost-archives-book-club.sql',
-          content: bookClubContent || '// File not found - check public/sql folder',
-          description: 'Creates the blog post "Join THE LOST ARCHIVES BOOK CLUB and Share Your Love of Books" - inviting readers and writers to join the book club community, share insights, and earn as Amazon affiliates. Run this AFTER the migration script. Works with any schema version.',
-          createdAt: getScriptTimestamp('create-blog-post-join-the-lost-archives-book-club.sql')
-        },
-        {
           name: 'Building a Creative Brand That Rewards People for Life: Lessons That Shaped THE LOST+UNFOUNDS',
           filename: 'create-blog-post-building-a-creative-brand-that-rewards-people-for-life.sql',
           content: creativeBrandContent || '// File not found - check public/sql folder',
@@ -1294,7 +1326,7 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
       {/* Lock Screen */}
       {isLocked && (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center">
-          <div className="bg-black/50 border border-white/10 rounded-none p-8 max-w-md w-full mx-4">
+          <div className="bg-black/50 border border-white rounded-none p-8 max-w-md w-full mx-4">
             <div className="flex flex-col items-center text-center">
               <Lock className="w-16 h-16 text-yellow-400 mb-4" />
               <h2 className="text-2xl font-bold text-white mb-2">Session Locked</h2>
@@ -1316,7 +1348,7 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
       {!isLocked && (
         <div className="space-y-6">
           {scripts.length === 0 ? (
-            <div className="bg-black/50 border border-white/10 rounded-none p-6">
+            <div className="bg-black/50 border border-white rounded-none p-6">
               <p className="text-white/60">No SQL scripts found.</p>
               <p className="text-white/40 text-sm mt-2">Check browser console for debug info.</p>
             </div>
@@ -1324,7 +1356,7 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
             scripts.map((script, index) => (
               <div
                 key={index}
-                className="bg-black/50 border border-white/10 rounded-none p-6"
+                className="bg-black/50 border border-white rounded-none p-6"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div>
@@ -1341,7 +1373,7 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
                   </div>
                   <button
                     onClick={() => copyToClipboard(script.content, index)}
-                    className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded text-white text-sm transition flex items-center gap-2"
+                    className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-none text-white text-sm transition flex items-center gap-2"
                   >
                     {copiedIndex === index ? (
                       <>
@@ -1356,7 +1388,7 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
                     )}
                   </button>
                 </div>
-                <pre className="bg-black/50 border border-white/10 rounded-none p-4 overflow-x-auto text-white/90 text-sm font-mono whitespace-pre-wrap break-words text-left">
+                <pre className="bg-black/50 border border-white rounded-none p-4 overflow-x-auto text-white/90 text-sm font-mono whitespace-pre-wrap break-words text-left">
                   <code className="text-left">{script.content}</code>
                 </pre>
               </div>

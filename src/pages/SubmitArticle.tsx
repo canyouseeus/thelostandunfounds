@@ -727,7 +727,7 @@ export default function SubmitArticle() {
       />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {!user && !authLoading && (
-          <div className="mb-8 text-center bg-yellow-900/20 border border-yellow-500/50 rounded-none p-6">
+          <div className="mb-8 text-center bg-yellow-900/20 border border-white rounded-none p-6">
             <h2 className="text-xl font-bold text-white mb-2">Sign In Required</h2>
             <p className="text-white/70 mb-4">
               Please sign in or create an account to submit articles to THE LOST ARCHIVES.
@@ -752,11 +752,11 @@ export default function SubmitArticle() {
         {/* AI Writing Prompt Box */}
         {config.promptPath && (
         <div className="mb-8">
-          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <div className="bg-black/50 border border-white rounded-none p-6">
             <div className="mb-4">
               <h2 className="text-xl font-bold text-white mb-1">AI Writing Prompt for Contributors</h2>
               <p className="text-white/60 text-sm mb-2">Copy this prompt to use with your AI assistant</p>
-              <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-none p-3 mt-3 flex items-start gap-2">
+              <div className="bg-yellow-900/20 border border-white rounded-none p-3 mt-3 flex items-start gap-2">
                 <AlertTriangle className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
                 <p className="text-yellow-300 text-xs">
                   <strong>Important:</strong> Do not modify this prompt. Use it exactly as provided to ensure your article matches our format and style requirements.
@@ -764,15 +764,15 @@ export default function SubmitArticle() {
               </div>
             </div>
             {loadingPrompt ? (
-              <div className="bg-black/50 border border-white/10 rounded-none p-4">
+              <div className="bg-black/50 border border-white rounded-none p-4">
                 <p className="text-white/60 text-sm">Loading prompt...</p>
               </div>
             ) : (
               <>
-                <pre className="bg-black/50 border border-white/10 rounded-none p-4 overflow-x-auto text-white/90 text-sm font-mono whitespace-pre-wrap break-words text-left max-h-96 overflow-y-auto relative">
+                <pre className="bg-black/50 border border-white rounded-none p-4 overflow-x-auto text-white/90 text-sm font-mono whitespace-pre-wrap break-words text-left max-h-96 overflow-y-auto relative">
                   <button
                     onClick={copyPromptToClipboard}
-                    className="absolute top-2 right-2 p-1.5 bg-white/10 hover:bg-white/20 rounded text-white transition flex items-center justify-center flex-shrink-0 z-10"
+                    className="absolute top-2 right-2 p-1.5 bg-white/10 hover:bg-white/20 rounded-none text-white transition flex items-center justify-center flex-shrink-0 z-10"
                     title={copiedPrompt ? "Copied!" : "Copy Prompt"}
                   >
                     {copiedPrompt ? (
@@ -809,7 +809,7 @@ export default function SubmitArticle() {
 
         {/* Tips Section */}
         <div className="mb-8">
-          <div className="bg-black/30 border border-white/10 rounded-none p-6 mt-6">
+          <div className="bg-black/30 border border-white rounded-none p-6 mt-6">
             <h3 className="text-lg font-bold text-white mb-4">Important Tips for Contributors</h3>
             
             <div className="space-y-4">
@@ -847,9 +847,9 @@ export default function SubmitArticle() {
         </div>
 
         {user && (
-          <div className="bg-black/50 border border-white/10 rounded-none p-6 md:p-8">
+          <div className="bg-black/50 border border-white rounded-none p-6 md:p-8">
             {/* Column indicator */}
-            <div className="mb-6 pb-4 border-b border-white/10">
+            <div className="mb-6 pb-4 border-b border-white">
               <p className="text-white/60 text-sm">
                 Submitting to: <span className="text-white font-semibold">{config.name}</span>
               </p>
@@ -858,7 +858,7 @@ export default function SubmitArticle() {
 
             {/* Subdomain Display (read-only) - only show if required */}
             {config.requiresSubdomain && userSubdomain && (
-              <div className="bg-green-900/20 border border-green-500/30 rounded-none p-4">
+              <div className="bg-green-900/20 border border-white rounded-none p-4">
                 <label className="block text-white/80 text-sm mb-2">
                   Your Blog Subdomain
                 </label>
@@ -871,7 +871,7 @@ export default function SubmitArticle() {
               </div>
             )}
             {config.requiresSubdomain && !userSubdomain && !loadingSubdomain && (
-              <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-none p-4">
+              <div className="bg-yellow-900/20 border border-white rounded-none p-4">
                 <p className="text-yellow-300 text-sm mb-2">
                   You need to register a subdomain before submitting articles.
                 </p>
@@ -895,7 +895,7 @@ export default function SubmitArticle() {
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+                className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none"
                 placeholder="Your Article Title"
                 required
               />
@@ -909,7 +909,7 @@ export default function SubmitArticle() {
               <textarea
                 value={formData.content}
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none font-mono text-sm"
+                className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none font-mono text-sm"
                 rows={20}
                 placeholder="Write your article here. Use double line breaks for paragraphs...
 
@@ -939,7 +939,7 @@ Use double line breaks between sections. Book titles mentioned in the text will 
               <textarea
                 value={formData.excerpt}
                 onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+                className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none"
                 rows={3}
                 placeholder="A brief summary of your article (will be shown on the blog listing page)"
               />
@@ -957,7 +957,7 @@ Use double line breaks between sections. Book titles mentioned in the text will 
                   <button
                     type="button"
                     onClick={addAffiliateLink}
-                    className="px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-xs font-medium transition flex items-center gap-1"
+                    className="px-3 py-1 bg-white/10 hover:bg-white/20 border border-white rounded-none text-white text-xs font-medium transition flex items-center gap-1"
                   >
                     <Plus className="w-3 h-3" />
                     Add {config.itemLabel}
@@ -975,14 +975,14 @@ Use double line breaks between sections. Book titles mentioned in the text will 
 
               {/* Bulk Paste Box - only for bookclub */}
               {column === 'bookclub' && (
-              <div className="bg-black/30 border border-white/10 rounded-none p-4 mb-6">
+              <div className="bg-black/30 border border-white rounded-none p-4 mb-6">
                 <label className="block text-white/80 text-xs mb-2 font-semibold">
                   QUICK ADD: Paste your book list here to auto-fill
                 </label>
                 <textarea
                   value={bulkAffiliateInput}
                   onChange={handleBulkInput}
-                  className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-none text-white text-sm focus:border-white/30 focus:outline-none font-mono placeholder-white/30"
+                  className="w-full px-3 py-2 bg-black/50 border border-white rounded-none text-white text-sm focus:border-white focus:outline-none font-mono placeholder-white/30"
                   rows={6}
                   placeholder={`Paste format example:
 The E-Myth Revisited
@@ -995,7 +995,7 @@ Atomic Habits - https://amzn.to/4...`}
               
               <div className="space-y-3">
                 {affiliateLinks.map((link, index) => (
-                  <div key={index} className="bg-black/30 border border-white/10 rounded-none p-4">
+                  <div key={index} className="bg-black/30 border border-white rounded-none p-4">
                     <div className="flex items-start justify-between mb-3">
                       <span className="text-white/80 text-sm font-medium">
                         {config.itemLabel} {index + 1} {index < config.minItems && <span className="text-white/50">(Required)</span>}
@@ -1017,7 +1017,7 @@ Atomic Habits - https://amzn.to/4...`}
                           type="text"
                           value={getTitleValue(link)}
                           onChange={(e) => updateAffiliateLink(index, getTitleField(), e.target.value)}
-                          className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-none text-white text-sm focus:border-white/30 focus:outline-none"
+                          className="w-full px-3 py-2 bg-black/50 border border-white rounded-none text-white text-sm focus:border-white focus:outline-none"
                           placeholder={`e.g., ${column === 'bookclub' ? 'The E-Myth Revisited' : column === 'gearheads' ? 'MacBook Pro 16"' : 'Travel Backpack'}`}
                           required={index < config.minItems}
                         />
@@ -1028,7 +1028,7 @@ Atomic Habits - https://amzn.to/4...`}
                           type="url"
                           value={link.link}
                           onChange={(e) => updateAffiliateLink(index, 'link', e.target.value)}
-                          className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-none text-white text-sm focus:border-white/30 focus:outline-none"
+                          className="w-full px-3 py-2 bg-black/50 border border-white rounded-none text-white text-sm focus:border-white focus:outline-none"
                           placeholder={column === 'bookclub' ? 'https://amzn.to/... or https://amazon.com/...' : 'https://...'}
                           required={index < config.minItems}
                         />
@@ -1038,7 +1038,7 @@ Atomic Habits - https://amzn.to/4...`}
                 ))}
               </div>
               {column === 'bookclub' && (
-              <div className="bg-blue-900/20 border border-blue-500/30 rounded-none p-3 mt-4">
+              <div className="bg-blue-900/20 border border-white rounded-none p-3 mt-4">
                 <p className="text-blue-300 text-xs">
                   <strong>Tip:</strong> Make sure to mention these book titles in your article content. 
                   When you mention a book title (e.g., "The E-Myth Revisited"), it will automatically become a clickable link 
@@ -1050,7 +1050,7 @@ Atomic Habits - https://amzn.to/4...`}
             )}
 
             {/* Submit Button */}
-            <div className="pt-4 border-t border-white/10">
+            <div className="pt-4 border-t border-white">
               <button
                 type="submit"
                 disabled={submitting}

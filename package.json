@@ -16,9 +16,12 @@
     "validate-env:local": "./scripts/validate-env.sh --local",
     "validate-env:vercel": "./scripts/validate-env.sh --vercel",
     "save:mantis": "./scripts/save-mantis-version.sh",
-    "dev:mantis": "./scripts/dev-mantis.sh"
+    "dev:mantis": "./scripts/dev-mantis.sh",
+    "discord:register-commands": "npx tsx scripts/register-discord-commands.ts",
+    "discord:test": "./scripts/test-discord-integration.sh"
   },
   "dependencies": {
+    "@noble/ed25519": "^3.0.0",
     "@scot33/tools-registry": "file:../tools-registry",
     "@supabase/supabase-js": "^2.80.0",
     "@vercel/analytics": "^1.5.0",
@@ -29,6 +32,7 @@
     "framer-motion": "^11.11.17",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.487.0",
+    "qrcode.react": "^4.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-helmet-async": "^2.0.5",

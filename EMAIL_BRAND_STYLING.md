@@ -10,11 +10,12 @@ All emails sent from THE LOST+UNFOUNDS must follow these strict brand guidelines
 - **Secondary Text**: `rgba(255, 255, 255, 0.6)` for footer/secondary text
 - **Borders**: `rgba(255, 255, 255, 0.1)` for subtle dividers
 
-### Logo
-- **Logo URL**: `https://www.thelostandunfounds.com/logo.png`
-- **Max Width**: `190px`
-- **Display**: Centered, with padding above content
+### Email Header Image
+- **Header Image URL**: `https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png`
+- **Max Width**: `100%` (responsive, constrained by container max-width of 600px)
+- **Display**: Left-aligned, with padding below (30px)
 - **Alt Text**: "THE LOST+UNFOUNDS"
+- **Style**: `max-width: 100%; height: auto; display: block;`
 
 ### Typography
 - **Font Family**: `Arial, sans-serif` (fallback to system fonts)
@@ -52,15 +53,14 @@ All emails sent from THE LOST+UNFOUNDS must follow these strict brand guidelines
 - ❌ No bright colors (except white text on black)
 - ❌ No decorative graphics (except logo)
 - ❌ No animated elements
-- ❌ No images except the logo
+- ❌ No images except the email header image
 
 ### Required Elements
-- ✅ Logo at the top (centered)
-- ✅ "CAN YOU SEE US?" heading
+- ✅ Email header image at the top (left-aligned)
 - ✅ Black background (`#000000`)
 - ✅ White text (`#ffffff`)
 - ✅ Footer with copyright: `© [YEAR] THE LOST+UNFOUNDS. All rights reserved.`
-- ✅ Footer disclaimer: "If you didn't sign up for this newsletter, you can safely ignore this email."
+- ✅ Footer disclaimer: "If you didn't sign up for this newsletter, you can safely ignore this email." (for newsletter emails)
 
 ### Email Template Structure
 
@@ -76,10 +76,10 @@ All emails sent from THE LOST+UNFOUNDS must follow these strict brand guidelines
     <tr>
       <td align="center" style="padding: 40px 20px;">
         <table role="presentation" style="max-width: 600px; width: 100%; border-collapse: collapse; background-color: #000000;">
-          <!-- Logo -->
+          <!-- Branding Header -->
           <tr>
-            <td align="center" style="padding: 0 0 30px 0;">
-              <img src="https://www.thelostandunfounds.com/logo.png" alt="THE LOST+UNFOUNDS" style="max-width: 190px; height: auto; display: block;">
+            <td align="left" style="padding: 0 0 30px 0;">
+              <img src="https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
             </td>
           </tr>
           <!-- Main Content -->
@@ -128,8 +128,7 @@ All emails sent from THE LOST+UNFOUNDS must follow these strict brand guidelines
 When creating a new email template, verify:
 - [ ] Background is `#000000` (black)
 - [ ] All text is white (`#ffffff`) or gray (`rgba(255, 255, 255, 0.6)`)
-- [ ] Logo is included and centered
-- [ ] "CAN YOU SEE US?" heading is present
+- [ ] Email header image is included at the top
 - [ ] No emojis anywhere
 - [ ] Footer includes copyright and disclaimer
 - [ ] Max width is 600px

@@ -70,6 +70,8 @@ GRANT EXECUTE ON FUNCTION is_admin_user() TO authenticated, anon;
 -- Create RLS policies for the bucket
 -- Allow authenticated users to upload files (any authenticated user can upload)
 -- Admins have full access, regular users can upload
+-- Note: The owner field is automatically set by Supabase to auth.uid() during upload
+-- We allow owner to be NULL or match auth.uid() to handle the upload process
 CREATE POLICY "Allow authenticated users to upload brand assets"
 ON storage.objects
 FOR INSERT
@@ -79,24 +81,29 @@ WITH CHECK (
 );
 
 -- Allow authenticated users to update files (any authenticated user can update)
+-- Users can only update files they own
 CREATE POLICY "Allow authenticated users to update brand assets"
 ON storage.objects
 FOR UPDATE
 TO authenticated
 USING (
-  bucket_id = 'brand-assets'
+  bucket_id = 'brand-assets' AND
+  owner = auth.uid()
 )
 WITH CHECK (
-  bucket_id = 'brand-assets'
+  bucket_id = 'brand-assets' AND
+  owner = auth.uid()
 );
 
--- Allow authenticated users to delete files (any authenticated user can delete)
+-- Allow authenticated users to delete files
+-- Users can only delete files they own, or admins can delete any file
 CREATE POLICY "Allow authenticated users to delete brand assets"
 ON storage.objects
 FOR DELETE
 TO authenticated
 USING (
-  bucket_id = 'brand-assets'
+  bucket_id = 'brand-assets' AND
+  (owner = auth.uid() OR is_admin_user())
 );
 
 -- Allow public read access (since bucket is public)

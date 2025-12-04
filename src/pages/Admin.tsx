@@ -31,7 +31,8 @@ import {
   Calendar,
   FileText,
   User,
-  Image
+  Image,
+  RefreshCw
 } from 'lucide-react';
 import { LoadingSpinner } from '../components/Loading';
 import ErrorBoundary from '../components/ErrorBoundary';
@@ -42,7 +43,6 @@ import BlogSubmissionReview from '../components/BlogSubmissionReview';
 import SendExistingPublicationEmailsButton from '../components/SendExistingPublicationEmailsButton';
 import SendWelcomeEmailsButton from '../components/SendWelcomeEmailsButton';
 import BrandAssets from '../components/BrandAssets';
-import { BentoGrid, BentoCard } from '../components/ui/bento-grid';
 
 interface DashboardStats {
   totalUsers: number;
@@ -109,6 +109,7 @@ export default function Admin() {
   const [loadingLostArchivesPosts, setLoadingLostArchivesPosts] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'subscriptions' | 'products' | 'settings' | 'blog' | 'newsletter' | 'submissions' | 'assets'>('overview');
   const [componentError, setComponentError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     checkAdminAccess();
@@ -188,6 +189,7 @@ export default function Admin() {
   const loadDashboardData = async () => {
     try {
       setComponentError(null);
+      console.log('[Admin Dashboard] Loading dashboard data...');
       
       // Load user stats with better error handling
       let usersData = null;
@@ -198,19 +200,24 @@ export default function Admin() {
           .select('user_id, tier, status');
         usersData = result.data;
         usersError = result.error;
+        console.log('[Admin Dashboard] Subscriptions query result:', { 
+          dataCount: usersData?.length || 0, 
+          error: usersError?.message || null 
+        });
       } catch (err: any) {
         // Table might not exist - that's okay, continue with defaults
         if (err?.message?.includes('does not exist') || err?.code === '42P01') {
-          console.warn('platform_subscriptions table does not exist, using defaults');
+          console.warn('[Admin Dashboard] platform_subscriptions table does not exist, using defaults');
           usersError = null;
           usersData = [];
         } else {
           usersError = err;
+          console.error('[Admin Dashboard] Error loading subscriptions:', err);
         }
       }
 
       if (usersError && usersError.code !== 'PGRST116') {
-        console.warn('Error loading subscriptions:', usersError);
+        console.warn('[Admin Dashboard] Error loading subscriptions:', usersError);
       }
 
       // Calculate stats
@@ -220,39 +227,33 @@ export default function Admin() {
       const premiumCount = activeSubs.filter(s => s.tier === 'premium').length;
       const proCount = activeSubs.filter(s => s.tier === 'pro').length;
 
-      // Get total users - count from user_subdomains (all registered users)
+      // Get total users (try multiple sources - prioritize user_subdomains as it has all users)
       let totalUsers = 0;
+      // First try user_subdomains (most comprehensive - includes all registered users)
       try {
-        // First try user_subdomains (most accurate - all registered users)
-        const userSubdomainsResult = await supabase
+        const subdomainResult = await supabase
           .from('user_subdomains')
-          .select('user_id', { count: 'exact', head: true });
-        if (userSubdomainsResult.count !== null) {
-          totalUsers = userSubdomainsResult.count;
+          .select('*', { count: 'exact', head: true });
+        if (subdomainResult.count !== null && subdomainResult.count > 0) {
+          totalUsers = subdomainResult.count;
+          console.log('[Admin Dashboard] Total users from user_subdomains:', totalUsers);
         } else {
-          // Fallback: try user_profiles if it exists
-          try {
-            const profilesResult = await supabase
-              .from('user_profiles')
-              .select('user_id', { count: 'exact', head: true });
-            totalUsers = profilesResult.count || 0;
-          } catch (profilesErr: any) {
-            // Last resort: count unique user_ids from platform_subscriptions
-            const uniqueUserIds = new Set(subscriptions.map((s: any) => s.user_id));
-            totalUsers = uniqueUserIds.size || subscriptions.length;
-          }
+          throw new Error('No count returned');
         }
-      } catch (err: any) {
-        // If user_subdomains doesn't exist, try user_profiles
+      } catch (subdomainErr: any) {
+        console.warn('[Admin Dashboard] Error getting count from user_subdomains:', subdomainErr);
+        // Try platform_subscriptions as fallback
         try {
-          const profilesResult = await supabase
-            .from('user_profiles')
-            .select('user_id', { count: 'exact', head: true });
-          totalUsers = profilesResult.count || 0;
-        } catch (profilesErr: any) {
-          // Last resort: count unique user_ids from subscriptions
-          const uniqueUserIds = new Set(subscriptions.map((s: any) => s.user_id));
-          totalUsers = uniqueUserIds.size || subscriptions.length;
+          const result = await supabase
+            .from('platform_subscriptions')
+            .select('*', { count: 'exact', head: true });
+          totalUsers = result.count || 0;
+          console.log('[Admin Dashboard] Total users from platform_subscriptions:', totalUsers);
+        } catch (err: any) {
+          console.warn('[Admin Dashboard] Error getting count from platform_subscriptions:', err);
+          // Last fallback: use length of subscriptions array
+          totalUsers = subscriptions.length;
+          console.log('[Admin Dashboard] Using subscriptions array length as fallback:', totalUsers);
         }
       }
 
@@ -273,7 +274,7 @@ export default function Admin() {
       const premiumRatio = totalSubs > 0 ? (premiumCount + proCount) / totalSubs : 0;
       const platformHealth = premiumRatio > 0.3 ? 'healthy' : premiumRatio > 0.1 ? 'warning' : 'critical';
 
-      setStats({
+      const newStats = {
         totalUsers: totalUsers || subscriptions.length,
         activeSubscriptions: activeSubs.length,
         freeUsers: freeCount,
@@ -282,7 +283,10 @@ export default function Admin() {
         totalToolUsage: toolUsage || 0,
         recentActivity: 0, // Can be enhanced with actual activity tracking
         platformHealth,
-      });
+      };
+      
+      console.log('[Admin Dashboard] Setting stats:', newStats);
+      setStats(newStats);
 
       // Generate alerts based on stats
       const newAlerts: Alert[] = [];
@@ -314,34 +318,80 @@ export default function Admin() {
         });
       }
       setAlerts(newAlerts);
+      console.log('[Admin Dashboard] Alerts set:', newAlerts.length);
 
-      // Load recent users
+      // Load recent users (prioritize user_subdomains as it has all users)
       let recentData = null;
+      // First try user_subdomains (most comprehensive)
       try {
-        const result = await supabase
-          .from('platform_subscriptions')
-          .select('user_id, tier, created_at')
+        const subdomainResult = await supabase
+          .from('user_subdomains')
+          .select('user_id, created_at')
           .order('created_at', { ascending: false })
           .limit(10);
-        recentData = result.data;
-      } catch (err: any) {
-        // Table might not exist - try to get users from auth.users via RPC or fallback
+        if (subdomainResult.data && subdomainResult.data.length > 0) {
+          // Map to format expected by the rest of the code
+          recentData = subdomainResult.data.map((row: any) => ({
+            user_id: row.user_id,
+            tier: 'free', // Default to free, will be updated from platform_subscriptions if available
+            created_at: row.created_at,
+          }));
+          console.log('[Admin Dashboard] Recent users from user_subdomains:', recentData.length);
+        }
+      } catch (subdomainErr: any) {
+        console.warn('[Admin Dashboard] Error loading from user_subdomains:', subdomainErr);
+      }
+      
+      // If no data from user_subdomains, try platform_subscriptions
+      if (!recentData || recentData.length === 0) {
         try {
-          // Try to get recent users from user_roles or user_subdomains as fallback
-          const fallbackResult = await supabase
-            .from('user_subdomains')
-            .select('user_id, created_at')
+          const result = await supabase
+            .from('platform_subscriptions')
+            .select('user_id, tier, created_at')
             .order('created_at', { ascending: false })
             .limit(10);
-          if (fallbackResult.data) {
-            recentData = fallbackResult.data.map((row: any) => ({
-              user_id: row.user_id,
-              tier: 'free',
-              created_at: row.created_at,
-            }));
+          if (result.data && result.data.length > 0) {
+            recentData = result.data;
+            console.log('[Admin Dashboard] Recent users from platform_subscriptions:', recentData.length);
           }
-        } catch (fallbackErr) {
+        } catch (err: any) {
+          console.warn('[Admin Dashboard] Error loading from platform_subscriptions:', err);
           recentData = [];
+        }
+      }
+      
+      // Enrich recentData with tier information from platform_subscriptions if available
+      if (recentData && recentData.length > 0) {
+        try {
+          const userIds = recentData.map((u: any) => u.user_id);
+          const subscriptionResult = await supabase
+            .from('platform_subscriptions')
+            .select('user_id, tier, status')
+            .in('user_id', userIds);
+          
+          if (subscriptionResult.data) {
+            // Create a map of user_id to subscription info
+            const subscriptionMap = new Map(
+              subscriptionResult.data.map((sub: any) => [sub.user_id, sub])
+            );
+            
+            // Update recentData with tier and status from subscriptions
+            recentData = recentData.map((user: any) => {
+              const sub = subscriptionMap.get(user.user_id);
+              if (sub) {
+                return {
+                  ...user,
+                  tier: sub.tier,
+                  status: sub.status,
+                };
+              }
+              return user;
+            });
+            console.log('[Admin Dashboard] Enriched user data with subscription info');
+          }
+        } catch (enrichErr: any) {
+          console.warn('[Admin Dashboard] Error enriching user data:', enrichErr);
+          // Continue with data we have
         }
       }
 
@@ -408,62 +458,16 @@ export default function Admin() {
           })
         );
         
+        console.log('[Admin Dashboard] Recent users loaded:', usersWithInfo.length);
         setRecentUsers(usersWithInfo);
       } else {
-        // If no subscription data, try to show users from user_subdomains
-        try {
-          const subdomainResult = await supabase
-            .from('user_subdomains')
-            .select('user_id, subdomain, created_at')
-            .order('created_at', { ascending: false })
-            .limit(10);
-          
-          if (subdomainResult.data && subdomainResult.data.length > 0) {
-            const usersFromSubdomains = await Promise.all(
-              subdomainResult.data.map(async (row: any) => {
-                const userId = row.user_id;
-                let isAdmin = false;
-                let email = `user-${userId.substring(0, 8)}`;
-                
-                try {
-                  const roleResult = await supabase
-                    .from('user_roles')
-                    .select('is_admin, email')
-                    .eq('user_id', userId)
-                    .maybeSingle();
-                  
-                  if (roleResult.data) {
-                    isAdmin = roleResult.data.is_admin === true;
-                    if (roleResult.data.email) {
-                      email = roleResult.data.email;
-                    }
-                  }
-                  
-                  if (email === 'thelostandunfounds@gmail.com' || email === 'admin@thelostandunfounds.com') {
-                    isAdmin = true;
-                  }
-                } catch (e) {
-                  // Ignore
-                }
-                
-                return {
-                  id: userId,
-                  email: email,
-                  username: row.subdomain || email.split('@')[0],
-                  tier: 'free',
-                  isAdmin: isAdmin,
-                  created_at: row.created_at || '',
-                };
-              })
-            );
-            setRecentUsers(usersFromSubdomains);
-          }
-        } catch (subdomainErr) {
-          // Ignore - no users to show
-        }
+        console.log('[Admin Dashboard] No recent users found');
+        setRecentUsers([]);
       }
+      
+      console.log('[Admin Dashboard] Dashboard data loaded successfully');
     } catch (error: any) {
-      console.error('Error loading dashboard data:', error);
+      console.error('[Admin Dashboard] Error loading dashboard data:', error);
       const errorMsg = error?.message || 'Unknown error';
       
       // Set default stats if tables don't exist
@@ -495,6 +499,7 @@ export default function Admin() {
   const loadBookClubPosts = async () => {
     try {
       setLoadingBookClubPosts(true);
+      console.log('[Admin Dashboard] Loading book club posts...');
       const { data, error } = await supabase
         .from('blog_posts')
         .select('id, title, slug, excerpt, published_at, created_at, subdomain, published, status')
@@ -504,9 +509,13 @@ export default function Admin() {
         .limit(10);
 
       if (error) {
-        console.error('Error loading book club posts:', error);
+        console.error('[Admin Dashboard] Error loading book club posts:', error);
         return;
       }
+
+      console.log('[Admin Dashboard] Book club posts query result:', { 
+        totalPosts: data?.length || 0 
+      });
 
       // Filter to only published posts
       const publishedPosts = (data || []).filter((post: any) => {
@@ -515,9 +524,10 @@ export default function Admin() {
         return isPublished;
       });
 
+      console.log('[Admin Dashboard] Published book club posts:', publishedPosts.length);
       setBookClubPosts(publishedPosts);
     } catch (err: any) {
-      console.error('Error loading book club posts:', err);
+      console.error('[Admin Dashboard] Error loading book club posts:', err);
     } finally {
       setLoadingBookClubPosts(false);
     }
@@ -528,6 +538,7 @@ export default function Admin() {
       setLoadingLostArchivesPosts(true);
       if (!user) return;
 
+      console.log('[Admin Dashboard] Loading THE LOST ARCHIVES posts...');
       const { data, error } = await supabase
         .from('blog_posts')
         .select('id, title, slug, excerpt, published_at, created_at, published, status, author_id, user_id, subdomain')
@@ -537,9 +548,13 @@ export default function Admin() {
         .limit(10);
 
       if (error) {
-        console.error('Error loading THE LOST ARCHIVES posts:', error);
+        console.error('[Admin Dashboard] Error loading THE LOST ARCHIVES posts:', error);
         return;
       }
+
+      console.log('[Admin Dashboard] THE LOST ARCHIVES posts query result:', { 
+        totalPosts: data?.length || 0 
+      });
 
       // Filter to published posts (no subdomain)
       // Since admin is the only writer for THE LOST ARCHIVES, show all published posts without subdomain
@@ -549,11 +564,31 @@ export default function Admin() {
         return isPublished; // All published posts without subdomain are THE LOST ARCHIVES
       });
 
+      console.log('[Admin Dashboard] Published THE LOST ARCHIVES posts:', filteredPosts.length);
       setLostArchivesPosts(filteredPosts);
     } catch (err: any) {
-      console.error('Error loading THE LOST ARCHIVES posts:', err);
+      console.error('[Admin Dashboard] Error loading THE LOST ARCHIVES posts:', err);
     } finally {
       setLoadingLostArchivesPosts(false);
+    }
+  };
+
+  const refreshAllData = async () => {
+    setRefreshing(true);
+    console.log('[Admin Dashboard] Refreshing all data...');
+    try {
+      await Promise.all([
+        loadDashboardData(),
+        loadBookClubPosts(),
+        loadLostArchivesPosts()
+      ]);
+      success('Dashboard data refreshed successfully');
+      console.log('[Admin Dashboard] All data refreshed successfully');
+    } catch (error) {
+      console.error('[Admin Dashboard] Error refreshing data:', error);
+      showError('Error refreshing dashboard data');
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -581,7 +616,7 @@ export default function Admin() {
   if (componentError) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
+        <div className="bg-red-900/20 border border-white rounded-none p-6">
           <h2 className="text-xl font-bold text-red-400 mb-2">Error Loading Admin Dashboard</h2>
           <p className="text-red-300 mb-4">{componentError}</p>
           <button
@@ -630,9 +665,18 @@ export default function Admin() {
             <p className="text-white/70">Manage your platform and users</p>
           </div>
               <div className="flex items-center gap-3">
+                <button
+                  onClick={refreshAllData}
+                  disabled={refreshing}
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white rounded-none text-white text-sm font-medium transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Refresh dashboard data"
+                >
+                  <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                  {refreshing ? 'Refreshing...' : 'Refresh'}
+                </button>
                 <Link
                   to={userSubdomain ? `/${userSubdomain}/bookclubprofile` : "/bookclubprofile"}
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition flex items-center gap-2"
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white rounded-none text-white text-sm font-medium transition flex items-center gap-2"
                 >
                   <User className="w-4 h-4" />
                   Profile
@@ -642,7 +686,7 @@ export default function Admin() {
       </div>
 
       {/* Tabs */}
-      <div className="mb-6 border-b border-white/10">
+      <div className="mb-6 border-b border-white">
         <div className="flex gap-4 flex-wrap">
           {(['overview', 'users', 'subscriptions', 'products', 'blog', 'newsletter', 'submissions', 'assets', 'settings'] as const).map((tab) => (
             <button
@@ -665,12 +709,12 @@ export default function Admin() {
         <div className="space-y-6">
           {/* Alerts Section */}
           {alerts.length > 0 && (
-            <div className="bg-black/50 border border-white/10 rounded-none p-6">
+            <div className="bg-black/50 border border-white rounded-none p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <Bell className="w-5 h-5 text-yellow-400" />
                   <h2 className="text-lg font-bold text-white">Recent Alerts</h2>
-                  <span className="px-2 py-1 bg-yellow-400/20 text-yellow-400 rounded text-xs">
+                  <span className="px-2 py-1 bg-yellow-400/20 text-yellow-400 rounded-none text-xs">
                     {alerts.filter(a => !a.read).length} New
                   </span>
                 </div>
@@ -705,7 +749,7 @@ export default function Admin() {
                       <p className="text-xs text-white/50 mt-1">{alert.time}</p>
                     </div>
                     {!alert.read && (
-                      <div className="w-2 h-2 rounded-full bg-yellow-400 mt-2"></div>
+                      <div className="w-2 h-2 rounded-none bg-yellow-400 mt-2"></div>
                     )}
                   </div>
                 ))}
@@ -713,97 +757,48 @@ export default function Admin() {
             </div>
           )}
 
-          {/* Stats Grid - Using BentoGrid */}
-          <BentoGrid columns={4} gap="md">
-            <BentoCard colSpan={1} rowSpan={1} expandable={true} expandedContent={
-              <div className="space-y-2 pt-2">
-                <div className="text-xs text-white/60">Breakdown:</div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-white/70">Free Users</span>
-                  <span className="text-sm font-semibold text-white">{stats?.freeUsers || 0}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-white/70">Premium Users</span>
-                  <span className="text-sm font-semibold text-yellow-400">{stats?.premiumUsers || 0}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-white/70">Pro Users</span>
-                  <span className="text-sm font-semibold text-purple-400">{stats?.proUsers || 0}</span>
-                </div>
-              </div>
-            }>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-black/50 border border-white rounded-none p-6 hover:border-white transition">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white/60 text-sm">Total Users</span>
                 <Users className="w-5 h-5 text-white/40" />
               </div>
               <div className="text-3xl font-bold text-white">{stats?.totalUsers || 0}</div>
               <div className="text-xs text-white/40 mt-1">All registered users</div>
-            </BentoCard>
+            </div>
 
-            <BentoCard colSpan={1} rowSpan={1} expandable={true} expandedContent={
-              <div className="space-y-2 pt-2">
-                <div className="text-xs text-white/60">Subscription Status:</div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-white/70">Active</span>
-                  <span className="text-sm font-semibold text-green-400">{stats?.activeSubscriptions || 0}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-white/70">Conversion Rate</span>
-                  <span className="text-sm font-semibold text-white">
-                    {stats?.totalUsers ? Math.round((stats.activeSubscriptions / stats.totalUsers) * 100) : 0}%
-                  </span>
-                </div>
-              </div>
-            }>
+            <div className="bg-black/50 border border-white rounded-none p-6 hover:border-white transition">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white/60 text-sm">Active Subscriptions</span>
                 <CheckCircle className="w-5 h-5 text-green-400" />
               </div>
               <div className="text-3xl font-bold text-white">{stats?.activeSubscriptions || 0}</div>
               <div className="text-xs text-white/40 mt-1">Currently active</div>
-            </BentoCard>
+            </div>
 
-            <BentoCard colSpan={1} rowSpan={1} expandable={true} expandedContent={
-              <div className="space-y-2 pt-2">
-                <div className="text-xs text-white/60">Usage Details:</div>
-                <div className="text-xs text-white/70">
-                  Total tool executions across all users and tools
-                </div>
-              </div>
-            }>
+            <div className="bg-black/50 border border-white rounded-none p-6 hover:border-white transition">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white/60 text-sm">Tool Usage</span>
                 <Activity className="w-5 h-5 text-blue-400" />
               </div>
               <div className="text-3xl font-bold text-white">{stats?.totalToolUsage || 0}</div>
               <div className="text-xs text-white/40 mt-1">Total tool executions</div>
-            </BentoCard>
+            </div>
 
-            <BentoCard colSpan={1} rowSpan={1} expandable={true} expandedContent={
-              <div className="space-y-2 pt-2">
-                <div className="text-xs text-white/60">Premium Breakdown:</div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-white/70">Premium</span>
-                  <span className="text-sm font-semibold text-yellow-400">{stats?.premiumUsers || 0}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-white/70">Pro</span>
-                  <span className="text-sm font-semibold text-purple-400">{stats?.proUsers || 0}</span>
-                </div>
-              </div>
-            }>
+            <div className="bg-black/50 border border-white rounded-none p-6 hover:border-white transition">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white/60 text-sm">Premium Users</span>
                 <TrendingUp className="w-5 h-5 text-yellow-400" />
               </div>
               <div className="text-3xl font-bold text-white">{stats?.premiumUsers || 0}</div>
               <div className="text-xs text-white/40 mt-1">Premium + Pro tiers</div>
-            </BentoCard>
-          </BentoGrid>
+            </div>
+          </div>
 
           {/* Platform Health & Additional Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-black/50 border border-white/10 rounded-none p-6">
+            <div className="bg-black/50 border border-white rounded-none p-6">
               <div className="flex items-center gap-2 mb-2 text-white/60">
                 <Activity className="w-4 h-4" />
                 <span className="text-sm">Platform Health</span>
@@ -818,7 +813,7 @@ export default function Admin() {
               </div>
             </div>
 
-            <div className="bg-black/50 border border-white/10 rounded-none p-6">
+            <div className="bg-black/50 border border-white rounded-none p-6">
               <div className="flex items-center gap-2 mb-2 text-white/60">
                 <Zap className="w-4 h-4" />
                 <span className="text-sm">Tool Usage</span>
@@ -827,7 +822,7 @@ export default function Admin() {
               <div className="text-xs text-white/40 mt-1">Total executions</div>
             </div>
 
-            <div className="bg-black/50 border border-white/10 rounded-none p-6">
+            <div className="bg-black/50 border border-white rounded-none p-6">
               <div className="flex items-center gap-2 mb-2 text-white/60">
                 <Network className="w-4 h-4" />
                 <span className="text-sm">Subscription Rate</span>
@@ -840,7 +835,7 @@ export default function Admin() {
           </div>
 
           {/* Tier Breakdown */}
-          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <div className="bg-black/50 border border-white rounded-none p-6">
             <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
               <BarChart3 className="w-5 h-5" />
               Subscription Tiers
@@ -862,7 +857,7 @@ export default function Admin() {
           </div>
 
           {/* THE LOST ARCHIVES Section */}
-          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <div className="bg-black/50 border border-white rounded-none p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <FileText className="w-5 h-5" />
@@ -889,7 +884,7 @@ export default function Admin() {
                 {lostArchivesPosts.slice(0, 3).map((post) => (
                   <div
                     key={post.id}
-                    className="bg-black/30 border border-white/10 rounded-none p-4 hover:border-white/20 transition"
+                    className="bg-black/30 border border-white rounded-none p-4 hover:border-white transition"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -919,7 +914,7 @@ export default function Admin() {
                           href={`/thelostarchives/${post.slug}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-2 hover:bg-white/10 rounded transition"
+                          className="p-2 hover:bg-white/10 rounded-none transition"
                           title="View post"
                         >
                           <Eye className="w-4 h-4 text-white/60" />
@@ -933,7 +928,7 @@ export default function Admin() {
           </div>
 
           {/* Book Club Posts Section */}
-          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <div className="bg-black/50 border border-white rounded-none p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <FileText className="w-5 h-5" />
@@ -957,15 +952,15 @@ export default function Admin() {
               <div className="space-y-6">
                 {/* Most Recent Post - Featured */}
                 {bookClubPosts[0] && (
-                  <div className="bg-black/30 border border-white/20 rounded-none p-6 hover:border-white/30 transition">
+                  <div className="bg-black/30 border border-white rounded-none p-6 hover:border-white transition">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="px-2 py-1 bg-blue-400/20 text-blue-400 border border-blue-400/30 rounded text-xs font-semibold">
+                          <span className="px-2 py-1 bg-blue-400/20 text-blue-400 border border-white rounded-none text-xs font-semibold">
                             MOST RECENT
                           </span>
                           {bookClubPosts[0].subdomain && (
-                            <span className="px-2 py-1 bg-white/10 text-white/80 border border-white/20 rounded text-xs">
+                            <span className="px-2 py-1 bg-white/10 text-white/80 border border-white rounded-none text-xs">
                               {bookClubPosts[0].subdomain}
                             </span>
                           )}
@@ -1014,13 +1009,13 @@ export default function Admin() {
                       {bookClubPosts.slice(1, 4).map((post) => (
                         <div
                           key={post.id}
-                          className="bg-black/30 border border-white/10 rounded-none p-4 hover:border-white/20 transition"
+                          className="bg-black/30 border border-white rounded-none p-4 hover:border-white transition"
                         >
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-2">
                                 {post.subdomain && (
-                                  <span className="px-2 py-1 bg-white/10 text-white/80 border border-white/20 rounded text-xs">
+                                  <span className="px-2 py-1 bg-white/10 text-white/80 border border-white rounded-none text-xs">
                                     {post.subdomain}
                                   </span>
                                 )}
@@ -1051,7 +1046,7 @@ export default function Admin() {
                                 href={`/blog/${post.subdomain}/${post.slug}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="p-2 hover:bg-white/10 rounded transition"
+                                className="p-2 hover:bg-white/10 rounded-none transition"
                                 title="View post"
                               >
                                 <Eye className="w-4 h-4 text-white/60" />
@@ -1066,7 +1061,7 @@ export default function Admin() {
 
                 {/* View All Link if more than 4 posts */}
                 {bookClubPosts.length > 4 && (
-                  <div className="text-center pt-4 border-t border-white/10">
+                  <div className="text-center pt-4 border-t border-white">
                     <Link
                       to="/bookclub"
                       className="text-white/60 hover:text-white text-sm flex items-center justify-center gap-2"
@@ -1081,7 +1076,7 @@ export default function Admin() {
           </div>
 
           {/* Recent Users */}
-          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <div className="bg-black/50 border border-white rounded-none p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <Users className="w-5 h-5" />
@@ -1095,7 +1090,7 @@ export default function Admin() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-white/10">
+                  <tr className="border-b border-white">
                     <th className="text-left py-3 text-white/60 text-sm font-medium">Username</th>
                     <th className="text-left py-3 text-white/60 text-sm font-medium">User ID</th>
                     <th className="text-left py-3 text-white/60 text-sm font-medium">Tier</th>
@@ -1106,12 +1101,12 @@ export default function Admin() {
                 <tbody>
                   {recentUsers.length > 0 ? (
                     recentUsers.map((user) => (
-                      <tr key={user.id} className="border-b border-white/5 hover:bg-white/5 transition">
+                      <tr key={user.id} className="border-b border-white hover:bg-white/5 transition">
                         <td className="py-3">
                           <div className="flex items-center gap-2">
                             <span className="text-white font-medium">{user.username}</span>
                             {user.isAdmin && (
-                              <span className="px-2 py-0.5 rounded text-xs bg-purple-400/20 text-purple-400 border border-purple-400/30 font-semibold">
+                              <span className="px-2 py-0.5 rounded-none text-xs bg-purple-400/20 text-purple-400 border border-white font-semibold">
                                 ADMIN
                               </span>
                             )}
@@ -1119,10 +1114,10 @@ export default function Admin() {
                         </td>
                         <td className="py-3 text-white/60 font-mono text-xs">{user.id.substring(0, 8)}...</td>
                         <td className="py-3">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          <span className={`px-2 py-1 rounded-none text-xs font-medium ${
                             user.tier === 'free' ? 'bg-white/5 text-white/60' :
-                            user.tier === 'premium' ? 'bg-yellow-400/10 text-yellow-400 border border-yellow-400/20' :
-                            'bg-purple-400/10 text-purple-400 border border-purple-400/20'
+                            user.tier === 'premium' ? 'bg-yellow-400/10 text-yellow-400 border border-white' :
+                            'bg-purple-400/10 text-purple-400 border border-white'
                           }`}>
                             {user.tier.charAt(0).toUpperCase() + user.tier.slice(1)}
                           </span>
@@ -1136,7 +1131,7 @@ export default function Admin() {
                           ) : 'N/A'}
                         </td>
                         <td className="py-3">
-                          <span className="px-2 py-1 rounded text-xs bg-green-400/10 text-green-400 border border-green-400/20">
+                          <span className="px-2 py-1 rounded-none text-xs bg-green-400/10 text-green-400 border border-white">
                             Active
                           </span>
                         </td>
@@ -1162,13 +1157,13 @@ export default function Admin() {
       {/* Users Tab */}
       {activeTab === 'users' && (
         <div className="space-y-6">
-          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <div className="bg-black/50 border border-white rounded-none p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <Users className="w-5 h-5" />
                 User Management
               </h2>
-              <button className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded text-white text-sm transition">
+              <button className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-none text-white text-sm transition">
                 Export Users
               </button>
             </div>
@@ -1187,7 +1182,7 @@ export default function Admin() {
                   <div className="text-2xl font-bold text-yellow-400">{stats?.premiumUsers || stats?.proUsers || 0}</div>
                 </div>
               </div>
-              <div className="border-t border-white/10 pt-4">
+              <div className="border-t border-white pt-4">
                 <p className="text-white/60">Advanced user management features coming soon...</p>
                 <p className="text-white/40 text-sm mt-2">Features will include: user search, filtering, bulk actions, and detailed user profiles.</p>
               </div>
@@ -1199,7 +1194,7 @@ export default function Admin() {
       {/* Subscriptions Tab */}
       {activeTab === 'subscriptions' && (
         <div className="space-y-6">
-          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <div className="bg-black/50 border border-white rounded-none p-6">
             <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
               <BarChart3 className="w-5 h-5" />
               Subscription Management
@@ -1212,14 +1207,14 @@ export default function Admin() {
                   {stats?.totalUsers ? Math.round((stats.freeUsers / stats.totalUsers) * 100) : 0}% of total
                 </div>
               </div>
-              <div className="bg-white/5 rounded-none p-4 border border-yellow-400/20">
+              <div className="bg-white/5 rounded-none p-4 border border-white">
                 <div className="text-white/60 text-sm mb-1">Premium Tier</div>
                 <div className="text-2xl font-bold text-yellow-400">{stats?.premiumUsers || 0}</div>
                 <div className="text-xs text-white/40 mt-1">
                   {stats?.totalUsers ? Math.round((stats.premiumUsers / stats.totalUsers) * 100) : 0}% of total
                 </div>
               </div>
-              <div className="bg-white/5 rounded-none p-4 border border-purple-400/20">
+              <div className="bg-white/5 rounded-none p-4 border border-white">
                 <div className="text-white/60 text-sm mb-1">Pro Tier</div>
                 <div className="text-2xl font-bold text-purple-400">{stats?.proUsers || 0}</div>
                 <div className="text-xs text-white/40 mt-1">
@@ -1227,7 +1222,7 @@ export default function Admin() {
                 </div>
               </div>
             </div>
-            <div className="border-t border-white/10 pt-4">
+            <div className="border-t border-white pt-4">
               <p className="text-white/60">Advanced subscription management features coming soon...</p>
               <p className="text-white/40 text-sm mt-2">Features will include: subscription analytics, upgrade/downgrade management, and billing history.</p>
             </div>
@@ -1240,7 +1235,7 @@ export default function Admin() {
         <div className="space-y-6">
           <ErrorBoundary
             fallback={
-              <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
+              <div className="bg-red-900/20 border border-white rounded-none p-6">
                 <p className="text-red-400">Error loading Product Cost Management. Please refresh the page.</p>
               </div>
             }
@@ -1254,7 +1249,7 @@ export default function Admin() {
       {activeTab === 'blog' && (
         <ErrorBoundary
           fallback={
-            <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
+            <div className="bg-red-900/20 border border-white rounded-none p-6">
               <p className="text-red-400">Error loading Blog Management. Please refresh the page.</p>
             </div>
           }
@@ -1267,7 +1262,7 @@ export default function Admin() {
       {activeTab === 'newsletter' && (
         <ErrorBoundary
           fallback={
-            <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
+            <div className="bg-red-900/20 border border-white rounded-none p-6">
               <p className="text-red-400">Error loading Newsletter Management. Please refresh the page.</p>
             </div>
           }
@@ -1280,7 +1275,7 @@ export default function Admin() {
       {activeTab === 'submissions' && (
         <ErrorBoundary
           fallback={
-            <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
+            <div className="bg-red-900/20 border border-white rounded-none p-6">
               <p className="text-red-400">Error loading Article Submissions Review. Please refresh the page.</p>
             </div>
           }
@@ -1288,14 +1283,14 @@ export default function Admin() {
           <div className="space-y-6">
             <BlogSubmissionReview />
             {/* Email Management Section */}
-            <div className="bg-black/50 border border-white/10 rounded-none p-6">
+            <div className="bg-black/50 border border-white rounded-none p-6">
               <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                 <Mail className="w-5 h-5" />
                 Email Management
               </h3>
               <div className="space-y-6">
                 {/* Send Welcome Emails - Should be sent first */}
-                <div className="border-b border-white/10 pb-6">
+                <div className="border-b border-white pb-6">
                   <h4 className="text-white font-semibold mb-2">Step 1: Send Welcome Emails</h4>
                   <p className="text-white/60 text-sm mb-4">
                     Send welcome emails with the getting started guide link to existing users. This should be done first, before sending submission update emails.
@@ -1320,7 +1315,7 @@ export default function Admin() {
       {activeTab === 'assets' && (
         <ErrorBoundary
           fallback={
-            <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
+            <div className="bg-red-900/20 border border-white rounded-none p-6">
               <p className="text-red-400">Error loading Brand Assets. Please refresh the page.</p>
             </div>
           }
@@ -1332,13 +1327,13 @@ export default function Admin() {
       {/* Settings Tab */}
       {activeTab === 'settings' && (
         <div className="space-y-6">
-          <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <div className="bg-black/50 border border-white rounded-none p-6">
             <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
               <Settings className="w-5 h-5" />
               Admin Settings
             </h2>
             <div className="space-y-6">
-              <div className="border-b border-white/10 pb-4">
+              <div className="border-b border-white pb-4">
                 <h3 className="text-white font-medium mb-2 flex items-center gap-2">
                   <Shield className="w-4 h-4" />
                   Platform Configuration
@@ -1347,15 +1342,15 @@ export default function Admin() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between p-3 bg-white/5 rounded">
                     <span className="text-white/80">Platform Status</span>
-                    <span className="px-2 py-1 bg-green-400/20 text-green-400 rounded text-xs">Operational</span>
+                    <span className="px-2 py-1 bg-green-400/20 text-green-400 rounded-none text-xs">Operational</span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-white/5 rounded">
                     <span className="text-white/80">Database Connection</span>
-                    <span className="px-2 py-1 bg-green-400/20 text-green-400 rounded text-xs">Connected</span>
+                    <span className="px-2 py-1 bg-green-400/20 text-green-400 rounded-none text-xs">Connected</span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-white/5 rounded">
                     <span className="text-white/80">Platform Health</span>
-                    <span className={`px-2 py-1 rounded text-xs ${
+                    <span className={`px-2 py-1 rounded-none text-xs ${
                       stats?.platformHealth === 'healthy' ? 'bg-green-400/20 text-green-400' :
                       stats?.platformHealth === 'warning' ? 'bg-yellow-400/20 text-yellow-400' :
                       'bg-red-400/20 text-red-400'
@@ -1367,7 +1362,7 @@ export default function Admin() {
                 </div>
               </div>
 
-              <div className="border-b border-white/10 pb-4">
+              <div className="border-b border-white pb-4">
                 <h3 className="text-white font-medium mb-2 flex items-center gap-2">
                   <Activity className="w-4 h-4" />
                   Tool Management
@@ -1380,7 +1375,7 @@ export default function Admin() {
                   </div>
                   <div className="flex items-center justify-between p-3 bg-white/5 rounded">
                     <span className="text-white/80">Tool Status</span>
-                    <span className="px-2 py-1 bg-green-400/20 text-green-400 rounded text-xs">Active</span>
+                    <span className="px-2 py-1 bg-green-400/20 text-green-400 rounded-none text-xs">Active</span>
                   </div>
                 </div>
               </div>

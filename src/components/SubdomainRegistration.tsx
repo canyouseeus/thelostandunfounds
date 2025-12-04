@@ -206,7 +206,7 @@ export default function SubdomainRegistration({
       onClick={required ? undefined : onClose}
     >
       <div 
-        className="bg-black/50 border border-white/10 rounded-none p-4 sm:p-6 w-full max-w-md my-auto max-h-[calc(100vh-4rem)] sm:max-h-[calc(100vh-6rem)] overflow-y-auto"
+        className="bg-black/50 border border-white rounded-none p-4 sm:p-6 w-full max-w-md my-auto max-h-[calc(100vh-4rem)] sm:max-h-[calc(100vh-6rem)] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between mb-4 sm:mb-6 gap-2">
@@ -240,7 +240,7 @@ export default function SubdomainRegistration({
                 value={subdomain}
                 onChange={(e) => handleSubdomainChange(e.target.value)}
                 onBlur={() => checkSubdomainAvailability(subdomain)}
-                className="flex-1 px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+                className="flex-1 px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none"
                 placeholder="your-blog-name"
                 required
                 disabled={registering}
@@ -262,14 +262,14 @@ export default function SubdomainRegistration({
             
             {/* Display CORRECT path-based URL */}
             {blogUrl && !subdomainError && (
-              <div className="mt-4 p-3 sm:p-4 bg-black/30 border border-white/10 rounded-none">
+              <div className="mt-4 p-3 sm:p-4 bg-black/30 border border-white rounded-none">
                 <p className="text-xs sm:text-sm text-white/60 mb-2">Your blog will be available at:</p>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="text"
                     value={blogUrl}
                     readOnly
-                    className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-black/50 border border-white/20 rounded-none text-white text-xs sm:text-sm font-mono"
+                    className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-black/50 border border-white rounded-none text-white text-xs sm:text-sm font-mono"
                   />
                   <button
                     type="button"
@@ -308,7 +308,7 @@ export default function SubdomainRegistration({
 
           {/* Amazon Associates Instructions */}
           {blogUrl && !subdomainError && (
-            <div className="bg-blue-500/10 border-2 border-blue-500/30 rounded-none p-3 sm:p-4">
+            <div className="bg-blue-500/10 border-2 border-white rounded-none p-3 sm:p-4">
               <h3 className="text-sm sm:text-base font-bold text-blue-400 mb-2 flex items-center gap-2">
                 📋 For Amazon Associates Registration
               </h3>
@@ -319,13 +319,13 @@ export default function SubdomainRegistration({
                 <li>Click the "Copy" button above to copy your blog URL</li>
                 <li>Go to your Amazon Associates account</li>
                 <li>When asked for your website URL, paste:
-                  <code className="block mt-1.5 px-2 py-1.5 bg-black/50 border border-white/10 rounded-none font-mono text-xs break-all">
+                  <code className="block mt-1.5 px-2 py-1.5 bg-black/50 border border-white rounded-none font-mono text-xs break-all">
                     {blogUrl}
                   </code>
                 </li>
                 <li>Complete your Amazon Associates registration</li>
               </ol>
-              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-none p-2 sm:p-2.5 mt-3">
+              <div className="bg-yellow-500/10 border border-white rounded-none p-2 sm:p-2.5 mt-3">
                 <p className="text-yellow-400 text-xs font-semibold mb-1">💡 Important:</p>
                 <p className="text-white/70 text-xs">
                   Use the full URL shown above (<code className="bg-black/50 px-1 py-0.5 rounded-none break-all">{blogUrl}</code>) when registering with Amazon Associates. This is your permanent blog URL.

@@ -23,7 +23,7 @@ export default function BlogGettingStarted() {
 
         {/* Introduction */}
         <div className="mb-12 prose prose-invert prose-lg max-w-none">
-          <h3 className="text-2xl font-bold text-white mb-4 border-l-4 border-white/20 pl-4">Introduction</h3>
+          <h3 className="text-2xl font-bold text-white mb-4 border-l-4 border-white pl-4">Introduction</h3>
           <p className="text-white/80 leading-relaxed mb-6">
             Welcome to <strong className="text-white">THE LOST ARCHIVES BOOK CLUB</strong>, a platform designed to help contributors share thoughtful reflections on books, engage readers, and earn as Amazon affiliates. This guide walks you through getting set up, writing high-quality articles, and using AI effectively while maintaining your unique voice by implementing Human-In-The-Loop principles and meeting Google’s standards for human expertise, experience, authority, and trust (E‑E‑A‑T).
           </p>
@@ -34,31 +34,31 @@ export default function BlogGettingStarted() {
 
         {/* Why Contribute? */}
         <div className="mb-12">
-          <h3 className="text-2xl font-bold text-white mb-6 border-l-4 border-white/20 pl-4">Why Contribute?</h3>
+          <h3 className="text-2xl font-bold text-white mb-6 border-l-4 border-white pl-4">Why Contribute?</h3>
           
           <div className="grid gap-6 md:grid-cols-2">
-            <div className="bg-white/5 border border-white/10 p-6 rounded-none">
+            <div className="bg-white/5 border border-white p-6 rounded-none">
               <h4 className="text-lg font-bold text-white mb-2">Centralized Reach & Community Impact</h4>
               <p className="text-white/70 text-sm">
                 Your reviews become part of a trusted, curated platform that attracts readers interested in thoughtful book reflections. Unlike personal blogs or social media, THE LOST ARCHIVES BOOK CLUB drives traffic to all contributor content, giving you more visibility and increasing the potential for affiliate revenue.
               </p>
             </div>
 
-            <div className="bg-white/5 border border-white/10 p-6 rounded-none">
+            <div className="bg-white/5 border border-white p-6 rounded-none">
               <h4 className="text-lg font-bold text-white mb-2">Collaborative Credibility</h4>
               <p className="text-white/70 text-sm">
                 Multiple contributors reviewing the same books create a rich ecosystem of perspectives. Readers can compare opinions, see how different people are impacted by the same book, and gain deeper insights. Your work gains authority by association with other thoughtful reviews.
               </p>
             </div>
 
-            <div className="bg-white/5 border border-white/10 p-6 rounded-none">
+            <div className="bg-white/5 border border-white p-6 rounded-none">
               <h4 className="text-lg font-bold text-white mb-2">Affiliate Opportunities</h4>
               <p className="text-white/70 text-sm">
                 Every article includes Amazon affiliate links. By publishing on this platform, your links benefit from more readers, search visibility, and engagement, increasing the chance of purchases and commissions.
               </p>
             </div>
 
-            <div className="bg-white/5 border border-white/10 p-6 rounded-none">
+            <div className="bg-white/5 border border-white p-6 rounded-none">
               <h4 className="text-lg font-bold text-white mb-2">Searchable Knowledge Base</h4>
               <p className="text-white/70 text-sm">
                 Readers can search by book title or author, surfacing multiple articles about the same book. This allows them to explore different perspectives and click affiliate links to purchase books. Contributors benefit from increased engagement and potential affiliate revenue.
@@ -69,9 +69,9 @@ export default function BlogGettingStarted() {
 
         {/* 1. Getting Set Up */}
         <div className="mb-12">
-          <h3 className="text-2xl font-bold text-white mb-6 border-l-4 border-white/20 pl-4">1. Getting Set Up: Registration & Amazon Affiliate Integration</h3>
+          <h3 className="text-2xl font-bold text-white mb-6 border-l-4 border-white pl-4">1. Getting Set Up: Registration & Amazon Affiliate Integration</h3>
           
-          <div className="bg-black/40 border border-white/10 p-8 mb-6 rounded-none">
+          <div className="bg-black/40 border border-white p-8 mb-6 rounded-none">
             <h4 className="text-xl font-bold text-white mb-4">Steps</h4>
             <ol className="list-decimal list-inside space-y-4 text-white/80">
               <li>
@@ -99,14 +99,14 @@ export default function BlogGettingStarted() {
             </ol>
           </div>
 
-          <div className="bg-blue-900/20 border-l-4 border-blue-500 p-4 mb-6">
+          <div className="bg-blue-900/20 border-l-4 border-white p-4 mb-6">
             <h5 className="font-bold text-white mb-2">Why this matters</h5>
             <p className="text-white/70 text-sm">
               Correct setup ensures all affiliate links are tracked, so you earn commissions when readers purchase through your articles.
             </p>
           </div>
 
-          <div className="bg-white/5 border border-white/10 p-6 rounded-none">
+          <div className="bg-white/5 border border-white p-6 rounded-none">
             <h4 className="text-lg font-bold text-white mb-4">Amazon Affiliate Impact: Make Your Story Compelling</h4>
             <p className="text-white/70 mb-4">
               Amazon will only give you credit when readers click your Amazon link to make a purchase. To maximize earnings:
@@ -124,9 +124,9 @@ export default function BlogGettingStarted() {
 
         {/* 2. Submission Requirements */}
         <div className="mb-12">
-          <h3 className="text-2xl font-bold text-white mb-6 border-l-4 border-white/20 pl-4">2. Submission Requirements</h3>
+          <h3 className="text-2xl font-bold text-white mb-6 border-l-4 border-white pl-4">2. Submission Requirements</h3>
           
-          <div className="bg-white/5 border border-white/10 p-6 mb-6 rounded-none">
+          <div className="bg-white/5 border border-white p-6 mb-6 rounded-none">
             <p className="text-white/90 font-medium mb-4">
               Each article should feature <span className="text-yellow-400">four books</span> with unique SiteStripe links.
             </p>
@@ -147,28 +147,28 @@ export default function BlogGettingStarted() {
 
         {/* 3. Writing Standards */}
         <div className="mb-12">
-          <h3 className="text-2xl font-bold text-white mb-6 border-l-4 border-white/20 pl-4">3. Writing Standards: Google E‑E‑A‑T</h3>
+          <h3 className="text-2xl font-bold text-white mb-6 border-l-4 border-white pl-4">3. Writing Standards: Google E‑E‑A‑T</h3>
           
           <div className="grid gap-4 md:grid-cols-2 mb-6">
-            <div className="bg-white/5 border border-white/10 p-4 rounded-none">
+            <div className="bg-white/5 border border-white p-4 rounded-none">
               <h4 className="font-bold text-green-400 mb-1">Experience</h4>
               <p className="text-white/70 text-sm">Share personal connection and lessons learned.</p>
             </div>
-            <div className="bg-white/5 border border-white/10 p-4 rounded-none">
+            <div className="bg-white/5 border border-white p-4 rounded-none">
               <h4 className="font-bold text-blue-400 mb-1">Expertise</h4>
               <p className="text-white/70 text-sm">Provide accurate analysis and thoughtful commentary.</p>
             </div>
-            <div className="bg-white/5 border border-white/10 p-4 rounded-none">
+            <div className="bg-white/5 border border-white p-4 rounded-none">
               <h4 className="font-bold text-purple-400 mb-1">Authoritativeness</h4>
               <p className="text-white/70 text-sm">Contribute consistently and maintain high-quality work.</p>
             </div>
-            <div className="bg-white/5 border border-white/10 p-4 rounded-none">
+            <div className="bg-white/5 border border-white p-4 rounded-none">
               <h4 className="font-bold text-yellow-400 mb-1">Trustworthiness</h4>
               <p className="text-white/70 text-sm">Be clear, honest, and transparent in your writing.</p>
             </div>
           </div>
 
-          <div className="bg-blue-900/20 border-l-4 border-blue-500 p-4">
+          <div className="bg-blue-900/20 border-l-4 border-white p-4">
             <h5 className="font-bold text-white mb-2">Why this matters</h5>
             <p className="text-white/70 text-sm">
               Meeting E‑E‑A‑T standards improves search rankings, builds reader trust, and increases engagement and affiliate conversions.
@@ -178,9 +178,9 @@ export default function BlogGettingStarted() {
 
         {/* 4. HITL Review */}
         <div className="mb-12">
-          <h3 className="text-2xl font-bold text-white mb-6 border-l-4 border-white/20 pl-4">4. Human-in-the-Loop (HITL) Review</h3>
+          <h3 className="text-2xl font-bold text-white mb-6 border-l-4 border-white pl-4">4. Human-in-the-Loop (HITL) Review</h3>
           
-          <div className="bg-white/5 border border-white/10 p-6 mb-6 rounded-none">
+          <div className="bg-white/5 border border-white p-6 mb-6 rounded-none">
             <p className="text-white/80 mb-4">AI can draft content, but human review is essential:</p>
             <ul className="list-disc list-inside space-y-2 text-white/80 mb-6">
               <li>Fact-check AI-generated text.</li>
@@ -190,7 +190,7 @@ export default function BlogGettingStarted() {
             </ul>
           </div>
 
-          <div className="bg-blue-900/20 border-l-4 border-blue-500 p-4">
+          <div className="bg-blue-900/20 border-l-4 border-white p-4">
             <h5 className="font-bold text-white mb-2">Why this matters</h5>
             <p className="text-white/70 text-sm">
               HITL ensures authenticity, originality, and credibility, helping your article outperform generic AI content and meet E‑E‑A‑T standards.
@@ -200,10 +200,10 @@ export default function BlogGettingStarted() {
 
         {/* 5. AI-Assisted Writing Workflow */}
         <div className="mb-12">
-          <h3 className="text-2xl font-bold text-white mb-6 border-l-4 border-white/20 pl-4">5. AI-Assisted Writing Workflow</h3>
+          <h3 className="text-2xl font-bold text-white mb-6 border-l-4 border-white pl-4">5. AI-Assisted Writing Workflow</h3>
           
           <div className="space-y-4">
-            <div className="bg-white/5 border border-white/10 p-5 rounded-none">
+            <div className="bg-white/5 border border-white p-5 rounded-none">
               <h4 className="font-bold text-white mb-2">Step 1: Research & Planning (Human)</h4>
               <ul className="list-disc list-inside text-white/70 text-sm space-y-1">
                 <li>Gather background info and key themes of your four books.</li>
@@ -212,7 +212,7 @@ export default function BlogGettingStarted() {
               </ul>
             </div>
 
-            <div className="bg-white/5 border border-white/10 p-5 rounded-none">
+            <div className="bg-white/5 border border-white p-5 rounded-none">
               <h4 className="font-bold text-white mb-2">Step 2: Define Tone, Perspective, & Audience</h4>
               <ul className="list-disc list-inside text-white/70 text-sm space-y-1">
                 <li>Decide how your voice should come across: reflective, conversational, analytical, etc.</li>
@@ -222,7 +222,7 @@ export default function BlogGettingStarted() {
               </ul>
             </div>
 
-            <div className="bg-white/5 border border-white/10 p-5 rounded-none">
+            <div className="bg-white/5 border border-white p-5 rounded-none">
               <h4 className="font-bold text-white mb-2">Step 3: Generate Outline & Draft (AI-Assisted)</h4>
               <ul className="list-disc list-inside text-white/70 text-sm space-y-1">
                 <li>Use AI to create structure, headings, and first draft paragraphs.</li>
@@ -230,7 +230,7 @@ export default function BlogGettingStarted() {
               </ul>
             </div>
 
-            <div className="bg-white/5 border border-white/10 p-5 rounded-none">
+            <div className="bg-white/5 border border-white p-5 rounded-none">
               <h4 className="font-bold text-white mb-2">Step 4: Human Editing & Personalization</h4>
               <ul className="list-disc list-inside text-white/70 text-sm space-y-1">
                 <li>Revise AI text to reflect exactly how you would say it, word-for-word.</li>
@@ -239,7 +239,7 @@ export default function BlogGettingStarted() {
               </ul>
             </div>
 
-            <div className="bg-white/5 border border-white/10 p-5 rounded-none">
+            <div className="bg-white/5 border border-white p-5 rounded-none">
               <h4 className="font-bold text-white mb-2">Step 5: SEO & Readability Optimization</h4>
               <ul className="list-disc list-inside text-white/70 text-sm space-y-1">
                 <li>Add clear headings and subheadings.</li>
@@ -248,7 +248,7 @@ export default function BlogGettingStarted() {
               </ul>
             </div>
 
-            <div className="bg-white/5 border border-white/10 p-5 rounded-none">
+            <div className="bg-white/5 border border-white p-5 rounded-none">
               <h4 className="font-bold text-white mb-2">Step 6: Final HITL Review</h4>
               <ul className="list-disc list-inside text-white/70 text-sm space-y-1">
                 <li>Ensure tone, flow, and engagement are polished.</li>
@@ -261,9 +261,9 @@ export default function BlogGettingStarted() {
 
         {/* 6. Best Practices */}
         <div className="mb-12">
-          <h3 className="text-2xl font-bold text-white mb-6 border-l-4 border-white/20 pl-4">6. Best Practices for AI-Assisted Original Content</h3>
+          <h3 className="text-2xl font-bold text-white mb-6 border-l-4 border-white pl-4">6. Best Practices for AI-Assisted Original Content</h3>
           
-          <div className="bg-white/5 border border-white/10 p-6 mb-6 rounded-none">
+          <div className="bg-white/5 border border-white p-6 mb-6 rounded-none">
             <ul className="list-disc list-inside space-y-2 text-white/80 mb-6">
               <li>Cross-reference all four books to show how themes relate.</li>
               <li>Inject personal voice: anecdotes, lessons, reflections.</li>
@@ -275,7 +275,7 @@ export default function BlogGettingStarted() {
             </ul>
           </div>
 
-          <div className="bg-blue-900/20 border-l-4 border-blue-500 p-4">
+          <div className="bg-blue-900/20 border-l-4 border-white p-4">
             <h5 className="font-bold text-white mb-2">Why this matters</h5>
             <p className="text-white/70 text-sm">
               Original, human-refined content ranks better, attracts more readers, and increases affiliate revenue. Thoughtful posts build credibility and trust.
@@ -285,9 +285,9 @@ export default function BlogGettingStarted() {
 
         {/* 7. Final Submission Checklist */}
         <div className="mb-12">
-          <h3 className="text-2xl font-bold text-white mb-6 border-l-4 border-white/20 pl-4">7. Final Submission Checklist</h3>
+          <h3 className="text-2xl font-bold text-white mb-6 border-l-4 border-white pl-4">7. Final Submission Checklist</h3>
           
-          <div className="bg-green-900/10 border border-green-500/30 p-6 rounded-none">
+          <div className="bg-green-900/10 border border-white p-6 rounded-none">
             <ul className="space-y-3">
               {[
                 "Four books with unique SiteStripe links included",
@@ -317,7 +317,7 @@ export default function BlogGettingStarted() {
 
         {/* 8. FAQ */}
         <div className="mb-12">
-          <h3 className="text-2xl font-bold text-white mb-6 border-l-4 border-white/20 pl-4">8. FAQ</h3>
+          <h3 className="text-2xl font-bold text-white mb-6 border-l-4 border-white pl-4">8. FAQ</h3>
           
           <div className="space-y-6">
             <div>
@@ -360,7 +360,7 @@ export default function BlogGettingStarted() {
         </div>
 
         {/* Footer Conclusion */}
-        <div className="border-t border-white/10 pt-8 mt-12 text-center">
+        <div className="border-t border-white pt-8 mt-12 text-center">
           <p className="text-white/60 italic max-w-2xl mx-auto">
             THE LOST ARCHIVES BOOK CLUB is designed to empower contributors to share their knowledge, talents, and insights in ways that reach an engaged audience beyond traditional avenues. By creating thoughtful, reflective, and well-crafted content, you have the opportunity to educate, inspire, and earn online while using your skills in unique and meaningful ways.
           </p>

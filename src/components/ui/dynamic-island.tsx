@@ -52,14 +52,14 @@ export function DynamicIsland({
           ? 'w-64'
           : 'w-32',
         'bg-black/80 backdrop-blur-xl',
-        'border border-white/20',
+        'border border-white',
         'shadow-lg',
         className
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
-        borderRadius: isExpanded ? '0' : '9999px', // Pill shape when collapsed, square when expanded
+        borderRadius: '0', // No rounded corners
       }}
     >
       <div
@@ -93,7 +93,7 @@ export function DynamicIsland({
       {isExpanded && expandedContent && (
         <div
           className={cn(
-            'border-t border-white/10',
+            'border-t border-white',
             'px-4 py-4',
             'animate-in slide-in-from-top-2 duration-300'
           )}

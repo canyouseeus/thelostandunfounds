@@ -16,7 +16,7 @@ export default function API() {
           <p className="text-white/80 mb-4">
             All API requests require authentication using an API key. You can generate an API key in your account settings.
           </p>
-          <div className="bg-black/50 border border-white/10 rounded-none p-4">
+          <div className="bg-black/50 border border-white rounded-none p-4">
             <pre className="text-white/80 text-sm overflow-x-auto">
 {`Authorization: Bearer YOUR_API_KEY`}
             </pre>
@@ -25,7 +25,7 @@ export default function API() {
 
         <section>
           <h2 className="text-2xl font-bold text-white mb-4">Base URL</h2>
-          <div className="bg-black/50 border border-white/10 rounded-none p-4">
+          <div className="bg-black/50 border border-white rounded-none p-4">
             <code className="text-white/80">https://api.thelostandunfounds.com/v1</code>
           </div>
         </section>
@@ -34,9 +34,9 @@ export default function API() {
           <h2 className="text-2xl font-bold text-white mb-4">Endpoints</h2>
           
           <div className="space-y-6">
-            <div className="border-b border-white/10 pb-6">
+            <div className="border-b border-white pb-6">
               <h3 className="text-xl font-semibold text-white mb-2">Download TikTok Video</h3>
-              <div className="bg-black/50 border border-white/10 rounded-none p-4 mb-3">
+              <div className="bg-black/50 border border-white rounded-none p-4 mb-3">
                 <pre className="text-white/80 text-sm overflow-x-auto">
 {`POST /tiktok/download
 Content-Type: application/json
@@ -47,7 +47,7 @@ Content-Type: application/json
                 </pre>
               </div>
               <p className="text-white/70 text-sm mb-2"><strong>Response:</strong></p>
-              <div className="bg-black/50 border border-white/10 rounded-none p-4">
+              <div className="bg-black/50 border border-white rounded-none p-4">
                 <pre className="text-white/80 text-sm overflow-x-auto">
 {`{
   "success": true,
@@ -63,7 +63,7 @@ Content-Type: application/json
 
         <section>
           <h2 className="text-2xl font-bold text-white mb-4">Rate Limits</h2>
-          <div className="bg-black/50 border border-white/10 rounded-none p-4">
+          <div className="bg-black/50 border border-white rounded-none p-4">
             <ul className="space-y-2 text-white/70">
               <li><strong>Free:</strong> 100 requests per day</li>
               <li><strong>Premium:</strong> 1,000 requests per day</li>
@@ -77,7 +77,7 @@ Content-Type: application/json
           <p className="text-white/80 mb-4">
             API keys are available for Pro tier subscribers. Generate your API key in your account settings.
           </p>
-          <div className="bg-black/50 border border-white/10 rounded-none p-4">
+          <div className="bg-black/50 border border-white rounded-none p-4">
             <p className="text-white/70 text-sm">
               To get started with the API, upgrade to Pro tier and generate your API key from the Settings page.
             </p>
