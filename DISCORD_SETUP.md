@@ -322,6 +322,20 @@ npm install @noble/ed25519
 
 This is required for proper Discord interaction signature verification. Without it, the interactions endpoint uses basic validation (not secure for production).
 
+## 🎯 Register Slash Commands
+
+After setting up your bot, register slash commands for your server:
+
+```bash
+npm run discord:register-commands
+```
+
+This will register the default commands (`/ping`, `/info`, `/blog`) to your Discord server.
+
+**Your Server ID**: `1428346383772942346`
+
+To customize commands, edit `scripts/register-discord-commands.ts`.
+
 ## 🎉 Next Steps
 
 After setup:
@@ -330,7 +344,8 @@ After setup:
 3. ✅ OAuth2 is set up (if using authentication)
 4. ✅ Webhook is configured (if using notifications)
 5. ✅ Install @noble/ed25519 for production signature verification
-6. ✅ Test bot commands and webhooks
+6. ✅ Register slash commands with `npm run discord:register-commands`
+7. ✅ Test bot commands and webhooks
 
 ## 📝 Related Documentation
 

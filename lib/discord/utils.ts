@@ -304,3 +304,106 @@ export async function getDiscordUser(accessToken: string): Promise<{
 
   return response.json()
 }
+
+/**
+ * Register slash commands for a Discord server (guild)
+ */
+export async function registerGuildCommands(
+  guildId: string,
+  commands: Array<{
+    name: string
+    description: string
+    options?: Array<{
+      type: number
+      name: string
+      description: string
+      required?: boolean
+    }>
+  }>,
+  botToken: string,
+  clientId: string
+): Promise<Response> {
+  const response = await fetch(
+    `https://discord.com/api/v10/applications/${clientId}/guilds/${guildId}/commands`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bot ${botToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(commands),
+    }
+  )
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    throw new Error(`Failed to register commands: ${response.status} ${errorText}`)
+  }
+
+  return response
+}
+
+/**
+ * Get Discord server (guild) information
+ */
+export async function getDiscordGuild(
+  guildId: string,
+  botToken: string
+): Promise<{
+  id: string
+  name: string
+  icon: string | null
+  description: string | null
+  member_count?: number
+}> {
+  const response = await fetch(`https://discord.com/api/v10/guilds/${guildId}`, {
+    headers: {
+      'Authorization': `Bot ${botToken}`,
+    },
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    throw new Error(`Discord API failed: ${response.status} ${errorText}`)
+  }
+
+  return response.json()
+}
+
+/**
+ * Get channels in a Discord server (guild)
+ */
+export async function getGuildChannels(
+  guildId: string,
+  botToken: string
+): Promise<Array<{
+  id: string
+  name: string
+  type: number
+  position: number
+}>> {
+  const response = await fetch(`https://discord.com/api/v10/guilds/${guildId}/channels`, {
+    headers: {
+      'Authorization': `Bot ${botToken}`,
+    },
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    throw new Error(`Discord API failed: ${response.status} ${errorText}`)
+  }
+
+  return response.json()
+}
+
+/**
+ * Send message to a channel in a specific Discord server
+ * Uses the configured Guild ID from environment variables
+ */
+export async function sendGuildChannelMessage(
+  channelId: string,
+  content: string | DiscordWebhookPayload,
+  botToken: string
+): Promise<Response> {
+  return sendDiscordMessage(channelId, content, botToken)
+}
