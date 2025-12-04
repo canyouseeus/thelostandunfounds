@@ -1054,21 +1054,22 @@ export default function BlogPost() {
       let actualMatchLength = matchInfo.length;
       
       // Special handling: Always use proper capitalization and full titles
-      // Check matchedText first to catch all variations, regardless of bookKey
+      // Check matchedText first to catch all variations, regardless of bookKey or affiliateLink
       const normalizedMatch = (matchedText || '').toLowerCase();
       
+      // ALWAYS fix capitalization for known books, regardless of whether there's an affiliate link
       if (normalizedMatch.includes('hobbit')) {
         displayText = 'The Hobbit';
       } else if (normalizedMatch.includes('hunger') && normalizedMatch.includes('game')) {
         displayText = 'The Hunger Games';
-      } else if (bookKey && affiliateLink) {
+      } else if (bookKey) {
         // Use the database title if available
         const normalizedKey = bookKey.toLowerCase();
         if (normalizedKey.includes('hobbit')) {
           displayText = 'The Hobbit';
         } else if (normalizedKey.includes('hunger') && normalizedKey.includes('game')) {
           displayText = 'The Hunger Games';
-        } else {
+        } else if (affiliateLink) {
           // ALWAYS use the full database title for the link text
           // This ensures consistency even if the text has partial titles
           displayText = bookKey;
