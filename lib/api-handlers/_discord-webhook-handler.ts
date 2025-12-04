@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
-import { sendDiscordWebhook, DiscordWebhookPayload } from '../../lib/discord/utils'
+import { sendDiscordWebhook, DiscordWebhookPayload } from '../discord/utils'
 
 /**
  * Discord Webhook Handler

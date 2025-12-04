@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
-import { verifyDiscordSignature } from '../../lib/discord/utils'
+import { verifyDiscordSignature } from '../discord/utils'
 
 /**
  * Discord Interactions Handler
