@@ -3,7 +3,7 @@ import {
   getDiscordOAuthUrl,
   exchangeDiscordCode,
   getDiscordUser,
-} from '../discord/utils'
+} from '../discord/utils.js'
 
 /**
  * Discord OAuth2 Handler
