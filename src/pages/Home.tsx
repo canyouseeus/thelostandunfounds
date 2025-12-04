@@ -238,10 +238,7 @@ export default function Home() {
                 src="/logo.png" 
                 alt="THE LOST+UNFOUNDS Logo" 
                 className="max-w-[570px] h-auto sm:max-w-[570px] max-w-[80vw] sm:max-w-[570px]" 
-                style={{ 
-                  maxWidth: 'min(570px, 80vw)',
-                  opacity: 1, // Ensure image itself is fully opaque
-                }} 
+                style={{ maxWidth: 'min(570px, 80vw)' }} 
               />
             </div>
           )}
