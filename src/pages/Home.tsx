@@ -34,7 +34,7 @@ export default function Home() {
     }
   }, [logoState, logoOpacity, showTyping, typingComplete])
 
-  // Logo animation sequence: fade in (3s) -> static (1.5s) -> fade out (1s)
+  // Logo animation sequence: fade in (1s) -> static (0.5s) -> fade out (0.33s) - 3x faster
   useEffect(() => {
     let fadeInIntervalRef: NodeJS.Timeout | null = null
     let fadeOutIntervalRef: NodeJS.Timeout | null = null
@@ -43,11 +43,11 @@ export default function Home() {
     setLogoOpacity(0)
     setLogoState('fading-in')
     
-    // Fade in over 3 seconds
+    // Fade in over 1 second (3x faster: 3000ms / 3 = 1000ms)
     const fadeInStart = Date.now()
     fadeInIntervalRef = setInterval(() => {
       const elapsed = Date.now() - fadeInStart
-      const progress = Math.min(elapsed / 3000, 1)
+      const progress = Math.min(elapsed / 1000, 1)
       setLogoOpacity(progress)
       
       if (progress >= 1) {
@@ -60,13 +60,13 @@ export default function Home() {
       }
     }, 16) // ~60fps
     
-    // After 3 seconds fade in + 1.5 seconds static, fade out
+    // After 1 second fade in + 0.5 seconds static, fade out (3x faster: 4500ms / 3 = 1500ms)
     const fadeOutTimer = setTimeout(() => {
       setLogoState('fading-out')
       const fadeOutStart = Date.now()
       fadeOutIntervalRef = setInterval(() => {
         const elapsed = Date.now() - fadeOutStart
-        const progress = Math.min(elapsed / 1000, 1)
+        const progress = Math.min(elapsed / 333, 1) // 3x faster: 1000ms / 3 = 333ms
         setLogoOpacity(1 - progress)
         
         if (progress >= 1) {
@@ -75,13 +75,13 @@ export default function Home() {
             fadeOutIntervalRef = null
           }
           setLogoState('hidden')
-          // Start typing animation after logo fades out + 1.5s delay
+          // Start typing animation after logo fades out + 0.5s delay (3x faster: 1500ms / 3 = 500ms)
           setTimeout(() => {
             setShowTyping(true)
-          }, 1500)
+          }, 500)
         }
       }, 16)
-    }, 4500) // 3s fade in + 1.5s static = 4.5s total before fade out
+    }, 1500) // 1s fade in + 0.5s static = 1.5s total before fade out
 
     return () => {
       if (fadeInIntervalRef) {
@@ -144,7 +144,7 @@ export default function Home() {
         setDisplayedText(text) // Ensure full text is displayed
         setTypingComplete(true)
       }
-    }, 100) // Adjust speed here (milliseconds per character)
+    }, 33) // 3x faster: 100ms / 3 = 33ms per character
 
     return () => {
       clearInterval(typeInterval)
