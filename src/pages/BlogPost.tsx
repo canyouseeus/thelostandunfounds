@@ -322,10 +322,11 @@ export default function BlogPost() {
       .replace(/[''`]/g, "'")
       // Normalize hyphens and dashes
       .replace(/[—–-]/g, '-')
+      // Normalize commas and spacing (handle both with and without spaces)
+      .replace(/,\s*/g, ', ')
       // Remove extra whitespace
       .replace(/\s+/g, ' ')
-      // Normalize commas and spacing
-      .replace(/,\s*/g, ', ');
+      .trim();
   };
 
   // Find book title match using intelligent fuzzy matching
@@ -347,6 +348,24 @@ export default function BlogPost() {
     const textNoApostrophe = removeApostrophes(text);
     for (const title of bookTitles) {
       if (removeApostrophes(title) === textNoApostrophe) {
+        return title;
+      }
+    }
+    
+    // Strategy 2b: Remove commas and compare (The Lion, the Witch = The Lion the Witch)
+    const removeCommas = (t: string) => normalizeBookTitle(t).replace(/,/g, '');
+    const textNoComma = removeCommas(text);
+    for (const title of bookTitles) {
+      if (removeCommas(title) === textNoComma) {
+        return title;
+      }
+    }
+    
+    // Strategy 2c: Remove both apostrophes and commas
+    const removeBoth = (t: string) => normalizeBookTitle(t).replace(/[',]/g, '');
+    const textNoBoth = removeBoth(text);
+    for (const title of bookTitles) {
+      if (removeBoth(title) === textNoBoth) {
         return title;
       }
     }
@@ -477,10 +496,12 @@ export default function BlogPost() {
         try {
           // Escape special regex characters
           let escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          // Handle apostrophes - allow both straight and curly quotes (make optional)
+          // Handle apostrophes - allow both straight and curly quotes (make optional but prefer matching)
           escaped = escaped.replace(/'/g, "[''`]?");
           // Handle hyphens - allow various dash types (make optional)
           escaped = escaped.replace(/-/g, '[—–-]?');
+          // Handle commas - make them optional with flexible spacing
+          escaped = escaped.replace(/,/g, ',?\\s*');
           return escaped;
         } catch (e) {
           console.warn('Error escaping term:', term, e);
@@ -595,16 +616,20 @@ export default function BlogPost() {
           // Build flexible patterns that match the title with variations
           const searchPatterns: string[] = [];
           
-          // Pattern 1: Exact title with optional apostrophes
+          // Pattern 1: Exact title with optional apostrophes and commas
           const exactPattern = bookTitle
             .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // Escape regex chars
-            .replace(/'/g, "[''`]?"); // Apostrophe variations
+            .replace(/'/g, "[''`]?") // Apostrophe variations (optional)
+            .replace(/,/g, ',?\\s*'); // Commas optional with flexible spacing
           searchPatterns.push(exactPattern);
           
           // Pattern 2: Title without apostrophes (Ender's Game = Enders Game)
           const noApostrophe = bookTitle.replace(/'/g, '');
           if (noApostrophe !== bookTitle) {
-            searchPatterns.push(noApostrophe.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+            const noApostropheEscaped = noApostrophe
+              .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+              .replace(/,/g, ',?\\s*'); // Also handle commas
+            searchPatterns.push(noApostropheEscaped);
           }
           
           // Pattern 3: Word sequence (handles punctuation differences)
@@ -612,6 +637,12 @@ export default function BlogPost() {
             .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
             .join('\\s+[,\\s]*'); // Allow commas/spaces between words
           searchPatterns.push(wordPattern);
+          
+          // Pattern 3b: Word sequence with commas handled explicitly
+          const wordPatternWithCommas = titleWords
+            .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+            .join('(?:,?\\s+|\\s+)'); // Explicit comma handling
+          searchPatterns.push(wordPatternWithCommas);
           
           // Pattern 4: Core words only (skip "the", "a", "an")
           const coreWords = titleWords.filter(w => !['the', 'a', 'an'].includes(w.toLowerCase()));
