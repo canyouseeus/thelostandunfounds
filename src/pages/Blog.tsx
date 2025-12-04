@@ -259,28 +259,32 @@ export default function Blog() {
               })() : '');
               
               return (
-                <Expandable
+                <Link
                   key={post.id}
-                  expandDirection="vertical"
-                  expandBehavior="replace"
-                  initialDelay={0}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  to={`/thelostarchives/${post.slug}`}
+                  className="block"
                 >
-                  {({ isExpanded }) => (
-                    <ExpandableTrigger>
-                        <ExpandableCard
-                          className="bg-white dark:bg-white border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02]"
-                          collapsedSize={{ height: 200 }}
-                          expandedSize={{ height: undefined }}
-                          hoverToExpand={false}
-                          expandDelay={0}
-                          collapseDelay={0}
-                        >
-                          <ExpandableCardHeader className="mb-1 pb-1">
-                            <h2 className="text-base font-black text-black dark:text-black mb-0 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
-                              {post.title}
-                            </h2>
-                          </ExpandableCardHeader>
+                  <Expandable
+                    expandDirection="vertical"
+                    expandBehavior="replace"
+                    initialDelay={0}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                  >
+                    {({ isExpanded }) => (
+                      <ExpandableTrigger>
+                          <ExpandableCard
+                            className="bg-white dark:bg-white border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] cursor-pointer"
+                            collapsedSize={{ height: 200 }}
+                            expandedSize={{ height: undefined }}
+                            hoverToExpand={false}
+                            expandDelay={0}
+                            collapseDelay={0}
+                          >
+                            <ExpandableCardHeader className="mb-1 pb-1">
+                              <h2 className="text-base font-black text-black dark:text-black mb-0 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
+                                {post.title}
+                              </h2>
+                            </ExpandableCardHeader>
                         
                           <ExpandableCardContent className="flex-1 min-h-0">
                             {excerpt && (
@@ -361,28 +365,32 @@ export default function Blog() {
               })() : '');
 
               return (
-                <Expandable
+                <Link
                   key={post.id}
-                  expandDirection="vertical"
-                  expandBehavior="replace"
-                  initialDelay={0}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  to={`/blog/${post.subdomain}/${post.slug}`}
+                  className="block"
                 >
-                  {({ isExpanded }) => (
-                    <ExpandableTrigger>
-                        <ExpandableCard
-                          className="bg-white dark:bg-white border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02]"
-                          collapsedSize={{ height: 200 }}
-                          expandedSize={{ height: undefined }}
-                          hoverToExpand={false}
-                          expandDelay={0}
-                          collapseDelay={0}
-                        >
-                          <ExpandableCardHeader className="mb-1 pb-1">
-                            <h2 className="text-base font-black text-black dark:text-black mb-0 tracking-wide transition line-clamp-2">
-                              {post.title}
-                            </h2>
-                          </ExpandableCardHeader>
+                  <Expandable
+                    expandDirection="vertical"
+                    expandBehavior="replace"
+                    initialDelay={0}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                  >
+                    {({ isExpanded }) => (
+                      <ExpandableTrigger>
+                          <ExpandableCard
+                            className="bg-white dark:bg-white border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] cursor-pointer"
+                            collapsedSize={{ height: 200 }}
+                            expandedSize={{ height: undefined }}
+                            hoverToExpand={false}
+                            expandDelay={0}
+                            collapseDelay={0}
+                          >
+                            <ExpandableCardHeader className="mb-1 pb-1">
+                              <h2 className="text-base font-black text-black dark:text-black mb-0 tracking-wide transition line-clamp-2">
+                                {post.title}
+                              </h2>
+                            </ExpandableCardHeader>
                           
                           <ExpandableCardContent className="flex-1 min-h-0">
                             {excerpt && (

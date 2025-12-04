@@ -241,7 +241,6 @@ export default function Home() {
                 style={{ 
                   maxWidth: 'min(570px, 80vw)',
                   opacity: 1, // Ensure image itself is fully opaque
-                  filter: 'none', // Remove any filters that might make it faint
                 }} 
               />
             </div>
