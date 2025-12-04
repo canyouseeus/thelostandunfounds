@@ -584,7 +584,6 @@ export default function BlogPost() {
           escaped = escaped.replace(/'/g, "[''`]?");
           // Handle hyphens - allow various dash types (make optional)
           escaped = escaped.replace(/-/g, '[—–-]?');
-<<<<<<< HEAD
           escapedTerms.push(escaped);
           
           // CRITICAL FIX: If term doesn't have apostrophe but could be possessive, add version with apostrophe
