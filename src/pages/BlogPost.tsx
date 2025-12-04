@@ -331,22 +331,26 @@ export default function BlogPost() {
 
   // Find book title match using intelligent fuzzy matching
   // Handles: case variations, apostrophes, punctuation, word order
+  // IMPORTANT: Prefers full title matches (e.g., "The Hobbit" over "Hobbit")
   const findBookTitleMatch = (text: string, bookTitles: string[]): string | null => {
     if (!text || !bookTitles || bookTitles.length === 0) return null;
     
     const normalizedText = normalizeBookTitle(text);
     
-    // Strategy 1: Exact normalized match
-    for (const title of bookTitles) {
+    // Strategy 1: Exact normalized match (prefer longer/fuller titles first)
+    // Sort by length descending to prefer "The Hobbit" over "Hobbit"
+    const sortedTitles = [...bookTitles].sort((a, b) => b.length - a.length);
+    for (const title of sortedTitles) {
       if (normalizeBookTitle(title) === normalizedText) {
         return title;
       }
     }
     
     // Strategy 2: Remove apostrophes and compare (Ender's Game = Enders Game)
+    // Prefer longer titles first
     const removeApostrophes = (t: string) => normalizeBookTitle(t).replace(/'/g, '');
     const textNoApostrophe = removeApostrophes(text);
-    for (const title of bookTitles) {
+    for (const title of sortedTitles) {
       if (removeApostrophes(title) === textNoApostrophe) {
         return title;
       }
@@ -355,7 +359,7 @@ export default function BlogPost() {
     // Strategy 2b: Remove commas and compare (The Lion, the Witch = The Lion the Witch)
     const removeCommas = (t: string) => normalizeBookTitle(t).replace(/,/g, '');
     const textNoComma = removeCommas(text);
-    for (const title of bookTitles) {
+    for (const title of sortedTitles) {
       if (removeCommas(title) === textNoComma) {
         return title;
       }
@@ -364,7 +368,7 @@ export default function BlogPost() {
     // Strategy 2c: Remove both apostrophes and commas
     const removeBoth = (t: string) => normalizeBookTitle(t).replace(/[',]/g, '');
     const textNoBoth = removeBoth(text);
-    for (const title of bookTitles) {
+    for (const title of sortedTitles) {
       if (removeBoth(title) === textNoBoth) {
         return title;
       }
@@ -380,7 +384,7 @@ export default function BlogPost() {
     };
     
     const textWords = getWords(text);
-    for (const title of bookTitles) {
+    for (const title of sortedTitles) {
       const titleWords = getWords(title);
       
       // Check if all significant words from title appear in text (or vice versa)
@@ -420,7 +424,7 @@ export default function BlogPost() {
     };
     
     const coreText = getCoreTitle(text);
-    for (const title of bookTitles) {
+    for (const title of sortedTitles) {
       const coreTitle = getCoreTitle(title);
       if (coreTitle === coreText || 
           (coreTitle.length > 5 && coreText.includes(coreTitle)) ||
@@ -809,7 +813,10 @@ export default function BlogPost() {
       }
       
       // Find the affiliate link using improved fuzzy matching
-      const bookKey = findBookTitleMatch(matchedText, Object.keys(bookLinks));
+      // IMPORTANT: Prefer full title matches (e.g., "The Hobbit" over "Hobbit")
+      // Sort book titles by length (longest first) to prefer full titles
+      const sortedBookTitles = Object.keys(bookLinks).sort((a, b) => b.length - a.length);
+      const bookKey = findBookTitleMatch(matchedText, sortedBookTitles);
       const affiliateLink = bookKey ? bookLinks[bookKey] : undefined;
       
       // Preserve original case from article content - don't change the author's formatting
@@ -1106,38 +1113,61 @@ export default function BlogPost() {
       const numberedMatch = trimmed.match(/^(\d+)\.\s+(.+)$/);
       if (numberedMatch) {
         const isInIntro = index < introEndIndex;
-        // Check if this is in a book section using intelligent matching
+        // Check if this is in a book section
         let isInBookSection = false;
+        let lastHeadingIndex = -1;
+        
+        // Find the most recent heading
         for (let i = index - 1; i >= 0; i--) {
           const prevPara = paragraphs[i]?.trim() || '';
           if (prevPara === '' || prevPara === '⸻') continue;
-          // Check if previous paragraph is a heading that contains a book title
+          
           const isHeading = prevPara.length < 100 && 
                            !prevPara.match(/[.!?]$/) && 
                            prevPara.split(' ').length < 15;
+          
           if (isHeading) {
-            // For headings with colons, try matching both the full heading and the part before the colon
-            const headingToMatch = prevPara.includes(':') ? prevPara.split(':')[0].trim() : prevPara;
-            const containsBookTitle = Object.keys(bookLinkCounts).some(bookTitle => {
-              // Try matching the full heading first
-              const fullMatch = findBookTitleMatch(prevPara, [bookTitle]) === bookTitle;
-              if (fullMatch) return true;
-              // If heading has a colon, try matching just the part before the colon
-              if (prevPara.includes(':')) {
-                return findBookTitleMatch(headingToMatch, [bookTitle]) === bookTitle;
-              }
-              return false;
-            });
-            if (containsBookTitle) {
-              isInBookSection = true;
-              break;
-            }
-          }
-          // Stop searching if we hit another heading
-          if (prevPara.length < 100 && !prevPara.match(/[.!?]$/) && prevPara.split(' ').length < 15) {
+            lastHeadingIndex = i;
             break;
           }
         }
+        
+        // Check if we're in a book section
+        if (lastHeadingIndex >= 0 && lastHeadingIndex < index) {
+          const headingPara = paragraphs[lastHeadingIndex]?.trim() || '';
+          const headingToMatch = headingPara.includes(':') ? headingPara.split(':')[0].trim() : headingPara;
+          const containsBookTitle = Object.keys(bookLinkCounts).some(bookTitle => {
+            const fullMatch = findBookTitleMatch(headingPara, [bookTitle]) === bookTitle;
+            if (fullMatch) return true;
+            if (headingPara.includes(':')) {
+              return findBookTitleMatch(headingToMatch, [bookTitle]) === bookTitle;
+            }
+            return false;
+          });
+          
+          if (containsBookTitle) {
+            isInBookSection = true;
+          } else if (headingPara.includes(':')) {
+            // Character-based section - check if content mentions a book
+            const contentMentionsBook = Object.keys(bookLinkCounts).some(bookTitle => {
+              return findBookTitleMatch(numberedMatch[2], [bookTitle]) === bookTitle;
+            });
+            if (contentMentionsBook) {
+              isInBookSection = true;
+            }
+          }
+        }
+        
+        // Also check if content itself mentions a book
+        if (!isInBookSection && !isInIntro) {
+          const contentMentionsBook = Object.keys(bookLinkCounts).some(bookTitle => {
+            return findBookTitleMatch(numberedMatch[2], [bookTitle]) === bookTitle;
+          });
+          if (contentMentionsBook) {
+            isInBookSection = true;
+          }
+        }
+        
         const allowLinks = isInIntro || isInBookSection;
         const content = formatTextWithEmphasis(numberedMatch[2], bookLinkCounts, allowLinks);
         elements.push(
@@ -1170,34 +1200,61 @@ export default function BlogPost() {
       if (trimmed.match(/^[•\-\*]\s+/)) {
         const bulletText = trimmed.replace(/^[•\-\*]\s+/, '');
         const isInIntro = index < introEndIndex;
-        // Check if this is in a book section - improved detection
+        // Check if this is in a book section
         let isInBookSection = false;
+        let lastHeadingIndex = -1;
+        
+        // Find the most recent heading
         for (let i = index - 1; i >= 0; i--) {
           const prevPara = paragraphs[i]?.trim() || '';
           if (prevPara === '' || prevPara === '⸻') continue;
           
-          // Check if previous paragraph is a heading that contains a book title
-          const prevParaLower = normalizeBookTitle(prevPara);
           const isHeading = prevPara.length < 100 && 
                            !prevPara.match(/[.!?]$/) && 
                            prevPara.split(' ').length < 15;
           
           if (isHeading) {
-            // Use intelligent fuzzy matching to find book titles in heading
-            const containsBookTitle = Object.keys(bookLinkCounts).some(bookTitle => {
-              return findBookTitleMatch(prevPara, [bookTitle]) === bookTitle;
-            });
-            if (containsBookTitle) {
-              isInBookSection = true;
-              break;
-            }
-          }
-          
-          // Stop looking if we hit another heading or section break
-          if (prevPara.length < 100 && !prevPara.match(/[.!?]$/) && prevPara.split(' ').length < 15) {
+            lastHeadingIndex = i;
             break;
           }
         }
+        
+        // Check if we're in a book section
+        if (lastHeadingIndex >= 0 && lastHeadingIndex < index) {
+          const headingPara = paragraphs[lastHeadingIndex]?.trim() || '';
+          const headingToMatch = headingPara.includes(':') ? headingPara.split(':')[0].trim() : headingPara;
+          const containsBookTitle = Object.keys(bookLinkCounts).some(bookTitle => {
+            const fullMatch = findBookTitleMatch(headingPara, [bookTitle]) === bookTitle;
+            if (fullMatch) return true;
+            if (headingPara.includes(':')) {
+              return findBookTitleMatch(headingToMatch, [bookTitle]) === bookTitle;
+            }
+            return false;
+          });
+          
+          if (containsBookTitle) {
+            isInBookSection = true;
+          } else if (headingPara.includes(':')) {
+            // Character-based section - check if content mentions a book
+            const contentMentionsBook = Object.keys(bookLinkCounts).some(bookTitle => {
+              return findBookTitleMatch(bulletText, [bookTitle]) === bookTitle;
+            });
+            if (contentMentionsBook) {
+              isInBookSection = true;
+            }
+          }
+        }
+        
+        // Also check if content itself mentions a book
+        if (!isInBookSection && !isInIntro) {
+          const contentMentionsBook = Object.keys(bookLinkCounts).some(bookTitle => {
+            return findBookTitleMatch(bulletText, [bookTitle]) === bookTitle;
+          });
+          if (contentMentionsBook) {
+            isInBookSection = true;
+          }
+        }
+        
         const allowLinks = isInIntro || isInBookSection;
         const content = formatTextWithEmphasis(bulletText, bookLinkCounts, allowLinks);
         elements.push(
@@ -1245,62 +1302,69 @@ export default function BlogPost() {
       // Regular paragraph with emphasis formatting
       // Allow links in intro (first 3 paragraphs) or in book sections
       const isInIntro = index < introEndIndex;
-      // Check if this paragraph is in a book section (after a heading that contains a book title)
-      // Look backwards to find the most recent heading - improved detection
+      // Check if this paragraph is in a book section
+      // A book section is defined as: paragraphs after a heading (character name or book title)
+      // OR any paragraph that mentions a book title (for character-based sections)
       let isInBookSection = false;
+      let lastHeadingIndex = -1;
+      
+      // First, find the most recent heading
       for (let i = index - 1; i >= 0; i--) {
         const prevPara = paragraphs[i]?.trim() || '';
         if (prevPara === '' || prevPara === '⸻') continue;
         
-        // Check if previous paragraph is a heading that contains a book title
-        const prevParaLower = normalizeBookTitle(prevPara);
         const isHeading = prevPara.length < 100 && 
                          !prevPara.match(/[.!?]$/) && 
                          prevPara.split(' ').length < 15;
         
         if (isHeading) {
-          // Use intelligent fuzzy matching to find book titles in heading
-          // For headings with colons, try matching both the full heading and the part before the colon
-          const headingToMatch = prevPara.includes(':') ? prevPara.split(':')[0].trim() : prevPara;
-          const containsBookTitle = Object.keys(bookLinkCounts).some(bookTitle => {
-            // Try matching the full heading first
-            const fullMatch = findBookTitleMatch(prevPara, [bookTitle]) === bookTitle;
-            if (fullMatch) return true;
-            // If heading has a colon, try matching just the part before the colon
-            if (prevPara.includes(':')) {
-              return findBookTitleMatch(headingToMatch, [bookTitle]) === bookTitle;
-            }
-            return false;
-          });
-          if (containsBookTitle) {
-            isInBookSection = true;
-            break;
-          }
+          lastHeadingIndex = i;
+          break;
         }
+      }
+      
+      // If we found a heading, check if we're in a book section
+      // A book section is any section after the intro that has a heading
+      // (Headings with colons are typically character/book sections)
+      if (lastHeadingIndex >= 0 && lastHeadingIndex < index) {
+        const headingPara = paragraphs[lastHeadingIndex]?.trim() || '';
         
-        // Stop looking if we hit another heading or section break
-        // But only if it's definitely a heading (has colon or matches heading pattern)
-        const isDefinitelyHeading = (prevPara.length < 100 && 
-                                     !prevPara.match(/[.!?]$/) && 
-                                     prevPara.split(' ').length < 15 &&
-                                     (prevPara.includes(':') || prevPara.match(/^(The|A|An)\s+[A-Z]/)));
-        if (isDefinitelyHeading) {
-          // Check if this heading contains a book title - if so, we're in a new book section
-          const headingToCheck = prevPara.includes(':') ? prevPara.split(':')[0].trim() : prevPara;
-          const containsDifferentBook = Object.keys(bookLinkCounts).some(bookTitle => {
-            const fullMatch = findBookTitleMatch(prevPara, [bookTitle]) === bookTitle;
-            if (fullMatch) return true;
-            if (prevPara.includes(':')) {
-              return findBookTitleMatch(headingToCheck, [bookTitle]) === bookTitle;
-            }
-            return false;
+        // Check if heading contains a book title
+        const headingToMatch = headingPara.includes(':') ? headingPara.split(':')[0].trim() : headingPara;
+        const containsBookTitle = Object.keys(bookLinkCounts).some(bookTitle => {
+          const fullMatch = findBookTitleMatch(headingPara, [bookTitle]) === bookTitle;
+          if (fullMatch) return true;
+          if (headingPara.includes(':')) {
+            return findBookTitleMatch(headingToMatch, [bookTitle]) === bookTitle;
+          }
+          return false;
+        });
+        
+        // If heading contains book title, we're definitely in a book section
+        if (containsBookTitle) {
+          isInBookSection = true;
+        } else if (headingPara.includes(':')) {
+          // Headings with colons are typically character/book sections
+          // Check if this paragraph mentions any book title - if so, we're in that book's section
+          const paragraphMentionsBook = Object.keys(bookLinkCounts).some(bookTitle => {
+            return findBookTitleMatch(trimmed, [bookTitle]) === bookTitle;
           });
-          // Only break if we found a different book section, otherwise continue searching
-          if (containsDifferentBook) {
-            break;
+          if (paragraphMentionsBook) {
+            isInBookSection = true;
           }
         }
       }
+      
+      // Also check if this paragraph itself mentions a book title (for sections without clear headings)
+      if (!isInBookSection && !isInIntro) {
+        const paragraphMentionsBook = Object.keys(bookLinkCounts).some(bookTitle => {
+          return findBookTitleMatch(trimmed, [bookTitle]) === bookTitle;
+        });
+        if (paragraphMentionsBook) {
+          isInBookSection = true;
+        }
+      }
+      
       const allowLinks = isInIntro || isInBookSection;
       const content = formatTextWithEmphasis(trimmed, bookLinkCounts, allowLinks);
       
