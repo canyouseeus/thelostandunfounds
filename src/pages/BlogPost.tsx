@@ -1053,21 +1053,26 @@ export default function BlogPost() {
       let displayText = matchedText || '';
       let actualMatchLength = matchInfo.length;
       
-      if (bookKey && affiliateLink) {
-        // Special handling: Always use proper capitalization and full titles
-        if (bookKey.toLowerCase().includes('hobbit')) {
+      // Special handling: Always use proper capitalization and full titles
+      // Check matchedText first to catch all variations, regardless of bookKey
+      const normalizedMatch = (matchedText || '').toLowerCase();
+      
+      if (normalizedMatch.includes('hobbit')) {
+        displayText = 'The Hobbit';
+      } else if (normalizedMatch.includes('hunger') && normalizedMatch.includes('game')) {
+        displayText = 'The Hunger Games';
+      } else if (bookKey && affiliateLink) {
+        // Use the database title if available
+        const normalizedKey = bookKey.toLowerCase();
+        if (normalizedKey.includes('hobbit')) {
           displayText = 'The Hobbit';
-        } else if (bookKey.toLowerCase().includes('hunger') && bookKey.toLowerCase().includes('game')) {
+        } else if (normalizedKey.includes('hunger') && normalizedKey.includes('game')) {
           displayText = 'The Hunger Games';
         } else {
           // ALWAYS use the full database title for the link text
           // This ensures consistency even if the text has partial titles
           displayText = bookKey;
         }
-        
-        // Always use the database title capitalization (don't preserve author's incorrect capitalization)
-        // This ensures "The hobbit" displays as "The Hobbit" and "hunger game" displays as "The Hunger Games"
-        // The displayText is already set to bookKey above, which has the correct capitalization from the database
       }
       
       // Check if it's an emphasis term (THE LOST+UNFOUNDS, etc.) - these should always be bold
