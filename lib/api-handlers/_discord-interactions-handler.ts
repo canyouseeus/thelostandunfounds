@@ -40,13 +40,25 @@ export default async function handler(
       })
     }
 
-    // Verify request signature
-    const signature = req.headers['x-signature-ed25519'] as string
-    const timestamp = req.headers['x-signature-timestamp'] as string
+    // Get raw body for signature verification first
+    // Try to get raw body from request (set by API route) or reconstruct
+    let body: string
+    const rawBody = (req as any).rawBody
+    if (rawBody && typeof rawBody === 'string') {
+      body = rawBody
+    } else if (typeof req.body === 'string') {
+      body = req.body
+    } else if (Buffer.isBuffer(req.body)) {
+      body = req.body.toString('utf-8')
+    } else {
+      // Fallback: reconstruct from parsed body
+      // This may cause signature mismatch if JSON formatting differs
+      body = JSON.stringify(req.body)
+      console.warn('Using reconstructed body - signature verification may fail')
+    }
 
-    // Parse interaction first to check if it's a ping (for verification)
-    // We need to parse before checking headers because Discord's verification ping
-    // might not always include proper headers
+    // Parse interaction to check if it's a ping (for verification)
+    // Discord's verification ping should be handled immediately
     let interaction: any
     try {
       interaction = typeof req.body === 'object' ? req.body : JSON.parse(body)
@@ -64,25 +76,11 @@ export default async function handler(
     }
 
     // For all other interactions, signature headers are required
+    const signature = req.headers['x-signature-ed25519'] as string
+    const timestamp = req.headers['x-signature-timestamp'] as string
+
     if (!signature || !timestamp) {
       return res.status(401).json({ error: 'Missing signature headers' })
-    }
-
-    // Get raw body for signature verification
-    // Try to get raw body from request (set by API route) or reconstruct
-    let body: string
-    const rawBody = (req as any).rawBody
-    if (rawBody && typeof rawBody === 'string') {
-      body = rawBody
-    } else if (typeof req.body === 'string') {
-      body = req.body
-    } else if (Buffer.isBuffer(req.body)) {
-      body = req.body.toString('utf-8')
-    } else {
-      // Fallback: reconstruct from parsed body
-      // This may cause signature mismatch if JSON formatting differs
-      body = JSON.stringify(req.body)
-      console.warn('Using reconstructed body - signature verification may fail')
     }
 
     // For all other interactions, verify signature strictly
