@@ -358,9 +358,9 @@ export default function BlogPost() {
     
     // Strategy 2a: For "Ender's Game" specifically - handle case where text might have different apostrophe
     // Check if we're looking for a title with "ender" and "game"
-    const textWords = normalizedText.split(/\s+/);
-    const hasEnder = textWords.some(w => w.includes('ender'));
-    const hasGame = textWords.some(w => w.includes('game'));
+    const textWordsCheck = normalizedText.split(/\s+/);
+    const hasEnder = textWordsCheck.some(w => w.includes('ender'));
+    const hasGame = textWordsCheck.some(w => w.includes('game'));
     
     if (hasEnder && hasGame) {
       // Look for titles containing both "ender" and "game"
@@ -800,14 +800,14 @@ export default function BlogPost() {
               })
               .join('\\s+[,\\s]*(?:and\\s+)?'); // Allow spaces, commas, and "and" between words
             
-            try {
-              // Try multiple regex patterns for better matching
-              const fallbackPatterns = [
-                `\\b(${wordBoundaryPattern})\\b`, // Word boundaries
-                `(${wordBoundaryPattern})`, // Without word boundaries (more permissive)
-              ];
-              
-              for (const pattern of fallbackPatterns) {
+            // Try multiple regex patterns for better matching
+            const fallbackPatterns = [
+              `\\b(${wordBoundaryPattern})\\b`, // Word boundaries
+              `(${wordBoundaryPattern})`, // Without word boundaries (more permissive)
+            ];
+            
+            for (const pattern of fallbackPatterns) {
+              try {
                 const fallbackRegex = new RegExp(pattern, 'gi');
                 fallbackRegex.lastIndex = 0;
                 let fallbackMatch;
@@ -841,7 +841,7 @@ export default function BlogPost() {
                 }
               } catch (e) {
                 // Silently fail - regex might be invalid, but that's okay
-                continue;
+                // Continue to next pattern
               }
             }
           }
