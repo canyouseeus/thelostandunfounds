@@ -16,7 +16,12 @@
       "permanent": false
     }
   ],
-  "rewrites": [],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
