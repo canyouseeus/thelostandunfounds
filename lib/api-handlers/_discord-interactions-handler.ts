@@ -81,6 +81,14 @@ export default async function handler(
       return res.status(401).json({ error: 'Invalid signature' })
     }
 
+    // Handle interaction
+    const interaction = typeof req.body === 'object' ? req.body : JSON.parse(body)
+
+    // Handle ping (Discord verification)
+    if (interaction.type === 1) {
+      return res.status(200).json({ type: 1 })
+    }
+
     // Handle application commands (slash commands)
     if (interaction.type === 2) {
       return handleApplicationCommand(req, res, interaction)
