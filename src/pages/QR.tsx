@@ -15,6 +15,8 @@ export default function QR() {
   const [logoImage, setLogoImage] = useState<string | null>(null) // User's custom logo
   const [useDefaultLogo, setUseDefaultLogo] = useState(true) // Use our logo by default
   const [qrPosition, setQrPosition] = useState({ x: 0.5, y: 0.5 }) // Center position (0-1)
+  const [qrSize, setQrSize] = useState(256) // QR code size in pixels (default 256)
+  const [qrSizePercent, setQrSizePercent] = useState(0.2) // QR code size as percentage of wallpaper (default 20%)
   const landingQRRef = useRef<HTMLDivElement>(null)
   const customQRRef = useRef<HTMLDivElement>(null)
   const landingCompositedCanvasRef = useRef<HTMLCanvasElement>(null)
@@ -254,10 +256,10 @@ export default function QR() {
         ctx.fillRect(0, 0, PORTRAIT_WIDTH, PORTRAIT_HEIGHT)
       }
 
-      // Calculate QR code size (20% of canvas width)
-      const qrSize = PORTRAIT_WIDTH * 0.2
-      const qrX = (PORTRAIT_WIDTH - qrSize) * qrPosition.x
-      const qrY = (PORTRAIT_HEIGHT - qrSize) * qrPosition.y
+      // Calculate QR code size based on user setting (percentage of canvas width)
+      const qrSizeOnCanvas = PORTRAIT_WIDTH * qrSizePercent
+      const qrX = (PORTRAIT_WIDTH - qrSizeOnCanvas) * qrPosition.x
+      const qrY = (PORTRAIT_HEIGHT - qrSizeOnCanvas) * qrPosition.y
 
       // Draw white background for QR code
       const padding = qrSize * 0.1
@@ -270,15 +272,15 @@ export default function QR() {
       )
 
       // Draw QR code
-      ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize)
+      ctx.drawImage(qrImage, qrX, qrY, qrSizeOnCanvas, qrSizeOnCanvas)
 
       // Draw logo in center of QR code if enabled
       if (includeLogo) {
         const logo = await getLogoImage()
         if (logo) {
-          const logoSize = qrSize * 0.3 // Logo is 30% of QR code size
-          const logoX = qrX + (qrSize - logoSize) / 2
-          const logoY = qrY + (qrSize - logoSize) / 2
+          const logoSize = qrSizeOnCanvas * 0.3 // Logo is 30% of QR code size
+          const logoX = qrX + (qrSizeOnCanvas - logoSize) / 2
+          const logoY = qrY + (qrSizeOnCanvas - logoSize) / 2
           
           // Draw white background circle/square for logo
           ctx.fillStyle = 'white'
@@ -525,6 +527,60 @@ export default function QR() {
               </p>
             </div>
 
+            {/* QR Code Size Control */}
+            <div className="mt-4 pt-4 border-t border-white/10">
+              <label className="block text-sm font-medium mb-2 text-left">
+                QR Code Size
+              </label>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs text-white/60 mb-1">
+                    Display Size: {qrSize}px
+                  </label>
+                  <input
+                    type="range"
+                    min="128"
+                    max="512"
+                    step="16"
+                    value={qrSize}
+                    onChange={(e) => {
+                      const newSize = parseInt(e.target.value)
+                      setQrSize(newSize)
+                    }}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-xs text-white/40 mt-1">
+                    <span>128px</span>
+                    <span>256px</span>
+                    <span>512px</span>
+                  </div>
+                </div>
+                {backgroundImage && (
+                  <div>
+                    <label className="block text-xs text-white/60 mb-1">
+                      Size on Wallpaper: {Math.round(qrSizePercent * 100)}% of width
+                    </label>
+                    <input
+                      type="range"
+                      min="0.1"
+                      max="0.5"
+                      step="0.05"
+                      value={qrSizePercent}
+                      onChange={(e) => {
+                        setQrSizePercent(parseFloat(e.target.value))
+                      }}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-white/40 mt-1">
+                      <span>10%</span>
+                      <span>20%</span>
+                      <span>50%</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* QR Position Controls - Only show if background image is uploaded */}
             {backgroundImage && (
               <div className="mt-4 pt-4 border-t border-white/10">
@@ -578,17 +634,18 @@ export default function QR() {
                   <div 
                     ref={landingQRRef}
                     className="bg-white p-4 rounded-lg relative"
+                    style={{ width: `${qrSize + 32}px`, height: `${qrSize + 32}px` }}
                   >
                     <QRCodeSVG
                       value={LANDING_PAGE_URL}
-                      size={256}
+                      size={qrSize}
                       level="H"
                       includeMargin={true}
                     />
                     {/* Logo overlay preview */}
                     {(useDefaultLogo || logoImage) && (
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="bg-white p-2 rounded" style={{ width: '51px', height: '51px' }}>
+                        <div className="bg-white p-2 rounded" style={{ width: `${qrSize * 0.2}px`, height: `${qrSize * 0.2}px` }}>
                           {useDefaultLogo && !logoImage ? (
                             <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
                           ) : logoImage ? (
@@ -690,17 +747,18 @@ export default function QR() {
                     <div 
                       ref={customQRRef}
                       className="bg-white p-4 rounded-lg relative"
+                      style={{ width: `${qrSize + 32}px`, height: `${qrSize + 32}px` }}
                     >
                       <QRCodeSVG
                         value={displayUrl}
-                        size={256}
+                        size={qrSize}
                         level="H"
                         includeMargin={true}
                       />
                       {/* Logo overlay preview */}
                       {(useDefaultLogo || logoImage) && (
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                          <div className="bg-white p-2 rounded" style={{ width: '51px', height: '51px' }}>
+                          <div className="bg-white p-2 rounded" style={{ width: `${qrSize * 0.2}px`, height: `${qrSize * 0.2}px` }}>
                             {useDefaultLogo && !logoImage ? (
                               <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
                             ) : logoImage ? (
