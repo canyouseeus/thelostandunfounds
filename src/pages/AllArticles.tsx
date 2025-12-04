@@ -147,7 +147,7 @@ export default function AllArticles() {
       </Helmet>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0 mb-4">
             <div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-2 tracking-wide">
                 ALL ARTICLES
@@ -173,7 +173,7 @@ export default function AllArticles() {
 
         {/* All Posts Grid */}
         {posts.length > 0 && (
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {posts.map((post) => {
               const excerpt = post.excerpt || (post.content ? (() => {
                 const firstParagraph = post.content.split(/\n\n+/)[0]?.trim() || '';
@@ -212,7 +212,7 @@ export default function AllArticles() {
                           collapseDelay={0}
                         >
                           <ExpandableCardHeader className="mb-1 pb-1">
-                            <h2 className="text-base font-black text-white mb-0 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
+                            <h2 className="text-base font-black text-white mb-0 tracking-wide transition md:whitespace-nowrap md:overflow-hidden md:text-ellipsis">
                               {post.title}
                             </h2>
                           </ExpandableCardHeader>
