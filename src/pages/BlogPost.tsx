@@ -439,6 +439,51 @@ export default function BlogPost() {
       post.amazon_affiliate_links.forEach((link: AffiliateLink) => {
         if (link.book_title && link.link) {
           bookLinks[link.book_title] = link.link;
+          
+          // Handle apostrophe variations (e.g. "Enders Game" -> "Ender's Game", "Ender’s Game")
+          // Also handle specific case for "Ender's Game"
+          if (link.book_title.toLowerCase().includes('ender') && link.book_title.toLowerCase().includes('game')) {
+            bookLinks["Ender's Game"] = link.link;
+            bookLinks["Ender’s Game"] = link.link;
+            bookLinks["Enders Game"] = link.link;
+          }
+
+          if (!link.book_title.includes("'") && !link.book_title.includes("’")) {
+            // Try adding apostrophe before 's'
+            if (link.book_title.endsWith("s Game")) {
+              const withApostrophe = link.book_title.replace("s Game", "'s Game");
+              const withSmartApostrophe = link.book_title.replace("s Game", "’s Game");
+              bookLinks[withApostrophe] = link.link;
+              bookLinks[withSmartApostrophe] = link.link;
+            }
+          }
+          
+          // Handle "The Lion, the Witch and the Wardrobe" specific variations
+          // The DB often has "Lion the witch and the wardrobe" but text has "The Lion, the Witch and the Wardrobe"
+          if (link.book_title.toLowerCase().includes('lion') && 
+              link.book_title.toLowerCase().includes('witch') && 
+              link.book_title.toLowerCase().includes('wardrobe')) {
+            bookLinks['The Lion, the Witch and the Wardrobe'] = link.link;
+            bookLinks['Lion, the Witch and the Wardrobe'] = link.link;
+            bookLinks['The Lion, The Witch And The Wardrobe'] = link.link;
+            bookLinks['the lion, the witch and the wardrobe'] = link.link;
+          }
+          
+          // General "The" prefix handling
+          if (!link.book_title.toLowerCase().startsWith('the ')) {
+            const withThe = `The ${link.book_title}`;
+            bookLinks[withThe] = link.link;
+            // Also try with title casing if the original wasn't
+            const withTheTitleCase = `The ${link.book_title.charAt(0).toUpperCase() + link.book_title.slice(1)}`;
+            bookLinks[withTheTitleCase] = link.link;
+          }
+          
+          // Handle apostrophe variations for existing titles
+          if (link.book_title.includes("'") || link.book_title.includes("'")) {
+            // Add version without apostrophe
+            const withoutApostrophe = link.book_title.replace(/['']/g, '');
+            bookLinks[withoutApostrophe] = link.link;
+          }
         }
       });
     }
@@ -471,9 +516,10 @@ export default function BlogPost() {
 
     // Create improved regex that handles punctuation and apostrophes better
     // Build patterns that match book titles with flexible punctuation handling
-    const escapedTerms = emphasisTerms
+    const escapedTerms: string[] = [];
+    emphasisTerms
       .filter(term => term && term.length > 0) // Filter out empty terms
-      .map(term => {
+      .forEach(term => {
         try {
           // Escape special regex characters
           let escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -481,13 +527,33 @@ export default function BlogPost() {
           escaped = escaped.replace(/'/g, "[''`]?");
           // Handle hyphens - allow various dash types (make optional)
           escaped = escaped.replace(/-/g, '[—–-]?');
-          return escaped;
+          escapedTerms.push(escaped);
+          
+          // CRITICAL FIX: If term doesn't have apostrophe but could be possessive, add version with apostrophe
+          // This handles "Enders Game" matching "Ender's Game"
+          if (!term.includes("'") && !term.includes("'") && !term.includes("`")) {
+            // Check if term has words ending in 's' that could be possessive
+            const possessiveMatch = term.match(/\b(\w{3,})(s)\b/gi);
+            if (possessiveMatch) {
+              // Create version with apostrophe: "Enders Game" -> "Ender's Game"
+              const withApostrophe = term.replace(/\b(\w{3,})(s)\b/gi, "$1's");
+              let escapedWithApostrophe = withApostrophe.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              escapedWithApostrophe = escapedWithApostrophe.replace(/'/g, "[''`]?");
+              escapedWithApostrophe = escapedWithApostrophe.replace(/-/g, '[—–-]?');
+              // Only add if different
+              if (escapedWithApostrophe !== escaped && !escapedTerms.includes(escapedWithApostrophe)) {
+                escapedTerms.push(escapedWithApostrophe);
+              }
+            }
+          }
         } catch (e) {
           console.warn('Error escaping term:', term, e);
-          return term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Fallback to basic escaping
+          const fallback = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          if (fallback && !escapedTerms.includes(fallback)) {
+            escapedTerms.push(fallback);
+          }
         }
-      })
-      .filter(term => term && term.length > 0); // Filter out any empty results
+      });
     
     // Only create regex if we have terms to match
     if (escapedTerms.length === 0) {
@@ -678,16 +744,37 @@ export default function BlogPost() {
         }
       }
       
-      // Remove duplicates and sort
-      const uniqueMatches: Array<{index: number, length: number, text: string}> = [];
-      matches.forEach(m => {
-        if (!uniqueMatches.some(um => 
-          (m.index >= um.index && m.index < um.index + um.length) ||
-          (um.index >= m.index && um.index < m.index + m.length)
-        )) {
-          uniqueMatches.push(m);
+      // Remove duplicates and prioritize longer matches
+      // CRITICAL: Sort by length (longest first) to prioritize full titles over partial matches
+      const sortedByLength = matches.sort((a, b) => b.length - a.length);
+      const uniqueMatches: Array<{index: number, length: number, text: string, bookTitle?: string}> = [];
+      
+      sortedByLength.forEach(m => {
+        // Check if this match overlaps with any existing match
+        const overlaps = uniqueMatches.some(um => {
+          const mStart = m.index;
+          const mEnd = m.index + m.length;
+          const umStart = um.index;
+          const umEnd = um.index + um.length;
+          
+          // Check for any overlap
+          return (mStart >= umStart && mStart < umEnd) ||
+                 (mEnd > umStart && mEnd <= umEnd) ||
+                 (mStart <= umStart && mEnd >= umEnd);
+        });
+        
+        // Only add if it doesn't overlap (longer matches were processed first)
+        if (!overlaps) {
+          // Try to find the full book title for this match
+          const bookTitle = findBookTitleMatch(m.text, Object.keys(bookLinks));
+          uniqueMatches.push({
+            ...m,
+            bookTitle: bookTitle || undefined
+          });
         }
       });
+      
+      // Now sort by index for processing order
       matches = uniqueMatches.sort((a, b) => a.index - b.index);
     }
 
@@ -718,10 +805,38 @@ export default function BlogPost() {
       const bookKey = findBookTitleMatch(matchedText, Object.keys(bookLinks));
       const affiliateLink = bookKey ? bookLinks[bookKey] : undefined;
       
-      // Preserve original case from article content - don't change the author's formatting
-      // If we found a match, use the original matched text (preserves author's case)
-      // Fallback to matchedText if bookKey exists but we want to preserve original formatting
-      const displayText = matchedText || '';
+      // CRITICAL FIX: Use the FULL book title from database for display
+      // This ensures "Hunger Game" displays as "The Hunger Games" and "Lion, the Witch..." displays as "The Lion, the Witch and the Wardrobe"
+      let displayText = matchedText || '';
+      let actualMatchLength = matchInfo.length;
+      
+      if (bookKey && affiliateLink) {
+        // Check if the full title appears in the text starting at this position
+        // Look ahead up to the full title length + some buffer
+        const searchStart = matchInfo.index;
+        const searchEnd = Math.min(text.length, searchStart + bookKey.length + 50);
+        const textSegment = text.substring(searchStart, searchEnd);
+        
+        // Try to find the full title in the text (case-insensitive, flexible punctuation)
+        // Escape the title but make apostrophes and punctuation flexible
+        let fullTitlePattern = bookKey
+          .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+          .replace(/'/g, "[''`]?")
+          .replace(/,/g, '[,]?\\s*');
+        
+        const fullTitleRegex = new RegExp(fullTitlePattern, 'gi');
+        const fullTitleMatch = textSegment.match(fullTitleRegex);
+        
+        if (fullTitleMatch && fullTitleMatch.index !== undefined) {
+          // Found the full title in the text - use it (preserves author's case)
+          displayText = fullTitleMatch[0];
+          // Update match length to include full title
+          actualMatchLength = fullTitleMatch.index + displayText.length;
+        } else {
+          // Full title not found in text - use the database title
+          displayText = bookKey;
+        }
+      }
       
       // Check if it's an emphasis term (THE LOST+UNFOUNDS, etc.) - these should always be bold
       const isEmphasisTerm = emphasisTerms.some(term => 
@@ -730,9 +845,9 @@ export default function BlogPost() {
       
       // If it's a book title with an affiliate link
       if (affiliateLink && bookLinkCounts) {
-        const currentCount = bookLinkCounts[bookKey!] || 0;
-        // Only create link if: we're allowed to link AND we haven't exceeded 2 links for this book
-        if (allowLinks && currentCount < 2) {
+        // Always create link if allowed - no limit on number of links per book
+        if (allowLinks) {
+          const currentCount = bookLinkCounts[bookKey!] || 0;
           bookLinkCounts[bookKey!] = currentCount + 1;
           parts.push(
             <a
@@ -746,7 +861,7 @@ export default function BlogPost() {
             </a>
           );
         } else {
-          // Exceeded link limit or not allowed - make it bold (no link)
+          // Not allowed to link - make it bold (no link)
           parts.push(
             <strong key={`bold-${keyCounter++}`} className="font-bold text-white">
               {displayText}
@@ -778,7 +893,8 @@ export default function BlogPost() {
         parts.push(displayText);
       }
       
-      lastIndex = matchInfo.index + matchInfo.length;
+      // Use actual match length (which may have been updated for full titles)
+      lastIndex = matchInfo.index + actualMatchLength;
     });
 
     // Add remaining text
@@ -1026,7 +1142,7 @@ export default function BlogPost() {
             break;
           }
         }
-        const allowLinks = isInIntro || isInBookSection;
+        const allowLinks = true; // Allow links throughout the entire post
         const content = formatTextWithEmphasis(numberedMatch[2], bookLinkCounts, allowLinks);
         elements.push(
           <p key={index} className="mb-6 text-white/90 text-lg leading-relaxed text-left">
@@ -1086,7 +1202,7 @@ export default function BlogPost() {
             break;
           }
         }
-        const allowLinks = isInIntro || isInBookSection;
+        const allowLinks = true; // Allow links throughout the entire post
         const content = formatTextWithEmphasis(bulletText, bookLinkCounts, allowLinks);
         elements.push(
           <p key={index} className="mb-4 text-white/90 text-lg leading-relaxed text-left pl-4">
@@ -1162,7 +1278,7 @@ export default function BlogPost() {
           break;
         }
       }
-      const allowLinks = isInIntro || isInBookSection;
+      const allowLinks = true; // Allow links throughout the entire post
       const content = formatTextWithEmphasis(trimmed, bookLinkCounts, allowLinks);
       
       elements.push(
