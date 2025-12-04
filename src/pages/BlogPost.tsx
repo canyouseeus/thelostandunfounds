@@ -1034,8 +1034,13 @@ export default function BlogPost() {
       // Use the book title from database (proper capitalization) instead of matched text
       // This ensures "The Hobbit" displays correctly even if content has "The hobbit"
       // CRITICAL: Always use the database title (bookKey) when available for proper capitalization
-      // Only fall back to matchedText if bookKey is not found (shouldn't happen for books in amazon_affiliate_links)
-      const displayText = (bookKey && affiliateLink) ? bookKey : matchedText || '';
+      // This ensures proper capitalization regardless of how it appears in content
+      let displayText = matchedText || '';
+      if (bookKey) {
+        // Always use the database title for proper capitalization
+        // This ensures "The Hobbit" displays correctly even if content has "The hobbit"
+        displayText = bookKey;
+      }
       
       // Check if it's an emphasis term (THE LOST+UNFOUNDS, etc.) - these should always be bold
       const isEmphasisTerm = emphasisTerms.some(term => 
