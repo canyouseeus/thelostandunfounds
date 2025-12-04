@@ -31,7 +31,8 @@ import {
   Calendar,
   FileText,
   User,
-  Image
+  Image,
+  RefreshCw
 } from 'lucide-react';
 import { LoadingSpinner } from '../components/Loading';
 import ErrorBoundary from '../components/ErrorBoundary';
@@ -108,6 +109,7 @@ export default function Admin() {
   const [loadingLostArchivesPosts, setLoadingLostArchivesPosts] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'subscriptions' | 'products' | 'settings' | 'blog' | 'newsletter' | 'submissions' | 'assets'>('overview');
   const [componentError, setComponentError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     checkAdminAccess();
@@ -187,6 +189,7 @@ export default function Admin() {
   const loadDashboardData = async () => {
     try {
       setComponentError(null);
+      console.log('[Admin Dashboard] Loading dashboard data...');
       
       // Load user stats with better error handling
       let usersData = null;
@@ -197,19 +200,24 @@ export default function Admin() {
           .select('user_id, tier, status');
         usersData = result.data;
         usersError = result.error;
+        console.log('[Admin Dashboard] Subscriptions query result:', { 
+          dataCount: usersData?.length || 0, 
+          error: usersError?.message || null 
+        });
       } catch (err: any) {
         // Table might not exist - that's okay, continue with defaults
         if (err?.message?.includes('does not exist') || err?.code === '42P01') {
-          console.warn('platform_subscriptions table does not exist, using defaults');
+          console.warn('[Admin Dashboard] platform_subscriptions table does not exist, using defaults');
           usersError = null;
           usersData = [];
         } else {
           usersError = err;
+          console.error('[Admin Dashboard] Error loading subscriptions:', err);
         }
       }
 
       if (usersError && usersError.code !== 'PGRST116') {
-        console.warn('Error loading subscriptions:', usersError);
+        console.warn('[Admin Dashboard] Error loading subscriptions:', usersError);
       }
 
       // Calculate stats
@@ -219,16 +227,29 @@ export default function Admin() {
       const premiumCount = activeSubs.filter(s => s.tier === 'premium').length;
       const proCount = activeSubs.filter(s => s.tier === 'pro').length;
 
-      // Get total users (approximate from auth.users)
+      // Get total users (try multiple sources)
       let totalUsers = 0;
       try {
         const result = await supabase
           .from('platform_subscriptions')
           .select('*', { count: 'exact', head: true });
         totalUsers = result.count || 0;
+        console.log('[Admin Dashboard] Total users from platform_subscriptions:', totalUsers);
       } catch (err: any) {
-        // Table might not exist - use length of subscriptions array
-        totalUsers = subscriptions.length;
+        console.warn('[Admin Dashboard] Error getting count from platform_subscriptions:', err);
+        // Try user_subdomains as fallback
+        try {
+          const subdomainResult = await supabase
+            .from('user_subdomains')
+            .select('*', { count: 'exact', head: true });
+          totalUsers = subdomainResult.count || subscriptions.length;
+          console.log('[Admin Dashboard] Total users from user_subdomains:', totalUsers);
+        } catch (subdomainErr: any) {
+          console.warn('[Admin Dashboard] Error getting count from user_subdomains:', subdomainErr);
+          // Last fallback: use length of subscriptions array
+          totalUsers = subscriptions.length;
+          console.log('[Admin Dashboard] Using subscriptions array length as fallback:', totalUsers);
+        }
       }
 
       // Get tool usage stats
@@ -248,7 +269,7 @@ export default function Admin() {
       const premiumRatio = totalSubs > 0 ? (premiumCount + proCount) / totalSubs : 0;
       const platformHealth = premiumRatio > 0.3 ? 'healthy' : premiumRatio > 0.1 ? 'warning' : 'critical';
 
-      setStats({
+      const newStats = {
         totalUsers: totalUsers || subscriptions.length,
         activeSubscriptions: activeSubs.length,
         freeUsers: freeCount,
@@ -257,7 +278,10 @@ export default function Admin() {
         totalToolUsage: toolUsage || 0,
         recentActivity: 0, // Can be enhanced with actual activity tracking
         platformHealth,
-      });
+      };
+      
+      console.log('[Admin Dashboard] Setting stats:', newStats);
+      setStats(newStats);
 
       // Generate alerts based on stats
       const newAlerts: Alert[] = [];
@@ -289,6 +313,7 @@ export default function Admin() {
         });
       }
       setAlerts(newAlerts);
+      console.log('[Admin Dashboard] Alerts set:', newAlerts.length);
 
       // Load recent users
       let recentData = null;
@@ -383,6 +408,7 @@ export default function Admin() {
           })
         );
         
+        console.log('[Admin Dashboard] Recent users loaded:', usersWithInfo.length);
         setRecentUsers(usersWithInfo);
       } else {
         // If no subscription data, try to show users from user_subdomains
@@ -431,14 +457,17 @@ export default function Admin() {
                 };
               })
             );
+            console.log('[Admin Dashboard] Recent users from subdomains:', usersFromSubdomains.length);
             setRecentUsers(usersFromSubdomains);
           }
         } catch (subdomainErr) {
-          // Ignore - no users to show
+          console.warn('[Admin Dashboard] Error loading users from subdomains:', subdomainErr);
         }
       }
+      
+      console.log('[Admin Dashboard] Dashboard data loaded successfully');
     } catch (error: any) {
-      console.error('Error loading dashboard data:', error);
+      console.error('[Admin Dashboard] Error loading dashboard data:', error);
       const errorMsg = error?.message || 'Unknown error';
       
       // Set default stats if tables don't exist
@@ -470,6 +499,7 @@ export default function Admin() {
   const loadBookClubPosts = async () => {
     try {
       setLoadingBookClubPosts(true);
+      console.log('[Admin Dashboard] Loading book club posts...');
       const { data, error } = await supabase
         .from('blog_posts')
         .select('id, title, slug, excerpt, published_at, created_at, subdomain, published, status')
@@ -479,9 +509,13 @@ export default function Admin() {
         .limit(10);
 
       if (error) {
-        console.error('Error loading book club posts:', error);
+        console.error('[Admin Dashboard] Error loading book club posts:', error);
         return;
       }
+
+      console.log('[Admin Dashboard] Book club posts query result:', { 
+        totalPosts: data?.length || 0 
+      });
 
       // Filter to only published posts
       const publishedPosts = (data || []).filter((post: any) => {
@@ -490,9 +524,10 @@ export default function Admin() {
         return isPublished;
       });
 
+      console.log('[Admin Dashboard] Published book club posts:', publishedPosts.length);
       setBookClubPosts(publishedPosts);
     } catch (err: any) {
-      console.error('Error loading book club posts:', err);
+      console.error('[Admin Dashboard] Error loading book club posts:', err);
     } finally {
       setLoadingBookClubPosts(false);
     }
@@ -503,6 +538,7 @@ export default function Admin() {
       setLoadingLostArchivesPosts(true);
       if (!user) return;
 
+      console.log('[Admin Dashboard] Loading THE LOST ARCHIVES posts...');
       const { data, error } = await supabase
         .from('blog_posts')
         .select('id, title, slug, excerpt, published_at, created_at, published, status, author_id, user_id, subdomain')
@@ -512,9 +548,13 @@ export default function Admin() {
         .limit(10);
 
       if (error) {
-        console.error('Error loading THE LOST ARCHIVES posts:', error);
+        console.error('[Admin Dashboard] Error loading THE LOST ARCHIVES posts:', error);
         return;
       }
+
+      console.log('[Admin Dashboard] THE LOST ARCHIVES posts query result:', { 
+        totalPosts: data?.length || 0 
+      });
 
       // Filter to published posts (no subdomain)
       // Since admin is the only writer for THE LOST ARCHIVES, show all published posts without subdomain
@@ -524,11 +564,31 @@ export default function Admin() {
         return isPublished; // All published posts without subdomain are THE LOST ARCHIVES
       });
 
+      console.log('[Admin Dashboard] Published THE LOST ARCHIVES posts:', filteredPosts.length);
       setLostArchivesPosts(filteredPosts);
     } catch (err: any) {
-      console.error('Error loading THE LOST ARCHIVES posts:', err);
+      console.error('[Admin Dashboard] Error loading THE LOST ARCHIVES posts:', err);
     } finally {
       setLoadingLostArchivesPosts(false);
+    }
+  };
+
+  const refreshAllData = async () => {
+    setRefreshing(true);
+    console.log('[Admin Dashboard] Refreshing all data...');
+    try {
+      await Promise.all([
+        loadDashboardData(),
+        loadBookClubPosts(),
+        loadLostArchivesPosts()
+      ]);
+      success('Dashboard data refreshed successfully');
+      console.log('[Admin Dashboard] All data refreshed successfully');
+    } catch (error) {
+      console.error('[Admin Dashboard] Error refreshing data:', error);
+      showError('Error refreshing dashboard data');
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -605,6 +665,15 @@ export default function Admin() {
             <p className="text-white/70">Manage your platform and users</p>
           </div>
               <div className="flex items-center gap-3">
+                <button
+                  onClick={refreshAllData}
+                  disabled={refreshing}
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white rounded-none text-white text-sm font-medium transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Refresh dashboard data"
+                >
+                  <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                  {refreshing ? 'Refreshing...' : 'Refresh'}
+                </button>
                 <Link
                   to={userSubdomain ? `/${userSubdomain}/bookclubprofile` : "/bookclubprofile"}
                   className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white rounded-none text-white text-sm font-medium transition flex items-center gap-2"
