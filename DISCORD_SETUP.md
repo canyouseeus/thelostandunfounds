@@ -23,8 +23,12 @@ Discord integration provides:
 2. **Get Application Credentials**
    - Go to **"General Information"** tab
    - Copy these values (you'll need them later):
-     - **Application ID** → `DISCORD_CLIENT_ID`
+     - **Application ID** → `DISCORD_CLIENT_ID` (This is your bot's application ID, NOT the server ID)
      - **Public Key** → `DISCORD_PUBLIC_KEY`
+   
+   **Note**: The Application ID (Client ID) is different from your Server ID (Guild ID):
+   - **Client ID** = Your bot application's unique identifier
+   - **Guild ID** = Your Discord server's unique identifier (`1428346383772942346`)
 
 ### Step 2: Create Discord Bot
 
@@ -106,16 +110,22 @@ Add these to your Vercel environment variables:
    ```env
    # Discord Bot Configuration
    DISCORD_BOT_TOKEN=your_bot_token_here
-   DISCORD_CLIENT_ID=your_application_id_here
+   DISCORD_CLIENT_ID=your_application_id_here  # From Developer Portal → General Information → Application ID
    DISCORD_CLIENT_SECRET=your_client_secret_here
    DISCORD_PUBLIC_KEY=your_public_key_here
    
    # Discord Webhook (Optional)
    DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
    
-   # Discord Server ID (Optional - for server-specific features)
-   DISCORD_GUILD_ID=your_server_id_here
+   # Discord Server ID (Guild ID) - Different from Client ID!
+   # Right-click your Discord server → Copy Server ID (Developer Mode must be enabled)
+   DISCORD_GUILD_ID=1428346383772942346  # Your server's ID (NOT the same as Client ID)
    ```
+   
+   **Important**: 
+   - `DISCORD_CLIENT_ID` = Your bot application ID (from Developer Portal)
+   - `DISCORD_GUILD_ID` = Your Discord server ID (`1428346383772942346`)
+   - These are **two different IDs** - don't confuse them!
 
 3. **Set for All Environments**
    - Select: Production, Preview, Development
