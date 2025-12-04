@@ -927,7 +927,20 @@ export default function BlogPost() {
       // IMPORTANT: Prefer full title matches (e.g., "The Hobbit" over "Hobbit")
       // Sort book titles by length (longest first) to prefer full titles
       const sortedBookTitles = Object.keys(bookLinks).sort((a, b) => b.length - a.length);
-      const bookKey = findBookTitleMatch(matchedText, sortedBookTitles);
+      let bookKey = findBookTitleMatch(matchedText, sortedBookTitles);
+      
+      // If no match found, try more aggressive matching for "Ender's Game"
+      if (!bookKey && (matchedText.toLowerCase().includes('ender') && matchedText.toLowerCase().includes('game'))) {
+        // Look for any book title containing "ender" and "game"
+        for (const title of sortedBookTitles) {
+          const titleLower = title.toLowerCase();
+          if (titleLower.includes('ender') && titleLower.includes('game')) {
+            bookKey = title;
+            break;
+          }
+        }
+      }
+      
       const affiliateLink = bookKey ? bookLinks[bookKey] : undefined;
       
       // Preserve original case from article content - don't change the author's formatting
