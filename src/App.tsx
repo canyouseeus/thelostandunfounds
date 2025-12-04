@@ -36,6 +36,7 @@ import Debug from './pages/Debug'
 import AIWritingPrompt from './pages/AIWritingPrompt'
 import HelloWorld from './pages/HelloWorld'
 import BlogGettingStarted from './pages/BlogGettingStarted'
+import QR from './pages/QR'
 
 function App() {
   // Video preloader temporarily disabled for debugging
@@ -100,6 +101,9 @@ function App() {
         </Route>
         <Route path="/sql" element={<Layout />}>
           <Route index element={<SQL />} />
+        </Route>
+        <Route path="/qr" element={<Layout />}>
+          <Route index element={<QR />} />
         </Route>
         <Route path="/:column/prompt" element={<Layout />}>
           <Route index element={<AIWritingPrompt />} />
