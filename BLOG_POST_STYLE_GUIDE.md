@@ -241,15 +241,98 @@ Both paragraphs are in "THE HOBBIT" section, so book title mentions can be linke
 
 When publishing a blog post, ensure:
 
-- [ ] All 4 books have affiliate links in `amazon_affiliate_links`
+- [ ] All books mentioned in the article have affiliate links in `amazon_affiliate_links` array
 - [ ] Each book has exactly 2 links (one in intro, one in section) - automatically added when publishing
-- [ ] Book titles preserve author's original case formatting (uppercase if author wrote uppercase, title case if author wrote title case)
+- [ ] Book titles display with proper capitalization from database (e.g., "The Hobbit" not "The hobbit")
 - [ ] Author name in disclosure is UPPERCASE and bold
 - [ ] Excerpt/preview text is displayed (if available)
 - [ ] Headers are properly detected and formatted
 - [ ] All text is left-aligned (except disclosure which is justified)
 - [ ] Disclosure is automatically added after intro (if not in content)
 - [ ] Book sections are properly detected for second links
+
+---
+
+## CRITICAL: How to Populate Hyperlinks When Publishing Articles
+
+### Step-by-Step Process for Adding Book Links to Blog Posts
+
+When a blog post is submitted or published, you MUST ensure book titles are properly linked. Follow these steps:
+
+#### 1. **Identify All Books Mentioned in the Article**
+   - Read through the article content
+   - Identify every book title mentioned (e.g., "The Hobbit", "Ender's Game", "The Hunger Games", "The Lion, the Witch and the Wardrobe")
+   - Note: Books may appear with different capitalization or punctuation in the content (e.g., "the hobbit", "Enders Game")
+
+#### 2. **Add Books to `amazon_affiliate_links` Array**
+   - The post must have an `amazon_affiliate_links` field in the database
+   - Format: `[{book_title: "The Hobbit", link: "https://amzn.to/..."}, ...]`
+   - **CRITICAL**: Use the FULL, PROPERLY CAPITALIZED book title from the database
+   - Examples:
+     - ✅ `"The Hobbit"` (not `"the hobbit"` or `"Hobbit"`)
+     - ✅ `"Ender's Game"` (not `"Enders Game"` or `"ender's game"`)
+     - ✅ `"The Hunger Games"` (not `"Hunger Games"` or `"the hunger games"`)
+     - ✅ `"The Lion, the Witch and the Wardrobe"` (not `"Lion, the Witch and the Wardrobe"`)
+
+#### 3. **Get Amazon Affiliate Links**
+   - For each book, create or use an existing Amazon affiliate link
+   - Format: `https://amzn.to/...` or full Amazon URL
+   - Ensure links are valid and working
+
+#### 4. **Database Schema**
+   ```sql
+   -- Example: Adding affiliate links to a blog post
+   UPDATE blog_posts
+   SET amazon_affiliate_links = '[
+     {"book_title": "The Hobbit", "link": "https://amzn.to/example1"},
+     {"book_title": "Ender'\''s Game", "link": "https://amzn.to/example2"},
+     {"book_title": "The Hunger Games", "link": "https://amzn.to/example3"},
+     {"book_title": "The Lion, the Witch and the Wardrobe", "link": "https://amzn.to/example4"}
+   ]'::jsonb
+   WHERE slug = 'your-post-slug';
+   ```
+
+#### 5. **Automatic Link Creation**
+   Once `amazon_affiliate_links` is populated:
+   - ✅ The system automatically finds book titles in the content (fuzzy matching handles variations)
+   - ✅ Creates first link in intro section (first 3 paragraphs)
+   - ✅ Creates second link in book's dedicated section (after heading with book title)
+   - ✅ Displays book titles with proper capitalization from database (not from content)
+
+#### 6. **Verification Checklist**
+   After publishing, verify:
+   - [ ] All books mentioned in article are in `amazon_affiliate_links` array
+   - [ ] Book titles in database use proper capitalization (e.g., "The Hobbit" not "The hobbit")
+   - [ ] First link appears in intro section (first 3 paragraphs)
+   - [ ] Second link appears in book's dedicated section
+   - [ ] Book titles display with proper capitalization (from database, not content)
+   - [ ] Links are clickable and working
+   - [ ] No more than 2 links per book appear
+
+#### 7. **Common Issues and Solutions**
+
+   **Issue**: Book title not linking
+   - **Solution**: Ensure book is in `amazon_affiliate_links` array with exact title match
+   - **Solution**: Check that title in database matches expected format (e.g., "The Hobbit" not "the hobbit")
+
+   **Issue**: Book title displays with wrong capitalization (e.g., "The hobbit" instead of "The Hobbit")
+   - **Solution**: Update `amazon_affiliate_links` to use properly capitalized title from database
+   - **Solution**: The system uses the database title for display, so ensure database has correct capitalization
+
+   **Issue**: Second link not appearing in book section
+   - **Solution**: Ensure section has a heading (character name or book title heading)
+   - **Solution**: Verify heading detection is working (headings with colons are detected)
+
+   **Issue**: "Ender's Game" not linking
+   - **Solution**: Ensure apostrophe is included in database title: `"Ender's Game"`
+   - **Solution**: System handles apostrophe variations, but database title must be correct
+
+#### 8. **Best Practices**
+   - Always use full book titles in `amazon_affiliate_links` (e.g., "The Hobbit" not "Hobbit")
+   - Use proper capitalization as it appears in official book title
+   - Include apostrophes and punctuation exactly as in official title
+   - Test links after publishing to ensure they work
+   - Verify display capitalization matches database title
 
 ---
 
