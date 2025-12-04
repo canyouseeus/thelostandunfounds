@@ -17,7 +17,8 @@
     "validate-env:vercel": "./scripts/validate-env.sh --vercel",
     "save:mantis": "./scripts/save-mantis-version.sh",
     "dev:mantis": "./scripts/dev-mantis.sh",
-    "discord:register-commands": "npx tsx scripts/register-discord-commands.ts"
+    "discord:register-commands": "npx tsx scripts/register-discord-commands.ts",
+    "discord:test": "./scripts/test-discord-integration.sh"
   },
   "dependencies": {
     "@scot33/tools-registry": "file:../tools-registry",
