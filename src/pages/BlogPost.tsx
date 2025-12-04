@@ -1031,38 +1031,10 @@ export default function BlogPost() {
       
       const affiliateLink = bookKey ? bookLinks[bookKey] : undefined;
       
-      // CRITICAL FIX: Use the FULL book title from database for display
-      // This ensures "Hunger Game" displays as "The Hunger Games" and "Lion, the Witch..." displays as "The Lion, the Witch and the Wardrobe"
-      let displayText = matchedText || '';
-      let actualMatchLength = matchInfo.length;
-      
-      if (bookKey && affiliateLink) {
-        // Check if the full title appears in the text starting at this position
-        // Look ahead up to the full title length + some buffer
-        const searchStart = matchInfo.index;
-        const searchEnd = Math.min(text.length, searchStart + bookKey.length + 50);
-        const textSegment = text.substring(searchStart, searchEnd);
-        
-        // Try to find the full title in the text (case-insensitive, flexible punctuation)
-        // Escape the title but make apostrophes and punctuation flexible
-        let fullTitlePattern = bookKey
-          .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-          .replace(/'/g, "[''`]?")
-          .replace(/,/g, '[,]?\\s*');
-        
-        const fullTitleRegex = new RegExp(fullTitlePattern, 'gi');
-        const fullTitleMatch = textSegment.match(fullTitleRegex);
-        
-        if (fullTitleMatch && fullTitleMatch.index !== undefined) {
-          // Found the full title in the text - use it (preserves author's case)
-          displayText = fullTitleMatch[0];
-          // Update match length to include full title
-          actualMatchLength = fullTitleMatch.index + displayText.length;
-        } else {
-          // Full title not found in text - use the database title
-          displayText = bookKey;
-        }
-      }
+      // Use the book title from database (proper capitalization) instead of matched text
+      // This ensures "The Hobbit" displays correctly even if content has "The hobbit"
+      // Always use the database title (bookKey) for proper capitalization
+      const displayText = bookKey || matchedText || '';
       
       // Check if it's an emphasis term (THE LOST+UNFOUNDS, etc.) - these should always be bold
       const isEmphasisTerm = emphasisTerms.some(term => 
