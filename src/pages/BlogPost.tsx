@@ -1043,9 +1043,9 @@ export default function BlogPost() {
       
       // If it's a book title with an affiliate link
       if (affiliateLink && bookLinkCounts) {
-        // Always create link if allowed - no limit on number of links per book
-        if (allowLinks) {
-          const currentCount = bookLinkCounts[bookKey!] || 0;
+        const currentCount = bookLinkCounts[bookKey!] || 0;
+        // Only create link if: we're allowed to link AND we haven't exceeded 2 links for this book
+        if (allowLinks && currentCount < 2) {
           bookLinkCounts[bookKey!] = currentCount + 1;
           parts.push(
             <a
@@ -1059,7 +1059,7 @@ export default function BlogPost() {
             </a>
           );
         } else {
-          // Not allowed to link - make it bold (no link)
+          // Exceeded link limit or not allowed - make it bold (no link)
           parts.push(
             <strong key={`bold-${keyCounter++}`} className="font-bold text-white">
               {displayText}
@@ -1091,8 +1091,8 @@ export default function BlogPost() {
         parts.push(displayText);
       }
       
-      // Use actual match length (which may have been updated for full titles)
-      lastIndex = matchInfo.index + actualMatchLength;
+      // Use the match length from the match info
+      lastIndex = matchInfo.index + matchInfo.length;
     });
 
     // Add remaining text
