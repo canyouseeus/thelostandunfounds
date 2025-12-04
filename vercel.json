@@ -16,12 +16,7 @@
       "permanent": false
     }
   ],
-  "rewrites": [
-    {
-      "source": "/thelostarchives/:slug",
-      "destination": "/thelostarchives/:slug.html"
-    }
-  ],
+  "rewrites": [],
   "headers": [
     {
       "source": "/(.*)",
