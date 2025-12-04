@@ -49,14 +49,18 @@ export default async function handler(
     }
 
     // Get raw body for signature verification
-    // Vercel should pass raw body when bodyParser is disabled
+    // Try to get raw body from request (set by API route) or reconstruct
     let body: string
-    if (typeof req.body === 'string') {
+    const rawBody = (req as any).rawBody
+    if (rawBody && typeof rawBody === 'string') {
+      body = rawBody
+    } else if (typeof req.body === 'string') {
       body = req.body
     } else if (Buffer.isBuffer(req.body)) {
       body = req.body.toString('utf-8')
     } else {
-      // Fallback: reconstruct from parsed body (may cause signature mismatch)
+      // Fallback: reconstruct from parsed body
+      // This may cause signature mismatch if JSON formatting differs
       body = JSON.stringify(req.body)
       console.warn('Using reconstructed body - signature verification may fail')
     }
