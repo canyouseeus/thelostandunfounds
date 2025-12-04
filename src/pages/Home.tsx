@@ -62,6 +62,8 @@ export default function Home() {
     
     // After 1 second fade in + 0.5 seconds static, fade out (3x faster)
     const fadeOutTimer = setTimeout(() => {
+      // Ensure opacity is exactly 1 before starting fade out
+      setLogoOpacity(1)
       setLogoState('fading-out')
       const fadeOutStart = Date.now()
       fadeOutIntervalRef = setInterval(() => {
