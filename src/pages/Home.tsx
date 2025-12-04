@@ -237,7 +237,7 @@ export default function Home() {
               <img 
                 src="/logo.png" 
                 alt="THE LOST+UNFOUNDS Logo" 
-                className="max-w-[570px] h-auto sm:max-w-[570px] max-w-[80vw] sm:max-w-[570px]" 
+                className="max-w-[570px] h-auto sm:max-w-[570px] max-w-[80vw] sm:max-w-[570px] logo" 
                 style={{ maxWidth: 'min(570px, 80vw)' }} 
               />
             </div>
