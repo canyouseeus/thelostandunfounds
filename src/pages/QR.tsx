@@ -12,11 +12,32 @@ export default function QR() {
   const [customUrl, setCustomUrl] = useState('')
   const [error, setError] = useState('')
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null)
+  const [logoImage, setLogoImage] = useState<string | null>(null) // User's custom logo
+  const [useDefaultLogo, setUseDefaultLogo] = useState(true) // Use our logo by default
   const [qrPosition, setQrPosition] = useState({ x: 0.5, y: 0.5 }) // Center position (0-1)
   const landingQRRef = useRef<HTMLDivElement>(null)
   const customQRRef = useRef<HTMLDivElement>(null)
-  const compositedCanvasRef = useRef<HTMLCanvasElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const landingCompositedCanvasRef = useRef<HTMLCanvasElement>(null)
+  const customCompositedCanvasRef = useRef<HTMLCanvasElement>(null)
+  const backgroundFileInputRef = useRef<HTMLInputElement>(null)
+  const logoFileInputRef = useRef<HTMLInputElement>(null)
+  
+  // Load default logo
+  useEffect(() => {
+    const loadDefaultLogo = async () => {
+      try {
+        const response = await fetch('/logo.png')
+        if (response.ok) {
+          const blob = await response.blob()
+          const url = URL.createObjectURL(blob)
+          // Don't set it here, we'll use it when rendering
+        }
+      } catch (err) {
+        console.warn('Could not load default logo')
+      }
+    }
+    loadDefaultLogo()
+  }, [])
 
   const validateUrl = (url: string): boolean => {
     if (!url.trim()) return false
@@ -72,10 +93,40 @@ export default function QR() {
     reader.readAsDataURL(file)
   }
 
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      setError('Please upload an image file (.png recommended)')
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const imageUrl = event.target?.result as string
+      setLogoImage(imageUrl)
+      setUseDefaultLogo(false)
+      setError('')
+    }
+    reader.onerror = () => {
+      setError('Failed to load logo')
+    }
+    reader.readAsDataURL(file)
+  }
+
   const removeBackgroundImage = () => {
     setBackgroundImage(null)
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
+    if (backgroundFileInputRef.current) {
+      backgroundFileInputRef.current.value = ''
+    }
+  }
+
+  const removeLogo = () => {
+    setLogoImage(null)
+    setUseDefaultLogo(true)
+    if (logoFileInputRef.current) {
+      logoFileInputRef.current.value = ''
     }
   }
 
@@ -120,9 +171,40 @@ export default function QR() {
     })
   }
 
+  const getLogoImage = async (): Promise<HTMLImageElement | null> => {
+    try {
+      let logoUrl: string
+      
+      if (useDefaultLogo) {
+        // Use our default logo
+        logoUrl = '/logo.png'
+      } else if (logoImage) {
+        // Use user's uploaded logo
+        logoUrl = logoImage
+      } else {
+        return null
+      }
+
+      return new Promise((resolve, reject) => {
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        img.onload = () => resolve(img)
+        img.onerror = () => {
+          console.warn('Failed to load logo image')
+          resolve(null)
+        }
+        img.src = logoUrl
+      })
+    } catch (err) {
+      console.warn('Error loading logo:', err)
+      return null
+    }
+  }
+
   const compositeQROnImage = async (
     qrRef: React.RefObject<HTMLDivElement>,
-    backgroundImgUrl: string | null
+    backgroundImgUrl: string | null,
+    includeLogo: boolean = true
   ) => {
     try {
       const qrImage = await getQRCodeAsImage(qrRef)
@@ -190,6 +272,23 @@ export default function QR() {
       // Draw QR code
       ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize)
 
+      // Draw logo in center of QR code if enabled
+      if (includeLogo) {
+        const logo = await getLogoImage()
+        if (logo) {
+          const logoSize = qrSize * 0.3 // Logo is 30% of QR code size
+          const logoX = qrX + (qrSize - logoSize) / 2
+          const logoY = qrY + (qrSize - logoSize) / 2
+          
+          // Draw white background circle/square for logo
+          ctx.fillStyle = 'white'
+          ctx.fillRect(logoX - 2, logoY - 2, logoSize + 4, logoSize + 4)
+          
+          // Draw logo
+          ctx.drawImage(logo, logoX, logoY, logoSize, logoSize)
+        }
+      }
+
       return canvas
     } catch (err: any) {
       setError(err.message || 'Failed to composite image')
@@ -202,8 +301,8 @@ export default function QR() {
     filename: string,
     withBackground: boolean = false
   ) => {
-    if (withBackground && backgroundImage) {
-      const canvas = await compositeQROnImage(ref, backgroundImage)
+    if (withBackground) {
+      const canvas = await compositeQROnImage(ref, backgroundImage, true)
       if (canvas) {
         canvas.toBlob((blob) => {
           if (blob) {
@@ -221,90 +320,98 @@ export default function QR() {
       return
     }
 
-    // Original download without background
+    // Download QR code with logo overlay
     if (!ref.current) return
 
     const svg = ref.current.querySelector('svg')
     if (!svg) return
 
-    // Clone the SVG to avoid modifying the original
-    const clonedSvg = svg.cloneNode(true) as SVGElement
+    // Get QR code as image
+    const qrImage = await getQRCodeAsImage(ref)
     
-    // Set background color to white
-    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
-    rect.setAttribute('width', '100%')
-    rect.setAttribute('height', '100%')
-    rect.setAttribute('fill', 'white')
-    clonedSvg.insertBefore(rect, clonedSvg.firstChild)
-
-    // Convert SVG to data URL
-    const svgData = new XMLSerializer().serializeToString(clonedSvg)
-    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' })
-    const svgUrl = URL.createObjectURL(svgBlob)
-
-    // Create canvas to convert SVG to PNG
-    const img = new Image()
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      canvas.width = img.width
-      canvas.height = img.height
-      const ctx = canvas.getContext('2d')
-      
-      if (ctx) {
-        // Fill white background
-        ctx.fillStyle = 'white'
-        ctx.fillRect(0, 0, canvas.width, canvas.height)
-        
-        // Draw the QR code
-        ctx.drawImage(img, 0, 0)
-        
-        // Convert to blob and download
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const url = URL.createObjectURL(blob)
-            const link = document.createElement('a')
-            link.href = url
-            link.download = filename
-            document.body.appendChild(link)
-            link.click()
-            document.body.removeChild(link)
-            URL.revokeObjectURL(url)
-          }
-        }, 'image/png')
-      }
-      
-      URL.revokeObjectURL(svgUrl)
-    }
-    img.onerror = () => {
-      URL.revokeObjectURL(svgUrl)
-      setError('Failed to download QR code')
-    }
-    img.src = svgUrl
-  }
-
-  // Update composited preview when QR or background changes
-  const updatePreview = async (qrRef: React.RefObject<HTMLDivElement>) => {
-    if (!compositedCanvasRef.current || !qrRef.current) return
+    // Get logo
+    const logo = await getLogoImage()
     
-    const canvas = compositedCanvasRef.current
+    // Create canvas
+    const canvas = document.createElement('canvas')
+    canvas.width = qrImage.width
+    canvas.height = qrImage.height
     const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    const composited = await compositeQROnImage(qrRef, backgroundImage)
-    if (composited) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      ctx.drawImage(composited, 0, 0, canvas.width, canvas.height)
+    
+    if (!ctx) {
+      setError('Failed to create canvas context')
+      return
     }
+
+    // Fill white background
+    ctx.fillStyle = 'white'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    
+    // Draw the QR code
+    ctx.drawImage(qrImage, 0, 0)
+    
+    // Draw logo in center if available
+    if (logo) {
+      const logoSize = canvas.width * 0.2 // Logo is 20% of QR code size
+      const logoX = (canvas.width - logoSize) / 2
+      const logoY = (canvas.height - logoSize) / 2
+      
+      // Draw white background for logo
+      ctx.fillStyle = 'white'
+      ctx.fillRect(logoX - 4, logoY - 4, logoSize + 8, logoSize + 8)
+      
+      // Draw logo
+      ctx.drawImage(logo, logoX, logoY, logoSize, logoSize)
+    }
+    
+    // Convert to blob and download
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = filename
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+      }
+    }, 'image/png')
   }
 
   const displayUrl = customUrl.trim() ? normalizeUrl(customUrl) : ''
 
-  // Update preview when background image or QR changes
+  // Update composited preview when QR or background changes
+  const updatePreview = async (
+    qrRef: React.RefObject<HTMLDivElement>,
+    canvasRef?: React.RefObject<HTMLCanvasElement>
+  ) => {
+    const targetCanvas = canvasRef?.current || customCompositedCanvasRef.current
+    if (!targetCanvas || !qrRef.current) return
+    
+    const ctx = targetCanvas.getContext('2d')
+    if (!ctx) return
+
+    const composited = await compositeQROnImage(qrRef, backgroundImage, true)
+    if (composited) {
+      ctx.clearRect(0, 0, targetCanvas.width, targetCanvas.height)
+      ctx.drawImage(composited, 0, 0, targetCanvas.width, targetCanvas.height)
+    }
+  }
+
+  // Update preview when background image, logo, or QR changes
   useEffect(() => {
     if (displayUrl && validateUrl(customUrl) && backgroundImage) {
       updatePreview(customQRRef)
     }
-  }, [backgroundImage, qrPosition, displayUrl])
+  }, [backgroundImage, logoImage, useDefaultLogo, qrPosition, displayUrl])
+
+  // Update landing page preview
+  useEffect(() => {
+    if (backgroundImage && landingQRRef.current) {
+      updatePreview(landingQRRef, landingCompositedCanvasRef)
+    }
+  }, [backgroundImage, logoImage, useDefaultLogo, qrPosition])
 
   return (
     <>
@@ -319,6 +426,145 @@ export default function QR() {
             <p className="text-white/70 text-lg">Generate and download QR codes for any link</p>
           </div>
 
+          {/* Image and Logo Upload Section - Always Visible */}
+          <div className="mb-8 bg-white/5 border border-white/10 rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4 text-left">Customize Your QR Codes</h2>
+            
+            {/* Background Image Upload */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2 text-left">
+                Background Image (Optional)
+              </label>
+              <div className="flex items-center gap-4">
+                <input
+                  ref={backgroundFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  id="background-image-upload"
+                />
+                <label
+                  htmlFor="background-image-upload"
+                  className="px-4 py-2 bg-white/10 border border-white/20 hover:bg-white/20 transition-colors rounded-none cursor-pointer flex items-center gap-2"
+                >
+                  <Upload className="w-4 h-4" />
+                  Upload Background
+                </label>
+                {backgroundImage && (
+                  <button
+                    onClick={removeBackgroundImage}
+                    className="px-4 py-2 bg-red-600/20 border border-red-600/40 hover:bg-red-600/30 transition-colors rounded-none flex items-center gap-2"
+                  >
+                    <X className="w-4 h-4" />
+                    Remove
+                  </button>
+                )}
+              </div>
+              <p className="text-white/50 text-xs mt-2 text-left">
+                Images will be resized to portrait dimensions (1080x1920) for phone wallpaper
+              </p>
+            </div>
+
+            {/* Logo Upload */}
+            <div>
+              <label className="block text-sm font-medium mb-2 text-left">
+                Logo (Optional)
+              </label>
+              <div className="flex items-center gap-4">
+                <input
+                  ref={logoFileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg"
+                  onChange={handleLogoUpload}
+                  className="hidden"
+                  id="logo-upload"
+                />
+                <label
+                  htmlFor="logo-upload"
+                  className="px-4 py-2 bg-white/10 border border-white/20 hover:bg-white/20 transition-colors rounded-none cursor-pointer flex items-center gap-2"
+                >
+                  <Upload className="w-4 h-4" />
+                  Upload Custom Logo
+                </label>
+                {(logoImage || useDefaultLogo) && (
+                  <>
+                    {logoImage && (
+                      <button
+                        onClick={removeLogo}
+                        className="px-4 py-2 bg-red-600/20 border border-red-600/40 hover:bg-red-600/30 transition-colors rounded-none flex items-center gap-2"
+                      >
+                        <X className="w-4 h-4" />
+                        Remove Custom Logo
+                      </button>
+                    )}
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={useDefaultLogo && !logoImage}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setUseDefaultLogo(true)
+                            setLogoImage(null)
+                            if (logoFileInputRef.current) {
+                              logoFileInputRef.current.value = ''
+                            }
+                          } else {
+                            setUseDefaultLogo(false)
+                          }
+                        }}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm text-white/70">Use our logo (default)</span>
+                    </label>
+                  </>
+                )}
+              </div>
+              <p className="text-white/50 text-xs mt-2 text-left">
+                Logo will be centered in the QR code. PNG format recommended.
+              </p>
+            </div>
+
+            {/* QR Position Controls - Only show if background image is uploaded */}
+            {backgroundImage && (
+              <div className="mt-4 pt-4 border-t border-white/10">
+                <label className="block text-sm font-medium mb-2 text-left">
+                  QR Code Position on Background
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs text-white/60 mb-1">Horizontal (0-1)</label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.1"
+                      value={qrPosition.x}
+                      onChange={(e) => {
+                        setQrPosition({ ...qrPosition, x: parseFloat(e.target.value) })
+                      }}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-white/60 mb-1">Vertical (0-1)</label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.1"
+                      value={qrPosition.y}
+                      onChange={(e) => {
+                        setQrPosition({ ...qrPosition, y: parseFloat(e.target.value) })
+                      }}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Landing Page QR Code */}
           <div className="mb-16">
             <div className="bg-white/5 border border-white/10 rounded-lg p-8">
@@ -326,30 +572,74 @@ export default function QR() {
               <p className="text-white/60 mb-6 text-left text-sm">
                 Scan this QR code to visit our landing page
               </p>
-              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8">
-                <div 
-                  ref={landingQRRef}
-                  className="bg-white p-4 rounded-lg flex-shrink-0"
-                >
-                  <QRCodeSVG
-                    value={LANDING_PAGE_URL}
-                    size={256}
-                    level="H"
-                    includeMargin={true}
-                  />
+              <div className="flex flex-col lg:flex-row items-start gap-8">
+                {/* QR Code Only */}
+                <div className="flex-shrink-0">
+                  <div 
+                    ref={landingQRRef}
+                    className="bg-white p-4 rounded-lg relative"
+                  >
+                    <QRCodeSVG
+                      value={LANDING_PAGE_URL}
+                      size={256}
+                      level="H"
+                      includeMargin={true}
+                    />
+                    {/* Logo overlay preview */}
+                    {(useDefaultLogo || logoImage) && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="bg-white p-2 rounded" style={{ width: '51px', height: '51px' }}>
+                          {useDefaultLogo && !logoImage ? (
+                            <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
+                          ) : logoImage ? (
+                            <img src={logoImage} alt="Custom Logo" className="w-full h-full object-contain" />
+                          ) : null}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
+
+                {/* Composited Preview */}
+                {backgroundImage && (
+                  <div className="flex-shrink-0">
+                    <p className="text-sm text-white/60 mb-2 text-left">Preview (Portrait)</p>
+                    <div className="border border-white/20 rounded-lg overflow-hidden" style={{ width: '270px', height: '480px' }}>
+                      <canvas
+                        ref={landingCompositedCanvasRef}
+                        width={270}
+                        height={480}
+                        className="w-full h-full object-cover"
+                        style={{ imageRendering: 'high-quality' }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Info and Download */}
                 <div className="flex-1 text-left">
                   <p className="text-white/80 mb-2 break-all">
                     <LinkIcon className="inline-block w-4 h-4 mr-2" />
                     {LANDING_PAGE_URL}
                   </p>
-                  <button
-                    onClick={() => downloadQRCode(landingQRRef, 'thelostandunfounds-landing-qr.png')}
-                    className="mt-4 px-6 py-2 bg-white text-black hover:bg-white/90 transition-colors rounded-none flex items-center gap-2"
-                  >
-                    <Download className="w-4 h-4" />
-                    Download QR Code
-                  </button>
+                  <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                    <button
+                      onClick={() => downloadQRCode(landingQRRef, 'thelostandunfounds-landing-qr.png', false)}
+                      className="px-6 py-2 bg-white text-black hover:bg-white/90 transition-colors rounded-none flex items-center justify-center gap-2"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download QR Only
+                    </button>
+                    {backgroundImage && (
+                      <button
+                        onClick={() => downloadQRCode(landingQRRef, 'thelostandunfounds-wallpaper.png', true)}
+                        className="px-6 py-2 bg-white text-black hover:bg-white/90 transition-colors rounded-none flex items-center justify-center gap-2"
+                      >
+                        <Download className="w-4 h-4" />
+                        Download Wallpaper
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -393,90 +683,13 @@ export default function QR() {
 
             {displayUrl && validateUrl(customUrl) && (
               <div className="mt-8 pt-8 border-t border-white/10">
-                {/* Image Upload Section */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium mb-2 text-left">
-                    Add Background Image (Optional)
-                  </label>
-                  <div className="flex items-center gap-4">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                      id="background-image-upload"
-                    />
-                    <label
-                      htmlFor="background-image-upload"
-                      className="px-4 py-2 bg-white/10 border border-white/20 hover:bg-white/20 transition-colors rounded-none cursor-pointer flex items-center gap-2"
-                    >
-                      <Upload className="w-4 h-4" />
-                      Upload Image
-                    </label>
-                    {backgroundImage && (
-                      <button
-                        onClick={removeBackgroundImage}
-                        className="px-4 py-2 bg-red-600/20 border border-red-600/40 hover:bg-red-600/30 transition-colors rounded-none flex items-center gap-2"
-                      >
-                        <X className="w-4 h-4" />
-                        Remove Image
-                      </button>
-                    )}
-                  </div>
-                  <p className="text-white/50 text-xs mt-2 text-left">
-                    Image will be resized to portrait dimensions (1080x1920) for phone wallpaper
-                  </p>
-                </div>
-
-                {/* QR Code Position Controls */}
-                {backgroundImage && (
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium mb-2 text-left">
-                      QR Code Position
-                    </label>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs text-white/60 mb-1">Horizontal (0-1)</label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="1"
-                          step="0.1"
-                          value={qrPosition.x}
-                          onChange={(e) => {
-                            setQrPosition({ ...qrPosition, x: parseFloat(e.target.value) })
-                            setTimeout(() => updatePreview(customQRRef), 100)
-                          }}
-                          className="w-full"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-white/60 mb-1">Vertical (0-1)</label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="1"
-                          step="0.1"
-                          value={qrPosition.y}
-                          onChange={(e) => {
-                            setQrPosition({ ...qrPosition, y: parseFloat(e.target.value) })
-                            setTimeout(() => updatePreview(customQRRef), 100)
-                          }}
-                          className="w-full"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {/* Preview and QR Code */}
                 <div className="flex flex-col lg:flex-row items-start gap-8">
                   {/* QR Code Only */}
                   <div className="flex-shrink-0">
                     <div 
                       ref={customQRRef}
-                      className="bg-white p-4 rounded-lg"
+                      className="bg-white p-4 rounded-lg relative"
                     >
                       <QRCodeSVG
                         value={displayUrl}
@@ -484,6 +697,18 @@ export default function QR() {
                         level="H"
                         includeMargin={true}
                       />
+                      {/* Logo overlay preview */}
+                      {(useDefaultLogo || logoImage) && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <div className="bg-white p-2 rounded" style={{ width: '51px', height: '51px' }}>
+                            {useDefaultLogo && !logoImage ? (
+                              <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
+                            ) : logoImage ? (
+                              <img src={logoImage} alt="Custom Logo" className="w-full h-full object-contain" />
+                            ) : null}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -493,7 +718,7 @@ export default function QR() {
                       <p className="text-sm text-white/60 mb-2 text-left">Preview (Portrait)</p>
                       <div className="border border-white/20 rounded-lg overflow-hidden" style={{ width: '270px', height: '480px' }}>
                         <canvas
-                          ref={compositedCanvasRef}
+                          ref={customCompositedCanvasRef}
                           width={270}
                           height={480}
                           className="w-full h-full object-cover"
