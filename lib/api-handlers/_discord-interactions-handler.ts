@@ -49,13 +49,17 @@ export default async function handler(
     }
 
     // Get raw body for signature verification
-    // Note: Vercel parses JSON automatically, so we need to reconstruct the raw body
-    // For proper signature verification, we should use raw body from req
-    // For now, we'll stringify the parsed body (this works but is not ideal)
-    // TODO: Configure Vercel to pass raw body for this endpoint
-    const body = typeof req.body === 'string' 
-      ? req.body 
-      : JSON.stringify(req.body)
+    // Vercel should pass raw body when bodyParser is disabled
+    let body: string
+    if (typeof req.body === 'string') {
+      body = req.body
+    } else if (Buffer.isBuffer(req.body)) {
+      body = req.body.toString('utf-8')
+    } else {
+      // Fallback: reconstruct from parsed body (may cause signature mismatch)
+      body = JSON.stringify(req.body)
+      console.warn('Using reconstructed body - signature verification may fail')
+    }
 
     // Verify signature
     const isValid = await verifyDiscordSignature(body, signature, timestamp, publicKey)
