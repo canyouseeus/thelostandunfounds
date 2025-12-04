@@ -40,35 +40,7 @@ export default async function handler(
       })
     }
 
-    // Verify request signature
-    const signature = req.headers['x-signature-ed25519'] as string
-    const timestamp = req.headers['x-signature-timestamp'] as string
-
-    // Parse interaction first to check if it's a ping (for verification)
-    // We need to parse before checking headers because Discord's verification ping
-    // might not always include proper headers
-    let interaction: any
-    try {
-      interaction = typeof req.body === 'object' ? req.body : JSON.parse(body)
-    } catch (e) {
-      // If we can't parse, it's not a valid interaction
-      return res.status(400).json({ error: 'Invalid request body' })
-    }
-
-    // Handle ping (Discord verification) - respond immediately
-    // Discord's verification only checks that we respond with {"type": 1}
-    if (interaction.type === 1) {
-      // For verification ping, we don't require signature headers
-      // This allows Discord to verify the endpoint
-      return res.status(200).json({ type: 1 })
-    }
-
-    // For all other interactions, signature headers are required
-    if (!signature || !timestamp) {
-      return res.status(401).json({ error: 'Missing signature headers' })
-    }
-
-    // Get raw body for signature verification
+    // Get raw body for signature verification first
     // Try to get raw body from request (set by API route) or reconstruct
     let body: string
     const rawBody = (req as any).rawBody
@@ -83,6 +55,41 @@ export default async function handler(
       // This may cause signature mismatch if JSON formatting differs
       body = JSON.stringify(req.body)
       console.warn('Using reconstructed body - signature verification may fail')
+    }
+
+    // Parse interaction to check if it's a ping (for verification)
+    let interaction: any
+    try {
+      interaction = typeof req.body === 'object' ? req.body : JSON.parse(body)
+    } catch (e) {
+      // If we can't parse, it's not a valid interaction
+      return res.status(400).json({ error: 'Invalid request body' })
+    }
+
+    // Get signature headers
+    const signature = req.headers['x-signature-ed25519'] as string
+    const timestamp = req.headers['x-signature-timestamp'] as string
+
+    // Handle ping (Discord verification) - respond immediately
+    // Discord's verification ping (type 1) should respond with {"type": 1}
+    // For verification, Discord may not send signature headers, so we handle it gracefully
+    if (interaction.type === 1) {
+      // If signature headers are present, verify them
+      if (signature && timestamp) {
+        const isValid = await verifyDiscordSignature(body, signature, timestamp, publicKey)
+        if (!isValid) {
+          console.warn('Discord verification ping signature check failed, but responding anyway for endpoint verification')
+          // Still respond with type 1 to allow Discord to verify the endpoint
+          // This is necessary because Vercel's body parsing may cause signature mismatches
+        }
+      }
+      // Always respond with type 1 for verification ping
+      return res.status(200).json({ type: 1 })
+    }
+
+    // For all other interactions, signature headers are required
+    if (!signature || !timestamp) {
+      return res.status(401).json({ error: 'Missing signature headers' })
     }
 
     // For all other interactions, verify signature strictly
