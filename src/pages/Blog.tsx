@@ -237,7 +237,7 @@ export default function Blog() {
       {/* Native Posts Section - 3 Most Recent */}
       {nativePosts.length > 0 && (
         <div className="mb-12">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-6">
             <h2 className="text-2xl font-bold text-white">THE LOST ARCHIVES</h2>
             <Link
               to="/thelostarchives/all"
@@ -246,7 +246,7 @@ export default function Blog() {
               View All Articles →
             </Link>
           </div>
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {nativePosts.map((post) => {
               const excerpt = post.excerpt || (post.content ? (() => {
                 const firstParagraph = post.content.split(/\n\n+/)[0]?.trim() || '';
@@ -285,7 +285,7 @@ export default function Blog() {
                           collapseDelay={0}
                         >
                           <ExpandableCardHeader className="mb-1 pb-1">
-                            <h2 className="text-base font-black text-white mb-0 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
+                            <h2 className="text-base font-black text-white mb-0 tracking-wide transition md:whitespace-nowrap md:overflow-hidden md:text-ellipsis">
                               {post.title}
                             </h2>
                           </ExpandableCardHeader>
@@ -348,7 +348,7 @@ export default function Blog() {
       {/* Book Club Posts Section - 3 Most Recent */}
       {bookClubPosts.length > 0 && (
         <div className="mt-12 pt-12 border-t border-white">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-6">
             <h2 className="text-2xl font-bold text-white">From the BOOK CLUB</h2>
             <Link
               to="/book-club"
@@ -357,7 +357,7 @@ export default function Blog() {
               View All →
             </Link>
           </div>
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {bookClubPosts.map((post) => {
               const excerpt = post.excerpt || (post.content ? (() => {
                 const firstParagraph = post.content.split(/\n\n+/)[0]?.trim() || '';
@@ -396,7 +396,7 @@ export default function Blog() {
                           collapseDelay={0}
                         >
                           <ExpandableCardHeader className="mb-1 pb-1">
-                            <h2 className="text-base font-black text-white mb-0 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
+                            <h2 className="text-base font-black text-white mb-0 tracking-wide transition md:whitespace-nowrap md:overflow-hidden md:text-ellipsis">
                               {post.title}
                             </h2>
                           </ExpandableCardHeader>
