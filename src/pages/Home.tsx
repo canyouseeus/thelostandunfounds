@@ -55,6 +55,7 @@ export default function Home() {
           clearInterval(fadeInIntervalRef)
           fadeInIntervalRef = null
         }
+        setLogoOpacity(1) // Ensure it's exactly 1, not just close to it
         setLogoState('static')
       }
     }, 16) // ~60fps
@@ -230,13 +231,18 @@ export default function Home() {
                 top: '50%',
                 transform: 'translate(-50%, -50%)',
                 zIndex: 1000,
+                willChange: 'opacity',
               }}
             >
               <img 
                 src="/logo.png" 
                 alt="THE LOST+UNFOUNDS Logo" 
                 className="max-w-[570px] h-auto sm:max-w-[570px] max-w-[80vw] sm:max-w-[570px]" 
-                style={{ maxWidth: 'min(570px, 80vw)' }} 
+                style={{ 
+                  maxWidth: 'min(570px, 80vw)',
+                  opacity: 1, // Ensure image itself is fully opaque
+                  filter: 'none', // Remove any filters that might make it faint
+                }} 
               />
             </div>
           )}
