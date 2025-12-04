@@ -348,11 +348,28 @@ export default function BlogPost() {
     
     // Strategy 2: Remove apostrophes and compare (Ender's Game = Enders Game)
     // Prefer longer titles first
-    const removeApostrophes = (t: string) => normalizeBookTitle(t).replace(/'/g, '');
+    const removeApostrophes = (t: string) => normalizeBookTitle(t).replace(/[''`]/g, '');
     const textNoApostrophe = removeApostrophes(text);
     for (const title of sortedTitles) {
       if (removeApostrophes(title) === textNoApostrophe) {
         return title;
+      }
+    }
+    
+    // Strategy 2a: For "Ender's Game" specifically - handle case where text might have different apostrophe
+    // Check if we're looking for a title with "ender" and "game"
+    const textWords = normalizedText.split(/\s+/);
+    const hasEnder = textWords.some(w => w.includes('ender'));
+    const hasGame = textWords.some(w => w.includes('game'));
+    
+    if (hasEnder && hasGame) {
+      // Look for titles containing both "ender" and "game"
+      for (const title of sortedTitles) {
+        const titleLower = normalizeBookTitle(title);
+        if (titleLower.includes('ender') && titleLower.includes('game')) {
+          // This is likely "Ender's Game" - return it
+          return title;
+        }
       }
     }
     
@@ -599,7 +616,10 @@ export default function BlogPost() {
     // This ensures we catch all books, especially those with punctuation variations like "Ender's Game"
     if (Object.keys(bookLinks).length > 0) {
       // For each book title in the database, search the text intelligently
-      for (const bookTitle of Object.keys(bookLinks)) {
+      // Sort by length (longest first) to prefer full titles
+      const sortedBookTitles = Object.keys(bookLinks).sort((a, b) => b.length - a.length);
+      
+      for (const bookTitle of sortedBookTitles) {
         // Check if we already found this book title in regex matches
         // But don't skip - we want to find ALL instances, not just the first one
         // The link count limit will handle preventing too many links
@@ -607,6 +627,9 @@ export default function BlogPost() {
           const matchResult = findBookTitleMatch(m.text, [bookTitle]);
           return matchResult === bookTitle;
         });
+        
+        // For "Ender's Game" specifically, be extra aggressive
+        const isEndersGame = bookTitle.toLowerCase().includes("ender") && bookTitle.toLowerCase().includes("game");
         
         // Even if found in regex, try intelligent matching to catch variations
         // This ensures we find "Ender's Game" even if content has "Enders Game" or vice versa
@@ -770,7 +793,7 @@ export default function BlogPost() {
               .map(w => {
                 // If word contains apostrophe (like "ender's"), handle it specially
                 if (w.includes("'")) {
-                  // Allow apostrophe variations
+                  // Allow apostrophe variations - make it optional for flexibility
                   return w.replace(/'/g, "[''`]?").replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                 }
                 return w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -788,7 +811,7 @@ export default function BlogPost() {
                 const fallbackRegex = new RegExp(pattern, 'gi');
                 fallbackRegex.lastIndex = 0;
                 let fallbackMatch;
-              
+                
                 while ((fallbackMatch = fallbackRegex.exec(text)) !== null) {
                   if (fallbackMatch[1] && fallbackMatch.index !== undefined) {
                     const matchStart = fallbackMatch.index;
@@ -819,6 +842,45 @@ export default function BlogPost() {
               } catch (e) {
                 // Silently fail - regex might be invalid, but that's okay
                 continue;
+              }
+            }
+          }
+          
+          // EXTRA FALLBACK for "Ender's Game" - direct substring search
+          // This is a last resort to catch any instance we might have missed
+          if (isEndersGame || bookTitle.toLowerCase().includes("ender")) {
+            const textLower = text.toLowerCase();
+            const searchTerms = [
+              "ender's game",
+              "enders game",
+              "ender game"
+            ];
+            
+            for (const searchTerm of searchTerms) {
+              let searchIndex = 0;
+              while ((searchIndex = textLower.indexOf(searchTerm, searchIndex)) !== -1) {
+                // Extract the actual text at this position
+                const actualMatch = text.substring(searchIndex, searchIndex + searchTerm.length);
+                
+                // Verify it matches the book title
+                const verifiedMatch = findBookTitleMatch(actualMatch, [bookTitle]);
+                if (verifiedMatch === bookTitle) {
+                  // Check if this overlaps with existing matches
+                  const isOverlapping = matches.some(m => 
+                    (searchIndex >= m.index && searchIndex < m.index + m.length) ||
+                    (searchIndex + actualMatch.length > m.index && searchIndex + actualMatch.length <= m.index + m.length) ||
+                    (searchIndex <= m.index && searchIndex + actualMatch.length >= m.index + m.length)
+                  );
+                  
+                  if (!isOverlapping) {
+                    matches.push({
+                      index: searchIndex,
+                      length: actualMatch.length,
+                      text: actualMatch
+                    });
+                  }
+                }
+                searchIndex += 1;
               }
             }
           }
