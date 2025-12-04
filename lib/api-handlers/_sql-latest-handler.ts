@@ -13,6 +13,7 @@ const SQL_FILES = [
   '/sql/fix-brand-assets-rls-policies.sql',
   '/sql/setup-admin-user.sql',
   '/sql/update-admin-username-and-subdomain.sql',
+  '/sql/fix-admin-dashboard-data-access.sql',
   '/sql/move-post-to-book-club.sql',
   '/sql/fix-book-club-posts-blog-column.sql',
   '/sql/create-newsletter-campaigns-table.sql',

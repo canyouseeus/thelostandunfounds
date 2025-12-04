@@ -227,25 +227,30 @@ export default function Admin() {
       const premiumCount = activeSubs.filter(s => s.tier === 'premium').length;
       const proCount = activeSubs.filter(s => s.tier === 'pro').length;
 
-      // Get total users (try multiple sources)
+      // Get total users (try multiple sources - prioritize user_subdomains as it has all users)
       let totalUsers = 0;
+      // First try user_subdomains (most comprehensive - includes all registered users)
       try {
-        const result = await supabase
-          .from('platform_subscriptions')
+        const subdomainResult = await supabase
+          .from('user_subdomains')
           .select('*', { count: 'exact', head: true });
-        totalUsers = result.count || 0;
-        console.log('[Admin Dashboard] Total users from platform_subscriptions:', totalUsers);
-      } catch (err: any) {
-        console.warn('[Admin Dashboard] Error getting count from platform_subscriptions:', err);
-        // Try user_subdomains as fallback
-        try {
-          const subdomainResult = await supabase
-            .from('user_subdomains')
-            .select('*', { count: 'exact', head: true });
-          totalUsers = subdomainResult.count || subscriptions.length;
+        if (subdomainResult.count !== null && subdomainResult.count > 0) {
+          totalUsers = subdomainResult.count;
           console.log('[Admin Dashboard] Total users from user_subdomains:', totalUsers);
-        } catch (subdomainErr: any) {
-          console.warn('[Admin Dashboard] Error getting count from user_subdomains:', subdomainErr);
+        } else {
+          throw new Error('No count returned');
+        }
+      } catch (subdomainErr: any) {
+        console.warn('[Admin Dashboard] Error getting count from user_subdomains:', subdomainErr);
+        // Try platform_subscriptions as fallback
+        try {
+          const result = await supabase
+            .from('platform_subscriptions')
+            .select('*', { count: 'exact', head: true });
+          totalUsers = result.count || 0;
+          console.log('[Admin Dashboard] Total users from platform_subscriptions:', totalUsers);
+        } catch (err: any) {
+          console.warn('[Admin Dashboard] Error getting count from platform_subscriptions:', err);
           // Last fallback: use length of subscriptions array
           totalUsers = subscriptions.length;
           console.log('[Admin Dashboard] Using subscriptions array length as fallback:', totalUsers);
@@ -315,33 +320,78 @@ export default function Admin() {
       setAlerts(newAlerts);
       console.log('[Admin Dashboard] Alerts set:', newAlerts.length);
 
-      // Load recent users
+      // Load recent users (prioritize user_subdomains as it has all users)
       let recentData = null;
+      // First try user_subdomains (most comprehensive)
       try {
-        const result = await supabase
-          .from('platform_subscriptions')
-          .select('user_id, tier, created_at')
+        const subdomainResult = await supabase
+          .from('user_subdomains')
+          .select('user_id, created_at')
           .order('created_at', { ascending: false })
           .limit(10);
-        recentData = result.data;
-      } catch (err: any) {
-        // Table might not exist - try to get users from auth.users via RPC or fallback
+        if (subdomainResult.data && subdomainResult.data.length > 0) {
+          // Map to format expected by the rest of the code
+          recentData = subdomainResult.data.map((row: any) => ({
+            user_id: row.user_id,
+            tier: 'free', // Default to free, will be updated from platform_subscriptions if available
+            created_at: row.created_at,
+          }));
+          console.log('[Admin Dashboard] Recent users from user_subdomains:', recentData.length);
+        }
+      } catch (subdomainErr: any) {
+        console.warn('[Admin Dashboard] Error loading from user_subdomains:', subdomainErr);
+      }
+      
+      // If no data from user_subdomains, try platform_subscriptions
+      if (!recentData || recentData.length === 0) {
         try {
-          // Try to get recent users from user_roles or user_subdomains as fallback
-          const fallbackResult = await supabase
-            .from('user_subdomains')
-            .select('user_id, created_at')
+          const result = await supabase
+            .from('platform_subscriptions')
+            .select('user_id, tier, created_at')
             .order('created_at', { ascending: false })
             .limit(10);
-          if (fallbackResult.data) {
-            recentData = fallbackResult.data.map((row: any) => ({
-              user_id: row.user_id,
-              tier: 'free',
-              created_at: row.created_at,
-            }));
+          if (result.data && result.data.length > 0) {
+            recentData = result.data;
+            console.log('[Admin Dashboard] Recent users from platform_subscriptions:', recentData.length);
           }
-        } catch (fallbackErr) {
+        } catch (err: any) {
+          console.warn('[Admin Dashboard] Error loading from platform_subscriptions:', err);
           recentData = [];
+        }
+      }
+      
+      // Enrich recentData with tier information from platform_subscriptions if available
+      if (recentData && recentData.length > 0) {
+        try {
+          const userIds = recentData.map((u: any) => u.user_id);
+          const subscriptionResult = await supabase
+            .from('platform_subscriptions')
+            .select('user_id, tier, status')
+            .in('user_id', userIds);
+          
+          if (subscriptionResult.data) {
+            // Create a map of user_id to subscription info
+            const subscriptionMap = new Map(
+              subscriptionResult.data.map((sub: any) => [sub.user_id, sub])
+            );
+            
+            // Update recentData with tier and status from subscriptions
+            recentData = recentData.map((user: any) => {
+              const sub = subscriptionMap.get(user.user_id);
+              if (sub) {
+                return {
+                  ...user,
+                  tier: sub.tier,
+                  status: sub.status,
+                };
+              }
+              return user;
+            });
+            console.log('[Admin Dashboard] Enriched user data with subscription info');
+          }
+        } catch (enrichErr: any) {
+          console.warn('[Admin Dashboard] Error enriching user data:', enrichErr);
+          // Continue with data we have
         }
       }
 
@@ -411,58 +461,8 @@ export default function Admin() {
         console.log('[Admin Dashboard] Recent users loaded:', usersWithInfo.length);
         setRecentUsers(usersWithInfo);
       } else {
-        // If no subscription data, try to show users from user_subdomains
-        try {
-          const subdomainResult = await supabase
-            .from('user_subdomains')
-            .select('user_id, subdomain, created_at')
-            .order('created_at', { ascending: false })
-            .limit(10);
-          
-          if (subdomainResult.data && subdomainResult.data.length > 0) {
-            const usersFromSubdomains = await Promise.all(
-              subdomainResult.data.map(async (row: any) => {
-                const userId = row.user_id;
-                let isAdmin = false;
-                let email = `user-${userId.substring(0, 8)}`;
-                
-                try {
-                  const roleResult = await supabase
-                    .from('user_roles')
-                    .select('is_admin, email')
-                    .eq('user_id', userId)
-                    .maybeSingle();
-                  
-                  if (roleResult.data) {
-                    isAdmin = roleResult.data.is_admin === true;
-                    if (roleResult.data.email) {
-                      email = roleResult.data.email;
-                    }
-                  }
-                  
-                  if (email === 'thelostandunfounds@gmail.com' || email === 'admin@thelostandunfounds.com') {
-                    isAdmin = true;
-                  }
-                } catch (e) {
-                  // Ignore
-                }
-                
-                return {
-                  id: userId,
-                  email: email,
-                  username: row.subdomain || email.split('@')[0],
-                  tier: 'free',
-                  isAdmin: isAdmin,
-                  created_at: row.created_at || '',
-                };
-              })
-            );
-            console.log('[Admin Dashboard] Recent users from subdomains:', usersFromSubdomains.length);
-            setRecentUsers(usersFromSubdomains);
-          }
-        } catch (subdomainErr) {
-          console.warn('[Admin Dashboard] Error loading users from subdomains:', subdomainErr);
-        }
+        console.log('[Admin Dashboard] No recent users found');
+        setRecentUsers([]);
       }
       
       console.log('[Admin Dashboard] Dashboard data loaded successfully');
