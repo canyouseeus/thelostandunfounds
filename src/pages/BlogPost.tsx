@@ -498,6 +498,22 @@ export default function BlogPost() {
             }
           }
           
+          // Handle "The Hobbit" - ensure proper capitalization
+          if (link.book_title.toLowerCase().includes('hobbit')) {
+            bookLinks['The Hobbit'] = link.link;
+            bookLinks['the hobbit'] = link.link;
+            bookLinks['The hobbit'] = link.link;
+            bookLinks['hobbit'] = link.link;
+          }
+          
+          // Handle "The Hunger Games" - ensure plural form is used
+          if (link.book_title.toLowerCase().includes('hunger') && link.book_title.toLowerCase().includes('game')) {
+            bookLinks['The Hunger Games'] = link.link;
+            bookLinks['Hunger Games'] = link.link;
+            bookLinks['The Hunger Game'] = link.link; // Also map singular for matching
+            bookLinks['Hunger Game'] = link.link;
+          }
+          
           // Handle "The Lion, the Witch and the Wardrobe" specific variations
           // The DB often has "Lion the witch and the wardrobe" but text has "The Lion, the Witch and the Wardrobe"
           if (link.book_title.toLowerCase().includes('lion') && 
@@ -1038,35 +1054,20 @@ export default function BlogPost() {
       let actualMatchLength = matchInfo.length;
       
       if (bookKey && affiliateLink) {
-        // ALWAYS use the full database title for the link text
-        // This ensures consistency even if the text has partial titles like "Hunger Game" vs "The Hunger Games"
-        displayText = bookKey;
-        
-        // But also check if the full title appears in the text to preserve author's case if possible
-        const searchStart = matchInfo.index;
-        const searchEnd = Math.min(text.length, searchStart + bookKey.length + 50);
-        const textSegment = text.substring(searchStart, searchEnd);
-        
-        // Try to find the full title in the text (case-insensitive, flexible punctuation)
-        // Escape the title but make apostrophes and punctuation flexible
-        let fullTitlePattern = bookKey
-          .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-          .replace(/'/g, "[''`]?")
-          .replace(/,/g, '[,]?\\s*');
-        
-        const fullTitleRegex = new RegExp(fullTitlePattern, 'gi');
-        const fullTitleMatch = textSegment.match(fullTitleRegex);
-        
-        if (fullTitleMatch && fullTitleMatch.index !== undefined) {
-          // Found the full title in the text - use it (preserves author's case)
-          displayText = fullTitleMatch[0];
-          // Update match length to include full title
-          actualMatchLength = fullTitleMatch.index + displayText.length;
+        // Special handling: Always use proper capitalization and full titles
+        if (bookKey.toLowerCase().includes('hobbit')) {
+          displayText = 'The Hobbit';
+        } else if (bookKey.toLowerCase().includes('hunger') && bookKey.toLowerCase().includes('game')) {
+          displayText = 'The Hunger Games';
         } else {
-          // Full title not found in text - use the database title (already set above)
-          // Keep the matched length for now, but we'll link the full title
-          actualMatchLength = matchInfo.length;
+          // ALWAYS use the full database title for the link text
+          // This ensures consistency even if the text has partial titles
+          displayText = bookKey;
         }
+        
+        // Always use the database title capitalization (don't preserve author's incorrect capitalization)
+        // This ensures "The hobbit" displays as "The Hobbit" and "hunger game" displays as "The Hunger Games"
+        // The displayText is already set to bookKey above, which has the correct capitalization from the database
       }
       
       // Check if it's an emphasis term (THE LOST+UNFOUNDS, etc.) - these should always be bold
