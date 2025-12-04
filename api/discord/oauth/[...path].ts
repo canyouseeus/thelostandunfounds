@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import discordOAuthHandler from '../../../lib/api-handlers/_discord-oauth-handler'
 
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
-  const handler = await import('../../../lib/api-handlers/_discord-oauth-handler')
-  return handler.default(req, res)
+  return discordOAuthHandler(req, res)
 }
