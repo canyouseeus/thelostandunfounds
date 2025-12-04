@@ -595,13 +595,16 @@ export default function BlogPost() {
     if (Object.keys(bookLinks).length > 0) {
       // For each book title in the database, search the text intelligently
       for (const bookTitle of Object.keys(bookLinks)) {
-        // Skip if we already found this book title in regex matches
-        const alreadyFound = matches.some(m => {
+        // Check if we already found this book title in regex matches
+        // But don't skip - we want to find ALL instances, not just the first one
+        // The link count limit will handle preventing too many links
+        const alreadyFoundInRegex = matches.some(m => {
           const matchResult = findBookTitleMatch(m.text, [bookTitle]);
           return matchResult === bookTitle;
         });
         
-        if (alreadyFound) continue;
+        // Even if found in regex, try intelligent matching to catch variations
+        // This ensures we find "Ender's Game" even if content has "Enders Game" or vice versa
         
         // Use intelligent word-based search that handles apostrophes, punctuation, case
         const normalizedTitle = normalizeBookTitle(bookTitle);
@@ -650,6 +653,21 @@ export default function BlogPost() {
             searchPatterns.push(coreWords.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+[,\\s]*'));
           }
           
+          // Pattern 5: For "The Lion, the Witch and the Wardrobe" - handle "and" variations
+          if (bookTitle.toLowerCase().includes(' and ')) {
+            const withAnd = bookTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/,/g, ',?\\s*').replace(/\s+and\s+/gi, '\\s+(?:and|&)\\s+');
+            searchPatterns.push(withAnd);
+          }
+          
+          // Pattern 6: Very permissive - just match significant words in order (for complex titles)
+          if (titleWords.length >= 3) {
+            const permissivePattern = titleWords
+              .slice(0, Math.min(4, titleWords.length)) // Take first 4 words max
+              .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+              .join('\\s+[,\\s]*(?:and\\s+)?'); // Allow commas and "and" between words
+            searchPatterns.push(permissivePattern);
+          }
+          
           // Try each pattern to find the book title in text
           for (const pattern of searchPatterns) {
             if (!pattern) continue;
@@ -691,19 +709,64 @@ export default function BlogPost() {
                             length: matchedText.length,
                             text: matchedText
                           });
+                          // Don't break here - continue to find all instances
                         }
                       }
                     }
                   }
                 }
                 
-                // If we found this book, move to next book
-                if (matches.some(m => findBookTitleMatch(m.text, [bookTitle]) === bookTitle)) {
-                  break;
-                }
+                // Continue to next pattern even if we found a match
+                // This allows us to find all variations and instances
               }
             } catch (e) {
               console.warn('Error in intelligent book title search:', e, 'Book:', bookTitle);
+            }
+          }
+          
+          // Final fallback: Simple case-insensitive text search with word boundaries
+          // This catches books that might have been missed by regex
+          const normalizedBookTitle = normalizeBookTitle(bookTitle);
+          const bookTitleWords = normalizedBookTitle.split(/\s+/).filter(w => w.length > 0);
+          
+          if (bookTitleWords.length > 0) {
+            // Build a pattern that matches the book title as whole words
+            const wordBoundaryPattern = bookTitleWords
+              .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+              .join('\\s+[,\\s]*(?:and\\s+)?'); // Allow spaces, commas, and "and" between words
+            
+            try {
+              const fallbackRegex = new RegExp(`\\b(${wordBoundaryPattern})\\b`, 'gi');
+              fallbackRegex.lastIndex = 0;
+              let fallbackMatch;
+              
+              while ((fallbackMatch = fallbackRegex.exec(text)) !== null) {
+                if (fallbackMatch[1] && fallbackMatch.index !== undefined) {
+                  const matchStart = fallbackMatch.index;
+                  const matchedText = fallbackMatch[1];
+                  
+                  // Verify it's a real match using our matching function
+                  const verifiedMatch = findBookTitleMatch(matchedText, [bookTitle]);
+                  if (verifiedMatch === bookTitle) {
+                    // Check if this overlaps with existing matches
+                    const isOverlapping = matches.some(m => 
+                      (matchStart >= m.index && matchStart < m.index + m.length) ||
+                      (matchStart + matchedText.length > m.index && matchStart + matchedText.length <= m.index + m.length) ||
+                      (matchStart <= m.index && matchStart + matchedText.length >= m.index + m.length)
+                    );
+                    
+                    if (!isOverlapping) {
+                      matches.push({
+                        index: matchStart,
+                        length: matchedText.length,
+                        text: matchedText
+                      });
+                    }
+                  }
+                }
+              }
+            } catch (e) {
+              // Silently fail - regex might be invalid, but that's okay
             }
           }
         }
@@ -1216,8 +1279,26 @@ export default function BlogPost() {
         }
         
         // Stop looking if we hit another heading or section break
-        if (prevPara.length < 100 && !prevPara.match(/[.!?]$/) && prevPara.split(' ').length < 15) {
-          break;
+        // But only if it's definitely a heading (has colon or matches heading pattern)
+        const isDefinitelyHeading = (prevPara.length < 100 && 
+                                     !prevPara.match(/[.!?]$/) && 
+                                     prevPara.split(' ').length < 15 &&
+                                     (prevPara.includes(':') || prevPara.match(/^(The|A|An)\s+[A-Z]/)));
+        if (isDefinitelyHeading) {
+          // Check if this heading contains a book title - if so, we're in a new book section
+          const headingToCheck = prevPara.includes(':') ? prevPara.split(':')[0].trim() : prevPara;
+          const containsDifferentBook = Object.keys(bookLinkCounts).some(bookTitle => {
+            const fullMatch = findBookTitleMatch(prevPara, [bookTitle]) === bookTitle;
+            if (fullMatch) return true;
+            if (prevPara.includes(':')) {
+              return findBookTitleMatch(headingToCheck, [bookTitle]) === bookTitle;
+            }
+            return false;
+          });
+          // Only break if we found a different book section, otherwise continue searching
+          if (containsDifferentBook) {
+            break;
+          }
         }
       }
       const allowLinks = isInIntro || isInBookSection;
