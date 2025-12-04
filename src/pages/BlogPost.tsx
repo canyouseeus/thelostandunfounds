@@ -500,7 +500,8 @@ export default function BlogPost() {
         try {
           // Escape special regex characters
           let escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          // Handle apostrophes - allow both straight and curly quotes (make optional but prefer matching)
+          // Handle apostrophes - allow both straight and curly quotes (optional for flexibility)
+          // This matches "Ender's Game" whether written with or without apostrophe
           escaped = escaped.replace(/'/g, "[''`]?");
           // Handle hyphens - allow various dash types (make optional)
           escaped = escaped.replace(/-/g, '[—–-]?');
@@ -623,14 +624,31 @@ export default function BlogPost() {
           // Build flexible patterns that match the title with variations
           const searchPatterns: string[] = [];
           
-          // Pattern 1: Exact title with optional apostrophes and commas
-          const exactPattern = bookTitle
-            .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // Escape regex chars
-            .replace(/'/g, "[''`]?") // Apostrophe variations (optional)
-            .replace(/,/g, ',?\\s*'); // Commas optional with flexible spacing
-          searchPatterns.push(exactPattern);
+          // Pattern 1: Exact title with apostrophes (prefer this for titles like "Ender's Game")
+          // First try with apostrophe variations (required or optional)
+          if (bookTitle.includes("'")) {
+            const withApostrophe = bookTitle
+              .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // Escape regex chars
+              .replace(/'/g, "[''`]") // Apostrophe variations (required - must have some form of apostrophe)
+              .replace(/,/g, ',?\\s*'); // Commas optional with flexible spacing
+            searchPatterns.push(withApostrophe);
+            
+            // Also try with optional apostrophe for flexibility
+            const optionalApostrophe = bookTitle
+              .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+              .replace(/'/g, "[''`]?") // Apostrophe variations (optional)
+              .replace(/,/g, ',?\\s*');
+            searchPatterns.push(optionalApostrophe);
+          } else {
+            // No apostrophe in title, use standard pattern
+            const exactPattern = bookTitle
+              .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+              .replace(/,/g, ',?\\s*');
+            searchPatterns.push(exactPattern);
+          }
           
           // Pattern 2: Title without apostrophes (Ender's Game = Enders Game)
+          // This is important for matching text that might have lost the apostrophe
           const noApostrophe = bookTitle.replace(/'/g, '');
           if (noApostrophe !== bookTitle) {
             const noApostropheEscaped = noApostrophe
@@ -640,10 +658,22 @@ export default function BlogPost() {
           }
           
           // Pattern 3: Word sequence (handles punctuation differences)
+          // For "Ender's Game", this becomes "enders" + "game"
           const wordPattern = titleWords
             .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
             .join('\\s+[,\\s]*'); // Allow commas/spaces between words
           searchPatterns.push(wordPattern);
+          
+          // Pattern 3a: Word sequence with explicit apostrophe handling for "Ender's Game"
+          // This ensures "Ender's Game" matches "Ender's Game" even if apostrophe is different type
+          if (bookTitle.includes("'")) {
+            const wordsWithApostrophe = bookTitle
+              .replace(/'/g, "[''`]?") // Optional apostrophe between words
+              .split(/\s+/)
+              .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+              .join('\\s+');
+            searchPatterns.push(wordsWithApostrophe);
+          }
           
           // Pattern 3b: Word sequence with commas handled explicitly
           const wordPatternWithCommas = titleWords
@@ -735,42 +765,61 @@ export default function BlogPost() {
           
           if (bookTitleWords.length > 0) {
             // Build a pattern that matches the book title as whole words
+            // Handle apostrophes specially for "Ender's Game"
             const wordBoundaryPattern = bookTitleWords
-              .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+              .map(w => {
+                // If word contains apostrophe (like "ender's"), handle it specially
+                if (w.includes("'")) {
+                  // Allow apostrophe variations
+                  return w.replace(/'/g, "[''`]?").replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                }
+                return w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              })
               .join('\\s+[,\\s]*(?:and\\s+)?'); // Allow spaces, commas, and "and" between words
             
             try {
-              const fallbackRegex = new RegExp(`\\b(${wordBoundaryPattern})\\b`, 'gi');
-              fallbackRegex.lastIndex = 0;
-              let fallbackMatch;
+              // Try multiple regex patterns for better matching
+              const fallbackPatterns = [
+                `\\b(${wordBoundaryPattern})\\b`, // Word boundaries
+                `(${wordBoundaryPattern})`, // Without word boundaries (more permissive)
+              ];
               
-              while ((fallbackMatch = fallbackRegex.exec(text)) !== null) {
-                if (fallbackMatch[1] && fallbackMatch.index !== undefined) {
-                  const matchStart = fallbackMatch.index;
-                  const matchedText = fallbackMatch[1];
-                  
-                  // Verify it's a real match using our matching function
-                  const verifiedMatch = findBookTitleMatch(matchedText, [bookTitle]);
-                  if (verifiedMatch === bookTitle) {
-                    // Check if this overlaps with existing matches
-                    const isOverlapping = matches.some(m => 
-                      (matchStart >= m.index && matchStart < m.index + m.length) ||
-                      (matchStart + matchedText.length > m.index && matchStart + matchedText.length <= m.index + m.length) ||
-                      (matchStart <= m.index && matchStart + matchedText.length >= m.index + m.length)
-                    );
+              for (const pattern of fallbackPatterns) {
+                const fallbackRegex = new RegExp(pattern, 'gi');
+                fallbackRegex.lastIndex = 0;
+                let fallbackMatch;
+              
+                while ((fallbackMatch = fallbackRegex.exec(text)) !== null) {
+                  if (fallbackMatch[1] && fallbackMatch.index !== undefined) {
+                    const matchStart = fallbackMatch.index;
+                    const matchedText = fallbackMatch[1];
                     
-                    if (!isOverlapping) {
-                      matches.push({
-                        index: matchStart,
-                        length: matchedText.length,
-                        text: matchedText
-                      });
+                    // Verify it's a real match using our matching function
+                    const verifiedMatch = findBookTitleMatch(matchedText, [bookTitle]);
+                    if (verifiedMatch === bookTitle) {
+                      // Check if this overlaps with existing matches
+                      const isOverlapping = matches.some(m => 
+                        (matchStart >= m.index && matchStart < m.index + m.length) ||
+                        (matchStart + matchedText.length > m.index && matchStart + matchedText.length <= m.index + m.length) ||
+                        (matchStart <= m.index && matchStart + matchedText.length >= m.index + m.length)
+                      );
+                      
+                      if (!isOverlapping) {
+                        matches.push({
+                          index: matchStart,
+                          length: matchedText.length,
+                          text: matchedText
+                        });
+                        // Found a match, can break from pattern loop
+                        break;
+                      }
                     }
                   }
                 }
+              } catch (e) {
+                // Silently fail - regex might be invalid, but that's okay
+                continue;
               }
-            } catch (e) {
-              // Silently fail - regex might be invalid, but that's okay
             }
           }
         }
