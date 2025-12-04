@@ -214,7 +214,7 @@ fetch('/api/affiliates/calculate-commission', {
     "mlm_level1": 2,                // 2%
     "mlm_level2": 1,                // 1%
     "king_midas": 8,                // 8%
-    "secret_santa": 0,              // (full chain exists)
+    "secret_santa": 3,              // 3% (ALWAYS)
     "company": 47                   // 47%
   }
 }
@@ -300,7 +300,7 @@ fetch('/api/affiliates/calculate-commission', {
     "mlm_level1": 1.16,             // 2% of $58
     "mlm_level2": 0.58,             // 1% of $58
     "king_midas": 4.64,             // 8% of $58
-    "secret_santa": 1.74,           // 3% of $58 (if no referrer)
+    "secret_santa": 1.74,           // 3% of $58 (ALWAYS)
     "company": 27.26                // Remaining
   },
   "buyer_is_affiliate": true

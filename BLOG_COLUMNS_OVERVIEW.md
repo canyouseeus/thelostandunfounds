@@ -159,7 +159,7 @@
 
 ### 6. NEW THEORY
 
-**Purpose:** Practical application of scientific and systems thinking in everyday life
+**Purpose:** Practical application of technology and systems thinking in everyday life
 
 **Focus:**
 - Nutrition and dietary systems

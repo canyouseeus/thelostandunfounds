@@ -1,13 +1,12 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Home, User, LogOut } from 'lucide-react'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, ReactNode } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { isAdmin } from '../utils/admin'
 import AuthModal from './auth/AuthModal'
 import { supabase } from '../lib/supabase'
-import Footer from './Footer'
 
-export default function Layout() {
+export default function Layout({ children }: { children?: ReactNode }) {
   const location = useLocation()
   const isHome = location.pathname === '/'
   const isTikTokDownloader = location.pathname === '/tools/tiktok-downloader'
@@ -226,13 +225,13 @@ export default function Layout() {
   }
 
   return (
-    <div className="min-h-screen bg-black flex flex-col">
+    <div className="min-h-screen bg-black">
       <nav className="bg-black/80 backdrop-blur-md relative z-[10000]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Top row: Title left, Menu button right */}
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center text-white hover:text-white/80 transition">
-              <span className="text-sm sm:text-lg md:text-xl font-bold">THE LOST+UNFOUNDS</span>
+              <span className="text-sm sm:text-lg md:text-xl font-bold whitespace-nowrap">THE LOST+UNFOUNDS</span>
             </Link>
             <div className="flex items-center space-x-4">
               <div 
@@ -288,18 +287,22 @@ export default function Layout() {
                   >
                     SHOP
                   </Link>
-                  <button
-                    type="button"
-                    className="menu-item menu-toggle-section"
-                    onClick={() => setArchivesMenuOpen(!archivesMenuOpen)}
-                    onMouseEnter={() => handleSubmenuMouseEnter('archives')}
+                  <div 
+                    className="menu-item menu-toggle-section flex items-center justify-start w-full gap-0 cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setArchivesMenuOpen(!archivesMenuOpen);
+                    }}
                   >
-                    <span className="menu-toggle-text">THE LOST ARCHIVES</span>
-                    <span className="menu-toggle-icon">{archivesMenuOpen ? '▼' : '▶'}</span>
-                  </button>
+                    <span className="flex-grow">THE LOST ARCHIVES</span>
+                    <div
+                      className="p-1 hover:bg-white/10 transition rounded-none flex items-center justify-center h-6 w-6 shrink-0"
+                    >
+                      {archivesMenuOpen ? '▼' : '▶'}
+                    </div>
+                  </div>
                   <div 
                     className={`menu-subsection ${archivesMenuOpen ? 'open' : ''}`}
-                    onMouseEnter={() => handleSubmenuMouseEnter('archives')}
                   >
                     <Link 
                       to="/thelostarchives" 
@@ -349,7 +352,7 @@ export default function Layout() {
                         setArchivesMenuOpen(false);
                       }}
                     >
-                      SCIENCE COLUMN
+                      MAD SCIENTISTS
                     </Link>
                     <Link 
                       to="/newtheory" 
@@ -372,18 +375,22 @@ export default function Layout() {
                     </Link>
                   )}
                   
-                  <button
-                    type="button"
-                    className="menu-item menu-toggle-section"
-                    onClick={() => setMoreMenuOpen(!moreMenuOpen)}
-                    onMouseEnter={() => handleSubmenuMouseEnter('more')}
+                  <div 
+                    className="menu-item menu-toggle-section flex items-center justify-start w-full gap-0 cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMoreMenuOpen(!moreMenuOpen);
+                    }}
                   >
-                    <span className="menu-toggle-text">MORE</span>
-                    <span className="menu-toggle-icon">{moreMenuOpen ? '▼' : '▶'}</span>
-                  </button>
+                    <span className="flex-grow">MORE</span>
+                    <div
+                      className="p-1 hover:bg-white/10 transition rounded-none flex items-center justify-center h-6 w-6 shrink-0"
+                    >
+                      {moreMenuOpen ? '▼' : '▶'}
+                    </div>
+                  </div>
                   <div 
                     className={`menu-subsection ${moreMenuOpen ? 'open' : ''}`}
-                    onMouseEnter={() => handleSubmenuMouseEnter('more')}
                   >
                     <Link 
                       to="/about" 
@@ -396,7 +403,7 @@ export default function Layout() {
                       ABOUT
                     </Link>
                     <Link 
-                      to="/privacy" 
+                      to="/privacy-policy" 
                       className="menu-item menu-subitem"
                       onClick={() => {
                         setMenuOpen(false);
@@ -406,14 +413,14 @@ export default function Layout() {
                       PRIVACY POLICY
                     </Link>
                     <Link 
-                      to="/terms" 
+                      to="/terms-of-service" 
                       className="menu-item menu-subitem"
                       onClick={() => {
                         setMenuOpen(false);
                         setMoreMenuOpen(false);
                       }}
                     >
-                      TERMS AND CONDITIONS
+                      TERMS OF SERVICE
                     </Link>
                     {!showLimitedMenu && (
                       <>
@@ -452,7 +459,7 @@ export default function Layout() {
                   </div>
                   {user && (
                     <>
-                      <div className="menu-item menu-separator"></div>
+                      <div className="border-t border-white/10 my-2"></div>
                 <Link
                   to={userIsAdmin ? "/admin" : userSubdomain ? `/${userSubdomain}/bookclubprofile` : "/bookclubprofile"}
                   className="menu-item"
@@ -460,26 +467,25 @@ export default function Layout() {
                     setMenuOpen(false);
                   }}
                 >
-                  <span className={`menu-toggle-text ${userIsAdmin ? 'font-bold' : ''}`}>{userIsAdmin ? 'ADMIN DASHBOARD' : 'PROFILE'}</span>
-                  <span className="menu-toggle-icon">
+                  <div className="flex items-center gap-2">
                     <User className="w-4 h-4" />
-                  </span>
+                    {userIsAdmin ? 'ADMIN DASHBOARD' : 'PROFILE'}
+                  </div>
                 </Link>
-                      <div className="menu-item menu-separator"></div>
                       <button
                         type="button"
-                        className="menu-item"
+                        className="menu-item w-full text-left"
                         onClick={handleSignOut}
                       >
-                        <span className="menu-toggle-text">LOG OUT</span>
-                        <span className="menu-toggle-icon">
+                        <div className="flex items-center gap-2">
                           <LogOut className="w-4 h-4" />
-                        </span>
+                          LOG OUT
+                        </div>
                       </button>
-                      <div className="menu-item menu-separator"></div>
+                      <div className="border-t border-white/10 my-2"></div>
                       <div className="menu-item user-info">
                         <div className="text-white/60 text-xs mb-1">Logged in as:</div>
-                        <div className="text-white text-xs font-medium">
+                        <div className="text-white text-sm font-medium">
                           {user.user_metadata?.author_name || user.email?.split('@')[0] || 'User'}
                         </div>
                       </div>
@@ -500,16 +506,15 @@ export default function Layout() {
           </div>
         </div>
       </nav>
-      <main className="pb-6 flex-1">
-        <Outlet />
+      <main className="pb-6">
+        {children || <Outlet />}
       </main>
-      <Footer />
       <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
       
       {/* Upgrade Modal */}
       {upgradeModalOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="bg-black/50 border border-white rounded-none p-6 w-full max-w-md mx-4">
+          <div className="bg-black/50 border border-white/10 rounded-none p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-white">Upgrade Your Account</h2>
               <button
@@ -521,7 +526,7 @@ export default function Layout() {
               </button>
             </div>
             <div className="space-y-4">
-              <div className="bg-black/50 border border-white rounded-none p-4">
+              <div className="bg-black/50 border border-white/10 rounded-none p-4">
                 <h3 className="text-lg font-semibold text-white mb-2">Premium Tier</h3>
                 <p className="text-white/70 text-sm mb-3">Unlimited access to all tools</p>
                 <div className="text-2xl font-bold text-white mb-4">$9.99<span className="text-sm text-white/60">/month</span></div>
@@ -535,7 +540,7 @@ export default function Layout() {
                   Upgrade to Premium
                 </button>
               </div>
-              <div className="bg-black/50 border border-white rounded-none p-4">
+              <div className="bg-black/50 border border-white/10 rounded-none p-4">
                 <h3 className="text-lg font-semibold text-white mb-2">Pro Tier</h3>
                 <p className="text-white/70 text-sm mb-3">Everything + API access</p>
                 <div className="text-2xl font-bold text-white mb-4">$19.99<span className="text-sm text-white/60">/month</span></div>

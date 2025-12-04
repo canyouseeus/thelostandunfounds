@@ -6,7 +6,9 @@ export default function EmailSignup() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const turnstileRef = useRef<any>(null);
+  const [turnstileKey, setTurnstileKey] = useState(0);
+  // Removed ref due to function component warning, using key to force reset instead
+
 
   // Get Cloudflare Turnstile site key from environment
   const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
@@ -66,18 +68,14 @@ export default function EmailSignup() {
       setEmail('');
       
       // Reset Turnstile
-      if (turnstileRef.current) {
-        turnstileRef.current.reset();
-      }
+      setTurnstileKey(prev => prev + 1);
       setTurnstileToken(null);
     } catch (error: any) {
       console.error('Email signup error:', error);
       alert(error.message || 'Failed to subscribe. Please try again.');
       
       // Reset Turnstile on error
-      if (turnstileRef.current) {
-        turnstileRef.current.reset();
-      }
+      setTurnstileKey(prev => prev + 1);
       setTurnstileToken(null);
     } finally {
       setLoading(false);
@@ -212,7 +210,7 @@ export default function EmailSignup() {
               onLoad={(widgetId) => {
                 console.log('Turnstile loaded:', widgetId);
               }}
-              ref={turnstileRef}
+              key={turnstileKey}
               theme="dark"
             />
           </div>

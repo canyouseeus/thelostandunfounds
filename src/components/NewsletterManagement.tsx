@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from './Toast';
 import { supabase } from '../lib/supabase';
-import { Mail, Send, Eye, Clock, CheckCircle, XCircle, Loader, Users } from 'lucide-react';
+import { Mail, Send, Eye, Clock, CheckCircle, XCircle, Loader, Users, BarChart3, TrendingUp } from 'lucide-react';
 
 interface NewsletterCampaign {
   id: string;
@@ -32,6 +32,11 @@ export default function NewsletterManagement() {
   const [campaigns, setCampaigns] = useState<NewsletterCampaign[]>([]);
   const [showPreview, setShowPreview] = useState(false);
   const [loadingCampaigns, setLoadingCampaigns] = useState(true);
+  const [stats, setStats] = useState({
+    totalSent: 0,
+    totalCampaigns: 0,
+    avgRecipients: 0
+  });
 
   useEffect(() => {
     loadSubscriberCount();
@@ -64,6 +69,12 @@ export default function NewsletterManagement() {
 
       if (error) throw error;
       setCampaigns(data || []);
+      
+      // Calculate stats
+      const totalSent = (data || []).reduce((acc, curr) => acc + (curr.emails_sent || 0), 0);
+      const totalCampaigns = (data || []).length;
+      const avgRecipients = totalCampaigns > 0 ? Math.round(totalSent / totalCampaigns) : 0;
+      setStats({ totalSent, totalCampaigns, avgRecipients });
     } catch (error: any) {
       console.error('Error loading campaigns:', error);
       showError('Failed to load campaigns');
@@ -196,6 +207,42 @@ export default function NewsletterManagement() {
 
   return (
     <div className="space-y-6">
+      {/* Analytics Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-black/50 border border-white/10 rounded-none p-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-blue-500/20 rounded-none">
+              <Users className="w-5 h-5 text-blue-400" />
+            </div>
+            <span className="text-white/60 text-sm">Total Subscribers</span>
+          </div>
+          <div className="text-2xl font-bold text-white">{subscriberCount}</div>
+          <div className="text-xs text-white/40 mt-1">Verified email addresses</div>
+        </div>
+
+        <div className="bg-black/50 border border-white/10 rounded-none p-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-green-500/20 rounded-none">
+              <BarChart3 className="w-5 h-5 text-green-400" />
+            </div>
+            <span className="text-white/60 text-sm">Emails Sent</span>
+          </div>
+          <div className="text-2xl font-bold text-white">{stats.totalSent}</div>
+          <div className="text-xs text-white/40 mt-1">Across {stats.totalCampaigns} campaigns</div>
+        </div>
+
+        <div className="bg-black/50 border border-white/10 rounded-none p-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-purple-500/20 rounded-none">
+              <TrendingUp className="w-5 h-5 text-purple-400" />
+            </div>
+            <span className="text-white/60 text-sm">Avg. Reach</span>
+          </div>
+          <div className="text-2xl font-bold text-white">{stats.avgRecipients}</div>
+          <div className="text-xs text-white/40 mt-1">Recipients per campaign</div>
+        </div>
+      </div>
+
       {/* Compose Newsletter */}
       <div className="bg-black/50 border border-white rounded-none p-6">
         <div className="flex items-center justify-between mb-6">

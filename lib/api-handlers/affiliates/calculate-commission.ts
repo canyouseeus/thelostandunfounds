@@ -274,29 +274,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               })
               .eq('id', level1Ref.referred_by);
           }
-        } else {
-          // No Level 2: add 1% to Secret Santa
-          const secretSantaAmount = adjustedProfit * 0.01;
-          breakdown.secret_santa += secretSantaAmount;
-          await addToSecretSanta(secretSantaAmount, 'no_level_2', commissionId);
         }
-      } else {
-        // No Level 1: add 3% to Secret Santa
-        const secretSantaAmount = adjustedProfit * 0.03;
-        breakdown.secret_santa = secretSantaAmount;
-        await addToSecretSanta(secretSantaAmount, 'no_referrer', commissionId);
       }
-    } else if (!referringAffiliate) {
-      // No referring affiliate: add 3% to Secret Santa
-      const secretSantaAmount = adjustedProfit * 0.03;
-      breakdown.secret_santa = secretSantaAmount;
-      await addToSecretSanta(secretSantaAmount, 'no_referrer', null);
     }
 
     // STEP 5: King Midas pot (8%)
     breakdown.king_midas = adjustedProfit * 0.08;
 
-    // STEP 6: Company gets the rest
+    // STEP 6: Secret Santa pot (ALWAYS 3% of adjusted profit)
+    const secretSantaAmount = adjustedProfit * 0.03;
+    breakdown.secret_santa = secretSantaAmount;
+    await addToSecretSanta(secretSantaAmount, 'profit_allocation', commissionId);
+
+    // STEP 7: Company gets the rest
     breakdown.company = adjustedProfit - breakdown.affiliate_commission - breakdown.mlm_level1 - breakdown.mlm_level2 - breakdown.king_midas - breakdown.secret_santa;
 
     return res.status(200).json({

@@ -224,6 +224,39 @@ export function getErrorMessage(error: unknown): string {
   return 'An unknown error occurred';
 }
 
+/**
+ * Safely parse JSON from a fetch Response
+ * Checks content-type header before parsing to avoid HTML parsing errors
+ */
+export async function safeJsonParse<T = any>(response: Response): Promise<T> {
+  const contentType = response.headers.get('content-type');
+  
+  // Check if response is actually JSON
+  if (!contentType || !contentType.includes('application/json')) {
+    const text = await response.text();
+    
+    // If it's HTML (starts with <!doctype or <html), provide helpful error
+    if (text.trim().toLowerCase().startsWith('<!doctype') || text.trim().toLowerCase().startsWith('<html')) {
+      throw new Error(
+        `Server returned HTML instead of JSON. This usually means:\n` +
+        `1. The API endpoint doesn't exist (404 page)\n` +
+        `2. The server returned an error page\n` +
+        `3. There's a routing issue\n\n` +
+        `Response preview: ${text.substring(0, 200)}`
+      );
+    }
+    
+    throw new Error(`Server returned non-JSON response (${contentType}): ${text.substring(0, 200)}`);
+  }
+  
+  try {
+    return await response.json();
+  } catch (error) {
+    const text = await response.text();
+    throw new Error(`Failed to parse JSON response: ${error instanceof Error ? error.message : String(error)}\nResponse: ${text.substring(0, 200)}`);
+  }
+}
+
 // Constants
 export const TIER_COLORS = {
   free: 'text-white/60',

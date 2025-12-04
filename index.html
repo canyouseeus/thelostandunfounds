@@ -158,11 +158,15 @@
       
       setTimeout(() => {
         const root = document.getElementById('root');
-        // Check if React actually mounted by looking for React root, not just "Loading" text
-        if (root && root.innerHTML.includes('Loading') && !root.querySelector('[data-reactroot]') && !root.querySelector('*[data-react-helmet]')) {
-          // Only show error if React root is definitely not present
-          const hasReactContent = root.children.length > 0 && !root.innerHTML.includes('Loading... If you see this');
-          if (!hasReactContent) {
+        // Check if React actually mounted (React 18 doesn't use data-reactroot)
+        // Look for actual React content, not just the loading message
+        if (root) {
+          const hasLoadingMessage = root.innerHTML.includes('Loading... If you see this');
+          const hasReactContent = root.children.length > 0 && root.children[0].tagName !== undefined;
+          const hasReactHelmet = root.querySelector('*[data-react-helmet]');
+          
+          // Only show error if we still have the loading message AND no React content
+          if (hasLoadingMessage && !hasReactContent && !hasReactHelmet) {
             const errorMsg = '❌ React did not mount after 3 seconds!';
             console.error(errorMsg);
             addDebugLog('error', errorMsg, 'React mount timeout');

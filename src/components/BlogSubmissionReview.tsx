@@ -8,12 +8,190 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useToast } from './Toast';
 import { LoadingSpinner } from './Loading';
-import { FileText, CheckCircle, XCircle, Eye, Mail, Calendar, BookOpen, MessageSquare, User, X } from 'lucide-react';
+import { FileText, CheckCircle, XCircle, Eye, Mail, Calendar, BookOpen, MessageSquare, User, X, AlertTriangle, Check } from 'lucide-react';
 
 interface AffiliateLink {
   book_title: string;
   link: string;
 }
+
+// --- Link Matching Logic (Mirrored from BlogPost.tsx) ---
+
+// Normalize book title for matching - handles case, punctuation, and common variations
+const normalizeBookTitle = (title: string): string => {
+  return title
+    .toLowerCase()
+    .trim()
+    // Normalize apostrophes and quotes
+    .replace(/[''`]/g, "'")
+    // Normalize hyphens and dashes
+    .replace(/[—–-]/g, '-')
+    // Remove extra whitespace
+    .replace(/\s+/g, ' ')
+    // Normalize commas and spacing
+    .replace(/,\s*/g, ', ');
+};
+
+// Find book title match using intelligent fuzzy matching
+const findBookTitleMatch = (text: string, bookTitles: string[]): string | null => {
+  if (!text || !bookTitles || bookTitles.length === 0) return null;
+  
+  const normalizedText = normalizeBookTitle(text);
+  
+  // Strategy 1: Exact normalized match
+  for (const title of bookTitles) {
+    if (normalizeBookTitle(title) === normalizedText) {
+      return title;
+    }
+  }
+  
+  // Strategy 2: Remove apostrophes and compare (Ender's Game = Enders Game)
+  const removeApostrophes = (t: string) => normalizeBookTitle(t).replace(/'/g, '');
+  const textNoApostrophe = removeApostrophes(text);
+  for (const title of bookTitles) {
+    if (removeApostrophes(title) === textNoApostrophe) {
+      return title;
+    }
+  }
+  
+  // Strategy 3: Word-by-word matching (handle punctuation differences)
+  const getWords = (t: string) => {
+    return normalizeBookTitle(t)
+      .replace(/[.,!?;:()\[\]{}'"]/g, ' ') // Remove punctuation
+      .split(/\s+/)
+      .filter(w => w.length > 0);
+  };
+  
+  const textWords = getWords(text);
+  for (const title of bookTitles) {
+    const titleWords = getWords(title);
+    const significantTitleWords = titleWords.filter(w => w.length > 2);
+    const significantTextWords = textWords.filter(w => w.length > 2);
+    
+    if (significantTitleWords.length === 0 || significantTextWords.length === 0) continue;
+    
+    // Count how many title words appear in text
+    const matchingWords = significantTitleWords.filter(tw => 
+      significantTextWords.some(txt => txt === tw || txt.includes(tw) || tw.includes(txt))
+    );
+    
+    const reverseMatch = significantTextWords.filter(txt =>
+      significantTitleWords.some(tw => txt === tw || txt.includes(tw) || tw.includes(txt))
+    );
+    
+    const matchRatio = Math.max(
+      matchingWords.length / significantTitleWords.length,
+      reverseMatch.length / significantTextWords.length
+    );
+    
+    if (matchRatio >= 0.7) { 
+      return title;
+    }
+  }
+  
+  // Strategy 4: Core title matching (remove "the", "a", "an")
+  const getCoreTitle = (t: string) => {
+    return normalizeBookTitle(t)
+      .replace(/^(the|a|an)\s+/i, '')
+      .replace(/\s+(the|a|an)$/i, '')
+      .replace(/'/g, '');
+  };
+  
+  const coreText = getCoreTitle(text);
+  for (const title of bookTitles) {
+    const coreTitle = getCoreTitle(title);
+    if (coreTitle === coreText || 
+        (coreTitle.length > 5 && coreText.includes(coreTitle)) ||
+        (coreText.length > 5 && coreTitle.includes(coreText))) {
+      return title;
+    }
+  }
+  
+  return null;
+};
+
+// Analyze links against content to check if they will be linked correctly
+const analyzeLinkHealth = (content: string, links: AffiliateLink[]) => {
+  if (!content || !links || links.length === 0) return [];
+
+  // 1. Build the variations map (Exact logic from BlogPost.tsx)
+  const bookLinks: Record<string, string> = {};
+  
+  links.forEach((link) => {
+    if (link.book_title && link.link) {
+      bookLinks[link.book_title] = link.link;
+      
+      // Handle apostrophe variations (e.g. "Enders Game" -> "Ender's Game", "Ender's Game")
+      // Also handle specific case for "Ender's Game"
+      if (link.book_title.toLowerCase().includes('ender') && link.book_title.toLowerCase().includes('game')) {
+        bookLinks["Ender's Game"] = link.link;
+        bookLinks["Ender’s Game"] = link.link;
+        bookLinks["Enders Game"] = link.link;
+      }
+
+      if (!link.book_title.includes("'") && !link.book_title.includes("’")) {
+        // Try adding apostrophe before 's'
+        if (link.book_title.endsWith("s Game")) {
+          const withApostrophe = link.book_title.replace("s Game", "'s Game");
+          const withSmartApostrophe = link.book_title.replace("s Game", "’s Game");
+          bookLinks[withApostrophe] = link.link;
+          bookLinks[withSmartApostrophe] = link.link;
+        }
+      }
+      
+      // Handle "The Lion, the Witch and the Wardrobe" specific variations
+      if (link.book_title.toLowerCase().includes('lion') && 
+          link.book_title.toLowerCase().includes('witch') && 
+          link.book_title.toLowerCase().includes('wardrobe')) {
+        bookLinks['The Lion, the Witch and the Wardrobe'] = link.link;
+        bookLinks['Lion, the Witch and the Wardrobe'] = link.link;
+        bookLinks['The Lion, The Witch And The Wardrobe'] = link.link;
+        bookLinks['the lion, the witch and the wardrobe'] = link.link;
+      }
+      
+      // General "The" prefix handling
+      if (!link.book_title.toLowerCase().startsWith('the ')) {
+        const withThe = `The ${link.book_title}`;
+        bookLinks[withThe] = link.link;
+        const withTheTitleCase = `The ${link.book_title.charAt(0).toUpperCase() + link.book_title.slice(1)}`;
+        bookLinks[withTheTitleCase] = link.link;
+      }
+      
+      // Handle apostrophe variations for existing titles
+      if (link.book_title.includes("'") || link.book_title.includes("'")) {
+        const withoutApostrophe = link.book_title.replace(/['']/g, '');
+        bookLinks[withoutApostrophe] = link.link;
+      }
+    }
+  });
+
+  // 2. Check each submitted link
+  const allVariations = Object.keys(bookLinks);
+  const paragraphs = content.split('\n').filter(p => p.trim().length > 0);
+
+  return links.map(link => {
+    // Find all variations that map to this link's URL
+    // (This handles the case where "Ender's Game" is found but the submitted title was "Enders Game")
+    const variationsForThisLink = allVariations.filter(v => bookLinks[v] === link.link);
+    
+    let matchCount = 0;
+    
+    // Check every paragraph
+    for (const para of paragraphs) {
+      // Use the robust matcher
+      const matchedTitle = findBookTitleMatch(para, variationsForThisLink);
+      if (matchedTitle) {
+        matchCount++;
+      }
+    }
+    
+    return {
+      title: link.book_title,
+      count: matchCount,
+      variations: variationsForThisLink
+    };
+  });
+};
 
 interface BlogSubmission {
   id: string;
@@ -672,6 +850,37 @@ export default function BlogSubmissionReview() {
                       <BookOpen className="w-4 h-4" />
                       Amazon Affiliate Links
                     </h4>
+                    
+                    {/* Link Health Check */}
+                    <div className="bg-white/5 border border-white/10 rounded-none p-4 mb-4">
+                      <h5 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-400" />
+                        Link Formatting Check
+                      </h5>
+                      <p className="text-white/60 text-xs mb-3">
+                        Verifies if book titles in the content will be correctly hyperlinked based on the latest formatting rules (including apostrophe and "The" prefix fixes).
+                      </p>
+                      <div className="space-y-2">
+                        {analyzeLinkHealth(selectedSubmission.content, selectedSubmission.amazon_affiliate_links).map((result, idx) => (
+                          <div key={idx} className="flex items-center justify-between text-sm p-2 bg-black/30 border border-white/5 rounded">
+                            <div className="flex items-center gap-2">
+                              {result.count > 0 ? (
+                                <Check className="w-4 h-4 text-green-400" />
+                              ) : (
+                                <AlertTriangle className="w-4 h-4 text-red-400" />
+                              )}
+                              <span className="text-white/90">{result.title}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className={`px-2 py-0.5 rounded text-xs font-mono ${result.count > 0 ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
+                                Found: {result.count}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
                     <div className="space-y-2 mb-4">
                       {selectedSubmission.amazon_affiliate_links.map((link, index) => (
                         <div key={index} className="bg-black/30 border border-white rounded-none p-3">

@@ -69,23 +69,17 @@ export function calculateCommissionPreview(options: CalculateOptions): Commissio
       
       if (hasLevel2) {
         breakdown.mlm_level2 = adjustedProfit * 0.01;
-      } else {
-        // No Level 2: add 1% to Secret Santa
-        breakdown.secret_santa += adjustedProfit * 0.01;
       }
-    } else {
-      // No Level 1: add 3% to Secret Santa
-      breakdown.secret_santa = adjustedProfit * 0.03;
     }
-  } else {
-    // No referrer: add 3% to Secret Santa
-    breakdown.secret_santa = adjustedProfit * 0.03;
   }
 
   // Step 4: King Midas (8% of adjusted profit)
   breakdown.king_midas = adjustedProfit * 0.08;
 
-  // Step 5: Company gets the rest
+  // Step 5: Secret Santa (ALWAYS 3% of adjusted profit)
+  breakdown.secret_santa = adjustedProfit * 0.03;
+
+  // Step 6: Company gets the rest
   breakdown.company = adjustedProfit - breakdown.affiliate_commission - breakdown.mlm_level1 - breakdown.mlm_level2 - breakdown.king_midas - breakdown.secret_santa;
 
   // Step 6: Reward points (1 per $10 of adjusted profit, floor division)

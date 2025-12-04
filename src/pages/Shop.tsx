@@ -1,13 +1,13 @@
 /**
  * Shop Page
- * Fetches products from Fourthwall storefront API
+ * Fetches native products from our database
  */
 
 import { useState, useEffect } from 'react';
 import { ShoppingCart, Search, Filter, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { initAffiliateTracking, getAffiliateRef } from '../utils/affiliate-tracking';
-import { getCheckoutUrl } from '../utils/fourthwall-checkout';
+import { getPayPalCheckoutUrl } from '../utils/checkout-utils';
 
 interface Product {
   id: string;
@@ -37,13 +37,13 @@ export default function Shop() {
     initAffiliateTracking();
   }, []);
 
-  // Fetch products from Fourthwall API
+  // Fetch native products from our API
   useEffect(() => {
     async function fetchProducts() {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch('/api/shop/fourthwall/products');
+        const response = await fetch('/api/shop/products');
         const data = await response.json();
         
         if (data.error) {
@@ -98,11 +98,6 @@ export default function Shop() {
         <div className="text-center py-12">
           <p className="text-red-400 text-lg mb-2">Error loading products</p>
           <p className="text-white/60">{error}</p>
-          {error.includes('FOURTHWALL_STOREFRONT_TOKEN') && (
-            <p className="text-white/40 text-sm mt-4">
-              Please configure FOURTHWALL_STOREFRONT_TOKEN in Vercel environment variables.
-            </p>
-          )}
         </div>
       </div>
     );
@@ -194,16 +189,51 @@ function ProductCard({ product }: { product: Product }) {
   const displayPrice = product.price; // Prices are already in dollars from API
   const displayComparePrice = product.compareAtPrice || null;
   
-  // Get affiliate ref and generate checkout URL with tracking
+  // Get affiliate ref for tracking
   const affiliateRef = getAffiliateRef();
-  const checkoutUrl = getCheckoutUrl(product.url, affiliateRef);
 
-  const handleCheckoutClick = () => {
+  const handleCheckoutClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    
     // Track click if affiliate ref exists
     if (affiliateRef) {
       import('../utils/affiliate-tracking').then(({ trackAffiliateClick }) => {
         trackAffiliateClick(affiliateRef);
       });
+    }
+
+    // For native products, use PayPal checkout
+    try {
+      console.log('🛒 Starting PayPal checkout for product:', {
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        currency: product.currency,
+        affiliateRef,
+      });
+      
+      const { approvalUrl } = await getPayPalCheckoutUrl({
+        amount: product.price,
+        currency: product.currency || 'USD',
+        description: product.title,
+        productId: product.id,
+        affiliateRef,
+      });
+      
+      console.log('✅ PayPal checkout URL received:', approvalUrl);
+      
+      // Redirect to PayPal approval URL
+      window.location.href = approvalUrl;
+    } catch (error: any) {
+      console.error('❌ Error creating PayPal checkout:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        response: error.response,
+      });
+      
+      const errorMessage = error.message || 'Failed to start checkout. Please try again.';
+      alert(`Checkout Error: ${errorMessage}\n\nCheck browser console for details.`);
     }
   };
 
@@ -243,11 +273,9 @@ function ProductCard({ product }: { product: Product }) {
           )}
         </div>
         <a
-          href={checkoutUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+          href="#"
           onClick={handleCheckoutClick}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white text-black px-4 py-3 sm:py-2 rounded-none hover:bg-white/90 transition-colors font-semibold text-sm sm:text-base min-h-[44px] touch-action: manipulation"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white text-black px-4 py-3 sm:py-2 rounded-none hover:bg-white/90 transition-colors font-semibold text-sm sm:text-base min-h-[44px] touch-action: manipulation cursor-pointer"
         >
           <ShoppingCart className="w-4 h-4" />
           {displayPrice === 0 ? 'View' : 'Buy Now'}

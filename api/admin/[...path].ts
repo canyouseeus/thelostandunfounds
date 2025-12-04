@@ -6,30 +6,91 @@ export default async function handler(
   res: VercelResponse
 ) {
   // Extract route from path parameter (Vercel catch-all)
+  // For /api/admin/affiliates, req.query.path should be ['affiliates']
   let route = ''
+  
+  // First, try to get route from query.path (Vercel catch-all parameter)
   if (req.query.path) {
-    route = Array.isArray(req.query.path) ? req.query.path[0] : req.query.path
-  } else {
-    // Fallback: extract from URL
-    const urlPath = req.url?.split('?')[0] || ''
+    if (Array.isArray(req.query.path)) {
+      // For /api/admin/affiliates, path will be ['affiliates']
+      route = req.query.path[0] || ''
+    } else {
+      route = req.query.path
+    }
+  }
+  
+  // Fallback: extract from URL if path not found in query
+  if (!route && req.url) {
+    const urlPath = req.url.split('?')[0]
     const pathParts = urlPath.split('/').filter(p => p)
-    route = pathParts[pathParts.length - 1] || ''
+    // Find 'admin' index and get everything after it
+    const adminIndex = pathParts.indexOf('admin')
+    if (adminIndex >= 0 && adminIndex < pathParts.length - 1) {
+      route = pathParts[adminIndex + 1] || ''
+    } else {
+      // Last resort: use last path segment
+      route = pathParts[pathParts.length - 1] || ''
+    }
+  }
+
+  // Debug logging
+  console.log('[Admin Router]', {
+    query: req.query,
+    queryPath: req.query.path,
+    route,
+    url: req.url,
+    method: req.method,
+    pathParts: req.url ? req.url.split('?')[0].split('/').filter(p => p) : []
+  })
+  
+  // If still no route found, return error early
+  if (!route) {
+    console.error('[Admin Router] Route extraction failed', {
+      query: req.query,
+      url: req.url,
+      path: req.query.path
+    })
+    return res.status(404).json({ 
+      error: 'Admin route not found',
+      debug: {
+        query: req.query,
+        url: req.url,
+        path: req.query.path,
+        extractedRoute: route
+      }
+    })
   }
 
   // Route to appropriate handler
-  switch (route) {
-    case 'product-costs':
-      return handleProductCosts(req, res)
-    case 'reset-password':
-      return handleResetPassword(req, res)
-    case 'send-existing-publication-emails':
-      return handleSendExistingPublicationEmails(req, res)
-    case 'send-welcome-emails':
-      return handleSendWelcomeEmails(req, res)
-    case 'send-all-missing-emails':
-      return handleSendAllMissingEmails(req, res)
-    default:
-      return res.status(404).json({ error: `Admin route not found: ${route}` })
+  try {
+    switch (route) {
+      case 'product-costs':
+        return await handleProductCosts(req, res)
+      case 'reset-password':
+        return await handleResetPassword(req, res)
+      case 'send-existing-publication-emails':
+        return await handleSendExistingPublicationEmails(req, res)
+      case 'send-welcome-emails':
+        return await handleSendWelcomeEmails(req, res)
+      case 'secret-santa':
+        return await handleSecretSanta(req, res)
+      case 'affiliates':
+        return await handleAffiliates(req, res)
+      case 'process-payouts':
+        return await handleProcessPayouts(req, res)
+      case 'new-subscription-notification':
+        return await handleNewSubscriptionNotification(req, res)
+      case 'new-blog-contributor-notification':
+        return await handleNewBlogContributorNotification(req, res)
+      case 'send-affiliate-email':
+        return await handleSendAffiliateEmail(req, res)
+      default:
+        console.error('Admin route not found:', route, 'query:', req.query, 'url:', req.url)
+        return res.status(404).json({ error: `Admin route not found: ${route}` })
+    }
+  } catch (error: any) {
+    console.error('Admin router error:', error)
+    return res.status(500).json({ error: error.message || 'Internal server error' })
   }
 }
 
@@ -37,7 +98,7 @@ export default async function handler(
  * Product Cost Management Handler
  */
 async function handleProductCosts(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/_product-costs-handler')
+  const handler = await import('../../lib/api-handlers/_product-costs-handler.js')
   return handler.default(req, res)
 }
 
@@ -45,7 +106,7 @@ async function handleProductCosts(req: VercelRequest, res: VercelResponse) {
  * Reset Password Handler
  */
 async function handleResetPassword(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/_reset-password-handler')
+  const handler = await import('../../lib/api-handlers/_reset-password-handler.js')
   return handler.default(req, res)
 }
 
@@ -66,9 +127,49 @@ async function handleSendWelcomeEmails(req: VercelRequest, res: VercelResponse) 
 }
 
 /**
- * Send All Missing Emails Handler
+ * Secret Santa Handler
  */
-async function handleSendAllMissingEmails(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/_send-all-missing-emails-handler.js')
+async function handleSecretSanta(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/_admin-secret-santa-handler.js')
+  return handler.default(req, res)
+}
+
+/**
+ * Affiliates Handler
+ */
+async function handleAffiliates(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/_admin-affiliates-handler.js')
+  return handler.default(req, res)
+}
+
+/**
+ * Process Payouts Handler
+ */
+async function handleProcessPayouts(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/admin/process-payouts.js')
+  return handler.default(req, res)
+}
+
+/**
+ * New Subscription Notification Handler
+ */
+async function handleNewSubscriptionNotification(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/_new-subscription-notification-handler.js')
   return await handler.default(req, res)
+}
+
+/**
+ * New Blog Contributor Notification Handler
+ */
+async function handleNewBlogContributorNotification(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/_new-blog-contributor-notification-handler.js')
+  return await handler.default(req, res)
+}
+
+/**
+ * Send Affiliate Email Handler
+ */
+async function handleSendAffiliateEmail(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/admin/send-affiliate-email.js')
+  return handler.default(req, res)
 }

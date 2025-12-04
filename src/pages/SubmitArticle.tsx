@@ -13,7 +13,7 @@ import AuthModal from '../components/auth/AuthModal';
 import SubdomainRegistration from '../components/SubdomainRegistration';
 import UserRegistration from '../components/UserRegistration';
 import StorefrontRegistration from '../components/StorefrontRegistration';
-import { FileText, Plus, X, BookOpen, Mail, User, Copy, Check, AlertTriangle } from 'lucide-react';
+import { FileText, Plus, X, BookOpen, Mail, User, Copy, Check, AlertTriangle, ArrowRight } from 'lucide-react';
 
 interface AffiliateLink {
   book_title?: string;
@@ -91,8 +91,8 @@ const COLUMN_CONFIGS: Record<BlogColumn, ColumnConfig> = {
     promptPath: '/prompts/BORDERLANDS_WRITING_PROMPT.md',
   },
   science: {
-    name: 'Science Column',
-    title: 'SUBMIT TO SCIENCE COLUMN',
+    name: 'MAD SCIENTISTS',
+    title: 'SUBMIT TO MAD SCIENTISTS',
     description: 'Deep dives into scientific concepts and discoveries. Physics, quantum theory, biology, emerging sciences, and applied innovation.',
     requiresAffiliates: false,
     requiresStorefront: false,
@@ -106,7 +106,7 @@ const COLUMN_CONFIGS: Record<BlogColumn, ColumnConfig> = {
   newtheory: {
     name: 'NEW THEORY',
     title: 'SUBMIT TO NEW THEORY',
-    description: 'Practical application of scientific and systems thinking in everyday life. Nutrition, household systems, habit-building, resource management, and DIY experiments.',
+    description: 'Practical application of technology and systems thinking in everyday life. Nutrition, household systems, habit-building, resource management, and DIY experiments.',
     requiresAffiliates: false,
     requiresStorefront: false,
     requiresSubdomain: false,
@@ -118,31 +118,46 @@ const COLUMN_CONFIGS: Record<BlogColumn, ColumnConfig> = {
 };
 
 export default function SubmitArticle() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
-  // Check URL path first, then query param, then default to bookclub
+  
   const pathname = location.pathname;
-  let columnParam: string | null = null;
   
-  if (pathname.includes('/submit/main')) {
-    columnParam = 'main';
-  } else if (pathname.includes('/submit/bookclub')) {
-    columnParam = 'bookclub';
-  } else if (pathname.includes('/submit/gearheads')) {
-    columnParam = 'gearheads';
-  } else if (pathname.includes('/submit/borderlands')) {
-    columnParam = 'borderlands';
-  } else if (pathname.includes('/submit/science')) {
-    columnParam = 'science';
-  } else if (pathname.includes('/submit/newtheory')) {
-    columnParam = 'newtheory';
-  } else {
-    columnParam = searchParams.get('column') || 'bookclub';
-  }
-  
-  const column = (Object.keys(COLUMN_CONFIGS).includes(columnParam.toLowerCase()) 
-    ? columnParam.toLowerCase() 
-    : 'bookclub') as BlogColumn;
+  // Helper to get column from URL
+  const getColumnFromUrl = (): BlogColumn | null => {
+    if (pathname.includes('/submit/main')) return 'main';
+    if (pathname.includes('/submit/bookclub')) return 'bookclub';
+    if (pathname.includes('/submit/gearheads')) return 'gearheads';
+    if (pathname.includes('/submit/borderlands')) return 'borderlands';
+    if (pathname.includes('/submit/science')) return 'science';
+    if (pathname.includes('/submit/newtheory')) return 'newtheory';
+    
+    const queryParam = searchParams.get('column');
+    if (queryParam && Object.keys(COLUMN_CONFIGS).includes(queryParam.toLowerCase())) {
+      return queryParam.toLowerCase() as BlogColumn;
+    }
+    
+    return null;
+  };
+
+  const urlColumn = getColumnFromUrl();
+  // Default to bookclub for internal hooks safety, but track if we actually have a selection
+  const [selectedColumn, setSelectedColumn] = useState<BlogColumn>(urlColumn || 'bookclub');
+  const [hasSelected, setHasSelected] = useState<boolean>(!!urlColumn);
+
+  // Sync with URL changes
+  useEffect(() => {
+    const col = getColumnFromUrl();
+    if (col) {
+      setSelectedColumn(col);
+      setHasSelected(true);
+    } else if (pathname === '/submit-article' && !searchParams.get('column')) {
+      // Only reset if explicit root visit without params
+      setHasSelected(false);
+    }
+  }, [location.pathname, searchParams]);
+
+  const column = selectedColumn;
   const config = COLUMN_CONFIGS[column];
   const { user, loading: authLoading } = useAuth();
   const { success, error: showError } = useToast();
@@ -643,6 +658,52 @@ export default function SubmitArticle() {
     }
   };
 
+  if (!hasSelected) {
+    return (
+      <>
+        <Helmet>
+          <title>Submit Article | THE LOST ARCHIVES</title>
+          <meta name="description" content="Choose a column to submit your article to." />
+        </Helmet>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 min-h-[60vh]">
+          <div className="text-center mb-12">
+            <h1 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-wide">
+              SUBMIT AN ARTICLE
+            </h1>
+            <p className="text-white/70 text-lg max-w-2xl mx-auto">
+              Choose a column to contribute to. Each column has its own unique focus and format.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {(Object.entries(COLUMN_CONFIGS) as [BlogColumn, ColumnConfig][]).map(([key, conf]) => (
+              <button
+                key={key}
+                onClick={() => {
+                  setSelectedColumn(key);
+                  setHasSelected(true);
+                  setSearchParams({ column: key });
+                  window.scrollTo(0, 0);
+                }}
+                className="bg-black/50 border border-white/10 p-6 text-left hover:bg-white/5 hover:border-white/30 transition group flex flex-col h-full rounded-none"
+              >
+                <h3 className="text-xl font-bold text-white mb-2 group-hover:text-white transition-colors uppercase tracking-wide">
+                  {conf.name}
+                </h3>
+                <p className="text-white/60 text-sm mb-6 flex-grow">
+                  {conf.description}
+                </p>
+                <div className="mt-auto flex items-center text-white/40 text-xs font-medium uppercase tracking-wider group-hover:text-white transition-colors gap-2">
+                  Select Column <ArrowRight className="w-4 h-4" />
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <Helmet>
@@ -727,7 +788,7 @@ export default function SubmitArticle() {
       />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {!user && !authLoading && (
-          <div className="mb-8 text-center bg-yellow-900/20 border border-white rounded-none p-6">
+          <div className="mb-8 text-center bg-yellow-900/20 border border-yellow-500/50 rounded-none p-6">
             <h2 className="text-xl font-bold text-white mb-2">Sign In Required</h2>
             <p className="text-white/70 mb-4">
               Please sign in or create an account to submit articles to THE LOST ARCHIVES.
@@ -752,11 +813,11 @@ export default function SubmitArticle() {
         {/* AI Writing Prompt Box */}
         {config.promptPath && (
         <div className="mb-8">
-          <div className="bg-black/50 border border-white rounded-none p-6">
+          <div className="bg-black/50 border border-white/10 rounded-none p-6">
             <div className="mb-4">
               <h2 className="text-xl font-bold text-white mb-1">AI Writing Prompt for Contributors</h2>
               <p className="text-white/60 text-sm mb-2">Copy this prompt to use with your AI assistant</p>
-              <div className="bg-yellow-900/20 border border-white rounded-none p-3 mt-3 flex items-start gap-2">
+              <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-none p-3 mt-3 flex items-start gap-2">
                 <AlertTriangle className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
                 <p className="text-yellow-300 text-xs">
                   <strong>Important:</strong> Do not modify this prompt. Use it exactly as provided to ensure your article matches our format and style requirements.
@@ -764,15 +825,15 @@ export default function SubmitArticle() {
               </div>
             </div>
             {loadingPrompt ? (
-              <div className="bg-black/50 border border-white rounded-none p-4">
+              <div className="bg-black/50 border border-white/10 rounded-none p-4">
                 <p className="text-white/60 text-sm">Loading prompt...</p>
               </div>
             ) : (
               <>
-                <pre className="bg-black/50 border border-white rounded-none p-4 overflow-x-auto text-white/90 text-sm font-mono whitespace-pre-wrap break-words text-left max-h-96 overflow-y-auto relative">
+                <pre className="bg-black/50 border border-white/10 rounded-none p-4 overflow-x-auto text-white/90 text-sm font-mono whitespace-pre-wrap break-words text-left max-h-96 overflow-y-auto relative">
                   <button
                     onClick={copyPromptToClipboard}
-                    className="absolute top-2 right-2 p-1.5 bg-white/10 hover:bg-white/20 rounded-none text-white transition flex items-center justify-center flex-shrink-0 z-10"
+                    className="absolute top-2 right-2 p-1.5 bg-white/10 hover:bg-white/20 rounded text-white transition flex items-center justify-center flex-shrink-0 z-10"
                     title={copiedPrompt ? "Copied!" : "Copy Prompt"}
                   >
                     {copiedPrompt ? (
@@ -809,7 +870,7 @@ export default function SubmitArticle() {
 
         {/* Tips Section */}
         <div className="mb-8">
-          <div className="bg-black/30 border border-white rounded-none p-6 mt-6">
+          <div className="bg-black/30 border border-white/10 rounded-none p-6 mt-6">
             <h3 className="text-lg font-bold text-white mb-4">Important Tips for Contributors</h3>
             
             <div className="space-y-4">
@@ -847,9 +908,9 @@ export default function SubmitArticle() {
         </div>
 
         {user && (
-          <div className="bg-black/50 border border-white rounded-none p-6 md:p-8">
+          <div className="bg-black/50 border border-white/10 rounded-none p-6 md:p-8">
             {/* Column indicator */}
-            <div className="mb-6 pb-4 border-b border-white">
+            <div className="mb-6 pb-4 border-b border-white/10">
               <p className="text-white/60 text-sm">
                 Submitting to: <span className="text-white font-semibold">{config.name}</span>
               </p>
@@ -858,7 +919,7 @@ export default function SubmitArticle() {
 
             {/* Subdomain Display (read-only) - only show if required */}
             {config.requiresSubdomain && userSubdomain && (
-              <div className="bg-green-900/20 border border-white rounded-none p-4">
+              <div className="bg-green-900/20 border border-green-500/30 rounded-none p-4">
                 <label className="block text-white/80 text-sm mb-2">
                   Your Blog Subdomain
                 </label>
@@ -871,7 +932,7 @@ export default function SubmitArticle() {
               </div>
             )}
             {config.requiresSubdomain && !userSubdomain && !loadingSubdomain && (
-              <div className="bg-yellow-900/20 border border-white rounded-none p-4">
+              <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-none p-4">
                 <p className="text-yellow-300 text-sm mb-2">
                   You need to register a subdomain before submitting articles.
                 </p>
@@ -895,7 +956,7 @@ export default function SubmitArticle() {
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none"
+                className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
                 placeholder="Your Article Title"
                 required
               />
@@ -909,7 +970,7 @@ export default function SubmitArticle() {
               <textarea
                 value={formData.content}
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none font-mono text-sm"
+                className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none font-mono text-sm"
                 rows={20}
                 placeholder="Write your article here. Use double line breaks for paragraphs...
 
@@ -939,7 +1000,7 @@ Use double line breaks between sections. Book titles mentioned in the text will 
               <textarea
                 value={formData.excerpt}
                 onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none"
+                className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
                 rows={3}
                 placeholder="A brief summary of your article (will be shown on the blog listing page)"
               />
@@ -957,7 +1018,7 @@ Use double line breaks between sections. Book titles mentioned in the text will 
                   <button
                     type="button"
                     onClick={addAffiliateLink}
-                    className="px-3 py-1 bg-white/10 hover:bg-white/20 border border-white rounded-none text-white text-xs font-medium transition flex items-center gap-1"
+                    className="px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-xs font-medium transition flex items-center gap-1"
                   >
                     <Plus className="w-3 h-3" />
                     Add {config.itemLabel}
@@ -973,29 +1034,33 @@ Use double line breaks between sections. Book titles mentioned in the text will 
                 {column === 'bookclub' && ' Paste your list below (Title and Link) to auto-fill, or enter them manually.'}
               </p>
 
-              {/* Bulk Paste Box - only for bookclub */}
-              {column === 'bookclub' && (
-              <div className="bg-black/30 border border-white rounded-none p-4 mb-6">
+              {/* Bulk Paste Box - allowed for any column with multiple items */}
+              {config.maxItems > 1 && (
+              <div className="bg-black/30 border border-white/10 rounded-none p-4 mb-6">
                 <label className="block text-white/80 text-xs mb-2 font-semibold">
-                  QUICK ADD: Paste your book list here to auto-fill
+                  QUICK ADD: Paste your {config.itemLabel.toLowerCase()} list here to auto-fill
                 </label>
                 <textarea
                   value={bulkAffiliateInput}
                   onChange={handleBulkInput}
-                  className="w-full px-3 py-2 bg-black/50 border border-white rounded-none text-white text-sm focus:border-white focus:outline-none font-mono placeholder-white/30"
+                  className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-none text-white text-sm focus:border-white/30 focus:outline-none font-mono placeholder-white/30"
                   rows={6}
-                  placeholder={`Paste format example:
+                  placeholder={column === 'bookclub' ? `Paste format example:
 The E-Myth Revisited
 https://amzn.to/3...
 
-Atomic Habits - https://amzn.to/4...`}
+Atomic Habits - https://amzn.to/4...` : `Paste format example:
+Product Name
+https://...
+
+Other Item - https://...`}
                 />
               </div>
               )}
               
               <div className="space-y-3">
                 {affiliateLinks.map((link, index) => (
-                  <div key={index} className="bg-black/30 border border-white rounded-none p-4">
+                  <div key={index} className="bg-black/30 border border-white/10 rounded-none p-4">
                     <div className="flex items-start justify-between mb-3">
                       <span className="text-white/80 text-sm font-medium">
                         {config.itemLabel} {index + 1} {index < config.minItems && <span className="text-white/50">(Required)</span>}
@@ -1017,7 +1082,7 @@ Atomic Habits - https://amzn.to/4...`}
                           type="text"
                           value={getTitleValue(link)}
                           onChange={(e) => updateAffiliateLink(index, getTitleField(), e.target.value)}
-                          className="w-full px-3 py-2 bg-black/50 border border-white rounded-none text-white text-sm focus:border-white focus:outline-none"
+                          className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-none text-white text-sm focus:border-white/30 focus:outline-none"
                           placeholder={`e.g., ${column === 'bookclub' ? 'The E-Myth Revisited' : column === 'gearheads' ? 'MacBook Pro 16"' : 'Travel Backpack'}`}
                           required={index < config.minItems}
                         />
@@ -1028,7 +1093,7 @@ Atomic Habits - https://amzn.to/4...`}
                           type="url"
                           value={link.link}
                           onChange={(e) => updateAffiliateLink(index, 'link', e.target.value)}
-                          className="w-full px-3 py-2 bg-black/50 border border-white rounded-none text-white text-sm focus:border-white focus:outline-none"
+                          className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-none text-white text-sm focus:border-white/30 focus:outline-none"
                           placeholder={column === 'bookclub' ? 'https://amzn.to/... or https://amazon.com/...' : 'https://...'}
                           required={index < config.minItems}
                         />
@@ -1038,7 +1103,7 @@ Atomic Habits - https://amzn.to/4...`}
                 ))}
               </div>
               {column === 'bookclub' && (
-              <div className="bg-blue-900/20 border border-white rounded-none p-3 mt-4">
+              <div className="bg-blue-900/20 border border-blue-500/30 rounded-none p-3 mt-4">
                 <p className="text-blue-300 text-xs">
                   <strong>Tip:</strong> Make sure to mention these book titles in your article content. 
                   When you mention a book title (e.g., "The E-Myth Revisited"), it will automatically become a clickable link 
@@ -1050,7 +1115,7 @@ Atomic Habits - https://amzn.to/4...`}
             )}
 
             {/* Submit Button */}
-            <div className="pt-4 border-t border-white">
+            <div className="pt-4 border-t border-white/10">
               <button
                 type="submit"
                 disabled={submitting}

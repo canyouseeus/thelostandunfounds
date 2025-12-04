@@ -273,7 +273,7 @@ export default function AllArticles() {
 
         {/* Empty State */}
         {posts.length === 0 && (
-          <div className="text-white/60 text-lg text-center">
+          <div className="text-white/60 text-lg">
             <p>No posts yet. Check back soon for intel from the field.</p>
           </div>
         )}

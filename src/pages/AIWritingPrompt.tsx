@@ -20,7 +20,7 @@ const COLUMN_NAMES: Record<string, string> = {
   bookclub: 'BOOK CLUB',
   gearheads: 'GEARHEADS',
   borderlands: 'EDGE OF THE BORDERLANDS',
-  science: 'SCIENCE COLUMN',
+  science: 'MAD SCIENTISTS',
   newtheory: 'NEW THEORY',
 };
 

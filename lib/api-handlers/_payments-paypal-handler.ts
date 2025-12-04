@@ -11,14 +11,31 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Affiliate-Ref')
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end()
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
   try {
+    console.log('📥 PayPal checkout request received:', {
+      amount: req.body.amount,
+      currency: req.body.currency,
+      productId: req.body.productId,
+      hasAffiliateRef: !!getAffiliateRefFromRequest(req),
+    });
+
     const { amount, currency = 'USD', description, productId, variantId } = req.body
 
     if (!amount || amount <= 0) {
+      console.warn('⚠️ Invalid amount:', amount);
       return res.status(400).json({ error: 'amount is required and must be greater than 0' })
     }
 
@@ -62,8 +79,17 @@ export default async function handler(
     })
 
     if (!paypalOrder || !paypalOrder.id) {
-      return res.status(500).json({ error: 'Failed to create PayPal order' })
+      console.error('❌ PayPal order creation failed:', paypalOrder);
+      return res.status(500).json({ 
+        error: 'Failed to create PayPal order',
+        details: paypalOrder?.error || 'Unknown error'
+      })
     }
+
+    console.log('✅ PayPal order created:', {
+      orderId: paypalOrder.id,
+      approvalUrl: paypalOrder.links?.find((l: any) => l.rel === 'approve')?.href,
+    });
 
     // Store order metadata in database for tracking
     if (affiliateRef) {
@@ -139,8 +165,19 @@ async function createPayPalOrderDirect(params: {
     ? 'https://api.sandbox.paypal.com'
     : 'https://api.paypal.com'
 
+  console.log('🔐 PayPal config:', {
+    hasClientId: !!clientId,
+    hasClientSecret: !!clientSecret,
+    isSandbox,
+    baseUrl,
+  });
+
   if (!clientId || !clientSecret) {
-    throw new Error('PayPal credentials not configured')
+    console.error('❌ PayPal credentials missing:', {
+      hasClientId: !!clientId,
+      hasClientSecret: !!clientSecret,
+    });
+    throw new Error('PayPal credentials not configured. Please set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET environment variables.')
   }
 
   // Get access token
@@ -161,36 +198,115 @@ async function createPayPalOrderDirect(params: {
   }
 
   // Create order
-  const customId = JSON.stringify({
-    affiliateRef: params.affiliateRef,
-    productId: params.productId,
-    productCost: params.productCost,
-  })
+  // Build custom_id (PayPal limits to 127 chars, must be alphanumeric + some special chars)
+  const customIdData = {
+    affiliateRef: params.affiliateRef || null,
+    productId: params.productId || null,
+    productCost: params.productCost || 0,
+  }
+  const customId = JSON.stringify(customIdData).substring(0, 127)
+
+  // Build order payload
+  const orderPayload = {
+    intent: 'CAPTURE',
+    purchase_units: [{
+      amount: {
+        currency_code: params.currency,
+        value: params.amount.toFixed(2),
+      },
+      ...(params.description ? { description: params.description.substring(0, 127) } : {}), // PayPal limits description to 127 chars
+      ...(customId && customId.length > 0 ? { custom_id: customId } : {}), // Only include if not empty
+    }],
+      application_context: {
+        brand_name: 'THE LOST+UNFOUNDS',
+        landing_page: 'NO_PREFERENCE',
+        user_action: 'PAY_NOW',
+        // PayPal sandbox accepts http://localhost URLs (NOT https://)
+        // Use PAYPAL_RETURN_URL env var if set, otherwise detect localhost vs production
+        return_url: (() => {
+          if (process.env.PAYPAL_RETURN_URL) {
+            return `${process.env.PAYPAL_RETURN_URL}/payment/success`
+          }
+          if (process.env.VERCEL_URL && !process.env.VERCEL_URL.includes('localhost')) {
+            return `https://${process.env.VERCEL_URL}/payment/success`
+          }
+          if (process.env.NEXT_PUBLIC_VERCEL_URL && !process.env.NEXT_PUBLIC_VERCEL_URL.includes('localhost')) {
+            return `${process.env.NEXT_PUBLIC_VERCEL_URL}/payment/success`
+          }
+          // Localhost - MUST use http:// not https://
+          return 'http://localhost:3000/payment/success'
+        })(),
+        cancel_url: (() => {
+          if (process.env.PAYPAL_RETURN_URL) {
+            return `${process.env.PAYPAL_RETURN_URL}/payment/cancel`
+          }
+          if (process.env.VERCEL_URL && !process.env.VERCEL_URL.includes('localhost')) {
+            return `https://${process.env.VERCEL_URL}/payment/cancel`
+          }
+          if (process.env.NEXT_PUBLIC_VERCEL_URL && !process.env.NEXT_PUBLIC_VERCEL_URL.includes('localhost')) {
+            return `${process.env.NEXT_PUBLIC_VERCEL_URL}/payment/cancel`
+          }
+          // Localhost - MUST use http:// not https://
+          return 'http://localhost:3000/payment/cancel'
+        })(),
+      },
+  }
+
+  console.log('📤 Creating PayPal order with payload:', JSON.stringify(orderPayload, null, 2))
 
   const orderResponse = await fetch(`${baseUrl}/v2/checkout/orders`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${accessToken}`,
+      'PayPal-Request-Id': `order-${Date.now()}-${Math.random().toString(36).substring(7)}`,
     },
-    body: JSON.stringify({
-      intent: 'CAPTURE',
-      purchase_units: [{
-        amount: {
-          currency_code: params.currency,
-          value: params.amount.toFixed(2),
-        },
-        description: params.description,
-        custom_id: customId,
-      }],
-      application_context: {
-        return_url: `${process.env.VERCEL_URL || 'https://thelostandunfounds.com'}/payment/success`,
-        cancel_url: `${process.env.VERCEL_URL || 'https://thelostandunfounds.com'}/payment/cancel`,
-      },
-    }),
+    body: JSON.stringify(orderPayload),
   })
 
-  const order = await orderResponse.json()
+  const responseText = await orderResponse.text()
+  console.log('📥 PayPal API response:', {
+    status: orderResponse.status,
+    statusText: orderResponse.statusText,
+    headers: Object.fromEntries(orderResponse.headers.entries()),
+    body: responseText.substring(0, 500), // First 500 chars
+  })
+
+  if (!orderResponse.ok) {
+    let errorData
+    try {
+      errorData = JSON.parse(responseText)
+    } catch {
+      errorData = { message: responseText }
+    }
+    console.error('❌ PayPal API error:', {
+      status: orderResponse.status,
+      statusText: orderResponse.statusText,
+      error: errorData,
+      fullResponse: responseText,
+    })
+    throw new Error(`PayPal API error: ${orderResponse.status} ${orderResponse.statusText} - ${JSON.stringify(errorData)}`)
+  }
+
+  let order
+  try {
+    order = JSON.parse(responseText)
+  } catch (e) {
+    console.error('❌ Failed to parse PayPal response:', e, responseText)
+    throw new Error('Invalid JSON response from PayPal')
+  }
+  
+  if (!order.id) {
+    console.error('❌ PayPal order missing ID:', order)
+    throw new Error('Invalid PayPal order response - missing order ID')
+  }
+
+  console.log('✅ PayPal order created successfully:', {
+    orderId: order.id,
+    status: order.status,
+    links: order.links?.map((l: any) => ({ rel: l.rel, href: l.href })),
+  })
+  
   return order
 }
 

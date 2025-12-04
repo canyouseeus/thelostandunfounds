@@ -122,9 +122,30 @@ interface ExpandableTriggerProps {
 }
 
 const ExpandableTrigger = ({ children }: ExpandableTriggerProps) => {
-  const { toggleExpand } = useExpandable()
+  const { toggleExpand, isExpanded } = useExpandable()
   return (
-    <div onClick={toggleExpand} className="cursor-pointer">
+    <div 
+      onClick={(e) => {
+        // Don't toggle if clicking on drawer content
+        const expandableContent = (e.target as HTMLElement).closest('[data-expandable-content]');
+        if (expandableContent) {
+          e.stopPropagation();
+          return;
+        }
+        // Don't toggle if clicking anywhere in the drawer toast (header, content, or container)
+        const drawerToast = (e.target as HTMLElement).closest('.drawer-toast');
+        const drawerHeader = (e.target as HTMLElement).closest('.drawer-header');
+        const drawerContent = (e.target as HTMLElement).closest('.drawer-content');
+        if (drawerToast || drawerHeader || drawerContent) {
+          e.stopPropagation();
+          return;
+        }
+        // Don't toggle on card click - only allow explicit button clicks (Maximize2 icon)
+        // Cards should only expand via Maximize2 button, not card area clicks
+        return;
+      }} 
+      className=""
+    >
       {children}
     </div>
   )
@@ -132,8 +153,8 @@ const ExpandableTrigger = ({ children }: ExpandableTriggerProps) => {
 
 interface ExpandableCardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
-  collapsedSize?: { width?: number; height?: number }
-  expandedSize?: { width?: number; height?: number }
+  collapsedSize?: { width?: number | string; height?: number | string }
+  expandedSize?: { width?: number | string; height?: number | string }
   hoverToExpand?: boolean
   expandDelay?: number
   collapseDelay?: number
@@ -171,14 +192,26 @@ const ExpandableCard = ({
     }
   }
 
-  const variants: Variants = {
+  // For percentage/auto heights, use layout animations instead of variants
+  const needsLayoutAnimation = 
+    expandDirection === 'vertical' && 
+    (collapsedSize.height === '100%' || expandedSize.height === 'auto');
+
+  const variants: Variants = needsLayoutAnimation ? {
     collapsed: {
-      width: expandDirection === "vertical" ? "100%" : collapsedSize.width,
-      height: expandDirection === "horizontal" ? "100%" : collapsedSize.height,
+      width: expandDirection === "vertical" ? (collapsedSize.width || "100%") : collapsedSize.width,
     },
     expanded: {
-      width: expandDirection === "vertical" ? "100%" : expandedSize.width || "auto",
-      height: expandDirection === "horizontal" ? "100%" : expandedSize.height || "auto",
+      width: expandDirection === "vertical" ? (expandedSize.width || "100%") : (expandedSize.width || "auto"),
+    },
+  } : {
+    collapsed: {
+      width: expandDirection === "vertical" ? (collapsedSize.width || "100%") : collapsedSize.width,
+      height: expandDirection === "horizontal" ? (collapsedSize.height || "100%") : collapsedSize.height,
+    },
+    expanded: {
+      width: expandDirection === "vertical" ? (expandedSize.width || "100%") : (expandedSize.width || "auto"),
+      height: expandDirection === "horizontal" ? (expandedSize.height || "100%") : (expandedSize.height || "auto"),
     },
   }
 
@@ -193,17 +226,30 @@ const ExpandableCard = ({
     ...motionProps
   } = props;
   
+  // Set height via style when using layout animations
+  const heightStyle = needsLayoutAnimation 
+    ? { 
+        height: isExpanded 
+          ? (expandedSize.height === 'auto' ? 'auto' : expandedSize.height || 'auto')
+          : (collapsedSize.height === '100%' ? '100%' : collapsedSize.height || undefined)
+      }
+    : {};
+
   return (
     <motion.div
       ref={ref}
       className={cn(
-        "relative overflow-hidden bg-white dark:bg-black border border-white shadow-sm",
+        "relative overflow-hidden",
+        "rounded-none", // Ensure sharp corners
+        "transition-all duration-300",
         className
       )}
+      style={heightStyle}
       variants={variants}
       initial="collapsed"
       animate={isExpanded ? "expanded" : "collapsed"}
       transition={transition}
+      layout={needsLayoutAnimation}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       {...(motionProps as any)}
@@ -216,21 +262,25 @@ const ExpandableCard = ({
 const ExpandableCardHeader = ({
   children,
   className,
+  onClick,
 }: {
   children: React.ReactNode
   className?: string
+  onClick?: (e: React.MouseEvent<HTMLDivElement>) => void
 }) => {
-  return <div className={cn("p-4", className)}>{children}</div>
+  return <div className={cn("p-4", className)} onClick={onClick}>{children}</div>
 }
 
 const ExpandableCardContent = ({
   children,
   className,
+  onClick,
 }: {
   children: React.ReactNode
   className?: string
+  onClick?: (e: React.MouseEvent<HTMLDivElement>) => void
 }) => {
-  return <div className={cn("p-4 pt-0", className)}>{children}</div>
+  return <div className={cn("p-4 pt-0", className)} onClick={onClick}>{children}</div>
 }
 
 const ExpandableCardFooter = ({
@@ -330,10 +380,12 @@ const ExpandableContent = ({
     <AnimatePresence mode="wait">
       {(isExpanded || keepMounted) && (
         <motion.div
+          data-expandable-content
           initial="hidden"
           animate="visible"
           exit="hidden"
           variants={containerVariants}
+          onClick={(e) => e.stopPropagation()}
         >
           <motion.div variants={itemVariants}>
             {children}
@@ -341,6 +393,27 @@ const ExpandableContent = ({
         </motion.div>
       )}
     </AnimatePresence>
+  )
+}
+
+const ExpandableCloseButton = ({ 
+  children, 
+  className 
+}: { 
+  children?: React.ReactNode
+  className?: string 
+}) => {
+  const { toggleExpand } = useExpandable()
+  return (
+    <button
+      onClick={(e) => {
+        e.stopPropagation()
+        toggleExpand()
+      }}
+      className={className}
+    >
+      {children || '×'}
+    </button>
   )
 }
 
@@ -352,6 +425,7 @@ export {
   ExpandableCardFooter,
   ExpandableContent,
   ExpandableTrigger,
+  ExpandableCloseButton,
   useExpandable,
 }
 

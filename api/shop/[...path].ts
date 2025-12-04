@@ -32,35 +32,51 @@ export default async function handler(
 
   // Route to appropriate handler
   switch (route) {
+    case 'products':
+      console.log('✅ Routing to products handler')
+      return handleProducts(req, res)
     case 'fourthwall/products':
-      return handleFourthwallProducts(req, res)
+      // Deprecated: Keep for backward compatibility but redirect to native products
+      console.log('✅ Routing to products handler (fourthwall fallback)')
+      return handleProducts(req, res)
     case 'affiliates/track-click':
+      console.log('✅ Routing to affiliates/track-click handler')
       return handleAffiliatesTrackClick(req, res)
     case 'payments/paypal':
+      console.log('✅ Routing to payments/paypal handler')
       return handlePaymentsPaypal(req, res)
     case 'king-midas/distribute':
+      console.log('✅ Routing to king-midas/distribute handler')
       return handleKingMidasDistribute(req, res)
     default:
-      return res.status(404).json({ error: `Shop route not found: ${route}` })
+      console.warn('⚠️ Route not found:', route, 'Available routes: products, affiliates/track-click, payments/paypal, king-midas/distribute')
+      return res.status(404).json({ error: `Shop route not found: ${route}`, availableRoutes: ['products', 'affiliates/track-click', 'payments/paypal', 'king-midas/distribute'] })
   }
 }
 
-async function handleFourthwallProducts(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/_fourthwall-products-handler')
+async function handleProducts(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/_products-handler.js')
   return handler.default(req, res)
 }
 
 async function handleAffiliatesTrackClick(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/_affiliates-track-click-handler')
+  const handler = await import('../../lib/api-handlers/_affiliates-track-click-handler.js')
   return handler.default(req, res)
 }
 
 async function handlePaymentsPaypal(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/_payments-paypal-handler')
-  return handler.default(req, res)
+  try {
+    console.log('📦 Loading PayPal payments handler...')
+    const handler = await import('../../lib/api-handlers/_payments-paypal-handler.js')
+    console.log('✅ PayPal handler loaded, calling default export')
+    return handler.default(req, res)
+  } catch (error) {
+    console.error('❌ Error loading PayPal handler:', error)
+    return res.status(500).json({ error: 'Failed to load PayPal handler', details: error instanceof Error ? error.message : String(error) })
+  }
 }
 
 async function handleKingMidasDistribute(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/_king-midas-distribute-handler')
+  const handler = await import('../../lib/api-handlers/_king-midas-distribute-handler.js')
   return handler.default(req, res)
 }

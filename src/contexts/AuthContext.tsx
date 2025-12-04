@@ -5,6 +5,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { authService, User, AuthSession } from '../services/auth';
 import { subscriptionService, SubscriptionTier } from '../services/subscription';
 import { autoPromoteToAdmin, isAdminEmail } from '../utils/admin';
+import { supabase } from '../lib/supabase';
 
 interface AuthContextType {
   user: User | null;
@@ -29,7 +30,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Initialize auth state
   useEffect(() => {
+    console.log('AuthProvider mounted');
     initializeAuth();
+    return () => console.log('AuthProvider unmounted');
   }, []);
 
   const initializeAuth = async () => {
@@ -222,6 +225,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               if (newUser?.id) {
                 const userTier = await subscriptionService.getTier(newUser.id);
                 setTier(userTier);
+                
+                // Check if user is a blog contributor (has subdomain) and send notification
+                try {
+                  const { data: subdomainData } = await supabase
+                    .from('user_subdomains')
+                    .select('subdomain')
+                    .eq('user_id', newUser.id)
+                    .maybeSingle();
+                  
+                  if (subdomainData?.subdomain) {
+                    // Send notification email (fire and forget - don't block on email)
+                    fetch('/api/admin/new-blog-contributor-notification', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        userId: newUser.id,
+                        subdomain: subdomainData.subdomain,
+                        userEmail: newUser.email,
+                      }),
+                    }).catch((err) => {
+                      console.warn('Failed to send blog contributor notification email:', err);
+                    });
+                  }
+                } catch (subdomainErr) {
+                  console.warn('Error checking for blog contributor subdomain:', subdomainErr);
+                }
               } else {
                 setTier('free');
               }
@@ -370,6 +401,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
+    console.error('useAuth failed: AuthContext is undefined. This usually means the component is not wrapped in AuthProvider.');
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

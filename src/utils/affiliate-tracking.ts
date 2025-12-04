@@ -18,17 +18,23 @@ export function getAffiliateRef(): string | null {
   if (typeof window === 'undefined') return null
 
   // Check URL query parameter first (e.g., ?ref=CODE or ?affiliate=CODE)
+  // URL params take precedence over cookies
   const params = new URLSearchParams(window.location.search)
   const urlRef = params.get('ref') || params.get('affiliate') || params.get('aff')
   
   if (urlRef) {
-    // Set cookie for future requests
+    // URL parameter takes precedence - update cookie with new value
+    console.log(`🔗 URL parameter detected: ${urlRef} (overriding any existing cookie)`)
     setAffiliateCookie(urlRef)
     return urlRef
   }
 
-  // Fall back to cookie
-  return getAffiliateCookie()
+  // Fall back to cookie only if no URL parameter
+  const cookieRef = getAffiliateCookie()
+  if (cookieRef) {
+    console.log(`🍪 Using affiliate from cookie: ${cookieRef}`)
+  }
+  return cookieRef
 }
 
 /**
@@ -77,6 +83,7 @@ export async function trackAffiliateClick(affiliateCode: string): Promise<boolea
   if (!affiliateCode) return false
 
   try {
+    console.log('📡 Tracking affiliate click:', affiliateCode)
     const response = await fetch('/api/shop/affiliates/track-click', {
       method: 'POST',
       headers: {
@@ -86,14 +93,16 @@ export async function trackAffiliateClick(affiliateCode: string): Promise<boolea
     })
 
     if (!response.ok) {
-      console.warn('Failed to track affiliate click:', response.statusText)
+      const errorText = await response.text()
+      console.warn('⚠️ Failed to track affiliate click:', response.status, response.statusText, errorText)
       return false
     }
 
     const data = await response.json()
+    console.log('📊 Tracking response:', data)
     return data.success === true
   } catch (error) {
-    console.error('Error tracking affiliate click:', error)
+    console.error('❌ Error tracking affiliate click:', error)
     return false
   }
 }
@@ -109,10 +118,21 @@ export function initAffiliateTracking(): void {
   const affiliateRef = getAffiliateRef()
   
   if (affiliateRef) {
+    console.log('🔗 Affiliate ref detected:', affiliateRef)
     // Track the click asynchronously (don't block page load)
-    trackAffiliateClick(affiliateRef).catch((error) => {
-      console.error('Failed to track affiliate click:', error)
-    })
+    trackAffiliateClick(affiliateRef)
+      .then((success) => {
+        if (success) {
+          console.log('✅ Affiliate click tracked successfully:', affiliateRef)
+        } else {
+          console.warn('⚠️ Affiliate click tracking returned false:', affiliateRef)
+        }
+      })
+      .catch((error) => {
+        console.error('❌ Failed to track affiliate click:', error)
+      })
+  } else {
+    console.log('ℹ️ No affiliate ref found in URL or cookie')
   }
 }
 

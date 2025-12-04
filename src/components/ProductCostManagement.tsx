@@ -10,7 +10,7 @@ interface ProductCost {
   id: string;
   product_id: string;
   variant_id: string | null;
-  source: 'local' | 'fourthwall' | 'paypal';
+  source: 'local' | 'paypal';
   cost: number;
   created_at: string;
   updated_at: string;
@@ -25,7 +25,7 @@ export function ProductCostManagement() {
   const [formData, setFormData] = useState({
     product_id: '',
     variant_id: '',
-    source: 'local' as 'local' | 'fourthwall' | 'paypal',
+    source: 'local' as 'local' | 'paypal',
     cost: '',
   });
   const [error, setError] = useState<string | null>(null);
@@ -253,7 +253,6 @@ export function ProductCostManagement() {
                 className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:ring-2 focus:ring-white/20 focus:border-white disabled:opacity-50"
               >
                 <option value="local">Local</option>
-                <option value="fourthwall">Fourthwall</option>
                 <option value="paypal">PayPal</option>
               </select>
             </div>
@@ -334,7 +333,6 @@ export function ProductCostManagement() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
                         cost.source === 'local' ? 'bg-blue-400/20 text-blue-400' :
-                        cost.source === 'fourthwall' ? 'bg-purple-400/20 text-purple-400' :
                         'bg-green-400/20 text-green-400'
                       }`}>
                         {cost.source}

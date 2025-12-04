@@ -387,6 +387,27 @@ export async function createSubscription(
       throw new Error(error.message);
     }
 
+    // Send notification email (fire and forget - don't block on email)
+    if (data?.id) {
+      try {
+        fetch('/api/admin/new-subscription-notification', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId,
+            tier,
+            subscriptionId: data.id,
+          }),
+        }).catch((err) => {
+          console.warn('Failed to send subscription notification email:', err);
+        });
+      } catch (err) {
+        console.warn('Error sending subscription notification:', err);
+      }
+    }
+
     return { subscription: data };
   } catch (error) {
     console.warn('Error creating subscription:', error);

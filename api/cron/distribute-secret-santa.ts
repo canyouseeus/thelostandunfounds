@@ -7,9 +7,10 @@ const supabase = createClient(
 );
 
 /**
- * Cron job to distribute Secret Santa pot annually on December 26
- * First distribution: December 26, 2026
+ * Cron job to distribute Secret Santa pot annually on December 25th
+ * First distribution: December 25th, 2026
  * Runs automatically via Vercel cron
+ * Evenly split among ALL active affiliates
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Verify this is a cron request
@@ -55,39 +56,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // Get all active affiliates with their reward points
+    // Get ALL active affiliates (even split distribution)
     const { data: affiliates, error: affiliatesError } = await supabase
       .from('affiliates')
-      .select('id, affiliate_code, reward_points, user_id')
-      .eq('status', 'active')
-      .gt('reward_points', 0)
-      .order('reward_points', { ascending: false });
+      .select('id, affiliate_code, user_id')
+      .eq('status', 'active');
 
     if (affiliatesError || !affiliates || affiliates.length === 0) {
       return res.status(200).json({
-        message: 'No active affiliates with points',
-        skipped: true
-      });
-    }
-
-    // Calculate total points
-    const totalPoints = affiliates.reduce((sum, a) => sum + (a.reward_points || 0), 0);
-
-    if (totalPoints === 0) {
-      return res.status(200).json({
-        message: 'No points to distribute against',
+        message: 'No active affiliates found',
         skipped: true
       });
     }
 
     const distributions = [];
     const potAmount = parseFloat(pot.total_amount);
+    const totalAffiliates = affiliates.length;
+    const sharePerAffiliate = potAmount / totalAffiliates;
 
-    // Calculate and create distributions
+    // Calculate and create distributions (even split)
     for (const affiliate of affiliates) {
-      if (affiliate.reward_points === 0) continue;
-
-      const share = (affiliate.reward_points / totalPoints) * potAmount;
+      const share = sharePerAffiliate;
 
       // Create commission record for payout
       const { data: commission, error: commissionError } = await supabase
@@ -106,9 +95,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         distributions.push({
           affiliate_id: affiliate.id,
           affiliate_code: affiliate.affiliate_code,
-          reward_points: affiliate.reward_points,
           share: share,
-          percentage: ((affiliate.reward_points / totalPoints) * 100).toFixed(2)
+          percentage: (100 / totalAffiliates).toFixed(2)
         });
 
         // Update affiliate's total earnings
@@ -129,8 +117,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // Mark pot as distributed (December 26th of current year)
-    const distributionDate = `${currentYear}-12-26`;
+    // Mark pot as distributed (December 25th of current year)
+    const distributionDate = `${currentYear}-12-25`;
     const { error: updateError } = await supabase
       .from('secret_santa_pot')
       .update({
@@ -148,7 +136,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       success: true,
       year: currentYear,
       pot_amount: potAmount,
-      total_points: totalPoints,
+      total_affiliates: totalAffiliates,
+      share_per_affiliate: sharePerAffiliate,
       affiliates_paid: distributions.length,
       distribution_date: distributionDate,
       distributions

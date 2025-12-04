@@ -1,8 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
-import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './components/Toast'
 import App from './App.tsx'
 import './index.css'
@@ -118,23 +116,6 @@ window.addEventListener('unhandledrejection', (event) => {
   originalConsoleError('Unhandled rejection:', event.reason);
 });
 
-// Skip MCP registry for now to isolate issue
-// initializeMCPRegistry()
-//   .then(async (mcpResult) => {
-//     const { toolRegistry } = await import('./services/mcp-registry');
-//     if (toolRegistry) {
-//       await initializeSkillsSystem(toolRegistry);
-//       if (import.meta.env.DEV) {
-//         console.log('✅ Skills system initialized');
-//       }
-//     }
-//   })
-//   .catch((error) => {
-//     if (import.meta.env.DEV) {
-//       console.warn('MCP registry initialization failed (this is optional):', error);
-//     }
-//   });
-
 const rootElement = document.getElementById('root')
 if (!rootElement) {
   throw new Error('Root element not found!')
@@ -146,18 +127,9 @@ try {
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
       <HelmetProvider>
-        <BrowserRouter
-          future={{
-            v7_startTransition: true,
-            v7_relativeSplatPath: true,
-          }}
-        >
-          <ToastProvider>
-            <AuthProvider>
-              <App />
-            </AuthProvider>
-          </ToastProvider>
-        </BrowserRouter>
+        <ToastProvider>
+          <App />
+        </ToastProvider>
       </HelmetProvider>
     </React.StrictMode>,
   )

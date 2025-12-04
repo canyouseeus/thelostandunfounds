@@ -36,9 +36,9 @@ export default defineConfig({
         secure: true,
         rewrite: (path) => '/api' + path.replace(/^\/api\/tiktok/, ''),
         configure: (proxy, _options) => {
-          proxy.on('error', (err, _req, res) => {
+          proxy.on('error', (err, _req, res: any) => {
             console.error('Proxy error:', err);
-            if (!res.headersSent) {
+            if (res && !res.headersSent) {
               res.writeHead(500, {
                 'Content-Type': 'application/json',
               });

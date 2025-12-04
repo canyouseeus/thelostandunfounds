@@ -263,7 +263,7 @@ export default function UserBlog() {
         </div>
 
         {posts.length === 0 ? (
-          <div className="text-white/60 text-lg text-center">
+          <div className="text-white/60 text-lg">
             <p>No posts yet. Check back soon!</p>
           </div>
         ) : (

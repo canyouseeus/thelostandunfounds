@@ -17,7 +17,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from 'lucide-react';
-import { cn } from '@/components/ui/utils';
+import { cn } from './utils';
 
 interface SortableItemProps {
   id: string;

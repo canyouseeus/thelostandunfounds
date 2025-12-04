@@ -33,12 +33,16 @@ export function BentoCard({
   return (
     <div
       className={cn(
-        'bg-black/50 border border-white backdrop-blur-md',
-        'hover:border-white hover:bg-white/5',
+        'bg-black/50 border border-white/20 backdrop-blur-md',
+        'hover:border-white/40 hover:bg-white/5',
         'transition-all duration-300',
         'p-6',
+        'rounded-none', // Ensure sharp corners
+        'shadow-[4px_4px_0px_0px_rgba(255,255,255,0.25)]', // 3D Shadow
+        'hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.35)]', // Enhanced shadow on hover
+        'hover:-translate-y-0.5 hover:-translate-x-0.5', // Lift effect
         expandable && 'cursor-pointer relative',
-        isExpanded && expandable && 'border-white bg-white/10',
+        isExpanded && expandable && 'border-white/40 bg-white/10 shadow-[inset_0_0_20px_rgba(255,255,255,0.05)]',
         className
       )}
       style={{
@@ -68,7 +72,7 @@ export function BentoCard({
       {expandable && isExpanded && expandedContent && (
         <div
           className={cn(
-            'mt-4 pt-4 border-t border-white',
+            'mt-4 pt-4 border-t border-white/10',
             'animate-in fade-in slide-in-from-top-2 duration-300'
           )}
         >

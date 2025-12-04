@@ -1,6 +1,7 @@
 -- Secret Santa pot tracking
--- Accumulates unclaimed 3% MLM bonuses for annual Christmas distribution
--- First distribution: December 26, 2026
+-- Accumulates 3% of profit for annual Christmas distribution
+-- First distribution: December 25th, 2026
+-- Evenly split among ALL active affiliates
 
 CREATE TABLE IF NOT EXISTS secret_santa_pot (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

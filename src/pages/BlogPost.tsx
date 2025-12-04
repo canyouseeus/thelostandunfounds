@@ -1038,8 +1038,11 @@ export default function BlogPost() {
       let actualMatchLength = matchInfo.length;
       
       if (bookKey && affiliateLink) {
-        // Check if the full title appears in the text starting at this position
-        // Look ahead up to the full title length + some buffer
+        // ALWAYS use the full database title for the link text
+        // This ensures consistency even if the text has partial titles like "Hunger Game" vs "The Hunger Games"
+        displayText = bookKey;
+        
+        // But also check if the full title appears in the text to preserve author's case if possible
         const searchStart = matchInfo.index;
         const searchEnd = Math.min(text.length, searchStart + bookKey.length + 50);
         const textSegment = text.substring(searchStart, searchEnd);
@@ -1060,8 +1063,9 @@ export default function BlogPost() {
           // Update match length to include full title
           actualMatchLength = fullTitleMatch.index + displayText.length;
         } else {
-          // Full title not found in text - use the database title
-          displayText = bookKey;
+          // Full title not found in text - use the database title (already set above)
+          // Keep the matched length for now, but we'll link the full title
+          actualMatchLength = matchInfo.length;
         }
       }
       

@@ -239,8 +239,8 @@ http://localhost:3000/become-affiliate?ref=KING01
 ✅ MLM L1:        $2.00  (2%)
 ✅ MLM L2:        $1.00  (1%)
 ✅ King Midas:    $8.00  (8%)
-✅ Secret Santa:  $0.00  (if full chain)
-✅ Company:       $47.00 (47%)
+✅ Secret Santa:  $3.00  (3% - ALWAYS)
+✅ Company:       $44.00 (44%)
 ```
 
 ### Employee Discount ($100 Sale)
@@ -253,7 +253,7 @@ From $58:
 ✅ MLM L1:        $1.16  (2%)
 ✅ MLM L2:        $0.58  (1%)
 ✅ King Midas:    $4.64  (8%)
-✅ Secret Santa:  $1.74  (3% if no referrer)
+✅ Secret Santa:  $1.74  (3% of $58 - ALWAYS)
 ✅ Company:       $27.26 (rest)
 ```
 

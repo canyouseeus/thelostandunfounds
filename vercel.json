@@ -3,6 +3,12 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "crons": [
+    {
+      "path": "/api/cron/process-payouts",
+      "schedule": "0 * * * *"
+    }
+  ],
   "redirects": [
     {
       "source": "/AI_WRITING_PROMPT_FOR_CONTRIBUTORS.md",
@@ -14,10 +20,6 @@
     {
       "source": "/thelostarchives/:slug",
       "destination": "/thelostarchives/:slug.html"
-    },
-    {
-      "source": "/:path((?!api).*)",
-      "destination": "/index.html"
     }
   ],
   "headers": [

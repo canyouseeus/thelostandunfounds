@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
-import { User, Mail, Calendar, Shield, Key, BookOpen, FileText, ExternalLink, Copy, Check, HelpCircle } from 'lucide-react';
+import { User, Mail, Calendar, Shield, Key, BookOpen, FileText, ExternalLink, Copy, Check, HelpCircle, ChevronDown, ChevronUp, TrendingUp } from 'lucide-react';
 import { LoadingSpinner, SkeletonCard } from '../components/Loading';
 import { formatDate } from '../utils/helpers';
 import { SubscriptionTier } from '../types/index';
@@ -55,6 +55,9 @@ export default function Profile() {
   const [userPosts, setUserPosts] = useState<BlogPost[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [affiliateData, setAffiliateData] = useState<any>(null);
+  const [loadingAffiliate, setLoadingAffiliate] = useState(false);
+  const [affiliateExpanded, setAffiliateExpanded] = useState(false);
 
   useEffect(() => {
     if (user?.email) {
@@ -80,8 +83,35 @@ export default function Profile() {
     if (user) {
       loadUserSubdomain();
       loadUserPosts();
+      checkAffiliateStatus();
     }
   }, [user]);
+
+  const checkAffiliateStatus = async () => {
+    if (!user?.id) return;
+    
+    setLoadingAffiliate(true);
+    try {
+      // Check if user has an affiliate account
+      const { data: affiliate, error } = await supabase
+        .from('affiliates')
+        .select('id, code, status, total_earnings, total_clicks, total_conversions, commission_rate')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+        console.error('Error checking affiliate status:', error);
+      } else if (affiliate) {
+        setAffiliateData(affiliate);
+      } else {
+        setAffiliateData(null);
+      }
+    } catch (err) {
+      console.error('Error checking affiliate status:', err);
+    } finally {
+      setLoadingAffiliate(false);
+    }
+  };
 
   // Redirect to correct URL after subdomain is loaded
   useEffect(() => {
@@ -498,6 +528,121 @@ export default function Profile() {
           </div>
         </div>
 
+        {/* Affiliates Section */}
+        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <TrendingUp className="w-5 h-5" />
+              Affiliate Program
+            </h2>
+            {affiliateData && (
+              <button
+                onClick={() => setAffiliateExpanded(!affiliateExpanded)}
+                className="text-white/60 hover:text-white transition-colors flex items-center gap-1"
+              >
+                {affiliateExpanded ? (
+                  <>
+                    <ChevronUp className="w-4 h-4" />
+                    <span className="text-sm">Collapse</span>
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-4 h-4" />
+                    <span className="text-sm">Expand</span>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+
+          {loadingAffiliate ? (
+            <div className="py-4">
+              <LoadingSpinner size="sm" />
+            </div>
+          ) : affiliateData ? (
+            <>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-white/60">Affiliate Code:</span>
+                  <span className="text-white font-mono font-semibold">{affiliateData.code}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-white/60">Status:</span>
+                  <span className={`px-2 py-1 rounded text-xs ${
+                    affiliateData.status === 'active'
+                      ? 'bg-green-400/20 text-green-400'
+                      : 'bg-yellow-400/20 text-yellow-400'
+                  }`}>
+                    {affiliateData.status}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-white/60">Total Earnings:</span>
+                  <span className="text-white font-semibold">${parseFloat(affiliateData.total_earnings || 0).toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-white/60">Commission Rate:</span>
+                  <span className="text-white">{affiliateData.commission_rate}%</span>
+                </div>
+              </div>
+
+              {affiliateExpanded && (
+                <div className="mt-6 pt-6 border-t border-white/10">
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="bg-black/30 border border-white/10 rounded-none p-3">
+                      <div className="text-xs text-white/60 mb-1">Total Clicks</div>
+                      <div className="text-lg font-bold text-white">{affiliateData.total_clicks || 0}</div>
+                    </div>
+                    <div className="bg-black/30 border border-white/10 rounded-none p-3">
+                      <div className="text-xs text-white/60 mb-1">Total Conversions</div>
+                      <div className="text-lg font-bold text-white">{affiliateData.total_conversions || 0}</div>
+                    </div>
+                  </div>
+                  <Link
+                    to="/affiliate/dashboard"
+                    className="w-full px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition flex items-center justify-center gap-2"
+                  >
+                    <TrendingUp className="w-4 h-4" />
+                    Open Full Dashboard
+                  </Link>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-white/70">
+                Join our affiliate program and earn commissions by promoting our products. 
+                Share your unique referral link and earn 42% commission on every sale.
+              </p>
+              <div className="bg-black/30 border border-white/10 rounded-none p-4 space-y-2">
+                <div className="flex items-center gap-2 text-white/80">
+                  <Check className="w-4 h-4 text-green-400" />
+                  <span>42% commission on all sales</span>
+                </div>
+                <div className="flex items-center gap-2 text-white/80">
+                  <Check className="w-4 h-4 text-green-400" />
+                  <span>Lifetime customer tracking</span>
+                </div>
+                <div className="flex items-center gap-2 text-white/80">
+                  <Check className="w-4 h-4 text-green-400" />
+                  <span>Multi-level marketing bonuses</span>
+                </div>
+                <div className="flex items-center gap-2 text-white/80">
+                  <Check className="w-4 h-4 text-green-400" />
+                  <span>Reward points system</span>
+                </div>
+              </div>
+              <Link
+                to="/become-affiliate"
+                className="w-full px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition flex items-center justify-center gap-2"
+              >
+                <TrendingUp className="w-4 h-4" />
+                Become an Affiliate
+              </Link>
+            </div>
+          )}
+        </div>
+
         {/* My Articles Section */}
         {userPosts.length > 0 && (
           <div className="bg-black/50 border border-white rounded-none p-6">
@@ -577,7 +722,7 @@ export default function Profile() {
                 to="/submit-article"
                 className="inline-block px-6 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
               >
-                Submit Your First Article
+                Submit the First Article
               </Link>
             </div>
           </div>

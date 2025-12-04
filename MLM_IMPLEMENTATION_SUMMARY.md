@@ -85,8 +85,8 @@ Referring Affiliate: $42 (42%)
 MLM Level 1:         $2  (2%)
 MLM Level 2:         $1  (1%)
 King Midas:          $8  (8%)
-Secret Santa:        $0  (if full chain)
-Company:            $47 (47%)
+Secret Santa:        $3  (3%) ← ALWAYS
+Company:            $44 (44%)
 ```
 
 ### Employee Discount Purchase ($100 profit):
@@ -98,8 +98,8 @@ Referring Affiliate: $24.36 (42% of $58)
 MLM Level 1:         $1.16 (2% of $58)
 MLM Level 2:         $0.58 (1% of $58)
 King Midas:          $4.64 (8% of $58)
-Secret Santa:        $1.74 (3% of $58, if applicable)
-Company:            $27.26 (remaining)
+Secret Santa:        $1.74 (3% of $58) ← ALWAYS
+Company:            $26.52 (remaining)
 ```
 
 ---

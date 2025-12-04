@@ -9,15 +9,6 @@ import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabase';
 import { LoadingSpinner } from '../components/Loading';
 import { BookOpen } from 'lucide-react';
-import {
-  Expandable,
-  ExpandableCard,
-  ExpandableCardHeader,
-  ExpandableCardContent,
-  ExpandableCardFooter,
-  ExpandableContent,
-  ExpandableTrigger,
-} from '../components/ui/expandable';
 
 interface BlogPost {
   id: string;
@@ -30,7 +21,6 @@ interface BlogPost {
   subdomain: string | null;
   author_id: string | null;
   amazon_affiliate_links?: any[] | null;
-  blog_column?: string | null;
 }
 
 export default function BookClub() {
@@ -47,59 +37,24 @@ export default function BookClub() {
       setLoading(true);
       setError(null);
 
-      // Load all published posts for BookClub column
-      // Try to filter by blog_column first, with fallback to subdomain for backward compatibility
-      let query = supabase
+      // Load all published posts that have a subdomain (user blogs)
+      // These are the "Book Club" articles - user-submitted content
+      const { data, error: fetchError } = await supabase
         .from('blog_posts')
-        .select('id, title, slug, excerpt, content, published_at, created_at, subdomain, author_id, amazon_affiliate_links, blog_column')
-        .eq('published', true);
-
-      // Try to filter by blog_column field
-      query = query.eq('blog_column', 'bookclub');
-
-      const { data, error: fetchError } = await query
+        .select('id, title, slug, excerpt, content, published_at, created_at, subdomain, author_id, amazon_affiliate_links')
+        .not('subdomain', 'is', null) // Only posts with subdomains (user blogs)
+        .eq('published', true)
         .order('published_at', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(100);
 
-      // If query failed or returned no results, try fallback to subdomain-based filtering
-      let filteredData = data || [];
-      if (fetchError || !data || data.length === 0) {
-        console.log('blog_column filter returned no results, trying subdomain fallback');
-        // Fallback: get posts with subdomain (book club posts)
-        const fallbackQuery = supabase
-          .from('blog_posts')
-          .select('id, title, slug, excerpt, content, published_at, created_at, subdomain, author_id, amazon_affiliate_links, blog_column')
-          .eq('published', true)
-          .not('subdomain', 'is', null)
-          .order('published_at', { ascending: false })
-          .order('created_at', { ascending: false })
-          .limit(100);
-        
-        const { data: fallbackData, error: fallbackError } = await fallbackQuery;
-        
-        if (fallbackError) {
-          console.error('Error loading book club posts (fallback):', fallbackError);
-          setError('Failed to load articles');
-          return;
-        }
-        
-        filteredData = fallbackData || [];
-      } else {
-        // Filter to ensure we only show posts with blog_column='bookclub' or NULL (for backward compatibility)
-        filteredData = data.filter((post: any) => 
-          post.blog_column === 'bookclub' || 
-          (post.blog_column === null && post.subdomain !== null)
-        );
-      }
-
-      if (fetchError && filteredData.length === 0) {
+      if (fetchError) {
         console.error('Error loading book club posts:', fetchError);
         setError('Failed to load articles');
         return;
       }
 
-      setPosts(filteredData);
+      setPosts(data || []);
     } catch (err: any) {
       console.error('Error loading book club:', err);
       setError(err.message || 'Failed to load articles');
@@ -148,13 +103,13 @@ export default function BookClub() {
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 tracking-wide">
             BOOK CLUB
           </h1>
-          <p className="text-white/60 text-sm max-w-2xl mx-auto">
+          <p className="text-white/60 text-sm max-w-lg mx-auto text-justify leading-relaxed">
             Each article features four books with Amazon affiliate links, connecting ideas across different works and sharing personal reflections.
           </p>
           <div className="mt-6">
             <Link
               to="/submit/bookclub"
-              className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white rounded-none text-white text-sm font-medium transition"
+              className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm font-medium transition"
             >
               Submit Your Article →
             </Link>
@@ -162,7 +117,7 @@ export default function BookClub() {
         </div>
 
         {error && (
-          <div className="bg-red-900/20 border border-white rounded-none p-4 mb-6">
+          <div className="bg-red-900/20 border border-red-500/50 rounded-none p-4 mb-6">
             <p className="text-red-400">{error}</p>
           </div>
         )}
@@ -178,112 +133,65 @@ export default function BookClub() {
               to="/submit/bookclub"
               className="inline-block px-6 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
             >
-              Submit Your First Article
+              Submit the First Article
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-6">
-            {posts.map((post) => {
-              const excerpt = post.excerpt || (post.content ? (() => {
-                const firstParagraph = post.content.split(/\n\n+/)[0]?.trim() || '';
-                if (firstParagraph.length > 0) {
-                  return firstParagraph.length > 200 
-                    ? firstParagraph.substring(0, 200).replace(/\s+\S*$/, '') + '...'
-                    : firstParagraph;
-                }
-                return '';
-              })() : '');
-              
-              return (
-                <Expandable
-                  key={post.id}
-                  expandDirection="vertical"
-                  expandBehavior="replace"
-                  initialDelay={0}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                >
-                  {({ isExpanded }) => (
-                    <ExpandableTrigger>
-                      <div 
-                        className="rounded-none p-[1px] relative"
-                        style={{ 
-                          background: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15), rgba(255,255,255,0.3))',
-                          minHeight: isExpanded ? '400px' : '220px',
-                          transition: 'min-height 0.2s ease-out',
-                        }}
-                      >
-                        <ExpandableCard
-                          className="bg-black border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02]"
-                          collapsedSize={{ height: 220 }}
-                          expandedSize={{ height: 400 }}
-                          hoverToExpand={false}
-                          expandDelay={0}
-                          collapseDelay={0}
-                        >
-                          <ExpandableCardHeader className="mb-1 pb-1">
-                            <h2 className="text-base font-black text-white mb-0 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
-                              {post.title}
-                            </h2>
-                          </ExpandableCardHeader>
-                        
-                          <ExpandableCardContent className="flex-1 min-h-0">
-                            {excerpt && (
-                              <div className="mb-1">
-                                <p className="text-white/60 text-sm leading-relaxed line-clamp-4 text-left">
-                                  {excerpt}
-                                </p>
-                              </div>
-                            )}
-                            
-                            {post.amazon_affiliate_links && post.amazon_affiliate_links.length > 0 && (
-                              <div className="mb-2 flex items-center gap-2 text-xs text-white/50">
-                                <BookOpen className="w-3 h-3" />
-                                <span>{post.amazon_affiliate_links.length} book{post.amazon_affiliate_links.length !== 1 ? 's' : ''}</span>
-                              </div>
-                            )}
-                            
-                            <ExpandableContent 
-                              preset="fade" 
-                              stagger 
-                              staggerChildren={0.1}
-                              keepMounted={false}
-                            >
-                              {post.content && (
-                                <div className="mb-2">
-                                  <p className="text-white/50 text-xs leading-relaxed text-left line-clamp-6">
-                                    {post.content.replace(/\n/g, ' ').substring(0, 300)}...
-                                  </p>
-                                </div>
-                              )}
-                              <Link
-                                to={`/blog/${post.subdomain}/${post.slug}`}
-                                className="inline-block mt-2 text-white/80 hover:text-white text-xs font-semibold transition"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                Read Full Article →
-                              </Link>
-                            </ExpandableContent>
-                          </ExpandableCardContent>
-                          
-                          <ExpandableCardFooter className="mt-auto p-3 pt-2 pb-3">
-                            <div className="flex items-center justify-between gap-2 min-w-0 w-full">
-                              <time className="text-white/70 text-xs font-medium truncate min-w-0 flex-1">
-                                {formatDate(post.published_at || post.created_at)}
-                              </time>
-                              {!isExpanded && (
-                                <span className="text-white/90 text-xs font-semibold transition flex-shrink-0 whitespace-nowrap">
-                                  Click to expand →
-                                </span>
-                              )}
-                            </div>
-                        </ExpandableCardFooter>
-                      </ExpandableCard>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {posts.map((post) => (
+              <Link
+                key={post.id}
+                to={`/blog/${post.subdomain}/${post.slug}`}
+                className="group"
+              >
+                <article className="bg-black/50 border-2 border-white/10 rounded-lg p-5 h-full flex flex-col hover:border-white/30 hover:shadow-lg hover:shadow-white/10 transition-all duration-300 transform hover:-translate-y-1">
+                  <div className="mb-4 pb-3 border-b border-white/10">
+                    <h3 className="text-base font-black text-white mb-2 tracking-wide group-hover:text-white/90 transition line-clamp-2">
+                      {post.title}
+                    </h3>
+                  </div>
+
+                  {(() => {
+                    // Generate excerpt: use existing excerpt or generate from first paragraph
+                    const excerpt = post.excerpt || (post.content ? (() => {
+                      const firstParagraph = post.content.split(/\n\n+/)[0]?.trim() || '';
+                      if (firstParagraph.length > 0) {
+                        return firstParagraph.length > 200 
+                          ? firstParagraph.substring(0, 200).replace(/\s+\S*$/, '') + '...'
+                          : firstParagraph;
+                      }
+                      return '';
+                    })() : '');
+                    
+                    return excerpt ? (
+                      <div className="flex-1 mb-4">
+                        <p className="text-white/60 text-sm leading-relaxed line-clamp-4 text-left">
+                          {excerpt}
+                        </p>
                       </div>
-                    </ExpandableTrigger>
+                    ) : null;
+                  })()}
+
+                  {post.amazon_affiliate_links && post.amazon_affiliate_links.length > 0 && (
+                    <div className="mb-4 flex items-center gap-2 text-xs text-white/50">
+                      <BookOpen className="w-3 h-3" />
+                      <span>{post.amazon_affiliate_links.length} book{post.amazon_affiliate_links.length !== 1 ? 's' : ''}</span>
+                    </div>
                   )}
-                </Expandable>
-              );
-            })}
+
+                  <div className="mt-auto pt-3 border-t border-white/10">
+                    <div className="flex items-center justify-between">
+                      <time className="text-white/40 text-xs font-medium">
+                        {formatDate(post.published_at || post.created_at)}
+                      </time>
+                      <span className="text-white/60 text-xs font-semibold group-hover:text-white transition">
+                        Read →
+                      </span>
+                    </div>
+                  </div>
+                </article>
+              </Link>
+            ))}
           </div>
         )}
       </div>
