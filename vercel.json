@@ -34,14 +34,5 @@
         }
       ]
     },
-    {
-      "source": "/tiktok-downloader/(.*)",
-      "headers": [
-        {
-          "key": "X-Frame-Options",
-          "value": "SAMEORIGIN"
-        }
-      ]
-    }
   ]
 }

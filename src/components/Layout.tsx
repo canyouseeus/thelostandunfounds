@@ -10,7 +10,6 @@ import Footer from './Footer'
 export default function Layout() {
   const location = useLocation()
   const isHome = location.pathname === '/'
-  const isTikTokDownloader = location.pathname === '/tools/tiktok-downloader'
   const [menuOpen, setMenuOpen] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
