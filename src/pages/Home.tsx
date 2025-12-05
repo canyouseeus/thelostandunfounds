@@ -18,13 +18,20 @@ export default function Home() {
       <div className="h-screen bg-black flex flex-col overflow-hidden">
         <main className="flex-1 flex flex-col items-center justify-center relative h-full gap-8">
           {/* Logo */}
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center" style={{ position: 'relative', zIndex: 10 }}>
             <img 
               src="/logo.png" 
               alt="THE LOST+UNFOUNDS Logo" 
-              className="max-w-[570px] h-auto w-full" 
               style={{ 
                 maxWidth: 'min(570px, 80vw)',
+                width: 'auto',
+                height: 'auto',
+                opacity: 1,
+                visibility: 'visible',
+                display: 'block',
+                filter: 'none',
+                mixBlendMode: 'normal',
+                position: 'relative',
               }} 
             />
           </div>
