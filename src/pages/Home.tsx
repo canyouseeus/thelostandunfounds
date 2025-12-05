@@ -14,6 +14,7 @@ export default function Home() {
       transform: translate(-50%, -50%);
       z-index: 99999;
       pointer-events: none;
+      opacity: 1 !important;
     `
     document.body.appendChild(logoContainer)
 
