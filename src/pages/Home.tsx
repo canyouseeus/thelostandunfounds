@@ -3,8 +3,13 @@ import { Helmet } from 'react-helmet-async'
 import EmailSignup from '../components/EmailSignup'
 
 export default function Home() {
+  const text = "CAN YOU SEE US?"
   const [logoOpacity, setLogoOpacity] = useState(0)
   const [showLogo, setShowLogo] = useState(true)
+  const [showTyping, setShowTyping] = useState(false)
+  const [displayedText, setDisplayedText] = useState('')
+  const [showCursor, setShowCursor] = useState(false)
+  const [typingComplete, setTypingComplete] = useState(false)
   const [showSignup, setShowSignup] = useState(false)
 
   useEffect(() => {
@@ -47,8 +52,8 @@ export default function Home() {
           }
           setLogoOpacity(0)
           setShowLogo(false)
-          // Show signup form after logo fades out
-          setShowSignup(true)
+          // Start typing animation after logo fades out
+          setShowTyping(true)
         }
       }, 16)
     }, 3500) // 0.5s fade in + 3s display = 3.5s
@@ -65,6 +70,65 @@ export default function Home() {
       }
     }
   }, [])
+
+  // Cursor blink animation - starts when typing begins
+  useEffect(() => {
+    if (!showTyping) return
+    
+    let cursorInterval: NodeJS.Timeout | null = null
+    
+    setShowCursor(true)
+    cursorInterval = setInterval(() => {
+      setShowCursor(prev => !prev)
+    }, 530)
+
+    return () => {
+      if (cursorInterval) {
+        clearInterval(cursorInterval)
+      }
+    }
+  }, [showTyping])
+
+  // Start typing animation when showTyping becomes true
+  useEffect(() => {
+    if (!showTyping) return
+
+    const centerIndex = Math.floor(text.length / 2)
+    let leftCount = 0
+    let rightCount = 1
+    let isRight = true
+    
+    const typeInterval = setInterval(() => {
+      if (isRight && rightCount <= text.length - centerIndex) {
+        // Type to the right
+        const start = centerIndex - leftCount
+        const end = centerIndex + rightCount
+        setDisplayedText(text.substring(start, end))
+        rightCount++
+        isRight = false
+      } else if (!isRight && leftCount < centerIndex) {
+        // Type to the left
+        leftCount++
+        const start = centerIndex - leftCount
+        const end = centerIndex + rightCount - 1
+        setDisplayedText(text.substring(start, end))
+        isRight = true
+      } else {
+        // Animation complete
+        clearInterval(typeInterval)
+        setDisplayedText(text)
+        setTypingComplete(true)
+        // Show signup form after typing completes
+        setTimeout(() => {
+          setShowSignup(true)
+        }, 500)
+      }
+    }, 33) // ~33ms per character
+
+    return () => {
+      clearInterval(typeInterval)
+    }
+  }, [showTyping, text])
 
   return (
     <>
@@ -111,32 +175,74 @@ export default function Home() {
             </div>
           )}
           
-          {/* Email Signup */}
-          {showSignup && (
+          {/* Typing text - appears after logo fades out */}
+          {showTyping && (
             <div 
-              className="flex flex-col items-center"
+              className="center-text fixed text-base sm:text-2xl md:text-3xl"
               style={{
-                width: '100%',
-                maxWidth: 'min(500px, 90vw)',
+                opacity: showSignup ? 0 : 1,
+                visibility: showSignup ? 'hidden' : 'visible',
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 1001,
+                transition: 'opacity 1.5s ease-in-out, visibility 0s linear 1.5s',
+                pointerEvents: showSignup ? 'none' : 'auto',
+                willChange: 'opacity',
+                position: 'fixed',
                 padding: '0 1rem',
-                opacity: showSignup ? 1 : 0,
-                transition: 'opacity 0.5s ease-in',
+                maxWidth: '100vw',
+                wordBreak: 'break-word',
+                whiteSpace: 'normal',
               }}
             >
-              <EmailSignup />
-              {/* Copy text below subscribe modal */}
-              <div style={{
-                textAlign: 'center',
-                color: 'rgba(255, 255, 255, 0.6)',
-                fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
-                lineHeight: '1.5',
-                padding: '0 0.5rem',
-                marginTop: '1.5rem',
-              }}>
-                Thanks for stopping by. Sign-up for updates and news!
-              </div>
+              {displayedText}
+              <span 
+                className="typing-cursor"
+                style={{ 
+                  opacity: showCursor ? 1 : 0,
+                  transition: 'opacity 0.1s ease-in-out'
+                }}
+              >
+                |
+              </span>
             </div>
           )}
+          
+          {/* Email Signup - slides up from bottom */}
+          <div 
+            className="fixed flex flex-col items-center"
+            style={{
+              opacity: showSignup ? 1 : 0,
+              visibility: showSignup ? 'visible' : 'hidden',
+              left: '50%',
+              top: showSignup ? '50%' : '100%',
+              transform: showSignup ? 'translate(-50%, -50%)' : 'translate(-50%, 0)',
+              width: '100%',
+              maxWidth: 'min(500px, 90vw)',
+              padding: '0 1rem',
+              zIndex: 1002,
+              transition: 'opacity 1.5s ease-in-out, transform 1.5s ease-in-out, visibility 0s linear',
+              pointerEvents: showSignup ? 'auto' : 'none',
+              willChange: 'opacity, transform',
+              position: 'fixed',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.5rem',
+            }}
+          >
+            <EmailSignup />
+            {/* Copy text below subscribe modal */}
+            <div style={{
+              textAlign: 'center',
+              color: 'rgba(255, 255, 255, 0.6)',
+              fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
+              lineHeight: '1.5',
+              padding: '0 0.5rem',
+            }}>
+              Thanks for stopping by. Sign-up for updates and news!
+            </div>
+          </div>
         </main>
       </div>
     </>

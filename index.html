@@ -78,7 +78,7 @@
         <p style="font-size: 0.875rem; color: rgba(255, 255, 255, 0.6);">
           THE LOST+UNFOUNDS - Revealing findings from the frontier and beyond.
         </p>
-        <div style="color: rgba(255, 255, 255, 0.4); margin-top: 2rem; font-size: 0.75rem;">
+        <div id="loading-message" style="display: none; color: rgba(255, 255, 255, 0.4); margin-top: 2rem; font-size: 0.75rem;">
           Loading... If you see this, HTML loaded but React hasn't mounted yet.
         </div>
       </div>
@@ -153,6 +153,22 @@
               preRender.style.display = 'none';
             }
           }, 5000);
+          
+          // Show loading message only if React hasn't mounted after 30 seconds
+          setTimeout(() => {
+            const root = document.getElementById('root');
+            const loadingMsg = document.getElementById('loading-message');
+            const preRender = document.getElementById('pre-render');
+            
+            // Check if React has actually mounted (look for React content)
+            const hasReactContent = root && root.children.length > 0 && 
+              root.children[0].tagName !== undefined && 
+              !root.innerHTML.includes('Loading... If you see this');
+            
+            if (!hasReactContent && loadingMsg && preRender && preRender.style.display !== 'none') {
+              loadingMsg.style.display = 'block';
+            }
+          }, 30000);
         }
       });
       
