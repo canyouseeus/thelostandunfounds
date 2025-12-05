@@ -19,7 +19,7 @@ export default function Home() {
     
     // Fade in logo immediately when page loads
     const fadeInStart = Date.now()
-    const fadeInDuration = 500 // 0.5 seconds fade in
+    const fadeInDuration = 1000 // 1 second fade in
     
     fadeInInterval = setInterval(() => {
       const elapsed = Date.now() - fadeInStart
@@ -35,10 +35,10 @@ export default function Home() {
       }
     }, 16) // ~60fps
 
-    // After fade in (0.5s) + display (3s) = 3.5s total, start fade out
+    // After fade in (1s) + display (1s) = 2s total, start fade out
     fadeOutTimer = setTimeout(() => {
       const fadeOutStart = Date.now()
-      const fadeOutDuration = 1500 // 1.5 seconds fade out
+      const fadeOutDuration = 1000 // 1 second fade out
       
       fadeOutInterval = setInterval(() => {
         const elapsed = Date.now() - fadeOutStart
@@ -56,7 +56,7 @@ export default function Home() {
           setShowTyping(true)
         }
       }, 16)
-    }, 3500) // 0.5s fade in + 3s display = 3.5s
+    }, 2000) // 1s fade in + 1s display = 2s
 
     return () => {
       if (fadeInInterval) {
