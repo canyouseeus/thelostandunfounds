@@ -238,13 +238,6 @@ export default function Layout({ children }: { children?: ReactNode }) {
               <Link to="/" className="flex items-center text-white hover:text-white/80 transition">
                 <span className="text-sm sm:text-lg md:text-xl font-bold whitespace-nowrap">THE LOST+UNFOUNDS</span>
               </Link>
-              <nav className="flex items-center gap-5 text-sm text-white/70">
-                <Link to="/" className="hover:text-white transition" onClick={() => setMenuOpen(false)}>HOME</Link>
-                <Link to="/shop" className="hover:text-white transition" onClick={() => setMenuOpen(false)}>SHOP</Link>
-                <Link to="/thelostarchives" className="hover:text-white transition" onClick={() => setMenuOpen(false)}>ARCHIVES</Link>
-                <Link to="/about" className="hover:text-white transition" onClick={() => setMenuOpen(false)}>ABOUT</Link>
-                <Link to="/contact" className="hover:text-white transition" onClick={() => setMenuOpen(false)}>CONTACT</Link>
-              </nav>
             </div>
             <div className="flex items-center space-x-4 ml-auto">
               <div 
