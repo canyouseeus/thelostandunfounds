@@ -1,5 +1,6 @@
-import { Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Analytics } from '@vercel/analytics/react'
+import { AuthProvider } from './contexts/AuthContext'
 import ErrorBoundary from './components/ErrorBoundary'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -38,18 +39,16 @@ import HelloWorld from './pages/HelloWorld'
 import BlogGettingStarted from './pages/BlogGettingStarted'
 
 function App() {
-  // Video preloader temporarily disabled for debugging
-  // const [showPreloader, setShowPreloader] = useState(true)
-  // const handlePreloaderComplete = () => {
-  //   setShowPreloader(false)
-  // }
-  // if (showPreloader) {
-  //   return <VideoPreloader onComplete={handlePreloaderComplete} />
-  // }
-
   return (
-    <ErrorBoundary>
-      <Routes>
+    <BrowserRouter
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
+      <AuthProvider>
+        <ErrorBoundary>
+          <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
         </Route>
@@ -164,9 +163,11 @@ function App() {
         </Route>
         <Route path="/reset-newsletter" element={<ResetNewsletter />} />
         <Route path="*" element={<NotFound />} />
-      </Routes>
-      <Analytics />
-    </ErrorBoundary>
+          </Routes>
+          <Analytics />
+        </ErrorBoundary>
+      </AuthProvider>
+    </BrowserRouter>
   )
 }
 

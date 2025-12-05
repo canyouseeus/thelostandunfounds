@@ -225,7 +225,6 @@ export default function Home() {
               className="fixed"
               style={{
                 opacity: logoOpacity,
-                transition: logoState === 'static' ? 'opacity 0s' : 'opacity 0.016s linear',
                 left: '50%',
                 top: '50%',
                 transform: 'translate(-50%, -50%)',
@@ -236,7 +235,10 @@ export default function Home() {
                 src="/logo.png" 
                 alt="THE LOST+UNFOUNDS Logo" 
                 className="max-w-[570px] h-auto sm:max-w-[570px] max-w-[80vw] sm:max-w-[570px]" 
-                style={{ maxWidth: 'min(570px, 80vw)' }} 
+                style={{ 
+                  maxWidth: 'min(570px, 80vw)',
+                  opacity: 1,
+                }} 
               />
             </div>
           )}
