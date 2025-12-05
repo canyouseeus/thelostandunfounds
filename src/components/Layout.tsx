@@ -236,12 +236,19 @@ export default function Layout({ children }: { children?: ReactNode }) {
       return
     }
 
+    // Fade in header/nav when home animation signals completion
     const handleHomeAnimationComplete = () => {
       setHeaderVisible(true)
     }
 
+    // Fallback: force header visible after a few seconds in case signal is missed
+    const fallbackTimer = setTimeout(() => setHeaderVisible(true), 5000)
+
     window.addEventListener('home-animation-complete', handleHomeAnimationComplete)
-    return () => window.removeEventListener('home-animation-complete', handleHomeAnimationComplete)
+    return () => {
+      window.removeEventListener('home-animation-complete', handleHomeAnimationComplete)
+      clearTimeout(fallbackTimer)
+    }
   }, [isHome])
 
   return (
