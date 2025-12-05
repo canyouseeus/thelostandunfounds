@@ -8,13 +8,14 @@ export default function Home() {
     const logoContainer = document.createElement('div')
     logoContainer.id = 'home-logo-container'
     logoContainer.style.cssText = `
-      position: fixed;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 99999;
-      pointer-events: none;
+      position: fixed !important;
+      left: 50% !important;
+      top: 50% !important;
+      transform: translate(-50%, -50%) !important;
+      z-index: 2147483647 !important;
+      pointer-events: none !important;
       opacity: 1 !important;
+      will-change: auto !important;
     `
     document.body.appendChild(logoContainer)
 
@@ -22,14 +23,15 @@ export default function Home() {
     logoImg.src = '/logo.png'
     logoImg.alt = 'THE LOST+UNFOUNDS Logo'
     logoImg.style.cssText = `
-      max-width: min(570px, 80vw);
-      width: auto;
-      height: auto;
+      max-width: min(570px, 80vw) !important;
+      width: auto !important;
+      height: auto !important;
       opacity: 1 !important;
-      filter: brightness(1) contrast(1) !important;
+      filter: none !important;
       mix-blend-mode: normal !important;
-      display: block;
+      display: block !important;
       visibility: visible !important;
+      image-rendering: auto !important;
     `
     logoContainer.appendChild(logoImg)
 
