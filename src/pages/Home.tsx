@@ -23,6 +23,7 @@ export default function Home() {
               top: '50%',
               transform: 'translate(-50%, -50%)',
               zIndex: 99999,
+              pointerEvents: 'none',
             }}
           >
             <img 
@@ -32,6 +33,9 @@ export default function Home() {
               style={{ 
                 maxWidth: 'min(570px, 80vw)',
                 opacity: 1,
+                filter: 'none',
+                mixBlendMode: 'normal',
+                brightness: 1,
               }} 
             />
           </div>
