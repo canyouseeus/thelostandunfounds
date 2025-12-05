@@ -37,6 +37,7 @@ import Debug from './pages/Debug'
 import AIWritingPrompt from './pages/AIWritingPrompt'
 import HelloWorld from './pages/HelloWorld'
 import BlogGettingStarted from './pages/BlogGettingStarted'
+import DesignSystem from './pages/DesignSystem'
 
 function App() {
   return (
@@ -97,6 +98,9 @@ function App() {
         </Route>
         <Route path="/sql" element={<Layout />}>
           <Route index element={<SQL />} />
+        </Route>
+        <Route path="/designsystem" element={<Layout />}>
+          <Route index element={<DesignSystem />} />
         </Route>
         <Route path="/:column/prompt" element={<Layout />}>
           <Route index element={<AIWritingPrompt />} />
