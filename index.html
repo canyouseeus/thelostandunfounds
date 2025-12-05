@@ -69,16 +69,16 @@
     </script>
     
     <div id="root">
-      <!-- Pre-rendered content visible to bots before React loads -->
-      <div id="pre-render" style="background: black; color: white; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999;">
+      <!-- Pre-rendered content for bots; visually hidden for users so no flash -->
+      <div id="pre-render" style="background: black; color: black; opacity: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999; pointer-events: none;">
         <h1 style="font-size: 3rem; margin-bottom: 2rem; font-weight: normal;">CAN YOU SEE US?</h1>
-        <p style="font-size: 1.25rem; margin-bottom: 2rem; color: rgba(255, 255, 255, 0.8);">
+        <p style="font-size: 1.25rem; margin-bottom: 2rem; color: black;">
           Thanks for stopping by. Sign-up for updates and news!
         </p>
-        <p style="font-size: 0.875rem; color: rgba(255, 255, 255, 0.6);">
+        <p style="font-size: 0.875rem; color: black;">
           THE LOST+UNFOUNDS - Revealing findings from the frontier and beyond.
         </p>
-        <div id="loading-message" style="display: none; color: rgba(255, 255, 255, 0.4); margin-top: 2rem; font-size: 0.75rem;">
+        <div id="loading-message" style="display: none; color: black; margin-top: 2rem; font-size: 0.75rem;">
           Loading... If you see this, HTML loaded but React hasn't mounted yet.
         </div>
       </div>
