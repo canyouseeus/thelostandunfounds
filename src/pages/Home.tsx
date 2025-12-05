@@ -14,32 +14,32 @@ export default function Home() {
         <meta name="twitter:title" content="THE LOST+UNFOUNDS - CAN YOU SEE US?" />
         <meta name="twitter:description" content="Thanks for stopping by. Sign-up for updates and news!" />
       </Helmet>
-      <div className="h-screen bg-black flex flex-col overflow-hidden">
-        <main className="flex-1 flex items-center justify-center relative h-full">
-          <div 
-            className="fixed"
-            style={{
-              left: '50%',
-              top: '50%',
-              transform: 'translate(-50%, -50%)',
-              zIndex: 99999,
-              pointerEvents: 'none',
-            }}
-          >
-            <img 
-              src="/logo.png" 
-              alt="THE LOST+UNFOUNDS Logo" 
-              className="max-w-[570px] h-auto sm:max-w-[570px] max-w-[80vw] sm:max-w-[570px]" 
-              style={{ 
-                maxWidth: 'min(570px, 80vw)',
-                opacity: 1,
-                filter: 'none',
-                mixBlendMode: 'normal',
-                brightness: 1,
-              }} 
-            />
-          </div>
-        </main>
+      <div className="h-screen bg-black flex flex-col overflow-hidden" style={{ position: 'relative' }}>
+        <div 
+          style={{
+            position: 'fixed',
+            left: '50%',
+            top: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 99999,
+            pointerEvents: 'none',
+            isolation: 'isolate',
+          }}
+        >
+          <img 
+            src="/logo.png" 
+            alt="THE LOST+UNFOUNDS Logo" 
+            style={{ 
+              maxWidth: 'min(570px, 80vw)',
+              width: 'auto',
+              height: 'auto',
+              opacity: 1,
+              filter: 'none !important',
+              mixBlendMode: 'normal',
+              display: 'block',
+            }} 
+          />
+        </div>
       </div>
     </>
   )
