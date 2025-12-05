@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Analytics } from '@vercel/analytics/react'
 import { AuthProvider } from './contexts/AuthContext'
+import { SageModeProvider } from './contexts/SageModeContext'
 import ErrorBoundary from './components/ErrorBoundary'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -38,6 +39,9 @@ import AIWritingPrompt from './pages/AIWritingPrompt'
 import HelloWorld from './pages/HelloWorld'
 import BlogGettingStarted from './pages/BlogGettingStarted'
 import DesignSystem from './pages/DesignSystem'
+import DesignSystemPreview from './pages/DesignSystemPreview'
+import SageMode from './pages/SageMode'
+import SageModeReports from './pages/SageModeReports'
 
 function App() {
   return (
@@ -48,7 +52,8 @@ function App() {
       }}
     >
       <AuthProvider>
-        <ErrorBoundary>
+        <SageModeProvider>
+          <ErrorBoundary>
           <Routes>
             <Route path="/" element={<Home />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
@@ -101,6 +106,11 @@ function App() {
         </Route>
         <Route path="/designsystem" element={<Layout />}>
           <Route index element={<DesignSystem />} />
+          <Route path="preview" element={<DesignSystemPreview />} />
+        </Route>
+        <Route path="/sagemode" element={<Layout />}>
+          <Route index element={<ProtectedRoute requireAdmin={true}><SageMode /></ProtectedRoute>} />
+          <Route path="reports" element={<ProtectedRoute requireAdmin={true}><SageModeReports /></ProtectedRoute>} />
         </Route>
         <Route path="/:column/prompt" element={<Layout />}>
           <Route index element={<AIWritingPrompt />} />
@@ -168,6 +178,7 @@ function App() {
           </Routes>
           <Analytics />
         </ErrorBoundary>
+        </SageModeProvider>
       </AuthProvider>
     </BrowserRouter>
   )

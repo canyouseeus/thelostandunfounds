@@ -1680,7 +1680,14 @@ export default function Admin() {
                   Quick Navigation
                 </h3>
                 <p className="text-white/60 text-sm mb-4">Access admin tools and resources</p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Link
+                    to="/sagemode"
+                    className="px-4 py-3 bg-yellow-400/20 hover:bg-yellow-400/30 border border-yellow-400/30 rounded-none text-yellow-400 font-medium transition flex items-center justify-center gap-2"
+                  >
+                    <span>SAGE MODE</span>
+                    <span className="text-yellow-400/60">→</span>
+                  </Link>
                   <Link
                     to="/designsystem"
                     className="px-4 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white font-medium transition flex items-center justify-center gap-2"
