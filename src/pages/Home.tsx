@@ -239,8 +239,7 @@ export default function Home() {
                   maxWidth: 'min(570px, 80vw)',
                   opacity: 1,
                   filter: 'none',
-                  brightness: 1,
-                  contrast: 1,
+                  mixBlendMode: 'normal',
                 }} 
               />
             </div>
