@@ -12,14 +12,19 @@ export default function EmailSignup() {
 
   // Get Cloudflare Turnstile site key from environment
   const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
+  const isDev =
+    import.meta.env.DEV ||
+    typeof window !== 'undefined'
+      ? window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname.endsWith('.local')
+      : false;
+  const requiresTurnstile = turnstileSiteKey && !isDev;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validate Turnstile token (required in production)
-    const isDev = import.meta.env.DEV;
-    const requiresTurnstile = turnstileSiteKey && !isDev;
-
     if (requiresTurnstile && !turnstileToken) {
       alert('Please complete the security verification');
       return;
@@ -161,17 +166,17 @@ export default function EmailSignup() {
           />
           <button
             type="submit"
-            disabled={loading || (turnstileSiteKey && !turnstileToken && !import.meta.env.DEV)}
+            disabled={loading || (requiresTurnstile && !turnstileToken)}
             style={{
               width: '100%',
               padding: '0.875rem',
-              background: loading || (turnstileSiteKey && !turnstileToken && !import.meta.env.DEV) ? 'rgba(255, 255, 255, 0.3)' : '#ffffff',
-              color: loading || (turnstileSiteKey && !turnstileToken && !import.meta.env.DEV) ? 'rgba(0, 0, 0, 0.5)' : '#000000',
+              background: loading || (requiresTurnstile && !turnstileToken) ? 'rgba(255, 255, 255, 0.3)' : '#ffffff',
+              color: loading || (requiresTurnstile && !turnstileToken) ? 'rgba(0, 0, 0, 0.5)' : '#000000',
               border: 'none',
               borderRadius: '0',
               fontSize: '1rem',
               fontWeight: 600,
-              cursor: loading || (turnstileSiteKey && !turnstileToken && !import.meta.env.DEV) ? 'not-allowed' : 'pointer',
+              cursor: loading || (requiresTurnstile && !turnstileToken) ? 'not-allowed' : 'pointer',
               whiteSpace: 'nowrap',
               minHeight: '44px',
               touchAction: 'manipulation'
@@ -182,7 +187,7 @@ export default function EmailSignup() {
         </div>
 
         {/* Cloudflare Turnstile */}
-        {turnstileSiteKey && (
+        {requiresTurnstile && (
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <Turnstile
               sitekey={turnstileSiteKey}
@@ -216,9 +221,9 @@ export default function EmailSignup() {
           </div>
         )}
 
-        {!turnstileSiteKey && import.meta.env.DEV && (
+        {!requiresTurnstile && isDev && (
           <p style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.3)', textAlign: 'center', margin: 0 }}>
-            Security verification is not configured. Please set VITE_TURNSTILE_SITE_KEY in your environment variables.
+            Security verification is disabled in dev/localhost. Turnstile is required only in production.
           </p>
         )}
       </form>
