@@ -119,6 +119,42 @@ export default function AllArticles() {
     });
   };
 
+  const extractFirstImage = (content?: string | null) => {
+    if (!content) return null;
+    const markdownMatch = content.match(/!\[[^\]]*?\]\((https?:\/\/[^\s)]+?\.(?:png|jpe?g|gif|webp))\)/i);
+    if (markdownMatch) return markdownMatch[1];
+    const urlMatch = content.match(/(https?:\/\/[^\s]+?\.(?:png|jpe?g|gif|webp))/i);
+    if (urlMatch) return urlMatch[1];
+    return null;
+  };
+
+  const buildPreviewExcerpt = (post: BlogPost) => {
+    if (post.excerpt && post.excerpt.trim().length > 0) {
+      const preview = post.excerpt.trim().replace(/\s+/g, ' ');
+      return preview.length > 220
+        ? preview.substring(0, 220).replace(/\s+\S*$/, '') + '...'
+        : preview;
+    }
+    const source = (post.content || '').trim();
+    if (!source) return '';
+    const sentences = source
+      .replace(/\s+/g, ' ')
+      .split(/(?<=[.!?])\s+/)
+      .filter(Boolean);
+    const candidate = sentences.slice(0, 2).join(' ');
+    const preview = candidate || sentences[0] || source;
+    return preview.length > 220
+      ? preview.substring(0, 220).replace(/\s+\S*$/, '') + '...'
+      : preview;
+  };
+
+  const buildExpandedIntro = (post: BlogPost) => {
+    const source = (post.content || post.excerpt || '').trim();
+    if (!source) return '';
+    const firstParagraph = source.split(/\n\n+/)[0]?.trim() || '';
+    return firstParagraph.substring(0, 420);
+  };
+
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -175,15 +211,10 @@ export default function AllArticles() {
         {posts.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {posts.map((post) => {
-              const excerpt = post.excerpt || (post.content ? (() => {
-                const firstParagraph = post.content.split(/\n\n+/)[0]?.trim() || '';
-                if (firstParagraph.length > 0) {
-                  return firstParagraph.length > 200 
-                    ? firstParagraph.substring(0, 200).replace(/\s+\S*$/, '') + '...'
-                    : firstParagraph;
-                }
-                return '';
-              })() : '');
+              const excerpt = buildPreviewExcerpt(post);
+              const imageUrl = extractFirstImage(post.content || post.excerpt || '');
+              const expandedIntro = buildExpandedIntro(post);
+              const showAdditionalContent = !!expandedIntro;
               
               return (
                 <Expandable
@@ -196,17 +227,16 @@ export default function AllArticles() {
                   {({ isExpanded }) => (
                     <ExpandableTrigger>
                       <div 
-                        className="rounded-none p-[1px] relative"
+                        className="rounded-none"
                         style={{ 
-                          background: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15), rgba(255,255,255,0.3))',
-                          minHeight: isExpanded ? '400px' : '220px',
+                          minHeight: isExpanded ? '420px' : '220px',
                           transition: 'min-height 0.2s ease-out',
                         }}
                       >
                         <ExpandableCard
-                          className="bg-black border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02]"
+                          className="bg-black rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] cursor-pointer"
                           collapsedSize={{ height: 220 }}
-                          expandedSize={{ height: 400 }}
+                          expandedSize={{ height: 420 }}
                           hoverToExpand={false}
                           expandDelay={0}
                           collapseDelay={0}
@@ -215,6 +245,9 @@ export default function AllArticles() {
                             <h2 className="text-base font-black text-white mb-0 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
                               {post.title}
                             </h2>
+                            <time className="text-white/60 text-xs font-medium block mt-1">
+                              {formatDate(post.published_at || post.created_at)}
+                            </time>
                           </ExpandableCardHeader>
                         
                           <ExpandableCardContent className="flex-1 min-h-0">
@@ -232,10 +265,19 @@ export default function AllArticles() {
                               staggerChildren={0.1}
                               keepMounted={false}
                             >
-                              {post.content && (
+                              {imageUrl && (
+                                <div className="mb-3">
+                                  <img
+                                    src={imageUrl}
+                                    alt={post.title}
+                                    className="w-full h-32 object-cover rounded-none bg-white/5"
+                                  />
+                                </div>
+                              )}
+                              {showAdditionalContent && (
                                 <div className="mb-2">
-                                  <p className="text-white/50 text-xs leading-relaxed text-left line-clamp-6">
-                                    {post.content.replace(/\n/g, ' ').substring(0, 300)}...
+                                  <p className="text-white/60 text-xs leading-relaxed text-left line-clamp-6">
+                                    {expandedIntro}
                                   </p>
                                 </div>
                               )}
@@ -250,17 +292,14 @@ export default function AllArticles() {
                           </ExpandableCardContent>
                           
                           <ExpandableCardFooter className="mt-auto p-3 pt-2 pb-3">
-                            <div className="flex items-center justify-between gap-2 min-w-0 w-full">
-                              <time className="text-white/70 text-xs font-medium truncate min-w-0 flex-1">
-                                {formatDate(post.published_at || post.created_at)}
-                              </time>
+                            <div className="flex items-center justify-end gap-2 min-w-0 w-full">
                               {!isExpanded && (
                                 <span className="text-white/90 text-xs font-semibold transition flex-shrink-0 whitespace-nowrap">
                                   Click to expand →
                                 </span>
                               )}
                             </div>
-                        </ExpandableCardFooter>
+                          </ExpandableCardFooter>
                       </ExpandableCard>
                       </div>
                     </ExpandableTrigger>

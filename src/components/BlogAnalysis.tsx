@@ -4,7 +4,6 @@
  */
 
 import { useMemo } from 'react';
-import { Sparkles, ExternalLink } from 'lucide-react';
 
 interface ToolSuggestion {
   name: string;
@@ -195,13 +194,11 @@ function generateIntuitiveBreakdown(title: string, content: string, excerpt?: st
   const paragraphs = content.split(/\n\n+/).filter(p => p.trim().length > 30);
   const allText = content.toLowerCase();
   
-  // Quick Take - synthesize a one-sentence insight
-  const quickTake = excerpt 
-    ? excerpt.split(/[.!?]/)[0].trim() + (excerpt.includes('.') ? '.' : '')
-    : generateQuickTake(title, content, allText);
+  // Quick Take - synthesize a one-sentence insight (avoid echoing excerpt)
+  const quickTake = generateQuickTake(title, content, allText);
 
-  // Summary - create a synthesized summary
-  const summary = excerpt || generateSummary(title, content, paragraphs);
+  // Summary - create a synthesized summary (independent of excerpt)
+  const summary = generateSummary(title, content, paragraphs);
 
   // Extract tools mentioned
   const toolKeywords: { [key: string]: string[] } = {
@@ -338,164 +335,14 @@ export default function BlogAnalysis({ title, content, excerpt }: BlogAnalysisPr
 
   return (
     <div className="mt-12 border-t border-white pt-8">
-      <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2 text-left">
-        <Sparkles className="w-6 h-6" />
-        AI Breakdown
-      </h2>
-
-      {/* Quick Take - Prominent at top */}
-      {analysis.quickTake && (
-        <div className="mb-8 p-4 bg-white/5 border border-white rounded-none">
-          <h3 className="text-sm font-semibold text-white/70 mb-2 text-left uppercase tracking-wide">Quick Take</h3>
-          <p className="text-white text-lg leading-relaxed text-left font-medium">
-            {analysis.quickTake}
-          </p>
-        </div>
-      )}
-
-      {/* Summary */}
       <div className="mb-8">
-        <h3 className="text-xl font-semibold text-white mb-3 text-left">Summary</h3>
+        <h3 className="text-xl font-semibold text-white mb-3 text-left uppercase tracking-wide">
+          SUMMARY
+        </h3>
         <p className="text-white/80 text-lg leading-relaxed text-left">
           {analysis.summary}
         </p>
       </div>
-
-      {/* Key Points */}
-      {analysis.keyPoints.length > 0 && (
-        <div className="mb-8">
-          <h3 className="text-xl font-semibold text-white mb-3 text-left">Key Points</h3>
-          <ul className="space-y-2 text-left">
-            {analysis.keyPoints.map((point, index) => (
-              <li key={index} className="text-white/80 flex items-start gap-2">
-                <span className="text-white/60 mt-1">•</span>
-                <span className="text-left">{point}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Practical Insights */}
-      {analysis.practicalInsights && analysis.practicalInsights.length > 0 && (
-        <div className="mb-8 p-4 bg-white/5 border border-white rounded-none">
-          <h3 className="text-xl font-semibold text-white mb-3 text-left">Practical Insights</h3>
-          <ul className="space-y-2 text-left">
-            {analysis.practicalInsights.map((insight, index) => (
-              <li key={index} className="text-white/90 flex items-start gap-2">
-                <span className="text-white/60 mt-1">✓</span>
-                <span className="text-left">{insight}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Tools Mentioned */}
-      {analysis.toolsMentioned.length > 0 && (
-        <div className="mb-8">
-          <h3 className="text-xl font-semibold text-white mb-3 text-left">Tools Mentioned</h3>
-          <div className="flex flex-wrap gap-2">
-            {analysis.toolsMentioned.map((tool, index) => (
-              <span
-                key={index}
-                className="px-3 py-1 bg-white/10 border border-white rounded-none text-white/90 text-sm"
-              >
-                {tool}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Terms & Concepts Glossary */}
-      {analysis.termsAndConcepts.length > 0 && (
-        <div className="mb-8">
-          <h3 className="text-xl font-semibold text-white mb-4 text-left">Terms & Concepts</h3>
-          <div className="space-y-4">
-            {analysis.termsAndConcepts.map((term, index) => (
-              <div
-                key={index}
-                className="bg-black/50 border border-white rounded-none p-4 hover:border-white transition"
-              >
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <div className="flex-1">
-                    <h4 className="text-lg font-semibold text-white text-left mb-1">{term.term}</h4>
-                    {term.category && (
-                      <span className="text-xs text-white/50 text-left inline-block px-2 py-0.5 bg-white/5 rounded">
-                        {term.category}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <p className="text-white/80 text-base leading-relaxed text-left mt-2">{term.definition}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Comparable Tools */}
-      {analysis.comparableTools.length > 0 && (
-        <div className="mb-8">
-          <h3 className="text-xl font-semibold text-white mb-4 text-left">Comparable Tools</h3>
-          <div className="grid gap-4 md:grid-cols-2">
-            {analysis.comparableTools.map((tool, index) => (
-              <div
-                key={index}
-                className="bg-black/50 border border-white rounded-none p-4 hover:border-white transition"
-              >
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <h4 className="text-lg font-semibold text-white text-left">{tool.name}</h4>
-                  {tool.url && (
-                    <a
-                      href={tool.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-white/60 hover:text-white transition"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                  )}
-                </div>
-                <p className="text-white/70 text-sm mb-2 text-left">{tool.description}</p>
-                <span className="text-xs text-white/50 text-left">{tool.category}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Alternatives */}
-      {analysis.alternatives.length > 0 && (
-        <div className="mb-8">
-          <h3 className="text-xl font-semibold text-white mb-4 text-left">Alternative Tools</h3>
-          <div className="grid gap-4 md:grid-cols-2">
-            {analysis.alternatives.map((tool, index) => (
-              <div
-                key={index}
-                className="bg-black/50 border border-white rounded-none p-4 hover:border-white transition"
-              >
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <h4 className="text-lg font-semibold text-white text-left">{tool.name}</h4>
-                  {tool.url && (
-                    <a
-                      href={tool.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-white/60 hover:text-white transition"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                  )}
-                </div>
-                <p className="text-white/70 text-sm mb-2 text-left">{tool.description}</p>
-                <span className="text-xs text-white/50 text-left">{tool.category}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

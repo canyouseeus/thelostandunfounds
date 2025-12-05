@@ -164,6 +164,45 @@ export default function Blog() {
     });
   };
 
+  const extractFirstImage = (content?: string | null) => {
+    if (!content) return null;
+    const markdownMatch = content.match(/!\[[^\]]*?\]\((https?:\/\/[^\s)]+?\.(?:png|jpe?g|gif|webp))\)/i);
+    if (markdownMatch) return markdownMatch[1];
+    const urlMatch = content.match(/(https?:\/\/[^\s]+?\.(?:png|jpe?g|gif|webp))/i);
+    if (urlMatch) return urlMatch[1];
+    return null;
+  };
+
+  // Build preview (shorter, sentence-based) and expanded intro (full intro paragraph).
+  const buildPreviewExcerpt = (post: BlogPost) => {
+    // Prefer the stored excerpt if present; otherwise derive from content.
+    if (post.excerpt && post.excerpt.trim().length > 0) {
+      const preview = post.excerpt.trim().replace(/\s+/g, ' ');
+      return preview.length > 220
+        ? preview.substring(0, 220).replace(/\s+\S*$/, '') + '...'
+        : preview;
+    }
+
+    const source = (post.content || '').trim();
+    if (!source) return '';
+    const sentences = source
+      .replace(/\s+/g, ' ')
+      .split(/(?<=[.!?])\s+/)
+      .filter(Boolean);
+    const candidate = sentences.slice(0, 2).join(' ');
+    const preview = candidate || sentences[0] || source;
+    return preview.length > 220
+      ? preview.substring(0, 220).replace(/\s+\S*$/, '') + '...'
+      : preview;
+  };
+
+  const buildExpandedIntro = (post: BlogPost) => {
+    const source = (post.content || post.excerpt || '').trim();
+    if (!source) return '';
+    const firstParagraph = source.split(/\n\n+/)[0]?.trim() || '';
+    return firstParagraph.substring(0, 420);
+  };
+
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -204,24 +243,24 @@ export default function Blog() {
           })}
         </script>
       </Helmet>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-12">
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 tracking-wide">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white mb-4 tracking-wide whitespace-nowrap">
             THE LOST ARCHIVES
           </h1>
           <p className="text-white/60 text-sm mb-4">
             Official articles from THE LOST+UNFOUNDS
           </p>
-          <div className="flex items-center justify-center gap-4 flex-wrap">
+          <div className="flex items-center justify-center gap-4 flex-nowrap whitespace-nowrap">
             <Link
               to="/book-club"
-              className="inline-block px-6 py-2 bg-white hover:bg-white/90 border border-white/20 rounded-none text-black text-sm font-medium transition"
+              className="inline-flex items-center justify-center w-40 sm:w-48 py-2 bg-white hover:bg-white/90 border border-white/20 rounded-none text-black text-xs sm:text-sm font-medium transition"
             >
               View BOOK CLUB →
             </Link>
             <Link
               to="/submit/main"
-              className="inline-block px-6 py-2 bg-white hover:bg-white/90 border border-white/20 rounded-none text-black text-sm font-medium transition"
+              className="inline-flex items-center justify-center w-40 sm:w-48 py-2 bg-white hover:bg-white/90 border border-white/20 rounded-none text-black text-xs sm:text-sm font-medium transition"
             >
               Submit Your Article →
             </Link>
@@ -237,8 +276,8 @@ export default function Blog() {
       {/* Native Posts Section - 3 Most Recent */}
       {nativePosts.length > 0 && (
         <div className="mb-12">
-          <div className="flex items-center justify-between mb-6 flex-nowrap gap-4">
-            <h2 className="text-2xl font-bold text-white whitespace-nowrap">THE LOST ARCHIVES</h2>
+          <div className="mb-6 flex flex-col gap-2">
+            <h2 className="text-xl font-bold text-white whitespace-nowrap">From THE LOST ARCHIVES</h2>
             <Link
               to="/thelostarchives/all"
               className="text-white/60 hover:text-white text-sm font-medium transition whitespace-nowrap flex-shrink-0"
@@ -248,48 +287,49 @@ export default function Blog() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {nativePosts.map((post) => {
-              const excerpt = post.excerpt || (post.content ? (() => {
-                const firstParagraph = post.content.split(/\n\n+/)[0]?.trim() || '';
-                if (firstParagraph.length > 0) {
-                  return firstParagraph.length > 200 
-                    ? firstParagraph.substring(0, 200).replace(/\s+\S*$/, '') + '...'
-                    : firstParagraph;
-                }
-                return '';
-              })() : '');
+              const excerpt = buildPreviewExcerpt(post);
+              const imageUrl = extractFirstImage(post.content || post.excerpt || '');
+              const expandedIntro = buildExpandedIntro(post);
+              const showAdditionalContent = !!expandedIntro;
               
               return (
-                <Link
+                <Expandable
                   key={post.id}
-                  to={`/thelostarchives/${post.slug}`}
-                  className="block"
+                  expandDirection="vertical"
+                  expandBehavior="replace"
+                  initialDelay={0}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
                 >
-                  <Expandable
-                    expandDirection="vertical"
-                    expandBehavior="replace"
-                    initialDelay={0}
-                    transition={{ duration: 0.2, ease: "easeOut" }}
-                  >
-                    {({ isExpanded }) => (
-                      <ExpandableTrigger>
-                          <ExpandableCard
-                            className="bg-white dark:bg-white border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] cursor-pointer"
-                            collapsedSize={{ height: 200 }}
-                            expandedSize={{ height: undefined }}
-                            hoverToExpand={false}
-                            expandDelay={0}
-                            collapseDelay={0}
-                          >
-                            <ExpandableCardHeader className="mb-1 pb-1">
-                              <h2 className="text-base font-black text-black dark:text-black mb-0 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
-                                {post.title}
-                              </h2>
-                            </ExpandableCardHeader>
-                        
+                  {({ isExpanded }) => (
+                    <ExpandableTrigger>
+                      <div
+                        className="rounded-none"
+                        style={{
+                          minHeight: isExpanded ? '420px' : '220px',
+                          transition: 'min-height 0.2s ease-out',
+                        }}
+                      >
+                        <ExpandableCard
+                          className="bg-black rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] cursor-pointer"
+                          collapsedSize={{ height: 220 }}
+                          expandedSize={{ height: 420 }}
+                          hoverToExpand={false}
+                          expandDelay={0}
+                          collapseDelay={0}
+                        >
+                          <ExpandableCardHeader className="mb-1 pb-1">
+                            <h2 className="text-base font-black text-white mb-0 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
+                              {post.title}
+                            </h2>
+                            <time className="text-white/60 text-xs font-medium block mt-1">
+                              {formatDate(post.published_at || post.created_at)}
+                            </time>
+                          </ExpandableCardHeader>
+
                           <ExpandableCardContent className="flex-1 min-h-0">
                             {excerpt && (
                               <div className="mb-1">
-                                <p className="text-black/70 dark:text-black/70 text-sm leading-relaxed line-clamp-4 text-left">
+                                <p className="text-white/70 text-sm leading-relaxed line-clamp-4 text-left">
                                   {excerpt}
                                 </p>
                               </div>
@@ -301,16 +341,25 @@ export default function Blog() {
                               staggerChildren={0.1}
                               keepMounted={false}
                             >
-                              {post.content && (
+                              {imageUrl && (
+                                <div className="mb-3">
+                                  <img
+                                    src={imageUrl}
+                                    alt={post.title}
+                                    className="w-full h-32 object-cover rounded-none bg-white/5"
+                                  />
+                                </div>
+                              )}
+                              {showAdditionalContent && (
                                 <div className="mb-2">
-                                  <p className="text-black/60 dark:text-black/60 text-xs leading-relaxed text-left line-clamp-6">
-                                    {post.content.replace(/\n/g, ' ').substring(0, 300)}...
+                                  <p className="text-white/60 text-xs leading-relaxed text-left line-clamp-6">
+                                    {expandedIntro}
                                   </p>
                                 </div>
                               )}
                               <Link
                                 to={`/thelostarchives/${post.slug}`}
-                                className="inline-block mt-2 text-black/80 dark:text-black/80 hover:text-black dark:hover:text-black text-xs font-semibold transition"
+                                className="inline-block mt-2 text-white/80 hover:text-white text-xs font-semibold transition"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 Read Full Article →
@@ -319,32 +368,43 @@ export default function Blog() {
                           </ExpandableCardContent>
                           
                           <ExpandableCardFooter className="mt-auto p-3 pt-2 pb-3">
-                            <div className="flex items-center justify-between gap-2 min-w-0 w-full">
-                              <time className="text-black/60 dark:text-black/60 text-xs font-medium truncate min-w-0 flex-1">
-                                {formatDate(post.published_at || post.created_at)}
-                              </time>
+                            <div className="flex items-center justify-end gap-2 min-w-0 w-full">
                               {!isExpanded && (
-                                <span className="text-black/80 dark:text-black/80 text-xs font-semibold transition flex-shrink-0 whitespace-nowrap">
+                                <span className="text-white/90 text-xs font-semibold transition flex-shrink-0 whitespace-nowrap">
                                   Click to expand →
                                 </span>
                               )}
                             </div>
                           </ExpandableCardFooter>
                         </ExpandableCard>
-                      </ExpandableTrigger>
-                    )}
-                  </Expandable>
-                </Link>
+                      </div>
+                    </ExpandableTrigger>
+                  )}
+                </Expandable>
               );
             })}
           </div>
         </div>
       )}
 
+      {/* Logo divider */}
+      {bookClubPosts.length > 0 && (
+        <div className="flex justify-center my-8 gap-12">
+          {[1, 2, 3].map((i) => (
+            <img
+              key={i}
+              src="/assets/lostunfounds-logo.png"
+              alt="THE LOST+UNFOUNDS"
+              className="h-40 w-auto object-contain"
+            />
+          ))}
+        </div>
+      )}
+
       {/* Book Club Posts Section - 3 Most Recent */}
       {bookClubPosts.length > 0 && (
-        <div className="mt-12 pt-12 border-t border-white/10">
-          <div className="flex items-center justify-between mb-6 flex-nowrap gap-4">
+        <div className="mt-6 pt-0">
+          <div className="mb-6 flex flex-col gap-2">
             <h2 className="text-2xl font-bold text-white whitespace-nowrap">From the BOOK CLUB</h2>
             <Link
               to="/book-club"
@@ -355,48 +415,49 @@ export default function Blog() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {bookClubPosts.map((post) => {
-              const excerpt = post.excerpt || (post.content ? (() => {
-                const firstParagraph = post.content.split(/\n\n+/)[0]?.trim() || '';
-                if (firstParagraph.length > 0) {
-                  return firstParagraph.length > 200 
-                    ? firstParagraph.substring(0, 200).replace(/\s+\S*$/, '') + '...'
-                    : firstParagraph;
-                }
-                return '';
-              })() : '');
+              const excerpt = buildPreviewExcerpt(post);
+              const imageUrl = extractFirstImage(post.content || post.excerpt || '');
+              const expandedIntro = buildExpandedIntro(post);
+              const showAdditionalContent = !!expandedIntro;
 
               return (
-                <Link
+                <Expandable
                   key={post.id}
-                  to={`/blog/${post.subdomain}/${post.slug}`}
-                  className="block"
+                  expandDirection="vertical"
+                  expandBehavior="replace"
+                  initialDelay={0}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
                 >
-                  <Expandable
-                    expandDirection="vertical"
-                    expandBehavior="replace"
-                    initialDelay={0}
-                    transition={{ duration: 0.2, ease: "easeOut" }}
-                  >
-                    {({ isExpanded }) => (
-                      <ExpandableTrigger>
-                          <ExpandableCard
-                            className="bg-white dark:bg-white border-0 rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] cursor-pointer"
-                            collapsedSize={{ height: 200 }}
-                            expandedSize={{ height: undefined }}
-                            hoverToExpand={false}
-                            expandDelay={0}
-                            collapseDelay={0}
-                          >
-                            <ExpandableCardHeader className="mb-1 pb-1">
-                              <h2 className="text-base font-black text-black dark:text-black mb-0 tracking-wide transition line-clamp-2">
-                                {post.title}
-                              </h2>
-                            </ExpandableCardHeader>
-                          
+                  {({ isExpanded }) => (
+                    <ExpandableTrigger>
+                      <div
+                        className="rounded-none"
+                        style={{
+                          minHeight: isExpanded ? '420px' : '220px',
+                          transition: 'min-height 0.2s ease-out',
+                        }}
+                      >
+                        <ExpandableCard
+                          className="bg-black rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] cursor-pointer"
+                          collapsedSize={{ height: 220 }}
+                          expandedSize={{ height: 420 }}
+                          hoverToExpand={false}
+                          expandDelay={0}
+                          collapseDelay={0}
+                        >
+                          <ExpandableCardHeader className="mb-1 pb-1">
+                            <h2 className="text-base font-black text-white mb-0 tracking-wide transition line-clamp-2">
+                              {post.title}
+                            </h2>
+                            <time className="text-white/60 text-xs font-medium block mt-1">
+                              {formatDate(post.published_at || post.created_at)}
+                            </time>
+                          </ExpandableCardHeader>
+                        
                           <ExpandableCardContent className="flex-1 min-h-0">
                             {excerpt && (
                               <div className="mb-1">
-                                <p className="text-black/70 dark:text-black/70 text-sm leading-relaxed line-clamp-4 text-left">
+                                <p className="text-white/70 text-sm leading-relaxed line-clamp-4 text-left">
                                   {excerpt}
                                 </p>
                               </div>
@@ -408,16 +469,25 @@ export default function Blog() {
                               staggerChildren={0.1}
                               keepMounted={false}
                             >
-                              {post.content && (
+                              {imageUrl && (
+                                <div className="mb-3">
+                                  <img
+                                    src={imageUrl}
+                                    alt={post.title}
+                                    className="w-full h-32 object-cover rounded-none bg-white/5"
+                                  />
+                                </div>
+                              )}
+                              {showAdditionalContent && (
                                 <div className="mb-2">
-                                  <p className="text-black/60 dark:text-black/60 text-xs leading-relaxed text-left line-clamp-6">
-                                    {post.content.replace(/\n/g, ' ').substring(0, 300)}...
+                                  <p className="text-white/60 text-xs leading-relaxed text-left line-clamp-6">
+                                    {expandedIntro}
                                   </p>
                                 </div>
                               )}
                               <Link
                                 to={`/blog/${post.subdomain}/${post.slug}`}
-                                className="inline-block mt-2 text-black/80 dark:text-black/80 hover:text-black dark:hover:text-black text-xs font-semibold transition"
+                                className="inline-block mt-2 text-white/80 hover:text-white text-xs font-semibold transition"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 Read Full Article →
@@ -426,22 +496,19 @@ export default function Blog() {
                           </ExpandableCardContent>
                           
                           <ExpandableCardFooter className="mt-auto p-3 pt-2 pb-3">
-                            <div className="flex items-center justify-between gap-2 min-w-0 w-full">
-                              <time className="text-black/60 dark:text-black/60 text-xs font-medium truncate min-w-0 flex-1">
-                                {formatDate(post.published_at || post.created_at)}
-                              </time>
+                            <div className="flex items-center justify-end gap-2 min-w-0 w-full">
                               {!isExpanded && (
-                                <span className="text-black/80 dark:text-black/80 text-xs font-semibold transition flex-shrink-0 whitespace-nowrap">
+                                <span className="text-white/90 text-xs font-semibold transition flex-shrink-0 whitespace-nowrap">
                                   Click to expand →
                                 </span>
                               )}
                             </div>
                           </ExpandableCardFooter>
                         </ExpandableCard>
-                      </ExpandableTrigger>
-                    )}
-                  </Expandable>
-                </Link>
+                      </div>
+                    </ExpandableTrigger>
+                  )}
+                </Expandable>
               );
             })}
           </div>

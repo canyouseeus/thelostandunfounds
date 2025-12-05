@@ -108,6 +108,21 @@ export default function BlogManagement() {
     }
   };
 
+  // Generate a short summary from content if no excerpt provided
+  const buildGeneratedSummary = (content: string) => {
+    const source = (content || '').trim();
+    if (!source) return '';
+    const sentences = source
+      .replace(/\s+/g, ' ')
+      .split(/(?<=[.!?])\s+/)
+      .filter(Boolean);
+    const candidate = sentences.slice(0, 2).join(' ');
+    const preview = candidate || sentences[0] || source;
+    return preview.length > 220
+      ? preview.substring(0, 220).replace(/\s+\S*$/, '') + '...'
+      : preview;
+  };
+
   const generateSlug = (title: string) => {
     return title
       .toLowerCase()
@@ -137,6 +152,10 @@ export default function BlogManagement() {
       // Set published_at when publishing for the first time
       const shouldSetPublishedAt = formData.published && (!editingPost || !editingPost.published_at);
       
+      const autoExcerpt = (!formData.excerpt || formData.excerpt.trim().length === 0)
+        ? buildGeneratedSummary(formData.content)
+        : formData.excerpt;
+
       const postData = {
         ...formData,
         slug: formData.slug || generateSlug(formData.title),
@@ -145,7 +164,7 @@ export default function BlogManagement() {
           : editingPost?.published_at || null,
         status: formData.published ? 'published' : 'draft', // Keep status in sync
         author_id: user.id,
-        excerpt: formData.excerpt || null,
+        excerpt: autoExcerpt || null,
         seo_title: formData.seo_title || null,
         seo_description: formData.seo_description || null,
         seo_keywords: formData.seo_keywords || null,

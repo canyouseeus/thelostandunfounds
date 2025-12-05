@@ -140,9 +140,8 @@ const ExpandableTrigger = ({ children }: ExpandableTriggerProps) => {
           e.stopPropagation();
           return;
         }
-        // Don't toggle on card click - only allow explicit button clicks (Maximize2 icon)
-        // Cards should only expand via Maximize2 button, not card area clicks
-        return;
+        // Toggle expansion when clicking the trigger area (excluding drawer content)
+        toggleExpand();
       }} 
       className=""
     >

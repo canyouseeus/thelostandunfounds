@@ -9,6 +9,15 @@ import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabase';
 import { LoadingSpinner } from '../components/Loading';
 import { BookOpen } from 'lucide-react';
+import {
+  Expandable,
+  ExpandableCard,
+  ExpandableCardHeader,
+  ExpandableCardContent,
+  ExpandableCardFooter,
+  ExpandableContent,
+  ExpandableTrigger,
+} from '../components/ui/expandable';
 
 interface BlogPost {
   id: string;
@@ -73,6 +82,42 @@ export default function BookClub() {
     });
   };
 
+  const extractFirstImage = (content?: string | null) => {
+    if (!content) return null;
+    const markdownMatch = content.match(/!\[[^\]]*?\]\((https?:\/\/[^\s)]+?\.(?:png|jpe?g|gif|webp))\)/i);
+    if (markdownMatch) return markdownMatch[1];
+    const urlMatch = content.match(/(https?:\/\/[^\s]+?\.(?:png|jpe?g|gif|webp))/i);
+    if (urlMatch) return urlMatch[1];
+    return null;
+  };
+
+  const buildPreviewExcerpt = (post: BlogPost) => {
+    if (post.excerpt && post.excerpt.trim().length > 0) {
+      const preview = post.excerpt.trim().replace(/\s+/g, ' ');
+      return preview.length > 220
+        ? preview.substring(0, 220).replace(/\s+\S*$/, '') + '...'
+        : preview;
+    }
+    const source = (post.content || '').trim();
+    if (!source) return '';
+    const sentences = source
+      .replace(/\s+/g, ' ')
+      .split(/(?<=[.!?])\s+/)
+      .filter(Boolean);
+    const candidate = sentences.slice(0, 2).join(' ');
+    const preview = candidate || sentences[0] || source;
+    return preview.length > 220
+      ? preview.substring(0, 220).replace(/\s+\S*$/, '') + '...'
+      : preview;
+  };
+
+  const buildExpandedIntro = (post: BlogPost) => {
+    const source = (post.content || post.excerpt || '').trim();
+    if (!source) return '';
+    const firstParagraph = source.split(/\n\n+/)[0]?.trim() || '';
+    return firstParagraph.substring(0, 420);
+  };
+
   // No longer grouping by author - show all posts in a flat list
 
   if (loading) {
@@ -104,7 +149,7 @@ export default function BookClub() {
             BOOK CLUB
           </h1>
           <p className="text-white/60 text-sm max-w-lg mx-auto text-justify leading-relaxed">
-            Each article features four books with Amazon affiliate links, connecting ideas across different works and sharing personal reflections.
+            Each article features four books connecting ideas across different works and sharing personal reflections.
           </p>
           <div className="mt-6">
             <Link
@@ -137,61 +182,104 @@ export default function BookClub() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {posts.map((post) => (
-              <Link
-                key={post.id}
-                to={`/blog/${post.subdomain}/${post.slug}`}
-                className="group"
-              >
-                <article className="bg-black/50 border-2 border-white/10 rounded-lg p-5 h-full flex flex-col hover:border-white/30 hover:shadow-lg hover:shadow-white/10 transition-all duration-300 transform hover:-translate-y-1">
-                  <div className="mb-4 pb-3 border-b border-white/10">
-                    <h3 className="text-base font-black text-white mb-2 tracking-wide group-hover:text-white/90 transition line-clamp-2">
-                      {post.title}
-                    </h3>
-                  </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {posts.map((post) => {
+              const excerpt = buildPreviewExcerpt(post);
+              const imageUrl = extractFirstImage(post.content || post.excerpt || '');
+              const expandedIntro = buildExpandedIntro(post);
+              const showAdditionalContent = !!expandedIntro;
 
-                  {(() => {
-                    // Generate excerpt: use existing excerpt or generate from first paragraph
-                    const excerpt = post.excerpt || (post.content ? (() => {
-                      const firstParagraph = post.content.split(/\n\n+/)[0]?.trim() || '';
-                      if (firstParagraph.length > 0) {
-                        return firstParagraph.length > 200 
-                          ? firstParagraph.substring(0, 200).replace(/\s+\S*$/, '') + '...'
-                          : firstParagraph;
-                      }
-                      return '';
-                    })() : '');
-                    
-                    return excerpt ? (
-                      <div className="flex-1 mb-4">
-                        <p className="text-white/60 text-sm leading-relaxed line-clamp-4 text-left">
-                          {excerpt}
-                        </p>
+              return (
+                <Expandable
+                  key={post.id}
+                  expandDirection="vertical"
+                  expandBehavior="replace"
+                  initialDelay={0}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                >
+                  {({ isExpanded }) => (
+                    <ExpandableTrigger>
+                      <div 
+                        className="rounded-none"
+                        style={{ 
+                          minHeight: isExpanded ? '420px' : '220px',
+                          transition: 'min-height 0.2s ease-out',
+                        }}
+                      >
+                        <ExpandableCard
+                          className="bg-black rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] cursor-pointer"
+                          collapsedSize={{ height: 220 }}
+                          expandedSize={{ height: 420 }}
+                          hoverToExpand={false}
+                          expandDelay={0}
+                          collapseDelay={0}
+                        >
+                          <ExpandableCardHeader className="mb-1 pb-1">
+                            <h3 className="text-base font-black text-white mb-0 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
+                              {post.title}
+                            </h3>
+                            <time className="text-white/60 text-xs font-medium block mt-1">
+                              {formatDate(post.published_at || post.created_at)}
+                            </time>
+                          </ExpandableCardHeader>
+
+                          <ExpandableCardContent className="flex-1 min-h-0">
+                            {excerpt && (
+                              <div className="mb-1">
+                                <p className="text-white/70 text-sm leading-relaxed line-clamp-4 text-left">
+                                  {excerpt}
+                                </p>
+                              </div>
+                            )}
+
+                            <ExpandableContent 
+                              preset="fade" 
+                              stagger 
+                              staggerChildren={0.1}
+                              keepMounted={false}
+                            >
+                              {imageUrl && (
+                                <div className="mb-3">
+                                  <img
+                                    src={imageUrl}
+                                    alt={post.title}
+                                    className="w-full h-32 object-cover rounded-none bg-white/5"
+                                  />
+                                </div>
+                              )}
+                              {showAdditionalContent && (
+                                <div className="mb-2">
+                                  <p className="text-white/60 text-xs leading-relaxed text-left line-clamp-6">
+                                    {expandedIntro}
+                                  </p>
+                                </div>
+                              )}
+                              <Link
+                                to={`/blog/${post.subdomain}/${post.slug}`}
+                                className="inline-block mt-2 text-white/80 hover:text-white text-xs font-semibold transition"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                Read Full Article →
+                              </Link>
+                            </ExpandableContent>
+                          </ExpandableCardContent>
+
+                          <ExpandableCardFooter className="mt-auto p-3 pt-2 pb-3">
+                            <div className="flex items-center justify-end gap-2 min-w-0 w-full">
+                              {!isExpanded && (
+                                <span className="text-white/90 text-xs font-semibold transition flex-shrink-0 whitespace-nowrap">
+                                  Click to expand →
+                                </span>
+                              )}
+                            </div>
+                          </ExpandableCardFooter>
+                        </ExpandableCard>
                       </div>
-                    ) : null;
-                  })()}
-
-                  {post.amazon_affiliate_links && post.amazon_affiliate_links.length > 0 && (
-                    <div className="mb-4 flex items-center gap-2 text-xs text-white/50">
-                      <BookOpen className="w-3 h-3" />
-                      <span>{post.amazon_affiliate_links.length} book{post.amazon_affiliate_links.length !== 1 ? 's' : ''}</span>
-                    </div>
+                    </ExpandableTrigger>
                   )}
-
-                  <div className="mt-auto pt-3 border-t border-white/10">
-                    <div className="flex items-center justify-between">
-                      <time className="text-white/40 text-xs font-medium">
-                        {formatDate(post.published_at || post.created_at)}
-                      </time>
-                      <span className="text-white/60 text-xs font-semibold group-hover:text-white transition">
-                        Read →
-                      </span>
-                    </div>
-                  </div>
-                </article>
-              </Link>
-            ))}
+                </Expandable>
+              );
+            })}
           </div>
         )}
       </div>
