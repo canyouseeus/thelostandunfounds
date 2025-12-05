@@ -228,7 +228,7 @@ export default function Home() {
                 left: '50%',
                 top: '50%',
                 transform: 'translate(-50%, -50%)',
-                zIndex: 10001,
+                zIndex: 99999,
                 pointerEvents: 'none',
               }}
             >
@@ -254,7 +254,7 @@ export default function Home() {
               left: '50%',
               top: '50%',
               transform: 'translate(-50%, -50%)',
-              zIndex: 1001,
+              zIndex: 99998,
               transition: 'opacity 1.5s ease-in-out, visibility 0s linear 1.5s',
               pointerEvents: showEmailSignup ? 'none' : 'auto',
               willChange: 'opacity',
@@ -290,7 +290,7 @@ export default function Home() {
             width: '100%',
             maxWidth: 'min(500px, 90vw)',
             padding: '0 1rem',
-            zIndex: 1002,
+              zIndex: 99997,
             transition: 'opacity 1.5s ease-in-out, transform 1.5s ease-in-out, visibility 0s linear',
             pointerEvents: showEmailSignup ? 'auto' : 'none',
             willChange: 'opacity, transform',
