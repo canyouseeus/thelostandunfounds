@@ -24,10 +24,13 @@ export default function Home() {
       max-width: min(570px, 80vw);
       width: auto;
       height: auto;
-      opacity: 1;
-      filter: none;
-      mix-blend-mode: normal;
+      opacity: 1 !important;
+      filter: none !important;
+      mix-blend-mode: normal !important;
       display: block;
+      visibility: visible !important;
+      brightness: 1 !important;
+      contrast: 1 !important;
     `
     logoContainer.appendChild(logoImg)
 
