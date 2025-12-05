@@ -1,6 +1,43 @@
+import { useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
+import { createPortal } from 'react-dom'
 
 export default function Home() {
+  useEffect(() => {
+    // Create logo element and append to body to escape any stacking contexts
+    const logoContainer = document.createElement('div')
+    logoContainer.id = 'home-logo-container'
+    logoContainer.style.cssText = `
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 99999;
+      pointer-events: none;
+    `
+    document.body.appendChild(logoContainer)
+
+    const logoImg = document.createElement('img')
+    logoImg.src = '/logo.png'
+    logoImg.alt = 'THE LOST+UNFOUNDS Logo'
+    logoImg.style.cssText = `
+      max-width: min(570px, 80vw);
+      width: auto;
+      height: auto;
+      opacity: 1;
+      filter: none;
+      mix-blend-mode: normal;
+      display: block;
+    `
+    logoContainer.appendChild(logoImg)
+
+    return () => {
+      if (document.body.contains(logoContainer)) {
+        document.body.removeChild(logoContainer)
+      }
+    }
+  }, [])
+
   return (
     <>
       <Helmet>
@@ -14,32 +51,7 @@ export default function Home() {
         <meta name="twitter:title" content="THE LOST+UNFOUNDS - CAN YOU SEE US?" />
         <meta name="twitter:description" content="Thanks for stopping by. Sign-up for updates and news!" />
       </Helmet>
-      <div className="h-screen bg-black flex flex-col overflow-hidden" style={{ position: 'relative' }}>
-        <div 
-          style={{
-            position: 'fixed',
-            left: '50%',
-            top: '50%',
-            transform: 'translate(-50%, -50%)',
-            zIndex: 99999,
-            pointerEvents: 'none',
-            isolation: 'isolate',
-          }}
-        >
-          <img 
-            src="/logo.png" 
-            alt="THE LOST+UNFOUNDS Logo" 
-            style={{ 
-              maxWidth: 'min(570px, 80vw)',
-              width: 'auto',
-              height: 'auto',
-              opacity: 1,
-              filter: 'none !important',
-              mixBlendMode: 'normal',
-              display: 'block',
-            }} 
-          />
-        </div>
+      <div className="h-screen bg-black flex flex-col overflow-hidden">
       </div>
     </>
   )
