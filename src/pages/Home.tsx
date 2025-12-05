@@ -11,6 +11,8 @@ export default function Home() {
   const [showCursor, setShowCursor] = useState(false)
   const [typingComplete, setTypingComplete] = useState(false)
   const [showSignup, setShowSignup] = useState(false)
+  const [textScale, setTextScale] = useState(1)
+  const [textBlur, setTextBlur] = useState(0)
 
   useEffect(() => {
     let fadeInInterval: NodeJS.Timeout | null = null
@@ -130,6 +132,23 @@ export default function Home() {
     }
   }, [showTyping, text])
 
+  // Start growing text and add blur when signup appears
+  useEffect(() => {
+    if (!showSignup) return
+    
+    // Start growing text and add blur when signup appears
+    setTextBlur(2)
+    const growStart = Date.now()
+    const growInterval = setInterval(() => {
+      const elapsed = Date.now() - growStart
+      // Grow continuously - no limit
+      const scale = 1 + (elapsed / 10000) * 1
+      setTextScale(scale)
+    }, 16)
+    
+    return () => clearInterval(growInterval)
+  }, [showSignup])
+
   return (
     <>
       <Helmet>
@@ -145,6 +164,27 @@ export default function Home() {
       </Helmet>
       <div className="h-screen bg-black flex flex-col overflow-hidden">
         <main className="flex-1 flex flex-col items-center justify-center relative h-full gap-8">
+          {/* Background text - grows and blurs behind signup form */}
+          <div 
+            className="center-text fixed text-base sm:text-2xl md:text-3xl"
+            style={{
+              left: '50%',
+              top: '50%',
+              transform: `translate(-50%, -50%) scale(${textScale})`,
+              filter: `blur(${textBlur}px)`,
+              transition: 'transform 0.1s linear, filter 0.5s ease-out',
+              zIndex: 1,
+              pointerEvents: 'none',
+              opacity: typingComplete ? 0.3 : 0,
+              padding: '0 1rem',
+              maxWidth: '100vw',
+              wordBreak: 'break-word',
+              whiteSpace: 'normal',
+            }}
+          >
+            {text}
+          </div>
+
           {/* Logo */}
           {showLogo && (
             <div 
