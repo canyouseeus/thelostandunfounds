@@ -246,7 +246,7 @@ export default function Blog() {
               View All Articles →
             </Link>
           </div>
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {nativePosts.map((post) => {
               const excerpt = post.excerpt || (post.content ? (() => {
                 const firstParagraph = post.content.split(/\n\n+/)[0]?.trim() || '';
@@ -353,7 +353,7 @@ export default function Blog() {
               View All →
             </Link>
           </div>
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {bookClubPosts.map((post) => {
               const excerpt = post.excerpt || (post.content ? (() => {
                 const firstParagraph = post.content.split(/\n\n+/)[0]?.trim() || '';

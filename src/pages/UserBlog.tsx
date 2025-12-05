@@ -267,7 +267,7 @@ export default function UserBlog() {
             <p>No posts yet. Check back soon!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {posts.map((post) => {
               const excerpt = post.excerpt || (post.content ? (() => {
                 const firstParagraph = post.content.split(/\n\n+/)[0]?.trim() || '';
