@@ -1,37 +1,6 @@
-import { useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { createPortal } from 'react-dom'
 
 export default function Home() {
-  useEffect(() => {
-    // Remove any existing logo containers
-    const existing = document.getElementById('home-logo-container')
-    if (existing) existing.remove()
-
-    // Create logo element and append to body
-    const logoContainer = document.createElement('div')
-    logoContainer.id = 'home-logo-container'
-    logoContainer.style.cssText = 'position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 999999; pointer-events: none; opacity: 1;'
-    document.body.appendChild(logoContainer)
-
-    const logoImg = document.createElement('img')
-    logoImg.src = '/logo.png'
-    logoImg.alt = 'THE LOST+UNFOUNDS Logo'
-    logoImg.style.cssText = 'max-width: min(570px, 80vw); width: auto; height: auto; opacity: 1; filter: none; display: block; background: transparent;'
-    // Force image to load and check if it has transparency
-    logoImg.onload = () => {
-      // Ensure no transparency effects
-      logoImg.style.opacity = '1'
-      logoImg.style.filter = 'none'
-    }
-    logoContainer.appendChild(logoImg)
-
-    return () => {
-      const container = document.getElementById('home-logo-container')
-      if (container) container.remove()
-    }
-  }, [])
-
   return (
     <>
       <Helmet>
@@ -45,7 +14,34 @@ export default function Home() {
         <meta name="twitter:title" content="THE LOST+UNFOUNDS - CAN YOU SEE US?" />
         <meta name="twitter:description" content="Thanks for stopping by. Sign-up for updates and news!" />
       </Helmet>
-      <div style={{ height: '100vh', width: '100vw', backgroundColor: '#000000', margin: 0, padding: 0, position: 'fixed', top: 0, left: 0, zIndex: 1 }}>
+      <div style={{ 
+        height: '100vh', 
+        width: '100vw', 
+        backgroundColor: '#000000', 
+        margin: 0, 
+        padding: 0, 
+        position: 'fixed', 
+        top: 0, 
+        left: 0, 
+        zIndex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <img 
+          src="/logo.png" 
+          alt="THE LOST+UNFOUNDS Logo" 
+          style={{ 
+            maxWidth: 'min(570px, 80vw)',
+            width: 'auto',
+            height: 'auto',
+            opacity: 1,
+            filter: 'none',
+            display: 'block',
+            zIndex: 999999,
+            position: 'relative'
+          }} 
+        />
       </div>
     </>
   )
