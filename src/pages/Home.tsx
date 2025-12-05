@@ -225,7 +225,6 @@ export default function Home() {
               className="fixed"
               style={{
                 opacity: logoOpacity,
-                transition: logoState === 'static' ? 'opacity 0s' : 'opacity 0.016s linear',
                 left: '50%',
                 top: '50%',
                 transform: 'translate(-50%, -50%)',
