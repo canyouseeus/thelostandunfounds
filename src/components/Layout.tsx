@@ -230,7 +230,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
   return (
     <div className="min-h-screen bg-black flex flex-col">
       <SageModeOverlay />
-      <nav className="sticky top-0 w-full bg-black/90 backdrop-blur-md z-[10000] border-b border-white/10">
+      <nav className="sticky top-0 w-full bg-black/90 backdrop-blur-md z-[200000] border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Top row: Title left, Menu button right */}
           <div className="flex items-center justify-between h-16 gap-6">
@@ -238,7 +238,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
               <Link to="/" className="flex items-center text-white hover:text-white/80 transition">
                 <span className="text-sm sm:text-lg md:text-xl font-bold whitespace-nowrap">THE LOST+UNFOUNDS</span>
               </Link>
-              <nav className="hidden md:flex items-center gap-5 text-sm text-white/70">
+              <nav className="flex items-center gap-5 text-sm text-white/70">
                 <Link to="/" className="hover:text-white transition" onClick={() => setMenuOpen(false)}>HOME</Link>
                 <Link to="/shop" className="hover:text-white transition" onClick={() => setMenuOpen(false)}>SHOP</Link>
                 <Link to="/thelostarchives" className="hover:text-white transition" onClick={() => setMenuOpen(false)}>ARCHIVES</Link>
