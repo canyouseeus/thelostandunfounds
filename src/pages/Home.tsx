@@ -221,17 +221,17 @@ export default function Home() {
         {/* Foreground content - all centered at same point, sequential animation */}
         {/* Logo - first in sequence */}
         {logoState !== 'hidden' && (
-          <div 
-            className="fixed"
-            style={{
-              opacity: logoOpacity,
-              left: '50%',
-              top: '50%',
-              transform: 'translate(-50%, -50%)',
-              zIndex: 1000,
-              pointerEvents: 'none',
-            }}
-          >
+            <div 
+              className="fixed"
+              style={{
+                opacity: logoOpacity,
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 10001,
+                pointerEvents: 'none',
+              }}
+            >
             <img 
               src="/logo.png" 
               alt="THE LOST+UNFOUNDS Logo" 
