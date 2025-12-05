@@ -26,12 +26,10 @@ export default function Home() {
       width: auto;
       height: auto;
       opacity: 1 !important;
-      filter: none !important;
+      filter: brightness(1) contrast(1) !important;
       mix-blend-mode: normal !important;
       display: block;
       visibility: visible !important;
-      brightness: 1 !important;
-      contrast: 1 !important;
     `
     logoContainer.appendChild(logoImg)
 
