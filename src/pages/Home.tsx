@@ -55,6 +55,7 @@ export default function Home() {
           clearInterval(fadeInIntervalRef)
           fadeInIntervalRef = null
         }
+        setLogoOpacity(1) // Explicitly set to 100% opacity
         setLogoState('static')
       }
     }, 16) // ~60fps
@@ -218,19 +219,19 @@ export default function Home() {
         </div>
 
         {/* Foreground content - all centered at same point, sequential animation */}
-        <div className="absolute inset-0 z-10 pointer-events-none">
-          {/* Logo - first in sequence */}
-          {logoState !== 'hidden' && (
-            <div 
-              className="fixed"
-              style={{
-                opacity: logoOpacity,
-                left: '50%',
-                top: '50%',
-                transform: 'translate(-50%, -50%)',
-                zIndex: 1000,
-              }}
-            >
+        {/* Logo - first in sequence */}
+        {logoState !== 'hidden' && (
+          <div 
+            className="fixed"
+            style={{
+              opacity: logoOpacity,
+              left: '50%',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 1000,
+              pointerEvents: 'none',
+            }}
+          >
               <img 
                 src="/logo.png" 
                 alt="THE LOST+UNFOUNDS Logo" 
@@ -242,11 +243,11 @@ export default function Home() {
                   mixBlendMode: 'normal',
                 }} 
               />
-            </div>
-          )}
-          
-          {/* Typing text - second in sequence, stays completely fixed */}
-          {showTyping && (
+          </div>
+        )}
+        
+        {/* Typing text - second in sequence, stays completely fixed */}
+        {showTyping && (
             <div 
               className="center-text fixed text-base sm:text-2xl md:text-3xl"
               style={{
@@ -277,10 +278,10 @@ export default function Home() {
                 |
               </span>
             </div>
-          )}
-          
-          {/* Email Signup - third in sequence, rises up from bottom to center */}
-          <div 
+        )}
+        
+        {/* Email Signup - third in sequence, rises up from bottom to center */}
+        <div 
             className="fixed"
             style={{
               opacity: showEmailSignup ? 1 : 0,
@@ -312,7 +313,6 @@ export default function Home() {
             }}>
               Thanks for stopping by. Sign-up for updates and news!
             </div>
-          </div>
         </div>
       </main>
     </div>
