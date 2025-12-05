@@ -219,100 +219,99 @@ export default function Home() {
         </div>
 
         {/* Foreground content - all centered at same point, sequential animation */}
-        <div className="absolute inset-0 z-10 pointer-events-none">
-          {/* Logo - first in sequence */}
-          {logoState !== 'hidden' && (
-            <div 
-              className="fixed"
-              style={{
-                opacity: logoOpacity,
-                left: '50%',
-                top: '50%',
-                transform: 'translate(-50%, -50%)',
-                zIndex: 1000,
-              }}
-            >
-              <img 
-                src="/logo.png" 
-                alt="THE LOST+UNFOUNDS Logo" 
-                className="max-w-[570px] h-auto sm:max-w-[570px] max-w-[80vw] sm:max-w-[570px]" 
-                style={{ 
-                  maxWidth: 'min(570px, 80vw)',
-                  opacity: 1,
-                  filter: 'none',
-                  mixBlendMode: 'normal',
-                }} 
-              />
-            </div>
-          )}
-          
-          {/* Typing text - second in sequence, stays completely fixed */}
-          {showTyping && (
-            <div 
-              className="center-text fixed text-base sm:text-2xl md:text-3xl"
-              style={{
-                opacity: showEmailSignup ? 0 : 1,
-                visibility: showEmailSignup ? 'hidden' : 'visible',
-                left: '50%',
-                top: '50%',
-                transform: 'translate(-50%, -50%)',
-                zIndex: 1001,
-                transition: 'opacity 1.5s ease-in-out, visibility 0s linear 1.5s',
-                pointerEvents: showEmailSignup ? 'none' : 'auto',
-                willChange: 'opacity',
-                position: 'fixed',
-                padding: '0 1rem',
-                maxWidth: '100vw',
-                wordBreak: 'break-word',
-                whiteSpace: 'normal',
-              }}
-            >
-              {displayedText}
-              <span 
-                className="typing-cursor"
-                style={{ 
-                  opacity: showCursor ? 1 : 0,
-                  transition: 'opacity 0.1s ease-in-out'
-                }}
-              >
-                |
-              </span>
-            </div>
-          )}
-          
-          {/* Email Signup - third in sequence, rises up from bottom to center */}
+        {/* Logo - first in sequence */}
+        {logoState !== 'hidden' && (
           <div 
             className="fixed"
             style={{
-              opacity: showEmailSignup ? 1 : 0,
-              visibility: showEmailSignup ? 'visible' : 'hidden',
+              opacity: logoOpacity,
               left: '50%',
-              top: showEmailSignup ? '50%' : '100%',
-              transform: showEmailSignup ? 'translate(-50%, -50%)' : 'translate(-50%, 0)',
-              width: '100%',
-              maxWidth: 'min(500px, 90vw)',
-              padding: '0 1rem',
-              zIndex: 1002,
-              transition: 'opacity 1.5s ease-in-out, transform 1.5s ease-in-out, visibility 0s linear',
-              pointerEvents: showEmailSignup ? 'auto' : 'none',
-              willChange: 'opacity, transform',
-              position: 'fixed',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1.5rem',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 1000,
+              pointerEvents: 'none',
             }}
           >
-            <EmailSignup />
-            {/* Copy text below subscribe modal */}
-            <div style={{
-              textAlign: 'center',
-              color: 'rgba(255, 255, 255, 0.6)',
-              fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
-              lineHeight: '1.5',
-              padding: '0 0.5rem',
-            }}>
-              Thanks for stopping by. Sign-up for updates and news!
-            </div>
+            <img 
+              src="/logo.png" 
+              alt="THE LOST+UNFOUNDS Logo" 
+              className="max-w-[570px] h-auto sm:max-w-[570px] max-w-[80vw] sm:max-w-[570px]" 
+              style={{ 
+                maxWidth: 'min(570px, 80vw)',
+                opacity: 1,
+                filter: 'none',
+                mixBlendMode: 'normal',
+              }} 
+            />
+          </div>
+        )}
+        
+        {/* Typing text - second in sequence, stays completely fixed */}
+        {showTyping && (
+          <div 
+            className="center-text fixed text-base sm:text-2xl md:text-3xl"
+            style={{
+              opacity: showEmailSignup ? 0 : 1,
+              visibility: showEmailSignup ? 'hidden' : 'visible',
+              left: '50%',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 1001,
+              transition: 'opacity 1.5s ease-in-out, visibility 0s linear 1.5s',
+              pointerEvents: showEmailSignup ? 'none' : 'auto',
+              willChange: 'opacity',
+              position: 'fixed',
+              padding: '0 1rem',
+              maxWidth: '100vw',
+              wordBreak: 'break-word',
+              whiteSpace: 'normal',
+            }}
+          >
+            {displayedText}
+            <span 
+              className="typing-cursor"
+              style={{ 
+                opacity: showCursor ? 1 : 0,
+                transition: 'opacity 0.1s ease-in-out'
+              }}
+            >
+              |
+            </span>
+          </div>
+        )}
+        
+        {/* Email Signup - third in sequence, rises up from bottom to center */}
+        <div 
+          className="fixed"
+          style={{
+            opacity: showEmailSignup ? 1 : 0,
+            visibility: showEmailSignup ? 'visible' : 'hidden',
+            left: '50%',
+            top: showEmailSignup ? '50%' : '100%',
+            transform: showEmailSignup ? 'translate(-50%, -50%)' : 'translate(-50%, 0)',
+            width: '100%',
+            maxWidth: 'min(500px, 90vw)',
+            padding: '0 1rem',
+            zIndex: 1002,
+            transition: 'opacity 1.5s ease-in-out, transform 1.5s ease-in-out, visibility 0s linear',
+            pointerEvents: showEmailSignup ? 'auto' : 'none',
+            willChange: 'opacity, transform',
+            position: 'fixed',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1.5rem',
+          }}
+        >
+          <EmailSignup />
+          {/* Copy text below subscribe modal */}
+          <div style={{
+            textAlign: 'center',
+            color: 'rgba(255, 255, 255, 0.6)',
+            fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
+            lineHeight: '1.5',
+            padding: '0 0.5rem',
+          }}>
+            Thanks for stopping by. Sign-up for updates and news!
           </div>
         </div>
       </main>
