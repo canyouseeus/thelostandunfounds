@@ -508,9 +508,13 @@ export default function Layout({ children }: { children?: ReactNode }) {
         </div>
       </nav>
       )}
-      <main className={isHome ? "" : "pb-6"}>
-        {children || <Outlet />}
-      </main>
+      {isHome ? (
+        <>{children || <Outlet />}</>
+      ) : (
+        <main className="pb-6">
+          {children || <Outlet />}
+        </main>
+      )}
       <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
       
       {/* Upgrade Modal */}

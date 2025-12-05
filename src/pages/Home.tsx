@@ -7,33 +7,44 @@ export default function Home() {
     // Create logo element and append to body to escape any stacking contexts
     const logoContainer = document.createElement('div')
     logoContainer.id = 'home-logo-container'
-    logoContainer.style.cssText = `
-      position: fixed !important;
-      left: 50% !important;
-      top: 50% !important;
-      transform: translate(-50%, -50%) !important;
-      z-index: 2147483647 !important;
-      pointer-events: none !important;
-      opacity: 1 !important;
-      will-change: auto !important;
-    `
+    Object.assign(logoContainer.style, {
+      position: 'fixed',
+      left: '50%',
+      top: '50%',
+      transform: 'translate(-50%, -50%)',
+      zIndex: '2147483647',
+      pointerEvents: 'none',
+      opacity: '1',
+      willChange: 'auto',
+      isolation: 'isolate',
+    })
     document.body.appendChild(logoContainer)
 
     const logoImg = document.createElement('img')
     logoImg.src = '/logo.png'
     logoImg.alt = 'THE LOST+UNFOUNDS Logo'
-    logoImg.style.cssText = `
-      max-width: min(570px, 80vw) !important;
-      width: auto !important;
-      height: auto !important;
-      opacity: 1 !important;
-      filter: none !important;
-      mix-blend-mode: normal !important;
-      display: block !important;
-      visibility: visible !important;
-      image-rendering: auto !important;
-    `
+    Object.assign(logoImg.style, {
+      maxWidth: 'min(570px, 80vw)',
+      width: 'auto',
+      height: 'auto',
+      opacity: '1',
+      filter: 'none',
+      mixBlendMode: 'normal',
+      display: 'block',
+      visibility: 'visible',
+      imageRendering: 'auto',
+    })
+    
+    // Force set inline styles to override any CSS
+    logoImg.setAttribute('style', logoImg.style.cssText + ' !important')
+    logoContainer.setAttribute('style', logoContainer.style.cssText + ' !important')
+    
     logoContainer.appendChild(logoImg)
+
+    // Debug: Log to console
+    console.log('Logo container opacity:', window.getComputedStyle(logoContainer).opacity)
+    console.log('Logo image opacity:', window.getComputedStyle(logoImg).opacity)
+    console.log('Logo container z-index:', window.getComputedStyle(logoContainer).zIndex)
 
     return () => {
       if (document.body.contains(logoContainer)) {
