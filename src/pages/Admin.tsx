@@ -1673,6 +1673,37 @@ export default function Admin() {
                 <p className="text-white/60 text-sm mb-4">Advanced user management features</p>
                 <p className="text-white/40 text-sm">Additional configuration options coming soon...</p>
               </div>
+
+              <div className="border-t border-white/10 pt-4">
+                <h3 className="text-white font-medium mb-4 flex items-center gap-2">
+                  <Settings className="w-4 h-4" />
+                  Quick Navigation
+                </h3>
+                <p className="text-white/60 text-sm mb-4">Access admin tools and resources</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Link
+                    to="/designsystem"
+                    className="px-4 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white font-medium transition flex items-center justify-center gap-2"
+                  >
+                    <span>Design System</span>
+                    <span className="text-white/60">→</span>
+                  </Link>
+                  <Link
+                    to="/qr"
+                    className="px-4 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white font-medium transition flex items-center justify-center gap-2"
+                  >
+                    <span>QR Codes</span>
+                    <span className="text-white/60">→</span>
+                  </Link>
+                  <Link
+                    to="/sql"
+                    className="px-4 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white font-medium transition flex items-center justify-center gap-2"
+                  >
+                    <span>SQL Scripts</span>
+                    <span className="text-white/60">→</span>
+                  </Link>
+                </div>
+              </div>
             </div>
             </div>
           </div>
