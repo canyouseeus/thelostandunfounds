@@ -55,7 +55,6 @@ export default function Home() {
           clearInterval(fadeInIntervalRef)
           fadeInIntervalRef = null
         }
-        setLogoOpacity(1) // Explicitly set to 100% opacity
         setLogoState('static')
       }
     }, 16) // ~60fps
