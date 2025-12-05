@@ -224,10 +224,14 @@ export default function Layout({ children }: { children?: ReactNode }) {
     pro: 'Pro',
   }
 
+  // Don't render Layout wrapper on home page at all
+  if (isHome) {
+    return <>{children || <Outlet />}</>
+  }
+
   return (
     <div className="min-h-screen bg-black">
-      {!isHome && (
-        <nav className="bg-black/80 backdrop-blur-md relative z-[10000]">
+      <nav className="bg-black/80 backdrop-blur-md relative z-[10000]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Top row: Title left, Menu button right */}
           <div className="flex items-center justify-between h-16">
@@ -507,14 +511,9 @@ export default function Layout({ children }: { children?: ReactNode }) {
           </div>
         </div>
       </nav>
-      )}
-      {isHome ? (
-        <>{children || <Outlet />}</>
-      ) : (
-        <main className="pb-6">
-          {children || <Outlet />}
-        </main>
-      )}
+      <main className="pb-6">
+        {children || <Outlet />}
+      </main>
       <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
       
       {/* Upgrade Modal */}

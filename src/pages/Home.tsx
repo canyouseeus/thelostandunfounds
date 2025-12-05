@@ -4,52 +4,25 @@ import { createPortal } from 'react-dom'
 
 export default function Home() {
   useEffect(() => {
-    // Create logo element and append to body to escape any stacking contexts
+    // Remove any existing logo containers
+    const existing = document.getElementById('home-logo-container')
+    if (existing) existing.remove()
+
+    // Create logo element and append to body
     const logoContainer = document.createElement('div')
     logoContainer.id = 'home-logo-container'
-    Object.assign(logoContainer.style, {
-      position: 'fixed',
-      left: '50%',
-      top: '50%',
-      transform: 'translate(-50%, -50%)',
-      zIndex: '2147483647',
-      pointerEvents: 'none',
-      opacity: '1',
-      willChange: 'auto',
-      isolation: 'isolate',
-    })
+    logoContainer.style.cssText = 'position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 999999; pointer-events: none; opacity: 1;'
     document.body.appendChild(logoContainer)
 
     const logoImg = document.createElement('img')
     logoImg.src = '/logo.png'
     logoImg.alt = 'THE LOST+UNFOUNDS Logo'
-    Object.assign(logoImg.style, {
-      maxWidth: 'min(570px, 80vw)',
-      width: 'auto',
-      height: 'auto',
-      opacity: '1',
-      filter: 'none',
-      mixBlendMode: 'normal',
-      display: 'block',
-      visibility: 'visible',
-      imageRendering: 'auto',
-    })
-    
-    // Force set inline styles to override any CSS
-    logoImg.setAttribute('style', logoImg.style.cssText + ' !important')
-    logoContainer.setAttribute('style', logoContainer.style.cssText + ' !important')
-    
+    logoImg.style.cssText = 'max-width: min(570px, 80vw); width: auto; height: auto; opacity: 1; filter: none; display: block;'
     logoContainer.appendChild(logoImg)
 
-    // Debug: Log to console
-    console.log('Logo container opacity:', window.getComputedStyle(logoContainer).opacity)
-    console.log('Logo image opacity:', window.getComputedStyle(logoImg).opacity)
-    console.log('Logo container z-index:', window.getComputedStyle(logoContainer).zIndex)
-
     return () => {
-      if (document.body.contains(logoContainer)) {
-        document.body.removeChild(logoContainer)
-      }
+      const container = document.getElementById('home-logo-container')
+      if (container) container.remove()
     }
   }, [])
 
@@ -66,7 +39,7 @@ export default function Home() {
         <meta name="twitter:title" content="THE LOST+UNFOUNDS - CAN YOU SEE US?" />
         <meta name="twitter:description" content="Thanks for stopping by. Sign-up for updates and news!" />
       </Helmet>
-      <div className="h-screen bg-black flex flex-col overflow-hidden">
+      <div style={{ height: '100vh', width: '100vw', backgroundColor: '#000000', margin: 0, padding: 0, position: 'fixed', top: 0, left: 0, zIndex: 1 }}>
       </div>
     </>
   )
