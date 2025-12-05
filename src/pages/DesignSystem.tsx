@@ -222,6 +222,7 @@ function ColorsSection() {
     {
       title: 'Accent Colors',
       colors: [
+        { name: 'Green (Success)', class: 'bg-[#008000]', hex: '#008000', text: 'text-white' },
         { name: 'Red 400', class: 'bg-red-400', hex: '#F87171', text: 'text-white' },
         { name: 'Red 500', class: 'bg-red-500', hex: '#EF4444', text: 'text-white' },
         { name: 'Red 900/20', class: 'bg-red-900/20', hex: 'rgba(127, 29, 29, 0.2)', text: 'text-white' },

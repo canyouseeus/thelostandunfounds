@@ -7,7 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabase';
 import { useSageMode } from '../contexts/SageModeContext';
-import { Eye, ArrowLeft, ExternalLink } from 'lucide-react';
+import { Eye, ArrowLeft, ExternalLink, CheckCircle, Rocket } from 'lucide-react';
 import {
   Expandable,
   ExpandableCard,
@@ -29,11 +29,12 @@ interface BlogPost {
 }
 
 export default function DesignSystemPreview() {
-  const { state } = useSageMode();
+  const { state, exportReport } = useSageMode();
   const navigate = useNavigate();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
+  const [deploying, setDeploying] = useState(false);
 
   useEffect(() => {
     loadPosts();
@@ -95,6 +96,48 @@ export default function DesignSystemPreview() {
   const selectedComponents = state.selections.filter(s => s.selected);
   const blogCardSelected = selectedComponents.some(s => s.id === 'blog-card' || s.id === 'blog-expandable');
 
+  const handleDeploy = async () => {
+    if (!confirm('Are you sure you want to deploy these changes to production? This will update the live site.')) {
+      return;
+    }
+
+    setDeploying(true);
+    try {
+      // Export the report
+      const report = exportReport();
+      
+      // Here you would typically:
+      // 1. Save the report to a database or file
+      // 2. Trigger a deployment process
+      // 3. Apply the custom code changes
+      
+      // For now, we'll create a deployment record
+      const deploymentData = {
+        timestamp: new Date().toISOString(),
+        report: JSON.parse(report),
+        customCode: state.customCode,
+        selectedComponents: selectedComponents.map(c => c.id),
+        status: 'pending',
+      };
+
+      // Save to localStorage as a deployment record
+      const deployments = JSON.parse(localStorage.getItem('sageModeDeployments') || '[]');
+      deployments.push(deploymentData);
+      localStorage.setItem('sageModeDeployments', JSON.stringify(deployments));
+
+      // Show success message
+      alert('Deployment initiated! Changes will be applied to the preview. To deploy to production, the agent will need to review and apply the changes from the report.');
+      
+      // In a real implementation, this would trigger an API call to deploy
+      // For now, we'll just mark it as ready for agent review
+    } catch (error) {
+      console.error('Deployment error:', error);
+      alert('Error initiating deployment. Please try again.');
+    } finally {
+      setDeploying(false);
+    }
+  };
+
   return (
     <>
       <Helmet>
@@ -121,6 +164,25 @@ export default function DesignSystemPreview() {
                 <ArrowLeft className="w-4 h-4" />
                 Back to SAGE MODE
               </Link>
+              {selectedComponents.length > 0 && (
+                <button
+                  onClick={handleDeploy}
+                  disabled={deploying}
+                  className="px-6 py-3 bg-[#008000] hover:bg-[#008000]/90 border border-[#008000] rounded-none text-white font-medium transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deploying ? (
+                    <>
+                      <Rocket className="w-4 h-4 animate-pulse" />
+                      Deploying...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      Accept & Deploy Changes
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </div>
 

@@ -19,11 +19,20 @@ export interface SageModeNote {
   timestamp: string;
 }
 
+export interface SageModeAnnotation {
+  id: string;
+  type: 'pen' | 'circle' | 'rectangle' | 'text' | 'selector';
+  data: any;
+  timestamp: string;
+  pageUrl?: string;
+}
+
 export interface SageModeState {
   enabled: boolean;
   selections: SageModeSelection[];
   notes: SageModeNote[];
   customCode: string;
+  annotations: SageModeAnnotation[];
 }
 
 interface SageModeContextType {
@@ -32,6 +41,7 @@ interface SageModeContextType {
   updateSelection: (id: string, selected: boolean) => void;
   addNote: (componentId: string, code: string, notes: string) => void;
   updateCustomCode: (code: string) => void;
+  addAnnotation: (annotation: SageModeAnnotation) => void;
   exportReport: () => string;
   clearState: () => void;
 }
@@ -82,6 +92,7 @@ export function SageModeProvider({ children }: { children: ReactNode }) {
       selections: defaultSelections,
       notes: [],
       customCode: '',
+      annotations: [],
     };
   });
 
@@ -121,6 +132,13 @@ export function SageModeProvider({ children }: { children: ReactNode }) {
     setState(prev => ({ ...prev, customCode: code }));
   };
 
+  const addAnnotation = (annotation: SageModeAnnotation) => {
+    setState(prev => ({
+      ...prev,
+      annotations: [...prev.annotations, { ...annotation, pageUrl: window.location.href }],
+    }));
+  };
+
   const exportReport = (): string => {
     const selected = state.selections.filter(s => s.selected);
     const report = {
@@ -129,6 +147,7 @@ export function SageModeProvider({ children }: { children: ReactNode }) {
       selectedComponents: selected,
       notes: state.notes,
       customCode: state.customCode,
+      annotations: state.annotations,
     };
     return JSON.stringify(report, null, 2);
   };
@@ -139,6 +158,7 @@ export function SageModeProvider({ children }: { children: ReactNode }) {
       selections: defaultSelections,
       notes: [],
       customCode: '',
+      annotations: [],
     });
     localStorage.removeItem('sageModeState');
   };
@@ -151,6 +171,7 @@ export function SageModeProvider({ children }: { children: ReactNode }) {
         updateSelection,
         addNote,
         updateCustomCode,
+        addAnnotation,
         exportReport,
         clearState,
       }}

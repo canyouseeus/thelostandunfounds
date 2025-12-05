@@ -1,9 +1,11 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Home, User, LogOut } from 'lucide-react'
+import { Home, User, LogOut, Sparkles } from 'lucide-react'
 import { useState, useEffect, useRef, useCallback, ReactNode } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { useSageMode } from '../contexts/SageModeContext'
 import { isAdmin } from '../utils/admin'
 import AuthModal from './auth/AuthModal'
+import SageModeOverlay from './SageModeOverlay'
 import { supabase } from '../lib/supabase'
 
 export default function Layout({ children }: { children?: ReactNode }) {
@@ -25,6 +27,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
   const menuCloseTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const mousePositionRef = useRef<{ x: number; y: number } | null>(null)
   const { user, tier, signOut, loading, clearAuthStorage } = useAuth()
+  const { state: sageModeState, toggleSageMode } = useSageMode()
   const navigate = useNavigate()
   
   // Load user subdomain for profile link
@@ -231,6 +234,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-black">
+      <SageModeOverlay />
       <nav className="bg-black/80 backdrop-blur-md relative z-[10000]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Top row: Title left, Menu button right */}
@@ -477,6 +481,23 @@ export default function Layout({ children }: { children?: ReactNode }) {
                     {userIsAdmin ? 'ADMIN DASHBOARD' : 'PROFILE'}
                   </div>
                 </Link>
+                {userIsAdmin && (
+                  <button
+                    type="button"
+                    className="menu-item w-full text-left flex items-center justify-between"
+                    onClick={() => {
+                      toggleSageMode();
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4" />
+                      SAGE MODE
+                    </div>
+                    <span className={`text-xs ${sageModeState.enabled ? 'text-yellow-400' : 'text-white/40'}`}>
+                      {sageModeState.enabled ? 'ON' : 'OFF'}
+                    </span>
+                  </button>
+                )}
                       <button
                         type="button"
                         className="menu-item w-full text-left"
