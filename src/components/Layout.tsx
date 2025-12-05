@@ -273,6 +273,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
                   ref={dropdownRef}
                   onMouseEnter={handleMenuMouseEnter}
                   onMouseLeave={handleMenuMouseLeave}
+                  style={{ maxHeight: '80vh', overflowY: 'auto' }}
                 >
                   <Link 
                     to="/" 
