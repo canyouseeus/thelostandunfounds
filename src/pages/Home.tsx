@@ -17,7 +17,13 @@ export default function Home() {
     const logoImg = document.createElement('img')
     logoImg.src = '/logo.png'
     logoImg.alt = 'THE LOST+UNFOUNDS Logo'
-    logoImg.style.cssText = 'max-width: min(570px, 80vw); width: auto; height: auto; opacity: 1; filter: none; display: block;'
+    logoImg.style.cssText = 'max-width: min(570px, 80vw); width: auto; height: auto; opacity: 1; filter: none; display: block; background: transparent;'
+    // Force image to load and check if it has transparency
+    logoImg.onload = () => {
+      // Ensure no transparency effects
+      logoImg.style.opacity = '1'
+      logoImg.style.filter = 'none'
+    }
     logoContainer.appendChild(logoImg)
 
     return () => {
