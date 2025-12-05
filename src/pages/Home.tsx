@@ -55,15 +55,12 @@ export default function Home() {
           clearInterval(fadeInIntervalRef)
           fadeInIntervalRef = null
         }
-        setLogoOpacity(1) // Ensure it's exactly 1, not just close to it
         setLogoState('static')
       }
     }, 16) // ~60fps
     
     // After 1 second fade in + 0.5 seconds static, fade out (3x faster)
     const fadeOutTimer = setTimeout(() => {
-      // Ensure opacity is exactly 1 before starting fade out
-      setLogoOpacity(1)
       setLogoState('fading-out')
       const fadeOutStart = Date.now()
       fadeOutIntervalRef = setInterval(() => {
@@ -233,13 +230,12 @@ export default function Home() {
                 top: '50%',
                 transform: 'translate(-50%, -50%)',
                 zIndex: 1000,
-                willChange: 'opacity',
               }}
             >
               <img 
                 src="/logo.png" 
                 alt="THE LOST+UNFOUNDS Logo" 
-                className="max-w-[570px] h-auto sm:max-w-[570px] max-w-[80vw] sm:max-w-[570px] logo" 
+                className="max-w-[570px] h-auto sm:max-w-[570px] max-w-[80vw] sm:max-w-[570px]" 
                 style={{ maxWidth: 'min(570px, 80vw)' }} 
               />
             </div>
