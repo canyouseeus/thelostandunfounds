@@ -13,6 +13,7 @@ export default function Home() {
   const [showSignup, setShowSignup] = useState(false)
   const [textScale, setTextScale] = useState(1)
   const [textBlur, setTextBlur] = useState(0)
+  const [headerSignalSent, setHeaderSignalSent] = useState(false)
 
   useEffect(() => {
     let fadeInInterval: NodeJS.Timeout | null = null
@@ -148,6 +149,16 @@ export default function Home() {
     
     return () => clearInterval(growInterval)
   }, [showSignup])
+
+  // Notify layout to fade header/nav in once the animation finishes
+  useEffect(() => {
+    if (!showSignup || headerSignalSent) return
+    const timer = setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('home-animation-complete'))
+      setHeaderSignalSent(true)
+    }, 800) // allow the signup to finish its entrance
+    return () => clearTimeout(timer)
+  }, [showSignup, headerSignalSent])
 
   return (
     <>
