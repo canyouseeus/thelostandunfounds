@@ -230,16 +230,20 @@ export default function Layout({ children }: { children?: ReactNode }) {
   return (
     <div className="min-h-screen bg-black flex flex-col">
       <SageModeOverlay />
-      <nav className="fixed top-0 left-0 w-full bg-black backdrop-blur-md z-[2147483647] border-b border-white/10">
+      <nav className="fixed top-0 left-0 w-full bg-black backdrop-blur-md z-[2147483647]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Top row: Title left, Menu button right */}
-          <div className="flex items-center justify-between h-16 gap-6">
-            <div className="flex items-center gap-6">
-              <Link to="/" className="flex items-center text-white hover:text-white/80 transition">
+          <div className="flex items-center justify-between h-16 gap-4 flex-nowrap">
+            <div className="flex items-center gap-4 flex-shrink-0 leading-none h-12">
+              <Link
+                to="/"
+                className="flex items-center text-white hover:text-white/80 transition h-12"
+                style={{ transform: 'translateY(7%)', display: 'flex', alignItems: 'center' }}
+              >
                 <span className="text-sm sm:text-lg md:text-xl font-bold whitespace-nowrap">THE LOST+UNFOUNDS</span>
               </Link>
             </div>
-            <div className="flex items-center space-x-4 ml-auto">
+            <div className="flex items-center space-x-4 ml-auto flex-shrink-0 leading-none h-12">
               <div 
                 className="header-nav" 
                 ref={menuRef}
@@ -248,7 +252,8 @@ export default function Layout({ children }: { children?: ReactNode }) {
               >
                   <button 
                     type="button"
-                    className="menu-toggle flex items-center justify-center"
+                    className="menu-toggle flex items-center justify-center h-12 w-12 leading-none"
+                    style={{ transform: 'translateY(0)' }}
                     onClick={(e) => {
                       e.stopPropagation();
                       justClickedRef.current = true;

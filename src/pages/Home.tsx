@@ -189,8 +189,9 @@ export default function Home() {
               opacity: typingComplete ? 0.3 : 0,
               padding: '0 1rem',
               maxWidth: '100vw',
-              wordBreak: 'break-word',
-              whiteSpace: 'normal',
+              wordBreak: 'keep-all',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
             }}
           >
             {text}
@@ -243,8 +244,9 @@ export default function Home() {
                 position: 'fixed',
                 padding: '0 1rem',
                 maxWidth: '100vw',
-                wordBreak: 'break-word',
-                whiteSpace: 'normal',
+                wordBreak: 'keep-all',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
               }}
             >
               {displayedText}
