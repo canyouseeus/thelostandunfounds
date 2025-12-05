@@ -11,7 +11,6 @@ import Footer from './Footer'
 
 export default function Layout({ children }: { children?: ReactNode }) {
   const location = useLocation()
-  const isHome = location.pathname === '/'
   const isTikTokDownloader = location.pathname === '/tools/tiktok-downloader'
   const [menuOpen, setMenuOpen] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
@@ -30,7 +29,6 @@ export default function Layout({ children }: { children?: ReactNode }) {
   const { user, tier, signOut, loading, clearAuthStorage } = useAuth()
   const { state: sageModeState, toggleSageMode } = useSageMode()
   const navigate = useNavigate()
-  const [headerVisible, setHeaderVisible] = useState(!isHome)
   
   // Load user subdomain for profile link
   useEffect(() => {
@@ -229,39 +227,10 @@ export default function Layout({ children }: { children?: ReactNode }) {
     pro: 'Pro',
   }
 
-  // Fade in header/nav after home animation completes
-  useEffect(() => {
-    if (!isHome) {
-      setHeaderVisible(true)
-      return
-    }
-
-    // Fade in header/nav when home animation signals completion
-    const handleHomeAnimationComplete = () => {
-      setHeaderVisible(true)
-    }
-
-    // Fallback: force header visible after a few seconds in case signal is missed
-    const fallbackTimer = setTimeout(() => setHeaderVisible(true), 5000)
-
-    window.addEventListener('home-animation-complete', handleHomeAnimationComplete)
-    return () => {
-      window.removeEventListener('home-animation-complete', handleHomeAnimationComplete)
-      clearTimeout(fallbackTimer)
-    }
-  }, [isHome])
-
   return (
     <div className="min-h-screen bg-black flex flex-col">
       <SageModeOverlay />
-      <nav
-        className="bg-black/80 backdrop-blur-md relative z-[10000] border-b border-white/10"
-        style={{
-          opacity: headerVisible ? 1 : 0,
-          transition: 'opacity 1.2s ease',
-          pointerEvents: headerVisible ? 'auto' : 'none',
-        }}
-      >
+      <nav className="bg-black/80 backdrop-blur-md relative z-[10000] border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Top row: Title left, Menu button right */}
           <div className="flex items-center justify-between h-16 gap-6">
