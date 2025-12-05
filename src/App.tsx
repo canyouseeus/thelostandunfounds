@@ -55,12 +55,14 @@ function App() {
         <SageModeProvider>
           <ErrorBoundary>
           <Routes>
-            <Route path="/" element={<Home />} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
-        <Route path="/zoho/callback" element={<ZohoCallback />} />
-        <Route path="/about" element={<Layout />}>
-          <Route index element={<About />} />
-        </Route>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Home />} />
+            </Route>
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/zoho/callback" element={<ZohoCallback />} />
+            <Route path="/about" element={<Layout />}>
+              <Route index element={<About />} />
+            </Route>
         <Route path="/contact" element={<Layout />}>
           <Route index element={<Contact />} />
         </Route>
