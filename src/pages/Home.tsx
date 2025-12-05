@@ -34,7 +34,7 @@ export default function Home() {
     }
   }, [logoState, logoOpacity, showTyping, typingComplete])
 
-  // Logo animation sequence: fade in (1s) -> static (0.5s) -> fade out (0.33s) - 3x faster
+  // Logo animation sequence: fade in (3s) -> static (1.5s) -> fade out (1s)
   useEffect(() => {
     let fadeInIntervalRef: NodeJS.Timeout | null = null
     let fadeOutIntervalRef: NodeJS.Timeout | null = null
@@ -43,11 +43,11 @@ export default function Home() {
     setLogoOpacity(0)
     setLogoState('fading-in')
     
-    // Fade in over 1 second (3x faster: 3s / 3 = 1s)
+    // Fade in over 3 seconds
     const fadeInStart = Date.now()
     fadeInIntervalRef = setInterval(() => {
       const elapsed = Date.now() - fadeInStart
-      const progress = Math.min(elapsed / 1000, 1)
+      const progress = Math.min(elapsed / 3000, 1)
       setLogoOpacity(progress)
       
       if (progress >= 1) {
@@ -59,13 +59,13 @@ export default function Home() {
       }
     }, 16) // ~60fps
     
-    // After 1 second fade in + 0.5 seconds static, fade out (3x faster)
+    // After 3 seconds fade in + 1.5 seconds static, fade out
     const fadeOutTimer = setTimeout(() => {
       setLogoState('fading-out')
       const fadeOutStart = Date.now()
       fadeOutIntervalRef = setInterval(() => {
         const elapsed = Date.now() - fadeOutStart
-        const progress = Math.min(elapsed / 333, 1) // 1s / 3 = 0.33s
+        const progress = Math.min(elapsed / 1000, 1)
         setLogoOpacity(1 - progress)
         
         if (progress >= 1) {
@@ -74,13 +74,13 @@ export default function Home() {
             fadeOutIntervalRef = null
           }
           setLogoState('hidden')
-          // Start typing animation after logo fades out + 0.5s delay (3x faster: 1.5s / 3 = 0.5s)
+          // Start typing animation after logo fades out + 1.5s delay
           setTimeout(() => {
             setShowTyping(true)
-          }, 500)
+          }, 1500)
         }
       }, 16)
-    }, 1500) // 1s fade in + 0.5s static = 1.5s total before fade out (3x faster)
+    }, 4500) // 3s fade in + 1.5s static = 4.5s total before fade out
 
     return () => {
       if (fadeInIntervalRef) {
@@ -143,7 +143,7 @@ export default function Home() {
         setDisplayedText(text) // Ensure full text is displayed
         setTypingComplete(true)
       }
-    }, 33) // 3x faster: 100ms / 3 = ~33ms per character
+    }, 100) // Adjust speed here (milliseconds per character)
 
     return () => {
       clearInterval(typeInterval)
@@ -225,6 +225,7 @@ export default function Home() {
               className="fixed"
               style={{
                 opacity: logoOpacity,
+                transition: logoState === 'static' ? 'opacity 0s' : 'opacity 0.016s linear',
                 left: '50%',
                 top: '50%',
                 transform: 'translate(-50%, -50%)',
@@ -235,12 +236,7 @@ export default function Home() {
                 src="/logo.png" 
                 alt="THE LOST+UNFOUNDS Logo" 
                 className="max-w-[570px] h-auto sm:max-w-[570px] max-w-[80vw] sm:max-w-[570px]" 
-                style={{ 
-                  maxWidth: 'min(570px, 80vw)',
-                  opacity: 1,
-                  filter: 'none',
-                  mixBlendMode: 'normal',
-                }} 
+                style={{ maxWidth: 'min(570px, 80vw)' }} 
               />
             </div>
           )}
