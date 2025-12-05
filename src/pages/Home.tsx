@@ -15,6 +15,27 @@ export default function Home() {
         <meta name="twitter:description" content="Thanks for stopping by. Sign-up for updates and news!" />
       </Helmet>
       <div className="h-screen bg-black flex flex-col overflow-hidden">
+        <main className="flex-1 flex items-center justify-center relative h-full">
+          <div 
+            className="fixed"
+            style={{
+              left: '50%',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 99999,
+            }}
+          >
+            <img 
+              src="/logo.png" 
+              alt="THE LOST+UNFOUNDS Logo" 
+              className="max-w-[570px] h-auto sm:max-w-[570px] max-w-[80vw] sm:max-w-[570px]" 
+              style={{ 
+                maxWidth: 'min(570px, 80vw)',
+                opacity: 1,
+              }} 
+            />
+          </div>
+        </main>
       </div>
     </>
   )
