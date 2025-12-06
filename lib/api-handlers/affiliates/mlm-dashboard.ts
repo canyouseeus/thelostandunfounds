@@ -64,13 +64,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const mlmLevel2 = mlmEarnings?.filter(e => e.level === 2).reduce((sum, e) => sum + parseFloat(e.amount), 0) || 0;
 
     // Get discount code (always available, usage controlled by last_discount_use_date)
-    const { data: discountCode } = await supabase
+    const { data: discountCodeData } = await supabase
       .from('affiliate_discount_codes')
       .select('code, is_active')
       .eq('affiliate_id', affiliate_id as string)
       .single();
 
     // If no code exists, generate one
+    let discountCode = discountCodeData;
     if (!discountCode) {
       const code = `${affiliate.affiliate_code}-EMPLOYEE`;
       const { data: newCode } = await supabase

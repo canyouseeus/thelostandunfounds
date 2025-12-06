@@ -299,7 +299,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       } : null,
       buyer_is_affiliate: !!buyerAffiliate
     });
-
+    
+  }
   } catch (error) {
     console.error('Calculate commission error:', error);
     return res.status(500).json({ error: 'Internal server error' });
