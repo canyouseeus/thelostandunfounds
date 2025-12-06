@@ -1,25 +1,26 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// Handler map with dynamic imports for Vercel compatibility
-const handlerMap: Record<string, string> = {
-  'award-points': '../../lib/api-handlers/affiliates/award-points.js',
-  'calculate-commission': '../../lib/api-handlers/affiliates/calculate-commission.js',
-  'check-customer': '../../lib/api-handlers/affiliates/check-customer.js',
-  'dashboard': '../../lib/api-handlers/affiliates/dashboard.js',
-  'distribute-secret-santa': '../../lib/api-handlers/affiliates/distribute-secret-santa.js',
-  'generate-discount': '../../lib/api-handlers/affiliates/generate-discount.js',
-  'mlm-dashboard': '../../lib/api-handlers/affiliates/mlm-dashboard.js',
-  'mlm-earnings': '../../lib/api-handlers/affiliates/mlm-earnings.js',
-  'payout-settings': '../../lib/api-handlers/affiliates/payout-settings.js',
-  'request-payout': '../../lib/api-handlers/affiliates/request-payout.js',
-  'points-history': '../../lib/api-handlers/affiliates/points-history.js',
-  'referrals': '../../lib/api-handlers/affiliates/referrals.js',
-  'secret-santa': '../../lib/api-handlers/affiliates/secret-santa.js',
-  'setup': '../../lib/api-handlers/affiliates/setup.js',
-  'switch-mode': '../../lib/api-handlers/affiliates/switch-mode.js',
-  'track-customer': '../../lib/api-handlers/affiliates/track-customer.js',
-  'update-code': '../../lib/api-handlers/affiliates/update-code.js',
-  'use-discount': '../../lib/api-handlers/affiliates/use-discount.js',
+type HandlerLoader = () => Promise<{ default?: (req: VercelRequest, res: VercelResponse) => any }>;
+
+const handlerLoaders: Record<string, HandlerLoader> = {
+  'award-points': () => import('../../lib/api-handlers/affiliates/award-points'),
+  'calculate-commission': () => import('../../lib/api-handlers/affiliates/calculate-commission'),
+  'check-customer': () => import('../../lib/api-handlers/affiliates/check-customer'),
+  'dashboard': () => import('../../lib/api-handlers/affiliates/dashboard'),
+  'distribute-secret-santa': () => import('../../lib/api-handlers/affiliates/distribute-secret-santa'),
+  'generate-discount': () => import('../../lib/api-handlers/affiliates/generate-discount'),
+  'mlm-dashboard': () => import('../../lib/api-handlers/affiliates/mlm-dashboard'),
+  'mlm-earnings': () => import('../../lib/api-handlers/affiliates/mlm-earnings'),
+  'payout-settings': () => import('../../lib/api-handlers/affiliates/payout-settings'),
+  'request-payout': () => import('../../lib/api-handlers/affiliates/request-payout'),
+  'points-history': () => import('../../lib/api-handlers/affiliates/points-history'),
+  'referrals': () => import('../../lib/api-handlers/affiliates/referrals'),
+  'secret-santa': () => import('../../lib/api-handlers/affiliates/secret-santa'),
+  'setup': () => import('../../lib/api-handlers/affiliates/setup'),
+  'switch-mode': () => import('../../lib/api-handlers/affiliates/switch-mode'),
+  'track-customer': () => import('../../lib/api-handlers/affiliates/track-customer'),
+  'update-code': () => import('../../lib/api-handlers/affiliates/update-code'),
+  'use-discount': () => import('../../lib/api-handlers/affiliates/use-discount'),
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -40,36 +41,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Invalid action' });
     }
 
-    const handlerPath = handlerMap[action];
+    const loader = handlerLoaders[action];
 
-    if (!handlerPath) {
+    if (!loader) {
       console.error(`Action not found: ${action}`);
       return res.status(404).json({ error: 'Action not found', action });
     }
 
-    console.log(`Loading handler for action "${action}" from path: ${handlerPath}`);
+    console.log(`Loading handler for action "${action}"`);
 
-    // Dynamically import handler for Vercel compatibility
-    // Try both .js and .ts extensions
-    let handlerModule;
-    try {
-      handlerModule = await import(handlerPath);
-    } catch (importError: any) {
-      // Try with .ts extension if .js fails
-      const tsPath = handlerPath.replace('.js', '.ts');
-      try {
-        handlerModule = await import(tsPath);
-      } catch (tsError: any) {
-        console.error(`Failed to import handler from both paths:`, {
-          jsPath: handlerPath,
-          tsPath: tsPath,
-          jsError: importError?.message,
-          tsError: tsError?.message
-        });
-        throw importError;
-      }
-    }
-
+    const handlerModule = await loader();
     const handlerFn = handlerModule.default;
 
     if (!handlerFn || typeof handlerFn !== 'function') {
