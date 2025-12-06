@@ -92,7 +92,6 @@ window.addEventListener('error', (event) => {
     errorMsg.includes('tool_limits') ||
     errorMsg.includes('tool_usage')
   ) {
-    event.preventDefault();
     return;
   }
   // Log other errors
@@ -109,7 +108,6 @@ window.addEventListener('unhandledrejection', (event) => {
     reason.includes('tool_limits') ||
     reason.includes('tool_usage')
   ) {
-    event.preventDefault();
     return;
   }
   // Log other rejections
