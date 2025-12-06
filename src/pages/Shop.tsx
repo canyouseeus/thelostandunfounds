@@ -463,9 +463,14 @@ function ProductModal({
   const imageUrl = product.images && product.images.length > 0 ? product.images[0] : null;
   const displayPrice = product.price;
   const displayComparePrice = product.compareAtPrice || null;
+  const isFourthwallProduct = product.url?.includes('fourthwall.com');
 
   const handleCheckoutClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
+    if (isFourthwallProduct && product.url) {
+      window.location.href = product.url;
+      return;
+    }
     if (affiliateRef) {
       import('../utils/affiliate-tracking').then(({ trackAffiliateClick }) => {
         trackAffiliateClick(affiliateRef);
@@ -489,7 +494,7 @@ function ProductModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-black/90 border border-white rounded-none shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-black/90 border border-white rounded-none shadow-2xl max-w-3xl w-full max-h-[68vh] overflow-y-auto">
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-white/80 hover:text-white flex items-center justify-center w-10 h-10"
@@ -552,7 +557,7 @@ function ProductModal({
                 className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white text-black px-4 py-3 sm:py-2 rounded-none hover:bg-white/90 transition-colors font-semibold text-sm sm:text-base min-h-[44px] touch-action: manipulation cursor-pointer"
               >
                 <ShoppingCart className="w-4 h-4" />
-                {displayPrice === 0 ? 'View' : 'Buy Now'}
+                {isFourthwallProduct ? 'View on Fourthwall' : displayPrice === 0 ? 'View' : 'Buy Now'}
               </a>
               {!product.available && (
                 <div className="text-xs text-red-400">Out of Stock</div>
