@@ -394,7 +394,8 @@ export async function handleFourthwallProducts(
   } catch (error) {
     console.error('Error fetching Fourthwall products:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    res.status(500).json({
+    res.status(200).json({
+      products: [],
       error: 'Failed to fetch products',
       message: errorMessage,
     })
