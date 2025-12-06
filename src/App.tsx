@@ -20,9 +20,12 @@ import Contact from './pages/Contact'
 import Pricing from './pages/Pricing'
 import Support from './pages/Support'
 import Shop from './pages/Shop'
+import QR from './pages/QR'
 import ResetNewsletter from './pages/ResetNewsletter'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
+import PaymentSuccess from './pages/PaymentSuccess'
+import PaymentCancel from './pages/PaymentCancel'
 import Blog from './pages/Blog'
 import AllArticles from './pages/AllArticles'
 import BlogPost from './pages/BlogPost'
@@ -71,6 +74,15 @@ function App() {
         </Route>
         <Route path="/support" element={<Layout />}>
           <Route index element={<Support />} />
+        </Route>
+        <Route path="/qr" element={<Layout />}>
+          <Route index element={<QR />} />
+        </Route>
+        <Route path="/payment/success" element={<Layout />}>
+          <Route index element={<PaymentSuccess />} />
+        </Route>
+        <Route path="/payment/cancel" element={<Layout />}>
+          <Route index element={<PaymentCancel />} />
         </Route>
         <Route path="/shop" element={<Layout />}>
           <Route index element={<Shop />} />
