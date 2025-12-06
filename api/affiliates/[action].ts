@@ -1,26 +1,44 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import awardPoints from '../../lib/api-handlers/affiliates/award-points';
+import calculateCommission from '../../lib/api-handlers/affiliates/calculate-commission';
+import checkCustomer from '../../lib/api-handlers/affiliates/check-customer';
+import dashboard from '../../lib/api-handlers/affiliates/dashboard';
+import distributeSecretSanta from '../../lib/api-handlers/affiliates/distribute-secret-santa';
+import generateDiscount from '../../lib/api-handlers/affiliates/generate-discount';
+import mlmDashboard from '../../lib/api-handlers/affiliates/mlm-dashboard';
+import mlmEarnings from '../../lib/api-handlers/affiliates/mlm-earnings';
+import payoutSettings from '../../lib/api-handlers/affiliates/payout-settings';
+import requestPayout from '../../lib/api-handlers/affiliates/request-payout';
+import pointsHistory from '../../lib/api-handlers/affiliates/points-history';
+import referrals from '../../lib/api-handlers/affiliates/referrals';
+import secretSanta from '../../lib/api-handlers/affiliates/secret-santa';
+import setupAffiliate from '../../lib/api-handlers/affiliates/setup';
+import switchMode from '../../lib/api-handlers/affiliates/switch-mode';
+import trackCustomer from '../../lib/api-handlers/affiliates/track-customer';
+import updateCode from '../../lib/api-handlers/affiliates/update-code';
+import useDiscount from '../../lib/api-handlers/affiliates/use-discount';
 
-type HandlerLoader = () => Promise<{ default?: (req: VercelRequest, res: VercelResponse) => any }>;
+type HandlerFn = (req: VercelRequest, res: VercelResponse) => Promise<any>;
 
-const handlerLoaders: Record<string, HandlerLoader> = {
-  'award-points': () => import('../../lib/api-handlers/affiliates/award-points'),
-  'calculate-commission': () => import('../../lib/api-handlers/affiliates/calculate-commission'),
-  'check-customer': () => import('../../lib/api-handlers/affiliates/check-customer'),
-  'dashboard': () => import('../../lib/api-handlers/affiliates/dashboard'),
-  'distribute-secret-santa': () => import('../../lib/api-handlers/affiliates/distribute-secret-santa'),
-  'generate-discount': () => import('../../lib/api-handlers/affiliates/generate-discount'),
-  'mlm-dashboard': () => import('../../lib/api-handlers/affiliates/mlm-dashboard'),
-  'mlm-earnings': () => import('../../lib/api-handlers/affiliates/mlm-earnings'),
-  'payout-settings': () => import('../../lib/api-handlers/affiliates/payout-settings'),
-  'request-payout': () => import('../../lib/api-handlers/affiliates/request-payout'),
-  'points-history': () => import('../../lib/api-handlers/affiliates/points-history'),
-  'referrals': () => import('../../lib/api-handlers/affiliates/referrals'),
-  'secret-santa': () => import('../../lib/api-handlers/affiliates/secret-santa'),
-  'setup': () => import('../../lib/api-handlers/affiliates/setup'),
-  'switch-mode': () => import('../../lib/api-handlers/affiliates/switch-mode'),
-  'track-customer': () => import('../../lib/api-handlers/affiliates/track-customer'),
-  'update-code': () => import('../../lib/api-handlers/affiliates/update-code'),
-  'use-discount': () => import('../../lib/api-handlers/affiliates/use-discount'),
+const handlerMap: Record<string, HandlerFn> = {
+  'award-points': awardPoints,
+  'calculate-commission': calculateCommission,
+  'check-customer': checkCustomer,
+  'dashboard': dashboard,
+  'distribute-secret-santa': distributeSecretSanta,
+  'generate-discount': generateDiscount,
+  'mlm-dashboard': mlmDashboard,
+  'mlm-earnings': mlmEarnings,
+  'payout-settings': payoutSettings,
+  'request-payout': requestPayout,
+  'points-history': pointsHistory,
+  'referrals': referrals,
+  'secret-santa': secretSanta,
+  'setup': setupAffiliate,
+  'switch-mode': switchMode,
+  'track-customer': trackCustomer,
+  'update-code': updateCode,
+  'use-discount': useDiscount,
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -41,25 +59,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Invalid action' });
     }
 
-    const loader = handlerLoaders[action];
+    const handlerFn = handlerMap[action];
 
-    if (!loader) {
+    if (!handlerFn) {
       console.error(`Action not found: ${action}`);
       return res.status(404).json({ error: 'Action not found', action });
-    }
-
-    console.log(`Loading handler for action "${action}"`);
-
-    const handlerModule = await loader();
-    const handlerFn = handlerModule.default;
-
-    if (!handlerFn || typeof handlerFn !== 'function') {
-      console.error(`Handler not found in module for action "${action}"`, {
-        moduleKeys: Object.keys(handlerModule),
-        hasDefault: !!handlerModule.default,
-        defaultType: typeof handlerModule.default
-      });
-      return res.status(500).json({ error: 'Handler not found in module', action });
     }
 
     return handlerFn(req, res);
