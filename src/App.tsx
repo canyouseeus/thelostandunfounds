@@ -45,6 +45,7 @@ import DesignSystem from './pages/DesignSystem'
 import DesignSystemPreview from './pages/DesignSystemPreview'
 import SageMode from './pages/SageMode'
 import SageModeReports from './pages/SageModeReports'
+import AffiliateDashboard from './pages/AffiliateDashboard'
 
 function App() {
   return (
@@ -105,6 +106,9 @@ function App() {
         </Route>
         <Route path="/settings" element={<Layout />}>
           <Route index element={<Settings />} />
+        </Route>
+        <Route path="/affiliate/dashboard" element={<Layout />}>
+          <Route index element={<AffiliateDashboard />} />
         </Route>
         <Route path="/admin" element={<Layout />}>
           <Route index element={
