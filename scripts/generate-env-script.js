@@ -37,6 +37,27 @@ const ENV_DEFINITIONS = {
     ],
     optional: [],
   },
+  fourthwall: {
+    name: 'Fourthwall Storefront',
+    description: 'Fourthwall products API (shop)',
+    required: [
+      {
+        key: 'FOURTHWALL_STOREFRONT_TOKEN',
+        description: 'Fourthwall Storefront token (server/API)',
+        defaultValue: '',
+        getFrom: 'https://thelostandunfounds-shop.fourthwall.com/admin/dashboard/settings/for-developers',
+        validation: (value) => value.length > 10,
+      },
+      {
+        key: 'VITE_FOURTHWALL_STOREFRONT_TOKEN',
+        description: 'Fourthwall Storefront token (client fallback)',
+        defaultValue: '',
+        getFrom: 'https://thelostandunfounds-shop.fourthwall.com/admin/dashboard/settings/for-developers',
+        validation: (value) => value.length > 10,
+      },
+    ],
+    optional: [],
+  },
   turnstile: {
     name: 'Cloudflare Turnstile',
     description: 'Bot protection for forms',
