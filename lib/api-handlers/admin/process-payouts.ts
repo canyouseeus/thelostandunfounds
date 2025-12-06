@@ -84,9 +84,11 @@ async function updatePayoutRequests(req: VercelRequest, res: VercelResponse) {
   const nextStatus = ACTION_STATUS_MAP[action]
   const processedAt = new Date().toISOString()
 
+  const shouldStampProcessedAt = ['paid', 'rejected', 'cancelled'].includes(nextStatus)
+
   const updatePayload: Record<string, any> = {
     status: nextStatus,
-    processed_at: nextStatus === 'pending' ? null : processedAt
+    processed_at: shouldStampProcessedAt ? processedAt : null
   }
 
   if (typeof note === 'string' && note.trim().length > 0) {
