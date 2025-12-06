@@ -1,22 +1,24 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import awardPoints from '../../lib/api-handlers/affiliates/award-points';
-import calculateCommission from '../../lib/api-handlers/affiliates/calculate-commission';
-import checkCustomer from '../../lib/api-handlers/affiliates/check-customer';
-import dashboard from '../../lib/api-handlers/affiliates/dashboard';
-import distributeSecretSanta from '../../lib/api-handlers/affiliates/distribute-secret-santa';
-import generateDiscount from '../../lib/api-handlers/affiliates/generate-discount';
-import mlmDashboard from '../../lib/api-handlers/affiliates/mlm-dashboard';
-import mlmEarnings from '../../lib/api-handlers/affiliates/mlm-earnings';
-import payoutSettings from '../../lib/api-handlers/affiliates/payout-settings';
-import requestPayout from '../../lib/api-handlers/affiliates/request-payout';
-import pointsHistory from '../../lib/api-handlers/affiliates/points-history';
-import referrals from '../../lib/api-handlers/affiliates/referrals';
-import secretSanta from '../../lib/api-handlers/affiliates/secret-santa';
-import setupAffiliate from '../../lib/api-handlers/affiliates/setup';
-import switchMode from '../../lib/api-handlers/affiliates/switch-mode';
-import trackCustomer from '../../lib/api-handlers/affiliates/track-customer';
-import updateCode from '../../lib/api-handlers/affiliates/update-code';
-import useDiscount from '../../lib/api-handlers/affiliates/use-discount';
+import {
+  awardPoints,
+  calculateCommission,
+  checkCustomer,
+  dashboard,
+  distributeSecretSanta,
+  generateDiscount,
+  mlmDashboard,
+  mlmEarnings,
+  payoutSettings,
+  requestPayout,
+  pointsHistory,
+  referrals,
+  secretSanta,
+  setupAffiliate,
+  switchMode,
+  trackCustomer,
+  updateCode,
+  useDiscount
+} from '../../lib/api-handlers/affiliates';
 
 type HandlerFn = (req: VercelRequest, res: VercelResponse) => Promise<any>;
 
