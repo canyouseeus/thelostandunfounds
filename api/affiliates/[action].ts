@@ -18,7 +18,7 @@ import {
   trackCustomer,
   updateCode,
   useDiscount
-} from '../../lib/api-handlers/affiliates';
+} from '../../lib/api-handlers/affiliates/index';
 
 type HandlerFn = (req: VercelRequest, res: VercelResponse) => Promise<any>;
 
