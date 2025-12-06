@@ -494,7 +494,7 @@ function ProductModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-black/90 border border-white rounded-none shadow-2xl max-w-3xl w-full max-h-[85vh] overflow-hidden">
+      <div className="relative bg-black/90 border border-white rounded-none shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-white/80 hover:text-white flex items-center justify-center w-10 h-10"
@@ -503,13 +503,13 @@ function ProductModal({
           <X className="w-5 h-5" />
         </button>
 
-        <div className="grid md:grid-cols-2 gap-0 md:h-[85vh]">
+        <div className="grid md:grid-cols-2 gap-0 md:h-auto">
           {imageUrl && (
-            <div className="relative bg-white/5 aspect-[4/5] md:h-full overflow-hidden">
+            <div className="relative bg-white/5 max-h-[40vh] md:max-h-full flex items-center justify-center overflow-hidden">
               <img
                 src={imageUrl}
                 alt={product.title}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
             </div>
           )}
