@@ -46,6 +46,7 @@ import DesignSystemPreview from './pages/DesignSystemPreview'
 import SageMode from './pages/SageMode'
 import SageModeReports from './pages/SageModeReports'
 import AffiliateDashboard from './pages/AffiliateDashboard'
+import KingMidasLeaderboard from './pages/KingMidasLeaderboard'
 
 function App() {
   return (
@@ -190,6 +191,9 @@ function App() {
         </Route>
         <Route path="/submit/newtheory" element={<Layout />}>
           <Route index element={<SubmitArticle />} />
+        </Route>
+        <Route path="/king-midas-leaderboard" element={<Layout />}>
+          <Route index element={<KingMidasLeaderboard />} />
         </Route>
         <Route path="/reset-newsletter" element={<ResetNewsletter />} />
         <Route path="*" element={<NotFound />} />
