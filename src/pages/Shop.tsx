@@ -494,7 +494,7 @@ function ProductModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-black/90 border border-white rounded-none shadow-2xl max-w-3xl w-full max-h-[68vh] overflow-y-auto">
+      <div className="relative bg-black/90 border border-white rounded-none shadow-2xl max-w-3xl w-full max-h-[85vh] overflow-hidden">
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-white/80 hover:text-white flex items-center justify-center w-10 h-10"
@@ -503,9 +503,9 @@ function ProductModal({
           <X className="w-5 h-5" />
         </button>
 
-        <div className="grid md:grid-cols-2 gap-0">
+        <div className="grid md:grid-cols-2 gap-0 md:h-[85vh]">
           {imageUrl && (
-            <div className="relative bg-white/5">
+            <div className="relative bg-white/5 aspect-[4/5] md:h-full overflow-hidden">
               <img
                 src={imageUrl}
                 alt={product.title}
@@ -513,7 +513,7 @@ function ProductModal({
               />
             </div>
           )}
-          <div className="p-6 space-y-4">
+          <div className="p-5 sm:p-6 space-y-3 md:space-y-4 overflow-hidden">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 {product.featured && (
@@ -546,7 +546,7 @@ function ProductModal({
               </div>
             </div>
 
-            <p className="text-white/80 leading-relaxed">
+            <p className="text-white/80 leading-relaxed line-clamp-3">
               {product.description}
             </p>
 
