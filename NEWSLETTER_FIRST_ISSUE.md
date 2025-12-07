@@ -43,7 +43,6 @@ It finally feels good to say this out loud: THE LOST+UNFOUNDS is open, humming, 
 - **More automation inside Affiliate Admin.** Bulk uploads for payouts, CSV exports, and one-click compliance packets.
 - **AI-enabled submission vetting.** Faster review cycles with redact + highlight features for editors.
 - **Community drops.** Shared prompts, design packs, and merch runs tied to leaderboard milestones.
-- **Live SQL surface.** Every migration and blog publish script hits `thelostandunfounds.com/sql` so you can audit what changed and copy it straight into Supabase.
 
 We are building this out in public with you. Forward this to someone who is sitting on an idea, invite your crew to grab their subdomain, and report back with what is working. Reply to this email (or drop a note in the Discord) with wins, obstacles, or requests -- we are here to help you ship.
 
