@@ -471,7 +471,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
                   </div>
                   {user && (
                     <>
-                      <div className="border-t border-white/20 my-2"></div>
+                      <div className="my-2"></div>
                 <Link
                   to={userIsAdmin ? "/admin" : userSubdomain ? `/${userSubdomain}/bookclubprofile` : "/bookclubprofile"}
                   className="menu-item"
@@ -511,7 +511,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
                           LOG OUT
                         </div>
                       </button>
-                      <div className="border-t border-white/10 my-2"></div>
+                      <div className="my-2"></div>
                       <div className="menu-item user-info">
                         <div className="text-white/60 text-xs mb-1">Logged in as:</div>
                         <div className="text-white text-sm font-medium">
