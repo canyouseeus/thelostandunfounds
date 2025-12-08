@@ -158,14 +158,18 @@ async function createPayPalOrderDirect(params: {
   productId?: string
   productCost?: number
 }) {
-  const clientId = process.env.PAYPAL_CLIENT_ID
-  const clientSecret = process.env.PAYPAL_CLIENT_SECRET
-  const isSandbox = process.env.PAYPAL_ENVIRONMENT === 'sandbox'
-  const baseUrl = isSandbox
-    ? 'https://api.sandbox.paypal.com'
-    : 'https://api.paypal.com'
+  const environment = (process.env.PAYPAL_ENVIRONMENT || '').toUpperCase()
+  const isSandbox = environment !== 'LIVE' // default to SANDBOX unless explicitly LIVE
+  const clientId = isSandbox
+    ? process.env.PAYPAL_CLIENT_ID_SANDBOX || process.env.PAYPAL_CLIENT_ID
+    : process.env.PAYPAL_CLIENT_ID || process.env.PAYPAL_CLIENT_ID_LIVE
+  const clientSecret = isSandbox
+    ? process.env.PAYPAL_CLIENT_SECRET_SANDBOX || process.env.PAYPAL_CLIENT_SECRET
+    : process.env.PAYPAL_CLIENT_SECRET || process.env.PAYPAL_CLIENT_SECRET_LIVE
+  const baseUrl = isSandbox ? 'https://api.sandbox.paypal.com' : 'https://api.paypal.com'
 
   console.log('🔐 PayPal config:', {
+    environment: isSandbox ? 'SANDBOX' : 'LIVE',
     hasClientId: !!clientId,
     hasClientSecret: !!clientSecret,
     isSandbox,
@@ -177,7 +181,7 @@ async function createPayPalOrderDirect(params: {
       hasClientId: !!clientId,
       hasClientSecret: !!clientSecret,
     });
-    throw new Error('PayPal credentials not configured. Please set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET environment variables.')
+    throw new Error('PayPal credentials not configured. Please set PAYPAL_ENVIRONMENT along with PAYPAL_CLIENT_ID/PAYPAL_CLIENT_SECRET (live) or PAYPAL_CLIENT_ID_SANDBOX/PAYPAL_CLIENT_SECRET_SANDBOX (sandbox).')
   }
 
   // Get access token
@@ -206,6 +210,25 @@ async function createPayPalOrderDirect(params: {
   }
   const customId = JSON.stringify(customIdData).substring(0, 127)
 
+  // Resolve return/cancel base URL with sandbox override support
+  const returnUrlBase = (() => {
+    const trimSlash = (url: string) => url.replace(/\/+$/, '')
+    if (isSandbox && process.env.PAYPAL_RETURN_URL_SANDBOX) {
+      return trimSlash(process.env.PAYPAL_RETURN_URL_SANDBOX)
+    }
+    if (process.env.PAYPAL_RETURN_URL) {
+      return trimSlash(process.env.PAYPAL_RETURN_URL)
+    }
+    if (process.env.VERCEL_URL && !process.env.VERCEL_URL.includes('localhost')) {
+      return `https://${process.env.VERCEL_URL}`
+    }
+    if (process.env.NEXT_PUBLIC_VERCEL_URL && !process.env.NEXT_PUBLIC_VERCEL_URL.includes('localhost')) {
+      return process.env.NEXT_PUBLIC_VERCEL_URL
+    }
+    // Localhost - MUST use http:// not https://
+    return 'http://localhost:3000'
+  })()
+
   // Build order payload
   const orderPayload = {
     intent: 'CAPTURE',
@@ -221,34 +244,8 @@ async function createPayPalOrderDirect(params: {
         brand_name: 'THE LOST+UNFOUNDS',
         landing_page: 'NO_PREFERENCE',
         user_action: 'PAY_NOW',
-        // PayPal sandbox accepts http://localhost URLs (NOT https://)
-        // Use PAYPAL_RETURN_URL env var if set, otherwise detect localhost vs production
-        return_url: (() => {
-          if (process.env.PAYPAL_RETURN_URL) {
-            return `${process.env.PAYPAL_RETURN_URL}/payment/success`
-          }
-          if (process.env.VERCEL_URL && !process.env.VERCEL_URL.includes('localhost')) {
-            return `https://${process.env.VERCEL_URL}/payment/success`
-          }
-          if (process.env.NEXT_PUBLIC_VERCEL_URL && !process.env.NEXT_PUBLIC_VERCEL_URL.includes('localhost')) {
-            return `${process.env.NEXT_PUBLIC_VERCEL_URL}/payment/success`
-          }
-          // Localhost - MUST use http:// not https://
-          return 'http://localhost:3000/payment/success'
-        })(),
-        cancel_url: (() => {
-          if (process.env.PAYPAL_RETURN_URL) {
-            return `${process.env.PAYPAL_RETURN_URL}/payment/cancel`
-          }
-          if (process.env.VERCEL_URL && !process.env.VERCEL_URL.includes('localhost')) {
-            return `https://${process.env.VERCEL_URL}/payment/cancel`
-          }
-          if (process.env.NEXT_PUBLIC_VERCEL_URL && !process.env.NEXT_PUBLIC_VERCEL_URL.includes('localhost')) {
-            return `${process.env.NEXT_PUBLIC_VERCEL_URL}/payment/cancel`
-          }
-          // Localhost - MUST use http:// not https://
-          return 'http://localhost:3000/payment/cancel'
-        })(),
+        return_url: `${returnUrlBase}/payment/success`,
+        cancel_url: `${returnUrlBase}/payment/cancel`,
       },
   }
 

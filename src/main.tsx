@@ -5,19 +5,26 @@ import { ToastProvider } from './components/Toast'
 import App from './App.tsx'
 import './index.css'
 
+declare global {
+  interface Window {
+    __DEBUG_LOGS__?: { type: string; message: string; stack?: string; timestamp: string }[]
+  }
+}
+
 // Initialize debug log storage if not exists
 if (typeof window !== 'undefined') {
-  window.__DEBUG_LOGS__ = window.__DEBUG_LOGS__ || [];
+  const win = window as Window;
+  win.__DEBUG_LOGS__ = win.__DEBUG_LOGS__ || [];
   
   const addDebugLog = (type: string, message: string, stack?: string) => {
-    window.__DEBUG_LOGS__.push({
+    win.__DEBUG_LOGS__!.push({
       type,
       message,
       stack,
       timestamp: new Date().toISOString()
     });
-    if (window.__DEBUG_LOGS__.length > 200) {
-      window.__DEBUG_LOGS__.shift();
+    if (win.__DEBUG_LOGS__!.length > 200) {
+      win.__DEBUG_LOGS__!.shift();
     }
   };
 
@@ -116,34 +123,34 @@ window.addEventListener('unhandledrejection', (event) => {
 
 const rootElement = document.getElementById('root')
 if (!rootElement) {
-  throw new Error('Root element not found!')
-}
+  console.error('Root element not found – skipping React mount. Refresh the page to recover.')
+} else {
+  console.log('🚀 React is mounting...', { rootElement })
 
-console.log('🚀 React is mounting...', { rootElement })
-
-try {
-  ReactDOM.createRoot(rootElement).render(
-    <React.StrictMode>
-      <HelmetProvider>
-        <ToastProvider>
-          <App />
-        </ToastProvider>
-      </HelmetProvider>
-    </React.StrictMode>,
-  )
-  console.log('✅ React mounted successfully')
-  
-  // Hide pre-render content when React mounts
-  const preRender = document.getElementById('pre-render')
-  if (preRender) {
-    preRender.style.display = 'none'
+  try {
+    ReactDOM.createRoot(rootElement).render(
+      <React.StrictMode>
+        <HelmetProvider>
+          <ToastProvider>
+            <App />
+          </ToastProvider>
+        </HelmetProvider>
+      </React.StrictMode>,
+    )
+    console.log('✅ React mounted successfully')
+    
+    // Hide pre-render content when React mounts
+    const preRender = document.getElementById('pre-render')
+    if (preRender) {
+      preRender.style.display = 'none'
+    }
+  } catch (error) {
+    console.error('❌ React mount failed:', error)
+    rootElement.innerHTML = `
+      <div style="color: red; padding: 20px;">
+        <h1>React Mount Failed</h1>
+        <pre>${error}</pre>
+      </div>
+    `
   }
-} catch (error) {
-  console.error('❌ React mount failed:', error)
-  rootElement.innerHTML = `
-    <div style="color: red; padding: 20px;">
-      <h1>React Mount Failed</h1>
-      <pre>${error}</pre>
-    </div>
-  `
 }

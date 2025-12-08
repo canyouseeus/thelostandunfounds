@@ -51,9 +51,19 @@ export async function getPayPalCheckoutUrl(params: {
     throw new Error('Invalid response from PayPal API')
   }
 
+  const approvalUrl: string = data.approvalUrl
+  // Safety: block old mock URLs from redirecting
+  if (approvalUrl.includes('example.com/dev-paypal-approval')) {
+    throw new Error('PayPal API unavailable (mock URL returned). Make sure the API is running with valid PayPal credentials.')
+  }
+  // Basic sanity: ensure it looks like an http(s) URL
+  if (!/^https?:\/\//i.test(approvalUrl)) {
+    throw new Error('Invalid approval URL returned from PayPal API')
+  }
+
   return {
     orderId: data.orderId,
-    approvalUrl: data.approvalUrl,
+    approvalUrl,
   }
 }
 

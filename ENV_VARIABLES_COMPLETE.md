@@ -72,4 +72,18 @@
 
 The app should work now with just the Supabase variables!
 
+## 🧪 Sandbox PayPal (testing-only)
+- `PAYPAL_ENVIRONMENT` = `SANDBOX`
+- `PAYPAL_CLIENT_ID_SANDBOX` = your **Sandbox** REST client ID
+- `PAYPAL_CLIENT_SECRET_SANDBOX` = your **Sandbox** REST secret
+- Optional: `PAYPAL_RETURN_URL_SANDBOX` = `http://localhost:3000` (local) or your preview URL  
+- Tip: Use the seed helper to stand up a sandbox affiliate/product cost: `scripts/tests/setup-sandbox-affiliate.sql` (fill placeholders first).
+
+## 💳 Live PayPal
+- `PAYPAL_ENVIRONMENT` = `LIVE`
+- `PAYPAL_CLIENT_ID` (or `PAYPAL_CLIENT_ID_LIVE`) = your **Live** REST client ID
+- `PAYPAL_CLIENT_SECRET` (or `PAYPAL_CLIENT_SECRET_LIVE`) = your **Live** REST secret
+- Optional: `PAYPAL_RETURN_URL` = your production domain (e.g., `https://www.thelostandunfounds.com`)
+- Tip: On Vercel, scope sandbox vars to Preview/Development and live vars to Production.
+
 

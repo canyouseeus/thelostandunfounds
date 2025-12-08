@@ -13,3 +13,10 @@ export function PrivacyPolicy() {
 }
 
 
+
+
+
+
+
+
+

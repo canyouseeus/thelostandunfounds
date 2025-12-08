@@ -84,6 +84,12 @@ export default async function handler(
         return await handleNewBlogContributorNotification(req, res)
       case 'send-affiliate-email':
         return await handleSendAffiliateEmail(req, res)
+      case 'affiliate-dashboard':
+        return await handleAffiliateDashboard(req, res)
+      case 'update-affiliate':
+        return await handleUpdateAffiliate(req, res)
+      case 'manual-commission':
+        return await handleManualCommission(req, res)
       default:
         console.error('Admin route not found:', route, 'query:', req.query, 'url:', req.url)
         return res.status(404).json({ error: `Admin route not found: ${route}` })
@@ -147,6 +153,30 @@ async function handleAffiliates(req: VercelRequest, res: VercelResponse) {
  */
 async function handleProcessPayouts(req: VercelRequest, res: VercelResponse) {
   const handler = await import('../../lib/api-handlers/admin/process-payouts.js')
+  return handler.default(req, res)
+}
+
+/**
+ * Affiliate Dashboard Handler
+ */
+async function handleAffiliateDashboard(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/admin/affiliate-dashboard.js')
+  return handler.default(req, res)
+}
+
+/**
+ * Update Affiliate Handler
+ */
+async function handleUpdateAffiliate(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/admin/update-affiliate.js')
+  return handler.default(req, res)
+}
+
+/**
+ * Manual Commission Handler
+ */
+async function handleManualCommission(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/admin/manual-commission.js')
   return handler.default(req, res)
 }
 

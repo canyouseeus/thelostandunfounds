@@ -24,3 +24,10 @@ QR generator page existed but navigating to `/qr` returned a 404.
 
 **Verification:**  
 - Navigated to `/qr` and confirmed the QR generator page renders instead of 404.
+
+
+
+
+
+
+

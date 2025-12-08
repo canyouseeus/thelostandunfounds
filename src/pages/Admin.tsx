@@ -58,15 +58,17 @@ import BrandAssets from '../components/BrandAssets';
 import SecretSantaAdmin from '../components/admin/SecretSantaAdmin';
 import AffiliateAdminView from '../components/admin/AffiliateAdminView';
 import AffiliateEmailComposer from '../components/admin/AffiliateEmailComposer';
-import { BentoGrid, BentoCard } from '../components/ui/bento-grid';
-import { DynamicIsland } from '../components/ui/dynamic-island';
+import { AdminBentoCard, AdminBentoRow } from '../components/ui/admin-bento-card';
 import { SidePanel } from '../components/ui/side-panel';
 import { SortableList } from '../components/ui/sortable-list';
 import { ExpandableScreen, ExpandableScreenTrigger, ExpandableScreenContent } from '../components/ui/expandable-screen';
-import { Expandable, ExpandableTrigger, ExpandableCard, ExpandableCardHeader, ExpandableCardContent, ExpandableContent, ExpandableCloseButton } from '../components/ui/expandable';
 import { AnimatedNumber } from '../components/ui/animated-number';
 import { cn } from '../components/ui/utils';
-import { motion, AnimatePresence } from 'framer-motion';
+import AdminUsersView from '../components/admin/AdminUsersView';
+import AdminSettingsView from '../components/admin/AdminSettingsView';
+import { ArrowLeft } from 'lucide-react';
+import AdminOverviewView from '../components/admin/AdminOverviewView';
+import { DashboardCharts } from '../components/admin/DashboardCharts';
 
 interface DashboardStats {
   totalUsers: number;
@@ -78,6 +80,7 @@ interface DashboardStats {
   recentActivity: number;
   platformHealth: 'healthy' | 'warning' | 'critical';
   newsletterSubscribers: number;
+  history: { revenue: string[]; newsletter: string[]; affiliates: string[]; };
 }
 
 interface RecentUser {
@@ -149,44 +152,13 @@ export default function Admin() {
     totalMLMEarnings: number;
   } | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'subscriptions' | 'products' | 'settings' | 'blog' | 'newsletter' | 'submissions' | 'assets' | 'secret-santa' | 'affiliates' | null>(null);
-  const [hoveredTab, setHoveredTab] = useState<string | null>(null);
-  const [showDrawer, setShowDrawer] = useState<string | null>(null);
   const [componentError, setComponentError] = useState<string | null>(null);
   
-  // User management state
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterTier, setFilterTier] = useState<'all' | 'free' | 'premium' | 'pro'>('all');
-  const [filterAdmin, setFilterAdmin] = useState<'all' | 'admin' | 'user'>('all');
-  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
-  const [showBulkActions, setShowBulkActions] = useState(false);
   const [allUsers, setAllUsers] = useState<RecentUser[]>([]);
 
-  // Filter and search users
-  const filteredUsers = allUsers.filter(user => {
-    // Search filter
-    const matchesSearch = searchQuery === '' || 
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (user.username && user.username.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    // Tier filter
-    const matchesTier = filterTier === 'all' || user.tier === filterTier;
-    
-    // Admin filter
-    const matchesAdmin = filterAdmin === 'all' || 
-      (filterAdmin === 'admin' && user.isAdmin) ||
-      (filterAdmin === 'user' && !user.isAdmin);
-    
-    return matchesSearch && matchesTier && matchesAdmin;
-  });
   
-  const sortedUsers = filteredUsers;
-  const sortedBookClubPosts = bookClubPosts;
-  const sortedLostArchivesPosts = lostArchivesPosts;
   const unreadAlertsCount = alerts.filter(a => !a.read).length;
 
-  const handleUserReorder = (newOrder: RecentUser[]) => {
-    setRecentUsers(newOrder);
-  };
 
   useEffect(() => {
     checkAdminAccess();
@@ -479,6 +451,25 @@ export default function Admin() {
       
       setAffiliateStats(affiliateStatsData);
 
+
+      // Fetch history data for charts
+      let historyData: { revenue: string[]; newsletter: string[]; affiliates: string[] } = { revenue: [], newsletter: [], affiliates: [] };
+      try {
+        const [subsHist, newsHist, affHist] = await Promise.all([
+          supabase.from('platform_subscriptions').select('created_at').order('created_at', { ascending: true }),
+          supabase.from('newsletter_subscribers').select('created_at').order('created_at', { ascending: true }),
+          supabase.from('affiliates').select('created_at').order('created_at', { ascending: true })
+        ]);
+        
+        historyData = {
+          revenue: subsHist.data?.map((r: any) => r.created_at) || [],
+          newsletter: newsHist.data?.map((r: any) => r.created_at) || [],
+          affiliates: affHist.data?.map((r: any) => r.created_at) || []
+        };
+      } catch (hErr) {
+        console.warn('Error loading history data:', hErr);
+      }
+
       // Calculate platform health
       const totalSubs = activeSubs.length;
       const premiumRatio = totalSubs > 0 ? (premiumCount + proCount) / totalSubs : 0;
@@ -494,6 +485,7 @@ export default function Admin() {
         recentActivity: 0, // Can be enhanced with actual activity tracking
         platformHealth,
         newsletterSubscribers: newsletterCount,
+        history: historyData,
       });
 
       // Generate alerts based on stats
@@ -730,6 +722,7 @@ export default function Admin() {
         recentActivity: 0,
         platformHealth: 'warning',
         newsletterSubscribers: 0,
+        history: { revenue: [], newsletter: [], affiliates: [] },
       });
       setAlerts([{
         id: 1,
@@ -948,795 +941,9 @@ export default function Admin() {
     );
   }
 
-  const renderTabContent = (tab: typeof activeTab) => {
-    switch (tab) {
-      case 'overview':
-  return (
-        <BentoGrid columns={4} gap="md">
-            {/* Hero Metric Card - Dialed In Expandable Card */}
-            <div style={{ gridColumn: 'span 3', gridRow: 'span 2', minHeight: '260px' }}>
-              <Expandable expandDirection="vertical">
-                <ExpandableCard
-                  collapsedSize={{ width: '100%', height: '100%' }}
-                  expandedSize={{ width: '100%', height: 'auto' }}
-                  className="dark:bg-black bg-black border border-white rounded-none flex flex-col relative overflow-visible transition-all duration-300 group shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] w-full cursor-pointer hover:-translate-y-1 hover:scale-[1.02] p-6"
-                  style={{ minHeight: '100%' }}
-                >
-                  <ExpandableTrigger>
-                    <div className="flex flex-col h-full">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
-                  <Users className="w-6 h-6" />
-                  Platform Overview
-                </h2>
-                          <p className="text-white/60 text-sm">Platform statistics and health</p>
-              </div>
-              <div className={`px-3 py-1 border text-xs ${
-                stats?.platformHealth === 'healthy' ? 'bg-green-400/20 text-green-400 border-green-400/30' :
-                stats?.platformHealth === 'warning' ? 'bg-yellow-400/20 text-yellow-400 border-yellow-400/30' :
-                'bg-red-400/20 text-red-400 border-red-400/30'
-              }`}>
-                {stats?.platformHealth === 'healthy' ? 'Healthy' :
-                 stats?.platformHealth === 'warning' ? 'Warning' : 'Critical'}
-              </div>
-            </div>
-            <div className="flex-1 flex items-end">
-                        <div>
-                          <div className="text-xs text-white/60 mb-1 uppercase tracking-wider">Total Users</div>
-              <div className="text-6xl font-bold text-white">
-                <AnimatedNumber value={stats?.totalUsers || 0} />
-              </div>
-            </div>
-                      </div>
-                      <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-white/10">
-              <div>
-                          <div className="text-xs text-white/60 mb-1 uppercase">Subscribers</div>
-                <div className="text-xl font-bold text-white">
-                  <AnimatedNumber value={stats?.activeSubscriptions || 0} />
-                </div>
-              </div>
-              <div>
-                          <div className="text-xs text-white/60 mb-1 uppercase">Tool Usage</div>
-                <div className="text-xl font-bold text-white">
-                  <AnimatedNumber value={stats?.totalToolUsage || 0} />
-                </div>
-              </div>
-              <div>
-                          <div className="text-xs text-white/60 mb-1 uppercase">Newsletter</div>
-                          <div className="text-xl font-bold text-blue-400">
-                            <AnimatedNumber value={stats?.newsletterSubscribers || 0} />
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-white/60 mb-1 uppercase">Quick Stats</div>
-                <div className="text-xl font-bold text-yellow-400">
-                  <AnimatedNumber value={(stats?.premiumUsers || 0) + (stats?.proUsers || 0)} />
-                </div>
-              </div>
-            </div>
-                    </div>
-                  </ExpandableTrigger>
-                  <ExpandableContent>
-                    <div 
-                      className="pt-6 mt-6 border-t border-white/10"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-xl font-bold text-white">Quick Stats</h3>
-                        <ExpandableCloseButton className="text-white/60 hover:text-white transition text-2xl leading-none">
-                          ×
-                        </ExpandableCloseButton>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="bg-white/5 p-4 border border-white/10">
-                          <div className="text-xs text-white/60 mb-1 uppercase">Active Subs</div>
-                          <div className="text-2xl font-bold text-white">
-                            <AnimatedNumber value={stats?.activeSubscriptions || 0} />
-                          </div>
-                        </div>
-                        <div className="bg-white/5 p-4 border border-white/10">
-                          <div className="text-xs text-white/60 mb-1 uppercase">Tool Usage</div>
-                          <div className="text-2xl font-bold text-white">
-                            <AnimatedNumber value={stats?.totalToolUsage || 0} />
-                          </div>
-                        </div>
-                        <div className="bg-white/5 p-4 border border-white/10">
-                          <div className="text-xs text-white/60 mb-1 uppercase">Premium</div>
-                          <div className="text-2xl font-bold text-yellow-400">
-                            <AnimatedNumber value={(stats?.premiumUsers || 0) + (stats?.proUsers || 0)} />
-                          </div>
-                        </div>
-                        <div className="bg-white/5 p-4 border border-white/10">
-                          <div className="text-xs text-white/60 mb-1 uppercase">Newsletter</div>
-                          <div className="text-2xl font-bold text-blue-400">
-                            <AnimatedNumber value={stats?.newsletterSubscribers || 0} />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </ExpandableContent>
-                </ExpandableCard>
-              </Expandable>
-            </div>
-
-          {/* Alerts Card - Tall (1x2) */}
-          <BentoCard colSpan={1} rowSpan={2}>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Bell className="w-5 h-5 text-yellow-400" />
-                <h3 className="text-lg font-bold text-white">Alerts</h3>
-              </div>
-              {unreadAlertsCount > 0 && (
-                <span className="w-2 h-2 bg-yellow-400"></span>
-              )}
-            </div>
-            <div className="space-y-2 max-h-[300px] overflow-y-auto">
-              {alerts.length > 0 ? alerts.slice(0, 5).map(alert => (
-                <div
-                  key={alert.id}
-                  className={`p-2 border border-white/10 ${
-                    !alert.read ? 'bg-white/5' : 'bg-black/30'
-                  }`}
-                >
-                  <div className={`text-xs mb-1 ${
-                    alert.type === 'success' ? 'text-green-400' :
-                    alert.type === 'warning' ? 'text-yellow-400' :
-                    alert.type === 'error' ? 'text-red-400' :
-                    'text-blue-400'
-                  }`}>
-                    {alert.type === 'success' && <CheckCircle className="w-3 h-3 inline mr-1" />}
-                    {alert.type === 'warning' && <AlertCircle className="w-3 h-3 inline mr-1" />}
-                    {alert.type === 'error' && <XCircle className="w-3 h-3 inline mr-1" />}
-                    {alert.type === 'info' && <Bell className="w-3 h-3 inline mr-1" />}
-                    {alert.message.substring(0, 40)}...
-                  </div>
-                  <div className="text-xs text-white/50">{alert.time}</div>
-                </div>
-              )) : (
-                <div className="text-white/40 text-sm text-center py-4">No alerts</div>
-              )}
-            </div>
-            <button
-              onClick={() => setAlerts(prev => prev.map(a => ({ ...a, read: true })))}
-              className="mt-4 w-full px-3 py-2 bg-white/10 hover:bg-white/20 text-white text-xs transition"
-            >
-              Mark all as read
-            </button>
-          </BentoCard>
-
-          {/* Tier Breakdown - Wide (4x1) */}
-          <BentoCard colSpan={4} rowSpan={1}>
-            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              Subscription Tiers
-            </h3>
-            <div className="grid grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-white">
-                  <AnimatedNumber value={stats?.freeUsers || 0} />
-                </div>
-                <div className="text-sm text-white/40">Free</div>
-                {stats?.totalUsers && (
-                  <div className="text-xs text-white/30 mt-1">
-                    {Math.round((stats.freeUsers / stats.totalUsers) * 100)}% of total
-                  </div>
-                )}
-              </div>
-              <div className="text-center border-l border-r border-white/10">
-                <div className="text-3xl font-bold text-yellow-400">
-                  <AnimatedNumber value={stats?.premiumUsers || 0} />
-                </div>
-                <div className="text-sm text-white/40">Premium</div>
-                {stats?.totalUsers && (
-                  <div className="text-xs text-white/30 mt-1">
-                    {Math.round((stats.premiumUsers / stats.totalUsers) * 100)}% of total
-                  </div>
-                )}
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-purple-400">
-                  <AnimatedNumber value={stats?.proUsers || 0} />
-                </div>
-                <div className="text-sm text-white/40">Pro</div>
-                {stats?.totalUsers && (
-                  <div className="text-xs text-white/30 mt-1">
-                    {Math.round((stats.proUsers / stats.totalUsers) * 100)}% of total
-                  </div>
-                )}
-              </div>
-            </div>
-          </BentoCard>
-
-          {/* Recent Users - Full Width (4x2) */}
-          <BentoCard colSpan={4} rowSpan={2}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Recent Users
-              </h3>
-              <button
-                onClick={() => setActiveTab('users')}
-                className="text-white/60 hover:text-white text-sm flex items-center gap-1"
-              >
-                <Eye className="w-4 h-4" />
-                View All
-              </button>
-            </div>
-            {sortedUsers.length > 0 ? (
-              <SortableList
-                items={sortedUsers}
-                onReorder={(items) => handleUserReorder(items as RecentUser[])}
-                renderItem={(user) => (
-                  <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center gap-3 overflow-hidden">
-                      <div className="w-10 h-10 bg-white/10 flex items-center justify-center flex-shrink-0">
-                        <User className="w-5 h-5 text-white/60" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-white font-medium truncate">{user.username || user.email}</span>
-                          {user.isAdmin && (
-                            <span className="px-2 py-0.5 text-[10px] bg-purple-500/20 text-purple-400 border border-purple-500/30">
-                              ADMIN
-                            </span>
-                          )}
-                          <span className={`px-2 py-0.5 text-[10px] border ${
-                            user.tier === 'free' ? 'bg-white/5 text-white/60 border-white/10' :
-                            user.tier === 'premium' ? 'bg-yellow-400/10 text-yellow-400 border-yellow-400/20' :
-                            'bg-purple-400/10 text-purple-400 border-purple-400/20'
-                          }`}>
-                            {user.tier.charAt(0).toUpperCase() + user.tier.slice(1)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-4 text-xs text-white/40 mt-0.5">
-                          <span className="font-mono">{user.email}</span>
-                          {user.created_at && (
-                            <span className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              {new Date(user.created_at).toLocaleDateString()}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setSelectedUser(user as RecentUser);
-                        setSidePanelOpen(true);
-                      }}
-                      className="p-2 hover:bg-white/10 transition rounded ml-2"
-                    >
-                      <Eye className="w-4 h-4 text-white/60" />
-                    </button>
-                  </div>
-                )}
-              />
-            ) : (
-              <div className="text-center py-12 text-white/60">
-                <Users className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                <p>No users found</p>
-              </div>
-            )}
-          </BentoCard>
-
-          {/* Book Club Posts - Wide (3x1) */}
-          {sortedBookClubPosts.length > 0 && (
-            <BentoCard colSpan={3} rowSpan={1}>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
-                  Book Club Posts
-                </h3>
-                <Link
-                  to="/bookclub"
-                  className="text-white/60 hover:text-white text-sm flex items-center gap-1"
-                >
-                  <Eye className="w-4 h-4" />
-                  View All
-                </Link>
-              </div>
-              {loadingBookClubPosts ? (
-                <div className="flex items-center justify-center py-8">
-                  <LoadingSpinner />
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {sortedBookClubPosts.slice(0, 3).map((post) => (
-                    <div
-                      key={post.id}
-                      className="p-3 border border-white/10 hover:bg-white/5 transition cursor-pointer flex justify-between items-center"
-                      onClick={() => setExpandedPost(post)}
-                    >
-                      <div>
-                        <h4 className="text-white font-bold mb-1 truncate max-w-[300px]">{post.title}</h4>
-                        <div className="flex items-center gap-2 text-xs text-white/40">
-                          {post.subdomain && (
-                            <span className="px-2 py-0.5 bg-white/10 text-white/60">
-                              {post.subdomain}
-                            </span>
-                          )}
-                          {post.published_at && (
-                            <span className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              {new Date(post.published_at).toLocaleDateString()}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <Eye className="w-4 h-4 text-white/40" />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </BentoCard>
-          )}
-
-          {/* THE LOST ARCHIVES - Tall (1x1) */}
-          {sortedLostArchivesPosts.length > 0 && (
-            <BentoCard colSpan={1} rowSpan={1}>
-              <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                Archives
-              </h3>
-              <div className="text-3xl font-bold text-white mb-1">
-                <AnimatedNumber value={sortedLostArchivesPosts.length} />
-              </div>
-              <div className="text-xs text-white/60">Published articles</div>
-              <Link
-                to="/thelostarchives"
-                className="mt-4 inline-block text-white/60 hover:text-white text-sm flex items-center gap-1"
-              >
-                <Eye className="w-4 h-4" />
-                View All
-              </Link>
-            </BentoCard>
-          )}
-        </BentoGrid>
-        );
-      case 'users':
-        return (
-        <div className="space-y-6">
-          <div className="bg-black/50 border border-white/10 rounded-none p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-white uppercase">
-                USER MANAGEMENT
-              </h2>
-              <button className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-none text-white text-sm transition">
-                Export Users
-              </button>
-            </div>
-            
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-white/5 rounded-none p-4">
-                <div className="text-white/60 text-sm mb-1">Total Users</div>
-                  <div className="text-2xl font-bold text-white">
-                    {allUsers.length > 0 ? allUsers.length : (stats?.totalUsers || 0)}
-                  </div>
-              </div>
-              <div className="bg-white/5 rounded-none p-4">
-                <div className="text-white/60 text-sm mb-1">Active Users</div>
-                  <div className="text-2xl font-bold text-green-400">
-                    {allUsers.length > 0 ? allUsers.filter(u => u.tier !== 'inactive').length : (stats?.activeSubscriptions || 0)}
-                  </div>
-              </div>
-              <div className="bg-white/5 rounded-none p-4">
-                <div className="text-white/60 text-sm mb-1">Premium Users</div>
-                  <div className="text-2xl font-bold text-yellow-400">
-                    {allUsers.length > 0 
-                      ? allUsers.filter(u => u.tier === 'premium' || u.tier === 'pro').length 
-                      : ((stats?.premiumUsers || 0) + (stats?.proUsers || 0))}
-                  </div>
-              </div>
-            </div>
-
-            {/* Search and Filters */}
-            <div className="space-y-4 mb-6">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/40" />
-                  <input
-                    type="text"
-                    placeholder="Search by email or username..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-black/50 border border-white/10 rounded-none text-white placeholder-white/40 focus:border-white/30 focus:outline-none"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <select
-                    value={filterTier}
-                    onChange={(e) => setFilterTier(e.target.value as any)}
-                    className="px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
-                  >
-                    <option value="all">All Tiers</option>
-                    <option value="free">Free</option>
-                    <option value="premium">Premium</option>
-                    <option value="pro">Pro</option>
-                  </select>
-                  <select
-                    value={filterAdmin}
-                    onChange={(e) => setFilterAdmin(e.target.value as any)}
-                    className="px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
-                  >
-                    <option value="all">All Users</option>
-                    <option value="admin">Admins</option>
-                    <option value="user">Regular Users</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Bulk Actions Bar */}
-              {selectedUsers.size > 0 && (
-                <div className="bg-white/5 border border-white/10 rounded-none p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-white/80 text-sm">
-                      {selectedUsers.size} user{selectedUsers.size > 1 ? 's' : ''} selected
-                    </span>
-                    <button
-                      onClick={() => setSelectedUsers(new Set())}
-                      className="text-white/60 hover:text-white text-sm"
-                    >
-                      Clear Selection
-                    </button>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => {
-                        success(`Bulk action performed on ${selectedUsers.size} users`);
-                        setSelectedUsers(new Set());
-                      }}
-                      className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-none text-white text-sm transition"
-                    >
-                      Export Selected
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm(`Ban ${selectedUsers.size} selected users?`)) {
-                          success(`Banned ${selectedUsers.size} users`);
-                          setSelectedUsers(new Set());
-                        }
-                      }}
-                      className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-none text-red-400 text-sm transition"
-                    >
-                      Ban Selected
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Users Table */}
-            <div className="border-t border-white/10 pt-4">
-              <div className="space-y-2">
-                {sortedUsers.length > 0 ? (
-                  sortedUsers.map((user) => (
-                    <div
-                      key={user.id}
-                      className="flex items-center gap-4 p-4 bg-black/30 border border-white/10 rounded-none hover:bg-white/5 transition"
-                    >
-                      <button
-                        onClick={() => {
-                          const newSelected = new Set(selectedUsers);
-                          if (newSelected.has(user.id)) {
-                            newSelected.delete(user.id);
-                          } else {
-                            newSelected.add(user.id);
-                          }
-                          setSelectedUsers(newSelected);
-                        }}
-                        className="flex-shrink-0"
-                      >
-                        {selectedUsers.has(user.id) ? (
-                          <CheckSquare className="w-5 h-5 text-white" />
-                        ) : (
-                          <Square className="w-5 h-5 text-white/40" />
-                        )}
-                      </button>
-                      <div className="w-10 h-10 bg-white/10 flex items-center justify-center flex-shrink-0">
-                        <User className="w-5 h-5 text-white/60" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-white font-medium truncate">{user.username || user.email}</span>
-                          {user.isAdmin && (
-                            <span className="px-2 py-0.5 text-[10px] bg-purple-500/20 text-purple-400 border border-purple-500/30">
-                              ADMIN
-                            </span>
-                          )}
-                          <span className={`px-2 py-0.5 text-[10px] border ${
-                            user.tier === 'free' ? 'bg-white/5 text-white/60 border-white/10' :
-                            user.tier === 'premium' ? 'bg-yellow-400/10 text-yellow-400 border-yellow-400/20' :
-                            'bg-purple-400/10 text-purple-400 border-purple-400/20'
-                          }`}>
-                            {user.tier.charAt(0).toUpperCase() + user.tier.slice(1)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-4 text-xs text-white/40">
-                          <span className="font-mono truncate">{user.email}</span>
-                          {user.created_at && (
-                            <span className="flex items-center gap-1 flex-shrink-0">
-                              <Calendar className="w-3 h-3" />
-                              {new Date(user.created_at).toLocaleDateString()}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setSidePanelOpen(true);
-                          }}
-                          className="p-2 hover:bg-white/10 transition rounded-none"
-                          title="View Details"
-                        >
-                          <Eye className="w-4 h-4 text-white/60" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setSidePanelOpen(true);
-                          }}
-                          className="p-2 hover:bg-white/10 transition rounded-none"
-                          title="Edit User"
-                        >
-                          <Edit className="w-4 h-4 text-white/60" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (confirm(`Ban user ${user.email}?`)) {
-                              success(`User ${user.email} banned`);
-                            }
-                          }}
-                          className="p-2 hover:bg-red-500/20 transition rounded-none"
-                          title="Ban User"
-                        >
-                          <Ban className="w-4 h-4 text-red-400" />
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-12 text-white/60">
-                    <Users className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                    <p>No users found</p>
-                    {searchQuery || filterTier !== 'all' || filterAdmin !== 'all' ? (
-                      <button
-                        onClick={() => {
-                          setSearchQuery('');
-                          setFilterTier('all');
-                          setFilterAdmin('all');
-                        }}
-                        className="mt-2 text-white/80 hover:text-white underline text-sm"
-                      >
-                        Clear filters
-                      </button>
-                    ) : null}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-        );
-      case 'subscriptions':
-        return (
-        <div className="space-y-6">
-          <div className="bg-black/50 border border-white/10 rounded-none p-6">
-            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              Subscription Management
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-white/5 rounded-none p-4">
-                <div className="text-white/60 text-sm mb-1">Free Tier</div>
-                <div className="text-2xl font-bold text-white/60">{stats?.freeUsers || 0}</div>
-                <div className="text-xs text-white/40 mt-1">
-                  {stats?.totalUsers ? Math.round((stats.freeUsers / stats.totalUsers) * 100) : 0}% of total
-                </div>
-              </div>
-              <div className="bg-white/5 rounded-none p-4 border border-yellow-400/20">
-                <div className="text-white/60 text-sm mb-1">Premium Tier</div>
-                <div className="text-2xl font-bold text-yellow-400">{stats?.premiumUsers || 0}</div>
-                <div className="text-xs text-white/40 mt-1">
-                  {stats?.totalUsers ? Math.round((stats.premiumUsers / stats.totalUsers) * 100) : 0}% of total
-                </div>
-              </div>
-              <div className="bg-white/5 rounded-none p-4 border border-purple-400/20">
-                <div className="text-white/60 text-sm mb-1">Pro Tier</div>
-                <div className="text-2xl font-bold text-purple-400">{stats?.proUsers || 0}</div>
-                <div className="text-xs text-white/40 mt-1">
-                  {stats?.totalUsers ? Math.round((stats.proUsers / stats.totalUsers) * 100) : 0}% of total
-                </div>
-              </div>
-            </div>
-            <div className="border-t border-white/10 pt-4">
-              <p className="text-white/60">Advanced subscription management features coming soon...</p>
-              <p className="text-white/40 text-sm mt-2">Features will include: subscription analytics, upgrade/downgrade management, and billing history.</p>
-            </div>
-          </div>
-        </div>
-        );
-      case 'products':
-        return (
-        <div className="space-y-6">
-          <ErrorBoundary
-            fallback={
-              <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
-                <p className="text-red-400">Error loading Product Cost Management. Please refresh the page.</p>
-              </div>
-            }
-          >
-            <ProductCostManagement />
-          </ErrorBoundary>
-        </div>
-        );
-      case 'blog':
-        return (
-        <ErrorBoundary
-          fallback={
-            <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
-              <p className="text-red-400">Error loading Blog Management. Please refresh the page.</p>
-            </div>
-          }
-        >
-          <BlogManagement />
-        </ErrorBoundary>
-        );
-      case 'newsletter':
-        return (
-        <ErrorBoundary
-          fallback={
-            <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
-              <p className="text-red-400">Error loading Newsletter Management. Please refresh the page.</p>
-            </div>
-          }
-        >
-          <NewsletterManagement />
-        </ErrorBoundary>
-        );
-      case 'submissions':
-        return (
-        <ErrorBoundary
-          fallback={
-            <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
-              <p className="text-red-400">Error loading Article Submissions Review. Please refresh the page.</p>
-            </div>
-          }
-        >
-          <BlogSubmissionReview />
-        </ErrorBoundary>
-        );
-      case 'settings':
-        return (
-        <div className="space-y-6">
-          <div className="bg-black/50 border border-white/10 rounded-none p-6">
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-              <Settings className="w-5 h-5" />
-              Admin Settings
-            </h2>
-            <div className="space-y-6">
-              <div className="border-b border-white/10 pb-4">
-                <h3 className="text-white font-medium mb-2 flex items-center gap-2">
-                  <Shield className="w-4 h-4" />
-                  Platform Configuration
-                </h3>
-                <p className="text-white/60 text-sm mb-4">Manage platform-wide settings and policies</p>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between p-3 bg-white/5 rounded">
-                    <span className="text-white/80">Platform Status</span>
-                    <span className="px-2 py-1 bg-green-400/20 text-green-400 rounded text-xs">Operational</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-white/5 rounded">
-                    <span className="text-white/80">Database Connection</span>
-                    <span className="px-2 py-1 bg-green-400/20 text-green-400 rounded text-xs">Connected</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-white/5 rounded">
-                    <span className="text-white/80">Platform Health</span>
-                    <span className={`px-2 py-1 rounded text-xs ${
-                      stats?.platformHealth === 'healthy' ? 'bg-green-400/20 text-green-400' :
-                      stats?.platformHealth === 'warning' ? 'bg-yellow-400/20 text-yellow-400' :
-                      'bg-red-400/20 text-red-400'
-                    }`}>
-                      {stats?.platformHealth === 'healthy' ? 'Healthy' :
-                       stats?.platformHealth === 'warning' ? 'Warning' : 'Critical'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-b border-white/10 pb-4">
-                <h3 className="text-white font-medium mb-2 flex items-center gap-2">
-                  <Activity className="w-4 h-4" />
-                  Tool Management
-                </h3>
-                <p className="text-white/60 text-sm mb-4">Configure tool usage limits and policies</p>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between p-3 bg-white/5 rounded">
-                    <span className="text-white/80">Total Tool Usage</span>
-                    <span className="text-white font-mono">{stats?.totalToolUsage || 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-white/5 rounded">
-                    <span className="text-white/80">Tool Status</span>
-                    <span className="px-2 py-1 bg-green-400/20 text-green-400 rounded text-xs">Active</span>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-white font-medium mb-2 flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  User Management
-                </h3>
-                <p className="text-white/60 text-sm mb-4">Advanced user management features</p>
-                <p className="text-white/40 text-sm">Additional configuration options coming soon...</p>
-              </div>
-
-              <div className="border-t border-white/10 pt-4">
-                <h3 className="text-white font-medium mb-4 flex items-center gap-2">
-                  <Settings className="w-4 h-4" />
-                  Quick Navigation
-                </h3>
-                <p className="text-white/60 text-sm mb-4">Access admin tools and resources</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <Link
-                    to="/sagemode"
-                    className="px-4 py-3 bg-yellow-400/20 hover:bg-yellow-400/30 border border-yellow-400/30 rounded-none text-yellow-400 font-medium transition flex items-center justify-center gap-2"
-                  >
-                    <span>SAGE MODE</span>
-                    <span className="text-yellow-400/60">→</span>
-                  </Link>
-                  <Link
-                    to="/designsystem"
-                    className="px-4 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white font-medium transition flex items-center justify-center gap-2"
-                  >
-                    <span>Design System</span>
-                    <span className="text-white/60">→</span>
-                  </Link>
-                  <Link
-                    to="/qr"
-                    className="px-4 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white font-medium transition flex items-center justify-center gap-2"
-                  >
-                    <span>QR Codes</span>
-                    <span className="text-white/60">→</span>
-                  </Link>
-                  <Link
-                    to="/sql"
-                    className="px-4 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white font-medium transition flex items-center justify-center gap-2"
-                  >
-                    <span>SQL Scripts</span>
-                    <span className="text-white/60">→</span>
-                  </Link>
-                </div>
-              </div>
-            </div>
-            </div>
-          </div>
-        );
-      case 'affiliates':
-        return (
-          <ErrorBoundary
-            fallback={
-              <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
-                <p className="text-red-400">Error loading Affiliate Management. Please refresh the page.</p>
-              </div>
-            }
-          >
-            <div className="space-y-6">
-            <AffiliateAdminView />
-              <AffiliateEmailComposer />
-            </div>
-          </ErrorBoundary>
-        );
-      default:
-        return null;
-    }
-  };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-black text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
@@ -1758,943 +965,312 @@ export default function Admin() {
         </div>
       </div>
 
-      {/* Admin Section Cards - Bento Style Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-8 auto-rows-fr">
-        {([
-          { 
-            id: 'overview', 
-            label: 'Overview', 
-            icon: BarChart3, 
-            description: 'Platform statistics and health',
-            preview: () => (
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                <div className="bg-white/5 rounded-none p-2.5 border border-white/10 flex flex-col justify-between min-h-[60px]">
-                  <div className="text-[10px] text-white/60 mb-1.5 uppercase tracking-wider font-medium">Total Users</div>
-                  <div className="text-2xl font-bold text-white leading-none">
-                    <AnimatedNumber value={stats?.totalUsers || 0} />
-                  </div>
-                </div>
-                <div className="bg-white/5 rounded-none p-2.5 border border-white/10 flex flex-col justify-between min-h-[60px]">
-                  <div className="text-[10px] text-white/60 mb-1.5 uppercase tracking-wider font-medium">Subscribers</div>
-                  <div className="text-2xl font-bold text-white leading-none">
-                    <AnimatedNumber value={stats?.activeSubscriptions || 0} />
-                  </div>
-                </div>
-                <div className="bg-white/5 rounded-none p-2.5 border border-white/10 flex flex-col justify-between min-h-[60px]">
-                  <div className="text-[10px] text-white/60 mb-1.5 uppercase tracking-wider font-medium">Newsletter</div>
-                  <div className="text-2xl font-bold text-white leading-none">
-                    <AnimatedNumber value={stats?.newsletterSubscribers || 0} />
-                  </div>
-                </div>
-                <div className="bg-white/5 rounded-none p-2.5 border border-white/10 flex flex-col justify-between min-h-[60px]">
-                  <div className="text-[10px] text-white/60 mb-1.5 uppercase tracking-wider font-medium">Tool Usage</div>
-                  <div className="text-2xl font-bold text-white leading-none">
-                    <AnimatedNumber value={stats?.totalToolUsage || 0} />
-                  </div>
-                </div>
+
+      {activeTab === 'overview' && (
+        <AdminOverviewView stats={stats} alerts={alerts} onBack={() => setActiveTab(null)} />
+      )}
+
+      {activeTab === 'users' && (
+        <AdminUsersView 
+          users={allUsers} 
+          stats={stats} 
+          onSelectUser={(u) => { setSelectedUser(u); setSidePanelOpen(true); }} 
+          onBack={() => setActiveTab(null)} 
+        />
+      )}
+
+      {activeTab === 'settings' && (
+        <AdminSettingsView stats={stats} onBack={() => setActiveTab(null)} />
+      )}
+
+      {activeTab === 'blog' && (
+        <div className="space-y-6">
+           <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
+             <ArrowLeft className="w-4 h-4" />
+             Back to Dashboard
+           </button>
+           <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Blog Management</div>}>
+             <BlogManagement />
+           </ErrorBoundary>
+        </div>
+      )}
+
+      {activeTab === 'newsletter' && (
+        <div className="space-y-6">
+           <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
+             <ArrowLeft className="w-4 h-4" />
+             Back to Dashboard
+           </button>
+           <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Newsletter Management</div>}>
+             <NewsletterManagement />
+           </ErrorBoundary>
+        </div>
+      )}
+
+      {activeTab === 'products' && (
+        <div className="space-y-6">
+           <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
+             <ArrowLeft className="w-4 h-4" />
+             Back to Dashboard
+           </button>
+           <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Product Management</div>}>
+             <ProductCostManagement />
+           </ErrorBoundary>
+        </div>
+      )}
+
+      {activeTab === 'submissions' && (
+        <div className="space-y-6">
+           <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
+             <ArrowLeft className="w-4 h-4" />
+             Back to Dashboard
+           </button>
+           <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Submissions</div>}>
+             <BlogSubmissionReview />
+           </ErrorBoundary>
+        </div>
+      )}
+
+      {activeTab === 'affiliates' && (
+        <div className="space-y-6">
+           <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
+             <ArrowLeft className="w-4 h-4" />
+             Back to Dashboard
+           </button>
+           <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Affiliates</div>}>
+             <div className="space-y-6">
+               <AffiliateAdminView />
+               <AffiliateEmailComposer />
+             </div>
+           </ErrorBoundary>
+        </div>
+      )}
+
+      {activeTab === 'subscriptions' && (
+        <div className="space-y-6">
+           <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
+             <ArrowLeft className="w-4 h-4" />
+             Back to Dashboard
+           </button>
+           <div className="bg-black/50 border border-white/10 rounded-none p-6">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <BarChart3 className="w-5 h-5" />
+              Subscription Management
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-white/5 rounded-none p-4">
+                <div className="text-white/60 text-sm mb-1">Free Tier</div>
+                <div className="text-2xl font-bold text-white/60">{stats?.freeUsers || 0}</div>
               </div>
-            )
-          },
-          { 
-            id: 'users', 
-            label: 'Users', 
-            icon: Users, 
-            description: 'Manage user accounts and permissions',
-            preview: () => {
-              // Use live data from allUsers if available, otherwise fall back to stats
-              const totalUsersCount = allUsers.length > 0 ? allUsers.length : (stats?.totalUsers || 0);
-              const freeCount = allUsers.length > 0 ? allUsers.filter(u => u.tier === 'free').length : (stats?.freeUsers || 0);
-              const premiumCount = allUsers.length > 0 ? allUsers.filter(u => u.tier === 'premium').length : (stats?.premiumUsers || 0);
-              const proCount = allUsers.length > 0 ? allUsers.filter(u => u.tier === 'pro').length : (stats?.proUsers || 0);
-              
-              return (
-                <div className="mt-3 space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-white/60 truncate">Total Users</span>
-                    <span className="text-white font-semibold ml-2">{totalUsersCount}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-white/60 truncate">Free Tier</span>
-                    <span className="text-white font-semibold ml-2">{freeCount}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-white/60 truncate">Premium</span>
-                    <span className="text-yellow-400 font-semibold ml-2">{premiumCount}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-white/60 truncate">Pro</span>
-                    <span className="text-purple-400 font-semibold ml-2">{proCount}</span>
-                  </div>
-                </div>
-              );
-            }
-          },
-          { 
-            id: 'subscriptions', 
-            label: 'Subscriptions', 
-            icon: DollarSign, 
-            description: 'View and manage subscriptions',
-            preview: () => (
-              <div className="mt-3 space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-white/60 truncate">Active</span>
-                  <span className="text-green-400 font-semibold ml-2">{stats?.activeSubscriptions || 0}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-white/60 truncate">Free</span>
-                  <span className="text-white font-semibold ml-2">{stats?.freeUsers || 0}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-white/60 truncate">Premium</span>
-                  <span className="text-yellow-400 font-semibold ml-2">{stats?.premiumUsers || 0}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-white/60 truncate">Pro</span>
-                  <span className="text-purple-400 font-semibold ml-2">{stats?.proUsers || 0}</span>
-                </div>
+              <div className="bg-white/5 rounded-none p-4 border border-yellow-400/20">
+                <div className="text-white/60 text-sm mb-1">Premium Tier</div>
+                <div className="text-2xl font-bold text-yellow-400">{stats?.premiumUsers || 0}</div>
               </div>
-            )
-          },
-          { 
-            id: 'products', 
-            label: 'Products', 
-            icon: Package, 
-            description: 'Manage product catalog and costs',
-            preview: () => (
-              <div className="mt-3 text-xs text-white/60 line-clamp-2">
-                Click to manage product catalog, pricing, and cost analysis
+              <div className="bg-white/5 rounded-none p-4 border border-purple-400/20">
+                <div className="text-white/60 text-sm mb-1">Pro Tier</div>
+                <div className="text-2xl font-bold text-purple-400">{stats?.proUsers || 0}</div>
               </div>
-            )
-          },
-          { 
-            id: 'blog', 
-            label: 'Blog', 
-            icon: BookOpen, 
-            description: 'Manage blog posts and content',
-            preview: () => (
-              <div className="mt-3 space-y-2">
-                <div className="flex items-center justify-between text-xs mb-2">
-                  <span className="text-white/60 truncate">Registered Writers</span>
-                  <span className="text-white font-semibold ml-2">{registeredWriters}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 mb-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-white/60 truncate">Book Club</span>
-                    <span className="text-white font-semibold ml-1">{bookClubPosts.length}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-white/60 truncate">Lost Archives</span>
-                    <span className="text-white font-semibold ml-1">{lostArchivesPosts.length}</span>
-                  </div>
-                </div>
-                {recentPosts.length > 0 && (
-                  <div className="border-t border-white/10 pt-2 mt-2">
-                    <div className="text-[10px] text-white/50 uppercase tracking-wider mb-1.5">Recent Posts</div>
-                    <div className="space-y-1">
-                      {recentPosts.slice(0, 2).map((post, idx) => (
-                        <div key={idx} className="text-[10px] text-white/70 truncate" title={post.title}>
-                          <span className="text-white/50">{post.author}:</span> {post.title}
-                        </div>
-                      ))}
+            </div>
+            <div className="border-t border-white/10 pt-4">
+              <p className="text-white/60">Advanced subscription management features coming soon...</p>
+            </div>
           </div>
         </div>
       )}
-              </div>
-            )
-          },
-          { 
-            id: 'newsletter', 
-            label: 'Newsletter', 
-            icon: Mail, 
-            description: 'Create and send newsletters',
-            preview: () => (
-              <div className="mt-3 space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-white/60 truncate">Subscribers</span>
-                  <span className="text-white font-semibold ml-2">{stats?.newsletterSubscribers || 0}</span>
+
+      {!activeTab && (
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 auto-rows-[240px] mb-8">
+        {/* Overview - 3x2 */}
+        <AdminBentoCard
+          title="Platform Overview"
+          icon={<BarChart3 className="w-4 h-4" />}
+          colSpan={3}
+          rowSpan={2}
+          className="md:col-span-3 md:row-span-2"
+          action={
+            <button 
+              onClick={() => setActiveTab('overview')}
+              className="text-xs bg-white/10 hover:bg-white/20 text-white px-2 py-1 rounded-none transition"
+            >
+              Full Report
+            </button>
+          }
+        >
+          <div className="h-full flex flex-col">
+             <div className="flex-1 min-h-0 mb-4">
+               <DashboardCharts stats={{
+                 revenue: (stats?.activeSubscriptions || 0) * 9.99,
+                 newsletter: stats?.newsletterSubscribers || 0,
+                 affiliates: affiliateStats?.totalAffiliates || 0
+               }} 
+               history={stats?.history} />
+             </div>
+             <div className="flex-none grid grid-cols-2 md:grid-cols-4 gap-4 items-baseline pb-4">
+                <div>
+                  <div className="text-xs text-white/50 uppercase tracking-wider mb-1">Total Contributors</div>
+                  <div className="text-2xl font-bold text-white"><AnimatedNumber value={stats?.totalUsers || 0} /></div>
                 </div>
-                <div className="text-[10px] text-white/40 mt-1 line-clamp-1">
-                  Click to create and manage campaigns
+                <div>
+                  <div className="text-xs text-white/50 uppercase tracking-wider mb-1">Subscribers</div>
+                  <div className="text-2xl font-bold text-white"><AnimatedNumber value={stats?.activeSubscriptions || 0} /></div>
                 </div>
-              </div>
-            )
-          },
-          { 
-            id: 'submissions', 
-            label: 'Submissions', 
-            icon: FileText, 
-            description: 'Review blog submissions',
-            preview: () => (
-              <div className="mt-3 text-xs text-white/60 line-clamp-2">
-                Review and approve pending blog submissions
-              </div>
-            )
-          },
-          { 
-            id: 'settings', 
-            label: 'Settings', 
-            icon: Settings, 
-            description: 'Platform configuration',
-            preview: () => (
-              <div className="mt-3 space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-white/60 truncate">Platform Health</span>
-                  <span className={cn(
-                    "font-semibold ml-2",
-                    stats?.platformHealth === 'healthy' ? "text-green-400" :
-                    stats?.platformHealth === 'warning' ? "text-yellow-400" : "text-red-400"
-                  )}>
-                    {stats?.platformHealth === 'healthy' ? 'Healthy' :
-                     stats?.platformHealth === 'warning' ? 'Warning' : 'Critical'}
-                  </span>
+                <div>
+                  <div className="text-xs text-white/50 uppercase tracking-wider mb-1">Revenue</div>
+                  <div className="text-2xl font-bold text-green-400">$<AnimatedNumber value={(stats?.activeSubscriptions || 0) * 9.99} /></div>
                 </div>
+                <div>
+                  <div className="text-xs text-white/50 uppercase tracking-wider mb-1">Health</div>
+                  <div className={`text-2xl font-bold ${stats?.platformHealth === 'healthy' ? 'text-green-400' : 'text-red-400'}`}>
+                    {stats?.platformHealth === 'healthy' ? 'Good' : 'Action Needed'}
+                  </div>
+                </div>
+             </div>
+             <div className="border-t border-white/10 pt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                <AdminBentoRow label="Newsletter" value={stats?.newsletterSubscribers || 0} className="border-0 p-0" />
+                <AdminBentoRow label="Tool Usage" value={stats?.totalToolUsage || 0} className="border-0 p-0" />
+                <AdminBentoRow label="Premium" value={stats?.premiumUsers || 0} className="border-0 p-0" />
+                <AdminBentoRow label="Pro" value={stats?.proUsers || 0} className="border-0 p-0" />
+             </div>
+          </div>
+        </AdminBentoCard>
+
+        {/* Alerts - 1x2 */}
+        <AdminBentoCard
+          title="System Alerts"
+          icon={<Bell className="w-4 h-4" />}
+          colSpan={1}
+          rowSpan={2}
+          className="md:col-span-1 md:row-span-2"
+          footer={
+             <button 
+               onClick={() => setAlerts(prev => prev.map(a => ({ ...a, read: true })))}
+               className="w-full text-xs text-white/60 hover:text-white text-center"
+             >
+               Mark all as read
+             </button>
+          }
+        >
+          <div className="space-y-2">
+            {alerts.length > 0 ? alerts.slice(0, 5).map(alert => (
+              <div key={alert.id} className="p-3 bg-white/5 border border-white/5 border-l-2 border-l-yellow-400">
+                <p className="text-xs text-white/90 line-clamp-2">{alert.message}</p>
+                <span className="text-[10px] text-white/40 mt-1 block">{alert.time}</span>
               </div>
-            )
-          },
-          { 
-            id: 'affiliates', 
-            label: 'Affiliates', 
-            icon: TrendingUp, 
-            description: 'Manage affiliate program',
-            preview: () => (
-              <div className="mt-3 text-xs text-white/60 line-clamp-2">
-                Manage affiliates, commissions, and payouts
-              </div>
-            )
-          },
-        ] as const).map((section, index) => {
-          const Icon = section.icon;
-          // Bento grid layout - Overview gets 2 columns, others get 1
-          const colSpan = section.id === 'overview' ? 'md:col-span-2 lg:col-span-2' : '';
-          // Remove row-span to prevent large gaps
-          
-          return (
-            <div key={section.id} className={cn(colSpan)}>
-              <Expandable
-                expanded={activeTab === section.id}
-                onToggle={() => {
-                  const newActiveTab = activeTab === section.id ? null : section.id as typeof activeTab;
-                  setActiveTab(newActiveTab);
-                  // Close drawer when expanding card
-                  if (newActiveTab) {
-                    setShowDrawer(null);
-                  }
-                  // Refresh data when opening a card to ensure live data
-                  if (newActiveTab && adminStatus === true) {
-                    loadDashboardData(); // This refreshes all stats including users
-                    if (newActiveTab === 'blog') {
-                      loadBlogStats();
-                      loadBookClubPosts();
-                      loadLostArchivesPosts();
-                    }
-                  }
-                }}
-                expandDirection="both"
-                expandBehavior="replace"
-              >
-                {({ isExpanded }) => (
-                  <>
-                    {activeTab === section.id && (
-                      <div 
-                        className="fixed inset-0 bg-black/80 z-40"
-                        onClick={() => setActiveTab(null)}
-                      />
-                    )}
-                    <ExpandableTrigger>
-                      <ExpandableCard
-                className={cn(
-                          "dark:bg-black bg-black border border-white rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 group",
-                          "shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.15)]",
-                          activeTab === section.id 
-                            ? "fixed inset-0 z-50 !w-screen !h-screen m-0 cursor-default hover:translate-y-0 hover:scale-100 shadow-[0_0_40px_rgba(255,255,255,0.2)]" 
-                            : "w-full hover:-translate-y-1 hover:scale-[1.02]"
-                        )}
-                        collapsedSize={{ width: '100%', height: section.id === 'overview' ? 260 : 240 }}
-                        expandedSize={{ 
-                          width: activeTab === section.id ? '100vw' : '100%', 
-                          height: activeTab === section.id ? '100vh' : 600 
-                        }}
-                        hoverToExpand={false}
-                        expandDelay={200}
-                        collapseDelay={300}
-                      >
-                    <ExpandableCardHeader 
-                      className={cn(
-                        "px-4 pt-3 pb-0",
-                        section.id === 'overview' && "pb-0",
-                        activeTab === section.id && "border-b border-white/10"
-                      )}
-                      onClick={(e: React.MouseEvent<HTMLDivElement>) => {
-                        // Allow header click to collapse when expanded (except on close button)
-                        if (activeTab === section.id && !(e.target as HTMLElement).closest('button')) {
-                          setActiveTab(null);
-                        }
-                      }}
-                    >
-                      <div className="flex items-start justify-between w-full">
-                        <div className="flex items-start gap-3 flex-1 min-w-0">
-                          <div className={cn(
-                            "p-2 rounded-full border-2 flex-shrink-0",
-                            activeTab === section.id 
-                              ? "bg-white text-black border-white" 
-                              : "bg-black/50 text-white border-white/20"
-                          )}>
-                            <Icon className="w-5 h-5" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-lg mb-1 text-white truncate">
-                              {section.label}
-                            </h3>
-                            <p className="text-sm text-white/60 line-clamp-1">
-                              {section.description}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          {!isExpanded && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveTab(section.id as typeof activeTab);
-                              }}
-                              className="p-1 hover:bg-white/10 rounded-none transition"
-                              type="button"
-                              aria-label="Expand"
-                            >
-                              <Maximize2 className="w-4 h-4 text-white/40" />
-                            </button>
-                          )}
-                          {activeTab === section.id && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveTab(null);
-                              }}
-                              className="p-2 hover:bg-white/10 rounded-none transition text-white/60 hover:text-white"
-                              aria-label="Close"
-                              type="button"
-                            >
-                              <XCircle className="w-5 h-5" />
-                            </button>
-                          )}
-                          {isExpanded && activeTab !== section.id && (
-                            <ExpandableCloseButton className="p-2 hover:bg-white/10 rounded-none transition text-white/60 hover:text-white">
-                              <XCircle className="w-5 h-5" />
-                            </ExpandableCloseButton>
-                          )}
-        </div>
-        </div>
-                    </ExpandableCardHeader>
-                    <ExpandableCardContent 
-                      className={cn(
-                        "px-4 pt-0 pb-4 relative",
-                        section.id === 'overview' && "pb-3",
-                        !isExpanded && "pb-[140px]", // Add bottom padding to prevent drawer from covering content (40px drawer + 100px spacing)
-                        !isExpanded && showDrawer === section.id && "pb-[190px]", // Extra padding when drawer is open (87px drawer + 103px spacing)
-                        activeTab === section.id && "overflow-y-auto h-[calc(100vh-120px)] pb-4"
-                      )}
-                      onClick={(e: React.MouseEvent<HTMLDivElement>) => {
-                        if (activeTab === section.id) {
-                          e.stopPropagation();
-                        }
-                        // Close drawer when clicking on card content (but not on the drawer itself)
-                        const drawerToast = (e.target as HTMLElement).closest('.drawer-toast');
-                        const drawerHeader = (e.target as HTMLElement).closest('.drawer-header');
-                        const drawerContent = (e.target as HTMLElement).closest('.drawer-content');
-                        
-                        // If clicking anywhere in the drawer toast area, don't close
-                        if (drawerToast || drawerHeader || drawerContent) {
-                          return;
-                        }
-                        
-                        // Only close drawer if clicking outside the drawer
-                        if (!isExpanded && showDrawer === section.id) {
-                          setShowDrawer(null);
-                        }
-                      }}
-                    >
-                      {!isExpanded && section.preview && (
-                        <div className={cn(
-                          "mt-0 relative z-10",
-                          section.id === 'overview' && "mt-0"
-                        )}>
-                          {section.preview()}
-                        </div>
-                      )}
-                      
-                      <ExpandableContent preset="fade">
-                        <div className={cn(
-                          activeTab === section.id ? "mt-0" : "mt-0",
-                          !isExpanded && "mb-[140px]", // Add margin-bottom to ensure content is above drawer
-                          !isExpanded && showDrawer === section.id && "mb-[190px]" // Extra margin when drawer is open
-                        )}>
-                          {renderTabContent(section.id as typeof activeTab)}
-                        </div>
-                      </ExpandableContent>
-                    </ExpandableCardContent>
-                    
-                    {/* Drawer Prompt - Toast-style pop-up - Always Visible - Positioned relative to card */}
-                    {!isExpanded && (
-                      <motion.div 
-                        className="drawer-toast absolute bottom-0 left-0 right-0 bg-black/98 border-t border-white/30 shadow-[0_8px_24px_rgba(0,0,0,0.8)] backdrop-blur-lg flex flex-col z-[100] overflow-hidden"
-                        style={{ 
-                          pointerEvents: 'auto'
-                        }}
-                        initial={{ maxHeight: "40px" }}
-                        animate={{ 
-                          maxHeight: showDrawer === section.id ? "87px" : "40px" // 1/3 of 260px card height
-                        }}
-                          transition={{ 
-                            type: "spring", 
-                            stiffness: 300, 
-                            damping: 30,
-                            duration: 0.3
-                          }}
-                          onClick={(e) => {
-                            // Always stop propagation to prevent card content handlers from firing
-                            e.stopPropagation();
-                            e.preventDefault();
-                            if (e.nativeEvent) {
-                              e.nativeEvent.stopImmediatePropagation();
-                            }
-                          }}
-                          onMouseDown={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            if (e.nativeEvent) {
-                              e.nativeEvent.stopImmediatePropagation();
-                            }
-                          }}
-                          onMouseUp={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            if (e.nativeEvent) {
-                              e.nativeEvent.stopImmediatePropagation();
-                            }
-                          }}
-                        >
-                          {/* Toast Header - Always Visible */}
-                          <div 
-                            className={cn(
-                              "drawer-header flex items-center justify-between p-2.5 flex-shrink-0 bg-white cursor-pointer",
-                              showDrawer === section.id && "border-b border-black/20"
-                            )}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                              // Stop all event propagation including native handlers
-                              if (e.nativeEvent) {
-                                e.nativeEvent.stopImmediatePropagation();
-                              }
-                              // Toggle drawer when clicking header - open if closed, close if open
-                              const currentDrawer = showDrawer === section.id ? null : section.id;
-                              setShowDrawer(currentDrawer);
-                            }}
-                            onMouseDown={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                              if (e.nativeEvent) {
-                                e.nativeEvent.stopImmediatePropagation();
-                              }
-                            }}
-                            onMouseUp={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                              if (e.nativeEvent) {
-                                e.nativeEvent.stopImmediatePropagation();
-                              }
-                            }}
-                          >
-                            <div className="flex items-center gap-2">
-                              <div className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
-                              <span className="text-[10px] text-black font-semibold uppercase tracking-wider">Quick Stats</span>
-                            </div>
-                            {showDrawer === section.id && (
-                              <div className="flex items-center gap-1">
-                                {section.id === 'overview' && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setActiveTab('overview');
-                                      setShowDrawer(null);
-                                    }}
-                                    className="px-2 py-0.5 text-[9px] bg-white text-black hover:bg-white/90 rounded-none transition font-medium"
-                                  >
-                                    View Full
-                                  </button>
-                                )}
-                                {section.id === 'users' && (
-                                  <>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setActiveTab('users');
-                                        setShowDrawer(null);
-                                      }}
-                                      className="px-2 py-0.5 text-[9px] bg-white text-black hover:bg-white/90 rounded-none transition font-medium"
-                                    >
-                                      View All
-                                    </button>
-                                  </>
-                                )}
-                                {section.id === 'subscriptions' && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setActiveTab('subscriptions');
-                                      setShowDrawer(null);
-                                    }}
-                                    className="px-2 py-0.5 text-[9px] bg-white text-black hover:bg-white/90 rounded-none transition font-medium"
-                                  >
-                                    Manage
-                                  </button>
-                                )}
-                                {section.id === 'products' && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setActiveTab('products');
-                                      setShowDrawer(null);
-                                    }}
-                                    className="px-2 py-0.5 text-[9px] bg-white text-black hover:bg-white/90 rounded-none transition font-medium"
-                                  >
-                                    Manage
-                                  </button>
-                                )}
-                                {section.id === 'blog' && (
-                                  <>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setActiveTab('blog');
-                                        setShowDrawer(null);
-                                      }}
-                                      className="px-2 py-0.5 text-[9px] bg-white text-black hover:bg-white/90 rounded-none transition font-medium"
-                                    >
-                                      Manage
-                                    </button>
-                                  </>
-                                )}
-                                {section.id === 'newsletter' && (
-                                  <>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setActiveTab('newsletter');
-                                        setShowDrawer(null);
-                                      }}
-                                      className="px-2 py-0.5 text-[9px] bg-white text-black hover:bg-white/90 rounded-none transition font-medium"
-                                    >
-                                      Campaigns
-                                    </button>
-                                  </>
-                                )}
-                                {section.id === 'submissions' && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setActiveTab('submissions');
-                                      setShowDrawer(null);
-                                    }}
-                                    className="px-2 py-0.5 text-[9px] bg-white text-black hover:bg-white/90 rounded-none transition font-medium"
-                                  >
-                                    Review
-                                  </button>
-                                )}
-                                {section.id === 'settings' && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setActiveTab('settings');
-                                      setShowDrawer(null);
-                                    }}
-                                    className="px-2 py-0.5 text-[9px] bg-white text-black hover:bg-white/90 rounded-none transition font-medium"
-                                  >
-                                    Configure
-                                  </button>
-                                )}
-                                {section.id === 'affiliates' && (
-                                  <>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setActiveTab('affiliates');
-                                        setShowDrawer(null);
-                                      }}
-                                      className="px-2 py-0.5 text-[9px] bg-white text-black hover:bg-white/90 rounded-none transition font-medium"
-                                    >
-                                      Dashboard
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                          {/* Toast Content - Only visible when expanded */}
-                          {showDrawer === section.id && (
-                          <div 
-                            className="drawer-content p-3 overflow-y-auto max-h-[260px] min-h-[100px]"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                              if (e.nativeEvent) {
-                                e.nativeEvent.stopImmediatePropagation();
-                              }
-                              // Don't close drawer when clicking content
-                            }}
-                            onMouseDown={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                              if (e.nativeEvent) {
-                                e.nativeEvent.stopImmediatePropagation();
-                              }
-                            }}
-                            onMouseUp={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                              if (e.nativeEvent) {
-                                e.nativeEvent.stopImmediatePropagation();
-                              }
-                            }}
-                          >
-                            <div className="space-y-0 text-[11px]">
-                            {section.id === 'overview' && (
-                              <>
-                                <div className="flex items-center justify-between py-2 border-b border-white/10">
-                                  <span className="text-white/70">Platform Health</span>
-                                  <span className={cn(
-                                    "font-semibold",
-                                    stats?.platformHealth === 'healthy' ? "text-green-400" :
-                                    stats?.platformHealth === 'warning' ? "text-yellow-400" : "text-red-400"
-                                  )}>
-                                    {stats?.platformHealth === 'healthy' ? '✓ Healthy' :
-                                     stats?.platformHealth === 'warning' ? '⚠ Warning' : '✗ Critical'}
-                                  </span>
-                                </div>
-                                <div className="flex items-center justify-between py-2 border-b border-white/10">
-                                  <span className="text-white/70">Active Subs</span>
-                                  <span className="text-white font-semibold">{stats?.activeSubscriptions || 0}</span>
-                                </div>
-                              </>
-                            )}
-                            {section.id === 'users' && (
-                              <>
-                                <div className="flex items-center justify-between py-2 border-b border-white/10">
-                                  <span className="text-white/70">New Today</span>
-                                  <span className="text-white font-semibold">
-                                    {recentUsers.filter(u => {
-                                      const created = new Date(u.created_at);
-                                      const today = new Date();
-                                      return created.toDateString() === today.toDateString();
-                                    }).length}
-                                  </span>
-                                </div>
-                                <div className="flex items-center justify-between py-2 border-b border-white/10">
-                                  <span className="text-white/70">Admins</span>
-                                  <span className="text-purple-400 font-semibold">
-                                    {recentUsers.filter(u => u.isAdmin).length}
-                                  </span>
-                                </div>
-                              </>
-                            )}
-                            {section.id === 'subscriptions' && (
-                              <>
-                                <div className="flex items-center justify-between py-2 border-b border-white/10">
-                                  <span className="text-white/70">Active</span>
-                                  <span className="text-green-400 font-semibold">{stats?.activeSubscriptions || 0}</span>
-                                </div>
-                                <div className="flex items-center justify-between py-2 border-b border-white/10">
-                                  <span className="text-white/70">Premium+</span>
-                                  <span className="text-yellow-400 font-semibold">
-                                    {(stats?.premiumUsers || 0) + (stats?.proUsers || 0)}
-                                  </span>
-                                </div>
-                              </>
-                            )}
-                            {section.id === 'blog' && (
-                              <>
-                                <div className="flex items-center justify-between py-2 border-b border-white/10">
-                                  <span className="text-white/70">Writers</span>
-                                  <span className="text-white font-semibold">{registeredWriters}</span>
-                                </div>
-                                <div className="flex items-center justify-between py-2 border-b border-white/10">
-                                  <span className="text-white/70">Recent Posts</span>
-                                  <span className="text-white font-semibold">{recentPosts.length}</span>
-                                </div>
-                              </>
-                            )}
-                            {section.id === 'newsletter' && (
-                              <>
-                                <div className="flex items-center justify-between py-2 border-b border-white/10">
-                                  <span className="text-white/70">Subscribers</span>
-                                  <span className="text-white font-semibold">{stats?.newsletterSubscribers || 0}</span>
-                                </div>
-                                <div className="space-y-1.5 pt-2">
-                                  {newestSubscribers.length > 0 ? (
-                                    newestSubscribers.map((sub, idx) => (
-                                      <div key={idx} className="flex items-center justify-between text-[10px] py-1 border-b border-white/5">
-                                        <span className="text-white/70 truncate flex-1 mr-2">{sub.email}</span>
-                                        <span className="text-white/40 text-[9px]">
-                                          {new Date(sub.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                        </span>
-                                      </div>
-                                    ))
-                                  ) : (
-                                    <div className="text-white/40 text-[10px] py-1">No recent subscribers</div>
-                                  )}
-                                </div>
-                              </>
-                            )}
-                            {section.id === 'submissions' && (
-                              <>
-                                <div className="flex items-center justify-between py-2 border-b border-white/10">
-                                  <span className="text-white/70">Pending</span>
-                                  <span className="text-yellow-400 font-semibold">
-                                    {alerts.filter(a => a.message.includes('submission')).length || 0}
-                                  </span>
-                                </div>
-                                <div className="flex items-center justify-between py-2 border-b border-white/10">
-                                  <span className="text-white/70">Review Needed</span>
-                                  <span className="text-red-400 font-semibold">!</span>
-                                </div>
-                              </>
-                            )}
-                            {section.id === 'affiliates' && (
-                              <>
-                                <div className="flex items-center justify-between py-2 border-b border-white/10">
-                                  <span className="text-white/70">Total Affiliates</span>
-                                  <span className="text-white font-semibold">{affiliateStats?.totalAffiliates || 0}</span>
-                                </div>
-                                <div className="flex items-center justify-between py-2 border-b border-white/10">
-                                  <span className="text-white/70">Active</span>
-                                  <span className="text-green-400 font-semibold">{affiliateStats?.activeAffiliates || 0}</span>
-                                </div>
-                                <div className="flex items-center justify-between py-2 border-b border-white/10">
-                                  <span className="text-white/70">Total Earnings</span>
-                                  <span className="text-yellow-400 font-semibold">
-                                    ${(affiliateStats?.totalEarnings || 0).toFixed(2)}
-                                  </span>
-                                </div>
-                                <div className="flex items-center justify-between py-2 border-b border-white/10">
-                                  <span className="text-white/70">Clicks</span>
-                                  <span className="text-white font-semibold">{affiliateStats?.totalClicks || 0}</span>
-                                </div>
-                                <div className="flex items-center justify-between py-2 border-b border-white/10">
-                                  <span className="text-white/70">Conversions</span>
-                                  <span className="text-white font-semibold">{affiliateStats?.totalConversions || 0}</span>
-                                </div>
-                                <div className="flex items-center justify-between py-2 border-b border-white/10">
-                                  <span className="text-white/70">Conv. Rate</span>
-                                  <span className={cn(
-                                    "font-semibold",
-                                    (affiliateStats?.conversionRate || 0) > 5 ? "text-green-400" :
-                                    (affiliateStats?.conversionRate || 0) > 2 ? "text-yellow-400" : "text-red-400"
-                                  )}>
-                                    {(affiliateStats?.conversionRate || 0).toFixed(1)}%
-                                  </span>
-                                </div>
-                                <div className="flex items-center justify-between py-2 border-b border-white/10">
-                                  <span className="text-white/70">Pending Payouts</span>
-                                  <span className="text-yellow-400 font-semibold">{affiliateStats?.pendingPayouts || 0}</span>
-                                </div>
-                                <div className="flex items-center justify-between py-2">
-                                  <span className="text-white/70">MLM Earnings</span>
-                                  <span className="text-purple-400 font-semibold">
-                                    ${(affiliateStats?.totalMLMEarnings || 0).toFixed(2)}
-                                  </span>
-                                </div>
-                              </>
-                            )}
-                            {(section.id === 'products' || section.id === 'settings') && (
-                              <>
-                                <div className="flex items-center justify-between py-2">
-                                  <span className="text-white/70">Click to manage</span>
-                                  <span className="text-white font-semibold">→</span>
-                                </div>
-                              </>
-                            )}
-                            </div>
-                            
-                            {/* Quick Action Buttons */}
-                            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/10">
-                              {section.id === 'overview' && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveTab('overview');
-                                    setShowDrawer(null);
-                                  }}
-                                  className="flex-1 px-3 py-1.5 text-[10px] bg-white/10 hover:bg-white/20 text-white/90 rounded-none transition font-medium"
-                                >
-                                  View Full Dashboard
-                                </button>
-                              )}
-                              {section.id === 'users' && (
-                                <>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setActiveTab('users');
-                                      setShowDrawer(null);
-                                    }}
-                                    className="flex-1 px-3 py-1.5 text-[10px] bg-white/10 hover:bg-white/20 text-white/90 rounded-none transition font-medium"
-                                  >
-                                    Manage Users
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      // TODO: Export users functionality
-                                    }}
-                                    className="px-3 py-1.5 text-[10px] bg-white/10 hover:bg-white/20 text-white/90 rounded-none transition"
-                                  >
-                                    Export
-                                  </button>
-                                </>
-                              )}
-                              {section.id === 'subscriptions' && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveTab('subscriptions');
-                                    setShowDrawer(null);
-                                  }}
-                                  className="flex-1 px-3 py-1.5 text-[10px] bg-white/10 hover:bg-white/20 text-white/90 rounded-none transition font-medium"
-                                >
-                                  Manage Subscriptions
-                                </button>
-                              )}
-                              {section.id === 'products' && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveTab('products');
-                                    setShowDrawer(null);
-                                  }}
-                                  className="flex-1 px-3 py-1.5 text-[10px] bg-white/10 hover:bg-white/20 text-white/90 rounded-none transition font-medium"
-                                >
-                                  Manage Products
-                                </button>
-                              )}
-                              {section.id === 'blog' && (
-                                <>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setActiveTab('blog');
-                                      setShowDrawer(null);
-                                    }}
-                                    className="flex-1 px-3 py-1.5 text-[10px] bg-white/10 hover:bg-white/20 text-white/90 rounded-none transition font-medium"
-                                  >
-                                    Manage Blog
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      window.open('/blog/new', '_blank');
-                                    }}
-                                    className="px-3 py-1.5 text-[10px] bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-none transition border border-green-500/30"
-                                  >
-                                    New Post
-                                  </button>
-                                </>
-                              )}
-                              {section.id === 'newsletter' && (
-                                <>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setActiveTab('newsletter');
-                                      setShowDrawer(null);
-                                    }}
-                                    className="flex-1 px-3 py-1.5 text-[10px] bg-white/10 hover:bg-white/20 text-white/90 rounded-none transition font-medium"
-                                  >
-                                    Manage Campaigns
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setActiveTab('newsletter');
-                                      setShowDrawer(null);
-                                      // Scroll to new campaign button
-                                      setTimeout(() => {
-                                        const newCampaignBtn = document.querySelector('[data-new-campaign]');
-                                        newCampaignBtn?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                      }, 100);
-                                    }}
-                                    className="px-3 py-1.5 text-[10px] bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-none transition border border-green-500/30"
-                                  >
-                                    New Campaign
-                                  </button>
-                                </>
-                              )}
-                              {section.id === 'submissions' && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveTab('submissions');
-                                    setShowDrawer(null);
-                                  }}
-                                  className="flex-1 px-3 py-1.5 text-[10px] bg-white/10 hover:bg-white/20 text-white/90 rounded-none transition font-medium"
-                                >
-                                  Review Submissions
-                                </button>
-                              )}
-                              {section.id === 'settings' && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveTab('settings');
-                                    setShowDrawer(null);
-                                  }}
-                                  className="flex-1 px-3 py-1.5 text-[10px] bg-white/10 hover:bg-white/20 text-white/90 rounded-none transition font-medium"
-                                >
-                                  Open Settings
-                                </button>
-                              )}
-                              {section.id === 'affiliates' && (
-                                <>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setActiveTab('affiliates');
-                                      setShowDrawer(null);
-                                    }}
-                                    className="flex-1 px-3 py-1.5 text-[10px] bg-white/10 hover:bg-white/20 text-white/90 rounded-none transition font-medium"
-                                  >
-                                    View Dashboard
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setActiveTab('affiliates');
-                                      setShowDrawer(null);
-                                      // Scroll to payouts section
-                                      setTimeout(() => {
-                                        const payoutsSection = document.querySelector('[data-payouts-section]');
-                                        payoutsSection?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                      }, 100);
-                                    }}
-                                    className="px-3 py-1.5 text-[10px] bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 rounded-none transition border border-yellow-500/30"
-                                  >
-                                    Payouts
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                          )}
-                        </motion.div>
-                      )}
-                    </ExpandableCard>
-                </ExpandableTrigger>
-                </>
-              )}
-            </Expandable>
-            </div>
-          );
-        })}
+            )) : (
+              <div className="text-center text-white/40 text-xs py-8">No active alerts</div>
+            )}
+          </div>
+        </AdminBentoCard>
+
+        {/* Users - 1x1 */}
+        <AdminBentoCard
+          title="Contributor Management"
+          icon={<Users className="w-4 h-4" />}
+          action={<span className="text-xs font-mono text-white/40">{allUsers.length}</span>}
+          footer={
+            <button onClick={() => setActiveTab('users')} className="w-full text-center text-xs hover:text-white text-white/60">Manage Users →</button>
+          }
+        >
+          <div className="space-y-0">
+            <AdminBentoRow label="New (24h)" value={recentUsers.filter(u => new Date(u.created_at).getTime() > Date.now() - 86400000).length} />
+            <AdminBentoRow label="Free" value={stats?.freeUsers || 0} />
+            <AdminBentoRow label="Premium" value={stats?.premiumUsers || 0} valueClassName="text-yellow-400" />
+            <AdminBentoRow label="Pro" value={stats?.proUsers || 0} valueClassName="text-purple-400" />
+          </div>
+        </AdminBentoCard>
+
+        {/* Subscriptions - 1x1 */}
+        <AdminBentoCard
+          title="Subscriptions"
+          icon={<DollarSign className="w-4 h-4" />}
+          action={<span className="text-xs font-mono text-green-400">{stats?.activeSubscriptions}</span>}
+          footer={
+            <button onClick={() => setActiveTab('subscriptions')} className="w-full text-center text-xs hover:text-white text-white/60">Manage Plans →</button>
+          }
+        >
+          <div className="space-y-0">
+             <AdminBentoRow label="Active" value={stats?.activeSubscriptions || 0} valueClassName="text-green-400" />
+             <AdminBentoRow label="Churn Rate" value="--%" />
+             <AdminBentoRow label="MRR" value={`$${((stats?.activeSubscriptions || 0) * 9.99).toFixed(0)}`} />
+          </div>
+        </AdminBentoCard>
+
+        {/* Products - 1x1 */}
+        <AdminBentoCard
+          title="Products"
+          icon={<Package className="w-4 h-4" />}
+          footer={
+            <button onClick={() => setActiveTab('products')} className="w-full text-center text-xs hover:text-white text-white/60">Catalog →</button>
+          }
+        >
+          <div className="flex flex-col h-full justify-center items-center text-center p-4">
+             <p className="text-xs text-white/60 mb-2">Catalog & Cost Analysis</p>
+             <div className="px-3 py-1 bg-white/5 border border-white/10 text-xs">
+               Manage Inventory
+             </div>
+          </div>
+        </AdminBentoCard>
+
+        {/* Blog - 1x1 */}
+        <AdminBentoCard
+          title="Blog"
+          icon={<BookOpen className="w-4 h-4" />}
+          action={<span className="text-xs font-mono text-white/40">{bookClubPosts.length + lostArchivesPosts.length}</span>}
+          footer={
+            <button onClick={() => setActiveTab('blog')} className="w-full text-center text-xs hover:text-white text-white/60">Manage Content →</button>
+          }
+        >
+           <div className="space-y-0">
+             <AdminBentoRow label="Writers" value={registeredWriters} />
+             <AdminBentoRow label="Book Club" value={bookClubPosts.length} />
+             <AdminBentoRow label="Archives" value={lostArchivesPosts.length} />
+           </div>
+        </AdminBentoCard>
+
+        {/* Newsletter - 1x1 */}
+        <AdminBentoCard
+          title="Newsletter"
+          icon={<Mail className="w-4 h-4" />}
+          action={<span className="text-xs font-mono text-blue-400">{stats?.newsletterSubscribers}</span>}
+          footer={
+            <button onClick={() => setActiveTab('newsletter')} className="w-full text-center text-xs hover:text-white text-white/60">Campaigns →</button>
+          }
+        >
+           <div className="space-y-2 mt-1">
+             {newestSubscribers.slice(0, 2).map((sub, i) => (
+               <div key={i} className="flex justify-between items-center text-xs">
+                 <span className="truncate text-white/60 max-w-[120px]">{sub.email}</span>
+                 <span className="text-white/30 text-[10px]">{new Date(sub.created_at).toLocaleDateString()}</span>
+               </div>
+             ))}
+             {newestSubscribers.length === 0 && <p className="text-xs text-white/40">No recent subscribers</p>}
+           </div>
+        </AdminBentoCard>
+
+        {/* Settings - 1x1 */}
+        <AdminBentoCard
+          title="System"
+          icon={<Settings className="w-4 h-4" />}
+          footer={
+            <button onClick={() => setActiveTab('settings')} className="w-full text-center text-xs hover:text-white text-white/60">Configuration →</button>
+          }
+        >
+           <div className="flex flex-col gap-2">
+             <div className="flex items-center justify-between p-2 bg-white/5 border border-white/10">
+               <span className="text-xs text-white/60">Status</span>
+               <span className="text-xs text-green-400">Operational</span>
+             </div>
+             <div className="flex items-center justify-between p-2 bg-white/5 border border-white/10">
+               <span className="text-xs text-white/60">Database</span>
+               <span className="text-xs text-green-400">Connected</span>
+             </div>
+           </div>
+        </AdminBentoCard>
       </div>
+
+      )}
+
 
       {/* Side Panel for User Details */}
       <SidePanel

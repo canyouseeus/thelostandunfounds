@@ -393,7 +393,7 @@ export default function Blog() {
           {[1, 2, 3].map((i) => (
             <img
               key={i}
-              src="/assets/lostunfounds-logo.png"
+              src="/logo.png"
               alt="THE LOST+UNFOUNDS"
               className="h-40 w-auto object-contain"
             />

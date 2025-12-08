@@ -47,6 +47,7 @@ import SageMode from './pages/SageMode'
 import SageModeReports from './pages/SageModeReports'
 import AffiliateDashboard from './pages/AffiliateDashboard'
 import KingMidasLeaderboard from './pages/KingMidasLeaderboard'
+import AdminAffiliates from './pages/AdminAffiliates'
 
 function App() {
   return (
@@ -116,6 +117,13 @@ function App() {
             <ErrorBoundary>
               <ProtectedRoute requireAdmin={true}>
                 <Admin />
+              </ProtectedRoute>
+            </ErrorBoundary>
+          } />
+          <Route path="affiliates" element={
+            <ErrorBoundary>
+              <ProtectedRoute requireAdmin={true}>
+                <AdminAffiliates />
               </ProtectedRoute>
             </ErrorBoundary>
           } />

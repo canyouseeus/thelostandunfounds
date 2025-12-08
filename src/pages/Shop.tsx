@@ -3,7 +3,7 @@
  * Fetches native products from our database
  */
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Search, Filter, Loader2, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { initAffiliateTracking, getAffiliateRef } from '../utils/affiliate-tracking';
@@ -459,11 +459,45 @@ function ProductModal({
   onClose: () => void;
   affiliateRef: string | null;
 }) {
+  useEffect(() => {
+    const handleDocumentClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('[data-product-modal-close="true"]')) {
+        event.preventDefault();
+        event.stopPropagation();
+        onClose();
+      }
+    };
+
+    const handleDocumentKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('click', handleDocumentClick, true);
+    document.addEventListener('keydown', handleDocumentKey, true);
+    return () => {
+      document.removeEventListener('click', handleDocumentClick, true);
+      document.removeEventListener('keydown', handleDocumentKey, true);
+    };
+  }, [onClose]);
+
   const { user } = useAuth();
   const imageUrl = product.images && product.images.length > 0 ? product.images[0] : null;
   const displayPrice = product.price;
   const displayComparePrice = product.compareAtPrice || null;
   const isFourthwallProduct = product.url?.includes('fourthwall.com');
+
+  const handleClose = (e?: React.MouseEvent | React.KeyboardEvent) => {
+    console.debug('ProductModal: close triggered');
+    if (e) {
+      e.preventDefault?.();
+      e.stopPropagation();
+      e.nativeEvent?.stopImmediatePropagation?.();
+    }
+    onClose();
+  };
 
   const handleCheckoutClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
@@ -492,13 +526,32 @@ function ProductModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-black/90 border border-white rounded-none shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center px-4"
+      role="dialog"
+      aria-modal="true"
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          handleClose(e);
+        }
+      }}
+    >
+      <div
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        onClick={handleClose}
+        data-product-modal-close="true"
+      />
+      <div
+        className="relative bg-black/90 border border-white rounded-none shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
-          onClick={onClose}
+          onClick={handleClose}
+          onMouseDown={(e) => e.stopPropagation()}
+          type="button"
           className="absolute top-3 right-3 text-white/80 hover:text-white flex items-center justify-center w-10 h-10"
           aria-label="Close"
+          data-product-modal-close="true"
         >
           <X className="w-5 h-5" />
         </button>
