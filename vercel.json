@@ -5,10 +5,10 @@
   "framework": "vite",
   "functions": {
     "api/**/*.ts": {
-      "runtime": "@vercel/node"
+      "maxDuration": 60
     },
     "api/**/*.js": {
-      "runtime": "@vercel/node"
+      "maxDuration": 60
     }
   },
   "crons": [
