@@ -471,7 +471,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
                   </div>
                   {user && (
                     <>
-                      <div className="border-t border-white/10 my-2"></div>
+                      <div className="border-t border-white/20 my-2"></div>
                 <Link
                   to={userIsAdmin ? "/admin" : userSubdomain ? `/${userSubdomain}/bookclubprofile` : "/bookclubprofile"}
                   className="menu-item"
