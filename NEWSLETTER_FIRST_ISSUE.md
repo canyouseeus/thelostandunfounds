@@ -14,7 +14,7 @@ It finally feels good to say this out loud: THE LOST+UNFOUNDS is open, humming, 
 - **Amazon storefront handshake.** Drop your Storefront ID once and we auto-thread it across articles that require affiliate links.
 - **Affiliate Dashboard + payout controls (coming soon).** Track clicks, conversions, MLM network data, discount credits, employee pricing, and King Midas earnings in one place once we finish the rollout.
 - **King Midas leaderboard (coming soon).** Eight percent of daily profit will be sliced to the top affiliates when the competition goes live.
-- **Creator tools.** TikTok downloader, AI writing prompts, and other utilities that make content ops faster.
+- **Creator tools.** AI writing prompts and other utilities that make content ops faster.
 - **Brand assets + merch.** That means launch-ready visuals, Secret Santa campaigns, and reward badges you can hand to your people when they join in.
 
 ### Turn the platform into income (right now)
@@ -22,7 +22,7 @@ It finally feels good to say this out loud: THE LOST+UNFOUNDS is open, humming, 
 2. **Verify with Amazon.** Paste your new URL during Associates signup, grab your Storefront ID, and drop it back into your profile. That is how the system attributes your links.
 3. **Pick a column and publish.** Use the Contributor Getting Started guide, follow the format (BookClub wants four books, GearHeads wants 1-8 products, etc.), and keep every paragraph text-left per the style guide. Your work ships faster when it meets the template.
 4. **Prep for the affiliate rollout.** Add yourself to the waitlist, gather your referral stories, and outline the offers you want ready when payouts flip on.
-5. **Automate your promo loop.** Turn clips into traffic using the TikTok Downloader, drop fresh CTAs into your subdomain, and repurpose newsletter paragraphs into blog intros.
+5. **Automate your promo loop.** Repurpose clips, drop fresh CTAs into your subdomain, and turn newsletter paragraphs into blog intros.
 6. **Document the build.** Capture screenshots, jot process notes, and write recap posts so you have receipts for collaborations, clients, and future launches.
 
 ### Income plays we are watching
