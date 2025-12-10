@@ -84,21 +84,18 @@ export default function NewsletterManagement() {
   };
 
   const convertToHtml = (text: string): string => {
-    const emailHeader = `
-                <!-- Branding Header -->
-                <tr>
-                  <td align="left" style="padding: 0 0 30px 0; background-color: #000000 !important;">
-                    <img src="https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
-                  </td>
-                </tr>
-    `;
-    // Convert plain text to HTML with proper styling
+    // Convert plain text to HTML with proper styling (content only)
     const paragraphs = text.split('\n\n').filter(p => p.trim());
     const htmlParagraphs = paragraphs.map(p => {
       const lines = p.split('\n').filter(l => l.trim());
       return lines.map(line => `<p style="color: #ffffff !important; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; background-color: #000000 !important;">${line.trim()}</p>`).join('');
     });
 
+    return htmlParagraphs.join('');
+  };
+
+  const buildPreviewHtml = (bodyHtml: string): string => {
+    const previewBody = bodyHtml || '<p style="color: #ffffff !important; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left !important;">Start writing your newsletter content…</p>';
     return `
       <!DOCTYPE html>
       <html>
@@ -106,30 +103,33 @@ export default function NewsletterManagement() {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-          body { background-color: #000000 !important; margin: 0 !important; padding: 0 !important; }
-          table { background-color: #000000 !important; }
+          body { background-color: #000000 !important; margin: 0 !important; padding: 0 !important; font-family: Arial, sans-serif; }
+          table { background-color: #000000 !important; border-collapse: collapse !important; }
           td { background-color: #000000 !important; }
         </style>
       </head>
       <body style="margin: 0 !important; padding: 0 !important; background-color: #000000 !important; font-family: Arial, sans-serif;">
         <table role="presentation" style="width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 !important; padding: 0 !important;">
           <tr>
-            <td align="center" style="padding: 40px 20px !important; background-color: #000000 !important;">
-              <table role="presentation" style="max-width: 600px !important; width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 auto !important;">
-                ${emailHeader}
-                <!-- Main Content -->
+            <td align="center" style="padding: 40px 20px !important;">
+              <table role="presentation" style="max-width: 600px !important; width: 100% !important; margin: 0 auto !important;">
                 <tr>
-                  <td style="padding: 0 !important; color: #ffffff !important; background-color: #000000 !important;">
-                    <h1 style="color: #ffffff !important; font-size: 28px; font-weight: bold; margin: 0 0 20px 0; text-align: left; letter-spacing: 0.1em; background-color: #000000 !important;">
+                  <td align="left" style="padding: 0 0 30px 0 !important;">
+                    <img src="https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 0 !important; color: #ffffff !important;">
+                    <h1 style="color: #ffffff !important; font-size: 28px; font-weight: bold; margin: 0 0 20px 0; text-align: left; letter-spacing: 0.1em;">
                       CAN YOU SEE US?
                     </h1>
-                    ${htmlParagraphs.join('')}
-                    <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0; background-color: #000000 !important;">
-                    <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 0; text-align: left; background-color: #000000 !important;">
+                    ${previewBody}
+                    <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0;">
+                    <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 0;">
                       © ${new Date().getFullYear()} THE LOST+UNFOUNDS. All rights reserved.
                     </p>
-                    <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 20px 0 0 0; text-align: left; background-color: #000000 !important;">
-                      <a href="{{unsubscribe_url}}" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe</a>
+                    <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 10px 0 0 0;">
+                      <em>Unsubscribe link is automatically added per recipient.</em>
                     </p>
                   </td>
                 </tr>
@@ -177,7 +177,7 @@ export default function NewsletterManagement() {
         body: JSON.stringify({
           subject: subject.trim(),
           content: content.trim(),
-          contentHtml: contentHtml || convertToHtml(content),
+          contentHtml: (contentHtml || convertToHtml(content)).trim(),
         }),
       });
 
@@ -331,7 +331,7 @@ export default function NewsletterManagement() {
                 <div className="text-white/60 text-sm mb-2">Subject: {subject || '(No subject)'}</div>
                 <div 
                   className="text-white text-left"
-                  dangerouslySetInnerHTML={{ __html: contentHtml || convertToHtml(content) }}
+                  dangerouslySetInnerHTML={{ __html: buildPreviewHtml(contentHtml || convertToHtml(content)) }}
                   style={{ maxHeight: '400px', overflow: 'auto' }}
                 />
               </div>

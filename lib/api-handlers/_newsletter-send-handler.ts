@@ -12,6 +12,71 @@ interface ZohoEmailResult {
   error?: string
 }
 
+function extractBodyContent(contentHtml: string): string {
+  if (!contentHtml) {
+    return ''
+  }
+
+  const bodyMatch = contentHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/i)
+  if (bodyMatch && bodyMatch[1]) {
+    return bodyMatch[1].trim()
+  }
+
+  // If legacy templates wrapped content in a table, capture the first table block
+  const tableMatch = contentHtml.match(/<table[^>]*>([\s\S]*?)<\/table>/i)
+  if (tableMatch && tableMatch[0]) {
+    return tableMatch[0].trim()
+  }
+
+  return contentHtml.trim()
+}
+
+function generateNewsletterEmailHtml(bodyHtml: string, subscriberEmail: string): string {
+  const currentYear = new Date().getFullYear()
+  const unsubscribeUrl = `https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(subscriberEmail)}`
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { background-color: #000000 !important; margin: 0 !important; padding: 0 !important; font-family: Arial, sans-serif; }
+    table { background-color: #000000 !important; border-collapse: collapse !important; }
+    td { background-color: #000000 !important; }
+    a { color: rgba(255, 255, 255, 0.9); }
+  </style>
+</head>
+<body style="margin: 0 !important; padding: 0 !important; background-color: #000000 !important; font-family: Arial, sans-serif;">
+  <table role="presentation" style="width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 !important; padding: 0 !important;">
+    <tr>
+      <td align="center" style="padding: 40px 20px !important; background-color: #000000 !important;">
+        <table role="presentation" style="max-width: 600px !important; width: 100% !important; background-color: #000000 !important; margin: 0 auto !important;">
+          <tr>
+            <td align="left" style="padding: 0 0 30px 0 !important;">
+              <img src="https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 0 !important; color: #ffffff !important;">
+              ${bodyHtml || '<p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;">Stay tuned for updates from THE LOST+UNFOUNDS.</p>'}
+              <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0;">
+              <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 0 0 10px 0; text-align: left;">
+                © ${currentYear} THE LOST+UNFOUNDS. All rights reserved.
+              </p>
+              <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: left;">
+                <a href="${unsubscribeUrl}" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe from this newsletter</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+}
+
 /**
  * Get Zoho access token
  */
@@ -169,6 +234,8 @@ export default async function handler(
     return res.status(400).json({ error: 'Subject, content, and contentHtml are required' })
   }
 
+  const normalizedContentHtml = extractBodyContent(contentHtml)
+
   // If testEmail is provided, validate it
   if (testEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testEmail)) {
     return res.status(400).json({ error: 'Invalid testEmail format' })
@@ -227,7 +294,7 @@ export default async function handler(
         .update({
           subject,
           content,
-          content_html: contentHtml,
+          content_html: normalizedContentHtml,
           status: 'sending',
           total_subscribers: totalSubscribers,
           updated_at: new Date().toISOString(),
@@ -245,7 +312,7 @@ export default async function handler(
         .insert({
           subject,
           content,
-          content_html: contentHtml,
+          content_html: normalizedContentHtml,
           status: 'sending',
           total_subscribers: totalSubscribers,
         })
@@ -307,7 +374,7 @@ export default async function handler(
               actualFromEmail,
               subscriber.email,
               subject,
-              contentHtml
+              generateNewsletterEmailHtml(normalizedContentHtml, subscriber.email)
             )
 
             if (result.success) {
