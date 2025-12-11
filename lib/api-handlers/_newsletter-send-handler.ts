@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
+import { ensureBannerHtml } from './_zoho-email-utils'
 
 interface ZohoTokenResponse {
   access_token: string
@@ -360,6 +361,21 @@ export default async function handler(
     let emailsFailed = 0
     const errors: string[] = []
 
+    // Per-recipient HTML: inject unsubscribe link and ensure banner
+    const buildRecipientHtml = (rawHtml: string, email: string) => {
+      const unsubscribeUrl = `https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(email)}`
+      let html = rawHtml || ''
+      // Replace placeholder if present
+      html = html.replace(/{{\\s*unsubscribe_url\\s*}}/gi, unsubscribeUrl)
+      // If no placeholder, append a simple unsubscribe block before footer/hr if possible
+      if (!/https?:\\/\\/[^\\s"']*unsubscribe/i.test(html)) {
+        const unsubBlock = `<p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 20px 0 0 0; text-align: left; background-color: #000000 !important;"><a href="${unsubscribeUrl}" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe</a></p>`
+        const hrIdx = html.indexOf('<hr')
+        html = hrIdx >= 0 ? html.slice(0, hrIdx) + unsubBlock + html.slice(hrIdx) : html + unsubBlock
+      }
+      return ensureBannerHtml(html)
+    }
+
     // Send emails in batches to avoid rate limiting
     const batchSize = 10
     for (let i = 0; i < subscribers.length; i += batchSize) {
@@ -368,13 +384,14 @@ export default async function handler(
       await Promise.all(
         batch.map(async (subscriber) => {
           try {
+            const recipientHtml = buildRecipientHtml(contentHtml, subscriber.email)
             const result = await sendZohoEmail(
               accessToken,
               accountId,
               actualFromEmail,
               subscriber.email,
               subject,
-              generateNewsletterEmailHtml(normalizedContentHtml, subscriber.email)
+              recipientHtml
             )
 
             if (result.success) {

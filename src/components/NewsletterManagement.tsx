@@ -3,7 +3,7 @@
  * Allows admins to compose and send newsletters to subscribers
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, KeyboardEvent } from 'react';
 import { useToast } from './Toast';
 import { supabase } from '../lib/supabase';
 import { Mail, Send, Eye, Clock, CheckCircle, XCircle, Loader, Users, BarChart3, TrendingUp } from 'lucide-react';
@@ -32,6 +32,7 @@ export default function NewsletterManagement() {
   const [campaigns, setCampaigns] = useState<NewsletterCampaign[]>([]);
   const [showPreview, setShowPreview] = useState(false);
   const [loadingCampaigns, setLoadingCampaigns] = useState(true);
+  const [expandedCampaignId, setExpandedCampaignId] = useState<string | null>(null);
   const [stats, setStats] = useState({
     totalSent: 0,
     totalCampaigns: 0,
@@ -91,11 +92,17 @@ export default function NewsletterManagement() {
       return lines.map(line => `<p style="color: #ffffff !important; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; background-color: #000000 !important;">${line.trim()}</p>`).join('');
     });
 
+<<<<<<< HEAD
     return htmlParagraphs.join('');
   };
 
   const buildPreviewHtml = (bodyHtml: string): string => {
     const previewBody = bodyHtml || '<p style="color: #ffffff !important; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left !important;">Start writing your newsletter content…</p>';
+=======
+    const gettingStartedUrl = 'https://www.thelostandunfounds.com/blog/getting-started';
+    const bannerUrl = 'https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png';
+
+>>>>>>> 882fa8b (Ensure outgoing emails add banner and unsubscribe link)
     return `
       <!DOCTYPE html>
       <html>
@@ -111,11 +118,20 @@ export default function NewsletterManagement() {
       <body style="margin: 0 !important; padding: 0 !important; background-color: #000000 !important; font-family: Arial, sans-serif;">
         <table role="presentation" style="width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 !important; padding: 0 !important;">
           <tr>
+<<<<<<< HEAD
             <td align="center" style="padding: 40px 20px !important;">
               <table role="presentation" style="max-width: 600px !important; width: 100% !important; margin: 0 auto !important;">
                 <tr>
                   <td align="left" style="padding: 0 0 30px 0 !important;">
                     <img src="https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
+=======
+            <td align="center" style="padding: 40px 20px !important; background-color: #000000 !important;">
+              <table role="presentation" style="max-width: 600px !important; width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 auto !important;">
+                <!-- Banner -->
+                <tr>
+                  <td align="center" style="padding: 0 0 30px 0; background-color: #000000 !important;">
+                    <img src="${bannerUrl}" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block; margin: 0 auto;" />
+>>>>>>> 882fa8b (Ensure outgoing emails add banner and unsubscribe link)
                   </td>
                 </tr>
                 <tr>
@@ -123,9 +139,20 @@ export default function NewsletterManagement() {
                     <h1 style="color: #ffffff !important; font-size: 28px; font-weight: bold; margin: 0 0 20px 0; text-align: left; letter-spacing: 0.1em;">
                       CAN YOU SEE US?
                     </h1>
+<<<<<<< HEAD
                     ${previewBody}
                     <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0;">
                     <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 0;">
+=======
+                    ${htmlParagraphs.join('')}
+                    <div style="margin: 30px 0;">
+                      <a href="${gettingStartedUrl}" style="display: inline-block; padding: 14px 20px; background-color: #ffffff; color: #000000; text-decoration: none; font-weight: bold; font-size: 16px; font-family: Arial, sans-serif; border: 2px solid #ffffff; letter-spacing: 0.05em;">
+                        View the Getting Started Guide →
+                      </a>
+                    </div>
+                    <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0; background-color: #000000 !important;">
+                    <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 0; text-align: left; background-color: #000000 !important;">
+>>>>>>> 882fa8b (Ensure outgoing emails add banner and unsubscribe link)
                       © ${new Date().getFullYear()} THE LOST+UNFOUNDS. All rights reserved.
                     </p>
                     <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 10px 0 0 0;">
@@ -206,6 +233,17 @@ export default function NewsletterManagement() {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
+  };
+
+  const toggleCampaign = (id: string) => {
+    setExpandedCampaignId((current) => (current === id ? null : id));
+  };
+
+  const handleCampaignKeyDown = (event: KeyboardEvent<HTMLDivElement>, id: string) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      toggleCampaign(id);
+    }
   };
 
   return (
@@ -372,7 +410,12 @@ export default function NewsletterManagement() {
             {campaigns.map((campaign) => (
               <div
                 key={campaign.id}
-                className="bg-white/5 border border-white rounded-none p-4 hover:bg-white/10 transition"
+                className="bg-white/5 border border-white rounded-none p-4 hover:bg-white/10 transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/40"
+                role="button"
+                tabIndex={0}
+                aria-expanded={expandedCampaignId === campaign.id}
+                onClick={() => toggleCampaign(campaign.id)}
+                onKeyDown={(event) => handleCampaignKeyDown(event, campaign.id)}
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1">
@@ -409,6 +452,29 @@ export default function NewsletterManagement() {
                     {campaign.sent_at ? formatDate(campaign.sent_at) : formatDate(campaign.created_at)}
                   </span>
                 </div>
+                {expandedCampaignId === campaign.id && (
+                  <div className="mt-3 pt-3 border-t border-white/10 space-y-3">
+                    <div className="text-white text-sm leading-relaxed whitespace-pre-wrap">
+                      {campaign.content}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm text-white/70">
+                      <div className="bg-black/40 border border-white/10 p-3 rounded-none">
+                        <div className="text-white/50">Subject</div>
+                        <div className="text-white font-medium">{campaign.subject}</div>
+                      </div>
+                      <div className="bg-black/40 border border-white/10 p-3 rounded-none">
+                        <div className="text-white/50">Sent</div>
+                        <div className="text-white font-medium">
+                          {campaign.sent_at ? formatDate(campaign.sent_at) : 'Draft'}
+                        </div>
+                      </div>
+                      <div className="bg-black/40 border border-white/10 p-3 rounded-none">
+                        <div className="text-white/50">Status</div>
+                        <div className="text-white font-medium capitalize">{campaign.status}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

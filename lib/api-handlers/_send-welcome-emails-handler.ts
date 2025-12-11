@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
+import { ensureBannerHtml } from './_zoho-email-utils'
 
 interface ZohoTokenResponse {
   access_token: string
@@ -103,6 +104,8 @@ async function sendZohoEmail(
 ): Promise<{ success: boolean; error?: string }> {
   const mailApiUrl = `https://mail.zoho.com/api/accounts/${accountId}/messages`
 
+  const finalHtml = ensureBannerHtml(htmlContent)
+
   const emailResponse = await fetch(mailApiUrl, {
     method: 'POST',
     headers: {
@@ -113,7 +116,7 @@ async function sendZohoEmail(
       fromAddress: fromEmail,
       toAddress: toEmail,
       subject: subject,
-      content: htmlContent,
+      content: finalHtml,
       mailFormat: 'html',
     }),
   })
