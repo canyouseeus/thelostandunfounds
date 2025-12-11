@@ -215,6 +215,7 @@ export default async function handler(
           <div class="container">
             <h1>Error</h1>
             <p>An error occurred while processing your unsubscribe request. Please try again later.</p>
+            <p style="color: rgba(255,255,255,0.6); font-size: 12px;">${error?.message || 'Unknown error'}</p>
           </div>
         </body>
         </html>
