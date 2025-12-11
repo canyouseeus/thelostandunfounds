@@ -394,7 +394,7 @@ export default async function handler(
     let emailsFailed = 0
     const errors: string[] = []
 
-    // Per-recipient HTML: inject unsubscribe link and ensure banner
+    // Per-recipient HTML: inject unsubscribe link (skip banner - content already has one)
     const buildRecipientHtml = (rawHtml: string, email: string) => {
       const unsubscribeUrl = `https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(email)}`
       let html = rawHtml || ''
@@ -403,13 +403,16 @@ export default async function handler(
       // Replace placeholders in both text and href (no escaped backslashes so regex matches)
       html = html.replace(/{{\s*unsubscribe_url\s*}}/gi, unsubscribeUrl)
       html = html.replace(/href=["']\s*{{\s*unsubscribe_url\s*}}["']/gi, `href="${unsubscribeUrl}"`)
-      // If no placeholder, append a simple unsubscribe block before footer/hr if possible
-      if (!/https?:\\/\\/[^\\s"']*unsubscribe/i.test(html)) {
+      // Only add unsubscribe if content has NO unsubscribe link at all
+      // Check for both the word "unsubscribe" in an href AND as link text
+      const hasUnsubscribeLink = /href=["'][^"']*unsubscribe/i.test(html) || />Unsubscribe<\/a>/i.test(html)
+      if (!hasUnsubscribeLink) {
         const unsubBlock = `<p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 20px 0 0 0; text-align: left; background-color: #000000 !important;"><a href="${unsubscribeUrl}" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe</a></p>`
         const hrIdx = html.indexOf('<hr')
         html = hrIdx >= 0 ? html.slice(0, hrIdx) + unsubBlock + html.slice(hrIdx) : html + unsubBlock
       }
-      return ensureBannerHtml(html)
+      // Don't add banner - content from NewsletterManagement already has proper banner
+      return html
     }
 
     // Send emails in batches to avoid rate limiting
