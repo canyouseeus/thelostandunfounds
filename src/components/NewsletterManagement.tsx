@@ -85,24 +85,18 @@ export default function NewsletterManagement() {
   };
 
   const convertToHtml = (text: string): string => {
-    // Convert plain text to HTML with proper styling (content only)
-    const paragraphs = text.split('\n\n').filter(p => p.trim());
+    const paragraphs = text.split('
+
+').filter(p => p.trim());
     const htmlParagraphs = paragraphs.map(p => {
-      const lines = p.split('\n').filter(l => l.trim());
+      const lines = p.split('
+').filter(l => l.trim());
       return lines.map(line => `<p style="color: #ffffff !important; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; background-color: #000000 !important;">${line.trim()}</p>`).join('');
     });
 
-<<<<<<< HEAD
-    return htmlParagraphs.join('');
-  };
-
-  const buildPreviewHtml = (bodyHtml: string): string => {
-    const previewBody = bodyHtml || '<p style="color: #ffffff !important; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left !important;">Start writing your newsletter content…</p>';
-=======
     const gettingStartedUrl = 'https://www.thelostandunfounds.com/blog/getting-started';
-    const bannerUrl = 'https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png';
+    const bannerUrl = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='400'><rect width='100%25' height='100%25' fill='%23000'/><text x='50%25' y='50%25' fill='%23fff' font-family='Arial, sans-serif' font-size='48' font-weight='bold' text-anchor='middle' dominant-baseline='middle'>THE LOST+UNFOUNDS</text></svg>";
 
->>>>>>> 882fa8b (Ensure outgoing emails add banner and unsubscribe link)
     return `
       <!DOCTYPE html>
       <html>
@@ -118,32 +112,18 @@ export default function NewsletterManagement() {
       <body style="margin: 0 !important; padding: 0 !important; background-color: #000000 !important; font-family: Arial, sans-serif;">
         <table role="presentation" style="width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 !important; padding: 0 !important;">
           <tr>
-<<<<<<< HEAD
-            <td align="center" style="padding: 40px 20px !important;">
-              <table role="presentation" style="max-width: 600px !important; width: 100% !important; margin: 0 auto !important;">
-                <tr>
-                  <td align="left" style="padding: 0 0 30px 0 !important;">
-                    <img src="https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
-=======
             <td align="center" style="padding: 40px 20px !important; background-color: #000000 !important;">
               <table role="presentation" style="max-width: 600px !important; width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 auto !important;">
-                <!-- Banner -->
                 <tr>
                   <td align="center" style="padding: 0 0 30px 0; background-color: #000000 !important;">
                     <img src="${bannerUrl}" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block; margin: 0 auto;" />
->>>>>>> 882fa8b (Ensure outgoing emails add banner and unsubscribe link)
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding: 0 !important; color: #ffffff !important;">
-                    <h1 style="color: #ffffff !important; font-size: 28px; font-weight: bold; margin: 0 0 20px 0; text-align: left; letter-spacing: 0.1em;">
-                      CAN YOU SEE US?
+                  <td style="padding: 0 !important; color: #ffffff !important; background-color: #000000 !important;">
+                    <h1 style="color: #ffffff !important; font-size: 28px; font-weight: bold; margin: 0 0 20px 0; text-align: left; letter-spacing: 0.1em; background-color: #000000 !important;">
+                      THE LOST+UNFOUNDS
                     </h1>
-<<<<<<< HEAD
-                    ${previewBody}
-                    <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0;">
-                    <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 0;">
-=======
                     ${htmlParagraphs.join('')}
                     <div style="margin: 30px 0;">
                       <a href="${gettingStartedUrl}" style="display: inline-block; padding: 14px 20px; background-color: #ffffff; color: #000000; text-decoration: none; font-weight: bold; font-size: 16px; font-family: Arial, sans-serif; border: 2px solid #ffffff; letter-spacing: 0.05em;">
@@ -152,11 +132,10 @@ export default function NewsletterManagement() {
                     </div>
                     <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0; background-color: #000000 !important;">
                     <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 0; text-align: left; background-color: #000000 !important;">
->>>>>>> 882fa8b (Ensure outgoing emails add banner and unsubscribe link)
                       © ${new Date().getFullYear()} THE LOST+UNFOUNDS. All rights reserved.
                     </p>
-                    <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 10px 0 0 0;">
-                      <em>Unsubscribe link is automatically added per recipient.</em>
+                    <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 20px 0 0 0; text-align: left; background-color: #000000 !important;">
+                      <a href="https://www.thelostandunfounds.com/unsubscribe" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe</a>
                     </p>
                   </td>
                 </tr>
@@ -169,6 +148,9 @@ export default function NewsletterManagement() {
     `;
   };
 
+  const buildPreviewHtml = (bodyHtml: string): string => {
+    return convertToHtml(bodyHtml || 'Start writing your newsletter content…');
+  };
   const handleContentChange = (value: string) => {
     setContent(value);
     setContentHtml(convertToHtml(value));
