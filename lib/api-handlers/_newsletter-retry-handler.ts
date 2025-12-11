@@ -180,6 +180,7 @@ export default async function handler(
 
     // Get failed emails to retry
     let emailsToRetry: string[]
+    let isLegacyRetry = false
     
     if (emails && Array.isArray(emails) && emails.length > 0) {
       // Retry specific emails
@@ -197,10 +198,40 @@ export default async function handler(
       }
 
       emailsToRetry = failedLogs?.map(log => log.subscriber_email) || []
+      
+      // If no logs exist but campaign shows failed emails, this is a legacy campaign
+      // Get all current verified subscribers and retry sending to all of them
+      if (emailsToRetry.length === 0 && campaign.emails_failed > 0) {
+        isLegacyRetry = true
+        
+        // Get successfully sent emails from logs (if any exist)
+        const { data: sentLogs } = await supabase
+          .from('newsletter_send_logs')
+          .select('subscriber_email')
+          .eq('campaign_id', campaignId)
+          .eq('status', 'sent')
+        
+        const sentEmails = new Set(sentLogs?.map(log => log.subscriber_email) || [])
+        
+        // Get all current verified subscribers
+        const { data: allSubscribers, error: subsError } = await supabase
+          .from('newsletter_subscribers')
+          .select('email')
+          .eq('verified', true)
+        
+        if (subsError) {
+          throw subsError
+        }
+        
+        // Filter out those who already received the email
+        emailsToRetry = (allSubscribers || [])
+          .map(s => s.email)
+          .filter(email => !sentEmails.has(email))
+      }
     }
 
     if (emailsToRetry.length === 0) {
-      return res.status(400).json({ error: 'No failed emails to retry' })
+      return res.status(400).json({ error: 'No failed emails to retry. All subscribers may have already received this newsletter.' })
     }
 
     // Check Zoho configuration
@@ -243,28 +274,52 @@ export default async function handler(
               emailsSent++
               results.push({ email, status: 'sent' })
               
-              // Update log entry
-              await supabase
-                .from('newsletter_send_logs')
-                .update({
-                  status: 'sent',
-                  error_message: null,
-                  sent_at: new Date().toISOString()
-                })
-                .eq('campaign_id', campaignId)
-                .eq('subscriber_email', email)
+              // Upsert log entry (insert if not exists, update if exists)
+              if (isLegacyRetry) {
+                await supabase
+                  .from('newsletter_send_logs')
+                  .insert({
+                    campaign_id: campaignId,
+                    subscriber_email: email,
+                    status: 'sent',
+                    error_message: null,
+                    sent_at: new Date().toISOString()
+                  })
+              } else {
+                await supabase
+                  .from('newsletter_send_logs')
+                  .update({
+                    status: 'sent',
+                    error_message: null,
+                    sent_at: new Date().toISOString()
+                  })
+                  .eq('campaign_id', campaignId)
+                  .eq('subscriber_email', email)
+              }
             } else {
               emailsFailed++
               results.push({ email, status: 'failed', error: result.error })
               
-              // Update log entry with new error
-              await supabase
-                .from('newsletter_send_logs')
-                .update({
-                  error_message: result.error
-                })
-                .eq('campaign_id', campaignId)
-                .eq('subscriber_email', email)
+              // Upsert log entry with error
+              if (isLegacyRetry) {
+                await supabase
+                  .from('newsletter_send_logs')
+                  .insert({
+                    campaign_id: campaignId,
+                    subscriber_email: email,
+                    status: 'failed',
+                    error_message: result.error,
+                    sent_at: null
+                  })
+              } else {
+                await supabase
+                  .from('newsletter_send_logs')
+                  .update({
+                    error_message: result.error
+                  })
+                  .eq('campaign_id', campaignId)
+                  .eq('subscriber_email', email)
+              }
             }
           } catch (error: any) {
             emailsFailed++
