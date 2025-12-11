@@ -125,7 +125,7 @@ export default async function handler(
     // We'll set verified to false to keep a record
     const { error: updateError } = await supabase
       .from('newsletter_subscribers')
-      .update({ verified: false, unsubscribed_at: new Date().toISOString() })
+      .update({ verified: false })
       .eq('email', email.toLowerCase().trim())
 
     if (updateError) {
