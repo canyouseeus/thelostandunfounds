@@ -1,6 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
-import { ensureBannerHtml } from './_zoho-email-utils'
 
 interface ZohoTokenResponse {
   access_token: string
@@ -11,6 +10,40 @@ interface ZohoTokenResponse {
 interface ZohoEmailResult {
   success: boolean
   error?: string
+}
+
+const BANNER_URL =
+  "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='400'><rect width='100%25' height='100%25' fill='%23000'/><text x='50%25' y='50%25' fill='%23fff' font-family='Arial, sans-serif' font-size='48' font-weight='bold' text-anchor='middle' dominant-baseline='middle'>THE LOST+UNFOUNDS</text></svg>"
+
+function ensureBannerHtml(htmlContent: string): string {
+  const bannerBlock = `
+<div style="padding: 0 0 30px 0; background-color: #000000 !important; text-align: center;">
+  <img src="${BANNER_URL}" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block; margin: 0 auto;" />
+</div>`
+
+  const ensureShell = (html: string) => {
+    if (/<html[\s>]/i.test(html)) return html
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="margin:0; padding:0; background-color:#000000; font-family: Arial, sans-serif;">${html}</body></html>`
+  }
+
+  const insertAfterBody = (html: string) => {
+    const match = /<body[^>]*>/i.exec(html)
+    if (!match) return null
+    const idx = (match.index ?? 0) + match[0].length
+    return html.slice(0, idx) + bannerBlock + html.slice(idx)
+  }
+
+  let html = htmlContent || ''
+  if (html.includes(BANNER_URL)) {
+    return ensureShell(html)
+  }
+
+  const withBodyInsert = insertAfterBody(html)
+  if (withBodyInsert) {
+    return ensureShell(withBodyInsert)
+  }
+
+  return ensureShell(bannerBlock + html)
 }
 
 function extractBodyContent(contentHtml: string): string {
