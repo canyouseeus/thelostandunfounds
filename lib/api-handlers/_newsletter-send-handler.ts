@@ -369,6 +369,8 @@ export default async function handler(
       html = html.replace(/several\\s+integrations/gi, 'several iterations')
       // Replace placeholder if present
       html = html.replace(/{{\\s*unsubscribe_url\\s*}}/gi, unsubscribeUrl)
+      // If placeholder is still in href, swap it
+      html = html.replace(/href=["']\\s*{{\\s*unsubscribe_url\\s*}}["']/gi, `href="${unsubscribeUrl}"`)
       // If no placeholder, append a simple unsubscribe block before footer/hr if possible
       if (!/https?:\\/\\/[^\\s"']*unsubscribe/i.test(html)) {
         const unsubBlock = `<p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 20px 0 0 0; text-align: left; background-color: #000000 !important;"><a href="${unsubscribeUrl}" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe</a></p>`
