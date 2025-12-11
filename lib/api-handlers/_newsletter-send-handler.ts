@@ -367,9 +367,8 @@ export default async function handler(
       let html = rawHtml || ''
       // Copy hygiene: fix wording
       html = html.replace(/several\\s+integrations/gi, 'several iterations')
-      // Replace placeholder if present
+      // Replace placeholders in both text and href
       html = html.replace(/{{\\s*unsubscribe_url\\s*}}/gi, unsubscribeUrl)
-      // If placeholder is still in href, swap it
       html = html.replace(/href=["']\\s*{{\\s*unsubscribe_url\\s*}}["']/gi, `href="${unsubscribeUrl}"`)
       // If no placeholder, append a simple unsubscribe block before footer/hr if possible
       if (!/https?:\\/\\/[^\\s"']*unsubscribe/i.test(html)) {
