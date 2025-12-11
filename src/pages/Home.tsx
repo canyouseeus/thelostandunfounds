@@ -121,7 +121,8 @@ export default function Home() {
         clearInterval(typeInterval)
         setDisplayedText(text)
         setTypingComplete(true)
-        // Show signup form after typing completes
+        // Hide cursor and start expansion; then show signup shortly after
+        setShowCursor(false)
         setTimeout(() => {
           setShowSignup(true)
         }, 500)
@@ -133,22 +134,20 @@ export default function Home() {
     }
   }, [showTyping, text])
 
-  // Start growing text and add blur when signup appears
+  // Start growing text and add blur once typing completes (cursor disappears)
   useEffect(() => {
-    if (!showSignup) return
+    if (!typingComplete) return
     
-    // Start growing text and add blur when signup appears
     setTextBlur(2)
     const growStart = Date.now()
     const growInterval = setInterval(() => {
       const elapsed = Date.now() - growStart
-      // Grow continuously - no limit
       const scale = 1 + (elapsed / 10000) * 1
       setTextScale(scale)
     }, 16)
     
     return () => clearInterval(growInterval)
-  }, [showSignup])
+  }, [typingComplete])
 
   // Notify layout to fade header/nav in once the animation finishes
   useEffect(() => {
@@ -175,28 +174,6 @@ export default function Home() {
       </Helmet>
       <div className="h-screen bg-black flex flex-col overflow-hidden">
         <main className="flex-1 flex flex-col items-center justify-center relative h-full gap-8">
-          {/* Background text - grows and blurs behind signup form */}
-          <div 
-            className="center-text fixed text-base sm:text-2xl md:text-3xl"
-            style={{
-              left: '50%',
-              top: '50%',
-              transform: `translate(-50%, -50%) scale(${textScale})`,
-              filter: `blur(${textBlur}px)`,
-              transition: 'transform 0.1s linear, filter 0.5s ease-out',
-              zIndex: 1,
-              pointerEvents: 'none',
-              opacity: typingComplete ? 0.3 : 0,
-              padding: '0 1rem',
-              maxWidth: '100vw',
-              wordBreak: 'keep-all',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-            }}
-          >
-            {text}
-          </div>
-
           {/* Logo */}
           {showLogo && (
             <div 
@@ -227,19 +204,19 @@ export default function Home() {
             </div>
           )}
           
-          {/* Typing text - appears after logo fades out */}
+          {/* Typing text - expands after cursor disappears */}
           {showTyping && (
             <div 
               className="center-text fixed text-base sm:text-2xl md:text-3xl"
               style={{
-                opacity: showSignup ? 0 : 1,
-                visibility: showSignup ? 'hidden' : 'visible',
+                opacity: typingComplete ? 0.3 : 1,
                 left: '50%',
                 top: '50%',
-                transform: 'translate(-50%, -50%)',
+                transform: `translate(-50%, -50%) scale(${textScale})`,
+                filter: `blur(${textBlur}px)`,
                 zIndex: 1001,
-                transition: 'opacity 1.5s ease-in-out, visibility 0s linear 1.5s',
-                pointerEvents: showSignup ? 'none' : 'auto',
+                transition: 'opacity 1.5s ease-in-out, transform 0.1s linear, filter 0.5s ease-out',
+                pointerEvents: 'none',
                 willChange: 'opacity',
                 position: 'fixed',
                 padding: '0 1rem',

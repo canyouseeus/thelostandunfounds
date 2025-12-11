@@ -20,6 +20,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const [archivesMenuOpen, setArchivesMenuOpen] = useState(false)
+  const [homeHeaderReady, setHomeHeaderReady] = useState(location.pathname !== '/')
   const menuRef = useRef<HTMLDivElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const isOpeningModalRef = useRef(false)
@@ -33,19 +34,21 @@ export default function Layout({ children }: { children?: ReactNode }) {
   // Load user subdomain for profile link
   useEffect(() => {
     if (user) {
-      supabase
-        .from('user_subdomains')
-        .select('subdomain')
-        .eq('user_id', user.id)
-        .maybeSingle()
-        .then(({ data }) => {
+      const loadSubdomain = async () => {
+        try {
+          const { data } = await supabase
+            .from('user_subdomains')
+            .select('subdomain')
+            .eq('user_id', user.id)
+            .maybeSingle()
           if (data?.subdomain) {
-            setUserSubdomain(data.subdomain);
+            setUserSubdomain(data.subdomain)
           }
-        })
-        .catch(() => {
+        } catch {
           // Ignore errors
-        });
+        }
+      }
+      loadSubdomain()
     }
   }, [user]);
 
@@ -69,6 +72,22 @@ export default function Layout({ children }: { children?: ReactNode }) {
       }
     }
   }, [])
+
+  useEffect(() => {
+    // On home, wait for the intro animation to finish before showing the header row
+    if (location.pathname !== '/') {
+      setHomeHeaderReady(true)
+      return
+    }
+
+    setHomeHeaderReady(false)
+    const handleAnimationComplete = () => setHomeHeaderReady(true)
+    window.addEventListener('home-animation-complete', handleAnimationComplete)
+
+    return () => {
+      window.removeEventListener('home-animation-complete', handleAnimationComplete)
+    }
+  }, [location.pathname])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -233,7 +252,14 @@ export default function Layout({ children }: { children?: ReactNode }) {
       <nav className="fixed top-0 left-0 w-full bg-black backdrop-blur-md z-[2147483647]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Top row: Title left, Menu button right */}
-          <div className="flex items-center justify-between h-16 gap-4 flex-nowrap">
+          <div
+            className="flex items-center justify-between h-16 gap-4 flex-nowrap"
+            style={{
+              opacity: homeHeaderReady ? 1 : 0,
+              pointerEvents: homeHeaderReady ? 'auto' : 'none',
+              transition: 'opacity 0.6s ease-in-out',
+            }}
+          >
             <div className="flex items-center gap-4 flex-shrink-0 leading-none h-12">
               <Link
                 to="/"
