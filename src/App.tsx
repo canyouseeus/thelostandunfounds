@@ -48,6 +48,7 @@ import SageModeReports from './pages/SageModeReports'
 import AffiliateDashboard from './pages/AffiliateDashboard'
 import KingMidasLeaderboard from './pages/KingMidasLeaderboard'
 import AdminAffiliates from './pages/AdminAffiliates'
+import Unsubscribe from './pages/Unsubscribe'
 
 function App() {
   return (
@@ -152,6 +153,9 @@ function App() {
           <Route index element={<Blog />} />
           <Route path="all" element={<AllArticles />} />
           <Route path=":slug" element={<BlogPost />} />
+        </Route>
+        <Route path="/unsubscribe" element={<Layout />}>
+          <Route index element={<Unsubscribe />} />
         </Route>
         <Route path="/book-club" element={<Layout />}>
           <Route index element={<BookClub />} />

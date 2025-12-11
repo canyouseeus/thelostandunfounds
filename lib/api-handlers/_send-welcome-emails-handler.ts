@@ -197,7 +197,7 @@ function generateWelcomeEmailHtml(userName: string, gettingStartedUrl: string, u
                 © ${currentYear} THE LOST+UNFOUNDS. All rights reserved.
               </p>
               <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: left; font-family: Arial, sans-serif;">
-                <a href="https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(userEmail || '')}" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe from emails</a>
+                <a href="https://www.thelostandunfounds.com/unsubscribe" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe from emails</a>
               </p>
             </td>
           </tr>
