@@ -85,12 +85,9 @@ export default function NewsletterManagement() {
   };
 
   const convertToHtml = (text: string): string => {
-    const paragraphs = text.split('
-
-').filter(p => p.trim());
+    const paragraphs = text.split('\n\n').filter(p => p.trim());
     const htmlParagraphs = paragraphs.map(p => {
-      const lines = p.split('
-').filter(l => l.trim());
+      const lines = p.split('\n').filter(l => l.trim());
       return lines.map(line => `<p style="color: #ffffff !important; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; background-color: #000000 !important;">${line.trim()}</p>`).join('');
     });
 
