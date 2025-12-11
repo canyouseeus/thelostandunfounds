@@ -366,10 +366,10 @@ export default async function handler(
       const unsubscribeUrl = `https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(email)}`
       let html = rawHtml || ''
       // Copy hygiene: fix wording
-      html = html.replace(/several\\s+integrations/gi, 'several iterations')
-      // Replace placeholders in both text and href
-      html = html.replace(/{{\\s*unsubscribe_url\\s*}}/gi, unsubscribeUrl)
-      html = html.replace(/href=["']\\s*{{\\s*unsubscribe_url\\s*}}["']/gi, `href="${unsubscribeUrl}"`)
+      html = html.replace(/several\s+integrations/gi, 'several iterations')
+      // Replace placeholders in both text and href (no escaped backslashes so regex matches)
+      html = html.replace(/{{\s*unsubscribe_url\s*}}/gi, unsubscribeUrl)
+      html = html.replace(/href=["']\s*{{\s*unsubscribe_url\s*}}["']/gi, `href="${unsubscribeUrl}"`)
       // If no placeholder, append a simple unsubscribe block before footer/hr if possible
       if (!/https?:\\/\\/[^\\s"']*unsubscribe/i.test(html)) {
         const unsubBlock = `<p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 20px 0 0 0; text-align: left; background-color: #000000 !important;"><a href="${unsubscribeUrl}" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe</a></p>`
