@@ -365,6 +365,8 @@ export default async function handler(
     const buildRecipientHtml = (rawHtml: string, email: string) => {
       const unsubscribeUrl = `https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(email)}`
       let html = rawHtml || ''
+      // Copy hygiene: fix wording
+      html = html.replace(/several\\s+integrations/gi, 'several iterations')
       // Replace placeholder if present
       html = html.replace(/{{\\s*unsubscribe_url\\s*}}/gi, unsubscribeUrl)
       // If no placeholder, append a simple unsubscribe block before footer/hr if possible
