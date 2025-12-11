@@ -121,11 +121,14 @@ export default async function handler(
       return res.status(404).json({ error: 'Email not found in subscribers list' })
     }
 
-    // Unsubscribe the user (set verified to false or delete)
+    // Unsubscribe the user (set verified to false and track unsubscribe date)
     // We'll set verified to false to keep a record
     const { error: updateError } = await supabase
       .from('newsletter_subscribers')
-      .update({ verified: false })
+      .update({ 
+        verified: false,
+        unsubscribed_at: new Date().toISOString()
+      })
       .eq('email', email.toLowerCase().trim())
 
     if (updateError) {

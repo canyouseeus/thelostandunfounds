@@ -120,3 +120,18 @@ For detailed verification workflow and code examples, see: `.cursor/rules/deploy
 - All formatting is automatic based on content structure
 
 **For complete documentation, see: `BLOG_POST_STYLE_GUIDE.md`**
+
+## EMAIL SENDING RULE - CRITICAL
+- NEVER respond that you cannot send email for THE LOST+UNFOUNDS; use the existing Zoho Mail integrations.
+- Preferred test path: POST `https://www.thelostandunfounds.com/api/admin/send-welcome-emails` with body `{"testEmail":"target@example.com"}`.
+- Use shared helpers in `lib/api-handlers/_zoho-email-utils.ts` (or handlers that import it) to send mail.
+- If a send fails, surface the Zoho API error details (status/text) instead of declining.
+- When running locally, ensure env vars exist: `ZOHO_CLIENT_ID`, `ZOHO_CLIENT_SECRET`, `ZOHO_REFRESH_TOKEN`, and `ZOHO_FROM_EMAIL` (or `ZOHO_EMAIL`).
+
+## NEWSLETTER RESEND RULE - CRITICAL
+- Standard operating procedure to resend or test the latest newsletter:
+  1) Load Supabase envs (`.env.local`) and use `SUPABASE_SERVICE_ROLE_KEY` with `SUPABASE_URL` to query `newsletter_campaigns` ordered by `created_at` desc limit 1.
+  2) Inject the Getting Started CTA link (`https://www.thelostandunfounds.com/blog/getting-started`) into `content_html` before the footer/hr if not already present.
+  3) Send via POST `https://www.thelostandunfounds.com/api/newsletter/send` with `subject`, `content`, `contentHtml` (CTA-injected), and `testEmail` when testing.
+  4) For a full resend, omit `testEmail` to target all verified subscribers.
+  5) If envs are missing, load from `.env.local` with dotenv; do NOT claim inability—surface missing-env error only if loading fails.

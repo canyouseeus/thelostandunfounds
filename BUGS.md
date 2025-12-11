@@ -31,3 +31,7 @@ QR generator page existed but navigating to `/qr` returned a 404.
 
 
 
+
+
+
+

@@ -168,3 +168,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .json({ error: error?.message || 'Failed to send affiliate email campaign' })
   }
 }
+
+
+
+

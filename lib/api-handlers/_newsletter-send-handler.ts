@@ -261,7 +261,7 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { subject, content, contentHtml, campaignId, testEmail } = req.body
+  const { subject, content, contentHtml, campaignId, testEmail, scheduledFor } = req.body
 
   // Validate input
   if (!subject || !content || !contentHtml) {
@@ -275,6 +275,18 @@ export default async function handler(
     return res.status(400).json({ error: 'Invalid testEmail format' })
   }
 
+  // Validate scheduledFor if provided
+  let scheduledDate: Date | null = null
+  if (scheduledFor) {
+    scheduledDate = new Date(scheduledFor)
+    if (isNaN(scheduledDate.getTime())) {
+      return res.status(400).json({ error: 'Invalid scheduledFor date format' })
+    }
+    if (scheduledDate <= new Date()) {
+      return res.status(400).json({ error: 'Scheduled time must be in the future' })
+    }
+  }
+
   try {
     // Initialize Supabase client
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
@@ -286,14 +298,69 @@ export default async function handler(
 
     const supabase = createClient(supabaseUrl, supabaseKey)
 
+    // Get subscriber count for campaign record
+    const { count: subscriberCount, error: countError } = await supabase
+      .from('newsletter_subscribers')
+      .select('*', { count: 'exact', head: true })
+      .eq('verified', true)
+
+    if (countError) {
+      throw countError
+    }
+
+    const totalSubscribers = testEmail ? 1 : (subscriberCount || 0)
+
+    // If scheduling, create campaign and return early
+    if (scheduledDate && !testEmail) {
+      const campaignData: any = {
+        subject,
+        content,
+        content_html: normalizedContentHtml,
+        status: 'scheduled',
+        scheduled_for: scheduledDate.toISOString(),
+        total_subscribers: totalSubscribers,
+      }
+
+      let campaignRecord
+      if (campaignId) {
+        const { data, error } = await supabase
+          .from('newsletter_campaigns')
+          .update(campaignData)
+          .eq('id', campaignId)
+          .select()
+          .single()
+        if (error) throw error
+        campaignRecord = data
+      } else {
+        const { data, error } = await supabase
+          .from('newsletter_campaigns')
+          .insert(campaignData)
+          .select()
+          .single()
+        if (error) throw error
+        campaignRecord = data
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: `Newsletter scheduled for ${scheduledDate.toISOString()}`,
+        campaignId: campaignRecord.id,
+        scheduled: true,
+        scheduledFor: scheduledDate.toISOString(),
+        stats: {
+          totalSubscribers,
+          emailsSent: 0,
+          emailsFailed: 0,
+        },
+      })
+    }
+
     // If testEmail is provided, only send to that email
     let subscribers: { email: string }[]
-    let totalSubscribers: number
 
     if (testEmail) {
       // Test mode: only send to the specified email
       subscribers = [{ email: testEmail }]
-      totalSubscribers = 1
     } else {
       // Normal mode: get all verified subscribers
       const { data: subscribersData, error: subscribersError } = await supabase
@@ -310,7 +377,6 @@ export default async function handler(
       }
 
       subscribers = subscribersData
-      totalSubscribers = subscribersData.length
     }
 
     // Check Zoho configuration
@@ -417,6 +483,8 @@ export default async function handler(
 
     // Send emails in batches to avoid rate limiting
     const batchSize = 10
+    const sendLogs: { subscriber_email: string; status: string; error_message: string | null; sent_at: string | null }[] = []
+    
     for (let i = 0; i < subscribers.length; i += batchSize) {
       const batch = subscribers.slice(i, i + batchSize)
       
@@ -435,13 +503,33 @@ export default async function handler(
 
             if (result.success) {
               emailsSent++
+              sendLogs.push({
+                subscriber_email: subscriber.email,
+                status: 'sent',
+                error_message: null,
+                sent_at: new Date().toISOString()
+              })
             } else {
               emailsFailed++
-              errors.push(`${subscriber.email}: ${result.error || 'Unknown error'} (accountId: ${accountId}, fromEmail: ${actualFromEmail})`)
+              const errorMsg = result.error || 'Unknown error'
+              errors.push(`${subscriber.email}: ${errorMsg} (accountId: ${accountId}, fromEmail: ${actualFromEmail})`)
+              sendLogs.push({
+                subscriber_email: subscriber.email,
+                status: 'failed',
+                error_message: errorMsg,
+                sent_at: null
+              })
             }
           } catch (error: any) {
             emailsFailed++
-            errors.push(`${subscriber.email}: ${error.message || 'Unknown error'}`)
+            const errorMsg = error.message || 'Unknown error'
+            errors.push(`${subscriber.email}: ${errorMsg}`)
+            sendLogs.push({
+              subscriber_email: subscriber.email,
+              status: 'failed',
+              error_message: errorMsg,
+              sent_at: null
+            })
           }
         })
       )
@@ -450,6 +538,17 @@ export default async function handler(
       if (i + batchSize < subscribers.length) {
         await new Promise(resolve => setTimeout(resolve, 1000))
       }
+    }
+
+    // Insert send logs into database
+    if (sendLogs.length > 0) {
+      const logsToInsert = sendLogs.map(log => ({
+        campaign_id: campaignRecord.id,
+        ...log
+      }))
+      await supabase
+        .from('newsletter_send_logs')
+        .insert(logsToInsert)
     }
 
     // Update campaign with results
