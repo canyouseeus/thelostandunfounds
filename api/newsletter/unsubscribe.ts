@@ -5,57 +5,57 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
-  // Support both GET (for link clicks) and POST (for API calls)
-  if (req.method !== 'GET' && req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' })
-  }
-
-  // Get email from query params (GET) or body (POST)
-  const email = (req.method === 'GET' ? req.query.email : req.body?.email) as string
-
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    // If GET request with invalid email, show error page
-    if (req.method === 'GET') {
-      return res.status(400).send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Unsubscribe Error</title>
-          <style>
-            body { 
-              font-family: Arial, sans-serif; 
-              background-color: #000000; 
-              color: #ffffff; 
-              display: flex; 
-              align-items: center; 
-              justify-content: center; 
-              min-height: 100vh; 
-              margin: 0; 
-              padding: 20px; 
-            }
-            .container { 
-              max-width: 600px; 
-              text-align: center; 
-            }
-            h1 { color: #ffffff; }
-            p { color: rgba(255, 255, 255, 0.8); }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <h1>Invalid Unsubscribe Request</h1>
-            <p>Please use the unsubscribe link from your email.</p>
-          </div>
-        </body>
-        </html>
-      `)
-    }
-    return res.status(400).json({ error: 'Valid email is required' })
-  }
-
   try {
+    // Support both GET (for link clicks) and POST (for API calls)
+    if (req.method !== 'GET' && req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method not allowed' })
+    }
+
+    // Get email from query params (GET) or body (POST)
+    const email = (req.method === 'GET' ? req.query.email : req.body?.email) as string
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      // If GET request with invalid email, show error page
+      if (req.method === 'GET') {
+        return res.status(400).send(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Unsubscribe Error</title>
+            <style>
+              body { 
+                font-family: Arial, sans-serif; 
+                background-color: #000000; 
+                color: #ffffff; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                min-height: 100vh; 
+                margin: 0; 
+                padding: 20px; 
+              }
+              .container { 
+                max-width: 600px; 
+                text-align: center; 
+              }
+              h1 { color: #ffffff; }
+              p { color: rgba(255, 255, 255, 0.8); }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>Invalid Unsubscribe Request</h1>
+              <p>Please use the unsubscribe link from your email.</p>
+            </div>
+          </body>
+          </html>
+        `)
+      }
+      return res.status(400).json({ error: 'Valid email is required' })
+    }
+
     // Initialize Supabase client
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
@@ -179,8 +179,12 @@ export default async function handler(
   } catch (error: any) {
     console.error('Unsubscribe error:', error)
     
+    const errorMessage = error?.message || error?.toString() || 'Unknown error'
+    
     // If GET request, show error page
     if (req.method === 'GET') {
+      // Escape HTML to prevent XSS
+      const safeMessage = errorMessage.replace(/</g, '&lt;').replace(/>/g, '&gt;')
       return res.status(500).send(`
         <!DOCTYPE html>
         <html>
@@ -212,7 +216,7 @@ export default async function handler(
           <div class="container">
             <h1>Error</h1>
             <p>An error occurred while processing your unsubscribe request. Please try again later.</p>
-            <p style="color: rgba(255,255,255,0.6); font-size: 12px;">${error?.message || 'Unknown error'}</p>
+            <p style="color: rgba(255,255,255,0.6); font-size: 12px;">${safeMessage}</p>
           </div>
         </body>
         </html>
@@ -220,7 +224,7 @@ export default async function handler(
     }
     
     return res.status(500).json({
-      error: error.message || 'An error occurred while unsubscribing'
+      error: errorMessage
     })
   }
 }
