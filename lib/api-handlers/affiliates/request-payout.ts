@@ -59,11 +59,11 @@ async function findAffiliate(userId?: string, affiliateCode?: string | null) {
   return null;
 }
 
-async function getPayoutSettings(userId: string) {
+async function getPayoutSettings(affiliateId: string) {
   const { data, error } = await supabase
     .from('affiliate_payout_settings')
     .select('paypal_email, payment_threshold')
-    .eq('user_id', userId)
+    .eq('affiliate_id', affiliateId)
     .maybeSingle();
 
   if (error) {
@@ -124,7 +124,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Requested amount exceeds available earnings' });
     }
 
-    const payoutSettings = await getPayoutSettings(affiliate.user_id);
+    const payoutSettings = await getPayoutSettings(affiliate.id);
 
     if (!payoutSettings || !payoutSettings.paypal_email) {
       return res.status(400).json({ error: 'Set your PayPal email before requesting payouts' });
