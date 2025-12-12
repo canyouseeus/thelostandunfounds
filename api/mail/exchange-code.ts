@@ -23,7 +23,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Authorization code is required' });
   }
 
-  const redirectUri = 'https://www.thelostandunfounds.com/auth/callback';
+  const redirectUri = 'https://www.thelostandunfounds.com/zoho/callback';
 
   try {
     const response = await fetch('https://accounts.zoho.com/oauth/v2/token', {

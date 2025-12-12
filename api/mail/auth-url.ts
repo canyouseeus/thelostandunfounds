@@ -24,7 +24,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     'ZohoMail.messages.ALL'
   ].join(',');
 
-  const redirectUri = 'https://www.thelostandunfounds.com/auth/callback';
+  const redirectUri = 'https://www.thelostandunfounds.com/zoho/callback';
   
   const authUrl = `https://accounts.zoho.com/oauth/v2/auth?scope=${scopes}&client_id=${clientId}&response_type=code&access_type=offline&redirect_uri=${encodeURIComponent(redirectUri)}&prompt=consent`;
 
