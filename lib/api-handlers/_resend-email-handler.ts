@@ -11,7 +11,7 @@ import {
   generateNewsletterEmail, 
   generateTransactionalEmail,
   processEmailContent 
-} from '../email-template';
+} from '../email-template.js';
 
 interface ResendEmailParams {
   to: string | string[];

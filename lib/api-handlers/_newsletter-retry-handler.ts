@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
-import { processEmailContent } from '../email-template'
+import { processEmailContent } from '../email-template.js'
 
 interface ZohoTokenResponse {
   access_token: string

@@ -5,7 +5,7 @@
  * NOTE: Auth helpers are inlined to avoid Vercel bundler issues with cross-file imports
  */
 
-import { wrapEmailContent, BRAND } from '../email-template';
+import { wrapEmailContent, BRAND } from '../email-template.js';
 
 const ZOHO_MAIL_API = 'https://mail.zoho.com/api/accounts';
 const ZOHO_TOKEN_URL = 'https://accounts.zoho.com/oauth/v2/token';
