@@ -19,9 +19,10 @@ import {
   Edit,
   X,
   Save,
-  Users
+  Users,
+  LogIn
 } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import KingMidasTicker from '../components/KingMidasTicker'
 import EmployeeDiscount from '../components/affiliate/EmployeeDiscount'
 import RewardPointsBadge from '../components/affiliate/RewardPointsBadge'
@@ -29,6 +30,7 @@ import ReferralLink from '../components/affiliate/ReferralLink'
 import CustomerList from '../components/affiliate/CustomerList'
 import ReferralTree from '../components/affiliate/ReferralTree'
 import MLMEarningsTable from '../components/affiliate/MLMEarningsTable'
+import AffiliateCodeSetup from '../components/affiliate/AffiliateCodeSetup'
 
 interface DashboardData {
   affiliate: {
@@ -106,7 +108,7 @@ interface DashboardData {
 }
 
 export default function AffiliateDashboard() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -129,16 +131,57 @@ export default function AffiliateDashboard() {
   const [newCode, setNewCode] = useState('')
   const [codeError, setCodeError] = useState<string | null>(null)
   const [updatingCode, setUpdatingCode] = useState(false)
+  
+  // Affiliate state
+  const [affiliateCode, setAffiliateCode] = useState<string | null>(null)
+  const [isAffiliate, setIsAffiliate] = useState<boolean | null>(null)
+  const [checkingAffiliate, setCheckingAffiliate] = useState(true)
 
-  // For testing, use test affiliate code
-  const affiliateCode = 'KING01' // In production, get from user profile
-
+  // Check if user has an affiliate account
   useEffect(() => {
-    loadDashboard()
-    loadPayoutSettings()
-  }, [])
+    async function checkAffiliateStatus() {
+      if (authLoading) return
+      
+      if (!user) {
+        setCheckingAffiliate(false)
+        setLoading(false)
+        return
+      }
+
+      try {
+        const response = await fetch(`/api/affiliates/get-by-user?user_id=${user.id}`)
+        const result = await response.json()
+        
+        if (result.isAffiliate && result.affiliate) {
+          setAffiliateCode(result.affiliate.code)
+          setIsAffiliate(true)
+        } else {
+          setIsAffiliate(false)
+        }
+      } catch (err) {
+        console.error('Error checking affiliate status:', err)
+        setError('Failed to check affiliate status')
+      } finally {
+        setCheckingAffiliate(false)
+      }
+    }
+    
+    checkAffiliateStatus()
+  }, [user, authLoading])
+
+  // Load dashboard when we have an affiliate code
+  useEffect(() => {
+    if (affiliateCode && isAffiliate) {
+      loadDashboard()
+      loadPayoutSettings()
+    } else if (isAffiliate === false) {
+      setLoading(false)
+    }
+  }, [affiliateCode, isAffiliate])
 
   const loadDashboard = async () => {
+    if (!affiliateCode) return
+    
     try {
       setLoading(true)
       setError(null)
@@ -159,14 +202,14 @@ export default function AffiliateDashboard() {
           affiliate: {
             ...result.affiliate,
             // Merge MLM-specific affiliate fields
-            reward_points: mlmResult.affiliate.reward_points,
-            discount_credit_balance: mlmResult.affiliate.discount_credit_balance,
-            total_mlm_earnings: mlmResult.affiliate.total_mlm_earnings
+            reward_points: mlmResult.affiliate?.reward_points || 0,
+            discount_credit_balance: mlmResult.affiliate?.discount_credit_balance || 0,
+            total_mlm_earnings: mlmResult.affiliate?.total_mlm_earnings || 0
           },
           mlm: {
-            network: mlmResult.network,
-            earnings: mlmResult.earnings,
-            discount_code: mlmResult.discount_code
+            network: mlmResult.network || { total_customers: 0, level1_affiliates: 0, level2_affiliates: 0, total_network: 0 },
+            earnings: mlmResult.earnings || { mlm_level1: 0, mlm_level2: 0, total_mlm: 0 },
+            discount_code: mlmResult.discount_code || null
           }
         })
       }
@@ -177,6 +220,12 @@ export default function AffiliateDashboard() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Handler for when user creates an affiliate account
+  const handleAffiliateCreated = (code: string) => {
+    setAffiliateCode(code)
+    setIsAffiliate(true)
   }
 
 
@@ -283,6 +332,7 @@ export default function AffiliateDashboard() {
   }
 
   const copyReferralLink = () => {
+    if (!affiliateCode) return
     const referralLink = `${window.location.origin}/shop?ref=${affiliateCode}`
     navigator.clipboard.writeText(referralLink)
     setCopied(true)
@@ -372,6 +422,57 @@ export default function AffiliateDashboard() {
     return null
   }
 
+  // Show loading while checking auth
+  if (authLoading || checkingAffiliate) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-white" />
+      </div>
+    )
+  }
+
+  // Show login prompt if not logged in
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-black/50 border border-white/10 rounded-none p-8 text-center">
+          <LogIn className="w-16 h-16 text-white/60 mx-auto mb-6" />
+          <h1 className="text-2xl font-bold text-white mb-4">
+            Sign in to Access Your Affiliate Dashboard
+          </h1>
+          <p className="text-white/60 mb-6">
+            Join our affiliate program and earn 42% commission on every sale you refer!
+          </p>
+          <div className="space-y-3">
+            <Link
+              to="/login"
+              className="block w-full px-6 py-3 bg-white text-black font-semibold hover:bg-white/90 transition-colors"
+            >
+              Sign In
+            </Link>
+            <Link
+              to="/signup"
+              className="block w-full px-6 py-3 bg-black border border-white/20 text-white font-semibold hover:bg-white/10 transition-colors"
+            >
+              Create Account
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show affiliate setup form if user is not yet an affiliate
+  if (isAffiliate === false) {
+    return (
+      <div className="min-h-screen bg-black">
+        <KingMidasTicker />
+        <AffiliateCodeSetup onSuccess={handleAffiliateCreated} />
+      </div>
+    )
+  }
+
+  // Show loading while fetching dashboard data
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -475,7 +576,7 @@ export default function AffiliateDashboard() {
                 {copied ? 'Copied!' : 'Copy Referral Link'}
               </button>
               <Link
-                to={`/shop?ref=${affiliateCode}`}
+                to={`/shop?ref=${data.affiliate.code}`}
                 target="_blank"
                 className="flex items-center gap-2 px-4 py-2 bg-black/50 border border-white/10 hover:bg-black/70 transition-colors text-center justify-center"
               >
