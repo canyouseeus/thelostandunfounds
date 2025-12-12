@@ -255,6 +255,61 @@ export default function AdminAffiliates() {
     }
   };
 
+  const handleApprovePayout = async (payoutId: string) => {
+    try {
+      setActionMessage('Approving payout...');
+      await postJson('/api/admin/process-payouts', { requestIds: [payoutId], action: 'approve' });
+      await load();
+      setActionMessage('Payout approved. You can now pay via PayPal.');
+    } catch (err: any) {
+      setActionMessage(err.message || 'Failed to approve payout');
+    }
+  };
+
+  const handlePayViaPayPal = async (payoutIds: string[]) => {
+    if (!payoutIds.length) {
+      setActionMessage('No approved payouts selected');
+      return;
+    }
+    try {
+      setActionMessage('Sending payout via PayPal...');
+      const result = await postJson('/api/admin/process-payouts', { requestIds: payoutIds, action: 'pay-via-paypal' });
+      await load();
+      setActionMessage(`PayPal payout sent! Batch ID: ${result.batchId}, Total: $${result.totalAmount}`);
+    } catch (err: any) {
+      setActionMessage(err.message || 'Failed to send PayPal payout');
+    }
+  };
+
+  const handlePayAllApproved = async () => {
+    const approvedPayouts = data?.payoutRequests?.filter(p => p.status === 'approved') || [];
+    if (!approvedPayouts.length) {
+      setActionMessage('No approved payouts to pay');
+      return;
+    }
+    const confirmed = window.confirm(
+      `Send $${approvedPayouts.reduce((sum, p) => sum + (p.amount || 0), 0).toFixed(2)} to ${approvedPayouts.length} affiliate(s) via PayPal?`
+    );
+    if (!confirmed) return;
+    await handlePayViaPayPal(approvedPayouts.map(p => p.id));
+  };
+
+  const handleApproveAllPending = async () => {
+    const pendingPayouts = data?.payoutRequests?.filter(p => p.status === 'pending') || [];
+    if (!pendingPayouts.length) {
+      setActionMessage('No pending payouts to approve');
+      return;
+    }
+    try {
+      setActionMessage('Approving all pending payouts...');
+      await postJson('/api/admin/process-payouts', { requestIds: pendingPayouts.map(p => p.id), action: 'approve' });
+      await load();
+      setActionMessage(`${pendingPayouts.length} payout(s) approved. Ready to pay via PayPal.`);
+    } catch (err: any) {
+      setActionMessage(err.message || 'Failed to approve payouts');
+    }
+  };
+
   const handleEditAffiliate = async (affiliate: Affiliate, field: 'commission_rate' | 'payment_threshold' | 'paypal_email') => {
     const current = affiliate[field] ?? '';
     const label = field === 'commission_rate' ? 'Commission rate (%)' : field === 'payment_threshold' ? 'Payout threshold ($)' : 'PayPal email';
@@ -363,12 +418,18 @@ export default function AdminAffiliates() {
           </SectionWrapper>
 
           <SectionWrapper title="Payout Requests" description="Pending and recent payouts">
-            <div className="flex flex-wrap gap-2 mb-2">
+            <div className="flex flex-wrap gap-2 mb-4">
               <button
-                onClick={handleProcessAllPayouts}
-                className="px-3 py-2 text-sm bg-white text-black rounded-none hover:bg-white/80"
+                onClick={handleApproveAllPending}
+                className="px-3 py-2 text-sm border border-white/20 text-white rounded-none hover:border-white/60"
               >
-                Process All Pending
+                Approve All Pending
+              </button>
+              <button
+                onClick={handlePayAllApproved}
+                className="px-3 py-2 text-sm bg-blue-600 text-white rounded-none hover:bg-blue-700"
+              >
+                Pay All Approved via PayPal
               </button>
               <button
                 onClick={() => exportCsv(data?.payoutRequests || [], 'payout-requests')}
@@ -376,6 +437,9 @@ export default function AdminAffiliates() {
               >
                 Export CSV
               </button>
+            </div>
+            <div className="text-xs text-white/50 mb-3">
+              Workflow: Pending → Approve → Pay via PayPal → Paid
             </div>
             <div className="space-y-3">
               {data?.payoutRequests?.length ? (
@@ -407,12 +471,32 @@ export default function AdminAffiliates() {
                       {payout.paypal_payout_batch_id ? <div>Batch: {payout.paypal_payout_batch_id}</div> : null}
                       {payout.paypal_payout_item_id ? <div>Item: {payout.paypal_payout_item_id}</div> : null}
                       <div className="text-white/50">{payout.paypal_email}</div>
-                        <button
-                          onClick={() => handleRetryPayout(payout.id)}
-                          className="mt-2 px-2 py-1 text-xs border border-white/20 text-white rounded-none hover:border-white/60"
-                        >
-                          Retry
-                        </button>
+                      <div className="flex flex-wrap gap-1 justify-start sm:justify-end mt-2">
+                        {payout.status === 'pending' && (
+                          <button
+                            onClick={() => handleApprovePayout(payout.id)}
+                            className="px-2 py-1 text-xs bg-emerald-600 text-white rounded-none hover:bg-emerald-700"
+                          >
+                            Approve
+                          </button>
+                        )}
+                        {payout.status === 'approved' && (
+                          <button
+                            onClick={() => handlePayViaPayPal([payout.id])}
+                            className="px-2 py-1 text-xs bg-blue-600 text-white rounded-none hover:bg-blue-700"
+                          >
+                            Pay via PayPal
+                          </button>
+                        )}
+                        {(payout.status === 'pending' || payout.status === 'approved') && (
+                          <button
+                            onClick={() => handleRetryPayout(payout.id)}
+                            className="px-2 py-1 text-xs border border-white/20 text-white rounded-none hover:border-white/60"
+                          >
+                            Retry
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))

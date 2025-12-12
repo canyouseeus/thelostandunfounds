@@ -90,6 +90,8 @@ export default async function handler(
         return await handleUpdateAffiliate(req, res)
       case 'manual-commission':
         return await handleManualCommission(req, res)
+      case 'paypal-payouts':
+        return await handlePayPalPayouts(req, res)
       default:
         console.error('Admin route not found:', route, 'query:', req.query, 'url:', req.url)
         return res.status(404).json({ error: `Admin route not found: ${route}` })
@@ -201,5 +203,13 @@ async function handleNewBlogContributorNotification(req: VercelRequest, res: Ver
  */
 async function handleSendAffiliateEmail(req: VercelRequest, res: VercelResponse) {
   const handler = await import('../../lib/api-handlers/admin/send-affiliate-email.js')
+  return handler.default(req, res)
+}
+
+/**
+ * PayPal Payouts Handler
+ */
+async function handlePayPalPayouts(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/admin/paypal-payouts.js')
   return handler.default(req, res)
 }
