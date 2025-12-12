@@ -17,31 +17,13 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import {
-  getFolders,
-  getMessages,
-  getMessage,
-  sendMessage,
-  saveDraft,
-  moveMessage,
-  deleteMessage,
-  searchMessages,
-  getAttachment,
-  markAsRead,
-  markAsStarred,
-  SendEmailParams,
-  SearchParams
-} from '../../lib/api-handlers/_zoho-mail-handler';
 
 // Admin email check
 const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com'];
 
 function isAdminRequest(req: VercelRequest): boolean {
-  // Check for admin auth header or session
-  const authHeader = req.headers.authorization;
   const adminEmail = req.headers['x-admin-email'] as string;
   
-  // For now, check admin email header (should be set by frontend after auth check)
   if (adminEmail && ADMIN_EMAILS.includes(adminEmail.toLowerCase())) {
     return true;
   }
@@ -74,15 +56,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const pathSegments = (req.query.path as string[]) || [];
   const endpoint = pathSegments[0] || '';
   
+  console.log('Mail router - path:', pathSegments, 'endpoint:', endpoint, 'method:', req.method);
+
   try {
+    // Dynamic import of mail handler
+    const mailHandler = await import('../../lib/api-handlers/_zoho-mail-handler.js');
+    
     switch (endpoint) {
       // GET /api/mail/folders
       case 'folders': {
         if (req.method !== 'GET') {
           return res.status(405).json({ error: 'Method not allowed' });
         }
-        const result = await getFolders();
+        const result = await mailHandler.getFolders();
         if (!result.success) {
+          console.error('getFolders error:', result.error);
           return res.status(500).json({ error: result.error });
         }
         return res.status(200).json({ folders: result.folders });
@@ -100,8 +88,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const limit = parseInt(req.query.limit as string || '50', 10);
         const start = parseInt(req.query.start as string || '0', 10);
         
-        const result = await getMessages(folderId, limit, start);
+        const result = await mailHandler.getMessages(folderId, limit, start);
         if (!result.success) {
+          console.error('getMessages error:', result.error);
           return res.status(500).json({ error: result.error });
         }
         return res.status(200).json({ 
@@ -110,7 +99,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
 
-      // GET /api/mail/message/:id
+      // GET /api/mail/message/:id or DELETE /api/mail/message/:id
       case 'message': {
         const messageId = pathSegments[1];
         
@@ -118,8 +107,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           if (!messageId) {
             return res.status(400).json({ error: 'messageId is required' });
           }
-          const result = await getMessage(messageId);
+          const result = await mailHandler.getMessage(messageId);
           if (!result.success) {
+            console.error('getMessage error:', result.error);
             return res.status(500).json({ error: result.error });
           }
           return res.status(200).json({ message: result.message });
@@ -130,8 +120,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ error: 'messageId is required' });
           }
           const permanent = req.query.permanent === 'true';
-          const result = await deleteMessage(messageId, permanent);
+          const result = await mailHandler.deleteMessage(messageId, permanent);
           if (!result.success) {
+            console.error('deleteMessage error:', result.error);
             return res.status(500).json({ error: result.error });
           }
           return res.status(200).json({ success: true });
@@ -145,12 +136,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (req.method !== 'POST') {
           return res.status(405).json({ error: 'Method not allowed' });
         }
-        const body = req.body as SendEmailParams;
+        const body = req.body;
         if (!body.to || !body.subject) {
           return res.status(400).json({ error: 'to and subject are required' });
         }
-        const result = await sendMessage(body);
+        const result = await mailHandler.sendMessage(body);
         if (!result.success) {
+          console.error('sendMessage error:', result.error);
           return res.status(500).json({ error: result.error });
         }
         return res.status(200).json({ 
@@ -165,7 +157,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return res.status(405).json({ error: 'Method not allowed' });
         }
         const body = req.body;
-        const result = await saveDraft({
+        const result = await mailHandler.saveDraft({
           to: body.to || '',
           cc: body.cc,
           bcc: body.bcc,
@@ -174,6 +166,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           isHtml: body.isHtml
         });
         if (!result.success) {
+          console.error('saveDraft error:', result.error);
           return res.status(500).json({ error: result.error });
         }
         return res.status(200).json({ 
@@ -191,8 +184,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (!messageId || !folderId) {
           return res.status(400).json({ error: 'messageId and folderId are required' });
         }
-        const result = await moveMessage(messageId, folderId);
+        const result = await mailHandler.moveMessage(messageId, folderId);
         if (!result.success) {
+          console.error('moveMessage error:', result.error);
           return res.status(500).json({ error: result.error });
         }
         return res.status(200).json({ success: true });
@@ -207,8 +201,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (!messageId) {
           return res.status(400).json({ error: 'messageId is required' });
         }
-        const result = await markAsRead(messageId, isRead !== false);
+        const result = await mailHandler.markAsRead(messageId, isRead !== false);
         if (!result.success) {
+          console.error('markAsRead error:', result.error);
           return res.status(500).json({ error: result.error });
         }
         return res.status(200).json({ success: true });
@@ -223,8 +218,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (!messageId) {
           return res.status(400).json({ error: 'messageId is required' });
         }
-        const result = await markAsStarred(messageId, isStarred !== false);
+        const result = await mailHandler.markAsStarred(messageId, isStarred !== false);
         if (!result.success) {
+          console.error('markAsStarred error:', result.error);
           return res.status(500).json({ error: result.error });
         }
         return res.status(200).json({ success: true });
@@ -239,14 +235,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (!query) {
           return res.status(400).json({ error: 'q (query) is required' });
         }
-        const params: SearchParams = {
+        const params = {
           query,
           folderId: req.query.folderId as string,
           limit: parseInt(req.query.limit as string || '50', 10),
           start: parseInt(req.query.start as string || '0', 10)
         };
-        const result = await searchMessages(params);
+        const result = await mailHandler.searchMessages(params);
         if (!result.success) {
+          console.error('searchMessages error:', result.error);
           return res.status(500).json({ error: result.error });
         }
         return res.status(200).json({ messages: result.messages });
@@ -262,8 +259,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (!messageId || !attachmentId) {
           return res.status(400).json({ error: 'messageId and attachmentId are required' });
         }
-        const result = await getAttachment(messageId, attachmentId);
+        const result = await mailHandler.getAttachment(messageId, attachmentId);
         if (!result.success || !result.content) {
+          console.error('getAttachment error:', result.error);
           return res.status(500).json({ error: result.error });
         }
         
@@ -274,7 +272,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       default:
-        return res.status(404).json({ error: 'Endpoint not found' });
+        return res.status(404).json({ error: `Mail endpoint not found: ${endpoint}` });
     }
   } catch (error: any) {
     console.error('Mail API error:', error);
