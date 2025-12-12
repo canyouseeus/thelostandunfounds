@@ -1,11 +1,17 @@
 /**
  * Zoho Mail API Handler
  * Full webmail functionality: folders, messages, send, search, attachments
+ * 
+ * NOTE: Auth helpers are inlined to avoid Vercel bundler issues with cross-file imports
  */
 
-import { getZohoAuthContext, ZohoAuthContext, ensureBannerHtml } from './_zoho-email-utils.js';
-
 const ZOHO_MAIL_API = 'https://mail.zoho.com/api/accounts';
+const ZOHO_TOKEN_URL = 'https://accounts.zoho.com/oauth/v2/token';
+const ZOHO_ACCOUNTS_URL = 'https://mail.zoho.com/api/accounts';
+
+// Inline SVG banner to avoid remote fetch failures in email clients
+const BANNER_URL =
+  "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='400'><rect width='100%25' height='100%25' fill='%23000'/><text x='50%25' y='50%25' fill='%23fff' font-family='Arial, sans-serif' font-size='48' font-weight='bold' text-anchor='middle' dominant-baseline='middle'>THE LOST+UNFOUNDS</text></svg>";
 
 // Rate limit helper - 200ms delay between calls
 let lastApiCall = 0;
@@ -19,7 +25,148 @@ async function rateLimitedFetch(url: string, options: RequestInit): Promise<Resp
   return fetch(url, options);
 }
 
-// Types
+// ============================================================================
+// INLINED AUTH HELPERS (from _zoho-email-utils.ts to avoid bundler issues)
+// ============================================================================
+
+export interface ZohoAuthContext {
+  accessToken: string;
+  accountId: string;
+  fromEmail: string;
+}
+
+interface ZohoTokenResponse {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+}
+
+function getZohoEnv() {
+  const clientId = process.env.ZOHO_CLIENT_ID;
+  const clientSecret = process.env.ZOHO_CLIENT_SECRET;
+  const refreshToken = process.env.ZOHO_REFRESH_TOKEN;
+  const fromEmail = process.env.ZOHO_FROM_EMAIL || process.env.ZOHO_EMAIL;
+
+  if (!clientId || !clientSecret || !refreshToken || !fromEmail) {
+    throw new Error('Zoho Mail environment variables are not configured');
+  }
+
+  return { clientId, clientSecret, refreshToken, fromEmail };
+}
+
+export function ensureBannerHtml(htmlContent: string): string {
+  const bannerBlock = `
+<div style="padding: 0 0 30px 0; background-color: #000000 !important; text-align: center;">
+  <img src="${BANNER_URL}" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block; margin: 0 auto;" />
+</div>`;
+
+  const ensureShell = (html: string) => {
+    if (/<html[\s>]/i.test(html)) return html;
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="margin:0; padding:0; background-color:#000000; font-family: Arial, sans-serif;">${html}</body></html>`;
+  };
+
+  const insertAfterBody = (html: string) => {
+    const match = /<body[^>]*>/i.exec(html);
+    if (!match) return null;
+    const idx = (match.index ?? 0) + match[0].length;
+    return html.slice(0, idx) + bannerBlock + html.slice(idx);
+  };
+
+  let html = htmlContent || '';
+  if (html.includes(BANNER_URL)) {
+    return ensureShell(html);
+  }
+
+  const withBodyInsert = insertAfterBody(html);
+  if (withBodyInsert) {
+    return ensureShell(withBodyInsert);
+  }
+
+  return ensureShell(bannerBlock + html);
+}
+
+async function getZohoAccessToken(): Promise<string> {
+  const { clientId, clientSecret, refreshToken } = getZohoEnv();
+
+  const response = await fetch(ZOHO_TOKEN_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      refresh_token: refreshToken,
+      client_id: clientId,
+      client_secret: clientSecret,
+      grant_type: 'refresh_token'
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to refresh Zoho token: ${response.status} ${errorText}`);
+  }
+
+  const data: ZohoTokenResponse = await response.json();
+  return data.access_token;
+}
+
+async function getZohoAccountInfo(accessToken: string, fallbackEmail: string) {
+  try {
+    const response = await fetch(ZOHO_ACCOUNTS_URL, {
+      method: 'GET',
+      headers: { Authorization: `Zoho-oauthtoken ${accessToken}` }
+    });
+
+    if (response.ok) {
+      const json = await response.json();
+      const account = json?.data?.[0] || json?.accounts?.[0];
+
+      if (account) {
+        const accountId =
+          account.accountId ||
+          account.account_id ||
+          account.accountID ||
+          account.accountid ||
+          account.accountid_zuid ||
+          account.accountName ||
+          account.account_name;
+
+        let accountEmail = fallbackEmail;
+        if (typeof account.emailAddress === 'string') {
+          accountEmail = account.emailAddress;
+        } else if (typeof account.email === 'string') {
+          accountEmail = account.email;
+        } else if (typeof account.accountName === 'string') {
+          accountEmail = account.accountName;
+        }
+
+        if (accountId) {
+          return { accountId: String(accountId), email: accountEmail };
+        }
+      }
+    }
+  } catch (error) {
+    console.warn('Zoho account lookup failed, falling back to derived account id', error);
+  }
+
+  const fallbackAccountId = fallbackEmail.split('@')[0];
+  return { accountId: fallbackAccountId, email: fallbackEmail };
+}
+
+export async function getZohoAuthContext(): Promise<ZohoAuthContext> {
+  const { fromEmail } = getZohoEnv();
+  const accessToken = await getZohoAccessToken();
+  const accountInfo = await getZohoAccountInfo(accessToken, fromEmail);
+
+  return {
+    accessToken,
+    accountId: accountInfo.accountId,
+    fromEmail: accountInfo.email || fromEmail
+  };
+}
+
+// ============================================================================
+// MAIL TYPES
+// ============================================================================
+
 export interface MailFolder {
   folderId: string;
   folderName: string;
@@ -71,7 +218,7 @@ export interface SendEmailParams {
   isHtml?: boolean;
   attachments?: Array<{
     name: string;
-    content: string; // base64
+    content: string;
     contentType: string;
   }>;
   inReplyTo?: string;
@@ -83,6 +230,10 @@ export interface SearchParams {
   limit?: number;
   start?: number;
 }
+
+// ============================================================================
+// MAIL API FUNCTIONS
+// ============================================================================
 
 /**
  * Get all mail folders (Inbox, Sent, Drafts, Trash, etc.)
@@ -261,7 +412,6 @@ export async function sendMessage(
     if (params.bcc) body.bccAddress = params.bcc;
     if (params.inReplyTo) body.inReplyTo = params.inReplyTo;
     
-    // Handle attachments
     if (params.attachments && params.attachments.length > 0) {
       body.attachments = params.attachments.map(a => ({
         attachmentName: a.name,
@@ -340,7 +490,6 @@ export async function deleteMessage(
     const auth = await getZohoAuthContext();
     
     if (permanent) {
-      // Permanent delete
       const url = `${ZOHO_MAIL_API}/${auth.accountId}/messages/${messageId}`;
       const response = await rateLimitedFetch(url, {
         method: 'DELETE',
@@ -355,7 +504,6 @@ export async function deleteMessage(
         return { success: false, error: `Failed to delete message: ${response.status}` };
       }
     } else {
-      // Move to trash - first get trash folder ID
       const foldersResult = await getFolders();
       if (!foldersResult.success || !foldersResult.folders) {
         return { success: false, error: 'Could not find trash folder' };
@@ -484,7 +632,7 @@ export async function saveDraft(
       subject: params.subject || '',
       content: params.content || '',
       mailFormat: params.isHtml !== false ? 'html' : 'plaintext',
-      mode: 'draft' // Save as draft
+      mode: 'draft'
     };
 
     if (params.cc) body.ccAddress = params.cc;
@@ -579,6 +727,3 @@ export async function markAsStarred(
     return { success: false, error: error.message || 'Unknown error' };
   }
 }
-
-// Re-export auth context getter for API routes
-export { getZohoAuthContext };
