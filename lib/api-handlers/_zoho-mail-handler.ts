@@ -3,7 +3,7 @@
  * Full webmail functionality: folders, messages, send, search, attachments
  */
 
-import { getZohoAuthContext, ZohoAuthContext, ensureBannerHtml } from './_zoho-email-utils';
+import { getZohoAuthContext, ZohoAuthContext, ensureBannerHtml } from './_zoho-email-utils.js';
 
 const ZOHO_MAIL_API = 'https://mail.zoho.com/api/accounts';
 
