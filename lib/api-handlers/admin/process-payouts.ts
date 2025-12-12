@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import type { PostgrestError } from '@supabase/supabase-js'
 import { createServiceSupabaseClient } from '../_supabase-admin-client'
-import { createPayoutBatch, isPayoutsEnabled, getPayoutBatchStatus } from './paypal-payouts'
+import { createPayoutBatch, isPayoutsEnabled, getPayoutBatchStatus } from './paypal-payouts.js'
 
 const isMissingTable = (error?: PostgrestError | null) =>
   Boolean(error?.message && error.message.toLowerCase().includes('does not exist'))
