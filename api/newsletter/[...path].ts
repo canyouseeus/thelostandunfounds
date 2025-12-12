@@ -29,6 +29,8 @@ export default async function handler(
         return await handleNewsletterRetry(req, res)
       case 'logs':
         return await handleNewsletterLogs(req, res)
+      case 'delete':
+        return await handleNewsletterDelete(req, res)
       default:
         return res.status(404).json({ error: `Newsletter route not found: ${route}` })
     }
@@ -59,5 +61,11 @@ async function handleNewsletterRetry(req: VercelRequest, res: VercelResponse) {
 // Import and re-export newsletter-logs handler
 async function handleNewsletterLogs(req: VercelRequest, res: VercelResponse) {
   const handler = await import('../../lib/api-handlers/_newsletter-logs-handler.js')
+  return await handler.default(req, res)
+}
+
+// Import and re-export newsletter-delete handler
+async function handleNewsletterDelete(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/_newsletter-delete-handler.js')
   return await handler.default(req, res)
 }

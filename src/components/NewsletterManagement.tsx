@@ -137,12 +137,20 @@ export default function NewsletterManagement() {
     }
 
     try {
-      const { error } = await supabase
-        .from('newsletter_campaigns')
-        .delete()
-        .eq('id', campaignId);
+      // Use secure server-side API endpoint
+      const response = await fetch('/api/newsletter/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Email': 'thelostandunfounds@gmail.com',
+        },
+        body: JSON.stringify({ campaignIds: [campaignId] }),
+      });
 
-      if (error) throw error;
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete campaign');
+      }
       
       success('Campaign deleted');
       setCampaigns(campaigns.filter(c => c.id !== campaignId));
@@ -155,7 +163,7 @@ export default function NewsletterManagement() {
       setStats({ totalSent, totalCampaigns, avgRecipients });
     } catch (error: any) {
       console.error('Error deleting campaign:', error);
-      showError('Failed to delete campaign');
+      showError(error.message || 'Failed to delete campaign');
     }
   };
 
@@ -169,12 +177,21 @@ export default function NewsletterManagement() {
     }
 
     try {
-      const { error } = await supabase
-        .from('newsletter_campaigns')
-        .delete()
-        .neq('id', ''); // Delete all
+      // Use secure server-side API endpoint
+      const campaignIds = campaigns.map(c => c.id);
+      const response = await fetch('/api/newsletter/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Email': 'thelostandunfounds@gmail.com',
+        },
+        body: JSON.stringify({ campaignIds }),
+      });
 
-      if (error) throw error;
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete campaigns');
+      }
       
       success('All campaigns deleted');
       setCampaigns([]);
@@ -182,7 +199,7 @@ export default function NewsletterManagement() {
       setStats({ totalSent: 0, totalCampaigns: 0, avgRecipients: 0 });
     } catch (error: any) {
       console.error('Error deleting all campaigns:', error);
-      showError('Failed to delete campaigns');
+      showError(error.message || 'Failed to delete campaigns');
     }
   };
 
@@ -215,12 +232,20 @@ export default function NewsletterManagement() {
     }
 
     try {
-      const { error } = await supabase
-        .from('newsletter_campaigns')
-        .delete()
-        .in('id', Array.from(selectedCampaigns));
+      // Use secure server-side API endpoint
+      const response = await fetch('/api/newsletter/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Email': 'thelostandunfounds@gmail.com',
+        },
+        body: JSON.stringify({ campaignIds: Array.from(selectedCampaigns) }),
+      });
 
-      if (error) throw error;
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete campaigns');
+      }
       
       success(`${selectedCampaigns.size} campaign${selectedCampaigns.size > 1 ? 's' : ''} deleted`);
       const remaining = campaigns.filter(c => !selectedCampaigns.has(c.id));
@@ -234,7 +259,7 @@ export default function NewsletterManagement() {
       setStats({ totalSent, totalCampaigns, avgRecipients });
     } catch (error: any) {
       console.error('Error deleting selected campaigns:', error);
-      showError('Failed to delete selected campaigns');
+      showError(error.message || 'Failed to delete selected campaigns');
     }
   };
 
