@@ -248,10 +248,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     switch (action) {
       case 'status':
-        // Check if payouts is enabled
+        // Check if payouts is enabled with debug info
+        const { clientId, clientSecret, isSandbox } = getPayPalConfig()
+        const payoutsEnabledVar = process.env.PAYPAL_PAYOUTS_ENABLED
         return res.status(200).json({
           enabled: isPayoutsEnabled(),
           environment: process.env.PAYPAL_ENVIRONMENT || 'SANDBOX',
+          debug: {
+            payoutsEnabledVar: payoutsEnabledVar === 'true' ? 'set' : `missing or wrong (got: ${payoutsEnabledVar})`,
+            clientIdSet: !!clientId ? 'set' : 'missing',
+            clientSecretSet: !!clientSecret ? 'set' : 'missing',
+            isSandbox,
+          }
         })
       
       case 'batch-status':
