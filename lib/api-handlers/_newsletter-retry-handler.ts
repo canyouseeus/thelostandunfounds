@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
+import { processEmailContent } from '../email-template'
 
 interface ZohoTokenResponse {
   access_token: string
@@ -177,20 +178,10 @@ async function sendZohoEmail(
 
 /**
  * Build recipient HTML with unsubscribe link
+ * Uses centralized email template for consistency
  */
 function buildRecipientHtml(rawHtml: string, email: string): string {
-  const unsubscribeUrl = `https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(email)}`
-  let html = rawHtml || ''
-  html = html.replace(/several\s+integrations/gi, 'several iterations')
-  html = html.replace(/{{\s*unsubscribe_url\s*}}/gi, unsubscribeUrl)
-  html = html.replace(/href=["']\s*{{\s*unsubscribe_url\s*}}["']/gi, `href="${unsubscribeUrl}"`)
-  const hasUnsubscribeLink = /href=["'][^"']*unsubscribe/i.test(html) || />Unsubscribe<\/a>/i.test(html)
-  if (!hasUnsubscribeLink) {
-    const unsubBlock = `<p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 20px 0 0 0; text-align: left; background-color: #000000 !important;"><a href="${unsubscribeUrl}" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe</a></p>`
-    const hrIdx = html.indexOf('<hr')
-    html = hrIdx >= 0 ? html.slice(0, hrIdx) + unsubBlock + html.slice(hrIdx) : html + unsubBlock
-  }
-  return html
+  return processEmailContent(rawHtml, email)
 }
 
 export default async function handler(

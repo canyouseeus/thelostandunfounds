@@ -5,6 +5,8 @@
  * NOTE: Auth helpers are inlined to avoid Vercel bundler issues with cross-file imports
  */
 
+import { wrapEmailContent, BRAND } from '../email-template';
+
 const ZOHO_MAIL_API = 'https://mail.zoho.com/api/accounts';
 const ZOHO_TOKEN_URL = 'https://accounts.zoho.com/oauth/v2/token';
 const ZOHO_ACCOUNTS_URL = 'https://mail.zoho.com/api/accounts';
@@ -55,34 +57,11 @@ function getZohoEnv() {
 }
 
 export function ensureBannerHtml(htmlContent: string): string {
-  const bannerBlock = `
-<div style="padding: 0 0 30px 0; background-color: #000000 !important; text-align: center;">
-  <img src="${BANNER_URL}" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block; margin: 0 auto;" />
-</div>`;
-
-  const ensureShell = (html: string) => {
-    if (/<html[\s>]/i.test(html)) return html;
-    return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="margin:0; padding:0; background-color:#000000; font-family: Arial, sans-serif;">${html}</body></html>`;
-  };
-
-  const insertAfterBody = (html: string) => {
-    const match = /<body[^>]*>/i.exec(html);
-    if (!match) return null;
-    const idx = (match.index ?? 0) + match[0].length;
-    return html.slice(0, idx) + bannerBlock + html.slice(idx);
-  };
-
-  let html = htmlContent || '';
-  if (html.includes(BANNER_URL)) {
-    return ensureShell(html);
-  }
-
-  const withBodyInsert = insertAfterBody(html);
-  if (withBodyInsert) {
-    return ensureShell(withBodyInsert);
-  }
-
-  return ensureShell(bannerBlock + html);
+  // Use centralized email template for consistency
+  return wrapEmailContent(htmlContent, {
+    includeUnsubscribe: false,
+    includeFooter: false,
+  });
 }
 
 async function getZohoAccessToken(): Promise<string> {
