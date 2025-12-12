@@ -44,7 +44,8 @@ import {
   Send,
   FolderOpen,
   ArrowUp,
-  Maximize2
+  Maximize2,
+  Inbox
 } from 'lucide-react';
 import { LoadingSpinner } from '../components/Loading';
 import ErrorBoundary from '../components/ErrorBoundary';
@@ -66,6 +67,7 @@ import { AnimatedNumber } from '../components/ui/animated-number';
 import { cn } from '../components/ui/utils';
 import AdminUsersView from '../components/admin/AdminUsersView';
 import AdminSettingsView from '../components/admin/AdminSettingsView';
+import AdminMailView from '../components/admin/AdminMailView';
 import { ArrowLeft } from 'lucide-react';
 import AdminOverviewView from '../components/admin/AdminOverviewView';
 import { DashboardCharts } from '../components/admin/DashboardCharts';
@@ -151,7 +153,7 @@ export default function Admin() {
     pendingPayouts: number;
     totalMLMEarnings: number;
   } | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'subscriptions' | 'products' | 'settings' | 'blog' | 'newsletter' | 'submissions' | 'assets' | 'secret-santa' | 'affiliates' | null>(null);
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'subscriptions' | 'products' | 'settings' | 'blog' | 'newsletter' | 'submissions' | 'assets' | 'secret-santa' | 'affiliates' | 'mail' | null>(null);
   const [componentError, setComponentError] = useState<string | null>(null);
   
   const [allUsers, setAllUsers] = useState<RecentUser[]>([]);
@@ -1046,6 +1048,12 @@ export default function Admin() {
         </div>
       )}
 
+      {activeTab === 'mail' && (
+        <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Mail</div>}>
+          <AdminMailView onBack={() => setActiveTab(null)} />
+        </ErrorBoundary>
+      )}
+
       {activeTab === 'subscriptions' && (
         <div className="space-y-6">
            <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
@@ -1247,6 +1255,36 @@ export default function Admin() {
              {newestSubscribers.length === 0 && <p className="text-xs text-white/40">No recent subscribers</p>}
            </div>
         </AdminBentoCard>
+
+        {/* Webmail - 1x1 */}
+        <div 
+          onClick={() => setActiveTab('mail')} 
+          className="cursor-pointer"
+        >
+          <AdminBentoCard
+            title="Webmail"
+            icon={<Send className="w-4 h-4" />}
+            footer={
+              <span className="w-full text-center text-xs hover:text-white text-white/60">Open Inbox →</span>
+            }
+          >
+             <div className="flex flex-col h-full justify-center items-center text-center p-4">
+               <Inbox className="w-8 h-8 text-white/20 mb-3" />
+               <p className="text-xs text-white/60 mb-2">Full Zoho Mail Access</p>
+               <div className="flex gap-2">
+                 <div className="px-2 py-1 bg-white/5 border border-white/10 text-[10px] text-white/40">
+                   Inbox
+                 </div>
+                 <div className="px-2 py-1 bg-white/5 border border-white/10 text-[10px] text-white/40">
+                   Sent
+                 </div>
+                 <div className="px-2 py-1 bg-white/5 border border-white/10 text-[10px] text-white/40">
+                   Drafts
+                 </div>
+               </div>
+             </div>
+          </AdminBentoCard>
+        </div>
 
         {/* Settings - 1x1 */}
         <AdminBentoCard
