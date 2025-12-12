@@ -41,11 +41,11 @@ async function findAffiliateByUserId(userId: string) {
   return data;
 }
 
-async function getSettings(userId: string) {
+async function getSettings(affiliateId: string) {
   const { data, error } = await supabase
     .from('affiliate_payout_settings')
     .select('paypal_email, payment_threshold')
-    .eq('user_id', userId)
+    .eq('affiliate_id', affiliateId)
     .maybeSingle();
 
   if (error) {
@@ -62,18 +62,17 @@ async function getSettings(userId: string) {
   };
 }
 
-async function upsertSettings(userId: string, affiliateId: string, email: string, threshold: number) {
+async function upsertSettings(affiliateId: string, email: string, threshold: number) {
   const { data, error } = await supabase
     .from('affiliate_payout_settings')
     .upsert(
       {
-        user_id: userId,
         affiliate_id: affiliateId,
         paypal_email: email,
         payment_threshold: threshold,
         updated_at: new Date().toISOString()
       },
-      { onConflict: 'user_id' }
+      { onConflict: 'affiliate_id' }
     )
     .select('paypal_email, payment_threshold')
     .single();
@@ -109,7 +108,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (req.method === 'GET') {
-      const settings = await getSettings(userId);
+      const settings = await getSettings(affiliate.id);
       return res.status(200).json({ settings });
     }
 
@@ -130,7 +129,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const paymentThreshold = toMoney(rawThreshold);
 
-    const settings = await upsertSettings(userId, affiliate.id, paypalEmail, paymentThreshold);
+    const settings = await upsertSettings(affiliate.id, paypalEmail, paymentThreshold);
 
     return res.status(200).json({
       success: true,
