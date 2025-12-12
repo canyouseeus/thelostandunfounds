@@ -6,6 +6,13 @@
  * Much better than Zoho's ~50/day limit!
  */
 
+import { 
+  wrapEmailContent, 
+  generateNewsletterEmail, 
+  generateTransactionalEmail,
+  processEmailContent 
+} from '../email-template';
+
 interface ResendEmailParams {
   to: string | string[];
   subject: string;
@@ -163,4 +170,60 @@ export async function sendBatchEmails(
  */
 export function isResendConfigured(): boolean {
   return !!process.env.RESEND_API_KEY;
+}
+
+/**
+ * Send a newsletter email with standardized template
+ * Automatically wraps content with THE LOST+UNFOUNDS branding
+ */
+export async function sendNewsletterEmail(params: {
+  to: string;
+  subject: string;
+  content: string;
+  from?: string;
+  replyTo?: string;
+}): Promise<{ success: boolean; id?: string; error?: string }> {
+  const html = generateNewsletterEmail(params.content, params.to);
+  return sendEmail({
+    to: params.to,
+    subject: params.subject,
+    html,
+    from: params.from,
+    replyTo: params.replyTo,
+  });
+}
+
+/**
+ * Send a transactional email with standardized template
+ * (e.g., welcome emails, notifications - no unsubscribe link)
+ */
+export async function sendTransactionalEmail(params: {
+  to: string | string[];
+  subject: string;
+  content: string;
+  from?: string;
+  replyTo?: string;
+}): Promise<{ success: boolean; id?: string; error?: string }> {
+  const html = generateTransactionalEmail(params.content);
+  return sendEmail({
+    to: params.to,
+    subject: params.subject,
+    html,
+    from: params.from,
+    replyTo: params.replyTo,
+  });
+}
+
+/**
+ * Send batch newsletter emails with standardized template
+ */
+export async function sendBatchNewsletterEmails(
+  emails: Array<{ to: string; subject: string; content: string }>
+): Promise<{ success: boolean; results: Array<{ to: string; success: boolean; id?: string; error?: string }> }> {
+  const formattedEmails = emails.map(email => ({
+    to: email.to,
+    subject: email.subject,
+    html: generateNewsletterEmail(email.content, email.to),
+  }));
+  return sendBatchEmails(formattedEmails);
 }
