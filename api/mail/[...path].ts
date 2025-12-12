@@ -52,11 +52,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(403).json({ error: 'Admin access required' });
   }
 
-  // Parse path
-  const pathSegments = (req.query.path as string[]) || [];
+  // Parse path - handle both array and string formats
+  let pathSegments: string[] = [];
+  if (req.query.path) {
+    pathSegments = Array.isArray(req.query.path) ? req.query.path : [req.query.path];
+  } else {
+    // Fallback: extract from URL
+    const urlPath = req.url?.split('?')[0] || '';
+    const pathParts = urlPath.split('/').filter(p => p);
+    // Remove 'api' and 'mail' from the path
+    const mailIndex = pathParts.indexOf('mail');
+    if (mailIndex !== -1) {
+      pathSegments = pathParts.slice(mailIndex + 1);
+    }
+  }
   const endpoint = pathSegments[0] || '';
   
-  console.log('Mail router - path:', pathSegments, 'endpoint:', endpoint, 'method:', req.method);
+  console.log('Mail router - path:', pathSegments, 'endpoint:', endpoint, 'method:', req.method, 'url:', req.url);
 
   try {
     // Dynamic import of mail handler
