@@ -12,6 +12,56 @@ interface ZohoEmailResult {
   error?: string
 }
 
+interface ResendEmailResult {
+  success: boolean
+  id?: string
+  error?: string
+}
+
+// Check if Resend is configured
+function isResendConfigured(): boolean {
+  return !!process.env.RESEND_API_KEY
+}
+
+// Send email via Resend API
+async function sendResendEmail(
+  to: string,
+  subject: string,
+  html: string
+): Promise<ResendEmailResult> {
+  const apiKey = process.env.RESEND_API_KEY
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'THE LOST+UNFOUNDS <noreply@thelostandunfounds.com>'
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: fromEmail,
+        to: to,
+        subject: subject,
+        html: html,
+      }),
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      return { 
+        success: false, 
+        error: data.message || data.error?.message || `Resend error: ${response.status}` 
+      }
+    }
+
+    return { success: true, id: data.id }
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to send email' }
+  }
+}
+
 /**
  * Get Zoho access token
  */
@@ -234,26 +284,35 @@ export default async function handler(
       return res.status(400).json({ error: 'No failed emails to retry. All subscribers may have already received this newsletter.' })
     }
 
-    // Check Zoho configuration
-    const fromEmail = process.env.ZOHO_FROM_EMAIL || process.env.ZOHO_EMAIL
-    if (!fromEmail) {
-      return res.status(500).json({ error: 'Zoho email not configured' })
-    }
+    // Determine which email provider to use
+    const useResend = isResendConfigured()
+    console.log(`Retry using email provider: ${useResend ? 'Resend' : 'Zoho'}`)
 
-    // Get Zoho access token and account info
-    const accessToken = await getZohoAccessToken()
-    const accountInfo = await getZohoAccountInfo(accessToken, fromEmail)
-    const accountId = accountInfo.accountId
-    const actualFromEmail = (accountInfo.email && accountInfo.email.includes('@')) 
-      ? accountInfo.email 
-      : fromEmail
+    // Initialize Zoho if needed
+    let accessToken: string = ''
+    let accountId: string = ''
+    let actualFromEmail: string = ''
+
+    if (!useResend) {
+      const fromEmail = process.env.ZOHO_FROM_EMAIL || process.env.ZOHO_EMAIL
+      if (!fromEmail) {
+        return res.status(500).json({ error: 'Email service not configured. Please set up Resend or Zoho.' })
+      }
+      
+      accessToken = await getZohoAccessToken()
+      const accountInfo = await getZohoAccountInfo(accessToken, fromEmail)
+      accountId = accountInfo.accountId
+      actualFromEmail = (accountInfo.email && accountInfo.email.includes('@')) 
+        ? accountInfo.email 
+        : fromEmail
+    }
 
     // Send emails
     let emailsSent = 0
     let emailsFailed = 0
     const results: { email: string; status: 'sent' | 'failed'; error?: string }[] = []
 
-    const batchSize = 10
+    const batchSize = useResend ? 50 : 10
     for (let i = 0; i < emailsToRetry.length; i += batchSize) {
       const batch = emailsToRetry.slice(i, i + batchSize)
       
@@ -261,14 +320,11 @@ export default async function handler(
         batch.map(async (email) => {
           try {
             const recipientHtml = buildRecipientHtml(campaign.content_html, email)
-            const result = await sendZohoEmail(
-              accessToken,
-              accountId,
-              actualFromEmail,
-              email,
-              campaign.subject,
-              recipientHtml
-            )
+            
+            // Use Resend or Zoho based on configuration
+            const result = useResend
+              ? await sendResendEmail(email, campaign.subject, recipientHtml)
+              : await sendZohoEmail(accessToken, accountId, actualFromEmail, email, campaign.subject, recipientHtml)
 
             if (result.success) {
               emailsSent++
@@ -328,9 +384,9 @@ export default async function handler(
         })
       )
 
-      // Small delay between batches
+      // Delay between batches (shorter for Resend)
       if (i + batchSize < emailsToRetry.length) {
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        await new Promise(resolve => setTimeout(resolve, useResend ? 200 : 1000))
       }
     }
 

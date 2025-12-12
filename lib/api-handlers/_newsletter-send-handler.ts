@@ -12,6 +12,58 @@ interface ZohoEmailResult {
   error?: string
 }
 
+interface ResendEmailResult {
+  success: boolean
+  id?: string
+  error?: string
+}
+
+// Check if Resend is configured
+function isResendConfigured(): boolean {
+  return !!process.env.RESEND_API_KEY
+}
+
+// Send email via Resend API
+async function sendResendEmail(
+  to: string,
+  subject: string,
+  html: string
+): Promise<ResendEmailResult> {
+  const apiKey = process.env.RESEND_API_KEY
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'THE LOST+UNFOUNDS <noreply@thelostandunfounds.com>'
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: fromEmail,
+        to: to,
+        subject: subject,
+        html: html,
+      }),
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      console.error('Resend API error:', data)
+      return { 
+        success: false, 
+        error: data.message || data.error?.message || `Resend error: ${response.status}` 
+      }
+    }
+
+    return { success: true, id: data.id }
+  } catch (error: any) {
+    console.error('Resend send error:', error)
+    return { success: false, error: error.message || 'Failed to send email' }
+  }
+}
+
 const BANNER_URL =
   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='400'><rect width='100%25' height='100%25' fill='%23000'/><text x='50%25' y='50%25' fill='%23fff' font-family='Arial, sans-serif' font-size='48' font-weight='bold' text-anchor='middle' dominant-baseline='middle'>THE LOST+UNFOUNDS</text></svg>"
 
@@ -423,36 +475,38 @@ export default async function handler(
       campaignRecord = data
     }
 
-    // Get Zoho access token and account info
-    let accessToken: string
-    let accountId: string
-    let actualFromEmail: string
+    // Determine which email provider to use
+    const useResend = isResendConfigured()
+    console.log(`Using email provider: ${useResend ? 'Resend' : 'Zoho'}`)
 
-    try {
-      accessToken = await getZohoAccessToken()
-      const accountInfo = await getZohoAccountInfo(accessToken, fromEmail)
-      accountId = accountInfo.accountId
-      // Use the email from account info, but fallback to configured email if it's invalid
-      actualFromEmail = (accountInfo.email && typeof accountInfo.email === 'string' && accountInfo.email.includes('@')) 
-        ? accountInfo.email 
-        : fromEmail
-      
-      // Log the email being used for debugging
-      console.log('Zoho account info:', {
-        accountId,
-        configuredEmail: fromEmail,
-        accountInfoEmail: accountInfo.email,
-        actualEmail: actualFromEmail,
-        usingActualEmail: actualFromEmail !== fromEmail
-      })
-    } catch (error: any) {
-      // Update campaign status to failed
-      await supabase
-        .from('newsletter_campaigns')
-        .update({ status: 'failed' })
-        .eq('id', campaignRecord.id)
+    // Initialize Zoho if needed (only when not using Resend)
+    let accessToken: string = ''
+    let accountId: string = ''
+    let actualFromEmail: string = fromEmail
 
-      throw new Error(`Failed to authenticate with Zoho: ${error.message}`)
+    if (!useResend) {
+      try {
+        accessToken = await getZohoAccessToken()
+        const accountInfo = await getZohoAccountInfo(accessToken, fromEmail)
+        accountId = accountInfo.accountId
+        actualFromEmail = (accountInfo.email && typeof accountInfo.email === 'string' && accountInfo.email.includes('@')) 
+          ? accountInfo.email 
+          : fromEmail
+        
+        console.log('Zoho account info:', {
+          accountId,
+          configuredEmail: fromEmail,
+          accountInfoEmail: accountInfo.email,
+          actualEmail: actualFromEmail,
+        })
+      } catch (error: any) {
+        await supabase
+          .from('newsletter_campaigns')
+          .update({ status: 'failed' })
+          .eq('id', campaignRecord.id)
+
+        throw new Error(`Failed to authenticate with Zoho: ${error.message}`)
+      }
     }
 
     // Send emails to all subscribers
@@ -460,29 +514,24 @@ export default async function handler(
     let emailsFailed = 0
     const errors: string[] = []
 
-    // Per-recipient HTML: inject unsubscribe link (skip banner - content already has one)
+    // Per-recipient HTML: inject unsubscribe link
     const buildRecipientHtml = (rawHtml: string, email: string) => {
       const unsubscribeUrl = `https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(email)}`
       let html = rawHtml || ''
-      // Copy hygiene: fix wording
       html = html.replace(/several\s+integrations/gi, 'several iterations')
-      // Replace placeholders in both text and href (no escaped backslashes so regex matches)
       html = html.replace(/{{\s*unsubscribe_url\s*}}/gi, unsubscribeUrl)
       html = html.replace(/href=["']\s*{{\s*unsubscribe_url\s*}}["']/gi, `href="${unsubscribeUrl}"`)
-      // Only add unsubscribe if content has NO unsubscribe link at all
-      // Check for both the word "unsubscribe" in an href AND as link text
       const hasUnsubscribeLink = /href=["'][^"']*unsubscribe/i.test(html) || />Unsubscribe<\/a>/i.test(html)
       if (!hasUnsubscribeLink) {
         const unsubBlock = `<p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 20px 0 0 0; text-align: left; background-color: #000000 !important;"><a href="${unsubscribeUrl}" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe</a></p>`
         const hrIdx = html.indexOf('<hr')
         html = hrIdx >= 0 ? html.slice(0, hrIdx) + unsubBlock + html.slice(hrIdx) : html + unsubBlock
       }
-      // Don't add banner - content from NewsletterManagement already has proper banner
       return html
     }
 
-    // Send emails in batches to avoid rate limiting
-    const batchSize = 10
+    // Send emails in batches
+    const batchSize = useResend ? 50 : 10  // Resend can handle larger batches
     const sendLogs: { subscriber_email: string; status: string; error_message: string | null; sent_at: string | null }[] = []
     
     for (let i = 0; i < subscribers.length; i += batchSize) {
@@ -492,14 +541,11 @@ export default async function handler(
         batch.map(async (subscriber) => {
           try {
             const recipientHtml = buildRecipientHtml(contentHtml, subscriber.email)
-            const result = await sendZohoEmail(
-              accessToken,
-              accountId,
-              actualFromEmail,
-              subscriber.email,
-              subject,
-              recipientHtml
-            )
+            
+            // Use Resend or Zoho based on configuration
+            const result = useResend
+              ? await sendResendEmail(subscriber.email, subject, recipientHtml)
+              : await sendZohoEmail(accessToken, accountId, actualFromEmail, subscriber.email, subject, recipientHtml)
 
             if (result.success) {
               emailsSent++
@@ -512,7 +558,7 @@ export default async function handler(
             } else {
               emailsFailed++
               const errorMsg = result.error || 'Unknown error'
-              errors.push(`${subscriber.email}: ${errorMsg} (accountId: ${accountId}, fromEmail: ${actualFromEmail})`)
+              errors.push(`${subscriber.email}: ${errorMsg}`)
               sendLogs.push({
                 subscriber_email: subscriber.email,
                 status: 'failed',
@@ -534,9 +580,9 @@ export default async function handler(
         })
       )
 
-      // Small delay between batches to avoid rate limiting
+      // Delay between batches (shorter for Resend)
       if (i + batchSize < subscribers.length) {
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        await new Promise(resolve => setTimeout(resolve, useResend ? 200 : 1000))
       }
     }
 
