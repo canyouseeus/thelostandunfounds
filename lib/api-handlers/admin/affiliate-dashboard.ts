@@ -61,11 +61,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       };
     })();
 
-    // Recent commissions
+    // Recent commissions (including new safeguard fields)
     const { data: commissions, error: commissionsError } = await supabase
       .from('affiliate_commissions')
       .select(
-        'id, affiliate_id, order_id, amount, profit_generated, product_cost, status, source, created_at, affiliates!inner(code)'
+        'id, affiliate_id, order_id, amount, profit_generated, product_cost, status, source, created_at, available_date, cancelled_reason, cancelled_at, affiliates!inner(code)'
       )
       .order('created_at', { ascending: false })
       .limit(40);

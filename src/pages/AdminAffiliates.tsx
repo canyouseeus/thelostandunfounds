@@ -56,6 +56,9 @@ type Commission = {
   status: string;
   source: string | null;
   created_at: string;
+  available_date?: string | null;
+  cancelled_reason?: string | null;
+  cancelled_at?: string | null;
   affiliates?: { code: string };
 };
 
@@ -589,7 +592,10 @@ export default function AdminAffiliates() {
                 data.commissions.map((commission) => (
                   <div
                     key={commission.id}
-                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 sm:p-4 bg-black text-white rounded-none"
+                    className={cn(
+                      "flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 sm:p-4 bg-black text-white rounded-none",
+                      commission.status === 'cancelled' && "opacity-60 border-l-2 border-red-500"
+                    )}
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
@@ -598,13 +604,27 @@ export default function AdminAffiliates() {
                           {commission.affiliates?.code || commission.affiliate_id}
                         </span>
                       </div>
-                      <div className="text-sm text-white">
+                      <div className={cn("text-sm", commission.status === 'cancelled' ? "text-red-400 line-through" : "text-white")}>
                         ${commission.amount?.toFixed(2)} • Profit {commission.profit_generated?.toFixed(2) ?? '—'} • Cost{' '}
                         {commission.product_cost?.toFixed(2) ?? '—'}
                       </div>
                       <div className="text-xs text-white/50">
                         {commission.source || 'paypal'} • {commission.order_id || 'no-order-id'}
                       </div>
+                      {commission.status === 'cancelled' && commission.cancelled_reason && (
+                        <div className="text-xs text-red-400 flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3" />
+                          {commission.cancelled_reason}
+                          {commission.cancelled_at && (
+                            <span className="text-red-400/60"> • {new Date(commission.cancelled_at).toLocaleDateString()}</span>
+                          )}
+                        </div>
+                      )}
+                      {commission.status === 'pending' && commission.available_date && (
+                        <div className="text-xs text-yellow-400">
+                          Available: {new Date(commission.available_date).toLocaleDateString()}
+                        </div>
+                      )}
                     </div>
                     <div className="text-xs text-white/60 sm:text-right">
                       {new Date(commission.created_at).toLocaleString()}
@@ -614,6 +634,50 @@ export default function AdminAffiliates() {
               ) : (
                 <div className="text-white/60 text-sm">No commissions yet.</div>
               )}
+            </div>
+          </SectionWrapper>
+
+          <SectionWrapper title="Cancelled / Chargebacks" description="Commissions cancelled due to refunds, chargebacks, or disputes">
+            <div className="space-y-3">
+              {(() => {
+                const cancelled = data?.commissions?.filter(c => c.status === 'cancelled') || [];
+                return cancelled.length ? (
+                  cancelled.map((commission) => (
+                    <div
+                      key={commission.id}
+                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 sm:p-4 bg-red-950/30 text-white rounded-none border-l-2 border-red-500"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="w-4 h-4 text-red-400" />
+                          <span className="text-sm font-semibold text-red-300">
+                            {commission.cancelled_reason || 'Cancelled'}
+                          </span>
+                        </div>
+                        <div className="text-sm text-white/80">
+                          Affiliate: {commission.affiliates?.code || commission.affiliate_id}
+                        </div>
+                        <div className="text-sm text-red-400 line-through">
+                          ${commission.amount?.toFixed(2)} commission
+                        </div>
+                        <div className="text-xs text-white/50">
+                          Order: {commission.order_id || 'N/A'} • Source: {commission.source || 'unknown'}
+                        </div>
+                      </div>
+                      <div className="text-xs text-white/60 sm:text-right">
+                        <div>Created: {new Date(commission.created_at).toLocaleString()}</div>
+                        {commission.cancelled_at && (
+                          <div className="text-red-400">Cancelled: {new Date(commission.cancelled_at).toLocaleString()}</div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-white/60 text-sm p-4 bg-emerald-950/20 border border-emerald-500/20 rounded-none">
+                    ✓ No cancelled commissions or chargebacks. All commissions are in good standing.
+                  </div>
+                );
+              })()}
             </div>
           </SectionWrapper>
         </div>

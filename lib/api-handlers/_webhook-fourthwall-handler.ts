@@ -10,7 +10,22 @@ import { createClient } from '@supabase/supabase-js'
  * - order.created: New order placed
  * - order.fulfilled: Order fulfilled
  * - order.cancelled: Order cancelled
+ * - order.refunded: Order refunded
+ * - payment.disputed / order.chargeback: Payment chargeback
  */
+
+// Holding periods for commissions (in days)
+const HOLD_PERIOD_PHYSICAL = parseInt(process.env.HOLD_PERIOD_PHYSICAL_DAYS || '30', 10)
+const HOLD_PERIOD_DIGITAL = parseInt(process.env.HOLD_PERIOD_DIGITAL_DAYS || '7', 10)
+
+type CancellationReason = 
+  | 'Order cancelled'
+  | 'Order refunded'
+  | 'Payment disputed'
+  | 'Chargeback'
+  | 'Fraud detected'
+  | 'Manual cancellation'
+
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
@@ -19,7 +34,11 @@ export default async function handler(
   if (req.method === 'GET') {
     return res.status(200).json({ 
       message: 'Fourthwall webhook endpoint is active',
-      methods: ['POST']
+      methods: ['POST'],
+      holdPeriods: {
+        physical: HOLD_PERIOD_PHYSICAL,
+        digital: HOLD_PERIOD_DIGITAL
+      }
     })
   }
 
@@ -29,10 +48,9 @@ export default async function handler(
 
   try {
     // Verify webhook signature (if Fourthwall provides one)
-    // TODO: Add signature verification when Fourthwall webhook secret is available
     const webhookSecret = process.env.FOURTHWALL_WEBHOOK_SECRET
     if (webhookSecret) {
-      // Verify signature here
+      // TODO: Add signature verification when Fourthwall webhook secret is available
       // const signature = req.headers['x-fourthwall-signature']
       // if (!verifySignature(req.body, signature, webhookSecret)) {
       //   return res.status(401).json({ error: 'Invalid signature' })
@@ -42,7 +60,7 @@ export default async function handler(
     const event = req.body
     const eventType = event.type || event.event_type
 
-    console.log('Fourthwall webhook received:', eventType, event)
+    console.log('Fourthwall webhook received:', eventType)
 
     // Initialize Supabase client
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
@@ -56,9 +74,8 @@ export default async function handler(
     const supabase = createClient(supabaseUrl, supabaseKey)
 
     // Handle different event types
-    // Fourthwall sends various event types - normalize them
     switch (eventType) {
-      // Order events (various formats)
+      // Order events - create commission
       case 'order.created':
       case 'order.fulfilled':
       case 'order.updated':
@@ -67,12 +84,31 @@ export default async function handler(
         await handleOrderCreated(supabase as any, event)
         break
 
+      // Cancellation events
       case 'order.cancelled':
       case 'ORDER_CANCELLED':
-        await handleOrderCancelled(supabase as any, event)
+        await handleCommissionCancellation(supabase as any, event, 'Order cancelled')
         break
 
-      // Product events - log but don't process (no affiliate tracking needed)
+      // Refund events
+      case 'order.refunded':
+      case 'ORDER_REFUNDED':
+      case 'refund.created':
+      case 'REFUND_CREATED':
+        await handleCommissionCancellation(supabase as any, event, 'Order refunded')
+        break
+
+      // Chargeback/dispute events
+      case 'payment.disputed':
+      case 'PAYMENT_DISPUTED':
+      case 'order.chargeback':
+      case 'ORDER_CHARGEBACK':
+      case 'chargeback.created':
+      case 'CHARGEBACK_CREATED':
+        await handleCommissionCancellation(supabase as any, event, 'Chargeback')
+        break
+
+      // Product events - log but don't process
       case 'PRODUCT_CREATED':
       case 'PRODUCT_UPDATED':
         console.log(`Product event received: ${eventType} - No action needed for affiliate tracking`)
@@ -96,22 +132,18 @@ async function handleOrderCreated(
   supabase: ReturnType<typeof createClient>,
   event: any
 ) {
-  // Log full event structure for debugging
   console.log('Order event data structure:', JSON.stringify(event, null, 2))
   
   const order = event.data || event.order || event.payload || event
   const orderId = (order.id || order.order_id || order.orderId || '') as string
   
-  // Check order status - Fourthwall may use different status values
+  // Check order status
   const orderStatus = order.status || order.order_status || order.orderStatus || order.state
   
   if (!orderStatus) {
-    console.log(`Order ${orderId} status is undefined, logging full order structure:`, JSON.stringify(order, null, 2))
-    // For ORDER_PLACED events, assume order is ready to process if status is missing
-    // This handles cases where Fourthwall sends ORDER_PLACED without a status field
     console.log('Processing order without status (assuming ORDER_PLACED means ready to process)')
   } else if (orderStatus === 'cancelled' || orderStatus === 'refunded' || orderStatus === 'CANCELLED') {
-    await handleOrderCancelled(supabase, event)
+    await handleCommissionCancellation(supabase, event, 'Order cancelled')
     return
   } else if (orderStatus !== 'fulfilled' && orderStatus !== 'completed' && orderStatus !== 'paid' && 
              orderStatus !== 'CONFIRMED' && orderStatus !== 'confirmed') {
@@ -143,10 +175,12 @@ async function handleOrderCreated(
   const affiliateId = affiliate.id as string
   const commissionRate = (affiliate.commission_rate as number) / 100
 
-  // Calculate commission from order items
+  // Calculate commission from order items and determine product type
   const lineItems = order.line_items || order.items || []
   let totalCommission = 0
   let totalProfit = 0
+  let hasPhysicalProduct = false
+  let hasDigitalProduct = false
 
   for (const item of lineItems) {
     const productId = item.product_id || item.product?.id
@@ -154,20 +188,29 @@ async function handleOrderCreated(
     const quantity = item.quantity || 1
     const price = parseFloat(item.price || item.unit_price || 0)
 
-    // Get product cost
+    // Get product cost and type
     const { data: productCost } = await (supabase as any)
       .from('product_costs')
-      .select('cost')
+      .select('cost, product_type')
       .eq('product_id', productId)
       .eq('variant_id', variantId || '')
       .eq('source', 'fourthwall')
-      .single() as { data: { cost: number } | null }
+      .single() as { data: { cost: number; product_type?: string } | null }
 
     const cost = productCost ? (productCost.cost as number) : 0
+    const productType = productCost?.product_type || 'physical'
+    
+    // Track product types for hold period determination
+    if (productType === 'digital') {
+      hasDigitalProduct = true
+    } else {
+      hasPhysicalProduct = true
+    }
+
     const profit = (price - cost) * quantity
     totalProfit += profit
 
-    // Calculate commission (10% of profit or commission_rate)
+    // Calculate commission (% of profit)
     const commission = profit * commissionRate
     totalCommission += commission
   }
@@ -177,8 +220,15 @@ async function handleOrderCreated(
     return
   }
 
-  // Create commission record
-  const { error: commissionError } = await (supabase as any)
+  // Determine hold period based on product types
+  // If order contains ANY physical products, use physical hold period (30 days)
+  // Digital-only orders use digital hold period (7 days)
+  const holdDays = hasPhysicalProduct ? HOLD_PERIOD_PHYSICAL : HOLD_PERIOD_DIGITAL
+  const availableDate = new Date()
+  availableDate.setDate(availableDate.getDate() + holdDays)
+
+  // Create commission record with available_date
+  const { data: newCommission, error: commissionError } = await (supabase as any)
     .from('affiliate_commissions')
     .insert({
       affiliate_id: affiliateId,
@@ -188,26 +238,40 @@ async function handleOrderCreated(
       source: 'fourthwall',
       product_cost: totalProfit > 0 ? (totalProfit - totalCommission / commissionRate) : 0,
       status: 'pending',
+      available_date: availableDate.toISOString(),
     } as any)
+    .select('id')
+    .single()
 
   if (commissionError) {
     console.error('Error creating commission:', commissionError)
     throw commissionError
   }
 
-  // Update affiliate total earnings
-  // Get current values first, then update
+  // Log commission creation
+  await logCommissionStatusChange(supabase, newCommission.id, null, 'pending', 'Commission created', {
+    order_id: orderId,
+    hold_days: holdDays,
+    available_date: availableDate.toISOString(),
+    has_physical: hasPhysicalProduct,
+    has_digital: hasDigitalProduct
+  })
+
+  // Note: We do NOT update total_earnings here anymore
+  // total_earnings only reflects what's actually been paid out
+  // The available balance is calculated from commissions table directly
+
+  // Update conversion count only
   const { data: currentAffiliate } = await (supabase as any)
     .from('affiliates')
-    .select('total_earnings, total_conversions')
+    .select('total_conversions')
     .eq('id', affiliateId)
-    .single() as { data: { total_earnings: number; total_conversions: number } | null }
+    .single() as { data: { total_conversions: number } | null }
 
   if (currentAffiliate) {
     await (supabase as any)
       .from('affiliates')
       .update({
-        total_earnings: ((currentAffiliate.total_earnings as number) || 0) + totalCommission,
         total_conversions: ((currentAffiliate.total_conversions as number) || 0) + 1,
       } as any)
       .eq('id', affiliateId)
@@ -217,28 +281,102 @@ async function handleOrderCreated(
   const today = new Date().toISOString().split('T')[0]
   await updateKingMidasStats(supabase as any, affiliateId, totalProfit, today)
 
-  console.log(`Commission created: ${totalCommission} for affiliate ${affiliateRef} from order ${orderId}`)
+  console.log(`Commission created: $${totalCommission.toFixed(2)} for affiliate ${affiliateRef} from order ${orderId} (available after ${holdDays} days)`)
 }
 
 /**
- * Handle order cancelled event
+ * Handle commission cancellation (cancelled, refunded, chargeback)
  */
-async function handleOrderCancelled(
+async function handleCommissionCancellation(
   supabase: ReturnType<typeof createClient>,
-  event: any
+  event: any,
+  reason: CancellationReason
 ) {
   const order = event.data || event.order || event
   const orderId = (order.id || order.order_id || '') as string
 
-  // Cancel associated commissions
-  const { error } = await (supabase as any)
+  if (!orderId) {
+    console.warn('No order ID in cancellation event')
+    return
+  }
+
+  // Find commissions for this order
+  const { data: commissions, error: findError } = await (supabase as any)
     .from('affiliate_commissions')
-    .update({ status: 'cancelled' } as any)
+    .select('id, affiliate_id, amount, status')
     .eq('order_id', orderId)
     .eq('source', 'fourthwall')
+    .neq('status', 'cancelled') as { data: Array<{ id: string; affiliate_id: string; amount: number; status: string }> | null; error: any }
 
-  if (error) {
-    console.error('Error cancelling commissions:', error)
+  if (findError) {
+    console.error('Error finding commissions:', findError)
+    return
+  }
+
+  if (!commissions || commissions.length === 0) {
+    console.log(`No active commissions found for order ${orderId}`)
+    return
+  }
+
+  // Cancel each commission
+  for (const commission of commissions) {
+    const previousStatus = commission.status
+
+    // Update commission status
+    const { error: updateError } = await (supabase as any)
+      .from('affiliate_commissions')
+      .update({
+        status: 'cancelled',
+        cancelled_reason: reason,
+        cancelled_at: new Date().toISOString()
+      } as any)
+      .eq('id', commission.id)
+
+    if (updateError) {
+      console.error('Error cancelling commission:', updateError)
+      continue
+    }
+
+    // Log status change
+    await logCommissionStatusChange(supabase, commission.id, previousStatus, 'cancelled', reason, {
+      order_id: orderId,
+      event_type: event.type || event.event_type
+    })
+
+    // If commission was already paid, we have a problem - log for manual review
+    if (previousStatus === 'paid') {
+      console.error(`ALERT: Cancellation/chargeback on PAID commission! Order: ${orderId}, Commission: ${commission.id}, Amount: $${commission.amount}`)
+      // In production, this should trigger an alert to admin
+    }
+
+    console.log(`Commission ${commission.id} cancelled: ${reason}`)
+  }
+}
+
+/**
+ * Log commission status changes for audit trail
+ */
+async function logCommissionStatusChange(
+  supabase: ReturnType<typeof createClient>,
+  commissionId: string,
+  previousStatus: string | null,
+  newStatus: string,
+  reason: string,
+  metadata: Record<string, any> = {}
+) {
+  try {
+    await (supabase as any)
+      .from('commission_status_log')
+      .insert({
+        commission_id: commissionId,
+        previous_status: previousStatus,
+        new_status: newStatus,
+        reason,
+        metadata
+      } as any)
+  } catch (error) {
+    // Don't fail the main operation if logging fails
+    console.error('Failed to log commission status change:', error)
   }
 }
 
@@ -260,7 +398,6 @@ async function updateKingMidasStats(
     .single() as { data: { profit_generated: number } | null }
 
   if (existingStats) {
-    // Update existing record - get current value first
     const currentProfit = parseFloat((existingStats.profit_generated as number)?.toString() || '0')
     await (supabase as any)
       .from('king_midas_daily_stats')
@@ -270,7 +407,6 @@ async function updateKingMidasStats(
       .eq('affiliate_id', affiliateId)
       .eq('date', date)
   } else {
-    // Create new record
     await (supabase as any)
       .from('king_midas_daily_stats')
       .insert({
@@ -280,4 +416,3 @@ async function updateKingMidasStats(
       } as any)
   }
 }
-

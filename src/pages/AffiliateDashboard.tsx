@@ -39,6 +39,9 @@ interface DashboardData {
     status: string
     commission_rate: number
     total_earnings: number
+    available_balance: number
+    pending_balance: number
+    total_paid: number
     total_clicks: number
     total_conversions: number
     created_at: string
@@ -52,6 +55,7 @@ interface DashboardData {
     total_profit_generated: number
     approved_commissions: number
     pending_commissions: number
+    cancelled_commissions: number
     total_king_midas_earnings: number
     pending_payouts: number
     paid_payouts: number
@@ -63,6 +67,20 @@ interface DashboardData {
     average_commission: number
     average_profit: number
     conversion_rate: number
+  }
+  balance: {
+    available_balance: number
+    pending_balance: number
+    total_paid: number
+    total_cancelled: number
+    total_lifetime: number
+    upcoming_availability: Array<{ date: string; amount: number }>
+    recent_cancellations: Array<{
+      amount: number
+      reason: string
+      cancelled_at: string
+      order_id: string
+    }>
   }
   mlm: {
     network: {
@@ -88,7 +106,11 @@ interface DashboardData {
     profit_generated: number
     source: string
     status: string
+    status_label: string
     created_at: string
+    available_date?: string
+    cancelled_reason?: string
+    cancelled_at?: string
   }>
   king_midas: {
     recent_stats: Array<{
@@ -206,6 +228,15 @@ export default function AffiliateDashboard() {
             discount_credit_balance: mlmResult.affiliate?.discount_credit_balance || 0,
             total_mlm_earnings: mlmResult.affiliate?.total_mlm_earnings || 0
           },
+          balance: result.balance || {
+            available_balance: result.affiliate.available_balance || 0,
+            pending_balance: result.affiliate.pending_balance || 0,
+            total_paid: result.affiliate.total_paid || 0,
+            total_cancelled: 0,
+            total_lifetime: result.affiliate.total_earnings || 0,
+            upcoming_availability: [],
+            recent_cancellations: []
+          },
           mlm: {
             network: mlmResult.network || { total_customers: 0, level1_affiliates: 0, level2_affiliates: 0, total_network: 0 },
             earnings: mlmResult.earnings || { mlm_level1: 0, mlm_level2: 0, total_mlm: 0 },
@@ -282,11 +313,11 @@ export default function AffiliateDashboard() {
   const checkPayoutEligibility = () => {
     if (!data || !payoutSettings) return false
     const hasPayPalEmail = payoutSettings.paypal_email && payoutSettings.paypal_email.trim() !== ''
-    const hasEnoughEarnings = data.affiliate.total_earnings >= payoutSettings.payment_threshold
-    // Check if there are any approved commissions by checking if total_earnings > 0
-    // (earnings only increase when commissions are approved)
-    const hasApprovedCommissions = data.affiliate.total_earnings > 0
-    return hasPayPalEmail && hasEnoughEarnings && hasApprovedCommissions
+    // Use available_balance (commissions past holding period)
+    const availableBalance = data.balance?.available_balance || 0
+    const hasEnoughEarnings = availableBalance >= payoutSettings.payment_threshold
+    const hasAvailableCommissions = availableBalance > 0
+    return hasPayPalEmail && hasEnoughEarnings && hasAvailableCommissions
   }
 
   const handleRequestPayout = async () => {
@@ -589,16 +620,20 @@ export default function AffiliateDashboard() {
 
         {/* Key Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {/* Total Earnings */}
+          {/* Available Balance */}
           <div className="bg-black/50 border border-white/10 rounded-none p-6">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-white/60 text-sm">Total Earnings</span>
+              <span className="text-white/60 text-sm">Available Now</span>
               <DollarSign className="w-5 h-5 text-green-400" />
             </div>
-            <div className="text-3xl font-bold text-white mb-1">
-              ${data.affiliate.total_earnings.toFixed(2)}
+            <div className="text-3xl font-bold text-green-400 mb-1">
+              ${(data.balance?.available_balance || 0).toFixed(2)}
             </div>
-            <div className="text-xs text-white/40">All time</div>
+            <div className="text-xs text-white/40">
+              {(data.balance?.pending_balance || 0) > 0 && (
+                <span className="text-yellow-400">+${(data.balance?.pending_balance || 0).toFixed(2)} pending</span>
+              )}
+            </div>
           </div>
 
           {/* Total Clicks */}
@@ -919,19 +954,24 @@ export default function AffiliateDashboard() {
                     <div>
                       <p className="text-sm text-white font-medium">Available for Payout</p>
                       <p className="text-xs text-white/60">
-                        ${data?.affiliate.total_earnings.toFixed(2)} available
+                        ${(data?.balance?.available_balance || 0).toFixed(2)} available now
                       </p>
+                      {(data?.balance?.pending_balance || 0) > 0 && (
+                        <p className="text-xs text-yellow-400/80">
+                          +${(data?.balance?.pending_balance || 0).toFixed(2)} pending (holding period)
+                        </p>
+                      )}
                     </div>
                   </div>
                   <button
                     onClick={() => {
-                      setPayoutAmount(data?.affiliate.total_earnings || 0)
+                      setPayoutAmount(data?.balance?.available_balance || 0)
                       setShowPayoutRequest(true)
                       setPayoutRequestError(null)
                     }}
                     className="w-full px-4 py-2 bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors text-sm"
                   >
-                    Request Payout
+                    Request Instant Payout
                   </button>
                 </div>
               )}
@@ -940,8 +980,12 @@ export default function AffiliateDashboard() {
                   <p className="text-sm text-white/60">
                     {!payoutSettings.paypal_email || payoutSettings.paypal_email.trim() === ''
                       ? 'Set your PayPal email to request payouts'
-                      : data.affiliate.total_earnings < payoutSettings.payment_threshold
-                      ? `Need $${(payoutSettings.payment_threshold - data.affiliate.total_earnings).toFixed(2)} more to reach threshold`
+                      : (data.balance?.available_balance || 0) < payoutSettings.payment_threshold
+                      ? (data.balance?.available_balance || 0) > 0
+                        ? `Need $${(payoutSettings.payment_threshold - (data.balance?.available_balance || 0)).toFixed(2)} more available to reach threshold`
+                        : (data.balance?.pending_balance || 0) > 0
+                        ? `$${(data.balance?.pending_balance || 0).toFixed(2)} is in holding period - check back soon!`
+                        : 'No earnings yet. Share your link to start earning!'
                       : 'No earnings available for payout'}
                   </p>
                 </div>
@@ -967,7 +1011,7 @@ export default function AffiliateDashboard() {
         {showPayoutRequest && (
           <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
             <div className="bg-black/90 border border-white/10 rounded-none p-6 max-w-md w-full">
-              <h3 className="text-xl font-bold text-white mb-4">Request Payout</h3>
+              <h3 className="text-xl font-bold text-white mb-4">Instant Payout</h3>
               
               {payoutRequestError && (
                 <div className="bg-red-400/20 border border-red-400/50 text-red-400 px-4 py-3 rounded-none text-sm mb-4">
@@ -976,14 +1020,36 @@ export default function AffiliateDashboard() {
               )}
 
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm text-white/60 mb-2">
-                    Available Earnings
-                  </label>
-                  <div className="px-4 py-2 bg-white/5 border border-white/10 rounded-none text-white font-mono">
-                    ${data?.affiliate.total_earnings.toFixed(2) || '0.00'}
+                <div className="bg-green-400/10 border border-green-400/30 p-3 rounded-none">
+                  <div className="flex justify-between items-center">
+                    <span className="text-green-400 text-sm font-medium">Available Now</span>
+                    <span className="text-green-400 font-bold font-mono">
+                      ${(data?.balance?.available_balance || 0).toFixed(2)}
+                    </span>
                   </div>
                 </div>
+
+                {(data?.balance?.pending_balance || 0) > 0 && (
+                  <div className="bg-yellow-400/10 border border-yellow-400/30 p-3 rounded-none">
+                    <div className="flex justify-between items-center">
+                      <span className="text-yellow-400 text-sm font-medium">Pending (Holding Period)</span>
+                      <span className="text-yellow-400 font-mono">
+                        ${(data?.balance?.pending_balance || 0).toFixed(2)}
+                      </span>
+                    </div>
+                    {data?.balance?.upcoming_availability && data.balance.upcoming_availability.length > 0 && (
+                      <div className="mt-2 pt-2 border-t border-yellow-400/20">
+                        <p className="text-xs text-yellow-400/70 mb-1">Upcoming:</p>
+                        {data.balance.upcoming_availability.slice(0, 3).map((item, idx) => (
+                          <div key={idx} className="flex justify-between text-xs text-yellow-400/60">
+                            <span>{new Date(item.date).toLocaleDateString()}</span>
+                            <span>+${item.amount.toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-sm text-white/60 mb-2">
@@ -992,14 +1058,14 @@ export default function AffiliateDashboard() {
                   <input
                     type="number"
                     min={payoutSettings?.payment_threshold || 10}
-                    max={data?.affiliate.total_earnings || 0}
+                    max={data?.balance?.available_balance || 0}
                     step="0.01"
                     value={payoutAmount}
                     onChange={(e) => setPayoutAmount(parseFloat(e.target.value) || 0)}
                     className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-none text-white focus:outline-none focus:border-white/30 font-mono"
                   />
                   <p className="text-xs text-white/50 mt-1">
-                    Minimum: ${payoutSettings?.payment_threshold || 10}
+                    Minimum: ${payoutSettings?.payment_threshold || 10} • Maximum: ${(data?.balance?.available_balance || 0).toFixed(2)}
                   </p>
                 </div>
 
@@ -1011,15 +1077,20 @@ export default function AffiliateDashboard() {
                     {payoutSettings?.paypal_email || 'Not set'}
                   </div>
                 </div>
+
+                <div className="bg-white/5 border border-white/10 p-3 rounded-none text-xs text-white/60">
+                  <p>💡 <strong>Instant payout:</strong> Funds are sent immediately to your PayPal account.</p>
+                  <p className="mt-1">Physical products: 30-day hold • Digital products: 7-day hold</p>
+                </div>
               </div>
 
               <div className="flex gap-2 mt-6">
                 <button
                   onClick={handleRequestPayout}
-                  disabled={requestingPayout || payoutAmount < (payoutSettings?.payment_threshold || 10)}
+                  disabled={requestingPayout || payoutAmount < (payoutSettings?.payment_threshold || 10) || payoutAmount > (data?.balance?.available_balance || 0)}
                   className="flex-1 px-4 py-2 bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {requestingPayout ? 'Requesting...' : 'Request Payout'}
+                  {requestingPayout ? 'Processing...' : `Send $${payoutAmount.toFixed(2)} to PayPal`}
                 </button>
                 <button
                   onClick={() => {
@@ -1063,14 +1134,14 @@ export default function AffiliateDashboard() {
                   </tr>
                 ) : (
                   data.recent_commissions.map((commission) => (
-                    <tr key={commission.id} className="hover:bg-white/5">
+                    <tr key={commission.id} className={`hover:bg-white/5 ${commission.status === 'cancelled' ? 'opacity-60' : ''}`}>
                       <td className="px-6 py-4 text-white font-mono text-sm">
                         {commission.order_id.substring(0, 16)}...
                       </td>
                       <td className="px-6 py-4 text-white/80 text-sm">
                         {new Date(commission.created_at).toLocaleDateString()}
                       </td>
-                      <td className="px-6 py-4 text-right font-semibold text-green-400">
+                      <td className={`px-6 py-4 text-right font-semibold ${commission.status === 'cancelled' ? 'text-red-400 line-through' : 'text-green-400'}`}>
                         ${commission.amount.toFixed(2)}
                       </td>
                       <td className="px-6 py-4 text-right text-white">
@@ -1080,13 +1151,22 @@ export default function AffiliateDashboard() {
                         {commission.source}
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          commission.status === 'paid' ? 'bg-green-400/20 text-green-400' :
-                          commission.status === 'approved' ? 'bg-blue-400/20 text-blue-400' :
-                          'bg-yellow-400/20 text-yellow-400'
-                        }`}>
-                          {commission.status}
-                        </span>
+                        <div className="flex flex-col items-center gap-1">
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                            commission.status === 'paid' ? 'bg-green-400/20 text-green-400' :
+                            commission.status === 'cancelled' ? 'bg-red-400/20 text-red-400' :
+                            commission.status_label?.includes('Available') ? 'bg-green-400/20 text-green-400' :
+                            commission.status_label?.includes('Pending') ? 'bg-yellow-400/20 text-yellow-400' :
+                            'bg-yellow-400/20 text-yellow-400'
+                          }`}>
+                            {commission.status_label || commission.status}
+                          </span>
+                          {commission.status === 'cancelled' && commission.cancelled_reason && (
+                            <span className="text-xs text-red-400/70" title={commission.cancelled_reason}>
+                              {commission.cancelled_reason}
+                            </span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))

@@ -23,6 +23,11 @@ const toNumber = (value: unknown): number => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
+const toMoney = (value: number) => {
+  if (!Number.isFinite(value)) return 0;
+  return Math.round(value * 100) / 100;
+};
+
 const safeDivide = (numerator: number, denominator: number) =>
   denominator > 0 ? numerator / denominator : 0;
 
@@ -66,6 +71,103 @@ async function fetchAffiliate(code: string) {
   return fetchAffiliateByColumn('affiliate_code', trimmedCode);
 }
 
+/**
+ * Calculate available and pending balance from commissions
+ */
+async function getBalanceBreakdown(affiliateId: string) {
+  const now = new Date().toISOString();
+  
+  // Get available commissions (past holding period, still pending payment)
+  const { data: availableCommissions, error: availableError } = await supabase
+    .from('affiliate_commissions')
+    .select('amount, available_date')
+    .eq('affiliate_id', affiliateId)
+    .eq('status', 'pending')
+    .not('available_date', 'is', null)
+    .lte('available_date', now);
+
+  // Get pending commissions (still in holding period)
+  const { data: pendingCommissions, error: pendingError } = await supabase
+    .from('affiliate_commissions')
+    .select('amount, available_date')
+    .eq('affiliate_id', affiliateId)
+    .eq('status', 'pending')
+    .or(`available_date.is.null,available_date.gt.${now}`)
+    .order('available_date', { ascending: true });
+
+  // Get total paid out
+  const { data: paidCommissions, error: paidError } = await supabase
+    .from('affiliate_commissions')
+    .select('amount')
+    .eq('affiliate_id', affiliateId)
+    .eq('status', 'paid');
+
+  // Get cancelled commissions (for transparency)
+  const { data: cancelledCommissions, error: cancelledError } = await supabase
+    .from('affiliate_commissions')
+    .select('amount, cancelled_reason, cancelled_at, order_id')
+    .eq('affiliate_id', affiliateId)
+    .eq('status', 'cancelled')
+    .order('cancelled_at', { ascending: false })
+    .limit(10);
+
+  const available = (availableCommissions || []).reduce(
+    (sum, c) => sum + toMoney(toNumber(c.amount)),
+    0
+  );
+
+  const pending = (pendingCommissions || []).reduce(
+    (sum, c) => sum + toMoney(toNumber(c.amount)),
+    0
+  );
+
+  const totalPaid = (paidCommissions || []).reduce(
+    (sum, c) => sum + toMoney(toNumber(c.amount)),
+    0
+  );
+
+  const totalCancelled = (cancelledCommissions || []).reduce(
+    (sum, c) => sum + toMoney(toNumber(c.amount)),
+    0
+  );
+
+  // Calculate upcoming availability breakdown
+  const upcomingAvailability: { date: string; amount: number }[] = [];
+  const pendingByDate = new Map<string, number>();
+  
+  for (const commission of (pendingCommissions || [])) {
+    if (commission.available_date) {
+      const date = commission.available_date.split('T')[0];
+      const current = pendingByDate.get(date) || 0;
+      pendingByDate.set(date, current + toMoney(toNumber(commission.amount)));
+    }
+  }
+
+  // Sort by date and take first 5
+  const sortedDates = Array.from(pendingByDate.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(0, 5);
+  
+  for (const [date, amount] of sortedDates) {
+    upcomingAvailability.push({ date, amount: toMoney(amount) });
+  }
+
+  return {
+    available_balance: toMoney(available),
+    pending_balance: toMoney(pending),
+    total_paid: toMoney(totalPaid),
+    total_cancelled: toMoney(totalCancelled),
+    total_lifetime: toMoney(available + pending + totalPaid),
+    upcoming_availability: upcomingAvailability,
+    recent_cancellations: (cancelledCommissions || []).map(c => ({
+      amount: toMoney(toNumber(c.amount)),
+      reason: c.cancelled_reason || 'Unknown',
+      cancelled_at: c.cancelled_at,
+      order_id: c.order_id
+    }))
+  };
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -98,17 +200,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       recentCommissionsResult,
       last30CommissionsResult,
       kingMidasStatsResult,
-      kingMidasPayoutsResult
+      kingMidasPayoutsResult,
+      balanceBreakdown
     ] = await Promise.all([
       supabase
         .from('affiliate_commissions')
-        .select('id, order_id, amount, profit_generated, source, status, created_at')
+        .select('id, order_id, amount, profit_generated, source, status, created_at, available_date, cancelled_reason, cancelled_at')
         .eq('affiliate_id', affiliateId)
         .order('created_at', { ascending: false })
         .limit(10),
       supabase
         .from('affiliate_commissions')
-        .select('id, amount, profit_generated, status, created_at')
+        .select('id, amount, profit_generated, status, created_at, available_date')
         .eq('affiliate_id', affiliateId)
         .gte('created_at', thirtyDaysAgo.toISOString())
         .order('created_at', { ascending: false })
@@ -124,7 +227,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .select('id, date, rank, pool_amount, status, paid_at')
         .eq('affiliate_id', affiliateId)
         .order('date', { ascending: false })
-        .limit(100)
+        .limit(100),
+      getBalanceBreakdown(affiliateId)
     ]);
 
     if (recentCommissionsResult.error && !isMissingRelationError(recentCommissionsResult.error)) {
@@ -160,6 +264,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     ).length;
     const pendingCommissions = last30CommissionsRaw.filter(
       item => String(item.status || '').toLowerCase() === 'pending'
+    ).length;
+    const cancelledCommissions = last30CommissionsRaw.filter(
+      item => String(item.status || '').toLowerCase() === 'cancelled'
     ).length;
 
     const profitByDay = new Map<string, number>();
@@ -215,7 +322,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       affiliate_code: code,
       status: affiliate.status || 'active',
       commission_rate: toNumber(affiliate.commission_rate ?? 0),
-      total_earnings: toNumber(affiliate.total_earnings ?? 0),
+      // Use calculated balances instead of stored total_earnings
+      available_balance: balanceBreakdown.available_balance,
+      pending_balance: balanceBreakdown.pending_balance,
+      total_earnings: balanceBreakdown.total_lifetime, // For backwards compatibility
+      total_paid: balanceBreakdown.total_paid,
       total_clicks: affiliate.total_clicks || 0,
       total_conversions: affiliate.total_conversions || 0,
       reward_points: affiliate.reward_points || 0,
@@ -233,6 +344,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       total_profit_generated: totalProfitGenerated30,
       approved_commissions: approvedCommissions,
       pending_commissions: pendingCommissions,
+      cancelled_commissions: cancelledCommissions,
       total_king_midas_earnings: totalKingMidasEarnings,
       pending_payouts: pendingPayouts,
       paid_payouts: paidPayouts,
@@ -258,7 +370,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const recentCommissions = recentCommissionsRaw.map(item => ({
       ...item,
       amount: toNumber(item.amount),
-      profit_generated: toNumber(item.profit_generated)
+      profit_generated: toNumber(item.profit_generated),
+      // Include new fields for transparency
+      available_date: item.available_date,
+      cancelled_reason: item.cancelled_reason,
+      cancelled_at: item.cancelled_at,
+      // Human-readable status
+      status_label: getStatusLabel(item.status, item.available_date)
     }));
 
     const kingMidas = {
@@ -282,7 +400,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       affiliate: affiliatePayload,
       overview,
       recent_commissions: recentCommissions,
-      king_midas: kingMidas
+      king_midas: kingMidas,
+      // New balance breakdown for UI
+      balance: balanceBreakdown
     });
   } catch (error: any) {
     console.error('Affiliate dashboard handler error:', error);
@@ -291,4 +411,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       message: error?.message || 'Unknown error'
     });
   }
+}
+
+/**
+ * Get human-readable status label
+ */
+function getStatusLabel(status: string, availableDate?: string): string {
+  const statusLower = (status || '').toLowerCase();
+  
+  if (statusLower === 'paid') {
+    return 'Paid';
+  }
+  
+  if (statusLower === 'cancelled') {
+    return 'Cancelled';
+  }
+  
+  if (statusLower === 'pending' && availableDate) {
+    const available = new Date(availableDate);
+    const now = new Date();
+    
+    if (available <= now) {
+      return 'Available';
+    }
+    
+    const daysUntil = Math.ceil((available.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    return `Pending (${daysUntil} day${daysUntil === 1 ? '' : 's'})`;
+  }
+  
+  return 'Pending';
 }
