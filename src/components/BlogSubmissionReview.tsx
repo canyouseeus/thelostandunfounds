@@ -992,7 +992,7 @@ export default function BlogSubmissionReview() {
                     </button>
                   </>
                 )}
-                )}
+
                 {selectedSubmission.status === 'approved' && (
                   <div className="flex flex-col gap-2">
                     <p className="text-white/70 text-xs mb-1">
