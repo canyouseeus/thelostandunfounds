@@ -109,3 +109,8 @@ What changed? What did you learn? How has this shifted your approach to other ar
 - **Linking:** Mention product names exactly as you enter them in the form so they can be automatically linked.
 - **Focus Areas:** Nutrition, household systems, habit-building, resource management, DIY experiments, and technology-enabled optimization.
 
+
+
+# IMPORTANT FORMATTING RULES
+1. Do NOT use em dashes (—) or en dashes (–). Use plain hyphens (-) or standard punctuation instead.
+2. Do NOT use multiple line breaks equivalent to 3+ newlines. Use single empty lines for paragraph breaks.

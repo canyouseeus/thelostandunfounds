@@ -28,11 +28,16 @@ interface BlogPost {
   seo_title: string | null;
   seo_description: string | null;
   subdomain?: string | null;
+  blog_column?: string | null;
 }
 
 export default function Blog() {
-  const [nativePosts, setNativePosts] = useState<BlogPost[]>([]);
+  const [mainPosts, setMainPosts] = useState<BlogPost[]>([]);
   const [bookClubPosts, setBookClubPosts] = useState<BlogPost[]>([]);
+  const [gearHeadsPosts, setGearHeadsPosts] = useState<BlogPost[]>([]);
+  const [borderlandsPosts, setBorderlandsPosts] = useState<BlogPost[]>([]);
+  const [sciencePosts, setSciencePosts] = useState<BlogPost[]>([]);
+  const [newTheoryPosts, setNewTheoryPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,112 +49,77 @@ export default function Blog() {
     try {
       setLoading(true);
       setError(null);
-      
+
       console.log('🔄 Starting to load blog posts...');
-      
-      // Load native posts (subdomain IS NULL) - only 3 most recent
-      let nativeQueryPromise = supabase
-        .from('blog_posts')
-        .select('id, title, slug, excerpt, content, published_at, created_at, seo_title, seo_description, published, status, subdomain')
-        .is('subdomain', null)
-        .order('published_at', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(3);
-      
-      // Try to filter by published
-      try {
-        nativeQueryPromise = nativeQueryPromise.eq('published', true);
-      } catch (e) {
-        console.warn('Published column filter not available, will filter client-side');
-      }
-      
-      // Load book club posts (subdomain IS NOT NULL) - 3 most recent
-      let bookClubQueryPromise = supabase
-        .from('blog_posts')
-        .select('id, title, slug, excerpt, content, published_at, created_at, seo_title, seo_description, published, status, subdomain')
-        .not('subdomain', 'is', null)
-        .order('published_at', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(3);
-      
-      try {
-        bookClubQueryPromise = bookClubQueryPromise.eq('published', true);
-      } catch (e) {
-        console.warn('Published column filter not available for book club posts');
-      }
-      
-      const timeoutPromise = new Promise((_, reject) => 
+
+      // Helper to build a query for a specific column
+      const buildQuery = (column: string, isSubdomainBased = false) => {
+        let query = supabase
+          .from('blog_posts')
+          .select('id, title, slug, excerpt, content, published_at, created_at, seo_title, seo_description, published, status, subdomain, blog_column')
+          .order('published_at', { ascending: false })
+          .order('created_at', { ascending: false })
+          .limit(3);
+
+        if (column === 'main') {
+          // Main: blog_column is 'main' OR (null column AND null subdomain)
+          query = query.or('blog_column.eq.main,and(blog_column.is.null,subdomain.is.null)');
+        } else if (column === 'bookclub') {
+          // Book Club: blog_column is 'bookclub' OR subdomain is not null
+          query = query.or('blog_column.eq.bookclub,subdomain.not.is.null');
+        } else {
+          // Others: strict match
+          query = query.eq('blog_column', column);
+        }
+
+        // Try to filter by published if possible (client-side fallback handled later)
+        // Note: supabase-js might throw on unknown columns if we're not careful, 
+        // but 'published' exists in the schema based on previous code.
+        return query;
+      };
+
+      const columns = ['main', 'bookclub', 'gearheads', 'borderlands', 'science', 'newtheory'];
+      const queries = columns.map(col => buildQuery(col));
+
+      const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Query timeout after 15 seconds')), 15000)
       );
-      
-      // Execute both queries
-      const [nativeResult, bookClubResult] = await Promise.all([
-        Promise.race([nativeQueryPromise, timeoutPromise]) as Promise<any>,
-        Promise.race([bookClubQueryPromise, timeoutPromise]) as Promise<any>
-      ]);
-      
-      const { data: nativeData, error: nativeError } = nativeResult;
-      const { data: bookClubData, error: bookClubError } = bookClubResult;
-      
-      console.log('✅ Queries completed:', { 
-        nativeLength: nativeData?.length, 
-        bookClubLength: bookClubData?.length,
-        nativeError,
-        bookClubError
-      });
 
-      if (nativeError && nativeError.code !== 'PGRST116' && nativeError.code !== '42P01') {
-        console.error('Error loading native posts:', nativeError);
-        const errorMsg = nativeError.message || 'Failed to load blog posts';
-        const errorCode = nativeError.code ? ` (Code: ${nativeError.code})` : '';
-        setError(`${errorMsg}${errorCode}`);
-      }
+      const results = await Promise.all(
+        queries.map(q => Promise.race([q, timeoutPromise]))
+      ) as any[];
 
-      if (bookClubError && bookClubError.code !== 'PGRST116' && bookClubError.code !== '42P01') {
-        console.error('Error loading book club posts:', bookClubError);
-        // Don't set error if native posts loaded successfully
-        if (!nativeError || nativeError.code === 'PGRST116' || nativeError.code === '42P01') {
-          const errorMsg = bookClubError.message || 'Failed to load book club posts';
-          setError(errorMsg);
+      // Process results
+      const processedPosts = results.map((result, index) => {
+        const { data, error } = result;
+        if (error && error.code !== 'PGRST116' && error.code !== '42P01') {
+          console.error(`Error loading ${columns[index]} posts:`, error);
+          return [];
         }
-      }
 
-      // Filter native posts: only published posts
-      const publishedNativePosts = (nativeData || []).filter((post: any) => {
-        try {
-          const isPublished = post.published === true || 
-            (post.published === undefined && post.status === 'published');
-          return isPublished;
-        } catch (e) {
-          return false;
-        }
+        // Filter published
+        return (data || []).filter((post: any) => {
+          try {
+            return post.published === true || (post.published === undefined && post.status === 'published');
+          } catch (e) {
+            return false;
+          }
+        });
       });
 
-      // Filter book club posts: only published posts
-      const publishedBookClubPosts = (bookClubData || []).filter((post: any) => {
-        try {
-          const isPublished = post.published === true || 
-            (post.published === undefined && post.status === 'published');
-          return isPublished;
-        } catch (e) {
-          return false;
-        }
-      });
+      setMainPosts(processedPosts[0]);
+      setBookClubPosts(processedPosts[1]);
+      setGearHeadsPosts(processedPosts[2]);
+      setBorderlandsPosts(processedPosts[3]);
+      setSciencePosts(processedPosts[4]);
+      setNewTheoryPosts(processedPosts[5]);
 
-      setNativePosts(publishedNativePosts || []);
-      setBookClubPosts(publishedBookClubPosts || []);
-      console.log('✅ Posts set:', { 
-        native: publishedNativePosts.length, 
-        bookClub: publishedBookClubPosts.length 
-      });
+      console.log('✅ Posts loaded via parallel queries');
+
     } catch (err: any) {
       console.error('❌ Error loading blog posts:', err);
-      const errorMsg = err?.message || 'Failed to load blog posts';
-      setError(errorMsg);
-      setNativePosts([]);
-      setBookClubPosts([]);
+      setError(err?.message || 'Failed to load blog posts');
     } finally {
-      console.log('🏁 loadPosts finally block - setting loading to false');
       setLoading(false);
     }
   };
@@ -157,10 +127,10 @@ export default function Blog() {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '';
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
   };
 
@@ -267,261 +237,183 @@ export default function Blog() {
           </div>
         </div>
 
-      {error && (
-        <div className="bg-red-900/20 border border-red-500/50 rounded-none p-4 mb-6">
-          <p className="text-red-400">{error}</p>
-        </div>
-      )}
-
-      {/* Native Posts Section - 3 Most Recent */}
-      {nativePosts.length > 0 && (
-        <div className="mb-12">
-          <div className="mb-6 flex flex-col gap-2">
-            <h2 className="text-xl font-bold text-white whitespace-nowrap">From THE LOST ARCHIVES</h2>
-            <Link
-              to="/thelostarchives/all"
-              className="text-white/60 hover:text-white text-sm font-medium transition whitespace-nowrap flex-shrink-0"
-            >
-              View All Articles →
-            </Link>
+        {error && (
+          <div className="bg-red-900/20 border border-red-500/50 rounded-none p-4 mb-6">
+            <p className="text-red-400">{error}</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {nativePosts.map((post) => {
-              const excerpt = buildPreviewExcerpt(post);
-              const imageUrl = extractFirstImage(post.content || post.excerpt || '');
-              const expandedIntro = buildExpandedIntro(post);
-              const showAdditionalContent = !!expandedIntro;
-              
-              return (
-                <Expandable
-                  key={post.id}
-                  expandDirection="vertical"
-                  expandBehavior="replace"
-                  initialDelay={0}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                >
-                  {({ isExpanded }) => (
-                    <ExpandableTrigger>
-                      <div
-                        className="rounded-none"
-                        style={{
-                          minHeight: isExpanded ? '420px' : '220px',
-                          transition: 'min-height 0.2s ease-out',
-                        }}
-                      >
-                        <ExpandableCard
-                          className="bg-black rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] cursor-pointer"
-                          collapsedSize={{ height: 220 }}
-                          expandedSize={{ height: 420 }}
-                          hoverToExpand={false}
-                          expandDelay={0}
-                          collapseDelay={0}
-                        >
-                          <ExpandableCardHeader className="mb-1 pb-1">
-                            <h2 className="text-base font-black text-white mb-0 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
-                              {post.title}
-                            </h2>
-                            <time className="text-white/60 text-xs font-medium block mt-1">
-                              {formatDate(post.published_at || post.created_at)}
-                            </time>
-                          </ExpandableCardHeader>
+        )}
 
-                          <ExpandableCardContent className="flex-1 min-h-0">
-                            {excerpt && (
-                              <div className="mb-1">
-                                <p className="text-white/70 text-sm leading-relaxed line-clamp-4 text-left">
-                                  {excerpt}
-                                </p>
-                              </div>
-                            )}
-                            
-                            <ExpandableContent 
-                              preset="fade" 
-                              stagger 
-                              staggerChildren={0.1}
-                              keepMounted={false}
-                            >
-                              {imageUrl && (
-                                <div className="mb-3">
-                                  <img
-                                    src={imageUrl}
-                                    alt={post.title}
-                                    className="w-full h-32 object-cover rounded-none bg-white/5"
-                                  />
-                                </div>
-                              )}
-                              {showAdditionalContent && (
-                                <div className="mb-2">
-                                  <p className="text-white/60 text-xs leading-relaxed text-left line-clamp-6">
-                                    {expandedIntro}
-                                  </p>
-                                </div>
-                              )}
-                              <Link
-                                to={`/thelostarchives/${post.slug}`}
-                                className="inline-block mt-2 text-white/80 hover:text-white text-xs font-semibold transition"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                Read Full Article →
-                              </Link>
-                            </ExpandableContent>
-                          </ExpandableCardContent>
-                          
-                          <ExpandableCardFooter className="mt-auto p-3 pt-2 pb-3">
-                            <div className="flex items-center justify-end gap-2 min-w-0 w-full">
-                              {!isExpanded && (
-                                <span className="text-white/90 text-xs font-semibold transition flex-shrink-0 whitespace-nowrap">
-                                  Click to expand →
-                                </span>
-                              )}
-                            </div>
-                          </ExpandableCardFooter>
-                        </ExpandableCard>
-                      </div>
-                    </ExpandableTrigger>
+        {/* Sections Helper */}
+        {(() => {
+          const renderSection = (title: string, posts: BlogPost[], viewAllLink: string | null) => {
+            if (posts.length === 0) return null;
+            return (
+              <div className="mb-12">
+                <div className="mb-6 flex flex-col gap-2">
+                  <h2 className="text-xl font-bold text-white whitespace-nowrap">{title}</h2>
+                  {viewAllLink && (
+                    <Link
+                      to={viewAllLink}
+                      className="text-white/60 hover:text-white text-sm font-medium transition whitespace-nowrap flex-shrink-0"
+                    >
+                      View All →
+                    </Link>
                   )}
-                </Expandable>
-              );
-            })}
-          </div>
-        </div>
-      )}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {posts.map((post) => {
+                    const excerpt = buildPreviewExcerpt(post);
+                    const imageUrl = extractFirstImage(post.content || post.excerpt || '');
+                    const expandedIntro = buildExpandedIntro(post);
+                    const showAdditionalContent = !!expandedIntro;
 
-      {/* Logo divider */}
-      {bookClubPosts.length > 0 && (
-        <div className="flex justify-center my-8 gap-12">
-          {[1, 2, 3].map((i) => (
-            <img
-              key={i}
-              src="/logo.png"
-              alt="THE LOST+UNFOUNDS"
-              className="h-40 w-auto object-contain"
-            />
-          ))}
-        </div>
-      )}
+                    // Determine link target
+                    let postLink = `/thelostarchives/${post.slug}`;
+                    if (post.subdomain) {
+                      postLink = `/blog/${post.subdomain}/${post.slug}`;
+                    } else if (post.blog_column && post.blog_column !== 'main') {
+                      // If it's a column post without subdomain (old data?), where should it go?
+                      // Defaulting to thelostarchives logic if no subdomain, 
+                      // OR we could construct /blog/[column]/[slug] if subdomains matched columns.
+                      // Safe bet: use thelostarchives if subdomain is missing.
+                      postLink = `/thelostarchives/${post.slug}`;
+                    }
 
-      {/* Book Club Posts Section - 3 Most Recent */}
-      {bookClubPosts.length > 0 && (
-        <div className="mt-6 pt-0">
-          <div className="mb-6 flex flex-col gap-2">
-            <h2 className="text-2xl font-bold text-white whitespace-nowrap">From the BOOK CLUB</h2>
-            <Link
-              to="/book-club"
-              className="text-white/60 hover:text-white text-sm font-medium transition whitespace-nowrap flex-shrink-0"
-            >
-              View All →
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {bookClubPosts.map((post) => {
-              const excerpt = buildPreviewExcerpt(post);
-              const imageUrl = extractFirstImage(post.content || post.excerpt || '');
-              const expandedIntro = buildExpandedIntro(post);
-              const showAdditionalContent = !!expandedIntro;
-
-              return (
-                <Expandable
-                  key={post.id}
-                  expandDirection="vertical"
-                  expandBehavior="replace"
-                  initialDelay={0}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                >
-                  {({ isExpanded }) => (
-                    <ExpandableTrigger>
-                      <div
-                        className="rounded-none"
-                        style={{
-                          minHeight: isExpanded ? '420px' : '220px',
-                          transition: 'min-height 0.2s ease-out',
-                        }}
+                    return (
+                      <Expandable
+                        key={post.id}
+                        expandDirection="vertical"
+                        expandBehavior="replace"
+                        initialDelay={0}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
                       >
-                        <ExpandableCard
-                          className="bg-black rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] cursor-pointer"
-                          collapsedSize={{ height: 220 }}
-                          expandedSize={{ height: 420 }}
-                          hoverToExpand={false}
-                          expandDelay={0}
-                          collapseDelay={0}
-                        >
-                          <ExpandableCardHeader className="mb-1 pb-1">
-                            <h2 className="text-base font-black text-white mb-0 tracking-wide transition line-clamp-2">
-                              {post.title}
-                            </h2>
-                            <time className="text-white/60 text-xs font-medium block mt-1">
-                              {formatDate(post.published_at || post.created_at)}
-                            </time>
-                          </ExpandableCardHeader>
-                        
-                          <ExpandableCardContent className="flex-1 min-h-0">
-                            {excerpt && (
-                              <div className="mb-1">
-                                <p className="text-white/70 text-sm leading-relaxed line-clamp-4 text-left">
-                                  {excerpt}
-                                </p>
-                              </div>
-                            )}
-                            
-                            <ExpandableContent 
-                              preset="fade" 
-                              stagger 
-                              staggerChildren={0.1}
-                              keepMounted={false}
+                        {({ isExpanded }) => (
+                          <ExpandableTrigger>
+                            <div
+                              className="rounded-none"
+                              style={{
+                                minHeight: isExpanded ? '420px' : '220px',
+                                transition: 'min-height 0.2s ease-out',
+                              }}
                             >
-                              {imageUrl && (
-                                <div className="mb-3">
-                                  <img
-                                    src={imageUrl}
-                                    alt={post.title}
-                                    className="w-full h-32 object-cover rounded-none bg-white/5"
-                                  />
-                                </div>
-                              )}
-                              {showAdditionalContent && (
-                                <div className="mb-2">
-                                  <p className="text-white/60 text-xs leading-relaxed text-left line-clamp-6">
-                                    {expandedIntro}
-                                  </p>
-                                </div>
-                              )}
-                              <Link
-                                to={`/blog/${post.subdomain}/${post.slug}`}
-                                className="inline-block mt-2 text-white/80 hover:text-white text-xs font-semibold transition"
-                                onClick={(e) => e.stopPropagation()}
+                              <ExpandableCard
+                                className="bg-black rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] cursor-pointer"
+                                collapsedSize={{ height: 220 }}
+                                expandedSize={{ height: 420 }}
+                                hoverToExpand={false}
+                                expandDelay={0}
+                                collapseDelay={0}
                               >
-                                Read Full Article →
-                              </Link>
-                            </ExpandableContent>
-                          </ExpandableCardContent>
-                          
-                          <ExpandableCardFooter className="mt-auto p-3 pt-2 pb-3">
-                            <div className="flex items-center justify-end gap-2 min-w-0 w-full">
-                              {!isExpanded && (
-                                <span className="text-white/90 text-xs font-semibold transition flex-shrink-0 whitespace-nowrap">
-                                  Click to expand →
-                                </span>
-                              )}
-                            </div>
-                          </ExpandableCardFooter>
-                        </ExpandableCard>
-                      </div>
-                    </ExpandableTrigger>
-                  )}
-                </Expandable>
-              );
-            })}
-          </div>
-        </div>
-      )}
+                                <ExpandableCardHeader className="mb-1 pb-1">
+                                  <h2 className="text-base font-black text-white mb-0 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
+                                    {post.title}
+                                  </h2>
+                                  <time className="text-white/60 text-xs font-medium block mt-1">
+                                    {formatDate(post.published_at || post.created_at)}
+                                  </time>
+                                </ExpandableCardHeader>
 
-      {/* Empty State */}
-      {nativePosts.length === 0 && bookClubPosts.length === 0 && (
-        <div className="text-white/60 text-lg">
-          <p>No posts yet. Check back soon for intel from the field.</p>
-        </div>
-      )}
-    </div>
+                                <ExpandableCardContent className="flex-1 min-h-0">
+                                  {excerpt && (
+                                    <div className="mb-1">
+                                      <p className="text-white/70 text-sm leading-relaxed line-clamp-4 text-left">
+                                        {excerpt}
+                                      </p>
+                                    </div>
+                                  )}
+
+                                  <ExpandableContent
+                                    preset="fade"
+                                    stagger
+                                    staggerChildren={0.1}
+                                    keepMounted={false}
+                                  >
+                                    {imageUrl && (
+                                      <div className="mb-3">
+                                        <img
+                                          src={imageUrl}
+                                          alt={post.title}
+                                          className="w-full h-32 object-cover rounded-none bg-white/5"
+                                        />
+                                      </div>
+                                    )}
+                                    {showAdditionalContent && (
+                                      <div className="mb-2">
+                                        <p className="text-white/60 text-xs leading-relaxed text-left line-clamp-6">
+                                          {expandedIntro}
+                                        </p>
+                                      </div>
+                                    )}
+                                    <Link
+                                      to={postLink}
+                                      className="inline-block mt-2 text-white/80 hover:text-white text-xs font-semibold transition"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      Read Full Article →
+                                    </Link>
+                                  </ExpandableContent>
+                                </ExpandableCardContent>
+
+                                <ExpandableCardFooter className="mt-auto p-3 pt-2 pb-3">
+                                  <div className="flex items-center justify-end gap-2 min-w-0 w-full">
+                                    {!isExpanded && (
+                                      <span className="text-white/90 text-xs font-semibold transition flex-shrink-0 whitespace-nowrap">
+                                        Click to expand →
+                                      </span>
+                                    )}
+                                  </div>
+                                </ExpandableCardFooter>
+                              </ExpandableCard>
+                            </div>
+                          </ExpandableTrigger>
+                        )}
+                      </Expandable>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          };
+
+          return (
+            <>
+              {renderSection('From THE LOST ARCHIVES', mainPosts, '/thelostarchives/all')}
+
+              {/* Logo divider only if Book Club posts exist */}
+              {bookClubPosts.length > 0 && (
+                <div className="flex justify-center my-8 gap-12">
+                  {[1, 2, 3].map((i) => (
+                    <img
+                      key={i}
+                      src="/logo.png"
+                      alt="THE LOST+UNFOUNDS"
+                      className="h-40 w-auto object-contain"
+                    />
+                  ))}
+                </div>
+              )}
+
+              {renderSection('From the BOOK CLUB', bookClubPosts, '/book-club')}
+              {renderSection('GEARHEADS', gearHeadsPosts, '/gearheads')}
+              {renderSection('EDGE OF THE BORDERLANDS', borderlandsPosts, '/borderlands')}
+              {renderSection('MAD SCIENTISTS', sciencePosts, '/science')}
+              {renderSection('NEW THEORY', newTheoryPosts, '/newtheory')}
+            </>
+          );
+        })()}
+
+        {/* Empty State */}
+        {mainPosts.length === 0 &&
+          bookClubPosts.length === 0 &&
+          gearHeadsPosts.length === 0 &&
+          borderlandsPosts.length === 0 &&
+          sciencePosts.length === 0 &&
+          newTheoryPosts.length === 0 && (
+            <div className="text-white/60 text-lg">
+              <p>No posts yet. Check back soon for intel from the field.</p>
+            </div>
+          )}
+      </div>
     </>
   );
 }

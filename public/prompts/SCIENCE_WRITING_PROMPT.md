@@ -62,3 +62,8 @@ Summarize the core idea and leave the reader with a question or a new perspectiv
 ## For Contributors:
 - **Affiliate Links:** Not required, but if you mention relevant books or tools, you can add them in the submission form to have them auto-linked.
 
+
+
+# IMPORTANT FORMATTING RULES
+1. Do NOT use em dashes (—) or en dashes (–). Use plain hyphens (-) or standard punctuation instead.
+2. Do NOT use multiple line breaks equivalent to 3+ newlines. Use single empty lines for paragraph breaks.

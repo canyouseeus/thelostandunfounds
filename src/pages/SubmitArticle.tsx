@@ -120,9 +120,9 @@ const COLUMN_CONFIGS: Record<BlogColumn, ColumnConfig> = {
 export default function SubmitArticle() {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
-  
+
   const pathname = location.pathname;
-  
+
   // Helper to get column from URL
   const getColumnFromUrl = (): BlogColumn | null => {
     if (pathname.includes('/submit/main')) return 'main';
@@ -131,12 +131,12 @@ export default function SubmitArticle() {
     if (pathname.includes('/submit/borderlands')) return 'borderlands';
     if (pathname.includes('/submit/science')) return 'science';
     if (pathname.includes('/submit/newtheory')) return 'newtheory';
-    
+
     const queryParam = searchParams.get('column');
     if (queryParam && Object.keys(COLUMN_CONFIGS).includes(queryParam.toLowerCase())) {
       return queryParam.toLowerCase() as BlogColumn;
     }
-    
+
     return null;
   };
 
@@ -244,7 +244,7 @@ export default function SubmitArticle() {
               }
             } else if (data) {
               setUserSubdomain(data.subdomain);
-              
+
               // Step 3: Check for storefront ID (after subdomain is set)
               const hasStorefrontId = userMetadata.amazon_storefront_id;
               if (!hasStorefrontId) {
@@ -271,7 +271,7 @@ export default function SubmitArticle() {
         // Author name and storefront ID should be set during registration
         const authorName = userMetadata.author_name || '';
         const storefrontId = userMetadata.amazon_storefront_id || '';
-        
+
         setFormData(prev => ({
           ...prev,
           author_email: user.email || '',
@@ -373,13 +373,13 @@ export default function SubmitArticle() {
         const textBefore = line.replace(url, '')
           .replace(/[-:|–]\s*$/, '') // Remove trailing separators
           .trim();
-        
+
         let title = textBefore;
         // If no title on same line, use the previous buffer line
         if (!title && bufferTitle) {
           title = bufferTitle;
         }
-        
+
         // Clean up title
         title = title.replace(/^[-*•\d.]+\s+/, ''); // Remove bullet points/numbers
 
@@ -387,7 +387,7 @@ export default function SubmitArticle() {
         const linkObj: AffiliateLink = { link: url };
         linkObj[titleField] = title || '';
         extracted.push(linkObj);
-        
+
         bufferTitle = ''; // Title consumed
       } else {
         // Likely a title for the next link
@@ -406,7 +406,7 @@ export default function SubmitArticle() {
     if (newLinks.length > config.maxItems) {
       newLinks.length = config.maxItems;
     }
-    
+
     setAffiliateLinks(newLinks);
   };
 
@@ -428,7 +428,7 @@ export default function SubmitArticle() {
     }
 
     const trimmed = value.trim();
-    
+
     // Check if it's a full Amazon storefront URL
     const storefrontUrlPatterns = [
       /^https?:\/\/(www\.)?amazon\.(com|co\.uk|ca|de|fr|it|es|jp|in|au|br|mx|nl|sg|ae|sa)\/(shop|stores)\/[a-zA-Z0-9_-]+/i,
@@ -501,20 +501,20 @@ export default function SubmitArticle() {
       showError('Please enter a valid email address');
       return false;
     }
-    
+
     // Validate Amazon storefront ID if required
     if (config.requiresStorefront) {
       if (!formData.amazon_storefront_id.trim()) {
         showError('Please enter your Amazon Storefront ID or URL');
         return false;
       }
-      
+
       if (!validateAmazonStorefront(formData.amazon_storefront_id)) {
         showError('Please enter a valid Amazon Storefront ID or URL (e.g., https://www.amazon.com/shop/yourstorefront or just your storefront ID)');
         return false;
       }
     }
-    
+
     // Validate affiliate links if required
     if (config.requiresAffiliates) {
       const titleField = getTitleField();
@@ -524,12 +524,12 @@ export default function SubmitArticle() {
           return title.trim() && link.link.trim();
         }
       );
-      
+
       if (validLinks.length < config.minItems) {
         showError(`Please provide at least ${config.minItems} ${config.itemLabel.toLowerCase()}${config.minItems > 1 ? 's' : ''} with both title and affiliate link`);
         return false;
       }
-      
+
       // Validate each link
       for (const link of validLinks) {
         if (!link.link.trim().startsWith('http')) {
@@ -549,7 +549,7 @@ export default function SubmitArticle() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!(await validateForm())) {
       return;
     }
@@ -582,7 +582,7 @@ export default function SubmitArticle() {
       }
 
       // Extract and normalize storefront ID if required
-      const storefrontId = config.requiresStorefront 
+      const storefrontId = config.requiresStorefront
         ? extractStorefrontId(formData.amazon_storefront_id)
         : null;
 
@@ -635,7 +635,7 @@ export default function SubmitArticle() {
       }
 
       success('Your article has been submitted successfully! A confirmation email has been sent. We\'ll review it and get back to you soon.');
-      
+
       // Reset form
       setFormData({
         title: '',
@@ -731,7 +731,7 @@ export default function SubmitArticle() {
                 .select('subdomain')
                 .eq('user_id', user.id)
                 .single();
-              
+
               if (!data) {
                 setShowSubdomainModal(true);
               } else {
@@ -812,73 +812,79 @@ export default function SubmitArticle() {
 
         {/* AI Writing Prompt Box */}
         {config.promptPath && (
-        <div className="mb-8">
-          <div className="bg-black/50 border border-white/10 rounded-none p-6">
-            <div className="mb-4">
-              <h2 className="text-xl font-bold text-white mb-1">AI Writing Prompt for Contributors</h2>
-              <p className="text-white/60 text-sm mb-2">Copy this prompt to use with your AI assistant</p>
-              <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-none p-3 mt-3 flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
-                <p className="text-yellow-300 text-xs">
-                  <strong>Important:</strong> Do not modify this prompt. Use it exactly as provided to ensure your article matches our format and style requirements.
-                </p>
-              </div>
-            </div>
-            {loadingPrompt ? (
-              <div className="bg-black/50 border border-white/10 rounded-none p-4">
-                <p className="text-white/60 text-sm">Loading prompt...</p>
-              </div>
-            ) : (
-              <>
-                <pre className="bg-black/50 border border-white/10 rounded-none p-4 overflow-x-auto text-white/90 text-sm font-mono whitespace-pre-wrap break-words text-left max-h-96 overflow-y-auto relative">
-                  <button
-                    onClick={copyPromptToClipboard}
-                    className="absolute top-2 right-2 p-1.5 bg-white/10 hover:bg-white/20 rounded text-white transition flex items-center justify-center flex-shrink-0 z-10"
-                    title={copiedPrompt ? "Copied!" : "Copy Prompt"}
-                  >
-                    {copiedPrompt ? (
-                      <Check className="w-3 h-3" />
-                    ) : (
-                      <Copy className="w-3 h-3" />
-                    )}
-                  </button>
-                  <code className="text-left">{promptContent || 'Failed to load prompt. Please refresh the page.'}</code>
-                </pre>
-                <div className="flex justify-center mt-4">
-                  <button
-                    onClick={copyPromptToClipboard}
-                    className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-none text-white text-sm transition flex items-center gap-2"
-                  >
-                    {copiedPrompt ? (
-                      <>
-                        <Check className="w-4 h-4" />
-                        Copied!
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-4 h-4" />
-                        Copy Prompt
-                      </>
-                    )}
-                  </button>
+          <div className="mb-8">
+            <div className="bg-black/50 border border-white/10 rounded-none p-6">
+              <div className="mb-4">
+                <h2 className="text-xl font-bold text-white mb-1">AI Writing Prompt for Contributors</h2>
+                <p className="text-white/60 text-sm mb-2">Copy this prompt to use with your AI assistant</p>
+                <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-none p-3 mt-3 flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-yellow-300 text-xs">
+                    <strong>Important:</strong> Do not modify this prompt. Use it exactly as provided to ensure your article matches our format and style requirements.
+                  </p>
                 </div>
-              </>
-            )}
+              </div>
+              {loadingPrompt ? (
+                <div className="bg-black/50 border border-white/10 rounded-none p-4">
+                  <p className="text-white/60 text-sm">Loading prompt...</p>
+                </div>
+              ) : (
+                <>
+                  <pre className="bg-black/50 border border-white/10 rounded-none p-4 overflow-x-auto text-white/90 text-sm font-mono whitespace-pre-wrap break-words text-left max-h-96 overflow-y-auto relative">
+                    <button
+                      onClick={copyPromptToClipboard}
+                      className="absolute top-2 right-2 p-1.5 bg-white/10 hover:bg-white/20 rounded text-white transition flex items-center justify-center flex-shrink-0 z-10"
+                      title={copiedPrompt ? "Copied!" : "Copy Prompt"}
+                    >
+                      {copiedPrompt ? (
+                        <Check className="w-3 h-3" />
+                      ) : (
+                        <Copy className="w-3 h-3" />
+                      )}
+                    </button>
+                    <code className="text-left">{promptContent || 'Failed to load prompt. Please refresh the page.'}</code>
+                  </pre>
+                  <div className="flex justify-center mt-4">
+                    <button
+                      onClick={copyPromptToClipboard}
+                      className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-none text-white text-sm transition flex items-center gap-2"
+                    >
+                      {copiedPrompt ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4" />
+                          Copy Prompt
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-        </div>
         )}
 
         {/* Tips Section */}
         <div className="mb-8">
           <div className="bg-black/30 border border-white/10 rounded-none p-6 mt-6">
             <h3 className="text-lg font-bold text-white mb-4">Important Tips for Contributors</h3>
-            
+
             <div className="space-y-4">
               <div>
-                <h4 className="text-white font-semibold mb-2">How Book Linking Works:</h4>
+                <h4 className="text-white font-semibold mb-2">How {config.requiresAffiliates ? (column === 'bookclub' ? 'Book' : 'Product') : 'Content'} Linking Works:</h4>
                 <ul className="text-white/70 text-sm space-y-1 list-disc list-inside">
-                  <li>Book titles in the text will automatically become clickable links - just mention them naturally where relevant</li>
-                  <li>Each book should be linked a maximum of 2 times - once in the introduction and once in its dedicated section</li>
+                  {config.requiresAffiliates ? (
+                    <>
+                      <li>{column === 'bookclub' ? 'Book titles' : 'Product names'} in the text will automatically become clickable links - just mention them naturally where relevant</li>
+                      <li>Each {config.itemLabel.toLowerCase()} should be linked a maximum of 2 times - once in the introduction and once in its dedicated section</li>
+                    </>
+                  ) : (
+                    <li>Standard links will be preserved, but affiliate matching is not active for this column.</li>
+                  )}
                 </ul>
               </div>
 
@@ -917,135 +923,137 @@ export default function SubmitArticle() {
             </div>
             <form onSubmit={handleSubmit} className="space-y-6">
 
-            {/* Subdomain Display (read-only) - only show if required */}
-            {config.requiresSubdomain && userSubdomain && (
-              <div className="bg-green-900/20 border border-green-500/30 rounded-none p-4">
-                <label className="block text-white/80 text-sm mb-2">
-                  Your Blog Subdomain
+              {/* Subdomain Display (read-only) - only show if required */}
+              {config.requiresSubdomain && userSubdomain && (
+                <div className="bg-green-900/20 border border-green-500/30 rounded-none p-4">
+                  <label className="block text-white/80 text-sm mb-2">
+                    Your Blog Subdomain
+                  </label>
+                  <p className="text-white/90 font-mono text-sm">
+                    {userSubdomain}.thelostandunfounds.com
+                  </p>
+                  <p className="text-white/50 text-xs mt-1">
+                    Your subdomain is set and cannot be changed. All your articles will be published under this subdomain.
+                  </p>
+                </div>
+              )}
+              {config.requiresSubdomain && !userSubdomain && !loadingSubdomain && (
+                <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-none p-4">
+                  <p className="text-yellow-300 text-sm mb-2">
+                    You need to register a subdomain before submitting articles.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowSubdomainModal(true)}
+                    className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium rounded-none transition"
+                  >
+                    Register Subdomain
+                  </button>
+                </div>
+              )}
+
+              {/* Article Title */}
+              <div>
+                <label className="block text-white/80 text-sm mb-2 flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Article Title *
                 </label>
-                <p className="text-white/90 font-mono text-sm">
-                  {userSubdomain}.thelostandunfounds.com
-                </p>
-                <p className="text-white/50 text-xs mt-1">
-                  Your subdomain is set and cannot be changed. All your articles will be published under this subdomain.
-                </p>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+                  placeholder="Your Article Title"
+                  required
+                />
               </div>
-            )}
-            {config.requiresSubdomain && !userSubdomain && !loadingSubdomain && (
-              <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-none p-4">
-                <p className="text-yellow-300 text-sm mb-2">
-                  You need to register a subdomain before submitting articles.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setShowSubdomainModal(true)}
-                  className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium rounded-none transition"
-                >
-                  Register Subdomain
-                </button>
-              </div>
-            )}
 
-            {/* Article Title */}
-            <div>
-              <label className="block text-white/80 text-sm mb-2 flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                Article Title *
-              </label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
-                placeholder="Your Article Title"
-                required
-              />
-            </div>
-
-            {/* Article Content */}
-            <div>
-              <label className="block text-white/80 text-sm mb-2">
-                Article Content *
-              </label>
-              <textarea
-                value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none font-mono text-sm"
-                rows={20}
-                placeholder="Write your article here. Use double line breaks for paragraphs...
+              {/* Article Content */}
+              <div>
+                <label className="block text-white/80 text-sm mb-2">
+                  Article Content *
+                </label>
+                <textarea
+                  value={formData.content}
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none font-mono text-sm"
+                  rows={20}
+                  placeholder={`Write your article here. Use double line breaks for paragraphs...
 
 Example structure:
 - Introduction (3-4 paragraphs)
-- Book sections (each with 3-4 paragraphs)
+- ${config.requiresAffiliates ? (column === 'bookclub' ? 'Book' : 'Product') : 'Content'} sections (each with 3-4 paragraphs)
 - Conclusion
 
-Use double line breaks between sections. Book titles mentioned in the text will automatically become clickable links if you add them in the Amazon Affiliate Links section below. The Amazon Affiliate Disclosure will be added automatically after the introduction."
-                required
-              />
-              <div className="text-white/50 text-xs mt-2 space-y-1">
-                <p>• Use double line breaks (press Enter twice) to create paragraphs</p>
-                <p>• Headings should be on their own line</p>
-                <p>• Book titles mentioned in your text will automatically become clickable links</p>
-                {config.promptPath && (
-                  <p>• See the <a href={`/${column}/prompt`} target="_blank" rel="noopener noreferrer" className="text-white hover:text-white/80 underline uppercase font-semibold">AI Writing Prompt Guide</a> for detailed formatting instructions</p>
-                )}
+Use double line breaks between sections. ${config.requiresAffiliates ? (column === 'bookclub' ? 'Book titles' : 'Product names') : 'Items'} mentioned in the text will automatically become clickable links if you add them in the Amazon Affiliate Links section below. The Amazon Affiliate Disclosure will be added automatically after the introduction.`}
+                  required
+                />
+                <div className="text-white/50 text-xs mt-2 space-y-1">
+                  <p>• Use double line breaks (press Enter twice) to create paragraphs</p>
+                  <p>• Headings should be on their own line</p>
+                  {config.requiresAffiliates && (
+                    <p>• {column === 'bookclub' ? 'Book titles' : 'Product names'} mentioned in your text will automatically become clickable links</p>
+                  )}
+                  {config.promptPath && (
+                    <p>• See the <a href={`/${column}/prompt`} target="_blank" rel="noopener noreferrer" className="text-white hover:text-white/80 underline uppercase font-semibold">AI Writing Prompt Guide</a> for detailed formatting instructions</p>
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* Excerpt */}
-            <div>
-              <label className="block text-white/80 text-sm mb-2">
-                Excerpt (Optional)
-              </label>
-              <textarea
-                value={formData.excerpt}
-                onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
-                rows={3}
-                placeholder="A brief summary of your article (will be shown on the blog listing page)"
-              />
-            </div>
-
-            {/* Affiliate Links - only show if required */}
-            {config.requiresAffiliates && (
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <label className="block text-white/80 text-sm flex items-center gap-2">
-                  <BookOpen className="w-4 h-4" />
-                  {config.itemLabel} Affiliate Links {config.minItems === config.maxItems ? `(Required - Exactly ${config.minItems} ${config.itemLabel}${config.minItems > 1 ? 's' : ''})` : `(Required - ${config.minItems} to ${config.maxItems} ${config.itemLabel}${config.maxItems > 1 ? 's' : ''})`} *
-                </label>
-                {affiliateLinks.length < config.maxItems && (
-                  <button
-                    type="button"
-                    onClick={addAffiliateLink}
-                    className="px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-xs font-medium transition flex items-center gap-1"
-                  >
-                    <Plus className="w-3 h-3" />
-                    Add {config.itemLabel}
-                  </button>
-                )}
-              </div>
-              
-              <p className="text-white/60 text-sm mb-4">
-                {config.minItems === config.maxItems 
-                  ? `You must provide exactly ${config.minItems} ${config.itemLabel.toLowerCase()}${config.minItems > 1 ? 's' : ''}.`
-                  : `You must provide between ${config.minItems} and ${config.maxItems} ${config.itemLabel.toLowerCase()}${config.maxItems > 1 ? 's' : ''}.`
-                }
-                {column === 'bookclub' && ' Paste your list below (Title and Link) to auto-fill, or enter them manually.'}
-              </p>
-
-              {/* Bulk Paste Box - allowed for any column with multiple items */}
-              {config.maxItems > 1 && (
-              <div className="bg-black/30 border border-white/10 rounded-none p-4 mb-6">
-                <label className="block text-white/80 text-xs mb-2 font-semibold">
-                  QUICK ADD: Paste your {config.itemLabel.toLowerCase()} list here to auto-fill
+              {/* Excerpt */}
+              <div>
+                <label className="block text-white/80 text-sm mb-2">
+                  Excerpt (Optional)
                 </label>
                 <textarea
-                  value={bulkAffiliateInput}
-                  onChange={handleBulkInput}
-                  className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-none text-white text-sm focus:border-white/30 focus:outline-none font-mono placeholder-white/30"
-                  rows={6}
-                  placeholder={column === 'bookclub' ? `Paste format example:
+                  value={formData.excerpt}
+                  onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
+                  className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+                  rows={3}
+                  placeholder="A brief summary of your article (will be shown on the blog listing page)"
+                />
+              </div>
+
+              {/* Affiliate Links - only show if required */}
+              {config.requiresAffiliates && (
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <label className="block text-white/80 text-sm flex items-center gap-2">
+                      <BookOpen className="w-4 h-4" />
+                      {config.itemLabel} Affiliate Links {config.minItems === config.maxItems ? `(Required - Exactly ${config.minItems} ${config.itemLabel}${config.minItems > 1 ? 's' : ''})` : `(Required - ${config.minItems} to ${config.maxItems} ${config.itemLabel}${config.maxItems > 1 ? 's' : ''})`} *
+                    </label>
+                    {affiliateLinks.length < config.maxItems && (
+                      <button
+                        type="button"
+                        onClick={addAffiliateLink}
+                        className="px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-xs font-medium transition flex items-center gap-1"
+                      >
+                        <Plus className="w-3 h-3" />
+                        Add {config.itemLabel}
+                      </button>
+                    )}
+                  </div>
+
+                  <p className="text-white/60 text-sm mb-4">
+                    {config.minItems === config.maxItems
+                      ? `You must provide exactly ${config.minItems} ${config.itemLabel.toLowerCase()}${config.minItems > 1 ? 's' : ''}.`
+                      : `You must provide between ${config.minItems} and ${config.maxItems} ${config.itemLabel.toLowerCase()}${config.maxItems > 1 ? 's' : ''}.`
+                    }
+                    {column === 'bookclub' && ' Paste your list below (Title and Link) to auto-fill, or enter them manually.'}
+                  </p>
+
+                  {/* Bulk Paste Box - allowed for any column with multiple items */}
+                  {config.maxItems > 1 && (
+                    <div className="bg-black/30 border border-white/10 rounded-none p-4 mb-6">
+                      <label className="block text-white/80 text-xs mb-2 font-semibold">
+                        QUICK ADD: Paste your {config.itemLabel.toLowerCase()} list here to auto-fill
+                      </label>
+                      <textarea
+                        value={bulkAffiliateInput}
+                        onChange={handleBulkInput}
+                        className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-none text-white text-sm focus:border-white/30 focus:outline-none font-mono placeholder-white/30"
+                        rows={6}
+                        placeholder={column === 'bookclub' ? `Paste format example:
 The E-Myth Revisited
 https://amzn.to/3...
 
@@ -1054,82 +1062,82 @@ Product Name
 https://...
 
 Other Item - https://...`}
-                />
-              </div>
-              )}
-              
-              <div className="space-y-3">
-                {affiliateLinks.map((link, index) => (
-                  <div key={index} className="bg-black/30 border border-white/10 rounded-none p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <span className="text-white/80 text-sm font-medium">
-                        {config.itemLabel} {index + 1} {index < config.minItems && <span className="text-white/50">(Required)</span>}
-                      </span>
-                      {affiliateLinks.length > config.minItems && (
-                        <button
-                          type="button"
-                          onClick={() => removeAffiliateLink(index)}
-                          className="text-red-400 hover:text-red-300 text-xs"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      )}
+                      />
                     </div>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-white/70 text-xs mb-1">{config.itemLabel} Title {index < config.minItems && '*'}</label>
-                        <input
-                          type="text"
-                          value={getTitleValue(link)}
-                          onChange={(e) => updateAffiliateLink(index, getTitleField(), e.target.value)}
-                          className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-none text-white text-sm focus:border-white/30 focus:outline-none"
-                          placeholder={`e.g., ${column === 'bookclub' ? 'The E-Myth Revisited' : column === 'gearheads' ? 'MacBook Pro 16"' : 'Travel Backpack'}`}
-                          required={index < config.minItems}
-                        />
+                  )}
+
+                  <div className="space-y-3">
+                    {affiliateLinks.map((link, index) => (
+                      <div key={index} className="bg-black/30 border border-white/10 rounded-none p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <span className="text-white/80 text-sm font-medium">
+                            {config.itemLabel} {index + 1} {index < config.minItems && <span className="text-white/50">(Required)</span>}
+                          </span>
+                          {affiliateLinks.length > config.minItems && (
+                            <button
+                              type="button"
+                              onClick={() => removeAffiliateLink(index)}
+                              className="text-red-400 hover:text-red-300 text-xs"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                        <div className="space-y-3">
+                          <div>
+                            <label className="block text-white/70 text-xs mb-1">{config.itemLabel} Title {index < config.minItems && '*'}</label>
+                            <input
+                              type="text"
+                              value={getTitleValue(link)}
+                              onChange={(e) => updateAffiliateLink(index, getTitleField(), e.target.value)}
+                              className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-none text-white text-sm focus:border-white/30 focus:outline-none"
+                              placeholder={`e.g., ${column === 'bookclub' ? 'The E-Myth Revisited' : column === 'gearheads' ? 'MacBook Pro 16"' : 'Travel Backpack'}`}
+                              required={index < config.minItems}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-white/70 text-xs mb-1">{config.linkLabel} {index < config.minItems && '*'}</label>
+                            <input
+                              type="url"
+                              value={link.link}
+                              onChange={(e) => updateAffiliateLink(index, 'link', e.target.value)}
+                              className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-none text-white text-sm focus:border-white/30 focus:outline-none"
+                              placeholder={column === 'bookclub' ? 'https://amzn.to/... or https://amazon.com/...' : 'https://...'}
+                              required={index < config.minItems}
+                            />
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-white/70 text-xs mb-1">{config.linkLabel} {index < config.minItems && '*'}</label>
-                        <input
-                          type="url"
-                          value={link.link}
-                          onChange={(e) => updateAffiliateLink(index, 'link', e.target.value)}
-                          className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-none text-white text-sm focus:border-white/30 focus:outline-none"
-                          placeholder={column === 'bookclub' ? 'https://amzn.to/... or https://amazon.com/...' : 'https://...'}
-                          required={index < config.minItems}
-                        />
-                      </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-              {column === 'bookclub' && (
-              <div className="bg-blue-900/20 border border-blue-500/30 rounded-none p-3 mt-4">
-                <p className="text-blue-300 text-xs">
-                  <strong>Tip:</strong> Make sure to mention these book titles in your article content. 
-                  When you mention a book title (e.g., "The E-Myth Revisited"), it will automatically become a clickable link 
-                  using the affiliate link you provide here. Each book can be linked up to 2 times in your article.
+                  {config.requiresAffiliates && (
+                    <div className="bg-blue-900/20 border border-blue-500/30 rounded-none p-3 mt-4">
+                      <p className="text-blue-300 text-xs">
+                        <strong>Tip:</strong> Make sure to mention these {config.itemLabel.toLowerCase()} names in your article content.
+                        When you mention a {config.itemLabel.toLowerCase()} (e.g., "{column === 'bookclub' ? 'The E-Myth Revisited' : 'Product Name'}"), it will automatically become a clickable link
+                        using the affiliate link you provide here.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Submit Button */}
+              <div className="pt-4 border-t border-white/10">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full md:w-auto px-8 py-3 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submitting ? 'Submitting...' : 'Submit Article'}
+                </button>
+                <p className="text-white/50 text-xs mt-3">
+                  By submitting, you agree that your article may be edited and published on THE LOST ARCHIVES.
+                  You'll be notified via email when your submission is reviewed.
                 </p>
               </div>
-              )}
-            </div>
-            )}
-
-            {/* Submit Button */}
-            <div className="pt-4 border-t border-white/10">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full md:w-auto px-8 py-3 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {submitting ? 'Submitting...' : 'Submit Article'}
-              </button>
-              <p className="text-white/50 text-xs mt-3">
-                By submitting, you agree that your article may be edited and published on THE LOST ARCHIVES. 
-                You'll be notified via email when your submission is reviewed.
-              </p>
-            </div>
-          </form>
-        </div>
+            </form>
+          </div>
         )}
       </div>
     </>

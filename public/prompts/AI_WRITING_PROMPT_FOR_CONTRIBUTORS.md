@@ -197,3 +197,8 @@ Once you have your draft, go to `/submit-article` and paste your content. Make s
 - Add your Amazon affiliate links in the form
 - Review the formatting matches the example post
 - Add your personal touches and experiences
+
+
+# IMPORTANT FORMATTING RULES
+1. Do NOT use em dashes (—) or en dashes (–). Use plain hyphens (-) or standard punctuation instead.
+2. Do NOT use multiple line breaks equivalent to 3+ newlines. Use single empty lines for paragraph breaks.

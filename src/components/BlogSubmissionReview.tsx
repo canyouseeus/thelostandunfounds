@@ -230,6 +230,18 @@ export default function BlogSubmissionReview() {
   const [reviewNotes, setReviewNotes] = useState('');
   const [rejectionReason, setRejectionReason] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected' | 'published'>('all');
+  const [selectedColumn, setSelectedColumn] = useState<string>('main');
+
+  const BLOG_COLUMNS = [
+    { value: 'main', label: 'Main Blog (The Lost Archives)' },
+    { value: 'bookclub', label: 'Book Club' },
+    { value: 'gearheads', label: 'GearHeads' },
+    { value: 'borderlands', label: 'Edge of the Borderlands' },
+    { value: 'science', label: 'Mad Scientists' },
+    { value: 'newtheory', label: 'New Theory' }
+  ];
+
+  /* const adminStatus = useAdminStatus(); - Removed invalid hook */
 
   useEffect(() => {
     loadSubmissions();
@@ -520,7 +532,7 @@ export default function BlogSubmissionReview() {
         subdomain: submission.subdomain || null, // User subdomain
         amazon_affiliate_links: submission.amazon_affiliate_links || [], // Store Amazon links
         amazon_storefront_id: submission.amazon_storefront_id || null, // Store Amazon storefront ID
-        blog_column: submission.blog_column || null, // Copy blog_column from submission
+        blog_column: selectedColumn || submission.blog_column || null, // Use selected column or fallback to submission
         seo_title: null,
         seo_description: submission.excerpt || null,
         seo_keywords: null,
@@ -773,12 +785,18 @@ export default function BlogSubmissionReview() {
                         <span>Storefront ID: {submission.amazon_storefront_id} <span className="text-white/30">(internal)</span></span>
                       </div>
                     )}
+                    <div className="flex items-center gap-2 text-xs text-white/50 mt-1">
+                      <span className="px-1.5 py-0.5 border border-white/20 rounded text-[10px] uppercase tracking-wider">
+                        {BLOG_COLUMNS.find(c => c.value === (submission.blog_column || 'main'))?.label || submission.blog_column || 'Main Blog'}
+                      </span>
+                    </div>
                   </div>
                   <button
                     onClick={() => {
                       setSelectedSubmission(submission);
                       setReviewNotes(submission.admin_notes || '');
                       setRejectionReason(submission.rejected_reason || '');
+                      setSelectedColumn(submission.blog_column || 'main');
                     }}
                     className="ml-4 p-2 hover:bg-white/10 rounded transition"
                     title="Review submission"
@@ -815,6 +833,24 @@ export default function BlogSubmissionReview() {
               <div className="bg-black/50 border border-white rounded-none p-4">
                 <h4 className="text-white font-bold mb-2">Title</h4>
                 <p className="text-white/90 mb-4">{selectedSubmission.title}</p>
+
+                <h4 className="text-white font-bold mb-2">Column Classification</h4>
+                <div className="mb-4">
+                  <select
+                    value={selectedColumn}
+                    onChange={(e) => setSelectedColumn(e.target.value)}
+                    className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none"
+                  >
+                    {BLOG_COLUMNS.map(column => (
+                      <option key={column.value} value={column.value}>
+                        {column.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-white/50 text-xs mt-1">
+                    Select the column this article belongs to. This determines where it appears on the site.
+                  </p>
+                </div>
 
                 <h4 className="text-white font-bold mb-2">Author</h4>
                 <p className="text-white/90 mb-2">{selectedSubmission.author_name}</p>
@@ -956,8 +992,12 @@ export default function BlogSubmissionReview() {
                     </button>
                   </>
                 )}
+                )}
                 {selectedSubmission.status === 'approved' && (
                   <div className="flex flex-col gap-2">
+                    <p className="text-white/70 text-xs mb-1">
+                      Publishing to: <span className="text-white font-bold">{BLOG_COLUMNS.find(c => c.value === selectedColumn)?.label}</span>
+                    </p>
                     {!selectedSubmission.subdomain && (
                       <div className="bg-yellow-900/20 border border-white rounded-none p-3 mb-2">
                         <p className="text-yellow-400 text-sm">
@@ -966,7 +1006,14 @@ export default function BlogSubmissionReview() {
                       </div>
                     )}
                     <button
-                      onClick={() => handlePublish(selectedSubmission)}
+                      onClick={() => {
+                        // Update the submission object with the selected column before publishing
+                        const submissionToPublish = {
+                          ...selectedSubmission,
+                          blog_column: selectedColumn
+                        };
+                        handlePublish(submissionToPublish);
+                      }}
                       className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-none transition flex items-center gap-2"
                     >
                       <CheckCircle className="w-4 h-4" />
@@ -979,6 +1026,7 @@ export default function BlogSubmissionReview() {
                     setSelectedSubmission(null);
                     setReviewNotes('');
                     setRejectionReason('');
+                    setSelectedColumn('main');
                   }}
                   className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded text-white transition"
                 >

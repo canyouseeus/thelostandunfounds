@@ -68,3 +68,8 @@ Final thoughts and advice for others attempting a similar journey.
 - **Affiliate Links:** You will add your Amazon affiliate links for the items discussed in the submission form.
 - **Linking:** Mention the product names exactly as you enter them in the form so they can be automatically linked.
 
+
+
+# IMPORTANT FORMATTING RULES
+1. Do NOT use em dashes (—) or en dashes (–). Use plain hyphens (-) or standard punctuation instead.
+2. Do NOT use multiple line breaks equivalent to 3+ newlines. Use single empty lines for paragraph breaks.

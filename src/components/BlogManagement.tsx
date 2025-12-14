@@ -26,10 +26,19 @@ interface BlogPost {
   seo_keywords: string | null;
   og_image_url: string | null;
   featured_image?: string | null; // Support existing field
-  subdomain?: string | null;
   author_id?: string | null;
   user_id?: string | null;
+  blog_column?: string | null;
 }
+
+const BLOG_COLUMNS = [
+  { value: 'main', label: 'Main Blog (The Lost Archives)' },
+  { value: 'bookclub', label: 'Book Club' },
+  { value: 'gearheads', label: 'GearHeads' },
+  { value: 'borderlands', label: 'Edge of the Borderlands' },
+  { value: 'science', label: 'Mad Scientists' },
+  { value: 'newtheory', label: 'New Theory' }
+];
 
 export default function BlogManagement() {
   const { user } = useAuth();
@@ -50,6 +59,7 @@ export default function BlogManagement() {
     seo_description: '',
     seo_keywords: '',
     og_image_url: '',
+    blog_column: 'main',
   });
 
   useEffect(() => {
@@ -59,7 +69,7 @@ export default function BlogManagement() {
 
   const loadUserSubdomain = async () => {
     if (!user) return;
-    
+
     try {
       const { data, error } = await supabase
         .from('user_subdomains')
@@ -81,7 +91,7 @@ export default function BlogManagement() {
       setLoading(true);
       const { data, error } = await supabase
         .from('blog_posts')
-        .select('*, author_id, user_id, subdomain')
+        .select('*, author_id, user_id, subdomain, blog_column')
         .order('published_at', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false });
 
@@ -94,8 +104,8 @@ export default function BlogManagement() {
       // Ensure published field exists (for backward compatibility with status field)
       const postsWithPublished = (data || []).map((post: any) => ({
         ...post,
-        published: post.published !== undefined 
-          ? post.published 
+        published: post.published !== undefined
+          ? post.published
           : (post.status === 'published')
       }));
 
@@ -142,7 +152,7 @@ export default function BlogManagement() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) {
       showError('You must be logged in to create/edit posts');
       return;
@@ -151,7 +161,7 @@ export default function BlogManagement() {
     try {
       // Set published_at when publishing for the first time
       const shouldSetPublishedAt = formData.published && (!editingPost || !editingPost.published_at);
-      
+
       const autoExcerpt = (!formData.excerpt || formData.excerpt.trim().length === 0)
         ? buildGeneratedSummary(formData.content)
         : formData.excerpt;
@@ -159,8 +169,8 @@ export default function BlogManagement() {
       const postData = {
         ...formData,
         slug: formData.slug || generateSlug(formData.title),
-        published_at: shouldSetPublishedAt 
-          ? new Date().toISOString() 
+        published_at: shouldSetPublishedAt
+          ? new Date().toISOString()
           : editingPost?.published_at || null,
         status: formData.published ? 'published' : 'draft', // Keep status in sync
         author_id: user.id,
@@ -169,6 +179,7 @@ export default function BlogManagement() {
         seo_description: formData.seo_description || null,
         seo_keywords: formData.seo_keywords || null,
         og_image_url: formData.og_image_url || null,
+        blog_column: formData.blog_column || null,
         // Set subdomain if creating a book club post
         subdomain: isBookClubPost && userSubdomain ? userSubdomain : (editingPost?.subdomain || null),
       };
@@ -203,6 +214,7 @@ export default function BlogManagement() {
         seo_description: '',
         seo_keywords: '',
         og_image_url: '',
+        blog_column: 'main',
       });
       setEditingPost(null);
       setIsCreating(false);
@@ -219,10 +231,10 @@ export default function BlogManagement() {
     setIsCreating(true);
     setIsBookClubPost(!!post.subdomain);
     // Handle both published boolean and status field for backward compatibility
-    const isPublished = post.published !== undefined 
-      ? post.published 
+    const isPublished = post.published !== undefined
+      ? post.published
       : (post.status === 'published');
-    
+
     setFormData({
       title: post.title,
       slug: post.slug,
@@ -233,6 +245,7 @@ export default function BlogManagement() {
       seo_description: post.seo_description || '',
       seo_keywords: post.seo_keywords || '',
       og_image_url: post.og_image_url || post.featured_image || '',
+      blog_column: post.blog_column || 'main',
     });
   };
 
@@ -257,10 +270,10 @@ export default function BlogManagement() {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Not published';
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     });
   };
 
@@ -275,7 +288,7 @@ export default function BlogManagement() {
   // Separate posts into categories
   const currentUserId = user?.id;
   const isAdmin = user?.email ? isAdminEmail(user.email) : false;
-  
+
   // THE LOST ARCHIVES posts: ALL posts without subdomain
   // Since admin is the only writer, show all posts without subdomain
   const lostArchivesPosts = posts.filter((post) => {
@@ -283,12 +296,12 @@ export default function BlogManagement() {
   });
 
   // All admin posts (including book club posts) - for admin, this is all posts
-  const adminPosts = isAdmin 
-    ? posts 
+  const adminPosts = isAdmin
+    ? posts
     : posts.filter((post) => {
-        const postAuthorId = post.author_id || post.user_id;
-        return postAuthorId === currentUserId;
-      });
+      const postAuthorId = post.author_id || post.user_id;
+      return postAuthorId === currentUserId;
+    });
 
   // Admin's book club posts (admin posts with subdomain)
   const adminBookClubPosts = posts.filter((post) => {
@@ -374,6 +387,21 @@ export default function BlogManagement() {
               />
             </div>
 
+            <div>
+              <label className="block text-white/80 text-sm mb-2">Column Classification</label>
+              <select
+                value={formData.blog_column}
+                onChange={(e) => setFormData({ ...formData, blog_column: e.target.value })}
+                className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none"
+              >
+                {BLOG_COLUMNS.map(column => (
+                  <option key={column.value} value={column.value}>
+                    {column.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-white/80 text-sm mb-2">SEO Title (optional)</label>
@@ -453,6 +481,7 @@ export default function BlogManagement() {
                     seo_description: '',
                     seo_keywords: '',
                     og_image_url: '',
+                    blog_column: 'main',
                   });
                 }}
                 className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded-none text-white transition"
@@ -483,6 +512,7 @@ export default function BlogManagement() {
                 seo_description: '',
                 seo_keywords: '',
                 og_image_url: '',
+                blog_column: 'main',
               });
             }}
             className="px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition flex items-center gap-2"
@@ -502,60 +532,59 @@ export default function BlogManagement() {
                 return new Date(dateB).getTime() - new Date(dateA).getTime();
               })
               .map((post) => (
-              <div
-                key={post.id}
-                className="bg-black/30 border border-white rounded-none p-4 hover:border-white transition"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h4 className="text-white font-bold text-lg mb-2">{post.title}</h4>
-                    <div className="flex items-center gap-4 text-sm text-white/60 mb-2">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {formatDate(post.published_at || post.created_at)}
-                      </span>
-                      <span className={`px-2 py-1 rounded-none text-xs ${
-                        post.published
+                <div
+                  key={post.id}
+                  className="bg-black/30 border border-white rounded-none p-4 hover:border-white transition"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h4 className="text-white font-bold text-lg mb-2">{post.title}</h4>
+                      <div className="flex items-center gap-4 text-sm text-white/60 mb-2">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {formatDate(post.published_at || post.created_at)}
+                        </span>
+                        <span className={`px-2 py-1 rounded-none text-xs ${post.published
                           ? 'bg-green-400/20 text-green-400 border border-white'
                           : 'bg-yellow-400/20 text-yellow-400 border border-white'
-                      }`}>
-                        {post.published ? 'Published' : 'Draft'}
-                      </span>
+                          }`}>
+                          {post.published ? 'Published' : 'Draft'}
+                        </span>
+                      </div>
+                      {post.excerpt && (
+                        <p className="text-white/70 text-sm">{post.excerpt.substring(0, 100)}...</p>
+                      )}
                     </div>
-                    {post.excerpt && (
-                      <p className="text-white/70 text-sm">{post.excerpt.substring(0, 100)}...</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 ml-4">
-                    {post.published && (
-                      <a
-                        href={`/thelostarchives/${post.slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <div className="flex items-center gap-2 ml-4">
+                      {post.published && (
+                        <a
+                          href={`/thelostarchives/${post.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 hover:bg-white/10 rounded-none transition"
+                          title="View post"
+                        >
+                          <Eye className="w-4 h-4 text-white/60" />
+                        </a>
+                      )}
+                      <button
+                        onClick={() => handleEdit(post)}
                         className="p-2 hover:bg-white/10 rounded-none transition"
-                        title="View post"
+                        title="Edit post"
                       >
-                        <Eye className="w-4 h-4 text-white/60" />
-                      </a>
-                    )}
-                    <button
-                      onClick={() => handleEdit(post)}
-                      className="p-2 hover:bg-white/10 rounded-none transition"
-                      title="Edit post"
-                    >
-                      <Edit className="w-4 h-4 text-white/60" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(post.id)}
-                      className="p-2 hover:bg-red-500/20 rounded-none transition"
-                      title="Delete post"
-                    >
-                      <Trash2 className="w-4 h-4 text-red-400" />
-                    </button>
+                        <Edit className="w-4 h-4 text-white/60" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(post.id)}
+                        className="p-2 hover:bg-red-500/20 rounded-none transition"
+                        title="Delete post"
+                      >
+                        <Trash2 className="w-4 h-4 text-red-400" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         )}
       </div>
@@ -578,11 +607,10 @@ export default function BlogManagement() {
                         <Calendar className="w-3 h-3" />
                         {formatDate(post.published_at || post.created_at)}
                       </span>
-                      <span className={`px-2 py-1 rounded-none text-xs ${
-                        post.published
-                          ? 'bg-green-400/20 text-green-400 border border-white'
-                          : 'bg-yellow-400/20 text-yellow-400 border border-white'
-                      }`}>
+                      <span className={`px-2 py-1 rounded-none text-xs ${post.published
+                        ? 'bg-green-400/20 text-green-400 border border-white'
+                        : 'bg-yellow-400/20 text-yellow-400 border border-white'
+                        }`}>
                         {post.published ? 'Published' : 'Draft'}
                       </span>
                       {post.subdomain && (
@@ -658,11 +686,10 @@ export default function BlogManagement() {
                         <Calendar className="w-3 h-3" />
                         {formatDate(post.published_at || post.created_at)}
                       </span>
-                      <span className={`px-2 py-1 rounded-none text-xs ${
-                        post.published
-                          ? 'bg-green-400/20 text-green-400 border border-white'
-                          : 'bg-yellow-400/20 text-yellow-400 border border-white'
-                      }`}>
+                      <span className={`px-2 py-1 rounded-none text-xs ${post.published
+                        ? 'bg-green-400/20 text-green-400 border border-white'
+                        : 'bg-yellow-400/20 text-yellow-400 border border-white'
+                        }`}>
                         {post.published ? 'Published' : 'Draft'}
                       </span>
                       {post.subdomain && (
