@@ -10,11 +10,11 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
 import { isAdmin } from '../utils/admin';
 import { supabase } from '../lib/supabase';
-import { 
-  Users, 
-  Shield, 
-  BarChart3, 
-  Settings, 
+import {
+  Users,
+  Shield,
+  BarChart3,
+  Settings,
   Activity,
   TrendingUp,
   AlertCircle,
@@ -141,8 +141,9 @@ export default function Admin() {
   const [lostArchivesPosts, setLostArchivesPosts] = useState<LostArchivesPost[]>([]);
   const [loadingLostArchivesPosts, setLoadingLostArchivesPosts] = useState(false);
   const [registeredWriters, setRegisteredWriters] = useState<number>(0);
-  const [recentPosts, setRecentPosts] = useState<Array<{title: string; author: string; date: string}>>([]);
-  const [newestSubscribers, setNewestSubscribers] = useState<Array<{email: string; created_at: string}>>([]);
+  const [pendingSubmissions, setPendingSubmissions] = useState<number>(0);
+  const [recentPosts, setRecentPosts] = useState<Array<{ title: string; author: string; date: string }>>([]);
+  const [newestSubscribers, setNewestSubscribers] = useState<Array<{ email: string; created_at: string }>>([]);
   const [affiliateStats, setAffiliateStats] = useState<{
     totalAffiliates: number;
     activeAffiliates: number;
@@ -155,10 +156,10 @@ export default function Admin() {
   } | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'subscriptions' | 'products' | 'settings' | 'blog' | 'newsletter' | 'submissions' | 'assets' | 'secret-santa' | 'affiliates' | 'mail' | null>(null);
   const [componentError, setComponentError] = useState<string | null>(null);
-  
+
   const [allUsers, setAllUsers] = useState<RecentUser[]>([]);
 
-  
+
   const unreadAlertsCount = alerts.filter(a => !a.read).length;
 
 
@@ -172,17 +173,17 @@ export default function Admin() {
       loadBookClubPosts();
       loadLostArchivesPosts();
       loadBlogStats();
-      
+
       // Set up auto-refresh every 30 seconds
       const refreshInterval = setInterval(() => {
         loadDashboardData();
         if (activeTab === 'blog') {
           loadBlogStats();
-      loadBookClubPosts();
-      loadLostArchivesPosts();
-    }
+          loadBookClubPosts();
+          loadLostArchivesPosts();
+        }
       }, 30000);
-      
+
       return () => clearInterval(refreshInterval);
     }
   }, [adminStatus, user, activeTab]);
@@ -214,10 +215,10 @@ export default function Admin() {
               },
               ...prev
             ]);
-            
+
             // Show toast
             success(`New submission received: ${newSubmission.title}`);
-            
+
             // Refresh data if needed
             // loadDashboardData(); 
           }
@@ -253,7 +254,7 @@ export default function Admin() {
 
   const checkAdminAccess = async () => {
     if (authLoading) return;
-    
+
     if (!user) {
       navigate('/');
       return;
@@ -262,7 +263,7 @@ export default function Admin() {
     // First check: email match (fastest, no database query)
     const email = user?.email || '';
     const isAdminEmail = email === 'thelostandunfounds@gmail.com' || email === 'admin@thelostandunfounds.com';
-    
+
     if (isAdminEmail) {
       // Email matches admin - allow access immediately
       setAdminStatus(true);
@@ -298,7 +299,7 @@ export default function Admin() {
   const loadDashboardData = async () => {
     try {
       setComponentError(null);
-      
+
       // Load user stats with better error handling
       let usersData = null;
       let usersError = null;
@@ -337,12 +338,12 @@ export default function Admin() {
         const subResult = await supabase
           .from('platform_subscriptions')
           .select('*', { count: 'exact', head: true });
-        
+
         // Source 2: user_roles (often more complete)
         const rolesResult = await supabase
           .from('user_roles')
           .select('*', { count: 'exact', head: true });
-          
+
         // Source 3: user_subdomains
         const domainsResult = await supabase
           .from('user_subdomains')
@@ -351,10 +352,10 @@ export default function Admin() {
         const subCount = subResult.count || 0;
         const roleCount = rolesResult.count || 0;
         const domainCount = domainsResult.count || 0;
-        
+
         // Use the highest count found
         totalUsers = Math.max(subCount, roleCount, domainCount);
-        
+
         // If all DB counts fail/return 0, fallback to local array
         if (totalUsers === 0) {
           totalUsers = subscriptions.length;
@@ -379,7 +380,7 @@ export default function Admin() {
 
       // Get newsletter subscriber count and newest subscribers
       let newsletterCount = 0;
-      let newestSubs: Array<{email: string; created_at: string}> = [];
+      let newestSubs: Array<{ email: string; created_at: string }> = [];
       try {
         const { count } = await supabase
           .from('newsletter_subscribers')
@@ -394,7 +395,7 @@ export default function Admin() {
           .eq('verified', true)
           .order('created_at', { ascending: false })
           .limit(3);
-        
+
         if (subsData) {
           newestSubs = subsData.map(sub => ({
             email: sub.email,
@@ -404,7 +405,7 @@ export default function Admin() {
       } catch (err) {
         console.warn('Error loading newsletter subscribers:', err);
       }
-      
+
       setNewestSubscribers(newestSubs);
 
       // Get affiliate stats
@@ -423,20 +424,20 @@ export default function Admin() {
         const { data: affiliates, count: affiliateCount } = await supabase
           .from('affiliates')
           .select('*', { count: 'exact' });
-        
+
         if (affiliates) {
           affiliateStatsData.totalAffiliates = affiliateCount || affiliates.length;
           affiliateStatsData.activeAffiliates = affiliates.filter(a => a.status === 'active').length;
-          
+
           // Aggregate stats
           affiliateStatsData.totalEarnings = affiliates.reduce((sum, a) => sum + parseFloat(a.total_earnings?.toString() || '0'), 0);
           affiliateStatsData.totalClicks = affiliates.reduce((sum, a) => sum + (a.total_clicks || 0), 0);
           affiliateStatsData.totalConversions = affiliates.reduce((sum, a) => sum + (a.total_conversions || 0), 0);
           affiliateStatsData.totalMLMEarnings = affiliates.reduce((sum, a) => sum + parseFloat(a.total_mlm_earnings?.toString() || '0'), 0);
-          
+
           // Calculate conversion rate
-          affiliateStatsData.conversionRate = affiliateStatsData.totalClicks > 0 
-            ? (affiliateStatsData.totalConversions / affiliateStatsData.totalClicks) * 100 
+          affiliateStatsData.conversionRate = affiliateStatsData.totalClicks > 0
+            ? (affiliateStatsData.totalConversions / affiliateStatsData.totalClicks) * 100
             : 0;
         }
 
@@ -445,12 +446,12 @@ export default function Admin() {
           .from('payout_requests')
           .select('*', { count: 'exact', head: true })
           .eq('status', 'pending');
-        
+
         affiliateStatsData.pendingPayouts = pendingCount || 0;
       } catch (err) {
         console.warn('Error loading affiliate stats:', err);
       }
-      
+
       setAffiliateStats(affiliateStatsData);
 
 
@@ -462,7 +463,7 @@ export default function Admin() {
           supabase.from('newsletter_subscribers').select('created_at').order('created_at', { ascending: true }),
           supabase.from('affiliates').select('created_at').order('created_at', { ascending: true })
         ]);
-        
+
         historyData = {
           revenue: subsHist.data?.map((r: any) => r.created_at) || [],
           newsletter: newsHist.data?.map((r: any) => r.created_at) || [],
@@ -526,16 +527,18 @@ export default function Admin() {
           .from('blog_submissions')
           .select('*', { count: 'exact', head: true })
           .eq('status', 'pending');
-        
+
         if (count && count > 0) {
-           newAlerts.push({
-             id: 4,
-             type: 'info',
-             message: `${count} new blog submission${count > 1 ? 's' : ''} pending review`,
-             time: 'Just now',
-             read: false
-           });
+          newAlerts.push({
+            id: 4,
+            type: 'info',
+            message: `${count} new blog submission${count > 1 ? 's' : ''} pending review`,
+            time: 'Just now',
+            read: false
+          });
         }
+
+        setPendingSubmissions(count || 0);
       } catch (err) {
         console.error('Error checking pending submissions:', err);
       }
@@ -560,7 +563,7 @@ export default function Admin() {
             .select('user_id, created_at')
             .order('created_at', { ascending: false })
             .limit(10);
-            
+
           if (roleResult.data && roleResult.data.length > 0) {
             recentData = roleResult.data.map((r: any) => ({
               user_id: r.user_id,
@@ -595,12 +598,12 @@ export default function Admin() {
         const usersWithInfo = await Promise.all(
           recentData.map(async (sub: any) => {
             const userId = sub.user_id;
-            
+
             // Try to get user metadata and admin status
             let username = null;
             let isAdmin = false;
             let email = `user-${userId.substring(0, 8)}`;
-            
+
             try {
               // Check user_roles for admin status
               const roleResult = await supabase
@@ -608,25 +611,25 @@ export default function Admin() {
                 .select('is_admin, email')
                 .eq('user_id', userId)
                 .maybeSingle();
-              
+
               if (roleResult.data) {
                 isAdmin = roleResult.data.is_admin === true;
                 if (roleResult.data.email) {
                   email = roleResult.data.email;
                 }
               }
-              
+
               // Check user_subdomains for username (author_name might be in metadata)
               // We can't directly query auth.users, but we can check user_metadata via user_subdomains
               // For now, we'll use email as fallback and check if we can get author_name
-              
+
               // Check if user has author_name in user_subdomains or try to infer from email
               const subdomainResult = await supabase
                 .from('user_subdomains')
                 .select('subdomain')
                 .eq('user_id', userId)
                 .maybeSingle();
-              
+
               if (subdomainResult.data?.subdomain) {
                 // Use subdomain as username hint, but we need actual author_name
                 // Since we can't query auth.users directly, we'll use email prefix
@@ -636,12 +639,12 @@ export default function Admin() {
               // If we can't get metadata, that's okay - use defaults
               console.warn('Error fetching user metadata:', metaErr);
             }
-            
+
             // Check admin email list
             if (email === 'thelostandunfounds@gmail.com' || email === 'admin@thelostandunfounds.com') {
               isAdmin = true;
             }
-            
+
             return {
               id: userId,
               email: email,
@@ -652,7 +655,7 @@ export default function Admin() {
             };
           })
         );
-        
+
         setRecentUsers(usersWithInfo);
         setAllUsers(usersWithInfo);
       } else {
@@ -663,35 +666,35 @@ export default function Admin() {
             .select('user_id, subdomain, created_at')
             .order('created_at', { ascending: false })
             .limit(10);
-          
+
           if (subdomainResult.data && subdomainResult.data.length > 0) {
             const usersFromSubdomains = await Promise.all(
               subdomainResult.data.map(async (row: any) => {
                 const userId = row.user_id;
                 let isAdmin = false;
                 let email = `user-${userId.substring(0, 8)}`;
-                
+
                 try {
                   const roleResult = await supabase
                     .from('user_roles')
                     .select('is_admin, email')
                     .eq('user_id', userId)
                     .maybeSingle();
-                  
+
                   if (roleResult.data) {
                     isAdmin = roleResult.data.is_admin === true;
                     if (roleResult.data.email) {
                       email = roleResult.data.email;
                     }
                   }
-                  
+
                   if (email === 'thelostandunfounds@gmail.com' || email === 'admin@thelostandunfounds.com') {
                     isAdmin = true;
                   }
                 } catch (e) {
                   // Ignore
                 }
-                
+
                 return {
                   id: userId,
                   email: email,
@@ -712,7 +715,7 @@ export default function Admin() {
     } catch (error: any) {
       console.error('Error loading dashboard data:', error);
       const errorMsg = error?.message || 'Unknown error';
-      
+
       // Set default stats if tables don't exist
       setStats({
         totalUsers: 0,
@@ -733,7 +736,7 @@ export default function Admin() {
         time: 'Just now',
         read: false,
       }]);
-      
+
       // Only set component error for unexpected errors
       if (!errorMsg.includes('does not exist') && !errorMsg.includes('permission denied') && !errorMsg.includes('403')) {
         setComponentError(`Error loading dashboard: ${errorMsg}`);
@@ -759,7 +762,7 @@ export default function Admin() {
 
       // Filter to only published posts
       const publishedPosts = (data || []).filter((post: any) => {
-        const isPublished = post.published === true || 
+        const isPublished = post.published === true ||
           (post.published === undefined && post.status === 'published');
         return isPublished;
       });
@@ -793,7 +796,7 @@ export default function Admin() {
       // Filter to published posts (no subdomain)
       // Since admin is the only writer for THE LOST ARCHIVES, show all published posts without subdomain
       const filteredPosts = (data || []).filter((post: any) => {
-        const isPublished = post.published === true || 
+        const isPublished = post.published === true ||
           (post.published === undefined && post.status === 'published');
         return isPublished; // All published posts without subdomain are THE LOST ARCHIVES
       });
@@ -859,7 +862,7 @@ export default function Admin() {
                 .select('author_name, blog_title')
                 .eq('subdomain', post.subdomain)
                 .maybeSingle();
-              
+
               if (subdomainData?.author_name) {
                 authorName = subdomainData.author_name;
               } else if (subdomainData?.blog_title) {
@@ -955,15 +958,15 @@ export default function Admin() {
             </h1>
             <p className="text-white/70">Manage your platform and users</p>
           </div>
-              <div className="flex items-center gap-3">
-                <Link
-                  to={userSubdomain ? `/${userSubdomain}/bookclubprofile` : "/bookclubprofile"}
-                  className="px-4 py-2 bg-white text-black hover:bg-white/90 font-bold rounded-none text-sm transition flex items-center gap-2"
-                >
-                  <User className="w-4 h-4" />
-                  Profile
-                </Link>
-              </div>
+          <div className="flex items-center gap-3">
+            <Link
+              to={userSubdomain ? `/${userSubdomain}/bookclubprofile` : "/bookclubprofile"}
+              className="px-4 py-2 bg-white text-black hover:bg-white/90 font-bold rounded-none text-sm transition flex items-center gap-2"
+            >
+              <User className="w-4 h-4" />
+              Profile
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -973,11 +976,11 @@ export default function Admin() {
       )}
 
       {activeTab === 'users' && (
-        <AdminUsersView 
-          users={allUsers} 
-          stats={stats} 
-          onSelectUser={(u) => { setSelectedUser(u); setSidePanelOpen(true); }} 
-          onBack={() => setActiveTab(null)} 
+        <AdminUsersView
+          users={allUsers}
+          stats={stats}
+          onSelectUser={(u) => { setSelectedUser(u); setSidePanelOpen(true); }}
+          onBack={() => setActiveTab(null)}
         />
       )}
 
@@ -987,64 +990,64 @@ export default function Admin() {
 
       {activeTab === 'blog' && (
         <div className="space-y-6">
-           <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
-             <ArrowLeft className="w-4 h-4" />
-             Back to Dashboard
-           </button>
-           <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Blog Management</div>}>
-             <BlogManagement />
-           </ErrorBoundary>
+          <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </button>
+          <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Blog Management</div>}>
+            <BlogManagement />
+          </ErrorBoundary>
         </div>
       )}
 
       {activeTab === 'newsletter' && (
         <div className="space-y-6">
-           <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
-             <ArrowLeft className="w-4 h-4" />
-             Back to Dashboard
-           </button>
-           <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Newsletter Management</div>}>
-             <NewsletterManagement />
-           </ErrorBoundary>
+          <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </button>
+          <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Newsletter Management</div>}>
+            <NewsletterManagement />
+          </ErrorBoundary>
         </div>
       )}
 
       {activeTab === 'products' && (
         <div className="space-y-6">
-           <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
-             <ArrowLeft className="w-4 h-4" />
-             Back to Dashboard
-           </button>
-           <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Product Management</div>}>
-             <ProductCostManagement />
-           </ErrorBoundary>
+          <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </button>
+          <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Product Management</div>}>
+            <ProductCostManagement />
+          </ErrorBoundary>
         </div>
       )}
 
       {activeTab === 'submissions' && (
         <div className="space-y-6">
-           <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
-             <ArrowLeft className="w-4 h-4" />
-             Back to Dashboard
-           </button>
-           <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Submissions</div>}>
-             <BlogSubmissionReview />
-           </ErrorBoundary>
+          <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </button>
+          <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Submissions</div>}>
+            <BlogSubmissionReview />
+          </ErrorBoundary>
         </div>
       )}
 
       {activeTab === 'affiliates' && (
         <div className="space-y-6">
-           <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
-             <ArrowLeft className="w-4 h-4" />
-             Back to Dashboard
-           </button>
-           <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Affiliates</div>}>
-             <div className="space-y-6">
-               <AffiliateAdminView />
-               <AffiliateEmailComposer />
-             </div>
-           </ErrorBoundary>
+          <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </button>
+          <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Affiliates</div>}>
+            <div className="space-y-6">
+              <AffiliateAdminView />
+              <AffiliateEmailComposer />
+            </div>
+          </ErrorBoundary>
         </div>
       )}
 
@@ -1056,11 +1059,11 @@ export default function Admin() {
 
       {activeTab === 'subscriptions' && (
         <div className="space-y-6">
-           <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
-             <ArrowLeft className="w-4 h-4" />
-             Back to Dashboard
-           </button>
-           <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </button>
+          <div className="bg-black/50 border border-white/10 rounded-none p-6">
             <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
               <BarChart3 className="w-5 h-5" />
               Subscription Management
@@ -1088,33 +1091,33 @@ export default function Admin() {
 
       {!activeTab && (
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 auto-rows-[240px] mb-8">
-        {/* Overview - 3x2 */}
-        <AdminBentoCard
-          title="Platform Overview"
-          icon={<BarChart3 className="w-4 h-4" />}
-          colSpan={3}
-          rowSpan={2}
-          className="md:col-span-3 md:row-span-2"
-          action={
-            <button 
-              onClick={() => setActiveTab('overview')}
-              className="text-xs bg-white/10 hover:bg-white/20 text-white px-2 py-1 rounded-none transition"
-            >
-              Full Report
-            </button>
-          }
-        >
-          <div className="h-full flex flex-col">
-             <div className="flex-1 min-h-0 mb-4">
-               <DashboardCharts stats={{
-                 revenue: (stats?.activeSubscriptions || 0) * 9.99,
-                 newsletter: stats?.newsletterSubscribers || 0,
-                 affiliates: affiliateStats?.totalAffiliates || 0
-               }} 
-               history={stats?.history} />
-             </div>
-             <div className="flex-none grid grid-cols-2 md:grid-cols-4 gap-4 items-baseline pb-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 auto-rows-[240px] mb-8">
+          {/* Overview - 3x2 */}
+          <AdminBentoCard
+            title="Platform Overview"
+            icon={<BarChart3 className="w-4 h-4" />}
+            colSpan={3}
+            rowSpan={2}
+            className="md:col-span-3 md:row-span-2"
+            action={
+              <button
+                onClick={() => setActiveTab('overview')}
+                className="text-xs bg-white/10 hover:bg-white/20 text-white px-2 py-1 rounded-none transition"
+              >
+                Full Report
+              </button>
+            }
+          >
+            <div className="h-full flex flex-col">
+              <div className="flex-1 min-h-0 mb-4">
+                <DashboardCharts stats={{
+                  revenue: (stats?.activeSubscriptions || 0) * 9.99,
+                  newsletter: stats?.newsletterSubscribers || 0,
+                  affiliates: affiliateStats?.totalAffiliates || 0
+                }}
+                  history={stats?.history} />
+              </div>
+              <div className="flex-none grid grid-cols-2 md:grid-cols-4 gap-4 items-baseline pb-4">
                 <div>
                   <div className="text-xs text-white/50 uppercase tracking-wider mb-1">Total Contributors</div>
                   <div className="text-2xl font-bold text-white"><AnimatedNumber value={stats?.totalUsers || 0} /></div>
@@ -1133,179 +1136,185 @@ export default function Admin() {
                     {stats?.platformHealth === 'healthy' ? 'Good' : 'Action Needed'}
                   </div>
                 </div>
-             </div>
-             <div className="border-t border-white/10 pt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+              </div>
+              <div className="border-t border-white/10 pt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
                 <AdminBentoRow label="Newsletter" value={stats?.newsletterSubscribers || 0} className="border-0 p-0" />
                 <AdminBentoRow label="Tool Usage" value={stats?.totalToolUsage || 0} className="border-0 p-0" />
                 <AdminBentoRow label="Premium" value={stats?.premiumUsers || 0} className="border-0 p-0" />
                 <AdminBentoRow label="Pro" value={stats?.proUsers || 0} className="border-0 p-0" />
-             </div>
-          </div>
-        </AdminBentoCard>
-
-        {/* Alerts - 1x2 */}
-        <AdminBentoCard
-          title="System Alerts"
-          icon={<Bell className="w-4 h-4" />}
-          colSpan={1}
-          rowSpan={2}
-          className="md:col-span-1 md:row-span-2"
-          footer={
-             <button 
-               onClick={() => setAlerts(prev => prev.map(a => ({ ...a, read: true })))}
-               className="w-full text-xs text-white/60 hover:text-white text-center"
-             >
-               Mark all as read
-             </button>
-          }
-        >
-          <div className="space-y-2">
-            {alerts.length > 0 ? alerts.slice(0, 5).map(alert => (
-              <div key={alert.id} className="p-3 bg-white/5 border border-white/5 border-l-2 border-l-yellow-400">
-                <p className="text-xs text-white/90 line-clamp-2">{alert.message}</p>
-                <span className="text-[10px] text-white/40 mt-1 block">{alert.time}</span>
               </div>
-            )) : (
-              <div className="text-center text-white/40 text-xs py-8">No active alerts</div>
-            )}
-          </div>
-        </AdminBentoCard>
+            </div>
+          </AdminBentoCard>
 
-        {/* Users - 1x1 */}
-        <AdminBentoCard
-          title="Contributor Management"
-          icon={<Users className="w-4 h-4" />}
-          action={<span className="text-xs font-mono text-white/40">{allUsers.length}</span>}
-          footer={
-            <button onClick={() => setActiveTab('users')} className="w-full text-center text-xs hover:text-white text-white/60">Manage Users →</button>
-          }
-        >
-          <div className="space-y-0">
-            <AdminBentoRow label="New (24h)" value={recentUsers.filter(u => new Date(u.created_at).getTime() > Date.now() - 86400000).length} />
-            <AdminBentoRow label="Free" value={stats?.freeUsers || 0} />
-            <AdminBentoRow label="Premium" value={stats?.premiumUsers || 0} valueClassName="text-yellow-400" />
-            <AdminBentoRow label="Pro" value={stats?.proUsers || 0} valueClassName="text-purple-400" />
-          </div>
-        </AdminBentoCard>
-
-        {/* Subscriptions - 1x1 */}
-        <AdminBentoCard
-          title="Subscriptions"
-          icon={<DollarSign className="w-4 h-4" />}
-          action={<span className="text-xs font-mono text-green-400">{stats?.activeSubscriptions}</span>}
-          footer={
-            <button onClick={() => setActiveTab('subscriptions')} className="w-full text-center text-xs hover:text-white text-white/60">Manage Plans →</button>
-          }
-        >
-          <div className="space-y-0">
-             <AdminBentoRow label="Active" value={stats?.activeSubscriptions || 0} valueClassName="text-green-400" />
-             <AdminBentoRow label="Churn Rate" value="--%" />
-             <AdminBentoRow label="MRR" value={`$${((stats?.activeSubscriptions || 0) * 9.99).toFixed(0)}`} />
-          </div>
-        </AdminBentoCard>
-
-        {/* Products - 1x1 */}
-        <AdminBentoCard
-          title="Products"
-          icon={<Package className="w-4 h-4" />}
-          footer={
-            <button onClick={() => setActiveTab('products')} className="w-full text-center text-xs hover:text-white text-white/60">Catalog →</button>
-          }
-        >
-          <div className="flex flex-col h-full justify-center items-center text-center p-4">
-             <p className="text-xs text-white/60 mb-2">Catalog & Cost Analysis</p>
-             <div className="px-3 py-1 bg-white/5 border border-white/10 text-xs">
-               Manage Inventory
-             </div>
-          </div>
-        </AdminBentoCard>
-
-        {/* Blog - 1x1 */}
-        <AdminBentoCard
-          title="Blog"
-          icon={<BookOpen className="w-4 h-4" />}
-          action={<span className="text-xs font-mono text-white/40">{bookClubPosts.length + lostArchivesPosts.length}</span>}
-          footer={
-            <button onClick={() => setActiveTab('blog')} className="w-full text-center text-xs hover:text-white text-white/60">Manage Content →</button>
-          }
-        >
-           <div className="space-y-0">
-             <AdminBentoRow label="Writers" value={registeredWriters} />
-             <AdminBentoRow label="Book Club" value={bookClubPosts.length} />
-             <AdminBentoRow label="Archives" value={lostArchivesPosts.length} />
-           </div>
-        </AdminBentoCard>
-
-        {/* Newsletter - 1x1 */}
-        <AdminBentoCard
-          title="Newsletter"
-          icon={<Mail className="w-4 h-4" />}
-          action={<span className="text-xs font-mono text-blue-400">{stats?.newsletterSubscribers}</span>}
-          footer={
-            <button onClick={() => setActiveTab('newsletter')} className="w-full text-center text-xs hover:text-white text-white/60">Campaigns →</button>
-          }
-        >
-           <div className="space-y-2 mt-1">
-             {newestSubscribers.slice(0, 2).map((sub, i) => (
-               <div key={i} className="flex justify-between items-center text-xs">
-                 <span className="truncate text-white/60 max-w-[120px]">{sub.email}</span>
-                 <span className="text-white/30 text-[10px]">{new Date(sub.created_at).toLocaleDateString()}</span>
-               </div>
-             ))}
-             {newestSubscribers.length === 0 && <p className="text-xs text-white/40">No recent subscribers</p>}
-           </div>
-        </AdminBentoCard>
-
-        {/* Webmail - 1x1 */}
-        <div 
-          onClick={() => setActiveTab('mail')} 
-          className="cursor-pointer"
-        >
+          {/* Alerts - 1x2 */}
           <AdminBentoCard
-            title="Webmail"
-            icon={<Send className="w-4 h-4" />}
+            title="System Alerts"
+            icon={<Bell className="w-4 h-4" />}
+            colSpan={1}
+            rowSpan={2}
+            className="md:col-span-1 md:row-span-2"
             footer={
-              <span className="w-full text-center text-xs hover:text-white text-white/60">Open Inbox →</span>
+              <button
+                onClick={() => setAlerts(prev => prev.map(a => ({ ...a, read: true })))}
+                className="w-full text-xs text-white/60 hover:text-white text-center"
+              >
+                Mark all as read
+              </button>
             }
           >
-             <div className="flex flex-col h-full justify-center items-center text-center p-4">
-               <Inbox className="w-8 h-8 text-white/20 mb-3" />
-               <p className="text-xs text-white/60 mb-2">Full Zoho Mail Access</p>
-               <div className="flex gap-2">
-                 <div className="px-2 py-1 bg-white/5 border border-white/10 text-[10px] text-white/40">
-                   Inbox
-                 </div>
-                 <div className="px-2 py-1 bg-white/5 border border-white/10 text-[10px] text-white/40">
-                   Sent
-                 </div>
-                 <div className="px-2 py-1 bg-white/5 border border-white/10 text-[10px] text-white/40">
-                   Drafts
-                 </div>
-               </div>
-             </div>
+            <div className="space-y-2">
+              {alerts.length > 0 ? alerts.slice(0, 5).map(alert => (
+                <div key={alert.id} className="p-3 bg-white/5 border border-white/5 border-l-2 border-l-yellow-400">
+                  <p className="text-xs text-white/90 line-clamp-2">{alert.message}</p>
+                  <span className="text-[10px] text-white/40 mt-1 block">{alert.time}</span>
+                </div>
+              )) : (
+                <div className="text-center text-white/40 text-xs py-8">No active alerts</div>
+              )}
+            </div>
+          </AdminBentoCard>
+
+          {/* Users - 1x1 */}
+          <AdminBentoCard
+            title="Contributor Management"
+            icon={<Users className="w-4 h-4" />}
+            action={<span className="text-xs font-mono text-white/40">{allUsers.length}</span>}
+            footer={
+              <button onClick={() => setActiveTab('users')} className="w-full text-center text-xs hover:text-white text-white/60">Manage Users →</button>
+            }
+          >
+            <div className="space-y-0">
+              <AdminBentoRow label="New (24h)" value={recentUsers.filter(u => new Date(u.created_at).getTime() > Date.now() - 86400000).length} />
+              <AdminBentoRow label="Free" value={stats?.freeUsers || 0} />
+              <AdminBentoRow label="Premium" value={stats?.premiumUsers || 0} valueClassName="text-yellow-400" />
+              <AdminBentoRow label="Pro" value={stats?.proUsers || 0} valueClassName="text-purple-400" />
+            </div>
+          </AdminBentoCard>
+
+          {/* Subscriptions - 1x1 */}
+          <AdminBentoCard
+            title="Subscriptions"
+            icon={<DollarSign className="w-4 h-4" />}
+            action={<span className="text-xs font-mono text-green-400">{stats?.activeSubscriptions}</span>}
+            footer={
+              <button onClick={() => setActiveTab('subscriptions')} className="w-full text-center text-xs hover:text-white text-white/60">Manage Plans →</button>
+            }
+          >
+            <div className="space-y-0">
+              <AdminBentoRow label="Active" value={stats?.activeSubscriptions || 0} valueClassName="text-green-400" />
+              <AdminBentoRow label="Churn Rate" value="--%" />
+              <AdminBentoRow label="MRR" value={`$${((stats?.activeSubscriptions || 0) * 9.99).toFixed(0)}`} />
+            </div>
+          </AdminBentoCard>
+
+          {/* Products - 1x1 */}
+          <AdminBentoCard
+            title="Products"
+            icon={<Package className="w-4 h-4" />}
+            footer={
+              <button onClick={() => setActiveTab('products')} className="w-full text-center text-xs hover:text-white text-white/60">Catalog →</button>
+            }
+          >
+            <div className="flex flex-col h-full justify-center items-center text-center p-4">
+              <p className="text-xs text-white/60 mb-2">Catalog & Cost Analysis</p>
+              <div className="px-3 py-1 bg-white/5 border border-white/10 text-xs">
+                Manage Inventory
+              </div>
+            </div>
+          </AdminBentoCard>
+
+          {/* Blog - 1x1 */}
+          <AdminBentoCard
+            title="Blog"
+            icon={<BookOpen className="w-4 h-4" />}
+            action={<span className="text-xs font-mono text-white/40">{bookClubPosts.length + lostArchivesPosts.length}</span>}
+            footer={
+              <div className="flex gap-2">
+                <button onClick={() => setActiveTab('blog')} className="flex-1 text-center text-xs hover:text-white text-white/60">Manage Content →</button>
+                {pendingSubmissions > 0 && (
+                  <button onClick={() => setActiveTab('submissions')} className="flex-1 text-center text-xs hover:text-white text-yellow-400 font-bold">Review ({pendingSubmissions}) →</button>
+                )}
+              </div>
+            }
+          >
+            <div className="space-y-0">
+              <AdminBentoRow label="Writers" value={registeredWriters} />
+              <AdminBentoRow label="Book Club" value={bookClubPosts.length} />
+              <AdminBentoRow label="Archives" value={lostArchivesPosts.length} />
+              <AdminBentoRow label="Pending" value={pendingSubmissions} valueClassName={pendingSubmissions > 0 ? "text-yellow-400 font-bold" : ""} />
+            </div>
+          </AdminBentoCard>
+
+          {/* Newsletter - 1x1 */}
+          <AdminBentoCard
+            title="Newsletter"
+            icon={<Mail className="w-4 h-4" />}
+            action={<span className="text-xs font-mono text-blue-400">{stats?.newsletterSubscribers}</span>}
+            footer={
+              <button onClick={() => setActiveTab('newsletter')} className="w-full text-center text-xs hover:text-white text-white/60">Campaigns →</button>
+            }
+          >
+            <div className="space-y-2 mt-1">
+              {newestSubscribers.slice(0, 2).map((sub, i) => (
+                <div key={i} className="flex justify-between items-center text-xs">
+                  <span className="truncate text-white/60 max-w-[120px]">{sub.email}</span>
+                  <span className="text-white/30 text-[10px]">{new Date(sub.created_at).toLocaleDateString()}</span>
+                </div>
+              ))}
+              {newestSubscribers.length === 0 && <p className="text-xs text-white/40">No recent subscribers</p>}
+            </div>
+          </AdminBentoCard>
+
+          {/* Webmail - 1x1 */}
+          <div
+            onClick={() => setActiveTab('mail')}
+            className="cursor-pointer"
+          >
+            <AdminBentoCard
+              title="Webmail"
+              icon={<Send className="w-4 h-4" />}
+              footer={
+                <span className="w-full text-center text-xs hover:text-white text-white/60">Open Inbox →</span>
+              }
+            >
+              <div className="flex flex-col h-full justify-center items-center text-center p-4">
+                <Inbox className="w-8 h-8 text-white/20 mb-3" />
+                <p className="text-xs text-white/60 mb-2">Full Zoho Mail Access</p>
+                <div className="flex gap-2">
+                  <div className="px-2 py-1 bg-white/5 border border-white/10 text-[10px] text-white/40">
+                    Inbox
+                  </div>
+                  <div className="px-2 py-1 bg-white/5 border border-white/10 text-[10px] text-white/40">
+                    Sent
+                  </div>
+                  <div className="px-2 py-1 bg-white/5 border border-white/10 text-[10px] text-white/40">
+                    Drafts
+                  </div>
+                </div>
+              </div>
+            </AdminBentoCard>
+          </div>
+
+          {/* Settings - 1x1 */}
+          <AdminBentoCard
+            title="System"
+            icon={<Settings className="w-4 h-4" />}
+            footer={
+              <button onClick={() => setActiveTab('settings')} className="w-full text-center text-xs hover:text-white text-white/60">Configuration →</button>
+            }
+          >
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between p-2 bg-white/5 border border-white/10">
+                <span className="text-xs text-white/60">Status</span>
+                <span className="text-xs text-green-400">Operational</span>
+              </div>
+              <div className="flex items-center justify-between p-2 bg-white/5 border border-white/10">
+                <span className="text-xs text-white/60">Database</span>
+                <span className="text-xs text-green-400">Connected</span>
+              </div>
+            </div>
           </AdminBentoCard>
         </div>
-
-        {/* Settings - 1x1 */}
-        <AdminBentoCard
-          title="System"
-          icon={<Settings className="w-4 h-4" />}
-          footer={
-            <button onClick={() => setActiveTab('settings')} className="w-full text-center text-xs hover:text-white text-white/60">Configuration →</button>
-          }
-        >
-           <div className="flex flex-col gap-2">
-             <div className="flex items-center justify-between p-2 bg-white/5 border border-white/10">
-               <span className="text-xs text-white/60">Status</span>
-               <span className="text-xs text-green-400">Operational</span>
-             </div>
-             <div className="flex items-center justify-between p-2 bg-white/5 border border-white/10">
-               <span className="text-xs text-white/60">Database</span>
-               <span className="text-xs text-green-400">Connected</span>
-             </div>
-           </div>
-        </AdminBentoCard>
-      </div>
 
       )}
 
@@ -1327,7 +1336,7 @@ export default function Admin() {
                 <p className="text-white/60">{selectedUser.email}</p>
               </div>
             </div>
-            
+
             <div className="space-y-4 border-t border-white/10 pt-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 bg-white/5 rounded">
@@ -1339,7 +1348,7 @@ export default function Admin() {
                   <div className="text-lg font-semibold text-green-400">Active</div>
                 </div>
               </div>
-              
+
               <div className="p-4 bg-white/5 rounded">
                 <div className="text-xs text-white/40 mb-1">User ID</div>
                 <div className="font-mono text-sm text-white/80">{selectedUser.id}</div>
@@ -1366,7 +1375,7 @@ export default function Admin() {
                   <div className="text-lg font-semibold text-green-400">Active</div>
                 </div>
               </div>
-              
+
               <div className="p-4 bg-white/5 rounded-none">
                 <div className="text-xs text-white/40 mb-1">Subdomain</div>
                 <div className="font-mono text-sm text-white/80">
@@ -1388,7 +1397,7 @@ export default function Admin() {
             </div>
 
             <div className="flex gap-3 pt-4 border-t border-white/10">
-              <button 
+              <button
                 onClick={() => {
                   success('User edit feature coming soon');
                 }}
@@ -1396,7 +1405,7 @@ export default function Admin() {
               >
                 Edit User
               </button>
-              <button 
+              <button
                 onClick={() => {
                   if (confirm(`Ban user ${selectedUser.email}?`)) {
                     success(`User ${selectedUser.email} banned`);
@@ -1429,7 +1438,7 @@ export default function Admin() {
                   </span>
                 )}
                 <span className="text-white/60 text-sm">
-                  {expandedPost.published_at 
+                  {expandedPost.published_at
                     ? new Date(expandedPost.published_at).toLocaleDateString()
                     : new Date(expandedPost.created_at).toLocaleDateString()}
                 </span>
@@ -1439,23 +1448,23 @@ export default function Admin() {
                 <p className="text-xl text-white/70 leading-relaxed mb-8">{expandedPost.excerpt}</p>
               )}
             </div>
-            
+
             <div className="prose prose-invert max-w-none">
               <div className="p-6 bg-white/5 border border-white/10 rounded-lg">
-                 <p className="text-white/60 italic">
-                   Full content preview is not available in this quick view. 
-                   <a 
-                     href={'subdomain' in expandedPost 
-                       ? `/blog/${expandedPost.subdomain}/${expandedPost.slug}`
-                       : `/thelostandunfounds/${expandedPost.slug}`
-                     }
-                     target="_blank"
-                     rel="noopener noreferrer"
-                     className="text-white underline ml-1"
-                   >
-                     Open full article
-                   </a>
-                 </p>
+                <p className="text-white/60 italic">
+                  Full content preview is not available in this quick view.
+                  <a
+                    href={'subdomain' in expandedPost
+                      ? `/blog/${expandedPost.subdomain}/${expandedPost.slug}`
+                      : `/thelostandunfounds/${expandedPost.slug}`
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-white underline ml-1"
+                  >
+                    Open full article
+                  </a>
+                </p>
               </div>
             </div>
           </div>
