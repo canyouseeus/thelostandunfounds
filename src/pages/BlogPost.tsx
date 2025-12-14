@@ -788,7 +788,7 @@ export default function BlogPost() {
             // For "Ender's Game", this becomes "enders" + "game"
             const wordPattern = titleWords
               .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-              .join('\\s+[,\\s]*'); // Allow commas/spaces between words
+              .join('[\\s\\-]*[,\\s]*'); // Allow spaces, hyphens matching no space (Flash Light matches Flashlight)
             searchPatterns.push(wordPattern);
 
             // Pattern 3a: Word sequence with explicit apostrophe handling for "Ender's Game"
@@ -805,7 +805,8 @@ export default function BlogPost() {
             // Pattern 3b: Word sequence with commas handled explicitly
             const wordPatternWithCommas = titleWords
               .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-              .join('(?:,?\\s+|\\s+)'); // Explicit comma handling
+              .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+              .join('(?:,?\\s+|\\s+|\\s*(?:\\+|and|&|with)\\s*)'); // Explicit comma and conjunction handling
             searchPatterns.push(wordPatternWithCommas);
 
             // Pattern 4: Core words only (skip "the", "a", "an")
@@ -1101,9 +1102,11 @@ export default function BlogPost() {
 
         // If it's a book title with an affiliate link
         if (affiliateLink && bookLinkCounts) {
-          // Always create link if allowed - no limit on number of links per book
-          if (allowLinks) {
-            const currentCount = bookLinkCounts[bookKey!] || 0;
+          // Check link limit based on column
+          const maxLinks = post?.blog_column === 'bookclub' ? 2 : 1;
+          const currentCount = bookLinkCounts[bookKey!] || 0;
+
+          if (allowLinks && currentCount < maxLinks) {
             bookLinkCounts[bookKey!] = currentCount + 1;
             parts.push(
               <a
