@@ -830,6 +830,30 @@ export default function BlogPost() {
               searchPatterns.push(permissivePattern);
             }
 
+            // Pattern 7: First significant word (for "Surefire Flash Light" -> "Surefire")
+            if (titleWords[0] && titleWords[0].length > 4 && !['the', 'this', 'that', 'with', 'from'].includes(titleWords[0].toLowerCase())) {
+              const firstWord = titleWords[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              searchPatterns.push(`(?:^|\\s)${firstWord}(?:\\s|$)`); // Requires boundaries
+              searchPatterns.push(firstWord); // More permissive
+            }
+
+            // Pattern 8: Split by '+' or '&' and match segments (for "Note Book + Pen" -> "Note Book" and "Pen")
+            if (bookTitle.includes('+') || bookTitle.includes('&') || bookTitle.toLowerCase().includes(' and ')) {
+              const parts = bookTitle.split(/[+&]| and /i).map(p => p.trim());
+              parts.forEach(p => {
+                if (p.length > 2) {
+                  // Normalize the part and create a pattern
+                  const pWords = normalizeBookTitle(p).split(/\s+/).filter(w => w.length > 0);
+                  if (pWords.length > 0) {
+                    const segmentPattern = pWords
+                      .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+                      .join('[\\s\\-]*[,\\s]*'); // Flexible matching for the segment
+                    searchPatterns.push(segmentPattern);
+                  }
+                }
+              });
+            }
+
             // Try each pattern to find the book title in text
             for (const pattern of searchPatterns) {
               if (!pattern) continue;
@@ -1120,12 +1144,8 @@ export default function BlogPost() {
               </a>
             );
           } else {
-            // Not allowed to link - make it bold (no link)
-            parts.push(
-              <strong key={`bold-${keyCounter++}`} className="font-bold text-white">
-                {displayText}
-              </strong>
-            );
+            // Not allowed to link (limit reached) - return plain text
+            parts.push(displayText);
           }
         } else if (affiliateLink && !bookLinkCounts) {
           // Fallback: if bookLinkCounts not provided, allow link (for backwards compatibility)
