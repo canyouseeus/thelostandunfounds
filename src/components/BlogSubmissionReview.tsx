@@ -11,9 +11,16 @@ import { LoadingSpinner } from './Loading';
 import { FileText, CheckCircle, XCircle, Eye, Mail, Calendar, BookOpen, MessageSquare, User, X, AlertTriangle, Check } from 'lucide-react';
 
 interface AffiliateLink {
-  book_title: string;
+  book_title?: string;
+  product_title?: string;
+  item_title?: string;
   link: string;
 }
+
+// Helper to get the display title from any link type
+const getLinkTitle = (link: AffiliateLink): string => {
+  return link.book_title || link.product_title || link.item_title || 'Untitled Item';
+};
 
 // --- Link Matching Logic (Mirrored from BlogPost.tsx) ---
 
@@ -35,16 +42,16 @@ const normalizeBookTitle = (title: string): string => {
 // Find book title match using intelligent fuzzy matching
 const findBookTitleMatch = (text: string, bookTitles: string[]): string | null => {
   if (!text || !bookTitles || bookTitles.length === 0) return null;
-  
+
   const normalizedText = normalizeBookTitle(text);
-  
+
   // Strategy 1: Exact normalized match
   for (const title of bookTitles) {
     if (normalizeBookTitle(title) === normalizedText) {
       return title;
     }
   }
-  
+
   // Strategy 2: Remove apostrophes and compare (Ender's Game = Enders Game)
   const removeApostrophes = (t: string) => normalizeBookTitle(t).replace(/'/g, '');
   const textNoApostrophe = removeApostrophes(text);
@@ -53,7 +60,7 @@ const findBookTitleMatch = (text: string, bookTitles: string[]): string | null =
       return title;
     }
   }
-  
+
   // Strategy 3: Word-by-word matching (handle punctuation differences)
   const getWords = (t: string) => {
     return normalizeBookTitle(t)
@@ -61,34 +68,34 @@ const findBookTitleMatch = (text: string, bookTitles: string[]): string | null =
       .split(/\s+/)
       .filter(w => w.length > 0);
   };
-  
+
   const textWords = getWords(text);
   for (const title of bookTitles) {
     const titleWords = getWords(title);
     const significantTitleWords = titleWords.filter(w => w.length > 2);
     const significantTextWords = textWords.filter(w => w.length > 2);
-    
+
     if (significantTitleWords.length === 0 || significantTextWords.length === 0) continue;
-    
+
     // Count how many title words appear in text
-    const matchingWords = significantTitleWords.filter(tw => 
+    const matchingWords = significantTitleWords.filter(tw =>
       significantTextWords.some(txt => txt === tw || txt.includes(tw) || tw.includes(txt))
     );
-    
+
     const reverseMatch = significantTextWords.filter(txt =>
       significantTitleWords.some(tw => txt === tw || txt.includes(tw) || tw.includes(txt))
     );
-    
+
     const matchRatio = Math.max(
       matchingWords.length / significantTitleWords.length,
       reverseMatch.length / significantTextWords.length
     );
-    
-    if (matchRatio >= 0.7) { 
+
+    if (matchRatio >= 0.7) {
       return title;
     }
   }
-  
+
   // Strategy 4: Core title matching (remove "the", "a", "an")
   const getCoreTitle = (t: string) => {
     return normalizeBookTitle(t)
@@ -96,17 +103,17 @@ const findBookTitleMatch = (text: string, bookTitles: string[]): string | null =
       .replace(/\s+(the|a|an)$/i, '')
       .replace(/'/g, '');
   };
-  
+
   const coreText = getCoreTitle(text);
   for (const title of bookTitles) {
     const coreTitle = getCoreTitle(title);
-    if (coreTitle === coreText || 
-        (coreTitle.length > 5 && coreText.includes(coreTitle)) ||
-        (coreText.length > 5 && coreTitle.includes(coreText))) {
+    if (coreTitle === coreText ||
+      (coreTitle.length > 5 && coreText.includes(coreTitle)) ||
+      (coreText.length > 5 && coreTitle.includes(coreText))) {
       return title;
     }
   }
-  
+
   return null;
 };
 
@@ -116,50 +123,51 @@ const analyzeLinkHealth = (content: string, links: AffiliateLink[]) => {
 
   // 1. Build the variations map (Exact logic from BlogPost.tsx)
   const bookLinks: Record<string, string> = {};
-  
+
   links.forEach((link) => {
-    if (link.book_title && link.link) {
-      bookLinks[link.book_title] = link.link;
-      
+    const title = getLinkTitle(link);
+    if (title && link.link) {
+      bookLinks[title] = link.link;
+
       // Handle apostrophe variations (e.g. "Enders Game" -> "Ender's Game", "Ender's Game")
       // Also handle specific case for "Ender's Game"
-      if (link.book_title.toLowerCase().includes('ender') && link.book_title.toLowerCase().includes('game')) {
+      if (title.toLowerCase().includes('ender') && title.toLowerCase().includes('game')) {
         bookLinks["Ender's Game"] = link.link;
         bookLinks["Ender’s Game"] = link.link;
         bookLinks["Enders Game"] = link.link;
       }
 
-      if (!link.book_title.includes("'") && !link.book_title.includes("’")) {
+      if (!title.includes("'") && !title.includes("’")) {
         // Try adding apostrophe before 's'
-        if (link.book_title.endsWith("s Game")) {
-          const withApostrophe = link.book_title.replace("s Game", "'s Game");
-          const withSmartApostrophe = link.book_title.replace("s Game", "’s Game");
+        if (title.endsWith("s Game")) {
+          const withApostrophe = title.replace("s Game", "'s Game");
+          const withSmartApostrophe = title.replace("s Game", "’s Game");
           bookLinks[withApostrophe] = link.link;
           bookLinks[withSmartApostrophe] = link.link;
         }
       }
-      
+
       // Handle "The Lion, the Witch and the Wardrobe" specific variations
-      if (link.book_title.toLowerCase().includes('lion') && 
-          link.book_title.toLowerCase().includes('witch') && 
-          link.book_title.toLowerCase().includes('wardrobe')) {
+      if (title.toLowerCase().includes('lion') &&
+        title.toLowerCase().includes('witch') &&
+        title.toLowerCase().includes('wardrobe')) {
         bookLinks['The Lion, the Witch and the Wardrobe'] = link.link;
         bookLinks['Lion, the Witch and the Wardrobe'] = link.link;
         bookLinks['The Lion, The Witch And The Wardrobe'] = link.link;
         bookLinks['the lion, the witch and the wardrobe'] = link.link;
       }
-      
+
       // General "The" prefix handling
-      if (!link.book_title.toLowerCase().startsWith('the ')) {
-        const withThe = `The ${link.book_title}`;
+      if (!title.toLowerCase().startsWith('the ')) {
+        const withThe = `The ${title}`;
         bookLinks[withThe] = link.link;
-        const withTheTitleCase = `The ${link.book_title.charAt(0).toUpperCase() + link.book_title.slice(1)}`;
+        const withTheTitleCase = `The ${title.charAt(0).toUpperCase() + title.slice(1)}`;
         bookLinks[withTheTitleCase] = link.link;
       }
-      
+
       // Handle apostrophe variations for existing titles
-      if (link.book_title.includes("'") || link.book_title.includes("'")) {
-        const withoutApostrophe = link.book_title.replace(/['']/g, '');
+      if (title.includes("'") || title.includes("'")) {
+        const withoutApostrophe = title.replace(/['']/g, '');
         bookLinks[withoutApostrophe] = link.link;
       }
     }
@@ -173,9 +181,9 @@ const analyzeLinkHealth = (content: string, links: AffiliateLink[]) => {
     // Find all variations that map to this link's URL
     // (This handles the case where "Ender's Game" is found but the submitted title was "Enders Game")
     const variationsForThisLink = allVariations.filter(v => bookLinks[v] === link.link);
-    
+
     let matchCount = 0;
-    
+
     // Check every paragraph
     for (const para of paragraphs) {
       // Use the robust matcher
@@ -184,9 +192,9 @@ const analyzeLinkHealth = (content: string, links: AffiliateLink[]) => {
         matchCount++;
       }
     }
-    
+
     return {
-      title: link.book_title,
+      title: getLinkTitle(link),
       count: matchCount,
       variations: variationsForThisLink
     };
@@ -388,7 +396,7 @@ export default function BlogSubmissionReview() {
       // We need to find the author's user_id from their email or subdomain
       let userId = null;
       let authorId = null;
-      
+
       // Method 1: If submission has a subdomain, find the user_id from user_subdomains
       if (submission.subdomain) {
         try {
@@ -397,7 +405,7 @@ export default function BlogSubmissionReview() {
             .select('user_id')
             .eq('subdomain', submission.subdomain)
             .maybeSingle();
-          
+
           if (subdomainError) {
             console.warn('Error looking up user_id from subdomain:', subdomainError);
           } else if (subdomainData?.user_id) {
@@ -409,7 +417,7 @@ export default function BlogSubmissionReview() {
           console.warn('Could not find user_id from subdomain:', err);
         }
       }
-      
+
       // Method 2: If we still don't have user_id, try to find it from user_roles by email
       if (!userId && submission.author_email) {
         try {
@@ -418,7 +426,7 @@ export default function BlogSubmissionReview() {
             .select('user_id')
             .eq('email', submission.author_email)
             .maybeSingle();
-          
+
           if (roleError) {
             console.warn('Error looking up user_id from user_roles:', roleError);
           } else if (roleData?.user_id) {
@@ -430,7 +438,7 @@ export default function BlogSubmissionReview() {
           console.warn('Could not find user_id from user_roles:', err);
         }
       }
-      
+
       // Method 3: Try to find from blog_submissions (if the author has other submissions)
       if (!userId && submission.author_email) {
         try {
@@ -441,7 +449,7 @@ export default function BlogSubmissionReview() {
             .not('subdomain', 'is', null)
             .limit(1)
             .maybeSingle();
-          
+
           if (!submissionsError && otherSubmissions?.subdomain) {
             // Try to get user_id from that subdomain
             const { data: subdomainData } = await supabase
@@ -449,7 +457,7 @@ export default function BlogSubmissionReview() {
               .select('user_id')
               .eq('subdomain', otherSubmissions.subdomain)
               .maybeSingle();
-            
+
             if (subdomainData?.user_id) {
               userId = subdomainData.user_id;
               authorId = subdomainData.user_id;
@@ -460,7 +468,7 @@ export default function BlogSubmissionReview() {
           console.warn('Could not find user_id from other submissions:', err);
         }
       }
-      
+
       // If we still don't have user_id, we cannot proceed - user_id is required
       if (!userId) {
         showError(`Could not find user_id for author ${submission.author_email} (subdomain: ${submission.subdomain || 'none'}). Please ensure the author has a subdomain registered or their email is in user_roles.`);
@@ -527,10 +535,10 @@ export default function BlogSubmissionReview() {
       // Only include author_name if the column exists (handled via try-catch fallback)
       // The author_name column may not exist in all schema versions
       // We'll try with it first, and if it fails, retry without it
-      
+
       let blogPost
       let blogError
-      
+
       // First attempt: try with author_name
       const firstAttempt = await supabase
         .from('blog_posts')
@@ -544,7 +552,7 @@ export default function BlogSubmissionReview() {
       if (firstAttempt.error) {
         const errorMsg = firstAttempt.error.message || '';
         const errorCode = firstAttempt.error.code;
-        
+
         // Handle different error types with appropriate fallbacks
         if (errorMsg.includes('author_name') || errorCode === '42703') {
           // Column doesn't exist - retry without author_name
@@ -554,7 +562,7 @@ export default function BlogSubmissionReview() {
             .insert([blogPostData])
             .select()
             .single()
-          
+
           blogPost = secondAttempt.data
           blogError = secondAttempt.error
         } else if (errorMsg.includes('user_id') && errorMsg.includes('null')) {
@@ -574,7 +582,7 @@ export default function BlogSubmissionReview() {
             }])
             .select()
             .single()
-          
+
           blogPost = fourthAttempt.data
           blogError = fourthAttempt.error
         } else {
@@ -606,12 +614,12 @@ export default function BlogSubmissionReview() {
 
       if (updateError) throw updateError;
 
-      const postUrl = submission.subdomain 
+      const postUrl = submission.subdomain
         ? `/blog/${submission.subdomain}/${slug}`
         : `/thelostarchives/${slug}`;
-      
+
       const fullPostUrl = `${window.location.origin}${postUrl}`;
-      
+
       // Send notification email to the author
       try {
         const emailResponse = await fetch('/api/blog/post-published', {
@@ -636,12 +644,12 @@ export default function BlogSubmissionReview() {
         console.error('Error sending notification email:', emailError);
         // Don't fail the publish if email fails - just log it
       }
-      
+
       success(`Article published successfully! ${submission.subdomain ? 'It should appear on the Book Club page.' : 'Note: Without a subdomain, it may not appear on the Book Club page.'} A notification email has been sent to ${submission.author_email}.`);
       setSelectedSubmission(null);
       setReviewNotes('');
       loadSubmissions();
-      
+
       // Optionally open the published post in a new tab
       setTimeout(() => {
         window.open(postUrl, '_blank');
@@ -699,11 +707,10 @@ export default function BlogSubmissionReview() {
             <button
               key={status}
               onClick={() => setFilterStatus(status)}
-              className={`px-3 py-1 text-sm rounded transition ${
-                filterStatus === status
-                  ? 'bg-white/20 text-white'
-                  : 'bg-white/5 text-white/60 hover:bg-white/10'
-              }`}
+              className={`px-3 py-1 text-sm rounded transition ${filterStatus === status
+                ? 'bg-white/20 text-white'
+                : 'bg-white/5 text-white/60 hover:bg-white/10'
+                }`}
             >
               {status.charAt(0).toUpperCase() + status.slice(1)}
             </button>
@@ -753,7 +760,7 @@ export default function BlogSubmissionReview() {
                     {submission.amazon_affiliate_links && submission.amazon_affiliate_links.length > 0 && (
                       <div className="flex items-center gap-2 text-xs text-white/50">
                         <BookOpen className="w-3 h-3" />
-                        <span>{submission.amazon_affiliate_links.length} book link(s)</span>
+                        <span>{submission.amazon_affiliate_links.length} affiliate link(s)</span>
                       </div>
                     )}
                     {submission.subdomain && (
@@ -850,7 +857,7 @@ export default function BlogSubmissionReview() {
                       <BookOpen className="w-4 h-4" />
                       Amazon Affiliate Links
                     </h4>
-                    
+
                     {/* Link Health Check */}
                     <div className="bg-white/5 border border-white/10 rounded-none p-4 mb-4">
                       <h5 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
@@ -884,7 +891,7 @@ export default function BlogSubmissionReview() {
                     <div className="space-y-2 mb-4">
                       {selectedSubmission.amazon_affiliate_links.map((link, index) => (
                         <div key={index} className="bg-black/30 border border-white rounded-none p-3">
-                          <p className="text-white/90 font-medium mb-1">{link.book_title}</p>
+                          <p className="text-white/90 font-medium mb-1">{getLinkTitle(link)}</p>
                           <a
                             href={link.link}
                             target="_blank"
