@@ -9,7 +9,7 @@ import { supabase } from '../lib/supabase';
 import { useToast } from './Toast';
 import { LoadingSpinner } from './Loading';
 import { isAdminEmail } from '../utils/admin';
-import { FileText, Plus, Edit, Trash2, Eye, Calendar } from 'lucide-react';
+import { FileText, Plus, Edit, Trash2, Eye, EyeOff, Calendar } from 'lucide-react';
 
 interface BlogPost {
   id: string;
@@ -264,6 +264,27 @@ export default function BlogManagement() {
     } catch (err: any) {
       console.error('Error deleting post:', err);
       showError(err.message || 'Failed to delete post');
+    }
+  };
+
+  const handleUnpublish = async (id: string) => {
+    if (!confirm('Are you sure you want to unpublish this post? It will be saved as a draft.')) return;
+
+    try {
+      const { error } = await supabase
+        .from('blog_posts')
+        .update({
+          published: false,
+          status: 'draft'
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+      success('Post unpublished successfully (moved to drafts)');
+      loadPosts();
+    } catch (err: any) {
+      console.error('Error unpublishing post:', err);
+      showError(err.message || 'Failed to unpublish post');
     }
   };
 
@@ -557,15 +578,24 @@ export default function BlogManagement() {
                     </div>
                     <div className="flex items-center gap-2 ml-4">
                       {post.published && (
-                        <a
-                          href={`/thelostarchives/${post.slug}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2 hover:bg-white/10 rounded-none transition"
-                          title="View post"
-                        >
-                          <Eye className="w-4 h-4 text-white/60" />
-                        </a>
+                        <>
+                          <a
+                            href={`/thelostarchives/${post.slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 hover:bg-white/10 rounded-none transition"
+                            title="View post"
+                          >
+                            <Eye className="w-4 h-4 text-white/60" />
+                          </a>
+                          <button
+                            onClick={() => handleUnpublish(post.id)}
+                            className="p-2 hover:bg-yellow-500/20 rounded-none transition"
+                            title="Unpublish (revert to draft)"
+                          >
+                            <EyeOff className="w-4 h-4 text-yellow-400" />
+                          </button>
+                        </>
                       )}
                       <button
                         onClick={() => handleEdit(post)}
@@ -625,15 +655,24 @@ export default function BlogManagement() {
                   </div>
                   <div className="flex items-center gap-2 ml-4">
                     {post.published && (
-                      <a
-                        href={`/blog/${post.subdomain}/${post.slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 hover:bg-white/10 rounded-none transition"
-                        title="View post"
-                      >
-                        <Eye className="w-4 h-4 text-white/60" />
-                      </a>
+                      <>
+                        <a
+                          href={`/blog/${post.subdomain}/${post.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 hover:bg-white/10 rounded-none transition"
+                          title="View post"
+                        >
+                          <Eye className="w-4 h-4 text-white/60" />
+                        </a>
+                        <button
+                          onClick={() => handleUnpublish(post.id)}
+                          className="p-2 hover:bg-yellow-500/20 rounded-none transition"
+                          title="Unpublish (revert to draft)"
+                        >
+                          <EyeOff className="w-4 h-4 text-yellow-400" />
+                        </button>
+                      </>
                     )}
                     <button
                       onClick={() => handleEdit(post)}
@@ -704,15 +743,24 @@ export default function BlogManagement() {
                   </div>
                   <div className="flex items-center gap-2 ml-4">
                     {post.published && (
-                      <a
-                        href={`/blog/${post.subdomain}/${post.slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 hover:bg-white/10 rounded-none transition"
-                        title="View post"
-                      >
-                        <Eye className="w-4 h-4 text-white/60" />
-                      </a>
+                      <>
+                        <a
+                          href={`/blog/${post.subdomain}/${post.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 hover:bg-white/10 rounded-none transition"
+                          title="View post"
+                        >
+                          <Eye className="w-4 h-4 text-white/60" />
+                        </a>
+                        <button
+                          onClick={() => handleUnpublish(post.id)}
+                          className="p-2 hover:bg-yellow-500/20 rounded-none transition"
+                          title="Unpublish (revert to draft)"
+                        >
+                          <EyeOff className="w-4 h-4 text-yellow-400" />
+                        </button>
+                      </>
                     )}
                     <button
                       onClick={() => handleEdit(post)}
