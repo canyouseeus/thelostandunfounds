@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useToast } from './Toast';
 import { LoadingSpinner } from './Loading';
+import RichTextEditor from './RichTextEditor';
 import { FileText, CheckCircle, XCircle, Eye, Mail, Calendar, BookOpen, MessageSquare, User, X, AlertTriangle, Check } from 'lucide-react';
 
 interface AffiliateLink {
@@ -231,6 +232,8 @@ export default function BlogSubmissionReview() {
   const [rejectionReason, setRejectionReason] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected' | 'published'>('all');
   const [selectedColumn, setSelectedColumn] = useState<string>('main');
+  const [editableContent, setEditableContent] = useState<string>('');
+  const [editableLinks, setEditableLinks] = useState<any[]>([]);
 
   const BLOG_COLUMNS = [
     { value: 'main', label: 'Main Blog (The Lost Archives)' },
@@ -506,7 +509,9 @@ export default function BlogSubmissionReview() {
       }
 
       // Clean content: remove ⸻ characters and normalize line breaks
-      let cleanedContent = submission.content
+      // Use editableContent (the RTE version) if available, otherwise fall back to original
+      const contentToUse = editableContent || submission.content;
+      let cleanedContent = contentToUse
         // Remove all ⸻ characters (em dashes used as separators)
         .replace(/⸻/g, '')
         // Remove standalone em dashes on their own line
@@ -797,6 +802,8 @@ export default function BlogSubmissionReview() {
                       setReviewNotes(submission.admin_notes || '');
                       setRejectionReason(submission.rejected_reason || '');
                       setSelectedColumn(submission.blog_column || 'main');
+                      setEditableContent(submission.content || '');
+                      setEditableLinks([]);
                     }}
                     className="ml-4 p-2 hover:bg-white/10 rounded transition"
                     title="Review submission"
@@ -863,12 +870,15 @@ export default function BlogSubmissionReview() {
                   </>
                 )}
 
-                <h4 className="text-white font-bold mb-2">Content</h4>
-                <div className="bg-black/30 border border-white rounded-none p-4 mb-4">
-                  <pre className="text-white/90 text-sm whitespace-pre-wrap font-sans">
-                    {selectedSubmission.content}
-                  </pre>
-                </div>
+                <h4 className="text-white font-bold mb-2">Content (Editable - Select text to add links)</h4>
+                <RichTextEditor
+                  content={editableContent}
+                  onChange={(html, links) => {
+                    setEditableContent(html);
+                    setEditableLinks(links);
+                  }}
+                  placeholder="Article content..."
+                />
 
                 {selectedSubmission.amazon_storefront_id && (
                   <>
