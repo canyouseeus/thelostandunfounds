@@ -483,16 +483,9 @@ export default function BlogPost() {
     }
 
     try {
-      // Build book links from post data or use defaults
-      const defaultBookLinks: Record<string, string> = {
-        'The E-Myth Revisited': 'https://amzn.to/49LFRbv',
-        'This Is Not a T-Shirt': 'https://amzn.to/4rJCNn1',
-        'The Alchemist': 'https://amzn.to/49HqnFx',
-        'Contagious': 'https://amzn.to/3XoOv8A'
-      };
-
-      // Use Amazon links from post data if available, otherwise use defaults
+      // Build book links from post data ONLY - no defaults to prevent cross-contamination
       const bookLinks: Record<string, string> = {};
+
 
       if (post?.amazon_affiliate_links && Array.isArray(post.amazon_affiliate_links)) {
         // Build map from submitted affiliate links
@@ -565,9 +558,6 @@ export default function BlogPost() {
         });
       }
 
-      // Merge with defaults (submitted links take precedence)
-      Object.assign(bookLinks, defaultBookLinks);
-
       // Build emphasis terms list - include all book titles from links, plus defaults
       const emphasisTerms: string[] = [
         'THE LOST+UNFOUNDS',
@@ -582,14 +572,6 @@ export default function BlogPost() {
       // Add all book titles from links (longer titles first to avoid partial matches)
       const bookTitles = Object.keys(bookLinks).sort((a, b) => b.length - a.length);
       emphasisTerms.push(...bookTitles);
-
-      // Add default terms that might not be in links
-      const defaultTerms = ['The E-Myth Revisited', 'This Is Not a T-Shirt', 'The Alchemist', 'Contagious'];
-      defaultTerms.forEach(term => {
-        if (!emphasisTerms.includes(term)) {
-          emphasisTerms.push(term);
-        }
-      });
 
       // Create improved regex that handles punctuation and apostrophes better
       // Build patterns that match book titles with flexible punctuation handling
@@ -1214,6 +1196,31 @@ export default function BlogPost() {
 
   const formatContent = (content: string) => {
     try {
+      // Detect if content is HTML (from new Rich Text Editor submissions)
+      const isHtml = content.trim().startsWith('<') && (content.includes('</p>') || content.includes('</a>') || content.includes('</div>'));
+
+      if (isHtml) {
+        // New HTML content - render directly with sanitization
+        // DOMPurify is already available in the project
+        const DOMPurify = (window as any).DOMPurify;
+        let safeHtml = content;
+
+        if (DOMPurify) {
+          safeHtml = DOMPurify.sanitize(content, {
+            ALLOWED_TAGS: ['p', 'a', 'strong', 'em', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'br', 'hr', 'blockquote', 'code', 'pre'],
+            ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'data-product-title'],
+          });
+        }
+
+        return (
+          <div
+            dangerouslySetInnerHTML={{ __html: safeHtml }}
+            className="prose prose-invert max-w-none [&_a]:text-white [&_a]:underline [&_a]:hover:text-white/80"
+          />
+        );
+      }
+
+      // Legacy plain text content - use existing formatting logic
       // Split by double newlines to create paragraphs
       let paragraphs = content.split(/\n\n+/);
 

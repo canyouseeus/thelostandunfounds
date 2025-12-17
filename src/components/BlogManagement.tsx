@@ -10,6 +10,7 @@ import { useToast } from './Toast';
 import { LoadingSpinner } from './Loading';
 import { isAdminEmail } from '../utils/admin';
 import { FileText, Plus, Edit, Trash2, Eye, EyeOff, Calendar } from 'lucide-react';
+import RichTextEditor from './RichTextEditor';
 
 interface BlogPost {
   id: string;
@@ -29,6 +30,7 @@ interface BlogPost {
   author_id?: string | null;
   user_id?: string | null;
   blog_column?: string | null;
+  amazon_affiliate_links?: any[] | null;
 }
 
 const BLOG_COLUMNS = [
@@ -389,13 +391,14 @@ export default function BlogManagement() {
 
             <div>
               <label className="block text-white/80 text-sm mb-2">Content</label>
-              <textarea
-                value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none"
-                rows={15}
-                required
+              <RichTextEditor
+                content={formData.content}
+                onChange={(html, links) => {
+                  setFormData({ ...formData, content: html });
+                }}
+                placeholder="Write your post content here..."
               />
+              <p className="text-white/50 text-xs mt-2">Select text and click "Add Product Link" to add affiliate links.</p>
             </div>
 
             <div>

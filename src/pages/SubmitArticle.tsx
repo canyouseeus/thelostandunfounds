@@ -14,12 +14,14 @@ import SubdomainRegistration from '../components/SubdomainRegistration';
 import UserRegistration from '../components/UserRegistration';
 import StorefrontRegistration from '../components/StorefrontRegistration';
 import { FileText, Plus, X, BookOpen, Mail, User, Copy, Check, AlertTriangle, ArrowRight } from 'lucide-react';
+import RichTextEditor from '../components/RichTextEditor';
 
 interface AffiliateLink {
   book_title?: string;
   product_title?: string;
   item_title?: string;
   link: string;
+  phrase?: string;  // The exact phrase to hyperlink
 }
 
 type BlogColumn = 'main' | 'bookclub' | 'gearheads' | 'borderlands' | 'science' | 'newtheory';
@@ -968,32 +970,31 @@ export default function SubmitArticle() {
                 />
               </div>
 
-              {/* Article Content */}
+              {/* Article Content - Rich Text Editor */}
               <div>
                 <label className="block text-white/80 text-sm mb-2">
                   Article Content *
                 </label>
-                <textarea
-                  value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none font-mono text-sm"
-                  rows={20}
-                  placeholder={`Write your article here. Use double line breaks for paragraphs...
-
-Example structure:
-- Introduction (3-4 paragraphs)
-- ${config.requiresAffiliates ? (column === 'bookclub' ? 'Book' : 'Product') : 'Content'} sections (each with 3-4 paragraphs)
-- Conclusion
-
-Use double line breaks between sections. ${config.requiresAffiliates ? (column === 'bookclub' ? 'Book titles' : 'Product names') : 'Items'} mentioned in the text will automatically become clickable links if you add them in the Amazon Affiliate Links section below. The Amazon Affiliate Disclosure will be added automatically after the introduction.`}
-                  required
+                <RichTextEditor
+                  content={formData.content}
+                  onChange={(html, links) => {
+                    setFormData({ ...formData, content: html });
+                    // Convert product links to affiliate links format
+                    if (config.requiresAffiliates && links.length > 0) {
+                      const titleField = getTitleField();
+                      const newAffiliateLinks: AffiliateLink[] = links.map(link => ({
+                        [titleField]: link.title,
+                        link: link.url,
+                        phrase: link.phrase,
+                      } as AffiliateLink));
+                      setAffiliateLinks(newAffiliateLinks);
+                    }
+                  }}
+                  placeholder={`Write your article here...`}
                 />
                 <div className="text-white/50 text-xs mt-2 space-y-1">
-                  <p>• Use double line breaks (press Enter twice) to create paragraphs</p>
-                  <p>• Headings should be on their own line</p>
-                  {config.requiresAffiliates && (
-                    <p>• {column === 'bookclub' ? 'Book titles' : 'Product names'} mentioned in your text will automatically become clickable links</p>
-                  )}
+                  <p>• Select text and click "Add Product Link" to create affiliate links</p>
+                  <p>• Links will appear in the list below the editor</p>
                   {config.promptPath && (
                     <p>• See the <a href={`/${column}/prompt`} target="_blank" rel="noopener noreferrer" className="text-white hover:text-white/80 underline uppercase font-semibold">AI Writing Prompt Guide</a> for detailed formatting instructions</p>
                   )}
@@ -1014,113 +1015,6 @@ Use double line breaks between sections. ${config.requiresAffiliates ? (column =
                 />
               </div>
 
-              {/* Affiliate Links - only show if required */}
-              {config.requiresAffiliates && (
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <label className="block text-white/80 text-sm flex items-center gap-2">
-                      <BookOpen className="w-4 h-4" />
-                      {config.itemLabel} Affiliate Links {config.minItems === config.maxItems ? `(Required - Exactly ${config.minItems} ${config.itemLabel}${config.minItems > 1 ? 's' : ''})` : `(Required - ${config.minItems} to ${config.maxItems} ${config.itemLabel}${config.maxItems > 1 ? 's' : ''})`} *
-                    </label>
-                    {affiliateLinks.length < config.maxItems && (
-                      <button
-                        type="button"
-                        onClick={addAffiliateLink}
-                        className="px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-xs font-medium transition flex items-center gap-1"
-                      >
-                        <Plus className="w-3 h-3" />
-                        Add {config.itemLabel}
-                      </button>
-                    )}
-                  </div>
-
-                  <p className="text-white/60 text-sm mb-4">
-                    {config.minItems === config.maxItems
-                      ? `You must provide exactly ${config.minItems} ${config.itemLabel.toLowerCase()}${config.minItems > 1 ? 's' : ''}.`
-                      : `You must provide between ${config.minItems} and ${config.maxItems} ${config.itemLabel.toLowerCase()}${config.maxItems > 1 ? 's' : ''}.`
-                    }
-                    {column === 'bookclub' && ' Paste your list below (Title and Link) to auto-fill, or enter them manually.'}
-                  </p>
-
-                  {/* Bulk Paste Box - allowed for any column with multiple items */}
-                  {config.maxItems > 1 && (
-                    <div className="bg-black/30 border border-white/10 rounded-none p-4 mb-6">
-                      <label className="block text-white/80 text-xs mb-2 font-semibold">
-                        QUICK ADD: Paste your {config.itemLabel.toLowerCase()} list here to auto-fill
-                      </label>
-                      <textarea
-                        value={bulkAffiliateInput}
-                        onChange={handleBulkInput}
-                        className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-none text-white text-sm focus:border-white/30 focus:outline-none font-mono placeholder-white/30"
-                        rows={6}
-                        placeholder={column === 'bookclub' ? `Paste format example:
-The E-Myth Revisited
-https://amzn.to/3...
-
-Atomic Habits - https://amzn.to/4...` : `Paste format example:
-Product Name
-https://...
-
-Other Item - https://...`}
-                      />
-                    </div>
-                  )}
-
-                  <div className="space-y-3">
-                    {affiliateLinks.map((link, index) => (
-                      <div key={index} className="bg-black/30 border border-white/10 rounded-none p-4">
-                        <div className="flex items-start justify-between mb-3">
-                          <span className="text-white/80 text-sm font-medium">
-                            {config.itemLabel} {index + 1} {index < config.minItems && <span className="text-white/50">(Required)</span>}
-                          </span>
-                          {affiliateLinks.length > config.minItems && (
-                            <button
-                              type="button"
-                              onClick={() => removeAffiliateLink(index)}
-                              className="text-red-400 hover:text-red-300 text-xs"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                        <div className="space-y-3">
-                          <div>
-                            <label className="block text-white/70 text-xs mb-1">{config.itemLabel} Title {index < config.minItems && '*'}</label>
-                            <input
-                              type="text"
-                              value={getTitleValue(link)}
-                              onChange={(e) => updateAffiliateLink(index, getTitleField(), e.target.value)}
-                              className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-none text-white text-sm focus:border-white/30 focus:outline-none"
-                              placeholder={`e.g., ${column === 'bookclub' ? 'The E-Myth Revisited' : column === 'gearheads' ? 'MacBook Pro 16"' : 'Travel Backpack'}`}
-                              required={index < config.minItems}
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-white/70 text-xs mb-1">{config.linkLabel} {index < config.minItems && '*'}</label>
-                            <input
-                              type="url"
-                              value={link.link}
-                              onChange={(e) => updateAffiliateLink(index, 'link', e.target.value)}
-                              className="w-full px-3 py-2 bg-black/50 border border-white/10 rounded-none text-white text-sm focus:border-white/30 focus:outline-none"
-                              placeholder={column === 'bookclub' ? 'https://amzn.to/... or https://amazon.com/...' : 'https://...'}
-                              required={index < config.minItems}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  {config.requiresAffiliates && (
-                    <div className="bg-blue-900/20 border border-blue-500/30 rounded-none p-3 mt-4">
-                      <p className="text-blue-300 text-xs">
-                        <strong>Tip:</strong> Make sure to mention these {config.itemLabel.toLowerCase()} names in your article content.
-                        When you mention a {config.itemLabel.toLowerCase()} (e.g., "{column === 'bookclub' ? 'The E-Myth Revisited' : 'Product Name'}"), it will automatically become a clickable link
-                        using the affiliate link you provide here.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
 
               {/* Submit Button */}
               <div className="pt-4 border-t border-white/10">
