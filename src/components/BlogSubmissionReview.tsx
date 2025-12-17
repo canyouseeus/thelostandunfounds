@@ -243,19 +243,31 @@ export default function BlogSubmissionReview() {
       return text;
     }
     // Convert plain text paragraphs to HTML
+    // Split by double line breaks (paragraphs)
     return text
-      .split(/\n\n+/) // Split by double line breaks (paragraphs)
-      .filter(p => p.trim()) // Remove empty paragraphs
+      .split(/\n\n+/)
+      .filter(p => p.trim())
       .map(paragraph => {
-        // Handle single line breaks within paragraphs
-        const withBreaks = paragraph
-          .split(/\n/)
-          .map(line => line.trim())
-          .join('<br />');
-        return `<p>${withBreaks}</p>`;
+        const trimmed = paragraph.trim();
+        // Detect section headers: short lines (under 60 chars) that don't end with punctuation
+        // or lines that look like titles (e.g., "Introduction", "What I Learned")
+        const isHeader = trimmed.length < 60 &&
+          !trimmed.endsWith('.') &&
+          !trimmed.endsWith('?') &&
+          !trimmed.endsWith('!') &&
+          !trimmed.endsWith(',') &&
+          !trimmed.includes('\n');
+
+        if (isHeader) {
+          return `<h3>${trimmed}</h3>`;
+        }
+        // Regular paragraph - join lines with space (CSS handles spacing)
+        const cleanedText = trimmed.split(/\n/).map(line => line.trim()).join(' ');
+        return `<p>${cleanedText}</p>`;
       })
       .join('');
   };
+
 
   const BLOG_COLUMNS = [
     { value: 'main', label: 'Main Blog (The Lost Archives)' },

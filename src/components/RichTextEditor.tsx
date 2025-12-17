@@ -48,7 +48,7 @@ export default function RichTextEditor({ content, onChange, placeholder }: RichT
         content: content,
         editorProps: {
             attributes: {
-                class: 'prose prose-invert max-w-none min-h-[300px] focus:outline-none p-4 text-white/90 leading-relaxed',
+                class: 'prose prose-invert max-w-none min-h-[300px] focus:outline-none p-4 text-white/90 leading-relaxed [&>p]:mb-4 [&>p:last-child]:mb-0 [&>h1]:text-2xl [&>h1]:font-bold [&>h1]:text-white [&>h1]:mb-4 [&>h2]:text-xl [&>h2]:font-bold [&>h2]:text-white [&>h2]:mb-3 [&>h3]:text-lg [&>h3]:font-semibold [&>h3]:text-white [&>h3]:mb-2',
             },
         },
         onUpdate: ({ editor }) => {
