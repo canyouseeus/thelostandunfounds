@@ -235,6 +235,28 @@ export default function BlogSubmissionReview() {
   const [editableContent, setEditableContent] = useState<string>('');
   const [editableLinks, setEditableLinks] = useState<any[]>([]);
 
+  // Convert plain text with line breaks into HTML paragraphs for proper display
+  const convertToHtml = (text: string): string => {
+    if (!text) return '';
+    // Check if content is already HTML
+    if (text.trim().startsWith('<') && text.includes('</')) {
+      return text;
+    }
+    // Convert plain text paragraphs to HTML
+    return text
+      .split(/\n\n+/) // Split by double line breaks (paragraphs)
+      .filter(p => p.trim()) // Remove empty paragraphs
+      .map(paragraph => {
+        // Handle single line breaks within paragraphs
+        const withBreaks = paragraph
+          .split(/\n/)
+          .map(line => line.trim())
+          .join('<br />');
+        return `<p>${withBreaks}</p>`;
+      })
+      .join('');
+  };
+
   const BLOG_COLUMNS = [
     { value: 'main', label: 'Main Blog (The Lost Archives)' },
     { value: 'bookclub', label: 'Book Club' },
@@ -802,7 +824,7 @@ export default function BlogSubmissionReview() {
                       setReviewNotes(submission.admin_notes || '');
                       setRejectionReason(submission.rejected_reason || '');
                       setSelectedColumn(submission.blog_column || 'main');
-                      setEditableContent(submission.content || '');
+                      setEditableContent(convertToHtml(submission.content || ''));
                       setEditableLinks([]);
                     }}
                     className="ml-4 p-2 hover:bg-white/10 rounded transition"
