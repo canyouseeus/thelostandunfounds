@@ -659,61 +659,106 @@ export default function BlogSubmissionReview() {
       let blogPost
       let blogError
 
-      // First attempt: try with author_name
-      const firstAttempt = await supabase
-        .from('blog_posts')
-        .insert([{
-          ...blogPostData,
-          author_name: submission.author_name.trim(), // Store author name for disclosure
-        }])
-        .select()
-        .single()
+      // Check if a post with this slug and subdomain already exists (for republishing)
+      const checkQuery = supabase.from('blog_posts').select('id').eq('slug', slug);
+      if (submission.subdomain) {
+        checkQuery.eq('subdomain', submission.subdomain);
+      } else {
+        checkQuery.is('subdomain', null);
+      }
+      const { data: existingPost } = await checkQuery.maybeSingle();
 
-      if (firstAttempt.error) {
-        const errorMsg = firstAttempt.error.message || '';
-        const errorCode = firstAttempt.error.code;
+      if (existingPost) {
+        console.log(`Found existing post ${existingPost.id}, updating for republish...`);
+        // Use update instead of insert to avoid unique constraint violations
+        const updateAttempt = await supabase
+          .from('blog_posts')
+          .update({
+            ...blogPostData,
+            author_name: submission.author_name.trim(),
+          })
+          .eq('id', existingPost.id)
+          .select()
+          .single();
 
-        // Handle different error types with appropriate fallbacks
-        if (errorMsg.includes('author_name') || errorCode === '42703') {
-          // Column doesn't exist - retry without author_name
-          console.warn('author_name column not found, retrying without it:', errorMsg)
-          const secondAttempt = await supabase
-            .from('blog_posts')
-            .insert([blogPostData])
-            .select()
-            .single()
-
-          blogPost = secondAttempt.data
-          blogError = secondAttempt.error
-        } else if (errorMsg.includes('user_id') && errorMsg.includes('null')) {
-          // user_id is required but we don't have it - this should not happen if we did the lookup correctly
-          console.error('user_id is required but not found. This should not happen after lookup:', errorMsg)
-          // Don't use admin user - fail with error
-          blogPost = null
-          blogError = firstAttempt.error
-        } else if (errorMsg.includes('author_id') && errorMsg.includes('null') && !blogPostData.author_id && blogPostData.user_id) {
-          // author_id might be required but we have user_id - try setting author_id to user_id
-          console.warn('author_id may be required, setting to user_id:', errorMsg)
-          const fourthAttempt = await supabase
-            .from('blog_posts')
-            .insert([{
-              ...blogPostData,
-              author_id: blogPostData.user_id,
-            }])
-            .select()
-            .single()
-
-          blogPost = fourthAttempt.data
-          blogError = fourthAttempt.error
+        if (updateAttempt.error) {
+          const errorMsg = updateAttempt.error.message || '';
+          if (errorMsg.includes('author_name')) {
+            // Column might not exist in update either, retry without it
+            const retryUpdate = await supabase
+              .from('blog_posts')
+              .update(blogPostData)
+              .eq('id', existingPost.id)
+              .select()
+              .single();
+            blogPost = retryUpdate.data;
+            blogError = retryUpdate.error;
+          } else {
+            blogPost = updateAttempt.data;
+            blogError = updateAttempt.error;
+          }
         } else {
-          // Different error, use the original
-          blogPost = firstAttempt.data
-          blogError = firstAttempt.error
+          blogPost = updateAttempt.data;
+          blogError = null;
         }
       } else {
-        // Success on first attempt
-        blogPost = firstAttempt.data
-        blogError = null
+        // Original insert logic for new posts
+        // First attempt: try with author_name
+        const firstAttempt = await supabase
+          .from('blog_posts')
+          .insert([{
+            ...blogPostData,
+            author_name: submission.author_name.trim(), // Store author name for disclosure
+          }])
+          .select()
+          .single()
+
+        if (firstAttempt.error) {
+          const errorMsg = firstAttempt.error.message || '';
+          const errorCode = firstAttempt.error.code;
+
+          // Handle different error types with appropriate fallbacks
+          if (errorMsg.includes('author_name') || errorCode === '42703') {
+            // Column doesn't exist - retry without author_name
+            console.warn('author_name column not found, retrying without it:', errorMsg)
+            const secondAttempt = await supabase
+              .from('blog_posts')
+              .insert([blogPostData])
+              .select()
+              .single()
+
+            blogPost = secondAttempt.data
+            blogError = secondAttempt.error
+          } else if (errorMsg.includes('user_id') && errorMsg.includes('null')) {
+            // user_id is required but we don't have it - this should not happen if we did the lookup correctly
+            console.error('user_id is required but not found. This should not happen after lookup:', errorMsg)
+            // Don't use admin user - fail with error
+            blogPost = null
+            blogError = firstAttempt.error
+          } else if (errorMsg.includes('author_id') && errorMsg.includes('null') && !blogPostData.author_id && blogPostData.user_id) {
+            // author_id might be required but we have user_id - try setting author_id to user_id
+            console.warn('author_id may be required, setting to user_id:', errorMsg)
+            const fourthAttempt = await supabase
+              .from('blog_posts')
+              .insert([{
+                ...blogPostData,
+                author_id: blogPostData.user_id,
+              }])
+              .select()
+              .single()
+
+            blogPost = fourthAttempt.data
+            blogError = fourthAttempt.error
+          } else {
+            // Different error, use the original
+            blogPost = firstAttempt.data
+            blogError = firstAttempt.error
+          }
+        } else {
+          // Success on first attempt
+          blogPost = firstAttempt.data
+          blogError = null
+        }
       }
 
       if (blogError) {
