@@ -621,6 +621,9 @@ export default function BlogSubmissionReview() {
       const contentToUse = editableContent || convertToHtml(submission.content);
       const cleanedContent = cleanContent(contentToUse);
 
+      // Normalize subdomain once for both data and checkQuery
+      const normalizedSubdomain = submission.subdomain?.toLowerCase() || null;
+
       // Map edibleLinks for publication
       const linksForPub = editableLinks.map(link => ({
         product_title: link.title,
@@ -660,7 +663,6 @@ export default function BlogSubmissionReview() {
       let blogError
 
       // Check if a post with this slug and subdomain already exists (for republishing)
-      const normalizedSubdomain = submission.subdomain?.toLowerCase() || null;
       const checkQuery = supabase.from('blog_posts').select('id').eq('slug', slug);
       if (normalizedSubdomain) {
         checkQuery.eq('subdomain', normalizedSubdomain);
