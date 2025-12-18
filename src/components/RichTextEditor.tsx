@@ -63,22 +63,30 @@ export default function RichTextEditor({ content, initialLinks = [], onChange, p
             onChange(html, productLinks);
         },
         onSelectionUpdate: ({ editor }) => {
+            // Just capture the data, don't trigger the modal yet
             const { from, to, empty } = editor.state.selection;
-
             if (!empty && (to - from) > 0) {
-                // Trigger modal immediately on selection
                 const text = editor.state.doc.textBetween(from, to);
                 setSelectedText(text);
                 setStoredSelection({ from, to });
-                setLinkUrl('');
-                setLinkTitle('');
-                setShowLinkModal(true);
             }
         },
         onBlur: () => {
             // No-op for now as we use the modal
         },
     });
+
+    const handlePointerUp = useCallback(() => {
+        if (!editor || showLinkModal) return;
+
+        const { from, to, empty } = editor.state.selection;
+        if (!empty && (to - from) > 0) {
+            // Trigger modal ONLY when user lifts finger/mouse
+            setLinkUrl('');
+            setLinkTitle('');
+            setShowLinkModal(true);
+        }
+    }, [editor, showLinkModal]);
 
     const closeLinkModal = useCallback(() => {
         setShowLinkModal(false);
@@ -137,7 +145,10 @@ export default function RichTextEditor({ content, initialLinks = [], onChange, p
     return (
         <div className="relative" ref={editorContainerRef}>
             {/* Editor */}
-            <div className="bg-black/30 border border-white/20 rounded-none min-h-[300px] relative">
+            <div
+                className="bg-black/30 border border-white/20 rounded-none min-h-[300px] relative"
+                onPointerUp={handlePointerUp}
+            >
                 <EditorContent editor={editor} />
             </div>
 
