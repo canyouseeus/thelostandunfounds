@@ -306,13 +306,36 @@ export default function BlogManagement() {
 
       if (updateError) throw updateError;
 
-      // 3. If there's a submission_id, revert it to pending and set the reason
-      if (post.submission_id) {
+      // 3. Revert submission status if linked
+      let submissionId = post.submission_id;
+
+      // Fallback: If submission_id is missing, try to find a matching submission by title
+      if (!submissionId) {
+        console.log(`No submission_id for post "${post.title}", attempting title-based lookup...`);
+        const { data: matchedSub } = await supabase
+          .from('blog_submissions')
+          .select('id')
+          .eq('title', post.title)
+          .maybeSingle();
+
+        if (matchedSub) {
+          submissionId = matchedSub.id;
+          console.log(`Found matching submission ID: ${submissionId}`);
+
+          // Link it in the database for future use
+          await supabase
+            .from('blog_posts')
+            .update({ submission_id: submissionId })
+            .eq('id', targetPostId);
+        }
+      }
+
+      if (submissionId) {
         // Fetch submission details for the email
         const { data: submission, error: subError } = await supabase
           .from('blog_submissions')
           .select('author_email, author_name, title')
-          .eq('id', post.submission_id)
+          .eq('id', submissionId)
           .single();
 
         if (!subError && submission) {
@@ -323,7 +346,7 @@ export default function BlogManagement() {
               status: 'pending',
               rejected_reason: unpublishReason
             })
-            .eq('id', post.submission_id);
+            .eq('id', submissionId);
 
           // Send notification email via API
           try {
