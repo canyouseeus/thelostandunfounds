@@ -17,16 +17,22 @@ interface ProductLinkData {
 
 interface RichTextEditorProps {
     content: string;
+    initialLinks?: ProductLinkData[];
     onChange: (html: string, links: ProductLinkData[]) => void;
     placeholder?: string;
 }
 
-export default function RichTextEditor({ content, onChange, placeholder }: RichTextEditorProps) {
+export default function RichTextEditor({ content, initialLinks = [], onChange, placeholder }: RichTextEditorProps) {
     const [showLinkModal, setShowLinkModal] = useState(false);
     const [linkUrl, setLinkUrl] = useState('');
     const [linkTitle, setLinkTitle] = useState('');
     const [selectedText, setSelectedText] = useState('');
-    const [productLinks, setProductLinks] = useState<ProductLinkData[]>([]);
+    const [productLinks, setProductLinks] = useState<ProductLinkData[]>(initialLinks);
+
+    // Sync product links when initialLinks changes (e.g., when opening a new submission)
+    useEffect(() => {
+        setProductLinks(initialLinks);
+    }, [initialLinks]);
 
     // Floating tooltip state
     const [showTooltip, setShowTooltip] = useState(false);

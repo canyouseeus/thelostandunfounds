@@ -30,6 +30,7 @@ interface BlogPost {
   author_id?: string | null;
   user_id?: string | null;
   blog_column?: string | null;
+  subdomain?: string | null;
   amazon_affiliate_links?: any[] | null;
 }
 
@@ -63,6 +64,12 @@ export default function BlogManagement() {
     og_image_url: '',
     blog_column: 'main',
   });
+
+  // Unpublish Reason Modal State
+  const [isUnpublishing, setIsUnpublishing] = useState(false);
+  const [unpublishReason, setUnpublishReason] = useState('');
+  const [targetPostId, setTargetPostId] = useState<string | null>(null);
+  const [isProcessingUnpublish, setIsProcessingUnpublish] = useState(false);
 
   useEffect(() => {
     loadPosts();
@@ -175,7 +182,8 @@ export default function BlogManagement() {
           ? new Date().toISOString()
           : editingPost?.published_at || null,
         status: formData.published ? 'published' : 'draft', // Keep status in sync
-        author_id: user.id,
+        author_id: editingPost ? (editingPost.author_id || editingPost.user_id) : user.id,
+        user_id: editingPost ? (editingPost.user_id || editingPost.author_id) : user.id,
         excerpt: autoExcerpt || null,
         seo_title: formData.seo_title || null,
         seo_description: formData.seo_description || null,
@@ -269,24 +277,83 @@ export default function BlogManagement() {
     }
   };
 
-  const handleUnpublish = async (id: string) => {
-    if (!confirm('Are you sure you want to unpublish this post? It will be saved as a draft.')) return;
+  const handleUnpublish = async () => {
+    if (!targetPostId || !unpublishReason.trim()) {
+      showError('Please provide a reason for unpublishing');
+      return;
+    }
 
     try {
-      const { error } = await supabase
+      setIsProcessingUnpublish(true);
+
+      // 1. Get the post details to find the submission_id and author info
+      const { data: post, error: fetchError } = await supabase
+        .from('blog_posts')
+        .select('*, submission_id')
+        .eq('id', targetPostId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // 2. Update the post to draft status
+      const { error: updateError } = await supabase
         .from('blog_posts')
         .update({
           published: false,
           status: 'draft'
         })
-        .eq('id', id);
+        .eq('id', targetPostId);
 
-      if (error) throw error;
-      success('Post unpublished successfully (moved to drafts)');
+      if (updateError) throw updateError;
+
+      // 3. If there's a submission_id, revert it to pending and set the reason
+      if (post.submission_id) {
+        // Fetch submission details for the email
+        const { data: submission, error: subError } = await supabase
+          .from('blog_submissions')
+          .select('author_email, author_name, title')
+          .eq('id', post.submission_id)
+          .single();
+
+        if (!subError && submission) {
+          // Revert submission status
+          await supabase
+            .from('blog_submissions')
+            .update({
+              status: 'pending',
+              rejected_reason: unpublishReason
+            })
+            .eq('id', post.submission_id);
+
+          // Send notification email via API
+          try {
+            await fetch('/api/blog/submission-unpublished', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                authorEmail: submission.author_email,
+                authorName: submission.author_name,
+                articleTitle: submission.title,
+                unpublishReason: unpublishReason
+              })
+            });
+          } catch (emailErr) {
+            console.error('Failed to send unpublish notification email:', emailErr);
+            // Don't block the UI if email fails
+          }
+        }
+      }
+
+      success('Post unpublished successfully and returned to review');
       loadPosts();
+      setIsUnpublishing(false);
+      setUnpublishReason('');
+      setTargetPostId(null);
     } catch (err: any) {
       console.error('Error unpublishing post:', err);
       showError(err.message || 'Failed to unpublish post');
+    } finally {
+      setIsProcessingUnpublish(false);
     }
   };
 
@@ -592,9 +659,12 @@ export default function BlogManagement() {
                             <Eye className="w-4 h-4 text-white/60" />
                           </a>
                           <button
-                            onClick={() => handleUnpublish(post.id)}
+                            onClick={() => {
+                              setTargetPostId(post.id);
+                              setIsUnpublishing(true);
+                            }}
                             className="p-2 hover:bg-yellow-500/20 rounded-none transition"
-                            title="Unpublish (revert to draft)"
+                            title="Unpublish (revert to review)"
                           >
                             <EyeOff className="w-4 h-4 text-yellow-400" />
                           </button>
@@ -669,7 +739,10 @@ export default function BlogManagement() {
                           <Eye className="w-4 h-4 text-white/60" />
                         </a>
                         <button
-                          onClick={() => handleUnpublish(post.id)}
+                          onClick={() => {
+                            setTargetPostId(post.id);
+                            setIsUnpublishing(true);
+                          }}
                           className="p-2 hover:bg-yellow-500/20 rounded-none transition"
                           title="Unpublish (revert to draft)"
                         >
@@ -757,7 +830,10 @@ export default function BlogManagement() {
                           <Eye className="w-4 h-4 text-white/60" />
                         </a>
                         <button
-                          onClick={() => handleUnpublish(post.id)}
+                          onClick={() => {
+                            setTargetPostId(post.id);
+                            setIsUnpublishing(true);
+                          }}
                           className="p-2 hover:bg-yellow-500/20 rounded-none transition"
                           title="Unpublish (revert to draft)"
                         >
@@ -794,6 +870,78 @@ export default function BlogManagement() {
           <p className="text-white/60">No posts yet.</p>
         </div>
       )}
+
+      <UnpublishModal
+        isOpen={isUnpublishing}
+        onClose={() => {
+          setIsUnpublishing(false);
+          setUnpublishReason('');
+          setTargetPostId(null);
+        }}
+        onConfirm={handleUnpublish}
+        reason={unpublishReason}
+        setReason={setUnpublishReason}
+        isProcessing={isProcessingUnpublish}
+      />
+    </div>
+  );
+}
+
+// Separate component for the Unpublish Reason Modal
+function UnpublishModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  reason,
+  setReason,
+  isProcessing
+}: {
+  isOpen: boolean,
+  onClose: () => void,
+  onConfirm: () => void,
+  reason: string,
+  setReason: (r: string) => void,
+  isProcessing: boolean
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4">
+      <div className="bg-black border border-white p-6 w-full max-w-md animate-fade-in">
+        <h3 className="text-xl font-bold text-white mb-4">Unpublish Article</h3>
+        <p className="text-white/70 mb-4 text-sm">
+          This will move the post to drafts and return the original submission to the review cycle.
+          The author will be notified via email with the reason provided below.
+        </p>
+
+        <div className="mb-6">
+          <label className="block text-white/80 text-sm mb-2">Reason for unpublishing</label>
+          <textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            className="w-full px-4 py-2 bg-black border border-white rounded-none text-white focus:outline-none h-32"
+            placeholder="Explain why this article is being unpublished..."
+            autoFocus
+          />
+        </div>
+
+        <div className="flex gap-4">
+          <button
+            onClick={onConfirm}
+            disabled={isProcessing || !reason.trim()}
+            className="flex-1 px-6 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition disabled:opacity-50"
+          >
+            {isProcessing ? 'Processing...' : 'Unpublish & Notify'}
+          </button>
+          <button
+            onClick={onClose}
+            disabled={isProcessing}
+            className="px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-none transition"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

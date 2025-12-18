@@ -20,8 +20,8 @@ export interface AdminUser {
  */
 export function isAdminEmail(email: string): boolean {
   const normalizedEmail = email?.toLowerCase().trim();
-  return normalizedEmail === ADMIN_EMAIL.toLowerCase() || 
-         normalizedEmail === ADMIN_EMAIL_ALT.toLowerCase();
+  return normalizedEmail === ADMIN_EMAIL.toLowerCase() ||
+    normalizedEmail === ADMIN_EMAIL_ALT.toLowerCase();
 }
 
 /**
@@ -30,12 +30,12 @@ export function isAdminEmail(email: string): boolean {
 export async function isAdmin(): Promise<boolean> {
   try {
     const { data: { user }, error: getUserError } = await supabase.auth.getUser();
-    
+
     if (getUserError) {
       console.warn('Error getting user:', getUserError);
       return false;
     }
-    
+
     if (!user) return false;
 
     // First check: email matches admin email (fastest check)
@@ -45,7 +45,12 @@ export async function isAdmin(): Promise<boolean> {
 
     // Second check: user metadata for admin role
     const userMetadata = user.user_metadata || {};
-    if (userMetadata.role === 'admin' || userMetadata.is_admin === true) {
+    if (userMetadata.role === 'admin' || userMetadata.is_admin === true || userMetadata.role === 'Admin') {
+      return true;
+    }
+
+    const appMetadata = user.app_metadata || {};
+    if (appMetadata.role === 'admin' || appMetadata.is_admin === true) {
       return true;
     }
 

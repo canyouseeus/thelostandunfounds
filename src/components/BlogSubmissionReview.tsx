@@ -234,6 +234,27 @@ export default function BlogSubmissionReview() {
   const [selectedColumn, setSelectedColumn] = useState<string>('main');
   const [editableContent, setEditableContent] = useState<string>('');
   const [editableLinks, setEditableLinks] = useState<any[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Clean content: remove em dashes and normalize line breaks
+  const cleanContent = (html: string): string => {
+    if (!html) return '';
+
+    // 1. Remove em dashes and similar characters
+    let cleaned = html
+      .replace(/[—–⸻]/g, ' ') // Replace em dashes, en dashes, and long dashes with space
+      .replace(/\s{2,}/g, ' '); // Normalize multiple spaces
+
+    // 2. Clean up line breaks in paragraphs
+    // If it's HTML, we need to be careful. TipTap handles most of this, 
+    // but we can ensure paragraphs are tidy.
+    cleaned = cleaned
+      .replace(/<p><\/p>/g, '') // Remove empty paragraphs
+      .replace(/<p>\s+<\/p>/g, '') // Remove whitespace-only paragraphs
+      .trim();
+
+    return cleaned;
+  };
 
   // Convert plain text with line breaks into HTML paragraphs for proper display
   const convertToHtml = (text: string): string => {
@@ -313,6 +334,49 @@ export default function BlogSubmissionReview() {
     }
   };
 
+  const handleSaveRevisions = async (submission: BlogSubmission) => {
+    if (!user) {
+      showError('You must be logged in');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+
+      // Map editableLinks back to the database format
+      const dbLinks = editableLinks.map(link => ({
+        product_title: link.title,
+        link: link.url,
+        // We could also store the phrase if we add it to the schema, 
+        // but for now we follow existing AffiliateLink shape
+      }));
+
+      const cleanedHtml = cleanContent(editableContent);
+
+      const { error } = await supabase
+        .from('blog_submissions')
+        .update({
+          content: cleanedHtml,
+          amazon_affiliate_links: dbLinks,
+          admin_notes: reviewNotes || null,
+          blog_column: selectedColumn,
+        })
+        .eq('id', submission.id);
+
+      if (error) throw error;
+
+      // Update local state to reflect changes
+      setEditableContent(cleanedHtml);
+      success('Revisions saved successfully');
+      loadSubmissions();
+    } catch (err: any) {
+      console.error('Error saving revisions:', err);
+      showError(err.message || 'Failed to save revisions');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleApprove = async (submission: BlogSubmission) => {
     if (!user) {
       showError('You must be logged in');
@@ -320,13 +384,24 @@ export default function BlogSubmissionReview() {
     }
 
     try {
+      // First, save any pending revisions
+      const dbLinks = editableLinks.map(link => ({
+        product_title: link.title,
+        link: link.url
+      }));
+
+      const cleanedHtml = cleanContent(editableContent);
+
       const { error } = await supabase
         .from('blog_submissions')
         .update({
           status: 'approved',
+          content: cleanedHtml,
+          amazon_affiliate_links: dbLinks,
           reviewed_by: user.id,
           reviewed_at: new Date().toISOString(),
           admin_notes: reviewNotes || null,
+          blog_column: selectedColumn,
         })
         .eq('id', submission.id);
 
@@ -542,34 +617,29 @@ export default function BlogSubmissionReview() {
         }
       }
 
-      // Clean content: remove ⸻ characters and normalize line breaks
       // Use editableContent (the RTE version) if available, otherwise fall back to original
-      const contentToUse = editableContent || submission.content;
-      let cleanedContent = contentToUse
-        // Remove all ⸻ characters (em dashes used as separators)
-        .replace(/⸻/g, '')
-        // Remove standalone em dashes on their own line
-        .replace(/^[—–-]\s*$/gm, '')
-        // Normalize multiple line breaks to double line breaks (paragraph breaks)
-        .replace(/\n{3,}/g, '\n\n')
-        // Remove trailing whitespace from lines
-        .split('\n').map(line => line.trimEnd()).join('\n')
-        // Remove leading/trailing whitespace
-        .trim();
+      const contentToUse = editableContent || convertToHtml(submission.content);
+      const cleanedContent = cleanContent(contentToUse);
+
+      // Map edibleLinks for publication
+      const linksForPub = editableLinks.map(link => ({
+        product_title: link.title,
+        link: link.url
+      }));
 
       // Create blog post with subdomain and Amazon links
       // Build insert object conditionally to handle different schema versions
-      // Some schemas use user_id, others use author_id, and one may be required
       const blogPostData: any = {
         title: submission.title,
         slug: slug,
-        content: cleanedContent, // Use cleaned content
+        content: cleanedContent, // Use cleaned content from outer scope or editableContent
         excerpt: submission.excerpt,
         published: true,
         published_at: new Date().toISOString(),
         status: 'published',
         subdomain: submission.subdomain || null, // User subdomain
-        amazon_affiliate_links: submission.amazon_affiliate_links || [], // Store Amazon links
+        submission_id: submission.id, // Store source submission ID
+        amazon_affiliate_links: linksForPub.length > 0 ? linksForPub : (submission.amazon_affiliate_links || []),
         amazon_storefront_id: submission.amazon_storefront_id || null, // Store Amazon storefront ID
         blog_column: selectedColumn || submission.blog_column || null, // Use selected column or fallback to submission
         seo_title: null,
@@ -579,9 +649,8 @@ export default function BlogSubmissionReview() {
       }
 
       // Set both user_id and author_id to the author's user_id
-      // This handles different schema versions (some use user_id, others use author_id)
       blogPostData.user_id = userId;
-      blogPostData.author_id = authorId || userId; // Use same value for both
+      blogPostData.author_id = authorId || userId;
 
       // Only include author_name if the column exists (handled via try-catch fallback)
       // The author_name column may not exist in all schema versions
@@ -837,7 +906,13 @@ export default function BlogSubmissionReview() {
                       setRejectionReason(submission.rejected_reason || '');
                       setSelectedColumn(submission.blog_column || 'main');
                       setEditableContent(convertToHtml(submission.content || ''));
-                      setEditableLinks([]);
+                      // Transform DB links to RTE format
+                      const initialLinks = (submission.amazon_affiliate_links || []).map((link: any) => ({
+                        url: link.link,
+                        title: link.product_title || link.book_title || link.item_title || 'Untitled',
+                        phrase: '' // We don't have the phrase in DB, but it's okay for existing links
+                      }));
+                      setEditableLinks(initialLinks);
                     }}
                     className="ml-4 p-2 hover:bg-white/10 rounded transition"
                     title="Review submission"
@@ -907,6 +982,7 @@ export default function BlogSubmissionReview() {
                 <h4 className="text-white font-bold mb-2">Content (Editable - Select text to add links)</h4>
                 <RichTextEditor
                   content={editableContent}
+                  initialLinks={editableLinks}
                   onChange={(html, links) => {
                     setEditableContent(html);
                     setEditableLinks(links);
@@ -1018,6 +1094,15 @@ export default function BlogSubmissionReview() {
 
               {/* Actions */}
               <div className="flex gap-4 pt-4 border-t border-white">
+                <button
+                  onClick={() => handleSaveRevisions(selectedSubmission)}
+                  disabled={isSaving}
+                  className="px-6 py-2 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-none transition flex items-center gap-2 disabled:opacity-50"
+                >
+                  <Check className="w-4 h-4" />
+                  {isSaving ? 'Saving...' : 'Save Revisions'}
+                </button>
+
                 {selectedSubmission.status === 'pending' && (
                   <>
                     <button

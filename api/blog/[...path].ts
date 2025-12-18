@@ -32,6 +32,9 @@ export default async function handler(
       case 'submission-rejected':
       case 'rejected':
         return await handleSubmissionRejected(req, res)
+      case 'submission-unpublished':
+      case 'unpublished':
+        return await handleSubmissionUnpublished(req, res)
       default:
         return res.status(404).json({ error: `Blog route not found: ${route}` })
     }
@@ -70,5 +73,13 @@ async function handleSubmissionApproved(req: VercelRequest, res: VercelResponse)
  */
 async function handleSubmissionRejected(req: VercelRequest, res: VercelResponse) {
   const handler = await import('../../lib/api-handlers/_blog-submission-rejected-handler.js')
+  return await handler.default(req, res)
+}
+
+/**
+ * Submission Unpublished Handler
+ */
+async function handleSubmissionUnpublished(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/_blog-post-unpublished-notify-handler.js')
   return await handler.default(req, res)
 }
