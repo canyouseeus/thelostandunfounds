@@ -28,7 +28,7 @@ interface BlogPost {
   seo_title: string | null;
   seo_description: string | null;
   author_id: string | null;
-  author_name: string | null;
+  author_name?: string | null;
 }
 
 const extractFirstImage = (content?: string | null) => {
@@ -41,30 +41,29 @@ const extractFirstImage = (content?: string | null) => {
 };
 
 const buildPreviewExcerpt = (post: BlogPost) => {
-  if (post.excerpt && post.excerpt.trim().length > 0) {
-    const preview = post.excerpt.trim().replace(/\s+/g, ' ');
-    return preview.length > 220
-      ? preview.substring(0, 220).replace(/\s+\S*$/, '') + '...'
-      : preview;
-  }
-  const source = (post.content || '').trim();
+  // Use excerpt if available, otherwise use content
+  const source = (post.excerpt || post.content || '').trim();
   if (!source) return '';
-  const sentences = source
-    .replace(/\s+/g, ' ')
-    .split(/(?<=[.!?])\s+/)
-    .filter(Boolean);
-  const candidate = sentences.slice(0, 2).join(' ');
-  const preview = candidate || sentences[0] || source;
-  return preview.length > 220
-    ? preview.substring(0, 220).replace(/\s+\S*$/, '') + '...'
-    : preview;
+
+  // Strip HTML tags and replace with space, then collapse whitespace
+  const stripped = source.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
+
+  if (stripped.length > 0) {
+    return stripped.length > 220
+      ? stripped.substring(0, 220).replace(/\s+\S*$/, '') + '...'
+      : stripped;
+  }
+  return '';
 };
 
 const buildExpandedIntro = (post: BlogPost) => {
   const source = (post.content || post.excerpt || '').trim();
   if (!source) return '';
-  const firstParagraph = source.split(/\n\n+/)[0]?.trim() || '';
-  return firstParagraph.substring(0, 420);
+
+  // Strip HTML tags and replace with space, then collapse whitespace
+  const stripped = source.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
+
+  return stripped.substring(0, 420);
 };
 
 export default function UserBlog() {
@@ -92,7 +91,7 @@ export default function UserBlog() {
       // Try multiple query strategies to handle different schema versions
       let postsData;
       let postsError;
-      
+
       // Strategy 1: Try with published field and author_name
       let result = await supabase
         .from('blog_posts')
@@ -102,10 +101,10 @@ export default function UserBlog() {
         .order('published_at', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(100);
-      
+
       postsData = result.data;
       postsError = result.error;
-      
+
       // Strategy 2: If that failed, try without author_name
       if (postsError && (postsError.message?.includes('author_name') || postsError.message?.includes('column'))) {
         result = await supabase
@@ -116,11 +115,11 @@ export default function UserBlog() {
           .order('published_at', { ascending: false })
           .order('created_at', { ascending: false })
           .limit(100);
-        
+
         postsData = result.data;
         postsError = result.error;
       }
-      
+
       // Strategy 3: If published column doesn't exist, try with status field
       if (postsError && (postsError.message?.includes('published') || postsError.message?.includes('column'))) {
         result = await supabase
@@ -131,11 +130,11 @@ export default function UserBlog() {
           .order('published_at', { ascending: false })
           .order('created_at', { ascending: false })
           .limit(100);
-        
+
         postsData = result.data;
         postsError = result.error;
       }
-      
+
       // Strategy 4: Last resort - get all posts for this subdomain and filter client-side
       if (postsError) {
         result = await supabase
@@ -145,10 +144,10 @@ export default function UserBlog() {
           .order('published_at', { ascending: false })
           .order('created_at', { ascending: false })
           .limit(100);
-        
+
         if (result.data) {
           // Filter client-side for published posts
-          postsData = result.data.filter((post: any) => 
+          postsData = result.data.filter((post: any) =>
             post.published === true || (post.published === undefined && post.status === 'published')
           );
           postsError = null;
@@ -188,7 +187,7 @@ export default function UserBlog() {
         setBlogTitle(subdomainData.blog_title);
         setBlogTitleDisplay(subdomainData.blog_title);
       }
-      
+
       // Get author_name from user_subdomains if available
       if (subdomainData?.author_name && !authorName) {
         setAuthorName(subdomainData.author_name);
@@ -262,16 +261,16 @@ export default function UserBlog() {
   // Use styled display title for UI, normalized title for SEO/metadata
   // If using subdomain as fallback, display it in uppercase
   const displayTitle = blogTitleDisplay || blogTitle || authorName || (subdomain ? subdomain.toUpperCase() : null) || 'User';
-  const pageTitle = blogTitle 
+  const pageTitle = blogTitle
     ? `${blogTitle} | COLLECTION | THE LOST ARCHIVES`
     : authorName
-    ? `${authorName} | COLLECTION | THE LOST ARCHIVES`
-    : `${subdomain}'s Collection | THE LOST ARCHIVES`;
+      ? `${authorName} | COLLECTION | THE LOST ARCHIVES`
+      : `${subdomain}'s Collection | THE LOST ARCHIVES`;
   const blogDescription = blogTitle
     ? `Articles and insights from ${blogTitle} in this collection on THE LOST ARCHIVES.`
     : authorName
-    ? `Articles and insights from ${authorName} in this collection on THE LOST ARCHIVES.`
-    : `Articles and insights from ${subdomain} on THE LOST ARCHIVES.`;
+      ? `Articles and insights from ${authorName} in this collection on THE LOST ARCHIVES.`
+      : `Articles and insights from ${subdomain} on THE LOST ARCHIVES.`;
 
   return (
     <>
@@ -310,7 +309,7 @@ export default function UserBlog() {
               const expandedIntro = buildExpandedIntro(post);
               const showAdditionalContent = !!expandedIntro;
               const postUrl = subdomain ? `/blog/${subdomain}/${post.slug}` : `/thelostarchives/${post.slug}`;
-              
+
               return (
                 <Expandable
                   key={post.id}
@@ -321,9 +320,9 @@ export default function UserBlog() {
                 >
                   {({ isExpanded }) => (
                     <ExpandableTrigger>
-                      <div 
+                      <div
                         className="rounded-none"
-                        style={{ 
+                        style={{
                           minHeight: isExpanded ? '420px' : '220px',
                           transition: 'min-height 0.2s ease-out',
                         }}
@@ -344,7 +343,7 @@ export default function UserBlog() {
                               {formatDate(post.published_at || post.created_at)}
                             </time>
                           </ExpandableCardHeader>
-                        
+
                           <ExpandableCardContent className="flex-1 min-h-0">
                             {excerpt && (
                               <div className="mb-1">
@@ -353,10 +352,10 @@ export default function UserBlog() {
                                 </p>
                               </div>
                             )}
-                            
-                            <ExpandableContent 
-                              preset="fade" 
-                              stagger 
+
+                            <ExpandableContent
+                              preset="fade"
+                              stagger
                               staggerChildren={0.1}
                               keepMounted={false}
                             >
@@ -385,7 +384,7 @@ export default function UserBlog() {
                               </Link>
                             </ExpandableContent>
                           </ExpandableCardContent>
-                          
+
                           <ExpandableCardFooter className="mt-auto p-3 pt-2 pb-3">
                             <div className="flex items-center justify-end gap-2 min-w-0 w-full">
                               {!isExpanded && (

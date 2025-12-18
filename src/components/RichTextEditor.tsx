@@ -76,12 +76,8 @@ export default function RichTextEditor({ content, initialLinks = [], onChange, p
             }
         },
         onBlur: () => {
-            // Keep selection data but hide trigger after a delay to allow clicks
-            setTimeout(() => {
-                if (!showLinkModal) {
-                    setShowLinkTrigger(false);
-                }
-            }, 200);
+            // No-op. We want the trigger to stay visible until selection changes or modal opens.
+            // This prevents it from disappearing when clicking the top bar.
         },
     });
 
@@ -92,6 +88,8 @@ export default function RichTextEditor({ content, initialLinks = [], onChange, p
         if (!empty && (to - from) > 0) {
             // Show trigger bar when user finishes selecting
             setShowLinkTrigger(true);
+        } else {
+            setShowLinkTrigger(false);
         }
     }, [editor, showLinkModal]);
 
@@ -108,6 +106,7 @@ export default function RichTextEditor({ content, initialLinks = [], onChange, p
         setSelectedText('');
         setLinkUrl('');
         setLinkTitle('');
+        setShowLinkTrigger(false);
         // Return focus to editor if needed
         if (editor) {
             editor.chain().focus().run();
@@ -205,15 +204,16 @@ export default function RichTextEditor({ content, initialLinks = [], onChange, p
 
             {/* Price/Link Trigger Bar - iOS Optimization: Fixed Top Bar */}
             {showLinkTrigger && !showLinkModal && (
-                <div className="fixed top-0 left-0 right-0 z-[9998] pointer-events-none p-4 animate-slide-down">
+                <div className="fixed top-0 left-0 right-0 z-[1000000] pointer-events-none p-4 animate-slide-down">
                     <div className="max-w-2xl mx-auto w-full pointer-events-auto">
                         <button
                             type="button"
                             onClick={handleOpenLinkModal}
-                            className="w-full bg-black border border-white/40 shadow-2xl p-3 flex items-center justify-center gap-2 group hover:bg-white transition-all duration-300"
+                            onMouseDown={(e) => e.preventDefault()} // Prevent blur
+                            className="w-full bg-white border border-black shadow-2xl p-4 flex items-center justify-center gap-2 group hover:bg-black transition-all duration-300"
                         >
-                            <LinkIcon className="w-4 h-4 text-white group-hover:text-black transition-colors" />
-                            <span className="text-white group-hover:text-black text-xs font-bold uppercase tracking-[0.2em] transition-colors">
+                            <LinkIcon className="w-5 h-5 text-black group-hover:text-white transition-colors" />
+                            <span className="text-black group-hover:text-white text-sm font-bold uppercase tracking-[0.2em] transition-colors">
                                 Add Product Link
                             </span>
                         </button>
@@ -223,7 +223,7 @@ export default function RichTextEditor({ content, initialLinks = [], onChange, p
 
             {/* Link Modal - iOS Optimized: Fixed and Top-Anchored */}
             {showLinkModal && (
-                <div className="fixed inset-0 z-[9999] pointer-events-none">
+                <div className="fixed inset-0 z-[1000001] pointer-events-none">
                     {/* Backdrop */}
                     <div
                         className="absolute inset-0 bg-black/60 pointer-events-auto backdrop-blur-sm animate-fade-in"
