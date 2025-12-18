@@ -637,7 +637,7 @@ export default function BlogSubmissionReview() {
         published: true,
         published_at: new Date().toISOString(),
         status: 'published',
-        subdomain: submission.subdomain || null, // User subdomain
+        subdomain: normalizedSubdomain, // User subdomain
         submission_id: submission.id, // Store source submission ID
         amazon_affiliate_links: linksForPub.length > 0 ? linksForPub : (submission.amazon_affiliate_links || []),
         amazon_storefront_id: submission.amazon_storefront_id || null, // Store Amazon storefront ID
@@ -660,9 +660,10 @@ export default function BlogSubmissionReview() {
       let blogError
 
       // Check if a post with this slug and subdomain already exists (for republishing)
+      const normalizedSubdomain = submission.subdomain?.toLowerCase() || null;
       const checkQuery = supabase.from('blog_posts').select('id').eq('slug', slug);
-      if (submission.subdomain) {
-        checkQuery.eq('subdomain', submission.subdomain);
+      if (normalizedSubdomain) {
+        checkQuery.eq('subdomain', normalizedSubdomain);
       } else {
         checkQuery.is('subdomain', null);
       }
