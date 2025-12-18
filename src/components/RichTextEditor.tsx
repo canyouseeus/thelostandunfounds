@@ -26,6 +26,7 @@ interface RichTextEditorProps {
 
 export default function RichTextEditor({ content, initialLinks = [], onChange, placeholder }: RichTextEditorProps) {
     const [showLinkModal, setShowLinkModal] = useState(false);
+    const [showLinkTrigger, setShowLinkTrigger] = useState(false);
     const [linkUrl, setLinkUrl] = useState('');
     const [linkTitle, setLinkTitle] = useState('');
     const [selectedText, setSelectedText] = useState('');
@@ -63,16 +64,24 @@ export default function RichTextEditor({ content, initialLinks = [], onChange, p
             onChange(html, productLinks);
         },
         onSelectionUpdate: ({ editor }) => {
-            // Just capture the data, don't trigger the modal yet
             const { from, to, empty } = editor.state.selection;
+
             if (!empty && (to - from) > 0) {
                 const text = editor.state.doc.textBetween(from, to);
                 setSelectedText(text);
                 setStoredSelection({ from, to });
+                // We show the trigger on pointerup instead to avoid flickering during drag
+            } else {
+                setShowLinkTrigger(false);
             }
         },
         onBlur: () => {
-            // No-op for now as we use the modal
+            // Keep selection data but hide trigger after a delay to allow clicks
+            setTimeout(() => {
+                if (!showLinkModal) {
+                    setShowLinkTrigger(false);
+                }
+            }, 200);
         },
     });
 
@@ -81,12 +90,17 @@ export default function RichTextEditor({ content, initialLinks = [], onChange, p
 
         const { from, to, empty } = editor.state.selection;
         if (!empty && (to - from) > 0) {
-            // Trigger modal ONLY when user lifts finger/mouse
-            setLinkUrl('');
-            setLinkTitle('');
-            setShowLinkModal(true);
+            // Show trigger bar when user finishes selecting
+            setShowLinkTrigger(true);
         }
     }, [editor, showLinkModal]);
+
+    const handleOpenLinkModal = useCallback(() => {
+        setLinkUrl('');
+        setLinkTitle('');
+        setShowLinkTrigger(false);
+        setShowLinkModal(true);
+    }, []);
 
     const closeLinkModal = useCallback(() => {
         setShowLinkModal(false);
@@ -185,6 +199,24 @@ export default function RichTextEditor({ content, initialLinks = [], onChange, p
                                 </button>
                             </div>
                         ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Price/Link Trigger Bar - iOS Optimization: Fixed Top Bar */}
+            {showLinkTrigger && !showLinkModal && (
+                <div className="fixed top-0 left-0 right-0 z-[9998] pointer-events-none p-4 animate-slide-down">
+                    <div className="max-w-2xl mx-auto w-full pointer-events-auto">
+                        <button
+                            type="button"
+                            onClick={handleOpenLinkModal}
+                            className="w-full bg-black border border-white/40 shadow-2xl p-3 flex items-center justify-center gap-2 group hover:bg-white transition-all duration-300"
+                        >
+                            <LinkIcon className="w-4 h-4 text-white group-hover:text-black transition-colors" />
+                            <span className="text-white group-hover:text-black text-xs font-bold uppercase tracking-[0.2em] transition-colors">
+                                Add Product Link
+                            </span>
+                        </button>
                     </div>
                 </div>
             )}
