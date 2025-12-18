@@ -10,6 +10,7 @@ import { LoadingSpinner } from '../components/Loading';
 import BlogAnalysis from '../components/BlogAnalysis';
 import ShareButtons from '../components/ShareButtons';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { BLOG_CONTENT_CLASS } from '../utils/blogStyles';
 
 interface AffiliateLink {
   book_title?: string;
@@ -1215,10 +1216,11 @@ export default function BlogPost() {
         return (
           <div
             dangerouslySetInnerHTML={{ __html: safeHtml }}
-            className="prose prose-invert max-w-none [&_a]:text-white [&_a]:underline [&_a]:hover:text-white/80"
+            className={BLOG_CONTENT_CLASS}
           />
         );
       }
+
 
       // Legacy plain text content - use existing formatting logic
       // Split by double newlines to create paragraphs
@@ -1262,6 +1264,7 @@ export default function BlogPost() {
 
       paragraphs = expandedParagraphs;
       const elements: JSX.Element[] = [];
+
 
       // Track book link counts (max 2 per book: once in intro, once in section)
       // Initialize with books from post's amazon_affiliate_links
@@ -1749,7 +1752,7 @@ export default function BlogPost() {
             )}
           </header>
 
-          <div className="prose prose-invert max-w-none text-left">
+          <div className={BLOG_CONTENT_CLASS}>
             {formatContent(post.content)}
           </div>
 

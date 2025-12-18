@@ -9,6 +9,8 @@ import Link from '@tiptap/extension-link';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { Link as LinkIcon, X } from 'lucide-react';
 
+import { BLOG_CONTENT_CLASS } from '../utils/blogStyles';
+
 interface ProductLinkData {
     url: string;
     title: string;
@@ -28,15 +30,13 @@ export default function RichTextEditor({ content, initialLinks = [], onChange, p
     const [linkTitle, setLinkTitle] = useState('');
     const [selectedText, setSelectedText] = useState('');
     const [productLinks, setProductLinks] = useState<ProductLinkData[]>(initialLinks);
+    const [storedSelection, setStoredSelection] = useState<{ from: number, to: number } | null>(null);
 
     // Sync product links when initialLinks changes (e.g., when opening a new submission)
     useEffect(() => {
         setProductLinks(initialLinks);
     }, [initialLinks]);
 
-    // Floating tooltip state
-    const [showTooltip, setShowTooltip] = useState(false);
-    const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
     const editorContainerRef = useRef<HTMLDivElement>(null);
 
     const editor = useEditor({
@@ -54,9 +54,10 @@ export default function RichTextEditor({ content, initialLinks = [], onChange, p
         content: content,
         editorProps: {
             attributes: {
-                class: 'prose prose-invert max-w-none min-h-[300px] focus:outline-none p-4 text-white/90 leading-relaxed [&>p]:mb-4 [&>p:last-child]:mb-0 [&>h1]:text-2xl [&>h1]:font-bold [&>h1]:text-white [&>h1]:mb-4 [&>h2]:text-xl [&>h2]:font-bold [&>h2]:text-white [&>h2]:mb-3 [&>h3]:text-lg [&>h3]:font-semibold [&>h3]:text-white [&>h3]:mb-2',
+                class: BLOG_CONTENT_CLASS,
             },
         },
+
         onUpdate: ({ editor }) => {
             const html = editor.getHTML();
             onChange(html, productLinks);
@@ -65,54 +66,39 @@ export default function RichTextEditor({ content, initialLinks = [], onChange, p
             const { from, to, empty } = editor.state.selection;
 
             if (!empty && (to - from) > 0) {
-                // Get selection coordinates
-                const view = editor.view;
-                const start = view.coordsAtPos(from);
-                const end = view.coordsAtPos(to);
-
-                // Calculate tooltip position (centered above selection)
-                if (editorContainerRef.current) {
-                    const containerRect = editorContainerRef.current.getBoundingClientRect();
-                    const left = ((start.left + end.right) / 2) - containerRect.left;
-                    const top = start.top - containerRect.top - 45; // 45px above selection
-
-                    setTooltipPosition({ top: Math.max(0, top), left: Math.max(40, left) });
-                    setShowTooltip(true);
-                }
-            } else {
-                setShowTooltip(false);
+                // Trigger modal immediately on selection
+                const text = editor.state.doc.textBetween(from, to);
+                setSelectedText(text);
+                setStoredSelection({ from, to });
+                setLinkUrl('');
+                setLinkTitle('');
+                setShowLinkModal(true);
             }
         },
         onBlur: () => {
-            // Delay hiding tooltip to allow clicking on it
-            setTimeout(() => {
-                if (!showLinkModal) {
-                    setShowTooltip(false);
-                }
-            }, 200);
+            // No-op for now as we use the modal
         },
     });
 
-    const openLinkModal = useCallback(() => {
-        if (!editor) return;
-
-        const { from, to, empty } = editor.state.selection;
-        if (empty) return;
-
-        const text = editor.state.doc.textBetween(from, to);
-        setSelectedText(text);
+    const closeLinkModal = useCallback(() => {
+        setShowLinkModal(false);
+        setStoredSelection(null);
+        setSelectedText('');
         setLinkUrl('');
         setLinkTitle('');
-        setShowTooltip(false);
-        setShowLinkModal(true);
+        // Return focus to editor if needed
+        if (editor) {
+            editor.chain().focus().run();
+        }
     }, [editor]);
 
     const applyLink = useCallback(() => {
-        if (!editor || !linkUrl) return;
+        if (!editor || !linkUrl || !storedSelection) return;
 
         editor
             .chain()
             .focus()
+            .setTextSelection(storedSelection)
             .extendMarkRange('link')
             .setLink({
                 href: linkUrl,
@@ -132,11 +118,8 @@ export default function RichTextEditor({ content, initialLinks = [], onChange, p
         // Trigger onChange with updated content and links
         onChange(editor.getHTML(), updatedLinks);
 
-        setShowLinkModal(false);
-        setLinkUrl('');
-        setLinkTitle('');
-        setSelectedText('');
-    }, [editor, linkUrl, linkTitle, selectedText, productLinks, onChange]);
+        closeLinkModal();
+    }, [editor, linkUrl, linkTitle, selectedText, productLinks, onChange, storedSelection, closeLinkModal]);
 
     const removeLink = useCallback((index: number) => {
         const updatedLinks = productLinks.filter((_, i) => i !== index);
@@ -156,28 +139,6 @@ export default function RichTextEditor({ content, initialLinks = [], onChange, p
             {/* Editor */}
             <div className="bg-black/30 border border-white/20 rounded-none min-h-[300px] relative">
                 <EditorContent editor={editor} />
-
-                {/* Floating Tooltip - appears on text selection */}
-                {showTooltip && (
-                    <div
-                        className="absolute z-50 bg-black border border-white/40 rounded shadow-lg px-2 py-1 flex items-center gap-1 animate-fade-in"
-                        style={{
-                            top: `${tooltipPosition.top}px`,
-                            left: `${tooltipPosition.left}px`,
-                            transform: 'translateX(-50%)'
-                        }}
-                        onMouseDown={(e) => e.preventDefault()} // Prevent blur
-                    >
-                        <button
-                            type="button"
-                            onClick={openLinkModal}
-                            className="flex items-center gap-1.5 text-white hover:text-white/80 text-sm px-2 py-1 hover:bg-white/10 transition rounded"
-                        >
-                            <LinkIcon className="w-4 h-4" />
-                            <span className="text-xs font-medium">Add Link</span>
-                        </button>
-                    </div>
-                )}
             </div>
 
             <p className="text-white/40 text-xs mt-2">
@@ -217,57 +178,82 @@ export default function RichTextEditor({ content, initialLinks = [], onChange, p
                 </div>
             )}
 
-            {/* Link Modal */}
+            {/* Link Modal - iOS Optimized: Fixed and Top-Anchored */}
             {showLinkModal && (
-                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-                    <div className="bg-black border border-white/30 p-6 w-full max-w-md mx-4">
-                        <h3 className="text-white text-lg font-bold mb-4">Add Product Link</h3>
+                <div className="fixed inset-0 z-[9999] pointer-events-none">
+                    {/* Backdrop */}
+                    <div
+                        className="absolute inset-0 bg-black/60 pointer-events-auto backdrop-blur-sm animate-fade-in"
+                        onClick={closeLinkModal}
+                    />
 
-                        <div className="mb-4">
-                            <label className="block text-white/70 text-sm mb-1">Selected Text</label>
-                            <div className="bg-white/5 border border-white/10 p-2 text-white/90">
-                                "{selectedText}"
+                    {/* Modal Content - Top Anchored */}
+                    <div className="absolute top-0 left-0 right-0 p-4 pointer-events-auto animate-slide-down">
+                        <div className="bg-black border border-white/30 shadow-2xl max-w-2xl mx-auto w-full pt-2 pb-6 px-6">
+                            {/* Drag Indicator / Handle for visual cues */}
+                            <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-4" />
+
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-white text-lg font-bold">Add Product Link</h3>
+                                <button
+                                    onClick={closeLinkModal}
+                                    className="text-white/40 hover:text-white transition"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
                             </div>
-                        </div>
 
-                        <div className="mb-4">
-                            <label className="block text-white/70 text-sm mb-1">Product Title *</label>
-                            <input
-                                type="text"
-                                value={linkTitle}
-                                onChange={(e) => setLinkTitle(e.target.value)}
-                                placeholder="e.g., The E-Myth Revisited"
-                                className="w-full bg-black border border-white/30 p-2 text-white placeholder:text-white/30 focus:outline-none focus:border-white/60"
-                            />
-                        </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-white/70 text-xs mb-1 uppercase tracking-wider font-semibold">Selection Preview</label>
+                                    <div className="bg-white/5 border border-white/10 p-2 text-white/90 text-sm h-[88px] overflow-y-auto italic italic-text-selection">
+                                        "{selectedText}"
+                                    </div>
+                                </div>
 
-                        <div className="mb-6">
-                            <label className="block text-white/70 text-sm mb-1">Affiliate Link URL *</label>
-                            <input
-                                type="url"
-                                value={linkUrl}
-                                onChange={(e) => setLinkUrl(e.target.value)}
-                                placeholder="https://amzn.to/..."
-                                className="w-full bg-black border border-white/30 p-2 text-white placeholder:text-white/30 focus:outline-none focus:border-white/60"
-                            />
-                        </div>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-white/70 text-xs mb-1 uppercase tracking-wider font-semibold">Product Title *</label>
+                                        <input
+                                            type="text"
+                                            value={linkTitle}
+                                            onChange={(e) => setLinkTitle(e.target.value)}
+                                            placeholder="Brand & Model"
+                                            className="w-full bg-black border border-white/30 p-2 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-white/60"
+                                            autoFocus
+                                        />
+                                    </div>
 
-                        <div className="flex gap-3">
-                            <button
-                                type="button"
-                                onClick={() => setShowLinkModal(false)}
-                                className="flex-1 px-4 py-2 border border-white/30 text-white/70 hover:text-white hover:border-white/60 transition"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                onClick={applyLink}
-                                disabled={!linkUrl || !linkTitle}
-                                className="flex-1 px-4 py-2 bg-white text-black font-semibold hover:bg-white/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                Add Link
-                            </button>
+                                    <div>
+                                        <label className="block text-white/70 text-xs mb-1 uppercase tracking-wider font-semibold">Affiliate Link *</label>
+                                        <input
+                                            type="url"
+                                            value={linkUrl}
+                                            onChange={(e) => setLinkUrl(e.target.value)}
+                                            placeholder="https://amzn.to/..."
+                                            className="w-full bg-black border border-white/30 p-2 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-white/60"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 mt-6">
+                                <button
+                                    type="button"
+                                    onClick={closeLinkModal}
+                                    className="flex-1 px-4 py-2 border border-white/30 text-white/70 hover:text-white hover:border-white/60 transition text-sm font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={applyLink}
+                                    disabled={!linkUrl || !linkTitle}
+                                    className="flex-1 px-4 py-2 bg-white text-black font-bold hover:bg-white/90 transition disabled:opacity-30 disabled:cursor-not-allowed text-sm uppercase tracking-wider"
+                                >
+                                    Add Link
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
