@@ -88,6 +88,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       // Externalize @scot33/tools-registry - it's optional and loaded dynamically
       external: ['@scot33/tools-registry'],
