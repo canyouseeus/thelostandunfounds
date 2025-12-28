@@ -1,0 +1,165 @@
+/**
+ * AI Writing Prompt Page
+ * Displays the AI writing prompt for contributors in a styled box with copy functionality
+ */
+
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { useToast } from '../components/Toast';
+import { Copy, Check } from 'lucide-react';
+
+const COLUMN_PROMPT_PATHS: Record<string, string> = {
+  bookclub: '/prompts/AI_WRITING_PROMPT_FOR_CONTRIBUTORS.md',
+  gearheads: '/prompts/GEARHEADS_WRITING_PROMPT.md',
+  borderlands: '/prompts/BORDERLANDS_WRITING_PROMPT.md',
+  science: '/prompts/SCIENCE_WRITING_PROMPT.md',
+  newtheory: '/prompts/NEW_THEORY_WRITING_PROMPT.md',
+};
+
+const COLUMN_NAMES: Record<string, string> = {
+  bookclub: 'BOOK CLUB',
+  gearheads: 'GEARHEADS',
+  borderlands: 'EDGE OF THE BORDERLANDS',
+  science: 'MAD SCIENTISTS',
+  newtheory: 'NEW THEORY',
+};
+
+export default function AIWritingPrompt() {
+  const { column = 'bookclub' } = useParams<{ column?: string }>();
+  const { success } = useToast();
+  const [promptContent, setPromptContent] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const loadPrompt = async () => {
+      try {
+        const promptPath = COLUMN_PROMPT_PATHS[column || 'bookclub'] || COLUMN_PROMPT_PATHS.bookclub;
+        const response = await fetch(promptPath);
+        if (response.ok) {
+          const text = await response.text();
+          setPromptContent(text);
+        } else {
+          console.error('Failed to load prompt file');
+          setPromptContent('Failed to load prompt. Please refresh the page.');
+        }
+      } catch (error) {
+        console.error('Error loading prompt:', error);
+        setPromptContent('Error loading prompt. Please refresh the page.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadPrompt();
+  }, [column]);
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(promptContent);
+      setCopied(true);
+      success('AI Writing Prompt copied to clipboard!');
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-white mb-2">
+          AI Writing Prompt for {COLUMN_NAMES[column || 'bookclub'] || 'Contributors'}
+        </h1>
+        <p className="text-white/70">
+          Copy this prompt to use with your AI assistant when writing articles for {COLUMN_NAMES[column || 'bookclub'] || 'THE LOST ARCHIVES'}
+        </p>
+      </div>
+
+      {/* Prompt Box */}
+      {loading ? (
+        <div className="bg-black/50 border border-white rounded-none p-6">
+          <p className="text-white/60">Loading prompt...</p>
+        </div>
+      ) : (
+        <div className="bg-black/50 border border-white rounded-none p-6">
+          <div className="mb-4">
+            <h2 className="text-xl font-bold text-white mb-1">AI Writing Prompt</h2>
+            <p className="text-white/60 text-sm mb-2">
+              Use this prompt exactly as provided to ensure your article matches our format and style requirements.
+            </p>
+          </div>
+          <pre className="bg-black/50 border border-white rounded-none p-4 overflow-x-auto text-white/90 text-sm font-mono whitespace-pre-wrap break-words text-left max-h-[600px] overflow-y-auto relative">
+            <button
+              onClick={copyToClipboard}
+              className="absolute top-2 right-2 p-1.5 bg-white/10 hover:bg-white/20 rounded text-white transition flex items-center justify-center flex-shrink-0 z-10"
+              title={copied ? "Copied!" : "Copy Prompt"}
+            >
+              {copied ? (
+                <Check className="w-3 h-3" />
+              ) : (
+                <Copy className="w-3 h-3" />
+              )}
+            </button>
+            <code className="text-left">{promptContent}</code>
+          </pre>
+          <div className="flex justify-center mt-4">
+            <button
+              onClick={copyToClipboard}
+              className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-none text-white text-sm transition flex items-center gap-2"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-4 h-4" />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4" />
+                  Copy Prompt
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Tips Section */}
+      <div className="bg-black/30 border border-white rounded-none p-6 mt-6">
+        <h3 className="text-lg font-bold text-white mb-4">Important Tips for Contributors</h3>
+        
+        <div className="space-y-4">
+          <div>
+            <h4 className="text-white font-semibold mb-2">How Book Linking Works:</h4>
+            <ul className="text-white/70 text-sm space-y-1 list-disc list-inside">
+              <li>Book titles in the text will automatically become clickable links - just mention them naturally where relevant</li>
+              <li>Each book should be linked a maximum of 2 times - once in the introduction and once in its dedicated section</li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-white font-semibold mb-2">Formatting Tips:</h4>
+            <ul className="text-white/70 text-sm space-y-1 list-disc list-inside">
+              <li>Use double line breaks (⸻) to separate major sections</li>
+              <li>Keep paragraphs focused - one main idea per paragraph</li>
+              <li>Write for humans, not algorithms - prioritize genuine insights over keyword stuffing</li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-white font-semibold mb-2">Ready to Submit?</h4>
+            <p className="text-white/70 text-sm mb-2">
+              Once you have your draft, go to <a href="/submit-article" className="text-blue-400 hover:text-blue-300 underline">/submit-article</a> and paste your content. Make sure to:
+            </p>
+            <ul className="text-white/70 text-sm space-y-1 list-disc list-inside">
+              <li>Fill in all placeholders with actual information</li>
+              <li>Add your Amazon affiliate links in the form</li>
+              <li>Review the formatting matches the example post</li>
+              <li>Add your personal touches and experiences</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

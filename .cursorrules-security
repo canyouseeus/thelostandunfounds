@@ -1,0 +1,122 @@
+# Security Agent Rules for Cursor AI
+# This file enables security monitoring agents for www.thelostandunfounds.com
+
+## Main Security Agent Activation
+
+When asked to perform security tasks, activate the appropriate security agent:
+
+### Dependency Security Agent
+**Trigger**: "check dependencies", "npm audit", "vulnerability scan", "security audit dependencies"
+**Action**: Run `npm audit` and analyze results, check for CVEs, recommend updates
+
+### Authentication Security Agent  
+**Trigger**: "check auth", "authentication security", "OAuth security", "session security"
+**Action**: Review Supabase Auth config, Google OAuth setup, session management, RLS policies
+
+### API Security Agent
+**Trigger**: "API security", "database security", "RLS policies", "SQL injection"
+**Action**: Audit Supabase RLS policies, test API endpoints, check for injection vulnerabilities
+
+### Infrastructure Security Agent
+**Trigger**: "infrastructure security", "Vercel security", "environment variables", "deployment security"
+**Action**: Check Vercel config, verify env vars, validate SSL/TLS, review Cloudflare Turnstile
+
+### Compliance & Privacy Agent
+**Trigger**: "GDPR", "compliance", "privacy", "data protection"
+**Action**: Check GDPR compliance, review privacy policy, verify consent mechanisms
+
+### Frontend Security Agent
+**Trigger**: "XSS", "frontend security", "client-side security", "CSP"
+**Action**: Scan for XSS vulnerabilities, check for exposed secrets, verify CSP headers
+
+## Security Monitoring Schedule
+
+### Daily Tasks (Run automatically)
+- **00:00 UTC**: Dependency Security Agent - npm audit
+- **06:00 UTC**: Authentication Security Agent - Auth flow tests  
+- **12:00 UTC**: API Security Agent - API endpoint checks
+- **18:00 UTC**: Infrastructure Security Agent - Deployment checks
+
+### Weekly Tasks (Every Monday)
+- **09:00 UTC**: Full security audit by all agents
+- **10:00 UTC**: Generate comprehensive security report
+
+## Security Response Protocol
+
+### CRITICAL (CVSS 9.0+)
+- Alert immediately
+- Begin remediation within 1 hour
+- Example: Exposed service role key, active data breach
+
+### HIGH (CVSS 7.0-8.9)
+- Alert within 24 hours
+- Plan remediation within 7 days
+- Example: SQL injection, RLS bypass
+
+### MEDIUM (CVSS 4.0-6.9)
+- Report in weekly summary
+- Include in next sprint
+- Example: Missing security headers, outdated dependency
+
+### LOW (CVSS 0.1-3.9)
+- Include in monthly report
+- Add to backlog
+- Example: Best practice improvements
+
+## Key Security Areas
+
+1. **API Keys & Secrets**
+   - ✅ VITE_* variables are safe (public)
+   - ❌ Service role keys MUST be server-only
+   - ❌ Secret keys MUST be server-only
+
+2. **Dependencies**
+   - Monitor: react, @supabase/supabase-js, axios, jsonwebtoken
+   - Run `npm audit` regularly
+   - Update HIGH/CRITICAL vulnerabilities immediately
+
+3. **Authentication**
+   - Supabase Auth: nonaqhllakrckbtbawrb
+   - Google OAuth redirect: https://thelostandunfounds.com/auth/callback
+   - Verify RLS policies on all tables
+
+4. **Infrastructure**
+   - Vercel project: thelostandunfounds
+   - Domain: thelostandunfounds.com
+   - Cloudflare Turnstile configured
+
+## Security Commands
+
+When user requests security check, use this format:
+
+```
+I'll run a [AGENT_NAME] security audit for www.thelostandunfounds.com.
+
+[Run appropriate checks]
+[Generate report]
+[Provide remediation steps]
+```
+
+## Current Security Status
+
+- **Dependencies**: 2 moderate vulnerabilities (esbuild/vite)
+- **Secrets**: ✅ No exposed secrets found
+- **Environment**: ✅ .env in .gitignore
+- **Next Audit**: Daily at scheduled times
+
+## Reporting Format
+
+Always provide:
+1. **Summary**: Overall security status
+2. **Findings**: List of vulnerabilities/issues
+3. **Severity**: CRITICAL/HIGH/MEDIUM/LOW
+4. **Remediation**: Specific steps to fix
+5. **Code References**: File paths and line numbers
+
+---
+
+**Security System**: Active
+**Last Updated**: 2025-11-10
+**Next Review**: 2025-12-10
+
+

@@ -1,0 +1,967 @@
+/**
+ * User Profile Page
+ * View and edit user account information
+ */
+
+import { useState, useEffect } from 'react';
+import { useNavigate, Link, useParams } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../components/Toast';
+import { User, Mail, Calendar, Shield, Key, BookOpen, FileText, ExternalLink, Copy, Check, HelpCircle, ChevronDown, ChevronUp, TrendingUp } from 'lucide-react';
+import { LoadingSpinner, SkeletonCard } from '../components/Loading';
+import { formatDate } from '../utils/helpers';
+import { SubscriptionTier } from '../types/index';
+import { isAdmin } from '../utils/admin';
+import { supabase } from '../lib/supabase';
+
+interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  published: boolean;
+  published_at: string | null;
+  subdomain: string | null;
+}
+
+export default function Profile() {
+  const { username } = useParams<{ username: string }>();
+  const { user, tier, loading: authLoading } = useAuth();
+  const { success, error: showError } = useToast();
+  const navigate = useNavigate();
+  const [isEditing, setIsEditing] = useState(false);
+  const [displayName, setDisplayName] = useState('');
+  const [userIsAdmin, setUserIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [userSubdomain, setUserSubdomain] = useState<string | null>(null);
+  const [blogTitle, setBlogTitle] = useState<string>('');
+  const [blogTitleDisplay, setBlogTitleDisplay] = useState<string>('');
+  const [isEditingBlogTitle, setIsEditingBlogTitle] = useState(false);
+  const [savingBlogTitle, setSavingBlogTitle] = useState(false);
+  
+  // Function to normalize blog title (remove symbols, convert + to AND)
+  const normalizeBlogTitle = (styledTitle: string): string => {
+    if (!styledTitle) return '';
+    return styledTitle
+      .replace(/\+/g, ' AND ')
+      .replace(/[^a-zA-Z0-9\s&]/g, '') // Remove all symbols except letters, numbers, spaces, and &
+      .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+      .trim();
+  };
+  const [userPosts, setUserPosts] = useState<BlogPost[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [affiliateData, setAffiliateData] = useState<any>(null);
+  const [loadingAffiliate, setLoadingAffiliate] = useState(false);
+  const [affiliateExpanded, setAffiliateExpanded] = useState(false);
+
+  useEffect(() => {
+    if (user?.email) {
+      // Use author_name from user_metadata if available, otherwise extract from email
+      const authorName = user.user_metadata?.author_name;
+      const emailName = user.email.split('@')[0];
+      setDisplayName(authorName || emailName);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (user) {
+        const admin = await isAdmin();
+        setUserIsAdmin(admin);
+        // Don't redirect - allow admins to view their profile
+      }
+    };
+    checkAdminStatus();
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      loadUserSubdomain();
+      loadUserPosts();
+      checkAffiliateStatus();
+    }
+  }, [user]);
+
+  const checkAffiliateStatus = async () => {
+    if (!user?.id) return;
+    
+    setLoadingAffiliate(true);
+    try {
+      // Check if user has an affiliate account
+      const { data: affiliate, error } = await supabase
+        .from('affiliates')
+        .select('id, code, status, total_earnings, total_clicks, total_conversions, commission_rate')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+        console.error('Error checking affiliate status:', error);
+      } else if (affiliate) {
+        setAffiliateData(affiliate);
+      } else {
+        setAffiliateData(null);
+      }
+    } catch (err) {
+      console.error('Error checking affiliate status:', err);
+    } finally {
+      setLoadingAffiliate(false);
+    }
+  };
+
+  // Redirect to correct URL after subdomain is loaded
+  useEffect(() => {
+    if (user && userSubdomain) {
+      if (username && username !== userSubdomain) {
+        // If URL has wrong username, redirect to correct one
+        navigate(`/${userSubdomain}/bookclubprofile`, { replace: true });
+      } else if (!username) {
+        // If no username in URL but we have subdomain, redirect to include it
+        navigate(`/${userSubdomain}/bookclubprofile`, { replace: true });
+      }
+    }
+  }, [user, username, userSubdomain, navigate]);
+
+  const loadUserSubdomain = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_subdomains')
+        .select('subdomain, blog_title, blog_title_display, author_name')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (data) {
+        if (data.subdomain) {
+          setUserSubdomain(data.subdomain);
+        }
+        // Use display version if available, otherwise use normalized version
+        if (data.blog_title_display) {
+          setBlogTitleDisplay(data.blog_title_display);
+          setBlogTitle(data.blog_title || normalizeBlogTitle(data.blog_title_display));
+        } else if (data.blog_title) {
+          setBlogTitle(data.blog_title);
+          setBlogTitleDisplay(data.blog_title);
+        }
+        // Update author_name in user_subdomains if it's not set but we have it in metadata
+        if (!data.author_name && user.user_metadata?.author_name) {
+          await supabase
+            .from('user_subdomains')
+            .update({ author_name: user.user_metadata.author_name })
+            .eq('user_id', user.id);
+        }
+      }
+    } catch (err) {
+      console.warn('Error loading subdomain:', err);
+    }
+  };
+
+  const handleSaveBlogTitle = async () => {
+    if (!user || !userSubdomain) return;
+
+    setSavingBlogTitle(true);
+    try {
+      // Normalize the styled title for database storage
+      const normalizedTitle = normalizeBlogTitle(blogTitleDisplay);
+      const displayTitle = blogTitleDisplay.trim() || null;
+      
+      // Try to update both fields
+      const updateData: { blog_title?: string | null; blog_title_display?: string | null } = {
+        blog_title: normalizedTitle || null
+      };
+      
+      // Only include blog_title_display if the column might exist
+      // If it doesn't exist, the migration needs to be run first
+      try {
+        updateData.blog_title_display = displayTitle;
+      } catch (e) {
+        // Column might not exist yet - that's okay, migration will add it
+      }
+      
+      const { error } = await supabase
+        .from('user_subdomains')
+        .update(updateData)
+        .eq('user_id', user.id);
+
+      if (error) {
+        // If error is about missing column, provide helpful message
+        if (error.message?.includes('blog_title_display') || error.message?.includes('column')) {
+          throw new Error('The blog_title_display column does not exist yet. Please run the SQL migration from /sql first, then try saving again.');
+        }
+        throw error;
+      }
+
+      // Update local state
+      setBlogTitle(normalizedTitle);
+      // Reload to get the saved display version
+      await loadUserSubdomain();
+      
+      success('Blog title updated successfully');
+      setIsEditingBlogTitle(false);
+    } catch (err: any) {
+      console.error('Error saving blog title:', err);
+      showError(err.message || 'Failed to update blog title');
+    } finally {
+      setSavingBlogTitle(false);
+    }
+  };
+
+  const loadUserPosts = async () => {
+    if (!user) return;
+    
+    setLoadingPosts(true);
+    try {
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('id, title, slug, published, published_at, subdomain')
+        .or(`author_id.eq.${user.id},user_id.eq.${user.id}`)
+        .order('published_at', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) {
+        console.error('Error loading posts:', error);
+      } else {
+        setUserPosts(data || []);
+      }
+    } catch (err) {
+      console.error('Error loading user posts:', err);
+    } finally {
+      setLoadingPosts(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      // TODO: Update user profile in database
+      await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate API call
+      success('Profile updated successfully');
+      setIsEditing(false);
+    } catch (err) {
+      showError('Failed to update profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (newPassword !== confirmPassword) {
+      showError('New passwords do not match');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      showError('Password must be at least 6 characters');
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      const { supabase } = await import('../lib/supabase');
+      
+      // Update password using Supabase
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) {
+        showError(error.message || 'Failed to update password');
+        return;
+      }
+
+      success('Password updated successfully');
+      setShowPasswordChange(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      showError('Failed to update password');
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  if (authLoading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <SkeletonCard />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="text-center py-12">
+          <p className="text-white/70">Please sign in to view your profile.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const tierColors: Record<SubscriptionTier, string> = {
+    free: 'text-white/60 bg-white/5 border-white',
+    premium: 'text-yellow-400 bg-yellow-400/10 border-white',
+    pro: 'text-purple-400 bg-purple-400/10 border-white',
+  };
+
+  const tierLabels: Record<SubscriptionTier, string> = {
+    free: 'Free',
+    premium: 'Premium',
+    pro: 'Pro',
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-white mb-2">PROFILE</h1>
+        <p className="text-white/70">Manage your account information and view your articles</p>
+      </div>
+
+      <div className="space-y-6">
+        {/* Book Club Info Section */}
+        {userSubdomain && (
+          <div className="bg-black/50 border border-white rounded-none p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <BookOpen className="w-5 h-5" />
+                Your Book Club Blog
+              </h2>
+              <div className="flex gap-2">
+                <Link
+                  to="/blog/getting-started"
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white rounded-none text-white text-sm font-medium transition flex items-center gap-2"
+                >
+                  <HelpCircle className="w-4 h-4" />
+                  Contributor Guide
+                </Link>
+                <Link
+                  to={`/blog/${userSubdomain}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white rounded-none text-white text-sm font-medium transition flex items-center gap-2"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  View Blog
+                </Link>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-2">Your Blog URL</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={`https://www.thelostandunfounds.com/blog/${userSubdomain}`}
+                    readOnly
+                    className="flex-1 px-4 py-2 bg-black/50 border border-white rounded-none text-white font-mono text-sm focus:outline-none focus:border-white"
+                  />
+                  <button
+                    onClick={async () => {
+                      const blogUrl = `https://www.thelostandunfounds.com/blog/${userSubdomain}`;
+                      try {
+                        await navigator.clipboard.writeText(blogUrl);
+                        setCopied(true);
+                        success('Blog URL copied to clipboard!');
+                        setTimeout(() => setCopied(false), 2000);
+                      } catch (err) {
+                        showError('Failed to copy URL. Please copy manually.');
+                      }
+                    }}
+                    className="px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition flex items-center gap-2"
+                    title="Copy blog URL"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        Copy
+                      </>
+                    )}
+                  </button>
+                </div>
+                <div className="bg-blue-500/10 border border-white rounded-none p-3 mt-3">
+                  <p className="text-blue-400 text-xs font-semibold mb-2 flex items-center gap-1">
+                    <Copy className="w-3 h-3" /> For Amazon Associates Registration
+                  </p>
+                  <ol className="text-white/80 text-xs space-y-1 list-decimal list-inside">
+                    <li>Click "Copy" above to copy your blog URL</li>
+                    <li>Go to your Amazon Associates account</li>
+                    <li>When asked for your website URL, paste: <code className="bg-black/50 px-1 py-0.5 rounded-none font-mono text-xs">https://www.thelostandunfounds.com/blog/{userSubdomain}</code></li>
+                    <li>Complete your Amazon Associates registration</li>
+                  </ol>
+                  <p className="text-white/60 text-xs mt-2">
+                    💡 This is your permanent blog URL. Use it when registering with Amazon Associates.
+                  </p>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-2">Subdomain</label>
+                <div className="px-4 py-2 bg-black/50 border border-white rounded-none">
+                  <p className="text-white font-mono text-sm">{userSubdomain}</p>
+                </div>
+                <p className="text-white/50 text-xs mt-1">Set during registration - cannot be changed</p>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-white/80">Blog Title</label>
+                  {!isEditingBlogTitle ? (
+                    <button
+                      onClick={() => setIsEditingBlogTitle(true)}
+                      className="text-sm text-white/60 hover:text-white transition"
+                    >
+                      Edit
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <button
+                      onClick={() => {
+                        setIsEditingBlogTitle(false);
+                        // Reset to saved value
+                        const resetData = async () => {
+                          const { data } = await supabase
+                            .from('user_subdomains')
+                            .select('blog_title, blog_title_display')
+                            .eq('user_id', user.id)
+                            .maybeSingle();
+                          if (data) {
+                            if (data.blog_title_display) {
+                              setBlogTitleDisplay(data.blog_title_display);
+                              setBlogTitle(data.blog_title || normalizeBlogTitle(data.blog_title_display));
+                            } else if (data.blog_title) {
+                              setBlogTitle(data.blog_title);
+                              setBlogTitleDisplay(data.blog_title);
+                            }
+                          }
+                        };
+                        resetData();
+                      }}
+                        className="text-sm text-white/60 hover:text-white transition"
+                        disabled={savingBlogTitle}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSaveBlogTitle}
+                        className="text-sm text-white hover:text-white/80 transition px-3 py-1 bg-white/10 hover:bg-white/20 rounded"
+                        disabled={savingBlogTitle}
+                      >
+                        {savingBlogTitle ? 'Saving...' : 'Save'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+                {isEditingBlogTitle ? (
+                  <input
+                    type="text"
+                    value={blogTitleDisplay}
+                    onChange={(e) => setBlogTitleDisplay(e.target.value)}
+                    placeholder="Enter your blog title (e.g., THE LOST+UNFOUNDS)"
+                    className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none"
+                    disabled={savingBlogTitle}
+                  />
+                ) : (
+                  <div className="px-4 py-2 bg-black/50 border border-white rounded-none">
+                    <p className="text-white text-sm">
+                      {blogTitleDisplay || blogTitle || <span className="text-white/50 italic">No title set</span>}
+                    </p>
+                  </div>
+                )}
+                <p className="text-white/50 text-xs mt-1">
+                  This title will be displayed as "[BLOG TITLE] BOOK CLUB" on your blog page
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Book Club Settings */}
+        <div className="bg-black/50 border border-white rounded-none p-6">
+          <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+            <BookOpen className="w-5 h-5" />
+            Book Club Settings
+          </h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-white/80 mb-2">
+                Author Name
+              </label>
+              <div className="px-4 py-2 bg-black/50 border border-white rounded-none">
+                <span className="text-white text-sm">{user.user_metadata?.author_name || user.email?.split('@')[0] || 'Not set'}</span>
+              </div>
+              <p className="text-xs text-white/40 mt-1">Set during registration - cannot be changed</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-white/80 mb-2">
+                Email
+              </label>
+              <div className="px-4 py-2 bg-black/50 border border-white rounded-none">
+                <span className="text-white text-sm">{user.email || 'Not set'}</span>
+              </div>
+              <p className="text-xs text-white/40 mt-1">Email cannot be changed</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-white/80 mb-2">
+                Amazon Storefront ID
+              </label>
+              <div className="px-4 py-2 bg-black/50 border border-white rounded-none">
+                <span className="text-white text-sm font-mono">{user.user_metadata?.amazon_storefront_id || 'Not set'}</span>
+              </div>
+              <p className="text-xs text-white/40 mt-1">Set during registration - cannot be changed</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Affiliates Section */}
+        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <TrendingUp className="w-5 h-5" />
+              Affiliate Program
+            </h2>
+            {affiliateData && (
+              <button
+                onClick={() => setAffiliateExpanded(!affiliateExpanded)}
+                className="text-white/60 hover:text-white transition-colors flex items-center gap-1"
+              >
+                {affiliateExpanded ? (
+                  <>
+                    <ChevronUp className="w-4 h-4" />
+                    <span className="text-sm">Collapse</span>
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-4 h-4" />
+                    <span className="text-sm">Expand</span>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+
+          {loadingAffiliate ? (
+            <div className="py-4">
+              <LoadingSpinner size="sm" />
+            </div>
+          ) : affiliateData ? (
+            <>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-white/60">Affiliate Code:</span>
+                  <span className="text-white font-mono font-semibold">{affiliateData.code}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-white/60">Status:</span>
+                  <span className={`px-2 py-1 rounded text-xs ${
+                    affiliateData.status === 'active'
+                      ? 'bg-green-400/20 text-green-400'
+                      : 'bg-yellow-400/20 text-yellow-400'
+                  }`}>
+                    {affiliateData.status}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-white/60">Total Earnings:</span>
+                  <span className="text-white font-semibold">${parseFloat(affiliateData.total_earnings || 0).toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-white/60">Commission Rate:</span>
+                  <span className="text-white">{affiliateData.commission_rate}%</span>
+                </div>
+              </div>
+
+              {affiliateExpanded && (
+                <div className="mt-6 pt-6 border-t border-white/10">
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="bg-black/30 border border-white/10 rounded-none p-3">
+                      <div className="text-xs text-white/60 mb-1">Total Clicks</div>
+                      <div className="text-lg font-bold text-white">{affiliateData.total_clicks || 0}</div>
+                    </div>
+                    <div className="bg-black/30 border border-white/10 rounded-none p-3">
+                      <div className="text-xs text-white/60 mb-1">Total Conversions</div>
+                      <div className="text-lg font-bold text-white">{affiliateData.total_conversions || 0}</div>
+                    </div>
+                  </div>
+                  <Link
+                    to="/affiliate/dashboard"
+                    className="w-full px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition flex items-center justify-center gap-2"
+                  >
+                    <TrendingUp className="w-4 h-4" />
+                    Open Full Dashboard
+                  </Link>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-white/70">
+                Join our affiliate program and earn commissions by promoting our products. 
+                Share your unique referral link and earn 42% commission on every sale.
+              </p>
+              <div className="bg-black/30 border border-white/10 rounded-none p-4 space-y-2">
+                <div className="flex items-center gap-2 text-white/80">
+                  <Check className="w-4 h-4 text-green-400" />
+                  <span>42% commission on all sales</span>
+                </div>
+                <div className="flex items-center gap-2 text-white/80">
+                  <Check className="w-4 h-4 text-green-400" />
+                  <span>Lifetime customer tracking</span>
+                </div>
+                <div className="flex items-center gap-2 text-white/80">
+                  <Check className="w-4 h-4 text-green-400" />
+                  <span>Multi-level marketing bonuses</span>
+                </div>
+                <div className="flex items-center gap-2 text-white/80">
+                  <Check className="w-4 h-4 text-green-400" />
+                  <span>Reward points system</span>
+                </div>
+              </div>
+              <Link
+                to="/become-affiliate"
+                className="w-full px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition flex items-center justify-center gap-2"
+              >
+                <TrendingUp className="w-4 h-4" />
+                Become an Affiliate
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* My Articles Section */}
+        {userPosts.length > 0 && (
+          <div className="bg-black/50 border border-white rounded-none p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                My Articles
+              </h2>
+              <Link
+                to="/submit-article"
+                className="px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition flex items-center gap-2"
+              >
+                <FileText className="w-4 h-4" />
+                Submit New Article
+              </Link>
+            </div>
+            <div className="space-y-3">
+              {userPosts.map((post) => (
+                <div
+                  key={post.id}
+                  className="bg-black/30 border border-white rounded-none p-4 hover:border-white transition"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-white font-bold mb-2">{post.title}</h3>
+                      <div className="flex items-center gap-3 text-sm text-white/60">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {post.published_at ? formatDate(post.published_at) : 'Draft'}
+                        </span>
+                        <span className={`px-2 py-1 rounded-none text-xs ${
+                          post.published
+                            ? 'bg-green-400/20 text-green-400 border border-white'
+                            : 'bg-yellow-400/20 text-yellow-400 border border-white'
+                        }`}>
+                          {post.published ? 'Published' : 'Draft'}
+                        </span>
+                        {post.subdomain && (
+                          <span className="px-2 py-1 rounded-none text-xs bg-blue-400/20 text-blue-400 border border-white">
+                            Book Club
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {post.published && (
+                      <Link
+                        to={post.subdomain ? `/blog/${post.subdomain}/${post.slug}` : `/thelostarchives/${post.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 hover:bg-white/10 rounded-none transition"
+                        title="View post"
+                      >
+                        <ExternalLink className="w-4 h-4 text-white/60" />
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Submit Article CTA if no posts */}
+        {userPosts.length === 0 && (
+          <div className="bg-black/50 border border-white rounded-none p-6 text-center">
+            <BookOpen className="w-12 h-12 text-white/40 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-white mb-2">Start Your Book Club Journey</h3>
+            <p className="text-white/60 mb-4">Submit your first article with four book recommendations.</p>
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              <Link
+                to="/bookclub/prompt"
+                className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white rounded-none text-white text-sm font-medium transition"
+              >
+                View Getting Started Guide →
+              </Link>
+              <Link
+                to="/submit-article"
+                className="inline-block px-6 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
+              >
+                Submit the First Article
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Getting Started Guide Link - Always visible */}
+        <div className="bg-black/50 border border-white rounded-none p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-white mb-2">Contributor Getting Started Guide</h3>
+              <p className="text-white/60 text-sm mb-4">
+                Learn how to write high-quality articles, use AI responsibly with Human-In-The-Loop principles, and adhere to Google's E‑E‑A‑T standards.
+              </p>
+            </div>
+            <Link
+              to="/bookclub/prompt"
+              className="px-6 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition flex items-center gap-2 whitespace-nowrap"
+            >
+              <FileText className="w-4 h-4" />
+              View Guide
+            </Link>
+          </div>
+        </div>
+        {/* Account Information */}
+        <div className="bg-black/50 border border-white rounded-none p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <User className="w-5 h-5" />
+                Account Information
+              </h2>
+              {userIsAdmin && (
+                <div className="px-4 py-2 bg-black/50 border border-white rounded-none text-white">
+                  ADMIN
+                </div>
+              )}
+            </div>
+            {!isEditing && (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition text-sm"
+              >
+                Edit
+              </button>
+            )}
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-white/80 mb-2">
+                Email
+              </label>
+              <div className="flex items-center gap-2 px-4 py-2 bg-black/50 border border-white rounded-none">
+                <Mail className="w-4 h-4 text-white/60" />
+                <span className="text-white">{user.email}</span>
+              </div>
+              <p className="text-xs text-white/40 mt-1">Email cannot be changed</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-white/80 mb-2">
+                Author Name (Username)
+              </label>
+              {isEditing ? (
+                <div>
+                  <input
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white"
+                    placeholder="Your author name"
+                    disabled={!!user.user_metadata?.author_name}
+                  />
+                  {user.user_metadata?.author_name && (
+                    <p className="text-xs text-yellow-400 mt-1">Author name cannot be changed after registration</p>
+                  )}
+                </div>
+              ) : (
+                <div className="px-4 py-2 bg-black/50 border border-white rounded-none text-white">
+                  {displayName || 'Not set'}
+                </div>
+              )}
+            </div>
+
+            {isEditing && (
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={handleSave}
+                  disabled={loading}
+                  className="px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {loading && <LoadingSpinner size="sm" />}
+                  Save Changes
+                </button>
+                <button
+                  onClick={() => {
+                    setIsEditing(false);
+                    setDisplayName(user.email?.split('@')[0] || '');
+                  }}
+                  className="px-4 py-2 bg-black/50 border border-white text-white font-semibold rounded-none hover:border-white transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Password Change */}
+        <div className="bg-black/50 border border-white rounded-none p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <Key className="w-5 h-5" />
+              Change Password
+            </h2>
+            {!showPasswordChange && (
+              <button
+                onClick={() => setShowPasswordChange(true)}
+                className="px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition text-sm"
+              >
+                Change Password
+              </button>
+            )}
+          </div>
+
+          {showPasswordChange ? (
+            <form onSubmit={handlePasswordChange} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-2">
+                  Current Password
+                </label>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white"
+                  placeholder="Enter current password"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-2">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white"
+                  placeholder="Enter new password (min. 6 characters)"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-2">
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white"
+                  placeholder="Confirm new password"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="submit"
+                  disabled={passwordLoading}
+                  className="px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {passwordLoading && <LoadingSpinner size="sm" />}
+                  Update Password
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPasswordChange(false);
+                    setCurrentPassword('');
+                    setNewPassword('');
+                    setConfirmPassword('');
+                  }}
+                  className="px-4 py-2 bg-black/50 border border-white text-white font-semibold rounded-none hover:border-white transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : (
+            <p className="text-white/60 text-sm">Click "Change Password" to update your password</p>
+          )}
+        </div>
+
+        {/* Subscription Information */}
+        <div className="bg-black/50 border border-white rounded-none p-6">
+          <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+            <Shield className="w-5 h-5" />
+            Subscription
+          </h2>
+
+          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-none border ${tierColors[tier]}`}>
+            <span className="font-semibold">{tierLabels[tier]} Tier</span>
+          </div>
+
+          {tier === 'free' && (
+            <div className="mt-4">
+              <a
+                href="/tools"
+                className="text-white/80 hover:text-white text-sm underline"
+              >
+                Upgrade to unlock more features →
+              </a>
+            </div>
+          )}
+        </div>
+
+        {/* Account Details */}
+        <div className="bg-black/50 border border-white rounded-none p-6">
+          <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+            <Calendar className="w-5 h-5" />
+            Account Details
+          </h2>
+
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between">
+              <span className="text-white/60">User ID</span>
+              <span className="text-white font-mono text-xs">{user.id}</span>
+            </div>
+            {user.created_at && (
+              <div className="flex justify-between">
+                <span className="text-white/60">Member since</span>
+                <span className="text-white">{formatDate(user.created_at)}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+

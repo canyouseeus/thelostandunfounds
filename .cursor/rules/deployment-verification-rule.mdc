@@ -1,0 +1,251 @@
+# Deployment Verification Rule
+
+## CRITICAL: Always Verify Deployments
+
+**When creating a deployment, ALWAYS verify it is successful before considering the task complete.**
+
+### Rule: Mandatory Deployment Verification
+
+After creating any deployment (Vercel, Railway, or other platforms), you MUST:
+
+1. ✅ **Check Deployment Status** - Verify the deployment state is "READY" or "SUCCESS"
+2. ✅ **Review Build Logs** - Check for errors, warnings, or failures
+3. ✅ **Verify Deployment URL** - Test that the deployed application is accessible
+4. ✅ **Confirm Functionality** - Ensure key features work on the deployed version
+
+### Verification Workflow
+
+#### Step 1: Get Deployment Status
+
+After creating a deployment, immediately check its status:
+
+**For Vercel:**
+```javascript
+import * as vercel from './servers/vercel/index.js';
+
+// After deployment
+const deployment = await vercel.deploy(projectName, directory);
+
+// Check status
+const status = await vercel.getDeployment(deployment.id);
+if (status.state !== 'READY' && status.state !== 'SUCCESS') {
+  throw new Error(`Deployment failed: ${status.state}`);
+}
+```
+
+**For Railway:**
+```javascript
+import * as railway from './servers/railway/index.js';
+
+// After deployment
+const deployment = await railway.deploy(serviceName, workspacePath);
+
+// Check status
+const deployments = await railway.listDeployments(serviceName, 1);
+const latest = deployments[0];
+if (latest.status !== 'SUCCESS' && latest.status !== 'ACTIVE') {
+  throw new Error(`Deployment failed: ${latest.status}`);
+}
+```
+
+#### Step 2: Check Build Logs
+
+Always review build logs for errors:
+
+**For Vercel:**
+```javascript
+const logs = await vercel.getBuildLogs(deployment.id, 100);
+const errors = logs.filter(log => 
+  log.message?.includes('error') || 
+  log.message?.includes('Error') ||
+  log.message?.includes('failed')
+);
+
+if (errors.length > 0) {
+  console.error('Build errors found:', errors);
+  throw new Error('Deployment has build errors');
+}
+```
+
+**For Railway:**
+```javascript
+const logs = await railway.getLogs(deployment.id, 'deploy', 100);
+const errors = logs.filter(log => 
+  log.level === 'error' || 
+  log.message?.toLowerCase().includes('failed')
+);
+
+if (errors.length > 0) {
+  console.error('Deployment errors found:', errors);
+  throw new Error('Deployment has errors');
+}
+```
+
+#### Step 3: Verify Deployment URL
+
+Test that the deployment is accessible:
+
+```javascript
+// For Vercel
+const response = await fetch(deployment.url);
+if (!response.ok) {
+  throw new Error(`Deployment URL not accessible: ${response.status}`);
+}
+
+// For Railway
+const domain = await railway.generateDomain(serviceName);
+const response = await fetch(`https://${domain}`);
+if (!response.ok) {
+  throw new Error(`Railway deployment not accessible: ${response.status}`);
+}
+```
+
+#### Step 4: Confirm Functionality
+
+Test key features on the deployed version:
+
+```javascript
+// Example: Test a key endpoint or page
+const testUrl = `${deployment.url}/api/health`; // or key page
+const response = await fetch(testUrl);
+const data = await response.json();
+
+if (!data.success && !response.ok) {
+  throw new Error('Deployed application not functioning correctly');
+}
+```
+
+### Error Handling
+
+If deployment verification fails:
+
+1. **Report the Error** - Clearly state what failed
+2. **Provide Logs** - Show relevant error messages
+3. **Suggest Fixes** - Recommend solutions based on error type
+4. **Retry if Appropriate** - If it's a transient error, retry once
+
+### Common Deployment States
+
+**Vercel States:**
+- ✅ `READY` - Deployment successful
+- ✅ `SUCCESS` - Deployment successful (alternative)
+- ⏳ `BUILDING` - Still in progress (wait and recheck)
+- ⏳ `QUEUED` - Waiting to build (wait and recheck)
+- ❌ `ERROR` - Deployment failed
+- ❌ `CANCELED` - Deployment canceled
+
+**Railway States:**
+- ✅ `SUCCESS` - Deployment successful
+- ✅ `ACTIVE` - Service is active
+- ⏳ `BUILDING` - Still building (wait and recheck)
+- ⏳ `DEPLOYING` - Still deploying (wait and recheck)
+- ❌ `FAILED` - Deployment failed
+- ❌ `CANCELED` - Deployment canceled
+
+### Waiting for Deployment
+
+If deployment is in progress (`BUILDING`, `QUEUED`, `DEPLOYING`):
+
+1. **Wait** - Poll status every 10-15 seconds
+2. **Timeout** - Maximum wait time: 5 minutes
+3. **Recheck** - Continue checking until final state
+4. **Report** - If timeout, report that deployment is still in progress
+
+### Example: Complete Verification Function
+
+```javascript
+async function verifyDeployment(deploymentId, platform = 'vercel') {
+  const maxWaitTime = 5 * 60 * 1000; // 5 minutes
+  const pollInterval = 15 * 1000; // 15 seconds
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < maxWaitTime) {
+    // Check status
+    const status = platform === 'vercel' 
+      ? await vercel.getDeployment(deploymentId)
+      : await railway.getDeployment(deploymentId);
+
+    // If successful, verify logs and URL
+    if (status.state === 'READY' || status.state === 'SUCCESS' || status.state === 'ACTIVE') {
+      // Check logs
+      const logs = platform === 'vercel'
+        ? await vercel.getBuildLogs(deploymentId)
+        : await railway.getLogs(deploymentId, 'deploy');
+      
+      const errors = logs.filter(log => 
+        log.message?.toLowerCase().includes('error') ||
+        log.message?.toLowerCase().includes('failed') ||
+        log.level === 'error'
+      );
+
+      if (errors.length > 0) {
+        throw new Error(`Deployment has errors: ${JSON.stringify(errors)}`);
+      }
+
+      // Verify URL
+      const url = status.url || (await railway.generateDomain(serviceName));
+      const response = await fetch(`https://${url}`);
+      if (!response.ok) {
+        throw new Error(`Deployment URL not accessible: ${response.status}`);
+      }
+
+      return { success: true, deployment: status };
+    }
+
+    // If failed, throw error
+    if (status.state === 'ERROR' || status.state === 'FAILED' || status.state === 'CANCELED') {
+      throw new Error(`Deployment failed with state: ${status.state}`);
+    }
+
+    // Wait and retry
+    await new Promise(resolve => setTimeout(resolve, pollInterval));
+  }
+
+  throw new Error('Deployment verification timeout - deployment still in progress');
+}
+```
+
+### Integration with MCP Code Execution Pattern
+
+This rule works with the MCP Code Execution Pattern:
+
+- ✅ Use code APIs from `servers/vercel/index.js` or `servers/railway/index.js`
+- ✅ Never call MCP tools directly for verification
+- ✅ Process results in code before reporting
+- ✅ Handle errors gracefully
+
+### Reporting Format
+
+When reporting deployment verification:
+
+```
+✅ Deployment Successful
+- Platform: Vercel/Railway
+- Deployment ID: [id]
+- URL: [url]
+- Status: READY/SUCCESS
+- Build Time: [time]
+- No errors in logs
+- URL verified and accessible
+```
+
+Or if failed:
+
+```
+❌ Deployment Failed
+- Platform: Vercel/Railway
+- Deployment ID: [id]
+- Status: ERROR/FAILED
+- Errors: [list of errors]
+- Logs: [relevant log excerpts]
+- Suggested Fix: [recommendation]
+```
+
+### CRITICAL REMINDERS
+
+- ❌ **NEVER** mark a deployment as complete without verification
+- ❌ **NEVER** skip checking build logs
+- ❌ **NEVER** assume deployment is successful based on creation alone
+- ✅ **ALWAYS** verify status, logs, and URL
+- ✅ **ALWAYS** wait for final state (not intermediate states)
+- ✅ **ALWAYS** report verification results clearly

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Debug Tools</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #000;
+      color: #fff;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    .link-card {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .link-card h2 {
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: #fff;
+    }
+    .link-card p {
+      color: #999;
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+    a {
+      display: block;
+      padding: 14px 20px;
+      background: #fff;
+      color: #000;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 600;
+      text-align: center;
+      transition: background 0.2s;
+    }
+    a:hover {
+      background: #e0e0e0;
+    }
+    .note {
+      background: #1a1a1a;
+      border-left: 3px solid #fff;
+      padding: 15px;
+      margin-top: 30px;
+      font-size: 14px;
+      color: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Email Debug Tools</h1>
+    
+    <div class="link-card">
+      <h2>1. Test Zoho Email Configuration</h2>
+      <p>Check if your Zoho credentials are set up correctly</p>
+      <a href="/api/test-email-config?token=reset-newsletter-2024" target="_blank">
+        Test Email Config →
+      </a>
+    </div>
+
+    <div class="link-card">
+      <h2>2. Reset Newsletter List</h2>
+      <p>Clear all subscribers so you can test again</p>
+      <a href="/reset-newsletter.html" target="_blank">
+        Reset Newsletter List →
+      </a>
+    </div>
+
+    <div class="link-card">
+      <h2>3. Reset Newsletter (Direct API)</h2>
+      <p>Alternative reset method using REST API</p>
+      <a href="/api/reset-newsletter-direct?token=reset-newsletter-2024" target="_blank">
+        Reset via API →
+      </a>
+    </div>
+
+    <div class="note">
+      <strong>How to use:</strong><br>
+      1. Click "Test Email Config" first to see what's wrong<br>
+      2. Check if Zoho credentials are configured<br>
+      3. Look for error messages in the response<br>
+      4. Fix any missing environment variables in Vercel
+    </div>
+  </div>
+</body>
+</html>

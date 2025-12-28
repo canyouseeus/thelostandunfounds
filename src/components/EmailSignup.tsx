@@ -1,0 +1,233 @@
+import { useState, useRef } from 'react';
+import Turnstile from 'react-turnstile';
+
+export default function EmailSignup() {
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileKey, setTurnstileKey] = useState(0);
+  // Removed ref due to function component warning, using key to force reset instead
+
+
+  // Get Cloudflare Turnstile site key from environment
+  const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
+  const isDev =
+    import.meta.env.DEV ||
+    typeof window !== 'undefined'
+      ? window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname.endsWith('.local')
+      : false;
+  const requiresTurnstile = turnstileSiteKey && !isDev;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validate Turnstile token (required in production)
+    if (requiresTurnstile && !turnstileToken) {
+      alert('Please complete the security verification');
+      return;
+    }
+
+    // Validate email
+    if (!email || !email.includes('@')) {
+      alert('Please enter a valid email address');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Call API endpoint to save email and send confirmation
+      const response = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+          turnstileToken: turnstileToken,
+        }),
+      });
+
+      // Handle empty or invalid responses
+      if (!response.ok && response.status === 404) {
+        throw new Error('API endpoint not found. Make sure you are running with "npx vercel dev" for API routes to work.');
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        throw new Error(`Server returned non-JSON response: ${text || 'Empty response'}`);
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to subscribe');
+      }
+
+      // Success - no diagnostic info shown to user
+      setSuccess(true);
+      setEmail('');
+      
+      // Reset Turnstile
+      setTurnstileKey(prev => prev + 1);
+      setTurnstileToken(null);
+    } catch (error: any) {
+      console.error('Email signup error:', error);
+      alert(error.message || 'Failed to subscribe. Please try again.');
+      
+      // Reset Turnstile on error
+      setTurnstileKey(prev => prev + 1);
+      setTurnstileToken(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="email-signup-success" style={{
+        background: 'rgba(0, 0, 0, 0.5)',
+        border: '1px solid rgba(255, 255, 255, 1)',
+        borderRadius: '0',
+        padding: '1.25rem',
+        textAlign: 'center',
+        maxWidth: '500px',
+        width: '100%'
+      }}>
+        <div style={{ fontSize: '2rem', marginBottom: '1rem', color: '#ffffff' }}>✓</div>
+        <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '0.5rem', color: '#ffffff' }}>
+          Thank you for subscribing!
+        </h3>
+        <p style={{ color: 'rgba(255, 255, 255, 0.7)', marginBottom: '1rem', fontSize: '0.875rem' }}>
+          Check your email for confirmation.
+        </p>
+        <button
+          onClick={() => setSuccess(false)}
+          style={{
+            background: '#ffffff',
+            border: 'none',
+            color: '#000000',
+            padding: '0.875rem 1.5rem',
+            borderRadius: '0',
+            cursor: 'pointer',
+            fontSize: '1rem',
+            fontWeight: 600,
+            transition: 'opacity 0.3s ease',
+            minHeight: '44px',
+            touchAction: 'manipulation',
+            width: '100%'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.opacity = '0.9';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.opacity = '1';
+          }}
+        >
+          Subscribe Another Email
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="email-signup" style={{
+      background: 'rgba(0, 0, 0, 0.5)',
+      border: '1px solid rgba(255, 255, 255, 0.1)',
+      borderRadius: '0',
+      padding: '1.25rem',
+      maxWidth: '500px',
+      width: '100%'
+    }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <input
+            type="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            disabled={loading}
+            style={{
+              width: '100%',
+              padding: '0.875rem',
+              background: 'rgba(0, 0, 0, 0.5)',
+              border: '1px solid rgba(255, 255, 255, 1)',
+              borderRadius: '0',
+              color: '#ffffff',
+              fontSize: '16px',
+              minHeight: '44px',
+              touchAction: 'manipulation'
+            }}
+          />
+          <button
+            type="submit"
+            disabled={loading || (requiresTurnstile && !turnstileToken)}
+            style={{
+              width: '100%',
+              padding: '0.875rem',
+              background: loading || (requiresTurnstile && !turnstileToken) ? 'rgba(255, 255, 255, 0.3)' : '#ffffff',
+              color: loading || (requiresTurnstile && !turnstileToken) ? 'rgba(0, 0, 0, 0.5)' : '#000000',
+              border: 'none',
+              borderRadius: '0',
+              fontSize: '1rem',
+              fontWeight: 600,
+              cursor: loading || (requiresTurnstile && !turnstileToken) ? 'not-allowed' : 'pointer',
+              whiteSpace: 'nowrap',
+              minHeight: '44px',
+              touchAction: 'manipulation'
+            }}
+          >
+            {loading ? 'Subscribing...' : 'SUBSCRIBE'}
+          </button>
+        </div>
+
+        {/* Cloudflare Turnstile */}
+        {requiresTurnstile && (
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <Turnstile
+              sitekey={turnstileSiteKey}
+              onSuccess={(token) => {
+                console.log('Turnstile verified successfully');
+                setTurnstileToken(token);
+              }}
+              onError={(error) => {
+                console.error('❌ Turnstile error:', error);
+                console.error('Site key (first 20 chars):', turnstileSiteKey?.substring(0, 20));
+                console.error('Current domain:', window.location.hostname);
+                console.error('Full site key:', turnstileSiteKey);
+                setTurnstileToken(null);
+                // Error 400020 = Invalid sitekey or domain not configured
+                if (error?.errorCode === '400020') {
+                  alert(`Turnstile Configuration Error (400020)\n\nPlease verify:\n1. Site key in Vercel matches Cloudflare exactly\n2. Domain "${window.location.hostname}" is added in Cloudflare\n3. Both thelostandunfounds.com and www.thelostandunfounds.com are configured\n\nCheck console for site key details.`);
+                } else {
+                  alert('Security verification failed. Please try again.');
+                }
+              }}
+              onExpire={() => {
+                console.log('Turnstile token expired');
+                setTurnstileToken(null);
+              }}
+              onLoad={(widgetId) => {
+                console.log('Turnstile loaded:', widgetId);
+              }}
+              key={turnstileKey}
+              theme="dark"
+            />
+          </div>
+        )}
+
+        {!requiresTurnstile && isDev && (
+          <p style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.3)', textAlign: 'center', margin: 0 }}>
+            Security verification is disabled in dev/localhost. Turnstile is required only in production.
+          </p>
+        )}
+      </form>
+    </div>
+  );
+}
+

@@ -1,0 +1,137 @@
+# Cursor Rules for THE LOST+UNFOUNDS
+
+## TEXT ALIGNMENT RULE - CRITICAL
+**NEVER change text alignment to center or justify. ALWAYS use left alignment.**
+
+- Blog post content MUST be `text-left` (NOT `text-center`, NOT `text-justify`)
+- Blog post paragraphs MUST be `text-left`
+- Blog analysis components MUST be `text-left`
+- Headers and titles can be `text-left` or centered based on design, but body text is ALWAYS `text-left`
+- If you see `text-justify` or `text-center` on blog content, change it to `text-left`
+- DO NOT change alignment unless explicitly asked by the user
+- This applies to: BlogPost.tsx, BlogAnalysis.tsx, and any blog-related components
+
+## BLOG POST FORMATTING VERIFICATION RULE - CRITICAL
+**ALWAYS check the live URL first, NOT the SQL file, when verifying blog post formatting.**
+
+- Before making any formatting changes, check the actual live blog post URL: `https://www.thelostandunfounds.com/thelostarchives/[slug]`
+- Use `curl` or fetch the live page to see how content actually renders
+- The SQL file is just the source - the live page shows the real formatting
+- Remove "⸻" characters from content - they should NOT appear in blog posts
+- Section breaks should use proper paragraph spacing, not "⸻" characters
+
+## BLOG POST PUBLISHING RULE - FOLLOW EVERY TIME
+
+When the user asks to publish a blog post, you MUST follow these steps in order:
+
+### STEP 1: Create SQL File
+- Create the SQL file in `sql/create-blog-post-[slug].sql`
+- Create the same file in `public/sql/create-blog-post-[slug].sql`
+- The SQL file must:
+  - Handle multiple schema versions (published field, author_id vs user_id, etc.)
+  - Use the pattern from existing blog post SQL files
+  - Include proper title, slug, content, excerpt, SEO fields
+  - Set published=true and status='published'
+  - **CRITICAL: NEVER use ON CONFLICT (slug) - the slug column may not have a unique constraint**
+  - **MUST use check-and-insert/update pattern:**
+    1. Declare `existing_post_id UUID;` in the DECLARE block
+    2. Check if post exists: `SELECT id INTO existing_post_id FROM blog_posts WHERE slug = '[slug]' LIMIT 1;`
+    3. For each INSERT statement, wrap it in: `IF existing_post_id IS NOT NULL THEN UPDATE ... ELSE INSERT ... END IF;`
+  - This pattern works regardless of whether a unique constraint exists on the slug column
+
+### STEP 2: Update SQL.tsx
+- Open `src/pages/SQL.tsx`
+- Add fetch code to load the new SQL file (after the last blog post fetch)
+- Add the script to the `allScripts` array (order in array doesn't matter - scripts are auto-sorted by createdAt):
+  - name: Blog post title
+  - filename: create-blog-post-[slug].sql
+  - content: The fetched content
+  - description: Clear description of what the script does
+  - createdAt: getScriptTimestamp('create-blog-post-[slug].sql')
+- **CRITICAL: Scripts are automatically sorted by createdAt timestamp (newest first)**
+- **New scripts with current timestamps will automatically appear at the top of the page**
+- For code organization, you can add new scripts near the top of the array, but the display order is determined by createdAt
+
+### STEP 3: Update API Endpoint
+- Open `api/sql/latest.ts`
+- Add the new SQL file path to the `SQL_FILES` array
+
+### STEP 4: Commit Changes
+- Stage all changed files
+- Commit with descriptive message
+
+### STEP 5: Merge to Production
+- Checkout `main` branch
+- Pull latest from `origin/main`
+- Merge the cursor branch into `main`
+- Push to `origin/main` to deploy
+
+### STEP 6: Verify Deployment
+- The SQL file MUST be accessible at: `https://www.thelostandunfounds.com/sql/create-blog-post-[slug].sql`
+- The script MUST appear on the page: `https://www.thelostandunfounds.com/sql`
+- Verify the script shows up in the list with copy functionality
+
+### CRITICAL RULES:
+1. ALWAYS use the exact URL format: `https://www.thelostandunfounds.com/sql/` (lowercase "sql")
+2. ALWAYS merge to `main` branch and push to deploy
+3. ALWAYS verify the script appears on the `/sql` page after deployment
+4. NEVER skip any of these steps
+5. The `/sql` page is the deployment interface - scripts must appear there
+
+### The Purpose:
+The `/sql` page at `https://www.thelostandunfounds.com/sql` is where SQL scripts are displayed so they can be copied and executed in Supabase SQL Editor. Every blog post SQL script MUST be accessible and visible on this page.
+
+## DEPLOYMENT VERIFICATION RULE - CRITICAL
+**ALWAYS verify deployments are successful before marking tasks as complete.**
+
+When creating any deployment (Vercel, Railway, or other platforms), you MUST:
+
+1. ✅ **Check Deployment Status** - Verify state is "READY", "SUCCESS", or "ACTIVE"
+2. ✅ **Review Build Logs** - Check for errors, warnings, or failures
+3. ✅ **Verify Deployment URL** - Test that the deployed application is accessible
+4. ✅ **Confirm Functionality** - Ensure key features work on the deployed version
+
+**CRITICAL REMINDERS:**
+- ❌ **NEVER** mark a deployment as complete without verification
+- ❌ **NEVER** skip checking build logs
+- ❌ **NEVER** assume deployment is successful based on creation alone
+- ✅ **ALWAYS** verify status, logs, and URL
+- ✅ **ALWAYS** wait for final state (not intermediate states like "BUILDING")
+- ✅ **ALWAYS** report verification results clearly
+
+For detailed verification workflow and code examples, see: `.cursor/rules/deployment-verification-rule.mdc`
+
+## BLOG POST STYLE GUIDE - CRITICAL
+**ALWAYS follow the style guide when formatting blog posts. See `BLOG_POST_STYLE_GUIDE.md` for complete documentation.**
+
+### Key Style Rules:
+1. **Book Title Linking**: Maximum 2 links per book (1 in intro, 1 in section). After 2 links, display as bold title case text only.
+2. **Book Title Formatting**: Book titles MUST preserve the author's original case formatting from the article content. If author wrote "THE HOBBIT" it displays as "THE HOBBIT", if "The Hobbit" it displays as "The Hobbit". All book titles are bold. Linked titles are underlined.
+3. **Author Name in Disclosure**: Author names in Amazon Affiliate Disclosure MUST be UPPERCASE and bold.
+4. **Excerpt Display**: Excerpt/preview text displays in header after title and date (if available).
+5. **Header Detection**: Headers are auto-detected (short, title case, no ending punctuation). Book titles in headers can be linked.
+6. **Section Detection**: Book sections are detected by looking backwards for headings containing book titles (fuzzy matching, no colon required).
+7. **Text Alignment**: All body text MUST be left-aligned. Disclosure text is justified (only exception).
+
+### Implementation:
+- Book title matching uses fuzzy matching to handle case, punctuation, and apostrophe variations
+- Section detection uses normalized title matching (doesn't require exact case or colons)
+- Author name formatting is handled by `formatDisclosure()` function
+- All formatting is automatic based on content structure
+
+**For complete documentation, see: `BLOG_POST_STYLE_GUIDE.md`**
+
+## EMAIL SENDING RULE - CRITICAL
+- NEVER respond that you cannot send email for THE LOST+UNFOUNDS; use the existing Zoho Mail integrations.
+- Preferred test path: POST `https://www.thelostandunfounds.com/api/admin/send-welcome-emails` with body `{"testEmail":"target@example.com"}`.
+- Use shared helpers in `lib/api-handlers/_zoho-email-utils.ts` (or handlers that import it) to send mail.
+- If a send fails, surface the Zoho API error details (status/text) instead of declining.
+- When running locally, ensure env vars exist: `ZOHO_CLIENT_ID`, `ZOHO_CLIENT_SECRET`, `ZOHO_REFRESH_TOKEN`, and `ZOHO_FROM_EMAIL` (or `ZOHO_EMAIL`).
+
+## NEWSLETTER RESEND RULE - CRITICAL
+- Standard operating procedure to resend or test the latest newsletter:
+  1) Load Supabase envs (`.env.local`) and use `SUPABASE_SERVICE_ROLE_KEY` with `SUPABASE_URL` to query `newsletter_campaigns` ordered by `created_at` desc limit 1.
+  2) Inject the Getting Started CTA link (`https://www.thelostandunfounds.com/blog/getting-started`) into `content_html` before the footer/hr if not already present.
+  3) Send via POST `https://www.thelostandunfounds.com/api/newsletter/send` with `subject`, `content`, `contentHtml` (CTA-injected), and `testEmail` when testing.
+  4) For a full resend, omit `testEmail` to target all verified subscribers.
+  5) If envs are missing, load from `.env.local` with dotenv; do NOT claim inability—surface missing-env error only if loading fails.
