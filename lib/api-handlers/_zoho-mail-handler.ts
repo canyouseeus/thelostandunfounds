@@ -227,3 +227,29 @@ export interface MailMessage {
    Do not reintroduce ../email-template imports.
    ============================================================================
 */
+export async function getFolders(): Promise<MailFolder[]> {
+  const auth = await getZohoAuthContext();
+
+  const response = await rateLimitedFetch(`${ZOHO_MAIL_API}/${auth.accountId}/folders`, {
+    headers: {
+      Authorization: `Zoho-oauthtoken ${auth.accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Failed to fetch folders: ${response.status} ${text}`);
+  }
+
+  const data = await response.json();
+
+  // Map Zoho folder response to MailFolder interface
+  return (data?.data || []).map((f: any) => ({
+    folderId: f.folderId || f.id,
+    folderName: f.name,
+    folderPath: f.path || f.folderPath,
+    unreadCount: f.unreadCount || 0,
+    messageCount: f.messageCount || 0,
+    folderType: f.folderType || 'unknown',
+  }));
+}
