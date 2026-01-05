@@ -65,8 +65,8 @@ export default function Blog() {
           // Main: blog_column is 'main' OR (null column AND null subdomain)
           query = query.or('blog_column.eq.main,and(blog_column.is.null,subdomain.is.null)');
         } else if (column === 'bookclub') {
-          // Book Club: blog_column is 'bookclub' OR subdomain is not null
-          query = query.or('blog_column.eq.bookclub,subdomain.not.is.null');
+          // Book Club: blog_column is 'bookclub' OR (blog_column is null AND subdomain is not null)
+          query = query.or('blog_column.eq.bookclub,and(blog_column.is.null,subdomain.not.is.null)');
         } else {
           // Others: strict match
           query = query.eq('blog_column', column);
