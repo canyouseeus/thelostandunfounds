@@ -11,6 +11,7 @@ import BlogAnalysis from '../components/BlogAnalysis';
 import ShareButtons from '../components/ShareButtons';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { BLOG_CONTENT_CLASS } from '../utils/blogStyles';
+import { unescapeContent, normalizeTitle, findTitleMatch, formatDisclosure } from '../utils/blogUtils';
 
 interface AffiliateLink {
   book_title?: string;
@@ -261,12 +262,21 @@ export default function BlogPost() {
     if (!content) return null;
 
     try {
-      // DOMPurify is already available in the project
+      // 1. Unescape content (handles double-escaped DB strings)
+      let processedContent = unescapeContent(content);
+
+      // 2. Automatic Book Title Linking
+      // Rule: Max 2 links per book (1 in intro/first occurrence, 1 in section)
+      if (post && post.amazon_affiliate_links && post.amazon_affiliate_links.length > 0) {
+        processedContent = applyAutomaticLinking(processedContent, post.amazon_affiliate_links, post.author_name || undefined);
+      }
+
+      // 3. Final sanitization
       const DOMPurify = (window as any).DOMPurify;
-      let safeHtml = content;
+      let safeHtml = processedContent;
 
       if (DOMPurify) {
-        safeHtml = DOMPurify.sanitize(content, {
+        safeHtml = DOMPurify.sanitize(processedContent, {
           ALLOWED_TAGS: ['p', 'a', 'strong', 'em', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'br', 'hr', 'blockquote', 'code', 'pre', 'div', 'span', 'img'],
           ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'data-product-title', 'src', 'alt'],
         });
@@ -281,7 +291,7 @@ export default function BlogPost() {
     } catch (error: any) {
       console.error('Error formatting content:', error);
       // Fallback: strip tags and show plain text if something really goes wrong
-      const stripped = content.replace(/<[^>]*>?/gm, ' ');
+      const stripped = unescapeContent(content).replace(/<[^>]*>?/gm, ' ');
       return (
         <div className={BLOG_CONTENT_CLASS}>
           {stripped.split(/\n\n+/).map((para: string, idx: number) => (
@@ -290,6 +300,106 @@ export default function BlogPost() {
         </div>
       );
     }
+  };
+
+  /**
+   * Applies automatic linking and formatting to content
+   */
+  const applyAutomaticLinking = (content: string, affiliateLinks: AffiliateLink[], authorName?: string): string => {
+    let result = content;
+
+    // 1. Build link map and variations
+    const bookLinks: Record<string, string> = {};
+    const bookTitles: string[] = [];
+
+    affiliateLinks.forEach(link => {
+      const title = link.book_title || link.product_title || link.item_title;
+      if (title && link.link) {
+        bookLinks[title] = link.link;
+        if (!bookTitles.includes(title)) bookTitles.push(title);
+
+        // Common variations
+        if (title.toLowerCase().includes("ender's game") || title.toLowerCase().includes("enders game")) {
+          bookLinks["Ender's Game"] = link.link;
+          bookLinks["Ender’s Game"] = link.link;
+          bookLinks["Enders Game"] = link.link;
+        }
+
+        // Specially handle the user reported missing link
+        if (title.toLowerCase().includes('lion') && title.toLowerCase().includes('wardrobe')) {
+          bookLinks["The Lion, the Witch and the Wardrobe"] = link.link;
+          bookLinks["The Lion, The Witch and The Wardrobe"] = link.link;
+          bookLinks["The Lion, the Witch, and the Wardrobe"] = link.link;
+          bookLinks["Lion, the Witch and the Wardrobe"] = link.link;
+        }
+
+        // Handle "The" prefix
+        if (!title.toLowerCase().startsWith('the ')) {
+          bookLinks[`The ${title}`] = link.link;
+        }
+      }
+    });
+
+    // 2. Track link counts per book to stick to "Max 2 links" rule
+    const linkCounts: Record<string, number> = {};
+    bookTitles.forEach(t => linkCounts[t] = 0);
+
+    // 3. Process the content
+    // We split into sections/paragraphs to detect headers and context
+    const parts = result.split(/(<[^>]+>)/g); // Split by HTML tags
+
+    // For now, let's do a more targeted replacement to avoid breaking existing HTML
+    // We'll iterate through affiliate links and find occurrences
+
+    // Reverse sort titles by length to avoid partial matches (e.g. "The Hobbit" before "Hobbit")
+    const sortedTitles = [...Object.keys(bookLinks)].sort((a, b) => b.length - a.length);
+
+    // Track which book a section belongs to based on headers
+    let currentSectionBook: string | null = null;
+
+    // A simpler approach: replace unlinked text occurrences
+    // But we must ONLY replace text that is NOT already inside an <a> tag
+
+    // We'll use a regex that matches the book titles but avoids existing links
+    // This is hard to do perfectly with regex on HTML string, so we'll do it safely
+
+    sortedTitles.forEach(title => {
+      const link = bookLinks[title];
+      const normalizedMatch = normalizeTitle(title);
+
+      // We want to find occurrences of 'title' in 'result'
+      // but only if 'linkCounts[baseTitle] < 2'
+      const baseTitle = affiliateLinks.find(l =>
+        (l.book_title || l.product_title || l.item_title) === title ||
+        bookLinks[l.book_title || l.product_title || l.item_title || ''] === link
+      )?.book_title || title;
+
+      // Find occurrences using a safe word boundary regex
+      // but exclude those already in <a> tags
+      // This is a common pattern for "automatic linking"
+
+      const escapeRegExp = (string: string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const titleRegex = new RegExp(`(?<!<a[^>]*>)(?<!<[^>]*)${escapeRegExp(title)}(?![^<]*</a>)(?![^<]*>)`, 'gi');
+
+      result = result.replace(titleRegex, (match) => {
+        if ((linkCounts[baseTitle] || 0) < 2) {
+          linkCounts[baseTitle] = (linkCounts[baseTitle] || 0) + 1;
+          return `<a href="${link}" target="_blank" rel="noopener noreferrer" class="font-bold text-white underline hover:text-white/80 transition"><strong>${match}</strong></a>`;
+        } else {
+          return `<strong>${match}</strong>`; // Bold but no link after 2 times
+        }
+      });
+    });
+
+    // 4. Handle Affiliate Disclosure author name formatting
+    if (authorName) {
+      const disclosureRegex = /Amazon Affiliate Disclosure: As an Amazon Associate, (.*?) earns from qualifying purchases/i;
+      result = result.replace(disclosureRegex, (match, name) => {
+        return match.replace(name, `<strong>${authorName.toUpperCase()}</strong>`);
+      });
+    }
+
+    return result;
   };
 
   if (loading) {

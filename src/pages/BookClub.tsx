@@ -46,13 +46,13 @@ export default function BookClub() {
       setLoading(true);
       setError(null);
 
-      // Load all published posts that have a subdomain (user blogs)
-      // These are the "Book Club" articles - user-submitted content
+      // Load all published posts that belong to the "bookclub" column
+      // Fallback: if blog_column is null but post has a subdomain, it's also considered book club
       const { data, error: fetchError } = await supabase
         .from('blog_posts')
-        .select('id, title, slug, excerpt, content, published_at, created_at, subdomain, author_id, amazon_affiliate_links')
-        .not('subdomain', 'is', null) // Only posts with subdomains (user blogs)
+        .select('id, title, slug, excerpt, content, published_at, created_at, subdomain, author_id, amazon_affiliate_links, blog_column')
         .eq('published', true)
+        .or('blog_column.eq.bookclub,and(blog_column.is.null,subdomain.not.is.null)')
         .order('published_at', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(100);
@@ -92,29 +92,40 @@ export default function BookClub() {
   };
 
   const buildPreviewExcerpt = (post: BlogPost) => {
+    const stripHtml = (html: string) => {
+      if (!html) return '';
+      return html.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
+    };
+
     if (post.excerpt && post.excerpt.trim().length > 0) {
-      const preview = post.excerpt.trim().replace(/\s+/g, ' ');
+      const preview = stripHtml(post.excerpt);
       return preview.length > 220
         ? preview.substring(0, 220).replace(/\s+\S*$/, '') + '...'
         : preview;
     }
     const source = (post.content || '').trim();
     if (!source) return '';
-    const sentences = source
-      .replace(/\s+/g, ' ')
+    const cleanSource = stripHtml(source);
+    const sentences = cleanSource
       .split(/(?<=[.!?])\s+/)
       .filter(Boolean);
     const candidate = sentences.slice(0, 2).join(' ');
-    const preview = candidate || sentences[0] || source;
+    const preview = candidate || sentences[0] || cleanSource;
     return preview.length > 220
       ? preview.substring(0, 220).replace(/\s+\S*$/, '') + '...'
       : preview;
   };
 
   const buildExpandedIntro = (post: BlogPost) => {
+    const stripHtml = (html: string) => {
+      if (!html) return '';
+      return html.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
+    };
+
     const source = (post.content || post.excerpt || '').trim();
     if (!source) return '';
-    const firstParagraph = source.split(/\n\n+/)[0]?.trim() || '';
+    const cleanSource = stripHtml(source);
+    const firstParagraph = cleanSource.split(/\n\n+/)[0]?.trim() || '';
     return firstParagraph.substring(0, 420);
   };
 
@@ -199,9 +210,9 @@ export default function BookClub() {
                 >
                   {({ isExpanded }) => (
                     <ExpandableTrigger>
-                      <div 
+                      <div
                         className="rounded-none"
-                        style={{ 
+                        style={{
                           minHeight: isExpanded ? '420px' : '220px',
                           transition: 'min-height 0.2s ease-out',
                         }}
@@ -232,9 +243,9 @@ export default function BookClub() {
                               </div>
                             )}
 
-                            <ExpandableContent 
-                              preset="fade" 
-                              stagger 
+                            <ExpandableContent
+                              preset="fade"
+                              stagger
                               staggerChildren={0.1}
                               keepMounted={false}
                             >
