@@ -86,6 +86,34 @@ async function syncFolder(folderId: string, librarySlug: string) {
             }
         }
 
+        // 5. Cleanup: Remove photos that are no longer in Google Drive
+        const currentDriveFileIds = new Set(files.map(f => f.id));
+
+        const { data: existingPhotos } = await supabase
+            .from('photos')
+            .select('google_drive_file_id')
+            .eq('library_id', library.id);
+
+        if (existingPhotos) {
+            const photosToDelete = existingPhotos
+                .filter(p => p.google_drive_file_id && !currentDriveFileIds.has(p.google_drive_file_id))
+                .map(p => p.google_drive_file_id);
+
+            if (photosToDelete.length > 0) {
+                console.log(`🗑️ Found ${photosToDelete.length} photos to remove...`);
+                const { error: deleteError } = await supabase
+                    .from('photos')
+                    .delete()
+                    .in('google_drive_file_id', photosToDelete);
+
+                if (deleteError) {
+                    console.error('❌ Failed to clean up old photos:', deleteError.message);
+                } else {
+                    console.log('✨ Successfully removed deleted photos from database.');
+                }
+            }
+        }
+
         console.log('✨ Sync complete!');
 
     } catch (error: any) {

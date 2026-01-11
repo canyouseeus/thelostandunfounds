@@ -47,7 +47,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                 .select('*')
                 .eq('library_id', libData.id)
                 .eq('status', 'active')
-                .order('created_at', { ascending: false });
+                .order('title', { ascending: false });
 
             if (photoError) throw photoError;
             setPhotos(photoData || []);
@@ -137,8 +137,8 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
 
                             {/* Selection Badge */}
                             <div className={`absolute top-4 right-4 z-20 w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center ${isSelected
-                                    ? 'bg-white border-white'
-                                    : 'bg-black/20 backdrop-blur-md border-white/20'
+                                ? 'bg-white border-white'
+                                : 'bg-black/20 backdrop-blur-md border-white/20'
                                 }`}>
                                 {isSelected && <div className="w-3 h-3 bg-black rounded-full" />}
                             </div>
