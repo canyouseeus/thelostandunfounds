@@ -8,7 +8,10 @@ import Loading from '../Loading';
 interface Photo {
     id: string;
     title: string;
+    id: string;
+    title: string;
     thumbnail_url: string;
+    created_at: string;
 }
 
 interface PhotoLibrary {
@@ -114,43 +117,78 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                 </p>
             </div>
 
-            {/* Grid */}
-            <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                {photos.map((photo, index) => {
-                    const isSelected = !!selectedPhotos.find(p => p.id === photo.id);
-                    return (
-                        <motion.div
-                            key={photo.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            onClick={() => setActivePhotoIndex(index)}
-                            className="relative aspect-[4/5] bg-zinc-900 rounded-xl overflow-hidden cursor-pointer group"
-                        >
-                            {/* Image */}
-                            <img
-                                src={photo.thumbnail_url}
-                                alt={photo.title}
-                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 select-none"
-                                draggable={false}
-                            />
+            {/* Photos Grouped by Date */}
+            <div className="max-w-7xl mx-auto space-y-16">
+                {Object.entries(
+                    photos.reduce((acc, photo) => {
+                        // Create a date string for grouping. 
+                        // Using created_at. Format: "SUNDAY JAN 11TH, 2026"
+                        const date = new Date(photo.created_at);
+                        const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+                        const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
-                            {/* Selection Badge */}
-                            <div className={`absolute top-4 right-4 z-20 w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center ${isSelected
-                                ? 'bg-white border-white'
-                                : 'bg-black/20 backdrop-blur-md border-white/20'
-                                }`}>
-                                {isSelected && <div className="w-3 h-3 bg-black rounded-full" />}
-                            </div>
+                        const dayName = days[date.getDay()];
+                        const monthName = months[date.getMonth()];
+                        const dayNum = date.getDate();
+                        const year = date.getFullYear();
 
-                            {/* Hover Overlay */}
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6">
-                                <span className="text-white font-bold text-lg">$5.00</span>
-                                <span className="text-zinc-300 text-xs">Click to view details</span>
-                            </div>
-                        </motion.div>
-                    );
-                })}
+                        // Add 'TH', 'ST', 'ND', 'RD'
+                        let suffix = 'TH';
+                        if (dayNum % 10 === 1 && dayNum !== 11) suffix = 'ST';
+                        if (dayNum % 10 === 2 && dayNum !== 12) suffix = 'ND';
+                        if (dayNum % 10 === 3 && dayNum !== 13) suffix = 'RD';
+
+                        const dateString = `${dayName} ${monthName} ${dayNum}${suffix}, ${year}`;
+
+                        if (!acc[dateString]) acc[dateString] = [];
+                        acc[dateString].push(photo);
+                        return acc;
+                    }, {} as Record<string, Photo[]>)
+                ).map(([dateHeader, groupPhotos]) => (
+                    <div key={dateHeader}>
+                        <h2 className="text-2xl font-black text-white mb-6 uppercase sticky top-0 z-[5] bg-black/80 backdrop-blur-md py-4 border-b border-white/10">
+                            {dateHeader}
+                        </h2>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                            {groupPhotos.map((photo) => {
+                                const index = photos.findIndex(p => p.id === photo.id);
+                                const isSelected = !!selectedPhotos.find(p => p.id === photo.id);
+                                return (
+                                    <motion.div
+                                        key={photo.id}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        viewport={{ once: true }}
+                                        onClick={() => setActivePhotoIndex(index)}
+                                        className="relative aspect-[4/5] bg-zinc-900 rounded-xl overflow-hidden cursor-pointer group"
+                                    >
+                                        {/* Image */}
+                                        <img
+                                            src={photo.thumbnail_url}
+                                            alt={photo.title}
+                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 select-none"
+                                            draggable={false}
+                                        />
+
+                                        {/* Selection Badge */}
+                                        <div className={`absolute top-4 right-4 z-20 w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center ${isSelected
+                                            ? 'bg-white border-white'
+                                            : 'bg-black/20 backdrop-blur-md border-white/20'
+                                            }`}>
+                                            {isSelected && <div className="w-3 h-3 bg-black rounded-full" />}
+                                        </div>
+
+                                        {/* Hover Overlay */}
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6">
+                                            <span className="text-white font-bold text-lg">$5.00</span>
+                                            <span className="text-zinc-300 text-xs">Click to view details</span>
+                                        </div>
+                                    </motion.div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                ))}
             </div>
 
             {/* Lightbox */}
