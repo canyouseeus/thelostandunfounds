@@ -65,11 +65,11 @@ export default async function handler(
         )
 
         // Set headers for download
-        res.setHeader('Content-Type', driveResponse.headers['content-type'] || 'image/jpeg')
-        res.setHeader('Content-Disposition', `attachment; filename="${entitlement.photos.title || 'photo'}.jpg"`)
+        res.setHeader('Content-Type', driveResponse.headers['content-type'] || 'image/jpeg');
+        res.setHeader('Content-Disposition', `attachment; filename="${entitlement.photos.title || 'photo'}.jpg"`);
 
-            // Pipe the stream
-            (driveResponse.data as any).pipe(res)
+        // Pipe the stream
+        (driveResponse.data as any).pipe(res);
 
     } catch (error: any) {
         console.error('Download error:', error)
