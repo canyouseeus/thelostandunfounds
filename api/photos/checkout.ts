@@ -80,6 +80,12 @@ export default async function handler(
       body: 'grant_type=client_credentials',
     })
 
+    if (!tokenResponse.ok) {
+      const errorText = await tokenResponse.text()
+      console.error('PayPal Token Error:', errorText)
+      return res.status(500).json({ error: 'Failed to authenticate with PayPal', details: errorText })
+    }
+
     const { access_token } = await tokenResponse.json()
 
     // Create the order
@@ -112,6 +118,11 @@ export default async function handler(
     })
 
     const order = await orderResponse.json()
+
+    if (!orderResponse.ok || !order.id) {
+      console.error('PayPal Order Error:', order)
+      return res.status(500).json({ error: 'Failed to create PayPal order', details: order })
+    }
 
     return res.status(200).json({
       orderId: order.id,
