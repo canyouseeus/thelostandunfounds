@@ -64,6 +64,8 @@ export default async function handler(
       : process.env.PAYPAL_CLIENT_SECRET || process.env.PAYPAL_CLIENT_SECRET_LIVE
     const baseUrl = isSandbox ? 'https://api.sandbox.paypal.com' : 'https://api.paypal.com'
 
+    console.log(`[PayPal] Initializing checkout in ${isSandbox ? 'SANDBOX' : 'LIVE'} mode`)
+
     if (!clientId || !clientSecret) {
       return res.status(500).json({ error: 'PayPal credentials not configured' })
     }
