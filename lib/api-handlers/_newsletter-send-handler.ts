@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
-import { generateNewsletterEmail, processEmailContent, BRAND } from '../email-template'
+import { generateNewsletterEmail, processEmailContent, BRAND } from '../email-template.js'
 
 interface ZohoTokenResponse {
   access_token: string
@@ -52,9 +52,9 @@ async function sendResendEmail(
 
     if (!response.ok) {
       console.error('Resend API error:', data)
-      return { 
-        success: false, 
-        error: data.message || data.error?.message || `Resend error: ${response.status}` 
+      return {
+        success: false,
+        error: data.message || data.error?.message || `Resend error: ${response.status}`
       }
     }
 
@@ -225,7 +225,7 @@ async function getZohoAccountInfo(accessToken: string, fallbackEmail: string): P
       } else if (account.accountName && typeof account.accountName === 'string') {
         accountEmail = account.accountName
       }
-      
+
       if (accountId) {
         console.log('Using account ID:', accountId, 'email:', accountEmail)
         return { accountId, email: accountEmail }
@@ -490,10 +490,10 @@ export default async function handler(
         accessToken = await getZohoAccessToken()
         const accountInfo = await getZohoAccountInfo(accessToken, fromEmail)
         accountId = accountInfo.accountId
-        actualFromEmail = (accountInfo.email && typeof accountInfo.email === 'string' && accountInfo.email.includes('@')) 
-          ? accountInfo.email 
+        actualFromEmail = (accountInfo.email && typeof accountInfo.email === 'string' && accountInfo.email.includes('@'))
+          ? accountInfo.email
           : fromEmail
-        
+
         console.log('Zoho account info:', {
           accountId,
           configuredEmail: fromEmail,
@@ -524,15 +524,15 @@ export default async function handler(
     // Send emails in batches
     const batchSize = useResend ? 50 : 10  // Resend can handle larger batches
     const sendLogs: { subscriber_email: string; status: string; error_message: string | null; sent_at: string | null }[] = []
-    
+
     for (let i = 0; i < subscribers.length; i += batchSize) {
       const batch = subscribers.slice(i, i + batchSize)
-      
+
       await Promise.all(
         batch.map(async (subscriber) => {
           try {
             const recipientHtml = buildRecipientHtml(contentHtml, subscriber.email)
-            
+
             // Use Resend or Zoho based on configuration
             const result = useResend
               ? await sendResendEmail(subscriber.email, subject, recipientHtml)

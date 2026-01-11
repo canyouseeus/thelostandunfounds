@@ -66,6 +66,23 @@ export default defineConfig({
           });
         },
       },
+      // Proxy photo marketplace API calls to production Vercel in local dev
+      '/api/photos': {
+        target: 'https://www.thelostandunfounds.com',
+        changeOrigin: true,
+        secure: true,
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, res: any) => {
+            console.error('Photo API proxy error:', err);
+            if (res && !res.headersSent) {
+              res.writeHead(500, {
+                'Content-Type': 'application/json',
+              });
+              res.end(JSON.stringify({ error: 'Proxy error', message: err.message }));
+            }
+          });
+        },
+      },
       // Proxy mail API calls to production Vercel in local dev
       '/api/mail': {
         target: 'https://www.thelostandunfounds.com',

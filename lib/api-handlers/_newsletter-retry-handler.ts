@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
-import { processEmailContent } from '../email-template'
+import { processEmailContent } from '../email-template.js'
 
 interface ZohoTokenResponse {
   access_token: string
@@ -51,9 +51,9 @@ async function sendResendEmail(
     const data = await response.json()
 
     if (!response.ok) {
-      return { 
-        success: false, 
-        error: data.message || data.error?.message || `Resend error: ${response.status}` 
+      return {
+        success: false,
+        error: data.message || data.error?.message || `Resend error: ${response.status}`
       }
     }
 
@@ -222,7 +222,7 @@ export default async function handler(
     // Get failed emails to retry
     let emailsToRetry: string[]
     let isLegacyRetry = false
-    
+
     if (emails && Array.isArray(emails) && emails.length > 0) {
       // Retry specific emails
       emailsToRetry = emails
@@ -239,31 +239,31 @@ export default async function handler(
       }
 
       emailsToRetry = failedLogs?.map(log => log.subscriber_email) || []
-      
+
       // If no logs exist but campaign shows failed emails, this is a legacy campaign
       // Get all current verified subscribers and retry sending to all of them
       if (emailsToRetry.length === 0 && campaign.emails_failed > 0) {
         isLegacyRetry = true
-        
+
         // Get successfully sent emails from logs (if any exist)
         const { data: sentLogs } = await supabase
           .from('newsletter_send_logs')
           .select('subscriber_email')
           .eq('campaign_id', campaignId)
           .eq('status', 'sent')
-        
+
         const sentEmails = new Set(sentLogs?.map(log => log.subscriber_email) || [])
-        
+
         // Get all current verified subscribers
         const { data: allSubscribers, error: subsError } = await supabase
           .from('newsletter_subscribers')
           .select('email')
           .eq('verified', true)
-        
+
         if (subsError) {
           throw subsError
         }
-        
+
         // Filter out those who already received the email
         emailsToRetry = (allSubscribers || [])
           .map(s => s.email)
@@ -289,12 +289,12 @@ export default async function handler(
       if (!fromEmail) {
         return res.status(500).json({ error: 'Email service not configured. Please set up Resend or Zoho.' })
       }
-      
+
       accessToken = await getZohoAccessToken()
       const accountInfo = await getZohoAccountInfo(accessToken, fromEmail)
       accountId = accountInfo.accountId
-      actualFromEmail = (accountInfo.email && accountInfo.email.includes('@')) 
-        ? accountInfo.email 
+      actualFromEmail = (accountInfo.email && accountInfo.email.includes('@'))
+        ? accountInfo.email
         : fromEmail
     }
 
@@ -306,12 +306,12 @@ export default async function handler(
     const batchSize = useResend ? 50 : 10
     for (let i = 0; i < emailsToRetry.length; i += batchSize) {
       const batch = emailsToRetry.slice(i, i + batchSize)
-      
+
       await Promise.all(
         batch.map(async (email) => {
           try {
             const recipientHtml = buildRecipientHtml(campaign.content_html, email)
-            
+
             // Use Resend or Zoho based on configuration
             const result = useResend
               ? await sendResendEmail(email, campaign.subject, recipientHtml)
@@ -320,7 +320,7 @@ export default async function handler(
             if (result.success) {
               emailsSent++
               results.push({ email, status: 'sent' })
-              
+
               // Upsert log entry (insert if not exists, update if exists)
               if (isLegacyRetry) {
                 await supabase
@@ -346,7 +346,7 @@ export default async function handler(
             } else {
               emailsFailed++
               results.push({ email, status: 'failed', error: result.error })
-              
+
               // Upsert log entry with error
               if (isLegacyRetry) {
                 await supabase

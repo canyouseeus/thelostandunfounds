@@ -1,257 +1,257 @@
 {
-  "generated": "2025-12-14T21:52:44.315Z",
+  "generated": "2026-01-11T00:04:08.328Z",
   "files": [
     {
-      "filename": "update-blog-post-if-exists.sql",
-      "path": "public/sql/update-blog-post-if-exists.sql",
-      "publicPath": "/sql/update-blog-post-if-exists.sql",
-      "modified": "2025-12-14T19:46:10.567Z",
-      "size": 11841
+      "filename": "blog-schema-migration.sql",
+      "path": "public/blog-schema-migration.sql",
+      "publicPath": "/blog-schema-migration.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 5267
     },
     {
-      "filename": "update-homescience-to-newtheory.sql",
-      "path": "public/sql/update-homescience-to-newtheory.sql",
-      "publicPath": "/sql/update-homescience-to-newtheory.sql",
-      "modified": "2025-12-14T19:46:10.567Z",
-      "size": 636
+      "filename": "create-first-blog-post.sql",
+      "path": "public/create-first-blog-post.sql",
+      "publicPath": "/create-first-blog-post.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 32310
     },
     {
-      "filename": "setup-admin-user.sql",
-      "path": "public/sql/setup-admin-user.sql",
-      "publicPath": "/sql/setup-admin-user.sql",
-      "modified": "2025-12-14T19:46:10.566Z",
-      "size": 3859
-    },
-    {
-      "filename": "update-admin-username-and-subdomain.sql",
-      "path": "public/sql/update-admin-username-and-subdomain.sql",
-      "publicPath": "/sql/update-admin-username-and-subdomain.sql",
-      "modified": "2025-12-14T19:46:10.566Z",
-      "size": 2863
-    },
-    {
-      "filename": "fix-brand-assets-rls-policies.sql",
-      "path": "public/sql/fix-brand-assets-rls-policies.sql",
-      "publicPath": "/sql/fix-brand-assets-rls-policies.sql",
-      "modified": "2025-12-14T19:46:10.565Z",
-      "size": 3108
-    },
-    {
-      "filename": "fix-user-subdomain-connections.sql",
-      "path": "public/sql/fix-user-subdomain-connections.sql",
-      "publicPath": "/sql/fix-user-subdomain-connections.sql",
-      "modified": "2025-12-14T19:46:10.565Z",
-      "size": 6682
-    },
-    {
-      "filename": "move-post-to-book-club.sql",
-      "path": "public/sql/move-post-to-book-club.sql",
-      "publicPath": "/sql/move-post-to-book-club.sql",
-      "modified": "2025-12-14T19:46:10.565Z",
-      "size": 2943
-    },
-    {
-      "filename": "fix-book-club-posts-blog-column.sql",
-      "path": "public/sql/fix-book-club-posts-blog-column.sql",
-      "publicPath": "/sql/fix-book-club-posts-blog-column.sql",
-      "modified": "2025-12-14T19:46:10.564Z",
-      "size": 1458
-    },
-    {
-      "filename": "fix-admin-dashboard-data-access.sql",
-      "path": "public/sql/fix-admin-dashboard-data-access.sql",
-      "publicPath": "/sql/fix-admin-dashboard-data-access.sql",
-      "modified": "2025-12-14T19:46:10.563Z",
-      "size": 2400
-    },
-    {
-      "filename": "fix-blog-posts-rls-policies.sql",
-      "path": "public/sql/fix-blog-posts-rls-policies.sql",
-      "publicPath": "/sql/fix-blog-posts-rls-policies.sql",
-      "modified": "2025-12-14T19:46:10.563Z",
-      "size": 2730
-    },
-    {
-      "filename": "fix-blog-submissions-rls-policies.sql",
-      "path": "public/sql/fix-blog-submissions-rls-policies.sql",
-      "publicPath": "/sql/fix-blog-submissions-rls-policies.sql",
-      "modified": "2025-12-14T19:46:10.563Z",
-      "size": 1816
-    },
-    {
-      "filename": "diagnose-user-subdomain-connections.sql",
-      "path": "public/sql/diagnose-user-subdomain-connections.sql",
-      "publicPath": "/sql/diagnose-user-subdomain-connections.sql",
-      "modified": "2025-12-14T19:46:10.562Z",
-      "size": 3684
-    },
-    {
-      "filename": "ensure-author-name-column-exists.sql",
-      "path": "public/sql/ensure-author-name-column-exists.sql",
-      "publicPath": "/sql/ensure-author-name-column-exists.sql",
-      "modified": "2025-12-14T19:46:10.562Z",
-      "size": 599
-    },
-    {
-      "filename": "create-brand-assets-storage-bucket.sql",
-      "path": "public/sql/create-brand-assets-storage-bucket.sql",
-      "publicPath": "/sql/create-brand-assets-storage-bucket.sql",
-      "modified": "2025-12-14T19:46:10.561Z",
-      "size": 5203
-    },
-    {
-      "filename": "create-newsletter-campaigns-table.sql",
-      "path": "public/sql/create-newsletter-campaigns-table.sql",
-      "publicPath": "/sql/create-newsletter-campaigns-table.sql",
-      "modified": "2025-12-14T19:46:10.561Z",
-      "size": 2734
-    },
-    {
-      "filename": "create-user-subdomains-table.sql",
-      "path": "public/sql/create-user-subdomains-table.sql",
-      "publicPath": "/sql/create-user-subdomains-table.sql",
-      "modified": "2025-12-14T19:46:10.561Z",
-      "size": 3226
-    },
-    {
-      "filename": "create-blog-post-our-tech-stack.sql",
-      "path": "public/sql/create-blog-post-our-tech-stack.sql",
-      "publicPath": "/sql/create-blog-post-our-tech-stack.sql",
-      "modified": "2025-12-14T19:46:10.560Z",
-      "size": 41747
-    },
-    {
-      "filename": "create-blog-submissions-table.sql",
-      "path": "public/sql/create-blog-submissions-table.sql",
-      "publicPath": "/sql/create-blog-submissions-table.sql",
-      "modified": "2025-12-14T19:46:10.560Z",
-      "size": 4236
-    },
-    {
-      "filename": "create-blog-post-building-a-creative-brand-that-rewards-people-for-life.sql",
-      "path": "public/sql/create-blog-post-building-a-creative-brand-that-rewards-people-for-life.sql",
-      "publicPath": "/sql/create-blog-post-building-a-creative-brand-that-rewards-people-for-life.sql",
-      "modified": "2025-12-14T19:46:10.559Z",
-      "size": 30060
-    },
-    {
-      "filename": "create-blog-post-join-the-lost-archives-book-club.sql",
-      "path": "public/sql/create-blog-post-join-the-lost-archives-book-club.sql",
-      "publicPath": "/sql/create-blog-post-join-the-lost-archives-book-club.sql",
-      "modified": "2025-12-14T19:46:10.559Z",
-      "size": 25861
-    },
-    {
-      "filename": "comprehensive-admin-setup.sql",
-      "path": "public/sql/comprehensive-admin-setup.sql",
-      "publicPath": "/sql/comprehensive-admin-setup.sql",
-      "modified": "2025-12-14T19:46:10.558Z",
-      "size": 5237
-    },
-    {
-      "filename": "create-blog-post-all-for-a-dream.sql",
-      "path": "public/sql/create-blog-post-all-for-a-dream.sql",
-      "publicPath": "/sql/create-blog-post-all-for-a-dream.sql",
-      "modified": "2025-12-14T19:46:10.558Z",
-      "size": 21977
-    },
-    {
-      "filename": "create-blog-post-artificial-intelligence-the-job-killer.sql",
-      "path": "public/sql/create-blog-post-artificial-intelligence-the-job-killer.sql",
-      "publicPath": "/sql/create-blog-post-artificial-intelligence-the-job-killer.sql",
-      "modified": "2025-12-14T19:46:10.558Z",
-      "size": 30894
-    },
-    {
-      "filename": "add-welcome-email-tracking.sql",
-      "path": "public/sql/add-welcome-email-tracking.sql",
-      "publicPath": "/sql/add-welcome-email-tracking.sql",
-      "modified": "2025-12-14T19:46:10.557Z",
-      "size": 595
-    },
-    {
-      "filename": "check-blog-post-exists.sql",
-      "path": "public/sql/check-blog-post-exists.sql",
-      "publicPath": "/sql/check-blog-post-exists.sql",
-      "modified": "2025-12-14T19:46:10.557Z",
-      "size": 920
-    },
-    {
-      "filename": "check-user-subdomain-email-status.sql",
-      "path": "public/sql/check-user-subdomain-email-status.sql",
-      "publicPath": "/sql/check-user-subdomain-email-status.sql",
-      "modified": "2025-12-14T19:46:10.557Z",
-      "size": 1489
-    },
-    {
-      "filename": "add-column-to-blog-submissions.sql",
-      "path": "public/sql/add-column-to-blog-submissions.sql",
-      "publicPath": "/sql/add-column-to-blog-submissions.sql",
-      "modified": "2025-12-14T19:46:10.556Z",
-      "size": 856
-    },
-    {
-      "filename": "add-emails-to-user-roles-from-submissions.sql",
-      "path": "public/sql/add-emails-to-user-roles-from-submissions.sql",
-      "publicPath": "/sql/add-emails-to-user-roles-from-submissions.sql",
-      "modified": "2025-12-14T19:46:10.556Z",
-      "size": 2853
-    },
-    {
-      "filename": "add-publication-email-tracking.sql",
-      "path": "public/sql/add-publication-email-tracking.sql",
-      "publicPath": "/sql/add-publication-email-tracking.sql",
-      "modified": "2025-12-14T19:46:10.556Z",
-      "size": 624
-    },
-    {
-      "filename": "add-user-subdomain-support.sql",
-      "path": "public/sql/add-user-subdomain-support.sql",
-      "publicPath": "/sql/add-user-subdomain-support.sql",
-      "modified": "2025-12-14T19:46:10.556Z",
-      "size": 2876
+      "filename": "add-amazon-storefront-id.sql",
+      "path": "public/sql/add-amazon-storefront-id.sql",
+      "publicPath": "/sql/add-amazon-storefront-id.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 870
     },
     {
       "filename": "add-author-name-to-blog-posts.sql",
       "path": "public/sql/add-author-name-to-blog-posts.sql",
       "publicPath": "/sql/add-author-name-to-blog-posts.sql",
-      "modified": "2025-12-14T19:46:10.555Z",
+      "modified": "2025-12-18T20:47:47.000Z",
       "size": 470
     },
     {
       "filename": "add-blog-title-to-user-subdomains.sql",
       "path": "public/sql/add-blog-title-to-user-subdomains.sql",
       "publicPath": "/sql/add-blog-title-to-user-subdomains.sql",
-      "modified": "2025-12-14T19:46:10.555Z",
+      "modified": "2025-12-18T20:47:47.000Z",
       "size": 2679
     },
     {
       "filename": "add-column-to-blog-posts.sql",
       "path": "public/sql/add-column-to-blog-posts.sql",
       "publicPath": "/sql/add-column-to-blog-posts.sql",
-      "modified": "2025-12-14T19:46:10.555Z",
+      "modified": "2025-12-18T20:47:47.000Z",
       "size": 1005
     },
     {
-      "filename": "add-amazon-storefront-id.sql",
-      "path": "public/sql/add-amazon-storefront-id.sql",
-      "publicPath": "/sql/add-amazon-storefront-id.sql",
-      "modified": "2025-12-14T19:46:10.554Z",
-      "size": 870
+      "filename": "add-column-to-blog-submissions.sql",
+      "path": "public/sql/add-column-to-blog-submissions.sql",
+      "publicPath": "/sql/add-column-to-blog-submissions.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 856
     },
     {
-      "filename": "create-first-blog-post.sql",
-      "path": "public/create-first-blog-post.sql",
-      "publicPath": "/create-first-blog-post.sql",
-      "modified": "2025-12-14T19:46:10.544Z",
-      "size": 32310
+      "filename": "add-emails-to-user-roles-from-submissions.sql",
+      "path": "public/sql/add-emails-to-user-roles-from-submissions.sql",
+      "publicPath": "/sql/add-emails-to-user-roles-from-submissions.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 2853
     },
     {
-      "filename": "blog-schema-migration.sql",
-      "path": "public/blog-schema-migration.sql",
-      "publicPath": "/blog-schema-migration.sql",
-      "modified": "2025-12-14T19:46:10.536Z",
-      "size": 5267
+      "filename": "add-publication-email-tracking.sql",
+      "path": "public/sql/add-publication-email-tracking.sql",
+      "publicPath": "/sql/add-publication-email-tracking.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 624
+    },
+    {
+      "filename": "add-user-subdomain-support.sql",
+      "path": "public/sql/add-user-subdomain-support.sql",
+      "publicPath": "/sql/add-user-subdomain-support.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 2876
+    },
+    {
+      "filename": "add-welcome-email-tracking.sql",
+      "path": "public/sql/add-welcome-email-tracking.sql",
+      "publicPath": "/sql/add-welcome-email-tracking.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 595
+    },
+    {
+      "filename": "check-blog-post-exists.sql",
+      "path": "public/sql/check-blog-post-exists.sql",
+      "publicPath": "/sql/check-blog-post-exists.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 920
+    },
+    {
+      "filename": "check-user-subdomain-email-status.sql",
+      "path": "public/sql/check-user-subdomain-email-status.sql",
+      "publicPath": "/sql/check-user-subdomain-email-status.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 1489
+    },
+    {
+      "filename": "comprehensive-admin-setup.sql",
+      "path": "public/sql/comprehensive-admin-setup.sql",
+      "publicPath": "/sql/comprehensive-admin-setup.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 5237
+    },
+    {
+      "filename": "create-blog-post-all-for-a-dream.sql",
+      "path": "public/sql/create-blog-post-all-for-a-dream.sql",
+      "publicPath": "/sql/create-blog-post-all-for-a-dream.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 21977
+    },
+    {
+      "filename": "create-blog-post-artificial-intelligence-the-job-killer.sql",
+      "path": "public/sql/create-blog-post-artificial-intelligence-the-job-killer.sql",
+      "publicPath": "/sql/create-blog-post-artificial-intelligence-the-job-killer.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 30894
+    },
+    {
+      "filename": "create-blog-post-building-a-creative-brand-that-rewards-people-for-life.sql",
+      "path": "public/sql/create-blog-post-building-a-creative-brand-that-rewards-people-for-life.sql",
+      "publicPath": "/sql/create-blog-post-building-a-creative-brand-that-rewards-people-for-life.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 30060
+    },
+    {
+      "filename": "create-blog-post-join-the-lost-archives-book-club.sql",
+      "path": "public/sql/create-blog-post-join-the-lost-archives-book-club.sql",
+      "publicPath": "/sql/create-blog-post-join-the-lost-archives-book-club.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 25861
+    },
+    {
+      "filename": "create-blog-post-our-tech-stack.sql",
+      "path": "public/sql/create-blog-post-our-tech-stack.sql",
+      "publicPath": "/sql/create-blog-post-our-tech-stack.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 41747
+    },
+    {
+      "filename": "create-blog-submissions-table.sql",
+      "path": "public/sql/create-blog-submissions-table.sql",
+      "publicPath": "/sql/create-blog-submissions-table.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 4236
+    },
+    {
+      "filename": "create-brand-assets-storage-bucket.sql",
+      "path": "public/sql/create-brand-assets-storage-bucket.sql",
+      "publicPath": "/sql/create-brand-assets-storage-bucket.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 5203
+    },
+    {
+      "filename": "create-newsletter-campaigns-table.sql",
+      "path": "public/sql/create-newsletter-campaigns-table.sql",
+      "publicPath": "/sql/create-newsletter-campaigns-table.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 2734
+    },
+    {
+      "filename": "create-user-subdomains-table.sql",
+      "path": "public/sql/create-user-subdomains-table.sql",
+      "publicPath": "/sql/create-user-subdomains-table.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 3226
+    },
+    {
+      "filename": "diagnose-user-subdomain-connections.sql",
+      "path": "public/sql/diagnose-user-subdomain-connections.sql",
+      "publicPath": "/sql/diagnose-user-subdomain-connections.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 3684
+    },
+    {
+      "filename": "ensure-author-name-column-exists.sql",
+      "path": "public/sql/ensure-author-name-column-exists.sql",
+      "publicPath": "/sql/ensure-author-name-column-exists.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 599
+    },
+    {
+      "filename": "fix-admin-dashboard-data-access.sql",
+      "path": "public/sql/fix-admin-dashboard-data-access.sql",
+      "publicPath": "/sql/fix-admin-dashboard-data-access.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 2400
+    },
+    {
+      "filename": "fix-blog-posts-rls-policies.sql",
+      "path": "public/sql/fix-blog-posts-rls-policies.sql",
+      "publicPath": "/sql/fix-blog-posts-rls-policies.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 2730
+    },
+    {
+      "filename": "fix-blog-submissions-rls-policies.sql",
+      "path": "public/sql/fix-blog-submissions-rls-policies.sql",
+      "publicPath": "/sql/fix-blog-submissions-rls-policies.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 1816
+    },
+    {
+      "filename": "fix-book-club-posts-blog-column.sql",
+      "path": "public/sql/fix-book-club-posts-blog-column.sql",
+      "publicPath": "/sql/fix-book-club-posts-blog-column.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 1458
+    },
+    {
+      "filename": "fix-brand-assets-rls-policies.sql",
+      "path": "public/sql/fix-brand-assets-rls-policies.sql",
+      "publicPath": "/sql/fix-brand-assets-rls-policies.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 3108
+    },
+    {
+      "filename": "fix-user-subdomain-connections.sql",
+      "path": "public/sql/fix-user-subdomain-connections.sql",
+      "publicPath": "/sql/fix-user-subdomain-connections.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 6682
+    },
+    {
+      "filename": "move-post-to-book-club.sql",
+      "path": "public/sql/move-post-to-book-club.sql",
+      "publicPath": "/sql/move-post-to-book-club.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 2943
+    },
+    {
+      "filename": "setup-admin-user.sql",
+      "path": "public/sql/setup-admin-user.sql",
+      "publicPath": "/sql/setup-admin-user.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 3859
+    },
+    {
+      "filename": "update-admin-username-and-subdomain.sql",
+      "path": "public/sql/update-admin-username-and-subdomain.sql",
+      "publicPath": "/sql/update-admin-username-and-subdomain.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 2863
+    },
+    {
+      "filename": "update-blog-post-if-exists.sql",
+      "path": "public/sql/update-blog-post-if-exists.sql",
+      "publicPath": "/sql/update-blog-post-if-exists.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 11841
+    },
+    {
+      "filename": "update-homescience-to-newtheory.sql",
+      "path": "public/sql/update-homescience-to-newtheory.sql",
+      "publicPath": "/sql/update-homescience-to-newtheory.sql",
+      "modified": "2025-12-18T20:47:47.000Z",
+      "size": 636
     }
   ]
 }

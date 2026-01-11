@@ -6,12 +6,12 @@
  * Much better than Zoho's ~50/day limit!
  */
 
-import { 
-  wrapEmailContent, 
-  generateNewsletterEmail, 
+import {
+  wrapEmailContent,
+  generateNewsletterEmail,
   generateTransactionalEmail,
-  processEmailContent 
-} from '../email-template';
+  processEmailContent
+} from '../email-template.js';
 
 interface ResendEmailParams {
   to: string | string[];
@@ -38,7 +38,7 @@ const RESEND_API_URL = 'https://api.resend.com/emails';
  */
 export async function sendEmail(params: ResendEmailParams): Promise<{ success: boolean; id?: string; error?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
-  
+
   if (!apiKey) {
     return { success: false, error: 'Resend API key not configured' };
   }
@@ -67,9 +67,9 @@ export async function sendEmail(params: ResendEmailParams): Promise<{ success: b
 
     if (!response.ok) {
       console.error('Resend API error:', data);
-      return { 
-        success: false, 
-        error: data.error?.message || `Resend error: ${response.status}` 
+      return {
+        success: false,
+        error: data.error?.message || `Resend error: ${response.status}`
       };
     }
 
@@ -87,10 +87,10 @@ export async function sendBatchEmails(
   emails: Array<{ to: string; subject: string; html: string }>
 ): Promise<{ success: boolean; results: Array<{ to: string; success: boolean; id?: string; error?: string }> }> {
   const apiKey = process.env.RESEND_API_KEY;
-  
+
   if (!apiKey) {
-    return { 
-      success: false, 
+    return {
+      success: false,
       results: emails.map(e => ({ to: e.to, success: false, error: 'Resend API key not configured' }))
     };
   }
@@ -100,10 +100,10 @@ export async function sendBatchEmails(
 
   // Resend batch API supports up to 100 emails per request
   const batchSize = 100;
-  
+
   for (let i = 0; i < emails.length; i += batchSize) {
     const batch = emails.slice(i, i + batchSize);
-    
+
     try {
       const response = await fetch('https://api.resend.com/emails/batch', {
         method: 'POST',
