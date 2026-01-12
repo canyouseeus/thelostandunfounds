@@ -23,20 +23,15 @@ export default async function handler(
     // Pricing Logic
     // 1 photo = $5
     // 3 photos = $8
-    let amount = 0
+    // 25 photos = $37.50 ($1.50/ea)
     const count = photoIds.length
 
-    if (count === 1) {
-      amount = 5.00
-    } else if (count === 3) {
-      amount = 8.00
-    } else {
-      // For other counts, we use a simple additive logic for now or enforce 1 or 3
-      // But let's be flexible: 2 = $10, 4 = $8 + $5, etc.
-      const bundlesOf3 = Math.floor(count / 3)
-      const remainder = count % 3
-      amount = (bundlesOf3 * 8.00) + (remainder * 5.00)
-    }
+    const bundles25 = Math.floor(count / 25)
+    let rem = count % 25
+    const bundles3 = Math.floor(rem / 3)
+    const singles = rem % 3
+
+    const amount = (bundles25 * 37.50) + (bundles3 * 8.00) + (singles * 5.00)
 
     // Initialize Supabase
     // We MUST use the Service Role Key to bypass RLS for inserting orders

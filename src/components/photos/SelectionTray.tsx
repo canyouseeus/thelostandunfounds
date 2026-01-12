@@ -25,15 +25,41 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
 
     const pricing = useMemo(() => {
         if (count === 0) return { total: 0, message: 'Select photos to begin' };
+
+        // Elite Bundle: 25 photos for $37.50 ($1.50 each)
+        if (count === 25) return { total: 37.50, message: 'Elite Bundle Applied! ($1.50/photo)' };
+
+        // Better messaging for upsells
         if (count === 1) return { total: 5.00, message: 'Add 2 more for the $8 bundle!' };
         if (count === 2) return { total: 10.00, message: 'Add 1 more to unlock the $8 bundle!' };
         if (count === 3) return { total: 8.00, message: 'Bundle Applied! (Best Value)' };
 
-        // Simple logic for > 3
-        const bundles = Math.floor(count / 3);
-        const remainder = count % 3;
-        const total = (bundles * 8.00) + (remainder * 5.00);
-        return { total, message: `${bundles} Bundle(s) + ${remainder} Photo(s)` };
+        // Suggest Elite Bundle if count is between 15 and 24
+        if (count >= 15 && count < 25) {
+            const currentTotal = (Math.floor(count / 3) * 8.00) + ((count % 3) * 5.00);
+            const savings = currentTotal - 37.50;
+            if (savings > 0) {
+                return {
+                    total: currentTotal,
+                    message: `Add ${25 - count} more to save $${savings.toFixed(2)} with the Elite Bundle!`
+                };
+            }
+        }
+
+        // Standard Calculation
+        const bundles25 = Math.floor(count / 25);
+        let rem = count % 25;
+        const bundles3 = Math.floor(rem / 3);
+        const singles = rem % 3;
+
+        const total = (bundles25 * 37.50) + (bundles3 * 8.00) + (singles * 5.00);
+
+        let msg = '';
+        if (bundles25 > 0) msg += `${bundles25} Elite Bundle(s)`;
+        if (bundles3 > 0) msg += (msg ? ' + ' : '') + `${bundles3} Bundle(s)`;
+        if (singles > 0) msg += (msg ? ' + ' : '') + `${singles} Photo(s)`;
+
+        return { total, message: msg || 'Calculating...' };
     }, [count]);
 
     if (count === 0) return null;
@@ -85,16 +111,16 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
                 <button
                     onClick={onCheckout}
                     disabled={loading}
-                    className={`flex items-center gap-2 px-8 py-3 rounded-full font-bold transition-all ${count === 3
-                            ? 'bg-green-600 hover:bg-green-500 text-white scale-105 shadow-[0_0_20px_rgba(22,163,74,0.4)]'
-                            : 'bg-white hover:bg-zinc-200 text-black'
+                    className={`flex items-center gap-2 px-8 py-3 rounded-full font-bold transition-all ${count >= 3
+                        ? 'bg-green-600 hover:bg-green-500 text-white scale-105 shadow-[0_0_20px_rgba(22,163,74,0.4)]'
+                        : 'bg-white hover:bg-zinc-200 text-black'
                         } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                     {loading ? (
                         <div className="w-5 h-5 border-2 border-t-transparent border-zinc-900 rounded-full animate-spin" />
                     ) : (
                         <>
-                            {count === 3 && <CheckCircle className="w-4 h-4" />}
+                            {count >= 3 && <CheckCircle className="w-4 h-4" />}
                             <span>Checkout Now</span>
                             <ShoppingBag className="w-4 h-4" />
                         </>
