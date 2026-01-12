@@ -92,8 +92,8 @@ export default async function handler(
         return await handleManualCommission(req, res)
       case 'paypal-payouts':
         return await handlePayPalPayouts(req, res)
-      case 'health':
-        return await handleHealth(req, res)
+      case 'paypal-test':
+        return await handlePayPalTest(req, res)
       default:
         console.error('Admin route not found:', route, 'query:', req.query, 'url:', req.url)
         return res.status(404).json({ error: `Admin route not found: ${route}` })
@@ -216,9 +216,9 @@ async function handlePayPalPayouts(req: VercelRequest, res: VercelResponse) {
   return handler.default(req, res)
 }
 /**
- * Health Check Handler
+ * PayPal Test Handler
  */
-async function handleHealth(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/_health-check-handler.js')
+async function handlePayPalTest(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/_paypal-test-handler.js')
   return handler.default(req, res)
 }
