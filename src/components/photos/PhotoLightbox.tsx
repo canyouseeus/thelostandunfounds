@@ -48,7 +48,7 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                     <motion.div
                         initial={{ scale: 0.9, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        className="relative max-h-[80vh] w-full flex items-center justify-center pointer-events-none"
+                        className="relative max-h-[60vh] w-full flex items-center justify-center pointer-events-none"
                     >
                         {/* Watermark Overlay (Security) */}
                         <div className="absolute inset-0 z-10 opacity-10 flex items-center justify-center pointer-events-none select-none">
@@ -60,16 +60,17 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                         <img
                             src={photo.thumbnail_url}
                             alt={photo.title}
-                            className="max-h-[80vh] w-auto object-contain shadow-2xl rounded-lg select-none"
+                            className="max-h-[60vh] w-auto object-contain shadow-2xl rounded-lg select-none"
                             onContextMenu={(e) => e.preventDefault()}
                             draggable={false}
                         />
                     </motion.div>
 
                     {/* Controls */}
+                    {/* Close button moved to fixed position outside container flow */}
                     <button
                         onClick={onClose}
-                        className="absolute top-0 right-0 p-4 text-white hover:text-zinc-400 transition-colors"
+                        className="fixed top-6 right-6 z-[70] p-2 bg-black/20 hover:bg-black/50 backdrop-blur-md rounded-full text-white transition-all"
                     >
                         <X className="w-8 h-8" />
                     </button>
@@ -101,8 +102,8 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                         <button
                             onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}
                             className={`flex items-center gap-2 px-8 py-4 rounded-full font-bold transition-all ${isSelected
-                                    ? 'bg-zinc-800 text-white'
-                                    : 'bg-white text-black hover:bg-zinc-200'
+                                ? 'bg-zinc-800 text-white'
+                                : 'bg-white text-black hover:bg-zinc-200'
                                 }`}
                         >
                             {isSelected ? (
