@@ -29,9 +29,28 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
     const [loading, setLoading] = useState(true);
     const [checkoutLoading, setCheckoutLoading] = useState(false);
 
+    const storageKey = `selected_photos_${librarySlug}`;
+
     useEffect(() => {
         fetchLibrary();
+
+        // Load saved selections from localStorage
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+            try {
+                setSelectedPhotos(JSON.parse(saved));
+            } catch (err) {
+                console.error('Error parsing saved selections:', err);
+            }
+        }
     }, [librarySlug]);
+
+    // Persist selections to localStorage
+    useEffect(() => {
+        if (!loading) {
+            localStorage.setItem(storageKey, JSON.stringify(selectedPhotos));
+        }
+    }, [selectedPhotos, storageKey, loading]);
 
     async function fetchLibrary() {
         try {
@@ -91,6 +110,8 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
 
             const data = await response.json();
             if (response.ok && data.approvalUrl) {
+                // Clear saved selections before redirecting
+                localStorage.removeItem(storageKey);
                 window.location.href = data.approvalUrl;
             } else {
                 const errorMessage = data.details || data.message || data.error || 'Unknown error';

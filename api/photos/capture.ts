@@ -16,6 +16,41 @@ export default async function handler(
             return res.status(400).json({ error: 'orderId is required' })
         }
 
+        // Initialize Supabase early for idempotency check
+        const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+        if (!supabaseUrl || !supabaseKey) {
+            console.error('[Capture] Missing Supabase credentials')
+            return res.status(500).json({ error: 'Database configuration error' })
+        }
+
+        const supabase = createClient(supabaseUrl, supabaseKey)
+
+        // 1. CHECK IF ALREADY CAPTURED (IDEMPOTENCY)
+        const { data: existingOrder } = await supabase
+            .from('photo_orders')
+            .select('id, payment_status')
+            .eq('paypal_order_id', orderId)
+            .single()
+
+        if (existingOrder?.payment_status === 'completed') {
+            console.log('[Capture] Order already completed, returning existing entitlements for', orderId)
+            const { data: entitlements } = await supabase
+                .from('photo_entitlements')
+                .select('*')
+                .eq('order_id', existingOrder.id)
+
+            return res.status(200).json({
+                success: true,
+                orderId: existingOrder.id,
+                entitlements: entitlements?.map(e => ({
+                    photoId: e.photo_id,
+                    token: e.token
+                })) || []
+            })
+        }
+
         // Initialize PayPal
         const environment = (process.env.PAYPAL_ENVIRONMENT || 'SANDBOX').toUpperCase()
         const isLive = environment === 'LIVE'
@@ -69,17 +104,6 @@ export default async function handler(
         }
 
         const captureData = await captureResponse.json()
-
-        // Initialize Supabase
-        const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
-        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-        if (!supabaseUrl || !supabaseKey) {
-            console.error('[Capture] Missing Supabase credentials')
-            return res.status(500).json({ error: 'Database configuration error' })
-        }
-
-        const supabase = createClient(supabaseUrl, supabaseKey)
 
         // 1. Update Order record to 'completed'
         // We find the order by paypal_order_id (which is request.orderId)
