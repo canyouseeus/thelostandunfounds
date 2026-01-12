@@ -145,16 +145,24 @@ export default async function handler(
       .single()
 
     if (dbOrderError) {
-      console.error('Database Order Error:', dbOrderError)
-      return res.status(500).json({ error: 'Failed to save order record' })
+      console.error('[Checkout] Database Order Error:', {
+        error: dbOrderError,
+        payload: {
+          email,
+          total_amount_cents: Math.round(amount * 100),
+          paypal_order_id: order.id
+        }
+      })
+      return res.status(500).json({
+        error: 'Failed to save order record',
+        details: dbOrderError.message
+      })
     }
 
     // Create Pending Entitlements
     const entitlements = photoIds.map((photoId: string) => ({
       order_id: photoOrder.id,
       photo_id: photoId,
-      // We set a temporary expiry or check status later. 
-      // Ideally, we verify payment_status='completed' before delivering.
       expires_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
     }))
 
@@ -163,9 +171,15 @@ export default async function handler(
       .insert(entitlements)
 
     if (dbEntitlementsError) {
-      console.error('Database Entitlements Error:', dbEntitlementsError)
-      // Non-fatal? No, fatal.
-      return res.status(500).json({ error: 'Failed to save order items' })
+      console.error('[Checkout] Database Entitlements Error:', {
+        error: dbEntitlementsError,
+        orderId: photoOrder.id,
+        photoIds
+      })
+      return res.status(500).json({
+        error: 'Failed to save order items',
+        details: dbEntitlementsError.message
+      })
     }
 
     return res.status(200).json({
@@ -174,7 +188,11 @@ export default async function handler(
     })
 
   } catch (error: any) {
-    console.error('Checkout error:', error)
-    return res.status(500).json({ error: 'Checkout failed' })
+    console.error('[Checkout] Fatal Error:', error)
+    return res.status(500).json({
+      error: 'Checkout failed',
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    })
   }
 }

@@ -90,14 +90,16 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
             });
 
             const data = await response.json();
-            if (data.approvalUrl) {
+            if (response.ok && data.approvalUrl) {
                 window.location.href = data.approvalUrl;
             } else {
-                alert('Checkout failed. Please try again.');
+                const errorMessage = data.details || data.message || data.error || 'Unknown error';
+                alert(`Checkout failed: ${errorMessage}`);
+                console.error('Checkout error details:', data);
             }
-        } catch (err) {
-            console.error('Checkout error:', err);
-            alert('Checkout failed.');
+        } catch (err: any) {
+            console.error('Checkout fetch error:', err);
+            alert(`Checkout error: ${err.message || 'Check your connection'}`);
         } finally {
             setCheckoutLoading(false);
         }
