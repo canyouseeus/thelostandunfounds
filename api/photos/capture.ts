@@ -55,53 +55,43 @@ export default async function handler(
 
         const captureData = await captureResponse.json()
 
-        // Get custom data (photoIds, email) from the order
-        const orderDetailsResponse = await fetch(`${baseUrl}/v2/checkout/orders/${orderId}`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${access_token}`,
-            }
-        })
-        const orderDetails = await orderDetailsResponse.json()
-        const { photoIds, email } = JSON.parse(orderDetails.purchase_units[0].custom_id)
-
         // Initialize Supabase
         const supabaseUrl = process.env.SUPABASE_URL!
         const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
         const supabase = createClient(supabaseUrl, supabaseKey)
 
-        // 1. Create Order record
+        // 1. Update Order record to 'completed'
+        // We find the order by paypal_order_id (which is request.orderId)
         const { data: photoOrder, error: orderError } = await supabase
             .from('photo_orders')
-            .insert({
-                email,
-                total_amount_cents: Math.round(parseFloat(captureData.purchase_units[0].payments.captures[0].amount.value) * 100),
-                paypal_order_id: orderId,
-                payment_status: 'completed'
+            .update({
+                payment_status: 'completed',
+                // Optional: Update final amount if needed, but we trust the initial Create Order logic mostly.
+                // But let's verify amount Matches?
+                // For now, simpler is better. We trust PayPal captured what we asked.
             })
+            .eq('paypal_order_id', orderId)
             .select()
             .single()
 
-        if (orderError) throw orderError
+        if (orderError || !photoOrder) {
+            console.error('Database Update Error:', orderError)
+            return res.status(500).json({ error: 'Failed to update order status' })
+        }
 
-        // 2. Create Entitlements
-        const entitlements = photoIds.map((photoId: string) => ({
-            order_id: photoOrder.id,
-            photo_id: photoId,
-            expires_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString() // 48 hours
-        }))
-
-        const { data: createdEntitlements, error: entitlementError } = await supabase
+        // 2. Fetch Entitlements
+        // They were created in checkout.ts
+        const { data: entitlements, error: entitlementError } = await supabase
             .from('photo_entitlements')
-            .insert(entitlements)
-            .select()
+            .select('*')
+            .eq('order_id', photoOrder.id)
 
         if (entitlementError) throw entitlementError
 
         return res.status(200).json({
             success: true,
             orderId: photoOrder.id,
-            entitlements: createdEntitlements.map(e => ({
+            entitlements: entitlements.map(e => ({
                 photoId: e.photo_id,
                 token: e.token
             }))

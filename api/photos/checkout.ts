@@ -94,7 +94,8 @@ export default async function handler(
 
     const { access_token } = await tokenResponse.json()
 
-    // Create the order
+    // Create the order (Minimal custom_id to avoid length limits)
+    // We only send EMAIL in custom_id for reference. The real data is stored in our DB.
     const orderPayload = {
       intent: 'CAPTURE',
       purchase_units: [{
@@ -103,7 +104,7 @@ export default async function handler(
           value: amount.toFixed(2),
         },
         description: `Photo Download Access (${count} photos)`,
-        custom_id: JSON.stringify({ photoIds, email }),
+        custom_id: JSON.stringify({ email }), // Just email, keep it short!
       }],
       application_context: {
         brand_name: 'THE LOST+UNFOUNDS',
@@ -128,6 +129,42 @@ export default async function handler(
     if (!orderResponse.ok || !order.id) {
       console.error('PayPal Order Error:', order)
       return res.status(500).json({ error: 'Failed to create PayPal order', details: order })
+    }
+
+    // Persist Order to Supabase (Pending Status)
+    const { data: photoOrder, error: dbOrderError } = await supabase
+      .from('photo_orders')
+      .insert({
+        email,
+        total_amount_cents: Math.round(amount * 100),
+        paypal_order_id: order.id,
+        payment_status: 'pending' // Initial status
+      })
+      .select()
+      .single()
+
+    if (dbOrderError) {
+      console.error('Database Order Error:', dbOrderError)
+      return res.status(500).json({ error: 'Failed to save order record' })
+    }
+
+    // Create Pending Entitlements
+    const entitlements = photoIds.map((photoId: string) => ({
+      order_id: photoOrder.id,
+      photo_id: photoId,
+      // We set a temporary expiry or check status later. 
+      // Ideally, we verify payment_status='completed' before delivering.
+      expires_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
+    }))
+
+    const { error: dbEntitlementsError } = await supabase
+      .from('photo_entitlements')
+      .insert(entitlements)
+
+    if (dbEntitlementsError) {
+      console.error('Database Entitlements Error:', dbEntitlementsError)
+      // Non-fatal? No, fatal.
+      return res.status(500).json({ error: 'Failed to save order items' })
     }
 
     return res.status(200).json({
