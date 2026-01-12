@@ -24,6 +24,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         writeTest: {
             status: 'pending',
             error: null as any
+        },
+        paypalTest: {
+            status: 'pending',
+            environment: process.env.PAYPAL_ENVIRONMENT
         }
     }
 
@@ -61,6 +65,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } catch (err: any) {
         results.writeTest.status = 'FAILED'
         results.writeTest.error = err
+    }
+
+    // Final confirmation of PayPal vars (only checking presence here to avoid slow external call)
+    if (process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET) {
+        results.paypalTest.status = 'KEYS_PRESENT'
     }
 
     return res.status(200).json(results)

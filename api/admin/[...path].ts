@@ -8,7 +8,7 @@ export default async function handler(
   // Extract route from path parameter (Vercel catch-all)
   // For /api/admin/affiliates, req.query.path should be ['affiliates']
   let route = ''
-  
+
   // First, try to get route from query.path (Vercel catch-all parameter)
   if (req.query.path) {
     if (Array.isArray(req.query.path)) {
@@ -18,7 +18,7 @@ export default async function handler(
       route = req.query.path
     }
   }
-  
+
   // Fallback: extract from URL if path not found in query
   if (!route && req.url) {
     const urlPath = req.url.split('?')[0]
@@ -42,7 +42,7 @@ export default async function handler(
     method: req.method,
     pathParts: req.url ? req.url.split('?')[0].split('/').filter(p => p) : []
   })
-  
+
   // If still no route found, return error early
   if (!route) {
     console.error('[Admin Router] Route extraction failed', {
@@ -50,7 +50,7 @@ export default async function handler(
       url: req.url,
       path: req.query.path
     })
-    return res.status(404).json({ 
+    return res.status(404).json({
       error: 'Admin route not found',
       debug: {
         query: req.query,
@@ -92,6 +92,8 @@ export default async function handler(
         return await handleManualCommission(req, res)
       case 'paypal-payouts':
         return await handlePayPalPayouts(req, res)
+      case 'health':
+        return await handleHealth(req, res)
       default:
         console.error('Admin route not found:', route, 'query:', req.query, 'url:', req.url)
         return res.status(404).json({ error: `Admin route not found: ${route}` })
@@ -211,5 +213,12 @@ async function handleSendAffiliateEmail(req: VercelRequest, res: VercelResponse)
  */
 async function handlePayPalPayouts(req: VercelRequest, res: VercelResponse) {
   const handler = await import('../../lib/api-handlers/admin/paypal-payouts.js')
+  return handler.default(req, res)
+}
+/**
+ * Health Check Handler
+ */
+async function handleHealth(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/_health-check-handler.js')
   return handler.default(req, res)
 }
