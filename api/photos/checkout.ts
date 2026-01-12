@@ -39,12 +39,13 @@ export default async function handler(
     }
 
     // Initialize Supabase
+    // We MUST use the Service Role Key to bypass RLS for inserting orders
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
     if (!supabaseUrl || !supabaseKey) {
-      console.error('Missing Supabase credentials')
-      return res.status(500).json({ error: 'Server configuration error' })
+      console.error('Missing Supabase credentials: SUPABASE_SERVICE_ROLE_KEY is required')
+      return res.status(500).json({ error: 'Server configuration error: Missing Service Key' })
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey)
