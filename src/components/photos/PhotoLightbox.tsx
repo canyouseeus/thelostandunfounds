@@ -33,7 +33,7 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[60] flex items-center justify-center p-4 md:p-8"
+                className="fixed inset-0 z-[1000] flex items-center justify-center p-4 md:p-8"
             >
                 {/* Backdrop */}
                 <div
@@ -64,16 +64,15 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                             onContextMenu={(e) => e.preventDefault()}
                             draggable={false}
                         />
-                    </motion.div>
 
-                    {/* Controls */}
-                    {/* Close button moved to fixed position outside container flow */}
-                    <button
-                        onClick={onClose}
-                        className="fixed top-6 right-6 z-[70] p-2 bg-black/20 hover:bg-black/50 backdrop-blur-md rounded-full text-white transition-all"
-                    >
-                        <X className="w-8 h-8" />
-                    </button>
+                        {/* Close Button - Overlaid on Photo */}
+                        <button
+                            onClick={onClose}
+                            className="absolute top-4 right-4 z-50 p-2 bg-black/40 hover:bg-black/60 backdrop-blur-md rounded-full text-white transition-all pointer-events-auto opacity-0 group-hover:opacity-100"
+                        >
+                            <X className="w-6 h-6" />
+                        </button>
+                    </motion.div>
 
                     <button
                         onClick={(e) => { e.stopPropagation(); onPrev(); }}
