@@ -1,0 +1,78 @@
+* Host api.paypal.com:443 was resolved.
+* IPv6: (none)
+* IPv4: 173.0.92.23
+*   Trying 173.0.92.23:443...
+* Connected to api.paypal.com (173.0.92.23) port 443
+* ALPN: curl offers h2,http/1.1
+* (304) (OUT), TLS handshake, Client hello (1):
+} [319 bytes data]
+*  CAfile: /etc/ssl/cert.pem
+*  CApath: none
+* (304) (IN), TLS handshake, Server hello (2):
+{ [122 bytes data]
+* (304) (IN), TLS handshake, Unknown (8):
+{ [19 bytes data]
+* (304) (IN), TLS handshake, Request CERT (13):
+{ [4425 bytes data]
+* (304) (IN), TLS handshake, Certificate (11):
+{ [5498 bytes data]
+* (304) (IN), TLS handshake, CERT verify (15):
+{ [264 bytes data]
+* (304) (IN), TLS handshake, Finished (20):
+{ [52 bytes data]
+* (304) (OUT), TLS handshake, Certificate (11):
+} [8 bytes data]
+* (304) (OUT), TLS handshake, Finished (20):
+} [52 bytes data]
+* SSL connection using TLSv1.3 / AEAD-AES256-GCM-SHA384 / [blank] / UNDEF
+* ALPN: server accepted h2
+* Server certificate:
+*  subject: C=US; ST=California; L=San Jose; O=PayPal, Inc.; CN=api.paypal.com
+*  start date: Mar 13 00:00:00 2025 GMT
+*  expire date: Apr 13 23:59:59 2026 GMT
+*  subjectAltName: host "api.paypal.com" matched cert's "api.paypal.com"
+*  issuer: C=US; O=DigiCert Inc; CN=DigiCert Global G2 TLS RSA SHA256 2020 CA1
+*  SSL certificate verify ok.
+* using HTTP/2
+* Server auth using Basic with user 'AdFYps0FvEk53RYJsTpIVAeqGsvJNHXGgRPfA9oyR4B4bjHED_fbsfcm7FI9GttKV54Dp9k5H4rC_n26'
+* [HTTP/2] [1] OPENED stream for https://api.paypal.com/v1/oauth2/token
+* [HTTP/2] [1] [:method: POST]
+* [HTTP/2] [1] [:scheme: https]
+* [HTTP/2] [1] [:authority: api.paypal.com]
+* [HTTP/2] [1] [:path: /v1/oauth2/token]
+* [HTTP/2] [1] [authorization: Basic QWRGWXBzMEZ2RWs1M1JZSnNUcElWQWVxR3N2Sk5IWEdnUlBmQTlveVI0QjRiakhFRF9mYnNmY203Rkk5R3R0S1Y1NERwOWs1SDRyQ19uMjY6RUJnS05Nc3Z5cTR6ZWtycmtWSldENU41MlZQbmtRMFZVY2FPUlpFQnNBa2VCbWZuMDhfVDd0MzlzYmp1emw3WTZ0T3hPaTRHUXhvYktGSnc=]
+* [HTTP/2] [1] [user-agent: curl/8.7.1]
+* [HTTP/2] [1] [accept: */*]
+* [HTTP/2] [1] [content-length: 29]
+* [HTTP/2] [1] [content-type: application/x-www-form-urlencoded]
+> POST /v1/oauth2/token HTTP/2
+> Host: api.paypal.com
+> Authorization: Basic QWRGWXBzMEZ2RWs1M1JZSnNUcElWQWVxR3N2Sk5IWEdnUlBmQTlveVI0QjRiakhFRF9mYnNmY203Rkk5R3R0S1Y1NERwOWs1SDRyQ19uMjY6RUJnS05Nc3Z5cTR6ZWtycmtWSldENU41MlZQbmtRMFZVY2FPUlpFQnNBa2VCbWZuMDhfVDd0MzlzYmp1emw3WTZ0T3hPaTRHUXhvYktGSnc=
+> User-Agent: curl/8.7.1
+> Accept: */*
+> Content-Length: 29
+> Content-Type: application/x-www-form-urlencoded
+> 
+} [29 bytes data]
+* upload completely sent off: 29 bytes
+< HTTP/2 200 
+< date: Mon, 12 Jan 2026 00:01:09 GMT
+< content-type: application/json
+< content-length: 2027
+< cf-ray: 9bc860b41a8e6c69-DFW
+< access-control-expose-headers: Server-Timing
+< cache-control: max-age=0, no-cache, no-store, must-revalidate
+< paypal-debug-id: f838a9361c927
+< pragma: no-cache
+< server-timing: traceparent;desc="00-0000000000000000000f838a9361c927-c3cacab25498a163-01"
+< set-cookie: l7_az=ccg14.slc; Path=/; Domain=paypal.com; Expires=Mon, 12 Jan 2026 00:31:09 GMT; HttpOnly; Secure
+< set-cookie: __cf_bm=WY7Mo3jx5nnsn6xl00PlSwHViJyNaTQXxUJSZR3252k-1768176069-1.0.1.1-hSZLpvEGcgK0E63mnZ4faq4TPJhJnMArtkMzkuQuJazXB_LwZuuDHeO6rYw.WKo4J1uKPfMZW4UrE31oPr2ILUor4ysNa8yt7CsxlEF0dYY; path=/; expires=Mon, 12-Jan-26 00:31:09 GMT; domain=.api.paypal.com; HttpOnly; Secure; SameSite=None
+< vary: Accept-Encoding
+< x-paypal-token-service: IAAS
+< cf-cache-status: DYNAMIC
+< strict-transport-security: max-age=31536000; includeSubDomains; preload
+< server: cloudflare
+< 
+{ [1360 bytes data]
+* Connection #0 to host api.paypal.com left intact
+{"scope":"https://uri.paypal.com/services/invoicing https://uri.paypal.com/services/checkout/one-click-with-merchant-issued-token https://uri.paypal.com/services/payments/futurepayments https://uri.paypal.com/services/vault/payment-tokens/read https://uri.paypal.com/services/disputes/read-buyer https://uri.paypal.com/services/payments/realtimepayment https://uri.paypal.com/services/subscriptions/confirm-payment https://uri.paypal.com/services/payments/client-payments-eligibility https://api.paypal.com/v1/vault/credit-card https://api.paypal.com/v1/payments/.* https://uri.paypal.com/services/reporting/search/read https://uri.paypal.com/services/wallet/mandates/write https://uri.paypal.com/services/vault/payment-tokens/readwrite https://uri.paypal.com/services/applications/webhooks https://uri.paypal.com/services/pricing/exchange-currency/read https://uri.paypal.com/services/credit/client-offer-presentment/read https://uri.paypal.com/services/disputes/update-seller openid https://uri.paypal.com/services/payments/payment/authcapture Braintree:Vault https://uri.paypal.com/services/disputes/read-seller https://uri.paypal.com/services/payments/orders/client_sdk_orders_api https://uri.paypal.com/services/payments/refund https://uri.paypal.com/services/disputes/create https://uri.paypal.com/services/pricing/quote-exchange-rates/read https://uri.paypal.com/services/documents/disputes/download https://uri.paypal.com/services/billing-agreements https://uri.paypal.com/services/checkout/payment-resources https://uri.paypal.com/services/wallet/mandates/read https://uri.paypal.com/payments/payouts https://api.paypal.com/v1/vault/credit-card/.* https://uri.paypal.com/services/shipping/trackers/readwrite https://uri.paypal.com/services/subscriptions","access_token":"A21AANMovgSo0yTBB4sg4YpUglnJtwCND7bqqgwQBrfDHyzraD7WGFzxjpZ_hMySdRAYF48C_oLHhXx43p6ZS82tInLNg1qyQ","token_type":"Bearer","app_id":"APP-8CJ14158A3175040Y","expires_in":32348,"nonce":"2026-01-12T00:00:17ZFbpNcaSefZ5ethona3VjFBSirmzlCBY8YvmhB3Hn3m0"}
