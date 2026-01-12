@@ -61,20 +61,25 @@ export default async function handler(
     }
 
     // Create PayPal order
-    const environment = (process.env.PAYPAL_ENVIRONMENT || '').toUpperCase()
-    const isSandbox = environment !== 'LIVE'
-    const clientId = isSandbox
-      ? process.env.PAYPAL_CLIENT_ID_SANDBOX || process.env.PAYPAL_CLIENT_ID
-      : process.env.PAYPAL_CLIENT_ID || process.env.PAYPAL_CLIENT_ID_LIVE
-    const clientSecret = isSandbox
-      ? process.env.PAYPAL_CLIENT_SECRET_SANDBOX || process.env.PAYPAL_CLIENT_SECRET
-      : process.env.PAYPAL_CLIENT_SECRET || process.env.PAYPAL_CLIENT_SECRET_LIVE
-    const baseUrl = isSandbox ? 'https://api.sandbox.paypal.com' : 'https://api.paypal.com'
+    const environment = (process.env.PAYPAL_ENVIRONMENT || 'SANDBOX').toUpperCase()
+    const isLive = environment === 'LIVE'
 
-    console.log(`[PayPal] Initializing checkout in ${isSandbox ? 'SANDBOX' : 'LIVE'} mode`)
+    // Explicitly prioritize the correct key for the environment
+    const clientId = isLive
+      ? (process.env.PAYPAL_CLIENT_ID_LIVE || process.env.PAYPAL_CLIENT_ID)
+      : (process.env.PAYPAL_CLIENT_ID_SANDBOX || process.env.PAYPAL_CLIENT_ID)
+
+    const clientSecret = isLive
+      ? (process.env.PAYPAL_CLIENT_SECRET_LIVE || process.env.PAYPAL_CLIENT_SECRET)
+      : (process.env.PAYPAL_CLIENT_SECRET_SANDBOX || process.env.PAYPAL_CLIENT_SECRET)
+
+    const baseUrl = isLive ? 'https://api.paypal.com' : 'https://api.sandbox.paypal.com'
+
+    console.log(`[PayPal] ${environment} Mode: Using Client ID starting with ${clientId?.substring(0, 5)}`)
 
     if (!clientId || !clientSecret) {
-      return res.status(500).json({ error: 'PayPal credentials not configured' })
+      console.error('[PayPal] Missing credentials for', environment)
+      return res.status(500).json({ error: `PayPal credentials not configured for ${environment}` })
     }
 
     // Get PayPal access token

@@ -3,30 +3,41 @@ import { VercelRequest, VercelResponse } from '@vercel/node'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     const environment = (process.env.PAYPAL_ENVIRONMENT || 'SANDBOX').toUpperCase()
-    const isSandbox = environment !== 'LIVE'
-    const clientId = isSandbox
-        ? process.env.PAYPAL_CLIENT_ID_SANDBOX || process.env.PAYPAL_CLIENT_ID
-        : process.env.PAYPAL_CLIENT_ID || process.env.PAYPAL_CLIENT_ID_LIVE
-    const clientSecret = isSandbox
-        ? process.env.PAYPAL_CLIENT_SECRET_SANDBOX || process.env.PAYPAL_CLIENT_SECRET
-        : process.env.PAYPAL_CLIENT_SECRET || process.env.PAYPAL_CLIENT_SECRET_LIVE
-    const baseUrl = isSandbox ? 'https://api.sandbox.paypal.com' : 'https://api.paypal.com'
+    const isLive = environment === 'LIVE'
+
+    const vars = {
+        PAYPAL_ENVIRONMENT: process.env.PAYPAL_ENVIRONMENT,
+        PAYPAL_CLIENT_ID: !!process.env.PAYPAL_CLIENT_ID,
+        PAYPAL_CLIENT_ID_LIVE: !!process.env.PAYPAL_CLIENT_ID_LIVE,
+        PAYPAL_CLIENT_ID_SANDBOX: !!process.env.PAYPAL_CLIENT_ID_SANDBOX,
+        PAYPAL_CLIENT_SECRET: !!process.env.PAYPAL_CLIENT_SECRET,
+        PAYPAL_CLIENT_SECRET_LIVE: !!process.env.PAYPAL_CLIENT_SECRET_LIVE,
+        PAYPAL_CLIENT_SECRET_SANDBOX: !!process.env.PAYPAL_CLIENT_SECRET_SANDBOX,
+    }
+
+    const clientId = isLive
+        ? (process.env.PAYPAL_CLIENT_ID_LIVE || process.env.PAYPAL_CLIENT_ID)
+        : (process.env.PAYPAL_CLIENT_ID_SANDBOX || process.env.PAYPAL_CLIENT_ID)
+
+    const clientSecret = isLive
+        ? (process.env.PAYPAL_CLIENT_SECRET_LIVE || process.env.PAYPAL_CLIENT_SECRET)
+        : (process.env.PAYPAL_CLIENT_SECRET_SANDBOX || process.env.PAYPAL_CLIENT_SECRET)
+
+    const baseUrl = isLive ? 'https://api.paypal.com' : 'https://api.sandbox.paypal.com'
 
     const results = {
-        environment,
-        baseUrl,
-        clientIdPresent: !!clientId,
-        clientIdStart: clientId ? `${clientId.substring(0, 5)}...` : null,
-        clientSecretPresent: !!clientSecret,
+        selectedEnvironment: environment,
+        effectiveBaseUrl: baseUrl,
+        environmentVariables: vars,
+        selectedClientIdStart: clientId ? `${clientId.substring(0, 5)}...` : null,
         authAttempt: {
             status: 'pending',
-            error: null as any,
-            paypalResponse: null as any
+            error: null as any
         }
     }
 
     if (!clientId || !clientSecret) {
-        return res.status(500).json({ error: 'PayPal credentials missing in environment', results })
+        return res.status(500).json({ error: 'PayPal credentials missing', results })
     }
 
     try {
@@ -41,8 +52,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         })
 
         const data = await response.json()
-        results.authAttempt.paypalResponse = data
-
         if (response.ok) {
             results.authAttempt.status = 'SUCCESS'
         } else {
