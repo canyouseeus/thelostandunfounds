@@ -44,34 +44,38 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                 {/* Content Container */}
                 <div className="relative w-full max-w-6xl h-full flex flex-col items-center justify-center group">
 
-                    {/* Main Image */}
+                    {/* Main Image Container */}
                     <motion.div
                         initial={{ scale: 0.9, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        className="relative max-h-[60vh] w-full flex items-center justify-center pointer-events-none"
+                        className="flex items-center justify-center w-full h-full pointer-events-none p-4"
                     >
-                        {/* Watermark Overlay (Security) */}
-                        <div className="absolute inset-0 z-10 opacity-10 flex items-center justify-center pointer-events-none select-none">
-                            <span className="text-4xl md:text-8xl font-black rotate-[-45deg] whitespace-nowrap">
-                                THE LOST+UNFOUNDS
-                            </span>
+                        {/* Inner generic wrapper that shrinks to fit the image */}
+                        <div className="relative w-fit h-auto flex items-center justify-center">
+
+                            {/* Watermark Overlay (Security) */}
+                            <div className="absolute inset-0 z-10 opacity-10 flex items-center justify-center select-none overflow-hidden rounded-lg">
+                                <span className="text-4xl md:text-8xl font-black rotate-[-45deg] whitespace-nowrap">
+                                    THE LOST+UNFOUNDS
+                                </span>
+                            </div>
+
+                            <img
+                                src={photo.thumbnail_url}
+                                alt={photo.title}
+                                className="max-h-[60vh] w-auto object-contain shadow-2xl rounded-lg select-none"
+                                onContextMenu={(e) => e.preventDefault()}
+                                draggable={false}
+                            />
+
+                            {/* Close Button - Overlaid on Photo */}
+                            <button
+                                onClick={onClose}
+                                className="absolute top-4 right-4 z-50 p-2 bg-black/40 hover:bg-black/60 backdrop-blur-md rounded-full text-white transition-all pointer-events-auto opacity-0 group-hover:opacity-100"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
                         </div>
-
-                        <img
-                            src={photo.thumbnail_url}
-                            alt={photo.title}
-                            className="max-h-[60vh] w-auto object-contain shadow-2xl rounded-lg select-none"
-                            onContextMenu={(e) => e.preventDefault()}
-                            draggable={false}
-                        />
-
-                        {/* Close Button - Overlaid on Photo */}
-                        <button
-                            onClick={onClose}
-                            className="absolute top-4 right-4 z-50 p-2 bg-black/40 hover:bg-black/60 backdrop-blur-md rounded-full text-white transition-all pointer-events-auto opacity-0 group-hover:opacity-100"
-                        >
-                            <X className="w-6 h-6" />
-                        </button>
                     </motion.div>
 
                     <button
