@@ -45,7 +45,8 @@ import {
   FolderOpen,
   ArrowUp,
   Maximize2,
-  Inbox
+  Inbox,
+  Image as ImageIcon
 } from 'lucide-react';
 import { LoadingSpinner } from '../components/Loading';
 import ErrorBoundary from '../components/ErrorBoundary';
@@ -71,6 +72,7 @@ import AdminMailView from '../components/admin/AdminMailView';
 import { ArrowLeft } from 'lucide-react';
 import AdminOverviewView from '../components/admin/AdminOverviewView';
 import { DashboardCharts } from '../components/admin/DashboardCharts';
+import AdminGalleryView from '../components/admin/AdminGalleryView';
 
 interface DashboardStats {
   totalUsers: number;
@@ -83,6 +85,19 @@ interface DashboardStats {
   platformHealth: 'healthy' | 'warning' | 'critical';
   newsletterSubscribers: number;
   history: { revenue: string[]; newsletter: string[]; affiliates: string[]; };
+  // Blog-specific metrics
+  blogWriters?: number;
+  totalBlogPosts?: number;
+  publishedThisMonth?: number;
+  affiliateRevenue?: number;
+  galleryRevenue?: number;
+  contributorDetails?: Array<{
+    authorId: string;
+    authorName: string;
+    email: string;
+    postCount: number;
+    latestPost: string;
+  }>;
 }
 
 interface RecentUser {
@@ -154,7 +169,7 @@ export default function Admin() {
     pendingPayouts: number;
     totalMLMEarnings: number;
   } | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'subscriptions' | 'products' | 'settings' | 'blog' | 'newsletter' | 'submissions' | 'assets' | 'secret-santa' | 'affiliates' | 'mail' | null>(null);
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'subscriptions' | 'products' | 'settings' | 'blog' | 'newsletter' | 'submissions' | 'assets' | 'secret-santa' | 'affiliates' | 'mail' | 'gallery' | null>(null);
   const [componentError, setComponentError] = useState<string | null>(null);
 
   const [allUsers, setAllUsers] = useState<RecentUser[]>([]);
@@ -478,6 +493,150 @@ export default function Admin() {
       const premiumRatio = totalSubs > 0 ? (premiumCount + proCount) / totalSubs : 0;
       const platformHealth = premiumRatio > 0.3 ? 'healthy' : premiumRatio > 0.1 ? 'warning' : 'critical';
 
+      // Calculate recent activity (actions in last 24h)
+      const oneDayAgo = new Date(Date.now() - 86400000).toISOString();
+      const recentSubsCount = activeSubs.filter(s => s.created_at && s.created_at > oneDayAgo).length;
+      const recentNewsletterCount = newestSubs.filter(s => s.created_at && s.created_at > oneDayAgo).length;
+
+      // Add recent blog posts to activity
+      const recentBlogCount = [
+        ...bookClubPosts.filter(p => p.created_at > oneDayAgo),
+        ...lostArchivesPosts.filter(p => p.created_at > oneDayAgo)
+      ].length;
+
+      // Calculate blog-specific metrics
+      let blogWritersCount = 0;
+      let totalBlogPostsCount = 0;
+      let publishedThisMonthCount = 0;
+      let affiliateRevenueTotal = 0;
+      let galleryRevenueTotal = 0;
+      let contributorDetailsArray: Array<{
+        authorId: string;
+        authorName: string;
+        email: string;
+        postCount: number;
+        latestPost: string;
+      }> = [];
+
+      try {
+        // Get unique blog writers count (authors who have published posts)
+        const { data: blogPosts } = await supabase
+          .from('blog_posts')
+          .select('author_id, user_id, created_at, published_at')
+          .eq('published', true);
+
+        if (blogPosts) {
+          // Count unique authors (try author_id first, fallback to user_id)
+          const uniqueAuthors = new Set(
+            blogPosts.map(p => p.author_id || p.user_id).filter(Boolean)
+          );
+          blogWritersCount = uniqueAuthors.size;
+          totalBlogPostsCount = blogPosts.length;
+
+          // Count posts published this month
+          const startOfMonth = new Date();
+          startOfMonth.setDate(1);
+          startOfMonth.setHours(0, 0, 0, 0);
+          publishedThisMonthCount = blogPosts.filter(p => {
+            const publishDate = new Date(p.published_at || p.created_at);
+            return publishDate >= startOfMonth;
+          }).length;
+
+          // Get contributor details
+          const authorIds = Array.from(uniqueAuthors);
+          console.log('Author IDs:', authorIds);
+
+          const { data: profiles, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, full_name, email')
+            .in('id', authorIds);
+
+          console.log('Profiles data:', profiles, 'Error:', profileError);
+
+          // Create contributor details even if profiles are missing
+          contributorDetailsArray = authorIds.map(authorId => {
+            const profile = profiles?.find(p => p.id === authorId);
+            const authorPosts = blogPosts.filter(p => (p.author_id || p.user_id) === authorId);
+            const latestPost = authorPosts.sort((a, b) =>
+              new Date(b.published_at || b.created_at).getTime() -
+              new Date(a.published_at || a.created_at).getTime()
+            )[0];
+
+            return {
+              authorId: authorId as string,
+              authorName: profile?.full_name || profile?.email?.split('@')[0] || `Author ${authorId.substring(0, 8)}`,
+              email: profile?.email || 'No email available',
+              postCount: authorPosts.length,
+              latestPost: latestPost?.published_at || latestPost?.created_at || new Date().toISOString(),
+            };
+          }).sort((a, b) => b.postCount - a.postCount); // Sort by post count descending
+
+          console.log('Contributor details array:', contributorDetailsArray);
+        }
+
+        // Platform launch date - filter out test data before this date
+        const PLATFORM_LAUNCH_DATE = '2026-01-15';
+
+        // Helper to identify test emails
+        const isTestEmail = (email: string | null | undefined) => {
+          if (!email) return false;
+          const testPatterns = ['test', 'demo', 'admin', 'dev', 'staging', 'dummy'];
+          return testPatterns.some(pattern =>
+            email.toLowerCase().includes(pattern)
+          );
+        };
+
+        // Get affiliate revenue with email and date filtering
+        const { data: affiliates, error: affError } = await supabase
+          .from('affiliates')
+          .select('total_earnings, email, created_at');
+
+        console.log('Affiliate data:', affiliates, 'Error:', affError);
+
+        if (affiliates) {
+          // Filter out test data
+          const realAffiliates = affiliates.filter(a =>
+            !isTestEmail(a.email) &&
+            new Date(a.created_at) >= new Date(PLATFORM_LAUNCH_DATE)
+          );
+
+          console.log('Real affiliates (filtered):', realAffiliates);
+
+          affiliateRevenueTotal = realAffiliates.reduce((sum, a) => {
+            const earnings = typeof a.total_earnings === 'string'
+              ? parseFloat(a.total_earnings)
+              : (a.total_earnings || 0);
+            return sum + (isNaN(earnings) ? 0 : earnings);
+          }, 0);
+          console.log('Total affiliate revenue (real customers only):', affiliateRevenueTotal);
+        }
+
+        // Get gallery revenue with email and date filtering
+        const { data: orders, error: ordersError } = await supabase
+          .from('photo_orders')
+          .select('total_amount_cents, email, created_at, payment_status');
+
+        console.log('Gallery orders:', orders, 'Error:', ordersError);
+
+        if (orders) {
+          // Filter out test data
+          const realOrders = orders.filter(o =>
+            !isTestEmail(o.email) &&
+            new Date(o.created_at) >= new Date(PLATFORM_LAUNCH_DATE) &&
+            o.payment_status === 'completed'
+          );
+
+          console.log('Real orders (filtered):', realOrders);
+
+          galleryRevenueTotal = realOrders.reduce((sum, o) =>
+            sum + (o.total_amount_cents || 0), 0
+          ) / 100;
+          console.log('Total gallery revenue (real customers only):', galleryRevenueTotal);
+        }
+      } catch (err) {
+        console.warn('Error loading blog metrics:', err);
+      }
+
       setStats({
         totalUsers: totalUsers || subscriptions.length,
         activeSubscriptions: activeSubs.length,
@@ -485,10 +644,17 @@ export default function Admin() {
         premiumUsers: premiumCount,
         proUsers: proCount,
         totalToolUsage: toolUsage || 0,
-        recentActivity: 0, // Can be enhanced with actual activity tracking
+        recentActivity: recentSubsCount + recentNewsletterCount + recentBlogCount,
         platformHealth,
         newsletterSubscribers: newsletterCount,
         history: historyData,
+        // Blog-specific metrics
+        blogWriters: blogWritersCount,
+        totalBlogPosts: totalBlogPostsCount,
+        publishedThisMonth: publishedThisMonthCount,
+        affiliateRevenue: affiliateRevenueTotal,
+        galleryRevenue: galleryRevenueTotal,
+        contributorDetails: contributorDetailsArray,
       });
 
       // Generate alerts based on stats
@@ -933,9 +1099,8 @@ export default function Admin() {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-2">
-            <Shield className="w-8 h-8" />
-            Admin Dashboard
+          <h1 className="text-4xl font-bold text-white mb-2 uppercase">
+            ADMIN DASHBOARD
           </h1>
           <p className="text-white/70">Manage your platform and users</p>
         </div>
@@ -1057,6 +1222,10 @@ export default function Admin() {
         </ErrorBoundary>
       )}
 
+      {activeTab === 'gallery' && (
+        <AdminGalleryView onBack={() => setActiveTab(null)} />
+      )}
+
       {activeTab === 'subscriptions' && (
         <div className="space-y-6">
           <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
@@ -1117,7 +1286,7 @@ export default function Admin() {
                 }}
                   history={stats?.history} />
               </div>
-              <div className="flex-none grid grid-cols-2 md:grid-cols-4 gap-4 items-baseline pb-4">
+              <div className="flex-none grid grid-cols-2 md:grid-cols-4 gap-4 items-start pb-4">
                 <div>
                   <div className="text-xs text-white/50 uppercase tracking-wider mb-1">Total Contributors</div>
                   <div className="text-2xl font-bold text-white"><AnimatedNumber value={stats?.totalUsers || 0} /></div>
@@ -1202,7 +1371,7 @@ export default function Admin() {
           >
             <div className="space-y-0">
               <AdminBentoRow label="Active" value={stats?.activeSubscriptions || 0} valueClassName="text-green-400" />
-              <AdminBentoRow label="Churn Rate" value="--%" />
+              <AdminBentoRow label="Churn Rate" value="0.0%" />
               <AdminBentoRow label="MRR" value={`$${((stats?.activeSubscriptions || 0) * 9.99).toFixed(0)}`} />
             </div>
           </AdminBentoCard>
@@ -1215,10 +1384,13 @@ export default function Admin() {
               <button onClick={() => setActiveTab('products')} className="w-full text-center text-xs hover:text-white text-white/60">Catalog →</button>
             }
           >
-            <div className="flex flex-col h-full justify-center items-center text-center p-4">
-              <p className="text-xs text-white/60 mb-2">Catalog & Cost Analysis</p>
-              <div className="px-3 py-1 bg-white/5 border border-white/10 text-xs">
-                Manage Inventory
+            <div className="space-y-0 text-left h-full">
+              <AdminBentoRow label="Catalog Items" value="0" />
+              <AdminBentoRow label="Inventory" value="IN STOCK" valueClassName="text-green-400" />
+              <AdminBentoRow label="Cost Basis" value="$0.00" />
+              <div className="mt-4 pt-2 border-t border-white/5">
+                <p className="text-[10px] text-white/40 uppercase tracking-widest leading-none">Status</p>
+                <p className="text-xs text-white/60 mt-1 uppercase">Operational</p>
               </div>
             </div>
           </AdminBentoCard>
@@ -1265,7 +1437,25 @@ export default function Admin() {
             </div>
           </AdminBentoCard>
 
-          {/* Webmail - 1x1 */}
+
+          {/* Gallery Ops */}
+          <div
+            onClick={() => setActiveTab('gallery')}
+            className="col-span-1 border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] p-6 flex flex-col justify-between cursor-pointer group transition-all"
+          >
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-2 bg-pink-400/10 rounded-sm">
+                <ImageIcon className="w-5 h-5 text-pink-400" />
+              </div>
+              <ArrowUp className="w-4 h-4 text-white/20 group-hover:text-white/60 group-hover:rotate-45 transition-all" />
+            </div>
+            <div>
+              <h3 className="text-white font-bold uppercase text-sm mb-1 tracking-wider">Gallery Ops</h3>
+              <p className="text-white/40 text-xs">Manage photos & sales</p>
+            </div>
+          </div>
+
+          {/* Mail System */}
           <div
             onClick={() => setActiveTab('mail')}
             className="cursor-pointer"
@@ -1277,18 +1467,16 @@ export default function Admin() {
                 <span className="w-full text-center text-xs hover:text-white text-white/60">Open Inbox →</span>
               }
             >
-              <div className="flex flex-col h-full justify-center items-center text-center p-4">
-                <Inbox className="w-8 h-8 text-white/20 mb-3" />
-                <p className="text-xs text-white/60 mb-2">Full Zoho Mail Access</p>
-                <div className="flex gap-2">
-                  <div className="px-2 py-1 bg-white/5 border border-white/10 text-[10px] text-white/40">
-                    Inbox
+              <div className="space-y-0 text-left h-full">
+                <AdminBentoRow label="Provider" value="ZOHO MAIL" />
+                <AdminBentoRow label="Status" value="CONNECTED" valueClassName="text-green-400" />
+                <AdminBentoRow label="Storage" value="0.0 GB" />
+                <div className="mt-4 pt-2 border-t border-white/5 flex gap-2">
+                  <div className="px-2 py-1 bg-white/5 border border-white/10 text-[10px] text-white/40 uppercase">
+                    INBOX
                   </div>
-                  <div className="px-2 py-1 bg-white/5 border border-white/10 text-[10px] text-white/40">
-                    Sent
-                  </div>
-                  <div className="px-2 py-1 bg-white/5 border border-white/10 text-[10px] text-white/40">
-                    Drafts
+                  <div className="px-2 py-1 bg-white/5 border border-white/10 text-[10px] text-white/40 uppercase">
+                    SENT
                   </div>
                 </div>
               </div>
@@ -1299,6 +1487,8 @@ export default function Admin() {
           <AdminBentoCard
             title="System"
             icon={<Settings className="w-4 h-4" />}
+            colSpan={2}
+            className="md:col-span-2"
             footer={
               <button onClick={() => setActiveTab('settings')} className="w-full text-center text-xs hover:text-white text-white/60">Configuration →</button>
             }
@@ -1339,58 +1529,38 @@ export default function Admin() {
 
             <div className="space-y-4 border-t border-white/10 pt-6">
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-white/5 rounded">
-                  <div className="text-xs text-white/40 mb-1">Tier</div>
+                <div className="p-4 bg-white/5 rounded-none">
+                  <div className="text-xs text-white/40 mb-1 uppercase tracking-tighter">Tier</div>
                   <div className="text-lg font-semibold text-white capitalize">{selectedUser.tier}</div>
                 </div>
-                <div className="p-4 bg-white/5 rounded">
-                  <div className="text-xs text-white/40 mb-1">Status</div>
-                  <div className="text-lg font-semibold text-green-400">Active</div>
-                </div>
-              </div>
-
-              <div className="p-4 bg-white/5 rounded">
-                <div className="text-xs text-white/40 mb-1">User ID</div>
-                <div className="font-mono text-sm text-white/80">{selectedUser.id}</div>
-              </div>
-
-              <div className="p-4 bg-white/5 rounded">
-                <div className="text-xs text-white/40 mb-1">Joined Date</div>
-                <div className="text-white/80">
-                  {selectedUser.created_at ? new Date(selectedUser.created_at).toLocaleString() : 'N/A'}
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4 border-t border-white/10 pt-6">
-              <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 bg-white/5 rounded-none">
-                  <div className="text-xs text-white/40 mb-1">Admin Status</div>
-                  <div className="text-lg font-semibold text-white">
-                    {selectedUser.isAdmin ? 'Admin' : 'User'}
-                  </div>
-                </div>
-                <div className="p-4 bg-white/5 rounded-none">
-                  <div className="text-xs text-white/40 mb-1">Account Status</div>
-                  <div className="text-lg font-semibold text-green-400">Active</div>
+                  <div className="text-xs text-white/40 mb-1 uppercase tracking-tighter">Status</div>
+                  <div className="text-lg font-semibold text-green-400">ACTIVE</div>
                 </div>
               </div>
 
               <div className="p-4 bg-white/5 rounded-none">
-                <div className="text-xs text-white/40 mb-1">Subdomain</div>
+                <div className="text-xs text-white/40 mb-1 uppercase tracking-tighter">Admin Status</div>
+                <div className="text-lg font-semibold text-white">
+                  {selectedUser.isAdmin ? 'ADMIN' : 'USER'}
+                </div>
+              </div>
+
+              <div className="p-4 bg-white/5 rounded-none">
+                <div className="text-xs text-white/40 mb-1 uppercase tracking-tighter">Subdomain</div>
                 <div className="font-mono text-sm text-white/80">
-                  {selectedUser.username || 'None'}
+                  {selectedUser.username || 'NONE'}
                 </div>
               </div>
 
               <div className="p-4 bg-white/5 rounded-none">
-                <div className="text-xs text-white/40 mb-1">User ID</div>
-                <div className="font-mono text-sm text-white/80 break-all">{selectedUser.id}</div>
+                <div className="text-xs text-white/40 mb-1 uppercase tracking-tighter">User ID</div>
+                <div className="font-mono text-xs text-white/80 break-all">{selectedUser.id}</div>
               </div>
 
               <div className="p-4 bg-white/5 rounded-none">
-                <div className="text-xs text-white/40 mb-1">Joined Date</div>
-                <div className="text-white/80">
+                <div className="text-xs text-white/40 mb-1 uppercase tracking-tighter">Joined Date</div>
+                <div className="text-white/80 text-sm">
                   {selectedUser.created_at ? new Date(selectedUser.created_at).toLocaleString() : 'N/A'}
                 </div>
               </div>
@@ -1401,7 +1571,7 @@ export default function Admin() {
                 onClick={() => {
                   success('User edit feature coming soon');
                 }}
-                className="flex-1 px-4 py-2 bg-white text-black font-semibold hover:bg-white/90 transition rounded-none"
+                className="flex-1 px-4 py-3 bg-white text-black font-bold hover:bg-white/90 transition rounded-none uppercase text-xs"
               >
                 Edit User
               </button>
@@ -1412,7 +1582,7 @@ export default function Admin() {
                     setSidePanelOpen(false);
                   }
                 }}
-                className="flex-1 px-4 py-2 bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 transition rounded-none"
+                className="flex-1 px-4 py-3 bg-red-500/20 text-red-500 border border-red-500/30 hover:bg-red-500/30 transition rounded-none uppercase text-xs font-bold"
               >
                 Ban User
               </button>
