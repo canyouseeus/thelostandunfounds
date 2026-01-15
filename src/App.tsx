@@ -51,6 +51,8 @@ import AdminAffiliates from './pages/AdminAffiliates'
 import Unsubscribe from './pages/Unsubscribe'
 import PhotoLibraryPage from './pages/PhotoLibraryPage'
 import PhotoSuccessPage from './pages/PhotoSuccessPage'
+import Gallery from './pages/Gallery'
+import DownloadPortal from './pages/DownloadPortal'
 
 function App() {
   return (
@@ -208,6 +210,12 @@ function App() {
               </Route>
               <Route path="/king-midas-leaderboard" element={<Layout />}>
                 <Route index element={<KingMidasLeaderboard />} />
+              </Route>
+              <Route path="/gallery" element={<Layout />}>
+                <Route index element={<Gallery />} />
+              </Route>
+              <Route path="/download" element={<Layout />}>
+                <Route index element={<DownloadPortal />} />
               </Route>
               <Route path="/photos/success" element={<Layout />}>
                 <Route index element={<PhotoSuccessPage />} />
