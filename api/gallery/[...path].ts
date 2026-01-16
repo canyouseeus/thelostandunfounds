@@ -112,7 +112,19 @@ async function handleCheckout(req: VercelRequest, res: VercelResponse) {
             body: 'grant_type=client_credentials'
         });
 
-        const { access_token } = await tokenRes.json();
+        if (!tokenRes.ok) {
+            const tokenErr = await tokenRes.text();
+            console.error('PayPal token error:', tokenErr);
+            return res.status(500).json({ error: 'Failed to authenticate with PayPal' });
+        }
+
+        const tokenData = await tokenRes.json();
+        const access_token = tokenData.access_token;
+
+        if (!access_token) {
+            console.error('No access token in PayPal response');
+            return res.status(500).json({ error: 'PayPal authentication failed' });
+        }
 
         // Create Order
         const orderRes = await fetch(`${baseUrl}/v2/checkout/orders`, {
@@ -135,13 +147,25 @@ async function handleCheckout(req: VercelRequest, res: VercelResponse) {
                     brand_name: 'THE LOST+UNFOUNDS',
                     landing_page: 'NO_PREFERENCE',
                     user_action: 'PAY_NOW',
-                    return_url: `${req.headers.origin || 'http://localhost:3000'}/payment/success`,
-                    cancel_url: `${req.headers.origin || 'http://localhost:3000'}/payment/cancel`
+                    return_url: `${req.headers.origin || 'https://www.thelostandunfounds.com'}/payment/success`,
+                    cancel_url: `${req.headers.origin || 'https://www.thelostandunfounds.com'}/payment/cancel`
                 }
             })
         });
 
+        if (!orderRes.ok) {
+            const orderErr = await orderRes.text();
+            console.error('PayPal order creation error:', orderErr);
+            return res.status(500).json({ error: 'Failed to create PayPal order' });
+        }
+
         const order = await orderRes.json();
+
+        if (!order.links) {
+            console.error('PayPal order missing links:', order);
+            return res.status(500).json({ error: 'Invalid PayPal order response' });
+        }
+
         const approvalUrl = order.links.find((l: any) => l.rel === 'approve')?.href;
 
         return res.status(200).json({ approvalUrl });
