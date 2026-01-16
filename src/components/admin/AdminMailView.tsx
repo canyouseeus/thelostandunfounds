@@ -4,14 +4,14 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  ArrowLeft, 
-  Mail, 
-  Send, 
-  FileText, 
-  Trash2, 
-  Inbox, 
-  Search, 
+import {
+  ArrowLeft,
+  Mail,
+  Send,
+  FileText,
+  Trash2,
+  Inbox,
+  Search,
   RefreshCw,
   Paperclip,
   Star,
@@ -97,7 +97,7 @@ const CACHE_DURATION = 5 * 60 * 1000;
 export default function AdminMailView({ onBack }: AdminMailViewProps) {
   const { user } = useAuth();
   const { success, error: showError } = useToast();
-  
+
   // State
   const [folders, setFolders] = useState<MailFolder[]>([]);
   const [selectedFolder, setSelectedFolder] = useState<MailFolder | null>(null);
@@ -121,36 +121,36 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showMoveMenu, setShowMoveMenu] = useState(false);
-  
+
   const PAGE_SIZE = 25;
   const contentRef = useRef<HTMLDivElement>(null);
 
   // API helper
   const mailApi = useCallback(async (
-    endpoint: string, 
+    endpoint: string,
     options: RequestInit = {}
   ) => {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'X-Admin-Email': user?.email || ''
     };
-    
+
     const response = await fetch(`/api/mail/${endpoint}`, {
       ...options,
       headers: { ...headers, ...options.headers }
     });
-    
+
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
       throw new Error(data.error || `API error: ${response.status}`);
     }
-    
+
     // Check if response is JSON
     const contentType = response.headers.get('content-type');
     if (contentType?.includes('application/json')) {
       return response.json();
     }
-    
+
     return response;
   }, [user?.email]);
 
@@ -160,7 +160,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
     if (!force && foldersCache && Date.now() - foldersCache.timestamp < CACHE_DURATION) {
       setFolders(foldersCache.data);
       if (!selectedFolder && foldersCache.data.length > 0) {
-        const inbox = foldersCache.data.find(f => 
+        const inbox = foldersCache.data.find(f =>
           f.folderType === 'Inbox' || f.folderName.toLowerCase() === 'inbox'
         );
         setSelectedFolder(inbox || foldersCache.data[0]);
@@ -168,21 +168,21 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
       setLoading(false);
       return;
     }
-    
+
     try {
       setLoading(true);
       setError(null);
       const data = await mailApi('folders');
       const foldersList = data.folders || [];
-      
+
       // Update cache
       foldersCache = { data: foldersList, timestamp: Date.now() };
-      
+
       setFolders(foldersList);
-      
+
       // Auto-select inbox
       if (!selectedFolder && foldersList.length > 0) {
-        const inbox = foldersList.find((f: MailFolder) => 
+        const inbox = foldersList.find((f: MailFolder) =>
           f.folderType === 'Inbox' || f.folderName.toLowerCase() === 'inbox'
         );
         setSelectedFolder(inbox || foldersList[0]);
@@ -200,10 +200,10 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
     try {
       setLoadingMessages(true);
       setError(null);
-      
+
       const start = pageNum * PAGE_SIZE;
       const data = await mailApi(`messages?folderId=${folderId}&limit=${PAGE_SIZE}&start=${start}`);
-      
+
       const newMessages = data.messages || [];
       setMessages(prev => append ? [...prev, ...newMessages] : newMessages);
       setHasMore(newMessages.length === PAGE_SIZE);
@@ -221,19 +221,19 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
     try {
       setLoadingMessage(true);
       setError(null);
-      
+
       const data = await mailApi(`message/${messageId}`);
       setSelectedMessage(data.message);
-      
+
       // Mark as read
       if (!data.message.isRead) {
         mailApi('read', {
           method: 'PUT',
           body: JSON.stringify({ messageId, isRead: true })
         }).catch(console.error);
-        
+
         // Update local state
-        setMessages(prev => prev.map(m => 
+        setMessages(prev => prev.map(m =>
           m.messageId === messageId ? { ...m, isRead: true } : m
         ));
       }
@@ -253,16 +253,16 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
       }
       return;
     }
-    
+
     try {
       setIsSearching(true);
       setError(null);
-      
+
       const params = new URLSearchParams({ q: searchQuery });
       if (selectedFolder) {
         params.append('folderId', selectedFolder.folderId);
       }
-      
+
       const data = await mailApi(`search?${params.toString()}`);
       setMessages(data.messages || []);
       setHasMore(false);
@@ -280,10 +280,10 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
       showError('To and Subject are required');
       return;
     }
-    
+
     try {
       setSending(true);
-      
+
       await mailApi('send', {
         method: 'POST',
         body: JSON.stringify({
@@ -296,13 +296,13 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
           inReplyTo: composeData.inReplyTo
         })
       });
-      
+
       success('Email sent successfully');
       setShowCompose(false);
       setComposeData({ to: '', cc: '', bcc: '', subject: '', content: '' });
-      
+
       // Refresh sent folder if viewing it
-      const sentFolder = folders.find(f => 
+      const sentFolder = folders.find(f =>
         f.folderType === 'Sent' || f.folderName.toLowerCase() === 'sent'
       );
       if (selectedFolder?.folderId === sentFolder?.folderId) {
@@ -330,7 +330,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
           isHtml: true
         })
       });
-      
+
       success('Draft saved');
     } catch (err: any) {
       console.error('Failed to save draft:', err);
@@ -343,7 +343,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
     try {
       await mailApi(`message/${messageId}`, { method: 'DELETE' });
       success('Message deleted');
-      
+
       // Remove from list
       setMessages(prev => prev.filter(m => m.messageId !== messageId));
       if (selectedMessage?.messageId === messageId) {
@@ -363,7 +363,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
         body: JSON.stringify({ messageId, folderId })
       });
       success('Message moved');
-      
+
       // Remove from current list
       setMessages(prev => prev.filter(m => m.messageId !== messageId));
       if (selectedMessage?.messageId === messageId) {
@@ -383,11 +383,11 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
         method: 'PUT',
         body: JSON.stringify({ messageId, isStarred: !currentState })
       });
-      
-      setMessages(prev => prev.map(m => 
+
+      setMessages(prev => prev.map(m =>
         m.messageId === messageId ? { ...m, isStarred: !currentState } : m
       ));
-      
+
       if (selectedMessage?.messageId === messageId) {
         setSelectedMessage(prev => prev ? { ...prev, isStarred: !currentState } : null);
       }
@@ -399,7 +399,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
   // Reply
   const handleReply = useCallback(() => {
     if (!selectedMessage) return;
-    
+
     setComposeData({
       to: selectedMessage.fromAddress,
       cc: '',
@@ -415,7 +415,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
   // Forward
   const handleForward = useCallback(() => {
     if (!selectedMessage) return;
-    
+
     setComposeData({
       to: '',
       cc: '',
@@ -433,9 +433,9 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
       const response = await fetch(`/api/mail/attachment/${messageId}/${attachment.attachmentId}`, {
         headers: { 'X-Admin-Email': user?.email || '' }
       });
-      
+
       if (!response.ok) throw new Error('Download failed');
-      
+
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -467,7 +467,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
     const date = new Date(timestamp);
     const now = new Date();
     const isToday = date.toDateString() === now.toDateString();
-    
+
     if (isToday) {
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
@@ -485,7 +485,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
   const getFolderIcon = (folder: MailFolder) => {
     const name = folder.folderName.toLowerCase();
     const type = folder.folderType.toLowerCase();
-    
+
     if (type === 'inbox' || name === 'inbox') return <Inbox className="w-4 h-4" />;
     if (type === 'sent' || name === 'sent') return <Send className="w-4 h-4" />;
     if (type === 'drafts' || name === 'drafts') return <FileText className="w-4 h-4" />;
@@ -550,11 +550,10 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
             <button
               key={folder.folderId}
               onClick={() => setSelectedFolder(folder)}
-              className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition ${
-                selectedFolder?.folderId === folder.folderId
+              className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition ${selectedFolder?.folderId === folder.folderId
                   ? 'bg-white/10 text-white'
                   : 'text-white/60 hover:text-white hover:bg-white/5'
-              }`}
+                }`}
             >
               {getFolderIcon(folder)}
               <span className="flex-1 truncate">{folder.folderName}</span>
@@ -565,7 +564,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
               )}
             </button>
           ))}
-          
+
           <div className="pt-4 border-t border-white/10 mt-4">
             <button
               onClick={() => loadFolders(true)}
@@ -610,11 +609,10 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                   <button
                     key={msg.messageId}
                     onClick={() => loadMessage(msg.messageId)}
-                    className={`w-full p-3 text-left border-b border-white/5 transition ${
-                      selectedMessage?.messageId === msg.messageId
+                    className={`w-full p-3 text-left border-b border-white/5 transition ${selectedMessage?.messageId === msg.messageId
                         ? 'bg-white/10'
                         : 'hover:bg-white/5'
-                    } ${!msg.isRead ? 'bg-white/[0.02]' : ''}`}
+                      } ${!msg.isRead ? 'bg-white/[0.02]' : ''}`}
                   >
                     <div className="flex items-start gap-2">
                       <button
@@ -656,7 +654,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                     </div>
                   </button>
                 ))}
-                
+
                 {/* Pagination */}
                 {(hasMore || page > 0) && (
                   <div className="p-3 flex items-center justify-center gap-2">
@@ -720,7 +718,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Actions */}
                   <div className="flex items-center gap-2">
                     <button
@@ -809,14 +807,14 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
               )}
 
               {/* Message body */}
-              <div 
+              <div
                 ref={contentRef}
                 className="flex-1 overflow-auto p-4"
               >
                 {selectedMessage.htmlContent ? (
-                  <div 
+                  <div
                     className="prose prose-invert max-w-none text-white/80"
-                    dangerouslySetInnerHTML={{ 
+                    dangerouslySetInnerHTML={{
                       __html: DOMPurify.sanitize(selectedMessage.htmlContent, {
                         ADD_TAGS: ['style'],
                         ADD_ATTR: ['target']
@@ -843,7 +841,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
 
       {/* Compose Modal */}
       {showCompose && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4">
           <div className="bg-black border border-white/20 w-full max-w-2xl max-h-[90vh] flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
@@ -870,7 +868,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                   placeholder="recipient@example.com"
                 />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-white/40 mb-1 block">CC</label>

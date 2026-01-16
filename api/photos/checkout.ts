@@ -20,6 +20,19 @@ export default async function handler(
       return res.status(400).json({ error: 'email is required' })
     }
 
+    const count = photoIds.length;
+
+    // Initialize Supabase
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('[Checkout] Missing Supabase credentials')
+      return res.status(500).json({ error: 'Database configuration error' })
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
     // Verify photo IDs exist and find associated library
     const { data: photos, error: photoError } = await supabase
       .from('photos')
@@ -56,7 +69,7 @@ export default async function handler(
       .eq('id', libraryId)
       .single();
 
-    const singlePrice = sortedOptions.find(o => o.photo_count === 1)?.price || library?.price || 5.00;
+    const singlePrice = sortedOptions.find((o: any) => o.photo_count === 1)?.price || library?.price || 5.00;
 
     for (const option of sortedOptions) {
       if (option.photo_count <= 0) continue;

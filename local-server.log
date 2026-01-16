@@ -1,0 +1,8 @@
+[dotenv@17.2.3] injecting env (6) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+[dotenv@17.2.3] injecting env (7) from .env.local -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
+✅ Local Server Env Loaded
+   Supabase URL: OK
+   Zoho Client ID: Loaded
+   Zoho From Email: Loaded
+Local API Server running on http://localhost:3001
+Enabling local PayPal sandbox testing...

@@ -83,6 +83,18 @@ export default defineConfig({
           });
         },
       },
+      // Proxy gallery API calls to local server
+      '/api/gallery': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+      },
+      // Proxy photos API calls to local server
+      '/api/photos': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
   build: {

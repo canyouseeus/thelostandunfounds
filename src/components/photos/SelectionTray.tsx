@@ -7,6 +7,7 @@ interface Photo {
     id: string;
     title: string;
     thumbnail_url: string;
+    google_drive_file_id: string;
 }
 
 interface SelectionTrayProps {
@@ -27,132 +28,149 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
     const count = selectedPhotos.length;
 
     const pricing = useMemo(() => {
-        if (count === 0) return { total: 0, message: 'Select photos to begin' };
+        if (count === 0) return { total: 0, messages: [] };
 
-        // Sort options by count descending to handle largest bundles first
         const sortedOptions = [...pricingOptions].sort((a, b) => b.photo_count - a.photo_count);
-
-        // Find single photo price for base calculations and upsells
         const singleOption = pricingOptions.find(o => o.photo_count === 1);
         const singlePrice = singleOption?.price || 5.00;
 
-        // Find standard bundle (usually 3) for upsell messaging
-        const bundleOption = pricingOptions.find(o => o.photo_count > 1 && o.photo_count < 10);
+        const sbTarget = pricingOptions.find(o => o.photo_count >= 3 && o.photo_count < 10)?.photo_count || 3;
+        const eliteTarget = pricingOptions.find(o => o.photo_count >= 10)?.photo_count || 25;
 
-        // Special messaging for small counts (upsells)
-        if (bundleOption) {
-            if (count < bundleOption.photo_count) {
-                const diff = bundleOption.photo_count - count;
-                return {
-                    total: count * singlePrice,
-                    message: `Add ${diff} more for the $${bundleOption.price.toFixed(0)} bundle!`
-                };
-            }
-            if (count === bundleOption.photo_count) {
-                return {
-                    total: bundleOption.price,
-                    message: `${bundleOption.name} Applied! (Best Value)`
-                };
-            }
-        } else if (count === 1) {
-            return { total: singlePrice, message: 'Single photo selected' };
-        }
-
-        // Standard calculation using available bundles
         let remaining = count;
         let total = 0;
-        let msgParts: string[] = [];
-
-        // Handle full gallery buyout (-1) if it's the only thing selected or if count is very high
-        const buyoutOption = pricingOptions.find(o => o.photo_count === -1);
-        if (buyoutOption && (count > 50)) { // Arbitrary threshold for suggesting buyout
-            // For now we prioritize normal bundles unless it's cheaper
-        }
-
         for (const option of sortedOptions) {
-            if (option.photo_count <= 0) continue; // Skip buyout/invalid for this loop
-
+            if (option.photo_count <= 0) continue;
             const numBundles = Math.floor(remaining / option.photo_count);
             if (numBundles > 0) {
                 total += numBundles * option.price;
                 remaining %= option.photo_count;
-                msgParts.push(`${numBundles} ${option.name}${numBundles > 1 ? '(s)' : ''}`);
             }
         }
+        if (remaining > 0) total += remaining * singlePrice;
 
-        // Add remaining as singles if not already covered
-        if (remaining > 0) {
-            total += remaining * singlePrice;
-            msgParts.push(`${remaining} Photo${remaining > 1 ? 's' : ''}`);
-        }
+        const messages: { text: string; highlight?: boolean; secondary?: string }[] = [];
 
-        return { total, message: msgParts.join(' + ') || 'Calculating...' };
+        // Elite Bundle Progress (Always show)
+        const toElite = count % eliteTarget === 0 ? eliteTarget : eliteTarget - (count % eliteTarget);
+        messages.push({
+            text: `ADD ${toElite} MORE FOR `,
+            highlight: true,
+            secondary: 'YOUR NEXT ELITE BUNDLE'
+        });
+
+        // Standard Bundle Progress (Always show)
+        const toSB = count % sbTarget === 0 ? sbTarget : sbTarget - (count % sbTarget);
+        messages.push({
+            text: `ADD ${toSB} MORE FOR THE `,
+            highlight: true,
+            secondary: `NEXT STANDARD BUNDLE`
+        });
+
+        return { total, messages };
     }, [count, pricingOptions]);
 
     if (count === 0) return null;
 
     return (
         <motion.div
-            initial={{ y: 100 }}
+            initial={{ y: 200 }}
             animate={{ y: 0 }}
-            exit={{ y: 100 }}
-            className="fixed bottom-0 left-0 right-0 z-50 p-4 md:p-6 flex justify-center"
+            exit={{ y: 200 }}
+            className="fixed bottom-0 left-0 right-0 z-50 p-4 md:p-6 flex justify-center pointer-events-none"
         >
-            <div className="bg-zinc-900/90 backdrop-blur-md border border-zinc-800 rounded-2xl shadow-2xl w-full max-w-4xl p-4 flex flex-col md:flex-row items-center gap-4">
-                {/* Thumbnails */}
-                <div className="flex -space-x-4 overflow-hidden py-2">
-                    {selectedPhotos.map((photo) => (
-                        <motion.div
-                            key={photo.id}
-                            layoutId={`photo-${photo.id}`}
-                            className="relative group w-12 h-12 md:w-16 md:h-16 flex-shrink-0"
-                        >
-                            <img
-                                src={photo.thumbnail_url}
-                                alt={photo.title}
-                                className="w-full h-full object-cover rounded-lg border-2 border-zinc-900 group-hover:border-zinc-700 transition-colors"
-                                draggable={false}
-                            />
-                            <button
-                                onClick={() => onRemove(photo.id)}
-                                className="absolute -top-1 -right-1 bg-red-500 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                            >
-                                <X className="w-3 h-3 text-white" />
-                            </button>
-                        </motion.div>
-                    ))}
-                </div>
+            <div className="bg-zinc-950/95 backdrop-blur-2xl border border-white/10 rounded-none shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-full max-w-5xl p-4 md:p-5 flex flex-col md:flex-row items-center gap-6 pointer-events-auto">
 
-                {/* Pricing Info */}
-                <div className="flex-grow text-left">
-                    <div className="flex items-center gap-2">
-                        <span className="text-white font-bold text-lg">${pricing.total.toFixed(2)}</span>
-                        <span className="text-zinc-400 text-sm hidden md:inline">• {count} Photo{count !== 1 ? 's' : ''}</span>
+                {/* Thumbnails Section */}
+                <div className="hidden md:flex flex-1 w-full h-24 items-center order-1 mt-0">
+                    <div className="flex items-center overflow-x-auto p-4 scrollbar-hide w-full justify-center md:justify-start">
+                        <AnimatePresence mode="popLayout">
+                            {selectedPhotos.map((photo, index) => (
+                                <motion.div
+                                    key={photo.id}
+                                    layout
+                                    initial={{ opacity: 0, x: 20, scale: 0.8 }}
+                                    animate={{
+                                        opacity: 1,
+                                        x: 0,
+                                        scale: 1,
+                                        zIndex: index
+                                    }}
+                                    whileHover={{ zIndex: 100 }}
+                                    exit={{ opacity: 0, scale: 0.8, x: -20 }}
+                                    className="relative group flex-shrink-0"
+                                    style={{
+                                        marginLeft: index === 0 ? '0' : '-1.5rem'
+                                    }}
+                                >
+                                    <img
+                                        src={`https://lh3.googleusercontent.com/d/${photo.google_drive_file_id}=s160`}
+                                        alt={photo.title}
+                                        className="w-12 h-12 md:w-16 md:h-16 object-cover rounded border border-white/10 group-hover:border-white/30 transition-all group-hover:-translate-y-1"
+                                    />
+                                    <button
+                                        onClick={() => onRemove(photo.id)}
+                                        className="absolute -top-1.5 -right-1.5 bg-red-500 rounded-full p-0.5 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                    >
+                                        <X className="w-3 h-3 text-white" />
+                                    </button>
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
                     </div>
-                    <p className={`text-xs ${count === 3 ? 'text-green-400' : 'text-zinc-500'}`}>
-                        {pricing.message}
-                    </p>
                 </div>
 
-                {/* Action */}
-                <button
-                    onClick={onCheckout}
-                    disabled={loading}
-                    className={`flex items-center gap-2 px-8 py-3 rounded-full font-bold transition-all ${count >= 3
-                        ? 'bg-green-600 hover:bg-green-500 text-white scale-105 shadow-[0_0_20px_rgba(22,163,74,0.4)]'
-                        : 'bg-white hover:bg-zinc-200 text-black'
-                        } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                    {loading ? (
-                        <div className="w-5 h-5 border-2 border-t-transparent border-zinc-900 rounded-full animate-spin" />
-                    ) : (
-                        <>
-                            {count >= 3 && <CheckCircle className="w-4 h-4" />}
-                            <span>Checkout Now</span>
-                            <ShoppingBag className="w-4 h-4" />
-                        </>
-                    )}
-                </button>
+                {/* Pricing & Logic Section */}
+                <div className="flex flex-row items-center justify-between gap-4 w-full md:w-auto order-1 md:order-2">
+                    <div className="text-left flex-shrink-0">
+                        <div className="flex items-baseline gap-2 mb-0.5">
+                            <span className="text-xl md:text-3xl font-black text-white tracking-tighter tabular-nums">
+                                ${pricing.total.toFixed(2)}
+                            </span>
+                            <span className="text-[8px] md:text-[9px] font-black text-zinc-500 tracking-[0.2em] uppercase">
+                                {count} COLLECTED
+                            </span>
+                        </div>
+
+                        <div className="block flex flex-col justify-center space-y-0.5">
+                            {pricing.messages.map((msg, idx) => (
+                                <div key={idx} className="flex items-center gap-1.5">
+                                    <div className={`w-1 h-1 rounded-full ${msg.highlight ? 'bg-green-500' : 'bg-zinc-700'}`} />
+                                    <p className="text-[7px] md:text-[9px] font-black tracking-widest uppercase truncate max-w-[180px] md:max-w-none">
+                                        <span className="text-zinc-500 whitespace-nowrap">{msg.text}</span>
+                                        {msg.secondary && (
+                                            <span className={msg.highlight ? 'text-green-500' : 'text-zinc-400'}>
+                                                {msg.secondary}
+                                            </span>
+                                        )}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Checkout Button */}
+                    <button
+                        onClick={onCheckout}
+                        disabled={loading}
+                        className="group relative flex items-center gap-2 px-5 py-3 md:px-8 md:py-4 bg-white text-black rounded-none font-black uppercase tracking-[0.2em] text-[8px] md:text-[10px] hover:bg-zinc-200 transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap"
+                    >
+                        {loading ? (
+                            <div className="w-3 h-3 md:w-4 md:h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                            <>
+                                CHECKOUT
+                                <ShoppingBag className="w-3 h-3 md:w-4 md:h-4 transition-transform group-hover:translate-x-0.5" />
+                            </>
+                        )}
+
+                        {count >= 3 && (
+                            <div className="absolute -top-1.5 -right-1.5 md:-top-2 md:-right-2 bg-green-500 text-black p-0.5 md:p-1 rounded-full shadow-lg">
+                                <CheckCircle className="w-2.5 h-2.5 md:w-3.5 md:h-3.5" />
+                            </div>
+                        )}
+                    </button>
+                </div>
             </div>
         </motion.div>
     );

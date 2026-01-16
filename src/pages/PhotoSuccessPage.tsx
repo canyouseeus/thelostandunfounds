@@ -1,19 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Download, CheckCircle, ArrowLeft } from 'lucide-react';
+import { Download, CheckCircle, ArrowLeft, Loader2 } from 'lucide-react';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 import Loading from '../components/Loading';
 
 interface Entitlement {
     photoId: string;
     token: string;
     photoTitle?: string;
+    thumbnailUrl?: string; // Added from backend update
 }
 
 const PhotoSuccessPage: React.FC = () => {
     const [searchParams] = useSearchParams();
-    const orderId = searchParams.get('token'); // PayPal's token often used as redirect param
+    const orderId = searchParams.get('token');
     const [loading, setLoading] = useState(true);
+    const [zipping, setZipping] = useState(false);
     const [entitlements, setEntitlements] = useState<Entitlement[]>([]);
 
     useEffect(() => {
@@ -25,8 +29,7 @@ const PhotoSuccessPage: React.FC = () => {
     async function captureAndFetchEntitlements() {
         try {
             setLoading(true);
-            // Call our capture API
-            const response = await fetch('/api/photos/capture', {
+            const response = await fetch('/api/gallery/capture', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ orderId })
@@ -34,7 +37,7 @@ const PhotoSuccessPage: React.FC = () => {
 
             const data = await response.json();
             if (data.success) {
-                setEntitlements(data.entitlements);
+                setEntitlements(data.entitlements || []);
             }
         } catch (err) {
             console.error('Error capturing payment:', err);
@@ -43,61 +46,126 @@ const PhotoSuccessPage: React.FC = () => {
         }
     }
 
+    const handleDownloadAll = async () => {
+        if (entitlements.length === 0) return;
+        setZipping(true);
+
+        try {
+            const zip = new JSZip();
+            const fetchPromises = entitlements.map(async (e, i) => {
+                const url = `/api/photos/download?token=${e.token}`;
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    const blob = await response.blob();
+                    // Use title or fallback filename
+                    const filename = e.photoTitle ? `${e.photoTitle}.jpg` : `photo_${i + 1}.jpg`;
+                    zip.file(filename, blob);
+                } catch (err) {
+                    console.error(`Failed to fetch photo ${e.photoId}`, err);
+                }
+            });
+
+            await Promise.all(fetchPromises);
+            const content = await zip.generateAsync({ type: 'blob' });
+            saveAs(content, 'kattitude_photos.zip');
+        } catch (err) {
+            console.error('Error creating zip:', err);
+            alert('Could not download all photos. Please try downloading individually.');
+        } finally {
+            setZipping(false);
+        }
+    };
+
     if (loading) return <Loading />;
 
     return (
-        <div className="min-h-screen bg-black pt-32 pb-20 px-4 md:px-8 flex items-center justify-center">
-            <div className="max-w-2xl w-full text-left">
-                <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="mb-8 flex justify-start"
-                >
-                    <div className="bg-green-500/10 p-6 rounded-full">
-                        <CheckCircle className="w-20 h-20 text-green-500" />
+        <div className="min-h-screen bg-black pt-32 pb-20 px-4 md:px-8 flex flex-col items-center">
+            <div className="max-w-5xl w-full">
+                <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-8 gap-6">
+                    <div className="text-left max-w-2xl">
+                        <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tighter uppercase">
+                            Access Granted
+                        </h1>
+                        <p className="text-zinc-500 text-lg text-left max-w-xl">
+                            Your payment was successful. You can now download your high-resolution photos.
+                            These links will expire in 48 hours.
+                        </p>
                     </div>
-                </motion.div>
 
-                <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tighter uppercase">
-                    Access Granted
-                </h1>
-                <p className="text-zinc-500 text-lg mb-12 text-left">
-                    Your payment was successful. You can now download your high-resolution photos.
-                    These links will expire in 48 hours.
-                </p>
+                    <button
+                        onClick={handleDownloadAll}
+                        disabled={zipping || entitlements.length === 0}
+                        className="bg-white text-black px-6 py-2 rounded-none font-bold text-sm flex items-center justify-center gap-2 hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider shrink-0"
+                    >
+                        {zipping ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <span>Zipping...</span>
+                            </>
+                        ) : (
+                            <>
+                                <Download className="w-4 h-4" />
+                                <span>Download All ({entitlements.length})</span>
+                            </>
+                        )}
+                    </button>
+                </div>
 
-                <div className="space-y-4 mb-12">
+                {/* Grid Layout */}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-16">
                     {entitlements.map((e, i) => (
                         <motion.div
                             key={e.token}
-                            initial={{ x: -20, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            transition={{ delay: i * 0.1 }}
-                            className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex items-center justify-between"
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: i * 0.05 }}
+                            className="group relative aspect-square bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800"
                         >
-                            <div className="text-left">
-                                <span className="text-white font-medium block">Photo Download #{i + 1}</span>
-                                <span className="text-zinc-500 text-xs">Ready for high-res save</span>
+                            {/* Thumbnail */}
+                            {e.thumbnailUrl ? (
+                                <img
+                                    src={e.thumbnailUrl}
+                                    alt="Purchased content"
+                                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+                                    referrerPolicy="no-referrer"
+                                />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-zinc-600">
+                                    No Preview
+                                </div>
+                            )}
+
+                            {/* Overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end p-6">
+                                <a
+                                    href={`/api/photos/download?token=${e.token}`}
+                                    className="bg-white text-black w-full py-2 rounded-none font-bold text-sm flex items-center justify-center gap-2 hover:bg-zinc-200 transition-transform transform translate-y-4 group-hover:translate-y-0 duration-300 uppercase tracking-wider"
+                                    download
+                                >
+                                    <Download className="w-4 h-4" />
+                                    <span>Download</span>
+                                </a>
                             </div>
-                            <a
-                                href={`/api/photos/download?token=${e.token}`}
-                                className="bg-white text-black px-6 py-2 rounded-full font-bold flex items-center gap-2 hover:bg-zinc-200 transition-colors"
-                                download
-                            >
-                                <Download className="w-4 h-4" />
-                                <span>Download</span>
-                            </a>
+
+                            {/* Badge */}
+                            <div className="absolute top-3 left-3 bg-green-500 text-black text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider">
+                                PROPRIETARY
+                            </div>
                         </motion.div>
                     ))}
                 </div>
 
-                <Link
-                    to="/photos/kattitude-tattoo"
-                    className="inline-flex items-center gap-2 text-zinc-500 hover:text-white transition-colors"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    <span>Return to Gallery</span>
-                </Link>
+                <div className="border-t border-zinc-800 pt-8 flex justify-between items-center">
+                    <Link
+                        to="/gallery/kattitude-tattoo"
+                        className="inline-flex items-center gap-2 text-zinc-500 hover:text-white transition-colors"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        <span>Return to Gallery</span>
+                    </Link>
+                    <span className="text-zinc-600 text-sm">Order ID: {orderId}</span>
+                </div>
             </div>
         </div>
     );

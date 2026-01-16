@@ -8,6 +8,9 @@ export default function PaymentSuccess() {
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing')
   const [error, setError] = useState<string | null>(null)
 
+  const librarySlug = searchParams.get('library')
+  const redirectPath = librarySlug ? `/gallery/${librarySlug}` : '/shop'
+
   useEffect(() => {
     const orderId =
       searchParams.get('token') ||
@@ -25,7 +28,7 @@ export default function PaymentSuccess() {
     if (!orderId) {
       console.warn('⚠️ No order ID found in URL params. Showing success anyway.')
       setStatus('success')
-      setTimeout(() => navigate('/shop'), 3000)
+      setTimeout(() => navigate(redirectPath), 3000)
       return
     }
 
@@ -34,7 +37,7 @@ export default function PaymentSuccess() {
     async function captureOrder() {
       try {
         console.log('📥 Calling capture endpoint for order:', orderId)
-        const response = await fetch('/api/shop/payments/paypal/capture', {
+        const response = await fetch('/api/gallery/capture', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ orderId }),
@@ -43,24 +46,25 @@ export default function PaymentSuccess() {
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}))
           console.error('Capture error:', errorData)
+          // Even if capture fails, we want to return them to the gallery or shop
           setStatus('success')
-          setTimeout(() => navigate('/shop'), 3000)
+          setTimeout(() => navigate(redirectPath), 3000)
           return
         }
 
         const data = await response.json()
         console.log('✅ Payment captured:', data)
         setStatus('success')
-        setTimeout(() => navigate('/shop'), 3000)
+        setTimeout(() => navigate(redirectPath), 3000)
       } catch (err: any) {
         console.error('Error capturing payment:', err)
         setStatus('success')
-        setTimeout(() => navigate('/shop'), 3000)
+        setTimeout(() => navigate(redirectPath), 3000)
       }
     }
 
     captureOrder()
-  }, [searchParams, navigate])
+  }, [searchParams, navigate, redirectPath])
 
   return (
     <div className="min-h-screen bg-black flex items-start justify-center px-4 pt-16 pb-12">
@@ -78,7 +82,7 @@ export default function PaymentSuccess() {
             <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-400" />
             <h1 className="text-2xl font-bold text-white mb-2">Payment Successful!</h1>
             <p className="text-white/70 mb-4">Thank you for your purchase.</p>
-            <p className="text-white/50 text-sm">Redirecting to shop...</p>
+            <p className="text-white/50 text-sm">Redirecting to gallery...</p>
           </>
         )}
 
@@ -88,10 +92,10 @@ export default function PaymentSuccess() {
             <h1 className="text-2xl font-bold text-white mb-2">Payment Error</h1>
             <p className="text-white/70 mb-4">{error || 'An error occurred processing your payment.'}</p>
             <button
-              onClick={() => navigate('/shop')}
+              onClick={() => navigate(redirectPath)}
               className="bg-white text-black px-6 py-2 rounded-none hover:bg-white/90 transition-colors font-semibold"
             >
-              Return to Shop
+              Return to Gallery
             </button>
           </>
         )}
@@ -99,4 +103,3 @@ export default function PaymentSuccess() {
     </div>
   )
 }
-

@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import PhotoGallery from '../components/photos/PhotoGallery';
 import AuthModal from '../components/auth/AuthModal';
-import { Lock, Camera, ArrowRight, Loader2 } from 'lucide-react';
+import { Lock, ArrowRight, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface PhotoLibrary {
@@ -123,10 +123,7 @@ export default function Gallery() {
 
             <div className="max-w-7xl mx-auto mb-20">
                 <div className="text-left space-y-6 max-w-3xl border-b border-white/10 pb-12">
-                    <div className="flex items-center gap-3 text-white/40 mb-2">
-                        <Camera className="w-5 h-5 text-white/40" />
-                        <span className="text-xs font-bold tracking-[0.2em] uppercase">Visual Intel</span>
-                    </div>
+
                     <h1 className="text-6xl md:text-8xl font-black text-white tracking-tighter leading-[0.8] uppercase">
                         Gallery
                     </h1>

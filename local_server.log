@@ -1,0 +1,94 @@
+[dotenv@17.2.3] injecting env (6) from .env -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (7) from .env.local -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+✅ Local Server Env Loaded
+   Supabase URL: OK
+   Zoho Client ID: Loaded
+   Zoho From Email: Loaded
+Local API Server running on http://localhost:3001
+Enabling local PayPal sandbox testing...
+Processing checkout for: { email: 'thelostandunfounds@gmail.com', photoCount: 25 }
+Pricing Applied: 1 Elite, 0 Standard, 0 Singles. Total: $37.5
+Using PayPal Environment: SANDBOX
+Using Client ID: Ae32w...
+Processing checkout for: { email: 'thelostandunfounds@gmail.com', photoCount: 25 }
+Pricing Applied: 1 Elite, 0 Standard, 0 Singles. Total: $37.5
+Using PayPal Environment: SANDBOX
+Using Client ID: Ae32w...
+Capturing Local Order: 3DJ54633896646424
+Capturing Local Order: 3DJ54633896646424
+✅ Unlocking photos locally for: thelostandunfounds@gmail.com [
+  'e70b8715-9d81-49c5-b79e-68b562eba503',
+  '81e19175-9543-4942-bec0-efabf0347b44',
+  'f2237d1b-2ef3-4a22-83ab-f87df97d4931',
+  'fdeea390-cf65-48fa-bb07-f80b097d74dc',
+  '49258be0-15ce-4400-ab42-21a07b265ddd',
+  'a207e706-0e6a-4804-bd7a-b4cb797c0d7b',
+  '174320e4-9bb4-42c4-b321-d2286738fd01',
+  '8fbdbd5b-8b9f-4c1e-b2ec-994ffbf9eb58',
+  '037af3be-0730-4aec-8c00-3c63e59b591d',
+  '045b46be-d181-442d-867f-22b6c619b6d6',
+  '39d192d4-0353-4bdb-b7f9-63393d4ee131',
+  'becf8c2f-fe67-4283-8865-4c10bf756a20',
+  'a2913ae4-0f31-4e98-b30e-19d48f5a5a39',
+  '4b6bc7eb-f21e-478f-aecb-b765245d5c9b',
+  'c08882a0-973f-4f76-987b-7e32bb991d03',
+  'fdeee505-9771-4208-8cb0-9d7951f41fe6',
+  '0993c48d-8ef8-4eae-bab4-ac89b8032ce5',
+  '5a1ef1d2-50ed-47b0-ab32-a11b22c11dfd',
+  'b78a1765-22b1-4872-bea0-107ee28dfaa2',
+  'a6902d71-5e49-4461-a6e6-3ab30b64d342',
+  '90ef3bca-0a95-484b-ac62-527d6eda15a0',
+  '72ec333d-291d-4c87-a71e-baf0bd0203ec',
+  'de880d73-271c-4e3c-87d0-abd4254bf5bf',
+  '1cde2357-34d5-4232-a4e1-ff4a9ea77a12',
+  'b02d6a10-61c5-4474-9e20-1b1493e03e53'
+]
+📧 Sending confirmation email via Zoho...
+✅ Unlocking photos locally for: thelostandunfounds@gmail.com [
+  'e70b8715-9d81-49c5-b79e-68b562eba503',
+  '81e19175-9543-4942-bec0-efabf0347b44',
+  'f2237d1b-2ef3-4a22-83ab-f87df97d4931',
+  'fdeea390-cf65-48fa-bb07-f80b097d74dc',
+  '49258be0-15ce-4400-ab42-21a07b265ddd',
+  'a207e706-0e6a-4804-bd7a-b4cb797c0d7b',
+  '174320e4-9bb4-42c4-b321-d2286738fd01',
+  '8fbdbd5b-8b9f-4c1e-b2ec-994ffbf9eb58',
+  '037af3be-0730-4aec-8c00-3c63e59b591d',
+  '045b46be-d181-442d-867f-22b6c619b6d6',
+  '39d192d4-0353-4bdb-b7f9-63393d4ee131',
+  'becf8c2f-fe67-4283-8865-4c10bf756a20',
+  'a2913ae4-0f31-4e98-b30e-19d48f5a5a39',
+  '4b6bc7eb-f21e-478f-aecb-b765245d5c9b',
+  'c08882a0-973f-4f76-987b-7e32bb991d03',
+  'fdeee505-9771-4208-8cb0-9d7951f41fe6',
+  '0993c48d-8ef8-4eae-bab4-ac89b8032ce5',
+  '5a1ef1d2-50ed-47b0-ab32-a11b22c11dfd',
+  'b78a1765-22b1-4872-bea0-107ee28dfaa2',
+  'a6902d71-5e49-4461-a6e6-3ab30b64d342',
+  '90ef3bca-0a95-484b-ac62-527d6eda15a0',
+  '72ec333d-291d-4c87-a71e-baf0bd0203ec',
+  'de880d73-271c-4e3c-87d0-abd4254bf5bf',
+  '1cde2357-34d5-4232-a4e1-ff4a9ea77a12',
+  'b02d6a10-61c5-4474-9e20-1b1493e03e53'
+]
+📧 Sending confirmation email via Zoho...
+   Zoho Token Status: 400
+   Refresh Token Length: 89
+   Zoho Token Status: 400
+   Refresh Token Length: 89
+Zoho Token Error Body: <html><head><title>Zoho Accounts</title><meta name="viewport" content="width=device-width, initial-scale=1.0"><link href="https://static.zohocdn.com/iam/v2/components/css/zohoPuvi.c86bbb480e4a4fbc379f...
+❌ Failed to send email: Zoho Token Failed: 400
+📧 [FALLBACK LOG] Email that would have been sent:
+   To: thelostandunfounds@gmail.com
+   Subject: Your Photos Are Ready - THE LOST+UNFOUNDS
+Capture Local Error: ReferenceError: emailContent is not defined
+    at IncomingMessage.<anonymous> (file:///Users/thelostunfounds/thelostandunfounds/local-server.js:299:57)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+Zoho Token Error Body: <html><head><title>Zoho Accounts</title><meta name="viewport" content="width=device-width, initial-scale=1.0"><link href="https://static.zohocdn.com/iam/v2/components/css/zohoPuvi.c86bbb480e4a4fbc379f...
+❌ Failed to send email: Zoho Token Failed: 400
+📧 [FALLBACK LOG] Email that would have been sent:
+   To: thelostandunfounds@gmail.com
+   Subject: Your Photos Are Ready - THE LOST+UNFOUNDS
+Capture Local Error: ReferenceError: emailContent is not defined
+    at IncomingMessage.<anonymous> (file:///Users/thelostunfounds/thelostandunfounds/local-server.js:299:57)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)

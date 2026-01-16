@@ -512,7 +512,7 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
             {/* Create/Edit Gallery Modal */}
             {isManaged && (
                 <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
-                    <div className="bg-[#0A0A0A] border border-white/10 w-full max-w-2xl p-6 relative my-8 max-h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar">
+                    <div className="bg-[#0A0A0A] border border-white/10 w-full max-w-2xl p-6 relative my-8 max-h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar rounded-none">
                         <button
                             onClick={() => setIsManaged(false)}
                             className="absolute top-4 right-4 text-white/40 hover:text-white"
@@ -543,7 +543,7 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
                                                 setModalData({ ...modalData, name });
                                             }
                                         }}
-                                        className="w-full bg-white/5 border border-white/10 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40"
+                                        className="w-full bg-white/5 border border-white/10 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 rounded-none"
                                         placeholder="e.g. Summer 2025 Collection"
                                     />
                                 </div>
@@ -557,7 +557,7 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
                                             required
                                             value={modalData.slug}
                                             onChange={(e) => setModalData({ ...modalData, slug: e.target.value })}
-                                            className="bg-transparent text-white w-full focus:outline-none font-mono text-sm"
+                                            className="bg-transparent text-white w-full focus:outline-none font-mono text-sm rounded-none"
                                             placeholder="summer-2025"
                                         />
                                     </div>
@@ -573,8 +573,8 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
                                         return (
                                             <div
                                                 key={idx}
-                                                className="grid items-center gap-3 bg-white/5 border border-white/10 p-3"
-                                                style={{ gridTemplateColumns: '1fr 100px 120px auto' }}
+                                                className="grid items-center gap-4 bg-white/5 border border-white/10 p-4 rounded-none w-full"
+                                                style={{ gridTemplateColumns: 'minmax(180px, 1fr) 100px 120px 80px' }}
                                             >
                                                 {isEditing ? (
                                                     <>
@@ -589,7 +589,7 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
                                                                     setPricingOptions(newOptions);
                                                                 }}
                                                                 placeholder="Option Name"
-                                                                className="w-full bg-transparent text-sm text-white focus:outline-none border-b border-white/20 pb-1"
+                                                                className="w-full bg-transparent text-sm text-white focus:outline-none border-b border-white/20 pb-1 rounded-none"
                                                                 autoFocus
                                                             />
                                                         </div>
@@ -606,7 +606,7 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
                                                                 }}
                                                                 placeholder="Count"
                                                                 title="Number of photos (-1 for All)"
-                                                                className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-center text-white font-mono focus:outline-none focus:border-white/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                className="w-full bg-white/5 border border-white/10 rounded-none px-2 py-1 text-xs text-center text-white font-mono focus:outline-none focus:border-white/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                             />
                                                         </div>
                                                         {/* Price Input */}
@@ -622,7 +622,7 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
                                                                     newOptions[idx].price = isNaN(val) ? 0 : val;
                                                                     setPricingOptions(newOptions);
                                                                 }}
-                                                                className="w-20 bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white font-bold font-mono focus:outline-none focus:border-white/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                className="w-full bg-white/5 border border-white/10 rounded-none px-2 py-1 text-xs text-white font-bold font-mono focus:outline-none focus:border-white/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                             />
                                                         </div>
                                                         {/* Done Button */}
@@ -630,7 +630,7 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setEditingPricingIdx(null)}
-                                                                className="p-1.5 hover:bg-green-500/20 text-green-400 rounded-sm transition-colors"
+                                                                className="p-1.5 hover:bg-green-500/20 text-green-400 rounded-none transition-colors"
                                                                 title="Done"
                                                             >
                                                                 <CheckCircle className="w-4 h-4" />
@@ -640,29 +640,29 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
                                                 ) : (
                                                     <>
                                                         {/* Name Display */}
-                                                        <div className="text-sm font-bold text-white truncate">
+                                                        <div className="text-sm font-bold text-white truncate pr-2">
                                                             {option.name || <span className="text-white/20 italic">No Name</span>}
                                                         </div>
                                                         {/* Count Display */}
-                                                        <div className="text-center border-l border-white/10 pl-3">
+                                                        <div className="text-center border-l border-white/10 pl-2">
                                                             <div className="flex items-center justify-center gap-1">
                                                                 <span className="text-[10px] text-white/40">Count:</span>
                                                                 <span className="text-xs font-mono text-white/80">{option.photo_count === -1 ? 'ALL' : option.photo_count}</span>
                                                             </div>
                                                         </div>
                                                         {/* Price Display */}
-                                                        <div className="text-center border-l border-white/10 pl-3">
+                                                        <div className="text-center border-l border-white/10 pl-2">
                                                             <div className="flex items-center justify-center gap-1">
                                                                 <span className="text-xs text-white/40">$</span>
                                                                 <span className="text-sm font-bold font-mono text-green-400">{option.price.toFixed(2)}</span>
                                                             </div>
                                                         </div>
                                                         {/* Action Buttons */}
-                                                        <div className="flex gap-1 justify-end">
+                                                        <div className="flex gap-1 justify-end pl-2 border-l border-white/10">
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setEditingPricingIdx(idx)}
-                                                                className="p-1.5 hover:bg-white/10 text-white/40 hover:text-white rounded-sm transition-colors"
+                                                                className="p-1.5 hover:bg-white/10 text-white/40 hover:text-white rounded-none transition-colors"
                                                                 title="Edit"
                                                             >
                                                                 <Edit2 className="w-4 h-4" />
@@ -677,7 +677,7 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
                                                                     setPricingOptions(newOptions);
                                                                     if (editingPricingIdx === idx) setEditingPricingIdx(null);
                                                                 }}
-                                                                className="p-1.5 hover:bg-red-500/20 text-white/20 hover:text-red-400 rounded-sm transition-colors"
+                                                                className="p-1.5 hover:bg-red-500/20 text-white/20 hover:text-red-400 rounded-none transition-colors"
                                                                 title="Remove"
                                                             >
                                                                 <Trash2 className="w-4 h-4" />
@@ -692,15 +692,23 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
                                 <div className="flex gap-2">
                                     <button
                                         type="button"
-                                        onClick={() => setPricingOptions([...pricingOptions, { id: '', name: 'Bundle Option', photo_count: 3, price: 10.00 }])}
-                                        className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-[10px] text-white rounded transition-colors uppercase tracking-wider"
+                                        onClick={() => {
+                                            const newOption = { id: '', name: 'Bundle Option', photo_count: 3, price: 10.00 };
+                                            setPricingOptions([...pricingOptions, newOption]);
+                                            setEditingPricingIdx(pricingOptions.length);
+                                        }}
+                                        className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-[10px] text-white rounded-none transition-colors uppercase tracking-wider"
                                     >
                                         + Add Option
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => setPricingOptions([...pricingOptions, { id: '', name: 'Full Gallery Commercial License', photo_count: -1, price: 999.00 }])}
-                                        className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-[10px] text-emerald-400 border border-emerald-500/50 rounded transition-colors uppercase tracking-wider"
+                                        onClick={() => {
+                                            const newOption = { id: '', name: 'Full Gallery Commercial License', photo_count: -1, price: 999.00 };
+                                            setPricingOptions([...pricingOptions, newOption]);
+                                            setEditingPricingIdx(pricingOptions.length);
+                                        }}
+                                        className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-[10px] text-emerald-400 border border-emerald-500/50 rounded-none transition-colors uppercase tracking-wider"
                                     >
                                         + Add Full License
                                     </button>
@@ -715,7 +723,7 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
                                 <textarea
                                     value={modalData.description}
                                     onChange={(e) => setModalData({ ...modalData, description: e.target.value })}
-                                    className="w-full bg-white/5 border border-white/10 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 min-h-[80px]"
+                                    className="w-full bg-white/5 border border-white/10 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 min-h-[80px] rounded-none"
                                     placeholder="Brief description of the gallery contents..."
                                 />
                             </div>
@@ -724,7 +732,7 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
                                 <label className="block text-xs uppercase text-white/40 mb-2">Cover Image</label>
                                 <div className="flex items-start gap-4">
                                     {modalData.cover_image_url && (
-                                        <div className="w-24 h-16 bg-zinc-800 rounded overflow-hidden flex-shrink-0 border border-white/10">
+                                        <div className="w-24 h-16 bg-zinc-800 rounded-none overflow-hidden flex-shrink-0 border border-white/10">
                                             <img src={modalData.cover_image_url} alt="Cover" className="w-full h-full object-cover" />
                                         </div>
                                     )}
@@ -734,7 +742,7 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
                                                 type="text"
                                                 value={modalData.cover_image_url}
                                                 onChange={(e) => setModalData({ ...modalData, cover_image_url: e.target.value })}
-                                                className="flex-1 bg-white/5 border border-white/10 p-2 text-xs text-white"
+                                                className="flex-1 bg-white/5 border border-white/10 p-2 text-xs text-white rounded-none"
                                                 placeholder="https://... (or upload below)"
                                             />
                                         </div>
@@ -743,7 +751,7 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
                                                 type="checkbox"
                                                 checked={modalData.is_private}
                                                 onChange={(e) => setModalData({ ...modalData, is_private: e.target.checked })}
-                                                className="w-4 h-4 bg-white/5 border border-white/20 rounded focus:ring-0 text-white"
+                                                className="w-4 h-4 bg-white/5 border border-white/20 rounded-none focus:ring-0 text-white"
                                             />
                                             <span className="text-white text-xs uppercase tracking-widest">Private Gallery</span>
                                         </div>
@@ -752,7 +760,7 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
                                                 type="checkbox"
                                                 checked={modalData.commercial_included}
                                                 onChange={(e) => setModalData({ ...modalData, commercial_included: e.target.checked })}
-                                                className="w-4 h-4 bg-white/5 border border-white/20 rounded focus:ring-0 text-emerald-500"
+                                                className="w-4 h-4 bg-white/5 border border-white/20 rounded-none focus:ring-0 text-emerald-500"
                                             />
                                             <span className="text-emerald-400 text-xs uppercase tracking-widest font-bold">Commercial Rights Included</span>
                                         </div>
@@ -765,7 +773,7 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
                                             onChange={handleCoverImageUpload}
                                             className="block w-full text-xs text-white/60
                                                file:mr-4 file:py-2 file:px-4
-                                               file:rounded-full file:border-0
+                                               file:rounded-none file:border-0
                                                file:text-xs file:font-semibold
                                                file:bg-white/10 file:text-white
                                                hover:file:bg-white/20"
@@ -831,11 +839,11 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
                                         {filesData.length > 0 && (
                                             <div className="max-h-[220px] overflow-y-auto border border-white/10 bg-black/40 p-2 grid grid-cols-2 gap-2 custom-scrollbar">
                                                 {filesData.map((item, i) => (
-                                                    <div key={i} className="flex items-center gap-2 overflow-hidden text-xs text-white bg-white/5 p-2 rounded-sm relative group">
+                                                    <div key={i} className="flex items-center gap-2 overflow-hidden text-xs text-white bg-white/5 p-2 rounded-none relative group">
                                                         <div className="w-10 h-10 flex-shrink-0 bg-black/50 overflow-hidden relative">
                                                             {item.file.type.startsWith('video/') && (
                                                                 <div className="absolute inset-0 flex items-center justify-center z-10">
-                                                                    <div className="w-4 h-4 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                                                                    <div className="w-4 h-4 rounded-none bg-white/20 backdrop-blur-sm flex items-center justify-center">
                                                                         <div className="w-0 h-0 border-l-[4px] border-l-white border-y-[3px] border-y-transparent ml-0.5" />
                                                                     </div>
                                                                 </div>

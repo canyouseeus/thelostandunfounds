@@ -249,7 +249,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
   return (
     <div className="min-h-screen bg-black flex flex-col">
       <SageModeOverlay />
-      <nav className="fixed top-0 left-0 w-full bg-black backdrop-blur-md z-[2147483647]">
+      <nav className="fixed top-0 left-0 w-full bg-black backdrop-blur-md z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Top row: Title left, Menu button right */}
           <div
@@ -337,7 +337,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
                   >
                     THE GALLERY
                   </Link>
-                  <div className="menu-separator"></div>
+
                   <div
                     className="menu-item menu-toggle-section flex items-center justify-start w-full gap-0 cursor-pointer"
                     onClick={(e) => {
@@ -347,7 +347,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
                   >
                     <span className="flex-grow">THE LOST ARCHIVES</span>
                     <div
-                      className="p-1 hover:bg-white/10 transition rounded-none flex items-center justify-center h-6 w-6 shrink-0"
+                      className="p-1 transition rounded-none flex items-center justify-center h-6 w-6 shrink-0"
                     >
                       {archivesMenuOpen ? '▼' : '▶'}
                     </div>
@@ -435,7 +435,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
                   >
                     <span className="flex-grow">MORE</span>
                     <div
-                      className="p-1 hover:bg-white/10 transition rounded-none flex items-center justify-center h-6 w-6 shrink-0"
+                      className="p-1 transition rounded-none flex items-center justify-center h-6 w-6 shrink-0"
                     >
                       {moreMenuOpen ? '▼' : '▶'}
                     </div>
@@ -510,7 +510,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
                   </div>
                   {user && (
                     <>
-                      <div className="my-2"></div>
+
                       <Link
                         to={userIsAdmin ? "/admin" : userSubdomain ? `/${userSubdomain}/bookclubprofile` : "/bookclubprofile"}
                         className="menu-item"
@@ -550,7 +550,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
                           LOG OUT
                         </div>
                       </button>
-                      <div className="my-2"></div>
+
                       <div className="menu-item user-info">
                         <div className="text-white/60 text-xs mb-1">Logged in as:</div>
                         <div className="text-white text-sm font-medium">

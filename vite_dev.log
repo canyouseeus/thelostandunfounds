@@ -1,0 +1,11 @@
+
+> thelostandunfounds@1.0.0-classic dev
+> vite
+
+
+  VITE v7.2.2  ready in 362 ms
+
+  ➜  Local:   http://localhost:3000/
+  ➜  Network: use --host to expose
+  ➜  press h + enter to show help
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
