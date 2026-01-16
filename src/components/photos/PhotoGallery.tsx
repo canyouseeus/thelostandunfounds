@@ -191,7 +191,15 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                                             alt={photo.title}
                                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 select-none"
                                             draggable={false}
+                                            onContextMenu={(e) => e.preventDefault()}
                                         />
+
+                                        {/* Watermark Overlay - Prevents theft */}
+                                        <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
+                                            <div className="text-white/20 text-4xl md:text-6xl font-black tracking-wider transform rotate-[-30deg] select-none uppercase whitespace-nowrap">
+                                                THE LOST+UNFOUNDS
+                                            </div>
+                                        </div>
 
                                         {/* Selection Badge */}
                                         <div className={`absolute top-4 right-4 z-20 w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center ${isSelected
