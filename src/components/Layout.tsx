@@ -299,8 +299,22 @@ export default function Layout({ children }: { children?: ReactNode }) {
                   ref={dropdownRef}
                   onMouseEnter={handleMenuMouseEnter}
                   onMouseLeave={handleMenuMouseLeave}
-                  style={{ maxHeight: '80vh', overflowY: 'auto' }}
                 >
+                  {/* Close button for mobile */}
+                  <button
+                    type="button"
+                    className="mobile-menu-close hidden sm:hidden"
+                    onClick={() => setMenuOpen(false)}
+                    aria-label="Close menu"
+                    style={{ display: 'none' }}
+                  >
+                    ✕
+                  </button>
+                  <style>{`
+                    @media (max-width: 640px) {
+                      .mobile-menu-close { display: flex !important; }
+                    }
+                  `}</style>
                   <Link
                     to="/"
                     className="menu-item"

@@ -19,12 +19,7 @@ interface PhotoLibrary {
     // price?: number; // Removed as pricing is now handled by gallery_pricing_options
 }
 
-interface PricingOption {
-    id: string;
-    name: string;
-    price: number;
-    photo_count: number;
-}
+
 
 /**
  * Photos Page - Handles the gallery listing index and individual specialized galleries.
@@ -37,7 +32,7 @@ export default function Gallery() {
     const [userIsAdmin, setUserIsAdmin] = useState(false);
 
     const [libraries, setLibraries] = useState<PhotoLibrary[]>([]);
-    const [libraryPricingOptions, setLibraryPricingOptions] = useState<{ [key: string]: PricingOption[] }>({});
+
     const [loading, setLoading] = useState(true);
     const [authModalOpen, setAuthModalOpen] = useState(false);
 
@@ -69,27 +64,7 @@ export default function Gallery() {
             if (librariesError) throw librariesError;
             setLibraries(librariesData || []);
 
-            // Fetch pricing options for all libraries
-            const libraryIds = librariesData?.map(lib => lib.id) || [];
-            if (libraryIds.length > 0) {
-                const { data: pricingData, error: pricingError } = await supabase
-                    .from('gallery_pricing_options')
-                    .select('*')
-                    .in('library_id', libraryIds)
-                    .eq('is_active', true)
-                    .order('photo_count', { ascending: true });
 
-                if (pricingError) throw pricingError;
-
-                const pricingMap: { [key: string]: PricingOption[] } = {};
-                pricingData?.forEach(option => {
-                    if (!pricingMap[option.library_id]) {
-                        pricingMap[option.library_id] = [];
-                    }
-                    pricingMap[option.library_id].push(option);
-                });
-                setLibraryPricingOptions(pricingMap);
-            }
 
         } catch (err) {
             console.error('Error fetching galleries:', err);
@@ -117,22 +92,22 @@ export default function Gallery() {
     return (
         <div className="min-h-screen bg-black pt-24 pb-48 px-4 md:px-8 max-w-[100vw] overflow-x-hidden">
             <Helmet>
-                <title>GALLERY | THE LOST+UNFOUNDS</title>
+                <title>THE GALLERY | THE LOST+UNFOUNDS</title>
                 <meta name="description" content="Exclusive high-resolution photography collections. Findings from the field, captured in high definition." />
             </Helmet>
 
             <div className="max-w-7xl mx-auto mb-20">
                 <div className="text-left space-y-6 max-w-3xl border-b border-white/10 pb-12">
 
-                    <h1 className="text-6xl md:text-8xl font-black text-white tracking-tighter leading-[0.8] uppercase">
-                        Gallery
+                    <h1 className="text-5xl md:text-8xl font-black text-white tracking-tighter leading-[0.8] uppercase whitespace-nowrap">
+                        THE GALLERY
                     </h1>
                     <div className="text-xl md:text-2xl text-white/50 font-light leading-relaxed space-y-6">
                         <p>
-                            Thank you for visiting our gallery! Here you will find collections of photos and videos available for purchase and download.
+                            Thank you for visiting <span className="font-bold">THE GALLERY</span>! Here you will find collections of photos and videos available for purchase and download.
                         </p>
                         <p>
-                            To access private galleries you must be the owner of the photos within that gallery. If you have not received access to a gallery of your photos then you can email us at media@thelostandunfounds.com to request access.
+                            To access private galleries you must be the owner of the photos within that gallery. If you have not received access to a gallery of your photos then you can email us at <span className="font-bold">media@thelostandunfounds.com</span> to request access.
                         </p>
                         <p>
                             Our public albums contain content that is availble for anyone to download.
@@ -150,8 +125,7 @@ export default function Gallery() {
                 <div className="max-w-7xl mx-auto">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {libraries.map((lib, index) => {
-                            const pricing = libraryPricingOptions[lib.id] || [];
-                            const singlePhotoPrice = pricing.find(o => o.photo_count === 1)?.price || 5.00; // Default price
+
                             return (
                                 <motion.div
                                     key={lib.id}
@@ -187,27 +161,23 @@ export default function Gallery() {
                                                 </div>
                                             )}
                                             {/* Hover Overlay */}
-                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6">
-                                                <span className="text-white font-bold text-lg">
-                                                    ${singlePhotoPrice.toFixed(2)}
-                                                </span>
-                                                <span className="text-zinc-300 text-xs">Click to view details</span>
-                                            </div>
-                                        </div>
-
-                                        <h2 className="text-3xl font-black text-white tracking-tight leading-none uppercase group-hover:translate-x-2 transition-transform duration-500">
-                                            {lib.name}
-                                        </h2>
-
-                                        <p className="text-sm text-white/60 line-clamp-2 font-light leading-relaxed group-hover:text-white/80 transition-colors duration-500">
-                                            {lib.description}
-                                        </p>
-
-                                        <div className="pt-4 flex items-center gap-2 text-[10px] font-black tracking-widest uppercase text-white opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-500">
-                                            {lib.is_private && !user ? 'Log in to View' : 'View Gallery'}
-                                            <ArrowRight className="w-3 h-3" />
+                                            {/* Hover Overlay Removed - Price and Details Text Gone */}
                                         </div>
                                     </div>
+
+                                    <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-none uppercase group-hover:translate-x-2 transition-transform duration-500 whitespace-nowrap overflow-hidden text-ellipsis">
+                                        {lib.name}
+                                    </h2>
+
+                                    <p className="text-sm text-white/60 line-clamp-2 font-light leading-relaxed group-hover:text-white/80 transition-colors duration-500">
+                                        {lib.description}
+                                    </p>
+
+                                    <div className="pt-4 flex items-center gap-2 text-[10px] font-black tracking-widest uppercase text-white opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-500">
+                                        {lib.is_private && !user ? 'Log in to View' : 'View Gallery'}
+                                        <ArrowRight className="w-3 h-3" />
+                                    </div>
+
                                 </motion.div>
                             );
                         })}
@@ -218,18 +188,19 @@ export default function Gallery() {
                             <p className="text-white/40 font-bold tracking-widest uppercase">No available archives found.</p>
                         </div>
                     )}
+
+
+                    <AuthModal
+                        isOpen={authModalOpen}
+                        onClose={() => {
+                            setAuthModalOpen(false);
+                            setAuthMessage(undefined);
+                        }}
+                        message={authMessage}
+                        title={authMessage ? "Private Access" : undefined}
+                    />
                 </div>
             )}
-
-            <AuthModal
-                isOpen={authModalOpen}
-                onClose={() => {
-                    setAuthModalOpen(false);
-                    setAuthMessage(undefined);
-                }}
-                message={authMessage}
-                title={authMessage ? "Private Access" : undefined}
-            />
         </div>
     );
 }

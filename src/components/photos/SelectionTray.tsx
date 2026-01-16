@@ -77,13 +77,13 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
             initial={{ y: 200 }}
             animate={{ y: 0 }}
             exit={{ y: 200 }}
-            className="fixed bottom-0 left-0 right-0 z-50 p-4 md:p-6 flex justify-center pointer-events-none"
+            className="fixed bottom-0 left-0 right-0 z-50 px-4 md:px-8 py-0 flex justify-center pointer-events-none"
         >
-            <div className="bg-zinc-950/95 backdrop-blur-2xl border border-white/10 rounded-none shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-full max-w-5xl p-4 md:p-5 flex flex-col md:flex-row items-center gap-6 pointer-events-auto">
+            <div className="bg-zinc-950/95 backdrop-blur-2xl border border-white/10 rounded-none shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-full max-w-5xl px-4 md:px-6 py-1.5 md:py-2 flex flex-col md:flex-row items-center gap-6 pointer-events-auto">
 
                 {/* Thumbnails Section */}
-                <div className="hidden md:flex flex-1 w-full h-24 items-center order-1 mt-0">
-                    <div className="flex items-center overflow-x-auto p-4 scrollbar-hide w-full justify-center md:justify-start">
+                <div className="hidden md:flex flex-1 w-full h-16 items-center order-1 mt-0">
+                    <div className="flex items-center overflow-x-auto py-1 scrollbar-hide w-full justify-center md:justify-start">
                         <AnimatePresence mode="popLayout">
                             {selectedPhotos.map((photo, index) => (
                                 <motion.div
@@ -121,21 +121,23 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
                 </div>
 
                 {/* Pricing & Logic Section */}
-                <div className="flex flex-row items-center justify-between gap-4 w-full md:w-auto order-1 md:order-2">
-                    <div className="text-left flex-shrink-0">
-                        <div className="flex items-baseline gap-2 mb-0.5">
-                            <span className="text-xl md:text-3xl font-black text-white tracking-tighter tabular-nums">
+                <div className="flex flex-row items-center justify-between gap-6 md:gap-12 w-full md:w-auto order-1 md:order-2">
+                    <div className="flex flex-col justify-center">
+                        {/* Price & Count Line */}
+                        <div className="flex items-baseline gap-3 mb-1">
+                            <span className="text-xl md:text-3xl font-black text-white tracking-tighter tabular-nums leading-none">
                                 ${pricing.total.toFixed(2)}
                             </span>
-                            <span className="text-[8px] md:text-[9px] font-black text-zinc-500 tracking-[0.2em] uppercase">
+                            <span className="text-[8px] md:text-[9px] font-black text-zinc-500 tracking-[0.2em] uppercase leading-none">
                                 {count} COLLECTED
                             </span>
                         </div>
 
-                        <div className="block flex flex-col justify-center space-y-0.5">
+                        {/* Bundle Progress: Aligned for a clean vertical edge */}
+                        <div className="flex flex-col space-y-0.5">
                             {pricing.messages.map((msg, idx) => (
                                 <div key={idx} className="flex items-center gap-1.5">
-                                    <div className={`w-1 h-1 rounded-full ${msg.highlight ? 'bg-green-500' : 'bg-zinc-700'}`} />
+                                    <div className={`w-1 h-1 rounded-full shrink-0 ${msg.highlight ? 'bg-green-500' : 'bg-zinc-700'}`} />
                                     <p className="text-[7px] md:text-[9px] font-black tracking-widest uppercase truncate max-w-[180px] md:max-w-none">
                                         <span className="text-zinc-500 whitespace-nowrap">{msg.text}</span>
                                         {msg.secondary && (
@@ -153,7 +155,7 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
                     <button
                         onClick={onCheckout}
                         disabled={loading}
-                        className="group relative flex items-center gap-2 px-5 py-3 md:px-8 md:py-4 bg-white text-black rounded-none font-black uppercase tracking-[0.2em] text-[8px] md:text-[10px] hover:bg-zinc-200 transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap"
+                        className="group relative flex items-center gap-2 px-6 py-2 md:px-10 md:py-3.5 bg-white text-black rounded-none font-black uppercase tracking-[0.2em] text-[10px] md:text-[11px] hover:bg-zinc-200 transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap shrink-0"
                     >
                         {loading ? (
                             <div className="w-3 h-3 md:w-4 md:h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />

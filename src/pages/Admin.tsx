@@ -546,16 +546,26 @@ export default function Admin() {
           const authorIds = Array.from(uniqueAuthors);
           console.log('Author IDs:', authorIds);
 
+          // Fetch profiles for names
           const { data: profiles, error: profileError } = await supabase
             .from('profiles')
-            .select('id, full_name, email')
+            .select('id, display_name')
             .in('id', authorIds);
 
+          // Fetch emails from user_roles
+          const { data: userRoles, error: rolesError } = await supabase
+            .from('user_roles')
+            .select('user_id, email')
+            .in('user_id', authorIds);
+
           console.log('Profiles data:', profiles, 'Error:', profileError);
+          console.log('User roles data:', userRoles, 'Error:', rolesError);
 
           // Create contributor details even if profiles are missing
           contributorDetailsArray = authorIds.map(authorId => {
             const profile = profiles?.find(p => p.id === authorId);
+            const userRole = userRoles?.find(r => r.user_id === authorId);
+
             const authorPosts = blogPosts.filter(p => (p.author_id || p.user_id) === authorId);
             const latestPost = authorPosts.sort((a, b) =>
               new Date(b.published_at || b.created_at).getTime() -
@@ -564,8 +574,8 @@ export default function Admin() {
 
             return {
               authorId: authorId as string,
-              authorName: profile?.full_name || profile?.email?.split('@')[0] || `Author ${authorId.substring(0, 8)}`,
-              email: profile?.email || 'No email available',
+              authorName: profile?.display_name || userRole?.email?.split('@')[0] || `Author ${authorId.substring(0, 8)}`,
+              email: userRole?.email || 'No email available',
               postCount: authorPosts.length,
               latestPost: latestPost?.published_at || latestPost?.created_at || new Date().toISOString(),
             };
@@ -589,14 +599,14 @@ export default function Admin() {
         // Get affiliate revenue with email and date filtering
         const { data: affiliates, error: affError } = await supabase
           .from('affiliates')
-          .select('total_earnings, email, created_at');
+          .select('total_earnings, paypal_email, created_at');
 
         console.log('Affiliate data:', affiliates, 'Error:', affError);
 
         if (affiliates) {
           // Filter out test data
           const realAffiliates = affiliates.filter(a =>
-            !isTestEmail(a.email) &&
+            !isTestEmail(a.paypal_email) &&
             new Date(a.created_at) >= new Date(PLATFORM_LAUNCH_DATE)
           );
 

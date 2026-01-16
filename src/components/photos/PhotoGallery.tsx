@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, Grid, ShoppingBag, CheckCircle, Download, Eye, Lock, Unlock, Trash2, CheckSquare, Square } from 'lucide-react';
+import { Camera, Grid, ShoppingBag, CheckCircle, Download, Eye, Check, Lock, Unlock, Layers, Square, ArrowUp } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import PhotoLightbox from './PhotoLightbox';
@@ -43,6 +43,8 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
     const [loading, setLoading] = useState(true);
     const [checkoutLoading, setCheckoutLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<'storefront' | 'assets'>('storefront');
+    const [showBackToTop, setShowBackToTop] = useState(false);
+    const photosRef = useRef<HTMLDivElement>(null);
 
     const storageKey = `gallery_selection_${librarySlug}`;
 
@@ -68,6 +70,16 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
             localStorage.removeItem(storageKey);
         }
     }, [selectedPhotos, storageKey]);
+
+    // Track scroll position to show/hide back to top button
+    useEffect(() => {
+        const handleScroll = () => {
+            // Show button when scrolled down more than 500px
+            setShowBackToTop(window.scrollY > 500);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     // Check for purchased assets if user is logged in
     useEffect(() => {
@@ -224,7 +236,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
             <div className="max-w-7xl mx-auto mb-20">
                 {/* Title Section */}
                 <div className="mb-12">
-                    <h1 className="text-3xl md:text-6xl font-black text-white tracking-tight uppercase mb-2">
+                    <h1 className="text-2xl sm:text-3xl md:text-6xl font-black text-white tracking-tight uppercase mb-2 whitespace-nowrap overflow-hidden text-ellipsis">
                         {library?.name}
                     </h1>
                     <p className="text-zinc-500 text-sm md:text-base font-medium tracking-tight mb-8">
@@ -234,9 +246,9 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-32">
                     {/* Left Column: Pricing */}
-                    <div className="space-y-8 max-w-sm">
+                    <div className="space-y-2 max-w-sm">
                         {pricingOptions.map((option) => (
-                            <div key={option.id} className="flex items-center justify-between group py-2 border-b border-white/5 last:border-0">
+                            <div key={option.id} className="flex items-center justify-between group py-2">
                                 <span className={`text-[10px] font-black tracking-[0.2em] uppercase transition-colors ${option.photo_count >= 10 ? 'text-green-500' : 'text-white/40'}`}>
                                     {option.name} {option.photo_count > 1 && `(${option.photo_count})`}
                                 </span>
@@ -282,7 +294,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
 
             <div className="max-w-7xl mx-auto">
                 {/* Tab Switcher & Batch Actions */}
-                <div className="flex flex-col md:flex-row justify-end items-start md:items-end gap-8 mb-12 border-b border-white/10 pb-8">
+                <div className="flex flex-col md:flex-row justify-center md:justify-end items-center md:items-end gap-8 mb-4 pb-4">
                     {user && (
                         <div className="flex gap-8">
                             <button
@@ -308,7 +320,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                 </div>
 
                 {/* Photos Grouped by Date */}
-                <div className="space-y-16">
+                <div ref={photosRef} className="space-y-16">
                     {displayedPhotos.length === 0 ? (
                         <div className="py-40 text-center border border-dashed border-white/10 rounded-2xl">
                             <p className="text-zinc-500 uppercase tracking-widest font-bold">No items found in this vault section.</p>
@@ -341,30 +353,22 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
 
                             return (
                                 <div key={dateHeader}>
-                                    <div className="flex items-center justify-between mb-6 sticky top-0 z-[5] bg-black/80 backdrop-blur-md py-4 border-b border-white/10">
+                                    <div className="flex items-center justify-between mb-6 sticky top-0 z-[5] bg-black/80 backdrop-blur-md pt-2 pb-4">
                                         <h2 className="text-lg md:text-2xl font-black text-white uppercase tracking-tight whitespace-nowrap">
                                             {dateHeader}
                                         </h2>
                                         {activeTab === 'storefront' && (
                                             <button
                                                 onClick={() => handleToggleGroup(groupPhotos, isGroupAllSelected)}
-                                                className="flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-colors"
+                                                className="flex items-center gap-2 px-2 md:px-3 py-1 bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-colors"
+                                                title={isGroupAllSelected ? 'Unselect Group' : 'Select Group'}
                                             >
-                                                {isGroupAllSelected ? (
-                                                    <>
-                                                        <Trash2 className="w-3 h-3 text-red-500" />
-                                                        Unselect Group
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <CheckSquare className="w-3 h-3 text-green-500" />
-                                                        Select Group
-                                                    </>
-                                                )}
+                                                <Layers className={`w-3 h-3 ${isGroupAllSelected ? 'text-white' : 'text-white/60'}`} />
+                                                <span className="hidden md:inline">{isGroupAllSelected ? 'Unselect Group' : 'Select Group'}</span>
                                             </button>
                                         )}
                                     </div>
-                                    <div className="grid grid-cols-3 md:grid-cols-3 gap-2 md:gap-4">
+                                    <div className="grid grid-cols-3 gap-2 md:gap-4">
                                         {groupPhotos.map((photo) => {
                                             const index = photos.findIndex(p => p.id === photo.id);
                                             const isSelected = !!selectedPhotos.find(p => p.id === photo.id);
@@ -394,9 +398,11 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                                                     {/* Watermark Overlay - Only show if NOT purchased */}
                                                     {!isPurchased && (
                                                         <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center overflow-hidden">
-                                                            <div className="text-white/[0.07] text-3xl md:text-4xl font-black tracking-widest transform rotate-[-30deg] select-none uppercase whitespace-nowrap">
-                                                                THE LOST+UNFOUNDS • THE LOST+UNFOUNDS
-                                                            </div>
+                                                            <img
+                                                                src="/logo.png"
+                                                                alt="Watermark"
+                                                                className="w-1/2 opacity-[0.09] brightness-0 invert select-none object-contain"
+                                                            />
                                                         </div>
                                                     )}
 
@@ -404,16 +410,16 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                                                     {activeTab === 'storefront' && !isPurchased && (
                                                         <button
                                                             onClick={() => handleToggleSelect(photo)}
-                                                            className={`absolute top-0 right-0 z-30 p-4 transition-all group/select`}
+                                                            className={`absolute top-0 right-0 z-30 p-2 md:p-3 transition-all group/select`}
                                                         >
-                                                            <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${isSelected
+                                                            <div className={`w-4 h-4 md:w-8 md:h-8 rounded-full border-[1.5px] md:border-2 flex items-center justify-center transition-all ${isSelected
                                                                 ? 'bg-white border-white scale-110'
                                                                 : 'bg-black/20 backdrop-blur-md border-white/20 group-hover/select:border-white/50'
                                                                 }`}>
                                                                 {isSelected ? (
-                                                                    <div className="w-3 h-3 bg-black rounded-full" />
+                                                                    <Check className="w-2.5 h-2.5 md:w-5 md:h-5 text-black stroke-[3]" />
                                                                 ) : (
-                                                                    <div className="w-3 h-3 bg-white/0 rounded-full group-hover/select:bg-white/20" />
+                                                                    <div className="w-1.5 h-1.5 md:w-3 md:h-3 bg-white/0 rounded-full group-hover/select:bg-white/20" />
                                                                 )}
                                                             </div>
                                                         </button>
@@ -421,38 +427,31 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
 
                                                     {/* Purchased Badge */}
                                                     {isPurchased && (
-                                                        <div className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-green-500 text-black px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest">
-                                                            <CheckCircle className="w-3 h-3" />
+                                                        <div className="absolute top-2 left-2 z-20 flex items-center gap-1.5 bg-green-500 text-black px-1.5 py-0.5 rounded-none text-[7px] md:text-[8px] font-black uppercase tracking-[0.15em] shadow-lg">
+                                                            <CheckCircle className="w-2.5 h-2.5" />
                                                             PROPRIETARY
                                                         </div>
                                                     )}
 
                                                     {/* Hover Overlay */}
-                                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6 pointer-events-none">
-                                                        <div className="flex items-center justify-between pointer-events-auto">
-                                                            <div className="flex flex-col">
-                                                                <span className="text-white font-bold text-lg">
+                                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4 pointer-events-none">
+                                                        <div className="flex items-end justify-between pointer-events-auto w-full">
+                                                            <div className="flex flex-col items-start text-left">
+                                                                <span className="text-white font-bold text-sm tracking-wide hidden md:block">
                                                                     {isPurchased ? 'OWNED' : `$${singlePrice.toFixed(2)}`}
                                                                 </span>
-                                                                <span className="text-zinc-400 text-[10px] uppercase tracking-tighter">
+                                                                <span className="text-zinc-400 text-[10px] uppercase tracking-wider hidden md:block">
                                                                     {photo.title}
                                                                 </span>
                                                             </div>
                                                             <div className="flex gap-2 items-center">
-                                                                <button
-                                                                    onClick={() => setActivePhotoIndex(index)}
-                                                                    className="p-2 bg-white/10 hover:bg-white text-white hover:text-black rounded-full transition-colors"
-                                                                    title="View Details"
-                                                                >
-                                                                    <Eye className="w-4 h-4" />
-                                                                </button>
                                                                 {isPurchased && (
                                                                     <button
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
                                                                             window.open(`/api/gallery/stream?fileId=${photo.google_drive_file_id}&download=true`, '_blank');
                                                                         }}
-                                                                        className="bg-white text-black px-3 py-2 rounded-none font-bold text-[10px] flex items-center gap-2 uppercase tracking-wider hover:bg-zinc-200 transition-colors"
+                                                                        className="bg-white text-black px-1.5 py-1 rounded-none font-bold text-[8px] flex items-center gap-1 uppercase tracking-wider hover:bg-zinc-200 transition-colors"
                                                                         title="Download Original"
                                                                     >
                                                                         <Download className="w-3 h-3" />
@@ -483,7 +482,19 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                 isPurchased={activePhotoIndex !== null && !!photos[activePhotoIndex] && !!purchasedPhotos.find(p => p.id === photos[activePhotoIndex!].id)}
                 onToggleSelect={() => activePhotoIndex !== null && !!photos[activePhotoIndex] && handleToggleSelect(photos[activePhotoIndex!])}
                 singlePhotoPrice={singlePrice}
+                galleryName={library?.name}
             />
+
+            {/* Back to Top Button */}
+            {showBackToTop && (
+                <button
+                    onClick={() => photosRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                    className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-10 h-10 bg-white/10 border border-white/20 backdrop-blur-md flex items-center justify-center hover:bg-white hover:text-black transition-all"
+                    aria-label="Back to top"
+                >
+                    <ArrowUp className="w-5 h-5" />
+                </button>
+            )}
 
             {/* Tray */}
             <SelectionTray

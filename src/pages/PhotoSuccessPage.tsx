@@ -19,6 +19,7 @@ const PhotoSuccessPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [zipping, setZipping] = useState(false);
     const [entitlements, setEntitlements] = useState<Entitlement[]>([]);
+    const [libraryTitle, setLibraryTitle] = useState<string>('GALLERY');
 
     useEffect(() => {
         if (orderId) {
@@ -38,6 +39,9 @@ const PhotoSuccessPage: React.FC = () => {
             const data = await response.json();
             if (data.success) {
                 setEntitlements(data.entitlements || []);
+                if (data.libraryTitle) {
+                    setLibraryTitle(data.libraryTitle);
+                }
             }
         } catch (err) {
             console.error('Error capturing payment:', err);
@@ -68,7 +72,13 @@ const PhotoSuccessPage: React.FC = () => {
 
             await Promise.all(fetchPromises);
             const content = await zip.generateAsync({ type: 'blob' });
-            saveAs(content, 'kattitude_photos.zip');
+
+            // Format: THE_LOST+UNFOUNDS_ORDER_[SHORT_ID]_[GALLERY_NAME]
+            const shortId = orderId ? (orderId.includes('-') ? orderId.split('-')[0] : orderId.substring(0, 8)) : 'DOCS';
+            const galleryName = libraryTitle.replace(/\s+/g, '_');
+            const finalFilename = `THE_LOST+UNFOUNDS_ORDER_${shortId}_${galleryName}`.toUpperCase();
+
+            saveAs(content, `${finalFilename}.zip`);
         } catch (err) {
             console.error('Error creating zip:', err);
             alert('Could not download all photos. Please try downloading individually.');
@@ -137,19 +147,19 @@ const PhotoSuccessPage: React.FC = () => {
                             )}
 
                             {/* Overlay */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end p-6">
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end p-4">
                                 <a
                                     href={`/api/photos/download?token=${e.token}`}
-                                    className="bg-white text-black w-full py-2 rounded-none font-bold text-sm flex items-center justify-center gap-2 hover:bg-zinc-200 transition-transform transform translate-y-4 group-hover:translate-y-0 duration-300 uppercase tracking-wider"
+                                    className="bg-white text-black w-full py-1.5 rounded-none font-bold text-[9px] flex items-center justify-center gap-1.5 hover:bg-zinc-200 transition-transform transform translate-y-2 group-hover:translate-y-0 duration-300 uppercase tracking-[0.2em]"
                                     download
                                 >
-                                    <Download className="w-4 h-4" />
+                                    <Download className="w-3 h-3" />
                                     <span>Download</span>
                                 </a>
                             </div>
 
                             {/* Badge */}
-                            <div className="absolute top-3 left-3 bg-green-500 text-black text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider">
+                            <div className="absolute top-2 left-2 bg-green-500 text-black text-[7px] md:text-[8px] font-black px-1.5 py-0.5 rounded-none uppercase tracking-[0.2em] shadow-lg">
                                 PROPRIETARY
                             </div>
                         </motion.div>

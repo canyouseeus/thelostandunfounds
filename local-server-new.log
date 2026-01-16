@@ -1,0 +1,78 @@
+[dotenv@17.2.3] injecting env (13) from .env.local -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
+✅ Local Server Env Loaded
+   Supabase URL: OK
+   Zoho Client ID: Loaded
+   Zoho From Email: Loaded
+Local API Server running on http://localhost:3001
+Enabling local PayPal sandbox testing...
+[Local Server] POST /api/gallery/checkout
+Processing checkout for: {
+  email: 'thelostandunfounds@gmail.com',
+  itemCount: 2,
+  hasMetadata: false
+}
+Dynamic Bundling: Configured Bundles Used. Remaining Singles: 2
+Pricing Breakdown: 2 Std Items ($10.00) + Other ($0.00)
+Dynamic Pricing Calculated. Total: $10.00
+Using PayPal Environment: SANDBOX
+Using Client ID: Ae32w...
+   Access Token received.
+   PayPal Approval URL: https://www.sandbox.paypal.com/checkoutnow?token=8FR33850E3471532B
+[Local Server] POST /api/gallery/capture
+Capturing Local Order: 8FR33850E3471532B
+[Local Server] POST /api/gallery/capture
+Capturing Local Order: 8FR33850E3471532B
+   Reference ID found: LOC-1768601165202-15
+✅ Metadata Retrieved for Order: LOC-1768601165202-15
+   > Email: thelostandunfounds@gmail.com
+   > Library: kattitude-tattoo
+   > Items: 2
+Fulfilling purchase for: thelostandunfounds@gmail.com Photos: 2 Slug: kattitude-tattoo
+📧 Sending confirmation email via Zoho...
+   Reference ID found: LOC-1768601165202-15
+✅ Metadata Retrieved for Order: LOC-1768601165202-15
+   > Email: thelostandunfounds@gmail.com
+   > Library: kattitude-tattoo
+   > Items: 2
+Fulfilling purchase for: thelostandunfounds@gmail.com Photos: 2 Slug: kattitude-tattoo
+📧 Sending confirmation email via Zoho...
+   Zoho Token Status: 200
+   Refresh Token Length: 70
+✅ Email sent successfully to: thelostandunfounds@gmail.com
+   Zoho Token Status: 200
+   Refresh Token Length: 70
+✅ Purchase recorded. Entitlements Found: 2
+✅ Email sent successfully to: thelostandunfounds@gmail.com
+⚠️ Order duplicate detected (23505). Fetching existing ID...
+✅ Purchase recorded. Entitlements Found: 2
+[Local Server] POST /api/gallery/capture
+Capturing Local Order: 8FR33850E3471532B
+[Local Server] POST /api/gallery/capture
+Capturing Local Order: 8FR33850E3471532B
+   Order already completed in DB: 7712a8f5-75e0-467e-9128-5b301890209e
+   Order already completed in DB: 7712a8f5-75e0-467e-9128-5b301890209e
+[Local Server] GET /api/gallery/stream
+[Stream] Request for fileId: 1WbBSTn0_Fe4SrWz6r2ma5x3-YUNUv57c
+[Stream] Fetching upstream: https://lh3.googleusercontent.com/d/1WbBSTn0_Fe4SrWz6r2ma5x3-YUNUv57c=s0
+[Local Server] GET /api/gallery/stream
+[Stream] Request for fileId: 1mQhykfkmj9C7jMngrcjEljxDHnIdHEqy
+[Stream] Fetching upstream: https://lh3.googleusercontent.com/d/1mQhykfkmj9C7jMngrcjEljxDHnIdHEqy=s0
+[Stream] Upstream status: 200 OK
+[Stream] Upstream content-type: image/jpeg
+[Stream] Piping response...
+[Stream] Upstream status: 200 OK
+[Stream] Upstream content-type: image/jpeg
+[Stream] Piping response...
+[Local Server] GET /api/photos/download
+[Local Server] GET /api/photos/download
+[Local Server] GET /api/photos/download
+[Local Server] GET /api/photos/download
+[Download] Fetching high-res for DSCF9904: https://lh3.googleusercontent.com/d/1mQhykfkmj9C7jMngrcjEljxDHnIdHEqy=s0
+[Download] Fetching high-res for DSCF9905: https://lh3.googleusercontent.com/d/1WbBSTn0_Fe4SrWz6r2ma5x3-YUNUv57c=s0
+[Download] Fetching high-res for DSCF9905: https://lh3.googleusercontent.com/d/1WbBSTn0_Fe4SrWz6r2ma5x3-YUNUv57c=s0
+[Download] Fetching high-res for DSCF9904: https://lh3.googleusercontent.com/d/1mQhykfkmj9C7jMngrcjEljxDHnIdHEqy=s0
+[Download] Piping high-res stream for DSCF9905...
+[Download] Piping high-res stream for DSCF9904...
+[Download] Piping high-res stream for DSCF9904...
+[Download] Piping high-res stream for DSCF9905...

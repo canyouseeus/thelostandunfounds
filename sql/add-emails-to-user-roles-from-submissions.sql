@@ -13,7 +13,7 @@ BEGIN
 
   -- For each user with a subdomain, try to find their email from blog_submissions
   FOR subdomain_record IN
-    SELECT DISTINCT
+    SELECT DISTINCT ON (us.user_id)
       us.user_id,
       us.subdomain,
       bs.author_email,
@@ -27,7 +27,7 @@ BEGIN
         WHERE ur.user_id = us.user_id 
         AND ur.email IS NOT NULL
       )
-    ORDER BY bs.created_at DESC
+    ORDER BY us.user_id, bs.created_at DESC
   LOOP
     -- Check if user_roles entry exists
     SELECT user_id, email INTO user_record

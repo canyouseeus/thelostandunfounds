@@ -19,16 +19,16 @@ export default function Home() {
     let fadeInInterval: NodeJS.Timeout | null = null
     let fadeOutInterval: NodeJS.Timeout | null = null
     let fadeOutTimer: NodeJS.Timeout | null = null
-    
+
     // Fade in logo immediately when page loads
     const fadeInStart = Date.now()
     const fadeInDuration = 1000 // 1 second fade in
-    
+
     fadeInInterval = setInterval(() => {
       const elapsed = Date.now() - fadeInStart
       const progress = Math.min(elapsed / fadeInDuration, 1)
       setLogoOpacity(progress)
-      
+
       if (progress >= 1) {
         if (fadeInInterval) {
           clearInterval(fadeInInterval)
@@ -42,12 +42,12 @@ export default function Home() {
     fadeOutTimer = setTimeout(() => {
       const fadeOutStart = Date.now()
       const fadeOutDuration = 1000 // 1 second fade out
-      
+
       fadeOutInterval = setInterval(() => {
         const elapsed = Date.now() - fadeOutStart
         const progress = Math.min(elapsed / fadeOutDuration, 1)
         setLogoOpacity(1 - progress)
-        
+
         if (progress >= 1) {
           if (fadeOutInterval) {
             clearInterval(fadeOutInterval)
@@ -77,9 +77,9 @@ export default function Home() {
   // Cursor blink animation - starts when typing begins
   useEffect(() => {
     if (!showTyping) return
-    
+
     let cursorInterval: NodeJS.Timeout | null = null
-    
+
     setShowCursor(true)
     cursorInterval = setInterval(() => {
       setShowCursor(prev => !prev)
@@ -100,7 +100,7 @@ export default function Home() {
     let leftCount = 0
     let rightCount = 1
     let isRight = true
-    
+
     const typeInterval = setInterval(() => {
       if (isRight && rightCount <= text.length - centerIndex) {
         // Type to the right
@@ -137,7 +137,7 @@ export default function Home() {
   // Start growing text and add blur once typing completes (cursor disappears)
   useEffect(() => {
     if (!typingComplete) return
-    
+
     setTextBlur(2)
     const growStart = Date.now()
     const growInterval = setInterval(() => {
@@ -145,7 +145,7 @@ export default function Home() {
       const scale = 1 + (elapsed / 10000) * 1
       setTextScale(scale)
     }, 16)
-    
+
     return () => clearInterval(growInterval)
   }, [typingComplete])
 
@@ -176,9 +176,9 @@ export default function Home() {
         <main className="flex-1 flex flex-col items-center justify-center relative h-full gap-8">
           {/* Logo */}
           {showLogo && (
-            <div 
-              className="flex items-center justify-center" 
-              style={{ 
+            <div
+              className="flex items-center justify-center"
+              style={{
                 position: 'fixed',
                 left: '50%',
                 top: '50%',
@@ -186,10 +186,10 @@ export default function Home() {
                 zIndex: 10,
               }}
             >
-              <img 
-                src="/logo.png" 
-                alt="THE LOST+UNFOUNDS Logo" 
-                style={{ 
+              <img
+                src="/logo.png"
+                alt="THE LOST+UNFOUNDS Logo"
+                style={{
                   maxWidth: 'min(570px, 80vw)',
                   width: 'auto',
                   height: 'auto',
@@ -199,14 +199,14 @@ export default function Home() {
                   filter: 'none',
                   mixBlendMode: 'normal',
                   transition: 'opacity 0.1s linear',
-                }} 
+                }}
               />
             </div>
           )}
-          
+
           {/* Typing text - expands after cursor disappears */}
           {showTyping && (
-            <div 
+            <div
               className="center-text fixed text-base sm:text-2xl md:text-3xl"
               style={{
                 opacity: typingComplete ? 0.3 : 1,
@@ -214,7 +214,7 @@ export default function Home() {
                 top: '50%',
                 transform: `translate(-50%, -50%) scale(${textScale})`,
                 filter: `blur(${textBlur}px)`,
-                zIndex: 1001,
+                zIndex: 39,
                 transition: 'opacity 1.5s ease-in-out, transform 0.1s linear, filter 0.5s ease-out',
                 pointerEvents: 'none',
                 willChange: 'opacity',
@@ -227,9 +227,9 @@ export default function Home() {
               }}
             >
               {displayedText}
-              <span 
+              <span
                 className="typing-cursor"
-                style={{ 
+                style={{
                   opacity: showCursor ? 1 : 0,
                   transition: 'opacity 0.1s ease-in-out'
                 }}
@@ -238,9 +238,9 @@ export default function Home() {
               </span>
             </div>
           )}
-          
+
           {/* Email Signup - slides up from bottom */}
-          <div 
+          <div
             className="fixed flex flex-col items-center"
             style={{
               opacity: showSignup ? 1 : 0,
@@ -251,7 +251,7 @@ export default function Home() {
               width: '100%',
               maxWidth: 'min(500px, 90vw)',
               padding: '0 1rem',
-              zIndex: 1002,
+              zIndex: 40,
               transition: 'opacity 1.5s ease-in-out, transform 1.5s ease-in-out, visibility 0s linear',
               pointerEvents: showSignup ? 'auto' : 'none',
               willChange: 'opacity, transform',

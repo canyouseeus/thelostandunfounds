@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight, Plus, Check, Download, CheckCircle } from 'lucide-react';
 
@@ -18,6 +18,7 @@ interface PhotoLightboxProps {
     isPurchased?: boolean;
     onToggleSelect: () => void;
     singlePhotoPrice?: number;
+    galleryName?: string;
 }
 
 const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
@@ -28,8 +29,16 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
     isSelected,
     isPurchased = false,
     onToggleSelect,
-    singlePhotoPrice = 5.00
+    singlePhotoPrice = 5.00,
+    galleryName
 }) => {
+    const [isImageLoading, setIsImageLoading] = useState(true);
+
+    // Reset loading state when photo changes
+    useEffect(() => {
+        setIsImageLoading(true);
+    }, [photo?.google_drive_file_id]);
+
     if (!photo) return null;
 
 
@@ -50,21 +59,34 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                 {/* Content Container */}
                 <div className="relative w-full max-w-6xl h-full flex flex-col items-center justify-center group">
 
+                    {/* Header: Gallery Name */}
+                    <motion.div
+                        initial={{ y: -10, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        className="mb-8 md:mb-12 mt-8"
+                    >
+                        <h3 className="text-white text-[10px] md:text-[11px] font-black tracking-[0.4em] md:tracking-[0.5em] uppercase">
+                            {galleryName || 'Archive View'}
+                        </h3>
+                    </motion.div>
+
                     {/* Main Image Container */}
                     <motion.div
                         initial={{ scale: 0.9, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        className="flex items-center justify-center w-full h-full pointer-events-none p-4"
+                        className="flex flex-col items-center justify-center w-full h-full pointer-events-none p-4"
                     >
                         {/* Inner generic wrapper that shrinks to fit the image */}
                         <div className="relative w-fit h-auto flex items-center justify-center">
 
-                            {/* Watermark Overlay (Security) - Only if not purchased */}
+                            {/* Watermark Overlay (Security) - Only if not purchased and image is loaded */}
                             {!isPurchased && (
-                                <div className="absolute inset-0 z-10 opacity-10 flex items-center justify-center select-none overflow-hidden rounded-lg pointer-events-none">
-                                    <span className="text-4xl md:text-8xl font-black rotate-[-45deg] whitespace-nowrap uppercase tracking-[1em]">
-                                        THE LOST+UNFOUNDS
-                                    </span>
+                                <div className={`absolute inset-0 z-10 flex items-center justify-center pointer-events-none overflow-hidden rounded-lg transition-opacity duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}>
+                                    <img
+                                        src="/logo.png"
+                                        alt="Watermark"
+                                        className="w-1/2 h-auto brightness-0 invert opacity-[0.09] select-none"
+                                    />
                                 </div>
                             )}
 
@@ -74,51 +96,53 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                                 className="max-h-[70vh] w-auto object-contain shadow-2xl rounded-lg select-none pointer-events-auto"
                                 onContextMenu={(e) => e.preventDefault()}
                                 draggable={false}
+                                onLoad={() => setIsImageLoading(false)}
                                 referrerPolicy="no-referrer"
                                 crossOrigin="anonymous"
                             />
 
-                            {/* Close Button - Overlaid on Photo */}
+                            {/* Close Button - Overlaid on Photo - Only show when loaded */}
                             <button
                                 onClick={onClose}
-                                className="absolute -top-12 right-0 md:top-4 md:right-4 z-50 p-2 bg-black/40 hover:bg-white backdrop-blur-md rounded-full text-white hover:text-black transition-all pointer-events-auto opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                                className={`absolute -top-12 right-0 md:top-4 md:right-4 z-50 p-2 bg-black/40 hover:bg-white backdrop-blur-md rounded-full text-white hover:text-black transition-all pointer-events-auto ${isImageLoading ? 'opacity-0 scale-0' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100 scale-100'}`}
                             >
                                 <X className="w-5 h-5" />
                             </button>
 
-                            {/* Status Badge */}
+                            {/* Status Badge - Only show when loaded */}
                             {isPurchased && (
-                                <div className="absolute top-4 left-4 z-20 flex items-center gap-2 bg-green-500 text-black px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
-                                    <CheckCircle className="w-4 h-4" />
+                                <div className={`absolute top-4 left-4 z-20 flex items-center gap-1.5 bg-green-500 text-black px-2 py-1 rounded-none text-[8px] md:text-[9px] font-black uppercase tracking-[0.15em] shadow-lg transition-opacity duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}>
+                                    <CheckCircle className="w-3 h-3" />
                                     PROPRIETARY
                                 </div>
                             )}
+                        </div>
+
+                        {/* Sub-header: Photo Title - Nested inside to stay close to image - Only show when loaded */}
+                        <div className={`text-zinc-500 text-[9px] font-bold tracking-[0.2em] uppercase mt-6 pointer-events-auto transition-opacity duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}>
+                            {photo.title || 'Untitled Archive'}
                         </div>
                     </motion.div>
 
                     <button
                         onClick={(e) => { e.stopPropagation(); onPrev(); }}
-                        className="absolute left-0 p-4 text-white hover:text-zinc-400 transition-colors opacity-0 group-hover:opacity-100"
+                        className={`absolute left-0 p-4 text-white hover:text-zinc-400 transition-all ${isImageLoading ? 'opacity-0 pointer-events-none' : 'opacity-0 group-hover:opacity-100'}`}
                     >
                         <ChevronLeft className="w-12 h-12" />
                     </button>
 
                     <button
                         onClick={(e) => { e.stopPropagation(); onNext(); }}
-                        className="absolute right-0 p-4 text-white hover:text-zinc-400 transition-colors opacity-0 group-hover:opacity-100"
+                        className={`absolute right-0 p-4 text-white hover:text-zinc-400 transition-all ${isImageLoading ? 'opacity-0 pointer-events-none' : 'opacity-0 group-hover:opacity-100'}`}
                     >
                         <ChevronRight className="w-12 h-12" />
                     </button>
 
-                    {/* Selection Action Bar (Footer of Lightbox) */}
                     <motion.div
-                        initial={{ y: 20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        className="mt-8 flex flex-col items-center gap-4"
+                        initial={{ y: 0, opacity: 0 }}
+                        animate={{ y: 0, opacity: isImageLoading ? 0 : 1 }}
+                        className="mt-2 flex flex-col items-center gap-4 transition-opacity duration-300"
                     >
-                        <h3 className="text-zinc-400 text-[10px] font-black tracking-[0.3em] uppercase">
-                            {photo.title || 'Untitled Archive'}
-                        </h3>
 
                         {isPurchased ? (
                             <button
@@ -126,15 +150,15 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                                     e.stopPropagation();
                                     window.open(`/api/gallery/stream?fileId=${photo.google_drive_file_id || photo.id}&download=true`, '_blank');
                                 }}
-                                className="flex items-center gap-3 px-12 py-4 bg-green-500 hover:bg-green-400 text-black rounded-full font-black text-xs uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(34,197,94,0.3)]"
+                                className="flex items-center gap-2 px-8 py-3 bg-white hover:bg-zinc-200 text-black rounded-none font-black text-[10px] uppercase tracking-[0.25em] transition-all shadow-xl"
                             >
-                                <Download className="w-5 h-5" />
+                                <Download className="w-4 h-4" />
                                 <span>Download Original</span>
                             </button>
                         ) : (
                             <button
                                 onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}
-                                className={`flex items-center gap-2 px-10 py-4 rounded-full font-black text-xs uppercase tracking-widest transition-all ${isSelected
+                                className={`flex items-center gap-2 px-10 py-4 rounded-none font-black text-xs uppercase tracking-widest transition-all ${isSelected
                                     ? 'bg-zinc-800 text-white'
                                     : 'bg-white text-black hover:bg-zinc-200'
                                     }`}

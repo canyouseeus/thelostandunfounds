@@ -100,7 +100,7 @@ function wrapEmail(bodyContent) {
 const server = http.createServer(async (req, res) => {
     // Set CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
     if (req.method === 'OPTIONS') {
@@ -362,6 +362,49 @@ const server = http.createServer(async (req, res) => {
             console.log('Capturing Local Order:', orderId);
 
             try {
+                // 0. Idempotency Check (Support internal UUID or PayPal ID)
+                const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId);
+                let checkQuery = supabase.from('photo_orders').select('id, payment_status');
+                if (isUuid) {
+                    checkQuery = checkQuery.or(`id.eq.${orderId},paypal_order_id.eq.${orderId}`);
+                } else {
+                    checkQuery = checkQuery.eq('paypal_order_id', orderId);
+                }
+                const { data: earlyCheck } = await checkQuery.maybeSingle();
+
+                if (earlyCheck?.payment_status === 'completed') {
+                    console.log('   Order already completed in DB:', earlyCheck.id);
+                    const { data: existingE } = await supabase
+                        .from('photo_entitlements')
+                        .select('token, photo_id')
+                        .eq('order_id', earlyCheck.id);
+
+                    if (existingE && existingE.length > 0) {
+                        const pIds = existingE.map(e => e.photo_id);
+                        const { data: photos } = await supabase
+                            .from('photos')
+                            .select('id, title, google_drive_file_id, photo_libraries(name)')
+                            .in('id', pIds);
+
+                        const libraryTitle = photos?.[0]?.photo_libraries?.name || 'GALLERY';
+
+                        return setJsonRes(200, {
+                            success: true,
+                            message: 'Order already captured (Idempotent)',
+                            libraryTitle,
+                            entitlements: existingE.map(e => {
+                                const p = photos?.find(ph => ph.id === e.photo_id);
+                                return {
+                                    token: e.token,
+                                    photoId: e.photo_id,
+                                    photoTitle: p?.title || 'Purchased Photo',
+                                    thumbnailUrl: p?.google_drive_file_id ? `/api/gallery/stream?fileId=${p.google_drive_file_id}&size=400` : null
+                                };
+                            })
+                        });
+                    }
+                }
+
                 // 1. Get Access Token
                 const environment = process.env.PAYPAL_ENVIRONMENT || 'SANDBOX';
                 const isSandbox = environment.toUpperCase() === 'SANDBOX';
@@ -412,19 +455,22 @@ const server = http.createServer(async (req, res) => {
                                 const pIds = existingE.map(e => e.photo_id);
                                 const { data: photos } = await supabase
                                     .from('photos')
-                                    .select('id, title, thumbnail_url')
+                                    .select('id, title, google_drive_file_id, photo_libraries(name)')
                                     .in('id', pIds);
+
+                                const libraryTitle = photos?.[0]?.photo_libraries?.name || 'GALLERY';
 
                                 return setJsonRes(200, {
                                     success: true,
                                     message: 'Order already captured',
+                                    libraryTitle,
                                     entitlements: existingE.map(e => {
                                         const p = photos?.find(ph => ph.id === e.photo_id);
                                         return {
                                             token: e.token,
                                             photoId: e.photo_id,
                                             photoTitle: p?.title || 'Purchased Photo',
-                                            thumbnailUrl: p?.thumbnail_url
+                                            thumbnailUrl: p?.google_drive_file_id ? `/api/gallery/stream?fileId=${p.google_drive_file_id}&size=400` : null
                                         };
                                     })
                                 });
@@ -491,20 +537,23 @@ const server = http.createServer(async (req, res) => {
                             const pIds = existingE.map(e => e.photo_id);
                             const { data: photos } = await supabase
                                 .from('photos')
-                                .select('id, title, thumbnail_url')
+                                .select('id, title, google_drive_file_id, photo_libraries(name)')
                                 .in('id', pIds);
+
+                            const libraryTitle = photos?.[0]?.photo_libraries?.name || 'GALLERY';
 
                             return setJsonRes(200, {
                                 success: true,
                                 message: 'Captured locally (Recovered)',
                                 captureData,
+                                libraryTitle,
                                 entitlements: existingE.map(e => {
                                     const p = photos?.find(ph => ph.id === e.photo_id);
                                     return {
                                         token: e.token,
                                         photoId: e.photo_id,
                                         photoTitle: p?.title || 'Purchased Photo',
-                                        thumbnailUrl: p?.thumbnail_url
+                                        thumbnailUrl: p?.google_drive_file_id ? `/api/gallery/stream?fileId=${p.google_drive_file_id}&size=400` : null
                                     };
                                 })
                             });
@@ -515,6 +564,7 @@ const server = http.createServer(async (req, res) => {
 
                 // If we found metadata, continue to fulfillment logic below...
                 if (metadata) {
+                    const { photoIds, email, userId, librarySlug } = metadata;
 
                     // --- ZOHO EMAIL LOGIC START ---
                     try {
@@ -557,22 +607,32 @@ const server = http.createServer(async (req, res) => {
                             const accountId = accountData.data?.[0]?.accountId || accountData.data?.[0]?.account_id;
 
                             if (accountId) {
-                                // 3. Send Email
                                 const galleryUrl = `http://localhost:3000/photos/success?token=${orderId}`;
                                 const emailContent = wrapEmail(`
-                                    <h1 style="${EMAIL_STYLES.heading1}">Order Confirmed</h1>
-                                    <p style="${EMAIL_STYLES.paragraph}">Thank you for your purchase. Your selection has been unlocked in the gallery.</p>
-                                    <p style="${EMAIL_STYLES.paragraph}">You can download your high-resolution photos using the button below:</p>
-                                    <div style="margin: 30px 0;">
-                                        <a href="${galleryUrl}" style="${EMAIL_STYLES.button}">ACCESS GALLERY</a>
+                                    <div style="background-color: #000; color: #fff; padding: 40px; font-family: monospace; text-align: left;">
+                                        <h1 style="font-size: 28px; font-weight: 900; letter-spacing: -1px; margin-bottom: 30px; border-bottom: 2px solid #fff; padding-bottom: 10px; display: inline-block;">
+                                            ACCESS GRANTED
+                                        </h1>
+                                        <p style="color: #666; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; margin: 20px 0 40px 0;">
+                                            YOUR SECURED ARCHIVE ITEMS ARE READY FOR ACCESS.
+                                        </p>
+                                        <div style="margin: 40px 0;">
+                                            <a href="${galleryUrl}" style="${EMAIL_STYLES.button}">ACCESS GALLERY</a>
+                                        </div>
+                                        <div style="margin-top: 60px; padding-top: 20px; border-top: 1px solid #1a1a1a;">
+                                            <p style="color: #333; font-size: 9px; line-height: 1.6; text-transform: uppercase; letter-spacing: 1px;">
+                                                SECURE AUTOMATED DELIVERY SYSTEM<br/>
+                                                ORDER ID: ${orderId}<br/>
+                                                DESTINATION: ${email}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <p style="${EMAIL_STYLES.paragraph}">If you have any issues with your download, please reply to this email.</p>
                                 `);
 
                                 const mailPayload = {
                                     fromAddress: zohoFrom,
                                     toAddress: email,
-                                    subject: "Your Photos Are Ready - THE LOST+UNFOUNDS",
+                                    subject: "ARCHIVE ACCESS GRANTED | THE LOST+UNFOUNDS",
                                     content: emailContent,
                                     mailFormat: 'html'
                                 };
@@ -654,20 +714,23 @@ const server = http.createServer(async (req, res) => {
                                 const pIds = createdEntitlements.map(e => e.photo_id);
                                 const { data: photos } = await supabase
                                     .from('photos')
-                                    .select('id, title, thumbnail_url')
+                                    .select('id, title, google_drive_file_id, photo_libraries(name)')
                                     .in('id', pIds);
+
+                                const libraryTitle = photos?.[0]?.photo_libraries?.name || 'GALLERY';
 
                                 return setJsonRes(200, {
                                     success: true,
                                     message: 'Captured locally',
                                     captureData,
+                                    libraryTitle,
                                     entitlements: createdEntitlements?.map(e => {
                                         const p = photos?.find(ph => ph.id === e.photo_id);
                                         return {
                                             token: e.token,
                                             photoId: e.photo_id,
                                             photoTitle: p?.title || 'Purchased Photo',
-                                            thumbnailUrl: p?.thumbnail_url
+                                            thumbnailUrl: p?.google_drive_file_id ? `/api/gallery/stream?fileId=${p.google_drive_file_id}&size=400` : null
                                         };
                                     })
                                 });
@@ -694,11 +757,10 @@ const server = http.createServer(async (req, res) => {
         let body = '';
         req.on('data', chunk => { body += chunk.toString(); });
         req.on('end', async () => {
-            const { orderId, email, librarySlug } = JSON.parse(body || '{}');
+            const { orderId, email } = JSON.parse(body || '{}');
             if (!orderId || !email) return setJsonRes(400, { error: 'Missing requirements' });
 
             try {
-                // Fetch the order
                 const { data: order } = await supabase
                     .from('photo_orders')
                     .select('*')
@@ -708,11 +770,15 @@ const server = http.createServer(async (req, res) => {
 
                 if (!order) return setJsonRes(404, { error: 'Order not found' });
 
-                const galleryUrl = librarySlug
-                    ? `http://localhost:3000/gallery/${librarySlug}`
-                    : `http://localhost:3000/gallery`;
+                const { data: entitlements } = await supabase
+                    .from('photo_entitlements')
+                    .select('token, photos(title)')
+                    .eq('order_id', orderId);
 
-                // --- ZOHO EMAIL LOGIC START ---
+                if (!entitlements || entitlements.length === 0) {
+                    return setJsonRes(404, { error: 'No entitlements found for this order' });
+                }
+
                 try {
                     const zohoClientId = (process.env.ZOHO_CLIENT_ID || '').trim();
                     const zohoSecret = (process.env.ZOHO_CLIENT_SECRET || '').trim();
@@ -740,23 +806,27 @@ const server = http.createServer(async (req, res) => {
                         const accountId = accountData.data?.[0]?.accountId || accountData.data?.[0]?.account_id;
 
                         if (accountId) {
-                            // Just check if order is valid, no need to fetch all details heavily here
-                            // ... existing logic ...
-                            const downloadPortalUrl = `http://localhost:3000/downloads/${orderId}`;
-
+                            const galleryUrl = `http://localhost:3000/photos/success?token=${orderId}`;
                             const emailContent = wrapEmail(`
-                                    <h1 style="${EMAIL_STYLES.heading1}">CAN YOU SEE US?</h1>
-                                    <h2 style="${EMAIL_STYLES.heading2}">Access Restored</h2>
-                                    <p style="${EMAIL_STYLES.paragraph}">Your secure vault is ready. You can download all your artifacts from the secure portal below.</p>
-                                    
-                                    <div style="margin: 30px 0; text-align: center;">
-                                        <a href="${downloadPortalUrl}" style="${EMAIL_STYLES.button}">ACCESS VAULT & DOWNLOAD</a>
-                                    </div>
-
-                                    <p style="text-align: center; color: #666; font-size: 12px; margin-top: 20px;">
-                                        Reference ID: <span style="font-family: monospace;">${orderId.slice(0, 8)}</span>
+                                <div style="background-color: #000; color: #fff; padding: 40px; font-family: monospace; text-align: left;">
+                                    <h1 style="font-size: 28px; font-weight: 900; letter-spacing: -1px; margin-bottom: 30px; border-bottom: 2px solid #fff; padding-bottom: 10px; display: inline-block;">
+                                        ACCESS RESTORED
+                                    </h1>
+                                    <p style="color: #666; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; margin: 20px 0 40px 0;">
+                                        YOUR SECURED ARCHIVE ITEMS ARE READY FOR DOWNLOAD.
                                     </p>
-                                `);
+                                    <div style="margin: 40px 0;">
+                                        <a href="${galleryUrl}" style="${EMAIL_STYLES.button}">ACCESS GALLERY</a>
+                                    </div>
+                                    <div style="margin-top: 60px; padding-top: 20px; border-top: 1px solid #1a1a1a;">
+                                        <p style="color: #333; font-size: 9px; line-height: 1.6; text-transform: uppercase; letter-spacing: 1px;">
+                                            SECURE AUTOMATED DELIVERY SYSTEM<br/>
+                                            ORDER ID: ${orderId}<br/>
+                                            DESTINATION: ${email}
+                                        </p>
+                                    </div>
+                                </div>
+                            `);
 
                             await fetch(`https://mail.zoho.com/api/accounts/${accountId}/messages`, {
                                 method: 'POST',
@@ -778,13 +848,89 @@ const server = http.createServer(async (req, res) => {
                 } catch (emailErr) {
                     console.error('❌ Failed to resend email:', emailErr.message);
                 }
-                // --- ZOHO EMAIL LOGIC END ---
 
                 return setJsonRes(200, { success: true });
             } catch (err) {
+                console.error('❌ Resend Error:', err);
                 return setJsonRes(500, { error: err.message });
             }
         });
+        return;
+    }
+
+    if (pathname === '/api/photos/download' && req.method === 'GET') {
+        const urlObj = new URL(req.url, `http://${req.headers.host}`);
+        const token = urlObj.searchParams.get('token');
+
+        if (!token) {
+            return setJsonRes(400, { error: 'Missing token' });
+        }
+
+        try {
+            // 1. Verify token and get photo info
+            const { data: entitlement, error: entitlementError } = await supabase
+                .from('photo_entitlements')
+                .select('*, photos!inner(google_drive_file_id, title)')
+                .eq('token', token)
+                .single();
+
+            if (entitlementError || !entitlement) {
+                console.error('[Download] Invalid token:', token, entitlementError);
+                return setJsonRes(44, { error: 'Invalid or expired download token' });
+            }
+
+            const fileId = entitlement.photos.google_drive_file_id;
+            const title = entitlement.photos.title || 'photo';
+
+            // 2. Stream using the same logic as /api/gallery/stream
+            const driveUrl = `https://lh3.googleusercontent.com/d/${fileId}=s0`;
+            console.log(`[Download] Fetching high-res for ${title}: ${driveUrl}`);
+
+            const driveRes = await fetch(driveUrl, {
+                redirect: 'follow',
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
+            });
+
+            if (!driveRes.ok) {
+                console.error(`[Download] Failed to fetch: ${driveRes.status}`);
+                return setJsonRes(502, { error: `Upstream error: ${driveRes.status}` });
+            }
+
+            // Check if we got an HTML login page
+            const contentType = driveRes.headers.get('content-type');
+            if (contentType && contentType.toLowerCase().includes('text/html')) {
+                console.error('[Download] Received HTML instead of image. Likely auth redirection.');
+                return setJsonRes(403, { error: 'File requires authentication. Please ensure Google Drive link settings are "Anyone with the link".' });
+            }
+
+            // Update download count (fire and forget locally)
+            supabase
+                .from('photo_entitlements')
+                .update({ download_count: (entitlement.download_count || 0) + 1 })
+                .eq('id', entitlement.id)
+                .then(({ error }) => { if (error) console.error('[Download] Failed to update count:', error); });
+
+            // Set headers for download
+            res.writeHead(200, {
+                'Content-Type': contentType || 'image/jpeg',
+                'Content-Disposition': `attachment; filename="${title}.jpg"`,
+                'Access-Control-Allow-Origin': '*'
+            });
+
+            if (driveRes.body) {
+                const { Readable } = await import('stream');
+                console.log(`[Download] Piping high-res stream for ${title}...`);
+                Readable.fromWeb(driveRes.body).pipe(res);
+            } else {
+                res.end();
+            }
+
+        } catch (err) {
+            console.error('[Download] Critical error:', err);
+            if (!res.headersSent) setJsonRes(500, { error: 'Internal Download Error' });
+        }
         return;
     }
 

@@ -1041,7 +1041,7 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <button
-                                                    onClick={() => triggerResend(order.paypal_order_id, order.email)}
+                                                    onClick={() => triggerResend(order.id, order.email)}
                                                     className="text-xs uppercase font-bold text-white/60 hover:text-white px-3 py-1 border border-white/20 hover:bg-white/10 transition"
                                                 >
                                                     Resend Email
