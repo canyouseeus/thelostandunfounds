@@ -15,6 +15,7 @@ interface PhotoLightboxProps {
     onPrev: () => void;
     isSelected: boolean;
     onToggleSelect: () => void;
+    singlePhotoPrice?: number;
 }
 
 const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
@@ -23,7 +24,8 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
     onNext,
     onPrev,
     isSelected,
-    onToggleSelect
+    onToggleSelect,
+    singlePhotoPrice = 5.00
 }) => {
     if (!photo) return null;
 
@@ -117,7 +119,7 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                             ) : (
                                 <>
                                     <Plus className="w-5 h-5" />
-                                    <span>Add to Selection ($5.00)</span>
+                                    <span>Add to Selection (${singlePhotoPrice.toFixed(2)})</span>
                                 </>
                             )}
                         </button>

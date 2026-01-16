@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, X, CheckCircle } from 'lucide-react';
+import { PricingOption } from './PhotoGallery';
 
 interface Photo {
     id: string;
@@ -13,54 +14,80 @@ interface SelectionTrayProps {
     onRemove: (id: string) => void;
     onCheckout: () => void;
     loading?: boolean;
+    pricingOptions?: PricingOption[];
 }
 
 const SelectionTray: React.FC<SelectionTrayProps> = ({
     selectedPhotos,
     onRemove,
     onCheckout,
-    loading
+    loading,
+    pricingOptions = []
 }) => {
     const count = selectedPhotos.length;
 
     const pricing = useMemo(() => {
         if (count === 0) return { total: 0, message: 'Select photos to begin' };
 
-        // Elite Bundle: 25 photos for $37.50 ($1.50 each)
-        if (count === 25) return { total: 37.50, message: 'Elite Bundle Applied! ($1.50/photo)' };
+        // Sort options by count descending to handle largest bundles first
+        const sortedOptions = [...pricingOptions].sort((a, b) => b.photo_count - a.photo_count);
 
-        // Better messaging for upsells
-        if (count === 1) return { total: 5.00, message: 'Add 2 more for the $8 bundle!' };
-        if (count === 2) return { total: 10.00, message: 'Add 1 more to unlock the $8 bundle!' };
-        if (count === 3) return { total: 8.00, message: 'Bundle Applied! (Best Value)' };
+        // Find single photo price for base calculations and upsells
+        const singleOption = pricingOptions.find(o => o.photo_count === 1);
+        const singlePrice = singleOption?.price || 5.00;
 
-        // Suggest Elite Bundle if count is between 15 and 24
-        if (count >= 15 && count < 25) {
-            const currentTotal = (Math.floor(count / 3) * 8.00) + ((count % 3) * 5.00);
-            const savings = currentTotal - 37.50;
-            if (savings > 0) {
+        // Find standard bundle (usually 3) for upsell messaging
+        const bundleOption = pricingOptions.find(o => o.photo_count > 1 && o.photo_count < 10);
+
+        // Special messaging for small counts (upsells)
+        if (bundleOption) {
+            if (count < bundleOption.photo_count) {
+                const diff = bundleOption.photo_count - count;
                 return {
-                    total: currentTotal,
-                    message: `Add ${25 - count} more to save $${savings.toFixed(2)} with the Elite Bundle!`
+                    total: count * singlePrice,
+                    message: `Add ${diff} more for the $${bundleOption.price.toFixed(0)} bundle!`
                 };
+            }
+            if (count === bundleOption.photo_count) {
+                return {
+                    total: bundleOption.price,
+                    message: `${bundleOption.name} Applied! (Best Value)`
+                };
+            }
+        } else if (count === 1) {
+            return { total: singlePrice, message: 'Single photo selected' };
+        }
+
+        // Standard calculation using available bundles
+        let remaining = count;
+        let total = 0;
+        let msgParts: string[] = [];
+
+        // Handle full gallery buyout (-1) if it's the only thing selected or if count is very high
+        const buyoutOption = pricingOptions.find(o => o.photo_count === -1);
+        if (buyoutOption && (count > 50)) { // Arbitrary threshold for suggesting buyout
+            // For now we prioritize normal bundles unless it's cheaper
+        }
+
+        for (const option of sortedOptions) {
+            if (option.photo_count <= 0) continue; // Skip buyout/invalid for this loop
+
+            const numBundles = Math.floor(remaining / option.photo_count);
+            if (numBundles > 0) {
+                total += numBundles * option.price;
+                remaining %= option.photo_count;
+                msgParts.push(`${numBundles} ${option.name}${numBundles > 1 ? '(s)' : ''}`);
             }
         }
 
-        // Standard Calculation
-        const bundles25 = Math.floor(count / 25);
-        let rem = count % 25;
-        const bundles3 = Math.floor(rem / 3);
-        const singles = rem % 3;
+        // Add remaining as singles if not already covered
+        if (remaining > 0) {
+            total += remaining * singlePrice;
+            msgParts.push(`${remaining} Photo${remaining > 1 ? 's' : ''}`);
+        }
 
-        const total = (bundles25 * 37.50) + (bundles3 * 8.00) + (singles * 5.00);
-
-        let msg = '';
-        if (bundles25 > 0) msg += `${bundles25} Elite Bundle(s)`;
-        if (bundles3 > 0) msg += (msg ? ' + ' : '') + `${bundles3} Bundle(s)`;
-        if (singles > 0) msg += (msg ? ' + ' : '') + `${singles} Photo(s)`;
-
-        return { total, message: msg || 'Calculating...' };
-    }, [count]);
+        return { total, message: msgParts.join(' + ') || 'Calculating...' };
+    }, [count, pricingOptions]);
 
     if (count === 0) return null;
 

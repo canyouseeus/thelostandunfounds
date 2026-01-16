@@ -20,39 +20,55 @@ export default async function handler(
       return res.status(400).json({ error: 'email is required' })
     }
 
-    // Pricing Logic
-    // 1 photo = $5
-    // 3 photos = $8
-    // 25 photos = $37.50 ($1.50/ea)
-    const count = photoIds.length
-
-    const bundles25 = Math.floor(count / 25)
-    let rem = count % 25
-    const bundles3 = Math.floor(rem / 3)
-    const singles = rem % 3
-
-    const amount = (bundles25 * 37.50) + (bundles3 * 8.00) + (singles * 5.00)
-
-    // Initialize Supabase
-    // We MUST use the Service Role Key to bypass RLS for inserting orders
-    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-    if (!supabaseUrl || !supabaseKey) {
-      console.error('Missing Supabase credentials: SUPABASE_SERVICE_ROLE_KEY is required')
-      return res.status(500).json({ error: 'Server configuration error: Missing Service Key' })
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey)
-
-    // Verify photo IDs exist
+    // Verify photo IDs exist and find associated library
     const { data: photos, error: photoError } = await supabase
       .from('photos')
-      .select('id, title')
+      .select('id, title, library_id')
       .in('id', photoIds)
 
     if (photoError || photos.length !== photoIds.length) {
       return res.status(400).json({ error: 'One or more invalid photo IDs' })
+    }
+
+    const libraryId = photos[0].library_id;
+
+    // Fetch pricing options for this library
+    const { data: pricingOptions, error: pricingError } = await supabase
+      .from('gallery_pricing_options')
+      .select('*')
+      .eq('library_id', libraryId)
+      .eq('is_active', true)
+      .order('photo_count', { ascending: false });
+
+    if (pricingError || !pricingOptions || pricingOptions.length === 0) {
+      console.warn('No pricing options found for library:', libraryId);
+    }
+
+    // Dynamic Pricing Calculation
+    let amount = 0;
+    let remaining = count;
+    const sortedOptions = pricingOptions || [];
+
+    // Fallback single price
+    const { data: library } = await supabase
+      .from('photo_libraries')
+      .select('price')
+      .eq('id', libraryId)
+      .single();
+
+    const singlePrice = sortedOptions.find(o => o.photo_count === 1)?.price || library?.price || 5.00;
+
+    for (const option of sortedOptions) {
+      if (option.photo_count <= 0) continue;
+      const numBundles = Math.floor(remaining / option.photo_count);
+      if (numBundles > 0) {
+        amount += numBundles * parseFloat(option.price.toString());
+        remaining %= option.photo_count;
+      }
+    }
+
+    if (remaining > 0) {
+      amount += remaining * parseFloat(singlePrice.toString());
     }
 
     // Create PayPal order

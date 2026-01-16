@@ -8,8 +8,6 @@ import Loading from '../Loading';
 interface Photo {
     id: string;
     title: string;
-    id: string;
-    title: string;
     thumbnail_url: string;
     created_at: string;
 }
@@ -19,10 +17,19 @@ interface PhotoLibrary {
     name: string;
     slug: string;
     description: string;
+    price: number;
+}
+
+export interface PricingOption {
+    id: string;
+    name: string;
+    price: number;
+    photo_count: number;
 }
 
 const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
     const [library, setLibrary] = useState<PhotoLibrary | null>(null);
+    const [pricingOptions, setPricingOptions] = useState<PricingOption[]>([]);
     const [photos, setPhotos] = useState<Photo[]>([]);
     const [selectedPhotos, setSelectedPhotos] = useState<Photo[]>([]);
     const [activePhotoIndex, setActivePhotoIndex] = useState<number | null>(null);
@@ -63,6 +70,16 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
 
             if (libError) throw libError;
             setLibrary(libData);
+
+            // Fetch pricing options
+            const { data: pricingData } = await supabase
+                .from('gallery_pricing_options')
+                .select('*')
+                .eq('library_id', libData.id)
+                .eq('is_active', true)
+                .order('photo_count', { ascending: true });
+
+            setPricingOptions(pricingData || []);
 
             const { data: photoData, error: photoError } = await supabase
                 .from('photos')
@@ -211,7 +228,9 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
 
                                         {/* Hover Overlay */}
                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6">
-                                            <span className="text-white font-bold text-lg">$5.00</span>
+                                            <span className="text-white font-bold text-lg">
+                                                ${(pricingOptions.find(o => o.photo_count === 1)?.price || library?.price || 5.00).toFixed(2)}
+                                            </span>
                                             <span className="text-zinc-300 text-xs">Click to view details</span>
                                         </div>
                                     </motion.div>
@@ -230,6 +249,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                 onPrev={() => setActivePhotoIndex(prev => prev !== null && prev > 0 ? prev - 1 : photos.length - 1)}
                 isSelected={activePhotoIndex !== null && !!selectedPhotos.find(p => p.id === photos[activePhotoIndex].id)}
                 onToggleSelect={() => activePhotoIndex !== null && handleToggleSelect(photos[activePhotoIndex])}
+                singlePhotoPrice={pricingOptions.find(o => o.photo_count === 1)?.price || library?.price || 5.00}
             />
 
             {/* Tray */}
@@ -238,6 +258,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                 onRemove={(id) => setSelectedPhotos(prev => prev.filter(p => p.id !== id))}
                 onCheckout={handleCheckout}
                 loading={checkoutLoading}
+                pricingOptions={pricingOptions}
             />
         </div>
     );
