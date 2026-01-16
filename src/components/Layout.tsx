@@ -337,6 +337,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
                   >
                     THE GALLERY
                   </Link>
+                  <div className="menu-separator"></div>
                   <div
                     className="menu-item menu-toggle-section flex items-center justify-start w-full gap-0 cursor-pointer"
                     onClick={(e) => {
