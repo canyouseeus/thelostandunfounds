@@ -42,7 +42,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(404).json({
         error: 'Gallery route not found',
         debug: {
-            receivedPathFromQuery: path,
+            receivedPathFromQuery: rawPath,
             resolvedRoute: route,
             originalUrl: req.url,
             method: req.method,
