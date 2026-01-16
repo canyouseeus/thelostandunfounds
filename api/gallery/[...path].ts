@@ -7,9 +7,17 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { path } = req.query;
-    const route = Array.isArray(path) ? path.join('/') : path || '';
 
-    console.log('Gallery API routing:', { route, method: req.method });
+    // Normalize path: join array, remove trailing slash, lowercase
+    const rawRoute = Array.isArray(path) ? path.join('/') : path || '';
+    const route = rawRoute.replace(/\/$/, '').toLowerCase();
+
+    console.log('Gallery API routing:', {
+        rawPath: path,
+        resolvedRoute: route,
+        method: req.method,
+        query: req.query
+    });
 
     if (route === 'checkout') {
         return handleCheckout(req, res);
@@ -27,7 +35,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return handleStream(req, res);
     }
 
-    return res.status(404).json({ error: 'Gallery route not found', debug: { route, path, query: req.query, url: req.url, method: req.method } });
+    return res.status(404).json({
+        error: 'Gallery route not found',
+        debug: {
+            receivedPathFromQuery: path,
+            resolvedRoute: route,
+            originalUrl: req.url,
+            method: req.method,
+            queryKeys: Object.keys(req.query)
+        }
+    });
 }
 
 async function handleStream(req: VercelRequest, res: VercelResponse) {
