@@ -6,18 +6,22 @@ const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    const { path } = req.query;
+    // Vercel sometimes passes the spread param with the ellipses key (e.g. '...path' or just 'path')
+    // dependent on the exact runtime/platform version. We check both.
+    const rawPath = req.query.path || req.query['...path'] || req.query['slug'];
 
     // Normalize path: join array, remove trailing slash, lowercase
-    const rawRoute = Array.isArray(path) ? path.join('/') : path || '';
+    const rawRoute = Array.isArray(rawPath) ? rawPath.join('/') : (rawPath as string) || '';
     const route = rawRoute.replace(/\/$/, '').toLowerCase();
 
     console.log('Gallery API routing:', {
-        rawPath: path,
+        rawPath,
         resolvedRoute: route,
         method: req.method,
         query: req.query
     });
+
+
 
     if (route === 'checkout') {
         return handleCheckout(req, res);
