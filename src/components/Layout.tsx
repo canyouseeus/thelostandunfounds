@@ -30,7 +30,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
   const { user, tier, signOut, loading, clearAuthStorage } = useAuth()
   const { state: sageModeState, toggleSageMode } = useSageMode()
   const navigate = useNavigate()
-  
+
   // Load user subdomain for profile link
   useEffect(() => {
     if (user) {
@@ -95,9 +95,9 @@ export default function Layout({ children }: { children?: ReactNode }) {
       if (isOpeningModalRef.current) {
         return
       }
-      
+
       const target = event.target as HTMLElement
-      
+
       // Don't close if clicking on login button
       if (target.closest('button.menu-item')) {
         const button = target.closest('button.menu-item') as HTMLElement
@@ -106,7 +106,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
           return // Let the button's onClick handle it
         }
       }
-      
+
       if (menuRef.current && !menuRef.current.contains(target)) {
         // Clear any pending timeout before closing
         if (menuCloseTimeoutRef.current) {
@@ -129,13 +129,13 @@ export default function Layout({ children }: { children?: ReactNode }) {
   const handleLoginClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
     e.stopPropagation()
-    
+
     // Set flag to prevent click-outside handler from interfering
     isOpeningModalRef.current = true
-    
+
     // Close menu and open modal
     setMenuOpen(false)
-    
+
     // Use requestAnimationFrame to ensure DOM updates before opening modal
     requestAnimationFrame(() => {
       setAuthModalOpen(true)
@@ -199,14 +199,14 @@ export default function Layout({ children }: { children?: ReactNode }) {
             isOver = true
           }
         }
-        
+
         // If mouse is still within bounds, don't close
         if (isOver) {
           menuCloseTimeoutRef.current = null
           return
         }
       }
-      
+
       setMenuOpen(false)
       setMoreMenuOpen(false)
       setAccountMenuOpen(false)
@@ -270,39 +270,39 @@ export default function Layout({ children }: { children?: ReactNode }) {
               </Link>
             </div>
             <div className="flex items-center space-x-4 ml-auto flex-shrink-0 leading-none h-12">
-              <div 
-                className="header-nav" 
+              <div
+                className="header-nav"
                 ref={menuRef}
                 onMouseEnter={handleMenuMouseEnter}
                 onMouseLeave={handleMenuMouseLeave}
               >
-                  <button 
-                    type="button"
-                    className="menu-toggle flex items-center justify-center h-12 w-12 leading-none"
-                    style={{ transform: 'translateY(0)' }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      justClickedRef.current = true;
-                      setMenuOpen(!menuOpen);
-                      // Reset the flag after a short delay to allow hover to work again
-                      setTimeout(() => {
-                        justClickedRef.current = false;
-                      }, 300);
-                    }}
-                    aria-label="Toggle menu"
-                    aria-expanded={menuOpen}
-                  >
-                    <span className="menu-icon text-xl">☰</span>
-                  </button>
-                <div 
+                <button
+                  type="button"
+                  className="menu-toggle flex items-center justify-center h-12 w-12 leading-none"
+                  style={{ transform: 'translateY(0)' }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    justClickedRef.current = true;
+                    setMenuOpen(!menuOpen);
+                    // Reset the flag after a short delay to allow hover to work again
+                    setTimeout(() => {
+                      justClickedRef.current = false;
+                    }, 300);
+                  }}
+                  aria-label="Toggle menu"
+                  aria-expanded={menuOpen}
+                >
+                  <span className="menu-icon text-xl">☰</span>
+                </button>
+                <div
                   className={`menu-dropdown ${menuOpen ? 'open' : ''}`}
                   ref={dropdownRef}
                   onMouseEnter={handleMenuMouseEnter}
                   onMouseLeave={handleMenuMouseLeave}
                   style={{ maxHeight: '80vh', overflowY: 'auto' }}
                 >
-                  <Link 
-                    to="/" 
+                  <Link
+                    to="/"
                     className="menu-item"
                     onClick={() => {
                       // Allow navigation to happen before closing menu
@@ -313,8 +313,8 @@ export default function Layout({ children }: { children?: ReactNode }) {
                   >
                     HOME
                   </Link>
-                  <Link 
-                    to="/shop" 
+                  <Link
+                    to="/shop"
                     className="menu-item"
                     onClick={() => {
                       // Allow navigation to happen before closing menu
@@ -325,7 +325,19 @@ export default function Layout({ children }: { children?: ReactNode }) {
                   >
                     SHOP
                   </Link>
-                  <div 
+                  <Link
+                    to="/gallery"
+                    className="menu-item"
+                    onClick={() => {
+                      // Allow navigation to happen before closing menu
+                      setTimeout(() => {
+                        setMenuOpen(false);
+                      }, 100);
+                    }}
+                  >
+                    THE GALLERY
+                  </Link>
+                  <div
                     className="menu-item menu-toggle-section flex items-center justify-start w-full gap-0 cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -339,11 +351,11 @@ export default function Layout({ children }: { children?: ReactNode }) {
                       {archivesMenuOpen ? '▼' : '▶'}
                     </div>
                   </div>
-                  <div 
+                  <div
                     className={`menu-subsection ${archivesMenuOpen ? 'open' : ''}`}
                   >
-                    <Link 
-                      to="/thelostarchives" 
+                    <Link
+                      to="/thelostarchives"
                       className="menu-item menu-subitem"
                       onClick={() => {
                         setMenuOpen(false);
@@ -352,8 +364,8 @@ export default function Layout({ children }: { children?: ReactNode }) {
                     >
                       ALL ARTICLES
                     </Link>
-                    <Link 
-                      to="/book-club" 
+                    <Link
+                      to="/book-club"
                       className="menu-item menu-subitem"
                       onClick={() => {
                         setMenuOpen(false);
@@ -362,8 +374,8 @@ export default function Layout({ children }: { children?: ReactNode }) {
                     >
                       BOOK CLUB
                     </Link>
-                    <Link 
-                      to="/gearheads" 
+                    <Link
+                      to="/gearheads"
                       className="menu-item menu-subitem"
                       onClick={() => {
                         setMenuOpen(false);
@@ -372,8 +384,8 @@ export default function Layout({ children }: { children?: ReactNode }) {
                     >
                       GEARHEADS
                     </Link>
-                    <Link 
-                      to="/borderlands" 
+                    <Link
+                      to="/borderlands"
                       className="menu-item menu-subitem"
                       onClick={() => {
                         setMenuOpen(false);
@@ -382,8 +394,8 @@ export default function Layout({ children }: { children?: ReactNode }) {
                     >
                       EDGE OF THE BORDERLANDS
                     </Link>
-                    <Link 
-                      to="/science" 
+                    <Link
+                      to="/science"
                       className="menu-item menu-subitem"
                       onClick={() => {
                         setMenuOpen(false);
@@ -392,8 +404,8 @@ export default function Layout({ children }: { children?: ReactNode }) {
                     >
                       MAD SCIENTISTS
                     </Link>
-                    <Link 
-                      to="/newtheory" 
+                    <Link
+                      to="/newtheory"
                       className="menu-item menu-subitem"
                       onClick={() => {
                         setMenuOpen(false);
@@ -404,16 +416,16 @@ export default function Layout({ children }: { children?: ReactNode }) {
                     </Link>
                   </div>
                   {!showLimitedMenu && (
-                    <Link 
-                      to="/tools" 
+                    <Link
+                      to="/tools"
                       className="menu-item"
                       onClick={() => setMenuOpen(false)}
                     >
                       EXPLORE TOOLS
                     </Link>
                   )}
-                  
-                  <div 
+
+                  <div
                     className="menu-item menu-toggle-section flex items-center justify-start w-full gap-0 cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -427,11 +439,11 @@ export default function Layout({ children }: { children?: ReactNode }) {
                       {moreMenuOpen ? '▼' : '▶'}
                     </div>
                   </div>
-                  <div 
+                  <div
                     className={`menu-subsection ${moreMenuOpen ? 'open' : ''}`}
                   >
-                    <Link 
-                      to="/about" 
+                    <Link
+                      to="/about"
                       className="menu-item menu-subitem"
                       onClick={() => {
                         setMenuOpen(false);
@@ -440,8 +452,8 @@ export default function Layout({ children }: { children?: ReactNode }) {
                     >
                       ABOUT
                     </Link>
-                    <Link 
-                      to="/privacy-policy" 
+                    <Link
+                      to="/privacy-policy"
                       className="menu-item menu-subitem"
                       onClick={() => {
                         setMenuOpen(false);
@@ -450,8 +462,8 @@ export default function Layout({ children }: { children?: ReactNode }) {
                     >
                       PRIVACY POLICY
                     </Link>
-                    <Link 
-                      to="/terms-of-service" 
+                    <Link
+                      to="/terms-of-service"
                       className="menu-item menu-subitem"
                       onClick={() => {
                         setMenuOpen(false);
@@ -462,8 +474,8 @@ export default function Layout({ children }: { children?: ReactNode }) {
                     </Link>
                     {!showLimitedMenu && (
                       <>
-                        <Link 
-                          to="/docs" 
+                        <Link
+                          to="/docs"
                           className="menu-item menu-subitem"
                           onClick={() => {
                             setMenuOpen(false);
@@ -472,8 +484,8 @@ export default function Layout({ children }: { children?: ReactNode }) {
                         >
                           DOCUMENTATION
                         </Link>
-                        <Link 
-                          to="/pricing" 
+                        <Link
+                          to="/pricing"
                           className="menu-item menu-subitem"
                           onClick={() => {
                             setMenuOpen(false);
@@ -482,8 +494,8 @@ export default function Layout({ children }: { children?: ReactNode }) {
                         >
                           PRICING
                         </Link>
-                        <Link 
-                          to="/support" 
+                        <Link
+                          to="/support"
                           className="menu-item menu-subitem"
                           onClick={() => {
                             setMenuOpen(false);
@@ -498,35 +510,35 @@ export default function Layout({ children }: { children?: ReactNode }) {
                   {user && (
                     <>
                       <div className="my-2"></div>
-                <Link
-                  to={userIsAdmin ? "/admin" : userSubdomain ? `/${userSubdomain}/bookclubprofile` : "/bookclubprofile"}
-                  className="menu-item"
-                  onClick={() => {
-                    setMenuOpen(false);
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    <User className="w-4 h-4" />
-                    {userIsAdmin ? 'ADMIN DASHBOARD' : 'PROFILE'}
-                  </div>
-                </Link>
-                {userIsAdmin && (
-                  <button
-                    type="button"
-                    className="menu-item w-full text-left flex items-center justify-between"
-                    onClick={() => {
-                      toggleSageMode();
-                    }}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4" />
-                      SAGE MODE
-                    </div>
-                    <span className={`text-xs ${sageModeState.enabled ? 'text-yellow-400' : 'text-white/40'}`}>
-                      {sageModeState.enabled ? 'ON' : 'OFF'}
-                    </span>
-                  </button>
-                )}
+                      <Link
+                        to={userIsAdmin ? "/admin" : userSubdomain ? `/${userSubdomain}/bookclubprofile` : "/bookclubprofile"}
+                        className="menu-item"
+                        onClick={() => {
+                          setMenuOpen(false);
+                        }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <User className="w-4 h-4" />
+                          {userIsAdmin ? 'ADMIN DASHBOARD' : 'PROFILE'}
+                        </div>
+                      </Link>
+                      {userIsAdmin && (
+                        <button
+                          type="button"
+                          className="menu-item w-full text-left flex items-center justify-between"
+                          onClick={() => {
+                            toggleSageMode();
+                          }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="w-4 h-4" />
+                            SAGE MODE
+                          </div>
+                          <span className={`text-xs ${sageModeState.enabled ? 'text-yellow-400' : 'text-white/40'}`}>
+                            {sageModeState.enabled ? 'ON' : 'OFF'}
+                          </span>
+                        </button>
+                      )}
                       <button
                         type="button"
                         className="menu-item w-full text-left"
@@ -566,7 +578,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
       </main>
       <Footer />
       <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
-      
+
       {/* Upgrade Modal */}
       {upgradeModalOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm">
