@@ -200,7 +200,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    items: selectedPhotos.map(p => ({ photoId: p.id })),
+                    photoIds: selectedPhotos.map(p => p.id),
                     email,
                     userId: user?.id,
                     librarySlug
