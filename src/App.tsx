@@ -214,6 +214,9 @@ function App() {
               <Route path="/gallery" element={<Layout />}>
                 <Route index element={<Gallery />} />
               </Route>
+              <Route path="/gallery/:slug" element={<Layout />}>
+                <Route index element={<Gallery />} />
+              </Route>
               <Route path="/download" element={<Layout />}>
                 <Route index element={<DownloadPortal />} />
               </Route>
