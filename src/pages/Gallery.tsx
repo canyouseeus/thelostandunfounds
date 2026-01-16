@@ -26,13 +26,23 @@ interface PhotoLibrary {
 export default function Gallery() {
     const { slug } = useParams<{ slug: string }>();
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
+    const [userIsAdmin, setUserIsAdmin] = useState(false);
 
     const [libraries, setLibraries] = useState<PhotoLibrary[]>([]);
     const [loading, setLoading] = useState(true);
     const [authModalOpen, setAuthModalOpen] = useState(false);
 
     const [authMessage, setAuthMessage] = useState<string | undefined>(undefined);
+
+    // Track admin status
+    useEffect(() => {
+        if (user?.email) {
+            setUserIsAdmin(user.email === 'thelostandunfounds@gmail.com' || user.email === 'admin@thelostandunfounds.com');
+        } else {
+            setUserIsAdmin(false);
+        }
+    }, [user]);
 
     useEffect(() => {
         if (!slug) {
@@ -58,7 +68,7 @@ export default function Gallery() {
     }
 
     const handleGalleryClick = (library: PhotoLibrary) => {
-        if (library.is_private && !user) {
+        if (library.is_private && !user && !userIsAdmin && !authLoading) {
             setAuthMessage(
                 "This gallery is private. Please log in if you are the owner. To request access, please contact us at media@thelostandunfounds.com."
             );
