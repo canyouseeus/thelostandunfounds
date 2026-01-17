@@ -1027,7 +1027,7 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
                                                     <span>{lib.photo_count || 0} photos</span>
                                                 </div>
                                             </div>
-                                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="flex gap-2 transition-opacity">
                                                 <a
                                                     href={`/gallery/${lib.slug}`}
                                                     target="_blank"
