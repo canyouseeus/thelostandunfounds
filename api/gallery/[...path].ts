@@ -155,6 +155,15 @@ async function handleCheckout(req: VercelRequest, res: VercelResponse) {
 
         // Get auth token
         const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+
+        console.log('PayPal Auth Attempt:', {
+            env: environment,
+            isSandbox,
+            url: baseUrl,
+            clientIdPrefix: clientId ? clientId.substring(0, 10) : 'MISSING',
+            secretPrefix: clientSecret ? clientSecret.substring(0, 5) : 'MISSING'
+        });
+
         const tokenRes = await fetch(`${baseUrl}/v1/oauth2/token`, {
             method: 'POST',
             headers: {
