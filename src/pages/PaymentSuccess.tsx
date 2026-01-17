@@ -44,22 +44,24 @@ export default function PaymentSuccess() {
         })
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}))
-          console.error('Capture error:', errorData)
-          // Even if capture fails, we want to return them to the gallery or shop
-          setStatus('success')
-          setTimeout(() => navigate(redirectPath), 3000)
-          return
+          const errorData = await response.json().catch(() => ({}));
+          console.error('Capture error:', errorData);
+          const details = errorData.details?.message || errorData.error || 'Failed to finalize payment.';
+          setError(details);
+          setStatus('error');
+          return;
         }
 
-        const data = await response.json()
-        console.log('✅ Payment captured:', data)
-        setStatus('success')
-        setTimeout(() => navigate(redirectPath), 3000)
+        const data = await response.json();
+        console.log('✅ Payment captured:', data);
+        setStatus('success');
+
+        // Wait 2 seconds before redirecting to allow user to see success
+        setTimeout(() => navigate(redirectPath), 2000);
       } catch (err: any) {
-        console.error('Error capturing payment:', err)
-        setStatus('success')
-        setTimeout(() => navigate(redirectPath), 3000)
+        console.error('Error capturing payment:', err);
+        setError('A network error occurred while finalizing your payment.');
+        setStatus('error');
       }
     }
 
