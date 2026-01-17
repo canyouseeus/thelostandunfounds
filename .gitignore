@@ -17,6 +17,7 @@ build/
 .env.test.local
 .env.production.local
 .env.rotation
+.env
 
 # Logs
 npm-debug.log*
@@ -45,3 +46,4 @@ lerna-debug.log*
 
 
 
+.env*.local

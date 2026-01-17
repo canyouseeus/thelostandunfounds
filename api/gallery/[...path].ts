@@ -39,6 +39,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return handleStream(req, res);
     }
 
+    if (route === 'invite') {
+        return handleInvite(req, res);
+    }
+
     return res.status(404).json({
         error: 'Gallery route not found',
         debug: {
@@ -85,9 +89,18 @@ async function handleStream(req: VercelRequest, res: VercelResponse) {
         }
 
         return res.status(404).json({ error: 'Image not found or inaccessible' });
-    } catch (err) {
-        console.error('Stream error:', err);
-        return res.status(500).json({ error: 'Internal server error while streaming' });
+    } catch (err: any) {
+        console.error('Stream error:', {
+            fileId,
+            message: err.message,
+            stack: err.stack,
+            cause: err.cause
+        });
+        return res.status(500).json({
+            error: 'Internal server error while streaming',
+            details: err.message,
+            fileId
+        });
     }
 }
 
@@ -146,15 +159,16 @@ async function handleCheckout(req: VercelRequest, res: VercelResponse) {
 
         const internalRefId = pendingOrder.id; // UUID is safe for custom_id (36 chars)
 
-        // PayPal API Setup
-        const environment = (process.env.PAYPAL_ENVIRONMENT || 'SANDBOX').trim();
+        // PayPal API Setup - Use strict regex to strip ANY whitespace/hidden chars
+        const environmentRaw = (process.env.PAYPAL_ENVIRONMENT || 'SANDBOX');
+        const environment = environmentRaw.replace(/[^a-zA-Z0-9_-]/g, '').trim();
         const isSandbox = environment.toUpperCase() === 'SANDBOX';
 
         const rawClientId = isSandbox ? (process.env.PAYPAL_CLIENT_ID_SANDBOX || process.env.PAYPAL_CLIENT_ID) : process.env.PAYPAL_CLIENT_ID;
         const rawClientSecret = isSandbox ? (process.env.PAYPAL_CLIENT_SECRET_SANDBOX || process.env.PAYPAL_CLIENT_SECRET) : process.env.PAYPAL_CLIENT_SECRET;
 
-        const clientId = (rawClientId || '').trim();
-        const clientSecret = (rawClientSecret || '').trim();
+        const clientId = (rawClientId || '').replace(/[^a-zA-Z0-9_-]/g, '').trim();
+        const clientSecret = (rawClientSecret || '').replace(/[^a-zA-Z0-9_-]/g, '').trim();
         const baseUrl = isSandbox ? 'https://api.sandbox.paypal.com' : 'https://api.paypal.com';
 
         // Get auth token
@@ -296,15 +310,15 @@ async function handleCapture(req: VercelRequest, res: VercelResponse) {
         }
 
         // 2. PayPal Auth
-        const environment = (process.env.PAYPAL_ENVIRONMENT || 'SANDBOX').toUpperCase();
-        const environment = (process.env.PAYPAL_ENVIRONMENT || 'SANDBOX').trim();
+        const environmentRaw = (process.env.PAYPAL_ENVIRONMENT || 'SANDBOX');
+        const environment = environmentRaw.replace(/[^a-zA-Z0-9_-]/g, '').trim();
         const isSandbox = environment.toUpperCase() === 'SANDBOX';
 
         const rawClientId = isSandbox ? (process.env.PAYPAL_CLIENT_ID_SANDBOX || process.env.PAYPAL_CLIENT_ID) : process.env.PAYPAL_CLIENT_ID;
         const rawClientSecret = isSandbox ? (process.env.PAYPAL_CLIENT_SECRET_SANDBOX || process.env.PAYPAL_CLIENT_SECRET) : process.env.PAYPAL_CLIENT_SECRET;
 
-        const clientId = (rawClientId || '').trim();
-        const clientSecret = (rawClientSecret || '').trim();
+        const clientId = (rawClientId || '').replace(/[^a-zA-Z0-9_-]/g, '').trim();
+        const clientSecret = (rawClientSecret || '').replace(/[^a-zA-Z0-9_-]/g, '').trim();
         const baseUrl = isSandbox ? 'https://api.sandbox.paypal.com' : 'https://api.paypal.com';
 
         console.log('PayPal Capture Auth Attempt:', {
@@ -508,6 +522,69 @@ async function handleResendOrder(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ success: true });
     } catch (err: any) {
         console.error('Resend error:', err);
+        return res.status(500).json({ error: err.message });
+    }
+}
+
+async function handleInvite(req: VercelRequest, res: VercelResponse) {
+    try {
+        const { libraryId, emails } = req.body;
+        if (!libraryId || !emails || !Array.isArray(emails)) {
+            return res.status(400).json({ error: 'Missing libraryId or emails array' });
+        }
+
+        const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+        const { data: library, error: libError } = await supabase
+            .from('photo_libraries')
+            .select('name, slug')
+            .eq('id', libraryId)
+            .single();
+
+        if (libError || !library) {
+            console.error('Library fetch error:', libError);
+            return res.status(404).json({ error: 'Gallery not found' });
+        }
+
+        const galleryUrl = `https://www.thelostandunfounds.com/photos/${library.slug}`;
+        const auth = await getZohoAuthContext();
+
+        // Send to each email
+        for (const email of emails) {
+            try {
+                await sendZohoEmail({
+                    auth,
+                    to: email,
+                    subject: `ACCESS GRANTED: ${library.name} | THE LOST+UNFOUNDS`,
+                    htmlContent: `
+                        <div style="background-color: #000; color: #fff; padding: 40px; font-family: monospace; text-align: left;">
+                            <h1 style="font-size: 28px; font-weight: 900; letter-spacing: -1px; margin-bottom: 30px; border-bottom: 2px solid #fff; padding-bottom: 10px; display: inline-block;">
+                                GALLERY OPENED
+                            </h1>
+                            <p style="color: #666; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; margin: 20px 0 40px 0;">
+                                YOU HAVE BEEN INVITED TO ACCESS THE FOLLOWING SECURED ARCHIVE:
+                            </p>
+                            <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 10px;">${library.name}</h2>
+                            <div style="margin: 40px 0;">
+                                <a href="${galleryUrl}" style="display: inline-block; padding: 14px 28px; background-color: #fff; color: #000; text-decoration: none; font-weight: bold; font-size: 16px; border: 2px solid #fff;">ENTER GALLERY</a>
+                            </div>
+                            <div style="margin-top: 60px; padding-top: 20px; border-top: 1px solid #1a1a1a;">
+                                <p style="color: #333; font-size: 9px; line-height: 1.6; text-transform: uppercase; letter-spacing: 1px;">
+                                    SECURE AUTOMATED DELIVERY SYSTEM<br/>
+                                    GALLERY: ${library.name}<br/>
+                                    INVITEE: ${email}
+                                </p>
+                            </div>
+                        </div>
+                    `
+                });
+            } catch (innerErr) {
+                console.error(`Failed to send invite to ${email}:`, innerErr);
+            }
+        }
+
+        return res.status(200).json({ success: true });
+    } catch (err: any) {
+        console.error('Invite handler error:', err);
         return res.status(500).json({ error: err.message });
     }
 }

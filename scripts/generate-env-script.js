@@ -107,11 +107,32 @@ const ENV_DEFINITIONS = {
       },
     ],
   },
+  paypal: {
+    name: 'PayPal',
+    description: 'PayPal MCP Server and API integration',
+    required: [
+      {
+        key: 'PAYPAL_ACCESS_TOKEN',
+        description: 'PayPal Access Token (for MCP Server)',
+        defaultValue: '',
+        getFrom: 'Run: node generate-paypal-token.js',
+        validation: (value) => value.length > 20,
+      },
+      {
+        key: 'PAYPAL_ENVIRONMENT',
+        description: 'PayPal Environment (SANDBOX or PRODUCTION)',
+        defaultValue: 'PRODUCTION',
+        getFrom: 'Your PayPal Developer Dashboard',
+        validation: (value) => ['SANDBOX', 'PRODUCTION', 'LIVE'].includes(value.toUpperCase()),
+      },
+    ],
+    optional: [],
+  },
 };
 
 function generateScript(serviceName) {
   const config = ENV_DEFINITIONS[serviceName];
-  
+
   if (!config) {
     console.error(`❌ Unknown service: ${serviceName}`);
     console.error(`Available services: ${Object.keys(ENV_DEFINITIONS).join(', ')}`);
@@ -249,7 +270,7 @@ echo "   3. Run validation: npm run validate-env"
   const scriptPath = path.join(PROJECT_DIR, 'scripts', `setup-${serviceName}-env.sh`);
   fs.writeFileSync(scriptPath, scriptContent);
   fs.chmodSync(scriptPath, '755');
-  
+
   console.log(`✅ Generated script: ${scriptPath}`);
   console.log(`   Run: ./scripts/setup-${serviceName}-env.sh`);
 }

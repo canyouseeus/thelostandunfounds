@@ -60,6 +60,7 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
     const [pricingOptions, setPricingOptions] = useState<PricingOption[]>([]);
     const [editingPricingIdx, setEditingPricingIdx] = useState<number | null>(null);
     const [deletedPricingIds, setDeletedPricingIds] = useState<string[]>([]);
+    const [invitedEmails, setInvitedEmails] = useState(''); // Transient state for invitations
 
     const { success, error, info } = useToast();
 
@@ -242,8 +243,27 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
             }
 
             success(editingId ? 'Gallery updated successfully' : 'Gallery created successfully');
-            setIsManaged(false);
             loadGalleryStats();
+
+            // 6. Handle Invitations (New Feature)
+            if (invitedEmails.trim() && finalLibrary) {
+                try {
+                    await fetch('/api/gallery/invite', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            libraryId: finalLibrary.id,
+                            emails: invitedEmails.split(',').map(e => e.trim()).filter(e => e.length > 0)
+                        })
+                    });
+                    success('Invitations sent successfully');
+                } catch (inviteErr) {
+                    console.error('Failed to send invitations:', inviteErr);
+                    error('Gallery saved, but failed to send invitation emails');
+                }
+            }
+            setInvitedEmails('');
+            setIsManaged(false);
         } catch (err: any) {
             console.error('Error saving gallery:', err);
             error(err.message || 'Failed to save gallery');
@@ -362,6 +382,7 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
                 { name: 'Single Photo', price: lib.price || 5.00, photo_count: 1 }
             ]);
         }
+        setInvitedEmails('');
         setDeletedPricingIds([]);
         setIsManaged(true);
     };
@@ -379,6 +400,7 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
             commercial_included: false,
         });
         setFilesData([]);
+        setInvitedEmails('');
         setIsManaged(true);
     };
 
@@ -726,6 +748,20 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
                                     className="w-full bg-white/5 border border-white/10 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 min-h-[80px] rounded-none"
                                     placeholder="Brief description of the gallery contents..."
                                 />
+                            </div>
+
+                            {/* Client Invitations */}
+                            <div>
+                                <label className="block text-xs uppercase text-white/40 mb-1">Client Invitations (Email)</label>
+                                <textarea
+                                    value={invitedEmails}
+                                    onChange={(e) => setInvitedEmails(e.target.value)}
+                                    className="w-full bg-white/5 border border-white/10 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 min-h-[60px] rounded-none font-mono text-xs"
+                                    placeholder="client@example.com, another@example.com..."
+                                />
+                                <p className="text-[10px] text-white/30 mt-1">
+                                    Comma-separated list of emails. They will receive an access link once you save.
+                                </p>
                             </div>
 
                             <div>
