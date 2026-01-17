@@ -56,8 +56,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 }
 
 async function handleStream(req: VercelRequest, res: VercelResponse) {
+    const { fileId, size } = req.query;
     try {
-        const { fileId, size } = req.query;
         if (!fileId) {
             return res.status(400).json({ error: 'Missing fileId' });
         }
