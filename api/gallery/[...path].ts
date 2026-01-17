@@ -167,7 +167,17 @@ async function handleCheckout(req: VercelRequest, res: VercelResponse) {
         if (!tokenRes.ok) {
             const tokenErr = await tokenRes.text();
             console.error('PayPal token error:', tokenErr);
-            return res.status(500).json({ error: 'Failed to authenticate with PayPal', details: tokenErr });
+            console.error('PayPal token error:', tokenErr);
+            return res.status(500).json({
+                error: 'Failed to authenticate with PayPal',
+                details: tokenErr,
+                debug: {
+                    deploymentTimestamp: '2026-01-16T20:55:00Z',
+                    environment: environment,
+                    usedBaseUrl: baseUrl,
+                    usedClientIdPrefix: clientId ? clientId.substring(0, 4) + '...' : 'N/A'
+                }
+            });
         }
 
         const tokenData = await tokenRes.json();
