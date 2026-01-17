@@ -108,14 +108,41 @@ async function handleCheckout(req: VercelRequest, res: VercelResponse) {
             .in('id', photoIds);
 
         if (photoError || !photos) {
+            console.error('Photo fetch error:', photoError);
             return res.status(500).json({ error: 'Failed to fetch photo prices' });
         }
 
         const totalCents = photos.reduce((sum, p) => sum + (p.price_cents || 500), 0);
         const amount = totalCents / 100;
 
-        // Use the common PayPal handler logic or direct API
-        // For local development, we'll hit the sandbox directly
+        // --- NEW LOGIC: Create Pending Order in DB FIRST ---
+        // This avoids PayPal custom_id string limit bugs
+
+        const { data: pendingOrder, error: orderError } = await supabase
+            .from('photo_orders')
+            .insert({
+                user_id: userId || null,
+                email,
+                total_amount_cents: totalCents,
+                currency: 'USD',
+                payment_status: 'pending',
+                metadata: {
+                    photoIds,
+                    librarySlug,
+                    source: 'checkout_v2'
+                }
+            })
+            .select('id')
+            .single();
+
+        if (orderError || !pendingOrder) {
+            console.error('Failed to create pending order:', orderError);
+            return res.status(500).json({ error: 'Failed to initialize order record' });
+        }
+
+        const internalRefId = pendingOrder.id; // UUID is safe for custom_id (36 chars)
+
+        // PayPal API Setup
         const environment = process.env.PAYPAL_ENVIRONMENT || 'SANDBOX';
         const isSandbox = environment.toUpperCase() === 'SANDBOX';
         const clientId = isSandbox ? (process.env.PAYPAL_CLIENT_ID_SANDBOX || process.env.PAYPAL_CLIENT_ID) : process.env.PAYPAL_CLIENT_ID;
@@ -136,7 +163,7 @@ async function handleCheckout(req: VercelRequest, res: VercelResponse) {
         if (!tokenRes.ok) {
             const tokenErr = await tokenRes.text();
             console.error('PayPal token error:', tokenErr);
-            return res.status(500).json({ error: 'Failed to authenticate with PayPal' });
+            return res.status(500).json({ error: 'Failed to authenticate with PayPal', details: tokenErr });
         }
 
         const tokenData = await tokenRes.json();
@@ -147,7 +174,7 @@ async function handleCheckout(req: VercelRequest, res: VercelResponse) {
             return res.status(500).json({ error: 'PayPal authentication failed' });
         }
 
-        // Create Order
+        // Create Order at PayPal
         const orderRes = await fetch(`${baseUrl}/v2/checkout/orders`, {
             method: 'POST',
             headers: {
@@ -162,7 +189,7 @@ async function handleCheckout(req: VercelRequest, res: VercelResponse) {
                         value: amount.toFixed(2)
                     },
                     description: `Photos Archive Access (${photoIds.length} items)`,
-                    custom_id: JSON.stringify({ photoIds, email, userId })
+                    custom_id: internalRefId // UUID fits in 127 chars
                 }],
                 application_context: {
                     brand_name: 'THE LOST+UNFOUNDS',
@@ -177,18 +204,20 @@ async function handleCheckout(req: VercelRequest, res: VercelResponse) {
         if (!orderRes.ok) {
             const orderErr = await orderRes.text();
             console.error('PayPal order creation error:', orderErr);
-            return res.status(500).json({ error: 'Failed to create PayPal order' });
+            // Optimization: Delete or mark fatal error on pending order?
+            // For now, leave as pending (it will stale out).
+            return res.status(500).json({ error: 'Failed to create PayPal order', details: orderErr });
         }
 
         const order = await orderRes.json();
 
-        if (!order.links) {
-            console.error('PayPal order missing links:', order);
-            return res.status(500).json({ error: 'Invalid PayPal order response' });
-        }
+        // UPDATE pending order with PayPal Order ID
+        await supabase
+            .from('photo_orders')
+            .update({ paypal_order_id: order.id })
+            .eq('id', internalRefId);
 
         const approvalUrl = order.links.find((l: any) => l.rel === 'approve')?.href;
-
         return res.status(200).json({ approvalUrl });
 
     } catch (err) {
@@ -279,13 +308,43 @@ async function handleCapture(req: VercelRequest, res: VercelResponse) {
             return res.status(500).json({ error: 'Order update failed' });
         }
 
-        // 5. Fetch Entitlements for Return and Email
-        const { data: ents, error: entsError } = await supabase
+        // 5. Ensure Entitlements Exist (Create if from new flow)
+        let { data: ents, error: entsError } = await supabase
             .from('photo_entitlements')
             .select('*, photos(title, google_drive_file_id, photo_libraries(name))')
             .eq('order_id', photoOrder.id);
 
-        if (entsError || !ents) throw entsError;
+        if (!ents || ents.length === 0) {
+            // Check metadata for photoIds
+            // Use type assertion to access metadata if it's typed as JSON
+            const meta = photoOrder.metadata as any;
+            if (meta && meta.photoIds && Array.isArray(meta.photoIds)) {
+                console.log('Creating entitlements from metadata for order:', photoOrder.id);
+                const newEntitlements = meta.photoIds.map((pid: string) => ({
+                    order_id: photoOrder.id,
+                    photo_id: pid
+                }));
+
+                const { error: insertErr } = await supabase
+                    .from('photo_entitlements')
+                    .insert(newEntitlements);
+
+                if (insertErr) {
+                    console.error('Entitlement creation failed:', insertErr);
+                    // Continue, but log critical error. User might need support.
+                } else {
+                    // Refetch with joins
+                    const { data: refreshed, error: refetchErr } = await supabase
+                        .from('photo_entitlements')
+                        .select('*, photos(title, google_drive_file_id, photo_libraries(name))')
+                        .eq('order_id', photoOrder.id);
+
+                    if (refreshed) ents = refreshed;
+                }
+            }
+        }
+
+        if (!ents) ents = []; // Safety fallthrough
 
         const libraryTitle = (ents?.[0]?.photos as any)?.photo_libraries?.name || 'GALLERY';
 
