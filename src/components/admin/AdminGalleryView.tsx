@@ -477,6 +477,20 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
             setHealthStatus('issues');
             error('Failed to verify asset health. Check network connection and API endpoints.');
         } finally {
+            // New: Also trigger a sync when testing connection
+            try {
+                info('Resyncing all libraries with Google Drive...');
+                const syncRes = await fetch('/api/gallery/sync');
+                if (syncRes.ok) {
+                    const syncData = await syncRes.json();
+                    success(`Galleries synchronized successfully. ${syncData.results?.length || 0} libraries checked.`);
+                    loadGalleryStats(); // Refresh the list to show any new photo counts
+                } else {
+                    console.error('Sync failed during connection test');
+                }
+            } catch (syncErr) {
+                console.error('Connection test sync error:', syncErr);
+            }
             setVerifying(false);
         }
     };

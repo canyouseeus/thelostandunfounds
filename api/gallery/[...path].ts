@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { syncGalleryPhotos } from '../../lib/api-handlers/_photo-sync-utils';
 
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -41,6 +42,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (route === 'invite') {
         return handleInvite(req, res);
+    }
+
+    if (route === 'sync') {
+        return handleSync(req, res);
     }
 
     return res.status(404).json({
@@ -771,4 +776,41 @@ async function sendZohoEmail({
     }
 
     return { success: true }
+}
+
+async function handleSync(req: VercelRequest, res: VercelResponse) {
+    try {
+        const { slug } = req.query;
+        const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+
+        if (slug && typeof slug === 'string') {
+            const result = await syncGalleryPhotos(slug);
+            return res.json({ success: true, results: [result] });
+        }
+
+        // Sync all if no slug provided
+        const { data: libraries, error: libError } = await supabase
+            .from('photo_libraries')
+            .select('slug');
+
+        if (libError || !libraries) {
+            return res.status(500).json({ error: 'Failed to fetch galleries for sync' });
+        }
+
+        const results = [];
+        for (const lib of libraries) {
+            try {
+                const res = await syncGalleryPhotos(lib.slug);
+                results.push({ slug: lib.slug, ...res });
+            } catch (syncErr: any) {
+                console.error(`Sync failed for ${lib.slug}:`, syncErr);
+                results.push({ slug: lib.slug, error: syncErr.message });
+            }
+        }
+
+        return res.json({ success: true, results });
+    } catch (err: any) {
+        console.error('Sync route error:', err);
+        return res.status(500).json({ error: 'Sync operation failed', details: err.message });
+    }
 }
