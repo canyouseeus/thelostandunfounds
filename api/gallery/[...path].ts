@@ -93,10 +93,14 @@ async function handleStream(req: VercelRequest, res: VercelResponse) {
 
 async function handleCheckout(req: VercelRequest, res: VercelResponse) {
     try {
-        const { photoIds, email, userId } = req.body;
+        const { photoIds, email, userId, librarySlug } = req.body;
 
-        if (!photoIds || !photoIds.length || !email) {
-            return res.status(400).json({ error: 'Missing required fields' });
+        if (!photoIds || !Array.isArray(photoIds) || photoIds.length === 0) {
+            return res.status(400).json({ error: 'photoIds must be a non-empty array' });
+        }
+
+        if (!email) {
+            return res.status(400).json({ error: 'email is required' });
         }
 
         const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY!);
