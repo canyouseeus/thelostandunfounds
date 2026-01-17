@@ -297,10 +297,23 @@ async function handleCapture(req: VercelRequest, res: VercelResponse) {
 
         // 2. PayPal Auth
         const environment = (process.env.PAYPAL_ENVIRONMENT || 'SANDBOX').toUpperCase();
-        const isSandbox = environment === 'SANDBOX';
-        const clientId = isSandbox ? (process.env.PAYPAL_CLIENT_ID_SANDBOX || process.env.PAYPAL_CLIENT_ID) : process.env.PAYPAL_CLIENT_ID;
-        const clientSecret = isSandbox ? (process.env.PAYPAL_CLIENT_SECRET_SANDBOX || process.env.PAYPAL_CLIENT_SECRET) : process.env.PAYPAL_CLIENT_SECRET;
+        const environment = (process.env.PAYPAL_ENVIRONMENT || 'SANDBOX').trim();
+        const isSandbox = environment.toUpperCase() === 'SANDBOX';
+
+        const rawClientId = isSandbox ? (process.env.PAYPAL_CLIENT_ID_SANDBOX || process.env.PAYPAL_CLIENT_ID) : process.env.PAYPAL_CLIENT_ID;
+        const rawClientSecret = isSandbox ? (process.env.PAYPAL_CLIENT_SECRET_SANDBOX || process.env.PAYPAL_CLIENT_SECRET) : process.env.PAYPAL_CLIENT_SECRET;
+
+        const clientId = (rawClientId || '').trim();
+        const clientSecret = (rawClientSecret || '').trim();
         const baseUrl = isSandbox ? 'https://api.sandbox.paypal.com' : 'https://api.paypal.com';
+
+        console.log('PayPal Capture Auth Attempt:', {
+            env: environment,
+            isSandbox,
+            url: baseUrl,
+            clientIdPrefix: clientId ? clientId.substring(0, 10) : 'MISSING',
+            orderId
+        });
 
         const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
         const tokenRes = await fetch(`${baseUrl}/v1/oauth2/token`, {
@@ -318,8 +331,16 @@ async function handleCapture(req: VercelRequest, res: VercelResponse) {
 
         if (!captureRes.ok) {
             const err = await captureRes.json();
-            console.error('PayPal Capture Error:', err);
-            return res.status(500).json({ error: 'Failed to capture payment' });
+            console.error('PayPal Capture Error:', JSON.stringify(err, null, 2));
+            return res.status(500).json({
+                error: 'Failed to capture payment',
+                details: err,
+                debug: {
+                    environment,
+                    usedBaseUrl: baseUrl,
+                    orderId
+                }
+            });
         }
 
         // 4. Update Database
