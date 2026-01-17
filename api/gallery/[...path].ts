@@ -147,10 +147,14 @@ async function handleCheckout(req: VercelRequest, res: VercelResponse) {
         const internalRefId = pendingOrder.id; // UUID is safe for custom_id (36 chars)
 
         // PayPal API Setup
-        const environment = process.env.PAYPAL_ENVIRONMENT || 'SANDBOX';
+        const environment = (process.env.PAYPAL_ENVIRONMENT || 'SANDBOX').trim();
         const isSandbox = environment.toUpperCase() === 'SANDBOX';
-        const clientId = isSandbox ? (process.env.PAYPAL_CLIENT_ID_SANDBOX || process.env.PAYPAL_CLIENT_ID) : process.env.PAYPAL_CLIENT_ID;
-        const clientSecret = isSandbox ? (process.env.PAYPAL_CLIENT_SECRET_SANDBOX || process.env.PAYPAL_CLIENT_SECRET) : process.env.PAYPAL_CLIENT_SECRET;
+
+        const rawClientId = isSandbox ? (process.env.PAYPAL_CLIENT_ID_SANDBOX || process.env.PAYPAL_CLIENT_ID) : process.env.PAYPAL_CLIENT_ID;
+        const rawClientSecret = isSandbox ? (process.env.PAYPAL_CLIENT_SECRET_SANDBOX || process.env.PAYPAL_CLIENT_SECRET) : process.env.PAYPAL_CLIENT_SECRET;
+
+        const clientId = (rawClientId || '').trim();
+        const clientSecret = (rawClientSecret || '').trim();
         const baseUrl = isSandbox ? 'https://api.sandbox.paypal.com' : 'https://api.paypal.com';
 
         // Get auth token
