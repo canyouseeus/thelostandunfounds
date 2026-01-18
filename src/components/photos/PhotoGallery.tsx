@@ -35,6 +35,8 @@ interface PhotoLibrary {
     slug: string;
     description: string;
     price: number;
+    is_private?: boolean;
+    owner_id?: string;
 }
 
 export interface PricingOption {
@@ -351,8 +353,31 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                 {/* Photos Grouped by Date */}
                 <div ref={photosRef} className="space-y-16 scroll-mt-40">
                     {displayedPhotos.length === 0 ? (
-                        <div className="py-40 text-center">
-                            <p className="text-zinc-500 uppercase tracking-widest font-bold">No items found in this vault section.</p>
+                        <div className="py-40 text-center space-y-6">
+                            {library?.is_private && !user ? (
+                                <>
+                                    <Lock className="w-12 h-12 mx-auto text-white/20" />
+                                    <p className="text-zinc-500 uppercase tracking-widest font-bold">
+                                        This is a private gallery.
+                                    </p>
+                                    <p className="text-white/40 text-sm max-w-md mx-auto">
+                                        If you are the owner of this gallery, please log in to view and manage your photos.
+                                    </p>
+                                    <a
+                                        href="/login"
+                                        className="inline-block mt-4 px-8 py-3 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-white/90 transition-colors"
+                                    >
+                                        Log In
+                                    </a>
+                                </>
+                            ) : activeTab === 'assets' ? (
+                                <>
+                                    <p className="text-zinc-500 uppercase tracking-widest font-bold">No purchased assets yet.</p>
+                                    <p className="text-white/40 text-sm">Select photos from the Storefront and complete checkout to see them here.</p>
+                                </>
+                            ) : (
+                                <p className="text-zinc-500 uppercase tracking-widest font-bold">No items found in this vault section.</p>
+                            )}
                         </div>
                     ) : (
                         Object.entries(
