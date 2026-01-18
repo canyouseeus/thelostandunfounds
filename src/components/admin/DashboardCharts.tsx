@@ -178,8 +178,8 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
                   fontSize: '12px'
                 }}
                 itemStyle={{ color: config[metric].color }}
-                formatter={(value: number) => [
-                  `${config[metric].prefix}${value.toFixed(0)}`,
+                formatter={(value: number | undefined) => [
+                  `${config[metric].prefix}${(value ?? 0).toFixed(0)}`,
                   config[metric].label
                 ]}
                 labelStyle={{ display: 'block', color: '#666', marginBottom: '4px' }}
