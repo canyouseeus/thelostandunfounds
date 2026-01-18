@@ -811,10 +811,18 @@ async function syncGalleryPhotos(librarySlug: string) {
     const rawKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
 
     const GOOGLE_EMAIL = (rawEmail || '').replace(/[^a-zA-Z0-9@._-]/g, '');
-    const GOOGLE_KEY = (rawKey || '')
-        .replace(/\\n/g, '\n')
+    // Handle literal \n strings from Vercel env vars using split/join
+    let GOOGLE_KEY = (rawKey || '')
+        .split('\\n').join('\n')
         .replace(/"/g, '')
         .trim();
+
+    // Ensure proper PEM format with newlines
+    if (GOOGLE_KEY.includes('-----BEGIN') && !GOOGLE_KEY.includes('\n-----')) {
+        GOOGLE_KEY = GOOGLE_KEY
+            .replace(/-----BEGIN PRIVATE KEY-----/, '-----BEGIN PRIVATE KEY-----\n')
+            .replace(/-----END PRIVATE KEY-----/, '\n-----END PRIVATE KEY-----');
+    }
 
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !GOOGLE_EMAIL || !GOOGLE_KEY) {
         console.error('Sync missing credentials:', {
