@@ -556,12 +556,25 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 const syncRes = await fetch('/api/gallery/sync');
                 if (syncRes.ok) {
                     const syncData = await syncRes.json();
-                    success(`Galleries synchronized successfully. ${syncData.results?.length || 0} libraries checked.`);
+                    // Check if any individual syncs failed
+                    const failedSyncs = syncData.results?.filter((r: any) => r.error) || [];
+                    const successfulSyncs = syncData.results?.filter((r: any) => !r.error) || [];
+
+                    if (failedSyncs.length > 0 && successfulSyncs.length === 0) {
+                        error(`Sync failed for all libraries. ${failedSyncs[0]?.error || 'Check Google Drive credentials.'}`);
+                    } else if (failedSyncs.length > 0) {
+                        info(`Partially synced. ${successfulSyncs.length} succeeded, ${failedSyncs.length} failed.`);
+                    } else {
+                        success(`Galleries synchronized successfully. ${syncData.results?.length || 0} libraries checked.`);
+                    }
                     loadGalleryStats(); // Refresh the list to show any new photo counts
                 } else {
-                    console.error('Sync failed during connection test');
+                    const errData = await syncRes.json().catch(() => ({ error: 'Unknown sync error' }));
+                    error(`Sync failed: ${errData.error || errData.details || 'Check server logs.'}`);
+                    console.error('Sync failed during connection test:', errData);
                 }
-            } catch (syncErr) {
+            } catch (syncErr: any) {
+                error(`Sync error: ${syncErr.message || 'Network error. Check connection.'}`);
                 console.error('Connection test sync error:', syncErr);
             }
             setVerifying(false);
