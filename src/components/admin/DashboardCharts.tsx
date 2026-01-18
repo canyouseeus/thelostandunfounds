@@ -1,13 +1,13 @@
 
 import { useState, useMemo } from 'react';
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer 
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
 } from 'recharts';
 import { cn } from '@/components/ui/utils';
 
@@ -34,19 +34,19 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
   const data = useMemo(() => {
     if (!history) {
       // Fallback to simulated data if no history provided
-      const points = timeRange === '1H' ? 60 : 
-                     timeRange === '24H' ? 24 : 
-                     timeRange === '7D' ? 7 : 
-                     timeRange === '30D' ? 30 : 12;
-      
+      const points = timeRange === '1H' ? 60 :
+        timeRange === '24H' ? 24 :
+          timeRange === '7D' ? 7 :
+            timeRange === '30D' ? 30 : 12;
+
       const baseValue = metric === 'revenue' ? (stats?.revenue || 1000) :
-                        metric === 'newsletter' ? (stats?.newsletter || 100) :
-                        (stats?.affiliates || 50);
-                        
+        metric === 'newsletter' ? (stats?.newsletter || 100) :
+          (stats?.affiliates || 50);
+
       return Array.from({ length: points }).map((_, i) => {
         const progress = i / (points - 1);
         const randomVariation = (Math.random() - 0.5) * 0.1;
-        const trend = baseValue * (0.7 + (progress * 0.3)); 
+        const trend = baseValue * (0.7 + (progress * 0.3));
         return {
           name: i.toString(),
           value: Math.max(0, trend + (trend * randomVariation))
@@ -130,8 +130,8 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
               onClick={() => setMetric(m)}
               className={cn(
                 "px-2 py-1 text-[10px] uppercase tracking-wider font-medium transition-colors border border-transparent rounded-none",
-                metric === m 
-                  ? "bg-white/10 text-white border-white/10" 
+                metric === m
+                  ? "bg-white/10 text-white border-white/10"
                   : "text-white/40 hover:text-white hover:bg-white/5"
               )}
             >
@@ -146,8 +146,8 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
               onClick={() => setTimeRange(t)}
               className={cn(
                 "px-1.5 py-0.5 text-[10px] font-medium transition-colors rounded-none",
-                timeRange === t 
-                  ? "text-white bg-white/10" 
+                timeRange === t
+                  ? "text-white bg-white/10"
                   : "text-white/40 hover:text-white"
               )}
             >
@@ -161,40 +161,34 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
         <div className="absolute inset-0">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data}>
-              <defs>
-                <linearGradient id={`gradient-${metric}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={config[metric].color} stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor={config[metric].color} stopOpacity={0}/>
-                </linearGradient>
-              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-              <XAxis 
-                dataKey="name" 
-                hide={true} 
+              <XAxis
+                dataKey="name"
+                hide={true}
               />
-              <YAxis 
-                hide={true} 
-                domain={['dataMin', 'dataMax']} 
+              <YAxis
+                hide={true}
+                domain={['dataMin', 'dataMax']}
               />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: '#000', 
-                  borderColor: 'rgba(255,255,255,0.1)', 
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#000',
+                  borderColor: 'rgba(255,255,255,0.1)',
                   borderRadius: 0,
                   fontSize: '12px'
                 }}
                 itemStyle={{ color: config[metric].color }}
                 formatter={(value: number) => [
-                  `${config[metric].prefix}${value.toFixed(0)}`, 
+                  `${config[metric].prefix}${value.toFixed(0)}`,
                   config[metric].label
                 ]}
                 labelStyle={{ display: 'block', color: '#666', marginBottom: '4px' }}
               />
-              <Area 
-                type="monotone" 
-                dataKey="value" 
-                stroke={config[metric].color} 
-                fill={`url(#gradient-${metric})`} 
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke={config[metric].color}
+                fill="transparent"
                 strokeWidth={2}
               />
             </AreaChart>

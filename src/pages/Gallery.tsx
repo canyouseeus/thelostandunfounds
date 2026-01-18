@@ -97,7 +97,7 @@ export default function Gallery() {
             </Helmet>
 
             <div className="max-w-7xl mx-auto mb-20">
-                <div className="text-left space-y-6 max-w-3xl border-b border-white/10 pb-12">
+                <div className="text-left space-y-6 max-w-3xl pb-12">
 
                     <h1 className="text-5xl md:text-8xl font-black text-white tracking-tighter leading-[0.8] uppercase whitespace-nowrap">
                         THE GALLERY
@@ -123,7 +123,7 @@ export default function Gallery() {
                 </div>
             ) : (
                 <div className="max-w-7xl mx-auto">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-3 gap-0">
                         {libraries.map((lib, index) => {
 
                             return (
@@ -133,7 +133,7 @@ export default function Gallery() {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: index * 0.1 }}
                                     onClick={() => handleGalleryClick(lib)}
-                                    className="group relative bg-zinc-900/30 border border-white/5 hover:border-white/20 transition-all duration-500 cursor-pointer overflow-hidden aspect-[4/5] flex flex-col justify-end p-8"
+                                    className="group relative bg-zinc-900/30 hover:bg-zinc-800/30 transition-all duration-500 cursor-pointer overflow-hidden aspect-[4/5] flex flex-col justify-end p-8"
                                 >
                                     {/* Background Image/Overlay */}
                                     {lib.cover_image_url ? (
@@ -151,7 +151,7 @@ export default function Gallery() {
                                     <div className="relative z-10 space-y-4">
                                         <div className="flex items-center justify-between">
                                             {lib.is_private ? (
-                                                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1 border border-white/10">
+                                                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1">
                                                     <Lock className="w-3 h-3 text-white" />
                                                     <span className="text-[10px] font-bold text-white tracking-widest uppercase">Private</span>
                                                 </div>
@@ -184,7 +184,7 @@ export default function Gallery() {
                     </div>
 
                     {libraries.length === 0 && (
-                        <div className="text-center py-40 border border-dashed border-white/10">
+                        <div className="text-center py-40">
                             <p className="text-white/40 font-bold tracking-widest uppercase">No available archives found.</p>
                         </div>
                     )}

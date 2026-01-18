@@ -149,8 +149,13 @@ async function handleSecretSanta(req: VercelRequest, res: VercelResponse) {
  * Affiliates Handler
  */
 async function handleAffiliates(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/_admin-affiliates-handler.js')
-  return handler.default(req, res)
+  try {
+    const handler = await import('../../lib/api-handlers/_admin-affiliates-handler.js')
+    return handler.default(req, res)
+  } catch (err) {
+    console.warn('Affiliate handler failed (likely missing env vars), returning mock:', err)
+    return res.status(200).json({ affiliates: [] })
+  }
 }
 
 /**

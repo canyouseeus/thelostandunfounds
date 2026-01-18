@@ -123,14 +123,14 @@ const PhotoSuccessPage: React.FC = () => {
                 </div>
 
                 {/* Grid Layout */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-16">
+                <div className="grid grid-cols-3 gap-0 mb-16">
                     {entitlements.map((e, i) => (
                         <motion.div
                             key={e.token}
                             initial={{ y: 20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ delay: i * 0.05 }}
-                            className="group relative aspect-square bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800"
+                            className="group relative aspect-square bg-zinc-900 overflow-hidden"
                         >
                             {/* Thumbnail */}
                             {e.thumbnailUrl ? (

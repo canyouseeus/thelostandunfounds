@@ -161,7 +161,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
       setFolders(foldersCache.data);
       if (!selectedFolder && foldersCache.data.length > 0) {
         const inbox = foldersCache.data.find(f =>
-          f.folderType === 'Inbox' || f.folderName.toLowerCase() === 'inbox'
+          f.folderType === 'Inbox' || (f.folderName && f.folderName.toLowerCase() === 'inbox')
         );
         setSelectedFolder(inbox || foldersCache.data[0]);
       }
@@ -183,7 +183,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
       // Auto-select inbox
       if (!selectedFolder && foldersList.length > 0) {
         const inbox = foldersList.find((f: MailFolder) =>
-          f.folderType === 'Inbox' || f.folderName.toLowerCase() === 'inbox'
+          f.folderType === 'Inbox' || (f.folderName && f.folderName.toLowerCase() === 'inbox')
         );
         setSelectedFolder(inbox || foldersList[0]);
       }
@@ -303,9 +303,9 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
 
       // Refresh sent folder if viewing it
       const sentFolder = folders.find(f =>
-        f.folderType === 'Sent' || f.folderName.toLowerCase() === 'sent'
+        f.folderType === 'Sent' || (f.folderName && f.folderName.toLowerCase() === 'sent')
       );
-      if (selectedFolder?.folderId === sentFolder?.folderId) {
+      if (selectedFolder && sentFolder && selectedFolder.folderId === sentFolder.folderId) {
         loadMessages(selectedFolder.folderId);
       }
     } catch (err: any) {
@@ -483,8 +483,8 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
 
   // Get folder icon
   const getFolderIcon = (folder: MailFolder) => {
-    const name = folder.folderName.toLowerCase();
-    const type = folder.folderType.toLowerCase();
+    const name = (folder.folderName || '').toLowerCase();
+    const type = (folder.folderType || '').toLowerCase();
 
     if (type === 'inbox' || name === 'inbox') return <Inbox className="w-4 h-4" />;
     if (type === 'sent' || name === 'sent') return <Send className="w-4 h-4" />;
@@ -542,7 +542,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
       )}
 
       {/* Main layout */}
-      <div className="bg-black/50 border border-white/10 rounded-none min-h-[600px] flex">
+      <div className="bg-black/50 rounded-none min-h-[600px] flex">
         {/* Folder sidebar */}
         <div className="w-48 border-r border-white/10 p-3 space-y-1">
           <div className="text-xs text-white/40 uppercase tracking-wider mb-3 px-2">Folders</div>
@@ -551,8 +551,8 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
               key={folder.folderId}
               onClick={() => setSelectedFolder(folder)}
               className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition ${selectedFolder?.folderId === folder.folderId
-                  ? 'bg-white/10 text-white'
-                  : 'text-white/60 hover:text-white hover:bg-white/5'
+                ? 'bg-white/10 text-white'
+                : 'text-white/60 hover:text-white hover:bg-white/5'
                 }`}
             >
               {getFolderIcon(folder)}
@@ -610,8 +610,8 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                     key={msg.messageId}
                     onClick={() => loadMessage(msg.messageId)}
                     className={`w-full p-3 text-left border-b border-white/5 transition ${selectedMessage?.messageId === msg.messageId
-                        ? 'bg-white/10'
-                        : 'hover:bg-white/5'
+                      ? 'bg-white/10'
+                      : 'hover:bg-white/5'
                       } ${!msg.isRead ? 'bg-white/[0.02]' : ''}`}
                   >
                     <div className="flex items-start gap-2">

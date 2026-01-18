@@ -12,6 +12,7 @@ import AuthCallback from './pages/AuthCallback'
 import ZohoCallback from './pages/ZohoCallback'
 import Profile from './pages/Profile'
 import Settings from './pages/Settings'
+import PhotographerDashboard from './pages/PhotographerDashboard'
 import Admin from './pages/Admin'
 import NotFound from './pages/NotFound'
 import Docs from './pages/Docs'
@@ -53,6 +54,7 @@ import PhotoLibraryPage from './pages/PhotoLibraryPage'
 import PhotoSuccessPage from './pages/PhotoSuccessPage'
 import Gallery from './pages/Gallery'
 import DownloadPortal from './pages/DownloadPortal'
+import OnboardingWizard from './pages/setup/OnboardingWizard'
 
 function App() {
   return (
@@ -113,6 +115,13 @@ function App() {
               </Route>
               <Route path="/settings" element={<Layout />}>
                 <Route index element={<Settings />} />
+              </Route>
+              <Route path="/dashboard" element={<Layout />}>
+                <Route index element={
+                  <ProtectedRoute>
+                    <PhotographerDashboard />
+                  </ProtectedRoute>
+                } />
               </Route>
               <Route path="/affiliate/dashboard" element={<Layout />}>
                 <Route index element={<AffiliateDashboard />} />
@@ -220,6 +229,7 @@ function App() {
               <Route path="/download" element={<Layout />}>
                 <Route index element={<DownloadPortal />} />
               </Route>
+              <Route path="/setup" element={<OnboardingWizard />} />
               <Route path="/photos/success" element={<Layout />}>
                 <Route index element={<PhotoSuccessPage />} />
               </Route>

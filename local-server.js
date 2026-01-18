@@ -13,6 +13,7 @@ dotenv.config({ path: resolve(__dirname, '.env') });
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+console.log('Using Supabase Key Type:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SERVICE_ROLE' : 'ANON_FALLBACK');
 const PORT = 3001;
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
@@ -98,16 +99,9 @@ function wrapEmail(bodyContent) {
 }
 
 const server = http.createServer(async (req, res) => {
-    // Set CORS headers
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    // ... (CORS headers)
 
-    if (req.method === 'OPTIONS') {
-        res.writeHead(200);
-        res.end();
-        return;
-    }
+    // ... (existing logic)
 
     const { pathname } = new URL(req.url, `http://${req.headers.host}`);
     console.log(`[Local Server] ${req.method} ${pathname}`);
@@ -116,6 +110,52 @@ const server = http.createServer(async (req, res) => {
         res.writeHead(statusCode, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(data));
     };
+
+    // --- ADMIN STATS ENDPOINTS ---
+    if (pathname === '/api/admin/affiliate-stats' && req.method === 'GET') {
+        try {
+            // Fetch affiliate stats from Supabase
+            const { data: affiliates, error } = await supabase
+                .from('affiliates')
+                .select('total_earnings, total_clicks, total_conversions, total_mlm_earnings');
+
+            if (error) throw error;
+
+            const stats = {
+                totalEarnings: affiliates.reduce((sum, a) => sum + (parseFloat(a.total_earnings) || 0), 0),
+                totalClicks: affiliates.reduce((sum, a) => sum + (a.total_clicks || 0), 0),
+                totalConversions: affiliates.reduce((sum, a) => sum + (a.total_conversions || 0), 0),
+                totalMLMEarnings: affiliates.reduce((sum, a) => sum + (parseFloat(a.total_mlm_earnings) || 0), 0),
+                conversionRate: 0
+            };
+
+            if (stats.totalClicks > 0) {
+                stats.conversionRate = (stats.totalConversions / stats.totalClicks) * 100;
+            }
+
+            return setJsonRes(200, stats);
+        } catch (err) {
+            console.error('Error fetching affiliate stats:', err);
+            return setJsonRes(500, { error: 'Failed to fetch affiliate stats' });
+        }
+    }
+
+    if (pathname === '/api/admin/platform-health' && req.method === 'GET') {
+        try {
+            // Fetch simplified platform health
+            const { count: usersCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+            const { count: subsCount } = await supabase.from('platform_subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active');
+
+            return setJsonRes(200, {
+                status: 'healthy', // Logic can be improved
+                users: usersCount || 0,
+                activeSubscriptions: subsCount || 0
+            });
+        } catch (err) {
+            console.error('Error fetching platform health:', err);
+            return setJsonRes(500, { error: 'Failed to fetch platform health' });
+        }
+    }
 
     if (pathname === '/api/gallery/checkout' && req.method === 'POST') {
         let body = '';
@@ -1001,12 +1041,111 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
+    // --- NEW ENDPOINTS ---
+    // Affiliate Stats Endpoint
+    if (pathname === '/api/admin/affiliates' && req.method === 'GET') {
+        try {
+            const { data: affiliates, error } = await supabase
+                .from('affiliates')
+                .select('*', { count: 'exact' });
+
+            if (error) throw error;
+
+            // Calculate total stats
+            const totalAffiliates = affiliates.length;
+            const totalClicks = affiliates.reduce((acc, curr) => acc + (curr.clicks || 0), 0);
+            const totalConversions = affiliates.reduce((acc, curr) => acc + (curr.conversions || 0), 0);
+
+            return setJsonRes(200, {
+                success: true,
+                totalAffiliates,
+                totalClicks,
+                totalConversions,
+                affiliates // Return full list for detailed view
+            });
+        } catch (error) {
+            console.error('Error fetching affiliate stats:', error);
+            return setJsonRes(500, { error: error.message });
+        }
+    }
+
+    // Analytics Recording Endpoint
+    if (pathname === '/api/admin/analytics/record' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+            try {
+                const { user_id, event_type, resource_id, metadata, duration } = JSON.parse(body || '{}');
+
+                const { data, error } = await supabase
+                    .from('user_analytics')
+                    .insert({
+                        user_id,
+                        event_type,
+                        resource_id,
+                        metadata,
+                        duration
+                    })
+                    .select()
+                    .single();
+
+                if (error) {
+                    // Create table if it doesn't exist (basic auto-migration for dev)
+                    if (error.code === '42P01') { // undefined_table
+                        await supabase.rpc('exec_sql', {
+                            sql: `
+                        CREATE TABLE IF NOT EXISTS user_analytics (
+                            id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+                            user_id UUID,
+                            event_type TEXT NOT NULL,
+                            resource_id TEXT,
+                            metadata JSONB DEFAULT '{}'::jsonb,
+                            duration INTEGER,
+                            created_at TIMESTAMPTZ DEFAULT NOW()
+                        );
+                      `});
+                        // Retry insert
+                        await supabase.from('user_analytics').insert({ user_id, event_type, resource_id, metadata, duration });
+                    } else {
+                        throw error;
+                    }
+                }
+
+                return setJsonRes(200, { success: true, data });
+            } catch (error) {
+                console.error('Error recording analytics:', error);
+                return setJsonRes(500, { error: error.message });
+            }
+        });
+        return;
+    }
+
+    // Analytics Stats Endpoint
+    if (pathname === '/api/admin/analytics/stats' && req.method === 'GET') {
+        try {
+            const { data: analytics, error } = await supabase
+                .from('user_analytics')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(100);
+
+            if (error) throw error;
+
+            return setJsonRes(200, { success: true, analytics });
+        } catch (error) {
+            console.error('Error fetching analytics:', error);
+            return setJsonRes(500, { error: error.message });
+        }
+    }
+
     // Default 404
     setJsonRes(404, {
         error: `Route not found: ${req.method} ${pathname}`,
         help: "If this looks correct, ensure local-server.js was restarted after code changes."
     });
 });
+
+
 
 server.listen(PORT, () => {
     console.log(`Local API Server running on http://localhost:${PORT}`);

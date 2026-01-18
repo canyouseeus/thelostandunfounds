@@ -95,7 +95,7 @@ export function useToast() {
 
 function ToastContainer({ toasts, removeToast }: { toasts: Toast[]; removeToast: (id: string) => void }) {
   return (
-    <div className="fixed top-20 right-4 z-[10000] flex flex-col gap-2 max-w-md w-full pointer-events-none">
+    <div className="fixed top-4 sm:top-20 right-4 left-4 sm:left-auto z-[10000] flex flex-col gap-2 max-w-md pointer-events-none transition-all">
       {toasts.map((toast) => (
         <div key={toast.id} className="pointer-events-auto">
           <ToastItem toast={toast} onClose={() => removeToast(toast.id)} />
@@ -125,14 +125,14 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
 
   return (
     <div
-      className={`${colorClass} border rounded-none p-4 flex items-start gap-3 shadow-lg backdrop-blur-sm animate-slide-in`}
+      className={`${colorClass} border rounded-none p-3 sm:p-4 flex items-start gap-2 sm:gap-3 shadow-lg backdrop-blur-sm animate-slide-in`}
       role="alert"
     >
-      <Icon className="w-5 h-5 flex-shrink-0 mt-0.5" />
-      <div className="flex-1 text-sm font-medium">{toast.message}</div>
+      <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 mt-0.5" />
+      <div className="flex-1 text-xs sm:text-sm font-medium leading-tight">{toast.message}</div>
       <button
         onClick={onClose}
-        className="text-white/60 hover:text-white transition flex-shrink-0"
+        className="text-white/60 hover:text-white transition flex-shrink-0 ml-1"
         aria-label="Close notification"
       >
         <X className="w-4 h-4" />

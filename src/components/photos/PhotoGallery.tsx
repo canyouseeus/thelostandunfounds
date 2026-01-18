@@ -15,6 +15,15 @@ interface Photo {
     created_at: string;
     price?: number;
     library_id: string;
+    metadata?: {
+        cameraMake?: string;
+        cameraModel?: string;
+        isoSpeed?: number;
+        focalLength?: number;
+        aperture?: number;
+        time?: string;
+        [key: string]: any;
+    };
 }
 
 interface PhotoLibrary {
@@ -284,7 +293,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
 
                 {/* Sandbox Banner - ONLY SHOW IN DEV */}
                 {!import.meta.env.PROD && (
-                    <div className="mt-24 bg-white/[0.02] border-y border-white/[0.05] py-5 text-center">
+                    <div className="mt-24 bg-white/[0.02] py-5 text-center">
                         <span className="text-[9px] font-black tracking-[0.8em] uppercase text-white/10">
                             [ SANDBOX MODE ENABLED ] - NO REAL CURRENCY WILL BE CHARGED
                         </span>
@@ -322,7 +331,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                 {/* Photos Grouped by Date */}
                 <div ref={photosRef} className="space-y-16">
                     {displayedPhotos.length === 0 ? (
-                        <div className="py-40 text-center border border-dashed border-white/10 rounded-2xl">
+                        <div className="py-40 text-center">
                             <p className="text-zinc-500 uppercase tracking-widest font-bold">No items found in this vault section.</p>
                         </div>
                     ) : (
@@ -354,13 +363,28 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                             return (
                                 <div key={dateHeader}>
                                     <div className="flex items-center justify-between mb-6 sticky top-0 z-[5] bg-black/80 backdrop-blur-md pt-2 pb-4">
-                                        <h2 className="text-lg md:text-2xl font-black text-white uppercase tracking-tight whitespace-nowrap">
-                                            {dateHeader}
-                                        </h2>
+                                        <div className="flex flex-col items-start">
+                                            <h2 className="text-lg md:text-2xl font-black text-white uppercase tracking-tight whitespace-nowrap">
+                                                {dateHeader}
+                                            </h2>
+                                            {/* Camera Model Display */}
+                                            {(() => {
+                                                // Find first photo with camera model in this group
+                                                const modelPhoto = groupPhotos.find(p => p.metadata?.cameraModel);
+                                                if (modelPhoto?.metadata?.cameraModel) {
+                                                    return (
+                                                        <span className="text-[10px] md:text-xs font-bold text-white/50 tracking-widest uppercase mt-1">
+                                                            {modelPhoto.metadata.cameraMake ? `${modelPhoto.metadata.cameraMake} ` : ''}{modelPhoto.metadata.cameraModel}
+                                                        </span>
+                                                    );
+                                                }
+                                                return null;
+                                            })()}
+                                        </div>
                                         {activeTab === 'storefront' && (
                                             <button
                                                 onClick={() => handleToggleGroup(groupPhotos, isGroupAllSelected)}
-                                                className="flex items-center gap-2 px-2 md:px-3 py-1 bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-colors"
+                                                className="flex items-center gap-2 px-2 md:px-3 py-1 bg-white/5 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-colors"
                                                 title={isGroupAllSelected ? 'Unselect Group' : 'Select Group'}
                                             >
                                                 <Layers className={`w-3 h-3 ${isGroupAllSelected ? 'text-white' : 'text-white/60'}`} />
@@ -368,7 +392,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                                             </button>
                                         )}
                                     </div>
-                                    <div className="grid grid-cols-3 gap-2 md:gap-4">
+                                    <div className="grid grid-cols-3 gap-0">
                                         {groupPhotos.map((photo) => {
                                             const index = photos.findIndex(p => p.id === photo.id);
                                             const isSelected = !!selectedPhotos.find(p => p.id === photo.id);
@@ -380,7 +404,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                                                     initial={{ opacity: 0, y: 20 }}
                                                     whileInView={{ opacity: 1, y: 0 }}
                                                     viewport={{ once: true }}
-                                                    className="relative aspect-square bg-zinc-900 rounded-xl overflow-hidden group border border-white/5"
+                                                    className="relative aspect-square bg-zinc-900 overflow-hidden group"
                                                 >
                                                     {/* Image */}
                                                     <img
@@ -489,7 +513,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
             {showBackToTop && (
                 <button
                     onClick={() => photosRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                    className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-10 h-10 bg-white/10 border border-white/20 backdrop-blur-md flex items-center justify-center hover:bg-white hover:text-black transition-all"
+                    className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-10 h-10 bg-white/10 backdrop-blur-md flex items-center justify-center hover:bg-white hover:text-black transition-all"
                     aria-label="Back to top"
                 >
                     <ArrowUp className="w-5 h-5" />

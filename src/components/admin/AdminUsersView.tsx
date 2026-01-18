@@ -1,15 +1,15 @@
 
 import { useState } from 'react';
-import { 
-  Users, 
-  Search, 
-  CheckSquare, 
-  Square, 
-  User, 
-  Calendar, 
-  Eye, 
-  Edit, 
-  Ban, 
+import {
+  Users,
+  Search,
+  CheckSquare,
+  Square,
+  User,
+  Calendar,
+  Eye,
+  Edit,
+  Ban,
   BarChart3,
   ArrowLeft
 } from 'lucide-react';
@@ -53,18 +53,18 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
   // Filter users
   const filteredUsers = allUsers.filter(user => {
     // Search filter
-    const matchesSearch = searchQuery === '' || 
+    const matchesSearch = searchQuery === '' ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (user.username && user.username.toLowerCase().includes(searchQuery.toLowerCase()));
-    
+
     // Tier filter
     const matchesTier = filterTier === 'all' || user.tier === filterTier;
-    
+
     // Admin filter
-    const matchesAdmin = filterAdmin === 'all' || 
+    const matchesAdmin = filterAdmin === 'all' ||
       (filterAdmin === 'admin' && user.isAdmin) ||
       (filterAdmin === 'user' && !user.isAdmin);
-    
+
     return matchesSearch && matchesTier && matchesAdmin;
   });
 
@@ -75,7 +75,7 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
         Back to Dashboard
       </button>
 
-      <div className="bg-black/50 border border-white/10 rounded-none p-6">
+      <div className="bg-black/50 rounded-none p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-white uppercase">
             CONTRIBUTOR MANAGEMENT
@@ -84,28 +84,28 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
             Export Users
           </button>
         </div>
-        
+
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-white/5 rounded-none p-4">
             <div className="text-white/60 text-sm mb-1">Total Contributors</div>
-              <div className="text-2xl font-bold text-white">
-                {allUsers.length > 0 ? allUsers.length : (stats?.totalUsers || 0)}
-              </div>
+            <div className="text-2xl font-bold text-white">
+              {allUsers.length > 0 ? allUsers.length : (stats?.totalUsers || 0)}
+            </div>
           </div>
           <div className="bg-white/5 rounded-none p-4">
             <div className="text-white/60 text-sm mb-1">Active Users</div>
-              <div className="text-2xl font-bold text-green-400">
-                {allUsers.length > 0 ? allUsers.filter(u => u.tier !== 'inactive').length : (stats?.activeSubscriptions || 0)}
-              </div>
+            <div className="text-2xl font-bold text-green-400">
+              {allUsers.length > 0 ? allUsers.filter(u => u.tier !== 'inactive').length : (stats?.activeSubscriptions || 0)}
+            </div>
           </div>
           <div className="bg-white/5 rounded-none p-4">
             <div className="text-white/60 text-sm mb-1">Premium Users</div>
-              <div className="text-2xl font-bold text-yellow-400">
-                {allUsers.length > 0 
-                  ? allUsers.filter(u => u.tier === 'premium' || u.tier === 'pro').length 
-                  : ((stats?.premiumUsers || 0) + (stats?.proUsers || 0))}
-              </div>
+            <div className="text-2xl font-bold text-yellow-400">
+              {allUsers.length > 0
+                ? allUsers.filter(u => u.tier === 'premium' || u.tier === 'pro').length
+                : ((stats?.premiumUsers || 0) + (stats?.proUsers || 0))}
+            </div>
           </div>
         </div>
 
@@ -192,7 +192,7 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
               filteredUsers.map((user) => (
                 <div
                   key={user.id}
-                  className="flex items-center gap-4 p-4 bg-black/30 border border-white/10 rounded-none hover:bg-white/5 transition"
+                  className="flex items-center gap-4 p-4 bg-black/30 rounded-none hover:bg-white/5 transition"
                 >
                   <button
                     onClick={() => {
@@ -223,11 +223,10 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
                           ADMIN
                         </span>
                       )}
-                      <span className={`px-2 py-0.5 text-[10px] border ${
-                        user.tier === 'free' ? 'bg-white/5 text-white/60 border-white/10' :
-                        user.tier === 'premium' ? 'bg-yellow-400/10 text-yellow-400 border-yellow-400/20' :
-                        'bg-purple-400/10 text-purple-400 border-purple-400/20'
-                      }`}>
+                      <span className={`px-2 py-0.5 text-[10px] border ${user.tier === 'free' ? 'bg-white/5 text-white/60 border-white/10' :
+                          user.tier === 'premium' ? 'bg-yellow-400/10 text-yellow-400 border-yellow-400/20' :
+                            'bg-purple-400/10 text-purple-400 border-purple-400/20'
+                        }`}>
                         {user.tier.charAt(0).toUpperCase() + user.tier.slice(1)}
                       </span>
                     </div>

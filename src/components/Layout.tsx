@@ -250,7 +250,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
     <div className="min-h-screen bg-black flex flex-col">
       <SageModeOverlay />
       <nav className="fixed top-0 left-0 w-full bg-black backdrop-blur-md z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           {/* Top row: Title left, Menu button right */}
           <div
             className="flex items-center justify-between h-16 gap-4 flex-nowrap"

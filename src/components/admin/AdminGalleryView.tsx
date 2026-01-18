@@ -1,17 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft, Image as ImageIcon, DollarSign, Download, AlertCircle, CheckCircle, RefreshCw, Activity, Plus, Lock, Unlock, Trash2, Globe, Upload, X, Cloud, HardDrive, Edit2 } from 'lucide-react';
+import { ArrowLeft, Image as ImageIcon, DollarSign, Download, AlertCircle, CheckCircle, RefreshCw, Activity, Plus, Lock, Unlock, Trash2, Globe, Upload, X, Cloud, HardDrive, Edit2, Mail } from 'lucide-react';
 import { AnimatedNumber } from '@/components/ui/animated-number';
 import { useToast } from '@/components/Toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { GalleryCountdownOverlay, shouldShowCountdown } from '@/components/ui/gallery-countdown-overlay';
 
 interface AdminGalleryViewProps {
     onBack: () => void;
+    isPhotographerView?: boolean;
 }
 
 interface GalleryStats {
     totalOrders: number;
     totalRevenue: number;
     recentOrders: any[];
+    recentPhotos: any[];
 }
 
 interface PhotoLibrary {
@@ -25,6 +29,7 @@ interface PhotoLibrary {
     cover_image_url?: string;
     price?: number;
     commercial_included?: boolean;
+    owner_id?: string;
 }
 
 interface PricingOption {
@@ -36,7 +41,8 @@ interface PricingOption {
     is_active?: boolean;
 }
 
-export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
+export default function AdminGalleryView({ onBack, isPhotographerView = false }: AdminGalleryViewProps) {
+    const { user } = useAuth(); // Get authenticated user
     const [stats, setStats] = useState<GalleryStats | null>(null);
     const [libraries, setLibraries] = useState<PhotoLibrary[]>([]);
     const [loading, setLoading] = useState(true);
@@ -62,28 +68,42 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
     const [deletedPricingIds, setDeletedPricingIds] = useState<string[]>([]);
     const [invitedEmails, setInvitedEmails] = useState(''); // Transient state for invitations
 
+    // Photographer Invite State
+    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+    const [inviteData, setInviteData] = useState({ email: '', name: '' });
+    const [inviteLoading, setInviteLoading] = useState(false);
+
+    // Countdown overlay state for "LAST NIGHT" gallery
+    const [countdownExpired, setCountdownExpired] = useState(false);
+    const targetTime8PM = useMemo(() => {
+        const target = new Date();
+        target.setHours(20, 0, 0, 0); // 8:00 PM today
+        return target;
+    }, []);
+
     const { success, error, info } = useToast();
 
     useEffect(() => {
-        loadGalleryStats();
-    }, []);
+        if (user) {
+            loadGalleryStats();
+        }
+    }, [user]);
 
     const loadGalleryStats = async () => {
         try {
             setLoading(true);
-            // Get orders
-            const { data: orders, error: supabaseError } = await supabase
-                .from('photo_orders')
-                .select('*')
-                .order('created_at', { ascending: false });
 
-            if (supabaseError) throw supabaseError;
-
-            // Get libraries with photo counts
-            const { data: libs, error: libError } = await supabase
+            // 1. Get libraries (filtered by owner if photographer mode)
+            let query = supabase
                 .from('photo_libraries')
                 .select('*, photos(count)')
                 .order('created_at', { ascending: false });
+
+            if (isPhotographerView && user) {
+                query = query.eq('owner_id', user.id);
+            }
+
+            const { data: libs, error: libError } = await query;
 
             if (libError) throw libError;
 
@@ -95,13 +115,64 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
 
             setLibraries(processedLibs);
 
+            // 2. Get orders (related to these libraries)
+            // If photographer, we only want orders for THEIR libraries
+            // We can fetch orders where library_id is in the list of fetched libraries
+            const libraryIds = processedLibs.map(l => l.id);
+
+            let ordersQuery = supabase
+                .from('photo_orders')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            // If we have libraries, filter orders by them. 
+            // If no libraries, no orders relevant for this view (or user has 0 galleries)
+            if (isPhotographerView) {
+                if (libraryIds.length > 0) {
+                    // Note: photo_orders usually has items JSON, not direct library_id column unless added.
+                    // Checking schema... typically order items link to photos/libraries. 
+                    // Assuming 'photo_orders' doesn't strictly link to library_id at root. 
+                    // BUT for stats, we might fallback to general revenue if schema is complex.
+                    // Let's assume for now we just show 0 if specialized filtering is too complex without a join table.
+                    // Actually, let's skip order filtering complexity for MVP and just show 0 or "contact admin" for revenue if strict.
+                    // OR, if 'photo_orders' has 'items' which contains 'library_id'.
+                    // For now, let's safely NOT show all platform orders to a photographer.
+                    // We'll fetch orders but maybe filter client-side if needed, or better:
+                    // ONLY fetch if we can link it.
+                    // Use a simple heuristic: if photographer view, don't show platform-wide stats.
+                }
+            }
+
+            const { data: orders, error: supabaseError } = await ordersQuery;
+
+            // Filter orders for photographer view (simple client-side check if possible, or just hide stats UI)
+            // Since we can't easily join on JSONB items without complex query, 
+            // let's just use the fetched orders for GLOBAL admin, and EMPTY/Filtered for photographer.
+
+            let validOrders = orders || [];
+            if (isPhotographerView) {
+                // If we can't filter easily, show empty to avoid leaking other's data
+                // TODO: Implement proper order-to-owner tracking
+                validOrders = [];
+            }
+
+            // 3. Get Recent Photos
+            const { data: recentPhotos, error: photosError } = await supabase
+                .from('photos')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(3);
+
+            if (photosError) console.error('Error fetching recent photos:', photosError);
+
             // Calculate stats
-            const totalRevenue = orders?.reduce((sum, order) => sum + (order.total_amount_cents || 0), 0) / 100 || 0;
+            const totalRevenue = validOrders.reduce((sum, order) => sum + (order.total_amount_cents || 0), 0) / 100 || 0;
 
             setStats({
-                totalOrders: orders?.length || 0,
+                totalOrders: validOrders.length || 0,
                 totalRevenue,
-                recentOrders: orders?.slice(0, 10) || []
+                recentOrders: validOrders.slice(0, 10) || [],
+                recentPhotos: recentPhotos || []
             });
         } catch (err) {
             console.error('Error loading gallery stats:', err);
@@ -125,7 +196,9 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
                 commercial_included: modalData.commercial_included || false,
                 google_drive_folder_id: uploadMode === 'drive' ? (modalData.google_drive_folder_id || null) : null,
                 cover_image_url: modalData.cover_image_url || null,
-                price: modalData.price || 5.00
+                price: modalData.price || 5.00,
+                // Assign owner if new and in photographer mode
+                ...(isPhotographerView && user && !editingId ? { owner_id: user.id } : {})
             };
 
             if (editingId) {
@@ -515,446 +588,543 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <button onClick={onBack} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
-                    <ArrowLeft className="w-4 h-4" />
-                    Back to Dashboard
-                </button>
-                <div className="flex gap-2">
+            {!isPhotographerView && (
+                <>
+                    {/* Stats Grid - Only for Admin */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="bg-white/5 p-4">
+                            <div className="text-white/40 text-xs uppercase font-bold mb-1">Total Orders</div>
+                            <div className="text-2xl font-bold font-mono text-white">
+                                <AnimatedNumber value={stats?.totalOrders || 0} />
+                            </div>
+                        </div>
+                        <div className="bg-white/5 p-4">
+                            <div className="text-white/40 text-xs uppercase font-bold mb-1">Total Revenue</div>
+                            <div className="text-2xl font-bold font-mono text-green-400">
+                                $<AnimatedNumber value={stats?.totalRevenue || 0} decimals={2} />
+                            </div>
+                        </div>
+                        <div className="bg-white/5 p-4">
+                            <div className="text-white/40 text-xs uppercase font-bold mb-1">Recent Activity</div>
+                            <div className="text-xs text-white/60 space-y-1 mt-2">
+                                {stats?.recentOrders.length === 0 ? (
+                                    <div className="text-white/20 italic">No recent orders</div>
+                                ) : (
+                                    stats?.recentOrders.slice(0, 3).map((order: any) => (
+                                        <div key={order.id} className="flex justify-between">
+                                            <span>{new Date(order.created_at).toLocaleDateString()}</span>
+                                            <span className="text-green-400">${(order.total_amount_cents / 100).toFixed(2)}</span>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                        <div className="bg-white/5 p-4">
+                            <div className="text-white/40 text-xs uppercase font-bold mb-2">Latest New Uploads</div>
+                            <div className="grid grid-cols-3 gap-2">
+                                {stats?.recentPhotos && stats.recentPhotos.length > 0 ? (
+                                    stats.recentPhotos.map((photo: any) => (
+                                        <div key={photo.id} className="aspect-square bg-black/50 relative group overflow-hidden border border-white/10">
+                                            <img
+                                                src={photo.thumbnail_url}
+                                                alt={photo.title}
+                                                className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                                            />
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="col-span-3 text-white/20 italic text-xs">No recent photos</div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                </>
+            )
+            }
+
+            <div className="flex flex-col gap-4 mb-2">
+                <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-white p-2">
+                            <ImageIcon className="w-5 h-5 text-black" />
+                        </div>
+                        <h2 className="text-xl md:text-2xl font-bold text-white uppercase tracking-tight">
+                            {isPhotographerView ? 'My Galleries' : 'Gallery Management'}
+                        </h2>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        {/* Desktop Only: Back Button */}
+                        {!isPhotographerView && (
+                            <button
+                                onClick={onBack}
+                                className="hidden md:flex items-center gap-2 text-white/60 hover:text-white transition-colors mr-2 px-3 py-2 text-sm"
+                            >
+                                <ArrowLeft className="w-4 h-4" />
+                                Back
+                            </button>
+                        )}
+                        <button
+                            onClick={openCreateModal}
+                            className="px-4 py-2 bg-white text-black text-xs uppercase tracking-wider font-bold flex items-center gap-2 hover:bg-white/90"
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span className="hidden sm:inline">New Gallery</span>
+                            <span className="sm:hidden">New</span>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Mobile Only: Back to Dashboard */}
+                {!isPhotographerView && (
+                    <button
+                        onClick={onBack}
+                        className="md:hidden flex items-center gap-2 text-white/60 hover:text-white py-1 px-1 text-sm transition-colors self-start"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        Back to Dashboard
+                    </button>
+                )}
+
+                {/* Secondary Actions (Invite, Test) */}
+                <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto mt-2 md:mt-0">
+                    {!isPhotographerView && (
+                        <button
+                            onClick={() => setIsInviteModalOpen(true)}
+                            className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 text-xs uppercase tracking-wider font-bold flex items-center justify-center gap-2 w-full sm:w-auto"
+                        >
+                            <Mail className="w-3 h-3" />
+                            <span className="sm:inline">Invite Photographer</span>
+                        </button>
+                    )}
                     <button
                         onClick={checkAssetHealth}
                         disabled={verifying}
-                        className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 text-xs uppercase tracking-wider font-bold flex items-center gap-2"
+                        className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 text-xs uppercase tracking-wider font-bold flex items-center justify-center gap-2 w-full sm:w-auto"
                     >
                         {verifying ? (
-                            <>
-                                <RefreshCw className="w-3 h-3 animate-spin" /> Check Connectivity
-                            </>
+                            <RefreshCw className="w-3 h-3 animate-spin" />
                         ) : (
-                            <>
-                                <Activity className="w-3 h-3" /> Test Connection
-                            </>
+                            <Activity className="w-3 h-3" />
                         )}
-                    </button>
-                    <button
-                        onClick={openCreateModal}
-                        className="px-4 py-2 bg-white text-black text-xs uppercase tracking-wider font-bold flex items-center gap-2 hover:bg-white/90"
-                    >
-                        <Plus className="w-4 h-4" /> New Gallery
+                        <span>{verifying ? 'Checking...' : 'Test Connection'}</span>
                     </button>
                 </div>
             </div>
 
             {/* Create/Edit Gallery Modal */}
-            {isManaged && (
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
-                    <div className="bg-[#0A0A0A] border border-white/10 w-full max-w-2xl p-6 relative my-8 max-h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar rounded-none">
-                        <button
-                            onClick={() => setIsManaged(false)}
-                            className="absolute top-4 right-4 text-white/40 hover:text-white"
-                        >
-                            <Plus className="w-6 h-6 rotate-45" />
-                        </button>
+            {
+                isManaged && (
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
+                        <div className="bg-[#0A0A0A] border border-white/10 w-full max-w-2xl p-6 relative my-8 max-h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar rounded-none">
+                            <button
+                                onClick={() => setIsManaged(false)}
+                                className="absolute top-4 right-4 text-white/40 hover:text-white"
+                            >
+                                <Plus className="w-6 h-6 rotate-45" />
+                            </button>
 
-                        <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                            {editingId ? <Edit2 className="w-5 h-5 text-white/60" /> : <Plus className="w-5 h-5 text-white/60" />}
-                            {editingId ? 'Edit Gallery Settings' : 'Create New Gallery'}
-                        </h2>
+                            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                                {editingId ? <Edit2 className="w-5 h-5 text-white/60" /> : <Plus className="w-5 h-5 text-white/60" />}
+                                {editingId ? 'Edit Gallery Settings' : 'Create New Gallery'}
+                            </h2>
 
-                        <form onSubmit={handleSaveGallery} className="space-y-6">
-                            {/* Gallery Name & Slug */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs uppercase text-white/40 mb-1">Gallery Name</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={modalData.name}
-                                        onChange={(e) => {
-                                            const name = e.target.value;
-                                            if (!editingId) {
-                                                const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-                                                setModalData({ ...modalData, name, slug });
-                                            } else {
-                                                setModalData({ ...modalData, name });
-                                            }
-                                        }}
-                                        className="w-full bg-white/5 border border-white/10 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 rounded-none"
-                                        placeholder="e.g. Summer 2025 Collection"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs uppercase text-white/40 mb-1">URL Slug</label>
-                                    <div className="flex items-center gap-2 bg-white/5 border border-white/10 p-2 opacity-50">
-                                        <span className="text-white/40 text-xs">/gallery/</span>
+                            <form onSubmit={handleSaveGallery} className="space-y-6">
+                                {/* Gallery Name & Slug */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs uppercase text-white/40 mb-1">Gallery Name</label>
                                         <input
                                             type="text"
                                             required
-                                            value={modalData.slug}
-                                            onChange={(e) => setModalData({ ...modalData, slug: e.target.value })}
-                                            className="bg-transparent text-white w-full focus:outline-none font-mono text-sm rounded-none"
-                                            placeholder="summer-2025"
+                                            value={modalData.name}
+                                            onChange={(e) => {
+                                                const name = e.target.value;
+                                                if (!editingId) {
+                                                    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+                                                    setModalData({ ...modalData, name, slug });
+                                                } else {
+                                                    setModalData({ ...modalData, name });
+                                                }
+                                            }}
+                                            className="w-full bg-white/5 border border-white/10 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 rounded-none"
+                                            placeholder="e.g. Summer 2025 Collection"
                                         />
                                     </div>
-                                </div>
-                            </div>
 
-                            {/* Pricing Options - Full Width */}
-                            <div>
-                                <label className="block text-xs uppercase text-white/40 mb-2">Pricing Options & Bundles</label>
-                                <div className="space-y-2 mb-3">
-                                    {pricingOptions.map((option, idx) => {
-                                        const isEditing = editingPricingIdx === idx;
-                                        return (
-                                            <div
-                                                key={idx}
-                                                className="grid items-center gap-4 bg-white/5 border border-white/10 p-4 rounded-none w-full"
-                                                style={{ gridTemplateColumns: 'minmax(180px, 1fr) 100px 120px 80px' }}
-                                            >
-                                                {isEditing ? (
-                                                    <>
-                                                        {/* Name Input */}
-                                                        <div>
-                                                            <input
-                                                                type="text"
-                                                                value={option.name}
-                                                                onChange={(e) => {
-                                                                    const newOptions = [...pricingOptions];
-                                                                    newOptions[idx].name = e.target.value;
-                                                                    setPricingOptions(newOptions);
-                                                                }}
-                                                                placeholder="Option Name"
-                                                                className="w-full bg-transparent text-sm text-white focus:outline-none border-b border-white/20 pb-1 rounded-none"
-                                                                autoFocus
-                                                            />
-                                                        </div>
-                                                        {/* Count Input */}
-                                                        <div className="text-center">
-                                                            <input
-                                                                type="number"
-                                                                value={option.photo_count}
-                                                                onChange={(e) => {
-                                                                    const newOptions = [...pricingOptions];
-                                                                    const val = parseInt(e.target.value);
-                                                                    newOptions[idx].photo_count = isNaN(val) ? 0 : val;
-                                                                    setPricingOptions(newOptions);
-                                                                }}
-                                                                placeholder="Count"
-                                                                title="Number of photos (-1 for All)"
-                                                                className="w-full bg-white/5 border border-white/10 rounded-none px-2 py-1 text-xs text-center text-white font-mono focus:outline-none focus:border-white/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                            />
-                                                        </div>
-                                                        {/* Price Input */}
-                                                        <div className="flex items-center justify-center gap-1">
-                                                            <span className="text-xs text-white/40">$</span>
-                                                            <input
-                                                                type="number"
-                                                                step="0.01"
-                                                                value={option.price}
-                                                                onChange={(e) => {
-                                                                    const newOptions = [...pricingOptions];
-                                                                    const val = parseFloat(e.target.value);
-                                                                    newOptions[idx].price = isNaN(val) ? 0 : val;
-                                                                    setPricingOptions(newOptions);
-                                                                }}
-                                                                className="w-full bg-white/5 border border-white/10 rounded-none px-2 py-1 text-xs text-white font-bold font-mono focus:outline-none focus:border-white/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                            />
-                                                        </div>
-                                                        {/* Done Button */}
-                                                        <div className="flex justify-end">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setEditingPricingIdx(null)}
-                                                                className="p-1.5 hover:bg-green-500/20 text-green-400 rounded-none transition-colors"
-                                                                title="Done"
-                                                            >
-                                                                <CheckCircle className="w-4 h-4" />
-                                                            </button>
-                                                        </div>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        {/* Name Display */}
-                                                        <div className="text-sm font-bold text-white truncate pr-2">
-                                                            {option.name || <span className="text-white/20 italic">No Name</span>}
-                                                        </div>
-                                                        {/* Count Display */}
-                                                        <div className="text-center border-l border-white/10 pl-2">
-                                                            <div className="flex items-center justify-center gap-1">
-                                                                <span className="text-[10px] text-white/40">Count:</span>
-                                                                <span className="text-xs font-mono text-white/80">{option.photo_count === -1 ? 'ALL' : option.photo_count}</span>
-                                                            </div>
-                                                        </div>
-                                                        {/* Price Display */}
-                                                        <div className="text-center border-l border-white/10 pl-2">
-                                                            <div className="flex items-center justify-center gap-1">
-                                                                <span className="text-xs text-white/40">$</span>
-                                                                <span className="text-sm font-bold font-mono text-green-400">{option.price.toFixed(2)}</span>
-                                                            </div>
-                                                        </div>
-                                                        {/* Action Buttons */}
-                                                        <div className="flex gap-1 justify-end pl-2 border-l border-white/10">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setEditingPricingIdx(idx)}
-                                                                className="p-1.5 hover:bg-white/10 text-white/40 hover:text-white rounded-none transition-colors"
-                                                                title="Edit"
-                                                            >
-                                                                <Edit2 className="w-4 h-4" />
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    const newOptions = pricingOptions.filter((_, i) => i !== idx);
-                                                                    if (option.id) {
-                                                                        setDeletedPricingIds([...deletedPricingIds, option.id]);
-                                                                    }
-                                                                    setPricingOptions(newOptions);
-                                                                    if (editingPricingIdx === idx) setEditingPricingIdx(null);
-                                                                }}
-                                                                className="p-1.5 hover:bg-red-500/20 text-white/20 hover:text-red-400 rounded-none transition-colors"
-                                                                title="Remove"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
-                                                        </div>
-                                                    </>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                                <div className="flex gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const newOption = { id: '', name: 'Bundle Option', photo_count: 3, price: 10.00 };
-                                            setPricingOptions([...pricingOptions, newOption]);
-                                            setEditingPricingIdx(pricingOptions.length);
-                                        }}
-                                        className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-[10px] text-white rounded-none transition-colors uppercase tracking-wider"
-                                    >
-                                        + Add Option
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const newOption = { id: '', name: 'Full Gallery Commercial License', photo_count: -1, price: 999.00 };
-                                            setPricingOptions([...pricingOptions, newOption]);
-                                            setEditingPricingIdx(pricingOptions.length);
-                                        }}
-                                        className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-[10px] text-emerald-400 border border-emerald-500/50 rounded-none transition-colors uppercase tracking-wider"
-                                    >
-                                        + Add Full License
-                                    </button>
-                                </div>
-                                <p className="text-[10px] text-white/30 mt-2">
-                                    Use count "-1" for Full Gallery Buyout options. Name options with "Commercial" to trigger commercial licensing checkout flow.
-                                </p>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs uppercase text-white/40 mb-1">Description</label>
-                                <textarea
-                                    value={modalData.description}
-                                    onChange={(e) => setModalData({ ...modalData, description: e.target.value })}
-                                    className="w-full bg-white/5 border border-white/10 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 min-h-[80px] rounded-none"
-                                    placeholder="Brief description of the gallery contents..."
-                                />
-                            </div>
-
-                            {/* Client Invitations */}
-                            <div>
-                                <label className="block text-xs uppercase text-white/40 mb-1">Client Invitations (Email)</label>
-                                <textarea
-                                    value={invitedEmails}
-                                    onChange={(e) => setInvitedEmails(e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 min-h-[60px] rounded-none font-mono text-xs"
-                                    placeholder="client@example.com, another@example.com..."
-                                />
-                                <p className="text-[10px] text-white/30 mt-1">
-                                    Comma-separated list of emails. They will receive an access link once you save.
-                                </p>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs uppercase text-white/40 mb-2">Cover Image</label>
-                                <div className="flex items-start gap-4">
-                                    {modalData.cover_image_url && (
-                                        <div className="w-24 h-16 bg-zinc-800 rounded-none overflow-hidden flex-shrink-0 border border-white/10">
-                                            <img src={modalData.cover_image_url} alt="Cover" className="w-full h-full object-cover" />
-                                        </div>
-                                    )}
-                                    <div className="flex-1 space-y-2">
-                                        <div className="flex gap-2">
+                                    <div>
+                                        <label className="block text-xs uppercase text-white/40 mb-1">URL Slug</label>
+                                        <div className="flex items-center gap-2 bg-white/5 border border-white/10 p-2 opacity-50">
+                                            <span className="text-white/40 text-xs">/gallery/</span>
                                             <input
                                                 type="text"
-                                                value={modalData.cover_image_url}
-                                                onChange={(e) => setModalData({ ...modalData, cover_image_url: e.target.value })}
-                                                className="flex-1 bg-white/5 border border-white/10 p-2 text-xs text-white rounded-none"
-                                                placeholder="https://... (or upload below)"
+                                                required
+                                                value={modalData.slug}
+                                                onChange={(e) => setModalData({ ...modalData, slug: e.target.value })}
+                                                className="bg-transparent text-white w-full focus:outline-none font-mono text-sm rounded-none"
+                                                placeholder="summer-2025"
                                             />
                                         </div>
-                                        <div className="flex items-center gap-2 mb-2">
+                                    </div>
+                                </div>
+
+                                {/* Pricing Options - Full Width */}
+                                <div>
+                                    <label className="block text-xs uppercase text-white/40 mb-2">Pricing Options & Bundles</label>
+                                    <div className="space-y-2 mb-3">
+                                        {pricingOptions.map((option, idx) => {
+                                            const isEditing = editingPricingIdx === idx;
+                                            return (
+                                                <div
+                                                    key={idx}
+                                                    className="grid items-center gap-4 bg-white/5 border border-white/10 p-4 rounded-none w-full"
+                                                    style={{ gridTemplateColumns: 'minmax(180px, 1fr) 100px 120px 80px' }}
+                                                >
+                                                    {isEditing ? (
+                                                        <>
+                                                            {/* Name Input */}
+                                                            <div>
+                                                                <input
+                                                                    type="text"
+                                                                    value={option.name}
+                                                                    onChange={(e) => {
+                                                                        const newOptions = [...pricingOptions];
+                                                                        newOptions[idx].name = e.target.value;
+                                                                        setPricingOptions(newOptions);
+                                                                    }}
+                                                                    placeholder="Option Name"
+                                                                    className="w-full bg-transparent text-sm text-white focus:outline-none border-b border-white/20 pb-1 rounded-none"
+                                                                    autoFocus
+                                                                />
+                                                            </div>
+                                                            {/* Count Input */}
+                                                            <div className="text-center">
+                                                                <input
+                                                                    type="number"
+                                                                    value={option.photo_count}
+                                                                    onChange={(e) => {
+                                                                        const newOptions = [...pricingOptions];
+                                                                        const val = parseInt(e.target.value);
+                                                                        newOptions[idx].photo_count = isNaN(val) ? 0 : val;
+                                                                        setPricingOptions(newOptions);
+                                                                    }}
+                                                                    placeholder="Count"
+                                                                    title="Number of photos (-1 for All)"
+                                                                    className="w-full bg-white/5 border border-white/10 rounded-none px-2 py-1 text-xs text-center text-white font-mono focus:outline-none focus:border-white/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                />
+                                                            </div>
+                                                            {/* Price Input */}
+                                                            <div className="flex items-center justify-center gap-1">
+                                                                <span className="text-xs text-white/40">$</span>
+                                                                <input
+                                                                    type="number"
+                                                                    step="0.01"
+                                                                    value={option.price}
+                                                                    onChange={(e) => {
+                                                                        const newOptions = [...pricingOptions];
+                                                                        const val = parseFloat(e.target.value);
+                                                                        newOptions[idx].price = isNaN(val) ? 0 : val;
+                                                                        setPricingOptions(newOptions);
+                                                                    }}
+                                                                    className="w-full bg-white/5 border border-white/10 rounded-none px-2 py-1 text-xs text-white font-bold font-mono focus:outline-none focus:border-white/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                />
+                                                            </div>
+                                                            {/* Done Button */}
+                                                            <div className="flex justify-end">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setEditingPricingIdx(null)}
+                                                                    className="p-1.5 hover:bg-green-500/20 text-green-400 rounded-none transition-colors"
+                                                                    title="Done"
+                                                                >
+                                                                    <CheckCircle className="w-4 h-4" />
+                                                                </button>
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            {/* Name Display */}
+                                                            <div className="text-sm font-bold text-white truncate pr-2">
+                                                                {option.name || <span className="text-white/20 italic">No Name</span>}
+                                                            </div>
+                                                            {/* Count Display */}
+                                                            <div className="text-center border-l border-white/10 pl-2">
+                                                                <div className="flex items-center justify-center gap-1">
+                                                                    <span className="text-[10px] text-white/40">Count:</span>
+                                                                    <span className="text-xs font-mono text-white/80">{option.photo_count === -1 ? 'ALL' : option.photo_count}</span>
+                                                                </div>
+                                                            </div>
+                                                            {/* Price Display */}
+                                                            <div className="text-center border-l border-white/10 pl-2">
+                                                                <div className="flex items-center justify-center gap-1">
+                                                                    <span className="text-xs text-white/40">$</span>
+                                                                    <span className="text-sm font-bold font-mono text-green-400">{option.price.toFixed(2)}</span>
+                                                                </div>
+                                                            </div>
+                                                            {/* Action Buttons */}
+                                                            <div className="flex gap-1 justify-end pl-2 border-l border-white/10">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setEditingPricingIdx(idx)}
+                                                                    className="p-1.5 hover:bg-white/10 text-white/40 hover:text-white rounded-none transition-colors"
+                                                                    title="Edit"
+                                                                >
+                                                                    <Edit2 className="w-4 h-4" />
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const newOptions = pricingOptions.filter((_, i) => i !== idx);
+                                                                        if (option.id) {
+                                                                            setDeletedPricingIds([...deletedPricingIds, option.id]);
+                                                                        }
+                                                                        setPricingOptions(newOptions);
+                                                                        if (editingPricingIdx === idx) setEditingPricingIdx(null);
+                                                                    }}
+                                                                    className="p-1.5 hover:bg-red-500/20 text-white/20 hover:text-red-400 rounded-none transition-colors"
+                                                                    title="Remove"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const newOption = { id: '', name: 'Bundle Option', photo_count: 3, price: 10.00 };
+                                                setPricingOptions([...pricingOptions, newOption]);
+                                                setEditingPricingIdx(pricingOptions.length);
+                                            }}
+                                            className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-[10px] text-white rounded-none transition-colors uppercase tracking-wider"
+                                        >
+                                            + Add Option
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const newOption = { id: '', name: 'Full Gallery Commercial License', photo_count: -1, price: 999.00 };
+                                                setPricingOptions([...pricingOptions, newOption]);
+                                                setEditingPricingIdx(pricingOptions.length);
+                                            }}
+                                            className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-[10px] text-emerald-400 border border-emerald-500/50 rounded-none transition-colors uppercase tracking-wider"
+                                        >
+                                            + Add Full License
+                                        </button>
+                                    </div>
+                                    <p className="text-[10px] text-white/30 mt-2">
+                                        Use count "-1" for Full Gallery Buyout options. Name options with "Commercial" to trigger commercial licensing checkout flow.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs uppercase text-white/40 mb-1">Description</label>
+                                    <textarea
+                                        value={modalData.description}
+                                        onChange={(e) => setModalData({ ...modalData, description: e.target.value })}
+                                        className="w-full bg-white/5 border border-white/10 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 min-h-[80px] rounded-none"
+                                        placeholder="Brief description of the gallery contents..."
+                                    />
+                                </div>
+
+                                {/* Client Invitations */}
+                                <div>
+                                    <label className="block text-xs uppercase text-white/40 mb-1">Client Invitations (Email)</label>
+                                    <textarea
+                                        value={invitedEmails}
+                                        onChange={(e) => setInvitedEmails(e.target.value)}
+                                        className="w-full bg-white/5 border border-white/10 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 min-h-[60px] rounded-none font-mono text-xs"
+                                        placeholder="client@example.com, another@example.com..."
+                                    />
+                                    <p className="text-[10px] text-white/30 mt-1">
+                                        Comma-separated list of emails. They will receive an access link once you save.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs uppercase text-white/40 mb-2">Cover Image</label>
+                                    <div className="flex items-start gap-4">
+                                        {modalData.cover_image_url && (
+                                            <div className="w-24 h-16 bg-zinc-800 rounded-none overflow-hidden flex-shrink-0 border border-white/10">
+                                                <img src={modalData.cover_image_url} alt="Cover" className="w-full h-full object-cover" />
+                                            </div>
+                                        )}
+                                        <div className="flex-1 space-y-2">
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={modalData.cover_image_url}
+                                                    onChange={(e) => setModalData({ ...modalData, cover_image_url: e.target.value })}
+                                                    className="flex-1 bg-white/5 border border-white/10 p-2 text-xs text-white rounded-none"
+                                                    placeholder="https://... (or upload below)"
+                                                />
+                                            </div>
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={modalData.is_private}
+                                                    onChange={(e) => setModalData({ ...modalData, is_private: e.target.checked })}
+                                                    className="w-4 h-4 bg-white/5 border border-white/20 rounded-none focus:ring-0 text-white"
+                                                />
+                                                <span className="text-white text-xs uppercase tracking-widest">Private Gallery</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={modalData.commercial_included}
+                                                    onChange={(e) => setModalData({ ...modalData, commercial_included: e.target.checked })}
+                                                    className="w-4 h-4 bg-white/5 border border-white/20 rounded-none focus:ring-0 text-emerald-500"
+                                                />
+                                                <span className="text-emerald-400 text-xs uppercase tracking-widest font-bold">Commercial Rights Included</span>
+                                            </div>
+                                            <p className="text-[10px] text-white/30 mt-1 pl-6">
+                                                If checked, displays "Eligible for Commercial Use" and assumes license is granted.
+                                            </p>
                                             <input
-                                                type="checkbox"
-                                                checked={modalData.is_private}
-                                                onChange={(e) => setModalData({ ...modalData, is_private: e.target.checked })}
-                                                className="w-4 h-4 bg-white/5 border border-white/20 rounded-none focus:ring-0 text-white"
-                                            />
-                                            <span className="text-white text-xs uppercase tracking-widest">Private Gallery</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <input
-                                                type="checkbox"
-                                                checked={modalData.commercial_included}
-                                                onChange={(e) => setModalData({ ...modalData, commercial_included: e.target.checked })}
-                                                className="w-4 h-4 bg-white/5 border border-white/20 rounded-none focus:ring-0 text-emerald-500"
-                                            />
-                                            <span className="text-emerald-400 text-xs uppercase tracking-widest font-bold">Commercial Rights Included</span>
-                                        </div>
-                                        <p className="text-[10px] text-white/30 mt-1 pl-6">
-                                            If checked, displays "Eligible for Commercial Use" and assumes license is granted.
-                                        </p>
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={handleCoverImageUpload}
-                                            className="block w-full text-xs text-white/60
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleCoverImageUpload}
+                                                className="block w-full text-xs text-white/60
                                                file:mr-4 file:py-2 file:px-4
                                                file:rounded-none file:border-0
                                                file:text-xs file:font-semibold
                                                file:bg-white/10 file:text-white
                                                hover:file:bg-white/20"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <hr className="border-white/10" />
-
-                            <div>
-                                <label className="block text-xs uppercase text-white/40 mb-3">Asset Source</label>
-                                <div className="flex gap-2 mb-4">
-                                    <button
-                                        type="button"
-                                        onClick={() => setUploadMode('drive')}
-                                        className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs uppercase font-bold border ${uploadMode === 'drive' ? 'bg-white text-black border-white' : 'bg-transparent text-white/40 border-white/20 hover:text-white hover:border-white/40'}`}
-                                    >
-                                        <Cloud className="w-4 h-4" /> {editingId ? 'Update Drive Folder' : 'Link Google Drive'}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setUploadMode('upload')}
-                                        className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs uppercase font-bold border ${uploadMode === 'upload' ? 'bg-white text-black border-white' : 'bg-transparent text-white/40 border-white/20 hover:text-white hover:border-white/40'}`}
-                                    >
-                                        <Upload className="w-4 h-4" /> {editingId ? 'Add More Photos' : 'Direct Upload'}
-                                    </button>
-                                </div>
-
-                                {uploadMode === 'drive' ? (
-                                    <div className="animate-in fade-in slide-in-from-top-2 duration-200">
-                                        <label className="block text-xs uppercase text-white/40 mb-1">Google Drive Folder ID</label>
-                                        <input
-                                            type="text"
-                                            value={modalData.google_drive_folder_id}
-                                            onChange={(e) => setModalData({ ...modalData, google_drive_folder_id: e.target.value })}
-                                            className="w-full bg-white/5 border border-white/10 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 font-mono text-xs"
-                                            placeholder="1AbCdEfGhIjK..."
-                                            required={uploadMode === 'drive' && !filesData.length} // Only required if not uploading files in mixed mode (simplified logic)
-                                        />
-                                        <p className="text-[10px] text-white/40 mt-1 flex items-center gap-1">
-                                            <AlertCircle className="w-3 h-3" />
-                                            Folder must be set to "Anyone with link can view"
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <div className="animate-in fade-in slide-in-from-top-2 duration-200 space-y-3">
-                                        <div className="border border-dashed border-white/20 bg-white/5 p-6 text-center hover:bg-white/10 transition-colors relative">
-                                            <input
-                                                type="file"
-                                                multiple
-                                                accept="image/*,video/*"
-                                                onChange={handleFileSelect}
-                                                className="absolute inset-0 opacity-0 cursor-pointer"
                                             />
-                                            <div className="pointer-events-none">
-                                                <Upload className="w-6 h-6 text-white/40 mx-auto mb-2" />
-                                                <p className="text-white text-xs uppercase font-bold">Click or Drag Photos Here</p>
-                                                <p className="text-white/40 text-[10px] mt-1">{filesData.length} files selected</p>
-                                            </div>
                                         </div>
-
-                                        {filesData.length > 0 && (
-                                            <div className="max-h-[220px] overflow-y-auto border border-white/10 bg-black/40 p-2 grid grid-cols-2 gap-2 custom-scrollbar">
-                                                {filesData.map((item, i) => (
-                                                    <div key={i} className="flex items-center gap-2 overflow-hidden text-xs text-white bg-white/5 p-2 rounded-none relative group">
-                                                        <div className="w-10 h-10 flex-shrink-0 bg-black/50 overflow-hidden relative">
-                                                            {item.file.type.startsWith('video/') && (
-                                                                <div className="absolute inset-0 flex items-center justify-center z-10">
-                                                                    <div className="w-4 h-4 rounded-none bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                                                                        <div className="w-0 h-0 border-l-[4px] border-l-white border-y-[3px] border-y-transparent ml-0.5" />
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                            <img src={item.previewUrl} className="w-full h-full object-cover" alt="" />
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="truncate text-[10px]">{item.file.name}</p>
-                                                            <p className="text-[9px] text-white/40 uppercase">{Math.round(item.file.size / 1024)} KB</p>
-                                                        </div>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeFile(i)}
-                                                            className="absolute top-1 right-1 p-1 bg-black/50 text-white/40 hover:text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                                        >
-                                                            <X className="w-3 h-3" />
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-
-                                        {uploadProgress > 0 && (
-                                            <div>
-                                                <div className="flex justify-between text-[10px] text-white/60 mb-1">
-                                                    <span>Uploading...</span>
-                                                    <span>{Math.round(uploadProgress)}%</span>
-                                                </div>
-                                                <div className="h-1 bg-white/10 w-full overflow-hidden">
-                                                    <div
-                                                        className="h-full bg-white transition-all duration-300 ease-out"
-                                                        style={{ width: `${uploadProgress}%` }}
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
                                     </div>
-                                )}
-                            </div>
+                                </div>
 
-                            <div className="pt-4 flex gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsManaged(false)}
-                                    className="flex-1 py-3 border border-white/10 text-white/60 hover:text-white hover:bg-white/5 transition uppercase text-xs font-bold"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="flex-1 py-3 bg-white text-black hover:bg-white/90 transition uppercase text-xs font-bold"
-                                >
-                                    {editingId ? 'Save Gallery' : 'Create Gallery'}
-                                </button>
-                            </div>
-                        </form>
+                                <hr className="border-white/10" />
+
+                                <div>
+                                    <label className="block text-xs uppercase text-white/40 mb-3">Asset Source</label>
+                                    <div className="flex gap-2 mb-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => setUploadMode('drive')}
+                                            className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs uppercase font-bold border ${uploadMode === 'drive' ? 'bg-white text-black border-white' : 'bg-transparent text-white/40 border-white/20 hover:text-white hover:border-white/40'}`}
+                                        >
+                                            <Cloud className="w-4 h-4" /> {editingId ? 'Update Drive Folder' : 'Link Google Drive'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setUploadMode('upload')}
+                                            className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs uppercase font-bold border ${uploadMode === 'upload' ? 'bg-white text-black border-white' : 'bg-transparent text-white/40 border-white/20 hover:text-white hover:border-white/40'}`}
+                                        >
+                                            <Upload className="w-4 h-4" /> {editingId ? 'Add More Photos' : 'Direct Upload'}
+                                        </button>
+                                    </div>
+
+                                    {uploadMode === 'drive' ? (
+                                        <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                                            <label className="block text-xs uppercase text-white/40 mb-1">Google Drive Folder ID</label>
+                                            <input
+                                                type="text"
+                                                value={modalData.google_drive_folder_id}
+                                                onChange={(e) => setModalData({ ...modalData, google_drive_folder_id: e.target.value })}
+                                                className="w-full bg-white/5 border border-white/10 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 font-mono text-xs"
+                                                placeholder="1AbCdEfGhIjK..."
+                                                required={uploadMode === 'drive' && !filesData.length} // Only required if not uploading files in mixed mode (simplified logic)
+                                            />
+                                            <p className="text-[10px] text-white/40 mt-1 flex items-center gap-1">
+                                                <AlertCircle className="w-3 h-3" />
+                                                Folder must be set to "Anyone with link can view"
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="animate-in fade-in slide-in-from-top-2 duration-200 space-y-3">
+                                            <div className="border border-dashed border-white/20 bg-white/5 p-6 text-center hover:bg-white/10 transition-colors relative">
+                                                <input
+                                                    type="file"
+                                                    multiple
+                                                    accept="image/*,video/*"
+                                                    onChange={handleFileSelect}
+                                                    className="absolute inset-0 opacity-0 cursor-pointer"
+                                                />
+                                                <div className="pointer-events-none">
+                                                    <Upload className="w-6 h-6 text-white/40 mx-auto mb-2" />
+                                                    <p className="text-white text-xs uppercase font-bold">Click or Drag Photos Here</p>
+                                                    <p className="text-white/40 text-[10px] mt-1">{filesData.length} files selected</p>
+                                                </div>
+                                            </div>
+
+                                            {filesData.length > 0 && (
+                                                <div className="max-h-[220px] overflow-y-auto border border-white/10 bg-black/40 p-2 grid grid-cols-2 gap-2 custom-scrollbar">
+                                                    {filesData.map((item, i) => (
+                                                        <div key={i} className="flex items-center gap-2 overflow-hidden text-xs text-white bg-white/5 p-2 rounded-none relative group">
+                                                            <div className="w-10 h-10 flex-shrink-0 bg-black/50 overflow-hidden relative">
+                                                                {item.file.type.startsWith('video/') && (
+                                                                    <div className="absolute inset-0 flex items-center justify-center z-10">
+                                                                        <div className="w-4 h-4 rounded-none bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                                                                            <div className="w-0 h-0 border-l-[4px] border-l-white border-y-[3px] border-y-transparent ml-0.5" />
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                                <img src={item.previewUrl} className="w-full h-full object-cover" alt="" />
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="truncate text-[10px]">{item.file.name}</p>
+                                                                <p className="text-[9px] text-white/40 uppercase">{Math.round(item.file.size / 1024)} KB</p>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeFile(i)}
+                                                                className="absolute top-1 right-1 p-1 bg-black/50 text-white/40 hover:text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            >
+                                                                <X className="w-3 h-3" />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            {uploadProgress > 0 && (
+                                                <div>
+                                                    <div className="flex justify-between text-[10px] text-white/60 mb-1">
+                                                        <span>Uploading...</span>
+                                                        <span>{Math.round(uploadProgress)}%</span>
+                                                    </div>
+                                                    <div className="h-1 bg-white/10 w-full overflow-hidden">
+                                                        <div
+                                                            className="h-full bg-white transition-all duration-300 ease-out"
+                                                            style={{ width: `${uploadProgress}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="pt-4 flex gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsManaged(false)}
+                                        className="flex-1 py-3 border border-white/10 text-white/60 hover:text-white hover:bg-white/5 transition uppercase text-xs font-bold"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="flex-1 py-3 bg-white text-black hover:bg-white/90 transition uppercase text-xs font-bold"
+                                    >
+                                        {editingId ? 'Save Gallery' : 'Create Gallery'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-            <div className="bg-black/50 border border-white/10 rounded-none p-6">
+            <div className="bg-black/50 rounded-none p-6">
                 <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
                     <ImageIcon className="w-5 h-5" />
                     GALLERY OPERATIONS
@@ -983,7 +1153,7 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
 
                 {/* Key Metrics */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                    <div className="bg-white/5 border border-white/10 p-4 rounded-none">
+                    <div className="bg-white/5 p-4 rounded-none">
                         <div className="flex items-center gap-2 mb-2 text-white/60 text-xs uppercase tracking-wider">
                             <Download className="w-3 h-3" /> Total Orders
                         </div>
@@ -992,7 +1162,7 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
                         </div>
                     </div>
 
-                    <div className="bg-white/5 border border-white/10 p-4 rounded-none">
+                    <div className="bg-white/5 p-4 rounded-none">
                         <div className="flex items-center gap-2 mb-2 text-white/60 text-xs uppercase tracking-wider">
                             <DollarSign className="w-3 h-3" /> Total Sales
                         </div>
@@ -1004,7 +1174,7 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Active Galleries */}
-                    <div className="border border-white/10 bg-white/[0.02] p-6 rounded-none h-full">
+                    <div className="bg-white/[0.02] p-6 rounded-none h-full">
                         <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
                             <h3 className="text-sm font-bold text-white uppercase tracking-wide">
                                 Active Galleries ({libraries.length})
@@ -1021,53 +1191,85 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
                                 {libraries.length === 0 ? (
                                     <div className="text-white/40 text-sm py-4">No galleries found.</div>
                                 ) : (
-                                    libraries.map((lib) => (
-                                        <div key={lib.id} className="group flex items-start justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors border border-transparent hover:border-white/10">
-                                            <div
-                                                className="flex-1 min-w-0 mr-4 cursor-pointer"
-                                                onClick={() => openEditModal(lib)}
-                                            >
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    {lib.is_private ? (
-                                                        <Lock className="w-3 h-3 text-yellow-400 flex-shrink-0" />
-                                                    ) : (
-                                                        <Globe className="w-3 h-3 text-green-400 flex-shrink-0" />
-                                                    )}
-                                                    <h4 className="font-bold text-white text-sm truncate">{lib.name}</h4>
-                                                </div>
-                                                <div className="flex items-center gap-2 text-xs text-white/40 font-mono">
-                                                    <span>/{lib.slug}</span>
-                                                    <span>•</span>
-                                                    <span>{lib.photo_count || 0} photos</span>
+                                    libraries.map((lib) => {
+                                        const isLastNight = lib.name.toUpperCase() === 'LAST NIGHT';
+                                        const showCountdown = isLastNight && !countdownExpired && shouldShowCountdown(lib.name, targetTime8PM);
+
+                                        const handleCountdownComplete = async () => {
+                                            setCountdownExpired(true);
+                                            // Trigger sync when countdown completes
+                                            try {
+                                                info('Gallery opening! Syncing photos...');
+                                                const syncRes = await fetch('/api/gallery/sync');
+                                                if (syncRes.ok) {
+                                                    success('LAST NIGHT gallery is now live!');
+                                                    loadGalleryStats(); // Refresh to show updated photo count
+                                                }
+                                            } catch (err) {
+                                                console.error('Sync error:', err);
+                                            }
+                                        };
+
+                                        return (
+                                            <div key={lib.id} className="relative group">
+                                                {/* Countdown Overlay for LAST NIGHT */}
+                                                {showCountdown && (
+                                                    <GalleryCountdownOverlay
+                                                        coverImageUrl={lib.cover_image_url}
+                                                        targetTime={targetTime8PM}
+                                                        galleryName={lib.name}
+                                                        onCountdownComplete={handleCountdownComplete}
+                                                    />
+                                                )}
+
+                                                <div className="flex items-start justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors border border-transparent hover:border-white/10">
+                                                    <div
+                                                        className="flex-1 min-w-0 mr-4 cursor-pointer"
+                                                        onClick={() => openEditModal(lib)}
+                                                    >
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            {lib.is_private ? (
+                                                                <Lock className="w-3 h-3 text-yellow-400 flex-shrink-0" />
+                                                            ) : (
+                                                                <Globe className="w-3 h-3 text-green-400 flex-shrink-0" />
+                                                            )}
+                                                            <h4 className="font-bold text-white text-sm truncate">{lib.name}</h4>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 text-xs text-white/40 font-mono">
+                                                            <span>/{lib.slug}</span>
+                                                            <span>•</span>
+                                                            <span>{lib.photo_count || 0} photos</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex gap-2 transition-opacity">
+                                                        <a
+                                                            href={`/gallery/${lib.slug}`}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="p-2 hover:bg-white/20 text-white/60 hover:text-white rounded-sm"
+                                                            title="View Gallery"
+                                                        >
+                                                            <ArrowLeft className="w-4 h-4 rotate-180" />
+                                                        </a>
+                                                        <button
+                                                            onClick={() => handleDeleteGallery(lib.id, lib.name)}
+                                                            className="p-2 hover:bg-red-500/20 text-white/60 hover:text-red-400 rounded-sm"
+                                                            title="Delete Gallery"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="flex gap-2 transition-opacity">
-                                                <a
-                                                    href={`/gallery/${lib.slug}`}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="p-2 hover:bg-white/20 text-white/60 hover:text-white rounded-sm"
-                                                    title="View Gallery"
-                                                >
-                                                    <ArrowLeft className="w-4 h-4 rotate-180" />
-                                                </a>
-                                                <button
-                                                    onClick={() => handleDeleteGallery(lib.id, lib.name)}
-                                                    className="p-2 hover:bg-red-500/20 text-white/60 hover:text-red-400 rounded-sm"
-                                                    title="Delete Gallery"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))
+                                        );
+                                    })
                                 )}
                             </div>
                         )}
                     </div>
 
                     {/* Recent Orders List */}
-                    <div className="border border-white/10 bg-white/[0.02] p-6 rounded-none h-full">
+                    <div className="bg-white/[0.02] p-6 rounded-none h-full">
                         <h3 className="text-sm font-bold text-white uppercase mb-4 tracking-wide border-b border-white/10 pb-2">
                             Recent Sales
                         </h3>
@@ -1106,6 +1308,84 @@ export default function AdminGalleryView({ onBack }: AdminGalleryViewProps) {
                 </div>
 
             </div>
-        </div>
+
+
+            {/* Photographer Invite Modal */}
+            {
+                isInviteModalOpen && (
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                        <div className="bg-[#0A0A0A] border border-white/10 w-full max-w-md p-6 relative">
+                            <button
+                                onClick={() => setIsInviteModalOpen(false)}
+                                className="absolute top-4 right-4 text-white/40 hover:text-white"
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
+                            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                                <Mail className="w-5 h-5 text-white/60" />
+                                Invite Photographer
+                            </h2>
+                            <p className="text-zinc-400 text-sm mb-6">Send an invitation link to a photographer to set up their own gallery connection.</p>
+
+                            <form onSubmit={async (e) => {
+                                e.preventDefault();
+                                setInviteLoading(true);
+                                try {
+                                    const res = await fetch('/api/admin/invite-photographer', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify(inviteData)
+                                    });
+                                    const data = await res.json();
+                                    if (res.ok) {
+                                        success('Invitation sent! Link: ' + data.inviteUrl);
+                                        setIsInviteModalOpen(false);
+                                        setInviteData({ email: '', name: '' });
+                                    } else {
+                                        error(data.error || 'Failed to send');
+                                    }
+                                } catch (err) {
+                                    error('Failed to invite');
+                                } finally {
+                                    setInviteLoading(false);
+                                }
+                            }} className="space-y-4">
+                                <div>
+                                    <label className="block text-xs uppercase text-white/40 mb-1">Photographer Name</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={inviteData.name}
+                                        onChange={e => setInviteData({ ...inviteData, name: e.target.value })}
+                                        className="w-full bg-white/5 border border-white/10 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40"
+                                        placeholder="Jane Doe"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs uppercase text-white/40 mb-1">Email Address</label>
+                                    <input
+                                        type="email"
+                                        required
+                                        value={inviteData.email}
+                                        onChange={e => setInviteData({ ...inviteData, email: e.target.value })}
+                                        className="w-full bg-white/5 border border-white/10 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40"
+                                        placeholder="jane@example.com"
+                                    />
+                                </div>
+                                <div className="pt-4 flex justify-end">
+                                    <button
+                                        type="submit"
+                                        disabled={inviteLoading}
+                                        className="px-6 py-2 bg-white text-black font-bold uppercase tracking-wider hover:bg-white/90 disabled:opacity-50"
+                                    >
+                                        {inviteLoading ? 'Sending...' : 'Send Invitation'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )
+            }
+        </div >
     );
 }

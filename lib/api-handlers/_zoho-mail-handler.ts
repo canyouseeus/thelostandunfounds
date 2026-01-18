@@ -6,6 +6,14 @@
  */
 
 // Branding and template helpers (inlined to avoid Vercel bundler issues)
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Explicitly load .env.local
+try {
+  dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+} catch (e) { }
+
 const BRAND = {
   name: 'THE LOST+UNFOUNDS',
   logo: 'https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png',
@@ -135,6 +143,7 @@ interface ZohoTokenResponse {
 }
 
 function getZohoEnv() {
+
   const clientId = process.env.ZOHO_CLIENT_ID;
   const clientSecret = process.env.ZOHO_CLIENT_SECRET;
   const refreshToken = process.env.ZOHO_REFRESH_TOKEN;

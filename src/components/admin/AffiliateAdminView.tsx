@@ -37,10 +37,10 @@ export default function AffiliateAdminView() {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Use service role to get all affiliates
       const response = await fetch('/api/admin/affiliates');
-      
+
       // Check if response is HTML (means API route isn't working)
       const contentType = response.headers.get('content-type') || '';
       if (contentType.includes('text/html')) {
@@ -51,7 +51,7 @@ export default function AffiliateAdminView() {
           'Note: "npm run dev" uses Vite (frontend only). Use "npm run dev:api" for API routes.'
         );
       }
-      
+
       if (!response.ok) {
         const errorData = await safeJsonParse(response).catch(() => ({ error: `HTTP ${response.status}` }));
         throw new Error(errorData.error || 'Failed to load affiliates');
@@ -89,11 +89,11 @@ export default function AffiliateAdminView() {
 
   if (error) {
     const isApiRouteError = error.includes('API routes are not available');
-    
+
     return (
       <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
         <p className="text-red-400 mb-4">Error: {error}</p>
-        
+
         {isApiRouteError && (
           <div className="bg-black/50 border border-white/20 rounded-none p-4 mb-4">
             <p className="text-white/80 mb-3 font-semibold">Quick Fix:</p>
@@ -107,7 +107,7 @@ export default function AffiliateAdminView() {
             </p>
           </div>
         )}
-        
+
         <button
           onClick={loadAffiliates}
           className="px-4 py-2 bg-white text-black rounded-none hover:bg-white/90 transition"
@@ -121,7 +121,7 @@ export default function AffiliateAdminView() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-black/50 border border-white/10 rounded-none p-6">
+      <div className="bg-black/50 rounded-none p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <Users className="w-6 h-6 text-white" />
@@ -131,7 +131,7 @@ export default function AffiliateAdminView() {
             Total: {affiliates.length} affiliates
           </div>
         </div>
-        
+
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-5 h-5" />
@@ -146,7 +146,7 @@ export default function AffiliateAdminView() {
       </div>
 
       {/* Affiliates Table */}
-      <div className="bg-black/50 border border-white/10 rounded-none p-6">
+      <div className="bg-black/50 rounded-none p-6">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
@@ -168,11 +168,10 @@ export default function AffiliateAdminView() {
                     <span className="font-mono text-white font-semibold">{affiliate.code}</span>
                   </td>
                   <td className="py-3">
-                    <span className={`px-2 py-1 rounded-none text-xs ${
-                      affiliate.status === 'active' ? 'bg-green-500/20 text-green-400' :
-                      affiliate.status === 'inactive' ? 'bg-gray-500/20 text-gray-400' :
-                      'bg-red-500/20 text-red-400'
-                    }`}>
+                    <span className={`px-2 py-1 rounded-none text-xs ${affiliate.status === 'active' ? 'bg-green-500/20 text-green-400' :
+                        affiliate.status === 'inactive' ? 'bg-gray-500/20 text-gray-400' :
+                          'bg-red-500/20 text-red-400'
+                      }`}>
                       {affiliate.status}
                     </span>
                   </td>
@@ -204,7 +203,7 @@ export default function AffiliateAdminView() {
               ))}
             </tbody>
           </table>
-          
+
           {filteredAffiliates.length === 0 && (
             <div className="text-center py-12 text-white/60">
               No affiliates found

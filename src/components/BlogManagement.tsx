@@ -449,7 +449,7 @@ export default function BlogManagement() {
 
       {/* Create/Edit Form */}
       {isCreating && (
-        <div className="bg-black/50 border border-white rounded-none p-6">
+        <div className="bg-black/50 rounded-none p-6">
           <h3 className="text-lg font-bold text-white mb-4">
             {editingPost ? 'Edit Post' : isBookClubPost ? 'Create New Book Club Post' : 'Create New Post'}
           </h3>
@@ -653,7 +653,7 @@ export default function BlogManagement() {
                 .map((post) => (
                   <div
                     key={post.id}
-                    className="bg-black/30 border border-white rounded-none p-4 hover:border-white transition"
+                    className="bg-black/30 rounded-none p-4 hover:bg-white/5 transition"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -723,7 +723,7 @@ export default function BlogManagement() {
 
       {/* My Book Club Posts Section (Admin's book club posts) */}
       {adminBookClubPosts.length > 0 && (
-        <div className="bg-black/50 border border-white rounded-none p-6">
+        <div className="bg-black/50 rounded-none p-6">
           <h3 className="text-lg font-bold text-white mb-4">MY BOOK CLUB POSTS</h3>
           <div className="space-y-4">
             {adminBookClubPosts.map((post) => (
@@ -802,7 +802,7 @@ export default function BlogManagement() {
       )}
 
       {/* Book Club Posts Section */}
-      <div className="bg-black/50 border border-white rounded-none p-6">
+      <div className="bg-black/50 rounded-none p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-white">Book Club Posts</h3>
           <button
@@ -838,7 +838,7 @@ export default function BlogManagement() {
               {bookClubPosts.map((post) => (
                 <div
                   key={post.id}
-                  className="bg-black/30 border border-white rounded-none p-4 hover:border-white transition"
+                  className="bg-black/30 rounded-none p-4 hover:bg-black/40 transition"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -913,7 +913,7 @@ export default function BlogManagement() {
 
       {/* Empty State */}
       {adminPosts.length === 0 && bookClubPosts.length === 0 && (
-        <div className="bg-black/50 border border-white rounded-none p-6">
+        <div className="bg-black/50 rounded-none p-6">
           <p className="text-white/60">No posts yet.</p>
         </div>
       )}

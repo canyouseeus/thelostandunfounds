@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import type { PostgrestError } from '@supabase/supabase-js'
-import { createServiceSupabaseClient } from './_supabase-admin-client'
+import { createServiceSupabaseClient } from './_supabase-admin-client.js'
 
 const isMissingTable = (error?: PostgrestError | null) =>
   Boolean(error?.message && error.message.toLowerCase().includes('does not exist'))

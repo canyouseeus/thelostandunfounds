@@ -61,6 +61,50 @@ export default function BlogPost() {
     if (slug) {
       loadPost(slug, subdomain || null);
       loadNextPost(slug, subdomain || null);
+
+      // Track Page View Start
+      const startTime = Date.now();
+
+      // Track Read on Scroll
+      let hasRead = false;
+      const handleScroll = () => {
+        if (hasRead) return;
+        const scrollPercentage = (window.scrollY + window.innerHeight) / document.documentElement.scrollHeight;
+        if (scrollPercentage > 0.8) {
+          hasRead = true;
+          // Record "read_article" event
+          fetch('/api/admin/analytics/record', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              event_type: 'read_article',
+              resource_id: slug,
+              metadata: { title: post?.title, subdomain },
+              duration: Math.round((Date.now() - startTime) / 1000)
+            })
+          }).catch(err => console.error('Analytics error:', err));
+        }
+      };
+
+      window.addEventListener('scroll', handleScroll);
+
+      return () => {
+        // Track time on page on unmount
+        const duration = Math.round((Date.now() - startTime) / 1000);
+        if (duration > 5) { // Only record if stayed > 5 seconds
+          fetch('/api/admin/analytics/record', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              event_type: 'page_view',
+              resource_id: slug,
+              metadata: { title: post?.title, subdomain },
+              duration
+            })
+          }).catch(err => console.error('Analytics error:', err));
+        }
+        window.removeEventListener('scroll', handleScroll);
+      };
     }
   }, [slug, subdomain]);
 

@@ -38,34 +38,46 @@ export function AdminBentoCard({
   return (
     <div
       className={cn(
-        'group relative flex flex-col overflow-hidden',
-        'bg-[#111] text-white',
-        'border border-white/10',
-        'rounded-none', // Strict rounded-none rule
-        'transition-all duration-200',
-        // 'hover:border-white/20', // Subtle hover effect - keeping it minimal for now
+        'group relative flex flex-col',
+        'bg-black text-white',
+        'border border-white/[0.08]',
+        'rounded-none',
+        // Blog card-style hover effects - subtle lift
+        'transition-all duration-300 ease-out',
+        'hover:-translate-y-0.5 hover:scale-[1.01]',
+        'hover:border-white/20 hover:bg-[#0a0a0a]',
+        'hover:shadow-[0_8px_30px_rgba(0,0,0,0.5)]',
+        // Mobile: no overflow, allow natural height
+        // Desktop: allow overflow for fixed-height grid
+        'overflow-visible md:overflow-hidden',
         colSpanClasses[colSpan],
         rowSpanClasses[rowSpan],
         className
       )}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-white/5 bg-[#111]">
-        <div className="flex items-center gap-3">
-          {icon && <div className="text-white/60 group-hover:text-white transition-colors">{icon}</div>}
-          <h3 className="font-medium text-sm tracking-wide text-white/90 uppercase">{title}</h3>
+      {/* Header - compact on mobile */}
+      <div className="flex items-center justify-between px-4 py-3 md:px-5 md:py-4 border-b border-white/[0.06] bg-[#0a0a0a]">
+        <div className="flex items-center gap-2 md:gap-3 min-w-0">
+          {icon && (
+            <div className="text-white/50 group-hover:text-white/80 transition-colors flex-shrink-0">
+              {icon}
+            </div>
+          )}
+          <h3 className="font-medium text-xs md:text-sm tracking-wider text-white/80 uppercase truncate">
+            {title}
+          </h3>
         </div>
-        {action && <div>{action}</div>}
+        {action && <div className="flex-shrink-0 ml-2">{action}</div>}
       </div>
 
-      {/* Content Body */}
-      <div className="flex-1 p-6 flex flex-col overflow-y-auto">
+      {/* Content Body - no scroll on mobile, scroll on desktop if needed */}
+      <div className="flex-1 p-4 md:p-5 flex flex-col md:overflow-y-auto">
         {children}
       </div>
 
       {/* Footer */}
       {footer && (
-        <div className="mt-auto border-t border-white/10 px-6 py-4 bg-[#141414]/50">
+        <div className="mt-auto border-t border-white/[0.08] px-4 py-3 md:px-5 md:py-4 bg-black/30">
           {footer}
         </div>
       )}

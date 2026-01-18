@@ -136,10 +136,10 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
                         {/* Bundle Progress: Aligned for a clean vertical edge */}
                         <div className="flex flex-col space-y-0.5">
                             {pricing.messages.map((msg, idx) => (
-                                <div key={idx} className="flex items-center gap-1.5">
-                                    <div className={`w-1 h-1 rounded-full shrink-0 ${msg.highlight ? 'bg-green-500' : 'bg-zinc-700'}`} />
-                                    <p className="text-[7px] md:text-[9px] font-black tracking-widest uppercase truncate max-w-[180px] md:max-w-none">
-                                        <span className="text-zinc-500 whitespace-nowrap">{msg.text}</span>
+                                <div key={idx} className="flex items-start gap-1.5">
+                                    <div className={`w-1 h-1 rounded-full shrink-0 mt-1 ${msg.highlight ? 'bg-green-500' : 'bg-zinc-700'}`} />
+                                    <p className="text-[7px] md:text-[9px] font-black tracking-widest uppercase leading-tight">
+                                        <span className="text-zinc-500">{msg.text}</span>
                                         {msg.secondary && (
                                             <span className={msg.highlight ? 'text-green-500' : 'text-zinc-400'}>
                                                 {msg.secondary}

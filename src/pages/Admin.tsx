@@ -2,9 +2,10 @@
  * Admin Dashboard Page
  * Admin-only page for managing the platform
  * Enhanced version with comprehensive platform management
+ * Single-page scrollable layout with inline module sections
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
@@ -57,6 +58,7 @@ import BlogSubmissionReview from '../components/BlogSubmissionReview';
 import SendExistingPublicationEmailsButton from '../components/SendExistingPublicationEmailsButton';
 import SendWelcomeEmailsButton from '../components/SendWelcomeEmailsButton';
 import BrandAssets from '../components/BrandAssets';
+import { UserAnalyticsView } from '../components/admin/UserAnalyticsView';
 import SecretSantaAdmin from '../components/admin/SecretSantaAdmin';
 import AffiliateAdminView from '../components/admin/AffiliateAdminView';
 import AffiliateEmailComposer from '../components/admin/AffiliateEmailComposer';
@@ -73,6 +75,10 @@ import { ArrowLeft } from 'lucide-react';
 import AdminOverviewView from '../components/admin/AdminOverviewView';
 import { DashboardCharts } from '../components/admin/DashboardCharts';
 import AdminGalleryView from '../components/admin/AdminGalleryView';
+import { RevenueTracker } from '../components/ui/revenue-tracker';
+import { ClockWidget } from '../components/ui/clock-widget';
+import { CalendarWidget } from '../components/ui/calendar-widget';
+import { CollapsibleSection } from '../components/ui/collapsible-section';
 
 interface DashboardStats {
   totalUsers: number;
@@ -92,12 +98,12 @@ interface DashboardStats {
   affiliateRevenue?: number;
   galleryRevenue?: number;
   contributorDetails?: Array<{
-    authorId: string;
     authorName: string;
     email: string;
     postCount: number;
     latestPost: string;
   }>;
+  galleryPhotoCount?: number;
 }
 
 interface RecentUser {
@@ -169,10 +175,82 @@ export default function Admin() {
     pendingPayouts: number;
     totalMLMEarnings: number;
   } | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'subscriptions' | 'products' | 'settings' | 'blog' | 'newsletter' | 'submissions' | 'assets' | 'secret-santa' | 'affiliates' | 'mail' | 'gallery' | null>(null);
   const [componentError, setComponentError] = useState<string | null>(null);
 
   const [allUsers, setAllUsers] = useState<RecentUser[]>([]);
+
+  // Refs for scroll navigation
+  const pageTopRef = useRef<HTMLDivElement>(null);
+  const gallerySectionRef = useRef<HTMLDivElement>(null);
+  const blogSectionRef = useRef<HTMLDivElement>(null);
+  const newsletterSectionRef = useRef<HTMLDivElement>(null);
+  const mailSectionRef = useRef<HTMLDivElement>(null);
+  const usersSectionRef = useRef<HTMLDivElement>(null);
+  const affiliatesSectionRef = useRef<HTMLDivElement>(null);
+  const submissionsSectionRef = useRef<HTMLDivElement>(null);
+  const settingsSectionRef = useRef<HTMLDivElement>(null);
+
+  // Expanded state for controlled CollapsibleSections
+  // All collapsed by default
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    gallery: false,
+    blog: false,
+    newsletter: false,
+    mail: false,
+    users: false,
+    affiliates: false,
+    submissions: false,
+    settings: false,
+  });
+
+  const handleSectionToggle = (key: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  };
+
+  const openAndScrollToSection = (key: string, ref: React.RefObject<HTMLDivElement>) => {
+    // 1. Expand the section
+    setExpandedSections(prev => ({
+      ...prev,
+      [key]: true // Always open when clicking icon
+    }));
+
+    // 2. Scroll to it
+    if (ref.current) {
+      setTimeout(() => {
+        ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100); // Small delay to allow expansion
+    }
+  };
+
+  const setActiveTab = (tab: string) => {
+    let key = tab;
+    let ref = null;
+
+    switch (tab) {
+      case 'gallery': ref = gallerySectionRef; break;
+      case 'blog': ref = blogSectionRef; break;
+      case 'newsletter': ref = newsletterSectionRef; break;
+      case 'mail': ref = mailSectionRef; break;
+      case 'users': ref = usersSectionRef; break;
+      case 'affiliates': ref = affiliatesSectionRef; break;
+      case 'submissions': ref = submissionsSectionRef; break;
+      case 'settings':
+        key = 'analytics';
+        ref = settingsSectionRef;
+        break;
+      default: return;
+    }
+
+    if (ref) openAndScrollToSection(key, ref);
+  };
+
+  const scrollToTop = () => {
+    // Scroll to absolute top (0,0) instantly
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  };
 
 
   const unreadAlertsCount = alerts.filter(a => !a.read).length;
@@ -192,16 +270,15 @@ export default function Admin() {
       // Set up auto-refresh every 30 seconds
       const refreshInterval = setInterval(() => {
         loadDashboardData();
-        if (activeTab === 'blog') {
-          loadBlogStats();
-          loadBookClubPosts();
-          loadLostArchivesPosts();
-        }
+        // Always refresh blog data since all modules are inline
+        loadBlogStats();
+        loadBookClubPosts();
+        loadLostArchivesPosts();
       }, 30000);
 
       return () => clearInterval(refreshInterval);
     }
-  }, [adminStatus, user, activeTab]);
+  }, [adminStatus, user]);
 
   // Listen for new blog submissions
   useEffect(() => {
@@ -517,6 +594,7 @@ export default function Admin() {
         postCount: number;
         latestPost: string;
       }> = [];
+      let galleryPhotoCountVal = 0;
 
       try {
         // Get unique blog writers count (authors who have published posts)
@@ -560,6 +638,17 @@ export default function Admin() {
 
           console.log('Profiles data:', profiles, 'Error:', profileError);
           console.log('User roles data:', userRoles, 'Error:', rolesError);
+
+          // Fetch total photos count
+
+          try {
+            const { count } = await supabase.from('photos').select('*', { count: 'exact', head: true });
+            galleryPhotoCountVal = count || 0;
+          } catch (err) {
+            console.warn('Error fetching photo count:', err);
+          }
+
+
 
           // Create contributor details even if profiles are missing
           contributorDetailsArray = authorIds.map(authorId => {
@@ -665,6 +754,7 @@ export default function Admin() {
         affiliateRevenue: affiliateRevenueTotal,
         galleryRevenue: galleryRevenueTotal,
         contributorDetails: contributorDetailsArray,
+        galleryPhotoCount: galleryPhotoCountVal,
       });
 
       // Generate alerts based on stats
@@ -1123,15 +1213,15 @@ export default function Admin() {
 
 
   return (
-    <div className="min-h-screen bg-black text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div ref={pageTopRef} className="min-h-screen bg-black text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold text-white mb-2 uppercase">
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <h1 className="text-2xl md:text-4xl font-bold text-white mb-1 uppercase whitespace-nowrap truncate">
               ADMIN DASHBOARD
             </h1>
-            <p className="text-white/70">Manage your platform and users</p>
+            <p className="text-white/70 text-sm hidden sm:block">Manage your platform and users</p>
           </div>
           <div className="flex items-center gap-3">
             <Link
@@ -1146,378 +1236,358 @@ export default function Admin() {
       </div>
 
 
-      {activeTab === 'overview' && (
-        <AdminOverviewView stats={stats} alerts={alerts} onBack={() => setActiveTab(null)} />
-      )}
+      {/* Dashboard Content - Single Scrollable Page */}
+      <div className="space-y-4">
+        {/* Hero Section: Revenue Tracker + Clock */}
+        <div className="flex flex-col md:flex-row gap-4">
+          {/* Revenue Tracker - Full width on mobile, 3/4 on desktop */}
+          <div className="flex-1">
+            <RevenueTracker
+              affiliateRevenue={stats?.affiliateRevenue || 0}
+              galleryRevenue={stats?.galleryRevenue || 0}
+              subscriberRevenue={(stats?.activeSubscriptions || 0) * 9.99}
+              history={stats?.history}
+              stats={{
+                revenue: (stats?.activeSubscriptions || 0) * 9.99,
+                newsletter: stats?.newsletterSubscribers || 0,
+                affiliates: affiliateStats?.totalAffiliates || 0,
+              }}
+            />
+          </div>
 
-      {activeTab === 'users' && (
-        <AdminUsersView
-          users={allUsers}
-          stats={stats}
-          onSelectUser={(u) => { setSelectedUser(u); setSidePanelOpen(true); }}
-          onBack={() => setActiveTab(null)}
-        />
-      )}
-
-      {activeTab === 'settings' && (
-        <AdminSettingsView stats={stats} onBack={() => setActiveTab(null)} />
-      )}
-
-      {activeTab === 'blog' && (
-        <div className="space-y-6">
-          <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
-          </button>
-          <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Blog Management</div>}>
-            <BlogManagement />
-          </ErrorBoundary>
-        </div>
-      )}
-
-      {activeTab === 'newsletter' && (
-        <div className="space-y-6">
-          <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
-          </button>
-          <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Newsletter Management</div>}>
-            <NewsletterManagement />
-          </ErrorBoundary>
-        </div>
-      )}
-
-      {activeTab === 'products' && (
-        <div className="space-y-6">
-          <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
-          </button>
-          <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Product Management</div>}>
-            <ProductCostManagement />
-          </ErrorBoundary>
-        </div>
-      )}
-
-      {activeTab === 'submissions' && (
-        <div className="space-y-6">
-          <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
-          </button>
-          <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Submissions</div>}>
-            <BlogSubmissionReview />
-          </ErrorBoundary>
-        </div>
-      )}
-
-      {activeTab === 'affiliates' && (
-        <div className="space-y-6">
-          <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
-          </button>
-          <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Affiliates</div>}>
-            <div className="space-y-6">
-              <AffiliateAdminView />
-              <AffiliateEmailComposer />
-            </div>
-          </ErrorBoundary>
-        </div>
-      )}
-
-      {activeTab === 'mail' && (
-        <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Mail</div>}>
-          <AdminMailView onBack={() => setActiveTab(null)} />
-        </ErrorBoundary>
-      )}
-
-      {activeTab === 'gallery' && (
-        <AdminGalleryView onBack={() => setActiveTab(null)} />
-      )}
-
-      {activeTab === 'subscriptions' && (
-        <div className="space-y-6">
-          <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
-          </button>
-          <div className="bg-black/50 border border-white/10 rounded-none p-6">
-            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              Subscription Management
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-white/5 rounded-none p-4">
-                <div className="text-white/60 text-sm mb-1">Free Tier</div>
-                <div className="text-2xl font-bold text-white/60">{stats?.freeUsers || 0}</div>
-              </div>
-              <div className="bg-white/5 rounded-none p-4 border border-yellow-400/20">
-                <div className="text-white/60 text-sm mb-1">Premium Tier</div>
-                <div className="text-2xl font-bold text-yellow-400">{stats?.premiumUsers || 0}</div>
-              </div>
-              <div className="bg-white/5 rounded-none p-4 border border-purple-400/20">
-                <div className="text-white/60 text-sm mb-1">Pro Tier</div>
-                <div className="text-2xl font-bold text-purple-400">{stats?.proUsers || 0}</div>
-              </div>
-            </div>
-            <div className="border-t border-white/10 pt-4">
-              <p className="text-white/60">Advanced subscription management features coming soon...</p>
-            </div>
+          {/* Clock Widget - Hidden on mobile, visible on desktop */}
+          <div className="hidden md:flex flex-col gap-4 w-64">
+            <ClockWidget size="lg" className="h-full" />
+            <CalendarWidget className="h-full" />
           </div>
         </div>
-      )}
 
-      {!activeTab && (
+        {/* Charts Section - Wrapped for Recharts responsiveness */}
+        <div className="h-96 w-full">
+          <DashboardCharts
+            stats={{
+              revenue: (stats?.activeSubscriptions || 0) * 9.99,
+              newsletter: stats?.newsletterSubscribers || 0,
+              affiliates: affiliateStats?.totalAffiliates || 0,
+            }}
+            history={stats?.history}
+          />
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 auto-rows-[240px] mb-8">
-          {/* Overview - 3x2 */}
-          <AdminBentoCard
-            title="Platform Overview"
+        {/* Collapsible Sections */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Key Stats */}
+          <CollapsibleSection
+            title="Platform Stats"
             icon={<BarChart3 className="w-4 h-4" />}
-            colSpan={3}
-            rowSpan={2}
-            className="md:col-span-3 md:row-span-2"
-            action={
-              <button
-                onClick={() => setActiveTab('overview')}
-                className="text-xs bg-white/10 hover:bg-white/20 text-white px-2 py-1 rounded-none transition"
-              >
-                Full Report
-              </button>
-            }
+            badge={<span className="text-xs font-mono text-green-400">{stats?.totalUsers || 0} users</span>}
+            defaultOpen={true}
           >
-            <div className="h-full flex flex-col">
-              <div className="flex-1 min-h-0 mb-4">
-                <DashboardCharts stats={{
-                  revenue: (stats?.activeSubscriptions || 0) * 9.99,
-                  newsletter: stats?.newsletterSubscribers || 0,
-                  affiliates: affiliateStats?.totalAffiliates || 0
-                }}
-                  history={stats?.history} />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white/[0.02] p-3">
+                <div className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Contributors</div>
+                <div className="text-xl font-bold text-white font-mono"><AnimatedNumber value={stats?.totalUsers || 0} /></div>
               </div>
-              <div className="flex-none grid grid-cols-2 md:grid-cols-4 gap-4 items-start pb-4">
-                <div>
-                  <div className="text-xs text-white/50 uppercase tracking-wider mb-1">Total Contributors</div>
-                  <div className="text-2xl font-bold text-white"><AnimatedNumber value={stats?.totalUsers || 0} /></div>
-                </div>
-                <div>
-                  <div className="text-xs text-white/50 uppercase tracking-wider mb-1">Subscribers</div>
-                  <div className="text-2xl font-bold text-white"><AnimatedNumber value={stats?.activeSubscriptions || 0} /></div>
-                </div>
-                <div>
-                  <div className="text-xs text-white/50 uppercase tracking-wider mb-1">Revenue</div>
-                  <div className="text-2xl font-bold text-green-400">$<AnimatedNumber value={(stats?.activeSubscriptions || 0) * 9.99} /></div>
-                </div>
-                <div>
-                  <div className="text-xs text-white/50 uppercase tracking-wider mb-1">Health</div>
-                  <div className={`text-2xl font-bold ${stats?.platformHealth === 'healthy' ? 'text-green-400' : 'text-red-400'}`}>
-                    {stats?.platformHealth === 'healthy' ? 'Good' : 'Action Needed'}
-                  </div>
-                </div>
+              <div className="bg-white/[0.02] p-3">
+                <div className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Newsletter</div>
+                <div className="text-xl font-bold text-white font-mono"><AnimatedNumber value={stats?.newsletterSubscribers || 0} /></div>
               </div>
-              <div className="border-t border-white/10 pt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-                <AdminBentoRow label="Newsletter" value={stats?.newsletterSubscribers || 0} className="border-0 p-0" />
-                <AdminBentoRow label="Tool Usage" value={stats?.totalToolUsage || 0} className="border-0 p-0" />
-                <AdminBentoRow label="Premium" value={stats?.premiumUsers || 0} className="border-0 p-0" />
-                <AdminBentoRow label="Pro" value={stats?.proUsers || 0} className="border-0 p-0" />
+              <div className="bg-white/[0.02] p-3">
+                <div className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Affiliates</div>
+                <div className="text-xl font-bold text-white font-mono"><AnimatedNumber value={affiliateStats?.totalAffiliates || 0} /></div>
+              </div>
+              <div className="bg-white/[0.02] p-3">
+                <div className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Health</div>
+                <div className={`text-lg font-bold ${stats?.platformHealth === 'healthy' ? 'text-green-400' : 'text-amber-400'}`}>
+                  {stats?.platformHealth === 'healthy' ? 'Operational' : 'Action Needed'}
+                </div>
               </div>
             </div>
-          </AdminBentoCard>
+          </CollapsibleSection>
 
-          {/* Alerts - 1x2 */}
-          <AdminBentoCard
+          {/* System Alerts */}
+          <CollapsibleSection
             title="System Alerts"
             icon={<Bell className="w-4 h-4" />}
-            colSpan={1}
-            rowSpan={2}
-            className="md:col-span-1 md:row-span-2"
-            footer={
-              <button
-                onClick={() => setAlerts(prev => prev.map(a => ({ ...a, read: true })))}
-                className="w-full text-xs text-white/60 hover:text-white text-center"
-              >
-                Mark all as read
-              </button>
-            }
+            badge={alerts.filter(a => !a.read).length > 0 && (
+              <span className="px-2 py-0.5 bg-yellow-400/20 text-yellow-400 text-[10px] font-bold uppercase">
+                {alerts.filter(a => !a.read).length} new
+              </span>
+            )}
+            defaultOpen={alerts.filter(a => !a.read).length > 0}
           >
             <div className="space-y-2">
-              {alerts.length > 0 ? alerts.slice(0, 5).map(alert => (
-                <div key={alert.id} className="p-3 bg-white/5 border border-white/5 border-l-2 border-l-yellow-400">
-                  <p className="text-xs text-white/90 line-clamp-2">{alert.message}</p>
-                  <span className="text-[10px] text-white/40 mt-1 block">{alert.time}</span>
+              {alerts.length > 0 ? alerts.slice(0, 4).map(alert => (
+                <div key={alert.id} className="p-3 bg-white/[0.02] border-l-2 border-l-yellow-400">
+                  <p className="text-xs text-white/80 line-clamp-2">{alert.message}</p>
+                  <span className="text-[10px] text-white/30 mt-1 block">{alert.time}</span>
                 </div>
               )) : (
-                <div className="text-center text-white/40 text-xs py-8">No active alerts</div>
+                <div className="text-center text-white/30 text-xs py-6">No active alerts</div>
               )}
             </div>
-          </AdminBentoCard>
-
-          {/* Users - 1x1 */}
-          <AdminBentoCard
-            title="Contributor Management"
-            icon={<Users className="w-4 h-4" />}
-            action={<span className="text-xs font-mono text-white/40">{allUsers.length}</span>}
-            footer={
-              <button onClick={() => setActiveTab('users')} className="w-full text-center text-xs hover:text-white text-white/60">Manage Users →</button>
-            }
-          >
-            <div className="space-y-0">
-              <AdminBentoRow label="New (24h)" value={recentUsers.filter(u => new Date(u.created_at).getTime() > Date.now() - 86400000).length} />
-              <AdminBentoRow label="Free" value={stats?.freeUsers || 0} />
-              <AdminBentoRow label="Premium" value={stats?.premiumUsers || 0} valueClassName="text-yellow-400" />
-              <AdminBentoRow label="Pro" value={stats?.proUsers || 0} valueClassName="text-purple-400" />
-            </div>
-          </AdminBentoCard>
-
-          {/* Subscriptions - 1x1 */}
-          <AdminBentoCard
-            title="Subscriptions"
-            icon={<DollarSign className="w-4 h-4" />}
-            action={<span className="text-xs font-mono text-green-400">{stats?.activeSubscriptions}</span>}
-            footer={
-              <button onClick={() => setActiveTab('subscriptions')} className="w-full text-center text-xs hover:text-white text-white/60">Manage Plans →</button>
-            }
-          >
-            <div className="space-y-0">
-              <AdminBentoRow label="Active" value={stats?.activeSubscriptions || 0} valueClassName="text-green-400" />
-              <AdminBentoRow label="Churn Rate" value="0.0%" />
-              <AdminBentoRow label="MRR" value={`$${((stats?.activeSubscriptions || 0) * 9.99).toFixed(0)}`} />
-            </div>
-          </AdminBentoCard>
-
-          {/* Products - 1x1 */}
-          <AdminBentoCard
-            title="Products"
-            icon={<Package className="w-4 h-4" />}
-            footer={
-              <button onClick={() => setActiveTab('products')} className="w-full text-center text-xs hover:text-white text-white/60">Catalog →</button>
-            }
-          >
-            <div className="space-y-0 text-left h-full">
-              <AdminBentoRow label="Catalog Items" value="0" />
-              <AdminBentoRow label="Inventory" value="IN STOCK" valueClassName="text-green-400" />
-              <AdminBentoRow label="Cost Basis" value="$0.00" />
-              <div className="mt-4 pt-2 border-t border-white/5">
-                <p className="text-[10px] text-white/40 uppercase tracking-widest leading-none">Status</p>
-                <p className="text-xs text-white/60 mt-1 uppercase">Operational</p>
-              </div>
-            </div>
-          </AdminBentoCard>
-
-          {/* Blog - 1x1 */}
-          <AdminBentoCard
-            title="Blog"
-            icon={<BookOpen className="w-4 h-4" />}
-            action={<span className="text-xs font-mono text-white/40">{bookClubPosts.length + lostArchivesPosts.length}</span>}
-            footer={
-              <div className="flex gap-2">
-                <button onClick={() => setActiveTab('blog')} className="flex-1 text-center text-xs hover:text-white text-white/60">Manage Content →</button>
-                {pendingSubmissions > 0 && (
-                  <button onClick={() => setActiveTab('submissions')} className="flex-1 text-center text-xs hover:text-white text-yellow-400 font-bold">Review ({pendingSubmissions}) →</button>
-                )}
-              </div>
-            }
-          >
-            <div className="space-y-0">
-              <AdminBentoRow label="Writers" value={registeredWriters} />
-              <AdminBentoRow label="Book Club" value={bookClubPosts.length} />
-              <AdminBentoRow label="Archives" value={lostArchivesPosts.length} />
-              <AdminBentoRow label="Pending" value={pendingSubmissions} valueClassName={pendingSubmissions > 0 ? "text-yellow-400 font-bold" : ""} />
-            </div>
-          </AdminBentoCard>
-
-          {/* Newsletter - 1x1 */}
-          <AdminBentoCard
-            title="Newsletter"
-            icon={<Mail className="w-4 h-4" />}
-            action={<span className="text-xs font-mono text-blue-400">{stats?.newsletterSubscribers}</span>}
-            footer={
-              <button onClick={() => setActiveTab('newsletter')} className="w-full text-center text-xs hover:text-white text-white/60">Campaigns →</button>
-            }
-          >
-            <div className="space-y-2 mt-1">
-              {newestSubscribers.slice(0, 2).map((sub, i) => (
-                <div key={i} className="flex justify-between items-center text-xs">
-                  <span className="truncate text-white/60 max-w-[120px]">{sub.email}</span>
-                  <span className="text-white/30 text-[10px]">{new Date(sub.created_at).toLocaleDateString()}</span>
-                </div>
-              ))}
-              {newestSubscribers.length === 0 && <p className="text-xs text-white/40">No recent subscribers</p>}
-            </div>
-          </AdminBentoCard>
-
-
-          {/* Gallery Ops */}
-          <div
-            onClick={() => setActiveTab('gallery')}
-            className="col-span-1 border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] p-6 flex flex-col justify-between cursor-pointer group transition-all"
-          >
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-2 bg-pink-400/10 rounded-sm">
-                <ImageIcon className="w-5 h-5 text-pink-400" />
-              </div>
-              <ArrowUp className="w-4 h-4 text-white/20 group-hover:text-white/60 group-hover:rotate-45 transition-all" />
-            </div>
-            <div>
-              <h3 className="text-white font-bold uppercase text-sm mb-1 tracking-wider">Gallery Ops</h3>
-              <p className="text-white/40 text-xs">Manage photos & sales</p>
-            </div>
-          </div>
-
-          {/* Mail System */}
-          <div
-            onClick={() => setActiveTab('mail')}
-            className="cursor-pointer"
-          >
-            <AdminBentoCard
-              title="Webmail"
-              icon={<Send className="w-4 h-4" />}
-              footer={
-                <span className="w-full text-center text-xs hover:text-white text-white/60">Open Inbox →</span>
-              }
-            >
-              <div className="space-y-0 text-left h-full">
-                <AdminBentoRow label="Provider" value="ZOHO MAIL" />
-                <AdminBentoRow label="Status" value="CONNECTED" valueClassName="text-green-400" />
-                <AdminBentoRow label="Storage" value="0.0 GB" />
-                <div className="mt-4 pt-2 border-t border-white/5 flex gap-2">
-                  <div className="px-2 py-1 bg-white/5 border border-white/10 text-[10px] text-white/40 uppercase">
-                    INBOX
-                  </div>
-                  <div className="px-2 py-1 bg-white/5 border border-white/10 text-[10px] text-white/40 uppercase">
-                    SENT
-                  </div>
-                </div>
-              </div>
-            </AdminBentoCard>
-          </div>
-
-          {/* Settings - 1x1 */}
-          <AdminBentoCard
-            title="System"
-            icon={<Settings className="w-4 h-4" />}
-            colSpan={2}
-            className="md:col-span-2"
-            footer={
-              <button onClick={() => setActiveTab('settings')} className="w-full text-center text-xs hover:text-white text-white/60">Configuration →</button>
-            }
-          >
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between p-2 bg-white/5 border border-white/10">
-                <span className="text-xs text-white/60">Status</span>
-                <span className="text-xs text-green-400">Operational</span>
-              </div>
-              <div className="flex items-center justify-between p-2 bg-white/5 border border-white/10">
-                <span className="text-xs text-white/60">Database</span>
-                <span className="text-xs text-green-400">Connected</span>
-              </div>
-            </div>
-          </AdminBentoCard>
+          </CollapsibleSection>
         </div>
 
-      )}
+        {/* System Status */}
 
+
+        <CollapsibleSection
+          title="System Status"
+          icon={<Activity className="w-4 h-4" />}
+          badge={<span className="text-xs text-green-400">Operational</span>}
+          defaultOpen={false}
+        >
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="flex items-center justify-between p-3 bg-white/[0.02]">
+              <span className="text-xs text-white/50">Database</span>
+              <span className="text-xs text-green-400">Connected</span>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-white/[0.02]">
+              <span className="text-xs text-white/50">Email</span>
+              <span className="text-xs text-green-400">Connected</span>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-white/[0.02]">
+              <span className="text-xs text-white/50">Storage</span>
+              <span className="text-xs text-green-400">Active</span>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-white/[0.02]">
+              <span className="text-xs text-white/50">CDN</span>
+              <span className="text-xs text-green-400">Online</span>
+            </div>
+          </div>
+        </CollapsibleSection>
+
+        {/* ===== APP MODULES - All Inline Below ===== */}
+        <div className="pt-8 pb-4">
+          <h2 className="text-xl md:text-2xl font-bold text-white mb-2 tracking-tight">MY APPS</h2>
+          <div className="h-1 w-20 bg-white/20"></div>
+        </div>
+
+        {/* My Apps Grid */}
+        <div className="grid grid-cols-4 md:grid-cols-8 gap-4 mb-8">
+          {/* Gallery */}
+          <div
+            onClick={() => setActiveTab('gallery')}
+            className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
+            title="Gallery"
+          >
+            <ImageIcon className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
+          </div>
+
+          {/* Blog */}
+          <div
+            onClick={() => setActiveTab('blog')}
+            className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
+            title="Blog"
+          >
+            <BookOpen className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
+          </div>
+
+          {/* Newsletter */}
+          <div
+            onClick={() => setActiveTab('newsletter')}
+            className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
+            title="Newsletter"
+          >
+            <Mail className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
+          </div>
+
+          {/* Webmail */}
+          <div
+            onClick={() => setActiveTab('mail')}
+            className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
+            title="Webmail"
+          >
+            <Send className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
+          </div>
+
+          {/* Users */}
+          <div
+            onClick={() => setActiveTab('users')}
+            className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
+            title="Users"
+          >
+            <Users className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
+          </div>
+
+          {/* Affiliates */}
+          <div
+            onClick={() => setActiveTab('affiliates')}
+            className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
+            title="Affiliates"
+          >
+            <Network className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
+          </div>
+
+          {/* Submissions - badge shows pending (actionable) */}
+          {pendingSubmissions > 0 && (
+            <div
+              onClick={() => setActiveTab('submissions')}
+              className="flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
+              title="Review"
+            >
+              <div className="relative">
+                <FileText className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
+                <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] flex items-center justify-center bg-white text-black text-[9px] font-bold rounded-full translate-x-1/2 -translate-y-1/2">
+                  {pendingSubmissions}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Settings */}
+          <div
+            onClick={() => setActiveTab('settings')}
+            className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
+            title="Settings"
+          >
+            <Settings className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
+          </div>
+        </div>
+
+        {/* Gallery Section */}
+        <div ref={gallerySectionRef}>
+          <CollapsibleSection
+            title="GALLERY"
+            icon={<ImageIcon className="w-4 h-4" />}
+            isOpen={expandedSections['gallery']}
+            onToggle={() => handleSectionToggle('gallery')}
+          >
+            <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Gallery</div>}>
+              <AdminGalleryView onBack={scrollToTop} />
+            </ErrorBoundary>
+          </CollapsibleSection>
+        </div>
+
+        {/* Blog Section */}
+        <div ref={blogSectionRef}>
+          <CollapsibleSection
+            title="BLOG"
+            icon={<BookOpen className="w-4 h-4" />}
+            isOpen={expandedSections['blog']}
+            onToggle={() => handleSectionToggle('blog')}
+          >
+            <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Blog Management</div>}>
+              <BlogManagement />
+            </ErrorBoundary>
+          </CollapsibleSection>
+        </div>
+
+        {/* Newsletter Section */}
+        <div ref={newsletterSectionRef}>
+          <CollapsibleSection
+            title="NEWSLETTER"
+            icon={<Mail className="w-4 h-4" />}
+            isOpen={expandedSections['newsletter']}
+            onToggle={() => handleSectionToggle('newsletter')}
+          >
+            <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Newsletter Management</div>}>
+              <NewsletterManagement />
+            </ErrorBoundary>
+          </CollapsibleSection>
+        </div>
+
+        {/* Mail Section */}
+        <div ref={mailSectionRef}>
+          <CollapsibleSection
+            title="WEBMAIL"
+            icon={<Send className="w-4 h-4" />}
+            isOpen={expandedSections['mail']}
+            onToggle={() => handleSectionToggle('mail')}
+          >
+            <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Mail</div>}>
+              <AdminMailView onBack={scrollToTop} />
+            </ErrorBoundary>
+          </CollapsibleSection>
+        </div>
+
+        {/* Users Section */}
+        <div ref={usersSectionRef}>
+          <CollapsibleSection
+            title="USERS"
+            icon={<Users className="w-4 h-4" />}
+            isOpen={expandedSections['users']}
+            onToggle={() => handleSectionToggle('users')}
+          >
+            <AdminUsersView
+              users={allUsers}
+              stats={stats}
+              onSelectUser={(u) => { setSelectedUser(u); setSidePanelOpen(true); }}
+              onBack={scrollToTop}
+            />
+          </CollapsibleSection>
+        </div>
+
+        {/* Affiliates Section */}
+        <div ref={affiliatesSectionRef}>
+          <CollapsibleSection
+            title="AFFILIATES"
+            icon={<Network className="w-4 h-4" />}
+            isOpen={expandedSections['affiliates']}
+            onToggle={() => handleSectionToggle('affiliates')}
+          >
+            <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Affiliates</div>}>
+              <div className="space-y-6">
+                <AffiliateAdminView />
+                <AffiliateEmailComposer />
+              </div>
+            </ErrorBoundary>
+          </CollapsibleSection>
+        </div>
+
+        {/* Submissions Section */}
+        {pendingSubmissions > 0 && (
+          <div ref={submissionsSectionRef}>
+            <CollapsibleSection
+              title="SUBMISSIONS"
+              icon={<FileText className="w-4 h-4" />}
+              badge={<span className="px-2 py-0.5 bg-white/20 text-white text-[10px] font-bold">{pendingSubmissions}</span>}
+              isOpen={expandedSections['submissions']}
+              onToggle={() => handleSectionToggle('submissions')}
+            >
+              <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Submissions</div>}>
+                <BlogSubmissionReview />
+              </ErrorBoundary>
+            </CollapsibleSection>
+          </div>
+        )}
+
+        {/* User Activity Section */}
+        <div ref={settingsSectionRef /* Reusing ref or create new one? Using unique div key actually better */}>
+          <CollapsibleSection
+            title="USER ACTIVITY"
+            icon={<Activity className="w-4 h-4" />}
+            isOpen={expandedSections['analytics']}
+            onToggle={() => handleSectionToggle('analytics')}
+          >
+            <div className="bg-white/[0.02] border-l-2 border-white/10">
+              <UserAnalyticsView />
+            </div>
+          </CollapsibleSection>
+        </div>
+
+        {/* Settings Section */}
+        <div ref={settingsSectionRef}>
+          <CollapsibleSection
+            title="SETTINGS"
+            icon={<Settings className="w-4 h-4" />}
+            isOpen={expandedSections['settings']}
+            onToggle={() => handleSectionToggle('settings')}
+          >
+            <AdminSettingsView stats={stats} onBack={scrollToTop} />
+          </CollapsibleSection>
+        </div>
+      </div>
+
+      {/* Floating Back to Top Button */}
+      <button
+        onClick={scrollToTop}
+        className="fixed bottom-6 right-6 p-3 bg-white text-black hover:bg-white/90 transition-all shadow-lg z-50"
+        title="Back to Top"
+      >
+        <ArrowUp className="w-5 h-5" strokeWidth={2} />
+      </button>
 
       {/* Side Panel for User Details */}
       <SidePanel
