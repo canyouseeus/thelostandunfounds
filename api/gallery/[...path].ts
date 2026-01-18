@@ -811,18 +811,36 @@ async function syncGalleryPhotos(librarySlug: string) {
     const rawKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
 
     const GOOGLE_EMAIL = (rawEmail || '').replace(/[^a-zA-Z0-9@._-]/g, '');
-    // Handle literal \n strings from Vercel env vars using split/join
-    let GOOGLE_KEY = (rawKey || '')
-        .split('\\n').join('\n')
-        .replace(/"/g, '')
-        .trim();
 
-    // Ensure proper PEM format with newlines
-    if (GOOGLE_KEY.includes('-----BEGIN') && !GOOGLE_KEY.includes('\n-----')) {
-        GOOGLE_KEY = GOOGLE_KEY
-            .replace(/-----BEGIN PRIVATE KEY-----/, '-----BEGIN PRIVATE KEY-----\n')
-            .replace(/-----END PRIVATE KEY-----/, '\n-----END PRIVATE KEY-----');
+    // Debug: log raw key format
+    console.log('Raw key debug:', {
+        rawLength: rawKey?.length,
+        hasLiteralBackslashN: rawKey?.includes('\\n'),
+        hasRealNewline: rawKey?.includes('\n'),
+        first50: rawKey?.substring(0, 50),
+        last30: rawKey?.slice(-30)
+    });
+
+    // Handle all possible newline formats from Vercel:
+    // 1. Literal string "\\n" (two chars: backslash + n)
+    // 2. Already proper newlines
+    let GOOGLE_KEY = rawKey || '';
+
+    // Replace literal \n string with actual newlines
+    if (GOOGLE_KEY.includes('\\n')) {
+        GOOGLE_KEY = GOOGLE_KEY.replace(/\\n/g, '\n');
     }
+
+    // Clean up quotes and whitespace
+    GOOGLE_KEY = GOOGLE_KEY.replace(/"/g, '').trim();
+
+    console.log('Processed key debug:', {
+        processedLength: GOOGLE_KEY.length,
+        startsCorrectly: GOOGLE_KEY.startsWith('-----BEGIN'),
+        endsCorrectly: GOOGLE_KEY.endsWith('-----'),
+        hasNewlines: GOOGLE_KEY.includes('\n'),
+        newlineCount: (GOOGLE_KEY.match(/\n/g) || []).length
+    });
 
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !GOOGLE_EMAIL || !GOOGLE_KEY) {
         console.error('Sync missing credentials:', {
