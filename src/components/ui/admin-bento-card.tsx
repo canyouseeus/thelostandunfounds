@@ -40,12 +40,11 @@ export function AdminBentoCard({
       className={cn(
         'group relative flex flex-col',
         'bg-black text-white',
-        'border border-white/[0.08]',
         'rounded-none',
         // Blog card-style hover effects - subtle lift
         'transition-all duration-300 ease-out',
         'hover:-translate-y-0.5 hover:scale-[1.01]',
-        'hover:border-white/20 hover:bg-[#0a0a0a]',
+        'hover:bg-[#0a0a0a]',
         'hover:shadow-[0_8px_30px_rgba(0,0,0,0.5)]',
         // Mobile: no overflow, allow natural height
         // Desktop: allow overflow for fixed-height grid
@@ -56,7 +55,7 @@ export function AdminBentoCard({
       )}
     >
       {/* Header - compact on mobile */}
-      <div className="flex items-center justify-between px-4 py-3 md:px-5 md:py-4 border-b border-white/[0.06] bg-[#0a0a0a]">
+      <div className="flex items-center justify-between px-4 py-3 md:px-5 md:py-4 bg-[#0a0a0a]">
         <div className="flex items-center gap-2 md:gap-3 min-w-0">
           {icon && (
             <div className="text-white/50 group-hover:text-white/80 transition-colors flex-shrink-0">
@@ -77,7 +76,7 @@ export function AdminBentoCard({
 
       {/* Footer */}
       {footer && (
-        <div className="mt-auto border-t border-white/[0.08] px-4 py-3 md:px-5 md:py-4 bg-black/30">
+        <div className="mt-auto px-4 py-3 md:px-5 md:py-4 bg-black/30">
           {footer}
         </div>
       )}
@@ -94,7 +93,7 @@ interface AdminBentoRowProps {
 
 export function AdminBentoRow({ label, value, className, valueClassName }: AdminBentoRowProps) {
   return (
-    <div className={cn('flex items-center justify-between py-2 border-b border-white/5 last:border-0', className)}>
+    <div className={cn('flex items-center justify-between py-2 last:border-0', className)}>
       <span className="text-xs text-white/50 uppercase tracking-wider">{label}</span>
       <span className={cn('text-sm font-medium text-white/90', valueClassName)}>{value}</span>
     </div>

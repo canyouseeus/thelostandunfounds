@@ -502,7 +502,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
           <ArrowLeft className="w-4 h-4" />
           Back to Dashboard
         </button>
-        <div className="bg-black/50 border border-white/10 rounded-none p-12 flex items-center justify-center">
+        <div className="bg-black/50 rounded-none p-12 flex items-center justify-center">
           <Loader className="w-6 h-6 animate-spin text-white/60" />
           <span className="ml-3 text-white/60">Loading mail...</span>
         </div>
@@ -565,7 +565,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
             </button>
           ))}
 
-          <div className="pt-4 border-t border-white/10 mt-4">
+          <div className="pt-4 mt-4">
             <button
               onClick={() => loadFolders(true)}
               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-white/40 hover:text-white transition"
@@ -588,7 +588,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 placeholder="Search messages..."
-                className="w-full bg-white/5 border border-white/10 pl-9 pr-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:border-white/30"
+                className="w-full bg-white/5 pl-9 pr-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:border-white/30"
               />
             </div>
           </div>
@@ -786,14 +786,14 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
 
               {/* Attachments */}
               {selectedMessage.attachments && selectedMessage.attachments.length > 0 && (
-                <div className="px-4 py-3 border-b border-white/10 bg-white/[0.02]">
+                <div className="px-4 py-3 bg-white/[0.02]">
                   <div className="text-xs text-white/40 mb-2">Attachments</div>
                   <div className="flex flex-wrap gap-2">
                     {selectedMessage.attachments.map(att => (
                       <button
                         key={att.attachmentId}
                         onClick={() => handleDownloadAttachment(selectedMessage.messageId, att)}
-                        className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 hover:bg-white/10 transition text-sm"
+                        className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 transition text-sm"
                       >
                         <Paperclip className="w-4 h-4 text-white/40" />
                         <span className="text-white/80">{att.attachmentName}</span>
@@ -864,7 +864,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                   type="text"
                   value={composeData.to}
                   onChange={(e) => setComposeData(prev => ({ ...prev, to: e.target.value }))}
-                  className="w-full bg-white/5 border border-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30"
+                  className="w-full bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30"
                   placeholder="recipient@example.com"
                 />
               </div>
@@ -876,7 +876,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                     type="text"
                     value={composeData.cc}
                     onChange={(e) => setComposeData(prev => ({ ...prev, cc: e.target.value }))}
-                    className="w-full bg-white/5 border border-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30"
+                    className="w-full bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30"
                   />
                 </div>
                 <div>
@@ -885,7 +885,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                     type="text"
                     value={composeData.bcc}
                     onChange={(e) => setComposeData(prev => ({ ...prev, bcc: e.target.value }))}
-                    className="w-full bg-white/5 border border-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30"
+                    className="w-full bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30"
                   />
                 </div>
               </div>
@@ -896,7 +896,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                   type="text"
                   value={composeData.subject}
                   onChange={(e) => setComposeData(prev => ({ ...prev, subject: e.target.value }))}
-                  className="w-full bg-white/5 border border-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30"
+                  className="w-full bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30"
                 />
               </div>
 
@@ -906,7 +906,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                   value={composeData.content}
                   onChange={(e) => setComposeData(prev => ({ ...prev, content: e.target.value }))}
                   rows={12}
-                  className="w-full bg-white/5 border border-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30 resize-none"
+                  className="w-full bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30 resize-none"
                 />
               </div>
             </div>

@@ -16,12 +16,15 @@ interface Photo {
     price?: number;
     library_id: string;
     metadata?: {
-        cameraMake?: string;
-        cameraModel?: string;
-        isoSpeed?: number;
-        focalLength?: number;
+        camera_make?: string;
+        camera_model?: string;
+        iso?: number;
+        focal_length?: number;
         aperture?: number;
+        shutter_speed?: number;
+        date_taken?: string;
         time?: string;
+        copyright?: string;
         [key: string]: any;
     };
 }
@@ -53,6 +56,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
     const [checkoutLoading, setCheckoutLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<'storefront' | 'assets'>('storefront');
     const [showBackToTop, setShowBackToTop] = useState(false);
+    const [viewMode, setViewMode] = useState<'grid' | 'single'>('grid');
     const photosRef = useRef<HTMLDivElement>(null);
 
     const storageKey = `gallery_selection_${librarySlug}`;
@@ -168,8 +172,6 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
             return [...prev, photo];
         });
     };
-
-
 
     const handleToggleGroup = (groupPhotos: Photo[], isCurrentlyAllSelected: boolean) => {
         if (isCurrentlyAllSelected) {
@@ -302,8 +304,26 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
             </div>
 
             <div className="max-w-7xl mx-auto">
+
                 {/* Tab Switcher & Batch Actions */}
-                <div className="flex flex-col md:flex-row justify-center md:justify-end items-center md:items-end gap-8 mb-4 pb-4">
+                <div className="sticky top-[60px] md:top-[80px] z-40 bg-black/95 backdrop-blur-md flex flex-col md:flex-row justify-center items-center gap-4 md:gap-8 mb-4 py-4 -mx-4 px-4 md:-mx-8 md:px-8 transition-all">
+                    <div className="flex gap-4 items-center">
+                        <button
+                            onClick={() => setViewMode('single')}
+                            className={`p-2 transition-colors ${viewMode === 'single' ? 'text-white' : 'text-white/40 hover:text-white/60'}`}
+                            title="Single Column View"
+                        >
+                            <Square className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={`p-2 transition-colors ${viewMode === 'grid' ? 'text-white' : 'text-white/40 hover:text-white/60'}`}
+                            title="Grid View"
+                        >
+                            <Grid className="w-4 h-4" />
+                        </button>
+                    </div>
+
                     {user && (
                         <div className="flex gap-8">
                             <button
@@ -336,40 +356,47 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                         </div>
                     ) : (
                         Object.entries(
-                            displayedPhotos.reduce((acc, photo) => {
-                                const date = new Date(photo.created_at);
-                                const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
-                                const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+                            // Sort photos by date taken first
+                            [...displayedPhotos].sort((a, b) => {
+                                const getDate = (p: Photo) => {
+                                    // Prioritize metadata.time (Google Drive) or date_taken, fall back to created_at
+                                    return new Date(p.metadata?.time || p.metadata?.date_taken || p.created_at).getTime();
+                                };
+                                return getDate(b) - getDate(a); // Descending (Newest first)
+                            })
+                                .reduce((acc, photo) => {
+                                    const date = new Date(photo.metadata?.date_taken || photo.created_at);
+                                    const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+                                    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
-                                const dayName = days[date.getDay()];
-                                const monthName = months[date.getMonth()];
-                                const dayNum = date.getDate();
-                                const year = date.getFullYear();
+                                    const dayName = days[date.getDay()];
+                                    const monthName = months[date.getMonth()];
+                                    const dayNum = date.getDate();
+                                    const year = date.getFullYear();
 
-                                let suffix = 'TH';
-                                if (dayNum % 10 === 1 && dayNum !== 11) suffix = 'ST';
-                                if (dayNum % 10 === 2 && dayNum !== 12) suffix = 'ND';
-                                if (dayNum % 10 === 3 && dayNum !== 13) suffix = 'RD';
+                                    let suffix = 'TH';
+                                    if (dayNum % 10 === 1 && dayNum !== 11) suffix = 'ST';
+                                    if (dayNum % 10 === 2 && dayNum !== 12) suffix = 'ND';
+                                    if (dayNum % 10 === 3 && dayNum !== 13) suffix = 'RD';
 
-                                const dateString = `${dayName} ${monthName} ${dayNum}${suffix}, ${year}`;
+                                    const dateString = `${dayName} ${monthName} ${dayNum}${suffix}, ${year}`;
 
-                                if (!acc[dateString]) acc[dateString] = [];
-                                acc[dateString].push(photo);
-                                return acc;
-                            }, {} as Record<string, Photo[]>)
+                                    if (!acc[dateString]) acc[dateString] = [];
+                                    acc[dateString].push(photo);
+                                    return acc;
+                                }, {} as Record<string, Photo[]>)
                         ).map(([dateHeader, groupPhotos]) => {
                             const isGroupAllSelected = groupPhotos.every(gp => selectedPhotos.find(p => p.id === gp.id));
 
                             return (
                                 <div key={dateHeader}>
-                                    <div className="flex items-center justify-between mb-6 sticky top-0 z-[5] bg-black/80 backdrop-blur-md pt-2 pb-4">
+                                    <div className="flex items-center justify-between mb-6">
                                         <div className="flex flex-col items-start">
                                             <h2 className="text-lg md:text-2xl font-black text-white uppercase tracking-tight whitespace-nowrap">
                                                 {dateHeader}
                                             </h2>
-                                            {/* Camera Model Display */}
+                                            {/* Camera Model Display (Group Level - optional fallback) */}
                                             {(() => {
-                                                // Find first photo with camera model in this group
                                                 const modelPhoto = groupPhotos.find(p => p.metadata?.cameraModel);
                                                 if (modelPhoto?.metadata?.cameraModel) {
                                                     return (
@@ -392,109 +419,28 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                                             </button>
                                         )}
                                     </div>
-                                    <div className="grid grid-cols-3 gap-0">
-                                        {groupPhotos.map((photo) => {
-                                            const index = photos.findIndex(p => p.id === photo.id);
-                                            const isSelected = !!selectedPhotos.find(p => p.id === photo.id);
-                                            const isPurchased = !!purchasedPhotos.find(p => p.id === photo.id);
-
-                                            return (
-                                                <motion.div
-                                                    key={photo.id}
-                                                    initial={{ opacity: 0, y: 20 }}
-                                                    whileInView={{ opacity: 1, y: 0 }}
-                                                    viewport={{ once: true }}
-                                                    className="relative aspect-square bg-zinc-900 overflow-hidden group"
-                                                >
-                                                    {/* Image */}
-                                                    <img
-                                                        src={`https://lh3.googleusercontent.com/d/${photo.google_drive_file_id}=s800`}
-                                                        alt={photo.title}
-                                                        onClick={() => setActivePhotoIndex(index)}
-                                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 select-none cursor-pointer"
-                                                        draggable={false}
-                                                        loading="lazy"
-                                                        referrerPolicy="no-referrer"
-                                                        crossOrigin="anonymous"
-                                                        onContextMenu={(e) => e.preventDefault()}
-                                                    />
-
-                                                    {/* Watermark Overlay - Only show if NOT purchased */}
-                                                    {!isPurchased && (
-                                                        <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center overflow-hidden">
-                                                            <img
-                                                                src="/logo.png"
-                                                                alt="Watermark"
-                                                                className="w-1/2 opacity-[0.09] brightness-0 invert select-none object-contain"
-                                                            />
-                                                        </div>
-                                                    )}
-
-                                                    {/* Selection Corner Tap Target */}
-                                                    {activeTab === 'storefront' && !isPurchased && (
-                                                        <button
-                                                            onClick={() => handleToggleSelect(photo)}
-                                                            className={`absolute top-0 right-0 z-30 p-2 md:p-3 transition-all group/select`}
-                                                        >
-                                                            <div className={`w-4 h-4 md:w-8 md:h-8 rounded-full border-[1.5px] md:border-2 flex items-center justify-center transition-all ${isSelected
-                                                                ? 'bg-white border-white scale-110'
-                                                                : 'bg-black/20 backdrop-blur-md border-white/20 group-hover/select:border-white/50'
-                                                                }`}>
-                                                                {isSelected ? (
-                                                                    <Check className="w-2.5 h-2.5 md:w-5 md:h-5 text-black stroke-[3]" />
-                                                                ) : (
-                                                                    <div className="w-1.5 h-1.5 md:w-3 md:h-3 bg-white/0 rounded-full group-hover/select:bg-white/20" />
-                                                                )}
-                                                            </div>
-                                                        </button>
-                                                    )}
-
-                                                    {/* Purchased Badge */}
-                                                    {isPurchased && (
-                                                        <div className="absolute top-2 left-2 z-20 flex items-center gap-1.5 bg-green-500 text-black px-1.5 py-0.5 rounded-none text-[7px] md:text-[8px] font-black uppercase tracking-[0.15em] shadow-lg">
-                                                            <CheckCircle className="w-2.5 h-2.5" />
-                                                            PROPRIETARY
-                                                        </div>
-                                                    )}
-
-                                                    {/* Hover Overlay */}
-                                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4 pointer-events-none">
-                                                        <div className="flex items-end justify-between pointer-events-auto w-full">
-                                                            <div className="flex flex-col items-start text-left">
-                                                                <span className="text-white font-bold text-sm tracking-wide hidden md:block">
-                                                                    {isPurchased ? 'OWNED' : `$${singlePrice.toFixed(2)}`}
-                                                                </span>
-                                                                <span className="text-zinc-400 text-[10px] uppercase tracking-wider hidden md:block">
-                                                                    {photo.title}
-                                                                </span>
-                                                            </div>
-                                                            <div className="flex gap-2 items-center">
-                                                                {isPurchased && (
-                                                                    <button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            window.open(`/api/gallery/stream?fileId=${photo.google_drive_file_id}&download=true`, '_blank');
-                                                                        }}
-                                                                        className="bg-white text-black px-1.5 py-1 rounded-none font-bold text-[8px] flex items-center gap-1 uppercase tracking-wider hover:bg-zinc-200 transition-colors"
-                                                                        title="Download Original"
-                                                                    >
-                                                                        <Download className="w-3 h-3" />
-                                                                        <span>Download</span>
-                                                                    </button>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </motion.div>
-                                            );
-                                        })}
+                                    <div className={`grid ${viewMode === 'single' ? 'grid-cols-1 gap-16' : 'grid-cols-3 gap-1 md:gap-2'}`}>
+                                        {groupPhotos.map((photo, index) => (
+                                            <PhotoCard
+                                                key={photo.id}
+                                                photo={photo}
+                                                index={index}
+                                                isSelected={!!selectedPhotos.find(p => p.id === photo.id)}
+                                                isPurchased={!!purchasedPhotos.find(p => p.id === photo.id)}
+                                                activeTab={activeTab}
+                                                singlePrice={singlePrice}
+                                                viewMode={viewMode}
+                                                onToggleSelect={() => handleToggleSelect(photo)}
+                                                onLightbox={() => setActivePhotoIndex(photos.findIndex(p => p.id === photo.id))}
+                                            />
+                                        ))}
                                     </div>
                                 </div>
                             );
                         })
                     )}
                 </div>
-            </div>
+            </div >
 
             {/* Lightbox */}
             <PhotoLightbox
@@ -510,15 +456,17 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
             />
 
             {/* Back to Top Button */}
-            {showBackToTop && (
-                <button
-                    onClick={() => photosRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                    className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-10 h-10 bg-white/10 backdrop-blur-md flex items-center justify-center hover:bg-white hover:text-black transition-all"
-                    aria-label="Back to top"
-                >
-                    <ArrowUp className="w-5 h-5" />
-                </button>
-            )}
+            {
+                showBackToTop && (
+                    <button
+                        onClick={() => photosRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                        className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-10 h-10 bg-white/10 backdrop-blur-md flex items-center justify-center active:bg-white active:text-black md:hover:bg-white md:hover:text-black transition-all rounded-full"
+                        aria-label="Back to top"
+                    >
+                        <ArrowUp className="w-5 h-5" />
+                    </button>
+                )
+            }
 
             {/* Tray */}
             <SelectionTray
@@ -529,6 +477,178 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                 pricingOptions={pricingOptions}
             />
         </div>
+    );
+};
+
+
+
+const PhotoCard: React.FC<{
+    photo: Photo;
+    index: number;
+    isSelected: boolean;
+    isPurchased: boolean;
+    activeTab: string;
+    singlePrice: number;
+    viewMode: 'grid' | 'single';
+    onToggleSelect: () => void;
+    onLightbox: () => void;
+}> = ({ photo, index, isSelected, isPurchased, activeTab, singlePrice, viewMode, onToggleSelect, onLightbox }) => {
+    const [rotation, setRotation] = useState(0);
+
+    // Dynamic styles based on view mode (Grid vs Single)
+    const isSingle = viewMode === 'single';
+
+    const handleFlip = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setRotation(prev => prev + 180);
+    };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className={`relative bg-black group perspective-1000 ${isSingle ? 'w-full md:min-h-[400px]' : 'aspect-square'}`}
+            style={{ perspective: '1000px' }}
+        >
+            <div
+                className={`w-full h-full relative transition-transform duration-700`}
+                style={{
+                    transformStyle: 'preserve-3d',
+                    WebkitTransformStyle: 'preserve-3d',
+                    transform: `rotateY(${rotation}deg)`
+                }}
+            >
+                {/* FRONT SIDE */}
+                <div
+                    className={`${isSingle ? 'relative w-full h-auto md:min-h-[400px]' : 'absolute inset-0 w-full h-full'} backface-hidden flex items-center justify-center bg-black cursor-pointer`}
+                    style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', zIndex: rotation % 360 === 0 ? 2 : 1 }}
+                    onClick={handleFlip}
+                >
+                    <img
+                        src={`https://lh3.googleusercontent.com/d/${photo.google_drive_file_id}=s1200`}
+                        alt={photo.title}
+                        onClick={(e) => { e.stopPropagation(); onLightbox(); }}
+                        className={`${isSingle ? 'w-full h-auto object-contain max-h-[85vh]' : 'w-full h-full object-cover'} select-none cursor-pointer`}
+                        draggable={false}
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                        crossOrigin="anonymous"
+                        onContextMenu={(e) => e.preventDefault()}
+                    />
+
+                    {/* Watermark (Front) */}
+                    {!isPurchased && (
+                        <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center overflow-hidden">
+                            <img src="/logo.png" alt="Watermark" className="w-1/2 opacity-[0.09] brightness-0 invert select-none object-contain" />
+                        </div>
+                    )}
+
+                    {/* Meta Flip Button */}
+                    <button
+                        onClick={handleFlip}
+                        className={`absolute z-[45] p-1.5 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 ${isSingle ? 'bottom-2 right-2' : 'bottom-0 right-0'}`}
+                        title="View Metadata"
+                    >
+                        <div className="w-7 h-7 md:w-8 md:h-8 bg-black/40 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-black/60 transition-all">
+                            <Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                        </div>
+                    </button>
+
+                    {/* Selection Checkbox (Front) */}
+                    {activeTab === 'storefront' && !isPurchased && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}
+                            className="absolute top-0 right-0 z-[45] p-1.5 md:p-3 transition-all"
+                        >
+                            <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full border-[1px] md:border-2 flex items-center justify-center transition-all ${isSelected
+                                ? 'bg-white border-white scale-110'
+                                : 'bg-black/20 backdrop-blur-md border-white/20 hover:border-white/50'
+                                }`}>
+                                {isSelected && <Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-black stroke-[3]" />}
+                            </div>
+                        </button>
+                    )}
+
+                    {/* Purchased Badge */}
+                    {isPurchased && (
+                        <div className="absolute top-1.5 left-1.5 z-[45] flex items-center gap-1 bg-green-500 text-black px-1.5 py-0.5 text-[7px] md:text-[8px] font-black uppercase tracking-[0.1em] shadow-lg">
+                            <CheckCircle className="w-2.5 h-2.5" />
+                            PROPRIETARY
+                        </div>
+                    )}
+                </div>
+
+                {/* BACK SIDE (METADATA) */}
+                <div
+                    className="absolute inset-0 w-full h-full backface-hidden bg-black flex flex-col justify-between cursor-pointer"
+                    style={{
+                        backfaceVisibility: 'hidden',
+                        WebkitBackfaceVisibility: 'hidden',
+                        transform: 'rotateY(180deg)',
+                        zIndex: rotation % 360 === 180 ? 2 : 1,
+                        padding: isSingle ? '1.25rem' : '1.5vw'
+                    }}
+                    onClick={handleFlip}
+                >
+                    <div className={isSingle ? 'space-y-4 md:space-y-8' : 'space-y-[0.5vw] md:space-y-4'}>
+                        <div className="space-y-[0.2vw] md:space-y-1">
+                            <p className={`${isSingle ? 'text-[10px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white uppercase tracking-widest font-bold leading-none`}>Camera</p>
+                            <p className={`${isSingle ? 'text-base md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono uppercase leading-tight`}>
+                                {photo.metadata?.camera_make} {photo.metadata?.camera_model || 'Unknown'}
+                            </p>
+                        </div>
+                        <div className={`grid grid-cols-2 ${isSingle ? 'gap-y-4 gap-x-4 md:gap-x-12' : 'gap-y-[0.5vw] gap-x-[1vw] md:gap-x-4'}`}>
+                            <div>
+                                <p className={`${isSingle ? 'text-[10px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white uppercase tracking-widest font-bold leading-none`}>ISO</p>
+                                <p className={`${isSingle ? 'text-base md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>{photo.metadata?.iso || '-'}</p>
+                            </div>
+                            <div>
+                                <p className={`${isSingle ? 'text-[10px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white uppercase tracking-widest font-bold leading-none`}>Aperture</p>
+                                <p className={`${isSingle ? 'text-base md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>f/{photo.metadata?.aperture || '-'}</p>
+                            </div>
+                            <div>
+                                <p className={`${isSingle ? 'text-[10px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white uppercase tracking-widest font-bold leading-none`}>Focal</p>
+                                <p className={`${isSingle ? 'text-base md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>{photo.metadata?.focal_length ? `${photo.metadata.focal_length}mm` : '-'}</p>
+                            </div>
+                            <div>
+                                <p className={`${isSingle ? 'text-[10px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white uppercase tracking-widest font-bold leading-none`}>Shutter</p>
+                                <p className={`${isSingle ? 'text-base md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>
+                                    {photo.metadata?.shutter_speed
+                                        ? (Number(photo.metadata.shutter_speed) < 1
+                                            ? `1/${Math.round(1 / Number(photo.metadata.shutter_speed))}s`
+                                            : `${photo.metadata.shutter_speed}s`)
+                                        : '-'}
+                                </p>
+                            </div>
+                        </div>
+                        <div className={`grid grid-cols-2 ${isSingle ? 'gap-y-4 gap-x-4 md:gap-x-12' : 'gap-y-[0.5vw] gap-x-[1vw] md:gap-x-4'}`}>
+                            <div>
+                                <p className={`${isSingle ? 'text-[10px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white uppercase tracking-widest font-bold leading-none`}>Date Taken</p>
+                                <p className={`${isSingle ? 'text-base md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono uppercase leading-tight`}>
+                                    {photo.metadata?.date_taken ? new Date(photo.metadata.date_taken).toLocaleDateString() : 'Unknown'}
+                                </p>
+                            </div>
+                            <div>
+                                <p className={`${isSingle ? 'text-[10px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white uppercase tracking-widest font-bold leading-none`}>Location</p>
+                                <p className={`${isSingle ? 'text-base md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono uppercase leading-tight`}>
+                                    {photo.metadata?.city || 'San Antonio, TX'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="pt-1 md:pt-4">
+                        <p className={`${isSingle ? 'text-[8px] md:text-sm' : 'text-[1.2vw] md:text-[10px]'} text-white font-medium tracking-widest uppercase mb-[0.1vw] md:mb-2 text-center w-full`}>
+                            © {new Date(photo.metadata?.date_taken || photo.created_at).getFullYear()} {photo.metadata?.copyright || 'THE LOST+UNFOUNDS'}
+                        </p>
+                        <p className={`${isSingle ? 'text-[7px] md:text-xs' : 'text-[1vw] md:text-[8px]'} text-white/50 uppercase tracking-wider text-center font-bold`}>
+                            TAP TO FLIP
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </motion.div>
     );
 };
 

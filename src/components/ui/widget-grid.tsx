@@ -85,7 +85,7 @@ function SortableWidget({ widget, children, onRemove, onResize }: SortableWidget
                 {...listeners}
                 className={cn(
                     'absolute top-2 left-2 z-10 p-1.5',
-                    'bg-black/80 border border-white/10',
+                    'bg-black/80',
                     'cursor-grab active:cursor-grabbing',
                     'opacity-0 group-hover:opacity-100 transition-opacity',
                 )}
@@ -99,7 +99,7 @@ function SortableWidget({ widget, children, onRemove, onResize }: SortableWidget
                     onClick={() => onRemove(widget.id)}
                     className={cn(
                         'absolute top-2 right-2 z-10 p-1.5',
-                        'bg-black/80 border border-white/10 hover:border-red-500/50',
+                        'bg-black/80 hover:bg-red-900/30',
                         'opacity-0 group-hover:opacity-100 transition-opacity',
                     )}
                 >

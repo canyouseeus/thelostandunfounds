@@ -119,14 +119,14 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
                 placeholder="Search by email or username..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-black/50 border border-white/10 rounded-none text-white placeholder-white/40 focus:border-white/30 focus:outline-none"
+                className="w-full pl-10 pr-4 py-2 bg-black/50 rounded-none text-white placeholder-white/40 focus:border-white/30 focus:outline-none"
               />
             </div>
             <div className="flex gap-2">
               <select
                 value={filterTier}
                 onChange={(e) => setFilterTier(e.target.value as any)}
-                className="px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+                className="px-4 py-2 bg-black/50 rounded-none text-white focus:border-white/30 focus:outline-none"
               >
                 <option value="all">All Tiers</option>
                 <option value="free">Free</option>
@@ -136,7 +136,7 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
               <select
                 value={filterAdmin}
                 onChange={(e) => setFilterAdmin(e.target.value as any)}
-                className="px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+                className="px-4 py-2 bg-black/50 rounded-none text-white focus:border-white/30 focus:outline-none"
               >
                 <option value="all">All Users</option>
                 <option value="admin">Admins</option>
@@ -147,7 +147,7 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
 
           {/* Bulk Actions Bar */}
           {selectedUsers.size > 0 && (
-            <div className="bg-white/5 border border-white/10 rounded-none p-4 flex items-center justify-between">
+            <div className="bg-white/5 rounded-none p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-white/80 text-sm">
                   {selectedUsers.size} user{selectedUsers.size > 1 ? 's' : ''} selected
@@ -186,7 +186,7 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
         </div>
 
         {/* Users Table */}
-        <div className="border-t border-white/10 pt-4">
+        <div className="pt-4">
           <div className="space-y-2">
             {filteredUsers.length > 0 ? (
               filteredUsers.map((user) => (

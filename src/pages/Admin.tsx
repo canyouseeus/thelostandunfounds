@@ -221,7 +221,7 @@ export default function Admin() {
     if (ref.current) {
       setTimeout(() => {
         ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100); // Small delay to allow expansion
+      }, 300); // Increased delay to ensure render
     }
   };
 
@@ -248,8 +248,8 @@ export default function Admin() {
   };
 
   const scrollToTop = () => {
-    // Scroll to absolute top (0,0) instantly
-    window.scrollTo({ top: 0, behavior: 'auto' });
+    // Scroll to absolute top
+    pageTopRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
 
@@ -713,7 +713,7 @@ export default function Admin() {
         // Get gallery revenue with email and date filtering
         const { data: orders, error: ordersError } = await supabase
           .from('photo_orders')
-          .select('total_amount_cents, email, created_at, payment_status');
+          .select('total_amount_cents, email, created_at, payment_status, metadata');
 
         console.log('Gallery orders:', orders, 'Error:', ordersError);
 
@@ -722,7 +722,9 @@ export default function Admin() {
           const realOrders = orders.filter(o =>
             !isTestEmail(o.email) &&
             new Date(o.created_at) >= new Date(PLATFORM_LAUNCH_DATE) &&
-            o.payment_status === 'completed'
+            o.payment_status === 'completed' &&
+            // Filter out explicit Sandbox orders from metadata
+            (o.metadata as any)?.environment !== 'sandbox'
           );
 
           console.log('Real orders (filtered):', realOrders);
@@ -1213,26 +1215,22 @@ export default function Admin() {
 
 
   return (
-    <div ref={pageTopRef} className="min-h-screen bg-black text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div ref={pageTopRef} className="min-h-screen bg-black text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-x-hidden">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <h1 className="text-2xl md:text-4xl font-bold text-white mb-1 uppercase whitespace-nowrap truncate">
-              ADMIN DASHBOARD
-            </h1>
-            <p className="text-white/70 text-sm hidden sm:block">Manage your platform and users</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              to={userSubdomain ? `/${userSubdomain}/bookclubprofile` : "/bookclubprofile"}
-              className="px-4 py-2 bg-white text-black hover:bg-white/90 font-bold rounded-none text-sm transition flex items-center gap-2"
-            >
-              <User className="w-4 h-4" />
-              Profile
-            </Link>
-          </div>
+          <h1 className="text-2xl md:text-4xl font-bold text-white uppercase">
+            ADMIN DASHBOARD
+          </h1>
+          <Link
+            to={userSubdomain ? `/${userSubdomain}/bookclubprofile` : "/bookclubprofile"}
+            className="p-2 bg-white text-black hover:bg-white/90 transition"
+            title="Profile"
+          >
+            <User className="w-5 h-5" />
+          </Link>
         </div>
+        <p className="text-white/70 text-sm hidden sm:block mt-1">Manage your platform and users</p>
       </div>
 
 
@@ -1260,18 +1258,6 @@ export default function Admin() {
             <ClockWidget size="lg" className="h-full" />
             <CalendarWidget className="h-full" />
           </div>
-        </div>
-
-        {/* Charts Section - Wrapped for Recharts responsiveness */}
-        <div className="h-96 w-full">
-          <DashboardCharts
-            stats={{
-              revenue: (stats?.activeSubscriptions || 0) * 9.99,
-              newsletter: stats?.newsletterSubscribers || 0,
-              affiliates: affiliateStats?.totalAffiliates || 0,
-            }}
-            history={stats?.history}
-          />
         </div>
 
         {/* Collapsible Sections */}
@@ -1305,421 +1291,387 @@ export default function Admin() {
             </div>
           </CollapsibleSection>
 
-          {/* System Alerts */}
-          <CollapsibleSection
-            title="System Alerts"
-            icon={<Bell className="w-4 h-4" />}
-            badge={alerts.filter(a => !a.read).length > 0 && (
-              <span className="px-2 py-0.5 bg-yellow-400/20 text-yellow-400 text-[10px] font-bold uppercase">
-                {alerts.filter(a => !a.read).length} new
-              </span>
-            )}
-            defaultOpen={alerts.filter(a => !a.read).length > 0}
-          >
-            <div className="space-y-2">
-              {alerts.length > 0 ? alerts.slice(0, 4).map(alert => (
-                <div key={alert.id} className="p-3 bg-white/[0.02] border-l-2 border-l-yellow-400">
-                  <p className="text-xs text-white/80 line-clamp-2">{alert.message}</p>
-                  <span className="text-[10px] text-white/30 mt-1 block">{alert.time}</span>
-                </div>
-              )) : (
-                <div className="text-center text-white/30 text-xs py-6">No active alerts</div>
-              )}
-            </div>
-          </CollapsibleSection>
-        </div>
-
-        {/* System Status */}
-
-
-        <CollapsibleSection
-          title="System Status"
-          icon={<Activity className="w-4 h-4" />}
-          badge={<span className="text-xs text-green-400">Operational</span>}
-          defaultOpen={false}
-        >
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="flex items-center justify-between p-3 bg-white/[0.02]">
-              <span className="text-xs text-white/50">Database</span>
-              <span className="text-xs text-green-400">Connected</span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-white/[0.02]">
-              <span className="text-xs text-white/50">Email</span>
-              <span className="text-xs text-green-400">Connected</span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-white/[0.02]">
-              <span className="text-xs text-white/50">Storage</span>
-              <span className="text-xs text-green-400">Active</span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-white/[0.02]">
-              <span className="text-xs text-white/50">CDN</span>
-              <span className="text-xs text-green-400">Online</span>
-            </div>
-          </div>
-        </CollapsibleSection>
-
-        {/* ===== APP MODULES - All Inline Below ===== */}
-        <div className="pt-8 pb-4">
-          <h2 className="text-xl md:text-2xl font-bold text-white mb-2 tracking-tight">MY APPS</h2>
-          <div className="h-1 w-20 bg-white/20"></div>
-        </div>
-
-        {/* My Apps Grid */}
-        <div className="grid grid-cols-4 md:grid-cols-8 gap-4 mb-8">
-          {/* Gallery */}
-          <div
-            onClick={() => setActiveTab('gallery')}
-            className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
-            title="Gallery"
-          >
-            <ImageIcon className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
+          {/* ===== APP MODULES - All Inline Below ===== */}
+          <div className="pt-8 pb-4">
+            <h2 className="text-xl md:text-2xl font-bold text-white mb-2 tracking-tight">MY APPS</h2>
+            <div className="h-1 w-20 bg-white/20"></div>
           </div>
 
-          {/* Blog */}
-          <div
-            onClick={() => setActiveTab('blog')}
-            className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
-            title="Blog"
-          >
-            <BookOpen className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
-          </div>
-
-          {/* Newsletter */}
-          <div
-            onClick={() => setActiveTab('newsletter')}
-            className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
-            title="Newsletter"
-          >
-            <Mail className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
-          </div>
-
-          {/* Webmail */}
-          <div
-            onClick={() => setActiveTab('mail')}
-            className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
-            title="Webmail"
-          >
-            <Send className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
-          </div>
-
-          {/* Users */}
-          <div
-            onClick={() => setActiveTab('users')}
-            className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
-            title="Users"
-          >
-            <Users className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
-          </div>
-
-          {/* Affiliates */}
-          <div
-            onClick={() => setActiveTab('affiliates')}
-            className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
-            title="Affiliates"
-          >
-            <Network className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
-          </div>
-
-          {/* Submissions - badge shows pending (actionable) */}
-          {pendingSubmissions > 0 && (
+          {/* My Apps Grid */}
+          <div className="grid grid-cols-4 md:grid-cols-8 gap-4 mb-8">
+            {/* Gallery */}
             <div
-              onClick={() => setActiveTab('submissions')}
-              className="flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
-              title="Review"
+              onClick={() => setActiveTab('gallery')}
+              className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
+              title="Gallery"
             >
-              <div className="relative">
-                <FileText className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
-                <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] flex items-center justify-center bg-white text-black text-[9px] font-bold rounded-full translate-x-1/2 -translate-y-1/2">
-                  {pendingSubmissions}
-                </span>
+              <ImageIcon className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
+            </div>
+
+            {/* Blog */}
+            <div
+              onClick={() => setActiveTab('blog')}
+              className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
+              title="Blog"
+            >
+              <BookOpen className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
+            </div>
+
+            {/* Newsletter */}
+            <div
+              onClick={() => setActiveTab('newsletter')}
+              className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
+              title="Newsletter"
+            >
+              <Mail className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
+            </div>
+
+            {/* Webmail */}
+            <div
+              onClick={() => setActiveTab('mail')}
+              className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
+              title="Webmail"
+            >
+              <Send className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
+            </div>
+
+            {/* Users */}
+            <div
+              onClick={() => setActiveTab('users')}
+              className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
+              title="Users"
+            >
+              <Users className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
+            </div>
+
+            {/* Affiliates */}
+            <div
+              onClick={() => setActiveTab('affiliates')}
+              className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
+              title="Affiliates"
+            >
+              <Network className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
+            </div>
+
+            {/* Submissions - badge shows pending (actionable) */}
+            {pendingSubmissions > 0 && (
+              <div
+                onClick={() => setActiveTab('submissions')}
+                className="flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
+                title="Review"
+              >
+                <div className="relative">
+                  <FileText className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
+                  <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] flex items-center justify-center bg-white text-black text-[9px] font-bold rounded-full translate-x-1/2 -translate-y-1/2">
+                    {pendingSubmissions}
+                  </span>
+                </div>
               </div>
+            )}
+
+            {/* Settings */}
+            <div
+              onClick={() => setActiveTab('settings')}
+              className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
+              title="Settings"
+            >
+              <Settings className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
+            </div>
+          </div>
+
+          {/* App Sections - Only render when expanded */}
+
+          {/* Gallery Section */}
+          {expandedSections['gallery'] && (
+            <div ref={gallerySectionRef} className="mt-6">
+              <div className="flex items-center justify-between px-4 py-3 bg-white/[0.03]">
+                <div className="flex items-center gap-2">
+                  <ImageIcon className="w-4 h-4 text-white/60" />
+                  <span className="text-sm font-bold text-white uppercase tracking-wider">Gallery</span>
+                </div>
+                <button onClick={() => handleSectionToggle('gallery')} className="text-white/40 hover:text-white text-xs uppercase tracking-wider">
+                  Close
+                </button>
+              </div>
+              <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Gallery</div>}>
+                <AdminGalleryView onBack={scrollToTop} />
+              </ErrorBoundary>
             </div>
           )}
 
-          {/* Settings */}
-          <div
-            onClick={() => setActiveTab('settings')}
-            className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
-            title="Settings"
-          >
-            <Settings className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
-          </div>
-        </div>
-
-        {/* Gallery Section */}
-        <div ref={gallerySectionRef}>
-          <CollapsibleSection
-            title="GALLERY"
-            icon={<ImageIcon className="w-4 h-4" />}
-            isOpen={expandedSections['gallery']}
-            onToggle={() => handleSectionToggle('gallery')}
-          >
-            <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Gallery</div>}>
-              <AdminGalleryView onBack={scrollToTop} />
-            </ErrorBoundary>
-          </CollapsibleSection>
-        </div>
-
-        {/* Blog Section */}
-        <div ref={blogSectionRef}>
-          <CollapsibleSection
-            title="BLOG"
-            icon={<BookOpen className="w-4 h-4" />}
-            isOpen={expandedSections['blog']}
-            onToggle={() => handleSectionToggle('blog')}
-          >
-            <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Blog Management</div>}>
-              <BlogManagement />
-            </ErrorBoundary>
-          </CollapsibleSection>
-        </div>
-
-        {/* Newsletter Section */}
-        <div ref={newsletterSectionRef}>
-          <CollapsibleSection
-            title="NEWSLETTER"
-            icon={<Mail className="w-4 h-4" />}
-            isOpen={expandedSections['newsletter']}
-            onToggle={() => handleSectionToggle('newsletter')}
-          >
-            <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Newsletter Management</div>}>
-              <NewsletterManagement />
-            </ErrorBoundary>
-          </CollapsibleSection>
-        </div>
-
-        {/* Mail Section */}
-        <div ref={mailSectionRef}>
-          <CollapsibleSection
-            title="WEBMAIL"
-            icon={<Send className="w-4 h-4" />}
-            isOpen={expandedSections['mail']}
-            onToggle={() => handleSectionToggle('mail')}
-          >
-            <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Mail</div>}>
-              <AdminMailView onBack={scrollToTop} />
-            </ErrorBoundary>
-          </CollapsibleSection>
-        </div>
-
-        {/* Users Section */}
-        <div ref={usersSectionRef}>
-          <CollapsibleSection
-            title="USERS"
-            icon={<Users className="w-4 h-4" />}
-            isOpen={expandedSections['users']}
-            onToggle={() => handleSectionToggle('users')}
-          >
-            <AdminUsersView
-              users={allUsers}
-              stats={stats}
-              onSelectUser={(u) => { setSelectedUser(u); setSidePanelOpen(true); }}
-              onBack={scrollToTop}
-            />
-          </CollapsibleSection>
-        </div>
-
-        {/* Affiliates Section */}
-        <div ref={affiliatesSectionRef}>
-          <CollapsibleSection
-            title="AFFILIATES"
-            icon={<Network className="w-4 h-4" />}
-            isOpen={expandedSections['affiliates']}
-            onToggle={() => handleSectionToggle('affiliates')}
-          >
-            <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Affiliates</div>}>
-              <div className="space-y-6">
-                <AffiliateAdminView />
-                <AffiliateEmailComposer />
+          {/* Blog Section */}
+          {expandedSections['blog'] && (
+            <div ref={blogSectionRef} className="mt-6">
+              <div className="flex items-center justify-between px-4 py-3 bg-white/[0.03]">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-white/60" />
+                  <span className="text-sm font-bold text-white uppercase tracking-wider">Blog</span>
+                </div>
+                <button onClick={() => handleSectionToggle('blog')} className="text-white/40 hover:text-white text-xs uppercase tracking-wider">
+                  Close
+                </button>
               </div>
-            </ErrorBoundary>
-          </CollapsibleSection>
-        </div>
+              <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Blog</div>}>
+                <BlogManagement />
+              </ErrorBoundary>
+            </div>
+          )}
 
-        {/* Submissions Section */}
-        {pendingSubmissions > 0 && (
-          <div ref={submissionsSectionRef}>
-            <CollapsibleSection
-              title="SUBMISSIONS"
-              icon={<FileText className="w-4 h-4" />}
-              badge={<span className="px-2 py-0.5 bg-white/20 text-white text-[10px] font-bold">{pendingSubmissions}</span>}
-              isOpen={expandedSections['submissions']}
-              onToggle={() => handleSectionToggle('submissions')}
-            >
+          {/* Newsletter Section */}
+          {expandedSections['newsletter'] && (
+            <div ref={newsletterSectionRef} className="mt-6">
+              <div className="flex items-center justify-between px-4 py-3 bg-white/[0.03]">
+                <div className="flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-white/60" />
+                  <span className="text-sm font-bold text-white uppercase tracking-wider">Newsletter</span>
+                </div>
+                <button onClick={() => handleSectionToggle('newsletter')} className="text-white/40 hover:text-white text-xs uppercase tracking-wider">
+                  Close
+                </button>
+              </div>
+              <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Newsletter</div>}>
+                <NewsletterManagement />
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* Mail Section */}
+          {expandedSections['mail'] && (
+            <div ref={mailSectionRef} className="mt-6">
+              <div className="flex items-center justify-between px-4 py-3 bg-white/[0.03]">
+                <div className="flex items-center gap-2">
+                  <Send className="w-4 h-4 text-white/60" />
+                  <span className="text-sm font-bold text-white uppercase tracking-wider">Webmail</span>
+                </div>
+                <button onClick={() => handleSectionToggle('mail')} className="text-white/40 hover:text-white text-xs uppercase tracking-wider">
+                  Close
+                </button>
+              </div>
+              <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Mail</div>}>
+                <AdminMailView onBack={scrollToTop} />
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* Users Section */}
+          {expandedSections['users'] && (
+            <div ref={usersSectionRef} className="mt-6">
+              <div className="flex items-center justify-between px-4 py-3 bg-white/[0.03]">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-white/60" />
+                  <span className="text-sm font-bold text-white uppercase tracking-wider">Users</span>
+                </div>
+                <button onClick={() => handleSectionToggle('users')} className="text-white/40 hover:text-white text-xs uppercase tracking-wider">
+                  Close
+                </button>
+              </div>
+              <AdminUsersView
+                users={allUsers}
+                stats={stats}
+                onSelectUser={(u) => { setSelectedUser(u); setSidePanelOpen(true); }}
+                onBack={scrollToTop}
+              />
+            </div>
+          )}
+
+          {/* Affiliates Section */}
+          {expandedSections['affiliates'] && (
+            <div ref={affiliatesSectionRef} className="mt-6">
+              <div className="flex items-center justify-between px-4 py-3 bg-white/[0.03]">
+                <div className="flex items-center gap-2">
+                  <Network className="w-4 h-4 text-white/60" />
+                  <span className="text-sm font-bold text-white uppercase tracking-wider">Affiliates</span>
+                </div>
+                <button onClick={() => handleSectionToggle('affiliates')} className="text-white/40 hover:text-white text-xs uppercase tracking-wider">
+                  Close
+                </button>
+              </div>
+              <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Affiliates</div>}>
+                <div className="space-y-6">
+                  <AffiliateAdminView />
+                  <AffiliateEmailComposer />
+                </div>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* Submissions Section */}
+          {expandedSections['submissions'] && pendingSubmissions > 0 && (
+            <div ref={submissionsSectionRef} className="mt-6">
+              <div className="flex items-center justify-between px-4 py-3 bg-white/[0.03]">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-white/60" />
+                  <span className="text-sm font-bold text-white uppercase tracking-wider">Submissions</span>
+                  <span className="px-2 py-0.5 bg-white/20 text-white text-[10px] font-bold">{pendingSubmissions}</span>
+                </div>
+                <button onClick={() => handleSectionToggle('submissions')} className="text-white/40 hover:text-white text-xs uppercase tracking-wider">
+                  Close
+                </button>
+              </div>
               <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Submissions</div>}>
                 <BlogSubmissionReview />
               </ErrorBoundary>
-            </CollapsibleSection>
-          </div>
-        )}
-
-        {/* User Activity Section */}
-        <div ref={settingsSectionRef /* Reusing ref or create new one? Using unique div key actually better */}>
-          <CollapsibleSection
-            title="USER ACTIVITY"
-            icon={<Activity className="w-4 h-4" />}
-            isOpen={expandedSections['analytics']}
-            onToggle={() => handleSectionToggle('analytics')}
-          >
-            <div className="bg-white/[0.02] border-l-2 border-white/10">
-              <UserAnalyticsView />
             </div>
-          </CollapsibleSection>
+          )}
+
+          {/* Settings Section */}
+          {expandedSections['settings'] && (
+            <div ref={settingsSectionRef} className="mt-6">
+              <div className="flex items-center justify-between px-4 py-3 bg-white/[0.03]">
+                <div className="flex items-center gap-2">
+                  <Settings className="w-4 h-4 text-white/60" />
+                  <span className="text-sm font-bold text-white uppercase tracking-wider">Settings</span>
+                </div>
+                <button onClick={() => handleSectionToggle('settings')} className="text-white/40 hover:text-white text-xs uppercase tracking-wider">
+                  Close
+                </button>
+              </div>
+              <AdminSettingsView stats={stats} onBack={scrollToTop} />
+            </div>
+          )}
         </div>
 
-        {/* Settings Section */}
-        <div ref={settingsSectionRef}>
-          <CollapsibleSection
-            title="SETTINGS"
-            icon={<Settings className="w-4 h-4" />}
-            isOpen={expandedSections['settings']}
-            onToggle={() => handleSectionToggle('settings')}
-          >
-            <AdminSettingsView stats={stats} onBack={scrollToTop} />
-          </CollapsibleSection>
-        </div>
-      </div>
+        {/* Floating Back to Top Button */}
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-10 h-10 bg-white/10 backdrop-blur-md flex items-center justify-center active:bg-white active:text-black md:hover:bg-white md:hover:text-black transition-all rounded-full"
+          title="Back to Top"
+        >
+          <ArrowUp className="w-5 h-5" />
+        </button>
 
-      {/* Floating Back to Top Button */}
-      <button
-        onClick={scrollToTop}
-        className="fixed bottom-6 right-6 p-3 bg-white text-black hover:bg-white/90 transition-all shadow-lg z-50"
-        title="Back to Top"
-      >
-        <ArrowUp className="w-5 h-5" strokeWidth={2} />
-      </button>
-
-      {/* Side Panel for User Details */}
-      <SidePanel
-        isOpen={sidePanelOpen}
-        onClose={() => setSidePanelOpen(false)}
-        title="User Details"
-      >
-        {selectedUser && (
-          <div className="space-y-6">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-white/10 flex items-center justify-center rounded-full">
-                <User className="w-8 h-8 text-white/60" />
+        {/* Side Panel for User Details */}
+        <SidePanel
+          isOpen={sidePanelOpen}
+          onClose={() => setSidePanelOpen(false)}
+          title="User Details"
+        >
+          {selectedUser && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-white/10 flex items-center justify-center rounded-full">
+                  <User className="w-8 h-8 text-white/60" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">{selectedUser.username || 'No Username'}</h3>
+                  <p className="text-white/60">{selectedUser.email}</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-xl font-bold text-white">{selectedUser.username || 'No Username'}</h3>
-                <p className="text-white/60">{selectedUser.email}</p>
-              </div>
-            </div>
 
-            <div className="space-y-4 border-t border-white/10 pt-6">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4 border-t border-white/10 pt-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-white/5 rounded-none">
+                    <div className="text-xs text-white/40 mb-1 uppercase tracking-tighter">Tier</div>
+                    <div className="text-lg font-semibold text-white capitalize">{selectedUser.tier}</div>
+                  </div>
+                  <div className="p-4 bg-white/5 rounded-none">
+                    <div className="text-xs text-white/40 mb-1 uppercase tracking-tighter">Status</div>
+                    <div className="text-lg font-semibold text-green-400">ACTIVE</div>
+                  </div>
+                </div>
+
                 <div className="p-4 bg-white/5 rounded-none">
-                  <div className="text-xs text-white/40 mb-1 uppercase tracking-tighter">Tier</div>
-                  <div className="text-lg font-semibold text-white capitalize">{selectedUser.tier}</div>
+                  <div className="text-xs text-white/40 mb-1 uppercase tracking-tighter">Admin Status</div>
+                  <div className="text-lg font-semibold text-white">
+                    {selectedUser.isAdmin ? 'ADMIN' : 'USER'}
+                  </div>
                 </div>
+
                 <div className="p-4 bg-white/5 rounded-none">
-                  <div className="text-xs text-white/40 mb-1 uppercase tracking-tighter">Status</div>
-                  <div className="text-lg font-semibold text-green-400">ACTIVE</div>
+                  <div className="text-xs text-white/40 mb-1 uppercase tracking-tighter">Subdomain</div>
+                  <div className="font-mono text-sm text-white/80">
+                    {selectedUser.username || 'NONE'}
+                  </div>
+                </div>
+
+                <div className="p-4 bg-white/5 rounded-none">
+                  <div className="text-xs text-white/40 mb-1 uppercase tracking-tighter">User ID</div>
+                  <div className="font-mono text-xs text-white/80 break-all">{selectedUser.id}</div>
+                </div>
+
+                <div className="p-4 bg-white/5 rounded-none">
+                  <div className="text-xs text-white/40 mb-1 uppercase tracking-tighter">Joined Date</div>
+                  <div className="text-white/80 text-sm">
+                    {selectedUser.created_at ? new Date(selectedUser.created_at).toLocaleString() : 'N/A'}
+                  </div>
                 </div>
               </div>
 
-              <div className="p-4 bg-white/5 rounded-none">
-                <div className="text-xs text-white/40 mb-1 uppercase tracking-tighter">Admin Status</div>
-                <div className="text-lg font-semibold text-white">
-                  {selectedUser.isAdmin ? 'ADMIN' : 'USER'}
-                </div>
-              </div>
-
-              <div className="p-4 bg-white/5 rounded-none">
-                <div className="text-xs text-white/40 mb-1 uppercase tracking-tighter">Subdomain</div>
-                <div className="font-mono text-sm text-white/80">
-                  {selectedUser.username || 'NONE'}
-                </div>
-              </div>
-
-              <div className="p-4 bg-white/5 rounded-none">
-                <div className="text-xs text-white/40 mb-1 uppercase tracking-tighter">User ID</div>
-                <div className="font-mono text-xs text-white/80 break-all">{selectedUser.id}</div>
-              </div>
-
-              <div className="p-4 bg-white/5 rounded-none">
-                <div className="text-xs text-white/40 mb-1 uppercase tracking-tighter">Joined Date</div>
-                <div className="text-white/80 text-sm">
-                  {selectedUser.created_at ? new Date(selectedUser.created_at).toLocaleString() : 'N/A'}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-3 pt-4 border-t border-white/10">
-              <button
-                onClick={() => {
-                  success('User edit feature coming soon');
-                }}
-                className="flex-1 px-4 py-3 bg-white text-black font-bold hover:bg-white/90 transition rounded-none uppercase text-xs"
-              >
-                Edit User
-              </button>
-              <button
-                onClick={() => {
-                  if (confirm(`Ban user ${selectedUser.email}?`)) {
-                    success(`User ${selectedUser.email} banned`);
-                    setSidePanelOpen(false);
-                  }
-                }}
-                className="flex-1 px-4 py-3 bg-red-500/20 text-red-500 border border-red-500/30 hover:bg-red-500/30 transition rounded-none uppercase text-xs font-bold"
-              >
-                Ban User
-              </button>
-            </div>
-          </div>
-        )}
-      </SidePanel>
-
-      {/* Expandable Screen for Post Details */}
-      <ExpandableScreen
-        isOpen={!!expandedPost}
-        onOpenChange={(open) => {
-          if (!open) setExpandedPost(null);
-        }}
-      >
-        {expandedPost && (
-          <div className="max-w-4xl mx-auto py-12 px-6">
-            <div className="mb-8">
-              <div className="flex items-center gap-3 mb-4">
-                {'subdomain' in expandedPost && expandedPost.subdomain && (
-                  <span className="px-3 py-1 bg-white/10 text-white/80 border border-white/20 rounded-full text-sm">
-                    {expandedPost.subdomain}
-                  </span>
-                )}
-                <span className="text-white/60 text-sm">
-                  {expandedPost.published_at
-                    ? new Date(expandedPost.published_at).toLocaleDateString()
-                    : new Date(expandedPost.created_at).toLocaleDateString()}
-                </span>
-              </div>
-              <h1 className="text-4xl font-bold text-white mb-6">{expandedPost.title}</h1>
-              {expandedPost.excerpt && (
-                <p className="text-xl text-white/70 leading-relaxed mb-8">{expandedPost.excerpt}</p>
-              )}
-            </div>
-
-            <div className="prose prose-invert max-w-none">
-              <div className="p-6 bg-white/5 border border-white/10 rounded-lg">
-                <p className="text-white/60 italic">
-                  Full content preview is not available in this quick view.
-                  <a
-                    href={'subdomain' in expandedPost
-                      ? `/blog/${expandedPost.subdomain}/${expandedPost.slug}`
-                      : `/thelostandunfounds/${expandedPost.slug}`
+              <div className="flex gap-3 pt-4 border-t border-white/10">
+                <button
+                  onClick={() => {
+                    success('User edit feature coming soon');
+                  }}
+                  className="flex-1 px-4 py-3 bg-white text-black font-bold hover:bg-white/90 transition rounded-none uppercase text-xs"
+                >
+                  Edit User
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirm(`Ban user ${selectedUser.email}?`)) {
+                      success(`User ${selectedUser.email} banned`);
+                      setSidePanelOpen(false);
                     }
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-white underline ml-1"
-                  >
-                    Open full article
-                  </a>
-                </p>
+                  }}
+                  className="flex-1 px-4 py-3 bg-red-500/20 text-red-500 border border-red-500/30 hover:bg-red-500/30 transition rounded-none uppercase text-xs font-bold"
+                >
+                  Ban User
+                </button>
               </div>
             </div>
-          </div>
-        )}
-      </ExpandableScreen>
+          )}
+        </SidePanel>
+
+        {/* Expandable Screen for Post Details */}
+        <ExpandableScreen
+          isOpen={!!expandedPost}
+          onOpenChange={(open) => {
+            if (!open) setExpandedPost(null);
+          }}
+        >
+          {expandedPost && (
+            <div className="max-w-4xl mx-auto py-12 px-6">
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-4">
+                  {'subdomain' in expandedPost && expandedPost.subdomain && (
+                    <span className="px-3 py-1 bg-white/10 text-white/80 border border-white/20 rounded-full text-sm">
+                      {expandedPost.subdomain}
+                    </span>
+                  )}
+                  <span className="text-white/60 text-sm">
+                    {expandedPost.published_at
+                      ? new Date(expandedPost.published_at).toLocaleDateString()
+                      : new Date(expandedPost.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+                <h1 className="text-4xl font-bold text-white mb-6">{expandedPost.title}</h1>
+                {expandedPost.excerpt && (
+                  <p className="text-xl text-white/70 leading-relaxed mb-8">{expandedPost.excerpt}</p>
+                )}
+              </div>
+
+              <div className="prose prose-invert max-w-none">
+                <div className="p-6 bg-white/5 border border-white/10 rounded-lg">
+                  <p className="text-white/60 italic">
+                    Full content preview is not available in this quick view.
+                    <a
+                      href={'subdomain' in expandedPost
+                        ? `/blog/${expandedPost.subdomain}/${expandedPost.slug}`
+                        : `/thelostandunfounds/${expandedPost.slug}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-white underline ml-1"
+                    >
+                      Open full article
+                    </a>
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </ExpandableScreen>
+      </div>
     </div>
   );
 }

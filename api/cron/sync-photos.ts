@@ -51,7 +51,7 @@ export default async function handler(
 
             const response = await drive.files.list({
                 q: `'${folderId}' in parents and mimeType contains 'image/' and trashed = false`,
-                fields: 'files(id, name, thumbnailLink)',
+                fields: 'files(id, name, thumbnailLink, imageMediaMetadata, createdTime)',
                 pageSize: 1000,
             })
 
@@ -63,6 +63,21 @@ export default async function handler(
                 const title = file.name.split('.').slice(0, -1).join('.')
                 const thumbnailUrl = file.thumbnailLink?.replace(/=s220$/, '=s1200')
 
+                // Extract metadata
+                const metadata = {
+                    camera_make: file.imageMediaMetadata?.cameraMake,
+                    camera_model: file.imageMediaMetadata?.cameraModel,
+                    iso: file.imageMediaMetadata?.isoSpeed,
+                    focal_length: file.imageMediaMetadata?.focalLength,
+                    aperture: file.imageMediaMetadata?.aperture,
+                    shutter_speed: file.imageMediaMetadata?.exposureTime,
+                    date_taken: file.imageMediaMetadata?.time || file.createdTime,
+                    width: file.imageMediaMetadata?.width,
+                    height: file.imageMediaMetadata?.height,
+                    // Copyright isn't standard in GDrive API response, defaulting to site name or we could parse from description?
+                    copyright: 'THE LOST+UNFOUNDS'
+                }
+
                 const { error: upsertError } = await supabase
                     .from('photos')
                     .upsert({
@@ -71,7 +86,8 @@ export default async function handler(
                         title: title,
                         thumbnail_url: thumbnailUrl,
                         status: 'active',
-                        price_cents: 500
+                        price_cents: 500,
+                        metadata: metadata
                     }, {
                         onConflict: 'google_drive_file_id'
                     })

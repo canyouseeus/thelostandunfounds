@@ -247,7 +247,7 @@ export default function AffiliateEmailComposer() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-black/50 border border-white/10 rounded-none p-6">
+      <div className="bg-black/50 rounded-none p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <Mail className="w-6 h-6 text-white" />
@@ -258,7 +258,7 @@ export default function AffiliateEmailComposer() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Compose Email */}
-        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+        <div className="bg-black/50 rounded-none p-6">
           <h3 className="text-lg font-semibold text-white mb-4">Compose Email</h3>
           
           <div className="space-y-4">
@@ -314,7 +314,7 @@ export default function AffiliateEmailComposer() {
         </div>
 
         {/* Select Recipients */}
-        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+        <div className="bg-black/50 rounded-none p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-white">Select Recipients</h3>
             <div className="text-sm text-white/60">
@@ -375,7 +375,7 @@ export default function AffiliateEmailComposer() {
               filteredAffiliates.map((affiliate) => (
                 <label
                   key={affiliate.id}
-                  className="flex items-center gap-3 p-3 bg-black/30 border border-white/10 rounded-none hover:bg-white/5 transition cursor-pointer"
+                  className="flex items-center gap-3 p-3 bg-black/30 rounded-none hover:bg-white/5 transition cursor-pointer"
                 >
                   <input
                     type="checkbox"
@@ -403,7 +403,7 @@ export default function AffiliateEmailComposer() {
 
       {/* Preview */}
       {showPreview && (
-        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+        <div className="bg-black/50 rounded-none p-6">
           <h3 className="text-lg font-semibold text-white mb-4">Email Preview</h3>
           <div className="bg-black border border-white/20 rounded-none p-6">
             <div className="text-white/60 text-sm mb-2">To: {selectedCount} affiliate(s)</div>
@@ -418,13 +418,13 @@ export default function AffiliateEmailComposer() {
 
       {/* Past Campaigns */}
       {campaigns.length > 0 && (
-        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+        <div className="bg-black/50 rounded-none p-6">
           <h3 className="text-lg font-semibold text-white mb-4">Recent Campaigns</h3>
           <div className="space-y-2">
             {campaigns.map((campaign) => (
               <div
                 key={campaign.id}
-                className="flex items-center justify-between p-3 bg-black/30 border border-white/10 rounded-none"
+                className="flex items-center justify-between p-3 bg-black/30 rounded-none"
               >
                 <div>
                   <div className="text-white font-semibold">{campaign.subject}</div>

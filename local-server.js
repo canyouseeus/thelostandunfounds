@@ -1183,7 +1183,7 @@ const server = http.createServer(async (req, res) => {
 
                 const response = await drive.files.list({
                     q: `'${folderId}' in parents and (mimeType contains 'image/' or mimeType = 'video/quicktime') and trashed = false`,
-                    fields: 'files(id, name, thumbnailLink, createdTime, mimeType)',
+                    fields: 'files(id, name, thumbnailLink, createdTime, mimeType, imageMediaMetadata)', // Added imageMediaMetadata
                     pageSize: 1000
                 });
 
@@ -1195,6 +1195,26 @@ const server = http.createServer(async (req, res) => {
                     const title = file.name.split('.').slice(0, -1).join('.');
                     const thumbnailUrl = file.thumbnailLink?.replace(/=s220$/, '=s1200');
 
+                    // --- Metadata Processing Match with api/gallery/[...path].ts ---
+                    let metadata = file.imageMediaMetadata || {};
+                    let finalCreatedAt = file.createdTime || new Date().toISOString();
+
+                    const captureTime = metadata.time;
+                    if (captureTime) {
+                        const captureDate = new Date(captureTime);
+                        const uploadDate = new Date(finalCreatedAt);
+
+                        // Fix for 2026 photos showing as 2025 (Date correction logic)
+                        if (captureDate.getFullYear() === 2025 && uploadDate.getFullYear() === 2026) {
+                            captureDate.setFullYear(2026);
+                            finalCreatedAt = captureDate.toISOString();
+                            metadata._corrected = true;
+                            metadata.time = captureDate.toISOString();
+                        } else {
+                            finalCreatedAt = captureTime;
+                        }
+                    }
+
                     await supabase.from('photos').upsert({
                         library_id: library.id,
                         google_drive_file_id: file.id,
@@ -1202,7 +1222,8 @@ const server = http.createServer(async (req, res) => {
                         thumbnail_url: thumbnailUrl,
                         status: 'active',
                         mime_type: file.mimeType,
-                        created_at: file.createdTime || new Date().toISOString()
+                        created_at: finalCreatedAt,
+                        metadata: metadata
                     }, { onConflict: 'google_drive_file_id' });
                 }
 

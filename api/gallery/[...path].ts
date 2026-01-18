@@ -1,7 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { google } from 'googleapis';
+import dotenv from 'dotenv';
+import path from 'path';
 
+// Load env vars if running locally
+if (process.env.NODE_ENV !== 'production') {
+    dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+    dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+}
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -167,6 +174,11 @@ async function handleCheckout(req: VercelRequest, res: VercelResponse) {
         // --- NEW LOGIC: Create Pending Order in DB FIRST ---
         // This avoids PayPal custom_id string limit bugs
 
+        // Determine PayPal Environment first
+        const environmentRaw = (process.env.PAYPAL_ENVIRONMENT || 'SANDBOX');
+        const environment = environmentRaw.replace(/[^a-zA-Z0-9_-]/g, '').trim();
+        const isSandbox = environment.toUpperCase() === 'SANDBOX';
+
         const { data: pendingOrder, error: orderError } = await supabase
             .from('photo_orders')
             .insert({
@@ -178,7 +190,8 @@ async function handleCheckout(req: VercelRequest, res: VercelResponse) {
                 metadata: {
                     photoIds,
                     librarySlug,
-                    source: 'checkout_v2'
+                    source: 'checkout_v2',
+                    environment: isSandbox ? 'sandbox' : 'production'
                 }
             })
             .select('id')
@@ -190,11 +203,6 @@ async function handleCheckout(req: VercelRequest, res: VercelResponse) {
         }
 
         const internalRefId = pendingOrder.id; // UUID is safe for custom_id (36 chars)
-
-        // PayPal API Setup - Use strict regex to strip ANY whitespace/hidden chars
-        const environmentRaw = (process.env.PAYPAL_ENVIRONMENT || 'SANDBOX');
-        const environment = environmentRaw.replace(/[^a-zA-Z0-9_-]/g, '').trim();
-        const isSandbox = environment.toUpperCase() === 'SANDBOX';
 
         const rawClientId = isSandbox ? (process.env.PAYPAL_CLIENT_ID_SANDBOX || process.env.PAYPAL_CLIENT_ID) : process.env.PAYPAL_CLIENT_ID;
         const rawClientSecret = isSandbox ? (process.env.PAYPAL_CLIENT_SECRET_SANDBOX || process.env.PAYPAL_CLIENT_SECRET) : process.env.PAYPAL_CLIENT_SECRET;
@@ -865,7 +873,7 @@ async function syncGalleryPhotos(librarySlug: string) {
         throw new Error(`Library not found: ${librarySlug}`);
     }
 
-    const folderId = library.google_drive_folder_id;
+    const folderId = library.google_drive_folder_id || library.gdrive_folder_id;
     if (!folderId) {
         throw new Error(`Library ${librarySlug} has no Google Drive folder ID configured`);
     }
@@ -951,7 +959,14 @@ async function syncGalleryPhotos(librarySlug: string) {
 async function handleSync(req: VercelRequest, res: VercelResponse) {
     try {
         const { slug } = req.query;
-        const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+        if (!SUPABASE_SERVICE_ROLE_KEY) {
+            console.error('[Sync] SUPABASE_SERVICE_ROLE_KEY is missing from environment variables.');
+            return res.status(500).json({
+                error: 'Server configuration error',
+                details: 'Missing database credentials (SUPABASE_SERVICE_ROLE_KEY). Check .env file.'
+            });
+        }
+        const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY);
 
         if (slug && typeof slug === 'string') {
             const result = await syncGalleryPhotos(slug);

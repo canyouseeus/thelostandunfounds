@@ -122,77 +122,103 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
 
   return (
     <div className="w-full h-full flex flex-col">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex gap-2">
-          {(['revenue', 'newsletter', 'affiliates'] as MetricType[]).map((m) => (
-            <button
-              key={m}
-              onClick={() => setMetric(m)}
-              className={cn(
-                "px-2 py-1 text-[10px] uppercase tracking-wider font-medium transition-colors border border-transparent rounded-none",
-                metric === m
-                  ? "bg-white/10 text-white border-white/10"
-                  : "text-white/40 hover:text-white hover:bg-white/5"
-              )}
-            >
-              {config[m].label}
-            </button>
-          ))}
-        </div>
-        <div className="flex gap-1">
-          {(['1H', '24H', '7D', '30D', '1Y'] as TimeRange[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTimeRange(t)}
-              className={cn(
-                "px-1.5 py-0.5 text-[10px] font-medium transition-colors rounded-none",
-                timeRange === t
-                  ? "text-white bg-white/10"
-                  : "text-white/40 hover:text-white"
-              )}
-            >
-              {t}
-            </button>
-          ))}
+      {/* Current Value Display */}
+      <div className="flex items-center justify-center gap-4 mb-4">
+        <div className="text-center">
+          <span className="text-2xl font-bold font-mono" style={{ color: config[metric].color }}>
+            {config[metric].prefix}{data.length > 0 ? data[data.length - 1]?.value.toFixed(0) : '0'}
+          </span>
+          <span className="text-xs text-white/40 ml-2 uppercase">{config[metric].label}</span>
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 relative">
+      {/* Chart Area */}
+      <div className="flex-1 min-h-0 relative mb-4">
         <div className="absolute inset-0">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+            <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
               <XAxis
                 dataKey="name"
-                hide={true}
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 9 }}
+                interval="preserveStartEnd"
+                minTickGap={40}
               />
               <YAxis
-                hide={true}
-                domain={['dataMin', 'dataMax']}
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 9 }}
+                width={35}
+                tickFormatter={(value) => `${config[metric].prefix}${value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value.toFixed(0)}`}
+                domain={['auto', 'auto']}
               />
               <Tooltip
                 contentStyle={{
                   backgroundColor: '#000',
-                  borderColor: 'rgba(255,255,255,0.1)',
+                  border: '1px solid rgba(255,255,255,0.2)',
                   borderRadius: 0,
-                  fontSize: '12px'
+                  fontSize: '12px',
+                  padding: '8px 12px'
                 }}
                 itemStyle={{ color: config[metric].color }}
                 formatter={(value: number | undefined) => [
                   `${config[metric].prefix}${(value ?? 0).toFixed(0)}`,
                   config[metric].label
                 ]}
-                labelStyle={{ display: 'block', color: '#666', marginBottom: '4px' }}
+                labelStyle={{ display: 'block', color: '#888', marginBottom: '4px', fontSize: '10px' }}
               />
               <Area
                 type="monotone"
                 dataKey="value"
                 stroke={config[metric].color}
-                fill="transparent"
+                fill={`${config[metric].color}20`}
                 strokeWidth={2}
+                dot={{ r: 2, fill: config[metric].color, strokeWidth: 0 }}
+                activeDot={{ r: 4, fill: config[metric].color, strokeWidth: 2, stroke: '#000' }}
               />
             </AreaChart>
           </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Controls Container */}
+      <div className="flex flex-col gap-3">
+        {/* Time Range Toggle - Full Width */}
+        <div className="flex w-full bg-white/5 border border-white/10">
+          {(['1H', '24H', '7D', '30D', '1Y'] as TimeRange[]).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTimeRange(t)}
+              className={cn(
+                "flex-1 py-3 text-[10px] md:text-xs uppercase tracking-wider font-medium transition-colors border-r border-white/5 last:border-r-0",
+                timeRange === t
+                  ? "bg-white text-black font-bold"
+                  : "text-white/40 hover:text-white hover:bg-white/10"
+              )}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+
+        {/* Metric Toggle - Full Width */}
+        <div className="flex w-full bg-white/5 border border-white/10">
+          {(['revenue', 'newsletter', 'affiliates'] as MetricType[]).map((m) => (
+            <button
+              key={m}
+              onClick={() => setMetric(m)}
+              className={cn(
+                "flex-1 py-3 text-[10px] md:text-xs uppercase tracking-widest font-bold transition-colors border-r border-white/5 last:border-r-0",
+                metric === m
+                  ? "bg-white text-black"
+                  : "text-white/40 hover:text-white hover:bg-white/10"
+              )}
+            >
+              {config[m].label}
+            </button>
+          ))}
         </div>
       </div>
     </div>

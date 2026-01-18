@@ -215,7 +215,7 @@ export default function PhotoCollectionsView() {
             </div>
 
             {showOnboardForm && (
-                <div className="bg-zinc-900 border border-white/10 p-6 rounded-none animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="bg-zinc-900 p-6 rounded-none animate-in fade-in slide-in-from-top-4 duration-300">
                     <form onSubmit={handleOnboard} className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
@@ -226,7 +226,7 @@ export default function PhotoCollectionsView() {
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
                                     placeholder="e.g. Kattitude Tattoo Studio"
-                                    className="w-full bg-black border border-white/10 p-3 text-white focus:border-white focus:outline-none transition"
+                                    className="w-full bg-black p-3 text-white focus:border-white focus:outline-none transition"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -237,7 +237,7 @@ export default function PhotoCollectionsView() {
                                     value={formData.clientName}
                                     onChange={e => setFormData({ ...formData, clientName: e.target.value })}
                                     placeholder="e.g. John Doe"
-                                    className="w-full bg-black border border-white/10 p-3 text-white focus:border-white focus:outline-none transition"
+                                    className="w-full bg-black p-3 text-white focus:border-white focus:outline-none transition"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -248,7 +248,7 @@ export default function PhotoCollectionsView() {
                                     value={formData.email}
                                     onChange={e => setFormData({ ...formData, email: e.target.value })}
                                     placeholder="client@example.com"
-                                    className="w-full bg-black border border-white/10 p-3 text-white focus:border-white focus:outline-none transition"
+                                    className="w-full bg-black p-3 text-white focus:border-white focus:outline-none transition"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -259,7 +259,7 @@ export default function PhotoCollectionsView() {
                                     value={formData.driveLink}
                                     onChange={e => setFormData({ ...formData, driveLink: e.target.value })}
                                     placeholder="https://drive.google.com/..."
-                                    className="w-full bg-black border border-white/10 p-3 text-white focus:border-white focus:outline-none transition"
+                                    className="w-full bg-black p-3 text-white focus:border-white focus:outline-none transition"
                                 />
                             </div>
                         </div>
@@ -287,7 +287,7 @@ export default function PhotoCollectionsView() {
             )}
 
             {/* Collections List */}
-            <div className="bg-zinc-900 border border-white/10 p-6 rounded-none">
+            <div className="bg-zinc-900 p-6 rounded-none">
                 <div className="mb-6 relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                     <input
@@ -295,7 +295,7 @@ export default function PhotoCollectionsView() {
                         placeholder="Filter collections by name or email..."
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
-                        className="w-full bg-black border border-white/10 pl-10 pr-4 py-2 text-white text-sm focus:border-white focus:outline-none transition"
+                        className="w-full bg-black pl-10 pr-4 py-2 text-white text-sm focus:border-white focus:outline-none transition"
                     />
                 </div>
 
@@ -307,9 +307,9 @@ export default function PhotoCollectionsView() {
                         </div>
                     ) : filteredCollections.length > 0 ? (
                         filteredCollections.map(collection => (
-                            <div key={collection.id} className="group flex flex-col md:flex-row md:items-center justify-between p-4 bg-black border border-white/5 hover:border-white/20 transition">
+                            <div key={collection.id} className="group flex flex-col md:flex-row md:items-center justify-between p-4 bg-black hover:border-white/20 transition">
                                 <div className="flex items-center gap-4 mb-4 md:mb-0">
-                                    <div className="w-12 h-12 bg-zinc-900 border border-white/10 flex items-center justify-center">
+                                    <div className="w-12 h-12 bg-zinc-900 flex items-center justify-center">
                                         <Camera className="w-6 h-6 text-zinc-600 group-hover:text-white transition" />
                                     </div>
                                     <div>
@@ -337,21 +337,21 @@ export default function PhotoCollectionsView() {
                                         href={`/thelostarchives/${collection.slug}`}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="p-2 bg-zinc-900 border border-white/10 text-zinc-400 hover:text-white hover:border-white/30 transition"
+                                        className="p-2 bg-zinc-900 text-zinc-400 hover:text-white hover:border-white/30 transition"
                                         title="View Collection"
                                     >
                                         <ExternalLink className="w-4 h-4" />
                                     </a>
                                     <button
                                         onClick={() => triggerSync(collection.slug)}
-                                        className="p-2 bg-zinc-900 border border-white/10 text-zinc-400 hover:text-white hover:border-white/30 transition"
+                                        className="p-2 bg-zinc-900 text-zinc-400 hover:text-white hover:border-white/30 transition"
                                         title="Refresh Data"
                                     >
                                         <RefreshCcw className="w-4 h-4" />
                                     </button>
                                     <button
                                         onClick={() => handleDelete(collection.id)}
-                                        className="p-2 bg-zinc-900 border border-white/10 text-zinc-400 hover:text-red-500 hover:border-red-500/30 transition"
+                                        className="p-2 bg-zinc-900 text-zinc-400 hover:text-red-500 hover:border-red-500/30 transition"
                                         title="Delete Collection"
                                     >
                                         <Trash2 className="w-4 h-4" />

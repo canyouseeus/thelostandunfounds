@@ -36,7 +36,6 @@ export function BentoCard({
         'bg-[#111] text-white',
         'p-4',
         'rounded-none',
-        'border border-white/10',
         expandable && 'cursor-pointer relative',
         isExpanded && expandable && 'bg-[#141414]',
         className
@@ -68,7 +67,7 @@ export function BentoCard({
       {expandable && isExpanded && expandedContent && (
         <div
           className={cn(
-            'mt-4 pt-4 border-t border-white/10',
+            'mt-4 pt-4',
             'animate-in fade-in slide-in-from-top-2 duration-300'
           )}
         >

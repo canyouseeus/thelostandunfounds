@@ -67,7 +67,7 @@ export default function AdminOverviewView({ stats, alerts, onBack }: AdminOvervi
           Back to Platform Report
         </button>
 
-        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+        <div className="bg-black/50 rounded-none p-6">
           <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
             <Users className="w-5 h-5" />
             BLOG CONTRIBUTORS ({stats?.blogWriters || 0})
@@ -76,7 +76,7 @@ export default function AdminOverviewView({ stats, alerts, onBack }: AdminOvervi
           <div className="space-y-3">
             {stats?.contributorDetails && stats.contributorDetails.length > 0 ? (
               stats.contributorDetails.map((contributor, idx) => (
-                <div key={contributor.authorId || idx} className="bg-white/5 border border-white/10 p-4 rounded-none hover:bg-white/10 transition-colors">
+                <div key={contributor.authorId || idx} className="bg-white/5 p-4 rounded-none hover:bg-white/10 transition-colors">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <h3 className="text-white font-bold text-lg mb-1">{contributor.authorName || 'Unknown Author'}</h3>
@@ -109,7 +109,7 @@ export default function AdminOverviewView({ stats, alerts, onBack }: AdminOvervi
         Back to Dashboard
       </button>
 
-      <div className="bg-black/50 border border-white/10 rounded-none p-6">
+      <div className="bg-black/50 rounded-none p-6">
         <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
           <BarChart3 className="w-5 h-5" />
           PLATFORM REPORT
@@ -119,7 +119,7 @@ export default function AdminOverviewView({ stats, alerts, onBack }: AdminOvervi
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <button
             onClick={() => setShowContributors(true)}
-            className="bg-white/5 border border-white/10 p-4 rounded-none hover:bg-white/10 transition-all text-left group"
+            className="bg-white/5 p-4 rounded-none hover:bg-white/10 transition-all text-left group"
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 text-white/60 text-xs uppercase tracking-wider">
@@ -133,7 +133,7 @@ export default function AdminOverviewView({ stats, alerts, onBack }: AdminOvervi
             <p className="text-[10px] text-white/40 mt-1">Click to view details</p>
           </button>
 
-          <div className="bg-white/5 border border-white/10 p-4 rounded-none">
+          <div className="bg-white/5 p-4 rounded-none">
             <div className="flex items-center gap-2 mb-2 text-white/60 text-xs uppercase tracking-wider">
               <DollarSign className="w-3 h-3" /> Total Revenue
             </div>
@@ -143,7 +143,7 @@ export default function AdminOverviewView({ stats, alerts, onBack }: AdminOvervi
             <p className="text-[10px] text-white/40 mt-1">Affiliate + Gallery sales</p>
           </div>
 
-          <div className="bg-white/5 border border-white/10 p-4 rounded-none">
+          <div className="bg-white/5 p-4 rounded-none">
             <div className="flex items-center gap-2 mb-2 text-white/60 text-xs uppercase tracking-wider">
               <FileText className="w-3 h-3" /> Published Posts
             </div>
@@ -153,7 +153,7 @@ export default function AdminOverviewView({ stats, alerts, onBack }: AdminOvervi
             <p className="text-[10px] text-white/40 mt-1">{stats?.publishedThisMonth || 0} this month</p>
           </div>
 
-          <div className="bg-white/5 border border-white/10 p-4 rounded-none">
+          <div className="bg-white/5 p-4 rounded-none">
             <div className="flex items-center gap-2 mb-2 text-white/60 text-xs uppercase tracking-wider">
               <Mail className="w-3 h-3" /> Newsletter
             </div>
@@ -167,8 +167,8 @@ export default function AdminOverviewView({ stats, alerts, onBack }: AdminOvervi
         {/* Detailed Breakdown */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Revenue Breakdown */}
-          <div className="border border-white/10 bg-white/[0.02] p-6 rounded-none">
-            <h3 className="text-sm font-bold text-white uppercase mb-4 tracking-wide border-b border-white/10 pb-2">
+          <div className="bg-white/[0.02] p-6 rounded-none">
+            <h3 className="text-sm font-bold text-white uppercase mb-4 tracking-wide pb-2">
               Revenue Streams
             </h3>
             <div className="space-y-4">
@@ -184,7 +184,7 @@ export default function AdminOverviewView({ stats, alerts, onBack }: AdminOvervi
                 <span className="text-white/60 text-sm">Platform Subscriptions</span>
                 <span className="text-white/40 font-mono">$0.00</span>
               </div>
-              <div className="pt-2 border-t border-white/10 flex justify-between items-center">
+              <div className="pt-2 flex justify-between items-center">
                 <span className="text-white font-bold text-sm">Total</span>
                 <span className="text-green-400 font-mono font-bold">
                   ${totalRevenue.toFixed(2)}
@@ -194,8 +194,8 @@ export default function AdminOverviewView({ stats, alerts, onBack }: AdminOvervi
           </div>
 
           {/* Content Health & Activity */}
-          <div className="border border-white/10 bg-white/[0.02] p-6 rounded-none">
-            <h3 className="text-sm font-bold text-white uppercase mb-4 tracking-wide border-b border-white/10 pb-2">
+          <div className="bg-white/[0.02] p-6 rounded-none">
+            <h3 className="text-sm font-bold text-white uppercase mb-4 tracking-wide pb-2">
               Content Health
             </h3>
             <div className="space-y-4">
@@ -221,7 +221,7 @@ export default function AdminOverviewView({ stats, alerts, onBack }: AdminOvervi
                 <div className="mt-4 space-y-2">
                   <p className="text-xs text-white/40 uppercase mb-1">Recent Alerts</p>
                   {alerts.slice(0, 3).map(alert => (
-                    <div key={alert.id} className="text-xs p-2 bg-white/5 border border-white/5 border-l-2 border-l-white/20 text-white/80">
+                    <div key={alert.id} className="text-xs p-2 bg-white/5 text-white/80">
                       {alert.message}
                       <span className="block text-[10px] text-white/30 mt-1">{alert.time}</span>
                     </div>

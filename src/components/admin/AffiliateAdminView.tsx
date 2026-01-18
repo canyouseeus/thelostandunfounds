@@ -79,7 +79,7 @@ export default function AffiliateAdminView() {
 
   if (loading) {
     return (
-      <div className="bg-black/50 border border-white/10 rounded-none p-6">
+      <div className="bg-black/50 rounded-none p-6">
         <div className="flex items-center justify-center py-12">
           <div className="text-white/60">Loading affiliates...</div>
         </div>

@@ -68,7 +68,7 @@ export function UserAnalyticsView() {
     return (
         <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
             {events.map((event) => (
-                <div key={event.id} className="bg-white/[0.03] p-3 border-l-2 border-white/10 hover:border-white/30 transition-colors flex items-start gap-3">
+                <div key={event.id} className="bg-white/[0.03] p-3 hover:border-white/30 transition-colors flex items-start gap-3">
                     <div className="mt-0.5">
                         {event.event_type === 'read_article' ? (
                             <BookOpen className="w-3 h-3 text-green-400" />

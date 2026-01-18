@@ -99,7 +99,7 @@ export default function ProfitGraph() {
 
   if (loading && profitData.length === 0) {
     return (
-      <div className="bg-black/50 border border-white/10 rounded-none p-6">
+      <div className="bg-black/50 rounded-none p-6">
         <div className="flex items-center justify-center h-64">
           <div className="text-white/60">Loading profit data...</div>
         </div>
@@ -116,7 +116,7 @@ export default function ProfitGraph() {
   }
 
   return (
-    <div className="bg-black/50 border border-white/10 rounded-none p-6">
+    <div className="bg-black/50 rounded-none p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -171,7 +171,7 @@ export default function ProfitGraph() {
       )}
 
       {/* Chart */}
-      <div className="bg-black/30 border border-white/10 rounded-none p-4">
+      <div className="bg-black/30 rounded-none p-4">
         {profitData.length === 0 ? (
           <div className="flex items-center justify-center h-64 text-white/60">
             <div className="text-center">

@@ -38,10 +38,10 @@ export function ExpandableScreen({
   onOpenChange,
 }: ExpandableScreenProps) {
   const [internalIsOpen, setInternalIsOpen] = useState(false);
-  
+
   const isControlled = controlledIsOpen !== undefined;
   const isOpen = isControlled ? controlledIsOpen : internalIsOpen;
-  
+
   const setIsOpen = (open: boolean) => {
     if (isControlled) {
       onOpenChange?.(open);
@@ -49,7 +49,7 @@ export function ExpandableScreen({
       setInternalIsOpen(open);
     }
   };
-  
+
   const screenRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -98,7 +98,7 @@ export function ExpandableScreen({
               className="fixed inset-0 bg-black/80 backdrop-blur-md z-40"
               onClick={() => setIsOpen(false)}
             />
-            
+
             {/* Expanded Screen */}
             <motion.div
               ref={screenRef}
@@ -110,7 +110,6 @@ export function ExpandableScreen({
               className={cn(
                 'fixed inset-0 z-[100]',
                 'bg-black/95 backdrop-blur-xl',
-                'border border-white/10',
                 'shadow-2xl'
               )}
               style={{
@@ -120,7 +119,7 @@ export function ExpandableScreen({
               {/* Close Button */}
               <button
                 onClick={() => setIsOpen(false)}
-                className="absolute top-20 right-8 z-[110] p-2 bg-black/50 hover:bg-white/10 border border-white/10 transition-colors rounded-none"
+                className="absolute top-20 right-8 z-[110] p-2 bg-black/50 hover:bg-white/10 transition-colors rounded-none"
               >
                 <X className="w-6 h-6 text-white" />
               </button>

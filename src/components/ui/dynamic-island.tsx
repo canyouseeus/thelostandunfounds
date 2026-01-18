@@ -49,10 +49,9 @@ export function DynamicIsland({
         isExpanded
           ? 'w-[90vw] max-w-2xl'
           : isHovered
-          ? 'w-64'
-          : 'w-32',
+            ? 'w-64'
+            : 'w-32',
         'bg-black/80 backdrop-blur-xl',
-        'border border-white/30',
         'shadow-[4px_4px_0px_0px_rgba(255,255,255,0.25)]', // 3D Shadow
         !isExpanded && 'hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.35)] hover:-translate-y-[1px]',
         className
@@ -94,7 +93,6 @@ export function DynamicIsland({
       {isExpanded && expandedContent && (
         <div
           className={cn(
-            'border-t border-white/10',
             'px-4 py-4',
             'animate-in slide-in-from-top-2 duration-300'
           )}

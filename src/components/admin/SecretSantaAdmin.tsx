@@ -108,7 +108,7 @@ export default function SecretSantaAdmin() {
 
   if (loading) {
     return (
-      <div className="bg-black/50 border border-white/10 rounded-none p-6">
+      <div className="bg-black/50 rounded-none p-6">
         <div className="flex items-center justify-center py-12">
           <RefreshCw className="w-6 h-6 animate-spin text-white/60" />
           <span className="ml-3 text-white/60">Loading Secret Santa data...</span>
@@ -133,7 +133,7 @@ export default function SecretSantaAdmin() {
 
   if (!data) {
     return (
-      <div className="bg-black/50 border border-white/10 rounded-none p-6">
+      <div className="bg-black/50 rounded-none p-6">
         <p className="text-white/60">No data available</p>
       </div>
     );
@@ -142,7 +142,7 @@ export default function SecretSantaAdmin() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-black/50 border border-white/10 rounded-none p-6">
+      <div className="bg-black/50 rounded-none p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <Gift className="w-6 h-6 text-red-500" />
@@ -176,7 +176,7 @@ export default function SecretSantaAdmin() {
 
       {/* Current Year Pot Summary */}
       {data.pot && (
-        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+        <div className="bg-black/50 rounded-none p-6">
           <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
             <Calendar className="w-5 h-5" />
             {data.pot.year} Pot Summary
@@ -217,7 +217,7 @@ export default function SecretSantaAdmin() {
       )}
 
       {/* Contributions Breakdown */}
-      <div className="bg-black/50 border border-white/10 rounded-none p-6">
+      <div className="bg-black/50 rounded-none p-6">
         <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
           <TrendingUp className="w-5 h-5" />
           Contributions Breakdown
@@ -231,7 +231,7 @@ export default function SecretSantaAdmin() {
         {Object.keys(data.contributions.by_reason).length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             {Object.entries(data.contributions.by_reason).map(([reason, amount]) => (
-              <div key={reason} className="bg-white/5 border border-white/10 rounded-none p-4">
+              <div key={reason} className="bg-white/5 rounded-none p-4">
                 <div className="text-white/60 text-sm mb-1">{reason}</div>
                 <div className="text-white text-xl font-bold">{formatCurrency(amount)}</div>
               </div>
@@ -269,7 +269,7 @@ export default function SecretSantaAdmin() {
 
       {/* Distribution History */}
       {data.distribution.distributed && data.distribution.items.length > 0 && (
-        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+        <div className="bg-black/50 rounded-none p-6">
           <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
             <Users className="w-5 h-5" />
             Distribution History ({data.distribution.items.length} affiliates)
@@ -312,7 +312,7 @@ export default function SecretSantaAdmin() {
 
       {/* All Years Summary */}
       {data.all_pots.length > 1 && (
-        <div className="bg-black/50 border border-white/10 rounded-none p-6">
+        <div className="bg-black/50 rounded-none p-6">
           <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
             <FileText className="w-5 h-5" />
             All Years Summary

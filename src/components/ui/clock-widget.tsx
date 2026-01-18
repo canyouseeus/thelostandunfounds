@@ -185,7 +185,7 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
         leftDisplay = dh;
         rightDisplay = dm;
         extraRight = (
-            <div className="absolute left-full top-0 ml-1 flex flex-col items-start leading-none">
+            <div className="absolute left-full bottom-0 ml-1 flex flex-col items-start leading-none">
                 <span className={cn(
                     "text-[10px] font-bold text-white/30 mb-[2px]",
                     is24Hour ? "opacity-0" : "opacity-100"
@@ -258,10 +258,10 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
                     {/* Analog Face */}
                     <div
                         className={cn("absolute inset-0 w-full h-full transition-opacity duration-500", !isDigital ? "opacity-100" : "opacity-0")}
-                        onClick={() => setIsDigital(true)}
+                        onClick={() => { setIsDigital(true); setIs24Hour(false); }}
                     >
                         {/* Clock Face Border */}
-                        <div className="absolute inset-2 border-2 border-white/20 rounded-full" />
+                        <div className="absolute inset-2 rounded-full" />
 
                         {/* Hands - Flat Design, No Shadows */}
                         <div className="relative w-full h-full">
@@ -272,12 +272,20 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
                         </div>
                     </div>
 
-                    {/* Digital Clock View */}
                     <div
                         className={cn("absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-300", isDigital ? "opacity-100" : "opacity-0")}
-                        onClick={() => setIsDigital(false)}
+                        onClick={() => {
+                            if (!is24Hour) {
+                                // Standard -> Military
+                                setIs24Hour(true);
+                            } else {
+                                // Military -> Analog (cycle back)
+                                setIsDigital(false);
+                                setIs24Hour(false);
+                            }
+                        }}
                     >
-                        <div onClick={(e) => { e.stopPropagation(); setIs24Hour(!is24Hour); }} className="cursor-pointer hover:opacity-80 transition-opacity">
+                        <div className="cursor-pointer hover:opacity-80 transition-opacity">
                             <UnifiedDigits />
                         </div>
                     </div>
@@ -323,7 +331,7 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
                                 <span className="absolute left-full top-1/2 -translate-y-1/2 text-white/40 text-sm ml-2">MIN</span>
                             </div>
                             {/* Absolute positioned button at bottom so it doesn't shift numbers */}
-                            <button type="submit" className="absolute bottom-6 text-xs text-white/40 hover:text-white uppercase tracking-widest border border-white/20 px-3 py-1 rounded-full hover:cursor-pointer">
+                            <button type="submit" className="absolute bottom-6 text-xs text-white/40 hover:text-white uppercase tracking-widest bg-white/10 px-3 py-1 rounded-full hover:cursor-pointer hover:bg-white/20">
                                 START
                             </button>
                         </form>

@@ -149,7 +149,18 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
             // Since we can't easily join on JSONB items without complex query, 
             // let's just use the fetched orders for GLOBAL admin, and EMPTY/Filtered for photographer.
 
-            let validOrders = orders || [];
+            // Filter out Sandbox data
+            const isTestEmail = (email: string | null | undefined) => {
+                if (!email) return false;
+                const testPatterns = ['test', 'demo', 'admin', 'dev', 'staging', 'dummy'];
+                return testPatterns.some(pattern => email.toLowerCase().includes(pattern));
+            };
+
+            let validOrders = (orders || []).filter(o =>
+                o.payment_status === 'completed' &&
+                !isTestEmail(o.email) &&
+                (o.metadata as any)?.environment !== 'sandbox'
+            );
             if (isPhotographerView) {
                 // If we can't filter easily, show empty to avoid leaking other's data
                 // TODO: Implement proper order-to-owner tracking
@@ -563,7 +574,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                     if (failedSyncs.length > 0 && successfulSyncs.length === 0) {
                         error(`Sync failed for all libraries. ${failedSyncs[0]?.error || 'Check Google Drive credentials.'}`);
                     } else if (failedSyncs.length > 0) {
-                        info(`Partially synced. ${successfulSyncs.length} succeeded, ${failedSyncs.length} failed.`);
+                        const failedNames = failedSyncs.map((f: any) => f.slug).join(', ');
+                        info(`Partially synced. ${successfulSyncs.length} succeeded. Failed: ${failedNames}`); // Show which ones failed
                     } else {
                         success(`Galleries synchronized successfully. ${syncData.results?.length || 0} libraries checked.`);
                     }
@@ -705,7 +717,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                     {!isPhotographerView && (
                         <button
                             onClick={() => setIsInviteModalOpen(true)}
-                            className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 text-xs uppercase tracking-wider font-bold flex items-center justify-center gap-2 w-full sm:w-auto"
+                            className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white/60 text-xs uppercase tracking-wider font-bold flex items-center justify-center gap-2 w-full sm:w-auto"
                         >
                             <Mail className="w-3 h-3" />
                             <span className="sm:inline">Invite Photographer</span>
@@ -714,7 +726,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                     <button
                         onClick={checkAssetHealth}
                         disabled={verifying}
-                        className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 text-xs uppercase tracking-wider font-bold flex items-center justify-center gap-2 w-full sm:w-auto"
+                        className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white/60 text-xs uppercase tracking-wider font-bold flex items-center justify-center gap-2 w-full sm:w-auto"
                     >
                         {verifying ? (
                             <RefreshCw className="w-3 h-3 animate-spin" />
@@ -730,7 +742,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
             {
                 isManaged && (
                     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
-                        <div className="bg-[#0A0A0A] border border-white/10 w-full max-w-2xl p-6 relative my-8 max-h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar rounded-none">
+                        <div className="bg-[#0A0A0A] w-full max-w-2xl p-6 relative my-8 max-h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar rounded-none">
                             <button
                                 onClick={() => setIsManaged(false)}
                                 className="absolute top-4 right-4 text-white/40 hover:text-white"
@@ -761,14 +773,14 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                     setModalData({ ...modalData, name });
                                                 }
                                             }}
-                                            className="w-full bg-white/5 border border-white/10 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 rounded-none"
+                                            className="w-full bg-white/5 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 rounded-none"
                                             placeholder="e.g. Summer 2025 Collection"
                                         />
                                     </div>
 
                                     <div>
                                         <label className="block text-xs uppercase text-white/40 mb-1">URL Slug</label>
-                                        <div className="flex items-center gap-2 bg-white/5 border border-white/10 p-2 opacity-50">
+                                        <div className="flex items-center gap-2 bg-white/5 p-2 opacity-50">
                                             <span className="text-white/40 text-xs">/gallery/</span>
                                             <input
                                                 type="text"
@@ -791,7 +803,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                             return (
                                                 <div
                                                     key={idx}
-                                                    className="grid items-center gap-4 bg-white/5 border border-white/10 p-4 rounded-none w-full"
+                                                    className="grid items-center gap-4 bg-white/5 p-4 rounded-none w-full"
                                                     style={{ gridTemplateColumns: 'minmax(180px, 1fr) 100px 120px 80px' }}
                                                 >
                                                     {isEditing ? (
@@ -824,7 +836,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                                     }}
                                                                     placeholder="Count"
                                                                     title="Number of photos (-1 for All)"
-                                                                    className="w-full bg-white/5 border border-white/10 rounded-none px-2 py-1 text-xs text-center text-white font-mono focus:outline-none focus:border-white/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                    className="w-full bg-white/5 rounded-none px-2 py-1 text-xs text-center text-white font-mono focus:outline-none focus:border-white/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                                 />
                                                             </div>
                                                             {/* Price Input */}
@@ -840,7 +852,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                                         newOptions[idx].price = isNaN(val) ? 0 : val;
                                                                         setPricingOptions(newOptions);
                                                                     }}
-                                                                    className="w-full bg-white/5 border border-white/10 rounded-none px-2 py-1 text-xs text-white font-bold font-mono focus:outline-none focus:border-white/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                    className="w-full bg-white/5 rounded-none px-2 py-1 text-xs text-white font-bold font-mono focus:outline-none focus:border-white/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                                 />
                                                             </div>
                                                             {/* Done Button */}
@@ -941,7 +953,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                     <textarea
                                         value={modalData.description}
                                         onChange={(e) => setModalData({ ...modalData, description: e.target.value })}
-                                        className="w-full bg-white/5 border border-white/10 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 min-h-[80px] rounded-none"
+                                        className="w-full bg-white/5 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 min-h-[80px] rounded-none"
                                         placeholder="Brief description of the gallery contents..."
                                     />
                                 </div>
@@ -952,7 +964,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                     <textarea
                                         value={invitedEmails}
                                         onChange={(e) => setInvitedEmails(e.target.value)}
-                                        className="w-full bg-white/5 border border-white/10 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 min-h-[60px] rounded-none font-mono text-xs"
+                                        className="w-full bg-white/5 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 min-h-[60px] rounded-none font-mono text-xs"
                                         placeholder="client@example.com, another@example.com..."
                                     />
                                     <p className="text-[10px] text-white/30 mt-1">
@@ -974,7 +986,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                     type="text"
                                                     value={modalData.cover_image_url}
                                                     onChange={(e) => setModalData({ ...modalData, cover_image_url: e.target.value })}
-                                                    className="flex-1 bg-white/5 border border-white/10 p-2 text-xs text-white rounded-none"
+                                                    className="flex-1 bg-white/5 p-2 text-xs text-white rounded-none"
                                                     placeholder="https://... (or upload below)"
                                                 />
                                             </div>
@@ -1042,7 +1054,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                 type="text"
                                                 value={modalData.google_drive_folder_id}
                                                 onChange={(e) => setModalData({ ...modalData, google_drive_folder_id: e.target.value })}
-                                                className="w-full bg-white/5 border border-white/10 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 font-mono text-xs"
+                                                className="w-full bg-white/5 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 font-mono text-xs"
                                                 placeholder="1AbCdEfGhIjK..."
                                                 required={uploadMode === 'drive' && !filesData.length} // Only required if not uploading files in mixed mode (simplified logic)
                                             />
@@ -1069,7 +1081,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                             </div>
 
                                             {filesData.length > 0 && (
-                                                <div className="max-h-[220px] overflow-y-auto border border-white/10 bg-black/40 p-2 grid grid-cols-2 gap-2 custom-scrollbar">
+                                                <div className="max-h-[220px] overflow-y-auto bg-black/40 p-2 grid grid-cols-2 gap-2 custom-scrollbar">
                                                     {filesData.map((item, i) => (
                                                         <div key={i} className="flex items-center gap-2 overflow-hidden text-xs text-white bg-white/5 p-2 rounded-none relative group">
                                                             <div className="w-10 h-10 flex-shrink-0 bg-black/50 overflow-hidden relative">
@@ -1120,7 +1132,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                     <button
                                         type="button"
                                         onClick={() => setIsManaged(false)}
-                                        className="flex-1 py-3 border border-white/10 text-white/60 hover:text-white hover:bg-white/5 transition uppercase text-xs font-bold"
+                                        className="flex-1 py-3 text-white/60 hover:text-white hover:bg-white/5 transition uppercase text-xs font-bold"
                                     >
                                         Cancel
                                     </button>
@@ -1188,7 +1200,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Active Galleries */}
                     <div className="bg-white/[0.02] p-6 rounded-none h-full">
-                        <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
+                        <div className="flex items-center justify-between mb-4 pb-2">
                             <h3 className="text-sm font-bold text-white uppercase tracking-wide">
                                 Active Galleries ({libraries.length})
                             </h3>
@@ -1283,7 +1295,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
 
                     {/* Recent Orders List */}
                     <div className="bg-white/[0.02] p-6 rounded-none h-full">
-                        <h3 className="text-sm font-bold text-white uppercase mb-4 tracking-wide border-b border-white/10 pb-2">
+                        <h3 className="text-sm font-bold text-white uppercase mb-4 tracking-wide pb-2">
                             Recent Sales
                         </h3>
 
@@ -1327,7 +1339,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
             {
                 isInviteModalOpen && (
                     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-                        <div className="bg-[#0A0A0A] border border-white/10 w-full max-w-md p-6 relative">
+                        <div className="bg-[#0A0A0A] w-full max-w-md p-6 relative">
                             <button
                                 onClick={() => setIsInviteModalOpen(false)}
                                 className="absolute top-4 right-4 text-white/40 hover:text-white"
@@ -1370,7 +1382,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                         required
                                         value={inviteData.name}
                                         onChange={e => setInviteData({ ...inviteData, name: e.target.value })}
-                                        className="w-full bg-white/5 border border-white/10 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40"
+                                        className="w-full bg-white/5 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40"
                                         placeholder="Jane Doe"
                                     />
                                 </div>
@@ -1381,7 +1393,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                         required
                                         value={inviteData.email}
                                         onChange={e => setInviteData({ ...inviteData, email: e.target.value })}
-                                        className="w-full bg-white/5 border border-white/10 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40"
+                                        className="w-full bg-white/5 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40"
                                         placeholder="jane@example.com"
                                     />
                                 </div>

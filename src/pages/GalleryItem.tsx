@@ -75,7 +75,7 @@ export default function GalleryItem({ lib, index, userIsAdmin, authLoading, onGa
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
             onClick={() => !isLocked && onGalleryClick(lib)}
-            className={`group relative bg-zinc-900/30 transition-all duration-500 overflow-hidden aspect-[4/5] flex flex-col justify-end p-8 ${!isLocked ? 'hover:bg-zinc-800/30 cursor-pointer' : 'cursor-not-allowed'}`}
+            className={`group relative bg-zinc-900/30 transition-all duration-500 overflow-hidden aspect-square flex flex-col justify-end p-8 ${!isLocked ? 'hover:bg-zinc-800/30 cursor-pointer' : 'cursor-not-allowed'}`}
         >
             {/* Background Image/Overlay */}
             {lib.cover_image_url ? (
@@ -103,10 +103,10 @@ export default function GalleryItem({ lib, index, userIsAdmin, authLoading, onGa
             {/* Hover Gradient Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-80 group-hover:opacity-40 transition-opacity duration-500" />
 
-            {/* Content Wrapper - Positioned at bottom */}
-            <div className={`relative z-10 space-y-3 ${isLocked ? 'opacity-20' : 'opacity-100'}`}>
+            {/* Content Wrapper - Fixed height layout so title doesn't move */}
+            <div className={`relative z-10 ${isLocked ? 'opacity-20' : 'opacity-100'}`}>
                 {/* Badge */}
-                <div className="flex items-center">
+                <div className="flex items-center mb-3">
                     {lib.is_private ? (
                         <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1">
                             <Lock className="w-3 h-3 text-white" />
@@ -119,15 +119,17 @@ export default function GalleryItem({ lib, index, userIsAdmin, authLoading, onGa
                     )}
                 </div>
 
-                {/* Title */}
+                {/* Title - Fixed position, no movement */}
                 <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-tight uppercase group-hover:translate-x-2 transition-transform duration-500">
                     {lib.name}
                 </h2>
 
-                {/* Description */}
-                <p className="text-sm text-white/60 line-clamp-2 font-light leading-relaxed group-hover:text-white/80 transition-colors duration-500">
-                    {lib.description}
-                </p>
+                {/* Description - Fixed 2-line container height */}
+                <div className="h-[2.75rem] mt-3">
+                    <p className="text-sm text-white/60 line-clamp-2 font-light leading-relaxed group-hover:text-white/80 transition-colors duration-500">
+                        {lib.description}
+                    </p>
+                </div>
 
                 {/* View Gallery Link */}
                 <div className="pt-2 flex items-center gap-2 text-[10px] font-black tracking-widest uppercase text-white opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-500">

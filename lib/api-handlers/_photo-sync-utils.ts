@@ -71,34 +71,60 @@ export async function syncGalleryPhotos(librarySlug: string) {
         const thumbnailUrl = file.thumbnailLink?.replace(/=s220$/, '=s1200');
 
         // --- METADATA & SMART DATE CORRECTION ---
-        let metadata = file.imageMediaMetadata || {};
+        // --- METADATA NORMALIZATION & DATE PARSING ---
+        let metadata = file.imageMediaMetadata || {} as any;
         let finalCreatedAt = file.createdTime || new Date().toISOString();
 
-        // Drive API 'time' field in imageMediaMetadata is the capture time
-        const captureTime = metadata.time;
+        // 1. Map camelCase to snake_case for frontend consistency
+        if (metadata.cameraMake) metadata.camera_make = metadata.cameraMake;
+        if (metadata.cameraModel) metadata.camera_model = metadata.cameraModel;
+        if (metadata.focalLength) metadata.focal_length = metadata.focalLength;
+        if (metadata.isoSpeed) metadata.iso = metadata.isoSpeed;
+        if (metadata.exposureTime) metadata.shutter_speed = metadata.exposureTime;
 
-        if (captureTime) {
-            const captureDate = new Date(captureTime);
-            const uploadDate = new Date(finalCreatedAt);
+        // 2. Parse 'time' (Capture Time)
+        // Drive format is often "YYYY:MM:DD HH:MM:SS" which new Date() often fails on
+        const captureTimeStr = metadata.time;
 
-            // If Capture Year is 2025 but Upload Year is 2026
-            if (captureDate.getFullYear() === 2025 && uploadDate.getFullYear() === 2026) {
-                // Force the year to 2026, keep month/day/time
-                captureDate.setFullYear(2026);
+        if (captureTimeStr) {
+            let captureDate: Date | null = null;
 
-                // Use a descriptive name for the corrected metadata to avoid TS errors
-                // and store it in a way that doesn't violate the schema if we cast to any for storage
-                finalCreatedAt = captureDate.toISOString();
-
-                // If we want to mark it as corrected in the metadata we store in Supabase
-                // we can cast to any here since Supabase jsonb doesn't care about Google's schema
-                (metadata as any)._corrected = true;
-                (metadata as any).time = captureDate.toISOString();
+            // Try standard parse
+            const stdParse = new Date(captureTimeStr);
+            if (!isNaN(stdParse.getTime())) {
+                captureDate = stdParse;
             } else {
-                // Use capture time as the primary sort time if available and valid
-                finalCreatedAt = captureTime;
+                // Try parsing "YYYY:MM:DD HH:MM:SS" manually
+                const parts = captureTimeStr.match(/(\d{4}):(\d{2}):(\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
+                if (parts) {
+                    captureDate = new Date(
+                        parseInt(parts[1]),
+                        parseInt(parts[2]) - 1, // Month is 0-indexed
+                        parseInt(parts[3]),
+                        parseInt(parts[4]),
+                        parseInt(parts[5]),
+                        parseInt(parts[6])
+                    );
+                }
+            }
+
+            if (captureDate && !isNaN(captureDate.getTime())) {
+                // Smart Year Correction (2025 -> 2026 if needed)
+                // If Capture Year is 2025 but Upload Year is 2026, force 2026
+                // (This is specific logic for the user's "Last Night" event context)
+                const uploadDate = new Date(finalCreatedAt);
+                if (captureDate.getFullYear() === 2025 && uploadDate.getFullYear() === 2026) {
+                    captureDate.setFullYear(2026);
+                    metadata._corrected = true;
+                }
+
+                // Update the metadata time to ISO format for easier frontend sorting
+                metadata.time = captureDate.toISOString();
+                metadata.date_taken = captureDate.toISOString(); // Use this for main sort
+                finalCreatedAt = captureDate.toISOString();
             }
         }
+
         // ----------------------------------------
 
         await supabase
@@ -111,7 +137,7 @@ export async function syncGalleryPhotos(librarySlug: string) {
                 status: 'active',
                 mime_type: file.mimeType,
                 created_at: finalCreatedAt,
-                metadata: metadata // Store full metadata
+                metadata: metadata // Store full (and normalized) metadata
             }, {
                 onConflict: 'google_drive_file_id'
             });

@@ -33,13 +33,13 @@ export default function AdminSettingsView({ stats, onBack }: AdminSettingsViewPr
         Back to Dashboard
       </button>
 
-      <div className="bg-black/50 border border-white/10 rounded-none p-6">
+      <div className="bg-black/50 rounded-none p-6">
         <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
           <Settings className="w-5 h-5" />
           Admin Settings
         </h2>
         <div className="space-y-6">
-          <div className="border-b border-white/10 pb-4">
+          <div className="pb-4">
             <h3 className="text-white font-medium mb-2 flex items-center gap-2">
               <Shield className="w-4 h-4" />
               Platform Configuration
@@ -68,7 +68,7 @@ export default function AdminSettingsView({ stats, onBack }: AdminSettingsViewPr
             </div>
           </div>
 
-          <div className="border-b border-white/10 pb-4">
+          <div className="pb-4">
             <h3 className="text-white font-medium mb-2 flex items-center gap-2">
               <Activity className="w-4 h-4" />
               Tool Management
@@ -95,7 +95,7 @@ export default function AdminSettingsView({ stats, onBack }: AdminSettingsViewPr
             <p className="text-white/40 text-sm">Additional configuration options coming soon...</p>
           </div>
 
-          <div className="border-t border-white/10 pt-4">
+          <div className="pt-4">
             <h3 className="text-white font-medium mb-4 flex items-center gap-2">
               <Settings className="w-4 h-4" />
               Quick Navigation

@@ -57,7 +57,7 @@ export function SidePanel({
         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 animate-in fade-in duration-300"
         onClick={onClose}
       />
-      
+
       {/* Panel */}
       <div
         className={cn(
@@ -65,7 +65,6 @@ export function SidePanel({
           sideClasses[side],
           'w-full max-w-md',
           'bg-black/95 backdrop-blur-xl',
-          'border border-white',
           'shadow-2xl',
           'transition-transform duration-300 ease-out',
           slideClasses[side],
@@ -74,7 +73,7 @@ export function SidePanel({
       >
         {/* Header */}
         {(title || true) && (
-          <div className="flex items-center justify-between p-6 border-b border-white">
+          <div className="flex items-center justify-between p-6">
             {title && (
               <h2 className="text-xl font-bold text-white">{title}</h2>
             )}

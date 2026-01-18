@@ -47,9 +47,9 @@ function SortableItem({ id, children, className }: SortableItemProps) {
       style={style}
       className={cn(
         'flex items-center gap-3',
-        'bg-black/50 border border-white',
+        'bg-black/50',
         'p-4',
-        'hover:border-white hover:bg-white/5',
+        'hover:bg-white/5',
         'transition-all duration-200',
         isDragging && 'z-50 shadow-lg',
         className
@@ -68,9 +68,9 @@ function SortableItem({ id, children, className }: SortableItemProps) {
 }
 
 interface SortableListProps {
-  items: Array<{ id: string; [key: string]: any }>;
-  onReorder: (newOrder: Array<{ id: string; [key: string]: any }>) => void;
-  renderItem: (item: { id: string; [key: string]: any }) => React.ReactNode;
+  items: Array<{ id: string;[key: string]: any }>;
+  onReorder: (newOrder: Array<{ id: string;[key: string]: any }>) => void;
+  renderItem: (item: { id: string;[key: string]: any }) => React.ReactNode;
   className?: string;
   itemClassName?: string;
 }
