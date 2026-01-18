@@ -77,7 +77,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
     const [countdownExpired, setCountdownExpired] = useState(false);
     const targetTime8PM = useMemo(() => {
         const target = new Date();
-        target.setHours(20, 0, 0, 0); // 8:00 PM today
+        target.setHours(23, 11, 0, 0); // 11:11 PM today
         return target;
     }, []);
 

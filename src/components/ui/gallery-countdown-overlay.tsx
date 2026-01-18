@@ -109,7 +109,7 @@ export function GalleryCountdownOverlay({
 
                 {/* "Opens at" label */}
                 <div className="text-xs tracking-[0.2em] text-white/60 uppercase mb-4">
-                    GALLERY OPENS AT 8PM
+                    GALLERY OPENS AT 11:11 PM
                 </div>
 
                 {/* Countdown display */}

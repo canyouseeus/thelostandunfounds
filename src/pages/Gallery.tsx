@@ -148,8 +148,10 @@ export default function Gallery() {
                                     {/* Hover Gradient Overlay */}
                                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-80 group-hover:opacity-40 transition-opacity duration-500" />
 
-                                    <div className="relative z-10 space-y-4">
-                                        <div className="flex items-center justify-between">
+                                    {/* Content Wrapper - Positioned at bottom */}
+                                    <div className="relative z-10 space-y-3">
+                                        {/* Badge */}
+                                        <div className="flex items-center">
                                             {lib.is_private ? (
                                                 <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1">
                                                     <Lock className="w-3 h-3 text-white" />
@@ -160,22 +162,23 @@ export default function Gallery() {
                                                     <span className="text-[10px] font-bold text-black tracking-widest uppercase">Public</span>
                                                 </div>
                                             )}
-                                            {/* Hover Overlay */}
-                                            {/* Hover Overlay Removed - Price and Details Text Gone */}
                                         </div>
-                                    </div>
 
-                                    <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-none uppercase group-hover:translate-x-2 transition-transform duration-500 whitespace-nowrap overflow-hidden text-ellipsis">
-                                        {lib.name}
-                                    </h2>
+                                        {/* Title - Allow wrapping, no truncation */}
+                                        <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-tight uppercase group-hover:translate-x-2 transition-transform duration-500">
+                                            {lib.name}
+                                        </h2>
 
-                                    <p className="text-sm text-white/60 line-clamp-2 font-light leading-relaxed group-hover:text-white/80 transition-colors duration-500">
-                                        {lib.description}
-                                    </p>
+                                        {/* Description */}
+                                        <p className="text-sm text-white/60 line-clamp-2 font-light leading-relaxed group-hover:text-white/80 transition-colors duration-500">
+                                            {lib.description}
+                                        </p>
 
-                                    <div className="pt-4 flex items-center gap-2 text-[10px] font-black tracking-widest uppercase text-white opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-500">
-                                        {lib.is_private && !user ? 'Log in to View' : 'View Gallery'}
-                                        <ArrowRight className="w-3 h-3" />
+                                        {/* View Gallery Link */}
+                                        <div className="pt-2 flex items-center gap-2 text-[10px] font-black tracking-widest uppercase text-white opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-500">
+                                            {lib.is_private && !user ? 'Log in to View' : 'View Gallery'}
+                                            <ArrowRight className="w-3 h-3" />
+                                        </div>
                                     </div>
 
                                 </motion.div>
