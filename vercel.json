@@ -28,6 +28,12 @@
       "permanent": false
     }
   ],
+  "rewrites": [
+    {
+      "source": "/((?!api|_next|static|sql|.*\\..*).*)",
+      "destination": "/index.html"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
