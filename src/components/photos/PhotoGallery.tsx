@@ -306,7 +306,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
             <div className="max-w-7xl mx-auto">
 
                 {/* Tab Switcher & Batch Actions */}
-                <div className="sticky top-[60px] md:top-[80px] z-40 bg-black/95 backdrop-blur-md flex flex-col md:flex-row justify-center items-center gap-4 md:gap-8 mb-4 py-4 -mx-4 px-4 md:-mx-8 md:px-8 transition-all">
+                <div className="sticky top-[60px] md:top-[80px] z-40 bg-black/95 backdrop-blur-md flex flex-col md:flex-row justify-center items-center gap-4 md:gap-8 mb-2 py-2 -mx-4 px-4 md:-mx-8 md:px-8 transition-all">
                     <div className="flex gap-4 items-center">
                         <button
                             onClick={() => setViewMode('single')}

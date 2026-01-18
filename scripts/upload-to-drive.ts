@@ -10,26 +10,20 @@ const __dirname = path.dirname(__filename);
 // Load env vars from the root .env.local
 dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 
-const GOOGLE_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.replace(/[^a-zA-Z0-9@._-]/g, '');
-const GOOGLE_KEY = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY
-    ?.replace(/\\n/g, '\n')
-    ?.replace(/"/g, '')
-    ?.trim();
+const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const REFRESH_TOKEN = process.env.GOOGLE_REFRESH_TOKEN;
 
-if (!GOOGLE_EMAIL || !GOOGLE_KEY) {
-    console.error('Missing Google Service Account credentials in .env.local');
+if (!CLIENT_ID || !CLIENT_SECRET || !REFRESH_TOKEN) {
+    console.error('Missing OAuth2 credentials in .env.local');
+    console.error('Run: npx tsx scripts/setup-google-oauth.ts');
     process.exit(1);
 }
 
-const auth = new google.auth.GoogleAuth({
-    credentials: {
-        client_email: GOOGLE_EMAIL,
-        private_key: GOOGLE_KEY,
-    },
-    scopes: ['https://www.googleapis.com/auth/drive'],
-});
+const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET);
+oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
 
-const drive = google.drive({ version: 'v3', auth });
+const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
 const FOLDER_CONFIG = {
     JPG: {
