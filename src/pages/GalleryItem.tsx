@@ -38,7 +38,7 @@ export default function GalleryItem({ lib, index, userIsAdmin, authLoading, onGa
         const calculateTime = () => {
             const now = new Date();
             const target = new Date();
-            target.setHours(23, 11, 0, 0); // 11:11 PM
+            target.setHours(11, 11, 0, 0); // 11:11 AM
 
             if (now >= target) {
                 setIsLocked(false);
@@ -95,7 +95,7 @@ export default function GalleryItem({ lib, index, userIsAdmin, authLoading, onGa
                         {timeRemaining}
                     </div>
                     <div className="text-xs font-bold text-white/50 tracking-[0.2em] mt-2 uppercase">
-                        Unlocks at 11:11 PM
+                        Unlocks at 11:11 AM
                     </div>
                 </div>
             )}
