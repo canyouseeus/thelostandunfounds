@@ -1,63 +1,73 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import { syncGalleryPhotos } from '../../lib/api-handlers/_photo-sync-utils';
+// NOTE: syncGalleryPhotos is now dynamically imported in handleSync to avoid
+// pulling googleapis into ALL routes which causes cold start failures
 
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    // Vercel sometimes passes the spread param with the ellipses key (e.g. '...path' or just 'path')
-    // dependent on the exact runtime/platform version. We check both.
-    const rawPath = req.query.path || req.query['...path'] || req.query['slug'];
+    try {
+        console.log(`[API] Req: ${req.url} [${req.method}]`);
 
-    // Normalize path: join array, remove trailing slash, lowercase
-    const rawRoute = Array.isArray(rawPath) ? rawPath.join('/') : (rawPath as string) || '';
-    const route = rawRoute.replace(/\/$/, '').toLowerCase();
+        // Vercel sometimes passes the spread param with the ellipses key (e.g. '...path' or just 'path')
+        // dependent on the exact runtime/platform version. We check both.
+        const rawPath = req.query.path || req.query['...path'] || req.query['slug'];
 
-    console.log('Gallery API routing:', {
-        rawPath,
-        resolvedRoute: route,
-        method: req.method,
-        query: req.query
-    });
+        // Normalize path: join array, remove trailing slash, lowercase
+        const rawRoute = Array.isArray(rawPath) ? rawPath.join('/') : (rawPath as string) || '';
+        const route = rawRoute.replace(/\/$/, '').toLowerCase();
 
-
-
-    if (route === 'checkout') {
-        return handleCheckout(req, res);
-    }
-
-    if (route === 'resend-order') {
-        return handleResendOrder(req, res);
-    }
-
-    if (route === 'capture') {
-        return handleCapture(req, res);
-    }
-
-    if (route === 'stream') {
-        return handleStream(req, res);
-    }
-
-    if (route === 'invite') {
-        return handleInvite(req, res);
-    }
-
-    if (route === 'sync') {
-        return handleSync(req, res);
-    }
-
-    return res.status(404).json({
-        error: 'Gallery route not found',
-        debug: {
-            receivedPathFromQuery: rawPath,
+        console.log('Gallery API routing:', {
+            rawPath,
             resolvedRoute: route,
-            originalUrl: req.url,
             method: req.method,
-            queryKeys: Object.keys(req.query)
+            query: req.query
+        });
+
+        if (route === 'checkout') {
+            return await handleCheckout(req, res);
         }
-    });
+
+        if (route === 'resend-order') {
+            return await handleResendOrder(req, res);
+        }
+
+        if (route === 'capture') {
+            return await handleCapture(req, res);
+        }
+
+        if (route === 'stream') {
+            return await handleStream(req, res);
+        }
+
+        if (route === 'invite') {
+            return await handleInvite(req, res);
+        }
+
+        if (route === 'sync') {
+            return await handleSync(req, res);
+        }
+
+        return res.status(404).json({
+            error: 'Gallery route not found',
+            debug: {
+                receivedPathFromQuery: rawPath,
+                resolvedRoute: route,
+                originalUrl: req.url,
+                method: req.method,
+                queryKeys: Object.keys(req.query)
+            }
+        });
+    } catch (err: any) {
+        console.error('[CRITICAL API ERROR] Uncaught exception in gallery handler:', err);
+        return res.status(500).json({
+            error: 'Internal Server Error',
+            message: err.message,
+            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+        });
+    }
 }
 
 async function handleStream(req: VercelRequest, res: VercelResponse) {
@@ -80,11 +90,17 @@ async function handleStream(req: VercelRequest, res: VercelResponse) {
             return res.send(Buffer.from(buffer));
         }
 
+        console.warn('lh3 stream failed, trying fallback:', {
+            fileId,
+            status: response.status,
+            contentType: response.headers.get('content-type')
+        });
+
         // Fallback to drive thumbnail
         const driveUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w${size || 1600}`;
         const driveRes = await fetch(driveUrl);
 
-        if (driveRes.ok) {
+        if (driveRes.ok && driveRes.headers.get('content-type')?.includes('image')) {
             const contentType = driveRes.headers.get('content-type') || 'image/jpeg';
             res.setHeader('Content-Type', contentType);
             res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
@@ -93,7 +109,19 @@ async function handleStream(req: VercelRequest, res: VercelResponse) {
             return res.send(Buffer.from(buffer));
         }
 
-        return res.status(404).json({ error: 'Image not found or inaccessible' });
+        console.error('All stream methods failed for fileId:', fileId, {
+            lh3Status: response.status,
+            driveStatus: driveRes.status,
+            driveContentType: driveRes.headers.get('content-type')
+        });
+
+        return res.status(driveRes.status === 403 ? 403 : 404).json({
+            error: 'Image not found or inaccessible',
+            debug: {
+                lh3: response.status,
+                drive: driveRes.status
+            }
+        });
     } catch (err: any) {
         console.error('Stream error:', {
             fileId,
@@ -780,6 +808,9 @@ async function sendZohoEmail({
 
 async function handleSync(req: VercelRequest, res: VercelResponse) {
     try {
+        // Dynamic import to avoid loading googleapis for all routes
+        const { syncGalleryPhotos } = await import('../../lib/api-handlers/_photo-sync-utils');
+
         const { slug } = req.query;
         const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
@@ -800,8 +831,8 @@ async function handleSync(req: VercelRequest, res: VercelResponse) {
         const results = [];
         for (const lib of libraries) {
             try {
-                const res = await syncGalleryPhotos(lib.slug);
-                results.push({ slug: lib.slug, ...res });
+                const syncResult = await syncGalleryPhotos(lib.slug);
+                results.push({ slug: lib.slug, ...syncResult });
             } catch (syncErr: any) {
                 console.error(`Sync failed for ${lib.slug}:`, syncErr);
                 results.push({ slug: lib.slug, error: syncErr.message });
