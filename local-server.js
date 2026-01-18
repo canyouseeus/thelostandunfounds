@@ -1138,6 +1138,121 @@ const server = http.createServer(async (req, res) => {
         }
     }
 
+    // Gallery Sync Endpoint
+    if (pathname === '/api/gallery/sync' && req.method === 'GET') {
+        const urlObj = new URL(req.url, `http://${req.headers.host}`);
+        const slug = urlObj.searchParams.get('slug');
+
+        console.log('[Sync] Starting gallery sync. Slug:', slug || 'ALL');
+
+        try {
+            const { google } = await import('googleapis');
+
+            const rawEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+            const rawKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
+
+            const GOOGLE_EMAIL = (rawEmail || '').replace(/[^a-zA-Z0-9@._-]/g, '');
+            let GOOGLE_KEY = (rawKey || '').replace(/\\n/g, '\n').replace(/"/g, '').trim();
+
+            if (!GOOGLE_EMAIL || !GOOGLE_KEY) {
+                return setJsonRes(500, { error: 'Missing Google credentials' });
+            }
+
+            const syncLibrary = async (librarySlug) => {
+                const { data: library, error: libErr } = await supabase
+                    .from('photo_libraries')
+                    .select('*')
+                    .eq('slug', librarySlug)
+                    .single();
+
+                if (libErr || !library) {
+                    throw new Error(`Library not found: ${librarySlug}`);
+                }
+
+                const folderId = library.google_drive_folder_id;
+                if (!folderId) {
+                    throw new Error(`Library ${librarySlug} has no Google Drive folder ID`);
+                }
+
+                const auth = new google.auth.GoogleAuth({
+                    credentials: { client_email: GOOGLE_EMAIL, private_key: GOOGLE_KEY },
+                    scopes: ['https://www.googleapis.com/auth/drive.readonly']
+                });
+
+                const drive = google.drive({ version: 'v3', auth });
+
+                const response = await drive.files.list({
+                    q: `'${folderId}' in parents and (mimeType contains 'image/' or mimeType = 'video/quicktime') and trashed = false`,
+                    fields: 'files(id, name, thumbnailLink, createdTime, mimeType)',
+                    pageSize: 1000
+                });
+
+                const files = response.data.files || [];
+                console.log(`[Sync] Found ${files.length} files in ${librarySlug}`);
+
+                for (const file of files) {
+                    if (!file.id || !file.name) continue;
+                    const title = file.name.split('.').slice(0, -1).join('.');
+                    const thumbnailUrl = file.thumbnailLink?.replace(/=s220$/, '=s1200');
+
+                    await supabase.from('photos').upsert({
+                        library_id: library.id,
+                        google_drive_file_id: file.id,
+                        title,
+                        thumbnail_url: thumbnailUrl,
+                        status: 'active',
+                        mime_type: file.mimeType,
+                        created_at: file.createdTime || new Date().toISOString()
+                    }, { onConflict: 'google_drive_file_id' });
+                }
+
+                // Cleanup deleted files
+                const currentIds = new Set(files.map(f => f.id));
+                const { data: existing } = await supabase
+                    .from('photos')
+                    .select('google_drive_file_id')
+                    .eq('library_id', library.id);
+
+                if (existing) {
+                    const toDelete = existing
+                        .filter(p => p.google_drive_file_id && !currentIds.has(p.google_drive_file_id))
+                        .map(p => p.google_drive_file_id);
+
+                    if (toDelete.length > 0) {
+                        await supabase.from('photos').delete().in('google_drive_file_id', toDelete);
+                        console.log(`[Sync] Deleted ${toDelete.length} removed files`);
+                    }
+                }
+
+                return { synced: files.length };
+            };
+
+            if (slug) {
+                const result = await syncLibrary(slug);
+                return setJsonRes(200, { success: true, results: [{ slug, ...result }] });
+            }
+
+            // Sync all libraries
+            const { data: libraries } = await supabase.from('photo_libraries').select('slug');
+            const results = [];
+
+            for (const lib of (libraries || [])) {
+                try {
+                    const result = await syncLibrary(lib.slug);
+                    results.push({ slug: lib.slug, ...result });
+                } catch (err) {
+                    results.push({ slug: lib.slug, error: err.message });
+                }
+            }
+
+            return setJsonRes(200, { success: true, results });
+
+        } catch (err) {
+            console.error('[Sync] Error:', err);
+            return setJsonRes(500, { error: 'Sync operation failed', details: err.message });
+        }
+    }
+
     // Default 404
     setJsonRes(404, {
         error: `Route not found: ${req.method} ${pathname}`,
