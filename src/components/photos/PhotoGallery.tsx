@@ -349,7 +349,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                 </div>
 
                 {/* Photos Grouped by Date */}
-                <div ref={photosRef} className="space-y-16">
+                <div ref={photosRef} className="space-y-16 scroll-mt-40">
                     {displayedPhotos.length === 0 ? (
                         <div className="py-40 text-center">
                             <p className="text-zinc-500 uppercase tracking-widest font-bold">No items found in this vault section.</p>
