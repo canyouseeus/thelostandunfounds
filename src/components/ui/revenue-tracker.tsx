@@ -80,10 +80,10 @@ export function RevenueTracker({
                 )}
             >
                 {/* Main Revenue Display Container */}
-                <div className="relative min-h-[220px] overflow-hidden">
+                <div className="relative min-h-[220px] overflow-hidden flex flex-col justify-between pt-12">
 
-                    {/* Date Toggles - Left side, vertically centered */}
-                    <div className="absolute left-6 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-20">
+                    {/* Date Toggles - Absolute Left */}
+                    <div className="absolute left-6 top-8 flex flex-col gap-2 z-20">
                         {periods.map((period) => (
                             <button
                                 key={period.key}
@@ -103,8 +103,8 @@ export function RevenueTracker({
                         ))}
                     </div>
 
-                    {/* Main Revenue Data - DEAD CENTER of the container */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
+                    {/* Main Revenue Data - Centered in remaining space */}
+                    <div className="flex-1 flex flex-col items-center justify-center py-8 z-10">
                         {/* Label */}
                         <div className="flex items-center gap-2 mb-3">
                             <DollarSign className="w-4 h-4 text-white/70" />
@@ -127,13 +127,13 @@ export function RevenueTracker({
                             )}
                         </div>
 
-                        <div className="flex items-center gap-8 mt-4 text-xs font-mono text-white/30 uppercase tracking-widest">
+                        <div className="flex items-center gap-8 mt-4 text-xs font-mono text-white/30 uppercase tracking-widest hidden md:flex">
                             <span>Affiliate Profits <span className="text-white">${affiliateRevenue}</span></span>
                         </div>
                     </div>
 
-                    {/* Revenue Breakdown - Absolute Bottom */}
-                    <div className="absolute bottom-0 left-0 right-0 grid grid-cols-3 gap-4 pb-6 px-6 z-20 bg-black pt-12">
+                    {/* Revenue Breakdown - Bottom Grid */}
+                    <div className="grid grid-cols-3 gap-4 pb-6 px-6 z-20 bg-black">
                         <div className="text-center group">
                             <div className="text-[10px] text-white/30 uppercase tracking-wider mb-1 group-hover:text-white/60 transition-colors">Gallery Photos</div>
                             <div className="text-xl font-bold text-white font-mono">

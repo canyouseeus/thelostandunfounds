@@ -7,6 +7,7 @@ import PhotoGallery from '../components/photos/PhotoGallery';
 import AuthModal from '../components/auth/AuthModal';
 import { Lock, ArrowRight, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import GalleryItem from './GalleryItem';
 
 interface PhotoLibrary {
     id: string;
@@ -110,7 +111,7 @@ export default function Gallery() {
                             To access private galleries you must be the owner of the photos within that gallery. If you have not received access to a gallery of your photos then you can email us at <span className="font-bold">media@thelostandunfounds.com</span> to request access.
                         </p>
                         <p>
-                            Our public albums contain content that is availble for anyone to download.
+                            Our public albums contain content that is available for anyone to download.
                         </p>
                     </div>
                 </div>
@@ -123,67 +124,17 @@ export default function Gallery() {
                 </div>
             ) : (
                 <div className="max-w-7xl mx-auto">
-                    <div className="grid grid-cols-3 gap-0">
-                        {libraries.map((lib, index) => {
-
-                            return (
-                                <motion.div
-                                    key={lib.id}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.1 }}
-                                    onClick={() => handleGalleryClick(lib)}
-                                    className="group relative bg-zinc-900/30 hover:bg-zinc-800/30 transition-all duration-500 cursor-pointer overflow-hidden aspect-[4/5] flex flex-col justify-end p-8"
-                                >
-                                    {/* Background Image/Overlay */}
-                                    {lib.cover_image_url ? (
-                                        <div
-                                            className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-110 opacity-40 group-hover:opacity-60"
-                                            style={{ backgroundImage: `url(${lib.cover_image_url})` }}
-                                        />
-                                    ) : (
-                                        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/80 opacity-60" />
-                                    )}
-
-                                    {/* Hover Gradient Overlay */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-80 group-hover:opacity-40 transition-opacity duration-500" />
-
-                                    {/* Content Wrapper - Positioned at bottom */}
-                                    <div className="relative z-10 space-y-3">
-                                        {/* Badge */}
-                                        <div className="flex items-center">
-                                            {lib.is_private ? (
-                                                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1">
-                                                    <Lock className="w-3 h-3 text-white" />
-                                                    <span className="text-[10px] font-bold text-white tracking-widest uppercase">Private</span>
-                                                </div>
-                                            ) : (
-                                                <div className="flex items-center gap-2 bg-white px-3 py-1">
-                                                    <span className="text-[10px] font-bold text-black tracking-widest uppercase">Public</span>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Title - Allow wrapping, no truncation */}
-                                        <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-tight uppercase group-hover:translate-x-2 transition-transform duration-500">
-                                            {lib.name}
-                                        </h2>
-
-                                        {/* Description */}
-                                        <p className="text-sm text-white/60 line-clamp-2 font-light leading-relaxed group-hover:text-white/80 transition-colors duration-500">
-                                            {lib.description}
-                                        </p>
-
-                                        {/* View Gallery Link */}
-                                        <div className="pt-2 flex items-center gap-2 text-[10px] font-black tracking-widest uppercase text-white opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-500">
-                                            {lib.is_private && !user ? 'Log in to View' : 'View Gallery'}
-                                            <ArrowRight className="w-3 h-3" />
-                                        </div>
-                                    </div>
-
-                                </motion.div>
-                            );
-                        })}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1">
+                        {libraries.map((lib, index) => (
+                            <GalleryItem
+                                key={lib.id}
+                                lib={lib}
+                                index={index}
+                                userIsAdmin={userIsAdmin}
+                                authLoading={authLoading}
+                                onGalleryClick={handleGalleryClick}
+                            />
+                        ))}
                     </div>
 
                     {libraries.length === 0 && (

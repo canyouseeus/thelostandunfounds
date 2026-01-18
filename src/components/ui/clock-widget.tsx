@@ -260,6 +260,9 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
                         className={cn("absolute inset-0 w-full h-full transition-opacity duration-500", !isDigital ? "opacity-100" : "opacity-0")}
                         onClick={() => setIsDigital(true)}
                     >
+                        {/* Clock Face Border */}
+                        <div className="absolute inset-2 border-2 border-white/20 rounded-full" />
+
                         {/* Hands - Flat Design, No Shadows */}
                         <div className="relative w-full h-full">
                             <div className="absolute top-1/2 left-1/2 w-2 h-2 -mt-1 -ml-1 rounded-full bg-white z-10" />

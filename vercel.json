@@ -30,7 +30,7 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!api|_next|static|sql|.*\\..*).*)",
+      "source": "/((?!api|_next|static|sql|@vite|@react-refresh|.*\\..*).*)",
       "destination": "/index.html"
     }
   ],
