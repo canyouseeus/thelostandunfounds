@@ -419,7 +419,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                                             </button>
                                         )}
                                     </div>
-                                    <div className={`grid ${viewMode === 'single' ? 'grid-cols-1 gap-16' : 'grid-cols-3 gap-1 md:gap-2'}`}>
+                                    <div className={`grid ${viewMode === 'single' ? 'grid-cols-1 gap-4 md:gap-16' : 'grid-cols-3 gap-1 md:gap-2'}`}>
                                         {groupPhotos.map((photo, index) => (
                                             <PhotoCard
                                                 key={photo.id}
@@ -508,11 +508,11 @@ const PhotoCard: React.FC<{
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className={`relative bg-black group perspective-1000 ${isSingle ? 'w-full md:min-h-[400px]' : 'aspect-square'}`}
+            className={`relative bg-black group perspective-1000 ${isSingle ? 'w-full' : 'aspect-square'}`}
             style={{ perspective: '1000px' }}
         >
             <div
-                className={`w-full h-full relative transition-transform duration-700`}
+                className={`w-full relative transition-transform duration-700 ${isSingle ? 'h-auto' : 'h-full'}`}
                 style={{
                     transformStyle: 'preserve-3d',
                     WebkitTransformStyle: 'preserve-3d',
@@ -521,7 +521,7 @@ const PhotoCard: React.FC<{
             >
                 {/* FRONT SIDE */}
                 <div
-                    className={`${isSingle ? 'relative w-full h-auto md:min-h-[400px]' : 'absolute inset-0 w-full h-full'} backface-hidden flex items-center justify-center bg-black cursor-pointer`}
+                    className={`${isSingle ? 'relative w-full h-auto' : 'absolute inset-0 w-full h-full'} backface-hidden flex items-center justify-center bg-black cursor-pointer`}
                     style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', zIndex: rotation % 360 === 0 ? 2 : 1 }}
                     onClick={handleFlip}
                 >
@@ -593,27 +593,27 @@ const PhotoCard: React.FC<{
                 >
                     <div className={isSingle ? 'space-y-4 md:space-y-8' : 'space-y-[0.5vw] md:space-y-4'}>
                         <div className="space-y-[0.2vw] md:space-y-1">
-                            <p className={`${isSingle ? 'text-[10px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white uppercase tracking-widest font-bold leading-none`}>Camera</p>
-                            <p className={`${isSingle ? 'text-base md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono uppercase leading-tight`}>
+                            <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Camera</p>
+                            <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono uppercase leading-tight truncate`}>
                                 {photo.metadata?.camera_make} {photo.metadata?.camera_model || 'Unknown'}
                             </p>
                         </div>
                         <div className={`grid grid-cols-2 ${isSingle ? 'gap-y-4 gap-x-4 md:gap-x-12' : 'gap-y-[0.5vw] gap-x-[1vw] md:gap-x-4'}`}>
                             <div>
-                                <p className={`${isSingle ? 'text-[10px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white uppercase tracking-widest font-bold leading-none`}>ISO</p>
-                                <p className={`${isSingle ? 'text-base md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>{photo.metadata?.iso || '-'}</p>
+                                <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>ISO</p>
+                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>{photo.metadata?.iso || '-'}</p>
                             </div>
                             <div>
-                                <p className={`${isSingle ? 'text-[10px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white uppercase tracking-widest font-bold leading-none`}>Aperture</p>
-                                <p className={`${isSingle ? 'text-base md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>f/{photo.metadata?.aperture || '-'}</p>
+                                <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Aperture</p>
+                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>f/{photo.metadata?.aperture || '-'}</p>
                             </div>
                             <div>
-                                <p className={`${isSingle ? 'text-[10px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white uppercase tracking-widest font-bold leading-none`}>Focal</p>
-                                <p className={`${isSingle ? 'text-base md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>{photo.metadata?.focal_length ? `${photo.metadata.focal_length}mm` : '-'}</p>
+                                <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Focal</p>
+                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>{photo.metadata?.focal_length ? `${photo.metadata.focal_length}mm` : '-'}</p>
                             </div>
                             <div>
-                                <p className={`${isSingle ? 'text-[10px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white uppercase tracking-widest font-bold leading-none`}>Shutter</p>
-                                <p className={`${isSingle ? 'text-base md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>
+                                <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Shutter</p>
+                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>
                                     {photo.metadata?.shutter_speed
                                         ? (Number(photo.metadata.shutter_speed) < 1
                                             ? `1/${Math.round(1 / Number(photo.metadata.shutter_speed))}s`
@@ -624,15 +624,15 @@ const PhotoCard: React.FC<{
                         </div>
                         <div className={`grid grid-cols-2 ${isSingle ? 'gap-y-4 gap-x-4 md:gap-x-12' : 'gap-y-[0.5vw] gap-x-[1vw] md:gap-x-4'}`}>
                             <div>
-                                <p className={`${isSingle ? 'text-[10px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white uppercase tracking-widest font-bold leading-none`}>Date Taken</p>
-                                <p className={`${isSingle ? 'text-base md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono uppercase leading-tight`}>
+                                <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Date Taken</p>
+                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono uppercase leading-tight`}>
                                     {photo.metadata?.date_taken ? new Date(photo.metadata.date_taken).toLocaleDateString() : 'Unknown'}
                                 </p>
                             </div>
                             <div>
-                                <p className={`${isSingle ? 'text-[10px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white uppercase tracking-widest font-bold leading-none`}>Location</p>
-                                <p className={`${isSingle ? 'text-base md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono uppercase leading-tight`}>
-                                    {photo.metadata?.city || 'San Antonio, TX'}
+                                <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Location</p>
+                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono uppercase leading-tight truncate whitespace-nowrap`}>
+                                    {photo.metadata?.city || 'Austin, TX'}
                                 </p>
                             </div>
                         </div>

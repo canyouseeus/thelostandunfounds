@@ -41,7 +41,7 @@ export async function syncGalleryPhotos(librarySlug: string) {
         throw new Error(`Library not found: ${librarySlug}`);
     }
 
-    const folderId = library.google_drive_folder_id;
+    const folderId = library.google_drive_folder_id || library.gdrive_folder_id;
 
     // 2. Init Google Drive
     const auth = new google.auth.GoogleAuth({
