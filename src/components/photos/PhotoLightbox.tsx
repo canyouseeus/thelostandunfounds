@@ -81,7 +81,7 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
 
                             {/* Watermark Overlay (Security) - Only if not purchased and image is loaded */}
                             {!isPurchased && (
-                                <div className={`absolute inset-0 z-10 flex items-center justify-center pointer-events-none overflow-hidden rounded-lg transition-opacity duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}>
+                                <div className={`absolute inset-0 z-10 flex items-center justify-center pointer-events-none overflow-hidden transition-opacity duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}>
                                     <img
                                         src="/logo.png"
                                         alt="Watermark"
@@ -93,7 +93,7 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                             <img
                                 src={`https://lh3.googleusercontent.com/d/${photo.google_drive_file_id}=s3000`}
                                 alt={photo.title}
-                                className="max-h-[70vh] w-auto object-contain shadow-2xl rounded-lg select-none pointer-events-auto"
+                                className="max-h-[70vh] w-auto object-contain shadow-2xl select-none pointer-events-auto"
                                 onContextMenu={(e) => e.preventDefault()}
                                 draggable={false}
                                 onLoad={() => setIsImageLoading(false)}
