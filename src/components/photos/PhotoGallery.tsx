@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import PhotoLightbox from './PhotoLightbox';
 import SelectionTray from './SelectionTray';
 import Loading from '../Loading';
+import AuthModal from '../auth/AuthModal';
 
 interface Photo {
     id: string;
@@ -59,6 +60,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
     const [activeTab, setActiveTab] = useState<'storefront' | 'assets'>('storefront');
     const [showBackToTop, setShowBackToTop] = useState(false);
     const [viewMode, setViewMode] = useState<'grid' | 'single'>('grid');
+    const [authModalOpen, setAuthModalOpen] = useState(false);
     const photosRef = useRef<HTMLDivElement>(null);
 
     const storageKey = `gallery_selection_${librarySlug}`;
@@ -363,12 +365,12 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                                     <p className="text-white/40 text-sm max-w-md mx-auto">
                                         If you are the owner of this gallery, please log in to view and manage your photos.
                                     </p>
-                                    <a
-                                        href="/login"
+                                    <button
+                                        onClick={() => setAuthModalOpen(true)}
                                         className="inline-block mt-4 px-8 py-3 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-white/90 transition-colors"
                                     >
                                         Log In
-                                    </a>
+                                    </button>
                                 </>
                             ) : activeTab === 'assets' ? (
                                 <>
@@ -501,6 +503,9 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                 loading={checkoutLoading}
                 pricingOptions={pricingOptions}
             />
+
+            {/* Auth Modal */}
+            <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
         </div>
     );
 };

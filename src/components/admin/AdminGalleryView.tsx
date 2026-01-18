@@ -674,7 +674,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                         <div className="bg-white p-2">
                             <ImageIcon className="w-5 h-5 text-black" />
                         </div>
-                        <h2 className="text-xl md:text-2xl font-bold text-white uppercase tracking-tight">
+                        <h2 className="text-xl md:text-2xl font-bold text-white uppercase tracking-tight whitespace-nowrap">
                             {isPhotographerView ? 'My Galleries' : 'Gallery Management'}
                         </h2>
                     </div>
