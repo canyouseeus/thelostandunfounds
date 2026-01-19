@@ -932,7 +932,7 @@ async function syncGalleryPhotos(librarySlug: string) {
             }
         }
 
-        await supabase
+        const { error: upsertError } = await supabase
             .from('photos')
             .upsert({
                 library_id: library.id,
@@ -946,7 +946,13 @@ async function syncGalleryPhotos(librarySlug: string) {
             }, {
                 onConflict: 'google_drive_file_id'
             });
+
+        if (upsertError) {
+            console.error(`Upsert failed for file ${file.id}:`, upsertError);
+        }
     }
+
+    console.log(`[Sync] Processed ${files.length} files from Google Drive for ${librarySlug}`);
 
     const currentDriveFileIds = new Set(files.map(f => f.id));
     const { data: existingPhotos } = await supabase
