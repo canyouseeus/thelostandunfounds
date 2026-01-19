@@ -57,19 +57,17 @@ export async function signIn(email: string, password: string) {
  * Sign in with Google OAuth
  */
 export async function signInWithGoogle(redirectTo?: string) {
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
+  const origin = typeof window !== 'undefined' ? window.location.origin.replace(/\/$/, '') : 'http://localhost:5173';
   // Safely check for env var without throwing ReferenceError for process
   const envRedirect = typeof process !== 'undefined' ? process.env.AUTH_REDIRECT_URL : undefined;
 
-  // If redirectTo is provided, use it. 
-  // If env var is set, use it.
-  // Otherwise, if we are on localhost, use origin/auth/callback (standard).
-  // BUT if we want to rely on Supabase Site URL, we can pass undefined.
-  // However, removing the default might break if Site URL is Prod.
-  // Let's try adhering to the explicit behavior but logging it.
+  // Always default to explicit origin/auth/callback on localhost to avoid Prod redirect
   const redirectUrl = redirectTo || envRedirect || `${origin}/auth/callback`;
 
-  console.log('SignInWithGoogle Redirect:', redirectUrl); // Debug log (visible in browser)
+  console.log('SignInWithGoogle Redirect:', redirectUrl);
+
+  // Force clear previous session/state to avoid PKCE conflicts
+  await supabase.auth.signOut();
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
