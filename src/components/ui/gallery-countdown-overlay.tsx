@@ -142,12 +142,6 @@ export function useTargetTimeToday(hour: number, minute: number = 0): Date {
  * Check if a gallery should show the countdown overlay
  */
 export function shouldShowCountdown(galleryName: string, targetTime: Date): boolean {
-    // Only show for "LAST NIGHT" gallery
-    if (galleryName.toUpperCase() !== 'LAST NIGHT') {
-        return false;
-    }
-
-    // Only show if countdown hasn't expired
-    const now = new Date();
-    return targetTime.getTime() > now.getTime();
+    // DISABLED: Countdown feature turned off
+    return false;
 }
