@@ -232,7 +232,7 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
   const handleGoogleSignIn = async () => {
     setError(null);
     setLoading(true);
-    const { error } = await signInWithGoogle();
+    const { error } = await signInWithGoogle(window.location.href);
     if (error) {
       setError(error.message);
       setLoading(false);
