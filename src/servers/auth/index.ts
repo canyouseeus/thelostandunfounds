@@ -58,7 +58,9 @@ export async function signIn(email: string, password: string) {
  */
 export async function signInWithGoogle(redirectTo?: string) {
   const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
-  const redirectUrl = redirectTo || process.env.AUTH_REDIRECT_URL || `${origin}/auth/callback`;
+  // Safely check for env var without throwing ReferenceError for process
+  const envRedirect = typeof process !== 'undefined' ? process.env.AUTH_REDIRECT_URL : undefined;
+  const redirectUrl = redirectTo || envRedirect || `${origin}/auth/callback`;
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
