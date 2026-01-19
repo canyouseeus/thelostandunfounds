@@ -57,7 +57,8 @@ export async function signIn(email: string, password: string) {
  * Sign in with Google OAuth
  */
 export async function signInWithGoogle(redirectTo?: string) {
-  const redirectUrl = redirectTo || process.env.AUTH_REDIRECT_URL || 'http://localhost:5173/auth/callback';
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
+  const redirectUrl = redirectTo || process.env.AUTH_REDIRECT_URL || `${origin}/auth/callback`;
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',

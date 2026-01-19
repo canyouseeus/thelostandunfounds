@@ -319,8 +319,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async (redirectUrl?: string) => {
     try {
-      const redirectTo = redirectUrl || `${window.location.origin}/auth/callback`;
-      const { url, error } = await authService.signInWithGoogle(redirectTo);
+      const { url, error } = await authService.signInWithGoogle(redirectUrl);
 
       if (error) {
         return { error };
