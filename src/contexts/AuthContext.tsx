@@ -38,14 +38,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const initializeAuth = async () => {
     setLoading(true);
     try {
+      console.log('[AuthContext] initializeAuth starting...');
       // Check for existing session
       const { session: currentSession, error: sessionError } = await authService.getSession();
+
+      console.log('[AuthContext] getSession result:', {
+        hasSession: !!currentSession,
+        userId: currentSession?.user?.id,
+        error: sessionError
+      });
 
       if (sessionError) {
         if (import.meta.env.DEV) {
           console.warn('Session check failed:', sessionError);
         }
         // Clear any stale state
+        console.log('[AuthContext] Clearing state due to sessionError');
         setUser(null);
         setSession(null);
         setTier('free');
@@ -58,9 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Validate user exists first
         if (!currentSession.user || !currentSession.user.id) {
           // Invalid session, clear it
-          if (import.meta.env.DEV) {
-            console.warn('Session has no user, clearing auth state');
-          }
+          console.warn('[AuthContext] Session has no user, clearing auth state');
           try {
             await authService.signOut();
           } catch (signOutError) {
@@ -85,9 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               // Add 5 minute buffer to account for clock skew
               if (expirationDate.getTime() < now.getTime() - 5 * 60 * 1000) {
                 // Session expired, clear it
-                if (import.meta.env.DEV) {
-                  console.warn('Session expired, clearing auth state');
-                }
+                console.warn('[AuthContext] Session expired, clearing auth state. Exp:', expirationDate, 'Now:', now);
                 try {
                   await authService.signOut();
                 } catch (signOutError) {
@@ -101,11 +105,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               }
             }
           }
-        } catch (expirationError) {
-          // If expiration check fails, continue anyway (session might still be valid)
-          if (import.meta.env.DEV) {
-            console.warn('Error checking session expiration:', expirationError);
-          }
+        } catch (e) {
+          console.warn('[AuthContext] Error checking expiration:', e);
         }
 
         setSession(currentSession);
