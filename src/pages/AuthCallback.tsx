@@ -27,7 +27,7 @@ export default function AuthCallback() {
     try {
       // Handle the OAuth callback
       const { session, error } = await authService.handleAuthCallback();
-      
+
       if (error) {
         console.warn('Auth callback error:', error);
         navigate('/?error=auth_failed');
@@ -43,7 +43,7 @@ export default function AuthCallback() {
               setUser(currentUser);
               const adminStatus = await isAdmin();
               const isAdminUser = adminStatus || isAdminEmail(currentUser.email || '');
-              
+
               if (isAdminUser) {
                 // Admins go directly to admin dashboard
                 navigate('/admin');
@@ -97,10 +97,22 @@ export default function AuthCallback() {
                 return;
               }
 
-              // All registration complete - redirect to submit article
-              navigate('/submit-article');
+              // All registration complete - redirect
+              const returnUrl = localStorage.getItem('auth_return_url');
+              if (returnUrl) {
+                localStorage.removeItem('auth_return_url');
+                navigate(returnUrl);
+              } else {
+                navigate('/submit-article');
+              }
             } else {
-              navigate('/submit-article');
+              const returnUrl = localStorage.getItem('auth_return_url');
+              if (returnUrl) {
+                localStorage.removeItem('auth_return_url');
+                navigate(returnUrl);
+              } else {
+                navigate('/submit-article');
+              }
             }
           } catch (error) {
             // If admin check fails, check email directly
@@ -140,10 +152,22 @@ export default function AuthCallback() {
                 }
 
                 // All complete - redirect
-                navigate('/submit-article');
+                const returnUrl = localStorage.getItem('auth_return_url');
+                if (returnUrl) {
+                  localStorage.removeItem('auth_return_url');
+                  navigate(returnUrl);
+                } else {
+                  navigate('/submit-article');
+                }
               }
             } else {
-              navigate('/submit-article');
+              const returnUrl = localStorage.getItem('auth_return_url');
+              if (returnUrl) {
+                localStorage.removeItem('auth_return_url');
+                navigate(returnUrl);
+              } else {
+                navigate('/submit-article');
+              }
             }
           }
         };
@@ -173,7 +197,13 @@ export default function AuthCallback() {
 
   const handleStorefrontSuccess = (storefrontId: string) => {
     setShowStorefrontModal(false);
-    navigate('/submit-article');
+    const returnUrl = localStorage.getItem('auth_return_url');
+    if (returnUrl) {
+      localStorage.removeItem('auth_return_url');
+      navigate(returnUrl);
+    } else {
+      navigate('/submit-article');
+    }
   };
 
   return (

@@ -230,9 +230,11 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
   };
 
   const handleGoogleSignIn = async () => {
+    // Save current URL for redirect after callback
+    localStorage.setItem('auth_return_url', window.location.pathname + window.location.search);
     setError(null);
     setLoading(true);
-    const { error } = await signInWithGoogle(window.location.href);
+    const { error } = await signInWithGoogle();
     if (error) {
       setError(error.message);
       setLoading(false);
