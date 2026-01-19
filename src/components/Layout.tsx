@@ -149,7 +149,8 @@ export default function Layout({ children }: { children?: ReactNode }) {
   const handleSignOut = async () => {
     await signOut()
     setMenuOpen(false)
-    navigate('/')
+    // Force a hard reload to ensure all auth state is cleared
+    window.location.href = '/'
   }
 
   // Track mouse position globally

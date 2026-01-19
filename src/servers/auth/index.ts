@@ -83,22 +83,8 @@ export async function signInWithGoogle(redirectTo?: string) {
  * Sign out
  */
 export async function signOut() {
-  // Use scope: 'global' to sign out of all sessions
-  const { error } = await supabase.auth.signOut({ scope: 'global' });
-
-  // Force clear any auth storage keys (belt and suspenders approach)
-  try {
-    const keysToRemove: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && (key.includes('supabase') || key.includes('sb-') || key.includes('auth-token'))) {
-        keysToRemove.push(key);
-      }
-    }
-    keysToRemove.forEach(key => localStorage.removeItem(key));
-  } catch (storageError) {
-    console.warn('Error clearing auth storage:', storageError);
-  }
+  // Use scope: 'local' to only sign out current session (safer)
+  const { error } = await supabase.auth.signOut({ scope: 'local' });
 
   if (error) {
     throw new Error(error.message);
