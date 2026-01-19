@@ -932,23 +932,45 @@ async function syncGalleryPhotos(librarySlug: string) {
             }
         }
 
-        const { error: upsertError } = await supabase
+        // Check if photo already exists
+        const { data: existingPhoto } = await supabase
             .from('photos')
-            .upsert({
-                library_id: library.id,
-                google_drive_file_id: file.id,
-                title: title,
-                thumbnail_url: thumbnailUrl,
-                status: 'active',
-                mime_type: file.mimeType,
-                created_at: finalCreatedAt,
-                metadata: metadata
-            }, {
-                onConflict: 'google_drive_file_id'
-            });
+            .select('id')
+            .eq('google_drive_file_id', file.id)
+            .maybeSingle();
 
-        if (upsertError) {
-            console.error(`Upsert failed for file ${file.id}:`, upsertError);
+        const photoData = {
+            library_id: library.id,
+            google_drive_file_id: file.id,
+            title: title,
+            thumbnail_url: thumbnailUrl,
+            status: 'active',
+            mime_type: file.mimeType,
+            created_at: finalCreatedAt,
+            metadata: metadata
+        };
+
+        if (existingPhoto) {
+            // Update existing photo
+            const { error: updateError } = await supabase
+                .from('photos')
+                .update(photoData)
+                .eq('id', existingPhoto.id);
+
+            if (updateError) {
+                console.error(`Update failed for file ${file.id}:`, updateError);
+            }
+        } else {
+            // Insert new photo
+            const { error: insertError } = await supabase
+                .from('photos')
+                .insert(photoData);
+
+            if (insertError) {
+                console.error(`Insert failed for file ${file.id}:`, insertError);
+            } else {
+                console.log(`[Sync] Inserted new photo: ${file.name}`);
+            }
         }
     }
 
