@@ -367,7 +367,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                                     </p>
                                     <button
                                         onClick={() => setAuthModalOpen(true)}
-                                        className="inline-block mt-4 px-8 py-3 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-white/90 transition-colors"
+                                        className="inline-block mt-4 px-8 py-3 bg-transparent border border-white text-white font-bold uppercase tracking-widest text-xs hover:bg-white hover:text-black transition-colors"
                                     >
                                         Log In
                                     </button>
