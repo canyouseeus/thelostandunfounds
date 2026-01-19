@@ -107,11 +107,22 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
 
             if (libError) throw libError;
 
+            console.log('[loadGalleryStats] Raw libs from Supabase:', libs?.map(l => ({
+                name: l.name,
+                photos: l.photos,
+                rawCount: l.photos?.[0]?.count
+            })));
+
             // Process libraries to flatten photo_count
             const processedLibs = libs?.map(lib => ({
                 ...lib,
                 photo_count: lib.photos?.[0]?.count || 0
             })) || [];
+
+            console.log('[loadGalleryStats] Processed libs photo counts:', processedLibs.map(l => ({
+                name: l.name,
+                photo_count: l.photo_count
+            })));
 
             setLibraries(processedLibs);
 
@@ -567,6 +578,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 const syncRes = await fetch('/api/gallery/sync');
                 if (syncRes.ok) {
                     const syncData = await syncRes.json();
+                    console.log('[checkAssetHealth] Sync response data:', syncData);
                     // Check if any individual syncs failed
                     const failedSyncs = syncData.results?.filter((r: any) => r.error) || [];
                     const successfulSyncs = syncData.results?.filter((r: any) => !r.error) || [];
@@ -577,8 +589,11 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                         const failedNames = failedSyncs.map((f: any) => f.slug).join(', ');
                         info(`Partially synced. ${successfulSyncs.length} succeeded. Failed: ${failedNames}`); // Show which ones failed
                     } else {
-                        success(`Galleries synchronized successfully. ${syncData.results?.length || 0} libraries checked.`);
+                        const totalSynced = successfulSyncs.reduce((sum: number, r: any) => sum + (r.synced || 0), 0);
+                        success(`Sync complete: ${totalSynced} photos across ${syncData.results?.length || 0} galleries.`);
                     }
+                    // Small delay to ensure database commits before refresh
+                    await new Promise(resolve => setTimeout(resolve, 500));
                     await loadGalleryStats(); // Refresh the list to show any new photo counts
                 } else {
                     const errData = await syncRes.json().catch(() => ({ error: 'Unknown sync error' }));
