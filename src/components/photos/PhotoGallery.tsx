@@ -505,7 +505,14 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
             />
 
             {/* Auth Modal */}
-            <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
+            <AuthModal
+                isOpen={authModalOpen}
+                onClose={() => setAuthModalOpen(false)}
+                onLoginSuccess={() => {
+                    // Reload to clean URL (stripping error params)
+                    window.location.href = window.location.pathname;
+                }}
+            />
         </div>
     );
 };
