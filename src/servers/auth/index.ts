@@ -58,7 +58,7 @@ export async function signIn(email: string, password: string) {
  */
 export async function signInWithGoogle(redirectTo?: string) {
   const redirectUrl = redirectTo || process.env.AUTH_REDIRECT_URL || 'http://localhost:5173/auth/callback';
-  
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
@@ -83,7 +83,23 @@ export async function signInWithGoogle(redirectTo?: string) {
  * Sign out
  */
 export async function signOut() {
-  const { error } = await supabase.auth.signOut();
+  // Use scope: 'global' to sign out of all sessions
+  const { error } = await supabase.auth.signOut({ scope: 'global' });
+
+  // Force clear any auth storage keys (belt and suspenders approach)
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.includes('supabase') || key.includes('sb-') || key.includes('auth-token'))) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+  } catch (storageError) {
+    console.warn('Error clearing auth storage:', storageError);
+  }
+
   if (error) {
     throw new Error(error.message);
   }
@@ -114,7 +130,7 @@ export async function getCurrentUser(accessToken?: string) {
  */
 export async function getSession() {
   const { data: { session }, error } = await supabase.auth.getSession();
-  
+
   if (error || !session) {
     return { session: null };
   }
@@ -134,7 +150,7 @@ export async function getSession() {
  */
 export async function verifySession(accessToken: string) {
   const { data: { user }, error } = await supabase.auth.getUser(accessToken);
-  
+
   if (error || !user) {
     return { valid: false, user: null };
   }
