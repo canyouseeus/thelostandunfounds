@@ -588,6 +588,11 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
         const galleryUrl = `https://www.thelostandunfounds.com/photos/${library.slug}`;
         const auth = await getZohoAuthContext();
 
+        const results = {
+            succeeded: [] as string[],
+            failed: [] as { email: string; error: string }[]
+        };
+
         // Send to each email
         for (const email of emails) {
             try {
@@ -617,12 +622,21 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
                         </div>
                     `
                 });
-            } catch (innerErr) {
+                results.succeeded.push(email);
+            } catch (innerErr: any) {
                 console.error(`Failed to send invite to ${email}:`, innerErr);
+                results.failed.push({ email, error: innerErr.message || String(innerErr) });
             }
         }
 
-        return res.status(200).json({ success: true });
+        const hasFailures = results.failed.length > 0;
+        // Return 207 Multi-Status if some failed, or 200 if all good (or 200 with stats)
+        // Sticking to 200 to avoid breaking generic clients, but include details
+        return res.status(200).json({
+            success: !hasFailures,
+            partial: hasFailures && results.succeeded.length > 0,
+            results
+        });
     } catch (err: any) {
         console.error('Invite handler error:', err);
         return res.status(500).json({ error: err.message });
