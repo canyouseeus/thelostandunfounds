@@ -248,7 +248,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
     return (
         <div className="min-h-screen bg-black pt-20 pb-40 px-4 md:px-8">
             {/* Header / Info Section */}
-            <div className="max-w-7xl mx-auto mb-20">
+            <div className="max-w-7xl mx-auto mb-6">
                 {/* Title Section */}
                 <div className="mb-12">
                     <h1 className="text-2xl sm:text-3xl md:text-6xl font-black text-white tracking-tight uppercase mb-2 whitespace-nowrap overflow-hidden text-ellipsis">
@@ -299,7 +299,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
 
                 {/* Sandbox Banner - ONLY SHOW IN DEV */}
                 {!import.meta.env.PROD && (
-                    <div className="mt-24 bg-white/[0.02] py-5 text-center">
+                    <div className="mt-4 bg-white/[0.02] py-5 text-center">
                         <span className="text-[9px] font-black tracking-[0.8em] uppercase text-white/10">
                             [ SANDBOX MODE ENABLED ] - NO REAL CURRENCY WILL BE CHARGED
                         </span>
@@ -310,7 +310,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
             <div className="max-w-7xl mx-auto">
 
                 {/* Tab Switcher & Batch Actions */}
-                <div className="sticky top-[60px] md:top-[80px] z-40 bg-black/95 backdrop-blur-md flex flex-col md:flex-row justify-center items-center gap-4 md:gap-8 mb-2 py-2 -mx-4 px-4 md:-mx-8 md:px-8 transition-all">
+                <div className="sticky top-16 z-40 bg-black/95 backdrop-blur-md flex flex-col md:flex-row justify-center items-center gap-4 md:gap-8 mb-2 py-2 -mx-4 px-4 md:-mx-8 md:px-8 transition-all">
                     <div className="flex gap-4 items-center">
                         <button
                             onClick={() => setViewMode('single')}
