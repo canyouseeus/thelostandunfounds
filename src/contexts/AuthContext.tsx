@@ -14,7 +14,7 @@ interface AuthContextType {
   loading: boolean;
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signInWithGoogle: () => Promise<{ error: Error | null }>;
+  signInWithGoogle: (redirectUrl?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<{ error: Error | null }>;
   refreshAuth: () => Promise<void>;
   clearAuthStorage: () => Promise<void>;
@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       // Check for existing session
       const { session: currentSession, error: sessionError } = await authService.getSession();
-      
+
       if (sessionError) {
         if (import.meta.env.DEV) {
           console.warn('Session check failed:', sessionError);
@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
         return;
       }
-      
+
       // Validate session is still valid
       if (currentSession) {
         // Validate user exists first
@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setLoading(false);
           return;
         }
-        
+
         // Check if session is expired (expires_at is Unix timestamp in seconds)
         try {
           const expiresAt = currentSession.expires_at;
@@ -107,10 +107,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.warn('Error checking session expiration:', expirationError);
           }
         }
-        
+
         setSession(currentSession);
         setUser(currentSession.user);
-        
+
         // Auto-promote to admin if email matches admin email (on session restore)
         if (currentSession.user?.id && currentSession.user?.email && isAdminEmail(currentSession.user.email)) {
           try {
@@ -119,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // Silently fail - admin check will still work via email
           }
         }
-        
+
         // Get subscription tier (with error handling)
         try {
           if (currentSession.user?.id) {
@@ -132,7 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Handle 403/406 errors gracefully - table might not exist yet
           const errorMsg = String(tierError?.message || '').toLowerCase();
           const errorStatus = tierError?.status || tierError?.statusCode;
-          
+
           if (
             errorStatus === 403 ||
             errorStatus === 406 ||
@@ -162,7 +162,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       // On error, clear state to be safe
       const errorMsg = String(error?.message || '').toLowerCase();
-      
+
       // Don't log expected errors (network issues, etc.)
       if (
         !errorMsg.includes('network') &&
@@ -174,7 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.warn('Error initializing auth:', error);
         }
       }
-      
+
       // Clear state to be safe
       setUser(null);
       setSession(null);
@@ -191,14 +191,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (email: string, password: string) => {
     try {
       const { user: newUser, error } = await authService.signUp(email, password);
-      
+
       if (error) {
         return { error };
       }
 
       if (newUser) {
         setUser(newUser);
-        
+
         // Auto-promote to admin if email matches admin email
         if (newUser?.id && newUser?.email && isAdminEmail(newUser.email)) {
           try {
@@ -211,7 +211,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // Continue anyway - admin check will still work via email
           }
         }
-        
+
         // Auto sign in after sign up
         try {
           const { session: newSession, error: signInError } = await authService.signIn(email, password);
@@ -225,7 +225,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               if (newUser?.id) {
                 const userTier = await subscriptionService.getTier(newUser.id);
                 setTier(userTier);
-                
+
                 // Check if user is a blog contributor (has subdomain) and send notification
                 try {
                   const { data: subdomainData } = await supabase
@@ -233,7 +233,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     .select('subdomain')
                     .eq('user_id', newUser.id)
                     .maybeSingle();
-                  
+
                   if (subdomainData?.subdomain) {
                     // Send notification email (fire and forget - don't block on email)
                     fetch('/api/admin/new-blog-contributor-notification', {
@@ -275,7 +275,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       const { session: newSession, error } = await authService.signIn(email, password);
-      
+
       if (error) {
         return { error };
       }
@@ -283,7 +283,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (newSession) {
         setSession(newSession);
         setUser(newSession.user);
-        
+
         // Auto-promote to admin if email matches admin email
         if (newSession.user?.id && newSession.user?.email && isAdminEmail(newSession.user.email)) {
           try {
@@ -296,7 +296,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // Continue anyway - admin check will still work via email
           }
         }
-        
+
         try {
           if (newSession.user?.id) {
             const userTier = await subscriptionService.getTier(newSession.user.id);
@@ -316,11 +316,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (redirectUrl?: string) => {
     try {
-      const redirectTo = `${window.location.origin}/auth/callback`;
+      const redirectTo = redirectUrl || `${window.location.origin}/auth/callback`;
       const { url, error } = await authService.signInWithGoogle(redirectTo);
-      
+
       if (error) {
         return { error };
       }
@@ -340,7 +340,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     try {
       const { error } = await authService.signOut();
-      
+
       if (!error) {
         setUser(null);
         setSession(null);
