@@ -41,6 +41,7 @@ export default async function handler(
     route,
     url: req.url,
     method: req.method,
+    body: req.body, // Debug body parsing
     pathParts: req.url ? req.url.split('?')[0].split('/').filter(p => p) : []
   })
 
@@ -133,7 +134,7 @@ async function handleSendExistingPublicationEmails(req: VercelRequest, res: Verc
  * Send Welcome Emails Handler
  */
 async function handleSendWelcomeEmails(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/_send-welcome-emails-handler.js')
+  const handler = await import(`../../lib/api-handlers/_send-welcome-emails-handler.js?v=${Date.now()}`)
   return await handler.default(req, res)
 }
 

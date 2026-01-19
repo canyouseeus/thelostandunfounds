@@ -579,7 +579,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                     } else {
                         success(`Galleries synchronized successfully. ${syncData.results?.length || 0} libraries checked.`);
                     }
-                    loadGalleryStats(); // Refresh the list to show any new photo counts
+                    await loadGalleryStats(); // Refresh the list to show any new photo counts
                 } else {
                     const errData = await syncRes.json().catch(() => ({ error: 'Unknown sync error' }));
                     error(`Sync failed: ${errData.error || errData.details || 'Check server logs.'}`);

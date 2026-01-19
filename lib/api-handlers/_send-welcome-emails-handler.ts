@@ -1,5 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
+import * as dotenv from 'dotenv'
+
+dotenv.config({ path: '.env.local' })
 
 interface ZohoTokenResponse {
   access_token: string
@@ -112,7 +115,7 @@ async function getZohoAccountInfo(accessToken: string, fallbackEmail: string): P
       } else if (account.accountName && typeof account.accountName === 'string') {
         accountEmail = account.accountName
       }
-      
+
       if (accountId) {
         return { accountId, email: accountEmail }
       }
@@ -172,7 +175,7 @@ async function sendZohoEmail(
  */
 function generateWelcomeEmailHtml(userName: string, gettingStartedUrl: string, userEmail?: string): string {
   const currentYear = new Date().getFullYear()
-  
+
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -270,7 +273,7 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { testEmail, manualEmails } = req.body as { 
+  const { testEmail, manualEmails } = req.body as {
     testEmail?: string
     manualEmails?: Array<{ subdomain: string; email: string }>
   }
@@ -303,8 +306,8 @@ export default async function handler(
 
       const accessToken = await getZohoAccessToken()
       const accountInfo = await getZohoAccountInfo(accessToken, fromEmail)
-      const actualFromEmail = (accountInfo.email && typeof accountInfo.email === 'string' && accountInfo.email.includes('@')) 
-        ? accountInfo.email 
+      const actualFromEmail = (accountInfo.email && typeof accountInfo.email === 'string' && accountInfo.email.includes('@'))
+        ? accountInfo.email
         : fromEmail
 
       const userName = testEmail.split('@')[0] || 'Contributor'
@@ -321,8 +324,16 @@ export default async function handler(
         htmlContent
       )
 
+      console.log(`[Email] Test email attempt to ${testEmail}:`, result)
+
+      if (result.success) {
+        console.log(`[Email] SUCCESS: Test email sent to ${testEmail}`)
+      } else {
+        console.error(`[Email] FAILED: Test email to ${testEmail} failed:`, result.error)
+      }
+
       if (!result.success) {
-        return res.status(500).json({ 
+        return res.status(500).json({
           error: result.error || 'Failed to send test email',
           success: false
         })
@@ -376,14 +387,14 @@ export default async function handler(
     // Get Zoho access token and account info
     const accessToken = await getZohoAccessToken()
     const accountInfo = await getZohoAccountInfo(accessToken, fromEmail)
-    const actualFromEmail = (accountInfo.email && typeof accountInfo.email === 'string' && accountInfo.email.includes('@')) 
-      ? accountInfo.email 
+    const actualFromEmail = (accountInfo.email && typeof accountInfo.email === 'string' && accountInfo.email.includes('@'))
+      ? accountInfo.email
       : fromEmail
 
     // Get user emails from multiple sources: user_roles, blog_submissions, blog_posts
     const usersWithEmails: UserWithEmail[] = []
     const emailMap = new Map<string, { email: string; source: string }>() // userId -> { email, source }
-    
+
     // First, try user_roles table
     for (const subdomain of userSubdomains) {
       const { data: roleData } = await supabase
@@ -436,9 +447,9 @@ export default async function handler(
           console.log(`Looking for email for subdomain "${normalizedSubdomain}" (user_id: ${subdomain.user_id})`)
           if (submissionEmailMap.has(normalizedSubdomain)) {
             const foundEmail = submissionEmailMap.get(normalizedSubdomain)!
-            emailMap.set(subdomain.user_id, { 
-              email: foundEmail, 
-              source: 'blog_submissions' 
+            emailMap.set(subdomain.user_id, {
+              email: foundEmail,
+              source: 'blog_submissions'
             })
             console.log(`✓ Found email ${foundEmail} for subdomain ${subdomain.subdomain} from blog_submissions`)
           } else {
@@ -478,7 +489,7 @@ export default async function handler(
           // Use admin API to get user by ID (requires service role key)
           if (supabase.auth && supabase.auth.admin) {
             const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(user.user_id)
-            
+
             if (!authError && authUser?.user?.email) {
               emailMap.set(user.user_id, {
                 email: authUser.user.email,
@@ -511,7 +522,7 @@ export default async function handler(
     console.log(`Building final email list. Email map has ${emailMap.size} entries`)
     for (const subdomain of userSubdomains) {
       const emailData = emailMap.get(subdomain.user_id)
-      
+
       if (emailData) {
         usersWithEmails.push({
           userId: subdomain.user_id,
@@ -525,7 +536,7 @@ export default async function handler(
         // This is the most reliable way to find emails
         console.warn(`✗ No email found for user ${subdomain.user_id} with subdomain ${subdomain.subdomain}`)
         console.warn(`  - Doing direct lookup in blog_submissions for subdomain "${subdomain.subdomain}"...`)
-        
+
         const { data: directLookup, error: directError } = await supabase
           .from('blog_submissions')
           .select('author_email, subdomain')
@@ -533,11 +544,11 @@ export default async function handler(
           .not('author_email', 'is', null)
           .limit(1)
           .maybeSingle()
-        
+
         if (directError) {
           console.error(`  - Error in direct lookup:`, directError)
         }
-        
+
         if (directLookup?.author_email) {
           console.warn(`  ✓ FOUND email ${directLookup.author_email} via direct lookup for subdomain ${subdomain.subdomain}`)
           usersWithEmails.push({
@@ -553,7 +564,7 @@ export default async function handler(
             const matchingSubmission = submissionsData.find(
               s => s.subdomain && s.subdomain.toLowerCase().trim() === normalizedSubdomain
             )
-            
+
             if (matchingSubmission?.author_email) {
               console.warn(`  ✓ FOUND email ${matchingSubmission.author_email} via case-insensitive match for subdomain ${subdomain.subdomain}`)
               usersWithEmails.push({
