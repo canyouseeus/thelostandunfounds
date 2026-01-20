@@ -935,14 +935,14 @@ async function syncGalleryPhotos(librarySlug: string) {
     // Get current photos in DB for this library to detect deletions and existing records
     const { data: existingPhotos } = await supabase
         .from('photos')
-        .select('id, google_drive_file_id')
+        .select('google_drive_file_id')
         .eq('library_id', library.id);
 
-    const existingFileIdMap = new Map(existingPhotos?.map(p => [p.google_drive_file_id, p.id]) || []);
+    const existingFileIdSet = new Set(existingPhotos?.map(p => p.google_drive_file_id) || []);
+    const driveMediaFileIds = new Set(files.map(f => f.id));
 
-    for (const file of files) {
-        if (!file.id || !file.name) continue;
-
+    // Prepare data for bulk upsert
+    const photosToUpsert = files.map(file => {
         const title = file.name.split('.').slice(0, -1).join('.');
         const thumbnailUrl = file.thumbnailLink?.replace(/=s220$/, '=s1200');
         let metadata = file.imageMediaMetadata || {};
@@ -962,9 +962,7 @@ async function syncGalleryPhotos(librarySlug: string) {
             }
         }
 
-        const isNew = !existingFileIdMap.has(file.id);
-
-        const photoData = {
+        return {
             library_id: library.id,
             google_drive_file_id: file.id,
             title: title,
@@ -975,44 +973,44 @@ async function syncGalleryPhotos(librarySlug: string) {
             metadata: metadata,
             updated_at: new Date().toISOString()
         };
+    });
 
-        const { error: upsertError } = await supabase
-            .from('photos')
-            .upsert(photoData, { onConflict: 'google_drive_file_id' });
+    // Execute Bulk Upsert
+    const { error: upsertError } = await supabase
+        .from('photos')
+        .upsert(photosToUpsert, { onConflict: 'google_drive_file_id' });
 
-        if (upsertError) {
-            console.error(`Sync failed for file ${file.id}:`, upsertError);
-        } else {
-            if (isNew) {
-                syncStats.added++;
-            } else {
-                syncStats.updated++;
-            }
-        }
+    if (upsertError) {
+        console.error(`[Sync] Bulk upsert failed for ${librarySlug}:`, upsertError);
+        throw upsertError;
     }
 
-    // Deletion logic
-    if (existingPhotos) {
-        const photosToDelete = existingPhotos
-            .filter(p => p.google_drive_file_id && !currentDriveFileIds.has(p.google_drive_file_id))
-            .map(p => p.google_drive_file_id);
+    // Calculate Added/Updated based on ID set
+    files.forEach(f => {
+        if (existingFileIdSet.has(f.id)) {
+            syncStats.updated++;
+        } else {
+            syncStats.added++;
+        }
+    });
 
-        if (photosToDelete.length > 0) {
-            const { error: deleteError } = await supabase
-                .from('photos')
-                .delete()
-                .in('google_drive_file_id', photosToDelete);
+    // Handle Deletions (Bulk)
+    const photosToDelete = Array.from(existingFileIdSet).filter(id => id && !driveMediaFileIds.has(id));
+    if (photosToDelete.length > 0) {
+        const { error: deleteError } = await supabase
+            .from('photos')
+            .delete()
+            .in('google_drive_file_id', photosToDelete);
 
-            if (!deleteError) {
-                syncStats.deleted = photosToDelete.length;
-            } else {
-                console.error('[Sync] Failed to delete stale photos:', deleteError);
-            }
+        if (!deleteError) {
+            syncStats.deleted = photosToDelete.length;
+        } else {
+            console.error('[Sync] Failed to delete stale photos:', deleteError);
         }
     }
 
     syncStats.total = files.length;
-    console.log(`[Sync] Completed for ${librarySlug}:`, syncStats);
+    console.log(`[Sync] Completed for ${librarySlug}: Added ${syncStats.added}, Updated ${syncStats.updated}, Deleted ${syncStats.deleted}`);
 
     return syncStats;
 }
