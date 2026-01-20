@@ -910,13 +910,26 @@ async function syncGalleryPhotos(librarySlug: string) {
     };
 
     const response = await drive.files.list({
-        // MIME types: image, video, and folder check (we only want files)
-        q: `'${folderId}' in parents and (mimeType contains 'image/' or mimeType = 'video/quicktime') and trashed = false`,
+        q: `'${folderId}' in parents and trashed = false`,
         fields: 'files(id, name, thumbnailLink, webContentLink, createdTime, mimeType, imageMediaMetadata)',
         pageSize: 1000,
     });
 
-    const files = response.data.files || [];
+    const allFiles = response.data.files || [];
+    console.log(`[Sync Debug] Found ${allFiles.length} total files in folder ${librarySlug}`);
+
+    // Filter manually so we can log what we skip
+    const files = allFiles.filter(f => {
+        const isImage = f.mimeType?.includes('image/');
+        const isVideo = f.mimeType === 'video/quicktime' || f.mimeType === 'video/mp4';
+        if (!isImage && !isVideo) {
+            console.log(`[Sync Debug] Skipping file: ${f.name} (MIME: ${f.mimeType})`);
+            return false;
+        }
+        return true;
+    });
+
+    console.log(`[Sync Debug] Processing ${files.length} active image/video files for ${librarySlug}`);
     const currentDriveFileIds = new Set(files.map(f => f.id));
 
     // Get current photos in DB for this library to detect deletions and existing records
