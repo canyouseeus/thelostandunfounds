@@ -943,7 +943,8 @@ async function syncGalleryPhotos(librarySlug: string) {
 
     // Prepare data for bulk upsert
     const photosToUpsert = files.map(file => {
-        const title = file.name.split('.').slice(0, -1).join('.');
+        const fileName = file.name || 'Untitled';
+        const title = fileName.split('.').slice(0, -1).join('.') || fileName;
         const thumbnailUrl = file.thumbnailLink?.replace(/=s220$/, '=s1200');
         let metadata = file.imageMediaMetadata || {};
         let finalCreatedAt = file.createdTime || new Date().toISOString();
