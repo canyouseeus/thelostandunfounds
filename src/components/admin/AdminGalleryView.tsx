@@ -178,11 +178,11 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 validOrders = [];
             }
 
-            // 3. Get Recent Photos
+            // 3. Get Recent Photos (Sorted by updated_at for real-time dashboard updates)
             const { data: recentPhotos, error: photosError } = await supabase
                 .from('photos')
                 .select('*')
-                .order('created_at', { ascending: false })
+                .order('updated_at', { ascending: false })
                 .limit(3);
 
             if (photosError) console.error('Error fetching recent photos:', photosError);
@@ -593,7 +593,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                         success(`Sync complete: ${totalSynced} photos across ${syncData.results?.length || 0} galleries.`);
                     }
                     // Small delay to ensure database commits before refresh
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                     await loadGalleryStats(); // Refresh the list to show any new photo counts
                 } else {
                     const errData = await syncRes.json().catch(() => ({ error: 'Unknown sync error' }));
