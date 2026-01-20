@@ -947,19 +947,34 @@ async function syncGalleryPhotos(librarySlug: string) {
         const title = fileName.split('.').slice(0, -1).join('.') || fileName;
         const thumbnailUrl = file.thumbnailLink?.replace(/=s220$/, '=s1200');
         let metadata = file.imageMediaMetadata || {};
-        let finalCreatedAt = file.createdTime || new Date().toISOString();
 
-        const captureTime = (metadata as any).time;
-        if (captureTime) {
-            const captureDate = new Date(captureTime);
-            const uploadDate = new Date(finalCreatedAt);
-            if (captureDate.getFullYear() === 2025 && uploadDate.getFullYear() === 2026) {
-                captureDate.setFullYear(2026);
+        // Robust Date Normalization
+        let finalCreatedAt = new Date().toISOString();
+        if (file.createdTime) {
+            const d = new Date(file.createdTime);
+            if (!isNaN(d.getTime())) finalCreatedAt = d.toISOString();
+        }
+
+        const rawCaptureTime = (metadata as any).time;
+        if (rawCaptureTime) {
+            // Fix "YYYY:MM:DD HH:MM:SS" format which is common in EXIF but invalid for JS Date/Postgres
+            let normalizedTime = rawCaptureTime;
+            if (/^\d{4}:\d{2}:\d{2}/.test(rawCaptureTime)) {
+                normalizedTime = rawCaptureTime.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3');
+            }
+
+            const captureDate = new Date(normalizedTime);
+            if (!isNaN(captureDate.getTime())) {
+                const uploadDate = new Date(finalCreatedAt);
+
+                // Keep the existing "2025 -> 2026" correction logic
+                if (captureDate.getFullYear() === 2025 && uploadDate.getFullYear() === 2026) {
+                    captureDate.setFullYear(2026);
+                    (metadata as any)._corrected = true;
+                }
+
                 finalCreatedAt = captureDate.toISOString();
-                (metadata as any)._corrected = true;
-                (metadata as any).time = captureDate.toISOString();
-            } else {
-                finalCreatedAt = captureTime;
+                (metadata as any).time = finalCreatedAt; // Store normalized ISO in metadata too
             }
         }
 
