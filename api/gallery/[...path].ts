@@ -902,13 +902,30 @@ async function syncGalleryPhotos(librarySlug: string) {
 
     const drive = google.drive({ version: 'v3', auth });
 
+    const syncStats = {
+        added: 0,
+        updated: 0,
+        deleted: 0,
+        total: 0
+    };
+
     const response = await drive.files.list({
+        // MIME types: image, video, and folder check (we only want files)
         q: `'${folderId}' in parents and (mimeType contains 'image/' or mimeType = 'video/quicktime') and trashed = false`,
         fields: 'files(id, name, thumbnailLink, webContentLink, createdTime, mimeType, imageMediaMetadata)',
         pageSize: 1000,
     });
 
     const files = response.data.files || [];
+    const currentDriveFileIds = new Set(files.map(f => f.id));
+
+    // Get current photos in DB for this library to detect deletions and existing records
+    const { data: existingPhotos } = await supabase
+        .from('photos')
+        .select('id, google_drive_file_id')
+        .eq('library_id', library.id);
+
+    const existingFileIdMap = new Map(existingPhotos?.map(p => [p.google_drive_file_id, p.id]) || []);
 
     for (const file of files) {
         if (!file.id || !file.name) continue;
@@ -932,12 +949,7 @@ async function syncGalleryPhotos(librarySlug: string) {
             }
         }
 
-        // Check if photo already exists
-        const { data: existingPhoto } = await supabase
-            .from('photos')
-            .select('id')
-            .eq('google_drive_file_id', file.id)
-            .maybeSingle();
+        const isNew = !existingFileIdMap.has(file.id);
 
         const photoData = {
             library_id: library.id,
@@ -947,55 +959,49 @@ async function syncGalleryPhotos(librarySlug: string) {
             status: 'active',
             mime_type: file.mimeType,
             created_at: finalCreatedAt,
-            metadata: metadata
+            metadata: metadata,
+            updated_at: new Date().toISOString()
         };
 
-        if (existingPhoto) {
-            // Update existing photo
-            const { error: updateError } = await supabase
-                .from('photos')
-                .update(photoData)
-                .eq('id', existingPhoto.id);
+        const { error: upsertError } = await supabase
+            .from('photos')
+            .upsert(photoData, { onConflict: 'google_drive_file_id' });
 
-            if (updateError) {
-                console.error(`Update failed for file ${file.id}:`, updateError);
-            }
+        if (upsertError) {
+            console.error(`Sync failed for file ${file.id}:`, upsertError);
         } else {
-            // Insert new photo
-            const { error: insertError } = await supabase
-                .from('photos')
-                .insert(photoData);
-
-            if (insertError) {
-                console.error(`Insert failed for file ${file.id}:`, insertError);
+            if (isNew) {
+                syncStats.added++;
             } else {
-                console.log(`[Sync] Inserted new photo: ${file.name}`);
+                syncStats.updated++;
             }
         }
     }
 
-    console.log(`[Sync] Processed ${files.length} files from Google Drive for ${librarySlug}`);
-
-    const currentDriveFileIds = new Set(files.map(f => f.id));
-    const { data: existingPhotos } = await supabase
-        .from('photos')
-        .select('google_drive_file_id')
-        .eq('library_id', library.id);
-
+    // Deletion logic
     if (existingPhotos) {
         const photosToDelete = existingPhotos
             .filter(p => p.google_drive_file_id && !currentDriveFileIds.has(p.google_drive_file_id))
             .map(p => p.google_drive_file_id);
 
         if (photosToDelete.length > 0) {
-            await supabase
+            const { error: deleteError } = await supabase
                 .from('photos')
                 .delete()
                 .in('google_drive_file_id', photosToDelete);
+
+            if (!deleteError) {
+                syncStats.deleted = photosToDelete.length;
+            } else {
+                console.error('[Sync] Failed to delete stale photos:', deleteError);
+            }
         }
     }
 
-    return { synced: files.length, deleted: existingPhotos?.length || 0 - files.length };
+    syncStats.total = files.length;
+    console.log(`[Sync] Completed for ${librarySlug}:`, syncStats);
+
+    return syncStats;
 }
 
 async function handleSync(req: VercelRequest, res: VercelResponse) {

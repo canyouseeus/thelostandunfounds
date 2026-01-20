@@ -589,8 +589,16 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                         const failedNames = failedSyncs.map((f: any) => f.slug).join(', ');
                         info(`Partially synced. ${successfulSyncs.length} succeeded. Failed: ${failedNames}`); // Show which ones failed
                     } else {
-                        const totalSynced = successfulSyncs.reduce((sum: number, r: any) => sum + (r.synced || 0), 0);
-                        success(`Sync complete: ${totalSynced} photos across ${syncData.results?.length || 0} galleries.`);
+                        const totalAdded = successfulSyncs.reduce((sum: number, r: any) => sum + (r.added || 0), 0);
+                        const totalDeleted = successfulSyncs.reduce((sum: number, r: any) => sum + (r.deleted || 0), 0);
+                        const totalPhotos = successfulSyncs.reduce((sum: number, r: any) => sum + (r.total || 0), 0);
+
+                        let msg = `Sync complete: ${totalPhotos} photos total.`;
+                        if (totalAdded > 0) msg += ` (${totalAdded} new added)`;
+                        if (totalDeleted > 0) msg += ` (${totalDeleted} removed)`;
+                        if (totalAdded === 0 && totalDeleted === 0) msg = `Sync complete: Archive is up to date (${totalPhotos} photos).`;
+
+                        success(msg);
                     }
                     // Small delay to ensure database commits before refresh
                     await new Promise(resolve => setTimeout(resolve, 1000));
