@@ -63,9 +63,35 @@ export default async function handler(
     })
   }
 
+  // Build full route path for nested routes (e.g., analytics/record)
+  let fullRoute = ''
+  if (req.query.path) {
+    if (Array.isArray(req.query.path)) {
+      fullRoute = req.query.path.join('/')
+    } else {
+      fullRoute = req.query.path
+    }
+  } else if (req.url) {
+    const urlPath = req.url.split('?')[0]
+    const pathParts = urlPath.split('/').filter(p => p)
+    const adminIndex = pathParts.indexOf('admin')
+    if (adminIndex >= 0) {
+      fullRoute = pathParts.slice(adminIndex + 1).join('/')
+    }
+  }
+
+  console.log('[Admin Router] Full route:', fullRoute)
+
   // Route to appropriate handler
   try {
-    switch (route) {
+    switch (fullRoute) {
+      // Analytics routes (nested paths)
+      case 'analytics/record':
+        return await handleAnalyticsRecord(req, res)
+      case 'analytics/stats':
+        return await handleAnalyticsStats(req, res)
+
+      // Standard routes
       case 'product-costs':
         return await handleProductCosts(req, res)
       case 'reset-password':
@@ -97,8 +123,8 @@ export default async function handler(
       case 'paypal-test':
         return await handlePayPalTest(req, res)
       default:
-        console.error('Admin route not found:', route, 'query:', req.query, 'url:', req.url)
-        return res.status(404).json({ error: `Admin route not found: ${route}` })
+        console.error('Admin route not found:', fullRoute, 'query:', req.query, 'url:', req.url)
+        return res.status(404).json({ error: `Admin route not found: ${fullRoute}` })
     }
   } catch (error: any) {
     console.error('Admin router error:', error)
@@ -228,4 +254,86 @@ async function handlePayPalPayouts(req: VercelRequest, res: VercelResponse) {
 async function handlePayPalTest(req: VercelRequest, res: VercelResponse) {
   const handler = await import('../../lib/api-handlers/_paypal-test-handler.js')
   return handler.default(req, res)
+}
+
+/**
+ * Analytics Record Handler - Records page views and events
+ */
+async function handleAnalyticsRecord(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' })
+  }
+
+  try {
+    const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+    const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!)
+
+    const { user_id, event_type, resource_id, metadata, duration } = req.body || {}
+
+    if (!event_type) {
+      return res.status(400).json({ error: 'event_type is required' })
+    }
+
+    const { data, error } = await supabase
+      .from('user_analytics')
+      .insert({
+        user_id: user_id || null,
+        event_type,
+        resource_id: resource_id || null,
+        metadata: metadata || {},
+        duration: duration || null
+      })
+      .select()
+      .single()
+
+    if (error) {
+      // If table doesn't exist, just log and return success (non-blocking analytics)
+      if (error.code === '42P01') {
+        console.warn('[Analytics] user_analytics table does not exist. Skipping.')
+        return res.status(200).json({ success: true, skipped: true })
+      }
+      throw error
+    }
+
+    return res.status(200).json({ success: true, data })
+  } catch (error: any) {
+    console.error('[Analytics Record] Error:', error)
+    // Analytics should not block user experience - return 200 even on error
+    return res.status(200).json({ success: false, error: error.message })
+  }
+}
+
+/**
+ * Analytics Stats Handler - Retrieves analytics data
+ */
+async function handleAnalyticsStats(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' })
+  }
+
+  try {
+    const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+    const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!)
+
+    const { data: analytics, error } = await supabase
+      .from('user_analytics')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(100)
+
+    if (error) {
+      // If table doesn't exist, return empty array
+      if (error.code === '42P01') {
+        return res.status(200).json({ success: true, analytics: [] })
+      }
+      throw error
+    }
+
+    return res.status(200).json({ success: true, analytics })
+  } catch (error: any) {
+    console.error('[Analytics Stats] Error:', error)
+    return res.status(500).json({ error: error.message })
+  }
 }
