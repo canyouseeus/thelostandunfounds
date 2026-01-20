@@ -582,6 +582,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                     // Check if any individual syncs failed
                     const failedSyncs = syncData.results?.filter((r: any) => r.error) || [];
                     const successfulSyncs = syncData.results?.filter((r: any) => !r.error) || [];
+                    console.log('[checkAssetHealth] Successful syncs:', successfulSyncs);
 
                     if (failedSyncs.length > 0 && successfulSyncs.length === 0) {
                         error(`Sync failed for all libraries. ${failedSyncs[0]?.error || 'Check Google Drive credentials.'}`);
