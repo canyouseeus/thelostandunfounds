@@ -663,15 +663,25 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                             <div className="text-white/40 text-xs uppercase font-bold mb-2">Latest New Uploads</div>
                             <div className="grid grid-cols-3 gap-2">
                                 {stats?.recentPhotos && stats.recentPhotos.length > 0 ? (
-                                    stats.recentPhotos.map((photo: any) => (
-                                        <div key={photo.id} className="aspect-square bg-black/50 relative group overflow-hidden border border-white/10">
-                                            <img
-                                                src={photo.thumbnail_url}
-                                                alt={photo.title}
-                                                className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
-                                            />
-                                        </div>
-                                    ))
+                                    stats.recentPhotos.map((photo: any) => {
+                                        // Use streaming proxy for reliable image loading
+                                        const imageUrl = photo.google_drive_file_id
+                                            ? `/api/gallery/stream?fileId=${photo.google_drive_file_id}&size=400`
+                                            : photo.thumbnail_url;
+                                        return (
+                                            <div key={photo.id} className="aspect-square bg-black/50 relative group overflow-hidden border border-white/10">
+                                                <img
+                                                    src={imageUrl}
+                                                    alt={photo.title}
+                                                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                                                    onError={(e) => {
+                                                        // Fallback: hide broken images
+                                                        (e.target as HTMLImageElement).style.display = 'none';
+                                                    }}
+                                                />
+                                            </div>
+                                        );
+                                    })
                                 ) : (
                                     <div className="col-span-3 text-white/20 italic text-xs">No recent photos</div>
                                 )}
