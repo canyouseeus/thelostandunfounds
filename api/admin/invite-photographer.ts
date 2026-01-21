@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import { getZohoAuthContext, sendZohoEmail } from '../../lib/api-handlers/_zoho-email-utils';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
