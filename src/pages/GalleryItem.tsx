@@ -24,50 +24,10 @@ interface GalleryItemProps {
 export default function GalleryItem({ lib, index, userIsAdmin, authLoading, onGalleryClick }: GalleryItemProps) {
     const { user } = useAuth();
 
-    // Countdown Logic for "Last Night"
-    const isLastNight = lib.name.toUpperCase() === 'LAST NIGHT';
-    const [timeRemaining, setTimeRemaining] = useState<string | null>(null);
-    const [isLocked, setIsLocked] = useState(false);
-
-    useEffect(() => {
-        if (!isLastNight) {
-            setIsLocked(false);
-            return;
-        }
-
-        const calculateTime = () => {
-            const now = new Date();
-            const target = new Date();
-            target.setHours(11, 11, 0, 0); // 11:11 AM
-
-            if (now >= target) {
-                setIsLocked(false);
-                setTimeRemaining(null);
-                return true; // Indicates unlocked
-            }
-
-            setIsLocked(true);
-            const diff = target.getTime() - now.getTime();
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-            setTimeRemaining(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
-            return false; // Still locked
-        };
-
-        // Initial check
-        if (calculateTime()) return; // If unlocked immediately, don't start timer
-
-        // Update every second
-        const timer = setInterval(() => {
-            if (calculateTime()) {
-                clearInterval(timer);
-            }
-        }, 1000);
-
-        return () => clearInterval(timer);
-    }, [isLastNight]);
+    // DISABLED: Countdown was a one-time launch event (already passed)
+    // Keeping variables for component compatibility but always unlocked
+    const isLocked = false;
+    const timeRemaining = null;
 
     return (
         <motion.div
