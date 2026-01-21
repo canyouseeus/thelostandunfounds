@@ -581,14 +581,14 @@ const PhotoCard: React.FC<{
                         </div>
                     )}
 
-                    {/* Meta Flip Button - Centered on hover overlay */}
+                    {/* Meta Flip Button */}
                     <button
                         onClick={handleFlip}
-                        className={`absolute inset-0 z-[45] flex items-center justify-center transition-all ${isSingle ? 'opacity-100 md:opacity-0 md:group-hover:opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                        className={`absolute z-[45] p-1.5 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 ${isSingle ? 'bottom-2 right-2' : 'bottom-0 right-0'}`}
                         title="View Metadata"
                     >
-                        <div className="w-10 h-10 md:w-12 md:h-12 bg-black/50 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-black/70 hover:scale-110 transition-all">
-                            <Eye className="w-5 h-5 md:w-6 md:h-6" />
+                        <div className="w-7 h-7 md:w-8 md:h-8 bg-black/40 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-black/60 transition-all">
+                            <Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />
                         </div>
                     </button>
 
