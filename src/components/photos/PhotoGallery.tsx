@@ -581,14 +581,14 @@ const PhotoCard: React.FC<{
                         </div>
                     )}
 
-                    {/* Meta Flip Button */}
+                    {/* Meta Flip Button - Centered on hover overlay */}
                     <button
                         onClick={handleFlip}
-                        className={`absolute z-[45] p-1.5 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 ${isSingle ? 'bottom-2 right-2' : 'bottom-0 right-0'}`}
+                        className={`absolute inset-0 z-[45] flex items-center justify-center transition-all ${isSingle ? 'opacity-100 md:opacity-0 md:group-hover:opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                         title="View Metadata"
                     >
-                        <div className="w-7 h-7 md:w-8 md:h-8 bg-black/40 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-black/60 transition-all">
-                            <Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                        <div className="w-10 h-10 md:w-12 md:h-12 bg-black/50 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-black/70 hover:scale-110 transition-all">
+                            <Eye className="w-5 h-5 md:w-6 md:h-6" />
                         </div>
                     </button>
 
@@ -632,13 +632,13 @@ const PhotoCard: React.FC<{
                         <div className="space-y-[0.2vw] md:space-y-1">
                             <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Camera</p>
                             <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono uppercase leading-tight truncate`}>
-                                {photo.metadata?.camera_make} {photo.metadata?.camera_model || 'Unknown'}
+                                {photo.metadata?.cameraMake || photo.metadata?.camera_make || ''} {photo.metadata?.cameraModel || photo.metadata?.camera_model || 'Unknown'}
                             </p>
                         </div>
                         <div className={`grid grid-cols-2 ${isSingle ? 'gap-y-4 gap-x-4 md:gap-x-12' : 'gap-y-[0.5vw] gap-x-[1vw] md:gap-x-4'}`}>
                             <div>
                                 <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>ISO</p>
-                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>{photo.metadata?.iso || '-'}</p>
+                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>{photo.metadata?.isoSpeed || photo.metadata?.iso || '-'}</p>
                             </div>
                             <div>
                                 <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Aperture</p>
@@ -646,16 +646,18 @@ const PhotoCard: React.FC<{
                             </div>
                             <div>
                                 <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Focal</p>
-                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>{photo.metadata?.focal_length ? `${photo.metadata.focal_length}mm` : '-'}</p>
+                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>{(photo.metadata?.focalLength || photo.metadata?.focal_length) ? `${photo.metadata?.focalLength || photo.metadata?.focal_length}mm` : '-'}</p>
                             </div>
                             <div>
                                 <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Shutter</p>
                                 <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>
-                                    {photo.metadata?.shutter_speed
-                                        ? (Number(photo.metadata.shutter_speed) < 1
-                                            ? `1/${Math.round(1 / Number(photo.metadata.shutter_speed))}s`
-                                            : `${photo.metadata.shutter_speed}s`)
-                                        : '-'}
+                                    {(() => {
+                                        const shutter = photo.metadata?.exposureTime || photo.metadata?.shutter_speed;
+                                        if (!shutter) return '-';
+                                        return Number(shutter) < 1
+                                            ? `1/${Math.round(1 / Number(shutter))}s`
+                                            : `${shutter}s`;
+                                    })()}
                                 </p>
                             </div>
                         </div>
@@ -663,7 +665,7 @@ const PhotoCard: React.FC<{
                             <div>
                                 <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Date Taken</p>
                                 <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono uppercase leading-tight`}>
-                                    {photo.metadata?.date_taken ? new Date(photo.metadata.date_taken).toLocaleDateString() : 'Unknown'}
+                                    {(photo.metadata?.time || photo.metadata?.date_taken) ? new Date(photo.metadata?.time || photo.metadata?.date_taken).toLocaleDateString() : 'Unknown'}
                                 </p>
                             </div>
                             <div>
