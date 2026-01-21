@@ -665,7 +665,10 @@ const PhotoCard: React.FC<{
                             <div>
                                 <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Date Taken</p>
                                 <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono uppercase leading-tight`}>
-                                    {(photo.metadata?.time || photo.metadata?.date_taken) ? new Date(photo.metadata?.time || photo.metadata?.date_taken).toLocaleDateString() : 'Unknown'}
+                                    {(() => {
+                                        const dateVal = photo.metadata?.time || photo.metadata?.date_taken;
+                                        return dateVal ? new Date(dateVal).toLocaleDateString() : 'Unknown';
+                                    })()}
                                 </p>
                             </div>
                             <div>
