@@ -15,7 +15,7 @@ declare global {
 if (typeof window !== 'undefined') {
   const win = window as Window;
   win.__DEBUG_LOGS__ = win.__DEBUG_LOGS__ || [];
-  
+
   const addDebugLog = (type: string, message: string, stack?: string) => {
     win.__DEBUG_LOGS__!.push({
       type,
@@ -38,7 +38,7 @@ if (typeof window !== 'undefined') {
   const originalError = console.error;
   console.error = (...args: any[]) => {
     originalError.apply(console, args);
-    const message = args.map(arg => 
+    const message = args.map(arg =>
       arg instanceof Error ? arg.message : String(arg)
     ).join(' ');
     const stack = args.find(arg => arg instanceof Error)?.stack;
@@ -64,25 +64,26 @@ console.log('📦 All imports loaded successfully')
 // Temporarily disable error suppression to debug blank page
 // TODO: Re-enable after fixing the issue
 const originalConsoleError = console.error;
-console.error = function(...args: any[]) {
+console.error = function (...args: any[]) {
   // Temporarily show all errors for debugging
   originalConsoleError.apply(console, args);
 };
 
 // Suppress 403/406 console warnings from Supabase subscription queries
 const originalConsoleWarn = console.warn;
-console.warn = function(...args: any[]) {
+console.warn = function (...args: any[]) {
   const message = args.join(' ').toLowerCase();
   // Suppress 403/406 warnings related to subscription tables
   if (
-    message.includes('403') || 
-    message.includes('406') || 
+    message.includes('403') ||
+    message.includes('406') ||
     message.includes('platform_subscriptions') ||
     message.includes('tool_limits') ||
     message.includes('tool_usage') ||
     message.includes('mcp registry tools not available') // Suppress MCP fallback warning
   ) {
-    // Suppress these warnings - they're expected if database tables don't exist or MCP tools unavailable
+    // Log suppressed warnings for debugging
+    console.log('[DEBUG_SUPPRESSED_WARN]', ...args);
     return;
   }
   originalConsoleWarn.apply(console, args);
@@ -93,12 +94,13 @@ window.addEventListener('error', (event) => {
   const errorMsg = event.message?.toLowerCase() || '';
   // Suppress 403/406 errors related to subscription tables (expected if tables don't exist)
   if (
-    errorMsg.includes('403') || 
-    errorMsg.includes('406') || 
+    errorMsg.includes('403') ||
+    errorMsg.includes('406') ||
     errorMsg.includes('platform_subscriptions') ||
     errorMsg.includes('tool_limits') ||
     errorMsg.includes('tool_usage')
   ) {
+    console.log('[DEBUG_SUPPRESSED_ERROR]', errorMsg);
     return;
   }
   // Log other errors
@@ -109,12 +111,13 @@ window.addEventListener('unhandledrejection', (event) => {
   const reason = event.reason?.toString()?.toLowerCase() || '';
   // Suppress 403/406 errors related to subscription tables (expected if tables don't exist)
   if (
-    reason.includes('403') || 
-    reason.includes('406') || 
+    reason.includes('403') ||
+    reason.includes('406') ||
     reason.includes('platform_subscriptions') ||
     reason.includes('tool_limits') ||
     reason.includes('tool_usage')
   ) {
+    console.log('[DEBUG_SUPPRESSED_REJECTION]', reason);
     return;
   }
   // Log other rejections
@@ -138,7 +141,7 @@ if (!rootElement) {
       </React.StrictMode>,
     )
     console.log('✅ React mounted successfully')
-    
+
     // Hide pre-render content when React mounts
     const preRender = document.getElementById('pre-render')
     if (preRender) {

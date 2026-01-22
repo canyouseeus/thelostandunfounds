@@ -266,7 +266,15 @@ async function handleAnalyticsRecord(req: VercelRequest, res: VercelResponse) {
 
   try {
     const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
-    const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY
+
+    // Diagnostic logging for debugging 403 errors
+    console.log('[Analytics Record] Using Supabase key:', {
+      hasUrl: !!SUPABASE_URL,
+      hasSvcKey: !!SUPABASE_SERVICE_ROLE_KEY,
+      svcKeyLength: SUPABASE_SERVICE_ROLE_KEY?.length
+    });
+
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!)
 
     const { user_id, event_type, resource_id, metadata, duration } = req.body || {}
@@ -314,7 +322,14 @@ async function handleAnalyticsStats(req: VercelRequest, res: VercelResponse) {
 
   try {
     const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
-    const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY
+
+    // Diagnostic logging
+    console.log('[Analytics Stats] Using Supabase key:', {
+      hasUrl: !!SUPABASE_URL,
+      hasSvcKey: !!SUPABASE_SERVICE_ROLE_KEY
+    });
+
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!)
 
     const { data: analytics, error } = await supabase

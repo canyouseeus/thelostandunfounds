@@ -250,7 +250,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
   return (
     <div className="min-h-screen bg-black flex flex-col">
       <SageModeOverlay />
-      <nav className="fixed top-0 left-0 w-full bg-black backdrop-blur-md z-50">
+      <nav className="fixed top-0 left-0 w-full bg-black backdrop-blur-md z-[999]">
         <div className="w-full px-4 sm:px-6 lg:px-8">
           {/* Top row: Title left, Menu button right */}
           <div
@@ -379,16 +379,6 @@ export default function Layout({ children }: { children?: ReactNode }) {
                       }}
                     >
                       ALL ARTICLES
-                    </Link>
-                    <Link
-                      to="/book-club"
-                      className="menu-item menu-subitem"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        setArchivesMenuOpen(false);
-                      }}
-                    >
-                      BOOK CLUB
                     </Link>
                     <Link
                       to="/gearheads"
@@ -527,7 +517,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
                     <>
 
                       <Link
-                        to={userIsAdmin ? "/admin" : userSubdomain ? `/${userSubdomain}/bookclubprofile` : "/bookclubprofile"}
+                        to={userIsAdmin ? "/admin" : userSubdomain ? `/${userSubdomain}/profile` : "/profile"}
                         className="menu-item"
                         onClick={() => {
                           setMenuOpen(false);
@@ -643,6 +633,6 @@ export default function Layout({ children }: { children?: ReactNode }) {
         </div>
       )}
     </div>
-  )
+  );
 }
 

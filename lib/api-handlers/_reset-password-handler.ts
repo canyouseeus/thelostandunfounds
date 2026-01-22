@@ -23,9 +23,18 @@ export default async function handler(
     }
 
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY
+
+    // Diagnostic logging for debugging 403 errors
+    console.log('[Reset Password] Using Supabase credentials:', {
+      hasUrl: !!supabaseUrl,
+      hasSvcKey: !!supabaseServiceKey,
+      svcKeyLength: supabaseServiceKey?.length,
+      svcKeyPrefix: supabaseServiceKey?.substring(0, 10)
+    });
 
     if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('[Reset Password] Missing Supabase configuration');
       return res.status(500).json({ error: 'Server configuration error' })
     }
 
@@ -42,7 +51,7 @@ export default async function handler(
     if (authHeader) {
       const token = authHeader.replace('Bearer ', '')
       const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
-      
+
       if (!authError && user) {
         const { data: requesterRole } = await supabaseAdmin
           .from('user_roles')
@@ -58,7 +67,7 @@ export default async function handler(
 
     // Get user by email
     const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers()
-    
+
     if (listError) {
       console.error('Error listing users:', listError)
       return res.status(500).json({ error: 'Failed to find user' })
@@ -88,8 +97,8 @@ export default async function handler(
       return res.status(500).json({ error: 'Failed to reset password' })
     }
 
-    return res.status(200).json({ 
-      success: true, 
+    return res.status(200).json({
+      success: true,
       message: `Password reset successfully for ${email}`,
       isAdmin: targetUserRole?.is_admin || false
     })

@@ -687,7 +687,7 @@ export default function SubmitArticle() {
                   setSearchParams({ column: key });
                   window.scrollTo(0, 0);
                 }}
-                className="bg-black/50 border border-white/10 p-6 text-left hover:bg-white/5 hover:border-white/30 transition group flex flex-col h-full rounded-none"
+                className="bg-black/50 p-6 text-left hover:bg-white/5 transition group flex flex-col h-full rounded-none"
               >
                 <h3 className="text-xl font-bold text-white mb-2 group-hover:text-white transition-colors uppercase tracking-wide">
                   {conf.name}
@@ -790,7 +790,7 @@ export default function SubmitArticle() {
       />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {!user && !authLoading && (
-          <div className="mb-8 text-center bg-yellow-900/20 border border-yellow-500/50 rounded-none p-6">
+          <div className="mb-8 text-center bg-yellow-900/20 rounded-none p-6">
             <h2 className="text-xl font-bold text-white mb-2">Sign In Required</h2>
             <p className="text-white/70 mb-4">
               Please sign in or create an account to submit articles to THE LOST ARCHIVES.
@@ -815,11 +815,11 @@ export default function SubmitArticle() {
         {/* AI Writing Prompt Box */}
         {config.promptPath && (
           <div className="mb-8">
-            <div className="bg-black/50 border border-white/10 rounded-none p-6">
+            <div className="bg-black/50 rounded-none p-6">
               <div className="mb-4">
                 <h2 className="text-xl font-bold text-white mb-1">AI Writing Prompt for Contributors</h2>
                 <p className="text-white/60 text-sm mb-2">Copy this prompt to use with your AI assistant</p>
-                <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-none p-3 mt-3 flex items-start gap-2">
+                <div className="bg-yellow-900/20 rounded-none p-3 mt-3 flex items-start gap-2">
                   <AlertTriangle className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
                   <p className="text-yellow-300 text-xs">
                     <strong>Important:</strong> Do not modify this prompt. Use it exactly as provided to ensure your article matches our format and style requirements.
@@ -827,12 +827,12 @@ export default function SubmitArticle() {
                 </div>
               </div>
               {loadingPrompt ? (
-                <div className="bg-black/50 border border-white/10 rounded-none p-4">
+                <div className="bg-black/50 rounded-none p-4">
                   <p className="text-white/60 text-sm">Loading prompt...</p>
                 </div>
               ) : (
                 <>
-                  <pre className="bg-black/50 border border-white/10 rounded-none p-4 overflow-x-auto text-white/90 text-sm font-mono whitespace-pre-wrap break-words text-left max-h-96 overflow-y-auto relative">
+                  <pre className="bg-black/50 rounded-none p-4 overflow-x-auto text-white/90 text-sm font-mono whitespace-pre-wrap break-words text-left max-h-96 overflow-y-auto relative">
                     <button
                       onClick={copyPromptToClipboard}
                       className="absolute top-2 right-2 p-1.5 bg-white/10 hover:bg-white/20 rounded text-white transition flex items-center justify-center flex-shrink-0 z-10"
@@ -872,7 +872,7 @@ export default function SubmitArticle() {
 
         {/* Tips Section */}
         <div className="mb-8">
-          <div className="bg-black/30 border border-white/10 rounded-none p-6 mt-6">
+          <div className="bg-black/30 rounded-none p-6 mt-6">
             <h3 className="text-lg font-bold text-white mb-4">Important Tips for Contributors</h3>
 
             <div className="space-y-4">
@@ -916,9 +916,9 @@ export default function SubmitArticle() {
         </div>
 
         {user && (
-          <div className="bg-black/50 border border-white/10 rounded-none p-6 md:p-8">
+          <div className="bg-black/50 rounded-none p-6 md:p-8">
             {/* Column indicator */}
-            <div className="mb-6 pb-4 border-b border-white/10">
+            <div className="mb-6 pb-4">
               <p className="text-white/60 text-sm">
                 Submitting to: <span className="text-white font-semibold">{config.name}</span>
               </p>
@@ -927,7 +927,7 @@ export default function SubmitArticle() {
 
               {/* Subdomain Display (read-only) - only show if required */}
               {config.requiresSubdomain && userSubdomain && (
-                <div className="bg-green-900/20 border border-green-500/30 rounded-none p-4">
+                <div className="bg-green-900/20 rounded-none p-4">
                   <label className="block text-white/80 text-sm mb-2">
                     Your Blog Subdomain
                   </label>
@@ -940,7 +940,7 @@ export default function SubmitArticle() {
                 </div>
               )}
               {config.requiresSubdomain && !userSubdomain && !loadingSubdomain && (
-                <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-none p-4">
+                <div className="bg-yellow-900/20 rounded-none p-4">
                   <p className="text-yellow-300 text-sm mb-2">
                     You need to register a subdomain before submitting articles.
                   </p>
@@ -964,7 +964,7 @@ export default function SubmitArticle() {
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+                  className="w-full px-4 py-2 bg-black/50 rounded-none text-white focus:bg-black/80 focus:outline-none"
                   placeholder="Your Article Title"
                   required
                 />
@@ -1009,7 +1009,7 @@ export default function SubmitArticle() {
                 <textarea
                   value={formData.excerpt}
                   onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                  className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-none text-white focus:border-white/30 focus:outline-none"
+                  className="w-full px-4 py-2 bg-black/50 rounded-none text-white focus:bg-black/80 focus:outline-none"
                   rows={3}
                   placeholder="A brief summary of your article (will be shown on the blog listing page)"
                 />
@@ -1017,7 +1017,7 @@ export default function SubmitArticle() {
 
 
               {/* Submit Button */}
-              <div className="pt-4 border-t border-white/10">
+              <div className="pt-4">
                 <button
                   type="submit"
                   disabled={submitting}

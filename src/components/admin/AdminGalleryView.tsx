@@ -5,6 +5,7 @@ import { AnimatedNumber } from '@/components/ui/animated-number';
 import { useToast } from '@/components/Toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { GalleryCountdownOverlay, shouldShowCountdown } from '@/components/ui/gallery-countdown-overlay';
+import { isAdminEmail } from '@/utils/admin';
 
 interface AdminGalleryViewProps {
     onBack: () => void;
@@ -30,6 +31,7 @@ interface PhotoLibrary {
     price?: number;
     commercial_included?: boolean;
     owner_id?: string;
+    invited_emails?: string; // Comma-separated list of invited client emails
 }
 
 interface PricingOption {
@@ -66,7 +68,9 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
     const [pricingOptions, setPricingOptions] = useState<PricingOption[]>([]);
     const [editingPricingIdx, setEditingPricingIdx] = useState<number | null>(null);
     const [deletedPricingIds, setDeletedPricingIds] = useState<string[]>([]);
-    const [invitedEmails, setInvitedEmails] = useState(''); // Transient state for invitations
+    const [invitedEmails, setInvitedEmails] = useState<string[]>([]); // Persistent list of invited emails
+    const [originalInvitedEmails, setOriginalInvitedEmails] = useState<string[]>([]); // Track original emails to detect new ones
+    const [newEmailInput, setNewEmailInput] = useState(''); // Input for adding new emails
 
     // Photographer Invite State
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -99,7 +103,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 .select('*, photos(count)')
                 .order('created_at', { ascending: false });
 
-            if (isPhotographerView && user) {
+            if (isPhotographerView && user && !isAdminEmail(user.email || '')) {
                 query = query.eq('owner_id', user.id);
             }
 
@@ -219,6 +223,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 google_drive_folder_id: uploadMode === 'drive' ? (modalData.google_drive_folder_id || null) : null,
                 cover_image_url: modalData.cover_image_url || null,
                 price: modalData.price || 5.00,
+                invited_emails: invitedEmails.join(','), // Persist invited emails
                 // Assign owner if new and in photographer mode
                 ...(isPhotographerView && user && !editingId ? { owner_id: user.id } : {})
             };
@@ -338,26 +343,44 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
             }
 
             success(editingId ? 'Gallery updated successfully' : 'Gallery created successfully');
+
+            // CRITICAL: Update local state immediately to avoid stale data if user re-opens modal before fetch completes
+            if (finalLibrary) {
+                console.log('[handleSaveGallery] Updating local state for:', finalLibrary.name, 'invited:', finalLibrary.invited_emails);
+                setLibraries(prev => {
+                    if (editingId) {
+                        return prev.map(l => l.id === finalLibrary!.id ? { ...l, ...finalLibrary, photo_count: l.photo_count } : l);
+                    } else {
+                        return [{ ...finalLibrary!, photo_count: 0 }, ...prev];
+                    }
+                });
+            }
+
             loadGalleryStats();
 
-            // 6. Handle Invitations (New Feature)
-            if (invitedEmails.trim() && finalLibrary) {
+            // 6. Handle Invitations - Only send for NEW emails
+            console.log('[handleSaveGallery] Checking invites. Current:', invitedEmails, 'Original:', originalInvitedEmails);
+            const newEmails = invitedEmails.filter(e => !originalInvitedEmails.includes(e));
+            console.log('[handleSaveGallery] New emails calculated:', newEmails);
+            if (newEmails.length > 0 && finalLibrary) {
                 try {
                     await fetch('/api/gallery/invite', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             libraryId: finalLibrary.id,
-                            emails: invitedEmails.split(',').map(e => e.trim()).filter(e => e.length > 0)
+                            emails: newEmails
                         })
                     });
-                    success('Invitations sent successfully');
+                    success(`Invitations sent to ${newEmails.length} new client(s)`);
                 } catch (inviteErr) {
                     console.error('Failed to send invitations:', inviteErr);
                     error('Gallery saved, but failed to send invitation emails');
                 }
             }
-            setInvitedEmails('');
+            setInvitedEmails([]);
+            setOriginalInvitedEmails([]);
+            setNewEmailInput('');
             setIsManaged(false);
         } catch (err: any) {
             console.error('Error saving gallery:', err);
@@ -477,7 +500,16 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 { name: 'Single Photo', price: lib.price || 5.00, photo_count: 1 }
             ]);
         }
-        setInvitedEmails('');
+        // Load existing invited emails from library
+        console.log('[openEditModal] Opening library:', lib.name);
+        console.log('[openEditModal] Raw invited_emails from lib:', lib.invited_emails);
+
+        const existingEmails = lib.invited_emails ? lib.invited_emails.split(',').map(e => e.trim()).filter(e => e.length > 0) : [];
+        console.log('[openEditModal] Parsed existingEmails:', existingEmails);
+
+        setInvitedEmails(existingEmails);
+        setOriginalInvitedEmails(existingEmails);
+        setNewEmailInput('');
         setDeletedPricingIds([]);
         setIsManaged(true);
     };
@@ -495,7 +527,9 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
             commercial_included: false,
         });
         setFilesData([]);
-        setInvitedEmails('');
+        setInvitedEmails([]);
+        setOriginalInvitedEmails([]);
+        setNewEmailInput('');
         setIsManaged(true);
     };
 
@@ -994,15 +1028,70 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
 
                                 {/* Client Invitations */}
                                 <div>
-                                    <label className="block text-xs uppercase text-white/40 mb-1">Client Invitations (Email)</label>
-                                    <textarea
-                                        value={invitedEmails}
-                                        onChange={(e) => setInvitedEmails(e.target.value)}
-                                        className="w-full bg-white/5 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 min-h-[60px] rounded-none font-mono text-xs"
-                                        placeholder="client@example.com, another@example.com..."
-                                    />
-                                    <p className="text-[10px] text-white/30 mt-1">
-                                        Comma-separated list of emails. They will receive an access link once you save.
+                                    <label className="block text-xs uppercase text-white/40 mb-2">Invited Clients</label>
+
+                                    {/* Existing email chips */}
+                                    {invitedEmails.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mb-3">
+                                            {invitedEmails.map((email, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    className={`flex items-center gap-1 px-2 py-1 text-xs font-mono ${originalInvitedEmails.includes(email)
+                                                        ? 'bg-white/10 text-white/60'
+                                                        : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                                        }`}
+                                                >
+                                                    <span>{email}</span>
+                                                    {!originalInvitedEmails.includes(email) && (
+                                                        <span className="text-[9px] uppercase ml-1 opacity-60">new</span>
+                                                    )}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setInvitedEmails(invitedEmails.filter((_, i) => i !== idx))}
+                                                        className="ml-1 hover:text-red-400 transition-colors"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {/* Add new email input */}
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="email"
+                                            value={newEmailInput}
+                                            onChange={(e) => setNewEmailInput(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ',') {
+                                                    e.preventDefault();
+                                                    const email = newEmailInput.trim().replace(',', '');
+                                                    if (email && email.includes('@') && !invitedEmails.includes(email)) {
+                                                        setInvitedEmails([...invitedEmails, email]);
+                                                        setNewEmailInput('');
+                                                    }
+                                                }
+                                            }}
+                                            className="flex-1 bg-white/5 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 rounded-none font-mono text-xs"
+                                            placeholder="client@example.com"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const email = newEmailInput.trim();
+                                                if (email && email.includes('@') && !invitedEmails.includes(email)) {
+                                                    setInvitedEmails([...invitedEmails, email]);
+                                                    setNewEmailInput('');
+                                                }
+                                            }}
+                                            className="px-4 py-2 bg-white/10 text-white text-xs uppercase font-bold hover:bg-white/20 transition-colors"
+                                        >
+                                            + Add
+                                        </button>
+                                    </div>
+                                    <p className="text-[10px] text-white/30 mt-2">
+                                        Press Enter or click Add. New clients will receive an access link when you save.
                                     </p>
                                 </div>
 

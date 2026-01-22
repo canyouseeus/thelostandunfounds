@@ -11,7 +11,9 @@ import {
   Wallet2,
   BarChart3,
   List,
+  Mail,
 } from 'lucide-react';
+import AffiliateEmailComposer from '@/components/admin/AffiliateEmailComposer';
 import {
   Expandable,
   ExpandableTrigger,
@@ -99,8 +101,8 @@ function StatTile({
     tone === 'success'
       ? 'text-emerald-300'
       : tone === 'warn'
-      ? 'text-amber-300'
-      : 'text-white';
+        ? 'text-amber-300'
+        : 'text-white';
   return (
     <div className="flex items-center justify-between bg-black text-white rounded-none p-3 sm:p-4">
       <div className="flex items-center gap-3">
@@ -180,7 +182,7 @@ function SectionWrapper({
   );
 }
 
-export default function AdminAffiliates() {
+export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -372,30 +374,61 @@ export default function AdminAffiliates() {
     URL.revokeObjectURL(link.href);
   };
 
+  /* Existing code ... */
+  const [showComposer, setShowComposer] = useState(false);
+
+  if (showComposer) {
+    return (
+      <div className="min-h-screen bg-black text-white px-0 py-0 sm:px-0 lg:px-0">
+        <div className="mb-6">
+          <button
+            onClick={() => setShowComposer(false)}
+            className="inline-flex items-center gap-2 text-sm text-white/70 hover:text-white mb-6 uppercase tracking-wider text-xs font-bold"
+          >
+            ← Back to Dashboard
+          </button>
+          <AffiliateEmailComposer />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-black text-white px-4 py-6 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-black text-white px-0 py-0 sm:px-0 lg:px-0">
       <div className="flex items-center justify-between mb-4 sm:mb-6">
         <div>
-          <p className="text-xs uppercase text-white/50">Admin / Affiliates</p>
+          {/* Removed breadcrumb for cleaner look in console */}
           <h1 className="text-2xl sm:text-3xl font-bold">Affiliate Program Dashboard</h1>
         </div>
-        <button
-          onClick={load}
-          className="flex items-center gap-2 text-sm sm:text-base px-3 py-2 rounded-none border border-white/20 hover:border-white/60 transition-colors"
-        >
-          <RefreshCcw className={cn('w-4 h-4', refreshing && 'animate-spin')} />
-          Refresh
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowComposer(true)}
+            className="flex items-center gap-2 text-sm sm:text-base px-3 py-2 rounded-none bg-white text-black hover:bg-white/90 transition-colors font-bold uppercase text-xs tracking-wider"
+          >
+            <Mail className="w-4 h-4" />
+            Message Affiliates
+          </button>
+          <button
+            onClick={load}
+            className="flex items-center gap-2 text-sm sm:text-base px-3 py-2 rounded-none border border-white/20 hover:border-white/60 transition-colors"
+          >
+            <RefreshCcw className={cn('w-4 h-4', refreshing && 'animate-spin')} />
+            Refresh
+          </button>
+        </div>
       </div>
 
       <div className="mb-4 sm:mb-6">
-        <Link
-          to="/admin"
-          className="inline-flex items-center gap-2 text-sm text-white/70 hover:text-white underline underline-offset-4"
-        >
-          Back to Admin Overview <ArrowUpRight className="w-4 h-4" />
-        </Link>
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="inline-flex items-center gap-2 text-sm text-white/70 hover:text-white underline underline-offset-4"
+          >
+            Back to Top <ArrowUpRight className="w-4 h-4" />
+          </button>
+        )}
       </div>
+  /* rest of component ... */
 
       {error && (
         <div className="mb-4 p-4 border border-red-500/50 text-red-200 bg-red-500/5 rounded-none">
@@ -543,32 +576,32 @@ export default function AdminAffiliates() {
                     <div className="text-xs text-white/60 sm:text-right space-y-1">
                       <div>{affiliate.paypal_email || 'No PayPal email set'}</div>
                       <div>Joined {new Date(affiliate.created_at).toLocaleDateString()}</div>
-                        <div className="flex flex-wrap gap-1 justify-start sm:justify-end">
-                          <button
-                            onClick={() => handleEditAffiliate(affiliate, 'paypal_email')}
-                            className="px-2 py-1 text-xs border border-white/20 text-white rounded-none hover:border-white/60"
-                          >
-                            Edit PayPal
-                          </button>
-                          <button
-                            onClick={() => handleEditAffiliate(affiliate, 'commission_rate')}
-                            className="px-2 py-1 text-xs border border-white/20 text-white rounded-none hover:border-white/60"
-                          >
-                            Edit Rate
-                          </button>
-                          <button
-                            onClick={() => handleEditAffiliate(affiliate, 'payment_threshold')}
-                            className="px-2 py-1 text-xs border border-white/20 text-white rounded-none hover:border-white/60"
-                          >
-                            Edit Threshold
-                          </button>
-                          <button
-                            onClick={() => handleManualCommission(affiliate)}
-                            className="px-2 py-1 text-xs bg-white text-black rounded-none hover:bg-white/80"
-                          >
-                            Manual Commission
-                          </button>
-                        </div>
+                      <div className="flex flex-wrap gap-1 justify-start sm:justify-end">
+                        <button
+                          onClick={() => handleEditAffiliate(affiliate, 'paypal_email')}
+                          className="px-2 py-1 text-xs border border-white/20 text-white rounded-none hover:border-white/60"
+                        >
+                          Edit PayPal
+                        </button>
+                        <button
+                          onClick={() => handleEditAffiliate(affiliate, 'commission_rate')}
+                          className="px-2 py-1 text-xs border border-white/20 text-white rounded-none hover:border-white/60"
+                        >
+                          Edit Rate
+                        </button>
+                        <button
+                          onClick={() => handleEditAffiliate(affiliate, 'payment_threshold')}
+                          className="px-2 py-1 text-xs border border-white/20 text-white rounded-none hover:border-white/60"
+                        >
+                          Edit Threshold
+                        </button>
+                        <button
+                          onClick={() => handleManualCommission(affiliate)}
+                          className="px-2 py-1 text-xs bg-white text-black rounded-none hover:bg-white/80"
+                        >
+                          Manual Commission
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))

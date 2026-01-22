@@ -16,11 +16,11 @@ interface UserRegistrationProps {
   required?: boolean; // If true, user cannot close without completing
 }
 
-export default function UserRegistration({ 
-  isOpen, 
-  onClose, 
+export default function UserRegistration({
+  isOpen,
+  onClose,
   onSuccess,
-  required = false 
+  required = false
 }: UserRegistrationProps) {
   const { user } = useAuth();
   const { success, error: showError } = useToast();
@@ -55,17 +55,17 @@ export default function UserRegistration({
       setUsernameError('Username is required');
       return false;
     }
-    
+
     if (value.trim().length < 2) {
       setUsernameError('Username must be at least 2 characters');
       return false;
     }
-    
+
     if (value.trim().length > 100) {
       setUsernameError('Username must be 100 characters or less');
       return false;
     }
-    
+
     setUsernameError('');
     return true;
   };
@@ -116,12 +116,12 @@ export default function UserRegistration({
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
       onClick={required ? undefined : onClose}
     >
-      <div 
-        className="bg-black/50 border border-white rounded-none p-6 w-full max-w-md mx-4"
+      <div
+        className="bg-black/50 rounded-none p-6 w-full max-w-md mx-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
@@ -164,7 +164,7 @@ export default function UserRegistration({
                 setUsernameError('');
               }}
               onBlur={() => validateUsername(username)}
-              className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-4 py-2 bg-black/50 rounded-none text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="THE LOST+UNFOUNDS or Your Name"
               required
               disabled={saving || !!user?.user_metadata?.author_name}

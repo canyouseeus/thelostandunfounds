@@ -15,6 +15,16 @@ export function createServiceSupabaseClient(): ServiceSupabaseClient {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY
 
+  // Diagnostic logging for debugging 403 errors in production
+  console.log('[Supabase Admin Client] Initializing...', {
+    hasUrl: !!supabaseUrl,
+    urlLength: supabaseUrl?.length,
+    hasServiceKey: !!supabaseServiceKey,
+    serviceKeyLength: supabaseServiceKey?.length,
+    serviceKeyPrefix: supabaseServiceKey ? `${supabaseServiceKey.substring(0, 7)}...` : 'N/A',
+    envKeysAvailable: Object.keys(process.env).filter(k => k.includes('SUPABASE'))
+  })
+
   if (!supabaseUrl || !supabaseServiceKey) {
     console.error('Supabase Admin Client Error: Missing Credentials', {
       hasUrl: !!supabaseUrl,

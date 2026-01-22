@@ -60,9 +60,9 @@ export default function Docs() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Sidebar Navigation */}
         <div className="lg:col-span-1">
-          <nav className="bg-black/50 border border-white rounded-none p-4">
-            <h2 className="text-white font-semibold mb-4">Documentation</h2>
-            <ul className="space-y-2">
+          <nav className="bg-transparent p-0">
+            <h2 className="text-white font-black tracking-widest uppercase mb-6 text-sm">Documentation</h2>
+            <ul className="space-y-1">
               {docSections.map((section) => {
                 const Icon = section.icon;
                 const isActive = activeSection === section.id;
@@ -75,13 +75,13 @@ export default function Docs() {
                         e.preventDefault();
                         scrollToSection(section.id);
                       }}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-none transition cursor-pointer ${isActive
-                          ? 'bg-white/10 text-white'
-                          : 'text-white/60 hover:text-white hover:bg-white/5'
+                      className={`flex items-center gap-3 px-4 py-3 rounded-none transition cursor-pointer border-l-2 ${isActive
+                        ? 'border-white bg-white/10 text-white font-bold'
+                        : 'border-transparent text-white/40 hover:text-white hover:bg-white/5'
                         }`}
                     >
                       <Icon className="w-4 h-4" />
-                      <span>{section.label}</span>
+                      <span className="uppercase tracking-wider text-xs">{section.label}</span>
                     </a>
                   </li>
                 );
@@ -92,7 +92,7 @@ export default function Docs() {
 
         {/* Main Content */}
         <div className="lg:col-span-3">
-          <div className="bg-black/50 border border-white rounded-none p-6 space-y-12">
+          <div className="bg-transparent space-y-16">
             <section id="getting-started" className="scroll-mt-8">
               <GettingStarted />
             </section>

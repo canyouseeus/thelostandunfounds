@@ -1,3 +1,5 @@
+import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import {
   awardPoints,
@@ -79,7 +81,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       stack: error?.stack,
       action: req.query.action
     });
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'Failed to load handler',
       message: error?.message || 'Unknown error',
       action: req.query.action,

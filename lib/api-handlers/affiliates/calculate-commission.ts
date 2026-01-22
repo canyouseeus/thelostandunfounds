@@ -1,10 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * Main commission calculator with employee discount adjustment
@@ -21,6 +16,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  // Check env vars at runtime, not module load time
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('Missing Supabase environment variables for calculate-commission');
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
     const { order_id, email, user_id, profit, affiliate_code } = req.body;
@@ -58,10 +64,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // For now, we check if they're using discount by checking discount code usage
       // The discount code validation happens at checkout and sets a flag
       const usedDiscountCode = req.body.used_discount_code === true;
-      
+
       if (affiliate && usedDiscountCode) {
         // Check if they can use discount (once per 30 days)
-        const canUseDiscount = !affiliate.last_discount_use_date || 
+        const canUseDiscount = !affiliate.last_discount_use_date ||
           (() => {
             const lastUse = new Date(affiliate.last_discount_use_date);
             const daysSince = Math.floor((Date.now() - lastUse.getTime()) / (1000 * 60 * 60 * 24));
@@ -84,230 +90,230 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             })
             .eq('id', affiliate.id);
 
-        // Award points for self-purchase (partial based on amount paid)
-        const selfPurchasePoints = Math.floor(adjustedProfit / 10);
-        if (selfPurchasePoints > 0) {
+          // Award points for self-purchase (partial based on amount paid)
+          const selfPurchasePoints = Math.floor(adjustedProfit / 10);
+          if (selfPurchasePoints > 0) {
+            await supabase
+              .from('reward_points_history')
+              .insert({
+                affiliate_id: affiliate.id,
+                points: selfPurchasePoints,
+                profit_amount: adjustedProfit,
+                source: 'self_purchase',
+                description: `Self-purchase: $${adjustedProfit.toFixed(2)} profit`
+              });
+
+            await supabase
+              .from('affiliates')
+              .update({
+                reward_points: (affiliate.reward_points || 0) + selfPurchasePoints
+              })
+              .eq('id', affiliate.id);
+          }
+        }
+      }
+
+      // STEP 2: Find referring affiliate (lifetime customer tie OR new customer)
+      let referringAffiliate = null;
+      const { data: customer } = await supabase
+        .from('affiliate_customers')
+        .select('*, affiliates!affiliate_customers_referred_by_affiliate_id_fkey(*)')
+        .eq('email', email)
+        .single();
+
+      if (customer && customer.affiliates) {
+        referringAffiliate = customer.affiliates;
+
+        // Update customer stats
+        await supabase
+          .from('affiliate_customers')
+          .update({
+            total_purchases: (customer.total_purchases || 0) + 1,
+            total_profit_generated: (parseFloat(customer.total_profit_generated || '0') + adjustedProfit).toFixed(2),
+            first_purchase_date: customer.first_purchase_date || new Date().toISOString()
+          })
+          .eq('id', customer.id);
+
+      } else if (affiliate_code) {
+        // First-time customer with affiliate link
+        const { data: newAffiliate } = await supabase
+          .from('affiliates')
+          .select('*')
+          .eq('affiliate_code', affiliate_code)
+          .single();
+
+        if (newAffiliate) {
+          referringAffiliate = newAffiliate;
+
+          // Create customer tie
+          await supabase
+            .from('affiliate_customers')
+            .insert({
+              email,
+              user_id: user_id || null,
+              referred_by_affiliate_id: newAffiliate.id,
+              first_purchase_date: new Date().toISOString(),
+              total_purchases: 1,
+              total_profit_generated: adjustedProfit.toFixed(2)
+            });
+        }
+      }
+
+      // STEP 3: Pay referring affiliate 42% of adjusted profit
+      let commissionId = null;
+      if (referringAffiliate) {
+        const commission = adjustedProfit * 0.42;
+        breakdown.affiliate_commission = commission;
+
+        const { data: commissionRecord } = await supabase
+          .from('affiliate_commissions')
+          .insert({
+            affiliate_id: referringAffiliate.id,
+            order_id,
+            amount: commission,
+            status: 'pending'
+          })
+          .select()
+          .single();
+
+        commissionId = commissionRecord?.id;
+
+        // Update affiliate totals
+        await supabase
+          .from('affiliates')
+          .update({
+            total_earnings: (parseFloat(referringAffiliate.total_earnings || '0') + commission).toFixed(2)
+          })
+          .eq('id', referringAffiliate.id);
+
+        // Award reward points (1 per $10 profit)
+        const points = Math.floor(adjustedProfit / 10);
+        if (points > 0) {
           await supabase
             .from('reward_points_history')
             .insert({
-              affiliate_id: affiliate.id,
-              points: selfPurchasePoints,
+              affiliate_id: referringAffiliate.id,
+              points,
               profit_amount: adjustedProfit,
-              source: 'self_purchase',
-              description: `Self-purchase: $${adjustedProfit.toFixed(2)} profit`
+              source: 'sale',
+              commission_id: commissionId,
+              description: `Sale: $${adjustedProfit.toFixed(2)} profit`
             });
 
           await supabase
             .from('affiliates')
             .update({
-              reward_points: (affiliate.reward_points || 0) + selfPurchasePoints
+              reward_points: (referringAffiliate.reward_points || 0) + points
             })
-            .eq('id', affiliate.id);
+            .eq('id', referringAffiliate.id);
         }
       }
-    }
 
-    // STEP 2: Find referring affiliate (lifetime customer tie OR new customer)
-    let referringAffiliate = null;
-    const { data: customer } = await supabase
-      .from('affiliate_customers')
-      .select('*, affiliates!affiliate_customers_referred_by_affiliate_id_fkey(*)')
-      .eq('email', email)
-      .single();
-
-    if (customer && customer.affiliates) {
-      referringAffiliate = customer.affiliates;
-      
-      // Update customer stats
-      await supabase
-        .from('affiliate_customers')
-        .update({
-          total_purchases: (customer.total_purchases || 0) + 1,
-          total_profit_generated: (parseFloat(customer.total_profit_generated || '0') + adjustedProfit).toFixed(2),
-          first_purchase_date: customer.first_purchase_date || new Date().toISOString()
-        })
-        .eq('id', customer.id);
-
-    } else if (affiliate_code) {
-      // First-time customer with affiliate link
-      const { data: newAffiliate } = await supabase
-        .from('affiliates')
-        .select('*')
-        .eq('affiliate_code', affiliate_code)
-        .single();
-
-      if (newAffiliate) {
-        referringAffiliate = newAffiliate;
-
-        // Create customer tie
-        await supabase
-          .from('affiliate_customers')
-          .insert({
-            email,
-            user_id: user_id || null,
-            referred_by_affiliate_id: newAffiliate.id,
-            first_purchase_date: new Date().toISOString(),
-            total_purchases: 1,
-            total_profit_generated: adjustedProfit.toFixed(2)
-          });
-      }
-    }
-
-    // STEP 3: Pay referring affiliate 42% of adjusted profit
-    let commissionId = null;
-    if (referringAffiliate) {
-      const commission = adjustedProfit * 0.42;
-      breakdown.affiliate_commission = commission;
-
-      const { data: commissionRecord } = await supabase
-        .from('affiliate_commissions')
-        .insert({
-          affiliate_id: referringAffiliate.id,
-          order_id,
-          amount: commission,
-          status: 'pending'
-        })
-        .select()
-        .single();
-
-      commissionId = commissionRecord?.id;
-
-      // Update affiliate totals
-      await supabase
-        .from('affiliates')
-        .update({
-          total_earnings: (parseFloat(referringAffiliate.total_earnings || '0') + commission).toFixed(2)
-        })
-        .eq('id', referringAffiliate.id);
-
-      // Award reward points (1 per $10 profit)
-      const points = Math.floor(adjustedProfit / 10);
-      if (points > 0) {
-        await supabase
-          .from('reward_points_history')
-          .insert({
-            affiliate_id: referringAffiliate.id,
-            points,
-            profit_amount: adjustedProfit,
-            source: 'sale',
-            commission_id: commissionId,
-            description: `Sale: $${adjustedProfit.toFixed(2)} profit`
-          });
-
-        await supabase
-          .from('affiliates')
-          .update({
-            reward_points: (referringAffiliate.reward_points || 0) + points
-          })
-          .eq('id', referringAffiliate.id);
-      }
-    }
-
-    // STEP 4: Calculate MLM bonuses
-    if (referringAffiliate && commissionId) {
-      // Level 1 (2%)
-      if (referringAffiliate.referred_by) {
-        const level1Amount = adjustedProfit * 0.02;
-        breakdown.mlm_level1 = level1Amount;
-
-        await supabase
-          .from('mlm_earnings')
-          .insert({
-            affiliate_id: referringAffiliate.referred_by,
-            from_affiliate_id: referringAffiliate.id,
-            commission_id: commissionId,
-            level: 1,
-            amount: level1Amount,
-            profit_source: adjustedProfit
-          });
-
-        // Update total MLM earnings
-        const { data: level1Affiliate } = await supabase
-          .from('affiliates')
-          .select('total_mlm_earnings')
-          .eq('id', referringAffiliate.referred_by)
-          .single();
-
-        if (level1Affiliate) {
-          await supabase
-            .from('affiliates')
-            .update({
-              total_mlm_earnings: (parseFloat(level1Affiliate.total_mlm_earnings || '0') + level1Amount).toFixed(2)
-            })
-            .eq('id', referringAffiliate.referred_by);
-        }
-
-        // Level 2 (1%)
-        const { data: level1Ref } = await supabase
-          .from('affiliates')
-          .select('referred_by')
-          .eq('id', referringAffiliate.referred_by)
-          .single();
-
-        if (level1Ref && level1Ref.referred_by) {
-          const level2Amount = adjustedProfit * 0.01;
-          breakdown.mlm_level2 = level2Amount;
+      // STEP 4: Calculate MLM bonuses
+      if (referringAffiliate && commissionId) {
+        // Level 1 (2%)
+        if (referringAffiliate.referred_by) {
+          const level1Amount = adjustedProfit * 0.02;
+          breakdown.mlm_level1 = level1Amount;
 
           await supabase
             .from('mlm_earnings')
             .insert({
-              affiliate_id: level1Ref.referred_by,
+              affiliate_id: referringAffiliate.referred_by,
               from_affiliate_id: referringAffiliate.id,
               commission_id: commissionId,
-              level: 2,
-              amount: level2Amount,
+              level: 1,
+              amount: level1Amount,
               profit_source: adjustedProfit
             });
 
           // Update total MLM earnings
-          const { data: level2Affiliate } = await supabase
+          const { data: level1Affiliate } = await supabase
             .from('affiliates')
             .select('total_mlm_earnings')
-            .eq('id', level1Ref.referred_by)
+            .eq('id', referringAffiliate.referred_by)
             .single();
 
-          if (level2Affiliate) {
+          if (level1Affiliate) {
             await supabase
               .from('affiliates')
               .update({
-                total_mlm_earnings: (parseFloat(level2Affiliate.total_mlm_earnings || '0') + level2Amount).toFixed(2)
+                total_mlm_earnings: (parseFloat(level1Affiliate.total_mlm_earnings || '0') + level1Amount).toFixed(2)
               })
-              .eq('id', level1Ref.referred_by);
+              .eq('id', referringAffiliate.referred_by);
+          }
+
+          // Level 2 (1%)
+          const { data: level1Ref } = await supabase
+            .from('affiliates')
+            .select('referred_by')
+            .eq('id', referringAffiliate.referred_by)
+            .single();
+
+          if (level1Ref && level1Ref.referred_by) {
+            const level2Amount = adjustedProfit * 0.01;
+            breakdown.mlm_level2 = level2Amount;
+
+            await supabase
+              .from('mlm_earnings')
+              .insert({
+                affiliate_id: level1Ref.referred_by,
+                from_affiliate_id: referringAffiliate.id,
+                commission_id: commissionId,
+                level: 2,
+                amount: level2Amount,
+                profit_source: adjustedProfit
+              });
+
+            // Update total MLM earnings
+            const { data: level2Affiliate } = await supabase
+              .from('affiliates')
+              .select('total_mlm_earnings')
+              .eq('id', level1Ref.referred_by)
+              .single();
+
+            if (level2Affiliate) {
+              await supabase
+                .from('affiliates')
+                .update({
+                  total_mlm_earnings: (parseFloat(level2Affiliate.total_mlm_earnings || '0') + level2Amount).toFixed(2)
+                })
+                .eq('id', level1Ref.referred_by);
+            }
           }
         }
       }
+
+      // STEP 5: King Midas pot (8%)
+      breakdown.king_midas = adjustedProfit * 0.08;
+
+      // STEP 6: Secret Santa pot (ALWAYS 3% of adjusted profit)
+      const secretSantaAmount = adjustedProfit * 0.03;
+      breakdown.secret_santa = secretSantaAmount;
+      await addToSecretSanta(supabase, secretSantaAmount, 'profit_allocation', commissionId);
+
+      // STEP 7: Company gets the rest
+      breakdown.company = adjustedProfit - breakdown.affiliate_commission - breakdown.mlm_level1 - breakdown.mlm_level2 - breakdown.king_midas - breakdown.secret_santa;
+
+      return res.status(200).json({
+        success: true,
+        order_id,
+        breakdown,
+        referring_affiliate: referringAffiliate ? {
+          id: referringAffiliate.id,
+          code: referringAffiliate.affiliate_code
+        } : null,
+        buyer_is_affiliate: !!buyerAffiliate
+      });
+
     }
-
-    // STEP 5: King Midas pot (8%)
-    breakdown.king_midas = adjustedProfit * 0.08;
-
-    // STEP 6: Secret Santa pot (ALWAYS 3% of adjusted profit)
-    const secretSantaAmount = adjustedProfit * 0.03;
-    breakdown.secret_santa = secretSantaAmount;
-    await addToSecretSanta(secretSantaAmount, 'profit_allocation', commissionId);
-
-    // STEP 7: Company gets the rest
-    breakdown.company = adjustedProfit - breakdown.affiliate_commission - breakdown.mlm_level1 - breakdown.mlm_level2 - breakdown.king_midas - breakdown.secret_santa;
-
-    return res.status(200).json({
-      success: true,
-      order_id,
-      breakdown,
-      referring_affiliate: referringAffiliate ? {
-        id: referringAffiliate.id,
-        code: referringAffiliate.affiliate_code
-      } : null,
-      buyer_is_affiliate: !!buyerAffiliate
-    });
-    
-  }
   } catch (error) {
     console.error('Calculate commission error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
 
-async function addToSecretSanta(amount: number, reason: string, commissionId: string | null) {
+async function addToSecretSanta(supabase: SupabaseClient, amount: number, reason: string, commissionId: string | null) {
   const currentYear = new Date().getFullYear();
 
   // Get or create current year pot

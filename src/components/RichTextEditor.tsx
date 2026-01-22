@@ -1,13 +1,9 @@
-/**
- * Rich Text Editor Component
- * Uses TipTap with a floating tooltip (bubble menu) for adding product links.
- */
-
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { Link as LinkIcon, X } from 'lucide-react';
+import Placeholder from '@tiptap/extension-placeholder';
 
 import { BLOG_CONTENT_CLASS } from '../utils/blogStyles';
 
@@ -51,11 +47,15 @@ export default function RichTextEditor({ content, initialLinks = [], onChange, p
                     target: '_blank',
                 },
             }),
+            Placeholder.configure({
+                placeholder: placeholder || 'Write something...',
+                emptyEditorClass: 'is-editor-empty before:content-[attr(data-placeholder)] before:text-white/30 before:float-left before:pointer-events-none',
+            }),
         ],
         content: content,
         editorProps: {
             attributes: {
-                class: BLOG_CONTENT_CLASS,
+                class: `${BLOG_CONTENT_CLASS} min-h-[500px] px-6 py-4 outline-none`,
             },
         },
 
@@ -159,7 +159,7 @@ export default function RichTextEditor({ content, initialLinks = [], onChange, p
         <div className="relative" ref={editorContainerRef}>
             {/* Editor */}
             <div
-                className="bg-black/30 border border-white/20 rounded-none min-h-[300px] relative"
+                className="bg-black/30 rounded-none min-h-[500px] relative"
                 onPointerUp={handlePointerUp}
             >
                 <EditorContent editor={editor} />
@@ -171,7 +171,7 @@ export default function RichTextEditor({ content, initialLinks = [], onChange, p
 
             {/* Product Links List */}
             {productLinks.length > 0 && (
-                <div className="mt-4 bg-black/20 border border-white/10 p-4">
+                <div className="mt-4 bg-black/20 p-4">
                     <h4 className="text-white/80 text-sm font-semibold mb-3 uppercase tracking-wider">
                         Product Links ({productLinks.length})
                     </h4>
@@ -179,7 +179,7 @@ export default function RichTextEditor({ content, initialLinks = [], onChange, p
                         {productLinks.map((link, index) => (
                             <div
                                 key={index}
-                                className="flex items-center justify-between bg-black/30 p-2 border border-white/10"
+                                className="flex items-center justify-between bg-black/30 p-2"
                             >
                                 <div className="flex-1 min-w-0">
                                     <p className="text-white text-sm truncate">

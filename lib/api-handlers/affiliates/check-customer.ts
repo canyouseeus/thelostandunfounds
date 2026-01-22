@@ -1,11 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 /**
  * Check if customer is tied to an affiliate
  * GET /api/affiliates/check-customer?email=xxx
@@ -15,6 +10,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  // Check env vars at runtime, not module load time
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('Missing Supabase environment variables for check-customer');
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
     const { email, user_id } = req.query;

@@ -1,11 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 /**
  * Get comprehensive MLM dashboard data
  * GET /api/affiliates/mlm-dashboard?affiliate_id=xxx
@@ -14,6 +9,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  // Check env vars at runtime, not module load time
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('Missing Supabase environment variables for mlm-dashboard');
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
     const { affiliate_id } = req.query;
@@ -40,12 +46,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .eq('referred_by', affiliate_id as string);
 
     const level1Ids = level1Refs?.map(r => r.id) || [];
-    
+
     const { data: level2Refs } = level1Ids.length > 0
       ? await supabase
-          .from('affiliates')
-          .select('id')
-          .in('referred_by', level1Ids)
+        .from('affiliates')
+        .select('id')
+        .in('referred_by', level1Ids)
       : { data: [] };
 
     // Get customer count
@@ -84,7 +90,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         })
         .select()
         .single();
-      
+
       discountCode = newCode;
     }
 

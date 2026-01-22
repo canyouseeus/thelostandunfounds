@@ -37,7 +37,7 @@ export default function SQL() {
   if (typeof window !== 'undefined' && !window.__DEBUG_LOGS__) {
     window.__DEBUG_LOGS__ = [];
   }
-  
+
   const logToDebug = (type: 'log' | 'error' | 'warn' | 'info', message: string, details?: any) => {
     if (typeof window !== 'undefined') {
       if (!window.__DEBUG_LOGS__) {
@@ -54,7 +54,7 @@ export default function SQL() {
   };
 
   logToDebug('info', 'SQL component rendering...');
-  
+
   const { success } = useToast();
   const [scripts, setScripts] = useState<SQLScript[]>([]);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
@@ -74,7 +74,7 @@ export default function SQL() {
     } catch (e) {
       // Fall through to default
     }
-    
+
     // Return the updated migration content
     return `-- Migration: Add missing fields to blog_posts table
 -- Run this in Supabase SQL Editor to add SEO fields and published boolean
@@ -302,7 +302,7 @@ END $$;`;
     } catch (error) {
       console.error('Error setting up activity tracking:', error);
       // Don't break the component if activity tracking fails
-      return () => {};
+      return () => { };
     }
   };
 
@@ -312,7 +312,7 @@ END $$;`;
       logToDebug('info', 'Starting to load SQL scripts...');
       const now = Date.now();
       const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-      
+
       // Get or create script timestamps from localStorage (24-hour timer starts from first view)
       const getScriptTimestamp = (filename: string): number => {
         const storageKey = `sql_script_${filename}_timestamp`;
@@ -324,7 +324,7 @@ END $$;`;
         localStorage.setItem(storageKey, now.toString());
         return now;
       };
-      
+
       // Load blog schema migration from public folder
       let migrationContent = '';
       try {
@@ -457,7 +457,7 @@ END $$;`;
       } catch (fetchError) {
         console.warn('Could not fetch check-blog-post-exists file:', fetchError);
       }
-      
+
       // Fallback: embed the diagnostic script directly
       if (!checkPostContent || checkPostContent.includes('File not found') || checkPostContent.trim().startsWith('<!')) {
         checkPostContent = `-- Check if the blog post exists and its status
@@ -507,7 +507,7 @@ FROM blog_posts;`;
       } catch (fetchError) {
         console.warn('Could not fetch update-blog-post-if-exists file:', fetchError);
       }
-      
+
       // Fallback: embed the update script directly (truncated for brevity, full version in file)
       if (!updatePostContent || updatePostContent.includes('File not found') || updatePostContent.trim().startsWith('<!')) {
         updatePostContent = `-- Update the blog post if it already exists
@@ -782,6 +782,20 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         }
       } catch (fetchError) {
         console.warn('Could not fetch fix-blog-posts-rls-policies file:', fetchError);
+      }
+
+      // Load fix-admin-access-comprehensive script
+      let fixAdminAccessContent = '';
+      try {
+        const fixAdminAccessResponse = await fetch('/sql/fix-admin-access-comprehensive.sql');
+        if (fixAdminAccessResponse.ok) {
+          const text = await fixAdminAccessResponse.text();
+          if (!text.trim().startsWith('<!')) {
+            fixAdminAccessContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch fix-admin-access-comprehensive file:', fetchError);
       }
 
       // Load setup-admin-user script
@@ -1123,6 +1137,13 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
           createdAt: getScriptTimestamp('ensure-author-name-column-exists.sql')
         },
         {
+          name: 'Fix Admin Access Comprehensive',
+          filename: 'fix-admin-access-comprehensive.sql',
+          content: fixAdminAccessContent || '// File not found - check public/sql folder',
+          description: 'Comprehensive fix for admin RLS policies across all tables (affiliates, newsletter, photos, etc.). Enables admin access via client-side Supabase client. Run this to fix 403 errors on the admin dashboard.',
+          createdAt: getScriptTimestamp('fix-admin-access-comprehensive.sql')
+        },
+        {
           name: 'Fix Blog Posts RLS Policies',
           filename: 'fix-blog-posts-rls-policies.sql',
           content: fixBlogPostsRLSContent || '// File not found - check public/sql folder',
@@ -1207,7 +1228,7 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
       const recentScripts = sortedScripts.filter(script => {
         // TEMPORARY: Show all scripts for debugging
         // TODO: Re-enable 24-hour filter after confirming scripts show
-        
+
         // Log for debugging
         console.log('Script check:', {
           name: script.name,
@@ -1215,10 +1236,10 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
           contentLength: script.content?.length || 0,
           createdAt: new Date(script.createdAt).toISOString()
         });
-        
+
         // Show all scripts for now
         return true;
-        
+
         // Original filter logic (disabled temporarily):
         // const age = now - script.createdAt;
         // const ageHours = age / (1000 * 60 * 60);
@@ -1234,7 +1255,7 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
         allScriptNames: allScripts.map(s => s.name),
         sortedOrder: recentScripts.map(s => ({ name: s.name, createdAt: new Date(s.createdAt).toISOString() }))
       });
-      
+
       // Force set scripts even if array is empty for debugging
       if (recentScripts.length === 0 && allScripts.length > 0) {
         console.error('WARNING: All scripts filtered out! Showing all scripts anyway.');

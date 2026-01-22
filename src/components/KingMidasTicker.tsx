@@ -106,8 +106,8 @@ export default function KingMidasTicker() {
   };
 
   // Check if using dummy data
-  const isDummyData = tickerData.rankings.length > 0 && 
-                      tickerData.rankings[0].affiliate_code === 'KING01';
+  const isDummyData = tickerData.rankings.length > 0 &&
+    tickerData.rankings[0].affiliate_code === 'KING01';
 
   // Create the ticker content
   const tickerContent = (
@@ -116,18 +116,16 @@ export default function KingMidasTicker() {
         tickerData.rankings.map((ranking) => (
           <span key={`${ranking.rank}-${ranking.affiliate_code}`} className="inline-flex items-center gap-2 mx-8">
             {ranking.rank <= 3 && (
-              <Trophy className={`w-4 h-4 ${
-                ranking.rank === 1 ? 'text-yellow-400' : 
-                ranking.rank === 2 ? 'text-gray-300' : 
-                'text-amber-600'
-              }`} />
+              <Trophy className={`w-4 h-4 ${ranking.rank === 1 ? 'text-yellow-400' :
+                  ranking.rank === 2 ? 'text-gray-300' :
+                    'text-amber-600'
+                }`} />
             )}
-            <span className={`font-bold ${
-              ranking.rank === 1 ? 'text-yellow-400' : 
-              ranking.rank === 2 ? 'text-gray-300' : 
-              ranking.rank === 3 ? 'text-amber-600' : 
-              'text-white/60'
-            }`}>#{ranking.rank}</span>
+            <span className={`font-bold ${ranking.rank === 1 ? 'text-yellow-400' :
+                ranking.rank === 2 ? 'text-gray-300' :
+                  ranking.rank === 3 ? 'text-amber-600' :
+                    'text-white/60'
+              }`}>#{ranking.rank}</span>
             <span className="text-white font-semibold">{ranking.affiliate_code}</span>
             <span className="text-green-400">${ranking.profit.toFixed(2)}</span>
             {getRankIcon(ranking.change_direction, ranking.rank_change)}
@@ -166,7 +164,7 @@ export default function KingMidasTicker() {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .ticker-wrapper {
           width: 100%;
           height: 100%;

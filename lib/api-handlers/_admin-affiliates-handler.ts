@@ -33,7 +33,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     let query = supabase
       .from('affiliates')
-      .select('*')
+      .select(`
+        *,
+        user_roles:user_id (
+          email
+        )
+      `)
       .order('created_at', { ascending: false })
 
     if (statusParam) {
@@ -62,11 +67,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const affiliates = (result.data ?? []).map(record => {
       const code = record.code || record.affiliate_code || ''
+      // Get email from user_roles join if available
+      const email = Array.isArray(record.user_roles)
+        ? record.user_roles[0]?.email
+        : record.user_roles?.email;
+
       return {
         id: record.id,
         code,
         affiliate_code: record.affiliate_code || record.code || code,
         user_id: record.user_id,
+        email: email || undefined,
         status: record.status || 'inactive',
         commission_rate: toNumber(record.commission_rate ?? 0),
         total_earnings: toNumber(record.total_earnings ?? 0),

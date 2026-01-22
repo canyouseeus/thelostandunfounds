@@ -1,17 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { createPayoutBatch, isPayoutsEnabled } from '../admin/paypal-payouts.js';
-
-const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase environment variables');
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: { persistSession: false }
-});
 
 const MIN_PAYOUT = 10;
 
@@ -23,7 +12,7 @@ const toMoney = (value: number) => {
 const normalizeCode = (code?: string | null) =>
   code?.trim().toUpperCase().replace(/[^A-Z0-9-]/g, '') || null;
 
-async function findAffiliate(userId?: string, affiliateCode?: string | null) {
+async function findAffiliate(supabase: SupabaseClient, userId?: string, affiliateCode?: string | null) {
   if (userId) {
     const { data, error } = await supabase
       .from('affiliates')
@@ -60,7 +49,7 @@ async function findAffiliate(userId?: string, affiliateCode?: string | null) {
   return null;
 }
 
-async function getPayoutSettings(affiliateId: string) {
+async function getPayoutSettings(supabase: SupabaseClient, affiliateId: string) {
   const { data, error } = await supabase
     .from('affiliate_payout_settings')
     .select('paypal_email, payment_threshold')
@@ -77,14 +66,14 @@ async function getPayoutSettings(affiliateId: string) {
 /**
  * Calculate available balance from commissions that have passed their holding period
  */
-async function getAvailableBalance(affiliateId: string): Promise<{
+async function getAvailableBalance(supabase: SupabaseClient, affiliateId: string): Promise<{
   available: number;
   pending: number;
   nextAvailableDate: string | null;
   nextAvailableAmount: number;
 }> {
   const now = new Date().toISOString();
-  
+
   // Get available commissions (past holding period)
   const { data: availableCommissions, error: availableError } = await supabase
     .from('affiliate_commissions')
@@ -125,7 +114,7 @@ async function getAvailableBalance(affiliateId: string): Promise<{
 
   // Find next commission to become available
   const nextPending = pendingCommissions?.find(c => c.available_date);
-  
+
   return {
     available: toMoney(available),
     pending: toMoney(pending),
@@ -137,9 +126,9 @@ async function getAvailableBalance(affiliateId: string): Promise<{
 /**
  * Get available commissions for payout (to mark as paid)
  */
-async function getAvailableCommissions(affiliateId: string, upToAmount: number) {
+async function getAvailableCommissions(supabase: SupabaseClient, affiliateId: string, upToAmount: number) {
   const now = new Date().toISOString();
-  
+
   const { data, error } = await supabase
     .from('affiliate_commissions')
     .select('id, amount')
@@ -173,6 +162,7 @@ async function getAvailableCommissions(affiliateId: string, upToAmount: number) 
  * Mark commissions as paid
  */
 async function markCommissionsAsPaid(
+  supabase: SupabaseClient,
   commissionIds: string[],
   paypalBatchId: string,
   paypalItemId?: string
@@ -210,6 +200,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Check env vars at runtime, not module load time
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('Missing Supabase environment variables for request-payout');
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: { persistSession: false }
+  });
+
   try {
     const { userId, affiliateCode, amount, notes } = req.body || {};
 
@@ -226,7 +229,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: `Minimum payout amount is $${MIN_PAYOUT}` });
     }
 
-    const affiliate = await findAffiliate(userId, affiliateCode);
+    const affiliate = await findAffiliate(supabase, userId, affiliateCode);
 
     if (!affiliate) {
       return res.status(404).json({ error: 'Affiliate not found' });
@@ -237,10 +240,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Get available balance (only commissions past holding period)
-    const balances = await getAvailableBalance(affiliate.id);
-    
+    const balances = await getAvailableBalance(supabase, affiliate.id);
+
     if (balances.available < numericAmount) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Requested amount exceeds available balance',
         details: {
           requested: numericAmount,
@@ -251,7 +254,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    const payoutSettings = await getPayoutSettings(affiliate.id);
+    const payoutSettings = await getPayoutSettings(supabase, affiliate.id);
 
     if (!payoutSettings || !payoutSettings.paypal_email) {
       return res.status(400).json({ error: 'Set your PayPal email before requesting payouts' });
@@ -276,7 +279,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       normalizeCode(affiliate.code) || normalizeCode(affiliate.affiliate_code) || 'UNKNOWN';
 
     // Get commissions to mark as paid
-    const commissionsToMark = await getAvailableCommissions(affiliate.id, numericAmount);
+    const commissionsToMark = await getAvailableCommissions(supabase, affiliate.id, numericAmount);
     const actualAmount = commissionsToMark.reduce((sum, c) => sum + c.amount, 0);
 
     if (actualAmount < numericAmount) {
@@ -289,7 +292,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Call PayPal Payouts API immediately
     console.log(`Processing instant payout: $${numericAmount} to ${payoutSettings.paypal_email} for affiliate ${affiliateCodeValue}`);
-    
+
     let payoutResult;
     try {
       payoutResult = await createPayoutBatch([
@@ -314,8 +317,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Mark commissions as paid
     const commissionIds = commissionsToMark.map(c => c.id);
     const paypalBatchId = payoutResult.batch_header.payout_batch_id;
-    
-    await markCommissionsAsPaid(commissionIds, paypalBatchId);
+
+    await markCommissionsAsPaid(supabase, commissionIds, paypalBatchId);
 
     // Create payout request record for history (status: paid)
     const { data: request, error: insertError } = await supabase

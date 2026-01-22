@@ -174,6 +174,15 @@ export default function OnboardingWizard() {
                             >
                                 Get Started <ArrowRight className="w-5 h-5" />
                             </button>
+
+                            <a
+                                href="/docs/photographer-guide"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block text-center mt-4 text-sm text-zinc-500 hover:text-white transition-colors"
+                            >
+                                How does this work? <span className="underline">Learn more</span>
+                            </a>
                         </motion.div>
                     )}
 

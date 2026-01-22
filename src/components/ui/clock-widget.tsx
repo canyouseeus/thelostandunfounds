@@ -237,16 +237,6 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
             'min-h-[200px]', // Ensure enough height
             className
         )}>
-            {/* Top Label - Mode Switcher */}
-            <div
-                onClick={cycleMode}
-                className="absolute top-4 left-0 right-0 text-center z-20 hover:cursor-pointer"
-            >
-                <span className="text-[10px] tracking-[0.2em] font-medium text-white/30 uppercase hover:text-white transition-colors">
-                    {mode === 'clock' ? 'CLOCK' : mode === 'stopwatch' ? 'STOPWATCH' : 'TIMER'}
-                </span>
-            </div>
-
             {/* Main Display Area */}
             <div className="flex-1 relative flex items-center justify-center">
 
@@ -364,6 +354,16 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
                     )}
                 </div>
 
+            </div>
+
+            {/* Top Label - Mode Switcher - Maximum Tap Area (Moved to end for z-index stacking) */}
+            <div
+                onClick={cycleMode}
+                className="absolute top-0 left-0 right-0 h-[45%] flex items-start justify-center pt-6 z-10 cursor-pointer bg-transparent"
+            >
+                <span className="text-[10px] tracking-[0.2em] font-medium text-white/30 uppercase hover:text-white transition-colors relative z-40">
+                    {mode === 'clock' ? 'CLOCK' : mode === 'stopwatch' ? 'STOPWATCH' : 'TIMER'}
+                </span>
             </div>
         </div>
     );

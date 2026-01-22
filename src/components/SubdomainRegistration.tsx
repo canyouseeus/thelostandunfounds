@@ -16,11 +16,11 @@ interface SubdomainRegistrationProps {
   required?: boolean; // If true, user cannot close without setting subdomain
 }
 
-export default function SubdomainRegistration({ 
-  isOpen, 
-  onClose, 
+export default function SubdomainRegistration({
+  isOpen,
+  onClose,
   onSuccess,
-  required = false 
+  required = false
 }: SubdomainRegistrationProps) {
   const { user } = useAuth();
   const { success, error: showError } = useToast();
@@ -45,33 +45,33 @@ export default function SubdomainRegistration({
 
   const validateSubdomain = (value: string): boolean => {
     const subdomainRegex = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
-    
+
     if (!value) {
       setSubdomainError('Subdomain is required');
       return false;
     }
-    
+
     if (value.length < 3) {
       setSubdomainError('Subdomain must be at least 3 characters');
       return false;
     }
-    
+
     if (value.length > 63) {
       setSubdomainError('Subdomain must be 63 characters or less');
       return false;
     }
-    
+
     if (!subdomainRegex.test(value)) {
       setSubdomainError('Subdomain can only contain lowercase letters, numbers, and hyphens. Cannot start or end with a hyphen.');
       return false;
     }
-    
+
     const reserved = ['www', 'api', 'admin', 'blog', 'mail', 'ftp', 'localhost', 'test', 'staging', 'dev', 'app', 'thelostarchives', 'thelostandunfounds'];
     if (reserved.includes(value.toLowerCase())) {
       setSubdomainError('This subdomain is reserved and cannot be used');
       return false;
     }
-    
+
     setSubdomainError('');
     return true;
   };
@@ -201,12 +201,12 @@ export default function SubdomainRegistration({
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 py-8 sm:py-12 overflow-y-auto"
       onClick={required ? undefined : onClose}
     >
-      <div 
-        className="bg-black/50 border border-white rounded-none p-4 sm:p-6 w-full max-w-md my-auto max-h-[calc(100vh-4rem)] sm:max-h-[calc(100vh-6rem)] overflow-y-auto"
+      <div
+        className="bg-black/50 rounded-none p-4 sm:p-6 w-full max-w-md my-auto max-h-[calc(100vh-4rem)] sm:max-h-[calc(100vh-6rem)] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between mb-4 sm:mb-6 gap-2">
@@ -240,7 +240,7 @@ export default function SubdomainRegistration({
                 value={subdomain}
                 onChange={(e) => handleSubdomainChange(e.target.value)}
                 onBlur={() => checkSubdomainAvailability(subdomain)}
-                className="flex-1 px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none"
+                className="flex-1 px-4 py-2 bg-black/50 rounded-none text-white focus:outline-none"
                 placeholder="your-blog-name"
                 required
                 disabled={registering}
@@ -259,17 +259,17 @@ export default function SubdomainRegistration({
                 Available
               </p>
             )}
-            
+
             {/* Display CORRECT path-based URL */}
             {blogUrl && !subdomainError && (
-              <div className="mt-4 p-3 sm:p-4 bg-black/30 border border-white rounded-none">
+              <div className="mt-4 p-3 sm:p-4 bg-black/30 rounded-none">
                 <p className="text-xs sm:text-sm text-white/60 mb-2">Your blog will be available at:</p>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="text"
                     value={blogUrl}
                     readOnly
-                    className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-black/50 border border-white rounded-none text-white text-xs sm:text-sm font-mono"
+                    className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-black/50 rounded-none text-white text-xs sm:text-sm font-mono"
                   />
                   <button
                     type="button"
@@ -300,7 +300,7 @@ export default function SubdomainRegistration({
                 </div>
               </div>
             )}
-            
+
             <p className="text-white/40 text-xs mt-2">
               • 3-63 characters • Lowercase letters, numbers, and hyphens only • Cannot start or end with hyphen
             </p>
@@ -308,7 +308,7 @@ export default function SubdomainRegistration({
 
           {/* Amazon Associates Instructions */}
           {blogUrl && !subdomainError && (
-            <div className="bg-blue-500/10 border-2 border-white rounded-none p-3 sm:p-4">
+            <div className="bg-blue-500/10 rounded-none p-3 sm:p-4">
               <h3 className="text-sm sm:text-base font-bold text-blue-400 mb-2 flex items-center gap-2">
                 📋 For Amazon Associates Registration
               </h3>
@@ -319,13 +319,13 @@ export default function SubdomainRegistration({
                 <li>Click the "Copy" button above to copy your blog URL</li>
                 <li>Go to your Amazon Associates account</li>
                 <li>When asked for your website URL, paste:
-                  <code className="block mt-1.5 px-2 py-1.5 bg-black/50 border border-white rounded-none font-mono text-xs break-all">
+                  <code className="block mt-1.5 px-2 py-1.5 bg-black/50 rounded-none font-mono text-xs break-all">
                     {blogUrl}
                   </code>
                 </li>
                 <li>Complete your Amazon Associates registration</li>
               </ol>
-              <div className="bg-yellow-500/10 border border-white rounded-none p-2 sm:p-2.5 mt-3">
+              <div className="bg-yellow-500/10 rounded-none p-2 sm:p-2.5 mt-3">
                 <p className="text-yellow-400 text-xs font-semibold mb-1">💡 Important:</p>
                 <p className="text-white/70 text-xs">
                   Use the full URL shown above (<code className="bg-black/50 px-1 py-0.5 rounded-none break-all">{blogUrl}</code>) when registering with Amazon Associates. This is your permanent blog URL.

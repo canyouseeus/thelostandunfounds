@@ -1,6 +1,20 @@
 {
-  "generated": "2026-01-18T17:51:14.635Z",
+  "generated": "2026-01-22T19:34:29.943Z",
   "files": [
+    {
+      "filename": "fix-admin-access-comprehensive.sql",
+      "path": "public/sql/fix-admin-access-comprehensive.sql",
+      "publicPath": "/sql/fix-admin-access-comprehensive.sql",
+      "modified": "2026-01-22T00:51:54.672Z",
+      "size": 4545
+    },
+    {
+      "filename": "fix-admin-policies-affiliates-newsletter.sql",
+      "path": "public/sql/fix-admin-policies-affiliates-newsletter.sql",
+      "publicPath": "/sql/fix-admin-policies-affiliates-newsletter.sql",
+      "modified": "2026-01-22T00:49:44.640Z",
+      "size": 3669
+    },
     {
       "filename": "blog-schema-migration.sql",
       "path": "public/blog-schema-migration.sql",

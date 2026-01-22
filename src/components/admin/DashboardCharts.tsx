@@ -132,10 +132,9 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
         </div>
       </div>
 
-      {/* Chart Area */}
       <div className="flex-1 min-h-0 relative mb-4">
         <div className="absolute inset-0">
-          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+          <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0} debounce={200}>
             <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
               <XAxis
@@ -157,7 +156,7 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
               <Tooltip
                 contentStyle={{
                   backgroundColor: '#000',
-                  border: '1px solid rgba(255,255,255,0.2)',
+                  border: 'none',
                   borderRadius: 0,
                   fontSize: '12px',
                   padding: '8px 12px'
@@ -186,13 +185,13 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
       {/* Controls Container */}
       <div className="flex flex-col gap-3">
         {/* Time Range Toggle - Full Width */}
-        <div className="flex w-full bg-white/5 border border-white/10">
+        <div className="flex w-full bg-white/5">
           {(['1H', '24H', '7D', '30D', '1Y'] as TimeRange[]).map((t) => (
             <button
               key={t}
               onClick={() => setTimeRange(t)}
               className={cn(
-                "flex-1 py-3 text-[10px] md:text-xs uppercase tracking-wider font-medium transition-colors border-r border-white/5 last:border-r-0",
+                "flex-1 py-3 text-[10px] md:text-xs uppercase tracking-wider font-medium transition-colors",
                 timeRange === t
                   ? "bg-white text-black font-bold"
                   : "text-white/40 hover:text-white hover:bg-white/10"
@@ -204,13 +203,13 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
         </div>
 
         {/* Metric Toggle - Full Width */}
-        <div className="flex w-full bg-white/5 border border-white/10">
+        <div className="flex w-full bg-white/5">
           {(['revenue', 'newsletter', 'affiliates'] as MetricType[]).map((m) => (
             <button
               key={m}
               onClick={() => setMetric(m)}
               className={cn(
-                "flex-1 py-3 text-[10px] md:text-xs uppercase tracking-widest font-bold transition-colors border-r border-white/5 last:border-r-0",
+                "flex-1 py-3 text-[10px] md:text-xs uppercase tracking-widest font-bold transition-colors",
                 metric === m
                   ? "bg-white text-black"
                   : "text-white/40 hover:text-white hover:bg-white/10"

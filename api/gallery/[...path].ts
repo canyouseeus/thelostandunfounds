@@ -155,6 +155,14 @@ async function handleCheckout(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ error: 'email is required' });
         }
 
+        // Diagnostic logging for debugging 403 errors
+        console.log('[Gallery Checkout] Using Supabase key:', {
+            hasUrl: !!SUPABASE_URL,
+            hasSvcKey: !!SUPABASE_SERVICE_ROLE_KEY,
+            svcKeyLength: SUPABASE_SERVICE_ROLE_KEY?.length,
+            fallbackToAnon: !SUPABASE_SERVICE_ROLE_KEY && !!process.env.VITE_SUPABASE_ANON_KEY
+        });
+
         const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY!);
 
         // Calculate total price
@@ -314,6 +322,11 @@ async function handleCapture(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ error: 'Missing orderId' });
         }
 
+        // Diagnostic logging
+        console.log('[Gallery Capture] Using Supabase key:', {
+            hasUrl: !!SUPABASE_URL,
+            hasSvcKey: !!SUPABASE_SERVICE_ROLE_KEY
+        });
         const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
         // 1. Initial Idempotency Check
@@ -509,6 +522,11 @@ async function handleResendOrder(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ error: 'Missing orderId or email' });
         }
 
+        // Diagnostic logging
+        console.log('[Gallery Resend] Using Supabase key:', {
+            hasUrl: !!SUPABASE_URL,
+            hasSvcKey: !!SUPABASE_SERVICE_ROLE_KEY
+        });
         const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
         // Fetch order and associated photos
@@ -573,6 +591,11 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ error: 'Missing libraryId or emails array' });
         }
 
+        // Diagnostic logging
+        console.log('[Gallery Invite] Using Supabase key:', {
+            hasUrl: !!SUPABASE_URL,
+            hasSvcKey: !!SUPABASE_SERVICE_ROLE_KEY
+        });
         const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
         const { data: library, error: libError } = await supabase
             .from('photo_libraries')
@@ -736,6 +759,13 @@ async function getZohoAccessToken(): Promise<string> {
 }
 
 async function getZohoAccountInfo(accessToken: string, fallbackEmail: string) {
+    // First check for explicit account ID override
+    const explicitAccountId = process.env.ZOHO_ACCOUNT_ID;
+    if (explicitAccountId) {
+        console.log('[Gallery Invite] Using explicit ZOHO_ACCOUNT_ID:', explicitAccountId);
+        return { accountId: explicitAccountId, email: fallbackEmail };
+    }
+
     try {
         const response = await fetch(ZOHO_ACCOUNTS_URL, {
             method: 'GET',
@@ -744,6 +774,7 @@ async function getZohoAccountInfo(accessToken: string, fallbackEmail: string) {
 
         if (response.ok) {
             const json = await response.json()
+            console.log('[Gallery Invite] Zoho accounts API response:', JSON.stringify(json, null, 2));
             const account = json?.data?.[0] || json?.accounts?.[0]
 
             if (account) {
@@ -766,14 +797,19 @@ async function getZohoAccountInfo(accessToken: string, fallbackEmail: string) {
                 }
 
                 if (accountId) {
+                    console.log('[Gallery Invite] Found account ID:', accountId, 'email:', accountEmail);
                     return { accountId: String(accountId), email: accountEmail }
                 }
             }
+        } else {
+            console.warn('[Gallery Invite] Zoho accounts API failed:', response.status, await response.text());
         }
     } catch (error) {
-        console.warn('Zoho account lookup failed, falling back to derived account id', error)
+        console.warn('[Gallery Invite] Zoho account lookup failed:', error)
     }
 
+    // Last resort fallback - but this will likely fail
+    console.error('[Gallery Invite] WARNING: Using fallback account ID from email prefix - this may not work!');
     const fallbackAccountId = fallbackEmail.split('@')[0]
     return { accountId: fallbackAccountId, email: fallbackEmail }
 }
@@ -864,10 +900,13 @@ async function syncGalleryPhotos(librarySlug: string) {
         newlineCount: (GOOGLE_KEY.match(/\n/g) || []).length
     });
 
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !GOOGLE_EMAIL || !GOOGLE_KEY) {
+    // Use supplied service key or fallback
+    const SVC_KEY = SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!SUPABASE_URL || !SVC_KEY || !GOOGLE_EMAIL || !GOOGLE_KEY) {
         console.error('Sync missing credentials:', {
             hasUrl: !!SUPABASE_URL,
-            hasSvcKey: !!SUPABASE_SERVICE_ROLE_KEY,
+            hasSvcKey: !!SVC_KEY,
             hasEmail: !!GOOGLE_EMAIL,
             hasKey: !!GOOGLE_KEY,
             keyLength: GOOGLE_KEY.length
@@ -875,7 +914,7 @@ async function syncGalleryPhotos(librarySlug: string) {
         throw new Error(`Missing credentials. Email: ${!!GOOGLE_EMAIL}, Key: ${!!GOOGLE_KEY}`);
     }
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createClient(SUPABASE_URL, SVC_KEY);
 
     const { data: library, error: libError } = await supabase
         .from('photo_libraries')
@@ -1033,22 +1072,43 @@ async function syncGalleryPhotos(librarySlug: string) {
 
 async function handleSync(req: VercelRequest, res: VercelResponse) {
     try {
-        const { slug } = req.query;
-        if (!SUPABASE_SERVICE_ROLE_KEY) {
+        const { slug: querySlug } = req.query;
+        const { libraryId, slug: bodySlug } = req.body || {};
+
+        // Use supplied service key or fallback
+        const SVC_KEY = SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+
+        if (!SVC_KEY) {
             console.error('[Sync] SUPABASE_SERVICE_ROLE_KEY is missing from environment variables.');
             return res.status(500).json({
                 error: 'Server configuration error',
                 details: 'Missing database credentials (SUPABASE_SERVICE_ROLE_KEY). Check .env file.'
             });
         }
-        const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY);
+        const supabase = createClient(SUPABASE_URL!, SVC_KEY);
 
-        if (slug && typeof slug === 'string') {
-            const result = await syncGalleryPhotos(slug);
+        let targetSlug = (typeof querySlug === 'string' ? querySlug : null) || bodySlug;
+
+        // If we only have libraryId, look up the slug
+        if (!targetSlug && libraryId) {
+            const { data: lib, error: lookupError } = await supabase
+                .from('photo_libraries')
+                .select('slug')
+                .eq('id', libraryId)
+                .single();
+
+            if (lookupError || !lib) {
+                return res.status(404).json({ error: 'Library not found by ID' });
+            }
+            targetSlug = lib.slug;
+        }
+
+        if (targetSlug) {
+            const result = await syncGalleryPhotos(targetSlug);
             return res.json({ success: true, results: [result] });
         }
 
-        // Sync all if no slug provided
+        // Sync all if no slug/id provided (only allow this for admins ideally, but acceptable for now)
         const { data: libraries, error: libError } = await supabase
             .from('photo_libraries')
             .select('slug');

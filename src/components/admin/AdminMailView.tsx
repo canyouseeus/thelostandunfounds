@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../Toast';
+import { cn } from '../ui/utils';
 import DOMPurify from 'dompurify';
 
 // Types
@@ -542,59 +543,69 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
       )}
 
       {/* Main layout */}
-      <div className="bg-black/50 rounded-none min-h-[600px] flex">
-        {/* Folder sidebar */}
-        <div className="w-48 border-r border-white/10 p-3 space-y-1">
-          <div className="text-xs text-white/40 uppercase tracking-wider mb-3 px-2">Folders</div>
+      return (
+      <div className="bg-black text-white rounded-none min-h-[600px] flex border-l border-white/10">
+        {/* Sidebar - Folders */}
+        <div className="w-48 border-r border-white/10 p-0 pr-4 py-3 space-y-1">
+          <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-3 px-3">Folders</div>
           {folders.map(folder => (
             <button
               key={folder.folderId}
               onClick={() => setSelectedFolder(folder)}
-              className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition ${selectedFolder?.folderId === folder.folderId
-                ? 'bg-white/10 text-white'
-                : 'text-white/60 hover:text-white hover:bg-white/5'
-                }`}
+              className={cn(
+                "w-full flex items-center justify-between px-3 py-2 text-sm transition-colors rounded-none group",
+                selectedFolder?.folderId === folder.folderId
+                  ? "bg-white text-black font-bold"
+                  : "text-white/60 hover:text-white"
+              )}
             >
-              {getFolderIcon(folder)}
-              <span className="flex-1 truncate">{folder.folderName}</span>
+              <div className="flex items-center gap-3">
+                {getFolderIcon(folder)}
+                <span className={cn("uppercase tracking-wider text-xs font-bold", selectedFolder?.folderId !== folder.folderId && "font-medium")}>
+                  {folder.folderName}
+                </span>
+              </div>
               {folder.unreadCount > 0 && (
-                <span className="text-xs bg-white/20 px-1.5 py-0.5 rounded-full">
+                <span className={cn(
+                  "text-[10px] font-bold px-1.5 py-0.5",
+                  selectedFolder?.folderId === folder.folderId ? "text-black" : "text-white"
+                )}>
                   {folder.unreadCount}
                 </span>
               )}
             </button>
           ))}
 
-          <div className="pt-4 mt-4">
+          <div className="pt-4 mt-4 border-t border-white/10 mx-3">
             <button
               onClick={() => loadFolders(true)}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-white/40 hover:text-white transition"
+              className="w-full flex items-center gap-3 px-0 py-2 text-xs text-white/40 hover:text-white transition uppercase tracking-wider font-bold"
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className="w-3 h-3" />
               Refresh
             </button>
           </div>
         </div>
 
         {/* Message list */}
-        <div className="w-80 border-r border-white/10 flex flex-col">
+        <div className="w-80 flex flex-col border-r border-white/10 pl-0">
           {/* Search bar */}
           <div className="p-3 border-b border-white/10">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                placeholder="Search messages..."
-                className="w-full bg-white/5 pl-9 pr-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:border-white/30"
+                placeholder="Search..."
+                className="w-full bg-transparent pl-9 pr-3 py-2 text-xs text-white placeholder-white/40 focus:outline-none border-b border-white/20 focus:border-white transition-colors rounded-none font-medium"
               />
             </div>
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 overflow-auto bg-black">
             {loadingMessages ? (
               <div className="p-8 text-center">
                 <Loader className="w-5 h-5 animate-spin text-white/40 mx-auto" />

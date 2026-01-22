@@ -3,22 +3,25 @@
  * Returns real-time rankings with hourly rank changes for the ticker display
  */
 
+import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase environment variables');
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('Missing Supabase environment variables for king-midas/ticker');
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
     const today = new Date().toISOString().split('T')[0];
@@ -43,7 +46,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Get the most recent hourly snapshot (should be from previous hour)
     const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
-    
+
     const { data: previousRankings, error: previousError } = await supabase
       .from('king_midas_hourly_rankings')
       .select('affiliate_id, rank')
@@ -69,15 +72,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const rankings = (todayRankings || []).map((ranking: any) => {
       const currentRank = ranking.rank;
       const previousRank = previousRankMap.get(ranking.affiliate_id);
-      
+
       let rank_change = 0;
       let change_direction: 'up' | 'down' | 'none' = 'none';
-      
+
       if (previousRank !== undefined) {
         // Rank change is previous - current (lower rank number is better)
         // If went from #5 to #3, that's +2 spots (up)
         rank_change = previousRank - currentRank;
-        
+
         if (rank_change > 0) {
           change_direction = 'up';
         } else if (rank_change < 0) {

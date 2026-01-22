@@ -62,8 +62,46 @@ async function getOrCreateFolder(name: string, parentId: string) {
     return folder.data.id;
 }
 
+async function findDuplicates(fileName: string, parentId: string) {
+    const res = await drive.files.list({
+        q: `name = '${fileName}' and '${parentId}' in parents and trashed = false`,
+        fields: 'files(id, name, createdTime)',
+        orderBy: 'createdTime',
+    });
+    return res.data.files || [];
+}
+
+async function removeDuplicates(fileName: string, parentId: string) {
+    const files = await findDuplicates(fileName, parentId);
+
+    if (files.length > 1) {
+        console.log(`Found ${files.length} copies of ${fileName}, keeping the oldest and removing ${files.length - 1} duplicate(s)...`);
+
+        // Keep the first (oldest) file, delete the rest
+        for (let i = 1; i < files.length; i++) {
+            try {
+                await drive.files.delete({ fileId: files[i].id! });
+                console.log(`  Removed duplicate: ${files[i].id}`);
+            } catch (err: any) {
+                console.error(`  Error removing duplicate ${files[i].id}:`, err.message);
+            }
+        }
+    }
+}
+
 async function uploadFile(filePath: string, parentId: string) {
     const fileName = path.basename(filePath);
+
+    // Check if file already exists
+    const existing = await findDuplicates(fileName, parentId);
+
+    if (existing.length > 0) {
+        console.log(`Skipping ${fileName} (already exists in Drive)`);
+        // Clean up any duplicates
+        await removeDuplicates(fileName, parentId);
+        return;
+    }
+
     console.log(`Uploading ${fileName}...`);
 
     try {
@@ -82,7 +120,47 @@ async function uploadFile(filePath: string, parentId: string) {
     }
 }
 
+async function cleanupDuplicatesInFolder(parentId: string, folderName: string) {
+    console.log(`\nScanning ${folderName} for duplicates...`);
+
+    const res = await drive.files.list({
+        q: `'${parentId}' in parents and trashed = false`,
+        fields: 'files(id, name)',
+    });
+
+    const files = res.data.files || [];
+    const fileNames = new Set<string>();
+    const duplicates = new Set<string>();
+
+    for (const file of files) {
+        if (fileNames.has(file.name!)) {
+            duplicates.add(file.name!);
+        } else {
+            fileNames.add(file.name!);
+        }
+    }
+
+    if (duplicates.size > 0) {
+        console.log(`Found duplicates for ${duplicates.size} file(s), cleaning up...`);
+        for (const fileName of duplicates) {
+            await removeDuplicates(fileName, parentId);
+        }
+    } else {
+        console.log(`No duplicates found in ${folderName}`);
+    }
+}
+
 async function startSync() {
+    // First, clean up any existing duplicates in all folders
+    console.log('\n=== Cleaning up existing duplicates ===');
+    for (const [key, config] of Object.entries(FOLDER_CONFIG)) {
+        const targetFolderId = await getOrCreateFolder('NEW UPLOADS', config.parent!);
+        if (targetFolderId) {
+            await cleanupDuplicatesInFolder(targetFolderId, `${key} NEW UPLOADS`);
+        }
+    }
+
+    console.log('\n=== Starting file uploads ===');
     for (const [key, config] of Object.entries(FOLDER_CONFIG)) {
         console.log(`\nProcessing ${key} folder...`);
 

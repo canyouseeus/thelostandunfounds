@@ -9,6 +9,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
+import AdminAffiliates from './AdminAffiliates';
 import { isAdmin } from '../utils/admin';
 import { supabase } from '../lib/supabase';
 import {
@@ -204,25 +205,38 @@ export default function Admin() {
   });
 
   const handleSectionToggle = (key: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
+    setExpandedSections(prev => {
+      const willOpen = !prev[key];
+      if (!willOpen) {
+        scrollToTop();
+      }
+      return {
+        ...prev,
+        [key]: willOpen
+      };
+    });
   };
 
   const openAndScrollToSection = (key: string, ref: React.RefObject<HTMLDivElement>) => {
-    // 1. Expand the section
-    setExpandedSections(prev => ({
-      ...prev,
-      [key]: true // Always open when clicking icon
-    }));
+    // 1. Toggle the section
+    setExpandedSections(prev => {
+      const willOpen = !prev[key];
 
-    // 2. Scroll to it
-    if (ref.current) {
-      setTimeout(() => {
-        ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 300); // Increased delay to ensure render
-    }
+      // 2. If opening, scroll to it
+      if (willOpen && ref.current) {
+        setTimeout(() => {
+          ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 300);
+      } else if (!willOpen) {
+        // If closing, scroll to top
+        scrollToTop();
+      }
+
+      return {
+        ...prev,
+        [key]: willOpen
+      };
+    });
   };
 
   const setActiveTab = (tab: string) => {
@@ -238,7 +252,7 @@ export default function Admin() {
       case 'affiliates': ref = affiliatesSectionRef; break;
       case 'submissions': ref = submissionsSectionRef; break;
       case 'settings':
-        key = 'analytics';
+        key = 'settings';
         ref = settingsSectionRef;
         break;
       default: return;
@@ -249,7 +263,7 @@ export default function Admin() {
 
   const scrollToTop = () => {
     // Scroll to absolute top
-    pageTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
 
@@ -1178,7 +1192,7 @@ export default function Admin() {
   if (componentError) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
+        <div className="bg-red-900/20 rounded-none p-6">
           <h2 className="text-xl font-bold text-red-400 mb-2">Error Loading Admin Dashboard</h2>
           <p className="text-red-300 mb-4">{componentError}</p>
           <button
@@ -1223,7 +1237,7 @@ export default function Admin() {
             ADMIN DASHBOARD
           </h1>
           <Link
-            to={userSubdomain ? `/${userSubdomain}/bookclubprofile` : "/bookclubprofile"}
+            to={userSubdomain ? `/${userSubdomain}/profile` : "/profile"}
             className="p-2 bg-white text-black hover:bg-white/90 transition"
             title="Profile"
           >
@@ -1235,11 +1249,10 @@ export default function Admin() {
 
 
       {/* Dashboard Content - Single Scrollable Page */}
-      <div className="space-y-4">
-        {/* Hero Section: Revenue Tracker + Clock */}
-        <div className="flex flex-col md:flex-row gap-4">
-          {/* Revenue Tracker - Full width on mobile, 3/4 on desktop */}
-          <div className="flex-1">
+      <div className="space-y-6">
+        {/* Row 1: Revenue & Time */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          <div className="md:col-span-8 lg:col-span-9">
             <RevenueTracker
               affiliateRevenue={stats?.affiliateRevenue || 0}
               galleryRevenue={stats?.galleryRevenue || 0}
@@ -1252,146 +1265,128 @@ export default function Admin() {
               }}
             />
           </div>
-
-          {/* Clock Widget - Hidden on mobile, visible on desktop */}
-          <div className="hidden md:flex flex-col gap-4 w-64">
-            <ClockWidget size="lg" className="h-full" />
-            <CalendarWidget className="h-full" />
+          <div className="md:col-span-4 lg:col-span-3 flex flex-col gap-6">
+            <ClockWidget size="lg" className="flex-1" />
+            <CalendarWidget className="flex-1 min-h-[300px]" />
           </div>
         </div>
 
-        {/* Collapsible Sections */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Key Stats */}
-          <CollapsibleSection
-            title="Platform Stats"
+        {/* Row 2: Stats & Health */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <AdminBentoCard
+            title="Operational Load"
             icon={<BarChart3 className="w-4 h-4" />}
-            badge={<span className="text-xs font-mono text-green-400">{stats?.totalUsers || 0} users</span>}
-            defaultOpen={true}
+            footer={<span className="text-[10px] text-white/40">Real-time sync</span>}
           >
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white/[0.02] p-3">
-                <div className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Contributors</div>
-                <div className="text-xl font-bold text-white font-mono"><AnimatedNumber value={stats?.totalUsers || 0} /></div>
+            <div className="space-y-4 pt-2">
+              <AdminBentoRow label="Total Users" value={<AnimatedNumber value={stats?.totalUsers || 0} />} />
+              <AdminBentoRow label="Subscribers" value={<AnimatedNumber value={stats?.newsletterSubscribers || 0} />} />
+              <AdminBentoRow label="Affiliates" value={<AnimatedNumber value={affiliateStats?.totalAffiliates || 0} />} />
+              <AdminBentoRow label="Pending Reviews" value={<span className={pendingSubmissions > 0 ? "text-amber-400 font-bold" : ""}>{pendingSubmissions}</span>} />
+            </div>
+          </AdminBentoCard>
+
+          <AdminBentoCard
+            title="Revenue Performance"
+            icon={<TrendingUp className="w-4 h-4" />}
+            footer={<span className="text-[10px] text-white/40">Gross profit estimate</span>}
+          >
+            <div className="space-y-4 pt-2">
+              <AdminBentoRow label="Affiliate" value={`$${(stats?.affiliateRevenue || 0).toLocaleString()}`} />
+              <AdminBentoRow label="Gallery" value={`$${(stats?.galleryRevenue || 0).toLocaleString()}`} />
+              <AdminBentoRow label="Subs" value={`$${((stats?.activeSubscriptions || 0) * 9.99).toLocaleString()}`} />
+              <AdminBentoRow label="Total" valueClassName="text-green-400 font-bold" value={`$${((stats?.affiliateRevenue || 0) + (stats?.galleryRevenue || 0) + (stats?.activeSubscriptions || 0) * 9.99).toLocaleString()}`} />
+            </div>
+          </AdminBentoCard>
+
+          <AdminBentoCard
+            title="Network Status"
+            icon={<Network className="w-4 h-4" />}
+            footer={<span className="text-[10px] text-white/40">System health</span>}
+          >
+            <div className="flex flex-col items-center justify-center py-6">
+              <div className={cn(
+                "w-12 h-12 rounded-full flex items-center justify-center mb-3",
+                stats?.platformHealth === 'healthy' ? "bg-green-500/20 text-green-400" : "bg-amber-500/20 text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.2)]"
+              )}>
+                {stats?.platformHealth === 'healthy' ? <CheckCircle className="w-6 h-6" /> : <AlertCircle className="w-6 h-6 animate-pulse" />}
               </div>
-              <div className="bg-white/[0.02] p-3">
-                <div className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Newsletter</div>
-                <div className="text-xl font-bold text-white font-mono"><AnimatedNumber value={stats?.newsletterSubscribers || 0} /></div>
-              </div>
-              <div className="bg-white/[0.02] p-3">
-                <div className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Affiliates</div>
-                <div className="text-xl font-bold text-white font-mono"><AnimatedNumber value={affiliateStats?.totalAffiliates || 0} /></div>
-              </div>
-              <div className="bg-white/[0.02] p-3">
-                <div className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Health</div>
-                <div className={`text-lg font-bold ${stats?.platformHealth === 'healthy' ? 'text-green-400' : 'text-amber-400'}`}>
-                  {stats?.platformHealth === 'healthy' ? 'Operational' : 'Action Needed'}
-                </div>
-              </div>
+              <span className={cn(
+                "text-sm font-bold tracking-widest uppercase",
+                stats?.platformHealth === 'healthy' ? "text-green-400" : "text-amber-400"
+              )}>
+                {stats?.platformHealth === 'healthy' ? 'Nominal' : 'Action Required'}
+              </span>
+              <p className="text-[10px] text-white/40 mt-2">Latency: 42ms</p>
             </div>
-          </CollapsibleSection>
+          </AdminBentoCard>
 
-          {/* ===== APP MODULES - All Inline Below ===== */}
-          <div className="pt-8 pb-4">
-            <h2 className="text-xl md:text-2xl font-bold text-white mb-2 tracking-tight">MY APPS</h2>
-            <div className="h-1 w-20 bg-white/20"></div>
-          </div>
-
-          {/* My Apps Grid */}
-          <div className="grid grid-cols-4 md:grid-cols-8 gap-4 mb-8">
-            {/* Gallery */}
-            <div
-              onClick={() => setActiveTab('gallery')}
-              className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
-              title="Gallery"
-            >
-              <ImageIcon className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
+          <AdminBentoCard
+            title="Registry"
+            icon={<Shield className="w-4 h-4" />}
+            footer={<Link to="/admin/affiliates" className="text-[10px] text-white/60 hover:text-white underline">Manage Affiliates</Link>}
+          >
+            <div className="space-y-4 pt-2">
+              <AdminBentoRow label="Writers" value={registeredWriters} />
+              <AdminBentoRow label="Gallery Photos" value={stats?.galleryPhotoCount || 0} />
+              <AdminBentoRow label="Active Admins" value="2" />
+              <AdminBentoRow label="Environment" value={<span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-[9px] font-bold rounded">PRODUCTION</span>} />
             </div>
+          </AdminBentoCard>
+        </div>
 
-            {/* Blog */}
-            <div
-              onClick={() => setActiveTab('blog')}
-              className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
-              title="Blog"
-            >
-              <BookOpen className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
-            </div>
+        {/* Console / My Apps Tab Bar (Premium Dock) */}
+        <div className="flex flex-col items-center pt-8">
+          <div className="relative group">
+            <h2 className="text-[10px] font-black text-white/40 tracking-[0.4em] uppercase mb-4 text-center">Platform Console</h2>
+            <div className="flex items-center gap-2 p-1.5 bg-white/5 backdrop-blur-xl rounded-full">
+              {[
+                { id: 'gallery', icon: ImageIcon, title: 'Gallery' },
+                { id: 'blog', icon: BookOpen, title: 'Blog' },
+                { id: 'newsletter', icon: Mail, title: 'Newsletter' },
+                { id: 'mail', icon: Send, title: 'Webmail' },
+                { id: 'users', icon: Users, title: 'Users' },
+                { id: 'affiliates', icon: Network, title: 'Affiliates' },
+                { id: 'submissions', icon: FileText, title: 'Submissions', badge: pendingSubmissions },
+                { id: 'settings', icon: Settings, title: 'Settings' }
+              ].map((app) => (
+                <button
+                  key={app.id}
+                  onClick={() => setActiveTab(app.id)}
+                  className={cn(
+                    "relative p-3 transition-all duration-300 rounded-full group/btn",
+                    expandedSections[app.id] ? "bg-white text-black scale-110 shadow-[0_0_20px_rgba(255,255,255,0.2)]" : "text-white/60 hover:text-white hover:bg-white/10"
+                  )}
+                  title={app.title}
+                >
+                  <app.icon className="w-5 h-5" />
+                  {app.badge ? (
+                    <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-black">
+                      {app.badge}
+                    </span>
+                  ) : null}
 
-            {/* Newsletter */}
-            <div
-              onClick={() => setActiveTab('newsletter')}
-              className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
-              title="Newsletter"
-            >
-              <Mail className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
-            </div>
-
-            {/* Webmail */}
-            <div
-              onClick={() => setActiveTab('mail')}
-              className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
-              title="Webmail"
-            >
-              <Send className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
-            </div>
-
-            {/* Users */}
-            <div
-              onClick={() => setActiveTab('users')}
-              className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
-              title="Users"
-            >
-              <Users className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
-            </div>
-
-            {/* Affiliates */}
-            <div
-              onClick={() => setActiveTab('affiliates')}
-              className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
-              title="Affiliates"
-            >
-              <Network className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
-            </div>
-
-            {/* Submissions - badge shows pending (actionable) */}
-            {pendingSubmissions > 0 && (
-              <div
-                onClick={() => setActiveTab('submissions')}
-                className="flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
-                title="Review"
-              >
-                <div className="relative">
-                  <FileText className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
-                  <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] flex items-center justify-center bg-white text-black text-[9px] font-bold rounded-full translate-x-1/2 -translate-y-1/2">
-                    {pendingSubmissions}
+                  {/* Tooltip */}
+                  <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-white text-black text-[9px] font-black uppercase tracking-widest opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                    {app.title}
                   </span>
-                </div>
-              </div>
-            )}
-
-            {/* Settings */}
-            <div
-              onClick={() => setActiveTab('settings')}
-              className="relative flex items-center justify-center p-4 cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
-              title="Settings"
-            >
-              <Settings className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" />
+                </button>
+              ))}
             </div>
           </div>
+        </div>
 
-          {/* App Sections - Only render when expanded */}
-
+        {/* Expanded App Sections */}
+        <div className="space-y-12 pb-24">
           {/* Gallery Section */}
           {expandedSections['gallery'] && (
-            <div ref={gallerySectionRef} className="mt-6">
-              <div className="flex items-center justify-between px-4 py-3 bg-white/[0.03]">
-                <div className="flex items-center gap-2">
-                  <ImageIcon className="w-4 h-4 text-white/60" />
-                  <span className="text-sm font-bold text-white uppercase tracking-wider">Gallery</span>
+            <div ref={gallerySectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex flex-col px-0 py-2 mb-8 items-start">
+                <div className="flex items-center gap-3">
+                  <ImageIcon className="w-5 h-5 text-white/40" />
+                  <h2 className="text-lg font-black text-white tracking-widest uppercase">Gallery Management</h2>
                 </div>
-                <button onClick={() => handleSectionToggle('gallery')} className="text-white/40 hover:text-white text-xs uppercase tracking-wider">
-                  Close
-                </button>
+                <button onClick={() => handleSectionToggle('gallery')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
               </div>
               <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Gallery</div>}>
                 <AdminGalleryView onBack={scrollToTop} />
@@ -1401,15 +1396,13 @@ export default function Admin() {
 
           {/* Blog Section */}
           {expandedSections['blog'] && (
-            <div ref={blogSectionRef} className="mt-6">
-              <div className="flex items-center justify-between px-4 py-3 bg-white/[0.03]">
-                <div className="flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-white/60" />
-                  <span className="text-sm font-bold text-white uppercase tracking-wider">Blog</span>
+            <div ref={blogSectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex flex-col px-0 py-2 mb-8 items-start">
+                <div className="flex items-center gap-3">
+                  <BookOpen className="w-5 h-5 text-white/40" />
+                  <h2 className="text-lg font-black text-white tracking-widest uppercase">Blog Management</h2>
                 </div>
-                <button onClick={() => handleSectionToggle('blog')} className="text-white/40 hover:text-white text-xs uppercase tracking-wider">
-                  Close
-                </button>
+                <button onClick={() => handleSectionToggle('blog')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
               </div>
               <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Blog</div>}>
                 <BlogManagement />
@@ -1419,15 +1412,13 @@ export default function Admin() {
 
           {/* Newsletter Section */}
           {expandedSections['newsletter'] && (
-            <div ref={newsletterSectionRef} className="mt-6">
-              <div className="flex items-center justify-between px-4 py-3 bg-white/[0.03]">
-                <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-white/60" />
-                  <span className="text-sm font-bold text-white uppercase tracking-wider">Newsletter</span>
+            <div ref={newsletterSectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex flex-col px-0 py-2 mb-8 items-start">
+                <div className="flex items-center gap-3">
+                  <Mail className="w-5 h-5 text-white/40" />
+                  <h2 className="text-lg font-black text-white tracking-widest uppercase">Newsletter Module</h2>
                 </div>
-                <button onClick={() => handleSectionToggle('newsletter')} className="text-white/40 hover:text-white text-xs uppercase tracking-wider">
-                  Close
-                </button>
+                <button onClick={() => handleSectionToggle('newsletter')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
               </div>
               <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Newsletter</div>}>
                 <NewsletterManagement />
@@ -1437,15 +1428,13 @@ export default function Admin() {
 
           {/* Mail Section */}
           {expandedSections['mail'] && (
-            <div ref={mailSectionRef} className="mt-6">
-              <div className="flex items-center justify-between px-4 py-3 bg-white/[0.03]">
-                <div className="flex items-center gap-2">
-                  <Send className="w-4 h-4 text-white/60" />
-                  <span className="text-sm font-bold text-white uppercase tracking-wider">Webmail</span>
+            <div ref={mailSectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex flex-col px-0 py-2 mb-8 items-start">
+                <div className="flex items-center gap-3">
+                  <Send className="w-5 h-5 text-white/40" />
+                  <h2 className="text-lg font-black text-white tracking-widest uppercase">Platform Webmail</h2>
                 </div>
-                <button onClick={() => handleSectionToggle('mail')} className="text-white/40 hover:text-white text-xs uppercase tracking-wider">
-                  Close
-                </button>
+                <button onClick={() => handleSectionToggle('mail')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
               </div>
               <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Mail</div>}>
                 <AdminMailView onBack={scrollToTop} />
@@ -1455,15 +1444,13 @@ export default function Admin() {
 
           {/* Users Section */}
           {expandedSections['users'] && (
-            <div ref={usersSectionRef} className="mt-6">
-              <div className="flex items-center justify-between px-4 py-3 bg-white/[0.03]">
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-white/60" />
-                  <span className="text-sm font-bold text-white uppercase tracking-wider">Users</span>
+            <div ref={usersSectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex flex-col px-0 py-2 mb-8 items-start">
+                <div className="flex items-center gap-3">
+                  <Users className="w-5 h-5 text-white/40" />
+                  <h2 className="text-lg font-black text-white tracking-widest uppercase">User Management</h2>
                 </div>
-                <button onClick={() => handleSectionToggle('users')} className="text-white/40 hover:text-white text-xs uppercase tracking-wider">
-                  Close
-                </button>
+                <button onClick={() => handleSectionToggle('users')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
               </div>
               <AdminUsersView
                 users={allUsers}
@@ -1476,37 +1463,31 @@ export default function Admin() {
 
           {/* Affiliates Section */}
           {expandedSections['affiliates'] && (
-            <div ref={affiliatesSectionRef} className="mt-6">
-              <div className="flex items-center justify-between px-4 py-3 bg-white/[0.03]">
-                <div className="flex items-center gap-2">
-                  <Network className="w-4 h-4 text-white/60" />
-                  <span className="text-sm font-bold text-white uppercase tracking-wider">Affiliates</span>
+            <div ref={usersSectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex flex-col px-0 py-2 mb-8 items-start">
+                <div className="flex items-center gap-3">
+                  <Users className="w-5 h-5 text-white/40" />
+                  <h2 className="text-lg font-black text-white tracking-widest uppercase">Affiliate Program</h2>
                 </div>
-                <button onClick={() => handleSectionToggle('affiliates')} className="text-white/40 hover:text-white text-xs uppercase tracking-wider">
-                  Close
-                </button>
+                <button onClick={() => handleSectionToggle('affiliates')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
               </div>
-              <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Affiliates</div>}>
-                <div className="space-y-6">
-                  <AffiliateAdminView />
-                  <AffiliateEmailComposer />
-                </div>
-              </ErrorBoundary>
+              {/* @ts-ignore */}
+              <AdminAffiliates onBack={scrollToTop} />
             </div>
           )}
 
           {/* Submissions Section */}
           {expandedSections['submissions'] && pendingSubmissions > 0 && (
-            <div ref={submissionsSectionRef} className="mt-6">
-              <div className="flex items-center justify-between px-4 py-3 bg-white/[0.03]">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-white/60" />
-                  <span className="text-sm font-bold text-white uppercase tracking-wider">Submissions</span>
-                  <span className="px-2 py-0.5 bg-white/20 text-white text-[10px] font-bold">{pendingSubmissions}</span>
+            <div ref={submissionsSectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex flex-col px-0 py-2 mb-8 items-start">
+                <div className="flex items-center gap-3">
+                  <FileText className="w-5 h-5 text-white/40" />
+                  <h2 className="text-lg font-black text-white tracking-widest uppercase">Submission Queue</h2>
+                  {pendingSubmissions > 0 && (
+                    <span className="px-2 py-0.5 bg-amber-400 text-black text-[10px] font-black">{pendingSubmissions} PENDING</span>
+                  )}
                 </div>
-                <button onClick={() => handleSectionToggle('submissions')} className="text-white/40 hover:text-white text-xs uppercase tracking-wider">
-                  Close
-                </button>
+                <button onClick={() => handleSectionToggle('submissions')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
               </div>
               <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Submissions</div>}>
                 <BlogSubmissionReview />
@@ -1516,15 +1497,13 @@ export default function Admin() {
 
           {/* Settings Section */}
           {expandedSections['settings'] && (
-            <div ref={settingsSectionRef} className="mt-6">
-              <div className="flex items-center justify-between px-4 py-3 bg-white/[0.03]">
-                <div className="flex items-center gap-2">
-                  <Settings className="w-4 h-4 text-white/60" />
-                  <span className="text-sm font-bold text-white uppercase tracking-wider">Settings</span>
+            <div ref={settingsSectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex items-center justify-between px-4 py-2 mb-6">
+                <div className="flex items-center gap-3">
+                  <Settings className="w-5 h-5 text-white/40" />
+                  <h2 className="text-lg font-black text-white tracking-widest uppercase">Platform Settings</h2>
                 </div>
-                <button onClick={() => handleSectionToggle('settings')} className="text-white/40 hover:text-white text-xs uppercase tracking-wider">
-                  Close
-                </button>
+                <button onClick={() => handleSectionToggle('settings')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
               </div>
               <AdminSettingsView stats={stats} onBack={scrollToTop} />
             </div>
@@ -1558,7 +1537,7 @@ export default function Admin() {
                 </div>
               </div>
 
-              <div className="space-y-4 border-t border-white/10 pt-6">
+              <div className="space-y-4 pt-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 bg-white/5 rounded-none">
                     <div className="text-xs text-white/40 mb-1 uppercase tracking-tighter">Tier</div>
@@ -1597,7 +1576,7 @@ export default function Admin() {
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4 border-t border-white/10">
+              <div className="flex gap-4 pt-4">
                 <button
                   onClick={() => {
                     success('User edit feature coming soon');
@@ -1651,7 +1630,7 @@ export default function Admin() {
               </div>
 
               <div className="prose prose-invert max-w-none">
-                <div className="p-6 bg-white/5 border border-white/10 rounded-lg">
+                <div className="p-6 bg-white/5 rounded-none">
                   <p className="text-white/60 italic">
                     Full content preview is not available in this quick view.
                     <a

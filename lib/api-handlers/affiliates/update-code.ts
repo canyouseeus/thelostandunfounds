@@ -6,19 +6,21 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase environment variables');
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey);
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  // Check env vars at runtime, not module load time
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('Missing Supabase environment variables for update-code');
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
   const { user_id, new_code } = req.body;
 
@@ -30,16 +32,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Validate code format
     const codeRegex = /^[A-Z0-9]{4,12}$/;
     if (!codeRegex.test(new_code)) {
-      return res.status(400).json({ 
-        error: 'Code must be 4-12 uppercase letters/numbers only' 
+      return res.status(400).json({
+        error: 'Code must be 4-12 uppercase letters/numbers only'
       });
     }
 
     // Reserved codes that cannot be used
     const reservedCodes = ['ADMIN', 'TEST', 'SYSTEM', 'API', 'NULL', 'UNDEFINED'];
     if (reservedCodes.includes(new_code)) {
-      return res.status(400).json({ 
-        error: 'This code is reserved and cannot be used' 
+      return res.status(400).json({
+        error: 'This code is reserved and cannot be used'
       });
     }
 
@@ -56,8 +58,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Check if code is the same (no change needed)
     if (affiliate.code === new_code) {
-      return res.status(400).json({ 
-        error: 'This is already your affiliate code' 
+      return res.status(400).json({
+        error: 'This is already your affiliate code'
       });
     }
 
@@ -70,8 +72,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .single();
 
     if (codeCheck) {
-      return res.status(400).json({ 
-        error: 'This code is already taken. Please choose another.' 
+      return res.status(400).json({
+        error: 'This code is already taken. Please choose another.'
       });
     }
 

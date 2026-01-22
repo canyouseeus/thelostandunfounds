@@ -93,9 +93,9 @@ interface AdminBentoRowProps {
 
 export function AdminBentoRow({ label, value, className, valueClassName }: AdminBentoRowProps) {
   return (
-    <div className={cn('flex items-center justify-between py-2 last:border-0', className)}>
-      <span className="text-xs text-white/50 uppercase tracking-wider">{label}</span>
-      <span className={cn('text-sm font-medium text-white/90', valueClassName)}>{value}</span>
+    <div className={cn('flex flex-col py-2 border-0', className)}>
+      <span className="text-[10px] text-white/40 uppercase tracking-[0.2em] mb-1">{label}</span>
+      <span className={cn('text-sm font-medium text-white/90 text-left', valueClassName)}>{value}</span>
     </div>
   );
 }

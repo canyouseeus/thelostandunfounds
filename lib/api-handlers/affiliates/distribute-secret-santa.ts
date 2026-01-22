@@ -1,22 +1,21 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 /**
- * Distribute Secret Santa pot (annual Christmas distribution)
- * First distribution: December 25th, 2026
+ * Distribute Secret Santa pot to eligible affiliates
  * POST /api/affiliates/distribute-secret-santa
- * Body: { year: number }
- * Evenly split among ALL active affiliates
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !supabaseKey) {
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
     const { year } = req.body;

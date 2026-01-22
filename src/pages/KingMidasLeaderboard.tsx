@@ -215,11 +215,10 @@ export default function KingMidasLeaderboard() {
               <button
                 key={range}
                 onClick={() => setDateRange(range)}
-                className={`px-4 py-2 rounded-none transition ${
-                  dateRange === range
+                className={`px-4 py-2 rounded-none transition ${dateRange === range
                     ? 'bg-white text-black font-semibold'
                     : 'bg-white/10 text-white/60 hover:bg-white/20'
-                }`}
+                  }`}
               >
                 {range.charAt(0).toUpperCase() + range.slice(1)}
               </button>
@@ -257,11 +256,11 @@ export default function KingMidasLeaderboard() {
                 <div className="p-6 border-b border-white/10 bg-white/5">
                   <h3 className="text-xl font-bold text-white flex items-center gap-2">
                     <BarChart3 className="w-6 h-6 text-yellow-400" />
-                    Rankings - {new Date(date).toLocaleDateString('en-US', { 
-                      weekday: 'long', 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
+                    Rankings - {new Date(date).toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
                     })}
                   </h3>
                 </div>
@@ -284,9 +283,8 @@ export default function KingMidasLeaderboard() {
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center gap-2">
                                 {getRankIcon(ranking.rank)}
-                                <span className={`px-3 py-1 rounded border font-bold ${
-                                  getRankBadgeColor(ranking.rank)
-                                }`}>
+                                <span className={`px-3 py-1 rounded border font-bold ${getRankBadgeColor(ranking.rank)
+                                  }`}>
                                   #{ranking.rank}
                                 </span>
                               </div>
@@ -301,11 +299,10 @@ export default function KingMidasLeaderboard() {
                               ${ranking.pool_share.toFixed(2)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                ranking.pool_share > 0 
-                                  ? 'bg-green-400/20 text-green-400' 
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${ranking.pool_share > 0
+                                  ? 'bg-green-400/20 text-green-400'
                                   : 'bg-white/10 text-white/60'
-                              }`}>
+                                }`}>
                                 {ranking.pool_share > 0 ? 'Eligible' : 'No payout'}
                               </span>
                             </td>
@@ -326,9 +323,16 @@ export default function KingMidasLeaderboard() {
             <div>
               <h4 className="text-yellow-400 font-semibold mb-2 text-lg">How KING MIDAS Works</h4>
               <ul className="text-white/80 text-sm space-y-2 list-disc list-inside">
-                <li><strong>8% Pool:</strong> 8% of daily profit is distributed to top affiliates</li>
+                <li><strong>8% Pool:</strong> 8% of daily profit is set aside for the KING MIDAS prize pool</li>
                 <li><strong>Daily Rankings:</strong> Rankings are based on profit generated each day</li>
-                <li><strong>Top 3 Distribution:</strong> #1 gets 50%, #2 gets 30%, #3 gets 20% of the pool</li>
+                <li><strong>Top 3 Distribution (90% of pool):</strong>
+                  <ul className="ml-6 mt-1 space-y-1 list-disc list-inside text-white/70">
+                    <li>#1 gets <span className="text-yellow-400 font-semibold">50%</span> of the pool</li>
+                    <li>#2 gets <span className="text-gray-300 font-semibold">30%</span> of the pool</li>
+                    <li>#3 gets <span className="text-orange-400 font-semibold">10%</span> of the pool</li>
+                  </ul>
+                </li>
+                <li><strong>Remaining Affiliates (10% of pool):</strong> Split equally among all other eligible affiliates who made the leaderboard</li>
                 <li><strong>Automatic Payouts:</strong> Rankings are calculated daily and payouts are processed automatically</li>
                 <li><strong>Compete Daily:</strong> Every day is a fresh competition - rankings reset daily</li>
               </ul>

@@ -281,11 +281,21 @@ export default async function handler(
   try {
     // Initialize Supabase client
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY
     const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
     const supabaseKey = supabaseServiceKey || supabaseAnonKey
 
+    // Diagnostic logging for debugging 403 errors
+    console.log('[Welcome Emails] Using Supabase credentials:', {
+      hasUrl: !!supabaseUrl,
+      hasSvcKey: !!supabaseServiceKey,
+      svcKeyLength: supabaseServiceKey?.length,
+      svcKeyPrefix: supabaseServiceKey?.substring(0, 10),
+      usingServiceKey: !!supabaseServiceKey
+    });
+
     if (!supabaseUrl || !supabaseKey) {
+      console.error('[Welcome Emails] Missing Supabase configuration');
       return res.status(500).json({ error: 'Database service not configured' })
     }
 

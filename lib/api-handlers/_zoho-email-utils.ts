@@ -104,14 +104,24 @@ async function getZohoAccessToken(): Promise<string> {
 }
 
 async function getZohoAccountInfo(accessToken: string, fallbackEmail: string) {
+  // Check for explicit account ID first
+  const envAccountId = process.env.ZOHO_ACCOUNT_ID
+  if (envAccountId) {
+    console.log('[Zoho] Using explicit ZOHO_ACCOUNT_ID:', envAccountId)
+    return { accountId: envAccountId, email: fallbackEmail }
+  }
+
   try {
     const response = await fetch(ZOHO_ACCOUNTS_URL, {
       method: 'GET',
       headers: { Authorization: `Zoho-oauthtoken ${accessToken}` }
     })
 
+    console.log('[Zoho] Accounts API response status:', response.status)
+
     if (response.ok) {
       const json = await response.json()
+      console.log('[Zoho] Accounts API full response:', JSON.stringify(json, null, 2))
       const account = json?.data?.[0] || json?.accounts?.[0]
 
       if (account) {
@@ -121,28 +131,37 @@ async function getZohoAccountInfo(accessToken: string, fallbackEmail: string) {
           account.accountID ||
           account.accountid ||
           account.accountid_zuid ||
-          account.accountName ||
-          account.account_name
+          account.primaryEmailAddress
 
         let accountEmail = fallbackEmail
         if (typeof account.emailAddress === 'string') {
           accountEmail = account.emailAddress
         } else if (typeof account.email === 'string') {
           accountEmail = account.email
+        } else if (typeof account.primaryEmailAddress === 'string') {
+          accountEmail = account.primaryEmailAddress
         } else if (typeof account.accountName === 'string') {
           accountEmail = account.accountName
         }
 
         if (accountId) {
+          console.log('[Zoho] Found account ID:', accountId, 'email:', accountEmail)
           return { accountId: String(accountId), email: accountEmail }
+        } else {
+          console.warn('[Zoho] Account object exists but no accountId found. Available keys:', Object.keys(account))
         }
       }
+    } else {
+      const errorText = await response.text()
+      console.error('[Zoho] Accounts API error:', response.status, errorText)
     }
   } catch (error) {
-    console.warn('Zoho account lookup failed, falling back to derived account id', error)
+    console.warn('[Zoho] Account lookup failed, falling back to derived account id', error)
   }
 
+  // Fallback - this likely won't work
   const fallbackAccountId = fallbackEmail.split('@')[0]
+  console.warn('[Zoho] WARN: Using fallback account ID (likely invalid):', fallbackAccountId)
   return { accountId: fallbackAccountId, email: fallbackEmail }
 }
 

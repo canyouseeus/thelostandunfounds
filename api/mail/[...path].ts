@@ -48,7 +48,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // Admin check
-  if (!isAdminRequest(req)) {
+  const isAdmin = isAdminRequest(req);
+  const adminEmail = req.headers['x-admin-email'] as string;
+
+  if (!isAdmin) {
+    console.warn('[Mail API] 403 Forbidden - Admin access required', {
+      receivedEmail: adminEmail,
+      host: req.headers.host,
+      allowedEmails: ADMIN_EMAILS
+    });
     return res.status(403).json({ error: 'Admin access required' });
   }
 

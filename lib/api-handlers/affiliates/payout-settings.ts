@@ -1,16 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase environment variables');
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: { persistSession: false }
-});
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const MIN_THRESHOLD = 10;
 
@@ -27,7 +16,7 @@ const toMoney = (value: number) => {
   return Math.max(MIN_THRESHOLD, Math.round(value * 100) / 100);
 };
 
-async function findAffiliateByUserId(userId: string) {
+async function findAffiliateByUserId(supabase: SupabaseClient, userId: string) {
   const { data, error } = await supabase
     .from('affiliates')
     .select('id, code, affiliate_code')
@@ -41,7 +30,7 @@ async function findAffiliateByUserId(userId: string) {
   return data;
 }
 
-async function getSettings(affiliateId: string) {
+async function getSettings(supabase: SupabaseClient, affiliateId: string) {
   const { data, error } = await supabase
     .from('affiliate_payout_settings')
     .select('paypal_email, payment_threshold')
@@ -62,7 +51,7 @@ async function getSettings(affiliateId: string) {
   };
 }
 
-async function upsertSettings(affiliateId: string, email: string, threshold: number) {
+async function upsertSettings(supabase: SupabaseClient, affiliateId: string, email: string, threshold: number) {
   const { data, error } = await supabase
     .from('affiliate_payout_settings')
     .upsert(
@@ -92,6 +81,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Check env vars at runtime, not module load time
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('Missing Supabase environment variables for payout-settings');
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: { persistSession: false }
+  });
+
   const userId = (req.query.userId || req.query.user_id || req.body?.userId || req.body?.user_id) as
     | string
     | undefined;
@@ -101,14 +103,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const affiliate = await findAffiliateByUserId(userId);
+    const affiliate = await findAffiliateByUserId(supabase, userId);
 
     if (!affiliate) {
       return res.status(404).json({ error: 'Affiliate account not found for user' });
     }
 
     if (req.method === 'GET') {
-      const settings = await getSettings(affiliate.id);
+      const settings = await getSettings(supabase, affiliate.id);
       return res.status(200).json({ settings });
     }
 
@@ -129,7 +131,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const paymentThreshold = toMoney(rawThreshold);
 
-    const settings = await upsertSettings(affiliate.id, paypalEmail, paymentThreshold);
+    const settings = await upsertSettings(supabase, affiliate.id, paypalEmail, paymentThreshold);
 
     return res.status(200).json({
       success: true,

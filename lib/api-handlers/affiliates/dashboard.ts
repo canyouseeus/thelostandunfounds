@@ -1,16 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient, type PostgrestError } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase environment variables');
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: { persistSession: false }
-});
+import { createClient, type PostgrestError, type SupabaseClient } from '@supabase/supabase-js';
 
 const toNumber = (value: unknown): number => {
   if (typeof value === 'number') return value;
@@ -42,7 +31,7 @@ const isMissingColumnError = (error: PostgrestError | null, column: string) =>
     error.message.toLowerCase().includes('does not exist')
   );
 
-async function fetchAffiliateByColumn(column: string, code: string) {
+async function fetchAffiliateByColumn(supabase: SupabaseClient, column: string, code: string) {
   const { data, error } = await supabase
     .from('affiliates')
     .select('*')
@@ -60,23 +49,23 @@ async function fetchAffiliateByColumn(column: string, code: string) {
   return data?.[0] ?? null;
 }
 
-async function fetchAffiliate(code: string) {
+async function fetchAffiliate(supabase: SupabaseClient, code: string) {
   const trimmedCode = code.trim();
   if (!trimmedCode) return null;
 
-  const affiliateByCode = await fetchAffiliateByColumn('code', trimmedCode);
+  const affiliateByCode = await fetchAffiliateByColumn(supabase, 'code', trimmedCode);
   if (affiliateByCode) return affiliateByCode;
 
   // Fallback for legacy column name
-  return fetchAffiliateByColumn('affiliate_code', trimmedCode);
+  return fetchAffiliateByColumn(supabase, 'affiliate_code', trimmedCode);
 }
 
 /**
  * Calculate available and pending balance from commissions
  */
-async function getBalanceBreakdown(affiliateId: string) {
+async function getBalanceBreakdown(supabase: SupabaseClient, affiliateId: string) {
   const now = new Date().toISOString();
-  
+
   // Get available commissions (past holding period, still pending payment)
   const { data: availableCommissions, error: availableError } = await supabase
     .from('affiliate_commissions')
@@ -134,7 +123,7 @@ async function getBalanceBreakdown(affiliateId: string) {
   // Calculate upcoming availability breakdown
   const upcomingAvailability: { date: string; amount: number }[] = [];
   const pendingByDate = new Map<string, number>();
-  
+
   for (const commission of (pendingCommissions || [])) {
     if (commission.available_date) {
       const date = commission.available_date.split('T')[0];
@@ -147,7 +136,7 @@ async function getBalanceBreakdown(affiliateId: string) {
   const sortedDates = Array.from(pendingByDate.entries())
     .sort(([a], [b]) => a.localeCompare(b))
     .slice(0, 5);
-  
+
   for (const [date, amount] of sortedDates) {
     upcomingAvailability.push({ date, amount: toMoney(amount) });
   }
@@ -173,6 +162,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Check env vars at runtime, not module load time
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('Missing Supabase environment variables for dashboard');
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: { persistSession: false }
+  });
+
   const affiliateCode = (req.query.affiliate_code || req.query.code) as string | undefined;
 
   if (!affiliateCode) {
@@ -180,7 +182,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const affiliate = await fetchAffiliate(affiliateCode);
+    const affiliate = await fetchAffiliate(supabase, affiliateCode);
 
     if (!affiliate) {
       return res.status(404).json({ error: 'Affiliate not found' });
@@ -228,7 +230,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .eq('affiliate_id', affiliateId)
         .order('date', { ascending: false })
         .limit(100),
-      getBalanceBreakdown(affiliateId)
+      getBalanceBreakdown(supabase, affiliateId)
     ]);
 
     if (recentCommissionsResult.error && !isMissingRelationError(recentCommissionsResult.error)) {
@@ -244,10 +246,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       throw kingMidasPayoutsResult.error;
     }
 
-    const recentCommissionsRaw = recentCommissionsResult.data ?? [];
-    const last30CommissionsRaw = last30CommissionsResult.data ?? [];
-    const kingMidasStatsRaw = kingMidasStatsResult.data ?? [];
-    const kingMidasPayoutsRaw = kingMidasPayoutsResult.data ?? [];
+    const recentCommissionsRaw: any[] = recentCommissionsResult.data ?? [];
+    const last30CommissionsRaw: any[] = last30CommissionsResult.data ?? [];
+    const kingMidasStatsRaw: any[] = kingMidasStatsResult.data ?? [];
+    const kingMidasPayoutsRaw: any[] = kingMidasPayoutsResult.data ?? [];
 
     const totalCommissionAmount30 = last30CommissionsRaw.reduce(
       (sum, item) => sum + toNumber(item.amount),
@@ -418,26 +420,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
  */
 function getStatusLabel(status: string, availableDate?: string): string {
   const statusLower = (status || '').toLowerCase();
-  
+
   if (statusLower === 'paid') {
     return 'Paid';
   }
-  
+
   if (statusLower === 'cancelled') {
     return 'Cancelled';
   }
-  
+
   if (statusLower === 'pending' && availableDate) {
     const available = new Date(availableDate);
     const now = new Date();
-    
+
     if (available <= now) {
       return 'Available';
     }
-    
+
     const daysUntil = Math.ceil((available.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     return `Pending (${daysUntil} day${daysUntil === 1 ? '' : 's'})`;
   }
-  
+
   return 'Pending';
 }

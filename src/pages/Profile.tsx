@@ -1,18 +1,28 @@
 /**
- * User Profile Page
- * View and edit user account information
+ * User Profile Page - Site-Wide Dashboard
+ * View and manage account information across all apps
+ * Styled to match the admin dashboard
  */
 
-import { useState, useEffect } from 'react';
-import { useNavigate, Link, useParams } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
-import { User, Mail, Calendar, Shield, Key, BookOpen, FileText, ExternalLink, Copy, Check, HelpCircle, ChevronDown, ChevronUp, TrendingUp } from 'lucide-react';
+import {
+  User, Mail, Key, BookOpen, FileText, ExternalLink, Copy, Check,
+  HelpCircle, TrendingUp, Camera, RefreshCw, Settings, ChevronRight,
+  Image as ImageIcon, DollarSign, Info, Clock, Users, ChevronDown, ChevronUp, Wallet, CreditCard, Share2, ArrowLeft
+} from 'lucide-react';
+import { cn } from '../components/ui/utils';
+import AdminGalleryView from '../components/admin/AdminGalleryView';
 import { LoadingSpinner, SkeletonCard } from '../components/Loading';
-import { formatDate } from '../utils/helpers';
 import { SubscriptionTier } from '../types/index';
 import { isAdmin } from '../utils/admin';
 import { supabase } from '../lib/supabase';
+import { AdminBentoCard, AdminBentoRow } from '../components/ui/admin-bento-card';
+import { ClockWidget } from '../components/ui/clock-widget';
+import { CalendarWidget } from '../components/ui/calendar-widget';
+import { RevenueTracker } from '../components/ui/revenue-tracker';
 
 interface BlogPost {
   id: string;
@@ -23,48 +33,77 @@ interface BlogPost {
   subdomain: string | null;
 }
 
+interface UserGallery {
+  id: string;
+  name: string;
+  slug: string;
+  photo_count?: number;
+  google_drive_folder_id?: string;
+}
+
+interface AffiliateData {
+  id: string;
+  code: string;
+  status: string;
+  total_earnings: number;
+  total_clicks: number;
+  total_conversions: number;
+  commission_rate: number;
+  network_size?: number;
+}
+
 export default function Profile() {
-  const { username } = useParams<{ username: string }>();
-  const { user, tier, loading: authLoading } = useAuth();
+  const { user, tier, signOut, loading: authLoading } = useAuth();
   const { success, error: showError } = useToast();
   const navigate = useNavigate();
-  const [isEditing, setIsEditing] = useState(false);
-  const [displayName, setDisplayName] = useState('');
-  const [userIsAdmin, setUserIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [showPasswordChange, setShowPasswordChange] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordLoading, setPasswordLoading] = useState(false);
-  const [userSubdomain, setUserSubdomain] = useState<string | null>(null);
-  const [blogTitle, setBlogTitle] = useState<string>('');
-  const [blogTitleDisplay, setBlogTitleDisplay] = useState<string>('');
-  const [isEditingBlogTitle, setIsEditingBlogTitle] = useState(false);
-  const [savingBlogTitle, setSavingBlogTitle] = useState(false);
-  
-  // Function to normalize blog title (remove symbols, convert + to AND)
-  const normalizeBlogTitle = (styledTitle: string): string => {
-    if (!styledTitle) return '';
-    return styledTitle
-      .replace(/\+/g, ' AND ')
-      .replace(/[^a-zA-Z0-9\s&]/g, '') // Remove all symbols except letters, numbers, spaces, and &
-      .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-      .trim();
-  };
-  const [userPosts, setUserPosts] = useState<BlogPost[]>([]);
-  const [loadingPosts, setLoadingPosts] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [affiliateData, setAffiliateData] = useState<any>(null);
-  const [loadingAffiliate, setLoadingAffiliate] = useState(false);
-  const [affiliateExpanded, setAffiliateExpanded] = useState(false);
 
+  // Core state
+  const [userIsAdmin, setUserIsAdmin] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const handleSectionToggle = (section: string) => {
+    setExpandedSections(prev => {
+      const isOpening = !prev[section];
+      const newState = { ...prev, [section]: isOpening };
+
+      // If opening, scroll to section
+      if (isOpening) {
+        setTimeout(() => {
+          sectionRefs.current[section]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      } else {
+        // Only scroll to top if NO sections are open
+        const hasOpenSections = Object.values(newState).some(isOpen => isOpen);
+        if (!hasOpenSections) {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }
+      return newState;
+    });
+  };
+  const [loading, setLoading] = useState(false);
+
+  // App-specific data
+  const [userSubdomain, setUserSubdomain] = useState<string | null>(null);
+  const [blogTitle, setBlogTitle] = useState('');
+  const [userPosts, setUserPosts] = useState<BlogPost[]>([]);
+  const [userGalleries, setUserGalleries] = useState<UserGallery[]>([]);
+  const [affiliateData, setAffiliateData] = useState<AffiliateData | null>(null);
+
+  // Loading states
+  const [loadingGalleries, setLoadingGalleries] = useState(false);
+  const [loadingAffiliate, setLoadingAffiliate] = useState(false);
+  const [loadingPosts, setLoadingPosts] = useState(false);
+  const [syncingGallery, setSyncingGallery] = useState<string | null>(null);
+
+  // UI state
+  const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
+
+  // Load all data on mount
   useEffect(() => {
-    if (user?.email) {
-      // Use author_name from user_metadata if available, otherwise extract from email
-      const authorName = user.user_metadata?.author_name;
-      const emailName = user.email.split('@')[0];
-      setDisplayName(authorName || emailName);
+    if (user) {
+      loadAllData();
     }
   }, [user]);
 
@@ -73,38 +112,105 @@ export default function Profile() {
       if (user) {
         const admin = await isAdmin();
         setUserIsAdmin(admin);
-        // Don't redirect - allow admins to view their profile
       }
     };
     checkAdminStatus();
   }, [user]);
 
-  useEffect(() => {
-    if (user) {
-      loadUserSubdomain();
-      loadUserPosts();
-      checkAffiliateStatus();
+  const loadAllData = async () => {
+    if (!user) return;
+
+    await Promise.all([
+      loadUserSubdomain(),
+      loadUserGalleries(),
+      loadUserPosts(),
+      checkAffiliateStatus(),
+    ]);
+  };
+
+  const loadUserSubdomain = async () => {
+    if (!user) return;
+
+    try {
+      const { data } = await supabase
+        .from('user_subdomains')
+        .select('subdomain, blog_title, blog_title_display')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (data) {
+        setUserSubdomain(data.subdomain || null);
+        setBlogTitle(data.blog_title_display || data.blog_title || '');
+      }
+    } catch (err) {
+      console.warn('Error loading subdomain:', err);
     }
-  }, [user]);
+  };
+
+  const loadUserGalleries = async () => {
+    if (!user?.id) return;
+
+    setLoadingGalleries(true);
+    try {
+      const { data: galleries, error } = await supabase
+        .from('photo_libraries')
+        .select('id, name, slug, google_drive_folder_id')
+        .or(`owner_id.eq.${user.id},user_id.eq.${user.id}`)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading galleries:', error);
+        return;
+      }
+
+      if (galleries && galleries.length > 0) {
+        const galleriesWithCounts = await Promise.all(
+          galleries.map(async (gallery) => {
+            const { count } = await supabase
+              .from('photos')
+              .select('*', { count: 'exact', head: true })
+              .eq('library_id', gallery.id);
+            return { ...gallery, photo_count: count || 0 };
+          })
+        );
+        setUserGalleries(galleriesWithCounts);
+      } else {
+        setUserGalleries([]);
+      }
+    } catch (err) {
+      console.error('Error loading galleries:', err);
+    } finally {
+      setLoadingGalleries(false);
+    }
+  };
 
   const checkAffiliateStatus = async () => {
     if (!user?.id) return;
-    
+
     setLoadingAffiliate(true);
     try {
-      // Check if user has an affiliate account
       const { data: affiliate, error } = await supabase
         .from('affiliates')
         .select('id, code, status, total_earnings, total_clicks, total_conversions, commission_rate')
         .eq('user_id', user.id)
         .single();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+      if (error && error.code !== 'PGRST116') {
         console.error('Error checking affiliate status:', error);
       } else if (affiliate) {
-        setAffiliateData(affiliate);
-      } else {
-        setAffiliateData(null);
+        // Fetch MLM/Network data
+        let networkSize = 0;
+        try {
+          const mlmRes = await fetch(`/api/affiliates/mlm-dashboard?affiliate_id=${affiliate.id}`);
+          if (mlmRes.ok) {
+            const mlmJson = await mlmRes.json();
+            networkSize = mlmJson.network?.total_network || 0;
+          }
+        } catch (mlmErr) {
+          console.warn('Failed to fetch MLM network data:', mlmErr);
+        }
+
+        setAffiliateData({ ...affiliate, network_size: networkSize });
       }
     } catch (err) {
       console.error('Error checking affiliate status:', err);
@@ -113,107 +219,11 @@ export default function Profile() {
     }
   };
 
-  // Redirect to correct URL after subdomain is loaded
-  useEffect(() => {
-    if (user && userSubdomain) {
-      if (username && username !== userSubdomain) {
-        // If URL has wrong username, redirect to correct one
-        navigate(`/${userSubdomain}/bookclubprofile`, { replace: true });
-      } else if (!username) {
-        // If no username in URL but we have subdomain, redirect to include it
-        navigate(`/${userSubdomain}/bookclubprofile`, { replace: true });
-      }
-    }
-  }, [user, username, userSubdomain, navigate]);
 
-  const loadUserSubdomain = async () => {
-    if (!user) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('user_subdomains')
-        .select('subdomain, blog_title, blog_title_display, author_name')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (data) {
-        if (data.subdomain) {
-          setUserSubdomain(data.subdomain);
-        }
-        // Use display version if available, otherwise use normalized version
-        if (data.blog_title_display) {
-          setBlogTitleDisplay(data.blog_title_display);
-          setBlogTitle(data.blog_title || normalizeBlogTitle(data.blog_title_display));
-        } else if (data.blog_title) {
-          setBlogTitle(data.blog_title);
-          setBlogTitleDisplay(data.blog_title);
-        }
-        // Update author_name in user_subdomains if it's not set but we have it in metadata
-        if (!data.author_name && user.user_metadata?.author_name) {
-          await supabase
-            .from('user_subdomains')
-            .update({ author_name: user.user_metadata.author_name })
-            .eq('user_id', user.id);
-        }
-      }
-    } catch (err) {
-      console.warn('Error loading subdomain:', err);
-    }
-  };
-
-  const handleSaveBlogTitle = async () => {
-    if (!user || !userSubdomain) return;
-
-    setSavingBlogTitle(true);
-    try {
-      // Normalize the styled title for database storage
-      const normalizedTitle = normalizeBlogTitle(blogTitleDisplay);
-      const displayTitle = blogTitleDisplay.trim() || null;
-      
-      // Try to update both fields
-      const updateData: { blog_title?: string | null; blog_title_display?: string | null } = {
-        blog_title: normalizedTitle || null
-      };
-      
-      // Only include blog_title_display if the column might exist
-      // If it doesn't exist, the migration needs to be run first
-      try {
-        updateData.blog_title_display = displayTitle;
-      } catch (e) {
-        // Column might not exist yet - that's okay, migration will add it
-      }
-      
-      const { error } = await supabase
-        .from('user_subdomains')
-        .update(updateData)
-        .eq('user_id', user.id);
-
-      if (error) {
-        // If error is about missing column, provide helpful message
-        if (error.message?.includes('blog_title_display') || error.message?.includes('column')) {
-          throw new Error('The blog_title_display column does not exist yet. Please run the SQL migration from /sql first, then try saving again.');
-        }
-        throw error;
-      }
-
-      // Update local state
-      setBlogTitle(normalizedTitle);
-      // Reload to get the saved display version
-      await loadUserSubdomain();
-      
-      success('Blog title updated successfully');
-      setIsEditingBlogTitle(false);
-    } catch (err: any) {
-      console.error('Error saving blog title:', err);
-      showError(err.message || 'Failed to update blog title');
-    } finally {
-      setSavingBlogTitle(false);
-    }
-  };
 
   const loadUserPosts = async () => {
     if (!user) return;
-    
+
     setLoadingPosts(true);
     try {
       const { data, error } = await supabase
@@ -221,12 +231,9 @@ export default function Profile() {
         .select('id, title, slug, published, published_at, subdomain')
         .or(`author_id.eq.${user.id},user_id.eq.${user.id}`)
         .order('published_at', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(5);
 
-      if (error) {
-        console.error('Error loading posts:', error);
-      } else {
+      if (!error) {
         setUserPosts(data || []);
       }
     } catch (err) {
@@ -236,732 +243,377 @@ export default function Profile() {
     }
   };
 
-  const handleSave = async () => {
-    if (!user) return;
 
-    setLoading(true);
+
+  const handleSyncGallery = async (galleryId: string) => {
+    setSyncingGallery(galleryId);
     try {
-      // TODO: Update user profile in database
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate API call
-      success('Profile updated successfully');
-      setIsEditing(false);
-    } catch (err) {
-      showError('Failed to update profile');
+      const response = await fetch('/api/gallery/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ libraryId: galleryId })
+      });
+
+      if (!response.ok) throw new Error('Sync failed');
+
+      success('Gallery synced successfully!');
+      await loadUserGalleries();
+    } catch (err: any) {
+      showError(err.message || 'Failed to sync gallery');
     } finally {
-      setLoading(false);
+      setSyncingGallery(null);
     }
   };
 
-  const handlePasswordChange = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (newPassword !== confirmPassword) {
-      showError('New passwords do not match');
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      showError('Password must be at least 6 characters');
-      return;
-    }
-
-    setPasswordLoading(true);
+  const copyToClipboard = async (text: string, label: string) => {
     try {
-      const { supabase } = await import('../lib/supabase');
-      
-      // Update password using Supabase
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-
-      if (error) {
-        showError(error.message || 'Failed to update password');
-        return;
-      }
-
-      success('Password updated successfully');
-      setShowPasswordChange(false);
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      await navigator.clipboard.writeText(text);
+      setCopiedUrl(label);
+      success(`${label} copied!`);
+      setTimeout(() => setCopiedUrl(null), 2000);
     } catch (err) {
-      showError('Failed to update password');
-    } finally {
-      setPasswordLoading(false);
+      showError('Failed to copy');
     }
   };
 
   if (authLoading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <SkeletonCard />
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <LoadingSpinner />
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center py-12">
-          <p className="text-white/70">Please sign in to view your profile.</p>
-        </div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <p className="text-white/60">Please sign in to view your profile.</p>
       </div>
     );
   }
 
-  const tierColors: Record<SubscriptionTier, string> = {
-    free: 'text-white/60 bg-white/5 border-white',
-    premium: 'text-yellow-400 bg-yellow-400/10 border-white',
-    pro: 'text-purple-400 bg-purple-400/10 border-white',
-  };
-
-  const tierLabels: Record<SubscriptionTier, string> = {
-    free: 'Free',
-    premium: 'Premium',
-    pro: 'Pro',
-  };
+  // Determine which apps the user has access to
+  // If admin, show all apps for testing purposes
+  const hasGallery = userGalleries.length > 0 || userIsAdmin;
+  const hasBookClub = !!userSubdomain || userIsAdmin;
+  const hasAffiliate = !!affiliateData || userIsAdmin;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-white mb-2">PROFILE</h1>
-        <p className="text-white/70">Manage your account information and view your articles</p>
-      </div>
+    <div className="min-h-screen bg-black text-white selection:bg-white/20">
+      <div className="max-w-7xl mx-auto p-4">
 
-      <div className="space-y-6">
-        {/* Book Club Info Section */}
-        {userSubdomain && (
-          <div className="bg-black/50 border border-white rounded-none p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <BookOpen className="w-5 h-5" />
-                Your Book Club Blog
-              </h2>
-              <div className="flex gap-2">
-                <Link
-                  to="/blog/getting-started"
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white rounded-none text-white text-sm font-medium transition flex items-center gap-2"
-                >
-                  <HelpCircle className="w-4 h-4" />
-                  Contributor Guide
-                </Link>
-                <Link
-                  to={`/blog/${userSubdomain}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white rounded-none text-white text-sm font-medium transition flex items-center gap-2"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  View Blog
-                </Link>
-              </div>
-            </div>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-sm font-medium text-white/80 mb-2">Your Blog URL</label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={`https://www.thelostandunfounds.com/blog/${userSubdomain}`}
-                    readOnly
-                    className="flex-1 px-4 py-2 bg-black/50 border border-white rounded-none text-white font-mono text-sm focus:outline-none focus:border-white"
-                  />
-                  <button
-                    onClick={async () => {
-                      const blogUrl = `https://www.thelostandunfounds.com/blog/${userSubdomain}`;
-                      try {
-                        await navigator.clipboard.writeText(blogUrl);
-                        setCopied(true);
-                        success('Blog URL copied to clipboard!');
-                        setTimeout(() => setCopied(false), 2000);
-                      } catch (err) {
-                        showError('Failed to copy URL. Please copy manually.');
-                      }
-                    }}
-                    className="px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition flex items-center gap-2"
-                    title="Copy blog URL"
-                  >
-                    {copied ? (
-                      <>
-                        <Check className="w-4 h-4" />
-                        Copied!
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-4 h-4" />
-                        Copy
-                      </>
-                    )}
-                  </button>
+        {/* Main Grid Layout - 12 Columns */}
+        <div className="grid grid-cols-12 gap-4 auto-rows-min">
+
+          {/* Header Card */}
+          <div className="col-span-12 bg-[#0a0a0a] p-6 flex flex-col justify-between relative overflow-hidden group">
+            {/* Background Gradient */}
+            <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-white/[0.02] rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+
+            <div className="relative z-10 flex items-start justify-between">
+              <div className="flex items-center gap-5">
+                <div className="w-16 h-16 bg-white text-black flex items-center justify-center font-black text-3xl">
+                  {user.email?.charAt(0).toUpperCase()}
                 </div>
-                <div className="bg-blue-500/10 border border-white rounded-none p-3 mt-3">
-                  <p className="text-blue-400 text-xs font-semibold mb-2 flex items-center gap-1">
-                    <Copy className="w-3 h-3" /> For Amazon Associates Registration
-                  </p>
-                  <ol className="text-white/80 text-xs space-y-1 list-decimal list-inside">
-                    <li>Click "Copy" above to copy your blog URL</li>
-                    <li>Go to your Amazon Associates account</li>
-                    <li>When asked for your website URL, paste: <code className="bg-black/50 px-1 py-0.5 rounded-none font-mono text-xs">https://www.thelostandunfounds.com/blog/{userSubdomain}</code></li>
-                    <li>Complete your Amazon Associates registration</li>
-                  </ol>
-                  <p className="text-white/60 text-xs mt-2">
-                    💡 This is your permanent blog URL. Use it when registering with Amazon Associates.
-                  </p>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-white/80 mb-2">Subdomain</label>
-                <div className="px-4 py-2 bg-black/50 border border-white rounded-none">
-                  <p className="text-white font-mono text-sm">{userSubdomain}</p>
-                </div>
-                <p className="text-white/50 text-xs mt-1">Set during registration - cannot be changed</p>
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-white/80">Blog Title</label>
-                  {!isEditingBlogTitle ? (
-                    <button
-                      onClick={() => setIsEditingBlogTitle(true)}
-                      className="text-sm text-white/60 hover:text-white transition"
-                    >
-                      Edit
-                    </button>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <button
-                      onClick={() => {
-                        setIsEditingBlogTitle(false);
-                        // Reset to saved value
-                        const resetData = async () => {
-                          const { data } = await supabase
-                            .from('user_subdomains')
-                            .select('blog_title, blog_title_display')
-                            .eq('user_id', user.id)
-                            .maybeSingle();
-                          if (data) {
-                            if (data.blog_title_display) {
-                              setBlogTitleDisplay(data.blog_title_display);
-                              setBlogTitle(data.blog_title || normalizeBlogTitle(data.blog_title_display));
-                            } else if (data.blog_title) {
-                              setBlogTitle(data.blog_title);
-                              setBlogTitleDisplay(data.blog_title);
-                            }
-                          }
-                        };
-                        resetData();
-                      }}
-                        className="text-sm text-white/60 hover:text-white transition"
-                        disabled={savingBlogTitle}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleSaveBlogTitle}
-                        className="text-sm text-white hover:text-white/80 transition px-3 py-1 bg-white/10 hover:bg-white/20 rounded"
-                        disabled={savingBlogTitle}
-                      >
-                        {savingBlogTitle ? 'Saving...' : 'Save'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-                {isEditingBlogTitle ? (
-                  <input
-                    type="text"
-                    value={blogTitleDisplay}
-                    onChange={(e) => setBlogTitleDisplay(e.target.value)}
-                    placeholder="Enter your blog title (e.g., THE LOST+UNFOUNDS)"
-                    className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none"
-                    disabled={savingBlogTitle}
-                  />
-                ) : (
-                  <div className="px-4 py-2 bg-black/50 border border-white rounded-none">
-                    <p className="text-white text-sm">
-                      {blogTitleDisplay || blogTitle || <span className="text-white/50 italic">No title set</span>}
-                    </p>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h1 className="text-3xl font-black uppercase tracking-tighter">My Dashboard</h1>
                   </div>
-                )}
-                <p className="text-white/50 text-xs mt-1">
-                  This title will be displayed as "[BLOG TITLE] BOOK CLUB" on your blog page
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Book Club Settings */}
-        <div className="bg-black/50 border border-white rounded-none p-6">
-          <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <BookOpen className="w-5 h-5" />
-            Book Club Settings
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-white/80 mb-2">
-                Author Name
-              </label>
-              <div className="px-4 py-2 bg-black/50 border border-white rounded-none">
-                <span className="text-white text-sm">{user.user_metadata?.author_name || user.email?.split('@')[0] || 'Not set'}</span>
-              </div>
-              <p className="text-xs text-white/40 mt-1">Set during registration - cannot be changed</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-white/80 mb-2">
-                Email
-              </label>
-              <div className="px-4 py-2 bg-black/50 border border-white rounded-none">
-                <span className="text-white text-sm">{user.email || 'Not set'}</span>
-              </div>
-              <p className="text-xs text-white/40 mt-1">Email cannot be changed</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-white/80 mb-2">
-                Amazon Storefront ID
-              </label>
-              <div className="px-4 py-2 bg-black/50 border border-white rounded-none">
-                <span className="text-white text-sm font-mono">{user.user_metadata?.amazon_storefront_id || 'Not set'}</span>
-              </div>
-              <p className="text-xs text-white/40 mt-1">Set during registration - cannot be changed</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Affiliates Section */}
-        <div className="bg-black/50 border border-white/10 rounded-none p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5" />
-              Affiliate Program
-            </h2>
-            {affiliateData && (
-              <button
-                onClick={() => setAffiliateExpanded(!affiliateExpanded)}
-                className="text-white/60 hover:text-white transition-colors flex items-center gap-1"
-              >
-                {affiliateExpanded ? (
-                  <>
-                    <ChevronUp className="w-4 h-4" />
-                    <span className="text-sm">Collapse</span>
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="w-4 h-4" />
-                    <span className="text-sm">Expand</span>
-                  </>
-                )}
-              </button>
-            )}
-          </div>
-
-          {loadingAffiliate ? (
-            <div className="py-4">
-              <LoadingSpinner size="sm" />
-            </div>
-          ) : affiliateData ? (
-            <>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-white/60">Affiliate Code:</span>
-                  <span className="text-white font-mono font-semibold">{affiliateData.code}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-white/60">Status:</span>
-                  <span className={`px-2 py-1 rounded text-xs ${
-                    affiliateData.status === 'active'
-                      ? 'bg-green-400/20 text-green-400'
-                      : 'bg-yellow-400/20 text-yellow-400'
-                  }`}>
-                    {affiliateData.status}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-white/60">Total Earnings:</span>
-                  <span className="text-white font-semibold">${parseFloat(affiliateData.total_earnings || 0).toFixed(2)}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-white/60">Commission Rate:</span>
-                  <span className="text-white">{affiliateData.commission_rate}%</span>
-                </div>
-              </div>
-
-              {affiliateExpanded && (
-                <div className="mt-6 pt-6 border-t border-white/10">
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="bg-black/30 border border-white/10 rounded-none p-3">
-                      <div className="text-xs text-white/60 mb-1">Total Clicks</div>
-                      <div className="text-lg font-bold text-white">{affiliateData.total_clicks || 0}</div>
-                    </div>
-                    <div className="bg-black/30 border border-white/10 rounded-none p-3">
-                      <div className="text-xs text-white/60 mb-1">Total Conversions</div>
-                      <div className="text-lg font-bold text-white">{affiliateData.total_conversions || 0}</div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-white/40 text-sm font-mono uppercase">{user.email}</span>
+                    <div className="flex gap-1">
+                      <span className={`text-[10px] px-1.5 py-0.5 ${tier === 'pro' ? 'text-purple-400' : tier === 'premium' ? 'text-yellow-500' : 'text-white/40'} uppercase font-bold`}>
+                        {tier || 'Free'}
+                      </span>
                     </div>
                   </div>
-                  <Link
-                    to="/affiliate/dashboard"
-                    className="w-full px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition flex items-center justify-center gap-2"
-                  >
-                    <TrendingUp className="w-4 h-4" />
-                    Open Full Dashboard
-                  </Link>
                 </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Link
+                  to="/settings"
+                  className="p-3 hover:bg-white hover:text-black transition-all group/settings"
+                  title="Settings"
+                >
+                  <Settings className="w-5 h-5 group-hover/settings:rotate-90 transition-transform duration-500" />
+                </Link>
+                <button
+                  onClick={() => signOut()}
+                  className="p-3 hover:bg-red-500 hover:text-white transition-all"
+                  title="Sign Out"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center gap-6 text-sm font-mono text-white/40">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                <span>SYSTEM ONLINE</span>
+              </div>
+              <span>•</span>
+              <span>ID: {user.id.slice(0, 8).toUpperCase()}</span>
+            </div>
+          </div>
+
+          {/* Revenue & Widgets Row */}
+          <div className="col-span-12 grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div className="md:col-span-8 lg:col-span-9">
+              {(hasAffiliate || hasGallery) && (
+                <RevenueTracker
+                  affiliateRevenue={parseFloat(String(affiliateData?.total_earnings || 0))}
+                  galleryRevenue={0} // TODO: Calculate gallery revenue
+                  subscriberRevenue={0}
+                  galleryPhotoCount={userGalleries.length}
+                  usersCount={0} // Not relevant for user profile
+                  stats={{
+                    revenue: parseFloat(String(affiliateData?.total_earnings || 0)),
+                    newsletter: 0,
+                    affiliates: parseFloat(String(affiliateData?.total_earnings || 0))
+                  }}
+                />
               )}
-            </>
-          ) : (
-            <div className="space-y-4">
-              <p className="text-white/70">
-                Join our affiliate program and earn commissions by promoting our products. 
-                Share your unique referral link and earn 42% commission on every sale.
-              </p>
-              <div className="bg-black/30 border border-white/10 rounded-none p-4 space-y-2">
-                <div className="flex items-center gap-2 text-white/80">
-                  <Check className="w-4 h-4 text-green-400" />
-                  <span>42% commission on all sales</span>
+            </div>
+            <div className="md:col-span-4 lg:col-span-3 flex flex-col gap-4">
+              <ClockWidget className="flex-1" />
+              <CalendarWidget className="flex-1 min-h-[300px]" />
+            </div>
+          </div>
+
+          {/* Console / My Apps Tab Bar */}
+          <div className="col-span-12 flex flex-col items-center pt-8">
+            <div className="relative group">
+              <h2 className="text-[10px] font-black text-white/40 tracking-[0.4em] uppercase mb-4 text-center">Platform Console</h2>
+              <div className="flex items-center gap-2 p-1.5 bg-white/5 backdrop-blur-xl rounded-full">
+                {[
+                  { id: 'gallery', icon: Camera, title: 'The Gallery', show: hasGallery },
+                  { id: 'writer', icon: BookOpen, title: 'Writer', show: hasBookClub },
+                  { id: 'affiliate', icon: TrendingUp, title: 'Affiliate', show: hasAffiliate },
+                  { id: 'settings', icon: Settings, title: 'Account', show: true }
+                ].filter(app => app.show).map((app) => (
+                  <button
+                    key={app.id}
+                    onClick={() => handleSectionToggle(app.id)}
+                    className={cn(
+                      "relative p-3 transition-all duration-300 rounded-full group/btn",
+                      expandedSections[app.id] ? "bg-white text-black scale-110 shadow-[0_0_20px_rgba(255,255,255,0.2)]" : "text-white/60 hover:text-white hover:bg-white/10"
+                    )}
+                    title={app.title}
+                  >
+                    <app.icon className="w-5 h-5" />
+                    {/* Tooltip */}
+                    <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-white text-black text-[9px] font-black uppercase tracking-widest opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                      {app.title}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Expanded App Sections */}
+          <div className="col-span-12 space-y-12 pb-24">
+            {/* Gallery Section */}
+            {hasGallery && expandedSections['gallery'] && (
+              <div ref={el => sectionRefs.current['gallery'] = el} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex flex-col px-0 py-2 mb-8 items-start">
+                  <div className="flex items-center gap-3">
+                    <Camera className="w-5 h-5 text-white/40" />
+                    <h2 className="text-lg font-black text-white tracking-widest uppercase">The Gallery</h2>
+                  </div>
+                  <button onClick={() => handleSectionToggle('gallery')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
                 </div>
-                <div className="flex items-center gap-2 text-white/80">
-                  <Check className="w-4 h-4 text-green-400" />
-                  <span>Lifetime customer tracking</span>
-                </div>
-                <div className="flex items-center gap-2 text-white/80">
-                  <Check className="w-4 h-4 text-green-400" />
-                  <span>Multi-level marketing bonuses</span>
-                </div>
-                <div className="flex items-center gap-2 text-white/80">
-                  <Check className="w-4 h-4 text-green-400" />
-                  <span>Reward points system</span>
+                <div className="p-1 bg-black overflow-hidden max-h-[800px] overflow-y-auto custom-scrollbar">
+                  <AdminGalleryView
+                    onBack={() => { }}
+                    isPhotographerView={true}
+                  />
                 </div>
               </div>
-              <Link
-                to="/become-affiliate"
-                className="w-full px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition flex items-center justify-center gap-2"
-              >
-                <TrendingUp className="w-4 h-4" />
-                Become an Affiliate
-              </Link>
-            </div>
-          )}
-        </div>
+            )}
 
-        {/* My Articles Section */}
-        {userPosts.length > 0 && (
-          <div className="bg-black/50 border border-white rounded-none p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                My Articles
-              </h2>
-              <Link
-                to="/submit-article"
-                className="px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition flex items-center gap-2"
-              >
-                <FileText className="w-4 h-4" />
-                Submit New Article
-              </Link>
-            </div>
-            <div className="space-y-3">
-              {userPosts.map((post) => (
-                <div
-                  key={post.id}
-                  className="bg-black/30 border border-white rounded-none p-4 hover:border-white transition"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="text-white font-bold mb-2">{post.title}</h3>
-                      <div className="flex items-center gap-3 text-sm text-white/60">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {post.published_at ? formatDate(post.published_at) : 'Draft'}
-                        </span>
-                        <span className={`px-2 py-1 rounded-none text-xs ${
-                          post.published
-                            ? 'bg-green-400/20 text-green-400 border border-white'
-                            : 'bg-yellow-400/20 text-yellow-400 border border-white'
-                        }`}>
-                          {post.published ? 'Published' : 'Draft'}
-                        </span>
-                        {post.subdomain && (
-                          <span className="px-2 py-1 rounded-none text-xs bg-blue-400/20 text-blue-400 border border-white">
-                            Book Club
-                          </span>
-                        )}
+            {/* Writer Section */}
+            {hasBookClub && expandedSections['writer'] && (
+              <div ref={el => sectionRefs.current['writer'] = el} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex flex-col px-0 py-2 mb-8 items-start">
+                  <div className="flex items-center gap-3">
+                    <BookOpen className="w-5 h-5 text-white/40" />
+                    <h2 className="text-lg font-black text-white tracking-widest uppercase">Writer Dashboard</h2>
+                  </div>
+                  <button onClick={() => handleSectionToggle('writer')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
+                </div>
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-black p-4">
+                      <AdminBentoRow
+                        label="Author Profile"
+                        value={blogTitle || user.user_metadata?.author_name || 'Not Set'}
+                      />
+                    </div>
+                    <div className="bg-black p-4">
+                      <AdminBentoRow
+                        label="Domain"
+                        value={<span className="text-green-400 font-mono text-[10px]">{userSubdomain}.thelostandunfounds.com</span>}
+                      />
+                    </div>
+                    <div className="bg-black p-4">
+                      <AdminBentoRow
+                        label="Total Articles"
+                        value={userPosts.length}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-4 flex gap-4">
+                    <Link
+                      to="/submit-article"
+                      className="flex-1 bg-white text-black py-3 px-4 font-black text-[10px] uppercase text-center hover:bg-white/80 transition"
+                    >
+                      Create New Article
+                    </Link>
+                    <Link
+                      to={`/blog/${userSubdomain}`}
+                      className="flex-1 bg-white/10 py-3 px-4 font-black text-[10px] uppercase text-center hover:bg-white/20 transition"
+                    >
+                      View Public Blog
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Affiliate Section */}
+            {hasAffiliate && expandedSections['affiliate'] && (
+              <div ref={el => sectionRefs.current['affiliate'] = el} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex flex-col px-0 py-2 mb-8 items-start">
+                  <div className="flex items-center gap-3">
+                    <TrendingUp className="w-5 h-5 text-white/40" />
+                    <h2 className="text-lg font-black text-white tracking-widest uppercase">Affiliate App</h2>
+                  </div>
+                  <button onClick={() => handleSectionToggle('affiliate')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
+                </div>
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="bg-black p-4 flex flex-col justify-between h-24">
+                      <span className="text-[10px] uppercase text-white/30 font-bold tracking-widest">Description</span>
+                      <div className="flex items-end justify-between">
+                        <div>
+                          <span className="text-[10px] uppercase text-white/30 font-bold block mb-1">Clicks</span>
+                          <span className="text-xl font-mono text-white leading-none">{affiliateData?.total_clicks || 0}</span>
+                        </div>
+                        <TrendingUp className="w-4 h-4 text-white/20 mb-1" />
                       </div>
                     </div>
-                    {post.published && (
-                      <Link
-                        to={post.subdomain ? `/blog/${post.subdomain}/${post.slug}` : `/thelostarchives/${post.slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 hover:bg-white/10 rounded-none transition"
-                        title="View post"
-                      >
-                        <ExternalLink className="w-4 h-4 text-white/60" />
-                      </Link>
-                    )}
+
+                    <div className="bg-black p-4 flex flex-col justify-between h-24">
+                      <div className="flex items-end justify-between h-full">
+                        <div>
+                          <span className="text-[10px] uppercase text-white/30 font-bold block mb-1">Earnings</span>
+                          <span className="text-xl font-mono text-green-400 leading-none">${parseFloat(String(affiliateData?.total_earnings || 0)).toFixed(2)}</span>
+                        </div>
+                        <DollarSign className="w-4 h-4 text-green-400/20 mb-1" />
+                      </div>
+                    </div>
+
+                    <div className="bg-black p-4 flex flex-col justify-between h-24">
+                      <div className="flex items-end justify-between h-full">
+                        <div>
+                          <span className="text-[10px] uppercase text-white/30 font-bold block mb-1">Network</span>
+                          <span className="text-xl font-mono text-purple-400 leading-none">{affiliateData?.network_size || 0}</span>
+                        </div>
+                        <Users className="w-4 h-4 text-purple-400/20 mb-1" />
+                      </div>
+                    </div>
+
+                    <div
+                      className="bg-black p-4 flex flex-col justify-between h-24 cursor-pointer hover:bg-white/5 transition-colors group"
+                      onClick={() => copyToClipboard(affiliateData?.code || '', 'Code')}
+                    >
+                      <div className="flex items-end justify-between h-full">
+                        <div className="w-full">
+                          <span className="text-[10px] uppercase text-white/30 font-bold block mb-1">Affiliate Code</span>
+                          <div className="flex items-center gap-2 w-full">
+                            <span className="text-xl font-mono text-white truncate leading-none">
+                              {affiliateData?.code || <span className="text-white/20 text-sm">NO CODE</span>}
+                            </span>
+                          </div>
+                        </div>
+                        <Copy className="w-4 h-4 text-white/20 group-hover:text-white transition-colors mb-1" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 flex gap-4">
+                    <Link
+                      to="/affiliate/dashboard"
+                      className="flex-1 bg-white text-black py-3 px-4 font-black text-[10px] uppercase text-center hover:bg-white/80 transition"
+                    >
+                      View Dashboard
+                    </Link>
+                    <button
+                      onClick={() => {
+                        if (affiliateData?.code) {
+                          const inviteLink = `${window.location.origin}/join?ref=${affiliateData.code}`;
+                          copyToClipboard(inviteLink, 'Invite Link');
+                        } else {
+                          showError('No affiliate code available');
+                        }
+                      }}
+                      className="flex-1 bg-white/10 py-3 px-4 font-black text-[10px] uppercase text-center hover:bg-white/20 transition text-white"
+                    >
+                      Invite Affiliate
+                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+              </div>
+            )}
 
-        {/* Submit Article CTA if no posts */}
-        {userPosts.length === 0 && (
-          <div className="bg-black/50 border border-white rounded-none p-6 text-center">
-            <BookOpen className="w-12 h-12 text-white/40 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-white mb-2">Start Your Book Club Journey</h3>
-            <p className="text-white/60 mb-4">Submit your first article with four book recommendations.</p>
-            <div className="flex items-center justify-center gap-3 flex-wrap">
-              <Link
-                to="/bookclub/prompt"
-                className="inline-block px-6 py-2 bg-white/10 hover:bg-white/20 border border-white rounded-none text-white text-sm font-medium transition"
-              >
-                View Getting Started Guide →
-              </Link>
-              <Link
-                to="/submit-article"
-                className="inline-block px-6 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
-              >
-                Submit the First Article
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {/* Getting Started Guide Link - Always visible */}
-        <div className="bg-black/50 border border-white rounded-none p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-bold text-white mb-2">Contributor Getting Started Guide</h3>
-              <p className="text-white/60 text-sm mb-4">
-                Learn how to write high-quality articles, use AI responsibly with Human-In-The-Loop principles, and adhere to Google's E‑E‑A‑T standards.
-              </p>
-            </div>
-            <Link
-              to="/bookclub/prompt"
-              className="px-6 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition flex items-center gap-2 whitespace-nowrap"
-            >
-              <FileText className="w-4 h-4" />
-              View Guide
-            </Link>
-          </div>
-        </div>
-        {/* Account Information */}
-        <div className="bg-black/50 border border-white rounded-none p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Account Information
-              </h2>
-              {userIsAdmin && (
-                <div className="px-4 py-2 bg-black/50 border border-white rounded-none text-white">
-                  ADMIN
+            {/* Settings Section */}
+            {expandedSections['settings'] && (
+              <div ref={el => sectionRefs.current['settings'] = el} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex flex-col px-0 py-2 mb-8 items-start">
+                  <div className="flex items-center gap-3">
+                    <Settings className="w-5 h-5 text-white/40" />
+                    <h2 className="text-lg font-black text-white tracking-widest uppercase">Account Settings</h2>
+                  </div>
+                  <button onClick={() => handleSectionToggle('settings')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
                 </div>
-              )}
-            </div>
-            {!isEditing && (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition text-sm"
-              >
-                Edit
-              </button>
-            )}
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-white/80 mb-2">
-                Email
-              </label>
-              <div className="flex items-center gap-2 px-4 py-2 bg-black/50 border border-white rounded-none">
-                <Mail className="w-4 h-4 text-white/60" />
-                <span className="text-white">{user.email}</span>
-              </div>
-              <p className="text-xs text-white/40 mt-1">Email cannot be changed</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-white/80 mb-2">
-                Author Name (Username)
-              </label>
-              {isEditing ? (
-                <div>
-                  <input
-                    type="text"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white"
-                    placeholder="Your author name"
-                    disabled={!!user.user_metadata?.author_name}
-                  />
-                  {user.user_metadata?.author_name && (
-                    <p className="text-xs text-yellow-400 mt-1">Author name cannot be changed after registration</p>
-                  )}
+                <div className="bg-[#0a0a0a] p-6">
+                  <div className="space-y-4 max-w-2xl">
+                    <AdminBentoRow label="Tier" value={tier || 'Free'} />
+                    <AdminBentoRow label="Status" value={<span className="text-green-500">Active</span>} />
+                    <AdminBentoRow label="Invites" value="0 Available" />
+                    <div className="pt-4">
+                      <Link
+                        to="/settings"
+                        className="flex items-center justify-between text-xs uppercase font-bold text-white/50 hover:text-white transition bg-black p-4"
+                      >
+                        Manage Details <ChevronRight className="w-4 h-4" />
+                      </Link>
+                    </div>
+                  </div>
                 </div>
-              ) : (
-                <div className="px-4 py-2 bg-black/50 border border-white rounded-none text-white">
-                  {displayName || 'Not set'}
-                </div>
-              )}
-            </div>
-
-            {isEditing && (
-              <div className="flex gap-3 pt-2">
-                <button
-                  onClick={handleSave}
-                  disabled={loading}
-                  className="px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {loading && <LoadingSpinner size="sm" />}
-                  Save Changes
-                </button>
-                <button
-                  onClick={() => {
-                    setIsEditing(false);
-                    setDisplayName(user.email?.split('@')[0] || '');
-                  }}
-                  className="px-4 py-2 bg-black/50 border border-white text-white font-semibold rounded-none hover:border-white transition"
-                >
-                  Cancel
-                </button>
               </div>
             )}
           </div>
+
         </div>
 
-        {/* Password Change */}
-        <div className="bg-black/50 border border-white rounded-none p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <Key className="w-5 h-5" />
-              Change Password
-            </h2>
-            {!showPasswordChange && (
-              <button
-                onClick={() => setShowPasswordChange(true)}
-                className="px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition text-sm"
-              >
-                Change Password
-              </button>
-            )}
+        {/* Support CTA */}
+        <div className="mt-8 bg-[#050505] p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div>
+            <h3 className="font-bold text-sm uppercase tracking-wider">Need help with your apps?</h3>
+            <p className="text-xs text-white/40">Check out our contributor guides or reach out to support.</p>
           </div>
-
-          {showPasswordChange ? (
-            <form onSubmit={handlePasswordChange} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-white/80 mb-2">
-                  Current Password
-                </label>
-                <input
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white"
-                  placeholder="Enter current password"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-white/80 mb-2">
-                  New Password
-                </label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white"
-                  placeholder="Enter new password (min. 6 characters)"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-white/80 mb-2">
-                  Confirm New Password
-                </label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white"
-                  placeholder="Confirm new password"
-                />
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="submit"
-                  disabled={passwordLoading}
-                  className="px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {passwordLoading && <LoadingSpinner size="sm" />}
-                  Update Password
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowPasswordChange(false);
-                    setCurrentPassword('');
-                    setNewPassword('');
-                    setConfirmPassword('');
-                  }}
-                  className="px-4 py-2 bg-black/50 border border-white text-white font-semibold rounded-none hover:border-white transition"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          ) : (
-            <p className="text-white/60 text-sm">Click "Change Password" to update your password</p>
-          )}
-        </div>
-
-        {/* Subscription Information */}
-        <div className="bg-black/50 border border-white rounded-none p-6">
-          <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <Shield className="w-5 h-5" />
-            Subscription
-          </h2>
-
-          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-none border ${tierColors[tier]}`}>
-            <span className="font-semibold">{tierLabels[tier]} Tier</span>
-          </div>
-
-          {tier === 'free' && (
-            <div className="mt-4">
-              <a
-                href="/tools"
-                className="text-white/80 hover:text-white text-sm underline"
-              >
-                Upgrade to unlock more features →
-              </a>
-            </div>
-          )}
-        </div>
-
-        {/* Account Details */}
-        <div className="bg-black/50 border border-white rounded-none p-6">
-          <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <Calendar className="w-5 h-5" />
-            Account Details
-          </h2>
-
-          <div className="space-y-3 text-sm">
-            <div className="flex justify-between">
-              <span className="text-white/60">User ID</span>
-              <span className="text-white font-mono text-xs">{user.id}</span>
-            </div>
-            {user.created_at && (
-              <div className="flex justify-between">
-                <span className="text-white/60">Member since</span>
-                <span className="text-white">{formatDate(user.created_at)}</span>
-              </div>
-            )}
+          <div className="flex gap-4">
+            <Link to="/docs" className="text-[10px] uppercase font-bold text-white/60 hover:text-white underline underline-offset-4">Read Docs</Link>
+            <Link to="/support" className="text-[10px] uppercase font-bold text-white/60 hover:text-white underline underline-offset-4">Get Support</Link>
           </div>
         </div>
+
       </div>
     </div>
   );
 }
-

@@ -1,19 +1,21 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 /**
- * Get MLM earnings history for affiliate
- * GET /api/affiliates/mlm-earnings?affiliate_id=xxx&level=1|2|all
+ * Get MLM earnings history
+ * GET /api/affiliates/mlm-earnings?affiliate_id=xxx
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !supabaseKey) {
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
     const { affiliate_id, level = 'all' } = req.query;
@@ -25,16 +27,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let query = supabase
       .from('mlm_earnings')
       .select(`
-        *,
-        from_affiliate:affiliates!mlm_earnings_from_affiliate_id_fkey(
-          affiliate_code,
-          status
-        ),
-        commission:affiliate_commissions(
-          order_id,
-          amount,
-          created_at
-        )
+  *,
+  from_affiliate: affiliates!mlm_earnings_from_affiliate_id_fkey(
+    affiliate_code,
+    status
+  ),
+    commission: affiliate_commissions(
+      order_id,
+      amount,
+      created_at
+    )
       `)
       .eq('affiliate_id', affiliate_id as string)
       .order('created_at', { ascending: false });

@@ -6,17 +6,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase environment variables');
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: { persistSession: false }
-});
-
 // Reserved codes that cannot be used
 const RESERVED_CODES = ['ADMIN', 'TEST', 'SYSTEM', 'API', 'NULL', 'UNDEFINED', 'ROOT', 'OWNER'];
 
@@ -24,6 +13,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  // Check env vars at runtime, not module load time
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('Missing Supabase environment variables for check-code');
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: { persistSession: false }
+  });
 
   const code = (req.query.code as string)?.toUpperCase().trim();
 
@@ -34,7 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Validate code format
   const codeRegex = /^[A-Z0-9]{4,12}$/;
   if (!codeRegex.test(code)) {
-    return res.status(400).json({ 
+    return res.status(400).json({
       available: false,
       error: 'Code must be 4-12 uppercase letters/numbers only'
     });
@@ -42,7 +44,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Check reserved codes
   if (RESERVED_CODES.includes(code)) {
-    return res.status(200).json({ 
+    return res.status(200).json({
       available: false,
       reason: 'reserved'
     });

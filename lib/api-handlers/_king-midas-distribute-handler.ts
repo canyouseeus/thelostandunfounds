@@ -59,8 +59,8 @@ export default async function handler(
     const totalPool = totalProfit * 0.08
 
     // Calculate pool distribution based on rankings
-    // Top 3 get: 50%, 30%, 20% of pool
-    // Others get: Equal share of remaining 0%
+    // Top 3 get: 50%, 30%, 10% of pool (90% total)
+    // Others get: Equal share of remaining 10%
     const rankings = calculateRankings(dailyStats)
     const distributions = calculateDistributions(rankings, totalPool)
 
@@ -82,7 +82,7 @@ export default async function handler(
     for (const distribution of distributions) {
       if (distribution.amount > 0) {
         const ranking = rankings.find(r => r.affiliateId === distribution.affiliateId)
-        
+
         await supabase
           .from('king_midas_payouts')
           .insert({
@@ -114,7 +114,7 @@ export default async function handler(
  * Calculate rankings based on profit generated
  */
 function calculateRankings(stats: any[]): Array<{ affiliateId: string; rank: number }> {
-  const sorted = [...stats].sort((a, b) => 
+  const sorted = [...stats].sort((a, b) =>
     parseFloat(b.profit_generated.toString()) - parseFloat(a.profit_generated.toString())
   )
 
@@ -126,8 +126,8 @@ function calculateRankings(stats: any[]): Array<{ affiliateId: string; rank: num
 
 /**
  * Calculate pool distributions
- * Top 3: 50%, 30%, 20%
- * Others: 0% (no distribution)
+ * Top 3: 90% of pool (50%, 30%, 10%)
+ * Remaining affiliates (rank 4+): 10% of pool split equally
  */
 function calculateDistributions(
   rankings: Array<{ affiliateId: string; rank: number }>,
@@ -135,15 +135,28 @@ function calculateDistributions(
 ): Array<{ affiliateId: string; amount: number }> {
   const distributions: Array<{ affiliateId: string; amount: number }> = []
 
+  // Count affiliates ranked 4 and above for the remaining pool split
+  const otherEligibleAffiliates = rankings.filter(r => r.rank >= 4)
+  const otherAffiliatesCount = otherEligibleAffiliates.length
+
+  // Calculate per-affiliate share for remaining 10% pool
+  const remainingPool = totalPool * 0.10 // 10% for affiliates ranked 4+
+  const perAffiliateShare = otherAffiliatesCount > 0
+    ? remainingPool / otherAffiliatesCount
+    : 0
+
   for (const ranking of rankings) {
     let amount = 0
 
     if (ranking.rank === 1) {
-      amount = totalPool * 0.5 // 50%
+      amount = totalPool * 0.50 // 50%
     } else if (ranking.rank === 2) {
-      amount = totalPool * 0.3 // 30%
+      amount = totalPool * 0.30 // 30%
     } else if (ranking.rank === 3) {
-      amount = totalPool * 0.2 // 20%
+      amount = totalPool * 0.10 // 10%
+    } else if (ranking.rank >= 4) {
+      // Equal share of remaining 10% for all other eligible affiliates
+      amount = perAffiliateShare
     }
 
     distributions.push({

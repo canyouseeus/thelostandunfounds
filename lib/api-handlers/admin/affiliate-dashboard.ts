@@ -42,6 +42,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
+    // Build affiliate code map for enrichment
+    const affiliateCodeMap = new Map<string, string>();
+    (affiliates || []).forEach((a) => {
+      affiliateCodeMap.set(a.id, a.code);
+    });
+
     const baseSummary = (() => {
       const total = affiliates?.length || 0;
       const active = affiliates?.filter((a) => a.status === 'active').length || 0;
@@ -61,11 +67,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       };
     })();
 
-    // Recent commissions (including new safeguard fields)
+    // Recent commissions (without relationship join to avoid schema errors)
     const { data: commissions, error: commissionsError } = await supabase
       .from('affiliate_commissions')
       .select(
-        'id, affiliate_id, order_id, amount, profit_generated, product_cost, status, source, created_at, available_date, cancelled_reason, cancelled_at, affiliates!inner(code)'
+        'id, affiliate_id, order_id, amount, profit_generated, product_cost, status, source, created_at, available_date, cancelled_reason, cancelled_at'
       )
       .order('created_at', { ascending: false })
       .limit(40);
@@ -79,11 +85,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // Payout requests
+    // Enrich commissions with affiliate code
+    const enrichedCommissions = (commissions || []).map((c) => ({
+      ...c,
+      affiliates: { code: affiliateCodeMap.get(c.affiliate_id) || 'Unknown' }
+    }));
+
+    // Payout requests (without relationship join to avoid schema errors)
     const { data: payoutRequests, error: payoutError } = await supabase
       .from('payout_requests')
       .select(
-        'id, affiliate_id, amount, currency, status, paypal_email, paypal_payout_batch_id, paypal_payout_item_id, error_message, created_at, processed_at, affiliates!inner(code)'
+        'id, affiliate_id, amount, currency, status, paypal_email, paypal_payout_batch_id, paypal_payout_item_id, error_message, created_at, processed_at'
       )
       .order('created_at', { ascending: false })
       .limit(40);
@@ -97,6 +109,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
+    // Enrich payout requests with affiliate code
+    const enrichedPayoutRequests = (payoutRequests || []).map((p) => ({
+      ...p,
+      affiliates: { code: affiliateCodeMap.get(p.affiliate_id) || 'Unknown' }
+    }));
+
     const pendingPayoutTotal =
       payoutRequests?.reduce((sum, p) => {
         const amt = typeof p.amount === 'number' ? p.amount : parseFloat(p.amount as any);
@@ -106,12 +124,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({
       summary: { ...baseSummary, pendingPayoutTotal },
       affiliates: affiliates || [],
-      commissions: commissions || [],
-      payoutRequests: payoutRequests || [],
+      commissions: enrichedCommissions,
+      payoutRequests: enrichedPayoutRequests,
     });
   } catch (error: any) {
     console.error('Admin Affiliate Dashboard API error:', error);
     return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 }
-

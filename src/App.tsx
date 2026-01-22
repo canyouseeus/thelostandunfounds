@@ -55,6 +55,7 @@ import PhotoSuccessPage from './pages/PhotoSuccessPage'
 import Gallery from './pages/Gallery'
 import DownloadPortal from './pages/DownloadPortal'
 import OnboardingWizard from './pages/setup/OnboardingWizard'
+import PhotographerGuide from './pages/docs/PhotographerGuide'
 
 function App() {
   return (
@@ -94,6 +95,7 @@ function App() {
               </Route>
               <Route path="/docs" element={<Layout />}>
                 <Route index element={<Docs />} />
+                <Route path="photographer-guide" element={<PhotographerGuide />} />
               </Route>
               <Route path="/privacy" element={<Layout />}>
                 <Route index element={<Privacy />} />
@@ -105,19 +107,22 @@ function App() {
                 <Route index element={<ToolsDashboard />} />
                 <Route path="tiktok-downloader" element={<TikTokDownloader />} />
               </Route>
-              <Route path="/:username/bookclubprofile" element={<Layout />}>
+              <Route path="/:username/profile" element={<Layout />}>
                 <Route index element={<Profile />} />
               </Route>
+              <Route path="/:username/bookclubprofile" element={
+                <Layout>
+                  <Profile />
+                </Layout>
+              } />
               <Route path="/settings" element={<Layout />}>
                 <Route index element={<Settings />} />
               </Route>
-              <Route path="/dashboard" element={<Layout />}>
-                <Route index element={
-                  <ProtectedRoute>
-                    <PhotographerDashboard />
-                  </ProtectedRoute>
-                } />
-              </Route>
+              <Route path="/dashboard" element={
+                <Layout>
+                  <Profile />
+                </Layout>
+              } />
               <Route path="/affiliate/dashboard" element={<Layout />}>
                 <Route index element={<AffiliateDashboard />} />
               </Route>
