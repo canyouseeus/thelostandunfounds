@@ -798,6 +798,20 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch fix-admin-access-comprehensive file:', fetchError);
       }
 
+      // Load add-password-protected-to-libraries script
+      let passwordProtectedContent = '';
+      try {
+        const passwordProtectedResponse = await fetch('/sql/add_password_protected_to_libraries.sql');
+        if (passwordProtectedResponse.ok) {
+          const text = await passwordProtectedResponse.text();
+          if (!text.trim().startsWith('<!')) {
+            passwordProtectedContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch add_password_protected_to_libraries file:', fetchError);
+      }
+
       // Load setup-admin-user script
       let setupAdminContent = '';
       try {
@@ -1093,6 +1107,13 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
           content: addColumnPostsContent || '// File not found - check public/sql folder',
           description: 'Adds column field to blog_posts table to track which blog column each post belongs to. Required for displaying posts on column pages. Run this AFTER add-column-to-blog-submissions.sql.',
           createdAt: getScriptTimestamp('add-column-to-blog-posts.sql')
+        },
+        {
+          name: 'Add password_protected to photo_libraries',
+          filename: 'add_password_protected_to_libraries.sql',
+          content: passwordProtectedContent || '// File not found - check public/sql folder',
+          description: 'Adds password_protected boolean column to photo_libraries table. Required for gallery creation (defaults to false). Run this if you get "column password_protected does not exist" errors.',
+          createdAt: getScriptTimestamp('add_password_protected_to_libraries.sql')
         },
         {
           name: 'Update Home Science to NEW THEORY',
