@@ -562,58 +562,61 @@ const PhotoCard: React.FC<{
                     style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', zIndex: rotation % 360 === 0 ? 2 : 1 }}
                     onClick={handleFlip}
                 >
-                    <img
-                        src={`https://lh3.googleusercontent.com/d/${photo.google_drive_file_id}=s1200`}
-                        alt={photo.title}
-                        onClick={(e) => { e.stopPropagation(); onLightbox(); }}
-                        className={`${isSingle ? 'w-full h-auto object-contain max-h-[85vh]' : 'w-full h-full object-cover'} select-none cursor-pointer`}
-                        draggable={false}
-                        loading="lazy"
-                        referrerPolicy="no-referrer"
-                        crossOrigin="anonymous"
-                        onContextMenu={(e) => e.preventDefault()}
-                    />
+                    {/* Wrapper to constrain overlays to image bounds */}
+                    <div className={`relative ${isSingle ? 'w-auto h-auto' : 'w-full h-full'}`}>
+                        <img
+                            src={`https://lh3.googleusercontent.com/d/${photo.google_drive_file_id}=s1200`}
+                            alt={photo.title}
+                            onClick={(e) => { e.stopPropagation(); onLightbox(); }}
+                            className={`${isSingle ? 'max-w-full w-auto h-auto max-h-[85vh] object-contain' : 'w-full h-full object-cover'} select-none cursor-pointer`}
+                            draggable={false}
+                            loading="lazy"
+                            referrerPolicy="no-referrer"
+                            crossOrigin="anonymous"
+                            onContextMenu={(e) => e.preventDefault()}
+                        />
 
-                    {/* Watermark (Front) */}
-                    {!isPurchased && (
-                        <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center overflow-hidden">
-                            <img src="/logo.png" alt="Watermark" className="w-1/2 opacity-[0.09] brightness-0 invert select-none object-contain" />
-                        </div>
-                    )}
+                        {/* Watermark (Front) */}
+                        {!isPurchased && (
+                            <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center overflow-hidden">
+                                <img src="/logo.png" alt="Watermark" className="w-1/2 opacity-[0.09] brightness-0 invert select-none object-contain" />
+                            </div>
+                        )}
 
-                    {/* Meta Flip Button */}
-                    <button
-                        onClick={handleFlip}
-                        className="absolute bottom-2 right-2 z-[45] outline-none"
-                        title="View Metadata"
-                    >
-                        <div className={`w-7 h-7 md:w-8 md:h-8 bg-black/40 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-black/60 transition-all ${isSingle ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
-                            <Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                        </div>
-                    </button>
-
-                    {/* Selection Checkbox (Front) */}
-                    {activeTab === 'storefront' && !isPurchased && (
+                        {/* Meta Flip Button */}
                         <button
-                            onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}
-                            className="absolute top-2 right-2 z-[45] outline-none"
+                            onClick={handleFlip}
+                            className="absolute bottom-2 right-2 z-[45] outline-none"
+                            title="View Metadata"
                         >
-                            <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full border-[1px] md:border-2 flex items-center justify-center transition-all ${isSelected
-                                ? 'bg-white border-white scale-110'
-                                : 'bg-black/20 backdrop-blur-md border-white/20 hover:border-white/50'
-                                }`}>
-                                {isSelected && <Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-black stroke-[3]" />}
+                            <div className={`w-7 h-7 md:w-8 md:h-8 bg-black/40 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-black/60 transition-all ${isSingle ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
+                                <Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />
                             </div>
                         </button>
-                    )}
 
-                    {/* Purchased Badge */}
-                    {isPurchased && (
-                        <div className="absolute top-1.5 left-1.5 z-[45] flex items-center gap-1 bg-green-500 text-black px-1.5 py-0.5 text-[7px] md:text-[8px] font-black uppercase tracking-[0.1em] shadow-lg">
-                            <CheckCircle className="w-2.5 h-2.5" />
-                            PROPRIETARY
-                        </div>
-                    )}
+                        {/* Selection Checkbox (Front) */}
+                        {activeTab === 'storefront' && !isPurchased && (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}
+                                className="absolute top-2 right-2 z-[45] outline-none"
+                            >
+                                <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full border-[1px] md:border-2 flex items-center justify-center transition-all ${isSelected
+                                    ? 'bg-white border-white scale-110'
+                                    : 'bg-black/20 backdrop-blur-md border-white/20 hover:border-white/50'
+                                    }`}>
+                                    {isSelected && <Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-black stroke-[3]" />}
+                                </div>
+                            </button>
+                        )}
+
+                        {/* Purchased Badge */}
+                        {isPurchased && (
+                            <div className="absolute top-1.5 left-1.5 z-[45] flex items-center gap-1 bg-green-500 text-black px-1.5 py-0.5 text-[7px] md:text-[8px] font-black uppercase tracking-[0.1em] shadow-lg">
+                                <CheckCircle className="w-2.5 h-2.5" />
+                                PROPRIETARY
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* BACK SIDE (METADATA) */}
