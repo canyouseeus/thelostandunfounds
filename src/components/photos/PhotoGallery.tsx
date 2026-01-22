@@ -584,10 +584,10 @@ const PhotoCard: React.FC<{
                     {/* Meta Flip Button */}
                     <button
                         onClick={handleFlip}
-                        className={`absolute z-[45] p-1.5 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 ${isSingle ? 'bottom-2 right-2' : 'bottom-0 right-0'}`}
+                        className="absolute bottom-2 right-2 z-[45] outline-none"
                         title="View Metadata"
                     >
-                        <div className="w-7 h-7 md:w-8 md:h-8 bg-black/40 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-black/60 transition-all">
+                        <div className={`w-7 h-7 md:w-8 md:h-8 bg-black/40 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-black/60 transition-all ${isSingle ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
                             <Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />
                         </div>
                     </button>
@@ -596,7 +596,7 @@ const PhotoCard: React.FC<{
                     {activeTab === 'storefront' && !isPurchased && (
                         <button
                             onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}
-                            className="absolute top-0 right-0 z-[45] p-1.5 md:p-3 transition-all"
+                            className="absolute top-2 right-2 z-[45] outline-none"
                         >
                             <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full border-[1px] md:border-2 flex items-center justify-center transition-all ${isSelected
                                 ? 'bg-white border-white scale-110'
