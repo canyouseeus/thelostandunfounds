@@ -757,14 +757,12 @@ h1.text-5xl {
   }
 
   /* Full-screen mobile menu is now handled by React Portal in Layout.tsx */
-  .menu-dropdown {
-    /* Only used for desktop absolute positioning now */
-  }
+  /* .menu-dropdown is only used for desktop absolute positioning now */
 
   .menu-item {
-     /* Ensure base styles are consistent */
-     font-size: 1rem;
-     padding: 1rem 1.5rem;
+    /* Ensure base styles are consistent */
+    font-size: 1rem;
+    padding: 1rem 1.5rem;
   }
 
 }

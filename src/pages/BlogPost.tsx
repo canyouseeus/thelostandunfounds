@@ -478,8 +478,13 @@ export default function BlogPost() {
   }
 
   const title = post.seo_title || post.title;
-  const description = post.seo_description || post.excerpt ||
-    post.content.substring(0, 160).replace(/\n/g, ' ').trim();
+  const rawDescription = post.seo_description || post.excerpt ||
+    post.content.substring(0, 300).replace(/\n/g, ' ').trim();
+
+  // Truncate to ~155-160 chars for SEO best practices
+  const description = rawDescription.length > 160
+    ? rawDescription.substring(0, 157).trim() + '...'
+    : rawDescription;
   const ogImage = post.og_image_url || post.featured_image;
   const publishedDate = post.published_at || post.created_at;
 
