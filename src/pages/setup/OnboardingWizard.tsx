@@ -9,7 +9,7 @@ export default function OnboardingWizard() {
     const [searchParams] = useSearchParams();
     const token = searchParams.get('token');
     const navigate = useNavigate();
-    const { user, signIn, signUp } = useAuth();
+    const { user, signIn, signUp, signOut } = useAuth();
 
     const [step, setStep] = useState(0); // 0: Intro, 1: Auth, 2: Connect, 3: Link, 4: Success
     const [loading, setLoading] = useState(true);
@@ -32,12 +32,21 @@ export default function OnboardingWizard() {
         verifyToken();
     }, [token]);
 
-    // Auto-advance if user logs in
+    // Check if logged-in user matches invitation email
+    const [emailMismatch, setEmailMismatch] = useState(false);
+
+    // Auto-advance if user logs in AND email matches
     useEffect(() => {
-        if (user && step === 1) {
-            setStep(2);
+        if (user && step === 1 && invitation) {
+            // Check if logged-in email matches invitation email
+            if (user.email?.toLowerCase() !== invitation.email?.toLowerCase()) {
+                setEmailMismatch(true);
+            } else {
+                setEmailMismatch(false);
+                setStep(2);
+            }
         }
-    }, [user, step]);
+    }, [user, step, invitation]);
 
     async function verifyToken() {
         if (!token) {
@@ -90,6 +99,11 @@ export default function OnboardingWizard() {
     const [syncStatus, setSyncStatus] = useState<string>(''); // For UI feedback
     const [syncStats, setSyncStats] = useState<{ synced: number, message: string } | null>(null);
 
+    // Gallery customization fields
+    const [galleryName, setGalleryName] = useState('');
+    const [galleryDescription, setGalleryDescription] = useState('');
+    const [isPrivate, setIsPrivate] = useState(true); // Default to private
+
     const handlePublish = async () => {
         if (!folderLink || !user) return;
         setPublishLoading(true);
@@ -108,7 +122,9 @@ export default function OnboardingWizard() {
                 body: JSON.stringify({
                     token,
                     folderId,
-                    name: `Gallery by ${invitation.email}`,
+                    name: galleryName || `Gallery by ${invitation.email}`,
+                    description: galleryDescription || '',
+                    isPrivate: isPrivate,
                     ownerId: user.id // Link to user
                 })
             });
@@ -141,9 +157,9 @@ export default function OnboardingWizard() {
                 });
 
             } catch (syncErr: any) {
-                // If sync fails, we still consider onboarding "done" but show a warning
-                console.error('Sync step failed:', syncErr);
-                alert(`Gallery created, but photo sync failed: ${syncErr.message}. \n\nThe system will retry automatically later.`);
+                // Sync failure is non-critical - the scheduled cron job will pick it up
+                // Log it for debugging but don't bother the user
+                console.error('Sync step failed (will retry via cron):', syncErr);
             }
 
             setStep(4); // Success step
@@ -156,7 +172,7 @@ export default function OnboardingWizard() {
     };
 
     if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-white">Loading...</div>;
-    if (error) return <div className="min-h-screen bg-black flex items-center justify-center text-red-500 font-bold">{error}</div>;
+    if (error) return <div className="min-h-screen bg-black flex items-center justify-center text-white font-bold">{error}</div>;
 
     return (
         <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6 bg-[grid-pattern] relative overflow-hidden">
@@ -228,6 +244,30 @@ export default function OnboardingWizard() {
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                             <h2 className="text-xl font-bold mb-2 text-center">Step 1: Account</h2>
                             <p className="text-zinc-400 text-sm mb-6 text-center">You must be logged in to manage your gallery.</p>
+
+                            {/* Email Mismatch Warning */}
+                            {emailMismatch && user && (
+                                <div className="bg-amber-500/10 border border-amber-500/30 text-amber-400 p-4 rounded-xl mb-6">
+                                    <div className="flex items-start gap-3">
+                                        <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <p className="font-bold mb-1">Wrong Account</p>
+                                            <p className="text-sm opacity-80">
+                                                You're logged in as <span className="font-bold text-white">{user.email}</span>, but this invitation is for <span className="font-bold text-white">{invitation?.email}</span>.
+                                            </p>
+                                            <button
+                                                onClick={async () => {
+                                                    await signOut();
+                                                    setEmailMismatch(false);
+                                                }}
+                                                className="mt-3 bg-amber-500/20 text-amber-300 px-4 py-2 rounded-lg text-sm font-bold hover:bg-amber-500/30 transition-colors"
+                                            >
+                                                Log Out & Switch Account
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             <form onSubmit={handleAuth} className="space-y-4">
                                 <div className="flex p-1 bg-black/40 rounded-lg mb-6">
@@ -315,8 +355,54 @@ export default function OnboardingWizard() {
                     {step === 3 && (
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                             <h2 className="text-xl font-bold mb-2 text-center">Step 3: Create Gallery</h2>
-                            <p className="text-zinc-400 text-sm mb-6 text-center">Paste the link to your shared Google Drive folder.</p>
+                            <p className="text-zinc-400 text-sm mb-6 text-center">Customize your gallery details.</p>
 
+                            {/* Gallery Name */}
+                            <div className="mb-4">
+                                <label className="text-xs uppercase font-bold text-zinc-500 mb-1 block">Gallery Name</label>
+                                <input
+                                    type="text"
+                                    value={galleryName}
+                                    onChange={(e) => setGalleryName(e.target.value)}
+                                    placeholder={`Gallery by ${invitation?.email || 'you'}`}
+                                    className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-white placeholder-zinc-600 focus:outline-none focus:border-white/40"
+                                />
+                            </div>
+
+                            {/* Description */}
+                            <div className="mb-4">
+                                <label className="text-xs uppercase font-bold text-zinc-500 mb-1 block">Description <span className="text-zinc-700">(optional)</span></label>
+                                <textarea
+                                    value={galleryDescription}
+                                    onChange={(e) => setGalleryDescription(e.target.value)}
+                                    placeholder="Tell visitors about your photography..."
+                                    rows={2}
+                                    className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-white placeholder-zinc-600 focus:outline-none focus:border-white/40 resize-none"
+                                />
+                            </div>
+
+                            {/* Privacy Toggle */}
+                            <div className="mb-6 p-4 bg-black/40 rounded-xl border border-white/5">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="font-bold text-white">Private Gallery</p>
+                                        <p className="text-xs text-zinc-500">Only accessible to invited clients</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsPrivate(!isPrivate)}
+                                        className={`w-12 h-6 rounded-full transition-colors ${isPrivate ? 'bg-blue-500' : 'bg-zinc-700'} relative`}
+                                    >
+                                        <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${isPrivate ? 'left-7' : 'left-1'}`} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Divider */}
+                            <div className="border-t border-white/10 my-6" />
+
+                            {/* Folder Link */}
+                            <label className="text-xs uppercase font-bold text-zinc-500 mb-1 block">Google Drive Folder Link</label>
                             <input
                                 type="text"
                                 value={folderLink}
@@ -368,6 +454,6 @@ export default function OnboardingWizard() {
 
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
