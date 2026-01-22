@@ -7,7 +7,7 @@ export default async function handler(
   // Extract route from path parameter (Vercel catch-all)
   // For /api/shop/fourthwall/products, req.query.path should be ['fourthwall', 'products']
   let route = ''
-  
+
   // First try query.path (Vercel catch-all parameter)
   if (req.query.path) {
     if (Array.isArray(req.query.path)) {
@@ -16,7 +16,7 @@ export default async function handler(
       route = req.query.path
     }
   }
-  
+
   // Fallback: extract from URL
   if (!route && req.url) {
     const urlPath = req.url.split('?')[0]
@@ -45,12 +45,15 @@ export default async function handler(
     case 'payments/paypal':
       console.log('✅ Routing to payments/paypal handler')
       return handlePaymentsPaypal(req, res)
+    case 'payments/paypal/capture':
+      console.log('✅ Routing to payments/paypal/capture handler')
+      return handlePaymentsPaypalCapture(req, res)
     case 'king-midas/distribute':
       console.log('✅ Routing to king-midas/distribute handler')
       return handleKingMidasDistribute(req, res)
     default:
-      console.warn('⚠️ Route not found:', route, 'Available routes: products, affiliates/track-click, payments/paypal, king-midas/distribute')
-      return res.status(404).json({ error: `Shop route not found: ${route}`, availableRoutes: ['products', 'affiliates/track-click', 'payments/paypal', 'king-midas/distribute'] })
+      console.warn('⚠️ Route not found:', route)
+      return res.status(404).json({ error: `Shop route not found: ${route}` })
   }
 }
 
@@ -65,15 +68,13 @@ async function handleAffiliatesTrackClick(req: VercelRequest, res: VercelRespons
 }
 
 async function handlePaymentsPaypal(req: VercelRequest, res: VercelResponse) {
-  try {
-    console.log('📦 Loading PayPal payments handler...')
-    const handler = await import('../../lib/api-handlers/_payments-paypal-handler.js')
-    console.log('✅ PayPal handler loaded, calling default export')
-    return handler.default(req, res)
-  } catch (error) {
-    console.error('❌ Error loading PayPal handler:', error)
-    return res.status(500).json({ error: 'Failed to load PayPal handler', details: error instanceof Error ? error.message : String(error) })
-  }
+  const handler = await import('../../lib/api-handlers/_payments-paypal-handler.js')
+  return handler.default(req, res)
+}
+
+async function handlePaymentsPaypalCapture(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/_payments-paypal-capture-handler.js')
+  return handler.default(req, res)
 }
 
 async function handleKingMidasDistribute(req: VercelRequest, res: VercelResponse) {
