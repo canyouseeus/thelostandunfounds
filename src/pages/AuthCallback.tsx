@@ -8,15 +8,12 @@ import { supabase } from '../lib/supabase';
 import { isAdminEmail, isAdmin } from '../utils/admin';
 import SubdomainRegistration from '../components/SubdomainRegistration';
 import UserRegistration from '../components/UserRegistration';
-import StorefrontRegistration from '../components/StorefrontRegistration';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
   const [showUserRegistrationModal, setShowUserRegistrationModal] = useState(false);
   const [showSubdomainModal, setShowSubdomainModal] = useState(false);
-  const [showStorefrontModal, setShowStorefrontModal] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [userSubdomain, setUserSubdomain] = useState<string | null>(null);
 
   useEffect(() => {
     handleCallback();
@@ -89,21 +86,13 @@ export default function AuthCallback() {
                 return;
               }
 
-              // Step 3: Check for storefront ID (after subdomain is set)
-              const hasStorefrontId = userMetadata.amazon_storefront_id;
-              if (!hasStorefrontId) {
-                setUserSubdomain(subdomainData.subdomain);
-                setShowStorefrontModal(true);
-                return;
-              }
-
-              // All registration complete - redirect
+              // All registration complete - redirect to dashboard
               const returnUrl = localStorage.getItem('auth_return_url');
               if (returnUrl) {
                 localStorage.removeItem('auth_return_url');
                 navigate(returnUrl);
               } else {
-                navigate('/submit-article');
+                navigate('/dashboard');
               }
             } else {
               const returnUrl = localStorage.getItem('auth_return_url');
@@ -111,7 +100,7 @@ export default function AuthCallback() {
                 localStorage.removeItem('auth_return_url');
                 navigate(returnUrl);
               } else {
-                navigate('/submit-article');
+                navigate('/dashboard');
               }
             }
           } catch (error) {
@@ -143,21 +132,13 @@ export default function AuthCallback() {
                   return;
                 }
 
-                // Step 3: Check for storefront ID
-                const hasStorefrontId = userMetadata.amazon_storefront_id;
-                if (!hasStorefrontId) {
-                  setUserSubdomain(subdomainData.subdomain);
-                  setShowStorefrontModal(true);
-                  return;
-                }
-
-                // All complete - redirect
+                // All complete - redirect to dashboard
                 const returnUrl = localStorage.getItem('auth_return_url');
                 if (returnUrl) {
                   localStorage.removeItem('auth_return_url');
                   navigate(returnUrl);
                 } else {
-                  navigate('/submit-article');
+                  navigate('/dashboard');
                 }
               }
             } else {
@@ -166,7 +147,7 @@ export default function AuthCallback() {
                 localStorage.removeItem('auth_return_url');
                 navigate(returnUrl);
               } else {
-                navigate('/submit-article');
+                navigate('/dashboard');
               }
             }
           }
@@ -189,20 +170,14 @@ export default function AuthCallback() {
   };
 
   const handleSubdomainSuccess = (subdomain: string) => {
-    setUserSubdomain(subdomain);
     setShowSubdomainModal(false);
-    // Now show storefront registration modal
-    setShowStorefrontModal(true);
-  };
-
-  const handleStorefrontSuccess = (storefrontId: string) => {
-    setShowStorefrontModal(false);
+    // Redirect to dashboard after subdomain registration
     const returnUrl = localStorage.getItem('auth_return_url');
     if (returnUrl) {
       localStorage.removeItem('auth_return_url');
       navigate(returnUrl);
     } else {
-      navigate('/submit-article');
+      navigate('/dashboard');
     }
   };
 
@@ -238,16 +213,7 @@ export default function AuthCallback() {
         onSuccess={handleSubdomainSuccess}
         required={true}
       />
-      <StorefrontRegistration
-        isOpen={showStorefrontModal}
-        onClose={() => {
-          // Don't allow closing during required registration
-          return;
-        }}
-        onSuccess={handleStorefrontSuccess}
-        subdomain={userSubdomain || ''}
-        required={true}
-      />
+
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Completing sign in...</h1>
