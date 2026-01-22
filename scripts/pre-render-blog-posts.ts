@@ -5,7 +5,6 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { createClient } from '@supabase/supabase-js';
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 

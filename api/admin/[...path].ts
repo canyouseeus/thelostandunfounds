@@ -6,6 +6,15 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Admin-Email')
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end()
+  }
+
   // Extract route from path parameter (Vercel catch-all)
   // For /api/admin/affiliates, req.query.path should be ['affiliates']
   let route = ''

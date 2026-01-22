@@ -298,6 +298,84 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).send(Buffer.from(result.content));
       }
 
+      // GET /api/mail/auth-url
+      case 'auth-url': {
+        const clientId = process.env.ZOHO_CLIENT_ID;
+        if (!clientId) {
+          return res.status(500).json({ error: 'ZOHO_CLIENT_ID not configured' });
+        }
+        const scopes = [
+          'ZohoMail.accounts.READ',
+          'ZohoMail.folders.READ',
+          'ZohoMail.folders.ALL',
+          'ZohoMail.messages.READ',
+          'ZohoMail.messages.CREATE',
+          'ZohoMail.messages.DELETE',
+          'ZohoMail.messages.ALL'
+        ].join(',');
+        const redirectUri = 'https://www.thelostandunfounds.com/zoho/callback';
+        const authUrl = `https://accounts.zoho.com/oauth/v2/auth?scope=${scopes}&client_id=${clientId}&response_type=code&access_type=offline&redirect_uri=${encodeURIComponent(redirectUri)}&prompt=consent`;
+
+        if (req.query.redirect === 'true') {
+          return res.redirect(302, authUrl);
+        }
+        return res.status(200).json({
+          authUrl,
+          instructions: 'Visit this URL while logged into Zoho, authorize, then copy the "code" parameter from the callback URL'
+        });
+      }
+
+      // POST /api/mail/exchange-code
+      case 'exchange-code': {
+        if (req.method !== 'POST') {
+          return res.status(405).json({ error: 'Method not allowed' });
+        }
+        const clientId = process.env.ZOHO_CLIENT_ID;
+        const clientSecret = process.env.ZOHO_CLIENT_SECRET;
+
+        if (!clientId || !clientSecret) {
+          return res.status(500).json({ error: 'Zoho credentials not configured' });
+        }
+
+        const { code } = req.body;
+        if (!code) {
+          return res.status(400).json({ error: 'Authorization code is required' });
+        }
+
+        const redirectUri = 'https://www.thelostandunfounds.com/zoho/callback';
+
+        try {
+          const response = await fetch('https://accounts.zoho.com/oauth/v2/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              code,
+              client_id: clientId,
+              client_secret: clientSecret,
+              redirect_uri: redirectUri,
+              grant_type: 'authorization_code'
+            })
+          });
+
+          const data = await response.json();
+          if (!response.ok) {
+            console.error('Zoho token exchange error:', data);
+            return res.status(400).json({ error: 'Failed to exchange code', details: data });
+          }
+
+          return res.status(200).json({
+            success: true,
+            refresh_token: data.refresh_token,
+            access_token: data.access_token,
+            expires_in: data.expires_in,
+            instructions: 'Copy the refresh_token and update ZOHO_REFRESH_TOKEN in Vercel environment variables'
+          });
+        } catch (error: any) {
+          console.error('Token exchange error:', error);
+          return res.status(500).json({ error: 'Failed to exchange code', message: error.message });
+        }
+      }
+
       default:
         return res.status(404).json({ error: `Mail endpoint not found: ${endpoint}` });
     }
