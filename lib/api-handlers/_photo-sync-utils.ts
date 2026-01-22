@@ -1,7 +1,7 @@
 import { google } from 'googleapis';
 import { createClient } from '@supabase/supabase-js';
 
-export async function syncGalleryPhotos(librarySlug: string) {
+export async function syncGalleryPhotos(librarySlug: string, limit: number = 1000) {
     const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
     const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
     const rawEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
@@ -58,7 +58,7 @@ export async function syncGalleryPhotos(librarySlug: string) {
     const response = await drive.files.list({
         q: `'${folderId}' in parents and (mimeType contains 'image/' or mimeType = 'video/quicktime') and trashed = false`,
         fields: 'files(id, name, thumbnailLink, webContentLink, createdTime, mimeType, imageMediaMetadata)', // Added imageMediaMetadata
-        pageSize: 1000,
+        pageSize: limit,
     });
 
     const files = response.data.files || [];

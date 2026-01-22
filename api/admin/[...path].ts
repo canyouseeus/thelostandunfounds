@@ -100,6 +100,10 @@ export default async function handler(
       case 'analytics/stats':
         return await handleAnalyticsStats(req, res)
 
+      // Sync Library
+      case 'sync-library':
+        return await handleSyncLibrary(req, res)
+
       // Standard routes
       case 'product-costs':
         return await handleProductCosts(req, res)
@@ -360,4 +364,12 @@ async function handleAnalyticsStats(req: VercelRequest, res: VercelResponse) {
     console.error('[Analytics Stats] Error:', error)
     return res.status(500).json({ error: error.message })
   }
+}
+
+/**
+ * Sync Library Handler
+ */
+async function handleSyncLibrary(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/_sync-library-handler.js')
+  return handler.default(req, res)
 }

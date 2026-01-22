@@ -60,13 +60,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             .update({ status: 'accepted', accepted_at: new Date().toISOString() })
             .eq('id', invite.id);
 
-        // 4. Trigger Initial Sync
-        try {
-            await syncGalleryPhotos(slug);
-        } catch (syncErr: any) {
-            // Log but don't fail the whole request since gallery is created
-            console.error('Initial sync warning:', syncErr);
-        }
+        // 4. (Removed) Sync is now triggered separately by the frontend
+        // via /api/admin/sync-library for better error handling and UX status.
+
 
         return res.status(200).json({ success: true, slug, message: 'Gallery created and syncing started' });
 

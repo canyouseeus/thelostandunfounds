@@ -87,15 +87,21 @@ export default function OnboardingWizard() {
         setTimeout(() => setCopySuccess(false), 2000);
     };
 
+    const [syncStatus, setSyncStatus] = useState<string>(''); // For UI feedback
+    const [syncStats, setSyncStats] = useState<{ synced: number, message: string } | null>(null);
+
     const handlePublish = async () => {
         if (!folderLink || !user) return;
         setPublishLoading(true);
+        setSyncStatus('Creating gallery...');
+        setError(null);
 
         try {
             // Extract ID from link
             const match = folderLink.match(/folders\/([a-zA-Z0-9-_]+)/) || folderLink.match(/^([a-zA-Z0-9-_]+)$/);
             const folderId = match ? match[1] : folderLink;
 
+            // 1. Create Gallery
             const response = await fetch('/api/admin/onboard-gallery', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -110,11 +116,42 @@ export default function OnboardingWizard() {
             const result = await response.json();
             if (!response.ok) throw new Error(result.error || 'Failed to publish');
 
+            const slug = result.slug;
+
+            // 2. Trigger Sync
+            setSyncStatus('Syncing photos...');
+
+            try {
+                const syncResponse = await fetch('/api/admin/sync-library', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ slug })
+                });
+
+                const syncResult = await syncResponse.json();
+
+                if (!syncResponse.ok) {
+                    console.error('Sync error:', syncResult);
+                    throw new Error(syncResult.error || 'Gallery created but photo sync failed');
+                }
+
+                setSyncStats({
+                    synced: syncResult.synced,
+                    message: syncResult.message
+                });
+
+            } catch (syncErr: any) {
+                // If sync fails, we still consider onboarding "done" but show a warning
+                console.error('Sync step failed:', syncErr);
+                alert(`Gallery created, but photo sync failed: ${syncErr.message}. \n\nThe system will retry automatically later.`);
+            }
+
             setStep(4); // Success step
         } catch (err: any) {
-            alert(`Error: ${err.message}`);
+            setError(`Error: ${err.message}`);
         } finally {
             setPublishLoading(false);
+            setSyncStatus('');
         }
     };
 
@@ -301,7 +338,12 @@ export default function OnboardingWizard() {
                                     disabled={!folderLink || publishLoading}
                                     className="flex-[2] bg-white text-black py-4 rounded-xl font-black uppercase tracking-widest hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {publishLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Publish Gallery'}
+                                    {publishLoading ? (
+                                        <>
+                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                            {syncStatus || 'Processing...'}
+                                        </>
+                                    ) : 'Publish Gallery'}
                                 </button>
                             </div>
                         </motion.div>

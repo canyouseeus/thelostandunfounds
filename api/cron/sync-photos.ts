@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
-import { google } from 'googleapis'
+import { syncGalleryPhotos } from '../../lib/api-handlers/_photo-sync-utils'
 
 export default async function handler(
     req: VercelRequest,
@@ -17,88 +17,34 @@ export default async function handler(
         const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
         const supabase = createClient(supabaseUrl, supabaseKey)
 
-        // 1. Fetch all libraries that have a sync config (initially we'll hardcode or look for a specific folder metadata)
-        // For now, let's sync Kattitude specifically or fetch all libraries
+        // 1. Fetch all libraries
         const { data: libraries, error: libError } = await supabase
             .from('photo_libraries')
-            .select('*')
+            .select('slug, name')
 
         if (libError) throw libError
 
-        // Google Auth
-        const auth = new google.auth.GoogleAuth({
-            credentials: {
-                client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-                private_key: process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-            },
-            scopes: ['https://www.googleapis.com/auth/drive.readonly'],
-        })
-        const drive = google.drive({ version: 'v3', auth })
-
         let totalSynced = 0
+        const results = []
 
         for (const library of libraries) {
-            const folderId = library.gdrive_folder_id
+            console.log(`Syncing library: ${library.name} (${library.slug})`)
 
-            if (!folderId) {
-                console.log(`Skipping library ${library.name}: No folder ID configured.`)
-                continue
-            }
-
-            if (!folderId) continue
-
-            console.log(`Syncing library: ${library.name} (${folderId})`)
-
-            const response = await drive.files.list({
-                q: `'${folderId}' in parents and mimeType contains 'image/' and trashed = false`,
-                fields: 'files(id, name, thumbnailLink, imageMediaMetadata, createdTime)',
-                pageSize: 1000,
-            })
-
-            const files = response.data.files || []
-
-            for (const file of files) {
-                if (!file.id || !file.name) continue
-
-                const title = file.name.split('.').slice(0, -1).join('.')
-                const thumbnailUrl = file.thumbnailLink?.replace(/=s220$/, '=s1200')
-
-                // Extract metadata
-                const metadata = {
-                    camera_make: file.imageMediaMetadata?.cameraMake,
-                    camera_model: file.imageMediaMetadata?.cameraModel,
-                    iso: file.imageMediaMetadata?.isoSpeed,
-                    focal_length: file.imageMediaMetadata?.focalLength,
-                    aperture: file.imageMediaMetadata?.aperture,
-                    shutter_speed: file.imageMediaMetadata?.exposureTime,
-                    date_taken: file.imageMediaMetadata?.time || file.createdTime,
-                    width: file.imageMediaMetadata?.width,
-                    height: file.imageMediaMetadata?.height,
-                    // Copyright isn't standard in GDrive API response, defaulting to site name or we could parse from description?
-                    copyright: 'THE LOST+UNFOUNDS'
-                }
-
-                const { error: upsertError } = await supabase
-                    .from('photos')
-                    .upsert({
-                        library_id: library.id,
-                        google_drive_file_id: file.id,
-                        title: title,
-                        thumbnail_url: thumbnailUrl,
-                        status: 'active',
-                        price_cents: 500,
-                        metadata: metadata
-                    }, {
-                        onConflict: 'google_drive_file_id'
-                    })
-
-                if (!upsertError) totalSynced++
+            try {
+                // Sync up to 1000 photos per library per run
+                const result = await syncGalleryPhotos(library.slug, 1000)
+                totalSynced += result.synced
+                results.push({ library: library.name, ...result })
+            } catch (err: any) {
+                console.error(`Failed to sync library ${library.name}:`, err)
+                results.push({ library: library.name, error: err.message })
             }
         }
 
         return res.status(200).json({
             success: true,
-            message: `Sync complete. Processed ${totalSynced} files across libraries.`,
+            message: `Sync cycle complete. Processed ${totalSynced} files.`,
+            details: results
         })
 
     } catch (error: any) {
