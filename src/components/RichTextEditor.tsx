@@ -31,7 +31,11 @@ export default function RichTextEditor({ content, initialLinks = [], onChange, p
 
     // Sync product links when initialLinks changes (e.g., when opening a new submission)
     useEffect(() => {
-        setProductLinks(initialLinks);
+        // Prevent infinite loop by checking if data actually changed
+        // Default param [] creates new reference every render
+        if (JSON.stringify(initialLinks) !== JSON.stringify(productLinks)) {
+            setProductLinks(initialLinks);
+        }
     }, [initialLinks]);
 
     const editorContainerRef = useRef<HTMLDivElement>(null);
