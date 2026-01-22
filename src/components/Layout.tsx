@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Home, User, LogOut, Sparkles } from 'lucide-react'
 import { useState, useEffect, useRef, useCallback, ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useSageMode } from '../contexts/SageModeContext'
 import { isAdmin } from '../utils/admin'
@@ -8,6 +9,7 @@ import AuthModal from './auth/AuthModal'
 import SageModeOverlay from './SageModeOverlay'
 import { supabase } from '../lib/supabase'
 import Footer from './Footer'
+import NavLinks from './NavLinks'
 
 export default function Layout({ children }: { children?: ReactNode }) {
   const location = useLocation()
@@ -17,9 +19,10 @@ export default function Layout({ children }: { children?: ReactNode }) {
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
   const [userIsAdmin, setUserIsAdmin] = useState(false)
   const [userSubdomain, setUserSubdomain] = useState<string | null>(null)
-  const [moreMenuOpen, setMoreMenuOpen] = useState(false)
-  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
-  const [archivesMenuOpen, setArchivesMenuOpen] = useState(false)
+
+  // State from NavLinks component needs to be lifted if we want to sync between desktop/mobile,
+  // but for simple navigation, independent state in NavLinks is fine (submenus reset on close).
+
   const [homeHeaderReady, setHomeHeaderReady] = useState(location.pathname !== '/')
   const menuRef = useRef<HTMLDivElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -52,9 +55,6 @@ export default function Layout({ children }: { children?: ReactNode }) {
     }
   }, [user]);
 
-  // Only show HOME and SHOP in menu for now (MORE menu always visible)
-  const showLimitedMenu = true
-
   // Check if user is admin
   useEffect(() => {
     if (user) {
@@ -74,6 +74,18 @@ export default function Layout({ children }: { children?: ReactNode }) {
   }, [])
 
   useEffect(() => {
+    // Disable body scroll when mobile menu is open
+    if (menuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [menuOpen])
+
+  useEffect(() => {
     // On home, wait for the intro animation to finish before showing the header row
     if (location.pathname !== '/') {
       setHomeHeaderReady(true)
@@ -91,6 +103,9 @@ export default function Layout({ children }: { children?: ReactNode }) {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      // Only runs for desktop dropdown behavior
+      if (window.innerWidth < 640) return; // Don't auto-close on mobile taps outside (mobile matches width)
+
       // Don't close if we're in the process of opening a modal
       if (isOpeningModalRef.current) {
         return
@@ -126,7 +141,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
     }
   }, [menuOpen])
 
-  const handleLoginClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleLoginClick = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
 
@@ -164,6 +179,9 @@ export default function Layout({ children }: { children?: ReactNode }) {
 
   // Handle menu hover behavior
   const handleMenuMouseEnter = useCallback(() => {
+    // Disable hover open on mobile
+    if (window.innerWidth < 640) return;
+
     // Clear any pending close timeout
     if (menuCloseTimeoutRef.current) {
       clearTimeout(menuCloseTimeoutRef.current)
@@ -176,6 +194,9 @@ export default function Layout({ children }: { children?: ReactNode }) {
   }, [])
 
   const handleMenuMouseLeave = useCallback(() => {
+    // Disable hover close on mobile
+    if (window.innerWidth < 640) return;
+
     // Add delay before closing - check if mouse is still over menu before closing
     menuCloseTimeoutRef.current = setTimeout(() => {
       // Check if mouse is still over the menu area (button OR dropdown)
@@ -209,43 +230,52 @@ export default function Layout({ children }: { children?: ReactNode }) {
       }
 
       setMenuOpen(false)
-      setMoreMenuOpen(false)
-      setAccountMenuOpen(false)
-      setArchivesMenuOpen(false)
       menuCloseTimeoutRef.current = null
     }, 300)
   }, [])
 
-  const handleSubmenuMouseEnter = useCallback((submenuType: 'more' | 'account' | 'archives') => {
-    // Close other submenus when opening one (accordion style)
-    if (submenuType === 'more') {
-      setMoreMenuOpen(true)
-      setAccountMenuOpen(false)
-      setArchivesMenuOpen(false)
-    } else if (submenuType === 'account') {
-      setAccountMenuOpen(true)
-      setMoreMenuOpen(false)
-      setArchivesMenuOpen(false)
-    } else if (submenuType === 'archives') {
-      setArchivesMenuOpen(true)
-      setMoreMenuOpen(false)
-      setAccountMenuOpen(false)
-    }
-  }, [])
+  // Mobile Menu Portal Component
+  const MobileMenuPortal = () => {
+    if (!menuOpen) return null;
 
-  // Removed handleSubmenuMouseLeave to prevent menu resizing while navigating
+    return createPortal(
+      <div
+        className="fixed inset-0 z-[99999] bg-black sm:hidden flex flex-col"
+        style={{ touchAction: 'none' }}
+      >
+        {/* Mobile Header Row (for close button) */}
+        <div className="flex items-center justify-between h-16 w-full px-4 border-b border-white/10 shrink-0">
+          <div className="flex items-center h-12">
+            <span className="text-white text-sm font-bold">MENU</span>
+          </div>
+          <button
+            onClick={() => setMenuOpen(false)}
+            className="flex items-center justify-center h-12 w-12 text-white"
+            aria-label="Close menu"
+          >
+            <span className="text-2xl">✕</span>
+          </button>
+        </div>
 
-  const tierColors = {
-    free: 'text-white/60',
-    premium: 'text-yellow-400',
-    pro: 'text-purple-400',
-  }
-
-  const tierLabels = {
-    free: 'Free',
-    premium: 'Premium',
-    pro: 'Pro',
-  }
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="py-4">
+            <NavLinks
+              user={user}
+              userIsAdmin={userIsAdmin}
+              userSubdomain={userSubdomain}
+              sageModeState={sageModeState}
+              toggleSageMode={toggleSageMode}
+              handleSignOut={handleSignOut}
+              onLinkClick={() => setMenuOpen(false)}
+              onLoginClick={handleLoginClick}
+            />
+          </div>
+        </div>
+      </div>,
+      document.body
+    );
+  };
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
@@ -295,290 +325,34 @@ export default function Layout({ children }: { children?: ReactNode }) {
                 >
                   <span className="menu-icon text-xl">☰</span>
                 </button>
+
+                {/* Desktop Dropdown (Hidden on Mobile) */}
                 <div
-                  className={`menu-dropdown ${menuOpen ? 'open' : ''}`}
+                  className={`menu-dropdown hidden sm:block ${menuOpen ? 'open' : ''}`}
                   ref={dropdownRef}
                   onMouseEnter={handleMenuMouseEnter}
                   onMouseLeave={handleMenuMouseLeave}
                 >
-                  {/* Close button for mobile */}
-                  <button
-                    type="button"
-                    className="mobile-menu-close hidden sm:hidden"
-                    onClick={() => setMenuOpen(false)}
-                    aria-label="Close menu"
-                    style={{ display: 'none' }}
-                  >
-                    ✕
-                  </button>
-                  <style>{`
-                    @media (max-width: 640px) {
-                      .mobile-menu-close { display: flex !important; }
-                    }
-                  `}</style>
-                  <Link
-                    to="/"
-                    className="menu-item"
-                    onClick={() => {
-                      // Allow navigation to happen before closing menu
-                      setTimeout(() => {
-                        setMenuOpen(false);
-                      }, 100);
-                    }}
-                  >
-                    HOME
-                  </Link>
-                  <Link
-                    to="/shop"
-                    className="menu-item"
-                    onClick={() => {
-                      // Allow navigation to happen before closing menu
-                      setTimeout(() => {
-                        setMenuOpen(false);
-                      }, 100);
-                    }}
-                  >
-                    SHOP
-                  </Link>
-                  <Link
-                    to="/gallery"
-                    className="menu-item"
-                    onClick={() => {
-                      // Allow navigation to happen before closing menu
-                      setTimeout(() => {
-                        setMenuOpen(false);
-                      }, 100);
-                    }}
-                  >
-                    THE GALLERY
-                  </Link>
-
-                  <div
-                    className="menu-item menu-toggle-section flex items-center justify-start w-full gap-0 cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setArchivesMenuOpen(!archivesMenuOpen);
-                    }}
-                  >
-                    <span className="flex-grow">THE LOST ARCHIVES</span>
-                    <div
-                      className="p-1 transition rounded-none flex items-center justify-center h-6 w-6 shrink-0"
-                    >
-                      {archivesMenuOpen ? '▼' : '▶'}
-                    </div>
-                  </div>
-                  <div
-                    className={`menu-subsection ${archivesMenuOpen ? 'open' : ''}`}
-                  >
-                    <Link
-                      to="/thelostarchives"
-                      className="menu-item menu-subitem"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        setArchivesMenuOpen(false);
-                      }}
-                    >
-                      ALL ARTICLES
-                    </Link>
-                    <Link
-                      to="/gearheads"
-                      className="menu-item menu-subitem"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        setArchivesMenuOpen(false);
-                      }}
-                    >
-                      GEARHEADS
-                    </Link>
-                    <Link
-                      to="/borderlands"
-                      className="menu-item menu-subitem"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        setArchivesMenuOpen(false);
-                      }}
-                    >
-                      EDGE OF THE BORDERLANDS
-                    </Link>
-                    <Link
-                      to="/science"
-                      className="menu-item menu-subitem"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        setArchivesMenuOpen(false);
-                      }}
-                    >
-                      MAD SCIENTISTS
-                    </Link>
-                    <Link
-                      to="/newtheory"
-                      className="menu-item menu-subitem"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        setArchivesMenuOpen(false);
-                      }}
-                    >
-                      NEW THEORY
-                    </Link>
-                  </div>
-                  {!showLimitedMenu && (
-                    <Link
-                      to="/tools"
-                      className="menu-item"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      EXPLORE TOOLS
-                    </Link>
-                  )}
-
-                  <div
-                    className="menu-item menu-toggle-section flex items-center justify-start w-full gap-0 cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMoreMenuOpen(!moreMenuOpen);
-                    }}
-                  >
-                    <span className="flex-grow">MORE</span>
-                    <div
-                      className="p-1 transition rounded-none flex items-center justify-center h-6 w-6 shrink-0"
-                    >
-                      {moreMenuOpen ? '▼' : '▶'}
-                    </div>
-                  </div>
-                  <div
-                    className={`menu-subsection ${moreMenuOpen ? 'open' : ''}`}
-                  >
-                    <Link
-                      to="/about"
-                      className="menu-item menu-subitem"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        setMoreMenuOpen(false);
-                      }}
-                    >
-                      ABOUT
-                    </Link>
-                    <Link
-                      to="/privacy-policy"
-                      className="menu-item menu-subitem"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        setMoreMenuOpen(false);
-                      }}
-                    >
-                      PRIVACY POLICY
-                    </Link>
-                    <Link
-                      to="/terms-of-service"
-                      className="menu-item menu-subitem"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        setMoreMenuOpen(false);
-                      }}
-                    >
-                      TERMS OF SERVICE
-                    </Link>
-                    {!showLimitedMenu && (
-                      <>
-                        <Link
-                          to="/docs"
-                          className="menu-item menu-subitem"
-                          onClick={() => {
-                            setMenuOpen(false);
-                            setMoreMenuOpen(false);
-                          }}
-                        >
-                          DOCUMENTATION
-                        </Link>
-                        <Link
-                          to="/pricing"
-                          className="menu-item menu-subitem"
-                          onClick={() => {
-                            setMenuOpen(false);
-                            setMoreMenuOpen(false);
-                          }}
-                        >
-                          PRICING
-                        </Link>
-                        <Link
-                          to="/support"
-                          className="menu-item menu-subitem"
-                          onClick={() => {
-                            setMenuOpen(false);
-                            setMoreMenuOpen(false);
-                          }}
-                        >
-                          SUPPORT
-                        </Link>
-                      </>
-                    )}
-                  </div>
-                  {user && (
-                    <>
-
-                      <Link
-                        to={userIsAdmin ? "/admin" : userSubdomain ? `/${userSubdomain}/profile` : "/profile"}
-                        className="menu-item"
-                        onClick={() => {
-                          setMenuOpen(false);
-                        }}
-                      >
-                        <div className="flex items-center gap-2">
-                          <User className="w-4 h-4" />
-                          {userIsAdmin ? 'ADMIN DASHBOARD' : 'PROFILE'}
-                        </div>
-                      </Link>
-                      {userIsAdmin && (
-                        <button
-                          type="button"
-                          className="menu-item w-full text-left flex items-center justify-between"
-                          onClick={() => {
-                            toggleSageMode();
-                          }}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Sparkles className="w-4 h-4" />
-                            SAGE MODE
-                          </div>
-                          <span className={`text-xs ${sageModeState.enabled ? 'text-yellow-400' : 'text-white/40'}`}>
-                            {sageModeState.enabled ? 'ON' : 'OFF'}
-                          </span>
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        className="menu-item w-full text-left"
-                        onClick={handleSignOut}
-                      >
-                        <div className="flex items-center gap-2">
-                          <LogOut className="w-4 h-4" />
-                          LOG OUT
-                        </div>
-                      </button>
-
-                      <div className="menu-item user-info">
-                        <div className="text-white/60 text-xs mb-1">Logged in as:</div>
-                        <div className="text-white text-sm font-medium">
-                          {user.user_metadata?.author_name || user.email?.split('@')[0] || 'User'}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                  {!user && (
-                    <button
-                      type="button"
-                      className="menu-item"
-                      onClick={handleLoginClick}
-                    >
-                      LOG IN
-                    </button>
-                  )}
+                  <NavLinks
+                    user={user}
+                    userIsAdmin={userIsAdmin}
+                    userSubdomain={userSubdomain}
+                    sageModeState={sageModeState}
+                    toggleSageMode={toggleSageMode}
+                    handleSignOut={handleSignOut}
+                    onLinkClick={() => setMenuOpen(false)}
+                    onLoginClick={handleLoginClick}
+                  />
                 </div>
               </div>
             </div>
           </div>
         </div>
       </nav>
+
+      {/* Render Mobile Menu Portal */}
+      <MobileMenuPortal />
+
       <main className="pb-6 pt-20 flex-1">
         {children || <Outlet />}
       </main>
