@@ -3,6 +3,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "ignoreCommand": "bash scripts/vercel-ignore-build-step.sh",
   "functions": {
     "api/**/*.ts": {
       "maxDuration": 60
