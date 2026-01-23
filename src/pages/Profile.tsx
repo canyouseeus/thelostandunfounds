@@ -90,11 +90,22 @@ export default function Profile() {
   const [userPosts, setUserPosts] = useState<BlogPost[]>([]);
   const [userGalleries, setUserGalleries] = useState<UserGallery[]>([]);
   const [affiliateData, setAffiliateData] = useState<AffiliateData | null>(null);
+  const [galleryRevenueTotal, setGalleryRevenueTotal] = useState(0);
+  const [history, setHistory] = useState<{
+    revenue: (string | { date: string; amount: number })[];
+    newsletter: string[];
+    affiliates: string[];
+  }>({
+    revenue: [],
+    newsletter: [],
+    affiliates: []
+  });
 
   // Loading states
   const [loadingGalleries, setLoadingGalleries] = useState(false);
   const [loadingAffiliate, setLoadingAffiliate] = useState(false);
   const [loadingPosts, setLoadingPosts] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const [syncingGallery, setSyncingGallery] = useState<string | null>(null);
 
   // UI state
@@ -120,12 +131,16 @@ export default function Profile() {
   const loadAllData = async () => {
     if (!user) return;
 
-    await Promise.all([
+    // Load basic app status first
+    const [subdomain, galleries, posts, affiliate] = await Promise.all([
       loadUserSubdomain(),
       loadUserGalleries(),
       loadUserPosts(),
       checkAffiliateStatus(),
     ]);
+
+    // Load detailed history based on what we found
+    await loadUserHistory(affiliate?.id);
   };
 
   const loadUserSubdomain = async () => {
@@ -185,7 +200,7 @@ export default function Profile() {
   };
 
   const checkAffiliateStatus = async () => {
-    if (!user?.id) return;
+    if (!user?.id) return null;
 
     setLoadingAffiliate(true);
     try {
@@ -210,16 +225,68 @@ export default function Profile() {
           console.warn('Failed to fetch MLM network data:', mlmErr);
         }
 
-        setAffiliateData({ ...affiliate, network_size: networkSize });
+        const enrichedAffiliate = { ...affiliate, network_size: networkSize };
+        setAffiliateData(enrichedAffiliate);
+        return enrichedAffiliate;
       }
     } catch (err) {
       console.error('Error checking affiliate status:', err);
     } finally {
       setLoadingAffiliate(false);
     }
+    return null;
   };
 
+  const loadUserHistory = async (affiliateId?: string) => {
+    if (!user?.id) return;
 
+    setLoadingHistory(true);
+    try {
+      // 1. Fetch affiliate commissions
+      let commissionsData: any[] = [];
+      if (affiliateId) {
+        const { data: commissions } = await supabase
+          .from('affiliate_commissions')
+          .select('created_at, amount')
+          .eq('affiliate_id', affiliateId)
+          .order('created_at', { ascending: true });
+        commissionsData = commissions || [];
+      }
+
+      // 2. Fetch gallery orders
+      const { data: orders } = await supabase
+        .from('photo_orders')
+        .select('created_at, total_amount_cents')
+        .eq('user_id', user.id)
+        .eq('payment_status', 'completed')
+        .order('created_at', { ascending: true });
+
+      const ordersData = orders || [];
+
+      // Calculate total gallery revenue
+      const galleryTotal = ordersData.reduce((sum, o) => sum + (o.total_amount_cents || 0), 0) / 100;
+      setGalleryRevenueTotal(galleryTotal);
+
+      // Combine and format for revenue history
+      const revenueHistory: { date: string; amount: number }[] = [
+        ...commissionsData.map(c => ({ date: c.created_at, amount: Number(c.amount) })),
+        ...ordersData.map(o => ({ date: o.created_at, amount: (o.total_amount_cents || 0) / 100 }))
+      ];
+
+      // Format for affiliate history (conversions)
+      const affiliateHistory = commissionsData.map(c => c.created_at);
+
+      setHistory({
+        revenue: revenueHistory,
+        newsletter: [], // User profile doesn't show newsletter growth for now
+        affiliates: affiliateHistory
+      });
+    } catch (err) {
+      console.error('Error loading history:', err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
 
   const loadUserPosts = async () => {
     if (!user) return;
@@ -364,15 +431,16 @@ export default function Profile() {
               {(hasAffiliate || hasGallery) && (
                 <RevenueTracker
                   affiliateRevenue={parseFloat(String(affiliateData?.total_earnings || 0))}
-                  galleryRevenue={0} // TODO: Calculate gallery revenue
+                  galleryRevenue={galleryRevenueTotal}
                   subscriberRevenue={0}
-                  galleryPhotoCount={userGalleries.length}
-                  usersCount={0} // Not relevant for user profile
+                  galleryPhotoCount={userGalleries.reduce((sum, g) => sum + (g.photo_count || 0), 0)}
+                  usersCount={affiliateData?.network_size || 0}
                   stats={{
-                    revenue: parseFloat(String(affiliateData?.total_earnings || 0)),
+                    revenue: parseFloat(String(affiliateData?.total_earnings || 0)) + galleryRevenueTotal,
                     newsletter: 0,
-                    affiliates: parseFloat(String(affiliateData?.total_earnings || 0))
+                    affiliates: (affiliateData?.total_conversions || 0)
                   }}
+                  history={history}
                 />
               )}
             </div>

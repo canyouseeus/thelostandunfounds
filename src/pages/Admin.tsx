@@ -91,7 +91,11 @@ interface DashboardStats {
   recentActivity: number;
   platformHealth: 'healthy' | 'warning' | 'critical';
   newsletterSubscribers: number;
-  history: { revenue: string[]; newsletter: string[]; affiliates: string[]; };
+  history: {
+    revenue: (string | { date: string; amount: number })[];
+    newsletter: string[];
+    affiliates: string[];
+  };
   // Blog-specific metrics
   blogWriters?: number;
   totalBlogPosts?: number;
@@ -144,6 +148,16 @@ interface Alert {
   time: string;
   read: boolean;
 }
+
+const PLATFORM_LAUNCH_DATE = '2026-01-15';
+
+const isTestEmail = (email: string | null | undefined) => {
+  if (!email) return false;
+  const testPatterns = ['test', 'demo', 'admin', 'dev', 'staging', 'dummy'];
+  return testPatterns.some(pattern =>
+    email.toLowerCase().includes(pattern)
+  );
+};
 
 export default function Admin() {
   const { user, loading: authLoading } = useAuth();
@@ -562,16 +576,40 @@ export default function Admin() {
 
 
       // Fetch history data for charts
-      let historyData: { revenue: string[]; newsletter: string[]; affiliates: string[] } = { revenue: [], newsletter: [], affiliates: [] };
+      let historyData: {
+        revenue: (string | { date: string; amount: number })[];
+        newsletter: string[];
+        affiliates: string[]
+      } = { revenue: [], newsletter: [], affiliates: [] };
+
       try {
-        const [subsHist, newsHist, affHist] = await Promise.all([
-          supabase.from('platform_subscriptions').select('created_at').order('created_at', { ascending: true }),
+        const [newsHist, affHist, commissionsHist, ordersHist] = await Promise.all([
           supabase.from('newsletter_subscribers').select('created_at').order('created_at', { ascending: true }),
-          supabase.from('affiliates').select('created_at').order('created_at', { ascending: true })
+          supabase.from('affiliates').select('created_at').order('created_at', { ascending: true }),
+          supabase.from('affiliate_commissions').select('created_at, amount').order('created_at', { ascending: true }),
+          supabase.from('photo_orders').select('created_at, total_amount_cents, email, payment_status, metadata').order('created_at', { ascending: true })
         ]);
 
+        // Filter and process revenue history
+        const commissions = (commissionsHist.data || []).filter(c =>
+          new Date(c.created_at) >= new Date(PLATFORM_LAUNCH_DATE)
+        ).map(c => ({
+          date: c.created_at,
+          amount: Number(c.amount)
+        }));
+
+        const orders = (ordersHist.data || []).filter(o =>
+          !isTestEmail(o.email) &&
+          new Date(o.created_at) >= new Date(PLATFORM_LAUNCH_DATE) &&
+          o.payment_status === 'completed' &&
+          (o.metadata as any)?.environment !== 'sandbox'
+        ).map(o => ({
+          date: o.created_at,
+          amount: (o.total_amount_cents || 0) / 100
+        }));
+
         historyData = {
-          revenue: subsHist.data?.map((r: any) => r.created_at) || [],
+          revenue: [...commissions, ...orders],
           newsletter: newsHist.data?.map((r: any) => r.created_at) || [],
           affiliates: affHist.data?.map((r: any) => r.created_at) || []
         };
@@ -687,17 +725,7 @@ export default function Admin() {
           console.log('Contributor details array:', contributorDetailsArray);
         }
 
-        // Platform launch date - filter out test data before this date
-        const PLATFORM_LAUNCH_DATE = '2026-01-15';
 
-        // Helper to identify test emails
-        const isTestEmail = (email: string | null | undefined) => {
-          if (!email) return false;
-          const testPatterns = ['test', 'demo', 'admin', 'dev', 'staging', 'dummy'];
-          return testPatterns.some(pattern =>
-            email.toLowerCase().includes(pattern)
-          );
-        };
 
         // Get affiliate revenue with email and date filtering
         const { data: affiliates, error: affError } = await supabase

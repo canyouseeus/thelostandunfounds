@@ -18,7 +18,7 @@ interface RevenueTrackerProps {
     galleryPhotoCount?: number;
     usersCount?: number;
     history?: {
-        revenue: string[];
+        revenue: (string | { date: string; amount: number })[];
         newsletter: string[];
         affiliates: string[];
     };
@@ -43,22 +43,49 @@ export function RevenueTracker({
 
     const totalRevenue = affiliateRevenue + galleryRevenue + subscriberRevenue;
 
-    // For now, time period just shows total - will filter data when backend supports it
+    // Use actual history data to calculate values for specific time periods
     const getDisplayRevenue = () => {
-        // TODO: Filter by actual time periods when data supports it
+        if (timePeriod === 'all') return totalRevenue;
+
+        // If no history, use placeholders as a fallback (should be rare now)
+        if (!history || !history.revenue || history.revenue.length === 0) {
+            switch (timePeriod) {
+                case 'daily': return totalRevenue * 0.03;
+                case 'weekly': return totalRevenue * 0.15;
+                case 'monthly': return totalRevenue * 0.4;
+                case 'yearly': return totalRevenue * 0.9;
+                default: return totalRevenue;
+            }
+        }
+
+        const now = Date.now();
+        let startTime = 0;
+
         switch (timePeriod) {
             case 'daily':
-                return totalRevenue * 0.03; // Placeholder
+                startTime = now - 24 * 60 * 60 * 1000;
+                break;
             case 'weekly':
-                return totalRevenue * 0.15; // Placeholder
+                startTime = now - 7 * 24 * 60 * 60 * 1000;
+                break;
             case 'monthly':
-                return totalRevenue * 0.4; // Placeholder
+                startTime = now - 30 * 24 * 60 * 60 * 1000;
+                break;
             case 'yearly':
-                return totalRevenue * 0.9; // Placeholder
-            case 'all':
-            default:
-                return totalRevenue;
+                startTime = now - 365 * 24 * 60 * 60 * 1000;
+                break;
         }
+
+        // Sum up revenue from items within the time period
+        return history.revenue
+            .map(item => {
+                if (typeof item === 'string') {
+                    return { time: new Date(item).getTime(), amount: 9.99 };
+                }
+                return { time: new Date(item.date).getTime(), amount: item.amount };
+            })
+            .filter(item => item.time >= startTime)
+            .reduce((sum, item) => sum + item.amount, 0);
     };
 
     const periods: { key: TimePeriod; label: string }[] = [

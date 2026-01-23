@@ -18,7 +18,7 @@ interface DashboardChartsProps {
     affiliates: number;
   } | null;
   history?: {
-    revenue: string[];
+    revenue: (string | { date: string; amount: number })[];
     newsletter: string[];
     affiliates: string[];
   };
@@ -32,16 +32,30 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
   const [metric, setMetric] = useState<MetricType>('revenue');
 
   const data = useMemo(() => {
+    // If we have history but the requested metric history is empty, 
+    // and we have a corresponding stats value, we should still show 0 or a flat line
+    // rather than falling back to simulated "fake" data which is misleading.
+    const hasAnyHistory = history && (history.revenue.length > 0 || history.newsletter.length > 0 || history.affiliates.length > 0);
+    const metricHistory = history?.[metric] || [];
+
     if (!history) {
-      // Fallback to simulated data if no history provided
+      // Fallback to simulated data if no history object provided AT ALL
       const points = timeRange === '1H' ? 60 :
         timeRange === '24H' ? 24 :
           timeRange === '7D' ? 7 :
             timeRange === '30D' ? 30 : 12;
 
-      const baseValue = metric === 'revenue' ? (stats?.revenue || 1000) :
-        metric === 'newsletter' ? (stats?.newsletter || 100) :
-          (stats?.affiliates || 50);
+      const baseValue = metric === 'revenue' ? (stats?.revenue || 0) :
+        metric === 'newsletter' ? (stats?.newsletter || 0) :
+          (stats?.affiliates || 0);
+
+      // If stats are 0, don't simulate growth
+      if (baseValue === 0) {
+        return Array.from({ length: points }).map((_, i) => ({
+          name: i.toString(),
+          value: 0
+        }));
+      }
 
       return Array.from({ length: points }).map((_, i) => {
         const progress = i / (points - 1);
@@ -55,7 +69,13 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
     }
 
     // Process actual history data
-    const dates = history[metric].map(d => new Date(d).getTime()).sort((a, b) => a - b);
+    const items = metricHistory.map(item => {
+      if (typeof item === 'string') {
+        return { time: new Date(item).getTime(), amount: metric === 'revenue' ? 9.99 : 1 };
+      }
+      return { time: new Date(item.date).getTime(), amount: item.amount };
+    }).sort((a, b) => a.time - b.time);
+
     const now = Date.now();
     let startTime = now;
     let interval = 0;
@@ -90,25 +110,24 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
     }
 
     // Generate buckets
-    const buckets: { time: number; count: number; label: string }[] = [];
+    const buckets: { time: number; label: string }[] = [];
     for (let t = startTime; t <= now; t += interval) {
       buckets.push({
         time: t,
-        label: formatLabel(new Date(t)),
-        count: 0
+        label: formatLabel(new Date(t))
       });
     }
 
-    // Calculate cumulative counts
-    // For each bucket, count how many items were created BEFORE that time
-    const valueMultiplier = metric === 'revenue' ? 9.99 : 1;
-
+    // Calculate cumulative values
     return buckets.map(bucket => {
-      // Count items created before bucket.time
-      const count = dates.filter(d => d <= bucket.time).length;
+      // Sum amounts for items created before bucket.time
+      const value = items
+        .filter(item => item.time <= bucket.time)
+        .reduce((sum, item) => sum + item.amount, 0);
+
       return {
         name: bucket.label,
-        value: count * valueMultiplier
+        value: value
       };
     });
 
