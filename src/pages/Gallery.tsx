@@ -8,6 +8,7 @@ import AuthModal from '../components/auth/AuthModal';
 import { Lock, ArrowRight, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import GalleryItem from './GalleryItem';
+import PhotographerApplicationModal from '../components/gallery/PhotographerApplicationModal';
 
 interface PhotoLibrary {
     id: string;
@@ -36,6 +37,7 @@ export default function Gallery() {
 
     const [loading, setLoading] = useState(true);
     const [authModalOpen, setAuthModalOpen] = useState(false);
+    const [applicationModalOpen, setApplicationModalOpen] = useState(false);
 
     const [authMessage, setAuthMessage] = useState<string | undefined>(undefined);
 
@@ -105,13 +107,27 @@ export default function Gallery() {
                     </h1>
                     <div className="text-xl md:text-2xl text-white/50 font-light leading-relaxed space-y-6">
                         <p>
-                            Thank you for visiting <span className="font-bold">THE GALLERY</span>! Here you will find collections of photos and videos available for purchase and download.
+                            Welcome to <span className="font-bold">THE GALLERY</span> — an invite-only platform for photographers to host, share, and sell their work.
                         </p>
                         <p>
-                            To access private galleries you must be the owner of the photos within that gallery. If you have not received access to a gallery of your photos then you can email us at <span className="font-bold">media@thelostandunfounds.com</span> to request access.
+                            Private galleries are reserved for invited photographers. If you're a photographer interested in joining, submit your application below and we'll review your work.
                         </p>
                         <p>
-                            Our public albums contain content that is available for anyone to download.
+                            Public albums contain content available for anyone to browse and purchase.
+                        </p>
+                    </div>
+
+                    {/* Application CTA */}
+                    <div className="pt-4">
+                        <button
+                            onClick={() => setApplicationModalOpen(true)}
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-bold uppercase tracking-wider text-sm hover:bg-white/90 transition-colors"
+                        >
+                            Apply to Join
+                            <ArrowRight className="w-4 h-4" />
+                        </button>
+                        <p className="text-white/30 text-xs mt-3">
+                            Already have an invite? <button onClick={() => setAuthModalOpen(true)} className="text-white/50 hover:text-white underline">Sign in here</button>
                         </p>
                     </div>
                 </div>
@@ -152,6 +168,11 @@ export default function Gallery() {
                         }}
                         message={authMessage}
                         title={authMessage ? "Private Access" : undefined}
+                    />
+
+                    <PhotographerApplicationModal
+                        isOpen={applicationModalOpen}
+                        onClose={() => setApplicationModalOpen(false)}
                     />
                 </div>
             )}
