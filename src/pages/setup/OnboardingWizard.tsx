@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Check, Copy, ArrowRight, Loader2, AlertCircle, LogIn, UserPlus } from 'lucide-react';
+import { Check, Copy, ArrowRight, Loader2, AlertCircle, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -38,7 +37,6 @@ export default function OnboardingWizard() {
     // Auto-advance if user logs in AND email matches
     useEffect(() => {
         if (user && step === 1 && invitation) {
-            // Check if logged-in email matches invitation email
             if (user.email?.toLowerCase() !== invitation.email?.toLowerCase()) {
                 setEmailMismatch(true);
             } else {
@@ -67,7 +65,7 @@ export default function OnboardingWizard() {
             setError('This invitation has already been used.');
         } else {
             setInvitation(data);
-            setEmail(data.email); // Pre-fill email from invite
+            setEmail(data.email);
         }
         setLoading(false);
     }
@@ -82,7 +80,6 @@ export default function OnboardingWizard() {
                 : await signUp(email, password);
 
             if (error) throw error;
-            // Success handled by useEffect
         } catch (err: any) {
             setAuthError(err.message || 'Authentication failed');
         } finally {
@@ -97,7 +94,6 @@ export default function OnboardingWizard() {
     };
 
     const handleGoogleSignIn = async () => {
-        // Save current URL for redirect after callback
         localStorage.setItem('auth_return_url', window.location.pathname + window.location.search);
         setAuthLoading(true);
         const { error } = await signInWithGoogle();
@@ -107,13 +103,13 @@ export default function OnboardingWizard() {
         }
     };
 
-    const [syncStatus, setSyncStatus] = useState<string>(''); // For UI feedback
+    const [syncStatus, setSyncStatus] = useState<string>('');
     const [syncStats, setSyncStats] = useState<{ synced: number, message: string } | null>(null);
 
     // Gallery customization fields
     const [galleryName, setGalleryName] = useState('');
     const [galleryDescription, setGalleryDescription] = useState('');
-    const [isPrivate, setIsPrivate] = useState(true); // Default to private
+    const [isPrivate, setIsPrivate] = useState(true);
 
     const handlePublish = async () => {
         if (!folderLink || !user) return;
@@ -122,11 +118,9 @@ export default function OnboardingWizard() {
         setError(null);
 
         try {
-            // Extract ID from link
             const match = folderLink.match(/folders\/([a-zA-Z0-9-_]+)/) || folderLink.match(/^([a-zA-Z0-9-_]+)$/);
             const folderId = match ? match[1] : folderLink;
 
-            // 1. Create Gallery
             const response = await fetch('/api/admin/onboard-gallery', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -136,7 +130,7 @@ export default function OnboardingWizard() {
                     name: galleryName || `Gallery by ${invitation.email}`,
                     description: galleryDescription || '',
                     isPrivate: isPrivate,
-                    ownerId: user.id // Link to user
+                    ownerId: user.id
                 })
             });
 
@@ -145,7 +139,6 @@ export default function OnboardingWizard() {
 
             const slug = result.slug;
 
-            // 2. Trigger Sync
             setSyncStatus('Syncing photos...');
 
             try {
@@ -168,12 +161,10 @@ export default function OnboardingWizard() {
                 });
 
             } catch (syncErr: any) {
-                // Sync failure is non-critical - the scheduled cron job will pick it up
-                // Log it for debugging but don't bother the user
                 console.error('Sync step failed (will retry via cron):', syncErr);
             }
 
-            setStep(4); // Success step
+            setStep(4);
         } catch (err: any) {
             setError(`Error: ${err.message}`);
         } finally {
@@ -186,151 +177,112 @@ export default function OnboardingWizard() {
     if (error) return <div className="min-h-screen bg-black flex items-center justify-center text-white font-bold">{error}</div>;
 
     return (
-        <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6 bg-[grid-pattern] relative overflow-hidden">
-            {/* Background elements to make it look nicer */}
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 via-purple-500 to-blue-500" />
+        <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+            <div className="w-full max-w-md">
+                {/* Main Card - matching AuthModal style */}
+                <div className="bg-black/90 backdrop-blur-md p-6">
 
-            <div className="max-w-xl w-full relative z-10">
-
-                {/* Header */}
-                <div className="mb-8 text-center">
-                    <img src="/logo.png" alt="Logo" className="h-10 mx-auto mb-6 invert brightness-0 opacity-80" />
-                    <h1 className="text-3xl font-black uppercase tracking-tighter mb-2">Photographer Setup</h1>
-                    {invitation && <p className="text-zinc-500 text-sm">Welcome, {invitation.email}</p>}
-                </div>
-
-                {/* Main Card */}
-                <div className="bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
+                    {/* Step Progress Bar */}
+                    <div className="flex items-center justify-center gap-2 mb-6">
+                        {[0, 1, 2, 3].map((s) => (
+                            <div key={s} className={`h-1 flex-1 max-w-12 rounded-full ${step >= s ? 'bg-white' : 'bg-white/20'}`} />
+                        ))}
+                    </div>
 
                     {/* Intro Step */}
                     {step === 0 && (
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                            <h2 className="text-xl font-bold mb-6 text-center">Welcome to THE LOST+UNFOUNDS</h2>
-                            <p className="text-zinc-400 mb-8 text-center">Follow these 3 simple steps to publish your gallery:</p>
+                        <div>
+                            <h2 className="text-2xl font-bold text-white mb-2">Create Your Gallery</h2>
+                            <p className="text-white/60 text-sm mb-6">
+                                Welcome, {invitation?.email}. Set up your photo gallery in 3 easy steps.
+                            </p>
 
-                            <div className="space-y-4 mb-8">
-                                <div className="flex items-center gap-4 p-4 bg-black/40 rounded-xl border border-white/5">
-                                    <div className="w-10 h-10 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold">1</div>
-                                    <div>
-                                        <h3 className="font-bold text-white">Account</h3>
-                                        <p className="text-xs text-zinc-500">Log in or create an account</p>
-                                    </div>
+                            <div className="space-y-3 mb-6">
+                                <div className="flex items-center gap-3 p-3 bg-white/5">
+                                    <div className="w-6 h-6 rounded-full bg-white/10 text-white/60 flex items-center justify-center text-xs font-bold">1</div>
+                                    <span className="text-sm text-white/80">Sign in or create account</span>
                                 </div>
-                                <div className="flex items-center gap-4 p-4 bg-black/40 rounded-xl border border-white/5">
-                                    <div className="w-10 h-10 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold">2</div>
-                                    <div>
-                                        <h3 className="font-bold text-white">Connect</h3>
-                                        <p className="text-xs text-zinc-500">Share your Google Drive folder</p>
-                                    </div>
+                                <div className="flex items-center gap-3 p-3 bg-white/5">
+                                    <div className="w-6 h-6 rounded-full bg-white/10 text-white/60 flex items-center justify-center text-xs font-bold">2</div>
+                                    <span className="text-sm text-white/80">Connect Google Drive folder</span>
                                 </div>
-                                <div className="flex items-center gap-4 p-4 bg-black/40 rounded-xl border border-white/5">
-                                    <div className="w-10 h-10 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center font-bold">3</div>
-                                    <div>
-                                        <h3 className="font-bold text-white">Create</h3>
-                                        <p className="text-xs text-zinc-500">Publish your gallery instantly</p>
-                                    </div>
+                                <div className="flex items-center gap-3 p-3 bg-white/5">
+                                    <div className="w-6 h-6 rounded-full bg-white/10 text-white/60 flex items-center justify-center text-xs font-bold">3</div>
+                                    <span className="text-sm text-white/80">Publish your gallery</span>
                                 </div>
                             </div>
 
                             <button
                                 onClick={() => user ? setStep(2) : setStep(1)}
-                                className="w-full bg-white text-black py-4 rounded-xl font-black uppercase tracking-widest hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2"
+                                className="w-full px-4 py-2 bg-white text-black font-semibold hover:bg-white/90 transition"
                             >
-                                Get Started <ArrowRight className="w-5 h-5" />
+                                Get Started
                             </button>
-
-                            <a
-                                href="/docs/photographer-guide"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="block text-center mt-4 text-sm text-zinc-500 hover:text-white transition-colors"
-                            >
-                                How does this work? <span className="underline">Learn more</span>
-                            </a>
-                        </motion.div>
+                        </div>
                     )}
 
-                    {/* Step 1: Auth */}
+                    {/* Step 1: Auth - matching AuthModal style */}
                     {step === 1 && (
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                            <h2 className="text-xl font-bold mb-2 text-center">Step 1: Account</h2>
-                            <p className="text-zinc-400 text-sm mb-6 text-center">You must be logged in to manage your gallery.</p>
+                        <div>
+                            <h2 className="text-2xl font-bold text-white mb-6">
+                                {authMode === 'signup' ? 'Sign Up' : 'Sign In'}
+                            </h2>
 
                             {/* Email Mismatch Warning */}
                             {emailMismatch && user && (
-                                <div className="bg-amber-500/10 border border-amber-500/30 text-amber-400 p-4 rounded-xl mb-6">
-                                    <div className="flex items-start gap-3">
-                                        <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                                        <div>
-                                            <p className="font-bold mb-1">Wrong Account</p>
-                                            <p className="text-sm opacity-80">
-                                                You're logged in as <span className="font-bold text-white">{user.email}</span>, but this invitation is for <span className="font-bold text-white">{invitation?.email}</span>.
-                                            </p>
-                                            <button
-                                                onClick={async () => {
-                                                    await signOut();
-                                                    setEmailMismatch(false);
-                                                }}
-                                                className="mt-3 bg-amber-500/20 text-amber-300 px-4 py-2 rounded-lg text-sm font-bold hover:bg-amber-500/30 transition-colors"
-                                            >
-                                                Log Out & Switch Account
-                                            </button>
-                                        </div>
-                                    </div>
+                                <div className="mb-4 px-4 py-3 bg-amber-500/20 text-amber-400 text-sm">
+                                    <p className="font-medium mb-1">Wrong Account</p>
+                                    <p className="text-xs opacity-80 mb-2">
+                                        You're logged in as <span className="font-bold">{user.email}</span>, but this invitation is for <span className="font-bold">{invitation?.email}</span>.
+                                    </p>
+                                    <button
+                                        onClick={async () => {
+                                            await signOut();
+                                            setEmailMismatch(false);
+                                        }}
+                                        className="text-xs underline hover:no-underline"
+                                    >
+                                        Switch Account
+                                    </button>
                                 </div>
                             )}
 
                             <form onSubmit={handleAuth} className="space-y-4">
-                                <div className="flex p-1 bg-black/40 rounded-lg mb-6">
-                                    <button
-                                        type="button"
-                                        onClick={() => setAuthMode('signin')}
-                                        className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${authMode === 'signin' ? 'bg-white text-black shadow-lg' : 'text-zinc-500 hover:text-white'}`}
-                                    >
-                                        Log In
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setAuthMode('signup')}
-                                        className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${authMode === 'signup' ? 'bg-white text-black shadow-lg' : 'text-zinc-500 hover:text-white'}`}
-                                    >
-                                        Sign Up
-                                    </button>
-                                </div>
-
-                                {authError && (
-                                    <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-3 rounded-lg text-sm flex items-center gap-2">
-                                        <AlertCircle className="w-4 h-4" /> {authError}
-                                    </div>
-                                )}
-
                                 <div>
-                                    <label className="text-xs uppercase font-bold text-zinc-500 mb-1 block">Email</label>
+                                    <label className="block text-sm font-medium text-white/80 mb-2">Email</label>
                                     <input
                                         type="email"
                                         required
                                         value={email}
                                         onChange={e => setEmail(e.target.value)}
-                                        className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-white focus:border-white focus:outline-none"
+                                        placeholder="your@email.com"
+                                        className="w-full px-4 py-2 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors"
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-xs uppercase font-bold text-zinc-500 mb-1 block">Password</label>
+                                    <label className="block text-sm font-medium text-white/80 mb-2">Password</label>
                                     <input
                                         type="password"
                                         required
                                         value={password}
                                         onChange={e => setPassword(e.target.value)}
-                                        className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-white focus:border-white focus:outline-none"
+                                        placeholder="••••••"
+                                        className="w-full px-4 py-2 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors"
                                     />
                                 </div>
+
+                                {authError && (
+                                    <div className="px-4 py-2 bg-red-500/20 text-red-400 text-sm">
+                                        {authError}
+                                    </div>
+                                )}
 
                                 <button
                                     type="submit"
                                     disabled={authLoading}
-                                    className="w-full bg-white text-black py-3 rounded-xl font-bold uppercase tracking-wider hover:bg-zinc-200 transition-colors disabled:opacity-50 mt-4"
+                                    className="w-full px-4 py-2 bg-white text-black font-semibold hover:bg-white/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {authLoading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : (authMode === 'signin' ? 'Log In' : 'Create Account')}
+                                    {authLoading ? 'Loading...' : authMode === 'signup' ? 'Sign Up' : 'Sign In'}
                                 </button>
                             </form>
 
@@ -341,7 +293,7 @@ export default function OnboardingWizard() {
                                         <div className="w-full border-t border-white/20"></div>
                                     </div>
                                     <div className="relative flex justify-center text-sm">
-                                        <span className="px-2 bg-zinc-900 text-zinc-500">OR</span>
+                                        <span className="px-2 bg-black text-white/60">OR</span>
                                     </div>
                                 </div>
                             </div>
@@ -350,160 +302,167 @@ export default function OnboardingWizard() {
                             <button
                                 onClick={handleGoogleSignIn}
                                 disabled={authLoading}
-                                className="w-full px-4 py-3 bg-white/5 text-white font-medium hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 rounded-xl"
+                                className="w-full px-4 py-2 bg-white/5 text-white font-medium hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
                                 <svg className="w-5 h-5" viewBox="0 0 24 24">
-                                    <path
-                                        fill="currentColor"
-                                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                                    />
-                                    <path
-                                        fill="currentColor"
-                                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                                    />
-                                    <path
-                                        fill="currentColor"
-                                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                                    />
-                                    <path
-                                        fill="currentColor"
-                                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                                    />
+                                    <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                                    <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                                    <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                                    <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                                 </svg>
                                 Sign in with Google
                             </button>
-                        </motion.div>
+
+                            <div className="mt-6 text-center">
+                                <button
+                                    onClick={() => setAuthMode(authMode === 'signin' ? 'signup' : 'signin')}
+                                    className="text-white/60 hover:text-white text-sm transition"
+                                >
+                                    {authMode === 'signup' ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+                                </button>
+                            </div>
+                        </div>
                     )}
 
                     {/* Step 2: Connect */}
                     {step === 2 && (
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                            <h2 className="text-xl font-bold mb-2 text-center">Step 2: Connect Drive</h2>
-                            <p className="text-zinc-400 text-sm mb-6 text-center">Create a Google Drive folder and share it with our Agent.</p>
+                        <div>
+                            <h2 className="text-2xl font-bold text-white mb-2">Connect Google Drive</h2>
+                            <p className="text-white/60 text-sm mb-6">
+                                Share your photo folder with our agent to sync your photos.
+                            </p>
 
-                            <div className="bg-black/50 p-4 rounded-xl border border-white/10 flex items-center justify-between gap-4 mb-8">
-                                <code className="text-xs text-green-400 break-all">{AGENT_EMAIL}</code>
-                                <button
-                                    onClick={handleCopyEmail}
-                                    className="p-2 hover:bg-white/10 rounded-lg transition-colors shrink-0"
-                                    title="Copy Email"
-                                >
-                                    {copySuccess ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5 text-white/60" />}
-                                </button>
+                            <div className="mb-6">
+                                <label className="block text-sm font-medium text-white/80 mb-2">Share with this email:</label>
+                                <div className="flex items-center gap-2 p-3 bg-white/5">
+                                    <code className="text-xs text-green-400 break-all flex-1">{AGENT_EMAIL}</code>
+                                    <button
+                                        onClick={handleCopyEmail}
+                                        className="p-2 hover:bg-white/10 transition-colors shrink-0"
+                                        title="Copy Email"
+                                    >
+                                        {copySuccess ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-white/60" />}
+                                    </button>
+                                </div>
+                                <p className="text-xs text-white/40 mt-2">Give "Viewer" access in Google Drive sharing settings.</p>
                             </div>
 
                             <button
                                 onClick={() => setStep(3)}
-                                className="w-full bg-white text-black py-4 rounded-xl font-black uppercase tracking-widest hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2"
+                                className="w-full px-4 py-2 bg-white text-black font-semibold hover:bg-white/90 transition"
                             >
-                                Next Step <ArrowRight className="w-5 h-5" />
+                                Continue
                             </button>
-                        </motion.div>
+
+                            <button
+                                onClick={() => setStep(1)}
+                                className="w-full mt-3 px-4 py-2 text-white/60 hover:text-white text-sm transition"
+                            >
+                                Back
+                            </button>
+                        </div>
                     )}
 
-                    {/* Step 3: Link & Create */}
+                    {/* Step 3: Create */}
                     {step === 3 && (
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                            <h2 className="text-xl font-bold mb-2 text-center">Step 3: Create Gallery</h2>
-                            <p className="text-zinc-400 text-sm mb-6 text-center">Customize your gallery details.</p>
+                        <div>
+                            <h2 className="text-2xl font-bold text-white mb-2">Create Gallery</h2>
+                            <p className="text-white/60 text-sm mb-6">
+                                Customize your gallery and paste your Google Drive folder link.
+                            </p>
 
-                            {/* Gallery Name */}
-                            <div className="mb-4">
-                                <label className="text-xs uppercase font-bold text-zinc-500 mb-1 block">Gallery Name</label>
-                                <input
-                                    type="text"
-                                    value={galleryName}
-                                    onChange={(e) => setGalleryName(e.target.value)}
-                                    placeholder={`Gallery by ${invitation?.email || 'you'}`}
-                                    className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-white placeholder-zinc-600 focus:outline-none focus:border-white/40"
-                                />
-                            </div>
+                            <div className="space-y-4 mb-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-white/80 mb-2">Gallery Name</label>
+                                    <input
+                                        type="text"
+                                        value={galleryName}
+                                        onChange={(e) => setGalleryName(e.target.value)}
+                                        placeholder={`Gallery by ${invitation?.email || 'you'}`}
+                                        className="w-full px-4 py-2 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors"
+                                    />
+                                </div>
 
-                            {/* Description */}
-                            <div className="mb-4">
-                                <label className="text-xs uppercase font-bold text-zinc-500 mb-1 block">Description <span className="text-zinc-700">(optional)</span></label>
-                                <textarea
-                                    value={galleryDescription}
-                                    onChange={(e) => setGalleryDescription(e.target.value)}
-                                    placeholder="Tell visitors about your photography..."
-                                    rows={2}
-                                    className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-white placeholder-zinc-600 focus:outline-none focus:border-white/40 resize-none"
-                                />
-                            </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-white/80 mb-2">Description <span className="text-white/40">(optional)</span></label>
+                                    <textarea
+                                        value={galleryDescription}
+                                        onChange={(e) => setGalleryDescription(e.target.value)}
+                                        placeholder="Tell visitors about your photography..."
+                                        rows={2}
+                                        className="w-full px-4 py-2 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors resize-none"
+                                    />
+                                </div>
 
-                            {/* Privacy Toggle */}
-                            <div className="mb-6 p-4 bg-black/40 rounded-xl border border-white/5">
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between p-3 bg-white/5">
                                     <div>
-                                        <p className="font-bold text-white">Private Gallery</p>
-                                        <p className="text-xs text-zinc-500">Only accessible to invited clients</p>
+                                        <p className="text-sm font-medium text-white">Private Gallery</p>
+                                        <p className="text-xs text-white/40">Only accessible via direct link</p>
                                     </div>
                                     <button
                                         type="button"
                                         onClick={() => setIsPrivate(!isPrivate)}
-                                        className={`w-12 h-6 rounded-full transition-colors ${isPrivate ? 'bg-blue-500' : 'bg-zinc-700'} relative`}
+                                        className={`w-10 h-6 rounded-full transition-colors ${isPrivate ? 'bg-green-500' : 'bg-white/20'} relative`}
                                     >
-                                        <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${isPrivate ? 'left-7' : 'left-1'}`} />
+                                        <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${isPrivate ? 'left-5' : 'left-1'}`} />
                                     </button>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-white/80 mb-2">Google Drive Folder Link</label>
+                                    <input
+                                        type="text"
+                                        value={folderLink}
+                                        onChange={(e) => setFolderLink(e.target.value)}
+                                        placeholder="https://drive.google.com/drive/folders/..."
+                                        className="w-full px-4 py-2 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors"
+                                    />
                                 </div>
                             </div>
 
-                            {/* Divider */}
-                            <div className="border-t border-white/10 my-6" />
+                            <button
+                                onClick={handlePublish}
+                                disabled={!folderLink || publishLoading}
+                                className="w-full px-4 py-2 bg-white text-black font-semibold hover:bg-white/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {publishLoading ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        {syncStatus || 'Processing...'}
+                                    </>
+                                ) : 'Publish Gallery'}
+                            </button>
 
-                            {/* Folder Link */}
-                            <label className="text-xs uppercase font-bold text-zinc-500 mb-1 block">Google Drive Folder Link</label>
-                            <input
-                                type="text"
-                                value={folderLink}
-                                onChange={(e) => setFolderLink(e.target.value)}
-                                placeholder="https://drive.google.com/drive/folders/..."
-                                className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-white placeholder-zinc-600 focus:outline-none focus:border-white/40 mb-2"
-                            />
-                            <p className="text-xs text-zinc-500 mb-8">Ensure the agent email has "Viewer" or "Editor" access.</p>
-
-                            <div className="flex gap-4">
-                                <button
-                                    onClick={() => setStep(2)}
-                                    className="flex-1 bg-transparent border border-white/10 text-white py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-white/5 transition-colors"
-                                >
-                                    Back
-                                </button>
-                                <button
-                                    onClick={handlePublish}
-                                    disabled={!folderLink || publishLoading}
-                                    className="flex-[2] bg-white text-black py-4 rounded-xl font-black uppercase tracking-widest hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {publishLoading ? (
-                                        <>
-                                            <Loader2 className="w-5 h-5 animate-spin" />
-                                            {syncStatus || 'Processing...'}
-                                        </>
-                                    ) : 'Publish Gallery'}
-                                </button>
-                            </div>
-                        </motion.div>
+                            <button
+                                onClick={() => setStep(2)}
+                                className="w-full mt-3 px-4 py-2 text-white/60 hover:text-white text-sm transition"
+                            >
+                                Back
+                            </button>
+                        </div>
                     )}
 
                     {/* Step 4: Success */}
                     {step === 4 && (
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-8">
-                            <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <Check className="w-10 h-10 text-black stroke-[3]" />
+                        <div className="text-center py-4">
+                            <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Check className="w-8 h-8 text-black stroke-[3]" />
                             </div>
-                            <h2 className="text-2xl font-black uppercase mb-4">Gallery Published!</h2>
-                            <p className="text-zinc-400 mb-8">Your photos are syncing. You can view your gallery status in your dashboard.</p>
+                            <h2 className="text-2xl font-bold text-white mb-2">Gallery Published!</h2>
+                            <p className="text-white/60 text-sm mb-6">
+                                Your photos are syncing. View your gallery in the dashboard.
+                            </p>
                             <button
                                 onClick={() => navigate('/dashboard')}
-                                className="inline-block bg-white/10 text-white px-8 py-3 rounded-xl font-bold uppercase tracking-widest hover:bg-white/20 transition-colors"
+                                className="w-full px-4 py-2 bg-white text-black font-semibold hover:bg-white/90 transition"
                             >
-                                Go To Dashboard
+                                Go to Dashboard
                             </button>
-                        </motion.div>
+                        </div>
                     )}
 
                 </div>
             </div>
-        </div >
+        </div>
     );
 }
