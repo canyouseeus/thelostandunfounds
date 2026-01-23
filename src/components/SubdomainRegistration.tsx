@@ -14,13 +14,17 @@ interface SubdomainRegistrationProps {
   onClose: () => void;
   onSuccess: (subdomain: string) => void;
   required?: boolean; // If true, user cannot close without setting subdomain
+  totalSteps?: number;
+  currentStep?: number;
 }
 
 export default function SubdomainRegistration({
   isOpen,
   onClose,
   onSuccess,
-  required = false
+  required = false,
+  totalSteps,
+  currentStep
 }: SubdomainRegistrationProps) {
   const { user } = useAuth();
   const { success, error: showError } = useToast();
@@ -215,6 +219,7 @@ export default function SubdomainRegistration({
               Choose Your Blog Subdomain
             </h2>
             <p className="text-white/60 text-xs sm:text-sm mt-1">
+              {totalSteps && currentStep ? `Step ${currentStep} of ${totalSteps}: ` : ''}
               This will be your permanent blog URL. You can only set this once.
             </p>
           </div>

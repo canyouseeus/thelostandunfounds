@@ -15,6 +15,8 @@ interface StorefrontRegistrationProps {
   onSuccess: (storefrontId: string) => void;
   subdomain: string; // User's subdomain URL
   required?: boolean; // If true, user cannot close without completing
+  totalSteps?: number;
+  currentStep?: number;
 }
 
 export default function StorefrontRegistration({
@@ -22,7 +24,9 @@ export default function StorefrontRegistration({
   onClose,
   onSuccess,
   subdomain,
-  required = false
+  required = false,
+  totalSteps,
+  currentStep
 }: StorefrontRegistrationProps) {
   const { user } = useAuth();
   const { success, error: showError } = useToast();
@@ -186,6 +190,7 @@ export default function StorefrontRegistration({
               Register Your Amazon Storefront
             </h2>
             <p className="text-white/60 text-sm mt-1">
+              {totalSteps && currentStep ? `Step ${currentStep} of ${totalSteps}: ` : ''}
               Now that you have your blog URL, you can register it with Amazon Associates.
             </p>
           </div>

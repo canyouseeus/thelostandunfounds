@@ -812,6 +812,20 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch add_password_protected_to_libraries file:', fetchError);
       }
 
+      // Load add-status-to-libraries script
+      let statusContent = '';
+      try {
+        const statusResponse = await fetch('/sql/add_status_to_libraries.sql');
+        if (statusResponse.ok) {
+          const text = await statusResponse.text();
+          if (!text.trim().startsWith('<!')) {
+            statusContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch add_status_to_libraries file:', fetchError);
+      }
+
       // Load setup-admin-user script
       let setupAdminContent = '';
       try {
@@ -1114,6 +1128,13 @@ COMMENT ON COLUMN user_subdomains.author_name IS 'Author name (username) from us
           content: passwordProtectedContent || '// File not found - check public/sql folder',
           description: 'Adds password_protected boolean column to photo_libraries table. Required for gallery creation (defaults to false). Run this if you get "column password_protected does not exist" errors.',
           createdAt: getScriptTimestamp('add_password_protected_to_libraries.sql')
+        },
+        {
+          name: 'Add status to photo_libraries',
+          filename: 'add_status_to_libraries.sql',
+          content: statusContent || '// File not found - check public/sql folder',
+          description: 'Adds status text column to photo_libraries table. Required for gallery creation (defaults to active). Run this if you get "column status does not exist" errors.',
+          createdAt: getScriptTimestamp('add_status_to_libraries.sql')
         },
         {
           name: 'Update Home Science to NEW THEORY',

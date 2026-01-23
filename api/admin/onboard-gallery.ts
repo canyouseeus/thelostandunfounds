@@ -11,7 +11,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        const { token, folderId, name, ownerId } = req.body;
+        const { token, folderId, name, description, isPrivate, ownerId } = req.body;
 
         if (!token || !folderId) {
             return res.status(400).json({ error: 'Missing requirements' });
@@ -40,10 +40,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             .insert({
                 name: name,
                 slug: slug,
-                description: 'New gallery',
+                description: description || 'New gallery',
                 google_drive_folder_id: folderId,
                 owner_id: ownerId, // Link gallery to the user
-                status: 'public', // Default to public or private? Let's say public for now as per "Publish" intent
+                is_private: isPrivate !== undefined ? isPrivate : true, // Default to private
+                status: 'active',
                 password_protected: false,
                 price: 5.00 // Default price
             })

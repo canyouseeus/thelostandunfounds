@@ -10,7 +10,7 @@ export default function OnboardingWizard() {
     const navigate = useNavigate();
     const { user, signIn, signUp, signOut, signInWithGoogle } = useAuth();
 
-    const [step, setStep] = useState(0); // 0: Intro, 1: Auth, 2: Connect, 3: Link, 4: Success
+    const [step, setStep] = useState(0); // 0: Intro, 1: Auth, 2: Profile, 3: Connect, 4: Link, 5: Success
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [invitation, setInvitation] = useState<any>(null);
@@ -24,6 +24,11 @@ export default function OnboardingWizard() {
     const [password, setPassword] = useState('');
     const [authError, setAuthError] = useState('');
     const [authLoading, setAuthLoading] = useState(false);
+
+    // Profile State for Step 2
+    const [username, setUsername] = useState('');
+    const [usernameError, setUsernameError] = useState('');
+    const [savingUsername, setSavingUsername] = useState(false);
 
     const AGENT_EMAIL = 'the-gallery-agent@the-lost-and-unf-1737406545588.iam.gserviceaccount.com';
 
@@ -41,7 +46,13 @@ export default function OnboardingWizard() {
                 setEmailMismatch(true);
             } else {
                 setEmailMismatch(false);
-                setStep(2);
+                // If user doesn't have a username, go to Profile step
+                if (!user.user_metadata?.author_name) {
+                    setStep(2);
+                } else {
+                    // Already has username, skip to Connect Drive
+                    setStep(3);
+                }
             }
         }
     }, [user, step, invitation]);
@@ -164,7 +175,7 @@ export default function OnboardingWizard() {
                 console.error('Sync step failed (will retry via cron):', syncErr);
             }
 
-            setStep(4);
+            setStep(5);
         } catch (err: any) {
             setError(`Error: ${err.message}`);
         } finally {
@@ -184,7 +195,7 @@ export default function OnboardingWizard() {
 
                     {/* Step Progress Bar */}
                     <div className="flex items-center justify-center gap-2 mb-6">
-                        {[0, 1, 2, 3].map((s) => (
+                        {[0, 1, 2, 3, 4].map((s) => (
                             <div key={s} className={`h-1 flex-1 max-w-12 rounded-full ${step >= s ? 'bg-white' : 'bg-white/20'}`} />
                         ))}
                     </div>
@@ -203,11 +214,11 @@ export default function OnboardingWizard() {
                                     <span className="text-sm text-white/80">Sign in or create account</span>
                                 </div>
                                 <div className="flex items-center gap-3 p-3 bg-white/5">
-                                    <div className="w-6 h-6 rounded-full bg-white/10 text-white/60 flex items-center justify-center text-xs font-bold">2</div>
+                                    <div className="w-6 h-6 rounded-full bg-white/10 text-white/60 flex items-center justify-center text-xs font-bold">3</div>
                                     <span className="text-sm text-white/80">Connect Google Drive folder</span>
                                 </div>
                                 <div className="flex items-center gap-3 p-3 bg-white/5">
-                                    <div className="w-6 h-6 rounded-full bg-white/10 text-white/60 flex items-center justify-center text-xs font-bold">3</div>
+                                    <div className="w-6 h-6 rounded-full bg-white/10 text-white/60 flex items-center justify-center text-xs font-bold">4</div>
                                     <span className="text-sm text-white/80">Publish your gallery</span>
                                 </div>
                             </div>
@@ -217,7 +228,11 @@ export default function OnboardingWizard() {
                                     if (user) {
                                         // Check if logged-in email matches invitation email
                                         if (user.email?.toLowerCase() === invitation?.email?.toLowerCase()) {
-                                            setStep(2);
+                                            if (user.user_metadata?.author_name) {
+                                                setStep(3);
+                                            } else {
+                                                setStep(2);
+                                            }
                                         } else {
                                             // Email mismatch - show auth step with warning
                                             setEmailMismatch(true);
@@ -337,8 +352,63 @@ export default function OnboardingWizard() {
                         </div>
                     )}
 
-                    {/* Step 2: Connect */}
+                    {/* Step 2: Profile Setup */}
                     {step === 2 && (
+                        <div>
+                            <h2 className="text-2xl font-bold text-white mb-2">Set Up Your Profile</h2>
+                            <p className="text-white/60 text-sm mb-6">
+                                Choose the username that will be displayed on your gallery.
+                            </p>
+
+                            <div className="space-y-4 mb-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-white/80 mb-2">Username (Author Name)</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={username}
+                                        onChange={e => {
+                                            setUsername(e.target.value);
+                                            setUsernameError('');
+                                        }}
+                                        placeholder="Artist Name or Your Name"
+                                        className="w-full px-4 py-2 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors"
+                                    />
+                                    {usernameError && (
+                                        <p className="text-red-400 text-xs mt-1">{usernameError}</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={async () => {
+                                    if (!username.trim()) {
+                                        setUsernameError('Username is required');
+                                        return;
+                                    }
+                                    setSavingUsername(true);
+                                    try {
+                                        const { error } = await supabase.auth.updateUser({
+                                            data: { author_name: username.trim() }
+                                        });
+                                        if (error) throw error;
+                                        setStep(3);
+                                    } catch (err: any) {
+                                        setUsernameError(err.message || 'Failed to save username');
+                                    } finally {
+                                        setSavingUsername(false);
+                                    }
+                                }}
+                                disabled={savingUsername || !username.trim()}
+                                className="w-full px-4 py-2 bg-white text-black font-semibold hover:bg-white/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {savingUsername ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Continue'}
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Step 3: Connect */}
+                    {step === 3 && (
                         <div>
                             <h2 className="text-2xl font-bold text-white mb-2">Connect Google Drive</h2>
                             <p className="text-white/60 text-sm mb-6">
@@ -361,14 +431,14 @@ export default function OnboardingWizard() {
                             </div>
 
                             <button
-                                onClick={() => setStep(3)}
+                                onClick={() => setStep(4)}
                                 className="w-full px-4 py-2 bg-white text-black font-semibold hover:bg-white/90 transition"
                             >
                                 Continue
                             </button>
 
                             <button
-                                onClick={() => setStep(1)}
+                                onClick={() => setStep(1)} // Should ideally check if we came from step 1 or 2
                                 className="w-full mt-3 px-4 py-2 text-white/60 hover:text-white text-sm transition"
                             >
                                 Back
@@ -376,8 +446,8 @@ export default function OnboardingWizard() {
                         </div>
                     )}
 
-                    {/* Step 3: Create */}
-                    {step === 3 && (
+                    {/* Step 4: Create */}
+                    {step === 4 && (
                         <div>
                             <h2 className="text-2xl font-bold text-white mb-2">Create Gallery</h2>
                             <p className="text-white/60 text-sm mb-6">
@@ -447,7 +517,7 @@ export default function OnboardingWizard() {
                             </button>
 
                             <button
-                                onClick={() => setStep(2)}
+                                onClick={() => setStep(3)}
                                 className="w-full mt-3 px-4 py-2 text-white/60 hover:text-white text-sm transition"
                             >
                                 Back
@@ -455,8 +525,8 @@ export default function OnboardingWizard() {
                         </div>
                     )}
 
-                    {/* Step 4: Success */}
-                    {step === 4 && (
+                    {/* Step 5: Success */}
+                    {step === 5 && (
                         <div className="text-center py-4">
                             <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <Check className="w-8 h-8 text-black stroke-[3]" />

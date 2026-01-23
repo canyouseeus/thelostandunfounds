@@ -198,6 +198,8 @@ export default function AuthCallback() {
         }}
         onSuccess={handleUserRegistrationSuccess}
         required={true}
+        totalSteps={2}
+        currentStep={1}
       />
       <SubdomainRegistration
         isOpen={showSubdomainModal}
@@ -219,6 +221,8 @@ export default function AuthCallback() {
         }}
         onSuccess={handleSubdomainSuccess}
         required={true}
+        totalSteps={2}
+        currentStep={2}
       />
 
       <div className="min-h-screen flex items-center justify-center">

@@ -14,13 +14,17 @@ interface UserRegistrationProps {
   onClose: () => void;
   onSuccess: (username: string) => void; // Only returns username now
   required?: boolean; // If true, user cannot close without completing
+  totalSteps?: number;
+  currentStep?: number;
 }
 
 export default function UserRegistration({
   isOpen,
   onClose,
   onSuccess,
-  required = false
+  required = false,
+  totalSteps,
+  currentStep
 }: UserRegistrationProps) {
   const { user } = useAuth();
   const { success, error: showError } = useToast();
@@ -130,7 +134,8 @@ export default function UserRegistration({
               Choose Your Username
             </h2>
             <p className="text-white/60 text-sm mt-1">
-              First, choose your author name. Next, you'll create your blog subdomain, then register your Amazon storefront.
+              {totalSteps && currentStep ? `Step ${currentStep} of ${totalSteps}: ` : ''}
+              Choose your author name. Next, you'll create your blog subdomain, then register your Amazon storefront.
             </p>
           </div>
           {!required && (

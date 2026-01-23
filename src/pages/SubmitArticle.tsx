@@ -749,6 +749,8 @@ export default function SubmitArticle() {
           checkSubdomain();
         }}
         required={true}
+        totalSteps={3}
+        currentStep={1}
       />
       <SubdomainRegistration
         isOpen={showSubdomainModal}
@@ -769,6 +771,8 @@ export default function SubmitArticle() {
           }
         }}
         required={!userSubdomain}
+        totalSteps={3}
+        currentStep={2}
       />
       <StorefrontRegistration
         isOpen={showStorefrontModal}
@@ -787,6 +791,8 @@ export default function SubmitArticle() {
         }}
         subdomain={userSubdomain || ''}
         required={true}
+        totalSteps={3}
+        currentStep={3}
       />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {!user && !authLoading && (
