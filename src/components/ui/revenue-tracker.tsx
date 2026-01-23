@@ -50,10 +50,10 @@ export function RevenueTracker({
         // If no history, use placeholders as a fallback (should be rare now)
         if (!history || !history.revenue || history.revenue.length === 0) {
             switch (timePeriod) {
-                case 'daily': return totalRevenue * 0.03;
-                case 'weekly': return totalRevenue * 0.15;
-                case 'monthly': return totalRevenue * 0.4;
-                case 'yearly': return totalRevenue * 0.9;
+                case 'daily': return 0;
+                case 'weekly': return 0;
+                case 'monthly': return 0;
+                case 'yearly': return 0;
                 default: return totalRevenue;
             }
         }
@@ -80,7 +80,7 @@ export function RevenueTracker({
         return history.revenue
             .map(item => {
                 if (typeof item === 'string') {
-                    return { time: new Date(item).getTime(), amount: 9.99 };
+                    return { time: new Date(item).getTime(), amount: 0 };
                 }
                 return { time: new Date(item.date).getTime(), amount: item.amount };
             })

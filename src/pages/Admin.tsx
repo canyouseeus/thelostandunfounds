@@ -505,8 +505,7 @@ export default function Admin() {
         const { count } = await supabase
           .from('newsletter_subscribers')
           .select('*', { count: 'exact', head: true })
-          .eq('verified', true)
-          .gte('created_at', PLATFORM_LAUNCH_DATE);
+          .eq('verified', true);
         newsletterCount = count || 0;
 
         // Fetch newest 3 subscribers
@@ -589,7 +588,6 @@ export default function Admin() {
           supabase.from('newsletter_subscribers')
             .select('created_at')
             .eq('verified', true)
-            .gte('created_at', PLATFORM_LAUNCH_DATE)
             .order('created_at', { ascending: true }),
           supabase.from('affiliates')
             .select('created_at')
@@ -1299,10 +1297,10 @@ export default function Admin() {
             <RevenueTracker
               affiliateRevenue={stats?.affiliateRevenue || 0}
               galleryRevenue={stats?.galleryRevenue || 0}
-              subscriberRevenue={(stats?.activeSubscriptions || 0) * 9.99}
+              subscriberRevenue={0} // No active paid subscriptions yet
               history={stats?.history}
               stats={{
-                revenue: (stats?.activeSubscriptions || 0) * 9.99,
+                revenue: (stats?.affiliateRevenue || 0) + (stats?.galleryRevenue || 0),
                 newsletter: stats?.newsletterSubscribers || 0,
                 affiliates: affiliateStats?.totalAffiliates || 0,
               }}
