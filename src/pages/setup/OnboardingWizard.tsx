@@ -213,7 +213,20 @@ export default function OnboardingWizard() {
                             </div>
 
                             <button
-                                onClick={() => user ? setStep(2) : setStep(1)}
+                                onClick={() => {
+                                    if (user) {
+                                        // Check if logged-in email matches invitation email
+                                        if (user.email?.toLowerCase() === invitation?.email?.toLowerCase()) {
+                                            setStep(2);
+                                        } else {
+                                            // Email mismatch - show auth step with warning
+                                            setEmailMismatch(true);
+                                            setStep(1);
+                                        }
+                                    } else {
+                                        setStep(1);
+                                    }
+                                }}
                                 className="w-full px-4 py-2 bg-white text-black font-semibold hover:bg-white/90 transition"
                             >
                                 Get Started
