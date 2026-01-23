@@ -181,7 +181,7 @@ export default function StorefrontRegistration({
       onClick={required ? undefined : onClose}
     >
       <div
-        className="bg-black/50 rounded-none p-6 w-full max-w-md mx-4"
+        className="bg-black/50 border-0 rounded-none p-6 w-full max-w-md mx-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">

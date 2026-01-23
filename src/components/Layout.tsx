@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useSageMode } from '../contexts/SageModeContext'
 import { isAdmin } from '../utils/admin'
+import { initAffiliateTracking } from '../utils/affiliateTracking'
 import AuthModal from './auth/AuthModal'
 import SageModeOverlay from './SageModeOverlay'
 import { supabase } from '../lib/supabase'
@@ -36,6 +37,9 @@ export default function Layout({ children }: { children?: ReactNode }) {
 
   // Load user subdomain for profile link
   useEffect(() => {
+    // Initialize affiliate tracking from URL - captures ?ref= everywhere
+    initAffiliateTracking();
+
     if (user) {
       const loadSubdomain = async () => {
         try {

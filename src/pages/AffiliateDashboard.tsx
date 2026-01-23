@@ -31,6 +31,8 @@ import CustomerList from '../components/affiliate/CustomerList'
 import ReferralTree from '../components/affiliate/ReferralTree'
 import MLMEarningsTable from '../components/affiliate/MLMEarningsTable'
 import AffiliateCodeSetup from '../components/affiliate/AffiliateCodeSetup'
+import { AdminBentoCard, AdminBentoRow } from '../components/ui/admin-bento-card'
+import { ExpandableBentoCard } from '../components/ui/expandable-bento-card'
 
 interface DashboardData {
   affiliate: {
@@ -447,9 +449,9 @@ export default function AffiliateDashboard() {
 
   const getRankBadge = (rank: number | null) => {
     if (!rank) return null
-    if (rank === 1) return <Trophy className="w-5 h-5 text-yellow-400" />
+    if (rank === 1) return <Trophy className="w-5 h-5 text-white" />
     if (rank === 2) return <Trophy className="w-5 h-5 text-gray-300" />
-    if (rank === 3) return <Trophy className="w-5 h-5 text-orange-400" />
+    if (rank === 3) return <Trophy className="w-5 h-5 text-white/60" />
     return null
   }
 
@@ -466,7 +468,7 @@ export default function AffiliateDashboard() {
   if (!user) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-black/50 border border-white/10 rounded-none p-8 text-center">
+        <div className="max-w-md w-full bg-black/50 border-0 border-white/10 rounded-none p-8 text-center">
           <LogIn className="w-16 h-16 text-white/60 mx-auto mb-6" />
           <h1 className="text-2xl font-bold text-white mb-4">
             Sign in to Access Your Affiliate Dashboard
@@ -515,7 +517,7 @@ export default function AffiliateDashboard() {
   if (error || !data) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <div className="bg-red-400/20 border border-red-400/50 text-red-400 px-6 py-4 rounded-none max-w-md">
+        <div className="bg-white/10 border-0 text-white px-6 py-4 rounded-none max-w-md">
           {error || 'Failed to load dashboard'}
         </div>
       </div>
@@ -532,187 +534,179 @@ export default function AffiliateDashboard() {
           <p className="text-white/60 font-medium uppercase tracking-widest text-xs">Performance Overview & Management</p>
         </div>
 
-        {/* Affiliate Info Card */}
-        <div className="bg-black border border-white/20 rounded-none p-6 mb-8">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex-1">
-              <div className="text-xs font-bold text-white/40 uppercase tracking-widest mb-2">Your Affiliate Code</div>
-              {editingCode ? (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={newCode}
-                      onChange={(e) => {
-                        const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '')
-                        setNewCode(value)
-                        setCodeError(null)
-                      }}
-                      maxLength={12}
-                      className="text-3xl font-black text-white bg-black border-b border-white px-0 py-2 focus:outline-none focus:border-white/40 font-mono rounded-none w-full max-w-[300px]"
-                      placeholder="ENTER CODE"
-                      autoFocus
-                    />
-                    <div className="flex gap-1">
-                      <button
-                        onClick={handleSaveCode}
-                        disabled={updatingCode}
-                        className="p-2 bg-white text-black hover:bg-white/90 transition-colors disabled:opacity-50"
-                        title="Save"
-                      >
-                        {updatingCode ? (
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                        ) : (
-                          <Save className="w-5 h-5" />
-                        )}
+        {/* Affiliate Info Card - Converted to Bento */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-8">
+          <AdminBentoCard
+            title="Affiliate Identity"
+            colSpan={4}
+            icon={<Tag className="w-4 h-4" />}
+            className="min-h-[200px]"
+          >
+            <div className="space-y-6">
+              <div>
+                <div className="text-[10px] items-center font-bold text-white/40 uppercase tracking-widest mb-2">Your Code</div>
+                {editingCode ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={newCode}
+                        onChange={(e) => {
+                          const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '')
+                          setNewCode(value)
+                          setCodeError(null)
+                        }}
+                        maxLength={12}
+                        className="text-2xl font-black text-white bg-black border-b border-white px-0 py-1 focus:outline-none focus:border-white/40 font-mono rounded-none w-full"
+                        placeholder="CODE"
+                        autoFocus
+                      />
+                      <button onClick={handleSaveCode} disabled={updatingCode} className="p-2 hover:bg-white/10 transition-colors">
+                        {updatingCode ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                       </button>
-                      <button
-                        onClick={handleCancelEdit}
-                        disabled={updatingCode}
-                        className="p-2 bg-black border border-white/20 text-white hover:bg-white/10 transition-colors disabled:opacity-50"
-                        title="Cancel"
-                      >
-                        <X className="w-5 h-5" />
+                      <button onClick={handleCancelEdit} disabled={updatingCode} className="p-2 hover:bg-white/10 transition-colors">
+                        <X className="w-4 h-4" />
                       </button>
                     </div>
+                    {codeError && <div className="text-[10px] text-red-500 font-bold uppercase tracking-wider">{codeError}</div>}
                   </div>
-                  {codeError && (
-                    <div className="text-sm text-red-500 font-bold uppercase tracking-wider">{codeError}</div>
-                  )}
-                  <div className="text-[10px] text-white/40 uppercase tracking-wider">
-                    Code must be 4-12 uppercase letters/numbers only
+                ) : (
+                  <div className="flex items-center justify-between group">
+                    <div className="text-xl sm:text-2xl md:text-3xl font-black text-white font-mono tracking-tighter break-all whitespace-pre-wrap">
+                      {data.affiliate.code}
+                    </div>
+                    <button onClick={handleEditCode} className="opacity-0 group-hover:opacity-100 p-2 hover:bg-white/10 transition-all">
+                      <Edit className="w-4 h-4 text-white/40 hover:text-white" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
+                <div>
+                  <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Commission</div>
+                  <div className="text-xl font-bold text-white">{data.affiliate.commission_rate}%</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Status</div>
+                  <div className={`text-xl font-bold uppercase ${data.affiliate.status === 'active' ? 'text-green-500' : 'text-white'}`}>
+                    {data.affiliate.status}
                   </div>
                 </div>
-              ) : (
-                <div className="flex items-center gap-4">
-                  <div className="text-4xl font-black text-white font-mono tracking-tighter">{data.affiliate.code}</div>
-                  <button
-                    onClick={handleEditCode}
-                    className="p-2 hover:bg-white/10 transition-colors group"
-                    title="Edit affiliate code"
-                  >
-                    <Edit className="w-4 h-4 text-white/40 group-hover:text-white transition-colors" />
-                  </button>
-                </div>
-              )}
-              <div className="text-xs font-bold text-white/40 uppercase tracking-wider mt-4 flex items-center gap-4">
-                <span>Commission Rate: <span className="text-white">{data.affiliate.commission_rate}%</span></span>
-                <span className="w-1 h-1 bg-white/20 rounded-full"></span>
-                <span>Status: <span className="text-green-500">{data.affiliate.status}</span></span>
               </div>
             </div>
-            <div className="flex flex-col gap-3 min-w-[200px]">
+          </AdminBentoCard>
+
+          <AdminBentoCard
+            title="Quick Actions"
+            colSpan={8}
+            icon={<ExternalLink className="w-4 h-4" />}
+            className="min-h-[200px]"
+          >
+            <div className="flex flex-col md:flex-row gap-4 h-full items-center justify-center p-4">
               <button
                 onClick={copyReferralLink}
-                className="flex items-center justify-center gap-2 px-6 py-3 bg-white text-black font-bold uppercase tracking-wider text-xs hover:bg-white/90 transition-colors w-full"
+                className="flex items-center justify-center gap-3 px-8 py-4 bg-white text-black font-black uppercase tracking-widest text-sm hover:bg-white/90 transition-all hover:scale-105 active:scale-95 w-full md:w-auto"
               >
-                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                {copied ? 'COPIED!' : 'COPY LINK'}
+                {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                {copied ? 'COPIED TO CLIPBOARD' : 'COPY AFFILIATE LINK'}
               </button>
               <Link
                 to={`/shop?ref=${data.affiliate.code}`}
                 target="_blank"
-                className="flex items-center justify-center gap-2 px-6 py-3 bg-black border border-white/20 text-white font-bold uppercase tracking-wider text-xs hover:bg-white/10 transition-colors w-full text-center"
+                className="flex items-center justify-center gap-3 px-8 py-4 bg-transparent border border-white/20 text-white font-black uppercase tracking-widest text-sm hover:bg-white/10 transition-all hover:border-white w-full md:w-auto"
               >
-                <ExternalLink className="w-4 h-4" />
+                <ExternalLink className="w-5 h-5" />
                 PREVIEW SHOP
               </Link>
             </div>
-          </div>
+          </AdminBentoCard>
         </div>
 
-        {/* Key Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {/* Available Balance */}
-          <div className="bg-black border border-white/20 rounded-none p-6">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Available Now</span>
-              <DollarSign className="w-4 h-4 text-white" />
-            </div>
-            <div className="text-4xl font-black text-white mb-2 tracking-tighter">
-              ${(data.balance?.available_balance || 0).toFixed(2)}
-            </div>
-            <div className="text-[10px] font-bold uppercase tracking-wider">
+        {/* Key Metrics Grid - Converted to Bento Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <AdminBentoCard title="Available Balance" icon={<DollarSign className="w-4 h-4" />}>
+            <div className="mt-2">
+              <div className="text-4xl font-black text-white tracking-tighter">
+                ${(data.balance?.available_balance || 0).toFixed(2)}
+              </div>
               {(data.balance?.pending_balance || 0) > 0 && (
-                <span className="text-white/60">+${(data.balance?.pending_balance || 0).toFixed(2)} PENDING</span>
+                <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-2">
+                  +${(data.balance?.pending_balance || 0).toFixed(2)} PENDING
+                </div>
               )}
             </div>
-          </div>
+          </AdminBentoCard>
 
-          {/* Total Clicks */}
-          <div className="bg-black border border-white/20 rounded-none p-6">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Total Clicks</span>
-              <MousePointerClick className="w-4 h-4 text-white" />
-            </div>
-            <div className="text-4xl font-black text-white mb-2 tracking-tighter">
-              {data.affiliate.total_clicks.toLocaleString()}
-            </div>
-            <div className="text-[10px] font-bold text-white/40 uppercase tracking-wider">
-              {data.overview.conversion_rate.toFixed(1)}% CONVERSION RATE
-            </div>
-          </div>
-
-          {/* Total Conversions */}
-          <div className="bg-black border border-white/20 rounded-none p-6">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Conversions</span>
-              <ShoppingCart className="w-4 h-4 text-white" />
-            </div>
-            <div className="text-4xl font-black text-white mb-2 tracking-tighter">
-              {data.affiliate.total_conversions}
-            </div>
-            <div className="text-[10px] font-bold text-white/40 uppercase tracking-wider">
-              ${data.overview.average_commission.toFixed(2)} AVG COMMISSION
-            </div>
-          </div>
-
-          {/* King Midas Rank */}
-          <div className="bg-black border border-white/20 rounded-none p-6">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Current Rank</span>
-              <Trophy className="w-4 h-4 text-white" />
-            </div>
-            <div className="flex items-center gap-2 mb-2">
-              {getRankBadge(data.overview.current_rank)}
+          <AdminBentoCard title="Total Clicks" icon={<MousePointerClick className="w-4 h-4" />}>
+            <div className="mt-2">
               <div className="text-4xl font-black text-white tracking-tighter">
-                {data.overview.current_rank ? `#${data.overview.current_rank}` : 'N/A'}
+                {data.affiliate.total_clicks.toLocaleString()}
+              </div>
+              <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-2">
+                {data.overview.conversion_rate.toFixed(1)}% CONVERSION RATE
               </div>
             </div>
-            <div className="text-[10px] font-bold text-white/40 uppercase tracking-wider">
-              {data.overview.top_3_finishes} TOP 3 FINISHES
+          </AdminBentoCard>
+
+          <AdminBentoCard title="Conversions" icon={<ShoppingCart className="w-4 h-4" />}>
+            <div className="mt-2">
+              <div className="text-4xl font-black text-white tracking-tighter">
+                {data.affiliate.total_conversions}
+              </div>
+              <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-2">
+                ${data.overview.average_commission.toFixed(2)} AVG COMM
+              </div>
             </div>
-          </div>
+          </AdminBentoCard>
+
+          <AdminBentoCard title="Current Rank" icon={<Trophy className="w-4 h-4" />}>
+            <div className="mt-2">
+              <div className="flex items-center gap-2">
+                {getRankBadge(data.overview.current_rank)}
+                <div className="text-4xl font-black text-white tracking-tighter">
+                  {data.overview.current_rank ? `#${data.overview.current_rank}` : 'N/A'}
+                </div>
+              </div>
+              <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-2">
+                {data.overview.top_3_finishes} TOP 3 FINISHES
+              </div>
+            </div>
+          </AdminBentoCard>
         </div>
 
         {/* MLM Quick Stats Row */}
         {data.mlm && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div className="bg-black border border-white/20 rounded-none p-6 text-center group hover:border-white transition-colors">
-              <Star className="text-white mx-auto mb-4" size={24} />
-              <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Reward Points</p>
-              <p className="text-3xl font-black text-white tracking-tighter">{data.affiliate.reward_points}</p>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <AdminBentoCard title="Rewards" icon={<Star className="w-4 h-4" />}>
+              <div className="text-center py-2">
+                <p className="text-4xl font-black text-white tracking-tighter">{data.affiliate.reward_points}</p>
+                <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">POINTS AVAILABLE</p>
+              </div>
+            </AdminBentoCard>
 
-            <div className="bg-black border border-white/20 rounded-none p-6 text-center group hover:border-white transition-colors">
-              <Users className="text-white mx-auto mb-4" size={24} />
-              <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Customers</p>
-              <p className="text-3xl font-black text-white tracking-tighter">{data.mlm.network.total_customers}</p>
-            </div>
+            <AdminBentoCard title="Customers" icon={<Users className="w-4 h-4" />}>
+              <div className="text-center py-2">
+                <p className="text-4xl font-black text-white tracking-tighter">{data.mlm.network.total_customers}</p>
+                <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">ACTIVE CUSTOMERS</p>
+              </div>
+            </AdminBentoCard>
 
-            <div className="bg-black border border-white/20 rounded-none p-6 text-center group hover:border-white transition-colors">
-              <Network className="text-white mx-auto mb-4" size={24} />
-              <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Network Size</p>
-              <p className="text-3xl font-black text-white tracking-tighter">{data.mlm.network.total_network}</p>
-            </div>
+            <AdminBentoCard title="Network" icon={<Network className="w-4 h-4" />}>
+              <div className="text-center py-2">
+                <p className="text-4xl font-black text-white tracking-tighter">{data.mlm.network.total_network}</p>
+                <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">TOTAL DOWNLINE</p>
+              </div>
+            </AdminBentoCard>
 
-            <div className="bg-black border border-white/20 rounded-none p-6 text-center group hover:border-white transition-colors">
-              <Gift className="text-white mx-auto mb-4" size={24} />
-              <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Credit Balance</p>
-              <p className="text-3xl font-black text-white tracking-tighter">
-                ${data.affiliate.discount_credit_balance?.toFixed(2) || '0.00'}
-              </p>
-            </div>
+            <AdminBentoCard title="Credits" icon={<Gift className="w-4 h-4" />}>
+              <div className="text-center py-2">
+                <p className="text-4xl font-black text-white tracking-tighter">
+                  ${data.affiliate.discount_credit_balance?.toFixed(2) || '0.00'}
+                </p>
+                <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">STORE CREDIT</p>
+              </div>
+            </AdminBentoCard>
           </div>
         )}
 
@@ -755,109 +749,103 @@ export default function AffiliateDashboard() {
           </>
         )}
 
-        {/* Performance Cards */}
+        {/* Performance Cards - Expandable */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Last 30 Days Performance */}
-          <div className="bg-black border border-white/20 rounded-none overflow-hidden">
-            <div className="p-6 border-b border-white/20">
-              <h2 className="text-lg font-black text-white flex items-center gap-3 uppercase tracking-widest">
-                <Calendar className="w-5 h-5 text-white" />
-                Last 30 Days
-              </h2>
+          <ExpandableBentoCard
+            title="Last 30 Days"
+            icon={<Calendar className="w-4 h-4" />}
+            details={
+              <>
+                <AdminBentoRow
+                  label="Total Orders"
+                  value={data.overview.total_commissions}
+                />
+                <AdminBentoRow
+                  label="7-Day Trend"
+                  value={
+                    <span className={`flex items-center gap-1 ${data.overview.profit_trend_7d >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      <TrendingUp className={`w-3 h-3 ${data.overview.profit_trend_7d < 0 ? 'rotate-180' : ''}`} />
+                      {Math.abs(data.overview.profit_trend_7d).toFixed(1)}%
+                    </span>
+                  }
+                />
+                {data.overview.best_day && (
+                  <AdminBentoRow
+                    label="Best Day"
+                    value={
+                      <div className="flex justify-between w-full">
+                        <span>{new Date(data.overview.best_day.date).toLocaleDateString()}</span>
+                        <span className="text-white/60">${data.overview.best_day.profit.toFixed(2)}</span>
+                      </div>
+                    }
+                  />
+                )}
+              </>
+            }
+          >
+            <div className="space-y-4 pt-2">
+              <AdminBentoRow
+                label="Commission Earned"
+                value={`$${data.overview.total_commission_amount.toFixed(2)}`}
+              />
+              <AdminBentoRow
+                label="Profit Generated"
+                value={`$${data.overview.total_profit_generated.toFixed(2)}`}
+              />
             </div>
-            <div className="p-6 space-y-6">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Commission Earned</span>
-                <span className="text-2xl font-black text-white tracking-tighter">
-                  ${data.overview.total_commission_amount.toFixed(2)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Profit Generated</span>
-                <span className="text-2xl font-black text-white tracking-tighter">
-                  ${data.overview.total_profit_generated.toFixed(2)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Orders</span>
-                <span className="text-2xl font-black text-white tracking-tighter">
-                  {data.overview.total_commissions}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">7-Day Trend</span>
-                <span className={`text-2xl font-black flex items-center gap-1 tracking-tighter ${data.overview.profit_trend_7d >= 0 ? 'text-white' : 'text-white/60'
-                  }`}>
-                  <TrendingUp className={`w-4 h-4 ${data.overview.profit_trend_7d < 0 ? 'rotate-180' : ''
-                    }`} />
-                  {Math.abs(data.overview.profit_trend_7d).toFixed(1)}%
-                </span>
-              </div>
-              {data.overview.best_day && (
-                <div className="pt-6 border-t border-white/20">
-                  <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Best Day</div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-white font-bold">{new Date(data.overview.best_day.date).toLocaleDateString()}</span>
-                    <span className="text-xl font-black text-white tracking-tighter">${data.overview.best_day.profit.toFixed(2)}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+          </ExpandableBentoCard>
+        </div>
 
-          {/* King Midas Performance */}
-          <div className="bg-black border border-white/20 rounded-none overflow-hidden">
-            <div className="p-6 border-b border-white/20">
-              <h2 className="text-lg font-black text-white flex items-center gap-3 uppercase tracking-widest">
-                <Award className="w-5 h-5 text-white" />
-                KING MIDAS Performance
-              </h2>
-            </div>
-            <div className="p-6 space-y-6">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Total Earned</span>
-                <span className="text-2xl font-black text-white tracking-tighter">
-                  ${data.overview.total_king_midas_earnings.toFixed(2)}
-                </span>
+        {/* King Midas Performance - Expandable */}
+        <div className="grid grid-cols-1 mb-8">
+          <ExpandableBentoCard
+            title="King Midas Performance"
+            icon={<Award className="w-4 h-4" />}
+            details={
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Top 3</div>
+                  <div className="text-xl font-black text-white tracking-tighter">{data.overview.top_3_finishes}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Paid Out</div>
+                  <div className="text-xl font-black text-white tracking-tighter">{data.overview.paid_payouts}</div>
+                </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">First Place Finishes</span>
-                <span className="text-2xl font-black text-white tracking-tighter">
-                  {data.overview.first_place_finishes}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Top 3 Finishes</span>
-                <span className="text-2xl font-black text-white tracking-tighter">
-                  {data.overview.top_3_finishes}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Pending Payouts</span>
-                <span className="text-2xl font-black text-white tracking-tighter">
-                  {data.overview.pending_payouts}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Paid Payouts</span>
-                <span className="text-2xl font-black text-white tracking-tighter">
-                  {data.overview.paid_payouts}
-                </span>
-              </div>
-              <div className="pt-6 border-t border-white/20">
+            }
+            footer={
+              <div className="text-center">
                 <Link
                   to="/king-midas-leaderboard"
-                  className="block text-center px-4 py-3 bg-white text-black font-bold uppercase tracking-widest hover:bg-white/90 transition-colors text-xs"
+                  className="inline-block px-6 py-2 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-white/90 transition-colors"
                 >
                   View Full Leaderboard →
                 </Link>
               </div>
+            }
+          >
+            <div className="p-2 space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Total Earned</div>
+                  <div className="text-xl font-black text-white tracking-tighter">${data.overview.total_king_midas_earnings.toFixed(2)}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">1st Place</div>
+                  <div className="text-xl font-black text-white tracking-tighter">{data.overview.first_place_finishes}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Current Pool</div>
+                  <div className="text-xl font-black text-white tracking-tighter">${(data.overview.current_rank && data.overview.current_rank <= 3) ? (data.king_midas?.recent_stats?.[0]?.pool_share || 0).toFixed(2) : '0.00'}</div>
+                </div>
+              </div>
             </div>
-          </div>
+          </ExpandableBentoCard>
         </div>
 
         {/* Payout Settings */}
-        <div className="bg-black border border-white/20 rounded-none p-6 mb-8">
+        <div className="bg-black border-0 rounded-none p-6 mb-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-black text-white uppercase tracking-widest">Payout Settings</h3>
             {!editingPayout && (
@@ -870,248 +858,256 @@ export default function AffiliateDashboard() {
             )}
           </div>
 
-          {payoutSuccess && (
-            <div className="bg-white/10 border border-white/20 text-white px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider mb-6">
-              Payout settings updated successfully!
-            </div>
-          )}
-
-          {payoutError && (
-            <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider mb-6">
-              {payoutError}
-            </div>
-          )}
-
-          {editingPayout ? (
-            <div className="space-y-6">
-              <div>
-                <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">PayPal Email</label>
-                <input
-                  type="email"
-                  value={paypalEmail}
-                  onChange={(e) => setPaypalEmail(e.target.value)}
-                  className="w-full px-4 py-3 bg-black border border-white/20 rounded-none text-white focus:outline-none focus:border-white transition-colors font-mono text-sm"
-                />
+          {
+            payoutSuccess && (
+              <div className="bg-green-500/10 border border-green-500/20 text-green-500 px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider mb-6">
+                Payout settings updated successfully!
               </div>
-              <div>
-                <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">
-                  Payment Threshold (minimum $10)
-                </label>
-                <input
-                  type="number"
-                  min="10"
-                  step="0.01"
-                  value={paymentThreshold}
-                  onChange={(e) => setPaymentThreshold(parseFloat(e.target.value))}
-                  className="w-full px-4 py-3 bg-black border border-white/20 rounded-none text-white focus:outline-none focus:border-white transition-colors font-mono text-sm"
-                />
-                <p className="text-[10px] font-medium text-white/40 uppercase tracking-wider mt-2">
-                  You'll receive payouts when your earnings reach this amount
-                </p>
-              </div>
-              <div className="flex gap-4">
-                <button
-                  onClick={handleSavePayoutSettings}
-                  className="px-6 py-2 bg-white text-black text-xs font-bold uppercase tracking-widest hover:bg-white/90 transition-colors"
-                >
-                  Save
-                </button>
-                <button
-                  onClick={() => {
-                    setEditingPayout(false);
-                    setPaypalEmail(payoutSettings?.paypal_email || '');
-                    setPaymentThreshold(payoutSettings?.payment_threshold || 10);
-                    setPayoutError(null);
-                  }}
-                  className="px-6 py-2 bg-transparent border border-white/20 text-white text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center text-sm border-b border-white/10 pb-4">
-                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">PayPal Email</span>
-                <span className="text-white font-mono">{payoutSettings?.paypal_email || 'Not set'}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm border-b border-white/10 pb-4">
-                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Payment Threshold</span>
-                <span className="text-white font-mono">${payoutSettings?.payment_threshold || 10}</span>
-              </div>
-              {payoutRequestSuccess && (
-                <div className="mt-4 bg-white/10 border border-white/20 text-white px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider">
-                  Payout request submitted successfully! We'll process it soon.
-                </div>
-              )}
-              {payoutRequestError && (
-                <div className="mt-4 bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider">
-                  {payoutRequestError}
-                </div>
-              )}
-              {payoutSettings && checkPayoutEligibility() && (
-                <div className="mt-4 pt-4 border-t border-white/10">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <p className="text-sm text-white font-bold uppercase tracking-wider">Available for Payout</p>
-                      <p className="text-[10px] text-white/60 font-medium uppercase tracking-widest mt-1">
-                        ${(data?.balance?.available_balance || 0).toFixed(2)} available now
-                      </p>
-                      {(data?.balance?.pending_balance || 0) > 0 && (
-                        <p className="text-[10px] text-white/40 font-medium uppercase tracking-widest mt-1">
-                          +${(data?.balance?.pending_balance || 0).toFixed(2)} pending (holding period)
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setPayoutAmount(data?.balance?.available_balance || 0)
-                      setShowPayoutRequest(true)
-                      setPayoutRequestError(null)
-                    }}
-                    className="w-full px-4 py-3 bg-white text-black font-bold uppercase tracking-widest hover:bg-white/90 transition-colors text-xs"
-                  >
-                    Request Instant Payout
-                  </button>
-                </div>
-              )}
-              {payoutSettings && !checkPayoutEligibility() && data && (
-                <div className="mt-4 pt-4 border-t border-white/10">
-                  <p className="text-xs text-white/40 font-medium uppercase tracking-wider">
-                    {!payoutSettings.paypal_email || payoutSettings.paypal_email.trim() === ''
-                      ? 'Set your PayPal email to request payouts'
-                      : (data.balance?.available_balance || 0) < payoutSettings.payment_threshold
-                        ? (data.balance?.available_balance || 0) > 0
-                          ? `Need $${(payoutSettings.payment_threshold - (data.balance?.available_balance || 0)).toFixed(2)} more to reach threshold`
-                          : (data.balance?.pending_balance || 0) > 0
-                            ? `$${(data.balance?.pending_balance || 0).toFixed(2)} is in holding period`
-                            : 'No earnings yet'
-                        : 'No earnings available for payout'}
-                  </p>
-                </div>
-              )}
-              {!payoutSettings && (
-                <div className="mt-4 pt-4 border-t border-white/10">
-                  <p className="text-xs text-white/40 font-medium uppercase tracking-wider mb-4">
-                    Set up your payout information to receive commissions
-                  </p>
-                  <button
-                    onClick={() => setEditingPayout(true)}
-                    className="px-6 py-3 bg-white text-black font-bold uppercase tracking-widest hover:bg-white/90 transition-colors text-xs"
-                  >
-                    Set Up Payouts
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+            )
+          }
 
-        {/* Payout Request Modal */}
-        {showPayoutRequest && (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-            <div className="bg-black border border-white rounded-none p-8 max-w-md w-full">
-              <h3 className="text-xl font-black text-white uppercase tracking-tighter mb-6">Instant Payout</h3>
+          {
+            payoutError && (
+              <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider mb-6">
+                {payoutError}
+              </div>
+            )
+          }
 
-              {payoutRequestError && (
-                <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider mb-6">
-                  {payoutRequestError}
-                </div>
-              )}
-
+          {
+            editingPayout ? (
               <div className="space-y-6">
-                <div className="bg-white/5 border border-white/20 p-4 rounded-none">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Available Now</span>
-                    <span className="text-white font-black font-mono text-lg">
-                      ${(data?.balance?.available_balance || 0).toFixed(2)}
-                    </span>
-                  </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">PayPal Email</label>
+                  <input
+                    type="email"
+                    value={paypalEmail}
+                    onChange={(e) => setPaypalEmail(e.target.value)}
+                    className="w-full px-4 py-3 bg-black border border-white/20 rounded-none text-white focus:outline-none focus:border-white transition-colors font-mono text-sm"
+                  />
                 </div>
-
-                {(data?.balance?.pending_balance || 0) > 0 && (
-                  <div className="bg-white/5 border border-white/20 p-4 rounded-none">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Pending</span>
-                      <span className="text-white font-mono font-bold">
-                        ${(data?.balance?.pending_balance || 0).toFixed(2)}
-                      </span>
-                    </div>
-                    {data?.balance?.upcoming_availability && data.balance.upcoming_availability.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-white/10">
-                        <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest mb-2">Upcoming:</p>
-                        {data.balance.upcoming_availability.slice(0, 3).map((item, idx) => (
-                          <div key={idx} className="flex justify-between text-[10px] text-white/60 uppercase tracking-wider mb-1">
-                            <span>{new Date(item.date).toLocaleDateString()}</span>
-                            <span className="font-mono">+${item.amount.toFixed(2)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
                 <div>
                   <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">
-                    Payout Amount
+                    Payment Threshold (minimum $10)
                   </label>
                   <input
                     type="number"
-                    min={payoutSettings?.payment_threshold || 10}
-                    max={data?.balance?.available_balance || 0}
+                    min="10"
                     step="0.01"
-                    value={payoutAmount}
-                    onChange={(e) => setPayoutAmount(parseFloat(e.target.value) || 0)}
+                    value={paymentThreshold}
+                    onChange={(e) => setPaymentThreshold(parseFloat(e.target.value))}
                     className="w-full px-4 py-3 bg-black border border-white/20 rounded-none text-white focus:outline-none focus:border-white transition-colors font-mono text-sm"
                   />
                   <p className="text-[10px] font-medium text-white/40 uppercase tracking-wider mt-2">
-                    Min: ${payoutSettings?.payment_threshold || 10} • Max: ${(data?.balance?.available_balance || 0).toFixed(2)}
+                    You'll receive payouts when your earnings reach this amount
                   </p>
                 </div>
+                <div className="flex gap-4">
+                  <button
+                    onClick={handleSavePayoutSettings}
+                    className="px-6 py-2 bg-white text-black text-xs font-bold uppercase tracking-widest hover:bg-white/90 transition-colors"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingPayout(false);
+                      setPaypalEmail(payoutSettings?.paypal_email || '');
+                      setPaymentThreshold(payoutSettings?.payment_threshold || 10);
+                      setPayoutError(null);
+                    }}
+                    className="px-6 py-2 bg-transparent border border-white/20 text-white text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center text-sm border-b border-white/10 pb-4">
+                  <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">PayPal Email</span>
+                  <span className="text-white font-mono">{payoutSettings?.paypal_email || 'Not set'}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm border-b border-white/10 pb-4">
+                  <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Payment Threshold</span>
+                  <span className="text-white font-mono">${payoutSettings?.payment_threshold || 10}</span>
+                </div>
+                {payoutRequestSuccess && (
+                  <div className="mt-4 bg-green-500/10 border border-green-500/20 text-green-500 px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider">
+                    Payout request submitted successfully! We'll process it soon.
+                  </div>
+                )}
+                {payoutRequestError && (
+                  <div className="mt-4 bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider">
+                    {payoutRequestError}
+                  </div>
+                )}
+                {payoutSettings && checkPayoutEligibility() && (
+                  <div className="mt-4 pt-4 border-t border-white/10">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <p className="text-sm text-white font-bold uppercase tracking-wider">Available for Payout</p>
+                        <p className="text-[10px] text-white/60 font-medium uppercase tracking-widest mt-1">
+                          ${(data?.balance?.available_balance || 0).toFixed(2)} available now
+                        </p>
+                        {(data?.balance?.pending_balance || 0) > 0 && (
+                          <p className="text-[10px] text-white/40 font-medium uppercase tracking-widest mt-1">
+                            +${(data?.balance?.pending_balance || 0).toFixed(2)} pending (holding period)
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setPayoutAmount(data?.balance?.available_balance || 0)
+                        setShowPayoutRequest(true)
+                        setPayoutRequestError(null)
+                      }}
+                      className="w-full px-4 py-3 bg-white text-black font-bold uppercase tracking-widest hover:bg-white/90 transition-colors text-xs"
+                    >
+                      Request Instant Payout
+                    </button>
+                  </div>
+                )}
+                {payoutSettings && !checkPayoutEligibility() && data && (
+                  <div className="mt-4 pt-4 border-t border-white/10">
+                    <p className="text-xs text-white/40 font-medium uppercase tracking-wider">
+                      {!payoutSettings.paypal_email || payoutSettings.paypal_email.trim() === ''
+                        ? 'Set your PayPal email to request payouts'
+                        : (data.balance?.available_balance || 0) < payoutSettings.payment_threshold
+                          ? (data.balance?.available_balance || 0) > 0
+                            ? `Need $${(payoutSettings.payment_threshold - (data.balance?.available_balance || 0)).toFixed(2)} more to reach threshold`
+                            : (data.balance?.pending_balance || 0) > 0
+                              ? `$${(data.balance?.pending_balance || 0).toFixed(2)} is in holding period`
+                              : 'No earnings yet'
+                          : 'No earnings available for payout'}
+                    </p>
+                  </div>
+                )}
+                {!payoutSettings && (
+                  <div className="mt-4 pt-4 border-t border-white/10">
+                    <p className="text-xs text-white/40 font-medium uppercase tracking-wider mb-4">
+                      Set up your payout information to receive commissions
+                    </p>
+                    <button
+                      onClick={() => setEditingPayout(true)}
+                      className="px-6 py-3 bg-white text-black font-bold uppercase tracking-widest hover:bg-white/90 transition-colors text-xs"
+                    >
+                      Set Up Payouts
+                    </button>
+                  </div>
+                )}
+              </div>
+            )
+          }
+        </div>
 
-                <div>
-                  <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">
-                    PayPal Email
-                  </label>
-                  <div className="px-4 py-3 bg-white/5 border border-white/10 rounded-none text-white font-mono text-sm">
-                    {payoutSettings?.paypal_email || 'Not set'}
+        {/* Payout Request Modal */}
+        {
+          showPayoutRequest && (
+            <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+              <div className="bg-black border-0 rounded-none p-8 max-w-md w-full">
+                <h3 className="text-xl font-black text-white uppercase tracking-tighter mb-6">Instant Payout</h3>
+
+                {payoutRequestError && (
+                  <div className="bg-white/10 border border-white/20 text-white px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider mb-6">
+                    {payoutRequestError}
+                  </div>
+                )}
+
+                <div className="space-y-6">
+                  <div className="bg-white/5 border border-white/20 p-4 rounded-none">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Available Now</span>
+                      <span className="text-white font-black font-mono text-lg">
+                        ${(data?.balance?.available_balance || 0).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {(data?.balance?.pending_balance || 0) > 0 && (
+                    <div className="bg-white/5 border border-white/20 p-4 rounded-none">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Pending</span>
+                        <span className="text-white font-mono font-bold">
+                          ${(data?.balance?.pending_balance || 0).toFixed(2)}
+                        </span>
+                      </div>
+                      {data?.balance?.upcoming_availability && data.balance.upcoming_availability.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-white/10">
+                          <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest mb-2">Upcoming:</p>
+                          {data.balance.upcoming_availability.slice(0, 3).map((item, idx) => (
+                            <div key={idx} className="flex justify-between text-[10px] text-white/60 uppercase tracking-wider mb-1">
+                              <span>{new Date(item.date).toLocaleDateString()}</span>
+                              <span className="font-mono">+${item.amount.toFixed(2)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">
+                      Payout Amount
+                    </label>
+                    <input
+                      type="number"
+                      min={payoutSettings?.payment_threshold || 10}
+                      max={data?.balance?.available_balance || 0}
+                      step="0.01"
+                      value={payoutAmount}
+                      onChange={(e) => setPayoutAmount(parseFloat(e.target.value) || 0)}
+                      className="w-full px-4 py-3 bg-black border border-white/20 rounded-none text-white focus:outline-none focus:border-white transition-colors font-mono text-sm"
+                    />
+                    <p className="text-[10px] font-medium text-white/40 uppercase tracking-wider mt-2">
+                      Min: ${payoutSettings?.payment_threshold || 10} • Max: ${(data?.balance?.available_balance || 0).toFixed(2)}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">
+                      PayPal Email
+                    </label>
+                    <div className="px-4 py-3 bg-white/5 border border-white/10 rounded-none text-white font-mono text-sm">
+                      {payoutSettings?.paypal_email || 'Not set'}
+                    </div>
+                  </div>
+
+                  <div className="bg-white/5 border border-white/10 p-4 rounded-none text-[10px] text-white/60 font-medium uppercase tracking-wider leading-relaxed">
+                    <p className="mb-2"><strong>Instant payout:</strong> Funds are sent immediately to your PayPal account.</p>
+                    <p>Physical products: 30-day hold • Digital products: 7-day hold</p>
                   </div>
                 </div>
 
-                <div className="bg-white/5 border border-white/10 p-4 rounded-none text-[10px] text-white/60 font-medium uppercase tracking-wider leading-relaxed">
-                  <p className="mb-2"><strong>Instant payout:</strong> Funds are sent immediately to your PayPal account.</p>
-                  <p>Physical products: 30-day hold • Digital products: 7-day hold</p>
+                <div className="flex gap-4 mt-8">
+                  <button
+                    onClick={handleRequestPayout}
+                    disabled={requestingPayout || payoutAmount < (payoutSettings?.payment_threshold || 10) || payoutAmount > (data?.balance?.available_balance || 0)}
+                    className="flex-1 px-4 py-3 bg-white text-black font-bold uppercase tracking-widest hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs"
+                  >
+                    {requestingPayout ? 'Processing...' : `Send $${payoutAmount.toFixed(2)} to PayPal`}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowPayoutRequest(false)
+                      setPayoutRequestError(null)
+                      setPayoutAmount(0)
+                    }}
+                    disabled={requestingPayout}
+                    className="px-6 py-3 bg-transparent border border-white/20 text-white font-bold uppercase tracking-widest hover:bg-white/10 transition-colors disabled:opacity-50 text-xs"
+                  >
+                    Cancel
+                  </button>
                 </div>
               </div>
-
-              <div className="flex gap-4 mt-8">
-                <button
-                  onClick={handleRequestPayout}
-                  disabled={requestingPayout || payoutAmount < (payoutSettings?.payment_threshold || 10) || payoutAmount > (data?.balance?.available_balance || 0)}
-                  className="flex-1 px-4 py-3 bg-white text-black font-bold uppercase tracking-widest hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs"
-                >
-                  {requestingPayout ? 'Processing...' : `Send $${payoutAmount.toFixed(2)} to PayPal`}
-                </button>
-                <button
-                  onClick={() => {
-                    setShowPayoutRequest(false)
-                    setPayoutRequestError(null)
-                    setPayoutAmount(0)
-                  }}
-                  disabled={requestingPayout}
-                  className="px-6 py-3 bg-transparent border border-white/20 text-white font-bold uppercase tracking-widest hover:bg-white/10 transition-colors disabled:opacity-50 text-xs"
-                >
-                  Cancel
-                </button>
-              </div>
             </div>
-          </div>
-        )}
+          )
+        }
 
         {/* Recent Commissions */}
-        <div className="bg-black border border-white/20 rounded-none overflow-hidden mb-8">
-          <div className="p-6 border-b border-white/20">
+        <div className="bg-black border-0 rounded-none overflow-hidden mb-8">
+          <div className="p-6">
             <h2 className="text-lg font-black text-white uppercase tracking-widest">Recent Commissions</h2>
           </div>
           <div className="overflow-x-auto">
@@ -1153,9 +1149,9 @@ export default function AffiliateDashboard() {
                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex flex-col items-center gap-1">
-                          <span className={`px-2 py-1 border text-[10px] font-bold uppercase tracking-widest ${commission.status === 'paid' ? 'border-white text-white' :
+                          <span className={`px-2 py-1 border text-[10px] font-bold uppercase tracking-widest ${commission.status === 'paid' ? 'border-green-500 text-green-500' :
                             commission.status === 'cancelled' ? 'border-red-500 text-red-500' :
-                              commission.status_label?.includes('Available') ? 'border-white text-white' :
+                              commission.status_label?.includes('Available') ? 'border-green-500 text-green-500' :
                                 commission.status_label?.includes('Pending') ? 'border-white/40 text-white/60' :
                                   'border-white/40 text-white/60'
                             }`}>
@@ -1175,7 +1171,7 @@ export default function AffiliateDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Link
             to="/king-midas-leaderboard"
-            className="bg-black border border-white/20 rounded-none p-6 hover:bg-white hover:text-black transition-colors group"
+            className="bg-black border-0 rounded-none p-6 hover:bg-white hover:text-black transition-colors group"
           >
             <Trophy className="w-8 h-8 text-white mb-4 group-hover:text-black transition-colors" />
             <h3 className="text-sm font-bold uppercase tracking-widest mb-2">
@@ -1188,7 +1184,7 @@ export default function AffiliateDashboard() {
 
           <Link
             to="/affiliate-profile"
-            className="bg-black border border-white/20 rounded-none p-6 hover:bg-white hover:text-black transition-colors group"
+            className="bg-black border-0 rounded-none p-6 hover:bg-white hover:text-black transition-colors group"
           >
             <MousePointerClick className="w-8 h-8 text-white mb-4 group-hover:text-black transition-colors" />
             <h3 className="text-sm font-bold uppercase tracking-widest mb-2">
@@ -1199,7 +1195,7 @@ export default function AffiliateDashboard() {
             </p>
           </Link>
 
-          <div className="bg-black border border-white/20 rounded-none p-6 opacity-50 cursor-not-allowed">
+          <div className="bg-black border-0 rounded-none p-6 opacity-50 cursor-not-allowed">
             <DollarSign className="w-8 h-8 text-white mb-4" />
             <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-2">
               Marketing Tools

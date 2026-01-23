@@ -89,7 +89,7 @@ export default function AffiliateCodeSetup({ onSuccess }: AffiliateCodeSetupProp
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
-      <div className="bg-black/50 border border-white/10 rounded-none p-8">
+      <div className="bg-black/50 border-0 rounded-none p-8">
         <h1 className="text-3xl font-bold text-white mb-4">
           Choose Your Affiliate Code
         </h1>
@@ -154,7 +154,7 @@ export default function AffiliateCodeSetup({ onSuccess }: AffiliateCodeSetupProp
             </div>
           )}
 
-          <div className="bg-white/5 border border-white/10 rounded-none p-4">
+          <div className="bg-white/5 border-0 rounded-none p-4">
             <h3 className="text-white font-semibold mb-2">Code Requirements:</h3>
             <ul className="text-white/60 text-sm space-y-1">
               <li>• 4-12 characters long</li>

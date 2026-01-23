@@ -67,7 +67,7 @@ export default function ReferralTree({ affiliateId }: ReferralTreeProps) {
   };
 
   return (
-    <div className="bg-black/50 border-2 border-white rounded-none p-6">
+    <div className="bg-black/50 border-0 rounded-none p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Network className="text-white" size={24} />
@@ -84,12 +84,12 @@ export default function ReferralTree({ affiliateId }: ReferralTreeProps) {
         <div className="space-y-6">
           {/* Network Summary */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-purple-500/10 border border-purple-500/30 rounded-none p-4 text-center">
-              <p className="text-purple-400 text-sm mb-1">Level 1 (2%)</p>
+            <div className="bg-white/10 border-0 rounded-none p-4 text-center">
+              <p className="text-white/60 text-sm mb-1">Level 1 (2%)</p>
               <p className="text-white text-3xl font-bold">{treeData.totals.total_level1_affiliates}</p>
             </div>
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-none p-4 text-center">
-              <p className="text-blue-400 text-sm mb-1">Level 2 (1%)</p>
+            <div className="bg-white/5 border-0 rounded-none p-4 text-center">
+              <p className="text-white/60 text-sm mb-1">Level 2 (1%)</p>
               <p className="text-white text-3xl font-bold">{treeData.totals.total_level2_affiliates}</p>
             </div>
           </div>
@@ -98,7 +98,7 @@ export default function ReferralTree({ affiliateId }: ReferralTreeProps) {
           {treeData.level1_affiliates.length > 0 && (
             <div>
               <h4 className="text-white font-medium mb-3 flex items-center gap-2">
-                <TrendingUp size={18} className="text-purple-400" />
+                <TrendingUp size={18} className="text-white" />
                 Level 1 Referrals (Direct)
               </h4>
               <div className="space-y-2">
@@ -110,12 +110,12 @@ export default function ReferralTree({ affiliateId }: ReferralTreeProps) {
                   return (
                     <div key={affiliate.id} className="border border-white/10 rounded-none">
                       {/* L1 Affiliate */}
-                      <div 
+                      <div
                         className={`flex items-center justify-between p-4 cursor-pointer hover:bg-white/5 transition-colors ${hasL2 ? '' : 'cursor-default'}`}
                         onClick={() => hasL2 && toggleL1(affiliate.id)}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-2 h-2 rounded-full bg-purple-400"></div>
+                          <div className="w-2 h-2 rounded-full bg-white"></div>
                           <div>
                             <p className="text-white font-mono font-bold">{affiliate.affiliate_code}</p>
                             <p className="text-white/60 text-xs">
@@ -124,9 +124,8 @@ export default function ReferralTree({ affiliateId }: ReferralTreeProps) {
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className={`text-xs px-2 py-1 rounded-none ${
-                            affiliate.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-white/10 text-white/60'
-                          }`}>
+                          <span className={`text-xs px-2 py-1 rounded-none ${affiliate.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-white/10 text-white/60'
+                            }`}>
                             {affiliate.status}
                           </span>
                           {hasL2 && (
@@ -139,11 +138,11 @@ export default function ReferralTree({ affiliateId }: ReferralTreeProps) {
 
                       {/* L2 Affiliates (nested) */}
                       {hasL2 && isExpanded && (
-                        <div className="bg-black/30 border-t border-white/10 p-4 pl-8 space-y-2">
+                        <div className="bg-black/30 border-0 p-4 pl-8 space-y-2">
                           {l2Affiliates.map((l2) => (
                             <div key={l2.id} className="flex items-center justify-between p-3 bg-white/5 rounded-none">
                               <div className="flex items-center gap-3">
-                                <div className="w-2 h-2 rounded-full bg-blue-400"></div>
+                                <div className="w-2 h-2 rounded-full bg-white/60"></div>
                                 <div>
                                   <p className="text-white font-mono font-bold text-sm">{l2.affiliate_code}</p>
                                   <p className="text-white/60 text-xs">
@@ -151,9 +150,8 @@ export default function ReferralTree({ affiliateId }: ReferralTreeProps) {
                                   </p>
                                 </div>
                               </div>
-                              <span className={`text-xs px-2 py-1 rounded-none ${
-                                l2.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-white/10 text-white/60'
-                              }`}>
+                              <span className={`text-xs px-2 py-1 rounded-none ${l2.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-white/10 text-white/60'
+                                }`}>
                                 {l2.status}
                               </span>
                             </div>
@@ -168,8 +166,8 @@ export default function ReferralTree({ affiliateId }: ReferralTreeProps) {
           )}
 
           {/* MLM Earnings Info */}
-          <div className="bg-blue-500/10 border border-blue-500/30 rounded-none p-4">
-            <h4 className="text-blue-400 font-medium mb-2">💰 MLM Earnings</h4>
+          <div className="bg-white/10 border-0 rounded-none p-4">
+            <h4 className="text-white font-medium mb-2">💰 MLM Earnings</h4>
             <ul className="text-white/80 text-sm space-y-1 list-disc list-inside">
               <li>Level 1: Earn 2% of their sales profits</li>
               <li>Level 2: Earn 1% of their sales profits</li>

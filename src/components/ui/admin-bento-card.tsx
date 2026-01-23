@@ -6,7 +6,7 @@ interface AdminBentoCardProps {
   icon?: React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
-  colSpan?: 1 | 2 | 3 | 4;
+  colSpan?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
   rowSpan?: 1 | 2 | 3;
   className?: string;
   action?: React.ReactNode;
@@ -27,6 +27,14 @@ export function AdminBentoCard({
     2: 'md:col-span-2',
     3: 'md:col-span-3',
     4: 'md:col-span-4',
+    5: 'md:col-span-5',
+    6: 'md:col-span-6',
+    7: 'md:col-span-7',
+    8: 'md:col-span-8',
+    9: 'md:col-span-9',
+    10: 'md:col-span-10',
+    11: 'md:col-span-11',
+    12: 'md:col-span-12',
   };
 
   const rowSpanClasses = {

@@ -49,7 +49,7 @@ export default function RewardPointsBadge({ affiliateId, initialPoints = 0 }: Re
   const displayPoints = pointsData?.total_points ?? initialPoints;
 
   return (
-    <div className="bg-black/50 border-2 border-white rounded-none p-6">
+    <div className="bg-black/50 border-0 rounded-none p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-xl font-bold text-white">Reward Points</h3>
         <button
@@ -62,8 +62,8 @@ export default function RewardPointsBadge({ affiliateId, initialPoints = 0 }: Re
 
       {/* Large Points Display */}
       <div className="text-center mb-6">
-        <div className="inline-flex items-center justify-center w-32 h-32 border-4 border-yellow-400 rounded-full bg-yellow-400/10">
-          <span className="text-5xl font-bold text-yellow-400">{displayPoints}</span>
+        <div className="inline-flex items-center justify-center w-32 h-32 border-0 rounded-full bg-white/10">
+          <span className="text-5xl font-bold text-white">{displayPoints}</span>
         </div>
         <p className="text-white/60 text-sm mt-3">Total Reward Points</p>
       </div>
@@ -82,16 +82,16 @@ export default function RewardPointsBadge({ affiliateId, initialPoints = 0 }: Re
 
       {/* Points Breakdown */}
       {pointsData && (
-        <div className="bg-white/5 border border-white/10 rounded-none p-4 mb-6">
+        <div className="bg-white/5 border-0 rounded-none p-4 mb-6">
           <h4 className="text-white font-medium mb-3">Points by Source</h4>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-white/60">Sales:</span>
-              <span className="text-green-400">{pointsData.breakdown.from_sales} pts</span>
+              <span className="text-white">{pointsData.breakdown.from_sales} pts</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-white/60">Self-Purchase:</span>
-              <span className="text-blue-400">{pointsData.breakdown.from_self_purchase} pts</span>
+              <span className="text-white">{pointsData.breakdown.from_self_purchase} pts</span>
             </div>
           </div>
         </div>
@@ -109,7 +109,7 @@ export default function RewardPointsBadge({ affiliateId, initialPoints = 0 }: Re
                     <p className="text-white">{entry.description}</p>
                     <p className="text-white/40 text-xs">{new Date(entry.created_at).toLocaleDateString()}</p>
                   </div>
-                  <span className="text-yellow-400 font-bold">+{entry.points}</span>
+                  <span className="text-white font-bold">+{entry.points}</span>
                 </div>
               ))
             ) : (

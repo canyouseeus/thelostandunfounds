@@ -57,12 +57,12 @@ export default function MLMEarningsTable({ affiliateId }: MLMEarningsTableProps)
     }
   };
 
-  const filteredEarnings = mlmData?.earnings.filter(e => 
+  const filteredEarnings = mlmData?.earnings.filter(e =>
     filter === 'all' || e.level === parseInt(filter)
   ) || [];
 
   return (
-    <div className="bg-black/50 border-2 border-white rounded-none p-6">
+    <div className="bg-black/50 border-0 rounded-none p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <DollarSign className="text-green-400" size={24} />
@@ -95,25 +95,22 @@ export default function MLMEarningsTable({ affiliateId }: MLMEarningsTableProps)
             <span className="text-white/60 text-sm self-center">Filter:</span>
             <button
               onClick={() => setFilter('all')}
-              className={`px-3 py-1 text-sm rounded-none transition-colors ${
-                filter === 'all' ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'
-              }`}
+              className={`px-3 py-1 text-sm rounded-none transition-colors ${filter === 'all' ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'
+                }`}
             >
               All ({mlmData.totals.total_transactions})
             </button>
             <button
               onClick={() => setFilter('1')}
-              className={`px-3 py-1 text-sm rounded-none transition-colors ${
-                filter === '1' ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'
-              }`}
+              className={`px-3 py-1 text-sm rounded-none transition-colors ${filter === '1' ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'
+                }`}
             >
               Level 1 ({mlmData.totals.level1_transactions})
             </button>
             <button
               onClick={() => setFilter('2')}
-              className={`px-3 py-1 text-sm rounded-none transition-colors ${
-                filter === '2' ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'
-              }`}
+              className={`px-3 py-1 text-sm rounded-none transition-colors ${filter === '2' ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'
+                }`}
             >
               Level 2 ({mlmData.totals.level2_transactions})
             </button>
@@ -141,11 +138,10 @@ export default function MLMEarningsTable({ affiliateId }: MLMEarningsTableProps)
                       {earning.from_affiliate.affiliate_code}
                     </td>
                     <td className="py-3 text-center">
-                      <span className={`text-xs px-2 py-1 rounded-none ${
-                        earning.level === 1 
-                          ? 'bg-purple-500/20 text-purple-400' 
+                      <span className={`text-xs px-2 py-1 rounded-none ${earning.level === 1
+                          ? 'bg-purple-500/20 text-purple-400'
                           : 'bg-blue-500/20 text-blue-400'
-                      }`}>
+                        }`}>
                         L{earning.level} ({earning.level === 1 ? '2%' : '1%'})
                       </span>
                     </td>
