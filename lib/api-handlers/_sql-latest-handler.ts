@@ -24,7 +24,8 @@ const SQL_FILES = [
   '/sql/create-blog-post-artificial-intelligence-the-job-killer.sql',
   '/sql/create-blog-post-our-tech-stack.sql',
   '/sql/create-blog-post-building-a-creative-brand-that-rewards-people-for-life.sql',
-  '/sql/create-brand-assets-storage-bucket.sql'
+  '/sql/create-brand-assets-storage-bucket.sql',
+  '/sql/create-photographer-applications-table.sql'
 ];
 
 interface SQLFileInfo {
@@ -50,9 +51,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // Get the base URL - use the request host or fallback to environment variable
     const protocol = req.headers['x-forwarded-proto'] || 'https';
-    const baseUrl = req.headers.host 
-      ? `${protocol}://${req.headers.host}` 
-      : process.env.VERCEL_URL 
+    const baseUrl = req.headers.host
+      ? `${protocol}://${req.headers.host}`
+      : process.env.VERCEL_URL
         ? `https://${process.env.VERCEL_URL}`
         : 'http://localhost:5173'; // Fallback for local dev
 
@@ -69,13 +70,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (manifestResponse.ok) {
         const manifest = await manifestResponse.json() as { files: ManifestEntry[] };
-        
+
         // Fetch the most recent file from manifest
         if (manifest.files && manifest.files.length > 0) {
           const mostRecentManifest = manifest.files[0]; // Already sorted by modified time
           const fileUrl = `${baseUrl}${mostRecentManifest.publicPath}`;
           const fileResponse = await fetch(fileUrl);
-          
+
           if (fileResponse.ok) {
             const content = await fileResponse.text();
             sqlFiles.push({
@@ -101,16 +102,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               'Cache-Control': 'no-cache'
             }
           });
-          
+
           if (response.ok) {
             const content = await response.text();
             const lastModifiedHeader = response.headers.get('last-modified');
-            const lastModified = lastModifiedHeader 
-              ? new Date(lastModifiedHeader) 
+            const lastModified = lastModifiedHeader
+              ? new Date(lastModifiedHeader)
               : new Date(); // Fallback to now if no header
-            
+
             const filename = sqlPath.split('/').pop() || sqlPath;
-            
+
             sqlFiles.push({
               filename,
               path: sqlPath,
@@ -137,7 +138,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (sqlFiles.length === 0) {
       return res.status(404).json({ error: 'No SQL files found' });
     }
-    
+
     const mostRecent = sqlFiles[0];
 
     return res.status(200).json({
@@ -145,15 +146,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       path: mostRecent.path,
       content: mostRecent.content,
       modified: mostRecent.lastModified?.toISOString() || new Date().toISOString(),
-      modifiedRelative: mostRecent.lastModified 
+      modifiedRelative: mostRecent.lastModified
         ? getRelativeTime(mostRecent.lastModified)
         : 'unknown'
     });
   } catch (error: any) {
     console.error('Error finding latest SQL file:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'Failed to find latest SQL file',
-      details: error.message 
+      details: error.message
     });
   }
 }

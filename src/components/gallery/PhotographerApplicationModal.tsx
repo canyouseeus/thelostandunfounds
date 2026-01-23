@@ -128,7 +128,7 @@ export default function PhotographerApplicationModal({ isOpen, onClose }: Photog
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={handleClose} />
 
             {/* Modal */}
-            <div className="relative w-full max-w-md bg-black/95 backdrop-blur-md border border-white/10">
+            <div className="relative w-full max-w-md bg-black/95 backdrop-blur-md">
                 {/* Close Button */}
                 <button
                     onClick={handleClose}
@@ -229,7 +229,7 @@ export default function PhotographerApplicationModal({ isOpen, onClose }: Photog
                                             <div key={index} className="flex gap-2">
                                                 <input
                                                     type="text"
-                                                    placeholder={index === 0 ? "e.g., Sony A7IV" : "Add another camera"}
+                                                    placeholder={index === 0 ? "e.g., Fujifilm X-T5" : "Add another camera"}
                                                     value={camera}
                                                     onChange={(e) => updateCamera(index, e.target.value)}
                                                     className="flex-1 px-4 py-3 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors"
@@ -300,7 +300,7 @@ export default function PhotographerApplicationModal({ isOpen, onClose }: Photog
 
                             {/* Error */}
                             {error && (
-                                <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-3 mb-4">
+                                <div className="bg-red-500/10 text-red-400 text-sm p-3 mb-4">
                                     {error}
                                 </div>
                             )}

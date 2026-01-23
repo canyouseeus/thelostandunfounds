@@ -59,6 +59,10 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
     const [filesData, setFilesData] = useState<{ file: File; thumbnail?: Blob; previewUrl: string }[]>([]);
     const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
     const [uploadProgress, setUploadProgress] = useState(0);
+    const [activeTab, setActiveTab] = useState<'galleries' | 'applications'>('galleries');
+    const [applications, setApplications] = useState<any[]>([]);
+    const [appsLoading, setAppsLoading] = useState(false);
+    const [pendingAppsCount, setPendingAppsCount] = useState(0);
 
     const [modalData, setModalData] = useState<Partial<PhotoLibrary>>({
         is_private: false,
@@ -90,8 +94,27 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
     useEffect(() => {
         if (user) {
             loadGalleryStats();
+            loadApplications();
         }
     }, [user]);
+
+    const loadApplications = async () => {
+        try {
+            setAppsLoading(true);
+            const { data, error } = await supabase
+                .from('photographer_applications')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            setApplications(data || []);
+            setPendingAppsCount(data?.filter(a => a.status === 'pending').length || 0);
+        } catch (err) {
+            console.error('Error loading applications:', err);
+        } finally {
+            setAppsLoading(false);
+        }
+    };
 
     const loadGalleryStats = async () => {
         try {
@@ -456,6 +479,32 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
         });
     };
 
+    const handleApplicationStatus = async (id: string, newStatus: 'approved' | 'rejected') => {
+        try {
+            const { error: updateError } = await supabase
+                .from('photographer_applications')
+                .update({ status: newStatus })
+                .eq('id', id);
+
+            if (updateError) throw updateError;
+
+            success(`Application ${newStatus}`);
+            loadApplications();
+
+            // If approved, we might want to automatically invite them or notify them
+            if (newStatus === 'approved') {
+                const app = applications.find(a => a.id === id);
+                if (app) {
+                    // Logic to send invitation email could go here
+                    // for now just log it
+                    console.log(`Application approved for ${app.email}. Ready for invitation.`);
+                }
+            }
+        } catch (err) {
+            error('Failed to update application status');
+        }
+    };
+
     const handleDeleteGallery = async (id: string, name: string) => {
         if (!confirm(`Are you sure you want to delete gallery "${name}"? This cannot be undone.`)) return;
 
@@ -742,8 +791,13 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                         <div className="bg-white p-2">
                             <ImageIcon className="w-5 h-5 text-black" />
                         </div>
-                        <h2 className="text-xl md:text-2xl font-bold text-white uppercase tracking-tight whitespace-nowrap">
+                        <h2 className="text-xl md:text-2xl font-bold text-white uppercase tracking-tight whitespace-nowrap flex items-center gap-3">
                             {isPhotographerView ? 'My Galleries' : 'Gallery Management'}
+                            {!isPhotographerView && pendingAppsCount > 0 && (
+                                <span className="flex items-center justify-center bg-red-500 text-white text-[10px] font-bold h-5 w-5 rounded-full animate-pulse">
+                                    {pendingAppsCount}
+                                </span>
+                            )}
                         </h2>
                     </div>
 
@@ -1320,140 +1374,241 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Active Galleries */}
-                    <div className="bg-white/[0.02] p-6 rounded-none h-full">
-                        <div className="flex items-center justify-between mb-4 pb-2">
-                            <h3 className="text-sm font-bold text-white uppercase tracking-wide">
-                                Active Galleries ({libraries.length})
+                {!isPhotographerView && (
+                    <div className="flex border-b border-white/10 mb-8">
+                        <button
+                            onClick={() => setActiveTab('galleries')}
+                            className={`px-6 py-3 text-xs uppercase font-bold tracking-widest transition-colors relative ${activeTab === 'galleries' ? 'text-white' : 'text-white/40 hover:text-white'}`}
+                        >
+                            Active Galleries
+                            {activeTab === 'galleries' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />}
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('applications')}
+                            className={`px-6 py-3 text-xs uppercase font-bold tracking-widest transition-colors relative flex items-center gap-2 ${activeTab === 'applications' ? 'text-white' : 'text-white/40 hover:text-white'}`}
+                        >
+                            Photographer Applications
+                            {pendingAppsCount > 0 && (
+                                <span className="bg-red-500 text-white text-[9px] px-1 rounded-sm">
+                                    {pendingAppsCount}
+                                </span>
+                            )}
+                            {activeTab === 'applications' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />}
+                        </button>
+                    </div>
+                )}
+
+                {activeTab === 'galleries' ? (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {/* Active Galleries */}
+                        <div className="bg-white/[0.02] p-6 rounded-none h-full">
+                            <div className="flex items-center justify-between mb-4 pb-2">
+                                <h3 className="text-sm font-bold text-white uppercase tracking-wide">
+                                    Active Galleries ({libraries.length})
+                                </h3>
+                                <button onClick={loadGalleryStats} className="text-white/40 hover:text-white">
+                                    <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+                                </button>
+                            </div>
+
+                            {loading && libraries.length === 0 ? (
+                                <div className="text-white/40 text-sm py-4">Loading galleries...</div>
+                            ) : (
+                                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                    {libraries.length === 0 ? (
+                                        <div className="text-white/40 text-sm py-4">No galleries found.</div>
+                                    ) : (
+                                        libraries.map((lib) => {
+                                            const isLastNight = lib.name.toUpperCase() === 'LAST NIGHT';
+                                            const showCountdown = isLastNight && !countdownExpired && shouldShowCountdown(lib.name, targetTime8PM);
+
+                                            const handleCountdownComplete = async () => {
+                                                setCountdownExpired(true);
+                                                // Trigger sync when countdown completes
+                                                try {
+                                                    info('Gallery opening! Syncing photos...');
+                                                    const syncRes = await fetch('/api/gallery/sync');
+                                                    if (syncRes.ok) {
+                                                        success('LAST NIGHT gallery is now live!');
+                                                        loadGalleryStats(); // Refresh to show updated photo count
+                                                    }
+                                                } catch (err) {
+                                                    console.error('Sync error:', err);
+                                                }
+                                            };
+
+                                            return (
+                                                <div key={lib.id} className="relative group">
+                                                    {/* Countdown Overlay for LAST NIGHT */}
+                                                    {showCountdown && (
+                                                        <GalleryCountdownOverlay
+                                                            coverImageUrl={lib.cover_image_url}
+                                                            targetTime={targetTime8PM}
+                                                            galleryName={lib.name}
+                                                            onCountdownComplete={handleCountdownComplete}
+                                                        />
+                                                    )}
+
+                                                    <div className="flex items-start justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors border border-transparent hover:border-white/10">
+                                                        <div
+                                                            className="flex-1 min-w-0 mr-4 cursor-pointer"
+                                                            onClick={() => openEditModal(lib)}
+                                                        >
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                {lib.is_private ? (
+                                                                    <Lock className="w-3 h-3 text-yellow-400 flex-shrink-0" />
+                                                                ) : (
+                                                                    <Globe className="w-3 h-3 text-green-400 flex-shrink-0" />
+                                                                )}
+                                                                <h4 className="font-bold text-white text-sm truncate">{lib.name}</h4>
+                                                            </div>
+                                                            <div className="flex items-center gap-2 text-xs text-white/40 font-mono">
+                                                                <span>/{lib.slug}</span>
+                                                                <span>•</span>
+                                                                <span>{lib.photo_count || 0} photos</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex gap-2 transition-opacity">
+                                                            <a
+                                                                href={`/gallery/${lib.slug}`}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="p-2 hover:bg-white/20 text-white/60 hover:text-white rounded-sm"
+                                                                title="View Gallery"
+                                                            >
+                                                                <ArrowLeft className="w-4 h-4 rotate-180" />
+                                                            </a>
+                                                            <button
+                                                                onClick={() => handleDeleteGallery(lib.id, lib.name)}
+                                                                className="p-2 hover:bg-red-500/20 text-white/60 hover:text-red-400 rounded-sm"
+                                                                title="Delete Gallery"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Recent Orders List */}
+                        <div className="bg-white/[0.02] p-6 rounded-none h-full">
+                            <h3 className="text-sm font-bold text-white uppercase mb-4 tracking-wide pb-2">
+                                Recent Sales
                             </h3>
-                            <button onClick={loadGalleryStats} className="text-white/40 hover:text-white">
-                                <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+
+                            {loading && !stats ? (
+                                <div className="text-white/40 text-sm py-4">Loading orders...</div>
+                            ) : (
+                                <div className="space-y-1 max-h-[400px] overflow-y-auto custom-scrollbar">
+                                    {stats?.recentOrders.length === 0 ? (
+                                        <div className="text-white/40 text-sm py-4">No orders found.</div>
+                                    ) : (
+                                        stats?.recentOrders.map((order) => (
+                                            <div key={order.id} className="flex flex-col md:flex-row md:items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors border-b border-white/5 last:border-0 gap-3">
+                                                <div>
+                                                    <div className="text-white font-mono text-sm">{order.email}</div>
+                                                    <div className="text-white/40 text-xs flex items-center gap-2">
+                                                        <span>{(order.total_amount_cents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                                        <span>•</span>
+                                                        <span>{new Date(order.created_at).toLocaleDateString()}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => triggerResend(order.id, order.email)}
+                                                        className="text-xs uppercase font-bold text-white/60 hover:text-white px-3 py-1 border border-white/20 hover:bg-white/10 transition"
+                                                    >
+                                                        Resend Email
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ) : (
+                    <div className="bg-white/[0.02] p-6 rounded-none h-full animate-in fade-in duration-300">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-sm font-bold text-white uppercase tracking-wide">
+                                Pending Applications ({pendingAppsCount})
+                            </h3>
+                            <button onClick={loadApplications} className="text-white/40 hover:text-white">
+                                <RefreshCw className={`w-3 h-3 ${appsLoading ? 'animate-spin' : ''}`} />
                             </button>
                         </div>
 
-                        {loading && libraries.length === 0 ? (
-                            <div className="text-white/40 text-sm py-4">Loading galleries...</div>
+                        {appsLoading && applications.length === 0 ? (
+                            <div className="text-white/40 text-sm py-8 text-center italic">Loading applications...</div>
                         ) : (
-                            <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                                {libraries.length === 0 ? (
-                                    <div className="text-white/40 text-sm py-4">No galleries found.</div>
+                            <div className="space-y-4">
+                                {applications.length === 0 ? (
+                                    <div className="text-white/40 text-sm py-8 text-center italic">No applications received yet.</div>
                                 ) : (
-                                    libraries.map((lib) => {
-                                        const isLastNight = lib.name.toUpperCase() === 'LAST NIGHT';
-                                        const showCountdown = isLastNight && !countdownExpired && shouldShowCountdown(lib.name, targetTime8PM);
-
-                                        const handleCountdownComplete = async () => {
-                                            setCountdownExpired(true);
-                                            // Trigger sync when countdown completes
-                                            try {
-                                                info('Gallery opening! Syncing photos...');
-                                                const syncRes = await fetch('/api/gallery/sync');
-                                                if (syncRes.ok) {
-                                                    success('LAST NIGHT gallery is now live!');
-                                                    loadGalleryStats(); // Refresh to show updated photo count
-                                                }
-                                            } catch (err) {
-                                                console.error('Sync error:', err);
-                                            }
-                                        };
-
-                                        return (
-                                            <div key={lib.id} className="relative group">
-                                                {/* Countdown Overlay for LAST NIGHT */}
-                                                {showCountdown && (
-                                                    <GalleryCountdownOverlay
-                                                        coverImageUrl={lib.cover_image_url}
-                                                        targetTime={targetTime8PM}
-                                                        galleryName={lib.name}
-                                                        onCountdownComplete={handleCountdownComplete}
-                                                    />
+                                    applications.map((app) => (
+                                        <div key={app.id} className="bg-white/5 border border-white/10 p-5 rounded-none flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-white font-bold">{app.name}</span>
+                                                    <span className={`text-[9px] px-1.5 py-0.5 uppercase font-bold tracking-tighter ${app.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' :
+                                                        app.status === 'approved' ? 'bg-green-500/20 text-green-500' :
+                                                            'bg-red-500/20 text-red-500'
+                                                        }`}>
+                                                        {app.status}
+                                                    </span>
+                                                </div>
+                                                <div className="text-white/60 text-xs font-mono">{app.email}</div>
+                                                {app.location && <div className="text-white/40 text-[10px] uppercase font-bold tracking-wider">{app.location}</div>}
+                                                {app.cameras && app.cameras.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1 mt-2">
+                                                        {app.cameras.map((cam: string, idx: number) => (
+                                                            <span key={idx} className="bg-white/10 text-white/50 text-[9px] px-1.5 py-0.5 rounded-none">
+                                                                {cam}
+                                                            </span>
+                                                        ))}
+                                                    </div>
                                                 )}
-
-                                                <div className="flex items-start justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors border border-transparent hover:border-white/10">
-                                                    <div
-                                                        className="flex-1 min-w-0 mr-4 cursor-pointer"
-                                                        onClick={() => openEditModal(lib)}
+                                                {app.portfolio_link && (
+                                                    <a
+                                                        href={app.portfolio_link.startsWith('http') ? app.portfolio_link : `https://${app.portfolio_link}`}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="text-blue-400 hover:text-blue-300 text-[10px] block mt-2 underline transition-colors"
                                                     >
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            {lib.is_private ? (
-                                                                <Lock className="w-3 h-3 text-yellow-400 flex-shrink-0" />
-                                                            ) : (
-                                                                <Globe className="w-3 h-3 text-green-400 flex-shrink-0" />
-                                                            )}
-                                                            <h4 className="font-bold text-white text-sm truncate">{lib.name}</h4>
-                                                        </div>
-                                                        <div className="flex items-center gap-2 text-xs text-white/40 font-mono">
-                                                            <span>/{lib.slug}</span>
-                                                            <span>•</span>
-                                                            <span>{lib.photo_count || 0} photos</span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex gap-2 transition-opacity">
-                                                        <a
-                                                            href={`/gallery/${lib.slug}`}
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                            className="p-2 hover:bg-white/20 text-white/60 hover:text-white rounded-sm"
-                                                            title="View Gallery"
-                                                        >
-                                                            <ArrowLeft className="w-4 h-4 rotate-180" />
-                                                        </a>
-                                                        <button
-                                                            onClick={() => handleDeleteGallery(lib.id, lib.name)}
-                                                            className="p-2 hover:bg-red-500/20 text-white/60 hover:text-red-400 rounded-sm"
-                                                            title="Delete Gallery"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
-                                                    </div>
-                                                </div>
+                                                        View Portfolio →
+                                                    </a>
+                                                )}
                                             </div>
-                                        );
-                                    })
-                                )}
-                            </div>
-                        )}
-                    </div>
 
-                    {/* Recent Orders List */}
-                    <div className="bg-white/[0.02] p-6 rounded-none h-full">
-                        <h3 className="text-sm font-bold text-white uppercase mb-4 tracking-wide pb-2">
-                            Recent Sales
-                        </h3>
-
-                        {loading && !stats ? (
-                            <div className="text-white/40 text-sm py-4">Loading orders...</div>
-                        ) : (
-                            <div className="space-y-1 max-h-[400px] overflow-y-auto custom-scrollbar">
-                                {stats?.recentOrders.length === 0 ? (
-                                    <div className="text-white/40 text-sm py-4">No orders found.</div>
-                                ) : (
-                                    stats?.recentOrders.map((order) => (
-                                        <div key={order.id} className="flex flex-col md:flex-row md:items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors border-b border-white/5 last:border-0 gap-3">
-                                            <div>
-                                                <div className="text-white font-mono text-sm">{order.email}</div>
-                                                <div className="text-white/40 text-xs flex items-center gap-2">
-                                                    <span>{(order.total_amount_cents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
-                                                    <span>•</span>
-                                                    <span>{new Date(order.created_at).toLocaleDateString()}</span>
+                                            {app.status === 'pending' && (
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => handleApplicationStatus(app.id, 'approved')}
+                                                        className="px-4 py-2 bg-green-500/20 hover:bg-green-500 text-green-500 hover:text-black text-[10px] uppercase font-bold transition-all border border-green-500/30"
+                                                    >
+                                                        Approve
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleApplicationStatus(app.id, 'rejected')}
+                                                        className="px-4 py-2 bg-red-500/20 hover:bg-red-500/40 text-red-500 text-[10px] uppercase font-bold transition-all border border-red-500/30"
+                                                    >
+                                                        Reject
+                                                    </button>
                                                 </div>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() => triggerResend(order.id, order.email)}
-                                                    className="text-xs uppercase font-bold text-white/60 hover:text-white px-3 py-1 border border-white/20 hover:bg-white/10 transition"
-                                                >
-                                                    Resend Email
-                                                </button>
-                                            </div>
+                                            )}
                                         </div>
                                     ))
                                 )}
                             </div>
                         )}
                     </div>
-                </div>
+                )}
 
             </div>
 

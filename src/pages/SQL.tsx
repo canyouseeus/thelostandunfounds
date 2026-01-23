@@ -798,6 +798,20 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
         console.warn('Could not fetch fix-admin-access-comprehensive file:', fetchError);
       }
 
+      // Load create-photographer-applications-table script
+      let photographerApplicationsContent = '';
+      try {
+        const photographerApplicationsResponse = await fetch('/sql/create-photographer-applications-table.sql');
+        if (photographerApplicationsResponse.ok) {
+          const text = await photographerApplicationsResponse.text();
+          if (!text.trim().startsWith('<!')) {
+            photographerApplicationsContent = text;
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Could not fetch create-photographer-applications-table file:', fetchError);
+      }
+
       // Load add-password-protected-to-libraries script
       let passwordProtectedContent = '';
       try {
@@ -944,6 +958,13 @@ WHERE slug = 'artificial-intelligence-the-job-killer';`;
       }
 
       const allScripts: SQLScript[] = [
+        {
+          name: 'Create Photographer Applications Table',
+          filename: 'create-photographer-applications-table.sql',
+          content: photographerApplicationsContent || '// File not found - check public/sql folder',
+          description: 'Creates the photographer_applications table to store and manage applications from photographers interested in joining THE GALLERY. Includes fields for camera gear, location, portfolio, and application status. Required for the photographer review system.',
+          createdAt: getScriptTimestamp('create-photographer-applications-table.sql')
+        },
         {
           name: 'Fix Brand Assets RLS Policies - FIX UPLOAD ERRORS',
           filename: 'fix-brand-assets-rls-policies.sql',
