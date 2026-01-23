@@ -248,7 +248,11 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
                     {/* Analog Face */}
                     <div
                         className={cn("absolute inset-0 w-full h-full transition-opacity duration-500", !isDigital ? "opacity-100" : "opacity-0")}
-                        onClick={() => { setIsDigital(true); setIs24Hour(false); }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsDigital(true);
+                            setIs24Hour(false);
+                        }}
                     >
                         {/* Clock Face Border */}
                         <div className="absolute inset-2 rounded-full" />
@@ -264,7 +268,8 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
 
                     <div
                         className={cn("absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-300", isDigital ? "opacity-100" : "opacity-0")}
-                        onClick={() => {
+                        onClick={(e) => {
+                            e.stopPropagation();
                             if (!is24Hour) {
                                 // Standard -> Military
                                 setIs24Hour(true);

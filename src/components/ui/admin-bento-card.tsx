@@ -89,11 +89,15 @@ interface AdminBentoRowProps {
   value: React.ReactNode;
   className?: string;
   valueClassName?: string;
+  onClick?: () => void;
 }
 
-export function AdminBentoRow({ label, value, className, valueClassName }: AdminBentoRowProps) {
+export function AdminBentoRow({ label, value, className, valueClassName, onClick }: AdminBentoRowProps) {
   return (
-    <div className={cn('flex flex-col py-2 border-0', className)}>
+    <div
+      className={cn('flex flex-col py-2 border-0', className)}
+      onClick={onClick}
+    >
       <span className="text-[10px] text-white/40 uppercase tracking-[0.2em] mb-1">{label}</span>
       <span className={cn('text-sm font-medium text-white/90 text-left', valueClassName)}>{value}</span>
     </div>

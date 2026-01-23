@@ -71,7 +71,7 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
     // Process actual history data
     const items = metricHistory.map(item => {
       if (typeof item === 'string') {
-        return { time: new Date(item).getTime(), amount: metric === 'revenue' ? 9.99 : 1 };
+        return { time: new Date(item).getTime(), amount: 0 };
       }
       return { time: new Date(item.date).getTime(), amount: item.amount };
     }).sort((a, b) => a.time - b.time);

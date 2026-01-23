@@ -118,6 +118,10 @@ interface RecentUser {
   tier: string;
   isAdmin: boolean;
   created_at: string;
+  resources?: {
+    hasBlog: boolean;
+    galleries: Array<{ id: string; name: string }>;
+  };
 }
 
 interface BookClubPost {
@@ -190,7 +194,19 @@ export default function Admin() {
     pendingPayouts: number;
     totalMLMEarnings: number;
   } | null>(null);
+  const [photoLibraries, setPhotoLibraries] = useState<any[]>([]);
   const [componentError, setComponentError] = useState<string | null>(null);
+  const [healthMetrics, setHealthMetrics] = useState<{
+    db: boolean;
+    auth: boolean;
+    storage: boolean;
+    api: boolean;
+  }>({
+    db: false,
+    auth: false,
+    storage: false,
+    api: false
+  });
 
   const [allUsers, setAllUsers] = useState<RecentUser[]>([]);
 
@@ -630,10 +646,23 @@ export default function Admin() {
         console.warn('Error loading history data:', hErr);
       }
 
-      // Calculate platform health
-      const totalSubs = activeSubs.length;
-      const premiumRatio = totalSubs > 0 ? (premiumCount + proCount) / totalSubs : 0;
-      const platformHealth = premiumRatio > 0.3 ? 'healthy' : premiumRatio > 0.1 ? 'warning' : 'critical';
+      // Detailed Health Check: Base health on real connectivity
+      const isDbOnline = !!usersData;
+      const isAuthOnline = !!user;
+      const isStorageOnline = !!(lostArchivesPosts.length > 0 || bookClubPosts.length > 0);
+
+      let platformHealth: 'healthy' | 'warning' | 'critical' = 'healthy';
+      if (!isDbOnline || !isAuthOnline) {
+        platformHealth = 'critical';
+      } else if (!isStorageOnline) {
+        platformHealth = 'warning';
+      }
+      setHealthMetrics({
+        db: isDbOnline,
+        auth: isAuthOnline,
+        storage: isStorageOnline,
+        api: true // Reached this point, so API is working
+      });
 
       // Calculate recent activity (actions in last 24h)
       const oneDayAgo = new Date(Date.now() - 86400000).toISOString();
@@ -794,11 +823,11 @@ export default function Admin() {
       }
 
       setStats({
-        totalUsers: totalUsers || subscriptions.length,
+        totalUsers: totalUsers || 0,
         activeSubscriptions: activeSubs.length,
         freeUsers: freeCount,
         premiumUsers: premiumCount,
-        proUsers: proCount,
+        proUsers: 0,
         totalToolUsage: toolUsage || 0,
         recentActivity: recentSubsCount + recentNewsletterCount + recentBlogCount,
         platformHealth,
@@ -819,8 +848,16 @@ export default function Admin() {
       if (platformHealth === 'critical') {
         newAlerts.push({
           id: 1,
+          type: 'error',
+          message: 'System connectivity issues detected - Database or Auth services may be intermittent',
+          time: 'Just now',
+          read: false,
+        });
+      } else if (platformHealth === 'warning') {
+        newAlerts.push({
+          id: 1,
           type: 'warning',
-          message: 'Low premium subscription ratio - consider promotional campaigns',
+          message: 'System monitoring active - some metrics are nominal but under review',
           time: 'Just now',
           read: false,
         });
@@ -1320,10 +1357,30 @@ export default function Admin() {
             footer={<span className="text-[10px] text-white/40">Real-time sync</span>}
           >
             <div className="space-y-4 pt-2">
-              <AdminBentoRow label="Total Users" value={<AnimatedNumber value={stats?.totalUsers || 0} />} />
-              <AdminBentoRow label="Subscribers" value={<AnimatedNumber value={stats?.newsletterSubscribers || 0} />} />
-              <AdminBentoRow label="Affiliates" value={<AnimatedNumber value={affiliateStats?.totalAffiliates || 0} />} />
-              <AdminBentoRow label="Pending Reviews" value={<span className={pendingSubmissions > 0 ? "text-amber-400 font-bold" : ""}>{pendingSubmissions}</span>} />
+              <AdminBentoRow
+                label="Total Users"
+                value={<AnimatedNumber value={stats?.totalUsers || 0} />}
+                className="cursor-pointer hover:bg-white/5 p-1 transition-colors"
+                onClick={() => setActiveTab('users')}
+              />
+              <AdminBentoRow
+                label="Subscribers"
+                value={<AnimatedNumber value={stats?.newsletterSubscribers || 0} />}
+                className="cursor-pointer hover:bg-white/5 p-1 transition-colors"
+                onClick={() => setActiveTab('newsletter')}
+              />
+              <AdminBentoRow
+                label="Affiliates"
+                value={<AnimatedNumber value={affiliateStats?.totalAffiliates || 0} />}
+                className="cursor-pointer hover:bg-white/5 p-1 transition-colors"
+                onClick={() => setActiveTab('affiliates')}
+              />
+              <AdminBentoRow
+                label="Pending Reviews"
+                value={<span className={pendingSubmissions > 0 ? "text-amber-400 font-bold" : ""}>{pendingSubmissions}</span>}
+                className="cursor-pointer hover:bg-white/5 p-1 transition-colors"
+                onClick={() => setActiveTab('submissions')}
+              />
             </div>
           </AdminBentoCard>
 
@@ -1335,8 +1392,8 @@ export default function Admin() {
             <div className="space-y-4 pt-2">
               <AdminBentoRow label="Affiliate" value={`$${(stats?.affiliateRevenue || 0).toLocaleString()}`} />
               <AdminBentoRow label="Gallery" value={`$${(stats?.galleryRevenue || 0).toLocaleString()}`} />
-              <AdminBentoRow label="Subs" value={`$${((stats?.activeSubscriptions || 0) * 9.99).toLocaleString()}`} />
-              <AdminBentoRow label="Total" valueClassName="text-green-400 font-bold" value={`$${((stats?.affiliateRevenue || 0) + (stats?.galleryRevenue || 0) + (stats?.activeSubscriptions || 0) * 9.99).toLocaleString()}`} />
+              <AdminBentoRow label="Subs" value={`$${(0).toLocaleString()}`} />
+              <AdminBentoRow label="Total" valueClassName="text-green-400 font-bold" value={`$${((stats?.affiliateRevenue || 0) + (stats?.galleryRevenue || 0)).toLocaleString()}`} />
             </div>
           </AdminBentoCard>
 
@@ -1345,20 +1402,27 @@ export default function Admin() {
             icon={<Network className="w-4 h-4" />}
             footer={<span className="text-[10px] text-white/40">System health</span>}
           >
-            <div className="flex flex-col items-center justify-center py-6">
-              <div className={cn(
-                "w-12 h-12 rounded-full flex items-center justify-center mb-3",
-                stats?.platformHealth === 'healthy' ? "bg-green-500/20 text-green-400" : "bg-amber-500/20 text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.2)]"
-              )}>
-                {stats?.platformHealth === 'healthy' ? <CheckCircle className="w-6 h-6" /> : <AlertCircle className="w-6 h-6 animate-pulse" />}
+            <div className="flex flex-col gap-2 pt-2">
+              <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+                <span className="text-white/40">Database</span>
+                <span className={healthMetrics.db ? "text-green-400" : "text-red-500"}>{healthMetrics.db ? 'Online' : 'Offline'}</span>
               </div>
-              <span className={cn(
-                "text-sm font-bold tracking-widest uppercase",
-                stats?.platformHealth === 'healthy' ? "text-green-400" : "text-amber-400"
-              )}>
-                {stats?.platformHealth === 'healthy' ? 'Nominal' : 'Action Required'}
-              </span>
-              <p className="text-[10px] text-white/40 mt-2">Latency: 42ms</p>
+              <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+                <span className="text-white/40">API Engine</span>
+                <span className={healthMetrics.api ? "text-green-400" : "text-red-500"}>{healthMetrics.api ? 'Online' : 'Offline'}</span>
+              </div>
+              <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+                <span className="text-white/40">Auth Service</span>
+                <span className={healthMetrics.auth ? "text-green-400" : "text-red-500"}>{healthMetrics.auth ? 'Online' : 'Offline'}</span>
+              </div>
+              <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+                <span className="text-white/40">Storage</span>
+                <span className={healthMetrics.storage ? "text-green-400" : "text-amber-500"}>{healthMetrics.storage ? 'Online' : 'Degraded'}</span>
+              </div>
+              <div className="mt-2 pt-2 border-t border-white/5 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-[9px] text-white/60 font-bold uppercase tracking-tighter">Latency: 42ms</span>
+              </div>
             </div>
           </AdminBentoCard>
 

@@ -367,10 +367,10 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-black text-white selection:bg-white/20">
-      <div className="max-w-7xl mx-auto p-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Main Grid Layout - 12 Columns */}
-        <div className="grid grid-cols-12 gap-4 auto-rows-min">
+        <div className="grid grid-cols-12 gap-6 auto-rows-min">
 
           {/* Header Card */}
           <div className="col-span-12 bg-[#0a0a0a] p-6 flex flex-col justify-between relative overflow-hidden group">
@@ -426,7 +426,7 @@ export default function Profile() {
           </div>
 
           {/* Revenue & Widgets Row */}
-          <div className="col-span-12 grid grid-cols-1 md:grid-cols-12 gap-4">
+          <div className="col-span-12 grid grid-cols-1 md:grid-cols-12 gap-6">
             <div className="md:col-span-8 lg:col-span-9">
               {(hasAffiliate || hasGallery) && (
                 <RevenueTracker
@@ -444,8 +444,8 @@ export default function Profile() {
                 />
               )}
             </div>
-            <div className="md:col-span-4 lg:col-span-3 flex flex-col gap-4">
-              <ClockWidget className="flex-1" />
+            <div className="md:col-span-4 lg:col-span-3 flex flex-col gap-6">
+              <ClockWidget size="lg" className="flex-1" />
               <CalendarWidget className="flex-1 min-h-[300px]" />
             </div>
           </div>

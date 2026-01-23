@@ -11,7 +11,9 @@ import {
   Edit,
   Ban,
   BarChart3,
-  ArrowLeft
+  ArrowLeft,
+  BookOpen,
+  Image as ImageIcon
 } from 'lucide-react';
 import { useToast } from '@/components/Toast';
 
@@ -22,6 +24,10 @@ interface RecentUser {
   tier: string;
   isAdmin: boolean;
   created_at: string;
+  resources?: {
+    hasBlog: boolean;
+    galleries: Array<{ id: string; name: string }>;
+  };
 }
 
 interface DashboardStats {
@@ -41,9 +47,10 @@ interface AdminUsersViewProps {
   stats: DashboardStats | null;
   onSelectUser: (user: RecentUser) => void;
   onBack: () => void;
+  onNavigateToSection?: (section: string) => void;
 }
 
-export default function AdminUsersView({ users: allUsers, stats, onSelectUser, onBack }: AdminUsersViewProps) {
+export default function AdminUsersView({ users: allUsers, stats, onSelectUser, onBack, onNavigateToSection }: AdminUsersViewProps) {
   const { success } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTier, setFilterTier] = useState<'all' | 'free' | 'premium' | 'pro'>('all');
@@ -116,7 +123,7 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/40" />
               <input
                 type="text"
-                placeholder="Search by email or username..."
+                placeholder="Search by email, username, or resources..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-black/50 rounded-none text-white placeholder-white/40 focus:border-white/30 focus:outline-none"
@@ -192,7 +199,7 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
               filteredUsers.map((user) => (
                 <div
                   key={user.id}
-                  className="flex items-center gap-4 p-4 bg-black/30 rounded-none hover:bg-white/5 transition"
+                  className="flex items-center gap-4 p-4 bg-black/30 rounded-none hover:bg-white/5 transition group"
                 >
                   <button
                     onClick={() => {
@@ -216,19 +223,39 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
                     <User className="w-5 h-5 text-white/60" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className="text-white font-medium truncate">{user.username || user.email}</span>
                       {user.isAdmin && (
-                        <span className="px-2 py-0.5 text-[10px] bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                        <span className="px-2 py-0.5 text-[10px] bg-purple-500/20 text-purple-400 border border-purple-500/30 font-black tracking-tighter">
                           ADMIN
                         </span>
                       )}
-                      <span className={`px-2 py-0.5 text-[10px] border ${user.tier === 'free' ? 'bg-white/5 text-white/60 border-white/10' :
-                          user.tier === 'premium' ? 'bg-yellow-400/10 text-yellow-400 border-yellow-400/20' :
-                            'bg-purple-400/10 text-purple-400 border-purple-400/20'
+                      <span className={`px-2 py-0.5 text-[10px] font-black tracking-tighter border ${user.tier === 'free' ? 'bg-white/5 text-white/60 border-white/10' :
+                        user.tier === 'premium' ? 'bg-yellow-400/10 text-yellow-400 border-yellow-400/20' :
+                          'bg-purple-400/10 text-purple-400 border-purple-400/20'
                         }`}>
-                        {user.tier.charAt(0).toUpperCase() + user.tier.slice(1)}
+                        {user.tier.toUpperCase()}
                       </span>
+
+                      {/* Resource Badges */}
+                      {user.resources?.hasBlog && (
+                        <button
+                          onClick={() => onNavigateToSection?.('blog')}
+                          className="flex items-center gap-1 px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-black hover:bg-blue-500/20 transition-colors tracking-tighter"
+                        >
+                          <BookOpen className="w-2.5 h-2.5" />
+                          BLOG
+                        </button>
+                      )}
+                      {user.resources?.galleries && user.resources.galleries.length > 0 && (
+                        <button
+                          onClick={() => onNavigateToSection?.('gallery')}
+                          className="flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black hover:bg-emerald-500/20 transition-colors tracking-tighter"
+                        >
+                          <ImageIcon className="w-2.5 h-2.5" />
+                          {user.resources.galleries.length === 1 ? '1 GALLERY' : `${user.resources.galleries.length} GALLERIES`}
+                        </button>
+                      )}
                     </div>
                     <div className="flex items-center gap-4 text-xs text-white/40">
                       <span className="font-mono truncate">{user.email}</span>
@@ -261,7 +288,7 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
                           success(`User ${user.email} banned`);
                         }
                       }}
-                      className="p-2 hover:bg-red-500/20 transition rounded-none"
+                      className="p-2 hover:bg-red-500/20 transition rounded-none opacity-0 group-hover:opacity-100"
                       title="Ban User"
                     >
                       <Ban className="w-4 h-4 text-red-400" />
