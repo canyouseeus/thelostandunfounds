@@ -505,7 +505,8 @@ export default function Admin() {
         const { count } = await supabase
           .from('newsletter_subscribers')
           .select('*', { count: 'exact', head: true })
-          .eq('verified', true);
+          .eq('verified', true)
+          .gte('created_at', PLATFORM_LAUNCH_DATE);
         newsletterCount = count || 0;
 
         // Fetch newest 3 subscribers
@@ -543,7 +544,8 @@ export default function Admin() {
         // Get all affiliates
         const { data: affiliates, count: affiliateCount } = await supabase
           .from('affiliates')
-          .select('*', { count: 'exact' });
+          .select('*', { count: 'exact' })
+          .gte('created_at', PLATFORM_LAUNCH_DATE);
 
         if (affiliates) {
           affiliateStatsData.totalAffiliates = affiliateCount || affiliates.length;
@@ -584,10 +586,23 @@ export default function Admin() {
 
       try {
         const [newsHist, affHist, commissionsHist, ordersHist] = await Promise.all([
-          supabase.from('newsletter_subscribers').select('created_at').order('created_at', { ascending: true }),
-          supabase.from('affiliates').select('created_at').order('created_at', { ascending: true }),
-          supabase.from('affiliate_commissions').select('created_at, amount').order('created_at', { ascending: true }),
-          supabase.from('photo_orders').select('created_at, total_amount_cents, email, payment_status, metadata').order('created_at', { ascending: true })
+          supabase.from('newsletter_subscribers')
+            .select('created_at')
+            .eq('verified', true)
+            .gte('created_at', PLATFORM_LAUNCH_DATE)
+            .order('created_at', { ascending: true }),
+          supabase.from('affiliates')
+            .select('created_at')
+            .gte('created_at', PLATFORM_LAUNCH_DATE)
+            .order('created_at', { ascending: true }),
+          supabase.from('affiliate_commissions')
+            .select('created_at, amount')
+            .gte('created_at', PLATFORM_LAUNCH_DATE)
+            .order('created_at', { ascending: true }),
+          supabase.from('photo_orders')
+            .select('created_at, total_amount_cents, email, payment_status, metadata')
+            .gte('created_at', PLATFORM_LAUNCH_DATE)
+            .order('created_at', { ascending: true })
         ]);
 
         // Filter and process revenue history
