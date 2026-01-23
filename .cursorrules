@@ -135,3 +135,12 @@ For detailed verification workflow and code examples, see: `.cursor/rules/deploy
   3) Send via POST `https://www.thelostandunfounds.com/api/newsletter/send` with `subject`, `content`, `contentHtml` (CTA-injected), and `testEmail` when testing.
   4) For a full resend, omit `testEmail` to target all verified subscribers.
   5) If envs are missing, load from `.env.local` with dotenv; do NOT claim inability—surface missing-env error only if loading fails.
+
+## DASHBOARD CLOCK INTERACTION RULE - CRITICAL
+**ALWAYS maintain the specific interaction logic for the dashboard clock widget.**
+
+- **Tapping/Clicking the clock face** MUST cycle through formats: Analog -> Digital (12h) -> Digital (24h).
+- **Tapping/Clicking the top label** (e.g., "CLOCK") MUST cycle through modes: Clock -> Stopwatch -> Timer.
+- **RESTRICT top label area**: The clickable area for mode switching should be small (e.g., `h-12`) to prevent accidental triggers.
+- **STOP PROPAGATION**: Clock face clicks must call `e.stopPropagation()` to prevent unwanted mode switching.
+- **NO KEYBOARD EVENTS**: Do not implement keyboard-based format toggling unless specified.
