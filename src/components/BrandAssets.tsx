@@ -39,7 +39,7 @@ export default function BrandAssets() {
   const loadAssets = async () => {
     try {
       setLoading(true);
-      
+
       // List all files in the brand-assets bucket
       const { data, error } = await supabase.storage
         .from(STORAGE_BUCKET)
@@ -69,9 +69,9 @@ export default function BrandAssets() {
             .getPublicUrl(file.name);
 
           const isImage = file.metadata?.mimetype?.startsWith('image/') ||
-                         file.name.toLowerCase().match(/\.(png|jpg|jpeg)$/);
+            file.name.toLowerCase().match(/\.(png|jpg|jpeg)$/);
           const isVideo = file.metadata?.mimetype?.startsWith('video/') ||
-                         file.name.toLowerCase().match(/\.(mp4)$/);
+            file.name.toLowerCase().match(/\.(mp4)$/);
 
           return {
             id: file.id || file.name,
@@ -96,10 +96,10 @@ export default function BrandAssets() {
 
   const validateFile = (file: File): string | null => {
     // Check file type
-    const isImage = ALLOWED_IMAGE_TYPES.includes(file.type) || 
-                   file.name.toLowerCase().match(/\.(png|jpg|jpeg)$/);
+    const isImage = ALLOWED_IMAGE_TYPES.includes(file.type) ||
+      file.name.toLowerCase().match(/\.(png|jpg|jpeg)$/);
     const isVideo = ALLOWED_VIDEO_TYPES.includes(file.type) ||
-                   file.name.toLowerCase().match(/\.(mp4)$/);
+      file.name.toLowerCase().match(/\.(mp4)$/);
 
     if (!isImage && !isVideo) {
       return 'Only PNG, JPG, and MP4 files are allowed';
@@ -119,14 +119,14 @@ export default function BrandAssets() {
 
     const file = files[0];
     const validationError = validateFile(file);
-    
+
     if (validationError) {
       showError(validationError);
       return;
     }
 
     await uploadFile(file);
-    
+
     // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -154,7 +154,7 @@ export default function BrandAssets() {
       if (error) {
         // If bucket doesn't exist, provide helpful instructions
         if (error.message.includes('not found') || error.message.includes('does not exist')) {
-          showError('Storage bucket does not exist. Please run the "Create Brand Assets Storage Bucket" script from the SQL page (/sql) to set it up.');
+          showError('Storage bucket does not exist. Please contact an administrator to set up the "brand-assets" bucket in Supabase storage.');
           return;
         }
         throw error;
@@ -162,7 +162,7 @@ export default function BrandAssets() {
 
       setUploadProgress(100);
       success(`Successfully uploaded ${file.name}`);
-      
+
       // Reload assets
       await loadAssets();
     } catch (error: any) {
@@ -231,7 +231,7 @@ export default function BrandAssets() {
         <p className="text-white/60 text-sm mb-4">
           Upload PNG, JPG images or MP4 videos. Maximum file size: {MAX_FILE_SIZE / (1024 * 1024)}MB
         </p>
-        
+
         <div className="space-y-4">
           {/* File Input - Hidden but accessible */}
           <input
@@ -243,13 +243,12 @@ export default function BrandAssets() {
             id="brand-asset-upload"
             disabled={uploading}
           />
-          
+
           {/* Upload Button */}
           <label
             htmlFor="brand-asset-upload"
-            className={`inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition cursor-pointer ${
-              uploading ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
+            className={`inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition cursor-pointer ${uploading ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
           >
             {uploading ? (
               <>
@@ -295,8 +294,7 @@ export default function BrandAssets() {
             <p className="text-white/60 mb-2">No assets uploaded yet</p>
             <p className="text-white/40 text-sm mb-4">Upload your first brand asset to get started</p>
             <p className="text-white/40 text-xs">
-              If you see an error, make sure to run the "Create Brand Assets Storage Bucket" script from the{' '}
-              <a href="/sql" className="text-white underline hover:text-white/80">SQL page</a> first.
+              If you see an error, make sure the "brand-assets" storage bucket is correctly configured in Supabase.
             </p>
           </div>
         ) : assets.length === 0 ? null : (
@@ -324,7 +322,7 @@ export default function BrandAssets() {
                       playsInline
                     />
                   )}
-                  
+
                   {/* Type Badge */}
                   <div className="absolute top-2 right-2">
                     {asset.type === 'image' ? (

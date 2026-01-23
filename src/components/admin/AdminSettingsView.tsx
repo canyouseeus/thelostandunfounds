@@ -1,9 +1,9 @@
 
 import { Link } from 'react-router-dom';
-import { 
-  Settings, 
-  Shield, 
-  Activity, 
+import {
+  Settings,
+  Shield,
+  Activity,
   Users,
   ArrowLeft
 } from 'lucide-react';
@@ -56,13 +56,12 @@ export default function AdminSettingsView({ stats, onBack }: AdminSettingsViewPr
               </div>
               <div className="flex items-center justify-between p-3 bg-white/5 rounded">
                 <span className="text-white/80">Platform Health</span>
-                <span className={`px-2 py-1 rounded text-xs ${
-                  stats?.platformHealth === 'healthy' ? 'bg-green-400/20 text-green-400' :
-                  stats?.platformHealth === 'warning' ? 'bg-yellow-400/20 text-yellow-400' :
-                  'bg-red-400/20 text-red-400'
-                }`}>
+                <span className={`px-2 py-1 rounded text-xs ${stats?.platformHealth === 'healthy' ? 'bg-green-400/20 text-green-400' :
+                    stats?.platformHealth === 'warning' ? 'bg-yellow-400/20 text-yellow-400' :
+                      'bg-red-400/20 text-red-400'
+                  }`}>
                   {stats?.platformHealth === 'healthy' ? 'Healthy' :
-                   stats?.platformHealth === 'warning' ? 'Warning' : 'Critical'}
+                    stats?.platformHealth === 'warning' ? 'Warning' : 'Critical'}
                 </span>
               </div>
             </div>
@@ -121,13 +120,6 @@ export default function AdminSettingsView({ stats, onBack }: AdminSettingsViewPr
                 className="px-4 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white font-medium transition flex items-center justify-center gap-2"
               >
                 <span>QR Codes</span>
-                <span className="text-white/60">→</span>
-              </Link>
-              <Link
-                to="/sql"
-                className="px-4 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white font-medium transition flex items-center justify-center gap-2"
-              >
-                <span>SQL Scripts</span>
                 <span className="text-white/60">→</span>
               </Link>
             </div>

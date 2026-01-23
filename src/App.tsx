@@ -37,7 +37,6 @@ import Borderlands from './pages/Borderlands'
 import Science from './pages/Science'
 import NewTheory from './pages/NewTheory'
 import SubmitArticle from './pages/SubmitArticle'
-import SQL from './pages/SQL'
 import Debug from './pages/Debug'
 import AIWritingPrompt from './pages/AIWritingPrompt'
 import HelloWorld from './pages/HelloWorld'
@@ -141,9 +140,6 @@ function App() {
                     </ProtectedRoute>
                   </ErrorBoundary>
                 } />
-              </Route>
-              <Route path="/sql" element={<Layout />}>
-                <Route index element={<SQL />} />
               </Route>
               <Route path="/designsystem" element={<Layout />}>
                 <Route index element={<DesignSystem />} />
