@@ -26,9 +26,16 @@ export default function OnboardingWizard() {
     const [authLoading, setAuthLoading] = useState(false);
 
     // Profile State for Step 2
-    const [username, setUsername] = useState('');
+    const [username, setUsername] = useState(user?.user_metadata?.author_name || '');
     const [usernameError, setUsernameError] = useState('');
     const [savingUsername, setSavingUsername] = useState(false);
+
+    // Sync username if user changes
+    useEffect(() => {
+        if (user?.user_metadata?.author_name && !username) {
+            setUsername(user.user_metadata.author_name);
+        }
+    }, [user]);
 
     const AGENT_EMAIL = 'the-gallery-agent@the-lost-and-unf-1737406545588.iam.gserviceaccount.com';
 
@@ -349,6 +356,13 @@ export default function OnboardingWizard() {
                                     {authMode === 'signup' ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
                                 </button>
                             </div>
+
+                            <button
+                                onClick={() => setStep(0)}
+                                className="w-full mt-3 px-4 py-2 text-white/60 hover:text-white text-sm transition"
+                            >
+                                Back
+                            </button>
                         </div>
                     )}
 
@@ -404,6 +418,13 @@ export default function OnboardingWizard() {
                             >
                                 {savingUsername ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Continue'}
                             </button>
+
+                            <button
+                                onClick={() => setStep(1)}
+                                className="w-full mt-3 px-4 py-2 text-white/60 hover:text-white text-sm transition"
+                            >
+                                Back
+                            </button>
                         </div>
                     )}
 
@@ -438,7 +459,7 @@ export default function OnboardingWizard() {
                             </button>
 
                             <button
-                                onClick={() => setStep(1)} // Should ideally check if we came from step 1 or 2
+                                onClick={() => setStep(2)}
                                 className="w-full mt-3 px-4 py-2 text-white/60 hover:text-white text-sm transition"
                             >
                                 Back
