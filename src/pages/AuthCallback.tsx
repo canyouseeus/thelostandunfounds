@@ -47,6 +47,14 @@ export default function AuthCallback() {
                 return;
               }
 
+              // Check if returning to setup wizard - skip registration checks for gallery onboarding
+              const returnUrl = localStorage.getItem('auth_return_url');
+              if (returnUrl?.startsWith('/setup')) {
+                localStorage.removeItem('auth_return_url');
+                navigate(returnUrl);
+                return;
+              }
+
               // Step 1: Check if user has username
               const userMetadata = currentUser.user_metadata || {};
               const hasAuthorName = userMetadata.author_name;
@@ -86,8 +94,7 @@ export default function AuthCallback() {
                 return;
               }
 
-              // All registration complete - redirect to dashboard
-              const returnUrl = localStorage.getItem('auth_return_url');
+              // All registration complete - redirect to dashboard or return URL
               if (returnUrl) {
                 localStorage.removeItem('auth_return_url');
                 navigate(returnUrl);
