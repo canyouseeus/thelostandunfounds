@@ -125,6 +125,18 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
         };
     };
 
+    const toggleClockType = useCallback(() => {
+        if (!isDigital) {
+            setIsDigital(true);
+            setIs24Hour(false);
+        } else if (!is24Hour) {
+            setIs24Hour(true);
+        } else {
+            setIsDigital(false);
+            setIs24Hour(false);
+        }
+    }, [isDigital, is24Hour]);
+
     const cycleMode = () => {
         if (mode === 'clock') setMode('stopwatch');
         else if (mode === 'stopwatch') setMode('timer');
@@ -250,8 +262,7 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
                         className={cn("absolute inset-0 w-full h-full transition-opacity duration-500", !isDigital ? "opacity-100" : "opacity-0")}
                         onClick={(e) => {
                             e.stopPropagation();
-                            setIsDigital(true);
-                            setIs24Hour(false);
+                            toggleClockType();
                         }}
                     >
                         {/* Clock Face Border */}
@@ -270,14 +281,7 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
                         className={cn("absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-300", isDigital ? "opacity-100" : "opacity-0")}
                         onClick={(e) => {
                             e.stopPropagation();
-                            if (!is24Hour) {
-                                // Standard -> Military
-                                setIs24Hour(true);
-                            } else {
-                                // Military -> Analog (cycle back)
-                                setIsDigital(false);
-                                setIs24Hour(false);
-                            }
+                            toggleClockType();
                         }}
                     >
                         <div className="cursor-pointer hover:opacity-80 transition-opacity">
@@ -363,7 +367,7 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
 
             {/* Top Label - Mode Switcher - Large Tap Area */}
             <div
-                className="absolute top-0 left-0 right-0 h-1/2 z-20 cursor-pointer flex items-start justify-center pt-4 select-none"
+                className="absolute top-0 left-0 right-0 h-12 z-20 cursor-pointer flex items-start justify-center pt-4 select-none"
                 onClick={cycleMode}
             >
                 <div className="px-8 py-4 bg-transparent">
