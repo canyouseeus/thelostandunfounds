@@ -8,7 +8,7 @@
     "dev:api": "vercel dev",
     "dev:vite": "vite",
     "dev:full": "concurrently \"npm run dev:api\" \"node local-server.js\"",
-    "dev:mantis": "./scripts/dev-mantis.sh",
+    "restart-dev": "./scripts/restart-dev.sh",
     "build": "vite build",
     "postbuild": "npx tsx scripts/pre-render-blog-posts.ts && npx tsx scripts/generate-sitemap.ts",
     "preview": "vite preview",
