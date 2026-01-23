@@ -361,14 +361,18 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
 
             </div>
 
-            {/* Top Label - Mode Switcher - Maximum Tap Area (Moved to end for z-index stacking) */}
+            {/* Top Label - Mode Switcher - Text Tap Only */}
             <div
-                onClick={cycleMode}
-                className="absolute top-0 left-0 right-0 h-[45%] flex items-start justify-center pt-6 z-10 cursor-pointer bg-transparent"
+                className="absolute top-0 left-0 right-0 h-[45%] flex items-start justify-center pt-6 z-10 pointer-events-none"
             >
-                <span className="text-[10px] tracking-[0.2em] font-medium text-white/30 uppercase hover:text-white transition-colors relative z-40">
-                    {mode === 'clock' ? 'CLOCK' : mode === 'stopwatch' ? 'STOPWATCH' : 'TIMER'}
-                </span>
+                <div
+                    onClick={cycleMode}
+                    className="cursor-pointer px-4 py-2 pointer-events-auto"
+                >
+                    <span className="text-[10px] tracking-[0.2em] font-medium text-white/30 uppercase hover:text-white transition-colors">
+                        {mode === 'clock' ? 'CLOCK' : mode === 'stopwatch' ? 'STOPWATCH' : 'TIMER'}
+                    </span>
+                </div>
             </div>
         </div>
     );
