@@ -33,29 +33,29 @@ export default async function handler(
     // Find affiliate by code (try both 'code' and 'affiliate_code' columns)
     let affiliate = null
     let affiliateError = null
-    
-    // Try 'code' column first
+
+    // Try 'code' column first (case-insensitive)
     console.log(`🔍 Searching for affiliate with code: ${affiliateCode}`)
     const { data: affiliateByCode, error: errorByCode } = await supabase
       .from('affiliates')
       .select('id')
-      .eq('code', affiliateCode)
+      .ilike('code', affiliateCode)
       .eq('status', 'active')
-      .single()
-    
+      .maybeSingle()
+
     if (affiliateByCode && !errorByCode) {
       affiliate = affiliateByCode
       console.log('✅ Found affiliate by "code" column:', affiliate.id)
     } else {
       console.log('⚠️ Not found by "code" column, trying "affiliate_code"...', errorByCode?.message)
-      // Try 'affiliate_code' column as fallback
+      // Try 'affiliate_code' column as fallback (case-insensitive)
       const { data: affiliateByAffiliateCode, error: errorByAffiliateCode } = await supabase
         .from('affiliates')
         .select('id')
-        .eq('affiliate_code', affiliateCode)
+        .ilike('affiliate_code', affiliateCode)
         .eq('status', 'active')
-        .single()
-      
+        .maybeSingle()
+
       if (affiliateByAffiliateCode && !errorByAffiliateCode) {
         affiliate = affiliateByAffiliateCode
         console.log('✅ Found affiliate by "affiliate_code" column:', affiliate.id)

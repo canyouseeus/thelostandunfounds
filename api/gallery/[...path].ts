@@ -617,6 +617,8 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
         };
 
         // Send to each email
+        console.log(`[Gallery Invite] Starting invitation sequence for library: ${library.name} (${libraryId}). Target emails:`, emails);
+
         for (const email of emails) {
             try {
                 await sendZohoEmail({
@@ -646,6 +648,7 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
                     `
                 });
                 results.succeeded.push(email);
+                console.log(`[Gallery Invite] Successfully sent invitation to ${email} for gallery: ${library.name}`);
             } catch (innerErr: any) {
                 console.error(`Failed to send invite to ${email}:`, innerErr);
                 results.failed.push({ email, error: innerErr.message || String(innerErr) });

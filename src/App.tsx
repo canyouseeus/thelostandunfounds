@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { Analytics } from '@vercel/analytics/react'
 import { AuthProvider } from './contexts/AuthContext'
 import { SageModeProvider } from './contexts/SageModeContext'
@@ -56,6 +56,12 @@ import DownloadPortal from './pages/DownloadPortal'
 import OnboardingWizard from './pages/setup/OnboardingWizard'
 import PhotographerGuide from './pages/docs/PhotographerGuide'
 
+// Redirect /shop to homepage while preserving query parameters for affiliate tracking
+function ShopRedirect() {
+  const location = useLocation();
+  return <Navigate to={`/${location.search}`} replace />;
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -89,9 +95,7 @@ function App() {
               <Route path="/payment/cancel" element={<Layout />}>
                 <Route index element={<PaymentCancel />} />
               </Route>
-              <Route path="/shop" element={<Layout />}>
-                <Route index element={<Shop />} />
-              </Route>
+              <Route path="/shop" element={<ShopRedirect />} />
               <Route path="/docs" element={<Layout />}>
                 <Route index element={<Docs />} />
                 <Route path="photographer-guide" element={<PhotographerGuide />} />
