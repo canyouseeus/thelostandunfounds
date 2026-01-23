@@ -22,8 +22,6 @@ export default async function handler(
   switch (route) {
     case 'signup':
       return handleSignup(req, res)
-    case 'sql/latest':
-      return handleSqlLatest(req, res)
     default:
       return res.status(404).json({ error: `Utils route not found: ${route}` })
   }
@@ -31,10 +29,5 @@ export default async function handler(
 
 async function handleSignup(req: VercelRequest, res: VercelResponse) {
   const handler = await import('../../lib/api-handlers/_signup-handler')
-  return handler.default(req, res)
-}
-
-async function handleSqlLatest(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/_sql-latest-handler')
   return handler.default(req, res)
 }
