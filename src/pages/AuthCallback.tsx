@@ -31,148 +31,109 @@ export default function AuthCallback() {
         return;
       }
 
-      if (session) {
-        // Check if user is admin and redirect accordingly
-        const checkAdminAndRedirect = async () => {
-          try {
-            const { data: { user: currentUser } } = await supabase.auth.getUser();
-            if (currentUser) {
-              setUser(currentUser);
-              const adminStatus = await isAdmin();
-              const isAdminUser = adminStatus || isAdminEmail(currentUser.email || '');
-
-              if (isAdminUser) {
-                // Admins go directly to admin dashboard
-                navigate('/admin');
-                return;
-              }
-
-              // Check if returning to setup wizard - skip registration checks for gallery onboarding
-              const returnUrl = localStorage.getItem('auth_return_url');
-              if (returnUrl?.startsWith('/setup')) {
-                localStorage.removeItem('auth_return_url');
-                navigate(returnUrl);
-                return;
-              }
-
-              // Step 1: Check if user has username
-              const userMetadata = currentUser.user_metadata || {};
-              const hasAuthorName = userMetadata.author_name;
-
-              // If missing username, show user registration modal first
-              if (!hasAuthorName) {
-                setShowUserRegistrationModal(true);
-                return;
-              }
-
-              // Step 2: Check for subdomain
-              const { data: subdomainData, error: subdomainError } = await supabase
-                .from('user_subdomains')
-                .select('subdomain')
-                .eq('user_id', currentUser.id)
-                .single();
-
-              // Handle table not found error gracefully
-              if (subdomainError) {
-                if (subdomainError.code === 'PGRST116') {
-                  // No rows returned - user doesn't have subdomain yet
-                  setShowSubdomainModal(true);
-                  return;
-                } else if (subdomainError.message?.includes('does not exist') || subdomainError.message?.includes('schema cache')) {
-                  // Table doesn't exist yet - show subdomain modal
-                  console.warn('user_subdomains table not found. Please run the SQL migration script.');
-                  setShowSubdomainModal(true);
-                  return;
-                } else {
-                  console.error('Error checking subdomain:', subdomainError);
-                }
-              }
-
-              if (!subdomainData) {
-                // User doesn't have a subdomain - show registration modal
-                setShowSubdomainModal(true);
-                return;
-              }
-
-              // All registration complete - redirect to dashboard or return URL
-              if (returnUrl) {
-                localStorage.removeItem('auth_return_url');
-                navigate(returnUrl);
-              } else {
-                navigate('/dashboard');
-              }
-            } else {
-              const returnUrl = localStorage.getItem('auth_return_url');
-              if (returnUrl) {
-                localStorage.removeItem('auth_return_url');
-                navigate(returnUrl);
-              } else {
-                navigate('/dashboard');
-              }
-            }
-          } catch (error) {
-            // If admin check fails, check email directly
-            const { data: { user: currentUser } } = await supabase.auth.getUser();
-            if (currentUser) {
-              setUser(currentUser);
-              if (isAdminEmail(currentUser.email || '')) {
-                navigate('/admin');
-              } else {
-                // Step 1: Check for username
-                const userMetadata = currentUser.user_metadata || {};
-                const hasAuthorName = userMetadata.author_name;
-
-                if (!hasAuthorName) {
-                  setShowUserRegistrationModal(true);
-                  return;
-                }
-
-                // Step 2: Check for subdomain
-                const { data: subdomainData } = await supabase
-                  .from('user_subdomains')
-                  .select('subdomain')
-                  .eq('user_id', currentUser.id)
-                  .single();
-
-                if (!subdomainData) {
-                  setShowSubdomainModal(true);
-                  return;
-                }
-
-                // All complete - redirect to dashboard
-                const returnUrl = localStorage.getItem('auth_return_url');
-                if (returnUrl) {
-                  localStorage.removeItem('auth_return_url');
-                  navigate(returnUrl);
-                } else {
-                  navigate('/dashboard');
-                }
-              }
-            } else {
-              const returnUrl = localStorage.getItem('auth_return_url');
-              if (returnUrl) {
-                localStorage.removeItem('auth_return_url');
-                navigate(returnUrl);
-              } else {
-                navigate('/dashboard');
-              }
-            }
-          }
-        };
-        checkAdminAndRedirect();
-      } else {
-        // No session - redirect to home
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) {
         navigate('/');
+        return;
+      }
+
+      setUser(currentUser);
+
+      // Check for return URL immediately
+      const returnUrl = localStorage.getItem('auth_return_url');
+
+      // 1. Check if returning to setup wizard - ALWAYS prioritize this
+      if (returnUrl?.startsWith('/setup')) {
+        localStorage.removeItem('auth_return_url');
+        navigate(returnUrl);
+        return;
+      }
+
+      // 2. Check for admin status
+      try {
+        const adminStatus = await isAdmin();
+        const isAdminUser = adminStatus || isAdminEmail(currentUser.email || '');
+
+        if (isAdminUser) {
+          navigate('/admin');
+          return;
+        }
+      } catch (err) {
+        console.warn('Admin check failed, falling back to basic checks', err);
+        // Fall back to direct email check
+        if (isAdminEmail(currentUser.email || '')) {
+          navigate('/admin');
+          return;
+        }
+      }
+
+      // 3. Registration completeness checks for regular users
+      const userMetadata = currentUser.user_metadata || {};
+      const hasAuthorName = userMetadata.author_name;
+
+      // Step A: Missing username
+      if (!hasAuthorName) {
+        setShowUserRegistrationModal(true);
+        return;
+      }
+
+      // Step B: Missing subdomain
+      try {
+        const { data: subdomainData, error: subdomainError } = await supabase
+          .from('user_subdomains')
+          .select('subdomain')
+          .eq('user_id', currentUser.id)
+          .maybeSingle();
+
+        if (subdomainError) {
+          console.error('Error checking subdomain:', subdomainError);
+          // If table doesn't exist or other fatal DB error, don't block
+          if (!subdomainError.message?.includes('does not exist') && !subdomainError.message?.includes('schema cache')) {
+            // Unexpected error, proceed to dashboard
+            navigate(returnUrl || '/dashboard');
+            return;
+          }
+          // Table missing - show subdomain modal
+          setShowSubdomainModal(true);
+          return;
+        }
+
+        if (!subdomainData) {
+          setShowSubdomainModal(true);
+          return;
+        }
+      } catch (err) {
+        console.warn('Subdomain check failed', err);
+        // If we can't check subdomains, better to show the modal to be safe
+        setShowSubdomainModal(true);
+        return;
+      }
+
+      // 4. All complete - redirect to dashboard or return URL
+      if (returnUrl) {
+        localStorage.removeItem('auth_return_url');
+        navigate(returnUrl);
+      } else {
+        navigate('/dashboard');
       }
     } catch (error) {
-      console.warn('Auth callback error:', error);
-      navigate('/?error=auth_failed');
+      console.error('Auth callback crash:', error);
+      navigate('/?error=onboarding_error');
     }
   };
 
   const handleUserRegistrationSuccess = (username: string) => {
     setShowUserRegistrationModal(false);
-    // Now show subdomain registration modal
+
+    // Check if we should continue to subdomain or redirect to setup
+    const returnUrl = localStorage.getItem('auth_return_url');
+    if (returnUrl?.startsWith('/setup')) {
+      localStorage.removeItem('auth_return_url');
+      navigate(returnUrl);
+      return;
+    }
+
+    // Otherwise show subdomain registration modal (standard blog flow)
     setShowSubdomainModal(true);
   };
 
