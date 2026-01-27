@@ -6,7 +6,8 @@
   "ignoreCommand": "bash scripts/vercel-ignore-build-step.sh",
   "functions": {
     "api/**/*.ts": {
-      "maxDuration": 60
+      "maxDuration": 60,
+      "includeFiles": "api/lib/**"
     },
     "api/**/*.js": {
       "maxDuration": 60
