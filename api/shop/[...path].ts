@@ -1,9 +1,8 @@
+// Note: We use dynamic imports to isolate failures. If one handler fails to load, the others (and ping) still work.
+// This prevents "Function Invocation Failed" due to a single broken dependency.
+// It also ensures that a crash in one module doesn't take down the entire routing infrastructure.
+
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import productsHandler from '../../lib/api-handlers/_products-handler'
-import affiliatesTrackClickHandler from '../../lib/api-handlers/_affiliates-track-click-handler'
-import paymentsPaypalHandler from '../../lib/api-handlers/_payments-paypal-handler'
-import paymentsPaypalCaptureHandler from '../../lib/api-handlers/_payments-paypal-capture-handler'
-import kingMidasDistributeHandler from '../../lib/api-handlers/_king-midas-distribute-handler'
 
 export default async function handler(
   req: VercelRequest,
@@ -69,7 +68,8 @@ export default async function handler(
       })
     }
 
-    // Route to appropriate handler
+    // Route to appropriate handler using DYNAMIC IMPORTS
+    // This allows us to catch import errors (like missing dependencies) per-route
     switch (route) {
       case 'ping':
       case 'health':
@@ -81,29 +81,68 @@ export default async function handler(
         })
 
       case 'products':
-        console.log('👉 Routing to: productsHandler')
-        return await productsHandler(req, res)
-
       case 'fourthwall/products':
-        // Deprecated: Keep for backward compatibility
-        console.log('👉 Routing to: productsHandler (fourthwall fallback)')
-        return await productsHandler(req, res)
+        console.log('👉 Routing to: productsHandler')
+        try {
+          const { default: productsHandler } = await import('../../lib/api-handlers/_products-handler')
+          return await productsHandler(req, res)
+        } catch (err: any) {
+          console.error('❌ Failed to load or execute products handler:', err)
+          // Return JSON error instead of crashing
+          return res.status(500).json({
+            error: 'Products handler failed',
+            message: err.message,
+            details: 'Failed to load products module. Check server logs.'
+          })
+        }
 
       case 'affiliates/track-click':
         console.log('👉 Routing to: affiliatesTrackClickHandler')
-        return await affiliatesTrackClickHandler(req, res)
+        try {
+          // Verify request body for this specific route to warn about common client issues
+          if (req.method === 'POST' && (!req.body || !req.body.affiliateCode)) {
+            console.warn('⚠️ Missing affiliateCode in body', req.body)
+          }
+
+          const { default: affiliatesTrackClickHandler } = await import('../../lib/api-handlers/_affiliates-track-click-handler')
+          return await affiliatesTrackClickHandler(req, res)
+        } catch (err: any) {
+          console.error('❌ Failed to load or execute affiliates handler:', err)
+          return res.status(500).json({
+            error: 'Affiliates handler failed',
+            message: err.message
+          })
+        }
 
       case 'payments/paypal':
         console.log('👉 Routing to: paymentsPaypalHandler')
-        return await paymentsPaypalHandler(req, res)
+        try {
+          const { default: paymentsPaypalHandler } = await import('../../lib/api-handlers/_payments-paypal-handler')
+          return await paymentsPaypalHandler(req, res)
+        } catch (err: any) {
+          console.error('❌ Failed to load paypal handler:', err)
+          return res.status(500).json({ error: 'PayPal handler failed', message: err.message })
+        }
 
       case 'payments/paypal/capture':
         console.log('👉 Routing to: paymentsPaypalCaptureHandler')
-        return await paymentsPaypalCaptureHandler(req, res)
+        try {
+          const { default: paymentsPaypalCaptureHandler } = await import('../../lib/api-handlers/_payments-paypal-capture-handler')
+          return await paymentsPaypalCaptureHandler(req, res)
+        } catch (err: any) {
+          console.error('❌ Failed to load paypal capture handler:', err)
+          return res.status(500).json({ error: 'PayPal capture handler failed', message: err.message })
+        }
 
       case 'king-midas/distribute':
         console.log('👉 Routing to: kingMidasDistributeHandler')
-        return await kingMidasDistributeHandler(req, res)
+        try {
+          const { default: kingMidasDistributeHandler } = await import('../../lib/api-handlers/_king-midas-distribute-handler')
+          return await kingMidasDistributeHandler(req, res)
+        } catch (err: any) {
+          console.error('❌ Failed to load king midas handler:', err)
+          return res.status(500).json({ error: 'King Midas handler failed', message: err.message })
+        }
 
       default:
         console.warn('⚠️ Route not matched:', route)
