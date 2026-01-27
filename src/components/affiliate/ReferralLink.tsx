@@ -9,13 +9,13 @@ export default function ReferralLink({ affiliateCode }: ReferralLinkProps) {
   const [copiedCustomer, setCopiedCustomer] = useState(false);
   const [copiedAffiliate, setCopiedAffiliate] = useState(false);
 
-  const customerLink = `https://thelostandunfounds.com/shop?ref=${affiliateCode}`;
+  const customerLink = `https://thelostandunfounds.com/?ref=${affiliateCode}`;
   const affiliateLink = `https://thelostandunfounds.com/become-affiliate?ref=${affiliateCode}`;
 
   const copyToClipboard = async (text: string, type: 'customer' | 'affiliate') => {
     try {
       await navigator.clipboard.writeText(text);
-      
+
       if (type === 'customer') {
         setCopiedCustomer(true);
         setTimeout(() => setCopiedCustomer(false), 2000);
@@ -51,7 +51,7 @@ export default function ReferralLink({ affiliateCode }: ReferralLinkProps) {
             <h4 className="text-white font-medium">Customer Link</h4>
             <span className="text-white/60 text-xs">For customers to shop</span>
           </div>
-          
+
           <div className="flex gap-2">
             <input
               type="text"
@@ -82,7 +82,7 @@ export default function ReferralLink({ affiliateCode }: ReferralLinkProps) {
             <h4 className="text-white font-medium">Affiliate Link</h4>
             <span className="text-white/60 text-xs">For recruiting affiliates</span>
           </div>
-          
+
           <div className="flex gap-2">
             <input
               type="text"

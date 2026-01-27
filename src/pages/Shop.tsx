@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Search, Filter, Loader2, X } from 'lucide-react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { initAffiliateTracking, getAffiliateRef } from '../utils/affiliate-tracking';
 import { getPayPalCheckoutUrl } from '../utils/checkout-utils';
@@ -37,6 +38,15 @@ export default function Shop() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const FOURTHWALL_BASE = 'https://storefront-api.fourthwall.com';
+
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const hasRef = searchParams.get('ref') || searchParams.get('affiliate') || searchParams.get('aff');
+
+  // If there's an affiliate ref, redirect to home page preserving the query params
+  if (hasRef) {
+    return <Navigate to={`/${location.search}`} replace />;
+  }
 
   // Initialize affiliate tracking on page load
   useEffect(() => {
@@ -335,13 +345,13 @@ function ProductCard({ product, onOpen }: { product: Product; onOpen: () => void
   const imageUrl = product.images && product.images.length > 0 ? product.images[0] : null;
   const displayPrice = product.price; // Prices are already in dollars from API
   const displayComparePrice = product.compareAtPrice || null;
-  
+
   // Get affiliate ref for tracking
   const affiliateRef = getAffiliateRef();
 
   const handleCheckoutClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
-    
+
     // Track click if affiliate ref exists
     if (affiliateRef) {
       import('../utils/affiliate-tracking').then(({ trackAffiliateClick }) => {
@@ -358,7 +368,7 @@ function ProductCard({ product, onOpen }: { product: Product; onOpen: () => void
         currency: product.currency,
         affiliateRef,
       });
-      
+
       const { approvalUrl } = await getPayPalCheckoutUrl({
         amount: product.price,
         currency: product.currency || 'USD',
@@ -366,9 +376,9 @@ function ProductCard({ product, onOpen }: { product: Product; onOpen: () => void
         productId: product.id,
         affiliateRef,
       });
-      
+
       console.log('✅ PayPal checkout URL received:', approvalUrl);
-      
+
       // Redirect to PayPal approval URL
       window.location.href = approvalUrl;
     } catch (error: any) {
@@ -378,7 +388,7 @@ function ProductCard({ product, onOpen }: { product: Product; onOpen: () => void
         stack: error.stack,
         response: error.response,
       });
-      
+
       const errorMessage = error.message || 'Failed to start checkout. Please try again.';
       alert(`Checkout Error: ${errorMessage}\n\nCheck browser console for details.`);
     }
