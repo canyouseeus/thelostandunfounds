@@ -149,7 +149,7 @@ export default async function handler(
  * Product Cost Management Handler
  */
 async function handleProductCosts(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/_product-costs-handler.js')
+  const handler = await import('../lib/api-handlers/_product-costs-handler.js')
   return handler.default(req, res)
 }
 
@@ -157,7 +157,7 @@ async function handleProductCosts(req: VercelRequest, res: VercelResponse) {
  * Reset Password Handler
  */
 async function handleResetPassword(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/_reset-password-handler.js')
+  const handler = await import('../lib/api-handlers/_reset-password-handler.js')
   return handler.default(req, res)
 }
 
@@ -165,7 +165,7 @@ async function handleResetPassword(req: VercelRequest, res: VercelResponse) {
  * Send Existing Publication Emails Handler
  */
 async function handleSendExistingPublicationEmails(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/_send-existing-publication-emails-handler.js')
+  const handler = await import('../lib/api-handlers/_send-existing-publication-emails-handler.js')
   return await handler.default(req, res)
 }
 
@@ -173,7 +173,7 @@ async function handleSendExistingPublicationEmails(req: VercelRequest, res: Verc
  * Send Welcome Emails Handler
  */
 async function handleSendWelcomeEmails(req: VercelRequest, res: VercelResponse) {
-  const handler = await import(`../../lib/api-handlers/_send-welcome-emails-handler.js?v=${Date.now()}`)
+  const handler = await import(`../lib/api-handlers/_send-welcome-emails-handler.js?v=${Date.now()}`)
   return await handler.default(req, res)
 }
 
@@ -181,7 +181,7 @@ async function handleSendWelcomeEmails(req: VercelRequest, res: VercelResponse) 
  * Secret Santa Handler
  */
 async function handleSecretSanta(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/_admin-secret-santa-handler.js')
+  const handler = await import('../lib/api-handlers/_admin-secret-santa-handler.js')
   return handler.default(req, res)
 }
 
@@ -190,7 +190,7 @@ async function handleSecretSanta(req: VercelRequest, res: VercelResponse) {
  */
 async function handleAffiliates(req: VercelRequest, res: VercelResponse) {
   try {
-    const handler = await import('../../lib/api-handlers/_admin-affiliates-handler.js')
+    const handler = await import('../lib/api-handlers/_admin-affiliates-handler.js')
     return handler.default(req, res)
   } catch (err) {
     console.warn('Affiliate handler failed (likely missing env vars), returning mock:', err)
@@ -202,7 +202,7 @@ async function handleAffiliates(req: VercelRequest, res: VercelResponse) {
  * Process Payouts Handler
  */
 async function handleProcessPayouts(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/admin/process-payouts.js')
+  const handler = await import('../lib/api-handlers/admin/process-payouts.js')
   return handler.default(req, res)
 }
 
@@ -210,7 +210,7 @@ async function handleProcessPayouts(req: VercelRequest, res: VercelResponse) {
  * Affiliate Dashboard Handler
  */
 async function handleAffiliateDashboard(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/admin/affiliate-dashboard.js')
+  const handler = await import('../lib/api-handlers/admin/affiliate-dashboard.js')
   return handler.default(req, res)
 }
 
@@ -218,7 +218,7 @@ async function handleAffiliateDashboard(req: VercelRequest, res: VercelResponse)
  * Update Affiliate Handler
  */
 async function handleUpdateAffiliate(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/admin/update-affiliate.js')
+  const handler = await import('../lib/api-handlers/admin/update-affiliate.js')
   return handler.default(req, res)
 }
 
@@ -226,7 +226,7 @@ async function handleUpdateAffiliate(req: VercelRequest, res: VercelResponse) {
  * Manual Commission Handler
  */
 async function handleManualCommission(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/admin/manual-commission.js')
+  const handler = await import('../lib/api-handlers/admin/manual-commission.js')
   return handler.default(req, res)
 }
 
@@ -234,7 +234,7 @@ async function handleManualCommission(req: VercelRequest, res: VercelResponse) {
  * New Subscription Notification Handler
  */
 async function handleNewSubscriptionNotification(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/_new-subscription-notification-handler.js')
+  const handler = await import('../lib/api-handlers/_new-subscription-notification-handler.js')
   return await handler.default(req, res)
 }
 
@@ -242,7 +242,7 @@ async function handleNewSubscriptionNotification(req: VercelRequest, res: Vercel
  * New Blog Contributor Notification Handler
  */
 async function handleNewBlogContributorNotification(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/_new-blog-contributor-notification-handler.js')
+  const handler = await import('../lib/api-handlers/_new-blog-contributor-notification-handler.js')
   return await handler.default(req, res)
 }
 
@@ -250,7 +250,7 @@ async function handleNewBlogContributorNotification(req: VercelRequest, res: Ver
  * Send Affiliate Email Handler
  */
 async function handleSendAffiliateEmail(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/admin/send-affiliate-email.js')
+  const handler = await import('../lib/api-handlers/admin/send-affiliate-email.js')
   return handler.default(req, res)
 }
 
@@ -258,14 +258,14 @@ async function handleSendAffiliateEmail(req: VercelRequest, res: VercelResponse)
  * PayPal Payouts Handler
  */
 async function handlePayPalPayouts(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/admin/paypal-payouts.js')
+  const handler = await import('../lib/api-handlers/admin/paypal-payouts.js')
   return handler.default(req, res)
 }
 /**
  * PayPal Test Handler
  */
 async function handlePayPalTest(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/_paypal-test-handler.js')
+  const handler = await import('../lib/api-handlers/_paypal-test-handler.js')
   return handler.default(req, res)
 }
 
@@ -370,6 +370,6 @@ async function handleAnalyticsStats(req: VercelRequest, res: VercelResponse) {
  * Sync Library Handler
  */
 async function handleSyncLibrary(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/_sync-library-handler.js')
+  const handler = await import('../lib/api-handlers/_sync-library-handler.js')
   return handler.default(req, res)
 }

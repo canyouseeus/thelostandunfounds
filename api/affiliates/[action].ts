@@ -22,7 +22,7 @@ import {
   trackCustomer,
   updateCode,
   useDiscount
-} from '../../lib/api-handlers/affiliates/index.js';
+} from '../lib/api-handlers/affiliates/index.js';
 
 type HandlerFn = (req: VercelRequest, res: VercelResponse) => Promise<any>;
 

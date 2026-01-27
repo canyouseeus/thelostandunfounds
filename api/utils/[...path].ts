@@ -28,6 +28,6 @@ export default async function handler(
 }
 
 async function handleSignup(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/_signup-handler')
+  const handler = await import('../lib/api-handlers/_signup-handler')
   return handler.default(req, res)
 }

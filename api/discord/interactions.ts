@@ -22,7 +22,7 @@ export default async function handler(
     // Pass raw body to handler via request object
     ;(req as any).rawBody = rawBody
 
-    const handler = await import('../../lib/api-handlers/_discord-interactions-handler.js')
+    const handler = await import('../lib/api-handlers/_discord-interactions-handler.js')
     return handler.default(req, res)
   } catch (error: any) {
     console.error('Discord interactions handler error:', error)

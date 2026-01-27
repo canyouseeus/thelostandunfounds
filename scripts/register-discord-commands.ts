@@ -5,7 +5,7 @@
  * Run with: npx tsx scripts/register-discord-commands.ts
  */
 
-import { registerGuildCommands } from '../lib/discord/utils'
+import { registerGuildCommands } from '../api/lib/discord/utils'
 
 const GUILD_ID = process.env.DISCORD_GUILD_ID || '833383219083608084'
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN

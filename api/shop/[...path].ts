@@ -84,7 +84,7 @@ export default async function handler(
       case 'fourthwall/products':
         console.log('👉 Routing to: productsHandler')
         try {
-          const { default: productsHandler } = await import('../../lib/api-handlers/_products-handler')
+          const { default: productsHandler } = await import('../lib/api-handlers/_products-handler')
           return await productsHandler(req, res)
         } catch (err: any) {
           console.error('❌ Failed to load or execute products handler:', err)
@@ -104,7 +104,7 @@ export default async function handler(
             console.warn('⚠️ Missing affiliateCode in body', req.body)
           }
 
-          const { default: affiliatesTrackClickHandler } = await import('../../lib/api-handlers/_affiliates-track-click-handler')
+          const { default: affiliatesTrackClickHandler } = await import('../lib/api-handlers/_affiliates-track-click-handler')
           return await affiliatesTrackClickHandler(req, res)
         } catch (err: any) {
           console.error('❌ Failed to load or execute affiliates handler:', err)
@@ -117,7 +117,7 @@ export default async function handler(
       case 'payments/paypal':
         console.log('👉 Routing to: paymentsPaypalHandler')
         try {
-          const { default: paymentsPaypalHandler } = await import('../../lib/api-handlers/_payments-paypal-handler')
+          const { default: paymentsPaypalHandler } = await import('../lib/api-handlers/_payments-paypal-handler')
           return await paymentsPaypalHandler(req, res)
         } catch (err: any) {
           console.error('❌ Failed to load paypal handler:', err)
@@ -127,7 +127,7 @@ export default async function handler(
       case 'payments/paypal/capture':
         console.log('👉 Routing to: paymentsPaypalCaptureHandler')
         try {
-          const { default: paymentsPaypalCaptureHandler } = await import('../../lib/api-handlers/_payments-paypal-capture-handler')
+          const { default: paymentsPaypalCaptureHandler } = await import('../lib/api-handlers/_payments-paypal-capture-handler')
           return await paymentsPaypalCaptureHandler(req, res)
         } catch (err: any) {
           console.error('❌ Failed to load paypal capture handler:', err)
@@ -137,7 +137,7 @@ export default async function handler(
       case 'king-midas/distribute':
         console.log('👉 Routing to: kingMidasDistributeHandler')
         try {
-          const { default: kingMidasDistributeHandler } = await import('../../lib/api-handlers/_king-midas-distribute-handler')
+          const { default: kingMidasDistributeHandler } = await import('../lib/api-handlers/_king-midas-distribute-handler')
           return await kingMidasDistributeHandler(req, res)
         } catch (err: any) {
           console.error('❌ Failed to load king midas handler:', err)
