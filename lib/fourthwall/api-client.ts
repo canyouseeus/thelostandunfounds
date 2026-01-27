@@ -95,5 +95,15 @@ export async function fetchProductsDirect(
   collectionHandle?: string
 ): Promise<Response> {
   const apiUrl = buildApiUrl(collectionHandle)
-  return fetchWithAuth(apiUrl, token)
+  let response = await fetchWithAuth(apiUrl, token)
+
+  // Fallback: If "v1/products" 404s AND we are looking for all products,
+  // try "v1/collections/all/products" which is often the robust alternative.
+  if (!response.ok && response.status === 404 && (!collectionHandle || collectionHandle === 'all')) {
+    console.log('Use "all" collection fallback...')
+    const fallbackUrl = `${BASE_URL}/v1/collections/all/products`
+    response = await fetchWithAuth(fallbackUrl, token)
+  }
+
+  return response
 }

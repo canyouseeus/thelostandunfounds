@@ -284,6 +284,7 @@ async function fetchProductsFromApi(): Promise<Product[]> {
 
 async function fetchFourthwallDirect(token: string): Promise<Product[]> {
   const endpoints = [
+    `${FOURTHWALL_BASE}/v1/collections/all/products?storefront_token=${token}`,
     `${FOURTHWALL_BASE}/v1/products?storefront_token=${token}`,
     `${FOURTHWALL_BASE}/v1/shop/feed?storefront_token=${token}`,
   ];
