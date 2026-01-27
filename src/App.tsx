@@ -56,11 +56,7 @@ import DownloadPortal from './pages/DownloadPortal'
 import OnboardingWizard from './pages/setup/OnboardingWizard'
 import PhotographerGuide from './pages/docs/PhotographerGuide'
 
-// Redirect /shop to homepage while preserving query parameters for affiliate tracking
-function ShopRedirect() {
-  const location = useLocation();
-  return <Navigate to={`/${location.search}`} replace />;
-}
+
 
 function App() {
   return (
@@ -95,7 +91,9 @@ function App() {
               <Route path="/payment/cancel" element={<Layout />}>
                 <Route index element={<PaymentCancel />} />
               </Route>
-              <Route path="/shop" element={<ShopRedirect />} />
+              <Route path="/shop" element={<Layout />}>
+                <Route index element={<Shop />} />
+              </Route>
               <Route path="/docs" element={<Layout />}>
                 <Route index element={<Docs />} />
                 <Route path="photographer-guide" element={<PhotographerGuide />} />

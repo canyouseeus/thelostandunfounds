@@ -366,7 +366,7 @@ export default function AffiliateDashboard() {
 
   const copyReferralLink = () => {
     if (!affiliateCode) return
-    const referralLink = `${window.location.origin}/shop?ref=${affiliateCode}`
+    const referralLink = `${window.location.origin}/?ref=${affiliateCode}`
     navigator.clipboard.writeText(referralLink)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
@@ -612,7 +612,7 @@ export default function AffiliateDashboard() {
                 {copied ? 'COPIED TO CLIPBOARD' : 'COPY AFFILIATE LINK'}
               </button>
               <Link
-                to={`/shop?ref=${data.affiliate.code}`}
+                to={`/?ref=${data.affiliate.code}`}
                 target="_blank"
                 className="flex items-center justify-center gap-3 px-8 py-4 bg-transparent border border-white/20 text-white font-black uppercase tracking-widest text-sm hover:bg-white/10 transition-all hover:border-white w-full md:w-auto"
               >

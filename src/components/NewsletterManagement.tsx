@@ -7,6 +7,8 @@ import { useState, useEffect, KeyboardEvent } from 'react';
 import { useToast } from './Toast';
 import { supabase } from '../lib/supabase';
 import { Mail, Send, Eye, Clock, CheckCircle, XCircle, Loader, Users, BarChart3, TrendingUp, X, UserMinus, UserCheck, Search, Copy, Trash2, Calendar, Timer, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { AdminBentoCard } from './ui/admin-bento-card';
+import { cn } from './ui/utils';
 
 interface NewsletterCampaign {
   id: string;
@@ -537,126 +539,138 @@ export default function NewsletterManagement() {
   return (
     <div className="space-y-6">
       {/* Analytics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <button
           onClick={handleOpenSubscriberModal}
-          className="bg-black/50 rounded-none p-4 text-left hover:bg-white/5 transition-all cursor-pointer group"
+          className="text-left w-full focus:outline-none transition-all"
         >
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-blue-500/20 rounded-none group-hover:bg-blue-500/30 transition">
-              <Users className="w-5 h-5 text-blue-400" />
+          <AdminBentoCard
+            title="TOTAL SUBSCRIBERS"
+            className="h-full"
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-blue-500/10 border border-blue-500/20">
+                <Users className="w-6 h-6 text-blue-400" />
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-white tracking-tight">{subscriberCount}</div>
+                <div className="text-[10px] text-white/40 uppercase tracking-[0.2em] mt-1">
+                  Verified Emails
+                </div>
+              </div>
             </div>
-            <span className="text-white/60 text-sm">Total Subscribers</span>
-          </div>
-          <div className="text-2xl font-bold text-white">{subscriberCount}</div>
-          <div className="text-xs text-white/40 mt-1 flex items-center justify-between">
-            <span>Verified email addresses</span>
-            <span className="text-white/30 group-hover:text-white/60 transition">Click to view →</span>
-          </div>
+            <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
+              <span className="text-[10px] text-blue-400/60 uppercase tracking-widest font-bold">View List</span>
+              <span className="text-white/20 text-xs">→</span>
+            </div>
+          </AdminBentoCard>
         </button>
 
-        <div className="bg-black/50 rounded-none p-4">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-green-500/20 rounded-none">
-              <BarChart3 className="w-5 h-5 text-green-400" />
+        <AdminBentoCard title="EMAILS SENT">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-green-500/10 border border-green-500/20">
+              <BarChart3 className="w-6 h-6 text-green-400" />
             </div>
-            <span className="text-white/60 text-sm">Emails Sent</span>
+            <div>
+              <div className="text-3xl font-bold text-white tracking-tight">{stats.totalSent}</div>
+              <div className="text-[10px] text-white/40 uppercase tracking-[0.2em] mt-1">
+                Across {stats.totalCampaigns} Campaigns
+              </div>
+            </div>
           </div>
-          <div className="text-2xl font-bold text-white">{stats.totalSent}</div>
-          <div className="text-xs text-white/40 mt-1">Across {stats.totalCampaigns} campaigns</div>
-        </div>
+        </AdminBentoCard>
 
-        <div className="bg-black/50 rounded-none p-4">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-purple-500/20 rounded-none">
-              <TrendingUp className="w-5 h-5 text-purple-400" />
+        <AdminBentoCard title="AVG. REACH">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-purple-500/10 border border-purple-500/20">
+              <TrendingUp className="w-6 h-6 text-purple-400" />
             </div>
-            <span className="text-white/60 text-sm">Avg. Reach</span>
+            <div>
+              <div className="text-3xl font-bold text-white tracking-tight">{stats.avgRecipients}</div>
+              <div className="text-[10px] text-white/40 uppercase tracking-[0.2em] mt-1">
+                Recipients Per Campaign
+              </div>
+            </div>
           </div>
-          <div className="text-2xl font-bold text-white">{stats.avgRecipients}</div>
-          <div className="text-xs text-white/40 mt-1">Recipients per campaign</div>
-        </div>
+        </AdminBentoCard>
       </div>
 
       {/* Compose Newsletter */}
-      <div className="bg-black/50 rounded-none p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <Mail className="w-5 h-5" />
-            Compose Newsletter
-          </h2>
-          <div className="flex items-center gap-2 text-white/60">
-            <Users className="w-4 h-4" />
-            <span className="text-sm">{subscriberCount} subscribers</span>
+      <AdminBentoCard
+        title="COMPOSE NEWSLETTER"
+        icon={<Mail className="w-4 h-4" />}
+        action={
+          <div className="flex items-center gap-2 text-white/40 text-[10px] uppercase tracking-widest font-medium">
+            <Users className="w-3.5 h-3.5" />
+            <span>{subscriberCount} Subscribers</span>
           </div>
-        </div>
-
-        <div className="space-y-4">
+        }
+      >
+        <div className="space-y-6">
           {/* Subject */}
           <div>
-            <label htmlFor="subject" className="block text-white font-medium mb-2">
-              Subject
+            <label htmlFor="subject" className="block text-white/40 text-[10px] uppercase tracking-[0.2em] mb-2 font-medium">
+              Subject Line
             </label>
             <input
               type="text"
               id="subject"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              placeholder="Newsletter subject line"
-              className="w-full px-4 py-2 bg-white/5 border border-white rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white"
+              placeholder="ENTER SUBJECT..."
+              className="w-full px-4 py-2 bg-black border border-white/20 text-white placeholder-white/20 focus:border-white transition-colors outline-none text-sm"
               disabled={sending}
             />
           </div>
 
           {/* Content */}
           <div>
-            <label htmlFor="content" className="block text-white font-medium mb-2">
-              Content
+            <label htmlFor="content" className="block text-white/40 text-[10px] uppercase tracking-[0.2em] mb-2 font-medium">
+              Content Body
             </label>
             <textarea
               id="content"
               value={content}
               onChange={(e) => handleContentChange(e.target.value)}
-              placeholder="Write your newsletter content here. Use double line breaks for paragraphs."
+              placeholder="WRITE YOUR CONTENT HERE. USE DOUBLE LINE BREAKS FOR PARAGRAPHS..."
               rows={12}
-              className="w-full px-4 py-2 bg-white/5 border border-white rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white font-mono text-sm"
+              className="w-full px-4 py-3 bg-black border border-white/20 text-white placeholder-white/20 focus:border-white transition-colors outline-none font-mono text-sm resize-none"
               disabled={sending}
             />
-            <p className="text-white/40 text-xs mt-2">
-              Tip: Use double line breaks to separate paragraphs
+            <p className="text-white/20 text-[10px] mt-2 uppercase tracking-tight">
+              Tip: Use double line breaks to separate paragraphs.
             </p>
           </div>
 
           {/* Schedule */}
-          <div className="border border-white/20 rounded-none p-4 bg-white/5">
-            <div className="flex items-center justify-between mb-3">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <button
-                  onClick={() => setScheduleEnabled(!scheduleEnabled)}
-                  className={`w-5 h-5 border rounded-none flex items-center justify-center transition ${scheduleEnabled
-                      ? 'bg-white border-white'
-                      : 'border-white/30 hover:border-white/50'
-                    }`}
-                  aria-label={scheduleEnabled ? 'Disable scheduling' : 'Enable scheduling'}
-                >
-                  {scheduleEnabled && <CheckCircle className="w-4 h-4 text-black" />}
-                </button>
-                <span className="text-white font-medium flex items-center gap-2">
-                  <Timer className="w-4 h-4" />
-                  Schedule for later
+          <div className="border border-white/10 p-4 bg-white/[0.02]">
+            <div className="flex items-center justify-between mb-4">
+              <label
+                className="flex items-center gap-3 cursor-pointer group"
+                onClick={() => setScheduleEnabled(!scheduleEnabled)}
+              >
+                <div className={cn(
+                  "w-4 h-4 border flex items-center justify-center transition-colors",
+                  scheduleEnabled ? "bg-white border-white" : "border-white/20 group-hover:border-white/40"
+                )}>
+                  {scheduleEnabled && <CheckCircle className="w-3 h-3 text-black" />}
+                </div>
+                <span className="text-white/80 text-[10px] uppercase tracking-[0.2em] font-bold flex items-center gap-2">
+                  <Timer className="w-3.5 h-3.5" />
+                  Schedule for Later
                 </span>
               </label>
               {scheduleEnabled && scheduledDate && scheduledTime && (
-                <span className="text-sm text-white/60">
+                <span className="text-[10px] text-blue-400 uppercase tracking-widest font-bold">
                   {formatScheduledTime(new Date(`${scheduledDate}T${scheduledTime}`))}
                 </span>
               )}
             </div>
 
             {scheduleEnabled && (
-              <div className="flex flex-wrap gap-4 mt-3">
-                <div className="flex-1 min-w-[180px]">
-                  <label htmlFor="scheduled-date" className="block text-white/60 text-sm mb-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div>
+                  <label htmlFor="scheduled-date" className="block text-white/40 text-[10px] uppercase tracking-[0.2em] mb-2 font-medium">
                     Date
                   </label>
                   <input
@@ -665,12 +679,12 @@ export default function NewsletterManagement() {
                     value={scheduledDate}
                     onChange={(e) => setScheduledDate(e.target.value)}
                     min={new Date().toISOString().split('T')[0]}
-                    className="w-full px-3 py-2 bg-black border border-white/30 rounded-none text-white focus:outline-none focus:border-white [color-scheme:dark]"
+                    className="w-full px-3 py-2 bg-black border border-white/20 text-white focus:border-white outline-none [color-scheme:dark] text-sm"
                     disabled={sending}
                   />
                 </div>
-                <div className="flex-1 min-w-[140px]">
-                  <label htmlFor="scheduled-time" className="block text-white/60 text-sm mb-1">
+                <div>
+                  <label htmlFor="scheduled-time" className="block text-white/40 text-[10px] uppercase tracking-[0.2em] mb-2 font-medium">
                     Time
                   </label>
                   <input
@@ -678,7 +692,7 @@ export default function NewsletterManagement() {
                     id="scheduled-time"
                     value={scheduledTime}
                     onChange={(e) => setScheduledTime(e.target.value)}
-                    className="w-full px-3 py-2 bg-black border border-white/30 rounded-none text-white focus:outline-none focus:border-white [color-scheme:dark]"
+                    className="w-full px-3 py-2 bg-black border border-white/20 text-white focus:border-white outline-none [color-scheme:dark] text-sm"
                     disabled={sending}
                   />
                 </div>
@@ -687,544 +701,478 @@ export default function NewsletterManagement() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-4 pt-4">
+          <div className="flex flex-wrap items-center gap-4 pt-2">
             <button
               onClick={handleSend}
               disabled={sending || !subject.trim() || !content.trim() || subscriberCount === 0 || (scheduleEnabled && (!scheduledDate || !scheduledTime))}
-              className={`px-6 py-2 rounded-none font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition ${scheduleEnabled
-                  ? 'bg-blue-500 text-white hover:bg-blue-600'
-                  : 'bg-white text-black hover:bg-white/90'
-                }`}
+              className={cn(
+                "px-8 py-3 font-bold uppercase tracking-[0.2em] text-xs transition-all duration-300 flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed",
+                scheduleEnabled
+                  ? "bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-500/20"
+                  : "bg-white text-black hover:bg-white/90"
+              )}
             >
               {sending ? (
                 <>
                   <Loader className="w-4 h-4 animate-spin" />
-                  {scheduleEnabled ? 'Scheduling...' : 'Sending...'}
+                  {scheduleEnabled ? 'SCHEDULING...' : 'SENDING...'}
                 </>
               ) : scheduleEnabled ? (
                 <>
                   <Calendar className="w-4 h-4" />
-                  Schedule for {subscriberCount} Subscribers
+                  SCHEDULE CAMPAIGN
                 </>
               ) : (
                 <>
                   <Send className="w-4 h-4" />
-                  Send Now to {subscriberCount} Subscribers
+                  SEND NEWSLETTER
                 </>
               )}
             </button>
             <button
               onClick={() => setShowPreview(!showPreview)}
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-none text-white flex items-center gap-2 transition"
+              className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white font-bold uppercase tracking-[0.2em] text-xs transition-all flex items-center gap-2 border border-white/10"
             >
               <Eye className="w-4 h-4" />
-              {showPreview ? 'Hide' : 'Show'} Preview
+              {showPreview ? 'HIDE' : 'SHOW'} PREVIEW
             </button>
           </div>
 
           {/* Preview */}
           {showPreview && (
-            <div className="mt-4 p-4 bg-white/5 border border-white rounded-none">
-              <h3 className="text-white font-medium mb-2">Email Preview</h3>
-              <div className="bg-black border border-white p-4 rounded-none">
-                <div className="text-white/60 text-sm mb-2">Subject: {subject || '(No subject)'}</div>
-                <div
-                  className="text-white text-left"
-                  dangerouslySetInnerHTML={{ __html: buildPreviewHtml(contentHtml || convertToHtml(content)) }}
-                  style={{ maxHeight: '400px', overflow: 'auto' }}
-                />
+            <div className="mt-4 p-6 bg-black border border-white/10 animate-in fade-in duration-500">
+              <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
+                <span className="text-white/40 text-[10px] uppercase tracking-[0.2em]">Live Preview</span>
+                <span className="text-white/60 text-xs font-medium">Subject: {subject || '(No subject)'}</span>
               </div>
+              <div
+                className="text-white text-left bg-black custom-scrollbar overflow-y-auto"
+                dangerouslySetInnerHTML={{ __html: buildPreviewHtml(contentHtml || convertToHtml(content)) }}
+                style={{ maxHeight: '500px' }}
+              />
             </div>
           )}
         </div>
-      </div>
+      </AdminBentoCard>
+
 
       {/* Past Campaigns */}
-      <div className="bg-black/50 rounded-none p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <Clock className="w-5 h-5" />
-            Past Campaigns
-            <span className="text-sm font-normal text-white/40">({campaigns.length})</span>
-          </h2>
+      <AdminBentoCard
+        title="PAST CAMPAIGNS"
+        icon={<Clock className="w-4 h-4" />}
+        action={
           <div className="flex items-center gap-3">
             {selectedCampaigns.size > 0 && (
               <button
                 onClick={deleteSelectedCampaigns}
-                className="px-3 py-1 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 text-red-400 text-sm flex items-center gap-1 transition rounded-none"
+                className="px-3 py-1 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 transition"
               >
-                <Trash2 className="w-4 h-4" />
-                Delete Selected ({selectedCampaigns.size})
+                <Trash2 className="w-3.5 h-3.5" />
+                DELETE SELECTED ({selectedCampaigns.size})
               </button>
             )}
             {campaigns.length > 0 && selectedCampaigns.size === 0 && (
               <button
                 onClick={deleteAllCampaigns}
-                className="text-red-400/60 hover:text-red-400 text-sm flex items-center gap-1 transition"
+                className="text-red-400/60 hover:text-red-400 text-[10px] uppercase tracking-widest font-bold flex items-center gap-1 transition"
               >
-                <Trash2 className="w-4 h-4" />
-                Delete All
+                <Trash2 className="w-3.5 h-3.5" />
+                DELETE ALL
               </button>
             )}
             <button
               onClick={loadCampaigns}
-              className="text-white/60 hover:text-white text-sm"
+              className="text-white/40 hover:text-white text-[10px] uppercase tracking-widest font-bold transition flex items-center gap-2"
               disabled={loadingCampaigns}
             >
-              {loadingCampaigns ? 'Loading...' : 'Refresh'}
+              <RefreshCw className={cn("w-3.5 h-3.5", loadingCampaigns && "animate-spin")} />
+              {loadingCampaigns ? 'REFRESHING...' : 'REFRESH'}
             </button>
           </div>
-        </div>
-
-        {/* Select All Row */}
-        {campaigns.length > 0 && (
-          <div className="flex items-center gap-3 mb-3 pb-3 border-b border-white/10">
-            <button
-              onClick={toggleSelectAll}
-              className={`w-5 h-5 border rounded-none flex items-center justify-center transition ${selectedCampaigns.size === campaigns.length && campaigns.length > 0
-                  ? 'bg-white border-white'
-                  : selectedCampaigns.size > 0
-                    ? 'bg-white/30 border-white/50'
-                    : 'border-white/30 hover:border-white/50'
-                }`}
-              aria-label={selectedCampaigns.size === campaigns.length ? 'Deselect all' : 'Select all'}
-            >
-              {selectedCampaigns.size === campaigns.length && campaigns.length > 0 && (
-                <CheckCircle className="w-4 h-4 text-black" />
-              )}
-              {selectedCampaigns.size > 0 && selectedCampaigns.size < campaigns.length && (
-                <div className="w-2 h-2 bg-black rounded-none" />
-              )}
-            </button>
-            <span className="text-white/60 text-sm">
-              {selectedCampaigns.size === 0
-                ? 'Select all'
-                : selectedCampaigns.size === campaigns.length
-                  ? 'All selected'
-                  : `${selectedCampaigns.size} selected`}
-            </span>
-          </div>
-        )}
-
-        {loadingCampaigns ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader className="w-6 h-6 animate-spin text-white/60" />
-          </div>
-        ) : campaigns.length === 0 ? (
-          <div className="text-left py-8 text-white/60">
-            <div className="flex items-center gap-3">
-              <Mail className="w-12 h-12 opacity-50" />
-              <p>No campaigns yet</p>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {campaigns.map((campaign) => (
-              <div
-                key={campaign.id}
-                className={`bg-white/5 border rounded-none p-4 hover:bg-white/10 transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/40 ${selectedCampaigns.has(campaign.id) ? 'border-white/50 bg-white/10' : 'border-white'
-                  }`}
-                role="button"
-                tabIndex={0}
-                aria-expanded={expandedCampaignId === campaign.id}
-                onClick={() => toggleCampaign(campaign.id)}
-                onKeyDown={(event) => handleCampaignKeyDown(event, campaign.id)}
+        }
+      >
+        <div className="space-y-4">
+          {/* Select All Row */}
+          {campaigns.length > 0 && (
+            <div className="flex items-center gap-3 pb-3 border-b border-white/5">
+              <button
+                onClick={toggleSelectAll}
+                className={cn(
+                  "w-4 h-4 border flex items-center justify-center transition-colors",
+                  selectedCampaigns.size === campaigns.length && campaigns.length > 0
+                    ? "bg-white border-white"
+                    : selectedCampaigns.size > 0
+                      ? "bg-white/30 border-white/30"
+                      : "border-white/20 hover:border-white/40"
+                )}
+                aria-label={selectedCampaigns.size === campaigns.length ? 'Deselect all' : 'Select all'}
               >
-                <div className="flex items-start gap-3 mb-2">
-                  {/* Checkbox */}
-                  <button
-                    onClick={(e) => toggleCampaignSelection(campaign.id, e)}
-                    className={`w-5 h-5 mt-0.5 border rounded-none flex-shrink-0 flex items-center justify-center transition ${selectedCampaigns.has(campaign.id)
-                        ? 'bg-white border-white'
-                        : 'border-white/30 hover:border-white/50'
-                      }`}
-                    aria-label={selectedCampaigns.has(campaign.id) ? 'Deselect campaign' : 'Select campaign'}
-                  >
-                    {selectedCampaigns.has(campaign.id) && (
-                      <CheckCircle className="w-4 h-4 text-black" />
-                    )}
-                  </button>
+                {selectedCampaigns.size === campaigns.length && campaigns.length > 0 && (
+                  <CheckCircle className="w-3 h-3 text-black" />
+                )}
+                {selectedCampaigns.size > 0 && selectedCampaigns.size < campaigns.length && (
+                  <div className="w-2 h-0.5 bg-black" />
+                )}
+              </button>
+              <span className="text-white/40 text-[10px] uppercase tracking-widest font-bold">
+                {selectedCampaigns.size === 0
+                  ? 'SELECT ALL'
+                  : selectedCampaigns.size === campaigns.length
+                    ? 'ALL SELECTED'
+                    : `${selectedCampaigns.size} SELECTED`}
+              </span>
+            </div>
+          )}
 
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-white font-medium mb-1 truncate">{campaign.subject}</h3>
-                        <p className="text-white/60 text-sm mb-2 line-clamp-2">
-                          {campaign.content.substring(0, 150)}...
-                        </p>
-                      </div>
-                      <div className="ml-4 flex items-center gap-2 flex-shrink-0">
-                        {campaign.status === 'sent' && (
-                          <CheckCircle className="w-5 h-5 text-green-400" />
-                        )}
-                        {campaign.status === 'failed' && (
-                          <XCircle className="w-5 h-5 text-red-400" />
-                        )}
-                        {campaign.status === 'sending' && (
-                          <Loader className="w-5 h-5 text-yellow-400 animate-spin" />
-                        )}
-                        {campaign.status === 'scheduled' && (
-                          <Calendar className="w-5 h-5 text-blue-400" />
-                        )}
-                        {campaign.status === 'draft' && (
-                          <Mail className="w-5 h-5 text-white/40" />
-                        )}
-                        <button
-                          onClick={(e) => deleteCampaign(campaign.id, e)}
-                          className="p-1 text-white/30 hover:text-red-400 transition"
-                          aria-label="Delete campaign"
-                          title="Delete campaign"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-white/60 flex-wrap">
-                      <span>
-                        {campaign.emails_sent} sent / {campaign.total_subscribers} total
-                      </span>
-                      {campaign.emails_failed > 0 && (
-                        <span className="text-red-400">
-                          {campaign.emails_failed} failed
-                        </span>
-                      )}
-                      {campaign.status === 'scheduled' && campaign.scheduled_for && (
-                        <span className="text-blue-400 flex items-center gap-1">
-                          <Timer className="w-3 h-3" />
-                          Scheduled: {formatDate(campaign.scheduled_for)}
-                        </span>
-                      )}
-                      <span className="ml-auto">
-                        {campaign.sent_at ? formatDate(campaign.sent_at) : formatDate(campaign.created_at)}
-                      </span>
-                    </div>
-                  </div>
+          {loadingCampaigns ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="w-8 h-8 border-2 border-white/20 border-t-white animate-spin" />
+            </div>
+          ) : campaigns.length === 0 ? (
+            <div className="text-left py-12 border border-white/5 bg-white/[0.01]">
+              <div className="flex items-center gap-4 px-6">
+                <Mail className="w-8 h-8 text-white/10" />
+                <div>
+                  <p className="text-white font-medium">No campaigns found</p>
+                  <p className="text-white/20 text-xs">Start by composing your first newsletter above.</p>
                 </div>
-                {expandedCampaignId === campaign.id && (
-                  <div className="mt-3 pt-3 border-t border-white/10 space-y-3">
-                    <div className="text-white text-sm leading-relaxed whitespace-pre-wrap">
-                      {campaign.content}
-                    </div>
-                    <div className={`grid grid-cols-1 sm:grid-cols-2 ${campaign.scheduled_for ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-3 text-sm text-white/70`}>
-                      <div className="bg-black/40 border border-white/10 p-3 rounded-none">
-                        <div className="text-white/50">Subject</div>
-                        <div className="text-white font-medium">{campaign.subject}</div>
-                      </div>
-                      <div className="bg-black/40 border border-white/10 p-3 rounded-none">
-                        <div className="text-white/50">Sent</div>
-                        <div className="text-white font-medium">
-                          {campaign.sent_at ? formatDate(campaign.sent_at) : campaign.status === 'scheduled' ? 'Pending' : 'Draft'}
-                        </div>
-                      </div>
-                      {campaign.scheduled_for && (
-                        <div className="bg-blue-500/10 border border-blue-500/30 p-3 rounded-none">
-                          <div className="text-blue-400/70">Scheduled For</div>
-                          <div className="text-blue-400 font-medium">{formatDate(campaign.scheduled_for)}</div>
-                        </div>
+              </div>
+            </div>
+          ) : (
+            <div className="divide-y divide-white/5">
+              {campaigns.map((campaign) => (
+                <div
+                  key={campaign.id}
+                  className={cn(
+                    "group/item py-6 transition-all border-l-2",
+                    selectedCampaigns.has(campaign.id) ? "bg-white/[0.03] border-white" : "border-transparent hover:bg-white/[0.02]"
+                  )}
+                  onClick={() => toggleCampaign(campaign.id)}
+                  onKeyDown={(e) => handleCampaignKeyDown(e, campaign.id)}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <div className="flex items-start gap-4 px-4">
+                    {/* Checkbox */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleCampaignSelection(campaign.id, e);
+                      }}
+                      className={cn(
+                        "w-4 h-4 mt-1 border flex items-center justify-center transition-colors flex-shrink-0",
+                        selectedCampaigns.has(campaign.id)
+                          ? "bg-white border-white"
+                          : "border-white/20 hover:border-white/40"
                       )}
-                      <div className="bg-black/40 border border-white/10 p-3 rounded-none">
-                        <div className="text-white/50">Status</div>
-                        <div className={`font-medium capitalize ${campaign.status === 'scheduled' ? 'text-blue-400' :
-                            campaign.status === 'sent' ? 'text-green-400' :
-                              campaign.status === 'failed' ? 'text-red-400' :
-                                'text-white'
-                          }`}>{campaign.status}</div>
-                      </div>
-                    </div>
+                    >
+                      {selectedCampaigns.has(campaign.id) && <CheckCircle className="w-3 h-3 text-black" />}
+                    </button>
 
-                    {/* Email Delivery Details */}
-                    <div className="border border-white/10 rounded-none overflow-hidden">
-                      <div className="bg-black/40 p-3 flex items-center justify-between">
-                        <h4 className="text-white font-medium flex items-center gap-2">
-                          <Mail className="w-4 h-4" />
-                          Email Delivery Details
-                        </h4>
-                        <div className="flex items-center gap-2">
-                          {campaign.emails_failed > 0 && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                retryFailedEmails(campaign.id);
-                              }}
-                              disabled={retrying === campaign.id}
-                              className="px-3 py-1 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/50 text-yellow-400 text-sm flex items-center gap-1 transition rounded-none disabled:opacity-50"
-                            >
-                              {retrying === campaign.id ? (
-                                <Loader className="w-3 h-3 animate-spin" />
-                              ) : (
-                                <RefreshCw className="w-3 h-3" />
-                              )}
-                              Retry Failed ({campaign.emails_failed})
-                            </button>
-                          )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-white font-bold text-base tracking-tight mb-1 truncate group-hover/item:text-white transition-colors">
+                            {campaign.subject}
+                          </h3>
+                          <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest">
+                            <span className={cn(
+                              "px-1.5 py-0.5 border",
+                              campaign.status === 'sent' ? "text-green-400 border-green-400/30 bg-green-400/5" :
+                                campaign.status === 'scheduled' ? "text-blue-400 border-blue-400/30 bg-blue-400/5" :
+                                  campaign.status === 'sending' ? "text-yellow-400 border-yellow-400/30 bg-yellow-400/5" :
+                                    "text-white/40 border-white/10 bg-white/5"
+                            )}>
+                              {campaign.status}
+                            </span>
+                            <span className="text-white/40">
+                              {campaign.sent_at ? formatDate(campaign.sent_at) : formatDate(campaign.created_at)}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 opacity-0 group-hover/item:opacity-100 transition-opacity">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              loadCampaignLogs(campaign.id);
+                              deleteCampaign(campaign.id, e);
                             }}
-                            disabled={loadingLogs === campaign.id}
-                            className="p-1 text-white/40 hover:text-white transition"
-                            title="Refresh logs"
+                            className="p-2 text-white/20 hover:text-red-400 hover:bg-red-400/10 transition-all"
                           >
-                            <RefreshCw className={`w-4 h-4 ${loadingLogs === campaign.id ? 'animate-spin' : ''}`} />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
 
-                      {loadingLogs === campaign.id ? (
-                        <div className="p-4 flex items-center justify-center">
-                          <Loader className="w-5 h-5 animate-spin text-white/60" />
-                        </div>
-                      ) : campaignLogs[campaign.id] && campaignLogs[campaign.id].length > 0 ? (
-                        <div className="max-h-64 overflow-y-auto">
-                          {/* Sent Emails */}
-                          {campaignLogs[campaign.id].filter(log => log.status === 'sent').length > 0 && (
-                            <div className="border-b border-white/10">
-                              <div className="bg-green-500/10 px-3 py-2 flex items-center gap-2">
-                                <CheckCircle className="w-4 h-4 text-green-400" />
-                                <span className="text-green-400 text-sm font-medium">
-                                  Sent ({campaignLogs[campaign.id].filter(log => log.status === 'sent').length})
-                                </span>
-                              </div>
-                              <div className="divide-y divide-white/5">
-                                {campaignLogs[campaign.id].filter(log => log.status === 'sent').map((log) => (
-                                  <div key={log.id} className="px-3 py-2 flex items-center justify-between text-sm">
-                                    <span className="text-white">{log.subscriber_email}</span>
-                                    <span className="text-white/40 text-xs">
-                                      {log.sent_at ? formatDate(log.sent_at) : ''}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
+                      <p className="text-white/40 text-sm line-clamp-2 leading-relaxed mb-4">
+                        {campaign.content}
+                      </p>
 
-                          {/* Failed Emails */}
-                          {campaignLogs[campaign.id].filter(log => log.status === 'failed').length > 0 && (
-                            <div>
-                              <div className="bg-red-500/10 px-3 py-2 flex items-center gap-2">
-                                <XCircle className="w-4 h-4 text-red-400" />
-                                <span className="text-red-400 text-sm font-medium">
-                                  Failed ({campaignLogs[campaign.id].filter(log => log.status === 'failed').length})
-                                </span>
-                              </div>
-                              <div className="divide-y divide-white/5">
-                                {campaignLogs[campaign.id].filter(log => log.status === 'failed').map((log) => (
-                                  <div key={log.id} className="px-3 py-2">
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-white text-sm">{log.subscriber_email}</span>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          retryFailedEmails(campaign.id, [log.subscriber_email]);
-                                        }}
-                                        disabled={retrying === campaign.id}
-                                        className="text-yellow-400 hover:text-yellow-300 text-xs flex items-center gap-1 transition"
-                                      >
-                                        <RefreshCw className="w-3 h-3" />
-                                        Retry
-                                      </button>
-                                    </div>
+                      <div className="flex items-center gap-6 text-[10px] uppercase tracking-widest font-bold text-white/30">
+                        <div className="flex items-center gap-1.5">
+                          <Users className="w-3.5 h-3.5" />
+                          <span>{campaign.emails_sent} / {campaign.total_subscribers} SENT</span>
+                        </div>
+                        {campaign.emails_failed > 0 && (
+                          <div className="flex items-center gap-1.5 text-red-400/60">
+                            <XCircle className="w-3.5 h-3.5" />
+                            <span>{campaign.emails_failed} FAILED</span>
+                          </div>
+                        )}
+                        {campaign.status === 'scheduled' && campaign.scheduled_for && (
+                          <div className="flex items-center gap-1.5 text-blue-400/60">
+                            <Timer className="w-3.5 h-3.5" />
+                            <span>SCHEDULED: {formatDate(campaign.scheduled_for)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Expanded Content */}
+                  {expandedCampaignId === campaign.id && (
+                    <div className="mt-8 mx-4 p-6 bg-black border border-white/5 animate-in fade-in slide-in-from-top-4 duration-300" onClick={(e) => e.stopPropagation()}>
+                      {/* Campaign Deep Stats */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                        <div className="p-4 bg-white/[0.02] border border-white/5 relative group/stat">
+                          <div className="text-white/20 text-[8px] uppercase tracking-widest mb-1 font-bold">Delivery Status</div>
+                          <div className={cn(
+                            "text-base font-bold uppercase tracking-tight",
+                            campaign.status === 'sent' ? "text-green-400" :
+                              campaign.status === 'failed' ? "text-red-400" : "text-white/60"
+                          )}>
+                            {campaign.status}
+                          </div>
+                        </div>
+                        <div className="p-4 bg-white/[0.02] border border-white/5 relative group/stat">
+                          <div className="text-white/20 text-[8px] uppercase tracking-widest mb-1 font-bold">Successful Sends</div>
+                          <div className="text-base font-bold text-white tracking-tight">
+                            {Math.round((campaign.emails_sent / (campaign.total_subscribers || 1)) * 100)}%
+                          </div>
+                        </div>
+                        <div className="p-4 bg-white/[0.02] border border-white/5 relative group/stat">
+                          <div className="text-white/20 text-[8px] uppercase tracking-widest mb-1 font-bold">Failed Count</div>
+                          <div className="text-base font-bold text-red-400/80 tracking-tight">
+                            {campaign.emails_failed}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Delivery Details Table-like List */}
+                      <div className="border border-white/5">
+                        <div className="bg-white/[0.03] px-4 py-3 border-b border-white/10 flex items-center justify-between">
+                          <h4 className="text-white text-[10px] uppercase tracking-[0.2em] font-bold flex items-center gap-2">
+                            <Mail className="w-3.5 h-3.5" />
+                            Delivery Details
+                          </h4>
+                          <div className="flex items-center gap-3">
+                            {campaign.emails_failed > 0 && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  retryFailedEmails(campaign.id);
+                                }}
+                                disabled={retrying === campaign.id}
+                                className="px-3 py-1 bg-white text-black text-[8px] font-bold uppercase tracking-widest hover:bg-white/90 transition disabled:opacity-50"
+                              >
+                                {retrying === campaign.id ? 'RETRYING...' : `RETRY FAILED (${campaign.emails_failed})`}
+                              </button>
+                            )}
+                            <button
+                              onClick={(e) => { e.stopPropagation(); loadCampaignLogs(campaign.id); }}
+                              className="text-white/40 hover:text-white transition"
+                            >
+                              <RefreshCw className={cn("w-3.5 h-3.5", loadingLogs === campaign.id && "animate-spin")} />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="max-h-80 overflow-y-auto custom-scrollbar">
+                          {loadingLogs === campaign.id ? (
+                            <div className="py-12 flex justify-center">
+                              <div className="w-6 h-6 border-2 border-white/10 border-t-white animate-spin" />
+                            </div>
+                          ) : campaignLogs[campaign.id] ? (
+                            <div className="divide-y divide-white/5">
+                              {campaignLogs[campaign.id].map((log) => (
+                                <div key={log.id} className="px-4 py-3 flex items-center justify-between group/log">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-white text-sm font-medium">{log.subscriber_email}</div>
                                     {log.error_message && (
-                                      <div className="text-red-400/70 text-xs mt-1 truncate" title={log.error_message}>
+                                      <div className="text-red-400/60 text-[10px] uppercase font-bold mt-1 tracking-tight truncate">
                                         {log.error_message}
                                       </div>
                                     )}
                                   </div>
-                                ))}
-                              </div>
+                                  <div className="flex items-center gap-4">
+                                    <span className={cn(
+                                      "text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 border",
+                                      log.status === 'sent' ? "text-green-400/80 border-green-400/20" : "text-red-400/80 border-red-400/20"
+                                    )}>
+                                      {log.status}
+                                    </span>
+                                    <span className="text-white/20 text-[10px] font-bold w-32 text-right">
+                                      {log.sent_at ? formatDate(log.sent_at) : ''}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="py-12 text-center text-white/20 text-[10px] uppercase tracking-widest">
+                              No logs locally available. Click refresh.
                             </div>
                           )}
                         </div>
-                      ) : (
-                        <div className="p-4 text-white/40 text-sm text-center">
-                          No detailed logs available for this campaign.
-                          <br />
-                          <span className="text-xs">(Logs are recorded for newsletters sent after this feature was added)</span>
-                        </div>
-                      )}
+                      </div>
                     </div>
-
-                    <div className="pt-2">
-                      <button
-                        onClick={(e) => deleteCampaign(campaign.id, e)}
-                        className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 text-sm flex items-center gap-2 transition rounded-none"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Delete Campaign
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </AdminBentoCard>
 
       {/* Subscriber List Modal */}
       {showSubscriberModal && (
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-md"
           onClick={() => setShowSubscriberModal(false)}
         >
           <div
-            className="bg-black border border-white rounded-none p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-hidden flex flex-col"
+            className="bg-black border border-white/10 w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden flex flex-col relative shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Subscriber List
-              </h2>
+            <div className="flex items-center justify-between p-8 border-b border-white/5 bg-[#0a0a0a]">
+              <div>
+                <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
+                  <Users className="w-6 h-6" />
+                  SUBSCRIBER INDEX
+                </h2>
+                <div className="text-white/40 text-[10px] uppercase tracking-[0.2em] mt-1">Management Console</div>
+              </div>
               <button
                 onClick={() => setShowSubscriberModal(false)}
-                className="text-white/60 hover:text-white transition p-1"
-                aria-label="Close"
+                className="text-white/30 hover:text-white transition-all p-2 hover:bg-white/5"
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
 
-            {/* Tabs */}
-            <div className="flex gap-2 mb-4">
-              <button
-                onClick={() => setSubscriberTab('subscribed')}
-                className={`px-4 py-2 rounded-none flex items-center gap-2 transition ${subscriberTab === 'subscribed'
-                    ? 'bg-green-500/20 border border-green-500/50 text-green-400'
-                    : 'bg-white/5 border border-white/10 text-white/60 hover:bg-white/10'
-                  }`}
-              >
-                <UserCheck className="w-4 h-4" />
-                Subscribed ({subscriberCount})
-              </button>
-              <button
-                onClick={() => setSubscriberTab('unsubscribed')}
-                className={`px-4 py-2 rounded-none flex items-center gap-2 transition ${subscriberTab === 'unsubscribed'
-                    ? 'bg-red-500/20 border border-red-500/50 text-red-400'
-                    : 'bg-white/5 border border-white/10 text-white/60 hover:bg-white/10'
-                  }`}
-              >
-                <UserMinus className="w-4 h-4" />
-                Unsubscribed ({unsubscribedCount})
-              </button>
-            </div>
-
-            {/* Search */}
-            <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-              <input
-                type="text"
-                placeholder="Search by email..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/20 rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white/40"
-              />
-            </div>
-
-            {/* Copy All Button */}
-            {(() => {
-              const filteredSubscribers = subscribers.filter(sub => {
-                const matchesTab = subscriberTab === 'subscribed'
-                  ? sub.verified
-                  : !sub.verified;
-                const matchesSearch = sub.email.toLowerCase().includes(searchQuery.toLowerCase());
-                return matchesTab && matchesSearch;
-              });
-
-              return filteredSubscribers.length > 0 && (
-                <button
-                  onClick={() => copyEmailsToClipboard(filteredSubscribers.map(s => s.email))}
-                  className="mb-4 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-sm flex items-center gap-2 w-fit transition"
-                >
-                  <Copy className="w-4 h-4" />
-                  Copy All Emails ({filteredSubscribers.length})
-                </button>
-              );
-            })()}
-
-            {/* Subscriber List */}
-            <div className="flex-1 overflow-y-auto">
-              {loadingSubscribers ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader className="w-6 h-6 animate-spin text-white/60" />
+            <div className="p-8 space-y-6 overflow-hidden flex flex-col flex-1">
+              {/* Tabs and Search */}
+              <div className="space-y-4">
+                <div className="flex gap-1 bg-white/[0.02] border border-white/5 p-1">
+                  <button
+                    onClick={() => setSubscriberTab('subscribed')}
+                    className={cn(
+                      "flex-1 py-3 text-[10px] font-bold uppercase tracking-[0.2em] transition-all",
+                      subscriberTab === 'subscribed' ? "bg-white text-black" : "text-white/40 hover:text-white hover:bg-white/5"
+                    )}
+                  >
+                    ACTIVES ({subscriberCount})
+                  </button>
+                  <button
+                    onClick={() => setSubscriberTab('unsubscribed')}
+                    className={cn(
+                      "flex-1 py-3 text-[10px] font-bold uppercase tracking-[0.2em] transition-all",
+                      subscriberTab === 'unsubscribed' ? "bg-white text-black" : "text-white/40 hover:text-white hover:bg-white/5"
+                    )}
+                  >
+                    INACTIVE ({unsubscribedCount})
+                  </button>
                 </div>
-              ) : (
-                <div className="space-y-2">
-                  {subscribers
+
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                  <input
+                    type="text"
+                    placeholder="QUERY EMAIL INDEX..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 bg-black border border-white/10 text-white placeholder-white/20 focus:border-white transition-colors outline-none text-xs uppercase tracking-widest"
+                  />
+                </div>
+              </div>
+
+              {/* Copy All Button */}
+              {(() => {
+                const filteredSubscribers = subscribers.filter(sub => {
+                  const matchesTab = subscriberTab === 'subscribed' ? sub.verified : !sub.verified;
+                  const matchesSearch = sub.email.toLowerCase().includes(searchQuery.toLowerCase());
+                  return matchesTab && matchesSearch;
+                });
+
+                return filteredSubscribers.length > 0 && (
+                  <button
+                    onClick={() => copyEmailsToClipboard(filteredSubscribers.map(s => s.email))}
+                    className="w-full py-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all"
+                  >
+                    <Copy className="w-4 h-4" />
+                    EXPORT {filteredSubscribers.length} ENTITIES TO CLIPBOARD
+                  </button>
+                );
+              })()}
+
+              {/* List Container */}
+              <div className="flex-1 overflow-y-auto custom-scrollbar border border-white/5 divide-y divide-white/5">
+                {loadingSubscribers ? (
+                  <div className="flex flex-col items-center justify-center py-24 gap-4">
+                    <div className="w-12 h-12 border-2 border-white/10 border-t-white animate-spin" />
+                    <span className="text-[10px] uppercase tracking-widest text-white/40 font-bold">Accessing Index...</span>
+                  </div>
+                ) : (
+                  subscribers
                     .filter(sub => {
-                      const matchesTab = subscriberTab === 'subscribed'
-                        ? sub.verified
-                        : !sub.verified;
+                      const matchesTab = subscriberTab === 'subscribed' ? sub.verified : !sub.verified;
                       const matchesSearch = sub.email.toLowerCase().includes(searchQuery.toLowerCase());
                       return matchesTab && matchesSearch;
                     })
                     .map((subscriber) => (
                       <div
                         key={subscriber.id}
-                        className="flex items-center justify-between p-3 bg-white/5 border border-white/10 rounded-none hover:bg-white/10 transition"
+                        className="flex items-center justify-between p-4 group transition-colors hover:bg-white/[0.01]"
                       >
-                        <div className="flex items-center gap-3">
-                          <div className={`w-2 h-2 rounded-full ${subscriber.verified ? 'bg-green-500' : 'bg-red-500'}`} />
+                        <div className="flex items-center gap-4">
+                          <div className={cn(
+                            "w-1 h-8 transition-colors",
+                            subscriber.verified ? "bg-green-500/40 group-hover:bg-green-500" : "bg-red-500/40 group-hover:bg-red-500"
+                          )} />
                           <div>
-                            <div className="text-white font-medium">{subscriber.email}</div>
-                            <div className="text-xs text-white/40 space-y-0.5">
-                              {subscriber.verified ? (
-                                <div>Subscribed: {formatDate(subscriber.created_at)}</div>
-                              ) : (
-                                <>
-                                  <div>Subscribed: {formatDate(subscriber.created_at)}</div>
-                                  <div className="text-red-400/70">
-                                    Unsubscribed: {subscriber.unsubscribed_at ? formatDate(subscriber.unsubscribed_at) : 'Unknown'}
-                                  </div>
-                                </>
-                              )}
+                            <div className="text-white font-medium text-sm tracking-tight">{subscriber.email}</div>
+                            <div className="text-[10px] text-white/30 uppercase tracking-widest font-bold mt-1">
+                              {subscriber.verified
+                                ? `JOINED: ${formatDate(subscriber.created_at)}`
+                                : `EXITED: ${subscriber.unsubscribed_at ? formatDate(subscriber.unsubscribed_at) : 'UNKNOWN'}`}
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {subscriber.verified ? (
-                            <span className="text-xs px-2 py-1 bg-green-500/20 text-green-400 rounded-none">
-                              Active
-                            </span>
-                          ) : (
-                            <span className="text-xs px-2 py-1 bg-red-500/20 text-red-400 rounded-none">
-                              Unsubscribed
-                            </span>
-                          )}
-                          <button
-                            onClick={() => {
-                              navigator.clipboard.writeText(subscriber.email);
-                              success('Email copied!');
-                            }}
-                            className="p-1 text-white/40 hover:text-white transition"
-                            aria-label="Copy email"
-                          >
-                            <Copy className="w-4 h-4" />
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(subscriber.email);
+                            success('ENTITY COPIED TO CLIPBOARD');
+                          }}
+                          className="p-3 text-white/20 hover:text-white hover:bg-white/5 transition-all"
+                          title="Copy ID"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
                       </div>
-                    ))}
-                  {subscribers.filter(sub => {
-                    const matchesTab = subscriberTab === 'subscribed'
-                      ? sub.verified
-                      : !sub.verified;
-                    const matchesSearch = sub.email.toLowerCase().includes(searchQuery.toLowerCase());
-                    return matchesTab && matchesSearch;
-                  }).length === 0 && (
-                      <div className="text-center py-12 text-white/40">
-                        {searchQuery ? (
-                          <p>No subscribers found matching "{searchQuery}"</p>
-                        ) : subscriberTab === 'subscribed' ? (
-                          <p>No subscribed users yet</p>
-                        ) : (
-                          <p>No unsubscribed users</p>
-                        )}
-                      </div>
-                    )}
-                </div>
-              )}
+                    ))
+                )}
+                {!loadingSubscribers && subscribers.filter(sub => {
+                  const matchesTab = subscriberTab === 'subscribed' ? sub.verified : !sub.verified;
+                  const matchesSearch = sub.email.toLowerCase().includes(searchQuery.toLowerCase());
+                  return matchesTab && matchesSearch;
+                }).length === 0 && (
+                    <div className="py-24 text-center">
+                      <Users className="w-12 h-12 text-white/5 mx-auto mb-4" />
+                      <p className="text-white/40 text-[10px] uppercase tracking-[0.2em] font-bold">Index Empty</p>
+                    </div>
+                  )}
+              </div>
             </div>
           </div>
         </div>
