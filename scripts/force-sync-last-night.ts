@@ -1,5 +1,5 @@
 
-import { syncGalleryPhotos } from '../api/lib/api-handlers/_photo-sync-utils';
+import { syncGalleryPhotos } from '../lib/api-handlers/_photo-sync-utils';
 import * as dotenv from 'dotenv';
 import path from 'path';
 

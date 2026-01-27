@@ -48,7 +48,7 @@ export default async function handler(
  * Blog Post Published Notification Handler
  */
 async function handlePostPublishedNotify(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../lib/api-handlers/_blog-post-published-notify-handler.js')
+  const handler = await import('../../lib/api-handlers/_blog-post-published-notify-handler.js')
   return await handler.default(req, res)
 }
 
@@ -56,7 +56,7 @@ async function handlePostPublishedNotify(req: VercelRequest, res: VercelResponse
  * Submission Confirmation Handler
  */
 async function handleSubmissionConfirmation(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../lib/api-handlers/_blog-submission-confirmation-handler.js')
+  const handler = await import('../../lib/api-handlers/_blog-submission-confirmation-handler.js')
   return await handler.default(req, res)
 }
 
@@ -64,7 +64,7 @@ async function handleSubmissionConfirmation(req: VercelRequest, res: VercelRespo
  * Submission Approved Handler
  */
 async function handleSubmissionApproved(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../lib/api-handlers/_blog-submission-approved-handler.js')
+  const handler = await import('../../lib/api-handlers/_blog-submission-approved-handler.js')
   return await handler.default(req, res)
 }
 
@@ -72,7 +72,7 @@ async function handleSubmissionApproved(req: VercelRequest, res: VercelResponse)
  * Submission Rejected Handler
  */
 async function handleSubmissionRejected(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../lib/api-handlers/_blog-submission-rejected-handler.js')
+  const handler = await import('../../lib/api-handlers/_blog-submission-rejected-handler.js')
   return await handler.default(req, res)
 }
 
@@ -80,6 +80,6 @@ async function handleSubmissionRejected(req: VercelRequest, res: VercelResponse)
  * Submission Unpublished Handler
  */
 async function handleSubmissionUnpublished(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../lib/api-handlers/_blog-post-unpublished-notify-handler.js')
+  const handler = await import('../../lib/api-handlers/_blog-post-unpublished-notify-handler.js')
   return await handler.default(req, res)
 }

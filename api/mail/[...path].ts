@@ -80,7 +80,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     // Dynamic import of mail handler
-    const mailHandler = await import('../lib/api-handlers/_zoho-mail-handler.js');
+    const mailHandler = await import('../../lib/api-handlers/_zoho-mail-handler.js');
 
     switch (endpoint) {
       // GET /api/mail/folders

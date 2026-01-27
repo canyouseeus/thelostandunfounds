@@ -44,36 +44,36 @@ export default async function handler(
 
 // Import and re-export newsletter-send handler
 async function handleNewsletterSend(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../lib/api-handlers/_newsletter-send-handler.js')
+  const handler = await import('../../lib/api-handlers/_newsletter-send-handler.js')
   return await handler.default(req, res)
 }
 
 // Import and re-export newsletter-subscribe handler
 async function handleNewsletterSubscribe(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../lib/api-handlers/_newsletter-subscribe-handler.js')
+  const handler = await import('../../lib/api-handlers/_newsletter-subscribe-handler.js')
   return await handler.default(req, res)
 }
 
 // Import and re-export newsletter-retry handler
 async function handleNewsletterRetry(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../lib/api-handlers/_newsletter-retry-handler.js')
+  const handler = await import('../../lib/api-handlers/_newsletter-retry-handler.js')
   return await handler.default(req, res)
 }
 
 // Import and re-export newsletter-logs handler
 async function handleNewsletterLogs(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../lib/api-handlers/_newsletter-logs-handler.js')
+  const handler = await import('../../lib/api-handlers/_newsletter-logs-handler.js')
   return await handler.default(req, res)
 }
 
 // Import and re-export newsletter-delete handler
 async function handleNewsletterDelete(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../lib/api-handlers/_newsletter-delete-handler.js')
+  const handler = await import('../../lib/api-handlers/_newsletter-delete-handler.js')
   return await handler.default(req, res)
 }
 
 // Import and re-export newsletter-unsubscribe handler
 async function handleNewsletterUnsubscribe(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../lib/api-handlers/_newsletter-unsubscribe-handler.js')
+  const handler = await import('../../lib/api-handlers/_newsletter-unsubscribe-handler.js')
   return await handler.default(req, res)
 }

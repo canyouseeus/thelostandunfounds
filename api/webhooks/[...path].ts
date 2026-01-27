@@ -25,6 +25,6 @@ export default async function handler(
 }
 
 async function handleFourthwallWebhook(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../lib/api-handlers/_webhook-fourthwall-handler.js')
+  const handler = await import('../../lib/api-handlers/_webhook-fourthwall-handler.js')
   return handler.default(req, res)
 }

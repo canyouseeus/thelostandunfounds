@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
-import { sendPhotoDeliveryEmail } from '../lib/api-handlers/_photo-email-utils.js'
+import { sendPhotoDeliveryEmail } from '../../lib/api-handlers/_photo-email-utils.js'
 
 export default async function handler(
     req: VercelRequest,

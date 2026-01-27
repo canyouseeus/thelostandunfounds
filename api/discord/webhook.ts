@@ -5,7 +5,7 @@ export default async function handler(
   res: VercelResponse
 ) {
   try {
-    const handler = await import('../lib/api-handlers/_discord-webhook-handler.js')
+    const handler = await import('../../lib/api-handlers/_discord-webhook-handler.js')
     return handler.default(req, res)
   } catch (error: any) {
     console.error('Discord webhook handler error:', error)

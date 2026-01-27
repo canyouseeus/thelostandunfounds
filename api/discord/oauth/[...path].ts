@@ -5,7 +5,7 @@ export default async function handler(
   res: VercelResponse
 ) {
   try {
-    const handler = await import('../../lib/api-handlers/_discord-oauth-handler.js')
+    const handler = await import('../../../lib/api-handlers/_discord-oauth-handler.js')
     return handler.default(req, res)
   } catch (error: any) {
     console.error('Discord OAuth handler error:', error)
