@@ -1,62 +1,72 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/logo.png" />
-    <link rel="apple-touch-icon" href="/logo.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/logo.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#000000" />
-    <meta name="msapplication-TileColor" content="#000000" />
-    <!-- Standard mobile web app capability -->
-    <meta name="mobile-web-app-capable" content="yes" />
-    <!-- iOS-specific meta tags (kept for iOS Safari compatibility) -->
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-    <meta name="apple-mobile-web-app-title" content="THE LOST+UNFOUNDS" />
-    
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://www.thelostandunfounds.com/" />
-    <meta property="og:title" content="THE LOST+UNFOUNDS" />
-    <meta property="og:description" content="CAN YOU SEE US?" />
-    <meta property="og:image" content="https://www.thelostandunfounds.com/og-image.png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="1200" />
-    <meta property="og:image:type" content="image/png" />
-    
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="THE LOST+UNFOUNDS" />
-    <meta name="twitter:description" content="CAN YOU SEE US?" />
-    <meta name="twitter:image" content="https://www.thelostandunfounds.com/og-image.png" />
-    
-    <!-- SEO Meta Description -->
-    <meta name="description" content="CAN YOU SEE US? THE LOST+UNFOUNDS - Revealing findings from the frontier and beyond. Intel from the field on development, AI, and building in the age of information." />
-    <meta name="keywords" content="THE LOST+UNFOUNDS, development, AI, technology, blog, newsletter" />
-    
-    <title>THE LOST+UNFOUNDS</title>
-    <!-- reCAPTCHA v3 will be loaded dynamically by React component -->
-  </head>
-  <body>
-    <!-- Pre-rendered content for bots and SEO - hidden when React loads -->
-    <noscript>
-      <div style="background: black; color: white; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center;">
-        <div style="font-size: 3rem; margin-bottom: 2rem; font-weight: bold; display: block;">CAN YOU SEE US?</div>
-        <p style="font-size: 1.25rem; margin-bottom: 2rem; color: rgba(255, 255, 255, 0.8);">
-          Thanks for stopping by. Sign-up for updates and news!
-        </p>
-        <p style="font-size: 0.875rem; color: rgba(255, 255, 255, 0.6);">
-          THE LOST+UNFOUNDS - Revealing findings from the frontier and beyond.
-        </p>
-        <div style="margin-top: 2rem;">
-          <a href="/thelostarchives" style="color: white; text-decoration: underline;">Read our latest articles in THE LOST ARCHIVES</a>
-        </div>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <link rel="apple-touch-icon" href="/logo.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/logo.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="msapplication-TileColor" content="#000000" />
+  <!-- Standard mobile web app capability -->
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <!-- Content Security Policy -->
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://analytics.ahrefs.com https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' https:;" />
+
+  <!-- iOS-specific meta tags (kept for iOS Safari compatibility) -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <meta name="apple-mobile-web-app-title" content="THE LOST+UNFOUNDS" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.thelostandunfounds.com/" />
+  <meta property="og:title" content="THE LOST+UNFOUNDS" />
+  <meta property="og:description" content="CAN YOU SEE US?" />
+  <meta property="og:image" content="https://www.thelostandunfounds.com/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="1200" />
+  <meta property="og:image:type" content="image/png" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="THE LOST+UNFOUNDS" />
+  <meta name="twitter:description" content="CAN YOU SEE US?" />
+  <meta name="twitter:image" content="https://www.thelostandunfounds.com/og-image.png" />
+
+  <!-- SEO Meta Description -->
+  <meta name="description"
+    content="CAN YOU SEE US? THE LOST+UNFOUNDS - Revealing findings from the frontier and beyond. Intel from the field on development, AI, and building in the age of information." />
+  <meta name="keywords" content="THE LOST+UNFOUNDS, development, AI, technology, blog, newsletter" />
+
+  <title>THE LOST+UNFOUNDS</title>
+  <!-- reCAPTCHA v3 will be loaded dynamically by React component -->
+</head>
+
+<body>
+  <!-- Pre-rendered content for bots and SEO - hidden when React loads -->
+  <noscript>
+    <div
+      style="background: black; color: white; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center;">
+      <div style="font-size: 3rem; margin-bottom: 2rem; font-weight: bold; display: block;">CAN YOU SEE US?</div>
+      <p style="font-size: 1.25rem; margin-bottom: 2rem; color: rgba(255, 255, 255, 0.8);">
+        Thanks for stopping by. Sign-up for updates and news!
+      </p>
+      <p style="font-size: 0.875rem; color: rgba(255, 255, 255, 0.6);">
+        THE LOST+UNFOUNDS - Revealing findings from the frontier and beyond.
+      </p>
+      <div style="margin-top: 2rem;">
+        <a href="/thelostarchives" style="color: white; text-decoration: underline;">Read our latest articles in THE
+          LOST ARCHIVES</a>
       </div>
-    </noscript>
-    
-    <!-- Structured Data for SEO -->
-    <script type="application/ld+json">
+    </div>
+  </noscript>
+
+  <!-- Structured Data for SEO -->
+  <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
@@ -70,138 +80,139 @@
       }
     }
     </script>
-    
-    <div id="root">
-      <!-- Pre-rendered content for bots; visually hidden for users so no flash -->
-      <div id="pre-render" style="background: black; color: black; opacity: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999; pointer-events: none;">
-        <div style="font-size: 3rem; margin-bottom: 2rem; font-weight: normal; display: block;">CAN YOU SEE US?</div>
-        <p style="font-size: 1.25rem; margin-bottom: 2rem; color: black;">
-          Thanks for stopping by. Sign-up for updates and news!
-        </p>
-        <p style="font-size: 0.875rem; color: black;">
-          THE LOST+UNFOUNDS - Revealing findings from the frontier and beyond.
-        </p>
-        <div id="loading-message" style="display: none; color: black; margin-top: 2rem; font-size: 0.75rem;">
-          Loading... If you see this, HTML loaded but React hasn't mounted yet.
-        </div>
-        <div style="margin-top: 1rem; opacity: 0; pointer-events: auto;">
-           <a href="/thelostarchives" style="color: black;">Enter Site</a>
-        </div>
+
+  <div id="root">
+    <!-- Pre-rendered content for bots; visually hidden for users so no flash -->
+    <div id="pre-render"
+      style="background: black; color: black; opacity: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999; pointer-events: none;">
+      <div style="font-size: 3rem; margin-bottom: 2rem; font-weight: normal; display: block;">CAN YOU SEE US?</div>
+      <p style="font-size: 1.25rem; margin-bottom: 2rem; color: black;">
+        Thanks for stopping by. Sign-up for updates and news!
+      </p>
+      <p style="font-size: 0.875rem; color: black;">
+        THE LOST+UNFOUNDS - Revealing findings from the frontier and beyond.
+      </p>
+      <div id="loading-message" style="display: none; color: black; margin-top: 2rem; font-size: 0.75rem;">
+        Loading... If you see this, HTML loaded but React hasn't mounted yet.
+      </div>
+      <div style="margin-top: 1rem; opacity: 0; pointer-events: auto;">
+        <a href="/thelostarchives" style="color: black;">Enter Site</a>
       </div>
     </div>
-    <script>
-      // Global error storage for debug page
-      window.__DEBUG_LOGS__ = window.__DEBUG_LOGS__ || [];
-      
-      const addDebugLog = (type, message, stack) => {
-        window.__DEBUG_LOGS__.push({
-          type,
-          message,
-          stack,
-          timestamp: new Date().toISOString()
-        });
-        // Keep last 200 logs
-        if (window.__DEBUG_LOGS__.length > 200) {
-          window.__DEBUG_LOGS__.shift();
+  </div>
+  <script>
+    // Global error storage for debug page
+    window.__DEBUG_LOGS__ = window.__DEBUG_LOGS__ || [];
+
+    const addDebugLog = (type, message, stack) => {
+      window.__DEBUG_LOGS__.push({
+        type,
+        message,
+        stack,
+        timestamp: new Date().toISOString()
+      });
+      // Keep last 200 logs
+      if (window.__DEBUG_LOGS__.length > 200) {
+        window.__DEBUG_LOGS__.shift();
+      }
+    };
+
+    // Capture errors before React loads
+    window.addEventListener('error', (event) => {
+      addDebugLog('error', event.message || 'Unknown error', event.error?.stack || event.filename);
+      console.error('Captured error:', event.message, event.error);
+    });
+
+    window.addEventListener('unhandledrejection', (event) => {
+      const reason = event.reason instanceof Error ? event.reason.message : String(event.reason);
+      const stack = event.reason instanceof Error ? event.reason.stack : undefined;
+      addDebugLog('error', `Unhandled Promise Rejection: ${reason}`, stack);
+      console.error('Captured promise rejection:', reason);
+    });
+
+    console.log('🔍 Inline script executed - JavaScript is working!');
+    addDebugLog('info', 'HTML loaded - JavaScript is working');
+    console.log('Checking if main.tsx will load...');
+  </script>
+  <script type="module" src="/src/main.tsx"></script>
+  <script>
+    // Hide pre-render content when React mounts
+    window.addEventListener('DOMContentLoaded', () => {
+      // Check if React has mounted by looking for React root
+      const checkReactMount = () => {
+        const root = document.getElementById('root');
+        const preRender = document.getElementById('pre-render');
+
+        if (root && root.querySelector('[data-reactroot]')) {
+          // React has mounted, hide pre-render
+          if (preRender) {
+            preRender.style.display = 'none';
+          }
+          return true;
         }
+        return false;
       };
 
-      // Capture errors before React loads
-      window.addEventListener('error', (event) => {
-        addDebugLog('error', event.message || 'Unknown error', event.error?.stack || event.filename);
-        console.error('Captured error:', event.message, event.error);
-      });
-
-      window.addEventListener('unhandledrejection', (event) => {
-        const reason = event.reason instanceof Error ? event.reason.message : String(event.reason);
-        const stack = event.reason instanceof Error ? event.reason.stack : undefined;
-        addDebugLog('error', `Unhandled Promise Rejection: ${reason}`, stack);
-        console.error('Captured promise rejection:', reason);
-      });
-
-      console.log('🔍 Inline script executed - JavaScript is working!');
-      addDebugLog('info', 'HTML loaded - JavaScript is working');
-      console.log('Checking if main.tsx will load...');
-    </script>
-    <script type="module" src="/src/main.tsx"></script>
-    <script>
-      // Hide pre-render content when React mounts
-      window.addEventListener('DOMContentLoaded', () => {
-        // Check if React has mounted by looking for React root
-        const checkReactMount = () => {
-          const root = document.getElementById('root');
-          const preRender = document.getElementById('pre-render');
-          
-          if (root && root.querySelector('[data-reactroot]')) {
-            // React has mounted, hide pre-render
-            if (preRender) {
-              preRender.style.display = 'none';
-            }
-            return true;
-          }
-          return false;
-        };
-        
-        // Check immediately
-        if (!checkReactMount()) {
-          // Check periodically until React mounts
-          const checkInterval = setInterval(() => {
-            if (checkReactMount()) {
-              clearInterval(checkInterval);
-            }
-          }, 100);
-          
-          // Fallback: hide after 5 seconds regardless
-          setTimeout(() => {
+      // Check immediately
+      if (!checkReactMount()) {
+        // Check periodically until React mounts
+        const checkInterval = setInterval(() => {
+          if (checkReactMount()) {
             clearInterval(checkInterval);
-            const preRender = document.getElementById('pre-render');
-            if (preRender) {
-              preRender.style.display = 'none';
-            }
-          }, 5000);
-          
-          // Show loading message only if React hasn't mounted after 30 seconds
-          setTimeout(() => {
-            const root = document.getElementById('root');
-            const loadingMsg = document.getElementById('loading-message');
-            const preRender = document.getElementById('pre-render');
-            
-            // Check if React has actually mounted (look for React content)
-            const hasReactContent = root && root.children.length > 0 && 
-              root.children[0].tagName !== undefined && 
-              !root.innerHTML.includes('Loading... If you see this');
-            
-            if (!hasReactContent && loadingMsg && preRender && preRender.style.display !== 'none') {
-              loadingMsg.style.display = 'block';
-            }
-          }, 30000);
-        }
-      });
-      
-      setTimeout(() => {
-        const root = document.getElementById('root');
-        // Check if React actually mounted (React 18 doesn't use data-reactroot)
-        // Look for actual React content, not just the loading message
-        if (root) {
-          const hasLoadingMessage = root.innerHTML.includes('Loading... If you see this');
-          const hasReactContent = root.children.length > 0 && root.children[0].tagName !== undefined;
-          const hasReactHelmet = root.querySelector('*[data-react-helmet]');
-          
-          // Only show error if we still have the loading message AND no React content
-          if (hasLoadingMessage && !hasReactContent && !hasReactHelmet) {
-            const errorMsg = '❌ React did not mount after 3 seconds!';
-            console.error(errorMsg);
-            addDebugLog('error', errorMsg, 'React mount timeout');
-            const preRender = document.getElementById('pre-render');
-            if (preRender) {
-              preRender.innerHTML += '<div style="color: red; margin-top: 20px; padding: 20px; background: black;">ERROR: React failed to mount. <a href="/debug" style="color: yellow;">Go to /debug page</a> to see errors.</div>';
-            }
+          }
+        }, 100);
+
+        // Fallback: hide after 5 seconds regardless
+        setTimeout(() => {
+          clearInterval(checkInterval);
+          const preRender = document.getElementById('pre-render');
+          if (preRender) {
+            preRender.style.display = 'none';
+          }
+        }, 5000);
+
+        // Show loading message only if React hasn't mounted after 30 seconds
+        setTimeout(() => {
+          const root = document.getElementById('root');
+          const loadingMsg = document.getElementById('loading-message');
+          const preRender = document.getElementById('pre-render');
+
+          // Check if React has actually mounted (look for React content)
+          const hasReactContent = root && root.children.length > 0 &&
+            root.children[0].tagName !== undefined &&
+            !root.innerHTML.includes('Loading... If you see this');
+
+          if (!hasReactContent && loadingMsg && preRender && preRender.style.display !== 'none') {
+            loadingMsg.style.display = 'block';
+          }
+        }, 30000);
+      }
+    });
+
+    setTimeout(() => {
+      const root = document.getElementById('root');
+      // Check if React actually mounted (React 18 doesn't use data-reactroot)
+      // Look for actual React content, not just the loading message
+      if (root) {
+        const hasLoadingMessage = root.innerHTML.includes('Loading... If you see this');
+        const hasReactContent = root.children.length > 0 && root.children[0].tagName !== undefined;
+        const hasReactHelmet = root.querySelector('*[data-react-helmet]');
+
+        // Only show error if we still have the loading message AND no React content
+        if (hasLoadingMessage && !hasReactContent && !hasReactHelmet) {
+          const errorMsg = '❌ React did not mount after 3 seconds!';
+          console.error(errorMsg);
+          addDebugLog('error', errorMsg, 'React mount timeout');
+          const preRender = document.getElementById('pre-render');
+          if (preRender) {
+            preRender.innerHTML += '<div style="color: red; margin-top: 20px; padding: 20px; background: black;">ERROR: React failed to mount. <a href="/debug" style="color: yellow;">Go to /debug page</a> to see errors.</div>';
           }
         }
-      }, 3000);
-    </script>
-    <!-- Ahrefs Analytics -->
-    <script src="https://analytics.ahrefs.com/analytics.js" data-key="t+iws/566eHU7UHuVLb2JA" async></script>
-  </body>
-</html>
+      }
+    }, 3000);
+  </script>
+  <!-- Ahrefs Analytics -->
+  <script src="https://analytics.ahrefs.com/analytics.js" data-key="t+iws/566eHU7UHuVLb2JA" async></script>
+</body>
 
+</html>
