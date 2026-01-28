@@ -32,7 +32,8 @@
   "include": [
     "src",
     "src/vite-env.d.ts",
-    "api"
+    "api",
+    "lib"
   ],
   "references": [
     {
