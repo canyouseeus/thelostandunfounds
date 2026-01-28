@@ -27,9 +27,6 @@
       "@/*": [
         "./src/*"
       ],
-      "@tools/*": [
-        "../tools-registry/src/*"
-      ]
     }
   },
   "include": [
