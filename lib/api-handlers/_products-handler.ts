@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { handleFourthwallProducts } from '../fourthwall/handler'
+import { handleFourthwallProducts } from '../fourthwall/handler.js'
 
 /**
  * Products Handler

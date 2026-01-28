@@ -40,7 +40,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let productsHandlerStatus = 'unknown'
     try {
         // @ts-ignore
-        await import('../../lib/api-handlers/_products-handler')
+        await import('../../lib/api-handlers/_products-handler.js')
         productsHandlerStatus = 'loaded'
     } catch (e: any) {
         productsHandlerStatus = `failed: ${e.message}`

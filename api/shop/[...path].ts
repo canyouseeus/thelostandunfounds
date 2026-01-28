@@ -2,11 +2,11 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 
 // Static imports ensure Vercel bundles these files correctly.
 // Dynamic imports caused tree-shaking issues where files were missing at runtime.
-import productsHandler from '../../lib/api-handlers/_products-handler'
-import affiliatesTrackClickHandler from '../../lib/api-handlers/_affiliates-track-click-handler'
-import paymentsPaypalHandler from '../../lib/api-handlers/_payments-paypal-handler'
-import paymentsPaypalCaptureHandler from '../../lib/api-handlers/_payments-paypal-capture-handler'
-import kingMidasDistributeHandler from '../../lib/api-handlers/_king-midas-distribute-handler'
+import productsHandler from '../../lib/api-handlers/_products-handler.js'
+import affiliatesTrackClickHandler from '../../lib/api-handlers/_affiliates-track-click-handler.js'
+import kingMidasDistributeHandler from '../../lib/api-handlers/_king-midas-distribute-handler.js'
+import paymentsPaypalHandler from '../../lib/api-handlers/_payments-paypal-handler.js'
+import paymentsPaypalCaptureHandler from '../../lib/api-handlers/_payments-paypal-capture-handler.js'
 
 export default async function handler(
   req: VercelRequest,
