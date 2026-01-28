@@ -36,14 +36,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
     };
 
-    // Try to load local modules to see if they exist
-    let productsHandlerStatus = 'unknown'
+    // Import testing removed to ensure stable deployment
+
+    let packageJson = null;
     try {
-        // @ts-ignore
-        await import('../../lib/api-handlers/_products-handler.js')
-        productsHandlerStatus = 'loaded'
-    } catch (e: any) {
-        productsHandlerStatus = `failed: ${e.message}`
+        const packageJsonPath = path.join(root, 'package.json');
+        const packageJsonContent = fs.readFileSync(packageJsonPath, 'utf8');
+        packageJson = JSON.parse(packageJsonContent);
+    } catch (e) {
+        // console.error('Failed to read package.json', e);
     }
 
     res.status(200).json({
@@ -51,8 +52,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         message: 'File structure debug',
         cwd: root,
         files: traverse(root),
-        modules: {
-            productsHandler: productsHandlerStatus
-        }
+        packageJson: packageJson ? 'found' : 'missing',
+        // modules: {
+        //     productsHandler: productsHandlerStatus
+        // }
     })
 }
