@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight, Plus, Check, Download, CheckCircle } from 'lucide-react';
+import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon, CheckIcon, ArrowDownTrayIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 
 interface Photo {
     id: string;
@@ -106,13 +106,13 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                                 onClick={onClose}
                                 className={`absolute -top-12 right-0 md:top-4 md:right-4 z-50 p-2 bg-black/40 hover:bg-white backdrop-blur-md rounded-full text-white hover:text-black transition-all pointer-events-auto ${isImageLoading ? 'opacity-0 scale-0' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100 scale-100'}`}
                             >
-                                <X className="w-5 h-5" />
+                                <XMarkIcon className="w-5 h-5" />
                             </button>
 
                             {/* Status Badge - Only show when loaded */}
                             {isPurchased && (
                                 <div className={`absolute top-4 left-4 z-20 flex items-center gap-1.5 bg-green-500 text-black px-2 py-1 rounded-none text-[8px] md:text-[9px] font-black uppercase tracking-[0.15em] shadow-lg transition-opacity duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}>
-                                    <CheckCircle className="w-3 h-3" />
+                                    <CheckCircleIcon className="w-3 h-3" />
                                     PROPRIETARY
                                 </div>
                             )}
@@ -128,14 +128,14 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                         onClick={(e) => { e.stopPropagation(); onPrev(); }}
                         className={`absolute left-0 p-4 text-white hover:text-zinc-400 transition-all ${isImageLoading ? 'opacity-0 pointer-events-none' : 'opacity-0 group-hover:opacity-100'}`}
                     >
-                        <ChevronLeft className="w-12 h-12" />
+                        <ChevronLeftIcon className="w-12 h-12" />
                     </button>
 
                     <button
                         onClick={(e) => { e.stopPropagation(); onNext(); }}
                         className={`absolute right-0 p-4 text-white hover:text-zinc-400 transition-all ${isImageLoading ? 'opacity-0 pointer-events-none' : 'opacity-0 group-hover:opacity-100'}`}
                     >
-                        <ChevronRight className="w-12 h-12" />
+                        <ChevronRightIcon className="w-12 h-12" />
                     </button>
 
                     <motion.div
@@ -152,7 +152,7 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                                 }}
                                 className="flex items-center gap-2 px-8 py-3 bg-white hover:bg-zinc-200 text-black rounded-none font-black text-[10px] uppercase tracking-[0.25em] transition-all shadow-xl"
                             >
-                                <Download className="w-4 h-4" />
+                                <ArrowDownTrayIcon className="w-4 h-4" />
                                 <span>Download Original</span>
                             </button>
                         ) : (
@@ -165,12 +165,12 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                             >
                                 {isSelected ? (
                                     <>
-                                        <Check className="w-5 h-5 text-green-500" />
+                                        <CheckIcon className="w-5 h-5 text-green-500" />
                                         <span>Selected</span>
                                     </>
                                 ) : (
                                     <>
-                                        <Plus className="w-5 h-5" />
+                                        <PlusIcon className="w-5 h-5" />
                                         <span>Add to Selection (${singlePhotoPrice.toFixed(2)})</span>
                                     </>
                                 )}

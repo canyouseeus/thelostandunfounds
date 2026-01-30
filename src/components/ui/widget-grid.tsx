@@ -21,7 +21,7 @@ import {
     rectSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, X, Maximize2, Minimize2 } from 'lucide-react';
+import { Bars2Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import { cn } from './utils';
 
 // Widget size variants
@@ -90,7 +90,7 @@ function SortableWidget({ widget, children, onRemove, onResize }: SortableWidget
                     'opacity-0 group-hover:opacity-100 transition-opacity',
                 )}
             >
-                <GripVertical className="w-3 h-3 text-white/50" />
+                <Bars2Icon className="w-3 h-3 text-white/50" />
             </div>
 
             {/* Remove button - visible on hover */}
@@ -103,7 +103,7 @@ function SortableWidget({ widget, children, onRemove, onResize }: SortableWidget
                         'opacity-0 group-hover:opacity-100 transition-opacity',
                     )}
                 >
-                    <X className="w-3 h-3 text-white/50 hover:text-red-400" />
+                    <XMarkIcon className="w-3 h-3 text-white/50 hover:text-red-400" />
                 </button>
             )}
 

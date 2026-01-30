@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRightIcon } from '@heroicons/react/24/outline';
 import { cn } from './utils';
 
 interface CollapsibleSectionProps {
@@ -54,7 +54,7 @@ export function CollapsibleSection({
             >
                 <div className="flex items-center gap-3">
                     {/* Triangle toggle icon */}
-                    <ChevronRight
+                    <ChevronRightIcon
                         className={cn(
                             'w-4 h-4 text-white/40 transition-transform duration-200',
                             isOpen && 'rotate-90'

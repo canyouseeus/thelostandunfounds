@@ -1,9 +1,4 @@
-/**
- * Book Preview Component
- * Displays the 4 books featured in a blog post with their Amazon affiliate links
- */
-
-import { BookOpen, ExternalLink } from 'lucide-react';
+import { BookOpenIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 
 interface AffiliateLink {
   book_title: string;
@@ -22,7 +17,7 @@ export default function BookPreview({ books }: BookPreviewProps) {
   return (
     <div className="my-12 border-t border-b border-white py-8">
       <div className="flex items-center gap-2 mb-6">
-        <BookOpen className="w-5 h-5 text-white/70" />
+        <BookOpenIcon className="w-5 h-5 text-white/70" />
         <h2 className="text-xl font-bold text-white text-left">Books Featured in This Article</h2>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -40,7 +35,7 @@ export default function BookPreview({ books }: BookPreviewProps) {
                   {book.book_title}
                 </h3>
               </div>
-              <ExternalLink className="w-4 h-4 text-white/40 group-hover:text-white/70 transition flex-shrink-0 mt-1" />
+              <ArrowTopRightOnSquareIcon className="w-4 h-4 text-white/40 group-hover:text-white/70 transition flex-shrink-0 mt-1" />
             </div>
             <div className="flex items-center gap-2 text-xs text-white/50 mt-3">
               <span>View on Amazon</span>

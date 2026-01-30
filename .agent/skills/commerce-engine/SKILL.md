@@ -13,6 +13,7 @@ This skill manages the commercial "Noir" marketplace and financial transactions.
 
 ## Transaction Flow (PayPal)
 - **Security**: Always capture payments before granting access or calculating commissions.
+- **Commissions**: Triggered upon successful capture, with `available_date` set to +30 days (holding period).
 - **Redirection**: Handle `/payment-success` and `/payment-cancel` with stark, mechanical UI feedback.
 - **Taxes**: Ensure tax calculations follow the country-specific rules defined in the checkout logic.
 

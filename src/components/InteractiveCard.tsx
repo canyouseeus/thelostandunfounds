@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useState, ReactNode } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRightIcon } from '@heroicons/react/24/outline';
 
 interface InteractiveCardProps {
   to?: string;
@@ -34,7 +34,7 @@ export default function InteractiveCard({
     if (showFlip && !onClick) {
       e.preventDefault();
       setIsFlipped(true);
-      
+
       setTimeout(() => {
         if (to) {
           window.location.href = to;
@@ -48,7 +48,7 @@ export default function InteractiveCard({
   };
 
   const baseClasses = "group relative bg-black/50 border border-white rounded-none px-6 py-4 hover:border-white hover:bg-white/5 hover:shadow-[0_8px_30px_rgba(255,255,255,0.12)] hover:-translate-y-1 transition-all duration-300 flex items-center justify-between cursor-pointer";
-  
+
   // If it's a simple card without flip, just render normally
   if (!showFlip) {
     const content = (
@@ -98,7 +98,7 @@ export default function InteractiveCard({
             ) : (
               children
             )}
-            <ArrowRight className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-2 transition-all" />
+            <ArrowRightIcon className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-2 transition-all" />
           </Link>
         ) : href ? (
           <a
@@ -125,7 +125,7 @@ export default function InteractiveCard({
             ) : (
               children
             )}
-            <ArrowRight className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-2 transition-all" />
+            <ArrowRightIcon className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-2 transition-all" />
           </a>
         ) : (
           <div
@@ -139,7 +139,7 @@ export default function InteractiveCard({
           {backContent || (
             <div className="text-center">
               <div className="w-16 h-16 border-2 border-white rounded-none flex items-center justify-center text-white mx-auto mb-4 animate-spin">
-                <ArrowRight className="w-8 h-8" />
+                <ArrowRightIcon className="w-8 h-8" />
               </div>
               <p className="text-white/80 text-sm">Loading...</p>
             </div>

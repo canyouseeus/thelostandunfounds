@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, X, Loader2, AlertCircle } from 'lucide-react';
+import { CheckIcon, XMarkIcon, ArrowPathIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../Toast';
 
@@ -11,6 +11,7 @@ export default function AffiliateCodeSetup({ onSuccess }: AffiliateCodeSetupProp
   const { user } = useAuth();
   const { success, error: showError } = useToast();
   const [code, setCode] = useState('');
+  const [paypalEmail, setPaypalEmail] = useState('');
   const [checking, setChecking] = useState(false);
   const [creating, setCreating] = useState(false);
   const [available, setAvailable] = useState<boolean | null>(null);
@@ -60,6 +61,11 @@ export default function AffiliateCodeSetup({ onSuccess }: AffiliateCodeSetupProp
       return;
     }
 
+    if (!paypalEmail) {
+      showError('Please provide a PayPal email for payouts');
+      return;
+    }
+
     setCreating(true);
     try {
       const response = await fetch('/api/affiliates/setup', {
@@ -68,6 +74,7 @@ export default function AffiliateCodeSetup({ onSuccess }: AffiliateCodeSetupProp
         body: JSON.stringify({
           user_id: user.id,
           code,
+          paypal_email: paypalEmail,
         }),
       });
 
@@ -114,10 +121,10 @@ export default function AffiliateCodeSetup({ onSuccess }: AffiliateCodeSetupProp
                   disabled={creating}
                 />
                 {available === true && (
-                  <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-400" />
+                  <CheckIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-400" />
                 )}
                 {available === false && (
-                  <X className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-red-400" />
+                  <XMarkIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-red-400" />
                 )}
               </div>
               <button
@@ -127,7 +134,7 @@ export default function AffiliateCodeSetup({ onSuccess }: AffiliateCodeSetupProp
                 className="px-4 py-3 bg-white/10 border border-white/10 text-white rounded-none hover:bg-white/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {checking ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <ArrowPathIcon className="w-5 h-5 animate-spin" />
                 ) : (
                   'Check'
                 )}
@@ -138,18 +145,35 @@ export default function AffiliateCodeSetup({ onSuccess }: AffiliateCodeSetupProp
                 <span>{code.length}/12 characters</span>
               )}
             </div>
+            {/* PayPal Email Field */}
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-white/80 mb-2">
+                PayPal Email (for Payouts)
+              </label>
+              <input
+                type="email"
+                value={paypalEmail}
+                onChange={(e) => setPaypalEmail(e.target.value)}
+                placeholder="your-paypal@email.com"
+                className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-none text-white placeholder-white/40 focus:outline-none focus:border-white/30 text-lg"
+                disabled={creating}
+              />
+              <p className="mt-2 text-xs text-white/50">
+                Direct deposits are handled via your PayPal account settings.
+              </p>
+            </div>
           </div>
 
           {available === false && (
             <div className="flex items-center gap-2 text-red-400 text-sm">
-              <AlertCircle className="w-4 h-4" />
+              <ExclamationCircleIcon className="w-4 h-4" />
               <span>This code is already taken. Try another.</span>
             </div>
           )}
 
           {available === true && (
             <div className="flex items-center gap-2 text-green-400 text-sm">
-              <Check className="w-4 h-4" />
+              <CheckIcon className="w-4 h-4" />
               <span>This code is available!</span>
             </div>
           )}
@@ -171,7 +195,7 @@ export default function AffiliateCodeSetup({ onSuccess }: AffiliateCodeSetupProp
           >
             {creating ? (
               <span className="flex items-center justify-center gap-2">
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <ArrowPathIcon className="w-5 h-5 animate-spin" />
                 Creating...
               </span>
             ) : (

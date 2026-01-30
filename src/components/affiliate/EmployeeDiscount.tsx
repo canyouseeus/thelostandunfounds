@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Tag, Calendar, CheckCircle, Clock } from 'lucide-react';
-import { Copy, Check } from 'lucide-react';
+import { TagIcon, CalendarIcon, CheckCircleIcon, ClockIcon, ClipboardIcon, CheckIcon } from '@heroicons/react/24/outline';
 
 interface EmployeeDiscountProps {
   affiliateId: string;
@@ -62,7 +61,7 @@ export default function EmployeeDiscount({ affiliateId, affiliateCode, creditBal
   return (
     <div className="bg-black/50 border-0 rounded-none p-6">
       <div className="flex items-center gap-3 mb-4">
-        <Tag className={status?.can_use ? 'text-green-400' : 'text-white/40'} size={24} />
+        <TagIcon className={`${status?.can_use ? 'text-green-400' : 'text-white/40'} w-6 h-6`} />
         <h3 className="text-xl font-bold text-white">Employee Discount</h3>
         {status?.can_use && (
           <span className="bg-green-400/20 text-green-400 text-xs px-2 py-1 rounded-none font-bold">AVAILABLE</span>
@@ -86,7 +85,7 @@ export default function EmployeeDiscount({ affiliateId, affiliateCode, creditBal
             className="bg-white text-black px-4 py-3 rounded-none hover:bg-white/90 transition-colors"
             title="Copy code"
           >
-            {copied ? <Check size={20} /> : <Copy size={20} />}
+            {copied ? <CheckIcon className="w-5 h-5" /> : <ClipboardIcon className="w-5 h-5" />}
           </button>
         </div>
       </div>
@@ -95,7 +94,7 @@ export default function EmployeeDiscount({ affiliateId, affiliateCode, creditBal
       {status?.can_use ? (
         <div className="bg-green-500/10 border-0 rounded-none p-4 mb-6">
           <div className="flex items-center gap-2 mb-2">
-            <CheckCircle className="text-green-400" size={20} />
+            <CheckCircleIcon className="text-green-400 w-5 h-5" />
             <p className="text-green-400 font-medium">Discount Available</p>
           </div>
           <p className="text-white/80 text-sm">
@@ -105,7 +104,7 @@ export default function EmployeeDiscount({ affiliateId, affiliateCode, creditBal
       ) : status ? (
         <div className="bg-yellow-500/10 border-0 rounded-none p-4 mb-6">
           <div className="flex items-center gap-2 mb-2">
-            <Clock className="text-yellow-400" size={20} />
+            <ClockIcon className="text-yellow-400 w-5 h-5" />
             <p className="text-yellow-400 font-medium">Discount Resets Soon</p>
           </div>
           <div className="space-y-2">

@@ -8,7 +8,7 @@ import {
     ExpandableCardContent,
     ExpandableContent,
 } from './expandable';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDownIcon } from '@heroicons/react/24/outline';
 
 interface ExpandableBentoCardProps {
     title: string;
@@ -125,7 +125,7 @@ export function ExpandableBentoCard({
                                     </div>
                                     <div className="flex items-center gap-2">
                                         {action && <div className="flex-shrink-0">{action}</div>}
-                                        <ChevronDown
+                                        <ChevronDownIcon
                                             className={cn(
                                                 "w-4 h-4 text-white/40 transition-transform duration-300",
                                                 isExpanded ? "rotate-180" : ""

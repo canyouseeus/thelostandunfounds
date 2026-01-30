@@ -4,7 +4,17 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Trophy, TrendingUp, DollarSign, Calendar, Award, Loader2, BarChart3, Users, Crown } from 'lucide-react';
+import {
+  TrophyIcon,
+  ArrowTrendingUpIcon,
+  CurrencyDollarIcon,
+  CalendarIcon,
+  StarIcon,
+  ArrowPathIcon,
+  ChartBarIcon,
+  UsersIcon,
+  SparklesIcon
+} from '@heroicons/react/24/outline';
 import KingMidasTicker from '../components/KingMidasTicker';
 import { supabase } from '../lib/supabase';
 
@@ -115,9 +125,9 @@ export default function KingMidasLeaderboard() {
   };
 
   const getRankIcon = (rank: number) => {
-    if (rank === 1) return <Crown className="w-5 h-5 text-yellow-400" />;
-    if (rank === 2) return <Trophy className="w-5 h-5 text-gray-300" />;
-    if (rank === 3) return <Trophy className="w-5 h-5 text-orange-400" />;
+    if (rank === 1) return <SparklesIcon className="w-5 h-5 text-yellow-400" />;
+    if (rank === 2) return <TrophyIcon className="w-5 h-5 text-gray-300" />;
+    if (rank === 3) return <TrophyIcon className="w-5 h-5 text-orange-400" />;
     return null;
   };
 
@@ -137,7 +147,7 @@ export default function KingMidasLeaderboard() {
       <div className="min-h-screen bg-black text-white">
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
-            <Loader2 className="w-8 h-8 animate-spin text-white" />
+            <ArrowPathIcon className="w-8 h-8 animate-spin text-white" />
           </div>
         </div>
       </div>
@@ -150,7 +160,7 @@ export default function KingMidasLeaderboard() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <Award className="w-8 h-8 text-yellow-400" />
+            <StarIcon className="w-8 h-8 text-yellow-400" />
             <h1 className="text-4xl font-bold text-white">KING MIDAS Leaderboard</h1>
           </div>
           <p className="text-white/60 text-lg">
@@ -169,7 +179,7 @@ export default function KingMidasLeaderboard() {
             <div className="bg-black/50 border border-white/10 rounded-none p-6">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white/60 text-sm">Total Profit</span>
-                <TrendingUp className="w-5 h-5 text-green-400" />
+                <ArrowTrendingUpIcon className="w-5 h-5 text-green-400" />
               </div>
               <div className="text-3xl font-bold text-white">${stats.totalProfit.toFixed(2)}</div>
               <div className="text-xs text-white/40 mt-1">All affiliates</div>
@@ -178,7 +188,7 @@ export default function KingMidasLeaderboard() {
             <div className="bg-black/50 border border-white/10 rounded-none p-6">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white/60 text-sm">Pool Size</span>
-                <DollarSign className="w-5 h-5 text-yellow-400" />
+                <CurrencyDollarIcon className="w-5 h-5 text-yellow-400" />
               </div>
               <div className="text-3xl font-bold text-yellow-400">${stats.totalPool.toFixed(2)}</div>
               <div className="text-xs text-white/40 mt-1">8% of profit</div>
@@ -187,7 +197,7 @@ export default function KingMidasLeaderboard() {
             <div className="bg-black/50 border border-white/10 rounded-none p-6">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white/60 text-sm">Top Earner</span>
-                <Crown className="w-5 h-5 text-yellow-400" />
+                <SparklesIcon className="w-5 h-5 text-yellow-400" />
               </div>
               <div className="text-xl font-bold text-white">{stats.topEarner}</div>
               <div className="text-xs text-white/40 mt-1">${stats.topEarnerProfit.toFixed(2)}</div>
@@ -196,7 +206,7 @@ export default function KingMidasLeaderboard() {
             <div className="bg-black/50 border border-white/10 rounded-none p-6">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white/60 text-sm">Total Affiliates</span>
-                <Users className="w-5 h-5 text-blue-400" />
+                <UsersIcon className="w-5 h-5 text-blue-400" />
               </div>
               <div className="text-3xl font-bold text-white">{stats.totalAffiliates}</div>
               <div className="text-xs text-white/40 mt-1">Ranked affiliates</div>
@@ -208,7 +218,7 @@ export default function KingMidasLeaderboard() {
         <div className="bg-black/50 border border-white/10 rounded-none p-6 mb-8">
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-white/60" />
+              <CalendarIcon className="w-5 h-5 text-white/60" />
               <span className="text-white/60">Time Range:</span>
             </div>
             {(['today', 'week', 'month', 'all'] as const).map((range) => (
@@ -216,8 +226,8 @@ export default function KingMidasLeaderboard() {
                 key={range}
                 onClick={() => setDateRange(range)}
                 className={`px-4 py-2 rounded-none transition ${dateRange === range
-                    ? 'bg-white text-black font-semibold'
-                    : 'bg-white/10 text-white/60 hover:bg-white/20'
+                  ? 'bg-white text-black font-semibold'
+                  : 'bg-white/10 text-white/60 hover:bg-white/20'
                   }`}
               >
                 {range.charAt(0).toUpperCase() + range.slice(1)}
@@ -243,7 +253,7 @@ export default function KingMidasLeaderboard() {
         {/* Leaderboard */}
         {sortedDates.length === 0 ? (
           <div className="bg-black/50 border border-white/10 rounded-none p-12 text-center">
-            <Trophy className="w-16 h-16 text-white/20 mx-auto mb-4" />
+            <TrophyIcon className="w-16 h-16 text-white/20 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-white mb-2">No Rankings Available</h3>
             <p className="text-white/60">
               Rankings are calculated daily. Check back tomorrow for updated leaderboard data.
@@ -255,7 +265,7 @@ export default function KingMidasLeaderboard() {
               <div key={date} className="bg-black/50 border border-white/10 rounded-none overflow-hidden">
                 <div className="p-6 border-b border-white/10 bg-white/5">
                   <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                    <BarChart3 className="w-6 h-6 text-yellow-400" />
+                    <ChartBarIcon className="w-6 h-6 text-yellow-400" />
                     Rankings - {new Date(date).toLocaleDateString('en-US', {
                       weekday: 'long',
                       year: 'numeric',
@@ -300,8 +310,8 @@ export default function KingMidasLeaderboard() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`px-2 py-1 rounded text-xs font-medium ${ranking.pool_share > 0
-                                  ? 'bg-green-400/20 text-green-400'
-                                  : 'bg-white/10 text-white/60'
+                                ? 'bg-green-400/20 text-green-400'
+                                : 'bg-white/10 text-white/60'
                                 }`}>
                                 {ranking.pool_share > 0 ? 'Eligible' : 'No payout'}
                               </span>
@@ -319,7 +329,7 @@ export default function KingMidasLeaderboard() {
         {/* Info Box */}
         <div className="mt-8 bg-yellow-400/10 border border-yellow-400/30 rounded-none p-6">
           <div className="flex items-start gap-3">
-            <Award className="w-6 h-6 text-yellow-400 mt-0.5 flex-shrink-0" />
+            <StarIcon className="w-6 h-6 text-yellow-400 mt-0.5 flex-shrink-0" />
             <div>
               <h4 className="text-yellow-400 font-semibold mb-2 text-lg">How KING MIDAS Works</h4>
               <ul className="text-white/80 text-sm space-y-2 list-disc list-inside">

@@ -4,7 +4,13 @@
  */
 
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
+import {
+  XMarkIcon,
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+  InformationCircleIcon,
+  ExclamationTriangleIcon
+} from '@heroicons/react/24/outline';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -107,10 +113,10 @@ function ToastContainer({ toasts, removeToast }: { toasts: Toast[]; removeToast:
 
 function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   const icons = {
-    success: CheckCircle,
-    error: AlertCircle,
-    info: Info,
-    warning: AlertTriangle,
+    success: CheckCircleIcon,
+    error: ExclamationCircleIcon,
+    info: InformationCircleIcon,
+    warning: ExclamationTriangleIcon,
   };
 
   const colors = {
@@ -135,7 +141,7 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
         className="text-white/60 hover:text-white transition flex-shrink-0 ml-1"
         aria-label="Close notification"
       >
-        <X className="w-4 h-4" />
+        <XMarkIcon className="w-4 h-4" />
       </button>
     </div>
   );

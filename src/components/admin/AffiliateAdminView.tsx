@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Users, Search, Eye, TrendingUp, DollarSign, Network, Gift } from 'lucide-react';
+import { UsersIcon, MagnifyingGlassIcon, EyeIcon, ArrowTrendingUpIcon, CurrencyDollarIcon, ShareIcon, GiftIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 import { safeJsonParse } from '../../utils/helpers';
 
@@ -91,18 +91,18 @@ export default function AffiliateAdminView() {
     const isApiRouteError = error.includes('API routes are not available');
 
     return (
-      <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
-        <p className="text-red-400 mb-4">Error: {error}</p>
+      <div className="bg-red-500/10 border-l-2 border-red-500 p-6">
+        <p className="text-red-400 mb-4 font-medium">Error: {error}</p>
 
         {isApiRouteError && (
-          <div className="bg-black/50 border border-white/20 rounded-none p-4 mb-4">
-            <p className="text-white/80 mb-3 font-semibold">Quick Fix:</p>
-            <ol className="list-decimal list-inside text-white/70 space-y-2 mb-4">
-              <li>Stop your current dev server (press <kbd className="px-2 py-1 bg-white/10 rounded text-xs">Ctrl+C</kbd> in terminal)</li>
-              <li>Run: <code className="px-2 py-1 bg-white/10 rounded text-xs">npm run dev</code></li>
+          <div className="bg-white/5 border border-white/10 p-4 mb-4">
+            <p className="text-white/80 mb-3 font-semibold text-sm uppercase tracking-wider">Quick Fix</p>
+            <ol className="list-decimal list-inside text-white/70 space-y-2 mb-4 text-xs">
+              <li>Stop your current dev server (press <kbd className="px-2 py-1 bg-white/10 rounded-sm">Ctrl+C</kbd> in terminal)</li>
+              <li>Run: <code className="px-2 py-1 bg-white/10 rounded-sm">npm run dev</code></li>
               <li>Refresh this page</li>
             </ol>
-            <p className="text-white/60 text-sm">
+            <p className="text-white/60 text-[10px] uppercase tracking-wide">
               <strong>Note:</strong> The default <code className="text-white/80">npm run dev</code> now uses <code className="text-white/80">vercel dev</code> which supports API routes.
             </p>
           </div>
@@ -110,7 +110,7 @@ export default function AffiliateAdminView() {
 
         <button
           onClick={loadAffiliates}
-          className="px-4 py-2 bg-white text-black rounded-none hover:bg-white/90 transition"
+          className="px-6 py-2 bg-white text-black hover:bg-white/90 transition text-xs font-bold uppercase tracking-widest"
         >
           Retry
         </button>
@@ -120,45 +120,51 @@ export default function AffiliateAdminView() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-black/50 rounded-none p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <Users className="w-6 h-6 text-white" />
-            <h2 className="text-2xl font-bold text-white">Affiliate Management</h2>
+      {/* Header & Search */}
+      <div className="bg-[#0A0A0A] p-10 shadow-2xl space-y-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <UsersIcon className="w-8 h-8 text-white/40" />
+            <div>
+              <h2 className="text-xl font-black text-white uppercase tracking-[0.3em]">Affiliate Network</h2>
+              <p className="text-[10px] text-white/30 uppercase tracking-[0.2em] font-medium mt-1">
+                Central Node Management
+              </p>
+            </div>
           </div>
-          <div className="text-white/60 text-sm">
-            Total: {affiliates.length} affiliates
+          <div className="text-right">
+            <div className="text-xl font-black text-white">{affiliates.length}</div>
+            <div className="text-[9px] text-white/20 uppercase tracking-widest font-black">Active Nodes</div>
           </div>
         </div>
 
         {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-5 h-5" />
+        <div className="relative pt-4 border-t border-white/5">
+          <MagnifyingGlassIcon className="absolute left-0 top-[2.4rem] text-white/20 w-5 h-5" />
           <input
             type="text"
-            placeholder="Search by code or ID..."
+            placeholder="FILTER NODES BY CODE OR IDENTIFIER..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-black/50 border border-white/30 rounded-none text-white placeholder-white/50"
+            className="w-full pl-8 pr-4 py-4 bg-transparent border-b border-white/10 text-white placeholder-white/10 uppercase tracking-[0.2em] text-[11px] focus:border-white transition-colors outline-none font-black"
           />
         </div>
       </div>
 
       {/* Affiliates Table */}
-      <div className="bg-black/50 rounded-none p-6">
+      <div className="bg-[#0A0A0A] p-10 shadow-2xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-white/10">
-                <th className="pb-3 text-white/60 text-sm font-medium">Code</th>
-                <th className="pb-3 text-white/60 text-sm font-medium">Status</th>
-                <th className="pb-3 text-white/60 text-sm font-medium">Earnings</th>
-                <th className="pb-3 text-white/60 text-sm font-medium">Clicks</th>
-                <th className="pb-3 text-white/60 text-sm font-medium">Conversions</th>
-                <th className="pb-3 text-white/60 text-sm font-medium">Points</th>
-                <th className="pb-3 text-white/60 text-sm font-medium">MLM Earnings</th>
-                <th className="pb-3 text-white/60 text-sm font-medium">Actions</th>
+                <th className="pb-6 text-white/20 text-[10px] uppercase tracking-widest font-black">Node Code</th>
+                <th className="pb-6 text-white/20 text-[10px] uppercase tracking-widest font-black">Status</th>
+                <th className="pb-6 text-white/20 text-[10px] uppercase tracking-widest font-black">Node Earnings</th>
+                <th className="pb-6 text-white/20 text-[10px] uppercase tracking-widest font-black">Hits</th>
+                <th className="pb-6 text-white/20 text-[10px] uppercase tracking-widest font-black">Conversions</th>
+                <th className="pb-6 text-white/20 text-[10px] uppercase tracking-widest font-black">Nexus Points</th>
+                <th className="pb-6 text-white/20 text-[10px] uppercase tracking-widest font-black">Network Yield</th>
+                <th className="pb-6 text-white/20 text-[10px] uppercase tracking-widest font-black">Auth</th>
               </tr>
             </thead>
             <tbody>
@@ -169,8 +175,8 @@ export default function AffiliateAdminView() {
                   </td>
                   <td className="py-3">
                     <span className={`px-2 py-1 rounded-none text-xs ${affiliate.status === 'active' ? 'bg-green-500/20 text-green-400' :
-                        affiliate.status === 'inactive' ? 'bg-gray-500/20 text-gray-400' :
-                          'bg-red-500/20 text-red-400'
+                      affiliate.status === 'inactive' ? 'bg-gray-500/20 text-gray-400' :
+                        'bg-red-500/20 text-red-400'
                       }`}>
                       {affiliate.status}
                     </span>
@@ -190,13 +196,12 @@ export default function AffiliateAdminView() {
                   <td className="py-3 text-white/80">
                     {formatCurrency(affiliate.total_mlm_earnings || 0)}
                   </td>
-                  <td className="py-3">
+                  <td className="py-4">
                     <button
                       onClick={() => navigate(`/affiliates/${affiliate.id}`)}
-                      className="px-3 py-1 bg-white text-black rounded-none hover:bg-white/90 transition text-sm flex items-center gap-1"
+                      className="px-4 py-2 bg-white/5 hover:bg-white text-white hover:text-black font-black uppercase tracking-widest text-[9px] transition-all"
                     >
-                      <Eye className="w-4 h-4" />
-                      View
+                      VIEW NODE
                     </button>
                   </td>
                 </tr>

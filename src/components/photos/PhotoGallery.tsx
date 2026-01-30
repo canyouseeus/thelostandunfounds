@@ -1,6 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, Grid, ShoppingBag, CheckCircle, Download, Eye, Check, Lock, Unlock, Layers, Square, ArrowUp } from 'lucide-react';
+import {
+    CameraIcon,
+    Squares2X2Icon,
+    ShoppingBagIcon,
+    CheckCircleIcon,
+    ArrowDownTrayIcon,
+    EyeIcon,
+    CheckIcon,
+    LockClosedIcon,
+    LockOpenIcon,
+    QueueListIcon,
+    StopIcon,
+    ArrowUpIcon
+} from '@heroicons/react/24/outline';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import PhotoLightbox from './PhotoLightbox';
@@ -317,14 +330,14 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                             className={`p-2 transition-colors ${viewMode === 'single' ? 'text-white' : 'text-white/40 hover:text-white/60'}`}
                             title="Single Column View"
                         >
-                            <Square className="w-4 h-4" />
+                            <StopIcon className="w-4 h-4" />
                         </button>
                         <button
                             onClick={() => setViewMode('grid')}
                             className={`p-2 transition-colors ${viewMode === 'grid' ? 'text-white' : 'text-white/40 hover:text-white/60'}`}
                             title="Grid View"
                         >
-                            <Grid className="w-4 h-4" />
+                            <Squares2X2Icon className="w-4 h-4" />
                         </button>
                     </div>
 
@@ -358,7 +371,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                         <div className="py-40 text-center space-y-6">
                             {library?.is_private && !user ? (
                                 <>
-                                    <Lock className="w-12 h-12 mx-auto text-white/20" />
+                                    <LockClosedIcon className="w-12 h-12 mx-auto text-white/20" />
                                     <p className="text-zinc-500 uppercase tracking-widest font-bold">
                                         This is a private gallery.
                                     </p>
@@ -441,7 +454,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                                                 className="flex items-center gap-2 px-2 md:px-3 py-1 bg-white/5 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-colors"
                                                 title={isGroupAllSelected ? 'Unselect Group' : 'Select Group'}
                                             >
-                                                <Layers className={`w-3 h-3 ${isGroupAllSelected ? 'text-white' : 'text-white/60'}`} />
+                                                <QueueListIcon className={`w-3 h-3 ${isGroupAllSelected ? 'text-white' : 'text-white/60'}`} />
                                                 <span className="hidden md:inline">{isGroupAllSelected ? 'Unselect Group' : 'Select Group'}</span>
                                             </button>
                                         )}
@@ -490,7 +503,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                         className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-10 h-10 bg-white/10 backdrop-blur-md flex items-center justify-center active:bg-white active:text-black md:hover:bg-white md:hover:text-black transition-all rounded-full"
                         aria-label="Back to top"
                     >
-                        <ArrowUp className="w-5 h-5" />
+                        <ArrowUpIcon className="w-5 h-5" />
                     </button>
                 )
             }
@@ -590,7 +603,7 @@ const PhotoCard: React.FC<{
                             title="View Metadata"
                         >
                             <div className={`w-7 h-7 md:w-8 md:h-8 bg-black/40 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-black/60 transition-all ${isSingle ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
-                                <Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                                <EyeIcon className="w-3.5 h-3.5 md:w-4 md:h-4" />
                             </div>
                         </button>
 
@@ -604,7 +617,7 @@ const PhotoCard: React.FC<{
                                     ? 'bg-white border-white scale-110'
                                     : 'bg-black/20 backdrop-blur-md border-white/20 hover:border-white/50'
                                     }`}>
-                                    {isSelected && <Check className="w-3.5 h-3.5 md:w-5 md:h-5 text-black stroke-[3]" />}
+                                    {isSelected && <CheckIcon className="w-3.5 h-3.5 md:w-5 md:h-5 text-black stroke-[3]" />}
                                 </div>
                             </button>
                         )}
@@ -612,7 +625,7 @@ const PhotoCard: React.FC<{
                         {/* Purchased Badge */}
                         {isPurchased && (
                             <div className="absolute top-1.5 left-1.5 z-[45] flex items-center gap-1 bg-green-500 text-black px-1.5 py-0.5 text-[7px] md:text-[8px] font-black uppercase tracking-[0.1em] shadow-lg">
-                                <CheckCircle className="w-2.5 h-2.5" />
+                                <CheckCircleIcon className="w-2.5 h-2.5" />
                                 PROPRIETARY
                             </div>
                         )}

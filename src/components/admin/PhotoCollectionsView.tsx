@@ -1,21 +1,20 @@
 import { useState, useEffect } from 'react';
 import {
-    Camera,
-    Plus,
-    Search,
-    User,
-    Link as LinkIcon,
-    Trash2,
-    RefreshCcw,
-    CheckCircle,
-    XCircle,
-    Loader2,
-    ExternalLink,
-    ChevronRight,
-    MoreVertical,
-    Mail,
-    FolderPlus
-} from 'lucide-react';
+    CameraIcon,
+    PlusIcon,
+    MagnifyingGlassIcon,
+    UserIcon,
+    LinkIcon,
+    TrashIcon,
+    ArrowPathIcon,
+    CheckCircleIcon,
+    XCircleIcon,
+    ArrowTopRightOnSquareIcon,
+    ChevronRightIcon,
+    EllipsisVerticalIcon,
+    EnvelopeIcon,
+    FolderPlusIcon
+} from '@heroicons/react/24/outline';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/Toast';
 
@@ -199,7 +198,7 @@ export default function PhotoCollectionsView() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                        <Camera className="w-6 h-6" />
+                        <CameraIcon className="w-6 h-6" />
                         PHOTO COLLECTIONS
                     </h2>
                     <p className="text-zinc-500 text-sm">Manage client photo galleries and associations.</p>
@@ -209,7 +208,7 @@ export default function PhotoCollectionsView() {
                     onClick={() => setShowOnboardForm(!showOnboardForm)}
                     className="flex items-center justify-center gap-2 px-6 py-3 bg-white text-black font-bold uppercase tracking-tighter hover:bg-zinc-200 transition"
                 >
-                    {showOnboardForm ? <ChevronRight className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+                    {showOnboardForm ? <ChevronRightIcon className="w-5 h-5" /> : <PlusIcon className="w-5 h-5" />}
                     {showOnboardForm ? 'Close Form' : 'Onboard Client'}
                 </button>
             </div>
@@ -279,7 +278,7 @@ export default function PhotoCollectionsView() {
                             disabled={submitting}
                             className="w-full md:w-auto px-8 py-3 bg-white text-black font-black uppercase tracking-tighter hover:bg-zinc-200 transition disabled:opacity-50 flex items-center justify-center gap-2"
                         >
-                            {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <FolderPlus className="w-5 h-5" />}
+                            {submitting ? <ArrowPathIcon className="w-5 h-5 animate-spin" /> : <FolderPlusIcon className="w-5 h-5" />}
                             Create Client Collection
                         </button>
                     </form>
@@ -289,7 +288,7 @@ export default function PhotoCollectionsView() {
             {/* Collections List */}
             <div className="bg-zinc-900 p-6 rounded-none">
                 <div className="mb-6 relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                     <input
                         type="text"
                         placeholder="Filter collections by name or email..."
@@ -302,7 +301,7 @@ export default function PhotoCollectionsView() {
                 <div className="space-y-3">
                     {loading ? (
                         <div className="py-20 flex flex-col items-center justify-center text-zinc-600">
-                            <Loader2 className="w-8 h-8 animate-spin mb-2" />
+                            <ArrowPathIcon className="w-8 h-8 animate-spin mb-2" />
                             <p className="text-xs uppercase font-black tracking-widest">Loading Collections...</p>
                         </div>
                     ) : filteredCollections.length > 0 ? (
@@ -310,7 +309,7 @@ export default function PhotoCollectionsView() {
                             <div key={collection.id} className="group flex flex-col md:flex-row md:items-center justify-between p-4 bg-black hover:border-white/20 transition">
                                 <div className="flex items-center gap-4 mb-4 md:mb-0">
                                     <div className="w-12 h-12 bg-zinc-900 flex items-center justify-center">
-                                        <Camera className="w-6 h-6 text-zinc-600 group-hover:text-white transition" />
+                                        <CameraIcon className="w-6 h-6 text-zinc-600 group-hover:text-white transition" />
                                     </div>
                                     <div>
                                         <h3 className="text-white font-black uppercase text-sm flex items-center gap-2">
@@ -323,7 +322,7 @@ export default function PhotoCollectionsView() {
                                         </h3>
                                         <div className="flex flex-col text-[11px] text-zinc-500 font-mono mt-1">
                                             <span className="flex items-center gap-1">
-                                                <User className="w-3 h-3" /> {collection.user_email}
+                                                <UserIcon className="w-3 h-3" /> {collection.user_email}
                                             </span>
                                             <span className="flex items-center gap-1">
                                                 <LinkIcon className="w-3 h-3" /> /{collection.slug}
@@ -340,28 +339,28 @@ export default function PhotoCollectionsView() {
                                         className="p-2 bg-zinc-900 text-zinc-400 hover:text-white hover:border-white/30 transition"
                                         title="View Collection"
                                     >
-                                        <ExternalLink className="w-4 h-4" />
+                                        <ArrowTopRightOnSquareIcon className="w-4 h-4" />
                                     </a>
                                     <button
                                         onClick={() => triggerSync(collection.slug)}
                                         className="p-2 bg-zinc-900 text-zinc-400 hover:text-white hover:border-white/30 transition"
                                         title="Refresh Data"
                                     >
-                                        <RefreshCcw className="w-4 h-4" />
+                                        <ArrowPathIcon className="w-4 h-4" />
                                     </button>
                                     <button
                                         onClick={() => handleDelete(collection.id)}
                                         className="p-2 bg-zinc-900 text-zinc-400 hover:text-red-500 hover:border-red-500/30 transition"
                                         title="Delete Collection"
                                     >
-                                        <Trash2 className="w-4 h-4" />
+                                        <TrashIcon className="w-4 h-4" />
                                     </button>
                                 </div>
                             </div>
                         ))
                     ) : (
                         <div className="text-center py-20 text-zinc-600 border border-dashed border-white/5">
-                            <Camera className="w-12 h-12 mx-auto mb-4 opacity-10" />
+                            <CameraIcon className="w-12 h-12 mx-auto mb-4 opacity-10" />
                             <p className="text-xs uppercase font-black tracking-widest">No Collections Found</p>
                         </div>
                     )}

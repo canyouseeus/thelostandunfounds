@@ -1,28 +1,29 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import {
-  TrendingUp,
-  DollarSign,
-  MousePointerClick,
-  ShoppingCart,
-  Trophy,
-  Copy,
-  Check,
-  Award,
-  Calendar,
-  Loader2,
-  ExternalLink,
-  Star,
-  Network,
-  Gift,
-  Tag,
-  Edit,
-  X,
-  Save,
-  Users,
-  LogIn
-} from 'lucide-react'
+  ArrowTrendingUpIcon,
+  CurrencyDollarIcon,
+  CursorArrowRaysIcon,
+  ShoppingCartIcon,
+  TrophyIcon,
+  ClipboardIcon,
+  CheckIcon,
+  StarIcon,
+  CalendarIcon,
+  ArrowPathIcon,
+  ArrowTopRightOnSquareIcon,
+  ShareIcon,
+  GiftIcon,
+  TagIcon,
+  PencilSquareIcon,
+  XMarkIcon,
+  DocumentCheckIcon,
+  UsersIcon,
+  ArrowRightOnRectangleIcon
+} from '@heroicons/react/24/outline'
 import { Link, useNavigate } from 'react-router-dom'
+import { Button } from '../components/ui/button'
+import AuthModal from '../components/auth/AuthModal'
 import KingMidasTicker from '../components/KingMidasTicker'
 import EmployeeDiscount from '../components/affiliate/EmployeeDiscount'
 import RewardPointsBadge from '../components/affiliate/RewardPointsBadge'
@@ -133,6 +134,8 @@ interface DashboardData {
 
 export default function AffiliateDashboard() {
   const { user, loading: authLoading } = useAuth()
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [initialAuthMode, setInitialAuthMode] = useState<'signin' | 'signup'>('signin');
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -449,9 +452,9 @@ export default function AffiliateDashboard() {
 
   const getRankBadge = (rank: number | null) => {
     if (!rank) return null
-    if (rank === 1) return <Trophy className="w-5 h-5 text-white" />
-    if (rank === 2) return <Trophy className="w-5 h-5 text-gray-300" />
-    if (rank === 3) return <Trophy className="w-5 h-5 text-white/60" />
+    if (rank === 1) return <TrophyIcon className="w-5 h-5 text-white" />
+    if (rank === 2) return <TrophyIcon className="w-5 h-5 text-gray-300" />
+    if (rank === 3) return <TrophyIcon className="w-5 h-5 text-white/60" />
     return null
   }
 
@@ -459,7 +462,7 @@ export default function AffiliateDashboard() {
   if (authLoading || checkingAffiliate) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-white" />
+        <ArrowPathIcon className="w-8 h-8 animate-spin text-white" />
       </div>
     )
   }
@@ -467,31 +470,70 @@ export default function AffiliateDashboard() {
   // Show login prompt if not logged in
   if (!user) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-black/50 border-0 border-white/10 rounded-none p-8 text-center">
-          <LogIn className="w-16 h-16 text-white/60 mx-auto mb-6" />
-          <h1 className="text-2xl font-bold text-white mb-4">
-            Sign in to Access Your Affiliate Dashboard
-          </h1>
-          <p className="text-white/60 mb-6">
-            Join our affiliate program and earn 42% commission on every sale you refer!
-          </p>
-          <div className="space-y-3">
-            <Link
-              to="/login"
-              className="block w-full px-6 py-3 bg-white text-black font-semibold hover:bg-white/90 transition-colors"
-            >
-              Sign In
-            </Link>
-            <Link
-              to="/signup"
-              className="block w-full px-6 py-3 bg-black border border-white/20 text-white font-semibold hover:bg-white/10 transition-colors"
-            >
-              Create Account
-            </Link>
+      <>
+        <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden -mt-20 md:-mt-32">
+          {/* Background Effects */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black via-black to-[#0a0a0a]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-white/[0.02] rounded-full blur-[100px]" />
+
+          <div className="relative w-full max-w-md">
+            <div className="bg-[#0a0a0a] p-8 md:p-10">
+              <div className="flex justify-center mb-8">
+                <div className="p-4 bg-white/5 rounded-full ring-1 ring-white/10">
+                  <ArrowRightOnRectangleIcon className="w-8 h-8 text-white" />
+                </div>
+              </div>
+
+              <div className="text-center mb-8">
+                <h1 className="text-2xl font-medium tracking-wide text-white mb-3">
+                  Affiliate Access
+                </h1>
+                <p className="text-white/40 text-sm leading-relaxed">
+                  Join The Lost+Unfounds affiliate program and earn 42% commission on every sale you refer.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <Button
+                  onClick={() => {
+                    setInitialAuthMode('signin');
+                    setShowAuthModal(true);
+                  }}
+                  className="w-full bg-white text-black hover:bg-white/90 h-12 text-sm uppercase tracking-widest font-medium transition-transform hover:scale-[1.02]"
+                >
+                  Sign In
+                </Button>
+
+                <Button
+                  onClick={() => {
+                    setInitialAuthMode('signup');
+                    setShowAuthModal(true);
+                  }}
+                  variant="outline"
+                  className="w-full border-white/20 text-white hover:bg-white/5 h-12 text-sm uppercase tracking-widest font-medium transition-transform hover:scale-[1.02]"
+                >
+                  Create Account
+                </Button>
+              </div>
+
+              <div className="mt-8 pt-8 border-t border-white/5 text-center">
+                <p className="text-[10px] text-white/20 uppercase tracking-[0.2em]">
+                  Secure Agent Access
+                </p>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          initialMode={initialAuthMode}
+          title={initialAuthMode === 'signin' ? 'Affiliate Login' : 'Join Program'}
+          message={initialAuthMode === 'signup' ? 'Create an account to verify your affiliate status.' : undefined}
+          onLoginSuccess={() => setShowAuthModal(false)}
+        />
+      </>
     )
   }
 
@@ -509,7 +551,7 @@ export default function AffiliateDashboard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-white" />
+        <ArrowPathIcon className="w-8 h-8 animate-spin text-white" />
       </div>
     )
   }
@@ -539,7 +581,7 @@ export default function AffiliateDashboard() {
           <AdminBentoCard
             title="Affiliate Identity"
             colSpan={4}
-            icon={<Tag className="w-4 h-4" />}
+            icon={<TagIcon className="w-4 h-4" />}
             className="min-h-[200px]"
           >
             <div className="space-y-6">
@@ -562,10 +604,10 @@ export default function AffiliateDashboard() {
                         autoFocus
                       />
                       <button onClick={handleSaveCode} disabled={updatingCode} className="p-2 hover:bg-white/10 transition-colors">
-                        {updatingCode ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                        {updatingCode ? <ArrowPathIcon className="w-4 h-4 animate-spin" /> : <DocumentCheckIcon className="w-4 h-4" />}
                       </button>
                       <button onClick={handleCancelEdit} disabled={updatingCode} className="p-2 hover:bg-white/10 transition-colors">
-                        <X className="w-4 h-4" />
+                        <XMarkIcon className="w-4 h-4" />
                       </button>
                     </div>
                     {codeError && <div className="text-[10px] text-red-500 font-bold uppercase tracking-wider">{codeError}</div>}
@@ -576,7 +618,7 @@ export default function AffiliateDashboard() {
                       {data.affiliate.code}
                     </div>
                     <button onClick={handleEditCode} className="opacity-0 group-hover:opacity-100 p-2 hover:bg-white/10 transition-all">
-                      <Edit className="w-4 h-4 text-white/40 hover:text-white" />
+                      <PencilSquareIcon className="w-4 h-4 text-white/40 hover:text-white" />
                     </button>
                   </div>
                 )}
@@ -600,7 +642,7 @@ export default function AffiliateDashboard() {
           <AdminBentoCard
             title="Quick Actions"
             colSpan={8}
-            icon={<ExternalLink className="w-4 h-4" />}
+            icon={<ArrowTopRightOnSquareIcon className="w-4 h-4" />}
             className="min-h-[200px]"
           >
             <div className="flex flex-col md:flex-row gap-4 h-full items-center justify-center p-4">
@@ -608,7 +650,7 @@ export default function AffiliateDashboard() {
                 onClick={copyReferralLink}
                 className="flex items-center justify-center gap-3 px-8 py-4 bg-white text-black font-black uppercase tracking-widest text-sm hover:bg-white/90 transition-all hover:scale-105 active:scale-95 w-full md:w-auto"
               >
-                {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                {copied ? <CheckIcon className="w-5 h-5" /> : <ClipboardIcon className="w-5 h-5" />}
                 {copied ? 'COPIED TO CLIPBOARD' : 'COPY AFFILIATE LINK'}
               </button>
               <Link
@@ -616,7 +658,7 @@ export default function AffiliateDashboard() {
                 target="_blank"
                 className="flex items-center justify-center gap-3 px-8 py-4 bg-transparent border border-white/20 text-white font-black uppercase tracking-widest text-sm hover:bg-white/10 transition-all hover:border-white w-full md:w-auto"
               >
-                <ExternalLink className="w-5 h-5" />
+                <ArrowTopRightOnSquareIcon className="w-5 h-5" />
                 PREVIEW SHOP
               </Link>
             </div>
@@ -625,20 +667,26 @@ export default function AffiliateDashboard() {
 
         {/* Key Metrics Grid - Converted to Bento Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <AdminBentoCard title="Available Balance" icon={<DollarSign className="w-4 h-4" />}>
+          <AdminBentoCard title="Available Balance" icon={<CurrencyDollarIcon className="w-4 h-4" />}>
             <div className="mt-2">
               <div className="text-4xl font-black text-white tracking-tighter">
                 ${(data.balance?.available_balance || 0).toFixed(2)}
               </div>
-              {(data.balance?.pending_balance || 0) > 0 && (
-                <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-2">
-                  +${(data.balance?.pending_balance || 0).toFixed(2)} PENDING
+
+              <div className="flex flex-col gap-1 mt-2">
+                {(data.balance?.pending_balance || 0) > 0 && (
+                  <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
+                    +${(data.balance?.pending_balance || 0).toFixed(2)} PENDING (30-DAY HOLD)
+                  </div>
+                )}
+                <div className="text-[8px] text-white/30 uppercase tracking-widest mt-1">
+                  * Funds held 30 days for security. No returns on digital items.
                 </div>
-              )}
+              </div>
             </div>
           </AdminBentoCard>
 
-          <AdminBentoCard title="Total Clicks" icon={<MousePointerClick className="w-4 h-4" />}>
+          <AdminBentoCard title="Total Clicks" icon={<CursorArrowRaysIcon className="w-4 h-4" />}>
             <div className="mt-2">
               <div className="text-4xl font-black text-white tracking-tighter">
                 {data.affiliate.total_clicks.toLocaleString()}
@@ -649,7 +697,7 @@ export default function AffiliateDashboard() {
             </div>
           </AdminBentoCard>
 
-          <AdminBentoCard title="Conversions" icon={<ShoppingCart className="w-4 h-4" />}>
+          <AdminBentoCard title="Conversions" icon={<ShoppingCartIcon className="w-4 h-4" />}>
             <div className="mt-2">
               <div className="text-4xl font-black text-white tracking-tighter">
                 {data.affiliate.total_conversions}
@@ -660,7 +708,7 @@ export default function AffiliateDashboard() {
             </div>
           </AdminBentoCard>
 
-          <AdminBentoCard title="Current Rank" icon={<Trophy className="w-4 h-4" />}>
+          <AdminBentoCard title="Current Rank" icon={<TrophyIcon className="w-4 h-4" />}>
             <div className="mt-2">
               <div className="flex items-center gap-2">
                 {getRankBadge(data.overview.current_rank)}
@@ -678,28 +726,28 @@ export default function AffiliateDashboard() {
         {/* MLM Quick Stats Row */}
         {data.mlm && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <AdminBentoCard title="Rewards" icon={<Star className="w-4 h-4" />}>
+            <AdminBentoCard title="Rewards" icon={<StarIcon className="w-4 h-4" />}>
               <div className="text-center py-2">
                 <p className="text-4xl font-black text-white tracking-tighter">{data.affiliate.reward_points}</p>
                 <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">POINTS AVAILABLE</p>
               </div>
             </AdminBentoCard>
 
-            <AdminBentoCard title="Customers" icon={<Users className="w-4 h-4" />}>
+            <AdminBentoCard title="Customers" icon={<UsersIcon className="w-4 h-4" />}>
               <div className="text-center py-2">
                 <p className="text-4xl font-black text-white tracking-tighter">{data.mlm.network.total_customers}</p>
                 <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">ACTIVE CUSTOMERS</p>
               </div>
             </AdminBentoCard>
 
-            <AdminBentoCard title="Network" icon={<Network className="w-4 h-4" />}>
+            <AdminBentoCard title="Network" icon={<ShareIcon className="w-4 h-4" />}>
               <div className="text-center py-2">
                 <p className="text-4xl font-black text-white tracking-tighter">{data.mlm.network.total_network}</p>
                 <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">TOTAL DOWNLINE</p>
               </div>
             </AdminBentoCard>
 
-            <AdminBentoCard title="Credits" icon={<Gift className="w-4 h-4" />}>
+            <AdminBentoCard title="Credits" icon={<GiftIcon className="w-4 h-4" />}>
               <div className="text-center py-2">
                 <p className="text-4xl font-black text-white tracking-tighter">
                   ${data.affiliate.discount_credit_balance?.toFixed(2) || '0.00'}
@@ -754,7 +802,7 @@ export default function AffiliateDashboard() {
           {/* Last 30 Days Performance */}
           <ExpandableBentoCard
             title="Last 30 Days"
-            icon={<Calendar className="w-4 h-4" />}
+            icon={<CalendarIcon className="w-4 h-4" />}
             details={
               <>
                 <AdminBentoRow
@@ -765,7 +813,7 @@ export default function AffiliateDashboard() {
                   label="7-Day Trend"
                   value={
                     <span className={`flex items-center gap-1 ${data.overview.profit_trend_7d >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      <TrendingUp className={`w-3 h-3 ${data.overview.profit_trend_7d < 0 ? 'rotate-180' : ''}`} />
+                      <ArrowTrendingUpIcon className={`w-3 h-3 ${data.overview.profit_trend_7d < 0 ? 'rotate-180' : ''}`} />
                       {Math.abs(data.overview.profit_trend_7d).toFixed(1)}%
                     </span>
                   }
@@ -801,7 +849,7 @@ export default function AffiliateDashboard() {
         <div className="grid grid-cols-1 mb-8">
           <ExpandableBentoCard
             title="King Midas Performance"
-            icon={<Award className="w-4 h-4" />}
+            icon={<TrophyIcon className="w-4 h-4" />}
             details={
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
@@ -1173,7 +1221,7 @@ export default function AffiliateDashboard() {
             to="/king-midas-leaderboard"
             className="bg-black border-0 rounded-none p-6 hover:bg-white hover:text-black transition-colors group"
           >
-            <Trophy className="w-8 h-8 text-white mb-4 group-hover:text-black transition-colors" />
+            <TrophyIcon className="w-8 h-8 text-white mb-4 group-hover:text-black transition-colors" />
             <h3 className="text-sm font-bold uppercase tracking-widest mb-2">
               View Leaderboard
             </h3>
@@ -1186,7 +1234,7 @@ export default function AffiliateDashboard() {
             to="/affiliate-profile"
             className="bg-black border-0 rounded-none p-6 hover:bg-white hover:text-black transition-colors group"
           >
-            <MousePointerClick className="w-8 h-8 text-white mb-4 group-hover:text-black transition-colors" />
+            <CursorArrowRaysIcon className="w-8 h-8 text-white mb-4 group-hover:text-black transition-colors" />
             <h3 className="text-sm font-bold uppercase tracking-widest mb-2">
               My Profile
             </h3>
@@ -1196,7 +1244,7 @@ export default function AffiliateDashboard() {
           </Link>
 
           <div className="bg-black border-0 rounded-none p-6 opacity-50 cursor-not-allowed">
-            <DollarSign className="w-8 h-8 text-white mb-4" />
+            <CurrencyDollarIcon className="w-8 h-8 text-white mb-4" />
             <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-2">
               Marketing Tools
             </h3>

@@ -12,6 +12,10 @@ export default async function handler(
   try {
     const { photoIds, email } = req.body
 
+    // Get affiliate reference from header or cookie
+    const affiliateRef = req.headers['x-affiliate-ref'] ||
+      (req.headers.cookie?.match(/affiliate_ref=([^;]+)/)?.[1]);
+
     if (!photoIds || !Array.isArray(photoIds) || photoIds.length === 0) {
       return res.status(400).json({ error: 'photoIds must be a non-empty array' })
     }
@@ -168,7 +172,8 @@ export default async function handler(
         email,
         total_amount_cents: Math.round(amount * 100),
         paypal_order_id: order.id,
-        payment_status: 'pending' // Initial status
+        payment_status: 'pending', // Initial status
+        affiliate_code: affiliateRef ? String(affiliateRef) : null
       })
       .select()
       .single()

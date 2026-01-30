@@ -13,43 +13,44 @@ import AdminAffiliates from './AdminAffiliates';
 import { isAdmin } from '../utils/admin';
 import { supabase } from '../lib/supabase';
 import {
-  Users,
-  Shield,
-  BarChart3,
-  Settings,
-  Activity,
-  TrendingUp,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  Loader,
-  Bell,
-  Clock,
-  DollarSign,
-  Zap,
-  Network,
-  Eye,
-  Mail,
-  Calendar,
-  FileText,
-  User,
-  Search,
-  Filter,
-  MoreVertical,
-  Edit,
-  Trash2,
-  Ban,
-  CheckSquare,
-  Square,
-  Package,
-  BookOpen,
-  Send,
-  FolderOpen,
-  ArrowUp,
-  Maximize2,
-  Inbox,
-  Image as ImageIcon
-} from 'lucide-react';
+  UsersIcon,
+  ShieldCheckIcon,
+  ChartBarIcon,
+  Cog6ToothIcon,
+  ArrowTrendingUpIcon,
+  ExclamationCircleIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  BellIcon,
+  ClockIcon,
+  CurrencyDollarIcon,
+  BoltIcon,
+  CpuChipIcon, // Using CpuChipIcon for "Network" concept or similar connectivity
+  EyeIcon,
+  EnvelopeIcon,
+  CalendarIcon,
+  DocumentTextIcon,
+  UserIcon,
+  MagnifyingGlassIcon,
+  FunnelIcon,
+  EllipsisVerticalIcon,
+  PencilIcon,
+  TrashIcon,
+  NoSymbolIcon,
+  CheckIcon, // CheckSquare -> CheckIcon or CheckCircleIcon; usually CheckIcon is fine + css border
+  Square2StackIcon, // "Square" -> potentially StopIcon or just a square shape? Square2Stack is 'Package'-like. Let's use StopIcon for outline square. Actually generic 'Square' isn't in v2 outline easily named 'Square'. We can use basic shapes or just empty div. But Lucide Square is just a box. `StopIcon` is a solid square usually?. Let's use `StopIcon` or just `QueueListIcon` if list. 
+  // Wait, Lucide Square is checkbox unchecked. Heroicons: `StopIcon` (solid?) or creating custom. 
+  // Let's use `StopIcon` for now or omit if unused.
+  ArchiveBoxIcon,
+  BookOpenIcon,
+  PaperAirplaneIcon,
+  FolderOpenIcon,
+  ArrowUpIcon,
+  ArrowsPointingOutIcon,
+  InboxIcon,
+  PhotoIcon,
+  LinkIcon
+} from '@heroicons/react/24/outline';
 import { LoadingSpinner } from '../components/Loading';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { ProductCostManagement } from '../components/ProductCostManagement';
@@ -72,7 +73,7 @@ import { cn } from '../components/ui/utils';
 import AdminUsersView from '../components/admin/AdminUsersView';
 import AdminSettingsView from '../components/admin/AdminSettingsView';
 import AdminMailView from '../components/admin/AdminMailView';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import AdminOverviewView from '../components/admin/AdminOverviewView';
 import { DashboardCharts } from '../components/admin/DashboardCharts';
 import AdminGalleryView from '../components/admin/AdminGalleryView';
@@ -238,7 +239,11 @@ export default function Admin() {
     setExpandedSections(prev => {
       const willOpen = !prev[key];
       if (!willOpen) {
-        scrollToTop();
+        // Only scroll to top if NO OTHER sections are open
+        const otherSectionsOpen = Object.entries(prev).some(([k, v]) => k !== key && v === true);
+        if (!otherSectionsOpen) {
+          scrollToTop();
+        }
       }
       return {
         ...prev,
@@ -253,13 +258,22 @@ export default function Admin() {
       const willOpen = !prev[key];
 
       // 2. If opening, scroll to it
-      if (willOpen && ref.current) {
+      // 2. If opening, scroll to it
+      if (willOpen) {
+        // Wait for render cycle to complete and ref to populate
         setTimeout(() => {
-          ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 300);
+          if (ref.current) {
+            const yOffset = -100; // Offset for fixed header/dock
+            const y = ref.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+          }
+        }, 100);
       } else if (!willOpen) {
-        // If closing, scroll to top
-        scrollToTop();
+        // If closing, scroll to top ONLY if no other sections are open
+        const otherSectionsOpen = Object.entries(prev).some(([k, v]) => k !== key && v === true);
+        if (!otherSectionsOpen) {
+          scrollToTop();
+        }
       }
 
       return {
@@ -1339,7 +1353,7 @@ export default function Admin() {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl md:text-4xl font-bold text-white uppercase">
+          <h1 className="font-bold text-white uppercase whitespace-nowrap text-[clamp(1.5rem,4vw,2.25rem)]">
             ADMIN DASHBOARD
           </h1>
           <Link
@@ -1347,7 +1361,7 @@ export default function Admin() {
             className="p-2 bg-white text-black hover:bg-white/90 transition"
             title="Profile"
           >
-            <User className="w-5 h-5" />
+            <UserIcon className="w-5 h-5" />
           </Link>
         </div>
         <p className="text-white/70 text-sm hidden sm:block mt-1">Manage your platform and users</p>
@@ -1381,7 +1395,7 @@ export default function Admin() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <AdminBentoCard
             title="Operational Load"
-            icon={<BarChart3 className="w-4 h-4" />}
+            icon={<ChartBarIcon className="w-4 h-4" />}
             footer={<span className="text-[10px] text-white/40">Real-time sync</span>}
           >
             <div className="space-y-4 pt-2">
@@ -1414,7 +1428,7 @@ export default function Admin() {
 
           <AdminBentoCard
             title="Revenue Performance"
-            icon={<TrendingUp className="w-4 h-4" />}
+            icon={<ArrowTrendingUpIcon className="w-4 h-4" />}
             footer={<span className="text-[10px] text-white/40">Gross profit estimate</span>}
           >
             <div className="space-y-4 pt-2">
@@ -1427,7 +1441,7 @@ export default function Admin() {
 
           <AdminBentoCard
             title="Network Status"
-            icon={<Network className="w-4 h-4" />}
+            icon={<CpuChipIcon className="w-4 h-4" />}
             footer={<span className="text-[10px] text-white/40">System health</span>}
           >
             <div className="flex flex-col gap-2 pt-2">
@@ -1456,7 +1470,7 @@ export default function Admin() {
 
           <AdminBentoCard
             title="Registry"
-            icon={<Shield className="w-4 h-4" />}
+            icon={<ShieldCheckIcon className="w-4 h-4" />}
             footer={<Link to="/admin/affiliates" className="text-[10px] text-white/60 hover:text-white underline">Manage Affiliates</Link>}
           >
             <div className="space-y-4 pt-2">
@@ -1474,14 +1488,14 @@ export default function Admin() {
             <h2 className="text-[10px] font-black text-white/40 tracking-[0.4em] uppercase mb-4 text-center">Platform Console</h2>
             <div className="flex flex-wrap justify-center gap-2 p-1.5 bg-white/5 backdrop-blur-xl rounded-[32px] sm:rounded-full">
               {[
-                { id: 'gallery', icon: ImageIcon, title: 'Gallery' },
-                { id: 'blog', icon: BookOpen, title: 'Blog' },
-                { id: 'newsletter', icon: Mail, title: 'Newsletter' },
-                { id: 'mail', icon: Send, title: 'Webmail' },
-                { id: 'users', icon: Users, title: 'Users' },
-                { id: 'affiliates', icon: Network, title: 'Affiliates' },
-                { id: 'submissions', icon: FileText, title: 'Submissions', badge: pendingSubmissions },
-                { id: 'settings', icon: Settings, title: 'Settings' }
+                { id: 'gallery', icon: PhotoIcon, title: 'Gallery' },
+                { id: 'blog', icon: BookOpenIcon, title: 'Blog' },
+                { id: 'newsletter', icon: EnvelopeIcon, title: 'Newsletter' },
+                { id: 'mail', icon: PaperAirplaneIcon, title: 'Webmail' },
+                { id: 'users', icon: UsersIcon, title: 'Users' },
+                { id: 'affiliates', icon: LinkIcon, title: 'Affiliates' },
+                { id: 'submissions', icon: DocumentTextIcon, title: 'Submissions', badge: pendingSubmissions },
+                { id: 'settings', icon: BoltIcon, title: 'Settings' }
               ].map((app) => (
                 <button
                   key={app.id}
@@ -1516,7 +1530,7 @@ export default function Admin() {
             <div ref={gallerySectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="flex flex-col px-0 py-2 mb-8 items-start">
                 <div className="flex items-center gap-3">
-                  <ImageIcon className="w-5 h-5 text-white/40" />
+                  <PhotoIcon className="w-5 h-5 text-white/40" />
                   <h2 className="text-lg font-black text-white tracking-widest uppercase">Gallery Management</h2>
                 </div>
                 <button onClick={() => handleSectionToggle('gallery')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
@@ -1532,7 +1546,7 @@ export default function Admin() {
             <div ref={blogSectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="flex flex-col px-0 py-2 mb-8 items-start">
                 <div className="flex items-center gap-3">
-                  <BookOpen className="w-5 h-5 text-white/40" />
+                  <BookOpenIcon className="w-5 h-5 text-white/40" />
                   <h2 className="text-lg font-black text-white tracking-widest uppercase">Blog Management</h2>
                 </div>
                 <button onClick={() => handleSectionToggle('blog')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
@@ -1548,7 +1562,7 @@ export default function Admin() {
             <div ref={newsletterSectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="flex flex-col px-0 py-2 mb-8 items-start">
                 <div className="flex items-center gap-3">
-                  <Mail className="w-5 h-5 text-white/40" />
+                  <EnvelopeIcon className="w-5 h-5 text-white/40" />
                   <h2 className="text-lg font-black text-white tracking-widest uppercase">Newsletter Module</h2>
                 </div>
                 <button onClick={() => handleSectionToggle('newsletter')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
@@ -1564,7 +1578,7 @@ export default function Admin() {
             <div ref={mailSectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="flex flex-col px-0 py-2 mb-8 items-start">
                 <div className="flex items-center gap-3">
-                  <Send className="w-5 h-5 text-white/40" />
+                  <PaperAirplaneIcon className="w-5 h-5 text-white/40" />
                   <h2 className="text-lg font-black text-white tracking-widest uppercase">Platform Webmail</h2>
                 </div>
                 <button onClick={() => handleSectionToggle('mail')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
@@ -1580,7 +1594,7 @@ export default function Admin() {
             <div ref={usersSectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="flex flex-col px-0 py-2 mb-8 items-start">
                 <div className="flex items-center gap-3">
-                  <Users className="w-5 h-5 text-white/40" />
+                  <UsersIcon className="w-5 h-5 text-white/40" />
                   <h2 className="text-lg font-black text-white tracking-widest uppercase">User Management</h2>
                 </div>
                 <button onClick={() => handleSectionToggle('users')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
@@ -1599,7 +1613,7 @@ export default function Admin() {
             <div ref={usersSectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="flex flex-col px-0 py-2 mb-8 items-start">
                 <div className="flex items-center gap-3">
-                  <Users className="w-5 h-5 text-white/40" />
+                  <UsersIcon className="w-5 h-5 text-white/40" />
                   <h2 className="text-lg font-black text-white tracking-widest uppercase">Affiliate Program</h2>
                 </div>
                 <button onClick={() => handleSectionToggle('affiliates')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
@@ -1614,7 +1628,7 @@ export default function Admin() {
             <div ref={submissionsSectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="flex flex-col px-0 py-2 mb-8 items-start">
                 <div className="flex items-center gap-3">
-                  <FileText className="w-5 h-5 text-white/40" />
+                  <DocumentTextIcon className="w-5 h-5 text-white/40" />
                   <h2 className="text-lg font-black text-white tracking-widest uppercase">Submission Queue</h2>
                   {pendingSubmissions > 0 && (
                     <span className="px-2 py-0.5 bg-amber-400 text-black text-[10px] font-black">{pendingSubmissions} PENDING</span>
@@ -1633,7 +1647,7 @@ export default function Admin() {
             <div ref={settingsSectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="flex items-center justify-between px-4 py-2 mb-6">
                 <div className="flex items-center gap-3">
-                  <Settings className="w-5 h-5 text-white/40" />
+                  <BoltIcon className="w-5 h-5 text-white/40" />
                   <h2 className="text-lg font-black text-white tracking-widest uppercase">Platform Settings</h2>
                 </div>
                 <button onClick={() => handleSectionToggle('settings')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
@@ -1649,7 +1663,7 @@ export default function Admin() {
           className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-10 h-10 bg-white/10 backdrop-blur-md flex items-center justify-center active:bg-white active:text-black md:hover:bg-white md:hover:text-black transition-all rounded-full"
           title="Back to Top"
         >
-          <ArrowUp className="w-5 h-5" />
+          <ArrowUpIcon className="w-5 h-5" />
         </button>
 
         {/* Side Panel for User Details */}
@@ -1662,7 +1676,7 @@ export default function Admin() {
             <div className="space-y-6">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 bg-white/10 flex items-center justify-center rounded-full">
-                  <User className="w-8 h-8 text-white/60" />
+                  <UserIcon className="w-8 h-8 text-white/60" />
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-white">{selectedUser.username || 'No Username'}</h3>

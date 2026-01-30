@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabase';
 import { LoadingSpinner } from '../components/Loading';
-import { BookOpen, Wrench, MapPin, Atom, Lightbulb } from 'lucide-react';
+import { BookOpenIcon, WrenchIcon, MapPinIcon, BeakerIcon, LightBulbIcon } from '@heroicons/react/24/outline';
 
 interface BlogPost {
   id: string;
@@ -32,11 +32,11 @@ interface ColumnPageProps {
 }
 
 const COLUMN_ICONS = {
-  bookclub: <BookOpen className="w-6 h-6" />,
-  gearheads: <Wrench className="w-6 h-6" />,
-  borderlands: <MapPin className="w-6 h-6" />,
-  science: <Atom className="w-6 h-6" />,
-  newtheory: <Lightbulb className="w-6 h-6" />,
+  bookclub: <BookOpenIcon className="w-6 h-6" />,
+  gearheads: <WrenchIcon className="w-6 h-6" />,
+  borderlands: <MapPinIcon className="w-6 h-6" />,
+  science: <BeakerIcon className="w-6 h-6" />,
+  newtheory: <LightBulbIcon className="w-6 h-6" />,
   main: null,
 };
 
@@ -182,10 +182,10 @@ export default function ColumnPage({ column, title, description, submitPath, ico
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {posts.map((post) => {
-              const postUrl = post.subdomain 
+              const postUrl = post.subdomain
                 ? `/blog/${post.subdomain}/${post.slug}`
                 : `/thelostarchives/${post.slug}`;
-              
+
               return (
                 <Link
                   key={post.id}
@@ -203,13 +203,13 @@ export default function ColumnPage({ column, title, description, submitPath, ico
                       const excerpt = post.excerpt || (post.content ? (() => {
                         const firstParagraph = post.content.split(/\n\n+/)[0]?.trim() || '';
                         if (firstParagraph.length > 0) {
-                          return firstParagraph.length > 200 
+                          return firstParagraph.length > 200
                             ? firstParagraph.substring(0, 200).replace(/\s+\S*$/, '') + '...'
                             : firstParagraph;
                         }
                         return '';
                       })() : '');
-                      
+
                       return excerpt ? (
                         <div className="flex-1 mb-4">
                           <p className="text-white/60 text-sm leading-relaxed line-clamp-4 text-left">

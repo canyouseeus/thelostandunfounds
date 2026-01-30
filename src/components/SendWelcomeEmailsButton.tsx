@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { useToast } from './Toast';
-import { Mail, Loader } from 'lucide-react';
+import { EnvelopeIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 
 export default function SendWelcomeEmailsButton() {
   const { success, error: showError } = useToast();
@@ -45,7 +45,7 @@ export default function SendWelcomeEmailsButton() {
 
     try {
       const body: any = isTest ? { testEmail: testEmail.trim() } : {};
-      
+
       // Add manual email mappings if in manual mode
       if (showManualMode && manualEmails.length > 0) {
         const validManualEmails = manualEmails.filter(
@@ -78,7 +78,7 @@ export default function SendWelcomeEmailsButton() {
         usersProcessed: data.stats?.usersProcessed || [],
         debug: data.debug,
       });
-      
+
       if (data.stats?.emailsSent === 0 && data.stats?.totalUsers === 0) {
         showError(data.message || 'No users found who need welcome emails');
       } else {
@@ -102,12 +102,12 @@ export default function SendWelcomeEmailsButton() {
         >
           {loading ? (
             <>
-              <Loader className="w-4 h-4 animate-spin" />
+              <ArrowPathIcon className="w-4 h-4 animate-spin" />
               Sending Welcome Emails...
             </>
           ) : (
             <>
-              <Mail className="w-4 h-4" />
+              <EnvelopeIcon className="w-4 h-4" />
               Send Welcome Emails to Existing Users
             </>
           )}

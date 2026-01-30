@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabase';
 import { LoadingSpinner } from '../components/Loading';
-import { BookOpen } from 'lucide-react';
+import { BookOpenIcon } from '@heroicons/react/24/outline';
 import {
   Expandable,
   ExpandableCard,
@@ -180,7 +180,7 @@ export default function BookClub() {
 
         {posts.length === 0 ? (
           <div className="text-center py-12">
-            <BookOpen className="w-16 h-16 text-white/20 mx-auto mb-4" />
+            <BookOpenIcon className="w-16 h-16 text-white/20 mx-auto mb-4" />
             <p className="text-white/60 text-lg mb-4">No articles yet.</p>
             <p className="text-white/50 text-sm mb-6">
               Be the first to contribute! Submit your article with four book recommendations.

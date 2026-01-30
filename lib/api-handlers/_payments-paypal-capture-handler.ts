@@ -151,7 +151,10 @@ export default async function handler(
         if (commission.status === 'pending') {
             const { error: updateError } = await supabase
                 .from('affiliate_commissions')
-                .update({ status: 'approved' })
+                .update({
+                    status: 'approved',
+                    available_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30-day holding period
+                })
                 .eq('id', commission.id)
 
             if (updateError) {

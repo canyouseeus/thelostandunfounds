@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { useToast } from './Toast';
-import { Mail, Loader } from 'lucide-react';
+import { EnvelopeIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 
 export default function SendExistingPublicationEmailsButton() {
   const { success, error: showError } = useToast();
@@ -58,12 +58,12 @@ export default function SendExistingPublicationEmailsButton() {
       >
         {loading ? (
           <>
-            <Loader className="w-4 h-4 animate-spin" />
+            <ArrowPathIcon className="w-4 h-4 animate-spin" />
             Sending Emails...
           </>
         ) : (
           <>
-            <Mail className="w-4 h-4" />
+            <EnvelopeIcon className="w-4 h-4" />
             Send Emails to Existing Published Posts
           </>
         )}

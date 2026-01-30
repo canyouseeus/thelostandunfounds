@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useToast } from '../components/Toast';
-import { Copy, Check } from 'lucide-react';
+import { DocumentDuplicateIcon, CheckIcon } from '@heroicons/react/24/outline';
 
 const COLUMN_PROMPT_PATHS: Record<string, string> = {
   bookclub: '/prompts/AI_WRITING_PROMPT_FOR_CONTRIBUTORS.md',
@@ -71,7 +71,7 @@ export default function AIWritingPrompt() {
         <h1 className="text-4xl font-bold text-white mb-2">
           AI Writing Prompt for {COLUMN_NAMES[column || 'bookclub'] || 'Contributors'}
         </h1>
-        <p className="text-white/70">
+        <p className="text-white/70 text-left">
           Copy this prompt to use with your AI assistant when writing articles for {COLUMN_NAMES[column || 'bookclub'] || 'THE LOST ARCHIVES'}
         </p>
       </div>
@@ -79,13 +79,13 @@ export default function AIWritingPrompt() {
       {/* Prompt Box */}
       {loading ? (
         <div className="bg-black/50 border border-white rounded-none p-6">
-          <p className="text-white/60">Loading prompt...</p>
+          <p className="text-white/60 text-left">Loading prompt...</p>
         </div>
       ) : (
         <div className="bg-black/50 border border-white rounded-none p-6">
           <div className="mb-4">
             <h2 className="text-xl font-bold text-white mb-1">AI Writing Prompt</h2>
-            <p className="text-white/60 text-sm mb-2">
+            <p className="text-white/60 text-sm mb-2 text-left">
               Use this prompt exactly as provided to ensure your article matches our format and style requirements.
             </p>
           </div>
@@ -96,9 +96,9 @@ export default function AIWritingPrompt() {
               title={copied ? "Copied!" : "Copy Prompt"}
             >
               {copied ? (
-                <Check className="w-3 h-3" />
+                <CheckIcon className="w-3 h-3" />
               ) : (
-                <Copy className="w-3 h-3" />
+                <DocumentDuplicateIcon className="w-3 h-3" />
               )}
             </button>
             <code className="text-left">{promptContent}</code>
@@ -110,12 +110,12 @@ export default function AIWritingPrompt() {
             >
               {copied ? (
                 <>
-                  <Check className="w-4 h-4" />
+                  <CheckIcon className="w-4 h-4" />
                   Copied!
                 </>
               ) : (
                 <>
-                  <Copy className="w-4 h-4" />
+                  <DocumentDuplicateIcon className="w-4 h-4" />
                   Copy Prompt
                 </>
               )}
@@ -127,7 +127,7 @@ export default function AIWritingPrompt() {
       {/* Tips Section */}
       <div className="bg-black/30 border border-white rounded-none p-6 mt-6">
         <h3 className="text-lg font-bold text-white mb-4">Important Tips for Contributors</h3>
-        
+
         <div className="space-y-4">
           <div>
             <h4 className="text-white font-semibold mb-2">How Book Linking Works:</h4>

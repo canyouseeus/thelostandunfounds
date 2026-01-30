@@ -4,7 +4,7 @@
  */
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertTriangle, Home, RefreshCw } from 'lucide-react';
+import { ExclamationTriangleIcon, HomeIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 import { getErrorMonitor } from '../services/error-monitor';
 
@@ -78,7 +78,7 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="min-h-screen bg-black flex items-center justify-center px-4">
           <div className="max-w-md w-full bg-black/50 border border-white rounded-none p-8 text-center">
-            <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <ExclamationTriangleIcon className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-white mb-2">Something went wrong</h1>
             <p className="text-white/70 mb-6">
               We encountered an unexpected error. Please try refreshing the page.
@@ -105,14 +105,14 @@ export class ErrorBoundary extends Component<Props, State> {
                 onClick={this.handleReset}
                 className="px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition flex items-center gap-2"
               >
-                <RefreshCw className="w-4 h-4" />
+                <ArrowPathIcon className="w-4 h-4" />
                 Try Again
               </button>
               <Link
                 to="/"
                 className="px-4 py-2 bg-black/50 border border-white text-white font-semibold rounded-none hover:border-white transition flex items-center gap-2"
               >
-                <Home className="w-4 h-4" />
+                <HomeIcon className="w-4 h-4" />
                 Go Home
               </Link>
             </div>

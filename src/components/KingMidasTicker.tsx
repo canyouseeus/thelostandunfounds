@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Trophy, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { TrophyIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon, MinusIcon } from '@heroicons/react/24/outline';
 
 interface TickerRanking {
   rank: number;
@@ -69,21 +69,21 @@ export default function KingMidasTicker() {
     if (change_direction === 'up') {
       return (
         <span className="text-green-400 inline-flex items-center gap-1">
-          <TrendingUp className="w-3 h-3" />
+          <ArrowTrendingUpIcon className="w-3 h-3" />
           {Math.abs(rank_change)}
         </span>
       );
     } else if (change_direction === 'down') {
       return (
         <span className="text-red-400 inline-flex items-center gap-1">
-          <TrendingDown className="w-3 h-3" />
+          <ArrowTrendingDownIcon className="w-3 h-3" />
           {Math.abs(rank_change)}
         </span>
       );
     }
     return (
       <span className="text-white/40 inline-flex items-center gap-1">
-        <Minus className="w-3 h-3" />
+        <MinusIcon className="w-3 h-3" />
       </span>
     );
   };
@@ -97,7 +97,7 @@ export default function KingMidasTicker() {
         tickerData.rankings.map((ranking) => (
           <span key={`${ranking.rank}-${ranking.affiliate_code}`} className="inline-flex items-center gap-2 mx-8">
             {ranking.rank <= 3 && (
-              <Trophy className={`w-4 h-4 ${ranking.rank === 1 ? 'text-yellow-400' :
+              <TrophyIcon className={`w-4 h-4 ${ranking.rank === 1 ? 'text-yellow-400' :
                 ranking.rank === 2 ? 'text-gray-300' :
                   'text-amber-600'
                 }`} />
@@ -114,7 +114,7 @@ export default function KingMidasTicker() {
         ))
       ) : (
         <span className="inline-flex items-center gap-2 mx-8 text-white/60">
-          <Trophy className="w-4 h-4" />
+          <TrophyIcon className="w-4 h-4" />
           <span>No rankings available yet</span>
         </span>
       )}
@@ -123,7 +123,7 @@ export default function KingMidasTicker() {
         <span className="text-green-400 font-bold">${tickerData.site_profit_today.toFixed(2)}</span>
       </span>
       <span className="inline-flex items-center gap-2 mx-8">
-        <Trophy className="w-4 h-4 text-yellow-400" />
+        <TrophyIcon className="w-4 h-4 text-yellow-400" />
         <span className="font-semibold text-white/80">King Midas Pot:</span>
         <span className="text-yellow-400 font-bold">${tickerData.king_midas_pot.toFixed(2)}</span>
       </span>

@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import type { PostgrestError } from '@supabase/supabase-js'
 import { createServiceSupabaseClient } from '../_supabase-admin-client'
 import { createPayoutBatch, isPayoutsEnabled, getPayoutBatchStatus } from './paypal-payouts.js'
+import { sendZohoEmail, getZohoAuthContext } from '../_zoho-email-utils.js'
 
 const isMissingTable = (error?: PostgrestError | null) =>
   Boolean(error?.message && error.message.toLowerCase().includes('does not exist'))
@@ -73,6 +74,23 @@ async function getPayoutRequests(req: VercelRequest, res: VercelResponse) {
 async function updatePayoutRequests(req: VercelRequest, res: VercelResponse) {
   const supabase = createServiceSupabaseClient()
   const { requestIds, action, note } = req.body ?? {}
+
+  // Handle automated processing from cron
+  const { processAll } = req.body ?? {}
+
+  // If processAll is true, fetch all approved requests
+  if (processAll === true) {
+    const { data: approvedRequests } = await supabase
+      .from('payout_requests')
+      .select('id')
+      .eq('status', 'approved')
+
+    if (approvedRequests && approvedRequests.length > 0) {
+      return processPayPalPayouts(req, res, supabase, approvedRequests.map(r => r.id))
+    }
+
+    return res.status(200).json({ message: 'No approved payout requests to process' })
+  }
 
   if (!Array.isArray(requestIds) || requestIds.length === 0) {
     return res.status(400).json({ error: 'requestIds must include at least one id' })
@@ -213,19 +231,42 @@ async function processPayPalPayouts(
     })
   } catch (error: any) {
     console.error('PayPal payout batch creation failed:', error)
+    const errorMessage = error?.message || 'Unknown PayPal error';
 
     // Mark requests as failed
     await supabase
       .from('payout_requests')
       .update({
-        status: 'approved', // Keep as approved so admin can retry
-        error_message: error?.message || 'PayPal payout failed',
+        status: 'failed', // Important: Mark as failed so they turn red in dash
+        error_message: errorMessage,
+        notes: `FAILED: ${errorMessage}`
       })
       .in('id', requestIds)
 
+    // Alert Admin
+    try {
+      const auth = await getZohoAuthContext();
+      await sendZohoEmail({
+        auth,
+        to: auth.fromEmail,
+        subject: '🚨 URGENT: Admin Payout Batch Failed',
+        htmlContent: `
+            <h2>Payout Failure Alert</h2>
+            <p>A batch payout attempt failed. Please investigate immediately.</p>
+            <ul>
+              <li><strong>Requests Affected:</strong> ${requestIds.length}</li>
+              <li><strong>Error:</strong> ${errorMessage}</li>
+            </ul>
+             <p>These requests have been marked as <strong>failed</strong> in the database. Please resolve the issue (e.g. check PayPal balance) and retry.</p>
+          `
+      });
+    } catch (emailError) {
+      console.error('Failed to send admin alert email:', emailError);
+    }
+
     return res.status(500).json({
       error: 'PayPal payout failed',
-      message: error?.message || 'Unknown error',
+      message: errorMessage,
     })
   }
 }

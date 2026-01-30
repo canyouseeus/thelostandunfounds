@@ -6,7 +6,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useToast } from './Toast';
-import { Upload, Image, Video, X, Trash2, Download, Loader } from 'lucide-react';
+import { ArrowUpTrayIcon, PhotoIcon, VideoCameraIcon, XMarkIcon, TrashIcon, ArrowDownTrayIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { LoadingSpinner } from './Loading';
 
 interface BrandAsset {
@@ -225,7 +225,7 @@ export default function BrandAssets() {
       {/* Upload Section */}
       <div className="bg-black/50 border border-white rounded-none p-6">
         <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-          <Upload className="w-5 h-5" />
+          <ArrowUpTrayIcon className="w-5 h-5" />
           Upload Brand Assets
         </h2>
         <p className="text-white/60 text-sm mb-4">
@@ -252,12 +252,12 @@ export default function BrandAssets() {
           >
             {uploading ? (
               <>
-                <Loader className="w-5 h-5 animate-spin" />
+                <ArrowPathIcon className="w-5 h-5 animate-spin" />
                 Uploading...
               </>
             ) : (
               <>
-                <Upload className="w-5 h-5" />
+                <ArrowUpTrayIcon className="w-5 h-5" />
                 Choose File to Upload
               </>
             )}
@@ -283,14 +283,14 @@ export default function BrandAssets() {
       <div className="bg-black/50 border border-white rounded-none p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <Image className="w-5 h-5" />
+            <PhotoIcon className="w-5 h-5" />
             Brand Assets ({assets.length})
           </h2>
         </div>
 
         {assets.length === 0 && !loading ? (
           <div className="text-center py-12">
-            <Image className="w-16 h-16 text-white/20 mx-auto mb-4" />
+            <PhotoIcon className="w-16 h-16 text-white/20 mx-auto mb-4" />
             <p className="text-white/60 mb-2">No assets uploaded yet</p>
             <p className="text-white/40 text-sm mb-4">Upload your first brand asset to get started</p>
             <p className="text-white/40 text-xs">
@@ -327,12 +327,12 @@ export default function BrandAssets() {
                   <div className="absolute top-2 right-2">
                     {asset.type === 'image' ? (
                       <div className="px-2 py-1 bg-blue-400/20 text-blue-400 border border-white rounded-none text-xs flex items-center gap-1">
-                        <Image className="w-3 h-3" />
+                        <PhotoIcon className="w-3 h-3" />
                         Image
                       </div>
                     ) : (
                       <div className="px-2 py-1 bg-purple-400/20 text-purple-400 border border-white rounded-none text-xs flex items-center gap-1">
-                        <Video className="w-3 h-3" />
+                        <VideoCameraIcon className="w-3 h-3" />
                         Video
                       </div>
                     )}
@@ -345,14 +345,14 @@ export default function BrandAssets() {
                       className="p-2 bg-white/20 hover:bg-white/30 rounded-none transition"
                       title="Download"
                     >
-                      <Download className="w-4 h-4 text-white" />
+                      <ArrowDownTrayIcon className="w-4 h-4 text-white" />
                     </button>
                     <button
                       onClick={() => handleDelete(asset)}
                       className="p-2 bg-red-500/20 hover:bg-red-500/30 rounded-none transition"
                       title="Delete"
                     >
-                      <Trash2 className="w-4 h-4 text-white" />
+                      <TrashIcon className="w-4 h-4 text-white" />
                     </button>
                   </div>
                 </div>

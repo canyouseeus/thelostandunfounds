@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Gift, Calendar, DollarSign, Users, TrendingUp, FileText, RefreshCw } from 'lucide-react';
+import { GiftIcon, CalendarIcon, CurrencyDollarIcon, UsersIcon, ArrowTrendingUpIcon, DocumentTextIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 
 interface SecretSantaData {
   current_year: number;
@@ -67,7 +67,7 @@ export default function SecretSantaAdmin() {
       setLoading(true);
       setError(null);
       const response = await fetch(`/api/admin/secret-santa?year=${selectedYear}`);
-      
+
       // Check if response is HTML (API route not available)
       const contentType = response.headers.get('content-type') || '';
       if (contentType.includes('text/html')) {
@@ -76,7 +76,7 @@ export default function SecretSantaAdmin() {
           'or test in production/deployed environment. Note: "npm run dev" uses Vite (frontend only). Use "npm run dev:api" for API routes.'
         );
       }
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
         throw new Error(errorData.error || `HTTP ${response.status}`);
@@ -110,7 +110,7 @@ export default function SecretSantaAdmin() {
     return (
       <div className="bg-black/50 rounded-none p-6">
         <div className="flex items-center justify-center py-12">
-          <RefreshCw className="w-6 h-6 animate-spin text-white/60" />
+          <ArrowPathIcon className="w-6 h-6 animate-spin text-white/60" />
           <span className="ml-3 text-white/60">Loading Secret Santa data...</span>
         </div>
       </div>
@@ -145,7 +145,7 @@ export default function SecretSantaAdmin() {
       <div className="bg-black/50 rounded-none p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <Gift className="w-6 h-6 text-red-500" />
+            <GiftIcon className="w-6 h-6 text-red-500" />
             <h2 className="text-2xl font-bold text-white">Secret Santa Admin</h2>
           </div>
           <div className="flex items-center gap-3">
@@ -164,7 +164,7 @@ export default function SecretSantaAdmin() {
               onClick={loadData}
               className="px-4 py-2 bg-white text-black rounded-none hover:bg-white/90 transition flex items-center gap-2"
             >
-              <RefreshCw className="w-4 h-4" />
+              <ArrowPathIcon className="w-4 h-4" />
               Refresh
             </button>
           </div>
@@ -178,7 +178,7 @@ export default function SecretSantaAdmin() {
       {data.pot && (
         <div className="bg-black/50 rounded-none p-6">
           <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <Calendar className="w-5 h-5" />
+            <CalendarIcon className="w-5 h-5" />
             {data.pot.year} Pot Summary
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -205,8 +205,8 @@ export default function SecretSantaAdmin() {
                 {data.distribution.share_per_affiliate
                   ? formatCurrency(data.distribution.share_per_affiliate)
                   : data.distribution.total_affiliates > 0
-                  ? formatCurrency(parseFloat(data.pot.total_amount) / data.distribution.total_affiliates)
-                  : 'N/A'}
+                    ? formatCurrency(parseFloat(data.pot.total_amount) / data.distribution.total_affiliates)
+                    : 'N/A'}
               </div>
               <div className="text-white/60 text-sm mt-1">
                 {data.distribution.total_affiliates} active affiliates
@@ -219,7 +219,7 @@ export default function SecretSantaAdmin() {
       {/* Contributions Breakdown */}
       <div className="bg-black/50 rounded-none p-6">
         <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5" />
+          <ArrowTrendingUpIcon className="w-5 h-5" />
           Contributions Breakdown
         </h3>
         <div className="mb-4">
@@ -227,7 +227,7 @@ export default function SecretSantaAdmin() {
             Total Contributions: {data.contributions.total} | Total Amount: {formatCurrency(data.contributions.total_amount)}
           </div>
         </div>
-        
+
         {Object.keys(data.contributions.by_reason).length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             {Object.entries(data.contributions.by_reason).map(([reason, amount]) => (
@@ -271,7 +271,7 @@ export default function SecretSantaAdmin() {
       {data.distribution.distributed && data.distribution.items.length > 0 && (
         <div className="bg-black/50 rounded-none p-6">
           <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <Users className="w-5 h-5" />
+            <UsersIcon className="w-5 h-5" />
             Distribution History ({data.distribution.items.length} affiliates)
           </h3>
           <div className="mb-4 text-white/60 text-sm">
@@ -293,11 +293,10 @@ export default function SecretSantaAdmin() {
                     <td className="py-2 text-white font-mono">{item.affiliates?.affiliate_code || 'N/A'}</td>
                     <td className="py-2 text-white font-semibold">{formatCurrency(item.amount)}</td>
                     <td className="py-2">
-                      <span className={`px-2 py-1 rounded-none text-xs ${
-                        item.status === 'paid' ? 'bg-green-500/20 text-green-400' :
-                        item.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                        'bg-red-500/20 text-red-400'
-                      }`}>
+                      <span className={`px-2 py-1 rounded-none text-xs ${item.status === 'paid' ? 'bg-green-500/20 text-green-400' :
+                          item.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                            'bg-red-500/20 text-red-400'
+                        }`}>
                         {item.status}
                       </span>
                     </td>
@@ -314,18 +313,17 @@ export default function SecretSantaAdmin() {
       {data.all_pots.length > 1 && (
         <div className="bg-black/50 rounded-none p-6">
           <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <FileText className="w-5 h-5" />
+            <DocumentTextIcon className="w-5 h-5" />
             All Years Summary
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {data.all_pots.map((pot) => (
               <div
                 key={pot.year}
-                className={`border rounded-none p-4 cursor-pointer transition ${
-                  pot.year === selectedYear
+                className={`border rounded-none p-4 cursor-pointer transition ${pot.year === selectedYear
                     ? 'bg-white/10 border-white/50'
                     : 'bg-black/30 border-white/10 hover:border-white/30'
-                }`}
+                  }`}
                 onClick={() => setSelectedYear(pot.year)}
               >
                 <div className="text-white/60 text-sm mb-1">{pot.year}</div>

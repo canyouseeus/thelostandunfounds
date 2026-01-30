@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/components/ui/utils';
-import { X, ChevronDown, ChevronUp } from 'lucide-react';
+import { XMarkIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 
 interface DynamicIslandProps {
   children?: React.ReactNode;
@@ -83,9 +83,9 @@ export function DynamicIsland({
             }}
           >
             {isExpanded ? (
-              <ChevronUp className="w-4 h-4 text-white/70" />
+              <ChevronUpIcon className="w-4 h-4 text-white/70" />
             ) : (
-              <ChevronDown className="w-4 h-4 text-white/70" />
+              <ChevronDownIcon className="w-4 h-4 text-white/70" />
             )}
           </button>
         )}

@@ -3,7 +3,7 @@
  */
 
 import { Link } from 'react-router-dom';
-import { Home, Search } from 'lucide-react';
+import { HomeIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 export default function NotFound() {
   return (
@@ -15,7 +15,7 @@ export default function NotFound() {
           </div>
           <h1 className="text-9xl font-bold text-white/20 mb-4">404</h1>
           <h2 className="text-3xl font-bold text-white mb-2">Page Not Found</h2>
-          <p className="text-white/70">
+          <p className="text-white/70 text-left">
             The page you're looking for doesn't exist or has been moved.
           </p>
         </div>
@@ -25,14 +25,14 @@ export default function NotFound() {
             to="/"
             className="px-6 py-3 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition flex items-center justify-center gap-2"
           >
-            <Home className="w-5 h-5" />
+            <HomeIcon className="w-5 h-5" />
             Go Home
           </Link>
           <Link
             to="/tools"
             className="px-6 py-3 bg-black/50 border border-white/10 rounded-none text-white font-semibold hover:border-white/30 transition flex items-center justify-center gap-2"
           >
-            <Search className="w-5 h-5" />
+            <MagnifyingGlassIcon className="w-5 h-5" />
             Explore Tools
           </Link>
         </div>

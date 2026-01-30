@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Download, Check, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
+import {
+    ArrowDownTrayIcon,
+    CheckIcon,
+    ExclamationCircleIcon,
+    ArrowPathIcon,
+    ArrowLeftIcon
+} from '@heroicons/react/24/outline';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { supabase } from '../lib/supabase';
@@ -168,7 +174,7 @@ const DownloadPortal: React.FC = () => {
 
                         {error && (
                             <div className="flex items-center gap-2 text-red-500 text-xs bg-red-950/30 p-4 rounded-lg border border-red-900/50">
-                                <AlertCircle className="w-4 h-4" />
+                                <ExclamationCircleIcon className="w-4 h-4" />
                                 <span className="uppercase font-bold tracking-wide">{error}</span>
                             </div>
                         )}
@@ -178,14 +184,14 @@ const DownloadPortal: React.FC = () => {
                             disabled={verifying}
                             className="w-full bg-white text-black h-12 rounded-xl text-xs font-black uppercase tracking-[0.2em] hover:bg-zinc-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
-                            {verifying ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Access Vault'}
+                            {verifying ? <ArrowPathIcon className="w-4 h-4 animate-spin" /> : 'Access Vault'}
                         </button>
                     </form>
                 ) : (
                     <div className="space-y-8">
                         <div className="text-center space-y-2">
                             <div className="inline-flex items-center gap-2 text-green-500 text-[10px] font-black uppercase tracking-widest bg-green-950/30 px-3 py-1 rounded-full border border-green-900/50 mb-4">
-                                <Check className="w-3 h-3" />
+                                <CheckIcon className="w-3 h-3" />
                                 <span>Access Granted</span>
                             </div>
                             <h2 className="text-2xl font-bold">Order #{orderId?.slice(0, 8)}</h2>
@@ -228,7 +234,7 @@ const DownloadPortal: React.FC = () => {
                                 onClick={downloadAll}
                                 className="w-full bg-white text-black h-14 rounded-xl text-xs font-black uppercase tracking-[0.2em] hover:bg-zinc-200 transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)]"
                             >
-                                <Download className="w-4 h-4" />
+                                <ArrowDownTrayIcon className="w-4 h-4" />
                                 Download All (.ZIP)
                             </button>
                         )}
@@ -237,7 +243,7 @@ const DownloadPortal: React.FC = () => {
                             onClick={() => navigate('/gallery')}
                             className="w-full text-[10px] text-white/30 uppercase tracking-widest hover:text-white transition-colors flex items-center justify-center gap-2"
                         >
-                            <ArrowLeft className="w-3 h-3" />
+                            <ArrowLeftIcon className="w-3 h-3" />
                             Return to Gallery
                         </button>
                     </div>

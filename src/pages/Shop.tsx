@@ -4,7 +4,13 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Search, Filter, Loader2, X } from 'lucide-react';
+import {
+  ShoppingCartIcon,
+  MagnifyingGlassIcon,
+  FunnelIcon,
+  ArrowPathIcon,
+  XMarkIcon
+} from '@heroicons/react/24/outline';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { initAffiliateTracking, getAffiliateRef } from '../utils/affiliate-tracking';
@@ -123,7 +129,7 @@ export default function Shop() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-white" />
+            <ArrowPathIcon className="w-8 h-8 animate-spin mx-auto mb-4 text-white" />
             <p className="text-white/70">Loading products...</p>
           </div>
         </div>
@@ -155,7 +161,7 @@ export default function Shop() {
         {/** shared style for inputs/selects */}
         {/** note: using min-h-[48px] for parity */}
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
           <input
             type="text"
             placeholder="Search products..."
@@ -169,7 +175,7 @@ export default function Shop() {
           />
         </div>
         <div className="flex items-center sm:w-56 relative">
-          <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 flex-shrink-0 pointer-events-none" />
+          <FunnelIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 flex-shrink-0 pointer-events-none" />
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
@@ -568,7 +574,7 @@ function ProductModal({
           aria-label="Close"
           data-product-modal-close="true"
         >
-          <X className="w-5 h-5" />
+          <XMarkIcon className="w-5 h-5" />
         </button>
 
         <div className="grid md:grid-cols-2 gap-0 md:h-auto">
@@ -624,7 +630,7 @@ function ProductModal({
                 onClick={handleCheckoutClick}
                 className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white text-black px-4 py-3 sm:py-2 rounded-none hover:bg-white/90 transition-colors font-semibold text-sm sm:text-base min-h-[44px] touch-action: manipulation cursor-pointer"
               >
-                <ShoppingCart className="w-4 h-4" />
+                <ShoppingCartIcon className="w-4 h-4" />
                 {isFourthwallProduct ? 'View on Fourthwall' : displayPrice === 0 ? 'View' : 'Buy Now'}
               </a>
               {!product.available && (

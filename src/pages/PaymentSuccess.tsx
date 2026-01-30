@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { CheckCircle, Loader2 } from 'lucide-react'
+import { CheckCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
 
 export default function PaymentSuccess() {
   const [searchParams] = useSearchParams()
@@ -73,7 +73,7 @@ export default function PaymentSuccess() {
       <div className="max-w-md w-full bg-black/50 border border-white/10 rounded-none p-8 text-center">
         {status === 'processing' && (
           <>
-            <Loader2 className="w-16 h-16 animate-spin mx-auto mb-4 text-white" />
+            <ArrowPathIcon className="w-16 h-16 animate-spin mx-auto mb-4 text-white" />
             <h1 className="text-2xl font-bold text-white mb-2">Processing Payment...</h1>
             <p className="text-white/70">Please wait while we confirm your payment.</p>
           </>
@@ -81,7 +81,7 @@ export default function PaymentSuccess() {
 
         {status === 'success' && (
           <>
-            <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-400" />
+            <CheckCircleIcon className="w-16 h-16 mx-auto mb-4 text-green-400" />
             <h1 className="text-2xl font-bold text-white mb-2">Payment Successful!</h1>
             <p className="text-white/70 mb-4">Thank you for your purchase.</p>
             <p className="text-white/50 text-sm">Redirecting to gallery...</p>

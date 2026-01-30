@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 
 interface EmailOptInModalProps {
   isOpen: boolean;
@@ -20,7 +20,7 @@ export default function EmailOptInModal({ isOpen, email, onOptIn, onClose }: Ema
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
@@ -28,8 +28,8 @@ export default function EmailOptInModal({ isOpen, email, onOptIn, onClose }: Ema
         }
       }}
     >
-      <div 
-        className="bg-black/50 border border-white/10 rounded-none p-6 w-full max-w-md"
+      <div
+        className="bg-black/50 rounded-none p-6 w-full max-w-md"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
@@ -41,7 +41,7 @@ export default function EmailOptInModal({ isOpen, email, onOptIn, onClose }: Ema
             className="text-white/60 hover:text-white transition"
             aria-label="Close"
           >
-            <X className="w-6 h-6" />
+            <XMarkIcon className="w-6 h-6" />
           </button>
         </div>
 
@@ -52,11 +52,10 @@ export default function EmailOptInModal({ isOpen, email, onOptIn, onClose }: Ema
         <div className="space-y-3 mb-6">
           <button
             onClick={() => setSelectedOption(true)}
-            className={`w-full px-4 py-3 border rounded-none text-left transition ${
-              selectedOption === true
-                ? 'bg-white text-black border-white'
-                : 'bg-black/50 text-white border-white/10 hover:border-white/30'
-            }`}
+            className={`w-full px-4 py-3 border rounded-none text-left transition ${selectedOption === true
+              ? 'bg-white text-black border-white'
+              : 'bg-black/50 text-white border-white/10 hover:border-white/30'
+              }`}
           >
             <div className="font-semibold mb-1">✓ Yes, keep me updated</div>
             <div className="text-sm opacity-70">Get news, updates, and exclusive content</div>
@@ -64,11 +63,10 @@ export default function EmailOptInModal({ isOpen, email, onOptIn, onClose }: Ema
 
           <button
             onClick={() => setSelectedOption(false)}
-            className={`w-full px-4 py-3 border rounded-none text-left transition ${
-              selectedOption === false
-                ? 'bg-white text-black border-white'
-                : 'bg-black/50 text-white border-white/10 hover:border-white/30'
-            }`}
+            className={`w-full px-4 py-3 border rounded-none text-left transition ${selectedOption === false
+              ? 'bg-white text-black border-white'
+              : 'bg-black/50 text-white border-white/10 hover:border-white/30'
+              }`}
           >
             <div className="font-semibold mb-1">No thanks</div>
             <div className="text-sm opacity-70">Continue without subscribing</div>

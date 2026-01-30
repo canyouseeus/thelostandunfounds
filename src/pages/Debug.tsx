@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { AlertTriangle, X, RefreshCw, Trash2 } from 'lucide-react';
+import { ExclamationTriangleIcon, XMarkIcon, ArrowPathIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 interface LogEntry {
   id: number;
@@ -70,8 +70,8 @@ export default function Debug() {
         return String(arg);
       });
       const message = errorDetails.map(d => typeof d === 'string' ? d : d.message || JSON.stringify(d)).join(' ');
-      const stack = args.find(arg => arg instanceof Error)?.stack || 
-                    (errorDetails.find(d => typeof d !== 'string' && d.stack) as any)?.stack;
+      const stack = args.find(arg => arg instanceof Error)?.stack ||
+        (errorDetails.find(d => typeof d !== 'string' && d.stack) as any)?.stack;
       const fullDetails = errorDetails.length > 1 ? JSON.stringify(errorDetails, null, 2) : undefined;
       addLog('error', message, stack || fullDetails);
     };
@@ -97,7 +97,7 @@ export default function Debug() {
           ...(event.error as any)
         } : null
       };
-      addLog('error', 
+      addLog('error',
         `Unhandled Error: ${errorDetails.message} (${errorDetails.filename}:${errorDetails.lineno}:${errorDetails.colno})`,
         errorDetails.error?.stack || JSON.stringify(errorDetails, null, 2)
       );
@@ -105,18 +105,18 @@ export default function Debug() {
 
     // Capture unhandled promise rejections with full details
     const handleRejection = (event: PromiseRejectionEvent) => {
-      const reason = event.reason instanceof Error 
+      const reason = event.reason instanceof Error
         ? {
-            message: event.reason.message,
-            stack: event.reason.stack,
-            name: event.reason.name,
-            ...(event.reason as any)
-          }
+          message: event.reason.message,
+          stack: event.reason.stack,
+          name: event.reason.name,
+          ...(event.reason as any)
+        }
         : event.reason;
-      const reasonStr = typeof reason === 'object' 
+      const reasonStr = typeof reason === 'object'
         ? JSON.stringify(reason, null, 2)
         : String(reason);
-      addLog('error', `Unhandled Promise Rejection: ${reasonStr}`, 
+      addLog('error', `Unhandled Promise Rejection: ${reasonStr}`,
         event.reason instanceof Error ? event.reason.stack : undefined
       );
     };
@@ -191,7 +191,7 @@ export default function Debug() {
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-2">
-            <AlertTriangle className="w-8 h-8 text-yellow-400" />
+            <ExclamationTriangleIcon className="w-8 h-8 text-yellow-400" />
             Debug Console
           </h1>
           <p className="text-white/70">Real-time console error and log capture</p>
@@ -201,14 +201,14 @@ export default function Debug() {
             onClick={clearLogs}
             className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded text-white text-sm transition flex items-center gap-2"
           >
-            <Trash2 className="w-4 h-4" />
+            <TrashIcon className="w-4 h-4" />
             Clear
           </button>
           <button
             onClick={() => window.location.reload()}
             className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded text-white text-sm transition flex items-center gap-2"
           >
-            <RefreshCw className="w-4 h-4" />
+            <ArrowPathIcon className="w-4 h-4" />
             Refresh
           </button>
         </div>

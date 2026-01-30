@@ -80,7 +80,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     // Dynamic import of mail handler
-    const mailHandler = await import('../../lib/api-handlers/_zoho-mail-handler.js');
+    // Try importing with .ts extension for Vercel dev resolution
+    const mailHandler = await import('../../lib/api-handlers/_zoho-mail-handler.ts');
+
+    console.log('Mail handler imported successfully');
 
     switch (endpoint) {
       // GET /api/mail/folders
@@ -103,7 +106,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ folders: result.folders });
       }
 
-      // GET /api/mail/messages?folderId=X&limit=50&start=0
+
       case 'messages': {
         if (req.method !== 'GET') {
           return res.status(405).json({ error: 'Method not allowed' });
@@ -126,15 +129,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
 
-      // GET /api/mail/message/:id or DELETE /api/mail/message/:id
+      // GET /api/mail/message?id=X or /api/mail/message/X
       case 'message': {
-        const messageId = pathSegments[1];
+        const pathId = pathSegments[1];
+        const queryId = req.query.id as string;
+        const messageId = pathId || queryId;
 
         if (req.method === 'GET') {
           if (!messageId) {
-            return res.status(400).json({ error: 'messageId is required' });
+            return res.status(400).json({ error: 'messageId is required (path or query param)' });
           }
-          const result = await mailHandler.getMessage(messageId);
+          const folderId = req.query.folderId as string;
+          const result = await mailHandler.getMessage(messageId, folderId);
           if (!result.success) {
             console.error('getMessage error:', result.error);
             return res.status(500).json({ error: result.error });
@@ -204,6 +210,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // PUT /api/mail/move
       case 'move': {
+        // ... (existing logic)
         if (req.method !== 'PUT') {
           return res.status(405).json({ error: 'Method not allowed' });
         }
@@ -221,6 +228,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // PUT /api/mail/read
       case 'read': {
+        // ... (existing logic)
         if (req.method !== 'PUT') {
           return res.status(405).json({ error: 'Method not allowed' });
         }
@@ -238,6 +246,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // PUT /api/mail/star
       case 'star': {
+        // ... (existing logic)
         if (req.method !== 'PUT') {
           return res.status(405).json({ error: 'Method not allowed' });
         }
@@ -255,6 +264,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // GET /api/mail/search?q=X&folderId=Y&limit=50&start=0
       case 'search': {
+        // ... (existing logic)
         if (req.method !== 'GET') {
           return res.status(405).json({ error: 'Method not allowed' });
         }
@@ -276,13 +286,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ messages: result.messages });
       }
 
-      // GET /api/mail/attachment/:messageId/:attachmentId
+      // GET /api/mail/attachment?messageId=X&attachmentId=Y
       case 'attachment': {
         if (req.method !== 'GET') {
           return res.status(405).json({ error: 'Method not allowed' });
         }
-        const messageId = pathSegments[1];
-        const attachmentId = pathSegments[2];
+
+        const pathMsgId = pathSegments[1];
+        const pathAttId = pathSegments[2];
+        const queryMsgId = req.query.messageId as string;
+        const queryAttId = req.query.attachmentId as string;
+
+        const messageId = pathMsgId || queryMsgId;
+        const attachmentId = pathAttId || queryAttId;
+
         if (!messageId || !attachmentId) {
           return res.status(400).json({ error: 'messageId and attachmentId are required' });
         }
@@ -376,6 +393,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
       }
 
+      // GET /api/mail/debug
+      case 'debug': {
+        const auth = await mailHandler.getZohoAuthContext();
+        return res.status(200).json({
+          accountId: auth.accountId,
+          email: auth.fromEmail,
+          tokenPreview: auth.accessToken?.substring(0, 10) + '...'
+        });
+      }
+
       default:
         return res.status(404).json({ error: `Mail endpoint not found: ${endpoint}` });
     }
@@ -386,3 +413,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   }
 }
+

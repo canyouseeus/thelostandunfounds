@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import PhotoGallery from '../components/photos/PhotoGallery';
 import AuthModal from '../components/auth/AuthModal';
-import { Lock, ArrowRight, Loader2 } from 'lucide-react';
+import { LockClosedIcon, ArrowRightIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import GalleryItem from './GalleryItem';
 import PhotographerApplicationModal from '../components/gallery/PhotographerApplicationModal';
@@ -102,7 +102,7 @@ export default function Gallery() {
             <div className="max-w-7xl mx-auto mb-20">
                 <div className="text-left space-y-6 max-w-3xl pb-12">
 
-                    <h1 className="text-5xl md:text-8xl font-black text-white tracking-tighter leading-[0.8] uppercase whitespace-nowrap">
+                    <h1 className="font-black text-white tracking-tighter leading-[0.8] uppercase whitespace-nowrap text-[clamp(2.5rem,8vw,6rem)]">
                         THE GALLERY
                     </h1>
                     <div className="text-xl md:text-2xl text-white/50 font-light leading-relaxed space-y-6">
@@ -124,7 +124,7 @@ export default function Gallery() {
                             className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-bold uppercase tracking-wider text-sm hover:bg-white/90 transition-colors"
                         >
                             Apply to Join
-                            <ArrowRight className="w-4 h-4" />
+                            <ArrowRightIcon className="w-4 h-4" />
                         </button>
                         <p className="text-white/30 text-xs mt-3">
                             Already have an invite? <button onClick={() => setAuthModalOpen(true)} className="text-white/50 hover:text-white underline">Sign in here</button>
@@ -135,12 +135,12 @@ export default function Gallery() {
 
             {loading ? (
                 <div className="flex flex-col items-center justify-center py-40 gap-4">
-                    <Loader2 className="w-8 h-8 text-white animate-spin" />
+                    <ArrowPathIcon className="w-8 h-8 text-white animate-spin" />
                     <span className="text-xs font-bold tracking-widest text-white/40 uppercase">Decrypting Archives...</span>
                 </div>
             ) : (
                 <div className="max-w-7xl mx-auto">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {libraries.map((lib, index) => (
                             <GalleryItem
                                 key={lib.id}

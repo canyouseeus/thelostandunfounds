@@ -6,7 +6,14 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useSageMode } from '../contexts/SageModeContext';
-import { FileText, Download, Trash2, ArrowLeft, Calendar, CheckSquare } from 'lucide-react';
+import {
+  DocumentTextIcon,
+  ArrowDownTrayIcon,
+  TrashIcon,
+  ArrowLeftIcon,
+  CalendarIcon,
+  CheckCircleIcon
+} from '@heroicons/react/24/outline';
 
 export default function SageModeReports() {
   const { state, exportReport, clearState } = useSageMode();
@@ -44,7 +51,7 @@ export default function SageModeReports() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-2 tracking-wide flex items-center gap-3">
-                <FileText className="w-10 h-10 text-yellow-400" />
+                <DocumentTextIcon className="w-10 h-10 text-yellow-400" />
                 SAGE MODE REPORTS
               </h1>
               <p className="text-white/60 text-sm">
@@ -55,7 +62,7 @@ export default function SageModeReports() {
               to="/sagemode"
               className="px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white font-medium transition flex items-center gap-2"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeftIcon className="w-4 h-4" />
               Back to SAGE MODE
             </Link>
           </div>
@@ -66,18 +73,17 @@ export default function SageModeReports() {
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-black/50 border border-white/10 rounded-none p-6">
               <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <FileText className="w-5 h-5" />
+                <DocumentTextIcon className="w-5 h-5" />
                 Current Report
               </h2>
 
               <div className="space-y-4 mb-6">
                 <div className="flex items-center justify-between p-3 bg-white/5 rounded-none border border-white/10">
                   <span className="text-white/80">SAGE MODE Status</span>
-                  <span className={`px-3 py-1 rounded-none text-xs font-medium ${
-                    state.enabled
+                  <span className={`px-3 py-1 rounded-none text-xs font-medium ${state.enabled
                       ? 'bg-yellow-400/20 text-yellow-400 border border-yellow-400/30'
                       : 'bg-white/10 text-white/60 border border-white/20'
-                  }`}>
+                    }`}>
                     {state.enabled ? 'ACTIVE' : 'INACTIVE'}
                   </span>
                 </div>
@@ -104,7 +110,7 @@ export default function SageModeReports() {
               {selectedComponents.length > 0 && (
                 <div className="mb-6">
                   <h3 className="text-white font-medium mb-3 flex items-center gap-2">
-                    <CheckSquare className="w-4 h-4" />
+                    <CheckCircleIcon className="w-4 h-4" />
                     Selected Components
                   </h3>
                   <div className="space-y-2">
@@ -136,7 +142,7 @@ export default function SageModeReports() {
                           <div className="flex items-center justify-between mb-2">
                             <div className="text-white font-medium text-sm">{component?.name}</div>
                             <div className="text-white/40 text-xs flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
+                              <CalendarIcon className="w-3 h-3" />
                               {new Date(note.timestamp).toLocaleString()}
                             </div>
                           </div>
@@ -182,7 +188,7 @@ export default function SageModeReports() {
                   onClick={handleDownload}
                   className="w-full px-4 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white font-medium transition flex items-center justify-center gap-2"
                 >
-                  <Download className="w-4 h-4" />
+                  <ArrowDownTrayIcon className="w-4 h-4" />
                   Download Report
                 </button>
                 <button
@@ -191,12 +197,12 @@ export default function SageModeReports() {
                 >
                   {copied ? (
                     <>
-                      <CheckSquare className="w-4 h-4" />
+                      <CheckCircleIcon className="w-4 h-4" />
                       Copied!
                     </>
                   ) : (
                     <>
-                      <FileText className="w-4 h-4" />
+                      <DocumentTextIcon className="w-4 h-4" />
                       Copy Report
                     </>
                   )}
@@ -223,7 +229,7 @@ export default function SageModeReports() {
                 }}
                 className="w-full px-4 py-3 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-none text-red-400 font-medium transition flex items-center justify-center gap-2"
               >
-                <Trash2 className="w-4 h-4" />
+                <TrashIcon className="w-4 h-4" />
                 Clear All Data
               </button>
             </div>

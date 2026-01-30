@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Share2, Twitter, Facebook, Linkedin, Link2, Check } from 'lucide-react';
+import { ShareIcon, LinkIcon, CheckIcon } from '@heroicons/react/24/outline';
 
 interface ShareButtonsProps {
   title: string;
@@ -11,8 +11,8 @@ export default function ShareButtons({ title, url, description }: ShareButtonsPr
   const [copied, setCopied] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const fullUrl = typeof window !== 'undefined' 
-    ? `${window.location.origin}${url}` 
+  const fullUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}${url}`
     : url;
 
   // Close menu when clicking outside
@@ -80,7 +80,7 @@ export default function ShareButtons({ title, url, description }: ShareButtonsPr
     // Twitter/X has a 280 character limit
     // URL typically takes ~23 chars when shortened, but we'll reserve ~30 for safety
     const maxTextLength = 250;
-    
+
     let text = title;
     if (description) {
       const combined = `${title} - ${description}`;
@@ -98,7 +98,7 @@ export default function ShareButtons({ title, url, description }: ShareButtonsPr
     } else if (text.length > maxTextLength) {
       text = text.substring(0, maxTextLength - 3) + '...';
     }
-    
+
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(fullUrl)}`;
     const width = 550;
     const height = 420;
@@ -165,10 +165,10 @@ export default function ShareButtons({ title, url, description }: ShareButtonsPr
           aria-label="Share this post"
           aria-expanded={menuOpen}
         >
-          <Share2 className="w-4 h-4" />
+          <ShareIcon className="w-4 h-4" />
           <span>Share</span>
         </button>
-        
+
         {menuOpen && (
           <div className="absolute top-full left-0 mt-2 bg-black/95 border border-white rounded-none min-w-[180px] z-50 shadow-lg">
             <div className="py-1">
@@ -178,7 +178,7 @@ export default function ShareButtons({ title, url, description }: ShareButtonsPr
                   className="w-full px-4 py-2 text-left text-white hover:bg-white hover:text-black transition flex items-center gap-3 text-sm"
                   aria-label="Share via native share"
                 >
-                  <Share2 className="w-4 h-4" />
+                  <ShareIcon className="w-4 h-4" />
                   <span>Share via...</span>
                 </button>
               )}
@@ -187,7 +187,7 @@ export default function ShareButtons({ title, url, description }: ShareButtonsPr
                 className="w-full px-4 py-2 text-left text-white hover:bg-white hover:text-black transition flex items-center gap-3 text-sm"
                 aria-label="Share on Twitter"
               >
-                <Twitter className="w-4 h-4" />
+                <span className="w-4 h-4 flex items-center justify-center font-bold text-[10px]">X</span>
                 <span>Twitter</span>
               </button>
               <button
@@ -195,7 +195,7 @@ export default function ShareButtons({ title, url, description }: ShareButtonsPr
                 className="w-full px-4 py-2 text-left text-white hover:bg-white hover:text-black transition flex items-center gap-3 text-sm"
                 aria-label="Share on Facebook"
               >
-                <Facebook className="w-4 h-4" />
+                <span className="w-4 h-4 flex items-center justify-center font-bold text-[10px]">F</span>
                 <span>Facebook</span>
               </button>
               <button
@@ -203,7 +203,7 @@ export default function ShareButtons({ title, url, description }: ShareButtonsPr
                 className="w-full px-4 py-2 text-left text-white hover:bg-white hover:text-black transition flex items-center gap-3 text-sm"
                 aria-label="Share on LinkedIn"
               >
-                <Linkedin className="w-4 h-4" />
+                <span className="w-4 h-4 flex items-center justify-center font-bold text-[10px]">L</span>
                 <span>LinkedIn</span>
               </button>
               <button
@@ -221,12 +221,12 @@ export default function ShareButtons({ title, url, description }: ShareButtonsPr
               >
                 {copied ? (
                   <>
-                    <Check className="w-4 h-4" />
+                    <CheckIcon className="w-4 h-4" />
                     <span>Copied!</span>
                   </>
                 ) : (
                   <>
-                    <Link2 className="w-4 h-4" />
+                    <LinkIcon className="w-4 h-4" />
                     <span>Copy Link</span>
                   </>
                 )}

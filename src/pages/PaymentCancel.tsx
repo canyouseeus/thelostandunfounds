@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { XCircle } from 'lucide-react'
+import { XCircleIcon } from '@heroicons/react/24/outline'
 
 export default function PaymentCancel() {
   const navigate = useNavigate()
@@ -7,7 +7,7 @@ export default function PaymentCancel() {
   return (
     <div className="min-h-screen bg-black flex items-start justify-center px-4 pt-16 pb-12">
       <div className="max-w-md w-full bg-black/50 border border-white/10 rounded-none p-8 text-center">
-        <XCircle className="w-16 h-16 mx-auto mb-4 text-yellow-400" />
+        <XCircleIcon className="w-16 h-16 mx-auto mb-4 text-yellow-400" />
         <h1 className="text-2xl font-bold text-white mb-2">Payment Cancelled</h1>
         <p className="text-white/70 mb-6">Your payment was cancelled. No charges were made.</p>
         <button

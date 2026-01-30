@@ -2,25 +2,25 @@
 
 import React, { useState } from "react"
 import {
-  Battery,
-  Bluetooth,
-  Calendar,
-  Clock,
-  Cloud,
-  Droplets,
-  Fingerprint,
-  MapPin,
-  MessageSquare,
-  Mic,
-  ShoppingCart,
-  Star,
-  Sun,
-  Users,
-  Video,
-  Wind,
-} from "lucide-react"
+  Battery100Icon,
+  SignalIcon,
+  CalendarIcon,
+  ClockIcon,
+  CloudIcon,
+  SparklesIcon,
+  FingerPrintIcon,
+  MapPinIcon,
+  ChatBubbleLeftRightIcon,
+  MicrophoneIcon,
+  ShoppingCartIcon,
+  StarIcon,
+  SunIcon,
+  UsersIcon,
+  VideoCameraIcon,
+  ArrowPathIcon,
+} from "@heroicons/react/24/outline"
 import { AnimatePresence, motion } from "framer-motion"
-import { useToast } from "../Toast"
+import { useToast } from "./Toast"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -79,7 +79,7 @@ function DesignSyncExample() {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button size="icon" variant="outline" className="h-8 w-8">
-                        <Calendar className="h-4 w-4" />
+                        <CalendarIcon className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -93,13 +93,13 @@ function DesignSyncExample() {
             <ExpandableCardContent>
               <div className="flex flex-col items-start justify-between mb-4">
                 <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                  <Clock className="h-4 w-4 mr-1" />
+                  <ClockIcon className="h-4 w-4 mr-1" />
                   <span>1:30PM → 2:30PM</span>
                 </div>
 
                 <ExpandableContent preset="blur-md">
                   <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                    <MapPin className="h-4 w-4 mr-1" />
+                    <MapPinIcon className="h-4 w-4 mr-1" />
                     <span>Conference Room A</span>
                   </div>
                 </ExpandableContent>
@@ -111,24 +111,29 @@ function DesignSyncExample() {
                 </p>
                 <div className="mb-4">
                   <h4 className="font-medium text-sm text-gray-800 dark:text-gray-100 mb-2 flex items-center">
-                    <Users className="h-4 w-4 mr-2" />
+                    <UsersIcon className="h-4 w-4 mr-2" />
                     Attendees:
                   </h4>
                   <div className="flex -space-x-2 overflow-hidden">
-                    {["Alice", "Bob", "Charlie", "David"].map((name, index) => (
+                    {[
+                      { name: "Alice", src: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&h=100" },
+                      { name: "Bob", src: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=100&h=100" },
+                      { name: "Charlie", src: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&h=100" },
+                      { name: "David", src: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=100&h=100" }
+                    ].map((attendee, index) => (
                       <TooltipProvider key={index}>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Avatar className="border-2 border-white dark:border-gray-800">
+                            <Avatar className="">
                               <AvatarImage
-                                src={`/placeholder.svg?height=32&width=32&text=${name[0]}`}
-                                alt={name}
+                                src={attendee.src}
+                                alt={attendee.name}
                               />
-                              <AvatarFallback>{name[0]}</AvatarFallback>
+                              <AvatarFallback>{attendee.name[0]}</AvatarFallback>
                             </Avatar>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>{name}</p>
+                            <p>{attendee.name}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -137,12 +142,12 @@ function DesignSyncExample() {
                 </div>
                 <div className="space-y-2">
                   <Button className="w-full bg-red-600 hover:bg-red-700 text-white">
-                    <Video className="h-4 w-4 mr-2" />
+                    <VideoCameraIcon className="h-4 w-4 mr-2" />
                     Join Meeting
                   </Button>
                   {isExpanded && (
                     <Button variant="outline" className="w-full">
-                      <MessageSquare className="h-4 w-4 mr-2" />
+                      <ChatBubbleLeftRightIcon className="h-4 w-4 mr-2" />
                       Open Chat
                     </Button>
                   )}
@@ -220,7 +225,7 @@ export function ProductShowcaseCard() {
                   </h3>
                   <div className="flex items-center mt-1">
                     {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
+                      <StarIcon
                         key={star}
                         className="w-4 h-4 text-yellow-400 fill-current"
                       />
@@ -270,10 +275,10 @@ export function ProductShowcaseCard() {
 
                 <div className="space-y-4">
                   {[
-                    { icon: Battery, text: "30-hour battery life" },
-                    { icon: Bluetooth, text: "Bluetooth 5.0" },
-                    { icon: Fingerprint, text: "Touch controls" },
-                    { icon: Mic, text: "Voice assistant compatible" },
+                    { icon: Battery100Icon, text: "30-hour battery life" },
+                    { icon: SignalIcon, text: "Bluetooth 5.0" },
+                    { icon: FingerPrintIcon, text: "Touch controls" },
+                    { icon: MicrophoneIcon, text: "Voice assistant compatible" },
                   ].map((feature, index) => (
                     <div
                       key={index}
@@ -285,7 +290,7 @@ export function ProductShowcaseCard() {
                   ))}
 
                   <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    <ShoppingCartIcon className="w-4 h-4 mr-2" />
                     Add to Cart
                   </Button>
                 </div>
@@ -320,7 +325,7 @@ export function WeatherForecastCard() {
           <ExpandableCardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <Sun className="w-8 h-8 text-yellow-400 mr-2" />
+                <SunIcon className="w-8 h-8 text-yellow-400 mr-2" />
                 <ExpandableContent preset="blur-sm" keepMounted={true}>
                   <h3 className="font-medium text-lg">Today's Weather</h3>
                   <Badge
@@ -375,21 +380,21 @@ export function WeatherForecastCard() {
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center">
-                    <Cloud className="w-5 h-5 mr-2 text-gray-400" />
+                    <CloudIcon className="w-5 h-5 mr-2 text-gray-400" />
                     <span>Humidity</span>
                   </div>
                   <span>45%</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <div className="flex items-center">
-                    <Wind className="w-5 h-5 mr-2 text-gray-400" />
+                    <ArrowPathIcon className="w-5 h-5 mr-2 text-gray-400" />
                     <span>Wind</span>
                   </div>
                   <span>8 mph</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <div className="flex items-center">
-                    <Droplets className="w-5 h-5 mr-2 text-gray-400" />
+                    <SparklesIcon className="w-5 h-5 mr-2 text-gray-400" />
                     <span>Precipitation</span>
 
                   </div>
@@ -402,7 +407,7 @@ export function WeatherForecastCard() {
                   <div key={day} className="flex justify-between items-center">
                     <span>{day}</span>
                     <div className="flex items-center">
-                      <Sun className="w-4 h-4 text-yellow-400 mr-2" />
+                      <SunIcon className="w-4 h-4 text-yellow-400 mr-2" />
                       <span>{70 + index}°F</span>
                     </div>
                   </div>

@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { createPayoutBatch, isPayoutsEnabled } from '../admin/paypal-payouts.js';
+import { sendZohoEmail, getZohoAuthContext } from '../_zoho-email-utils.js';
 
 const MIN_PAYOUT = 10;
 
@@ -74,27 +75,33 @@ async function getAvailableBalance(supabase: SupabaseClient, affiliateId: string
 }> {
   const now = new Date().toISOString();
 
-  // Get available commissions (past holding period)
+  // Get available commissions (approved and past holding period)
+  // If available_date is NULL, we treat it as available immediately (legacy) or pending?
+  // Let's assume NULL date = Available for 'approved' status to avoid locking old payouts.
+  // Actually, previous logic treated null as pending. Let's stick to safe:
+  // Approved + Date Passed = Available.
+  // Approved + Date Future = Pending.
+  // Approved + Date Null = Available (assume legacy data is fine).
+
   const { data: availableCommissions, error: availableError } = await supabase
     .from('affiliate_commissions')
     .select('amount, available_date')
     .eq('affiliate_id', affiliateId)
-    .eq('status', 'pending')
-    .not('available_date', 'is', null)
-    .lte('available_date', now);
+    .eq('status', 'approved')
+    .or(`available_date.lte.${now},available_date.is.null`);
 
   if (availableError) {
     console.error('Error fetching available commissions:', availableError);
     throw availableError;
   }
 
-  // Get pending commissions (still in holding period)
+  // Get pending commissions (approved but in holding period)
   const { data: pendingCommissions, error: pendingError } = await supabase
     .from('affiliate_commissions')
     .select('amount, available_date')
     .eq('affiliate_id', affiliateId)
-    .eq('status', 'pending')
-    .or(`available_date.is.null,available_date.gt.${now}`)
+    .eq('status', 'approved')
+    .gt('available_date', now)
     .order('available_date', { ascending: true });
 
   if (pendingError) {
@@ -133,10 +140,9 @@ async function getAvailableCommissions(supabase: SupabaseClient, affiliateId: st
     .from('affiliate_commissions')
     .select('id, amount')
     .eq('affiliate_id', affiliateId)
-    .eq('status', 'pending')
-    .not('available_date', 'is', null)
-    .lte('available_date', now)
-    .order('available_date', { ascending: true });
+    .eq('status', 'approved') // Only approve confirmed purchases
+    .or(`available_date.lte.${now},available_date.is.null`)
+    .order('available_date', { ascending: true }); // Prioritize oldest
 
   if (error) {
     throw error;
@@ -187,7 +193,7 @@ async function markCommissionsAsPaid(
       .from('commission_status_log')
       .insert({
         commission_id: id,
-        previous_status: 'pending',
+        previous_status: 'approved',
         new_status: 'paid',
         reason: 'PayPal payout processed',
         metadata: { paypal_batch_id: paypalBatchId, paypal_item_id: paypalItemId }
@@ -307,10 +313,47 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ]);
     } catch (paypalError: any) {
       console.error('PayPal payout failed:', paypalError);
+
+      const errorMessage = paypalError?.message || 'Unknown PayPal error';
+
+      // 1. Log failure to DB
+      await supabase.from('payout_requests').insert({
+        affiliate_id: affiliate.id,
+        user_id: affiliate.user_id,
+        affiliate_code: affiliateCodeValue,
+        amount: numericAmount,
+        paypal_email: payoutSettings.paypal_email,
+        status: 'failed',
+        error_message: errorMessage,
+        notes: notes ? `FAILED: ${notes}` : 'FAILED Payout Attempt'
+      });
+
+      // 2. Alert Admin via Email
+      try {
+        const auth = await getZohoAuthContext();
+        await sendZohoEmail({
+          auth,
+          to: auth.fromEmail, // Send to Admin
+          subject: '🚨 URGENT: Payout Failed (Insufficient Funds?)',
+          htmlContent: `
+            <h2>Payout Failure Alert</h2>
+            <p>An instant payout attempt failed. Please investigate immediately.</p>
+            <ul>
+              <li><strong>Affiliate:</strong> ${affiliateCodeValue}</li>
+              <li><strong>Amount:</strong> $${numericAmount}</li>
+              <li><strong>Error:</strong> ${errorMessage}</li>
+            </ul>
+            <p>The system did NOT mark commissions as paid. The user can try again, but if this was due to Insufficient Funds, you must top up your PayPal account.</p>
+          `
+        });
+      } catch (emailError) {
+        console.error('Failed to send admin alert email:', emailError);
+      }
+
       return res.status(500).json({
-        error: 'Payment processing failed. Please try again later.',
+        error: 'Payment processing failed. Administrators have been notified.',
         code: 'PAYPAL_ERROR',
-        message: paypalError?.message
+        message: errorMessage
       });
     }
 

@@ -22,4 +22,6 @@ This skill governs the growth and referral engine of THE LOST+UNFOUNDS.
 
 ## UI Standards
 - **Mechanical Dashboards**: Use high-contrast headers, sharp borders, and tabular data.
-- **Withdrawals**: The "Request Payout" flow must be stark and require explicit admin approval via the `AdminAffiliates` dashboard.
+- **Withdrawals**: 
+  - The "Request Payout" flow must be stark and require explicit admin approval via the `AdminAffiliates` dashboard.
+  - **Holding Period**: Ensure funds remain in "Pending" status for 30 days post-sale to cover chargebacks.

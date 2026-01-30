@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Search, Loader2, DollarSign, Package, Save, X } from 'lucide-react';
+import { PlusIcon, PencilIcon, TrashIcon, MagnifyingGlassIcon, ArrowPathIcon, CurrencyDollarIcon, CubeIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 interface ProductCost {
   id: string;
@@ -41,7 +41,7 @@ export function ProductCostManagement() {
       setError(null);
       const response = await fetch('/api/admin/product-costs');
       const data = await response.json();
-      
+
       if (data.error) {
         setError(data.error);
         setCosts([]);
@@ -94,7 +94,7 @@ export function ProductCostManagement() {
       }
 
       const data = await response.json();
-      
+
       if (data.error) {
         setError(data.error);
       } else {
@@ -103,7 +103,7 @@ export function ProductCostManagement() {
         setEditingCost(null);
         setFormData({ product_id: '', variant_id: '', source: 'local', cost: '' });
         loadCosts();
-        
+
         // Clear success message after 3 seconds
         setTimeout(() => setSuccess(null), 3000);
       }
@@ -135,7 +135,7 @@ export function ProductCostManagement() {
       });
 
       const data = await response.json();
-      
+
       if (data.error) {
         setError(data.error);
       } else {
@@ -168,7 +168,7 @@ export function ProductCostManagement() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-white" />
+        <ArrowPathIcon className="w-8 h-8 animate-spin text-white" />
       </div>
     );
   }
@@ -179,7 +179,7 @@ export function ProductCostManagement() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Package className="w-6 h-6" />
+            <CubeIcon className="w-6 h-6" />
             Product Cost Management
           </h2>
           <p className="text-white/60 mt-1">Manage product costs for profit tracking</p>
@@ -188,26 +188,26 @@ export function ProductCostManagement() {
           onClick={() => setShowForm(true)}
           className="flex items-center gap-2 px-4 py-2 bg-white text-black rounded-none hover:bg-white/90 transition-colors font-semibold"
         >
-          <Plus className="w-4 h-4" />
+          <PlusIcon className="w-4 h-4" />
           Add Product Cost
         </button>
       </div>
 
       {/* Success/Error Messages */}
       {success && (
-        <div className="bg-green-400/20 border border-white text-green-400 px-4 py-3 rounded-none">
+        <div className="bg-green-500/10 border-l-2 border-green-500 text-green-400 px-4 py-3">
           {success}
         </div>
       )}
       {error && (
-        <div className="bg-red-400/20 border border-white text-red-400 px-4 py-3 rounded-none">
+        <div className="bg-red-500/10 border-l-2 border-red-500 text-red-400 px-4 py-3">
           {error}
         </div>
       )}
 
       {/* Form Modal */}
       {showForm && (
-        <div className="bg-black/50 border border-white rounded-none p-6">
+        <div className="bg-white/5 border border-white/10 p-6 backdrop-blur-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-bold text-white">
               {editingCost ? 'Edit Product Cost' : 'Add Product Cost'}
@@ -216,7 +216,7 @@ export function ProductCostManagement() {
               onClick={handleCancel}
               className="text-white/60 hover:text-white"
             >
-              <X className="w-5 h-5" />
+              <XMarkIcon className="w-5 h-5" />
             </button>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -228,7 +228,7 @@ export function ProductCostManagement() {
                 onChange={(e) => setFormData({ ...formData, product_id: e.target.value })}
                 required
                 disabled={!!editingCost}
-                className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:ring-2 focus:ring-white/20 focus:border-white disabled:opacity-50"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white focus:border-white outline-none transition-colors disabled:opacity-50 text-sm"
                 placeholder="e.g., prod_12345"
               />
             </div>
@@ -239,7 +239,7 @@ export function ProductCostManagement() {
                 value={formData.variant_id}
                 onChange={(e) => setFormData({ ...formData, variant_id: e.target.value })}
                 disabled={!!editingCost}
-                className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:ring-2 focus:ring-white/20 focus:border-white disabled:opacity-50"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white focus:border-white outline-none transition-colors disabled:opacity-50 text-sm"
                 placeholder="e.g., var_12345"
               />
             </div>
@@ -250,7 +250,7 @@ export function ProductCostManagement() {
                 onChange={(e) => setFormData({ ...formData, source: e.target.value as any })}
                 required
                 disabled={!!editingCost}
-                className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:ring-2 focus:ring-white/20 focus:border-white disabled:opacity-50"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white focus:border-white outline-none transition-colors disabled:opacity-50 text-sm"
               >
                 <option value="local">Local</option>
                 <option value="paypal">PayPal</option>
@@ -259,7 +259,7 @@ export function ProductCostManagement() {
             <div>
               <label className="block text-white/80 mb-2">Cost ($) *</label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-5 h-5" />
+                <CurrencyDollarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-5 h-5" />
                 <input
                   type="number"
                   step="0.01"
@@ -267,7 +267,7 @@ export function ProductCostManagement() {
                   value={formData.cost}
                   onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
                   required
-                  className="w-full pl-10 pr-4 py-2 bg-black/50 border border-white rounded-none text-white focus:ring-2 focus:ring-white/20 focus:border-white"
+                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 text-white focus:border-white outline-none transition-colors text-sm"
                   placeholder="0.00"
                 />
               </div>
@@ -277,7 +277,7 @@ export function ProductCostManagement() {
                 type="submit"
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-white text-black rounded-none hover:bg-white/90 transition-colors font-semibold"
               >
-                <Save className="w-4 h-4" />
+                <CheckIcon className="w-4 h-4" />
                 {editingCost ? 'Update' : 'Create'}
               </button>
               <button
@@ -294,21 +294,21 @@ export function ProductCostManagement() {
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-5 h-5" />
+        <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-5 h-5" />
         <input
           type="text"
           placeholder="Search by product ID, variant ID, or source..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 bg-black/50 border border-white rounded-none text-white placeholder-white/40 focus:ring-2 focus:ring-white/20 focus:border-white"
+          className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/40 focus:border-white outline-none transition-colors text-sm"
         />
       </div>
 
       {/* Costs Table */}
-      <div className="bg-black/50 border border-white rounded-none overflow-hidden">
+      <div className="bg-white/5 border border-white/10 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-white/5 border-b border-white">
+            <thead className="bg-white/5 border-b border-white/10">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">Product ID</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">Variant ID</th>
@@ -331,10 +331,9 @@ export function ProductCostManagement() {
                     <td className="px-6 py-4 whitespace-nowrap text-white font-mono text-sm">{cost.product_id}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-white/60 font-mono text-sm">{cost.variant_id || '-'}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        cost.source === 'local' ? 'bg-blue-400/20 text-blue-400' :
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${cost.source === 'local' ? 'bg-blue-400/20 text-blue-400' :
                         'bg-green-400/20 text-green-400'
-                      }`}>
+                        }`}>
                         {cost.source}
                       </span>
                     </td>
@@ -351,14 +350,14 @@ export function ProductCostManagement() {
                           className="text-white/60 hover:text-white transition-colors"
                           title="Edit"
                         >
-                          <Edit className="w-4 h-4" />
+                          <PencilIcon className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(cost.id)}
                           className="text-red-400/60 hover:text-red-400 transition-colors"
                           title="Delete"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <TrashIcon className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
@@ -372,7 +371,7 @@ export function ProductCostManagement() {
 
       {/* Summary */}
       {costs.length > 0 && (
-        <div className="bg-white/5 border border-white rounded-none p-4">
+        <div className="bg-white/5 border border-white/10 p-4">
           <p className="text-white/60 text-sm">
             Total product costs: <span className="text-white font-semibold">{costs.length}</span>
             {searchQuery && (

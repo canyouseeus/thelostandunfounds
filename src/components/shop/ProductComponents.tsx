@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingCart, X } from 'lucide-react';
+import { ShoppingCartIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { Product } from '../../types/shop';
 import { getPayPalCheckoutUrl } from '../../utils/checkout-utils';
 import { trackAffiliateClick, getAffiliateRef } from '../../utils/affiliate-tracking';
@@ -97,14 +97,14 @@ export function ProductModal({ product, onClose }: ProductModalProps) {
     };
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto">
-            <div className="absolute inset-0 bg-black/95 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative bg-black border border-white max-w-4xl w-full my-8 max-h-[calc(100vh-4rem)] overflow-hidden flex flex-col md:flex-row shadow-2xl shadow-white/5">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 overflow-y-auto">
+            <div className="absolute inset-0 bg-black/90 backdrop-blur-sm" onClick={onClose} />
+            <div className="relative bg-black/50 max-w-4xl w-full my-8 max-h-[calc(100vh-4rem)] overflow-hidden flex flex-col md:flex-row shadow-2xl shadow-white/5 rounded-none">
                 <button
                     onClick={onClose}
                     className="absolute top-4 right-4 z-10 text-white hover:bg-white hover:text-black transition-colors p-1"
                 >
-                    <X className="w-6 h-6" />
+                    <XMarkIcon className="w-6 h-6" />
                 </button>
 
                 {imageUrl && (
@@ -135,7 +135,7 @@ export function ProductModal({ product, onClose }: ProductModalProps) {
                         onClick={handleCheckout}
                         className="w-full bg-white text-black font-black py-4 uppercase tracking-widest hover:bg-white/90 transition-all flex items-center justify-center gap-3"
                     >
-                        <ShoppingCart className="w-5 h-5" />
+                        <ShoppingCartIcon className="w-5 h-5" />
                         {isFourthwallProduct ? 'View External' : 'Secure Checkout'}
                     </button>
 

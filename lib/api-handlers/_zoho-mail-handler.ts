@@ -164,7 +164,16 @@ export function ensureBannerHtml(htmlContent: string): string {
   });
 }
 
+// Cache token in memory to avoid hitting rate limits
+let cachedAccessToken: string | null = null;
+let tokenExpiryTime: number = 0;
+
 async function getZohoAccessToken(): Promise<string> {
+  // Return cached token if still valid (with 60s buffer)
+  if (cachedAccessToken && Date.now() < tokenExpiryTime) {
+    return cachedAccessToken;
+  }
+
   const { clientId, clientSecret, refreshToken } = getZohoEnv();
 
   const response = await fetch(ZOHO_TOKEN_URL, {
@@ -184,6 +193,11 @@ async function getZohoAccessToken(): Promise<string> {
   }
 
   const data: ZohoTokenResponse = await response.json();
+
+  cachedAccessToken = data.access_token;
+  // expires_in is in seconds. Convert to ms and subtract 60s buffer
+  tokenExpiryTime = Date.now() + ((data.expires_in - 60) * 1000);
+
   return data.access_token;
 }
 
@@ -199,6 +213,7 @@ async function getZohoAccountInfo(accessToken: string, fallbackEmail: string) {
       const account = json?.data?.[0] || json?.accounts?.[0];
 
       if (account) {
+        console.log('[Zoho Auth] Found Account:', account);
         const accountId =
           account.accountId ||
           account.account_id ||
@@ -227,6 +242,7 @@ async function getZohoAccountInfo(accessToken: string, fallbackEmail: string) {
   }
 
   const fallbackAccountId = fallbackEmail.split('@')[0];
+  console.log(`[Zoho Auth] Using fallback Account ID: ${fallbackAccountId}`);
   return { accountId: fallbackAccountId, email: fallbackEmail };
 }
 
@@ -414,11 +430,25 @@ export async function getMessages(
  * Get full message content including attachments
  */
 export async function getMessage(
-  messageId: string
+  messageId: string,
+  folderId?: string
 ): Promise<{ success: boolean; message?: MailMessageFull; error?: string }> {
   try {
     const auth = await getZohoAuthContext();
-    const url = `${ZOHO_MAIL_API}/${auth.accountId}/messages/${messageId}/content`;
+
+    // Use folder-specific endpoint if available (more reliable for some accounts)
+    let url = `${ZOHO_MAIL_API}/${auth.accountId}/messages/${encodeURIComponent(messageId)}/content`;
+    if (folderId) {
+      url = `${ZOHO_MAIL_API}/${auth.accountId}/folders/${encodeURIComponent(folderId)}/messages/${encodeURIComponent(messageId)}/content`;
+    }
+
+    const logMsg = `[${new Date().toISOString()}] Fetching message content from: ${url} (AccountID: ${auth.accountId})\n`;
+    console.log(logMsg);
+    try {
+      const fs = await import('fs');
+      const logPath = path.join(process.cwd(), 'public', 'mail-debug.log');
+      fs.appendFileSync(logPath, logMsg);
+    } catch (e) { console.error('Failed to write log', e); }
 
     const response = await rateLimitedFetch(url, {
       method: 'GET',
@@ -431,7 +461,7 @@ export async function getMessage(
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Zoho message content API error:', response.status, errorText);
-      return { success: false, error: `Failed to fetch message: ${response.status}` };
+      return { success: false, error: `Failed to fetch message: ${response.status} - ${errorText}` };
     }
 
     const data = await response.json();

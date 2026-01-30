@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X } from 'lucide-react';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../Toast';
 import { isAdminEmail, isAdmin } from '../../utils/admin';
@@ -304,11 +304,11 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
         required={justSignedUp}
       />
       <div
-        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+        className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-sm"
         onClick={onClose}
       >
         <div
-          className="bg-black/90 backdrop-blur-md p-6 w-full max-w-md mx-4"
+          className="bg-black/50 rounded-none p-6 w-full max-w-md mx-4"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between mb-6">
@@ -320,7 +320,7 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
               className="text-white/60 hover:text-white transition"
               aria-label="Close"
             >
-              <X className="w-6 h-6" />
+              <XMarkIcon className="w-6 h-6" />
             </button>
           </div>
 

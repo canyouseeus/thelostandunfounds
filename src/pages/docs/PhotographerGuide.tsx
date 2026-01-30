@@ -5,16 +5,16 @@
 
 import { Link } from 'react-router-dom';
 import {
-    Mail, UserPlus, FolderOpen, Image, DollarSign,
-    ArrowRight, CheckCircle, RefreshCw, Share2,
-    HelpCircle, ExternalLink
-} from 'lucide-react';
+    EnvelopeIcon, UserPlusIcon, FolderOpenIcon, PhotoIcon, CurrencyDollarIcon,
+    ArrowRightIcon, CheckCircleIcon, ArrowPathIcon, ShareIcon,
+    QuestionMarkCircleIcon, ArrowTopRightOnSquareIcon
+} from '@heroicons/react/24/outline';
 
 const steps = [
     {
         number: 1,
         title: 'Get Invited',
-        icon: Mail,
+        icon: EnvelopeIcon,
         color: 'from-blue-500 to-blue-600',
         description: 'You\'ll receive an email invitation from THE LOST+UNFOUNDS with a special setup link.',
         details: [
@@ -26,7 +26,7 @@ const steps = [
     {
         number: 2,
         title: 'Create Your Account',
-        icon: UserPlus,
+        icon: UserPlusIcon,
         color: 'from-purple-500 to-purple-600',
         description: 'Sign up or log in to connect your gallery to your account.',
         details: [
@@ -38,7 +38,7 @@ const steps = [
     {
         number: 3,
         title: 'Connect Google Drive',
-        icon: FolderOpen,
+        icon: FolderOpenIcon,
         color: 'from-green-500 to-green-600',
         description: 'Share a Google Drive folder with our sync agent to upload your photos.',
         details: [
@@ -51,7 +51,7 @@ const steps = [
     {
         number: 4,
         title: 'Gallery Goes Live',
-        icon: Image,
+        icon: PhotoIcon,
         color: 'from-orange-500 to-orange-600',
         description: 'Your photos sync automatically and your gallery is published instantly.',
         details: [
@@ -63,7 +63,7 @@ const steps = [
     {
         number: 5,
         title: 'Earn From Sales',
-        icon: DollarSign,
+        icon: CurrencyDollarIcon,
         color: 'from-emerald-500 to-emerald-600',
         description: 'Get paid when visitors purchase your photos.',
         details: [
@@ -146,7 +146,7 @@ export default function PhotographerGuide() {
                                         <ul className="space-y-2">
                                             {step.details.map((detail, i) => (
                                                 <li key={i} className="flex items-start gap-2 text-sm text-white/70">
-                                                    <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 shrink-0" />
+                                                    <CheckCircleIcon className="w-4 h-4 text-green-400 mt-0.5 shrink-0" />
                                                     <span>{detail}</span>
                                                 </li>
                                             ))}
@@ -167,7 +167,7 @@ export default function PhotographerGuide() {
 
                         <div className="grid md:grid-cols-3 gap-6">
                             <div className="bg-black/50 border border-white/10 rounded-xl p-6 hover:border-white/20 transition-colors">
-                                <RefreshCw className="w-8 h-8 text-blue-400 mb-4" />
+                                <ArrowPathIcon className="w-8 h-8 text-blue-400 mb-4" />
                                 <h3 className="text-lg font-bold text-white mb-2">Sync Photos</h3>
                                 <p className="text-sm text-zinc-400">
                                     Click "Sync" in your dashboard anytime you add new photos to Google Drive.
@@ -175,7 +175,7 @@ export default function PhotographerGuide() {
                             </div>
 
                             <div className="bg-black/50 border border-white/10 rounded-xl p-6 hover:border-white/20 transition-colors">
-                                <Share2 className="w-8 h-8 text-purple-400 mb-4" />
+                                <ShareIcon className="w-8 h-8 text-purple-400 mb-4" />
                                 <h3 className="text-lg font-bold text-white mb-2">Share Your Gallery</h3>
                                 <p className="text-sm text-zinc-400">
                                     Copy your unique gallery URL and share it with clients or on social media.
@@ -183,7 +183,7 @@ export default function PhotographerGuide() {
                             </div>
 
                             <div className="bg-black/50 border border-white/10 rounded-xl p-6 hover:border-white/20 transition-colors">
-                                <DollarSign className="w-8 h-8 text-emerald-400 mb-4" />
+                                <CurrencyDollarIcon className="w-8 h-8 text-emerald-400 mb-4" />
                                 <h3 className="text-lg font-bold text-white mb-2">Track Earnings</h3>
                                 <p className="text-sm text-zinc-400">
                                     View real-time sales and revenue analytics in your dashboard.
@@ -198,7 +198,7 @@ export default function PhotographerGuide() {
             <div className="container mx-auto px-4 py-16">
                 <div className="max-w-3xl mx-auto">
                     <div className="flex items-center gap-3 mb-8">
-                        <HelpCircle className="w-6 h-6 text-white/60" />
+                        <QuestionMarkCircleIcon className="w-6 h-6 text-white/60" />
                         <h2 className="text-2xl font-bold text-white">Frequently Asked Questions</h2>
                     </div>
 
@@ -210,7 +210,7 @@ export default function PhotographerGuide() {
                             >
                                 <summary className="flex items-center justify-between p-5 cursor-pointer hover:bg-white/5 transition-colors">
                                     <span className="font-semibold text-white">{faq.question}</span>
-                                    <ArrowRight className="w-5 h-5 text-white/40 transition-transform group-open:rotate-90" />
+                                    <ArrowRightIcon className="w-5 h-5 text-white/40 transition-transform group-open:rotate-90" />
                                 </summary>
                                 <div className="px-5 pb-5 text-zinc-400">
                                     {faq.answer}
@@ -235,13 +235,13 @@ export default function PhotographerGuide() {
                                 to="/dashboard"
                                 className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-black font-bold rounded-xl hover:bg-zinc-200 transition-colors"
                             >
-                                Go to Dashboard <ArrowRight className="w-5 h-5" />
+                                Go to Dashboard <ArrowRightIcon className="w-5 h-5" />
                             </Link>
                             <Link
                                 to="/support"
                                 className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/10 text-white font-bold rounded-xl hover:bg-white/20 transition-colors"
                             >
-                                Get Support <ExternalLink className="w-4 h-4" />
+                                Get Support <ArrowTopRightOnSquareIcon className="w-4 h-4" />
                             </Link>
                         </div>
                     </div>

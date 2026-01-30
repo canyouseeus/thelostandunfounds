@@ -2,7 +2,7 @@
  * FAQ Documentation
  */
 
-import { ChevronDown } from 'lucide-react';
+import { ChevronDownIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 
 interface FAQItem {
@@ -66,10 +66,9 @@ export default function FAQ() {
               className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-white/5 transition"
             >
               <span className="text-white font-semibold">{faq.question}</span>
-              <ChevronDown
-                className={`w-5 h-5 text-white/60 transition-transform ${
-                  openIndex === index ? 'transform rotate-180' : ''
-                }`}
+              <ChevronDownIcon
+                className={`w-5 h-5 text-white/60 transition-transform ${openIndex === index ? 'transform rotate-180' : ''
+                  }`}
               />
             </button>
             {openIndex === index && (

@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from './Toast';
@@ -121,7 +121,7 @@ export default function UserRegistration({
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-sm"
       onClick={required ? undefined : onClose}
     >
       <div
@@ -144,7 +144,7 @@ export default function UserRegistration({
               className="text-white/60 hover:text-white transition"
               aria-label="Close"
             >
-              <X className="w-6 h-6" />
+              <XMarkIcon className="w-6 h-6" />
             </button>
           )}
         </div>

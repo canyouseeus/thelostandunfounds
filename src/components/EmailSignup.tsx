@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import Turnstile from 'react-turnstile';
-import { Check } from 'lucide-react';
+import { CheckIcon } from '@heroicons/react/24/outline';
 
 export default function EmailSignup() {
   const [email, setEmail] = useState('');
@@ -91,7 +91,7 @@ export default function EmailSignup() {
       <div className="w-full max-w-md bg-black/90 backdrop-blur-md p-6">
         <div className="text-center">
           <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Check className="w-6 h-6 text-black stroke-[3]" />
+            <CheckIcon className="w-6 h-6 text-black stroke-[3]" />
           </div>
           <h3 className="text-xl font-bold text-white mb-2">
             Thank you for subscribing!

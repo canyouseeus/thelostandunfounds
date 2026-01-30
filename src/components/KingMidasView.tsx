@@ -4,7 +4,14 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Trophy, TrendingUp, DollarSign, Calendar, Award, Loader2 } from 'lucide-react';
+import {
+  TrophyIcon,
+  ArrowTrendingUpIcon,
+  CurrencyDollarIcon,
+  CalendarIcon,
+  StarIcon,
+  ArrowPathIcon
+} from '@heroicons/react/24/outline';
 
 interface DailyStat {
   id: string;
@@ -44,7 +51,7 @@ export function KingMidasView() {
       // Load daily stats for selected date
       const statsResponse = await fetch(`/api/king-midas/stats?date=${selectedDate}`);
       const statsData = await statsResponse.json();
-      
+
       if (statsData.error) {
         setError(statsData.error);
         setDailyStats([]);
@@ -55,7 +62,7 @@ export function KingMidasView() {
       // Load payouts for selected date
       const payoutsResponse = await fetch(`/api/king-midas/payouts?date=${selectedDate}`);
       const payoutsData = await payoutsResponse.json();
-      
+
       if (payoutsData.error) {
         console.warn('Failed to load payouts:', payoutsData.error);
         setPayouts([]);
@@ -81,9 +88,9 @@ export function KingMidasView() {
   };
 
   const getRankIcon = (rank: number | null) => {
-    if (rank === 1) return <Trophy className="w-5 h-5 text-yellow-400" />;
-    if (rank === 2) return <Trophy className="w-5 h-5 text-gray-300" />;
-    if (rank === 3) return <Trophy className="w-5 h-5 text-orange-400" />;
+    if (rank === 1) return <TrophyIcon className="w-5 h-5 text-yellow-400" />;
+    if (rank === 2) return <TrophyIcon className="w-5 h-5 text-gray-300" />;
+    if (rank === 3) return <TrophyIcon className="w-5 h-5 text-orange-400" />;
     return null;
   };
 
@@ -96,7 +103,7 @@ export function KingMidasView() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-white" />
+        <ArrowPathIcon className="w-8 h-8 animate-spin text-white" />
       </div>
     );
   }
@@ -107,7 +114,7 @@ export function KingMidasView() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Award className="w-6 h-6 text-yellow-400" />
+            <StarIcon className="w-6 h-6 text-yellow-400" />
             KING MIDAS Rankings
           </h2>
           <p className="text-white/60 mt-1">Daily profit rankings and pool distributions</p>
@@ -134,7 +141,7 @@ export function KingMidasView() {
         <div className="bg-black/50 border border-white rounded-none p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-white/60 text-sm">Total Profit</span>
-            <TrendingUp className="w-5 h-5 text-green-400" />
+            <ArrowTrendingUpIcon className="w-5 h-5 text-green-400" />
           </div>
           <div className="text-2xl font-bold text-white">${totalProfit.toFixed(2)}</div>
           <div className="text-xs text-white/40 mt-1">All affiliates</div>
@@ -143,7 +150,7 @@ export function KingMidasView() {
         <div className="bg-black/50 border border-white rounded-none p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-white/60 text-sm">Pool Size</span>
-            <DollarSign className="w-5 h-5 text-yellow-400" />
+            <CurrencyDollarIcon className="w-5 h-5 text-yellow-400" />
           </div>
           <div className="text-2xl font-bold text-yellow-400">${totalPool.toFixed(2)}</div>
           <div className="text-xs text-white/40 mt-1">8% of profit</div>
@@ -152,7 +159,7 @@ export function KingMidasView() {
         <div className="bg-black/50 border border-white rounded-none p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-white/60 text-sm">Your Rank</span>
-            <Trophy className="w-5 h-5 text-yellow-400" />
+            <TrophyIcon className="w-5 h-5 text-yellow-400" />
           </div>
           <div className="text-2xl font-bold text-white">
             {myRank ? `#${myRank}` : 'N/A'}
@@ -165,7 +172,7 @@ export function KingMidasView() {
         <div className="bg-black/50 border border-white rounded-none p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-white/60 text-sm">Your Share</span>
-            <DollarSign className="w-5 h-5 text-green-400" />
+            <CurrencyDollarIcon className="w-5 h-5 text-green-400" />
           </div>
           <div className="text-2xl font-bold text-green-400">
             ${myPoolShare.toFixed(2)}
@@ -180,7 +187,7 @@ export function KingMidasView() {
       <div className="bg-black/50 border border-white rounded-none overflow-hidden">
         <div className="p-4 border-b border-white">
           <h3 className="text-lg font-bold text-white flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-yellow-400" />
+            <TrophyIcon className="w-5 h-5 text-yellow-400" />
             Daily Rankings - {new Date(selectedDate).toLocaleDateString()}
           </h3>
         </div>
@@ -210,9 +217,8 @@ export function KingMidasView() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           {getRankIcon(stat.rank)}
-                          <span className={`px-3 py-1 rounded border font-bold ${
-                            getRankBadgeColor(stat.rank)
-                          }`}>
+                          <span className={`px-3 py-1 rounded border font-bold ${getRankBadgeColor(stat.rank)
+                            }`}>
                             #{stat.rank}
                           </span>
                         </div>
@@ -224,11 +230,10 @@ export function KingMidasView() {
                         ${parseFloat(stat.pool_share.toString()).toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          stat.pool_share > 0 
-                            ? 'bg-green-400/20 text-green-400' 
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${stat.pool_share > 0
+                            ? 'bg-green-400/20 text-green-400'
                             : 'bg-white/10 text-white/60'
-                        }`}>
+                          }`}>
                           {stat.pool_share > 0 ? 'Eligible' : 'No payout'}
                         </span>
                       </td>
@@ -245,7 +250,7 @@ export function KingMidasView() {
         <div className="bg-black/50 border border-white rounded-none overflow-hidden">
           <div className="p-4 border-b border-white">
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-green-400" />
+              <CurrencyDollarIcon className="w-5 h-5 text-green-400" />
               Payouts
             </h3>
           </div>
@@ -257,9 +262,8 @@ export function KingMidasView() {
               >
                 <div className="flex items-center gap-4">
                   {payout.rank && (
-                    <div className={`px-3 py-1 rounded border font-bold ${
-                      getRankBadgeColor(payout.rank)
-                    }`}>
+                    <div className={`px-3 py-1 rounded border font-bold ${getRankBadgeColor(payout.rank)
+                      }`}>
                       #{payout.rank}
                     </div>
                   )}
@@ -273,13 +277,12 @@ export function KingMidasView() {
                   </div>
                 </div>
                 <div>
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${
-                    payout.status === 'paid' 
-                      ? 'bg-green-400/20 text-green-400' 
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${payout.status === 'paid'
+                      ? 'bg-green-400/20 text-green-400'
                       : payout.status === 'pending'
-                      ? 'bg-yellow-400/20 text-yellow-400'
-                      : 'bg-red-400/20 text-red-400'
-                  }`}>
+                        ? 'bg-yellow-400/20 text-yellow-400'
+                        : 'bg-red-400/20 text-red-400'
+                    }`}>
                     {payout.status === 'paid' ? 'Paid' : payout.status === 'pending' ? 'Pending' : 'Cancelled'}
                   </span>
                   {payout.paid_at && (
@@ -297,7 +300,7 @@ export function KingMidasView() {
       {/* Info Box */}
       <div className="bg-yellow-400/10 border border-white rounded-none p-4">
         <div className="flex items-start gap-3">
-          <Award className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" />
+          <StarIcon className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" />
           <div>
             <h4 className="text-yellow-400 font-semibold mb-1">How KING MIDAS Works</h4>
             <ul className="text-white/80 text-sm space-y-1 list-disc list-inside">

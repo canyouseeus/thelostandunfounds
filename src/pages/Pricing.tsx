@@ -3,7 +3,12 @@
  */
 
 import { Link } from 'react-router-dom';
-import { Check, ArrowRight, Zap, Crown } from 'lucide-react';
+import {
+  CheckIcon,
+  ArrowRightIcon,
+  BoltIcon,
+  SparklesIcon
+} from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Pricing() {
@@ -23,7 +28,7 @@ export default function Pricing() {
       ],
       cta: user ? 'Current Plan' : 'Get Started',
       highlight: false,
-      icon: Zap,
+      icon: BoltIcon,
     },
     {
       name: 'Premium',
@@ -39,7 +44,7 @@ export default function Pricing() {
       ],
       cta: tier === 'premium' ? 'Current Plan' : 'Upgrade to Premium',
       highlight: true,
-      icon: Crown,
+      icon: SparklesIcon,
     },
     {
       name: 'Pro',
@@ -56,7 +61,7 @@ export default function Pricing() {
       ],
       cta: tier === 'pro' ? 'Current Plan' : 'Upgrade to Pro',
       highlight: false,
-      icon: Crown,
+      icon: SparklesIcon,
     },
   ];
 
@@ -72,7 +77,7 @@ export default function Pricing() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
         {plans.map((plan) => {
           const Icon = plan.icon;
-          const isCurrentPlan = 
+          const isCurrentPlan =
             (plan.name.toLowerCase() === 'free' && tier === 'free') ||
             (plan.name.toLowerCase() === 'premium' && tier === 'premium') ||
             (plan.name.toLowerCase() === 'pro' && tier === 'pro');
@@ -80,11 +85,10 @@ export default function Pricing() {
           return (
             <div
               key={plan.name}
-              className={`bg-black/50 border border-white rounded-none p-8 relative hover:bg-white hover:text-black hover:border-white hover:shadow-[0_8px_30px_rgba(255,255,255,0.12)] hover:-translate-y-1 transition-all duration-300 group ${
-                plan.highlight
-                  ? 'border-white shadow-lg shadow-yellow-400/20'
-                  : ''
-              }`}
+              className={`bg-black/50 border border-white rounded-none p-8 relative hover:bg-white hover:text-black hover:border-white hover:shadow-[0_8px_30px_rgba(255,255,255,0.12)] hover:-translate-y-1 transition-all duration-300 group ${plan.highlight
+                ? 'border-white shadow-lg shadow-yellow-400/20'
+                : ''
+                }`}
             >
               {plan.highlight && (
                 <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
@@ -95,11 +99,10 @@ export default function Pricing() {
               )}
 
               <div className="text-center mb-6">
-                <Icon className={`w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4 transition-colors ${
-                  plan.highlight 
-                    ? 'text-yellow-400 group-hover:text-yellow-600' 
-                    : 'text-white/60 group-hover:text-black/60'
-                }`} />
+                <Icon className={`w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4 transition-colors ${plan.highlight
+                  ? 'text-yellow-400 group-hover:text-yellow-600'
+                  : 'text-white/60 group-hover:text-black/60'
+                  }`} />
                 <h3 className="text-xl sm:text-2xl font-bold text-white group-hover:text-black mb-2 transition-colors uppercase">{plan.name}</h3>
                 <p className="text-white/60 group-hover:text-black/60 text-sm mb-4 transition-colors px-2">{plan.description}</p>
                 <div className="mb-4">
@@ -113,7 +116,7 @@ export default function Pricing() {
               <ul className="space-y-3 mb-8">
                 {plan.features.map((feature, index) => (
                   <li key={index} className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-green-400 group-hover:text-green-600 mt-0.5 flex-shrink-0 transition-colors" />
+                    <CheckIcon className="w-5 h-5 text-green-400 group-hover:text-green-600 mt-0.5 flex-shrink-0 transition-colors" />
                     <span className="text-white/80 group-hover:text-black/80 transition-colors">{feature}</span>
                   </li>
                 ))}
@@ -145,7 +148,7 @@ export default function Pricing() {
           to="/contact"
           className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-transparent rounded-none text-black font-semibold hover:bg-transparent hover:border-white hover:text-white hover:shadow-[0_8px_30px_rgba(255,255,255,0.12)] hover:-translate-y-1 transition-all duration-300"
         >
-          Contact Sales <ArrowRight className="w-5 h-5" />
+          Contact Sales <ArrowRightIcon className="w-5 h-5" />
         </Link>
       </div>
     </div>

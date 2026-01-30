@@ -6,7 +6,13 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
-import { Settings, Bell, Shield, Trash2, Key } from 'lucide-react';
+import {
+  Cog6ToothIcon,
+  BellIcon,
+  ShieldCheckIcon,
+  TrashIcon,
+  KeyIcon
+} from '@heroicons/react/24/outline';
 import { LoadingSpinner } from '../components/Loading';
 
 export default function SettingsPage() {
@@ -39,7 +45,7 @@ export default function SettingsPage() {
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (newPassword !== confirmPassword) {
       showError('New passwords do not match');
       return;
@@ -53,7 +59,7 @@ export default function SettingsPage() {
     setPasswordLoading(true);
     try {
       const { supabase } = await import('../lib/supabase');
-      
+
       // Update password using Supabase
       const { error } = await supabase.auth.updateUser({
         password: newPassword
@@ -108,7 +114,7 @@ export default function SettingsPage() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-2">
-          <Settings className="w-8 h-8" />
+          <Cog6ToothIcon className="w-8 h-8" />
           Settings
         </h1>
         <p className="text-white/70">Manage your preferences and account settings</p>
@@ -118,7 +124,7 @@ export default function SettingsPage() {
         {/* Notifications */}
         <div className="bg-black/50 border border-white rounded-none p-6">
           <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <Bell className="w-5 h-5" />
+            <BellIcon className="w-5 h-5" />
             Notifications
           </h2>
 
@@ -167,7 +173,7 @@ export default function SettingsPage() {
         {/* Security */}
         <div className="bg-black/50 border border-white rounded-none p-6">
           <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <Shield className="w-5 h-5" />
+            <ShieldCheckIcon className="w-5 h-5" />
             Security
           </h2>
 
@@ -177,7 +183,7 @@ export default function SettingsPage() {
               className="w-full px-4 py-3 bg-black/50 border border-white rounded-none text-white font-medium hover:border-white transition flex items-center justify-between"
             >
               <div className="flex items-center gap-3">
-                <Key className="w-5 h-5 text-white/60" />
+                <KeyIcon className="w-5 h-5 text-white/60" />
                 <div className="text-left">
                   <div className="font-medium">Change Password</div>
                   <div className="text-sm text-white/60">Update your account password</div>
@@ -191,7 +197,7 @@ export default function SettingsPage() {
         {/* Danger Zone */}
         <div className="bg-black/50 border border-white rounded-none p-6">
           <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <Trash2 className="w-5 h-5 text-red-500" />
+            <TrashIcon className="w-5 h-5 text-red-500" />
             Danger Zone
           </h2>
 
@@ -216,8 +222,8 @@ export default function SettingsPage() {
 
       {/* Password Change Modal */}
       {showPasswordModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="bg-black/50 border border-white rounded-none p-6 w-full max-w-md mx-4">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-sm">
+          <div className="bg-black/50 rounded-none p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-white">Change Password</h2>
               <button

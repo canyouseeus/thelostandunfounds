@@ -78,36 +78,9 @@ export default function AuthCallback() {
       }
 
       // Step B: Missing subdomain
-      try {
-        const { data: subdomainData, error: subdomainError } = await supabase
-          .from('user_subdomains')
-          .select('subdomain')
-          .eq('user_id', currentUser.id)
-          .maybeSingle();
-
-        if (subdomainError) {
-          console.error('Error checking subdomain:', subdomainError);
-          // If table doesn't exist or other fatal DB error, don't block
-          if (!subdomainError.message?.includes('does not exist') && !subdomainError.message?.includes('schema cache')) {
-            // Unexpected error, proceed to dashboard
-            navigate(returnUrl || '/dashboard');
-            return;
-          }
-          // Table missing - show subdomain modal
-          setShowSubdomainModal(true);
-          return;
-        }
-
-        if (!subdomainData) {
-          setShowSubdomainModal(true);
-          return;
-        }
-      } catch (err) {
-        console.warn('Subdomain check failed', err);
-        // If we can't check subdomains, better to show the modal to be safe
-        setShowSubdomainModal(true);
-        return;
-      }
+      // We no longer force subdomain registration on login.
+      // This should only happen if the user specifically goes to the blog setup flow.
+      // Proceed to dashboard or return URL.
 
       // 4. All complete - redirect to dashboard or return URL
       if (returnUrl) {

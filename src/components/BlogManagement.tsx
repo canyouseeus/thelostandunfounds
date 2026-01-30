@@ -9,7 +9,7 @@ import { supabase } from '../lib/supabase';
 import { useToast } from './Toast';
 import { LoadingSpinner } from './Loading';
 import { isAdminEmail } from '../utils/admin';
-import { FileText, Plus, Edit, Trash2, Eye, EyeOff, Calendar } from 'lucide-react';
+import { DocumentTextIcon, PlusIcon, PencilSquareIcon, TrashIcon, EyeIcon, EyeSlashIcon, CalendarIcon } from '@heroicons/react/24/outline';
 import RichTextEditor from './RichTextEditor';
 import { unescapeContent } from '../utils/blogUtils';
 import { AdminBentoCard } from './ui/admin-bento-card';
@@ -444,7 +444,7 @@ export default function BlogManagement() {
     <div className="space-y-6">
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          <FileText className="w-5 h-5" />
+          <DocumentTextIcon className="w-5 h-5" />
           Blog Management
         </h2>
       </div>
@@ -458,9 +458,9 @@ export default function BlogManagement() {
             className="md:col-span-2"
           >
             {isBookClubPost && !editingPost && userSubdomain && (
-              <div className="mb-4 p-3 bg-blue-900/20 border border-white rounded-none">
-                <p className="text-blue-300 text-sm">
-                  This post will be published to the Book Club with subdomain: <span className="font-mono">{userSubdomain}</span>
+              <div className="mb-8 p-4 bg-white/5 border-l-2 border-white/20">
+                <p className="text-white text-[10px] font-bold uppercase tracking-widest">
+                  Target Destination: <span className="text-blue-400">{userSubdomain}.thelostandunfounds.com</span>
                 </p>
               </div>
             )}
@@ -471,7 +471,7 @@ export default function BlogManagement() {
                   type="text"
                   value={formData.title}
                   onChange={(e) => handleTitleChange(e.target.value)}
-                  className="w-full px-4 py-2 bg-black border border-white/20 rounded-none text-white focus:border-white transition-colors outline-none"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/20 focus:border-white focus:outline-none transition-colors"
                   required
                 />
               </div>
@@ -482,14 +482,14 @@ export default function BlogManagement() {
                   type="text"
                   value={formData.slug}
                   onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                  className="w-full px-4 py-2 bg-black border border-white/20 rounded-none text-white focus:border-white transition-colors outline-none"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/20 focus:border-white focus:outline-none transition-colors"
                   placeholder="auto-generated-from-title"
                 />
               </div>
 
               <div>
                 <label className="block text-white/80 text-xs uppercase tracking-wider mb-2 font-medium">Content</label>
-                <div className="border border-white/20">
+                <div className="border border-white/5">
                   <RichTextEditor
                     content={formData.content}
                     onChange={(html, links) => {
@@ -506,7 +506,7 @@ export default function BlogManagement() {
                 <textarea
                   value={formData.excerpt}
                   onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                  className="w-full px-4 py-2 bg-black border border-white/20 rounded-none text-white focus:border-white transition-colors outline-none"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/20 focus:border-white focus:outline-none transition-colors"
                   rows={3}
                 />
               </div>
@@ -516,7 +516,7 @@ export default function BlogManagement() {
                 <select
                   value={formData.blog_column}
                   onChange={(e) => setFormData({ ...formData, blog_column: e.target.value })}
-                  className="w-full px-4 py-2 bg-black border border-white/20 rounded-none text-white focus:border-white transition-colors outline-none"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/20 focus:border-white focus:outline-none transition-colors"
                 >
                   {BLOG_COLUMNS.map(column => (
                     <option key={column.value} value={column.value} className="bg-black">
@@ -533,7 +533,7 @@ export default function BlogManagement() {
                     type="text"
                     value={formData.seo_title}
                     onChange={(e) => setFormData({ ...formData, seo_title: e.target.value })}
-                    className="w-full px-4 py-2 bg-black border border-white/20 rounded-none text-white focus:border-white transition-colors outline-none"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/20 focus:border-white focus:outline-none transition-colors"
                   />
                 </div>
 
@@ -543,7 +543,7 @@ export default function BlogManagement() {
                     type="url"
                     value={formData.og_image_url}
                     onChange={(e) => setFormData({ ...formData, og_image_url: e.target.value })}
-                    className="w-full px-4 py-2 bg-black border border-white/20 rounded-none text-white focus:border-white transition-colors outline-none"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/20 focus:border-white focus:outline-none transition-colors"
                   />
                 </div>
               </div>
@@ -553,7 +553,7 @@ export default function BlogManagement() {
                 <textarea
                   value={formData.seo_description}
                   onChange={(e) => setFormData({ ...formData, seo_description: e.target.value })}
-                  className="w-full px-4 py-2 bg-black border border-white/20 rounded-none text-white focus:border-white transition-colors outline-none"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/20 focus:border-white focus:outline-none transition-colors"
                   rows={2}
                 />
               </div>
@@ -564,20 +564,23 @@ export default function BlogManagement() {
                   type="text"
                   value={formData.seo_keywords}
                   onChange={(e) => setFormData({ ...formData, seo_keywords: e.target.value })}
-                  className="w-full px-4 py-2 bg-black border border-white/20 rounded-none text-white focus:border-white transition-colors outline-none"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/20 focus:border-white focus:outline-none transition-colors"
                   placeholder="keyword1, keyword2, keyword3"
                 />
               </div>
 
               <div className="flex items-center gap-3 py-2">
-                <input
-                  type="checkbox"
-                  id="published"
-                  checked={formData.published}
-                  onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
-                  className="w-4 h-4 accent-white cursor-pointer"
-                />
-                <label htmlFor="published" className="text-white/80 text-sm cursor-pointer select-none">
+                <div className="w-5 h-5 border border-white/20 flex items-center justify-center transition-colors group-hover:border-white/40">
+                  <input
+                    type="checkbox"
+                    id="published"
+                    checked={formData.published}
+                    onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
+                    className="opacity-0 absolute w-full h-full cursor-pointer z-10"
+                  />
+                  {formData.published && <div className="w-3 h-3 bg-white" />}
+                </div>
+                <label htmlFor="published" className="text-white/40 text-[10px] font-black uppercase tracking-widest cursor-pointer select-none group-hover:text-white transition-colors">
                   Publish immediately
                 </label>
               </div>
@@ -585,9 +588,9 @@ export default function BlogManagement() {
               <div className="flex gap-4 pt-4">
                 <button
                   type="submit"
-                  className="flex-1 px-6 py-3 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-white/90 transition"
+                  className="flex-1 px-8 py-4 bg-white text-black font-black uppercase tracking-widest text-[10px] hover:bg-white/90 transition-all"
                 >
-                  {editingPost ? 'Update Post' : 'Create Post'}
+                  {editingPost ? 'UPDATE PUBLISHED CONTENT' : 'CREATE & DEPLOY POST'}
                 </button>
                 <button
                   type="button"
@@ -641,7 +644,7 @@ export default function BlogManagement() {
               }}
               className="flex items-center gap-2 px-3 py-1.5 bg-white text-black text-[10px] font-bold uppercase tracking-widest hover:bg-white/90 transition shadow-sm"
             >
-              <Plus className="w-3 h-3" />
+              <PlusIcon className="w-3 h-3" />
               NEW POST
             </button>
           }
@@ -678,7 +681,7 @@ export default function BlogManagement() {
 
                       <div className="flex items-center gap-4 text-[10px] text-white/40 uppercase tracking-wider mb-2">
                         <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
+                          <CalendarIcon className="w-3 h-3" />
                           {formatDate(post.published_at || post.created_at)}
                         </span>
                       </div>
@@ -700,7 +703,7 @@ export default function BlogManagement() {
                             className="p-2 text-white/30 hover:text-white hover:bg-white/5 transition-all"
                             title="View post"
                           >
-                            <Eye className="w-4 h-4" />
+                            <EyeIcon className="w-4 h-4" />
                           </a>
                           <button
                             onClick={() => {
@@ -710,7 +713,7 @@ export default function BlogManagement() {
                             className="p-2 text-amber-500/40 hover:text-amber-400 hover:bg-amber-400/10 transition-all"
                             title="Unpublish"
                           >
-                            <EyeOff className="w-4 h-4" />
+                            <EyeSlashIcon className="w-4 h-4" />
                           </button>
                         </>
                       )}
@@ -719,14 +722,14 @@ export default function BlogManagement() {
                         className="p-2 text-white/30 hover:text-white hover:bg-white/5 transition-all"
                         title="Edit post"
                       >
-                        <Edit className="w-4 h-4" />
+                        <PencilSquareIcon className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(post.id)}
                         className="p-2 text-red-500/40 hover:text-red-400 hover:bg-red-400/10 transition-all"
                         title="Delete post"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <TrashIcon className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -735,95 +738,7 @@ export default function BlogManagement() {
           </div>
         </AdminBentoCard>
 
-        {/* My Book Club Posts Section (Admin's book club posts) */}
-        {adminBookClubPosts.length > 0 && (
-          <AdminBentoCard
-            title="MY BOOK CLUB POSTS"
-          >
-            <div className="space-y-0 divide-y divide-white/5">
-              {adminBookClubPosts.map((post) => (
-                <div
-                  key={post.id}
-                  className="group/item py-4 flex items-start justify-between gap-4 transition-colors"
-                >
-                  <div className="flex-1 min-w-0 text-left">
-                    <div className="flex items-center gap-3 mb-1">
-                      <h4 className="text-white font-medium text-sm md:text-base leading-tight truncate">
-                        {post.title}
-                      </h4>
-                      <span className={cn(
-                        "flex-shrink-0 px-1.5 py-0.5 text-[8px] uppercase tracking-widest font-bold border",
-                        post.published
-                          ? "text-green-400 border-green-400/30 bg-green-400/5"
-                          : "text-amber-400 border-amber-400/30 bg-amber-400/5"
-                      )}>
-                        {post.published ? 'Published' : 'Draft'}
-                      </span>
-                    </div>
 
-                    <div className="flex items-center gap-4 text-[10px] text-white/40 uppercase tracking-wider mb-2">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {formatDate(post.published_at || post.created_at)}
-                      </span>
-                      {post.subdomain && (
-                        <span className="text-blue-400/60 border-l border-white/10 pl-4">
-                          {post.subdomain}
-                        </span>
-                      )}
-                    </div>
-
-                    {post.excerpt && (
-                      <p className="text-white/60 text-xs line-clamp-2 leading-relaxed">
-                        {post.excerpt}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-1">
-                    {post.published && (
-                      <>
-                        <a
-                          href={`/blog/${post.subdomain}/${post.slug}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2 text-white/30 hover:text-white hover:bg-white/5 transition-all"
-                          title="View post"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </a>
-                        <button
-                          onClick={() => {
-                            setTargetPostId(post.id);
-                            setIsUnpublishing(true);
-                          }}
-                          className="p-2 text-amber-500/40 hover:text-amber-400 hover:bg-amber-400/10 transition-all"
-                          title="Unpublish"
-                        >
-                          <EyeOff className="w-4 h-4" />
-                        </button>
-                      </>
-                    )}
-                    <button
-                      onClick={() => handleEdit(post)}
-                      className="p-2 text-white/30 hover:text-white hover:bg-white/5 transition-all"
-                      title="Edit post"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(post.id)}
-                      className="p-2 text-red-500/40 hover:text-red-400 hover:bg-red-400/10 transition-all"
-                      title="Delete post"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </AdminBentoCard>
-        )}
 
         <AdminBentoCard
           title="BOOK CLUB POSTS"
@@ -849,7 +764,7 @@ export default function BlogManagement() {
               }}
               className="flex items-center gap-2 px-3 py-1.5 bg-white text-black text-[10px] font-bold uppercase tracking-widest hover:bg-white/90 transition shadow-sm"
             >
-              <Plus className="w-3 h-3" />
+              <PlusIcon className="w-3 h-3" />
               NEW BOOK CLUB POST
             </button>
           }
@@ -886,7 +801,7 @@ export default function BlogManagement() {
 
                       <div className="flex items-center gap-4 text-[10px] text-white/40 uppercase tracking-wider mb-2">
                         <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
+                          <CalendarIcon className="w-3 h-3" />
                           {formatDate(post.published_at || post.created_at)}
                         </span>
                         {post.subdomain && (
@@ -913,7 +828,7 @@ export default function BlogManagement() {
                             className="p-2 text-white/30 hover:text-white hover:bg-white/5 transition-all"
                             title="View post"
                           >
-                            <Eye className="w-4 h-4" />
+                            <EyeIcon className="w-4 h-4" />
                           </a>
                           <button
                             onClick={() => {
@@ -923,7 +838,7 @@ export default function BlogManagement() {
                             className="p-2 text-amber-500/40 hover:text-amber-400 hover:bg-amber-400/10 transition-all"
                             title="Unpublish"
                           >
-                            <EyeOff className="w-4 h-4" />
+                            <EyeSlashIcon className="w-4 h-4" />
                           </button>
                         </>
                       )}
@@ -932,14 +847,14 @@ export default function BlogManagement() {
                         className="p-2 text-white/30 hover:text-white hover:bg-white/5 transition-all"
                         title="Edit post"
                       >
-                        <Edit className="w-4 h-4" />
+                        <PencilSquareIcon className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(post.id)}
                         className="p-2 text-red-500/40 hover:text-red-400 hover:bg-red-400/10 transition-all"
                         title="Delete post"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <TrashIcon className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -993,21 +908,21 @@ function UnpublishModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-      <div className="bg-black border border-white/20 p-8 w-full max-w-md animate-fade-in shadow-2xl">
-        <h3 className="text-lg font-bold text-white uppercase tracking-[0.2em] mb-4">Unpublish Article</h3>
-        <p className="text-white/50 mb-8 text-xs leading-relaxed uppercase tracking-wider">
-          This will move the post to drafts and return the original submission to the review cycle.
-          The author will be notified via email with the reason provided below.
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-xl p-4 animate-in fade-in duration-300">
+      <div className="bg-[#0A0A0A] border border-white/5 p-10 w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-300">
+        <h3 className="text-xl font-black text-white uppercase tracking-[0.3em] mb-4">Unpublish Article</h3>
+        <p className="text-white/30 mb-10 text-[10px] leading-relaxed uppercase tracking-[0.15em] font-medium">
+          This operation will revert the post to DRAFT status and return the source material to the REVIEW CYCLE.
+          Author notification is required.
         </p>
 
-        <div className="mb-8">
-          <label className="block text-white/40 text-[10px] uppercase tracking-[0.2em] mb-2 font-medium">Reason for unpublishing</label>
+        <div className="mb-10">
+          <label className="block text-white/20 text-[9px] uppercase tracking-[0.3em] mb-3 font-black">Reason for Withdrawal</label>
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            className="w-full px-4 py-3 bg-black border border-white/10 text-white focus:border-white transition-colors outline-none h-32 resize-none text-sm"
-            placeholder="EXPLAIN WHY THIS ARTICLE IS BEING UNPUBLISHED..."
+            className="w-full px-4 py-4 bg-white/5 border border-white/10 text-white focus:border-white transition-colors outline-none h-40 resize-none text-xs uppercase tracking-widest"
+            placeholder="EXPLAIN THE REASON FOR WITHDRAWAL..."
             autoFocus
           />
         </div>
@@ -1016,16 +931,16 @@ function UnpublishModal({
           <button
             onClick={onConfirm}
             disabled={isProcessing || !reason.trim()}
-            className="flex-1 px-6 py-3 bg-white text-black font-bold uppercase tracking-widest text-[10px] hover:bg-white/90 transition disabled:opacity-50"
+            className="flex-1 px-6 py-4 bg-white text-black font-black uppercase tracking-widest text-[10px] hover:bg-white/90 transition-all disabled:opacity-50"
           >
-            {isProcessing ? 'Processing...' : 'Unpublish & Notify'}
+            {isProcessing ? 'PROCESSING...' : 'UNPUBLISH & NOTIFY'}
           </button>
           <button
             onClick={onClose}
             disabled={isProcessing}
-            className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white font-bold uppercase tracking-widest text-[10px] transition"
+            className="px-6 py-4 bg-white/5 hover:bg-white/10 text-white/40 hover:text-white font-black uppercase tracking-widest text-[10px] transition-all"
           >
-            Cancel
+            CANCEL
           </button>
         </div>
       </div>

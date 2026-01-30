@@ -4,15 +4,15 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useSageMode, SageModeAnnotation } from '../contexts/SageModeContext';
-import { 
-  Pen, 
-  Circle, 
-  Square, 
-  Type, 
-  MousePointer2, 
-  Trash2,
-  Save
-} from 'lucide-react';
+import {
+  PencilIcon,
+  StopIcon,
+  ChatBubbleBottomCenterTextIcon,
+  CursorArrowRaysIcon,
+  TrashIcon,
+  CheckIcon,
+  LifebuoyIcon
+} from '@heroicons/react/24/outline';
 
 type ToolType = 'pen' | 'circle' | 'rectangle' | 'text' | 'selector' | null;
 
@@ -44,13 +44,13 @@ export default function SageModeOverlay() {
       const target = e.target as HTMLElement;
       // Find the actual page element, not the overlay
       const elements = document.elementsFromPoint(e.clientX, e.clientY);
-      const pageElement = elements.find(el => 
-        el !== overlayRef.current && 
+      const pageElement = elements.find(el =>
+        el !== overlayRef.current &&
         !overlayRef.current?.contains(el) &&
         el !== document.body &&
         el !== document.documentElement
       ) as HTMLElement;
-      
+
       if (pageElement && selectedElement !== pageElement) {
         // Remove previous selection
         if (selectedElement) {
@@ -61,7 +61,7 @@ export default function SageModeOverlay() {
         setSelectedElement(pageElement);
         pageElement.style.outline = '2px solid #FFD700';
         pageElement.style.outlineOffset = '2px';
-        
+
         // Create annotation for selected element
         const annotation: SageModeAnnotation = {
           id: Date.now().toString(),
@@ -194,58 +194,53 @@ export default function SageModeOverlay() {
         <div className="grid grid-cols-5 gap-2 mb-4">
           <button
             onClick={() => setActiveTool(activeTool === 'pen' ? null : 'pen')}
-            className={`p-2 border rounded-none transition ${
-              activeTool === 'pen'
+            className={`p-2 border rounded-none transition ${activeTool === 'pen'
                 ? 'bg-yellow-400/20 border-yellow-400 text-yellow-400'
                 : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
-            }`}
+              }`}
             title="Pen Tool"
           >
-            <Pen className="w-4 h-4" />
+            <PencilIcon className="w-4 h-4" />
           </button>
           <button
             onClick={() => setActiveTool(activeTool === 'circle' ? null : 'circle')}
-            className={`p-2 border rounded-none transition ${
-              activeTool === 'circle'
+            className={`p-2 border rounded-none transition ${activeTool === 'circle'
                 ? 'bg-yellow-400/20 border-yellow-400 text-yellow-400'
                 : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
-            }`}
+              }`}
             title="Circle Tool"
           >
-            <Circle className="w-4 h-4" />
+            <LifebuoyIcon className="w-4 h-4" />
           </button>
           <button
             onClick={() => setActiveTool(activeTool === 'rectangle' ? null : 'rectangle')}
-            className={`p-2 border rounded-none transition ${
-              activeTool === 'rectangle'
+            className={`p-2 border rounded-none transition ${activeTool === 'rectangle'
                 ? 'bg-yellow-400/20 border-yellow-400 text-yellow-400'
                 : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
-            }`}
+              }`}
             title="Rectangle Tool"
           >
-            <Square className="w-4 h-4" />
+            <StopIcon className="w-4 h-4" />
           </button>
           <button
             onClick={() => setActiveTool(activeTool === 'text' ? null : 'text')}
-            className={`p-2 border rounded-none transition ${
-              activeTool === 'text'
+            className={`p-2 border rounded-none transition ${activeTool === 'text'
                 ? 'bg-yellow-400/20 border-yellow-400 text-yellow-400'
                 : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
-            }`}
+              }`}
             title="Text Tool"
           >
-            <Type className="w-4 h-4" />
+            <ChatBubbleBottomCenterTextIcon className="w-4 h-4" />
           </button>
           <button
             onClick={() => setActiveTool(activeTool === 'selector' ? null : 'selector')}
-            className={`p-2 border rounded-none transition ${
-              activeTool === 'selector'
+            className={`p-2 border rounded-none transition ${activeTool === 'selector'
                 ? 'bg-yellow-400/20 border-yellow-400 text-yellow-400'
                 : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
-            }`}
+              }`}
             title="Selector Tool"
           >
-            <MousePointer2 className="w-4 h-4" />
+            <CursorArrowRaysIcon className="w-4 h-4" />
           </button>
         </div>
 
@@ -254,7 +249,7 @@ export default function SageModeOverlay() {
             onClick={saveAnnotations}
             className="flex-1 px-3 py-2 bg-yellow-400/20 hover:bg-yellow-400/30 border border-yellow-400/50 rounded-none text-yellow-400 text-xs font-medium transition flex items-center justify-center gap-1"
           >
-            <Save className="w-3 h-3" />
+            <CheckIcon className="w-3 h-3" />
             Save
           </button>
           <button
@@ -262,7 +257,7 @@ export default function SageModeOverlay() {
             className="px-3 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 rounded-none text-red-400 text-xs font-medium transition"
             title="Clear Annotations"
           >
-            <Trash2 className="w-3 h-3" />
+            <TrashIcon className="w-3 h-3" />
           </button>
         </div>
 

@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { X, Copy, Check } from 'lucide-react';
+import { XMarkIcon, CheckIcon, DocumentDuplicateIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from './Toast';
@@ -177,11 +177,11 @@ export default function StorefrontRegistration({
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-sm"
       onClick={required ? undefined : onClose}
     >
       <div
-        className="bg-black/50 border-0 rounded-none p-6 w-full max-w-md mx-4"
+        className="bg-black/50 rounded-none p-6 w-full max-md sm:max-w-md mx-4 animate-fade-in"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
@@ -200,7 +200,7 @@ export default function StorefrontRegistration({
               className="text-white/60 hover:text-white transition"
               aria-label="Close"
             >
-              <X className="w-6 h-6" />
+              <XMarkIcon className="w-6 h-6" />
             </button>
           )}
         </div>
@@ -232,12 +232,12 @@ export default function StorefrontRegistration({
                 >
                   {copied ? (
                     <>
-                      <Check className="w-4 h-4" />
+                      <CheckIcon className="w-4 h-4" />
                       Copied!
                     </>
                   ) : (
                     <>
-                      <Copy className="w-4 h-4" />
+                      <DocumentDuplicateIcon className="w-4 h-4" />
                       Copy
                     </>
                   )}

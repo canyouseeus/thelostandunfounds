@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users } from 'lucide-react';
+import { UsersIcon } from '@heroicons/react/24/outline';
 
 interface CustomerListProps {
   affiliateId: string;
@@ -57,7 +57,7 @@ export default function CustomerList({ affiliateId }: CustomerListProps) {
     <div className="bg-black/50 border-0 rounded-none p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Users className="text-white" size={24} />
+          <UsersIcon className="text-white w-6 h-6" />
           <h3 className="text-xl font-bold text-white">My Customers (Lifetime)</h3>
         </div>
         <span className="text-white/60 text-sm">{customers.length} customers</span>
@@ -136,7 +136,7 @@ export default function CustomerList({ affiliateId }: CustomerListProps) {
           </table>
         ) : (
           <div className="text-center py-8">
-            <Users className="text-white/20 mx-auto mb-3" size={48} />
+            <UsersIcon className="text-white/20 mx-auto mb-3 w-12 h-12" />
             <p className="text-white/60 text-sm">No customers yet</p>
             <p className="text-white/40 text-xs mt-1">Share your referral link to get started!</p>
           </div>

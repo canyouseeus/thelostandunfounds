@@ -232,7 +232,7 @@ export default function Blog() {
       </Helmet>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-12">
         <div className="text-center mb-8">
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white mb-4 tracking-wide whitespace-nowrap">
+          <h1 className="font-black text-white mb-4 tracking-wide whitespace-nowrap text-[clamp(2rem,6vw,4rem)]">
             THE LOST ARCHIVES
           </h1>
           <p className="text-white/60 text-sm mb-4">

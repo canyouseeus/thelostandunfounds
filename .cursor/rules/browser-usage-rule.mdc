@@ -1,0 +1,25 @@
+---
+description: MANDATORY: Follow this rule for ALL browser-based tasks to ensure single-tab usage and proper page loading.
+globs: 
+---
+
+# Browser Usage & Smart Browsing Verification
+
+## TRIGGER
+- ALWAYS apply this rule when using ANY tool that interacts with a web browser.
+- ALWAYS apply this rule when the user asks to "browse", "check online", "verify url", or "search".
+
+## ENFORCEMENT
+1. **MANDATORY SKILL CHECK**: Before performing the first browser action of a session, you MUST read the skill file at:
+   - `.agent/skills/smart-browsing/SKILL.md`
+
+2. **SINGLE TAB POLICY**:
+   - You are STRICTLY PROHIBITED from opening multiple tabs.
+   - You MUST reuse the existing tab/session.
+
+3. **PAGE LOAD PROTOCOL**:
+   - You MUST wait for visible UI elements or 15 seconds (whichever covers first) before calling a page "failed".
+   - DO NOT fail on initial blank screens if the 15s window hasn't elapsed.
+
+## FAILURE TO FOLLOW
+- If you ignore the protocol in `.agent/skills/smart-browsing/SKILL.md`, you risk providing false failure reports on JS-heavy sites.

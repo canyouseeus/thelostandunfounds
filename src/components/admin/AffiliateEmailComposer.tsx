@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '../Toast';
 import { supabase } from '../../lib/supabase';
-import { Mail, Send, Eye, Users, Filter, CheckSquare, Square, Loader } from 'lucide-react';
+import { EnvelopeIcon, PaperAirplaneIcon, EyeIcon, UsersIcon, FunnelIcon, CheckCircleIcon, StopIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { safeJsonParse } from '../../utils/helpers';
 
 interface Affiliate {
@@ -235,7 +235,7 @@ export default function AffiliateEmailComposer() {
       <div className="bg-black rounded-none p-6 border-b border-white/10">
         <div className="flex items-center justify-between mb-0">
           <div className="flex items-center gap-3">
-            <Mail className="w-6 h-6 text-white" />
+            <EnvelopeIcon className="w-6 h-6 text-white" />
             <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Affiliate Email Composer</h2>
           </div>
         </div>
@@ -274,7 +274,7 @@ export default function AffiliateEmailComposer() {
                 onClick={() => setShowPreview(!showPreview)}
                 className="px-6 py-3 bg-transparent border border-white/20 text-white rounded-none hover:bg-white hover:text-black transition-all flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider"
               >
-                <Eye className="w-4 h-4" />
+                <EyeIcon className="w-4 h-4" />
                 {showPreview ? 'HIDE PREVIEW' : 'PREVIEW'}
               </button>
               <button
@@ -284,12 +284,12 @@ export default function AffiliateEmailComposer() {
               >
                 {sending ? (
                   <>
-                    <Loader className="w-4 h-4 animate-spin" />
+                    <ArrowPathIcon className="w-4 h-4 animate-spin" />
                     SENDING...
                   </>
                 ) : (
                   <>
-                    <Send className="w-4 h-4" />
+                    <PaperAirplaneIcon className="w-4 h-4" />
                     SEND TO {selectedCount} AFFILIATES
                   </>
                 )}
@@ -328,7 +328,7 @@ export default function AffiliateEmailComposer() {
             onClick={handleSelectAll}
             className="w-full mb-6 px-4 py-3 bg-white/5 border border-white/10 text-white rounded-none hover:bg-white/10 transition flex items-center justify-center gap-3 text-xs font-bold uppercase tracking-wider group"
           >
-            {selectAll ? <CheckSquare className="w-4 h-4 text-white" /> : <Square className="w-4 h-4 text-white/40 group-hover:text-white" />}
+            {selectAll ? <CheckCircleIcon className="w-4 h-4 text-white" /> : <StopIcon className="w-4 h-4 text-white/40 group-hover:text-white" />}
             {selectAll ? 'DESELECT ALL' : 'SELECT ALL'}
           </button>
 
@@ -345,7 +345,7 @@ export default function AffiliateEmailComposer() {
                   className={`flex items-center gap-4 p-3 border border-transparent hover:bg-white/5 transition-all cursor-pointer group ${selectedAffiliates.has(affiliate.id) ? 'bg-white/5 border-white/10' : ''}`}
                 >
                   <div className={`w-4 h-4 border flex items-center justify-center transition-colors ${selectedAffiliates.has(affiliate.id) ? 'bg-white border-white' : 'border-white/20 group-hover:border-white/60'}`}>
-                    {selectedAffiliates.has(affiliate.id) && <CheckSquare className="w-3 h-3 text-black" />}
+                    {selectedAffiliates.has(affiliate.id) && <CheckCircleIcon className="w-3 h-3 text-black" />}
                   </div>
 
                   <div className="flex-1 min-w-0">

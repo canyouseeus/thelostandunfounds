@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Download, ArrowRight } from 'lucide-react'
+import { ArrowDownTrayIcon, ArrowRightIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
 import SubscriptionStatus from '../components/subscription/SubscriptionStatus'
 
@@ -16,7 +16,7 @@ const tools: Tool[] = [
     id: 'tiktok-downloader',
     name: 'TikTok Downloader',
     description: 'Download TikTok videos without watermarks',
-    icon: <Download className="w-5 h-5 text-white" />,
+    icon: <ArrowDownTrayIcon className="w-5 h-5 text-white" />,
     path: '/tools/tiktok-downloader',
   },
   // Add more tools here as you create them
@@ -24,7 +24,7 @@ const tools: Tool[] = [
 
 export default function ToolsDashboard() {
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set())
-  
+
   // Debug: Log when component renders
   console.log('ToolsDashboard rendered, tools count:', tools.length)
 
@@ -39,7 +39,7 @@ export default function ToolsDashboard() {
       }
       return newSet
     })
-    
+
     // Navigate after animation completes
     setTimeout(() => {
       const tool = tools.find(t => t.id === toolId)
@@ -85,7 +85,7 @@ export default function ToolsDashboard() {
                   <div className="w-10 h-10 border border-white flex items-center justify-center group-hover:border-white group-hover:scale-110 transition-all flex-shrink-0">
                     {tool.icon}
                   </div>
-                  
+
                   {/* Text - All on one line, left aligned */}
                   <div className="flex items-center gap-2 flex-1 min-w-0">
                     <h2 className="text-lg font-bold text-white leading-tight text-left m-0 whitespace-nowrap">{tool.name}</h2>
@@ -95,7 +95,7 @@ export default function ToolsDashboard() {
                 <div className="tool-card-back bg-black/50 border border-white rounded-none px-6 py-4 flex items-center justify-center cursor-pointer">
                   <div className="text-center">
                     <div className="w-16 h-16 border-2 border-white rounded-none flex items-center justify-center text-white mx-auto mb-4 animate-spin">
-                      <ArrowRight className="w-8 h-8" />
+                      <ArrowRightIcon className="w-8 h-8" />
                     </div>
                     <p className="text-white/80 text-sm">Loading...</p>
                   </div>
@@ -108,7 +108,7 @@ export default function ToolsDashboard() {
 
       {tools.length === 0 && (
         <div className="text-center py-20">
-          <Download className="w-16 h-16 text-white/50 mx-auto mb-4" />
+          <ArrowDownTrayIcon className="w-16 h-16 text-white/50 mx-auto mb-4" />
           <p className="text-white/70 text-lg">No tools available yet. Add your first tool!</p>
         </div>
       )}

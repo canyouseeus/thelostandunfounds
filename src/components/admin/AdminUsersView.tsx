@@ -1,20 +1,20 @@
 
 import { useState } from 'react';
 import {
-  Users,
-  Search,
-  CheckSquare,
-  Square,
-  User,
-  Calendar,
-  Eye,
-  Edit,
-  Ban,
-  BarChart3,
-  ArrowLeft,
-  BookOpen,
-  Image as ImageIcon
-} from 'lucide-react';
+  UsersIcon,
+  MagnifyingGlassIcon,
+  CheckCircleIcon,
+  StopIcon,
+  UserIcon,
+  CalendarIcon,
+  EyeIcon,
+  PencilSquareIcon,
+  NoSymbolIcon,
+  ChartBarIcon,
+  ArrowLeftIcon,
+  BookOpenIcon,
+  PhotoIcon as ImageIcon
+} from '@heroicons/react/24/outline';
 import { useToast } from '@/components/Toast';
 
 interface RecentUser {
@@ -78,7 +78,7 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
   return (
     <div className="space-y-6">
       <button onClick={onBack} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
-        <ArrowLeft className="w-4 h-4" />
+        <ArrowLeftIcon className="w-4 h-4" />
         Back to Dashboard
       </button>
 
@@ -120,7 +120,7 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
         <div className="space-y-4 mb-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/40" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/40" />
               <input
                 type="text"
                 placeholder="Search by email, username, or resources..."
@@ -214,13 +214,13 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
                     className="flex-shrink-0"
                   >
                     {selectedUsers.has(user.id) ? (
-                      <CheckSquare className="w-5 h-5 text-white" />
+                      <CheckCircleIcon className="w-5 h-5 text-white" />
                     ) : (
-                      <Square className="w-5 h-5 text-white/40" />
+                      <StopIcon className="w-5 h-5 text-white/40" />
                     )}
                   </button>
                   <div className="w-10 h-10 bg-white/10 flex items-center justify-center flex-shrink-0">
-                    <User className="w-5 h-5 text-white/60" />
+                    <UserIcon className="w-5 h-5 text-white/60" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -243,7 +243,7 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
                           onClick={() => onNavigateToSection?.('blog')}
                           className="flex items-center gap-1 px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-black hover:bg-blue-500/20 transition-colors tracking-tighter"
                         >
-                          <BookOpen className="w-2.5 h-2.5" />
+                          <BookOpenIcon className="w-2.5 h-2.5" />
                           BLOG
                         </button>
                       )}
@@ -261,7 +261,7 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
                       <span className="font-mono truncate">{user.email}</span>
                       {user.created_at && (
                         <span className="flex items-center gap-1 flex-shrink-0">
-                          <Calendar className="w-3 h-3" />
+                          <CalendarIcon className="w-3 h-3" />
                           {new Date(user.created_at).toLocaleDateString()}
                         </span>
                       )}
@@ -273,14 +273,14 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
                       className="p-2 hover:bg-white/10 transition rounded-none"
                       title="View Details"
                     >
-                      <Eye className="w-4 h-4 text-white/60" />
+                      <EyeIcon className="w-4 h-4 text-white/60" />
                     </button>
                     <button
                       onClick={() => onSelectUser(user)}
                       className="p-2 hover:bg-white/10 transition rounded-none"
                       title="Edit User"
                     >
-                      <Edit className="w-4 h-4 text-white/60" />
+                      <PencilSquareIcon className="w-4 h-4 text-white/60" />
                     </button>
                     <button
                       onClick={() => {
@@ -291,14 +291,14 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
                       className="p-2 hover:bg-red-500/20 transition rounded-none opacity-0 group-hover:opacity-100"
                       title="Ban User"
                     >
-                      <Ban className="w-4 h-4 text-red-400" />
+                      <NoSymbolIcon className="w-4 h-4 text-red-400" />
                     </button>
                   </div>
                 </div>
               ))
             ) : (
               <div className="text-center py-12 text-white/60">
-                <Users className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                <UsersIcon className="w-12 h-12 mx-auto mb-4 opacity-20" />
                 <p>No users found</p>
                 {searchQuery || filterTier !== 'all' || filterAdmin !== 'all' ? (
                   <button

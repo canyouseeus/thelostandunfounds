@@ -46,6 +46,7 @@ import DesignSystemPreview from './pages/DesignSystemPreview'
 import SageMode from './pages/SageMode'
 import SageModeReports from './pages/SageModeReports'
 import AffiliateDashboard from './pages/AffiliateDashboard'
+import BecomeAffiliate from './pages/BecomeAffiliate'
 import KingMidasLeaderboard from './pages/KingMidasLeaderboard'
 import AdminAffiliates from './pages/AdminAffiliates'
 import Unsubscribe from './pages/Unsubscribe'
@@ -126,6 +127,9 @@ function App() {
               } />
               <Route path="/affiliate/dashboard" element={<Layout />}>
                 <Route index element={<AffiliateDashboard />} />
+              </Route>
+              <Route path="/become-affiliate" element={<Layout />}>
+                <Route index element={<BecomeAffiliate />} />
               </Route>
               <Route path="/admin" element={<Layout />}>
                 <Route index element={

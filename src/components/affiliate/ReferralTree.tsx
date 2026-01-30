@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Network, TrendingUp } from 'lucide-react';
+import { ShareIcon, ArrowTrendingUpIcon } from '@heroicons/react/24/outline';
 
 interface ReferralTreeProps {
   affiliateId: string;
@@ -70,7 +70,7 @@ export default function ReferralTree({ affiliateId }: ReferralTreeProps) {
     <div className="bg-black/50 border-0 rounded-none p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Network className="text-white" size={24} />
+          <ShareIcon className="text-white w-6 h-6" />
           <h3 className="text-xl font-bold text-white">My Affiliate Network</h3>
         </div>
         <span className="text-white/60 text-sm">
@@ -98,7 +98,7 @@ export default function ReferralTree({ affiliateId }: ReferralTreeProps) {
           {treeData.level1_affiliates.length > 0 && (
             <div>
               <h4 className="text-white font-medium mb-3 flex items-center gap-2">
-                <TrendingUp size={18} className="text-white" />
+                <ArrowTrendingUpIcon className="text-white w-[18px] h-[18px]" />
                 Level 1 Referrals (Direct)
               </h4>
               <div className="space-y-2">
@@ -177,7 +177,7 @@ export default function ReferralTree({ affiliateId }: ReferralTreeProps) {
         </div>
       ) : (
         <div className="text-center py-8">
-          <Network className="text-white/20 mx-auto mb-3" size={48} />
+          <ShareIcon className="text-white/20 mx-auto mb-3 w-12 h-12" />
           <p className="text-white/60 text-sm">No affiliate referrals yet</p>
           <p className="text-white/40 text-xs mt-1">Share your affiliate referral link to build your network!</p>
         </div>

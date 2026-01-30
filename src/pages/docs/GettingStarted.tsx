@@ -3,7 +3,7 @@
  */
 
 import { Link } from 'react-router-dom';
-import { ArrowRight, CheckCircle } from 'lucide-react';
+import { ArrowRightIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 
 export default function GettingStarted() {
   return (
@@ -28,15 +28,15 @@ export default function GettingStarted() {
             </p>
             <ul className="space-y-2 text-white/70">
               <li className="flex items-start gap-2">
-                <CheckCircle className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
+                <CheckCircleIcon className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
                 <span>Free accounts get 5 downloads per day</span>
               </li>
               <li className="flex items-start gap-2">
-                <CheckCircle className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
+                <CheckCircleIcon className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
                 <span>Access to all basic tools</span>
               </li>
               <li className="flex items-start gap-2">
-                <CheckCircle className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
+                <CheckCircleIcon className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
                 <span>No credit card required</span>
               </li>
             </ul>
@@ -59,7 +59,7 @@ export default function GettingStarted() {
               to="/tools"
               className="inline-flex items-center gap-2 px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
             >
-              Explore Tools <ArrowRight className="w-4 h-4" />
+              Explore Tools <ArrowRightIcon className="w-4 h-4" />
             </Link>
           </div>
         </section>
@@ -121,7 +121,7 @@ export default function GettingStarted() {
           to="/support"
           className="inline-flex items-center gap-2 px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
         >
-          Get Support <ArrowRight className="w-4 h-4" />
+          Get Support <ArrowRightIcon className="w-4 h-4" />
         </Link>
       </div>
     </div>

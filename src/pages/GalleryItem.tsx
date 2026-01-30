@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Lock, ArrowRight } from 'lucide-react';
+import { LockClosedIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
 
 interface PhotoLibrary {
@@ -35,7 +35,7 @@ export default function GalleryItem({ lib, index, userIsAdmin, authLoading, onGa
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
             onClick={() => !isLocked && onGalleryClick(lib)}
-            className={`group relative bg-zinc-900/30 transition-all duration-500 overflow-hidden aspect-square flex flex-col justify-end p-8 ${!isLocked ? 'hover:bg-zinc-800/30 cursor-pointer' : 'cursor-not-allowed'}`}
+            className={`group relative bg-black transition-all duration-500 overflow-hidden aspect-square flex flex-col justify-end p-8 ${!isLocked ? 'hover:bg-[#0a0a0a] cursor-pointer' : 'cursor-not-allowed'} rounded-none`}
         >
             {/* Background Image/Overlay */}
             {lib.cover_image_url ? (
@@ -50,7 +50,7 @@ export default function GalleryItem({ lib, index, userIsAdmin, authLoading, onGa
             {/* Locked Overlay */}
             {isLocked && (
                 <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
-                    <Lock className="w-8 h-8 text-white mb-4" />
+                    <LockClosedIcon className="w-8 h-8 text-white mb-4" />
                     <div className="text-4xl font-black text-white tracking-widest tabular-nums">
                         {timeRemaining}
                     </div>
@@ -69,7 +69,7 @@ export default function GalleryItem({ lib, index, userIsAdmin, authLoading, onGa
                 <div className="flex items-center mb-3">
                     {lib.is_private ? (
                         <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1">
-                            <Lock className="w-3 h-3 text-white" />
+                            <LockClosedIcon className="w-3 h-3 text-white" />
                             <span className="text-[10px] font-bold text-white tracking-widest uppercase">Private</span>
                         </div>
                     ) : (
@@ -94,7 +94,7 @@ export default function GalleryItem({ lib, index, userIsAdmin, authLoading, onGa
                 {/* View Gallery Link */}
                 <div className="pt-2 flex items-center gap-2 text-[10px] font-black tracking-widest uppercase text-white opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-500">
                     {lib.is_private && !user ? 'Log in to View' : 'View Gallery'}
-                    <ArrowRight className="w-3 h-3" />
+                    <ArrowRightIcon className="w-3 h-3" />
                 </div>
             </div>
         </motion.div>

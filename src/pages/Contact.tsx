@@ -3,7 +3,7 @@
  */
 
 import { useState } from 'react';
-import { Mail, Send, CheckCircle } from 'lucide-react';
+import { EnvelopeIcon, PaperAirplaneIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { useToast } from '../components/Toast';
 
 export default function Contact() {
@@ -25,7 +25,7 @@ export default function Contact() {
       // TODO: Implement actual contact form submission
       // For now, just simulate success
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      
+
       setSubmitted(true);
       success('Message sent successfully! We\'ll get back to you soon.');
       setFormData({ name: '', email: '', subject: '', message: '' });
@@ -49,7 +49,7 @@ export default function Contact() {
         {/* Contact Info */}
         <div className="space-y-6">
           <div className="bg-black/50 border border-white rounded-none p-6">
-            <Mail className="w-6 h-6 text-white mb-3" />
+            <EnvelopeIcon className="w-6 h-6 text-white mb-3" />
             <h3 className="text-white font-semibold mb-2">Email</h3>
             <a href="mailto:support@thelostandunfounds.com" className="text-white/70 hover:text-white transition">
               support@thelostandunfounds.com
@@ -68,7 +68,7 @@ export default function Contact() {
           <div className="bg-black/50 border border-white rounded-none p-6">
             {submitted ? (
               <div className="text-center py-8">
-                <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
+                <CheckCircleIcon className="w-16 h-16 text-green-400 mx-auto mb-4" />
                 <h3 className="text-2xl font-bold text-white mb-2">Message Sent!</h3>
                 <p className="text-white/70 mb-6">
                   Thank you for contacting us. We'll get back to you as soon as possible.
@@ -151,7 +151,7 @@ export default function Contact() {
                     <>Sending...</>
                   ) : (
                     <>
-                      Send Message <Send className="w-5 h-5" />
+                      Send Message <PaperAirplaneIcon className="w-5 h-5" />
                     </>
                   )}
                 </button>

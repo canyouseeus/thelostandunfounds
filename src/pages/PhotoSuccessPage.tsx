@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Download, CheckCircle, ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowDownTrayIcon, CheckCircleIcon, ArrowLeftIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import Loading from '../components/Loading';
@@ -110,12 +110,12 @@ const PhotoSuccessPage: React.FC = () => {
                     >
                         {zipping ? (
                             <>
-                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <ArrowPathIcon className="w-4 h-4 animate-spin" />
                                 <span>Zipping...</span>
                             </>
                         ) : (
                             <>
-                                <Download className="w-4 h-4" />
+                                <ArrowDownTrayIcon className="w-4 h-4" />
                                 <span>Download All ({entitlements.length})</span>
                             </>
                         )}
@@ -153,7 +153,7 @@ const PhotoSuccessPage: React.FC = () => {
                                     className="bg-white text-black w-full py-1.5 rounded-none font-bold text-[9px] flex items-center justify-center gap-1.5 hover:bg-zinc-200 transition-transform transform translate-y-2 group-hover:translate-y-0 duration-300 uppercase tracking-[0.2em]"
                                     download
                                 >
-                                    <Download className="w-3 h-3" />
+                                    <ArrowDownTrayIcon className="w-3 h-3" />
                                     <span>Download</span>
                                 </a>
                             </div>
@@ -171,7 +171,7 @@ const PhotoSuccessPage: React.FC = () => {
                         to="/gallery/kattitude-tattoo"
                         className="inline-flex items-center gap-2 text-zinc-500 hover:text-white transition-colors"
                     >
-                        <ArrowLeft className="w-4 h-4" />
+                        <ArrowLeftIcon className="w-4 h-4" />
                         <span>Return to Gallery</span>
                     </Link>
                     <span className="text-zinc-600 text-sm">Order ID: {orderId}</span>

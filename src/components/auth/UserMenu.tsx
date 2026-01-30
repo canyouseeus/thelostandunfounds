@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { User, LogOut, ChevronDown, Shield } from 'lucide-react';
+import { UserIcon, ArrowRightOnRectangleIcon, ChevronDownIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { isAdmin } from '../../utils/admin';
@@ -79,9 +79,9 @@ export default function UserMenu() {
           onClick={() => setMenuOpen(!menuOpen)}
           className="flex items-center gap-2 px-3 py-2 bg-black/50 border border-white rounded-none hover:border-white transition"
         >
-          <User className="w-4 h-4 text-white" />
+          <UserIcon className="w-4 h-4 text-white" />
           <span className="text-white text-sm">{user.email || 'User'}</span>
-          <ChevronDown className={`w-4 h-4 text-white/60 transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
+          <ChevronDownIcon className={`w-4 h-4 text-white/60 transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
         </button>
 
         {menuOpen && (
@@ -101,7 +101,7 @@ export default function UserMenu() {
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-white/80 hover:text-white hover:bg-white/5 rounded-none transition text-sm"
                 >
-                  <Shield className="w-4 h-4" />
+                  <ShieldCheckIcon className="w-4 h-4" />
                   Admin Dashboard
                 </button>
               )}
@@ -109,7 +109,7 @@ export default function UserMenu() {
                 onClick={handleSignOut}
                 className="w-full flex items-center gap-2 px-3 py-2 text-white/80 hover:text-white hover:bg-white/5 rounded-none transition text-sm"
               >
-                <LogOut className="w-4 h-4" />
+                <ArrowRightOnRectangleIcon className="w-4 h-4" />
                 Sign Out
               </button>
             </div>

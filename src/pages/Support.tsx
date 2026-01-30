@@ -3,7 +3,13 @@
  */
 
 import { Link } from 'react-router-dom';
-import { HelpCircle, Book, Mail, MessageCircle, ArrowRight } from 'lucide-react';
+import {
+  QuestionMarkCircleIcon,
+  BookOpenIcon,
+  EnvelopeIcon,
+  ChatBubbleLeftEllipsisIcon,
+  ArrowRightIcon
+} from '@heroicons/react/24/outline';
 
 export default function Support() {
   return (
@@ -22,7 +28,7 @@ export default function Support() {
         >
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 border border-white flex items-center justify-center text-white group-hover:border-white group-hover:scale-110 transition-all flex-shrink-0">
-              <HelpCircle className="w-5 h-5" />
+              <QuestionMarkCircleIcon className="w-5 h-5" />
             </div>
             <div className="flex flex-col justify-center min-h-[40px]">
               <h3 className="text-lg font-bold text-white leading-none text-left">FAQ</h3>
@@ -31,7 +37,7 @@ export default function Support() {
               </p>
             </div>
           </div>
-          <ArrowRight className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-2 transition-all" />
+          <ArrowRightIcon className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-2 transition-all" />
         </Link>
 
         <Link
@@ -40,7 +46,7 @@ export default function Support() {
         >
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 border border-white flex items-center justify-center text-white group-hover:border-white group-hover:scale-110 transition-all flex-shrink-0">
-              <Book className="w-5 h-5" />
+              <BookOpenIcon className="w-5 h-5" />
             </div>
             <div className="flex flex-col justify-center min-h-[40px]">
               <h3 className="text-lg font-bold text-white leading-none text-left">Documentation</h3>
@@ -49,7 +55,7 @@ export default function Support() {
               </p>
             </div>
           </div>
-          <ArrowRight className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-2 transition-all" />
+          <ArrowRightIcon className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-2 transition-all" />
         </Link>
 
         <Link
@@ -58,7 +64,7 @@ export default function Support() {
         >
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 border border-white flex items-center justify-center text-white group-hover:border-white group-hover:scale-110 transition-all flex-shrink-0">
-              <Mail className="w-5 h-5" />
+              <EnvelopeIcon className="w-5 h-5" />
             </div>
             <div className="flex flex-col justify-center min-h-[40px]">
               <h3 className="text-lg font-bold text-white leading-none text-left">Contact Us</h3>
@@ -67,13 +73,13 @@ export default function Support() {
               </p>
             </div>
           </div>
-          <ArrowRight className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-2 transition-all" />
+          <ArrowRightIcon className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-2 transition-all" />
         </Link>
 
         <div className="group relative bg-black/50 border border-white rounded-none px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 border border-white flex items-center justify-center text-white flex-shrink-0">
-              <MessageCircle className="w-5 h-5" />
+              <ChatBubbleLeftEllipsisIcon className="w-5 h-5" />
             </div>
             <div className="flex flex-col justify-center min-h-[40px]">
               <h3 className="text-lg font-bold text-white leading-none text-left">Community</h3>
@@ -121,7 +127,7 @@ export default function Support() {
           to="/contact"
           className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
         >
-          Get in Touch <ArrowRight className="w-5 h-5" />
+          Get in Touch <ArrowRightIcon className="w-5 h-5" />
         </Link>
       </div>
     </div>

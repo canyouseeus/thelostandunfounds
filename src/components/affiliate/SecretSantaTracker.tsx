@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Gift } from 'lucide-react';
+import { GiftIcon } from '@heroicons/react/24/outline';
 
 interface SecretSantaTrackerProps {
   affiliateId: string;
@@ -43,14 +43,14 @@ export default function SecretSantaTracker({ affiliateId, rewardPoints }: Secret
     const now = new Date();
     const currentYear = now.getFullYear();
     const christmas = new Date(currentYear, 11, 25); // December 25
-    
+
     if (now > christmas) {
       christmas.setFullYear(currentYear + 1);
     }
-    
+
     const diff = christmas.getTime() - now.getTime();
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    
+
     return { days, date: christmas };
   };
 
@@ -59,7 +59,7 @@ export default function SecretSantaTracker({ affiliateId, rewardPoints }: Secret
   return (
     <div className="bg-black/50 border-2 border-red-500 rounded-none p-6">
       <div className="flex items-center gap-3 mb-6">
-        <Gift className="text-red-500" size={24} />
+        <GiftIcon className="text-red-500 w-6 h-6" />
         <h3 className="text-xl font-bold text-white">🎄 Secret Santa Pot</h3>
       </div>
 
@@ -85,7 +85,7 @@ export default function SecretSantaTracker({ affiliateId, rewardPoints }: Secret
           {!potData.distributed && rewardPoints > 0 && (
             <div className="bg-green-500/10 border border-green-500/30 rounded-none p-6">
               <h4 className="text-green-400 font-medium mb-4">Your Estimated Share</h4>
-              
+
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-white/60 text-sm">Your Points:</span>
@@ -99,7 +99,7 @@ export default function SecretSantaTracker({ affiliateId, rewardPoints }: Secret
                   <span className="text-white/60 text-sm">Your Percentage:</span>
                   <span className="text-white font-bold">{potData.your_percentage.toFixed(2)}%</span>
                 </div>
-                
+
                 <div className="border-t border-white/10 pt-3 mt-3">
                   <div className="flex justify-between items-center">
                     <span className="text-white font-medium">Estimated Payout:</span>

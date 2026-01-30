@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { X, Copy, Check } from 'lucide-react';
+import { XMarkIcon, DocumentDuplicateIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from './Toast';
@@ -206,11 +206,11 @@ export default function SubdomainRegistration({
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 py-8 sm:py-12 overflow-y-auto"
+      className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 py-8 sm:py-12 overflow-y-auto"
       onClick={required ? undefined : onClose}
     >
       <div
-        className="bg-black/50 rounded-none p-4 sm:p-6 w-full max-w-md my-auto max-h-[calc(100vh-4rem)] sm:max-h-[calc(100vh-6rem)] overflow-y-auto"
+        className="bg-black/50 rounded-none p-8 w-full max-w-lg mx-4 animate-fade-in max-h-[calc(100vh-4rem)] sm:max-h-[calc(100vh-6rem)] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between mb-4 sm:mb-6 gap-2">
@@ -229,7 +229,7 @@ export default function SubdomainRegistration({
               className="text-white/60 hover:text-white transition"
               aria-label="Close"
             >
-              <X className="w-6 h-6" />
+              <XMarkIcon className="w-6 h-6" />
             </button>
           )}
         </div>
@@ -260,7 +260,7 @@ export default function SubdomainRegistration({
             )}
             {!subdomainError && subdomain && !checkingSubdomain && (
               <p className="text-green-400 text-xs mt-1 flex items-center gap-1">
-                <Check className="w-3 h-3" />
+                <CheckIcon className="w-3 h-3" />
                 Available
               </p>
             )}
@@ -292,12 +292,12 @@ export default function SubdomainRegistration({
                   >
                     {copied ? (
                       <>
-                        <Check className="w-4 h-4" />
+                        <CheckIcon className="w-4 h-4" />
                         Copied!
                       </>
                     ) : (
                       <>
-                        <Copy className="w-4 h-4" />
+                        <DocumentDuplicateIcon className="w-4 h-4" />
                         Copy
                       </>
                     )}

@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { TrendingUp, DollarSign, Calendar } from 'lucide-react';
+import { ArrowTrendingUpIcon, CurrencyDollarIcon, CalendarIcon } from '@heroicons/react/24/outline';
 import { safeJsonParse } from '../../utils/helpers';
 
 interface ProfitDataPoint {
@@ -38,14 +38,14 @@ export default function ProfitGraph() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await fetch(`/api/admin/profit-stats?days=${days}`);
-      
+
       const contentType = response.headers.get('content-type') || '';
       if (contentType.includes('text/html')) {
         throw new Error('API routes are not available. Please restart with "npm run dev:api"');
       }
-      
+
       if (!response.ok) {
         const errorData = await safeJsonParse(response).catch(() => ({ error: `HTTP ${response.status}` }));
         throw new Error(errorData.error || 'Failed to load profit data');
@@ -77,13 +77,13 @@ export default function ProfitGraph() {
   // Generate SVG path for line chart
   const generatePath = () => {
     if (profitData.length === 0) return '';
-    
+
     const points = profitData.map((point, index) => {
       const x = padding + (index / (profitData.length - 1 || 1)) * (chartWidth - padding * 2);
       const y = chartHeight - padding - (point.profit / maxProfit) * (chartHeight - padding * 2);
       return `${x},${y}`;
     });
-    
+
     return `M ${points.join(' L ')}`;
   };
 
@@ -120,7 +120,7 @@ export default function ProfitGraph() {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <TrendingUp className="w-6 h-6 text-green-400" />
+          <ArrowTrendingUpIcon className="w-6 h-6 text-green-400" />
           <h3 className="text-xl font-bold text-white">Profit Generated</h3>
         </div>
         <div className="flex items-center gap-2">
@@ -128,11 +128,10 @@ export default function ProfitGraph() {
             <button
               key={d}
               onClick={() => setDays(d)}
-              className={`px-3 py-1 text-xs rounded-none transition ${
-                days === d
+              className={`px-3 py-1 text-xs rounded-none transition ${days === d
                   ? 'bg-white text-black font-semibold'
                   : 'bg-white/10 text-white/60 hover:bg-white/20'
-              }`}
+                }`}
             >
               {d}d
             </button>
@@ -175,7 +174,7 @@ export default function ProfitGraph() {
         {profitData.length === 0 ? (
           <div className="flex items-center justify-center h-64 text-white/60">
             <div className="text-center">
-              <Calendar className="w-12 h-12 mx-auto mb-2 opacity-20" />
+              <CalendarIcon className="w-12 h-12 mx-auto mb-2 opacity-20" />
               <p>No profit data available</p>
             </div>
           </div>

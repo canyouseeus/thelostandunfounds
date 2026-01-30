@@ -153,7 +153,7 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
 
       <div className="flex-1 min-h-0 relative mb-4">
         <div className="absolute inset-0">
-          <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0} debounce={200}>
+          <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={100} debounce={200}>
             <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
               <XAxis

@@ -1,11 +1,18 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Home, User, LogOut, Sparkles } from 'lucide-react'
+import {
+  HomeIcon,
+  UserIcon,
+  ArrowRightOnRectangleIcon,
+  SparklesIcon,
+  XMarkIcon,
+  Bars3Icon
+} from '@heroicons/react/24/outline'
 import { useState, useEffect, useRef, useCallback, ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useSageMode } from '../contexts/SageModeContext'
 import { isAdmin } from '../utils/admin'
-import { initAffiliateTracking } from '../utils/affiliateTracking'
+import { initAffiliateTracking } from '../utils/affiliate-tracking'
 import AuthModal from './auth/AuthModal'
 import SageModeOverlay from './SageModeOverlay'
 import { supabase } from '../lib/supabase'
@@ -257,7 +264,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
             className="flex items-center justify-center h-12 w-12 text-white"
             aria-label="Close menu"
           >
-            <span className="text-2xl">✕</span>
+            <XMarkIcon className="w-6 h-6" />
           </button>
         </div>
 
@@ -327,7 +334,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
                   aria-label="Toggle menu"
                   aria-expanded={menuOpen}
                 >
-                  <span className="menu-icon text-xl">☰</span>
+                  <Bars3Icon className="w-6 h-6 text-white" />
                 </button>
 
                 {/* Desktop Dropdown (Hidden on Mobile) */}
@@ -374,7 +381,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
                 className="text-white/60 hover:text-white transition"
                 aria-label="Close"
               >
-                ✕
+                <XMarkIcon className="w-6 h-6" />
               </button>
             </div>
             <div className="space-y-4">

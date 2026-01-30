@@ -9,7 +9,7 @@ import { supabase } from '../lib/supabase';
 import { LoadingSpinner } from '../components/Loading';
 import BlogAnalysis from '../components/BlogAnalysis';
 import ShareButtons from '../components/ShareButtons';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import { BLOG_CONTENT_CLASS } from '../utils/blogStyles';
 import { unescapeContent, normalizeTitle, findTitleMatch, formatDisclosure } from '../utils/blogUtils';
 
@@ -541,7 +541,7 @@ export default function BlogPost() {
             to="/thelostarchives"
             className="text-white/60 hover:text-white text-sm inline-flex items-center gap-2 transition"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeftIcon className="w-4 h-4" />
             Back to THE LOST ARCHIVES
           </Link>
           {nextPost && (
@@ -551,7 +551,7 @@ export default function BlogPost() {
             >
               <span className="hidden sm:inline">Next: {nextPost.title}</span>
               <span className="sm:hidden">Next Post</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRightIcon className="w-4 h-4" />
             </Link>
           )}
         </div>

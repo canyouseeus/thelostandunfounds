@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft, Image as ImageIcon, DollarSign, Download, AlertCircle, CheckCircle, RefreshCw, Activity, Plus, Lock, Unlock, Trash2, Globe, Upload, X, Cloud, HardDrive, Edit2, Mail } from 'lucide-react';
+import { ArrowLeftIcon, PhotoIcon, CurrencyDollarIcon, ArrowDownTrayIcon, ExclamationCircleIcon, CheckCircleIcon, ArrowPathIcon, ChartBarIcon, PlusIcon, LockClosedIcon, LockOpenIcon, TrashIcon, GlobeAltIcon, ArrowUpTrayIcon, XMarkIcon, CloudIcon, CircleStackIcon, PencilIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
 import { AnimatedNumber } from '@/components/ui/animated-number';
 import { useToast } from '@/components/Toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -725,19 +725,19 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                     {/* Stats Grid - Only for Admin */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div className="bg-white/5 p-4">
-                            <div className="text-white/40 text-xs uppercase font-bold mb-1">Total Orders</div>
+                            <div className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] mb-1">Total Orders</div>
                             <div className="text-2xl font-bold font-mono text-white">
                                 <AnimatedNumber value={stats?.totalOrders || 0} />
                             </div>
                         </div>
                         <div className="bg-white/5 p-4">
-                            <div className="text-white/40 text-xs uppercase font-bold mb-1">Total Revenue</div>
+                            <div className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] mb-1">Total Revenue</div>
                             <div className="text-2xl font-bold font-mono text-green-400">
                                 $<AnimatedNumber value={stats?.totalRevenue || 0} decimals={2} />
                             </div>
                         </div>
                         <div className="bg-white/5 p-4">
-                            <div className="text-white/40 text-xs uppercase font-bold mb-1">Recent Activity</div>
+                            <div className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] mb-1">Recent Activity</div>
                             <div className="text-xs text-white/60 space-y-1 mt-2">
                                 {stats?.recentOrders.length === 0 ? (
                                     <div className="text-white/20 italic">No recent orders</div>
@@ -752,7 +752,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                             </div>
                         </div>
                         <div className="bg-white/5 p-4">
-                            <div className="text-white/40 text-xs uppercase font-bold mb-2">Latest New Uploads</div>
+                            <div className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] mb-2">Latest New Uploads</div>
                             <div className="grid grid-cols-3 gap-2">
                                 {stats?.recentPhotos && stats.recentPhotos.length > 0 ? (
                                     stats.recentPhotos.map((photo: any) => {
@@ -761,7 +761,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                             ? `/api/gallery/stream?fileId=${photo.google_drive_file_id}&size=400`
                                             : photo.thumbnail_url;
                                         return (
-                                            <div key={photo.id} className="aspect-square bg-black/50 relative group overflow-hidden border border-white/10">
+                                            <div key={photo.id} className="aspect-square bg-black/50 relative group overflow-hidden">
                                                 <img
                                                     src={imageUrl}
                                                     alt={photo.title}
@@ -789,12 +789,12 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                         <div className="bg-white p-2">
-                            <ImageIcon className="w-5 h-5 text-black" />
+                            <PhotoIcon className="w-5 h-5 text-black" />
                         </div>
-                        <h2 className="text-xl md:text-2xl font-bold text-white uppercase tracking-tight whitespace-nowrap flex items-center gap-3">
+                        <h2 className="text-xl md:text-2xl font-black text-white uppercase tracking-wide whitespace-nowrap flex items-center gap-3">
                             {isPhotographerView ? 'My Galleries' : 'Gallery Management'}
                             {!isPhotographerView && pendingAppsCount > 0 && (
-                                <span className="flex items-center justify-center bg-red-500 text-white text-[10px] font-bold h-5 w-5 rounded-full animate-pulse">
+                                <span className="flex items-center justify-center bg-red-500 text-white text-[10px] font-black h-5 w-5 rounded-full animate-pulse">
                                     {pendingAppsCount}
                                 </span>
                             )}
@@ -808,7 +808,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                 onClick={onBack}
                                 className="hidden md:flex items-center gap-2 text-white/60 hover:text-white transition-colors mr-2 px-3 py-2 text-sm"
                             >
-                                <ArrowLeft className="w-4 h-4" />
+                                <ArrowLeftIcon className="w-4 h-4" />
                                 Back
                             </button>
                         )}
@@ -816,7 +816,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                             onClick={openCreateModal}
                             className="px-4 py-2 bg-white text-black text-xs uppercase tracking-wider font-bold flex items-center gap-2 hover:bg-white/90"
                         >
-                            <Plus className="w-4 h-4" />
+                            <PlusIcon className="w-4 h-4" />
                             <span className="hidden sm:inline">New Gallery</span>
                             <span className="sm:hidden">New</span>
                         </button>
@@ -829,7 +829,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                         onClick={onBack}
                         className="md:hidden flex items-center gap-2 text-white/60 hover:text-white py-1 px-1 text-sm transition-colors self-start"
                     >
-                        <ArrowLeft className="w-4 h-4" />
+                        <ArrowLeftIcon className="w-4 h-4" />
                         Back to Dashboard
                     </button>
                 )}
@@ -841,7 +841,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                             onClick={() => setIsInviteModalOpen(true)}
                             className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white/60 text-xs uppercase tracking-wider font-bold flex items-center justify-center gap-2 w-full sm:w-auto"
                         >
-                            <Mail className="w-3 h-3" />
+                            <EnvelopeIcon className="w-3 h-3" />
                             <span className="sm:inline">Invite Photographer</span>
                         </button>
                     )}
@@ -851,9 +851,9 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                         className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white/60 text-xs uppercase tracking-wider font-bold flex items-center justify-center gap-2 w-full sm:w-auto"
                     >
                         {verifying ? (
-                            <RefreshCw className="w-3 h-3 animate-spin" />
+                            <ArrowPathIcon className="w-3 h-3 animate-spin" />
                         ) : (
-                            <Activity className="w-3 h-3" />
+                            <ChartBarIcon className="w-3 h-3" />
                         )}
                         <span>{verifying ? 'Checking...' : 'Test Connection'}</span>
                     </button>
@@ -863,17 +863,17 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
             {/* Create/Edit Gallery Modal */}
             {
                 isManaged && (
-                    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
-                        <div className="bg-[#0A0A0A] w-full max-w-2xl p-6 relative my-8 max-h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar rounded-none">
+                    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 overflow-y-auto">
+                        <div className="bg-black/50 w-full max-w-2xl p-6 relative my-8 max-h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar rounded-none">
                             <button
                                 onClick={() => setIsManaged(false)}
                                 className="absolute top-4 right-4 text-white/40 hover:text-white"
                             >
-                                <Plus className="w-6 h-6 rotate-45" />
+                                <PlusIcon className="w-6 h-6 rotate-45" />
                             </button>
 
                             <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                                {editingId ? <Edit2 className="w-5 h-5 text-white/60" /> : <Plus className="w-5 h-5 text-white/60" />}
+                                {editingId ? <PencilIcon className="w-5 h-5 text-white/60" /> : <PlusIcon className="w-5 h-5 text-white/60" />}
                                 {editingId ? 'Edit Gallery Settings' : 'Create New Gallery'}
                             </h2>
 
@@ -881,7 +881,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                 {/* Gallery Name & Slug */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs uppercase text-white/40 mb-1">Gallery Name</label>
+                                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-1">Gallery Name</label>
                                         <input
                                             type="text"
                                             required
@@ -901,7 +901,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs uppercase text-white/40 mb-1">URL Slug</label>
+                                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-1">URL Slug</label>
                                         <div className="flex items-center gap-2 bg-white/5 p-2 opacity-50">
                                             <span className="text-white/40 text-xs">/gallery/</span>
                                             <input
@@ -918,7 +918,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
 
                                 {/* Pricing Options - Full Width */}
                                 <div>
-                                    <label className="block text-xs uppercase text-white/40 mb-2">Pricing Options & Bundles</label>
+                                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2">Pricing Options & Bundles</label>
                                     <div className="space-y-2 mb-3">
                                         {pricingOptions.map((option, idx) => {
                                             const isEditing = editingPricingIdx === idx;
@@ -985,7 +985,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                                     className="p-1.5 hover:bg-green-500/20 text-green-400 rounded-none transition-colors"
                                                                     title="Done"
                                                                 >
-                                                                    <CheckCircle className="w-4 h-4" />
+                                                                    <CheckCircleIcon className="w-4 h-4" />
                                                                 </button>
                                                             </div>
                                                         </>
@@ -1017,7 +1017,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                                     className="p-1.5 hover:bg-white/10 text-white/40 hover:text-white rounded-none transition-colors"
                                                                     title="Edit"
                                                                 >
-                                                                    <Edit2 className="w-4 h-4" />
+                                                                    <PencilIcon className="w-4 h-4" />
                                                                 </button>
                                                                 <button
                                                                     type="button"
@@ -1032,7 +1032,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                                     className="p-1.5 hover:bg-red-500/20 text-white/20 hover:text-red-400 rounded-none transition-colors"
                                                                     title="Remove"
                                                                 >
-                                                                    <Trash2 className="w-4 h-4" />
+                                                                    <TrashIcon className="w-4 h-4" />
                                                                 </button>
                                                             </div>
                                                         </>
@@ -1071,7 +1071,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs uppercase text-white/40 mb-1">Description</label>
+                                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-1">Description</label>
                                     <textarea
                                         value={modalData.description}
                                         onChange={(e) => setModalData({ ...modalData, description: e.target.value })}
@@ -1082,7 +1082,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
 
                                 {/* Client Invitations */}
                                 <div>
-                                    <label className="block text-xs uppercase text-white/40 mb-2">Invited Clients</label>
+                                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2">Invited Clients</label>
 
                                     {/* Existing email chips */}
                                     {invitedEmails.length > 0 && (
@@ -1092,7 +1092,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                     key={idx}
                                                     className={`flex items-center gap-1 px-2 py-1 text-xs font-mono ${originalInvitedEmails.includes(email)
                                                         ? 'bg-white/10 text-white/60'
-                                                        : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                                        : 'bg-emerald-500/20 text-emerald-400'
                                                         }`}
                                                 >
                                                     <span>{email}</span>
@@ -1153,7 +1153,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                     <label className="block text-xs uppercase text-white/40 mb-2">Cover Image</label>
                                     <div className="flex items-start gap-4">
                                         {modalData.cover_image_url && (
-                                            <div className="w-24 h-16 bg-zinc-800 rounded-none overflow-hidden flex-shrink-0 border border-white/10">
+                                            <div className="w-24 h-16 bg-zinc-800 rounded-none overflow-hidden flex-shrink-0">
                                                 <img src={modalData.cover_image_url} alt="Cover" className="w-full h-full object-cover" />
                                             </div>
                                         )}
@@ -1206,21 +1206,21 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                 <hr className="border-white/10" />
 
                                 <div>
-                                    <label className="block text-xs uppercase text-white/40 mb-3">Asset Source</label>
+                                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Asset Source</label>
                                     <div className="flex gap-2 mb-4">
                                         <button
                                             type="button"
                                             onClick={() => setUploadMode('drive')}
                                             className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs uppercase font-bold border ${uploadMode === 'drive' ? 'bg-white text-black border-white' : 'bg-transparent text-white/40 border-white/20 hover:text-white hover:border-white/40'}`}
                                         >
-                                            <Cloud className="w-4 h-4" /> {editingId ? 'Update Drive Folder' : 'Link Google Drive'}
+                                            <CloudIcon className="w-4 h-4" /> {editingId ? 'Update Drive Folder' : 'Link Google Drive'}
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setUploadMode('upload')}
                                             className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs uppercase font-bold border ${uploadMode === 'upload' ? 'bg-white text-black border-white' : 'bg-transparent text-white/40 border-white/20 hover:text-white hover:border-white/40'}`}
                                         >
-                                            <Upload className="w-4 h-4" /> {editingId ? 'Add More Photos' : 'Direct Upload'}
+                                            <ArrowUpTrayIcon className="w-4 h-4" /> {editingId ? 'Add More Photos' : 'Direct Upload'}
                                         </button>
                                     </div>
 
@@ -1236,7 +1236,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                 required={uploadMode === 'drive' && !filesData.length} // Only required if not uploading files in mixed mode (simplified logic)
                                             />
                                             <p className="text-[10px] text-white/40 mt-1 flex items-center gap-1">
-                                                <AlertCircle className="w-3 h-3" />
+                                                <ExclamationCircleIcon className="w-3 h-3" />
                                                 Folder must be set to "Anyone with link can view"
                                             </p>
                                         </div>
@@ -1251,7 +1251,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                     className="absolute inset-0 opacity-0 cursor-pointer"
                                                 />
                                                 <div className="pointer-events-none">
-                                                    <Upload className="w-6 h-6 text-white/40 mx-auto mb-2" />
+                                                    <ArrowUpTrayIcon className="w-6 h-6 text-white/40 mx-auto mb-2" />
                                                     <p className="text-white text-xs uppercase font-bold">Click or Drag Photos Here</p>
                                                     <p className="text-white/40 text-[10px] mt-1">{filesData.length} files selected</p>
                                                 </div>
@@ -1280,7 +1280,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                                 onClick={() => removeFile(i)}
                                                                 className="absolute top-1 right-1 p-1 bg-black/50 text-white/40 hover:text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                                                             >
-                                                                <X className="w-3 h-3" />
+                                                                <XMarkIcon className="w-3 h-3" />
                                                             </button>
                                                         </div>
                                                     ))}
@@ -1328,14 +1328,14 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
 
             <div className="bg-black/50 rounded-none p-6">
                 <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                    <ImageIcon className="w-5 h-5" />
+                    <PhotoIcon className="w-5 h-5" />
                     GALLERY OPERATIONS
                 </h2>
 
                 {/* Health Check Status Banner */}
                 {healthStatus === 'issues' && (
-                    <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 text-red-500 flex items-center gap-3">
-                        <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                    <div className="mb-6 p-4 bg-red-500/10 border-l-2 border-red-500 text-red-500 flex items-center gap-3">
+                        <ExclamationCircleIcon className="w-5 h-5 flex-shrink-0" />
                         <div>
                             <p className="font-bold uppercase text-sm">System Alert: Asset Delivery Issue Detected</p>
                             <p className="text-xs opacity-80 mt-1">Google Drive files may not be public. Users cannot download. Please check 'gallery-ops' skill.</p>
@@ -1344,8 +1344,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 )}
 
                 {healthStatus === 'healthy' && (
-                    <div className="mb-6 p-4 bg-green-500/10 border border-green-500/30 text-green-500 flex items-center gap-3">
-                        <CheckCircle className="w-5 h-5 flex-shrink-0" />
+                    <div className="mb-6 p-4 bg-green-500/10 border-l-2 border-green-500 text-green-500 flex items-center gap-3">
+                        <CheckCircleIcon className="w-5 h-5 flex-shrink-0" />
                         <div>
                             <p className="font-bold uppercase text-sm">System Healthy</p>
                             <p className="text-xs opacity-80 mt-1">Asset delivery system is fully operational.</p>
@@ -1357,7 +1357,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                     <div className="bg-white/5 p-4 rounded-none">
                         <div className="flex items-center gap-2 mb-2 text-white/60 text-xs uppercase tracking-wider">
-                            <Download className="w-3 h-3" /> Total Orders
+                            <ArrowDownTrayIcon className="w-3 h-3" /> Total Orders
                         </div>
                         <div className="text-3xl font-bold text-white">
                             <AnimatedNumber value={stats?.totalOrders || 0} />
@@ -1366,7 +1366,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
 
                     <div className="bg-white/5 p-4 rounded-none">
                         <div className="flex items-center gap-2 mb-2 text-white/60 text-xs uppercase tracking-wider">
-                            <DollarSign className="w-3 h-3" /> Total Sales
+                            <CurrencyDollarIcon className="w-3 h-3" /> Total Sales
                         </div>
                         <div className="text-3xl font-bold text-green-400">
                             $<AnimatedNumber value={stats?.totalRevenue || 0} />
@@ -1375,7 +1375,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 </div>
 
                 {!isPhotographerView && (
-                    <div className="flex border-b border-white/10 mb-8">
+                    <div className="flex mb-8">
                         <button
                             onClick={() => setActiveTab('galleries')}
                             className={`px-6 py-3 text-xs uppercase font-bold tracking-widest transition-colors relative ${activeTab === 'galleries' ? 'text-white' : 'text-white/40 hover:text-white'}`}
@@ -1407,7 +1407,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                     Active Galleries ({libraries.length})
                                 </h3>
                                 <button onClick={loadGalleryStats} className="text-white/40 hover:text-white">
-                                    <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+                                    <ArrowPathIcon className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
                                 </button>
                             </div>
 
@@ -1449,16 +1449,16 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                         />
                                                     )}
 
-                                                    <div className="flex items-start justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors border border-transparent hover:border-white/10">
+                                                    <div className="flex items-start justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors">
                                                         <div
                                                             className="flex-1 min-w-0 mr-4 cursor-pointer"
                                                             onClick={() => openEditModal(lib)}
                                                         >
                                                             <div className="flex items-center gap-2 mb-1">
                                                                 {lib.is_private ? (
-                                                                    <Lock className="w-3 h-3 text-yellow-400 flex-shrink-0" />
+                                                                    <LockClosedIcon className="w-3 h-3 text-yellow-400 flex-shrink-0" />
                                                                 ) : (
-                                                                    <Globe className="w-3 h-3 text-green-400 flex-shrink-0" />
+                                                                    <GlobeAltIcon className="w-3 h-3 text-green-400 flex-shrink-0" />
                                                                 )}
                                                                 <h4 className="font-bold text-white text-sm truncate">{lib.name}</h4>
                                                             </div>
@@ -1476,14 +1476,14 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                                 className="p-2 hover:bg-white/20 text-white/60 hover:text-white rounded-sm"
                                                                 title="View Gallery"
                                                             >
-                                                                <ArrowLeft className="w-4 h-4 rotate-180" />
+                                                                <ArrowLeftIcon className="w-4 h-4 rotate-180" />
                                                             </a>
                                                             <button
                                                                 onClick={() => handleDeleteGallery(lib.id, lib.name)}
                                                                 className="p-2 hover:bg-red-500/20 text-white/60 hover:text-red-400 rounded-sm"
                                                                 title="Delete Gallery"
                                                             >
-                                                                <Trash2 className="w-4 h-4" />
+                                                                <TrashIcon className="w-4 h-4" />
                                                             </button>
                                                         </div>
                                                     </div>
@@ -1509,7 +1509,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                         <div className="text-white/40 text-sm py-4">No orders found.</div>
                                     ) : (
                                         stats?.recentOrders.map((order) => (
-                                            <div key={order.id} className="flex flex-col md:flex-row md:items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors border-b border-white/5 last:border-0 gap-3">
+                                            <div key={order.id} className="flex flex-col md:flex-row md:items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors gap-3">
                                                 <div>
                                                     <div className="text-white font-mono text-sm">{order.email}</div>
                                                     <div className="text-white/40 text-xs flex items-center gap-2">
@@ -1521,7 +1521,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                 <div className="flex items-center gap-2">
                                                     <button
                                                         onClick={() => triggerResend(order.id, order.email)}
-                                                        className="text-xs uppercase font-bold text-white/60 hover:text-white px-3 py-1 border border-white/20 hover:bg-white/10 transition"
+                                                        className="text-xs uppercase font-bold text-white/60 hover:text-white px-3 py-1 bg-white/5 hover:bg-white/10 transition"
                                                     >
                                                         Resend Email
                                                     </button>
@@ -1540,7 +1540,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                 Pending Applications ({pendingAppsCount})
                             </h3>
                             <button onClick={loadApplications} className="text-white/40 hover:text-white">
-                                <RefreshCw className={`w-3 h-3 ${appsLoading ? 'animate-spin' : ''}`} />
+                                <ArrowPathIcon className={`w-3 h-3 ${appsLoading ? 'animate-spin' : ''}`} />
                             </button>
                         </div>
 
@@ -1552,7 +1552,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                     <div className="text-white/40 text-sm py-8 text-center italic">No applications received yet.</div>
                                 ) : (
                                     applications.map((app) => (
-                                        <div key={app.id} className="bg-white/5 border border-white/10 p-5 rounded-none flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                        <div key={app.id} className="bg-white/5 p-5 rounded-none flex flex-col md:flex-row md:items-center justify-between gap-4">
                                             <div className="space-y-1">
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-white font-bold">{app.name}</span>
@@ -1590,13 +1590,13 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                 <div className="flex gap-2">
                                                     <button
                                                         onClick={() => handleApplicationStatus(app.id, 'approved')}
-                                                        className="px-4 py-2 bg-green-500/20 hover:bg-green-500 text-green-500 hover:text-black text-[10px] uppercase font-bold transition-all border border-green-500/30"
+                                                        className="px-4 py-2 bg-green-500/20 hover:bg-green-500 text-green-500 hover:text-black text-[10px] uppercase font-bold transition-all"
                                                     >
                                                         Approve
                                                     </button>
                                                     <button
                                                         onClick={() => handleApplicationStatus(app.id, 'rejected')}
-                                                        className="px-4 py-2 bg-red-500/20 hover:bg-red-500/40 text-red-500 text-[10px] uppercase font-bold transition-all border border-red-500/30"
+                                                        className="px-4 py-2 bg-red-500/20 hover:bg-red-500/40 text-red-500 text-[10px] uppercase font-bold transition-all"
                                                     >
                                                         Reject
                                                     </button>
@@ -1622,10 +1622,10 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                 onClick={() => setIsInviteModalOpen(false)}
                                 className="absolute top-4 right-4 text-white/40 hover:text-white"
                             >
-                                <X className="w-6 h-6" />
+                                <XMarkIcon className="w-6 h-6" />
                             </button>
                             <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                                <Mail className="w-5 h-5 text-white/60" />
+                                <EnvelopeIcon className="w-5 h-5 text-white/60" />
                                 Invite Photographer
                             </h2>
                             <p className="text-zinc-400 text-sm mb-6">Send an invitation link to a photographer to set up their own gallery connection.</p>

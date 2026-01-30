@@ -1,18 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  ArrowUpRight,
-  RefreshCcw,
-  Users,
-  DollarSign,
-  MousePointerClick,
-  CheckCircle,
-  AlertTriangle,
-  Wallet2,
-  BarChart3,
-  List,
-  Mail,
-} from 'lucide-react';
+  ArrowUpRightIcon,
+  ArrowPathIcon,
+  UsersIcon,
+  CurrencyDollarIcon,
+  CursorArrowRaysIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  WalletIcon,
+  ChartBarIcon,
+  ListBulletIcon,
+  EnvelopeIcon,
+} from '@heroicons/react/24/outline';
 import AffiliateEmailComposer from '@/components/admin/AffiliateEmailComposer';
 import {
   Expandable,
@@ -216,12 +216,12 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
     if (!data) return [];
     const fmt = (n: number) => (isNaN(n) ? '0' : n.toLocaleString());
     return [
-      { label: 'Affiliates', value: fmt(data.summary.total), icon: Users },
-      { label: 'Active', value: fmt(data.summary.active), icon: CheckCircle, tone: 'success' as const },
-      { label: 'Revenue to Affiliates', value: `$${(data.summary.totalEarnings || 0).toFixed(2)}`, icon: DollarSign },
-      { label: 'Clicks', value: fmt(data.summary.totalClicks), icon: MousePointerClick },
-      { label: 'Conversions', value: fmt(data.summary.totalConversions), icon: BarChart3 },
-      { label: 'Pending Payouts', value: `$${(data.summary.pendingPayoutTotal || 0).toFixed(2)}`, icon: Wallet2, tone: 'warn' as const },
+      { label: 'Affiliates', value: fmt(data.summary.total), icon: UsersIcon },
+      { label: 'Active', value: fmt(data.summary.active), icon: CheckCircleIcon, tone: 'success' as const },
+      { label: 'Revenue to Affiliates', value: `$${(data.summary.totalEarnings || 0).toFixed(2)}`, icon: CurrencyDollarIcon },
+      { label: 'Clicks', value: fmt(data.summary.totalClicks), icon: CursorArrowRaysIcon },
+      { label: 'Conversions', value: fmt(data.summary.totalConversions), icon: ChartBarIcon },
+      { label: 'Pending Payouts', value: `$${(data.summary.pendingPayoutTotal || 0).toFixed(2)}`, icon: WalletIcon, tone: 'warn' as const },
     ];
   }, [data]);
 
@@ -405,14 +405,14 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
             onClick={() => setShowComposer(true)}
             className="flex items-center gap-2 text-sm sm:text-base px-3 py-2 rounded-none bg-white text-black hover:bg-white/90 transition-colors font-bold uppercase text-xs tracking-wider"
           >
-            <Mail className="w-4 h-4" />
+            <EnvelopeIcon className="w-4 h-4" />
             Message Affiliates
           </button>
           <button
             onClick={load}
             className="flex items-center gap-2 text-sm sm:text-base px-3 py-2 rounded-none border border-white/20 hover:border-white/60 transition-colors"
           >
-            <RefreshCcw className={cn('w-4 h-4', refreshing && 'animate-spin')} />
+            <ArrowPathIcon className={cn('w-4 h-4', refreshing && 'animate-spin')} />
             Refresh
           </button>
         </div>
@@ -424,7 +424,7 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
             onClick={onBack}
             className="inline-flex items-center gap-2 text-sm text-white/70 hover:text-white underline underline-offset-4"
           >
-            Back to Top <ArrowUpRight className="w-4 h-4" />
+            Back to Top <ArrowUpRightIcon className="w-4 h-4" />
           </button>
         )}
       </div>
@@ -498,7 +498,7 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
                       </div>
                       {payout.error_message ? (
                         <div className="text-xs text-amber-300 flex items-center gap-2">
-                          <AlertTriangle className="w-3 h-3" />
+                          <ExclamationTriangleIcon className="w-3 h-3" />
                           {payout.error_message}
                         </div>
                       ) : null}
@@ -646,7 +646,7 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
                       </div>
                       {commission.status === 'cancelled' && commission.cancelled_reason && (
                         <div className="text-xs text-red-400 flex items-center gap-1">
-                          <AlertTriangle className="w-3 h-3" />
+                          <ExclamationTriangleIcon className="w-3 h-3" />
                           {commission.cancelled_reason}
                           {commission.cancelled_at && (
                             <span className="text-red-400/60"> • {new Date(commission.cancelled_at).toLocaleDateString()}</span>
@@ -682,7 +682,7 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <AlertTriangle className="w-4 h-4 text-red-400" />
+                          <ExclamationTriangleIcon className="w-4 h-4 text-red-400" />
                           <span className="text-sm font-semibold text-red-300">
                             {commission.cancelled_reason || 'Cancelled'}
                           </span>
@@ -717,7 +717,7 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
       )}
 
       <div className="mt-8 sm:mt-10 text-xs text-white/40 flex items-center gap-2">
-        <List className="w-3 h-3" /> Mobile-first layout: single column on phones, expandable cards with no borders.
+        <ListBulletIcon className="w-3 h-3" /> Mobile-first layout: single column on phones, expandable cards with no borders.
       </div>
     </div>
   );

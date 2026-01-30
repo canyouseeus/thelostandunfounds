@@ -9,10 +9,37 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
 import {
-  User, Mail, Key, BookOpen, FileText, ExternalLink, Copy, Check,
-  HelpCircle, TrendingUp, Camera, RefreshCw, Settings, ChevronRight,
-  Image as ImageIcon, DollarSign, Info, Clock, Users, ChevronDown, ChevronUp, Wallet, CreditCard, Share2, ArrowLeft
-} from 'lucide-react';
+  UserIcon,
+  EnvelopeIcon,
+  KeyIcon,
+  BookOpenIcon,
+  DocumentTextIcon,
+  ArrowTopRightOnSquareIcon,
+  ClipboardIcon,
+  CheckIcon,
+  QuestionMarkCircleIcon,
+  ArrowTrendingUpIcon,
+  CameraIcon,
+  ArrowPathIcon,
+  Cog6ToothIcon,
+  ChevronRightIcon,
+  PhotoIcon,
+  CurrencyDollarIcon,
+  InformationCircleIcon,
+  ClockIcon,
+  UsersIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  WalletIcon,
+  CreditCardIcon,
+  ShareIcon,
+  ArrowLeftIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  PencilSquareIcon,
+  TrashIcon,
+  CalendarIcon
+} from '@heroicons/react/24/outline';
 import { cn } from '../components/ui/utils';
 import AdminGalleryView from '../components/admin/AdminGalleryView';
 import { LoadingSpinner, SkeletonCard } from '../components/Loading';
@@ -23,6 +50,7 @@ import { AdminBentoCard, AdminBentoRow } from '../components/ui/admin-bento-card
 import { ClockWidget } from '../components/ui/clock-widget';
 import { CalendarWidget } from '../components/ui/calendar-widget';
 import { RevenueTracker } from '../components/ui/revenue-tracker';
+import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
 
 interface BlogPost {
   id: string;
@@ -30,7 +58,9 @@ interface BlogPost {
   slug: string;
   published: boolean;
   published_at: string | null;
+  created_at: string;
   subdomain: string | null;
+  excerpt: string | null;
 }
 
 interface UserGallery {
@@ -295,10 +325,9 @@ export default function Profile() {
     try {
       const { data, error } = await supabase
         .from('blog_posts')
-        .select('id, title, slug, published, published_at, subdomain')
+        .select('id, title, slug, published, published_at, created_at, subdomain, excerpt')
         .or(`author_id.eq.${user.id},user_id.eq.${user.id}`)
-        .order('published_at', { ascending: false })
-        .limit(5);
+        .order('created_at', { ascending: false });
 
       if (!error) {
         setUserPosts(data || []);
@@ -330,6 +359,16 @@ export default function Profile() {
     } finally {
       setSyncingGallery(null);
     }
+  };
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'Not published';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   const copyToClipboard = async (text: string, label: string) => {
@@ -379,9 +418,12 @@ export default function Profile() {
 
             <div className="relative z-10 flex items-start justify-between">
               <div className="flex items-center gap-5">
-                <div className="w-16 h-16 bg-white text-black flex items-center justify-center font-black text-3xl">
-                  {user.email?.charAt(0).toUpperCase()}
-                </div>
+                <Avatar className="w-16 h-16">
+                  <AvatarImage src={user.user_metadata?.avatar_url || '/logo.png'} alt="Profile" />
+                  <AvatarFallback className="bg-white text-black font-black text-3xl">
+                    {user.email?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <h1 className="text-3xl font-black uppercase tracking-tighter">My Dashboard</h1>
@@ -403,14 +445,14 @@ export default function Profile() {
                   className="p-3 hover:bg-white hover:text-black transition-all group/settings"
                   title="Settings"
                 >
-                  <Settings className="w-5 h-5 group-hover/settings:rotate-90 transition-transform duration-500" />
+                  <Cog6ToothIcon className="w-5 h-5 group-hover/settings:rotate-90 transition-transform duration-500" />
                 </Link>
                 <button
                   onClick={() => signOut()}
                   className="p-3 hover:bg-red-500 hover:text-white transition-all"
                   title="Sign Out"
                 >
-                  <ArrowLeft className="w-5 h-5" />
+                  <ArrowLeftIcon className="w-5 h-5" />
                 </button>
               </div>
             </div>
@@ -456,10 +498,10 @@ export default function Profile() {
               <h2 className="text-[10px] font-black text-white/40 tracking-[0.4em] uppercase mb-4 text-center">Platform Console</h2>
               <div className="flex items-center gap-2 p-1.5 bg-white/5 backdrop-blur-xl rounded-full">
                 {[
-                  { id: 'gallery', icon: Camera, title: 'The Gallery', show: hasGallery },
-                  { id: 'writer', icon: BookOpen, title: 'Writer', show: hasBookClub },
-                  { id: 'affiliate', icon: TrendingUp, title: 'Affiliate', show: hasAffiliate },
-                  { id: 'settings', icon: Settings, title: 'Account', show: true }
+                  { id: 'gallery', icon: CameraIcon, title: 'The Gallery', show: hasGallery },
+                  { id: 'writer', icon: BookOpenIcon, title: 'Writer', show: hasBookClub },
+                  { id: 'affiliate', icon: ArrowTrendingUpIcon, title: 'Affiliate', show: hasAffiliate },
+                  { id: 'settings', icon: Cog6ToothIcon, title: 'Account', show: true }
                 ].filter(app => app.show).map((app) => (
                   <button
                     key={app.id}
@@ -488,7 +530,7 @@ export default function Profile() {
               <div ref={el => sectionRefs.current['gallery'] = el} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex flex-col px-0 py-2 mb-8 items-start">
                   <div className="flex items-center gap-3">
-                    <Camera className="w-5 h-5 text-white/40" />
+                    <CameraIcon className="w-5 h-5 text-white/40" />
                     <h2 className="text-lg font-black text-white tracking-widest uppercase">The Gallery</h2>
                   </div>
                   <button onClick={() => handleSectionToggle('gallery')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
@@ -507,7 +549,7 @@ export default function Profile() {
               <div ref={el => sectionRefs.current['writer'] = el} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex flex-col px-0 py-2 mb-8 items-start">
                   <div className="flex items-center gap-3">
-                    <BookOpen className="w-5 h-5 text-white/40" />
+                    <BookOpenIcon className="w-5 h-5 text-white/40" />
                     <h2 className="text-lg font-black text-white tracking-widest uppercase">Writer Dashboard</h2>
                   </div>
                   <button onClick={() => handleSectionToggle('writer')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
@@ -548,6 +590,118 @@ export default function Profile() {
                       View Public Blog
                     </Link>
                   </div>
+
+                  {/* My Book Club Posts */}
+                  <div className="mt-8">
+                    <AdminBentoCard
+                      title="MY BOOK CLUB POSTS"
+                      className="bg-black/20 border border-white/5"
+                    >
+                      <div className="space-y-0 divide-y divide-white/5">
+                        {userPosts.filter(p => p.subdomain).length === 0 ? (
+                          <p className="text-white/40 text-xs py-8 text-center uppercase tracking-widest">No articles found</p>
+                        ) : (
+                          userPosts
+                            .filter(p => p.subdomain)
+                            .map((post) => (
+                              <div
+                                key={post.id}
+                                className="group/item py-4 flex items-start justify-between gap-4 transition-colors"
+                              >
+                                <div className="flex-1 min-w-0 text-left">
+                                  <div className="flex items-center gap-3 mb-1">
+                                    <h4 className="text-white font-medium text-sm md:text-base leading-tight truncate">
+                                      {post.title}
+                                    </h4>
+                                    <span className={cn(
+                                      "flex-shrink-0 px-1.5 py-0.5 text-[8px] uppercase tracking-widest font-bold border",
+                                      post.published
+                                        ? "text-green-400 border-green-400/30 bg-green-400/5"
+                                        : "text-amber-400 border-amber-400/30 bg-amber-400/5"
+                                    )}>
+                                      {post.published ? 'Published' : 'Draft'}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex items-center gap-4 text-[10px] text-white/40 uppercase tracking-wider mb-2">
+                                    <span className="flex items-center gap-1">
+                                      <CalendarIcon className="w-3 h-3" />
+                                      {formatDate(post.published_at || post.created_at)}
+                                    </span>
+                                    <span className="border-l border-white/10 pl-4">
+                                      {blogTitle || user.user_metadata?.author_name || 'Anonymous'}
+                                    </span>
+                                    {post.subdomain && (
+                                      <span className="text-blue-400/60 border-l border-white/10 pl-4">
+                                        {post.subdomain}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {post.excerpt && (
+                                    <p className="text-white/60 text-xs line-clamp-2 leading-relaxed">
+                                      {post.excerpt}
+                                    </p>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center gap-1">
+                                  {post.published && (
+                                    <>
+                                      <a
+                                        href={`/blog/${post.subdomain}/${post.slug}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="p-2 text-white/30 hover:text-white hover:bg-white/5 transition-all outline-none"
+                                        title="View post"
+                                      >
+                                        <EyeIcon className="w-4 h-4" />
+                                      </a>
+                                      <button
+                                        onClick={() => {
+                                          if (confirm('To unpublish this post and return it to review, please use the Admin Dashboard Blog Management section.')) {
+                                            navigate('/admin?section=blog');
+                                          }
+                                        }}
+                                        className="p-2 text-amber-500/40 hover:text-amber-400 hover:bg-amber-400/10 transition-all outline-none"
+                                        title="Unpublish"
+                                      >
+                                        <EyeSlashIcon className="w-4 h-4" />
+                                      </button>
+                                    </>
+                                  )}
+                                  <button
+                                    onClick={() => navigate(`/admin?section=blog&edit=${post.id}`)}
+                                    className="p-2 text-white/30 hover:text-white hover:bg-white/5 transition-all outline-none"
+                                    title="Edit post"
+                                  >
+                                    <PencilSquareIcon className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      if (confirm('Are you sure you want to delete this post? This cannot be undone.')) {
+                                        // Simple delete implementation
+                                        supabase.from('blog_posts').delete().eq('id', post.id).then(({ error }) => {
+                                          if (error) showError(error.message);
+                                          else {
+                                            success('Post deleted');
+                                            loadUserPosts();
+                                          }
+                                        });
+                                      }
+                                    }}
+                                    className="p-2 text-red-500/40 hover:text-red-400 hover:bg-red-400/10 transition-all outline-none"
+                                    title="Delete post"
+                                  >
+                                    <TrashIcon className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            ))
+                        )}
+                      </div>
+                    </AdminBentoCard>
+                  </div>
                 </div>
               </div>
             )}
@@ -557,7 +711,7 @@ export default function Profile() {
               <div ref={el => sectionRefs.current['affiliate'] = el} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex flex-col px-0 py-2 mb-8 items-start">
                   <div className="flex items-center gap-3">
-                    <TrendingUp className="w-5 h-5 text-white/40" />
+                    <ArrowTrendingUpIcon className="w-5 h-5 text-white/40" />
                     <h2 className="text-lg font-black text-white tracking-widest uppercase">Affiliate App</h2>
                   </div>
                   <button onClick={() => handleSectionToggle('affiliate')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
@@ -571,7 +725,7 @@ export default function Profile() {
                           <span className="text-[10px] uppercase text-white/30 font-bold block mb-1">Clicks</span>
                           <span className="text-xl font-mono text-white leading-none">{affiliateData?.total_clicks || 0}</span>
                         </div>
-                        <TrendingUp className="w-4 h-4 text-white/20 mb-1" />
+                        <ArrowTrendingUpIcon className="w-4 h-4 text-white/20 mb-1" />
                       </div>
                     </div>
 
@@ -581,7 +735,7 @@ export default function Profile() {
                           <span className="text-[10px] uppercase text-white/30 font-bold block mb-1">Earnings</span>
                           <span className="text-xl font-mono text-green-400 leading-none">${parseFloat(String(affiliateData?.total_earnings || 0)).toFixed(2)}</span>
                         </div>
-                        <DollarSign className="w-4 h-4 text-green-400/20 mb-1" />
+                        <CurrencyDollarIcon className="w-4 h-4 text-green-400/20 mb-1" />
                       </div>
                     </div>
 
@@ -591,7 +745,7 @@ export default function Profile() {
                           <span className="text-[10px] uppercase text-white/30 font-bold block mb-1">Network</span>
                           <span className="text-xl font-mono text-purple-400 leading-none">{affiliateData?.network_size || 0}</span>
                         </div>
-                        <Users className="w-4 h-4 text-purple-400/20 mb-1" />
+                        <UsersIcon className="w-4 h-4 text-purple-400/20 mb-1" />
                       </div>
                     </div>
 
@@ -608,7 +762,7 @@ export default function Profile() {
                             </span>
                           </div>
                         </div>
-                        <Copy className="w-4 h-4 text-white/20 group-hover:text-white transition-colors mb-1" />
+                        <ClipboardIcon className="w-4 h-4 text-white/20 group-hover:text-white transition-colors mb-1" />
                       </div>
                     </div>
                   </div>
@@ -643,7 +797,7 @@ export default function Profile() {
               <div ref={el => sectionRefs.current['settings'] = el} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex flex-col px-0 py-2 mb-8 items-start">
                   <div className="flex items-center gap-3">
-                    <Settings className="w-5 h-5 text-white/40" />
+                    <Cog6ToothIcon className="w-5 h-5 text-white/40" />
                     <h2 className="text-lg font-black text-white tracking-widest uppercase">Account Settings</h2>
                   </div>
                   <button onClick={() => handleSectionToggle('settings')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
@@ -658,7 +812,7 @@ export default function Profile() {
                         to="/settings"
                         className="flex items-center justify-between text-xs uppercase font-bold text-white/50 hover:text-white transition bg-black p-4"
                       >
-                        Manage Details <ChevronRight className="w-4 h-4" />
+                        Manage Details <ChevronRightIcon className="w-4 h-4" />
                       </Link>
                     </div>
                   </div>
@@ -682,6 +836,6 @@ export default function Profile() {
         </div>
 
       </div>
-    </div>
+    </div >
   );
 }

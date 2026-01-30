@@ -2,7 +2,17 @@ import AdminGalleryView from '../components/admin/AdminGalleryView';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { DollarSign, Info, Clock, Users, ChevronDown, ChevronUp, Wallet, CreditCard, Share2 } from 'lucide-react';
+import {
+    CurrencyDollarIcon,
+    InformationCircleIcon,
+    ClockIcon,
+    UsersIcon,
+    ChevronDownIcon,
+    ChevronUpIcon,
+    WalletIcon,
+    CreditCardIcon,
+    ShareIcon
+} from '@heroicons/react/24/outline';
 
 export default function PhotographerDashboard() {
     const { user, loading } = useAuth();
@@ -32,7 +42,7 @@ export default function PhotographerDashboard() {
                 >
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-green-500/20 rounded-lg">
-                            <DollarSign className="w-5 h-5 text-green-400" />
+                            <CurrencyDollarIcon className="w-5 h-5 text-green-400" />
                         </div>
                         <div>
                             <h3 className="font-semibold text-white">Your Revenue & Payments</h3>
@@ -40,9 +50,9 @@ export default function PhotographerDashboard() {
                         </div>
                     </div>
                     {showRevenueInfo ? (
-                        <ChevronUp className="w-5 h-5 text-green-400" />
+                        <ChevronUpIcon className="w-5 h-5 text-green-400" />
                     ) : (
-                        <ChevronDown className="w-5 h-5 text-green-400" />
+                        <ChevronDownIcon className="w-5 h-5 text-green-400" />
                     )}
                 </button>
 
@@ -51,7 +61,7 @@ export default function PhotographerDashboard() {
                         {/* Revenue Split */}
                         <div className="bg-black/40 rounded-lg p-4 border border-white/10">
                             <div className="flex items-center gap-2 mb-3">
-                                <Wallet className="w-4 h-4 text-green-400" />
+                                <WalletIcon className="w-4 h-4 text-green-400" />
                                 <h4 className="font-medium text-white">Revenue Split</h4>
                             </div>
                             <ul className="space-y-2 text-sm text-zinc-300">
@@ -76,19 +86,19 @@ export default function PhotographerDashboard() {
                         {/* Fund Availability */}
                         <div className="bg-black/40 rounded-lg p-4 border border-white/10">
                             <div className="flex items-center gap-2 mb-3">
-                                <Clock className="w-4 h-4 text-blue-400" />
+                                <ClockIcon className="w-4 h-4 text-blue-400" />
                                 <h4 className="font-medium text-white">Fund Availability</h4>
                             </div>
                             <ul className="space-y-2 text-sm text-zinc-300">
                                 <li className="flex items-start gap-2">
-                                    <CreditCard className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                                    <CreditCardIcon className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
                                     <div>
                                         <span className="text-white">Digital Products:</span>
                                         <p className="text-zinc-400">Funds available <span className="text-green-400">instantly</span> in PayPal</p>
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-2 mt-3">
-                                    <Wallet className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                                    <WalletIcon className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
                                     <div>
                                         <span className="text-white">Bank Transfer:</span>
                                         <p className="text-zinc-400">1-3 business days from PayPal</p>
@@ -100,7 +110,7 @@ export default function PhotographerDashboard() {
                         {/* Affiliate Referrals */}
                         <div className="bg-black/40 rounded-lg p-4 border border-white/10">
                             <div className="flex items-center gap-2 mb-3">
-                                <Share2 className="w-4 h-4 text-purple-400" />
+                                <ShareIcon className="w-4 h-4 text-purple-400" />
                                 <h4 className="font-medium text-white">Affiliate Referrals</h4>
                             </div>
                             <p className="text-sm text-zinc-300 mb-3">
@@ -127,7 +137,7 @@ export default function PhotographerDashboard() {
 
             {/* Quick Stats Reminder */}
             <div className="mb-6 flex items-center gap-2 p-3 bg-blue-900/20 border border-blue-500/20 rounded-lg">
-                <Info className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                <InformationCircleIcon className="w-4 h-4 text-blue-400 flex-shrink-0" />
                 <p className="text-sm text-blue-200">
                     <span className="font-medium">Tip:</span> Payments are sent directly to your PayPal account.
                     Make sure your PayPal email matches your account settings.

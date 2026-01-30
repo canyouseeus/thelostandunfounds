@@ -5,30 +5,29 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  ArrowLeft,
-  Mail,
-  Send,
-  FileText,
-  Trash2,
-  Inbox,
-  Search,
-  RefreshCw,
-  Paperclip,
-  Star,
-  StarOff,
-  Reply,
-  Forward,
-  MoreVertical,
-  ChevronLeft,
-  ChevronRight,
-  X,
-  Plus,
-  Loader,
-  AlertCircle,
-  CheckCircle,
-  FolderOpen,
-  Archive
-} from 'lucide-react';
+  ArrowLeftIcon,
+  EnvelopeIcon,
+  PaperAirplaneIcon,
+  DocumentTextIcon,
+  TrashIcon,
+  InboxIcon,
+  MagnifyingGlassIcon,
+  ArrowPathIcon,
+  PaperClipIcon,
+  StarIcon,
+  ArrowUturnLeftIcon,
+  ArrowUturnRightIcon,
+  EllipsisVerticalIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  XMarkIcon,
+  PlusIcon,
+  ExclamationCircleIcon,
+  CheckCircleIcon,
+  FolderOpenIcon,
+  ArchiveBoxIcon
+} from '@heroicons/react/24/outline';
+import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../Toast';
 import { cn } from '../ui/utils';
@@ -218,12 +217,12 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
   }, [mailApi]);
 
   // Load single message
-  const loadMessage = useCallback(async (messageId: string) => {
+  const loadMessage = useCallback(async (messageId: string, folderId: string) => {
     try {
       setLoadingMessage(true);
       setError(null);
 
-      const data = await mailApi(`message/${messageId}`);
+      const data = await mailApi(`message?id=${encodeURIComponent(messageId)}&folderId=${encodeURIComponent(folderId)}`);
       setSelectedMessage(data.message);
 
       // Mark as read
@@ -342,7 +341,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
   // Delete message
   const handleDelete = useCallback(async (messageId: string) => {
     try {
-      await mailApi(`message/${messageId}`, { method: 'DELETE' });
+      await mailApi(`message?id=${encodeURIComponent(messageId)}`, { method: 'DELETE' });
       success('Message deleted');
 
       // Remove from list
@@ -431,7 +430,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
   // Download attachment
   const handleDownloadAttachment = useCallback(async (messageId: string, attachment: MailAttachment) => {
     try {
-      const response = await fetch(`/api/mail/attachment/${messageId}/${attachment.attachmentId}`, {
+      const response = await fetch(`/api/mail/attachment?messageId=${encodeURIComponent(messageId)}&attachmentId=${encodeURIComponent(attachment.attachmentId)}`, {
         headers: { 'X-Admin-Email': user?.email || '' }
       });
 
@@ -487,12 +486,12 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
     const name = (folder.folderName || '').toLowerCase();
     const type = (folder.folderType || '').toLowerCase();
 
-    if (type === 'inbox' || name === 'inbox') return <Inbox className="w-4 h-4" />;
-    if (type === 'sent' || name === 'sent') return <Send className="w-4 h-4" />;
-    if (type === 'drafts' || name === 'drafts') return <FileText className="w-4 h-4" />;
-    if (type === 'trash' || name === 'trash') return <Trash2 className="w-4 h-4" />;
-    if (type === 'archive' || name === 'archive') return <Archive className="w-4 h-4" />;
-    return <FolderOpen className="w-4 h-4" />;
+    if (type === 'inbox' || name === 'inbox') return <InboxIcon className="w-4 h-4" />;
+    if (type === 'sent' || name === 'sent') return <PaperAirplaneIcon className="w-4 h-4" />;
+    if (type === 'drafts' || name === 'drafts') return <DocumentTextIcon className="w-4 h-4" />;
+    if (type === 'trash' || name === 'trash') return <TrashIcon className="w-4 h-4" />;
+    if (type === 'archive' || name === 'archive') return <ArchiveBoxIcon className="w-4 h-4" />;
+    return <FolderOpenIcon className="w-4 h-4" />;
   };
 
   // Render loading state
@@ -500,11 +499,11 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
     return (
       <div className="space-y-6">
         <button onClick={onBack} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeftIcon className="w-4 h-4" />
           Back to Dashboard
         </button>
-        <div className="bg-black/50 rounded-none p-12 flex items-center justify-center">
-          <Loader className="w-6 h-6 animate-spin text-white/60" />
+        <div className="bg-black/50 p-12 flex items-center justify-center">
+          <ArrowPathIcon className="w-6 h-6 animate-spin text-white/60" />
           <span className="ml-3 text-white/60">Loading mail...</span>
         </div>
       </div>
@@ -514,92 +513,92 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <button onClick={onBack} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
-          <ArrowLeft className="w-4 h-4" />
-          Back to Dashboard
+      <div className="flex items-center justify-between mb-8">
+        <button onClick={onBack} className="flex items-center gap-2 text-white/40 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all group">
+          <ArrowLeftIcon className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          Dashboard
         </button>
         <button
           onClick={() => {
             setComposeData({ to: '', cc: '', bcc: '', subject: '', content: '' });
             setShowCompose(true);
           }}
-          className="flex items-center gap-2 px-4 py-2 bg-white text-black font-semibold hover:bg-white/90 transition rounded-none"
+          className="flex items-center gap-2 px-6 py-2 bg-white text-black font-black uppercase tracking-widest text-[10px] hover:bg-white/90 transition-all"
         >
-          <Plus className="w-4 h-4" />
-          Compose
+          <PlusIcon className="w-4 h-4" />
+          Compose Message
         </button>
       </div>
 
       {/* Error display */}
       {error && (
-        <div className="bg-red-500/10 border border-red-500/30 p-4 flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-red-400" />
+        <div className="bg-red-500/10 p-4 flex items-center gap-3">
+          <ExclamationCircleIcon className="w-5 h-5 text-red-400" />
           <span className="text-red-400">{error}</span>
           <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-300">
-            <X className="w-4 h-4" />
+            <XMarkIcon className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      {/* Main layout */}
-      return (
-      <div className="bg-black text-white rounded-none min-h-[600px] flex border-l border-white/10">
+      <div className="bg-[#0A0A0A] min-h-[700px] flex shadow-2xl overflow-hidden">
         {/* Sidebar - Folders */}
-        <div className="w-48 border-r border-white/10 p-0 pr-4 py-3 space-y-1">
-          <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-3 px-3">Folders</div>
-          {folders.map(folder => (
-            <button
-              key={folder.folderId}
-              onClick={() => setSelectedFolder(folder)}
-              className={cn(
-                "w-full flex items-center justify-between px-3 py-2 text-sm transition-colors rounded-none group",
-                selectedFolder?.folderId === folder.folderId
-                  ? "bg-white text-black font-bold"
-                  : "text-white/60 hover:text-white"
-              )}
-            >
-              <div className="flex items-center gap-3">
-                {getFolderIcon(folder)}
-                <span className={cn("uppercase tracking-wider text-xs font-bold", selectedFolder?.folderId !== folder.folderId && "font-medium")}>
-                  {folder.folderName}
-                </span>
-              </div>
-              {folder.unreadCount > 0 && (
-                <span className={cn(
-                  "text-[10px] font-bold px-1.5 py-0.5",
-                  selectedFolder?.folderId === folder.folderId ? "text-black" : "text-white"
-                )}>
-                  {folder.unreadCount}
-                </span>
-              )}
-            </button>
-          ))}
+        <div className="w-56 bg-white/[0.01] flex flex-col pt-6">
+          <div className="text-[10px] text-white/20 uppercase tracking-[0.3em] font-black mb-6 px-6">Folders</div>
+          <div className="flex-1 space-y-1 px-3">
+            {folders.map(folder => (
+              <button
+                key={folder.folderId}
+                onClick={() => setSelectedFolder(folder)}
+                className={cn(
+                  "w-full flex items-center justify-between px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-all",
+                  selectedFolder?.folderId === folder.folderId
+                    ? "bg-white text-black font-bold"
+                    : "text-white/60 hover:text-white"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  {getFolderIcon(folder)}
+                  <span className={cn("uppercase tracking-wider text-xs font-bold", selectedFolder?.folderId !== folder.folderId && "font-medium")}>
+                    {folder.folderName}
+                  </span>
+                </div>
+                {folder.unreadCount > 0 && (
+                  <span className={cn(
+                    "text-[10px] font-bold px-1.5 py-0.5",
+                    selectedFolder?.folderId === folder.folderId ? "text-black" : "text-white"
+                  )}>
+                    {folder.unreadCount}
+                  </span>
+                )}
+              </button>
+            ))}
 
-          <div className="pt-4 mt-4 border-t border-white/10 mx-3">
-            <button
-              onClick={() => loadFolders(true)}
-              className="w-full flex items-center gap-3 px-0 py-2 text-xs text-white/40 hover:text-white transition uppercase tracking-wider font-bold"
-            >
-              <RefreshCw className="w-3 h-3" />
-              Refresh
-            </button>
+            <div className="pt-4 mt-4 mx-3">
+              <button
+                onClick={() => loadFolders(true)}
+                className="w-full flex items-center gap-3 px-0 py-2 text-xs text-white/40 hover:text-white transition uppercase tracking-wider font-bold"
+              >
+                <ArrowPathIcon className="w-3 h-3" />
+                Refresh
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Message list */}
-        <div className="w-80 flex flex-col border-r border-white/10 pl-0">
+        <div className="w-80 flex flex-col pl-0">
           {/* Search bar */}
-          <div className="p-3 border-b border-white/10">
+          <div className="p-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 placeholder="Search..."
-                className="w-full bg-transparent pl-9 pr-3 py-2 text-xs text-white placeholder-white/40 focus:outline-none border-b border-white/20 focus:border-white transition-colors rounded-none font-medium"
+                className="w-full bg-white/5 pl-9 pr-3 py-2.5 text-[11px] font-bold uppercase tracking-widest text-white placeholder-white/20 focus:outline-none transition-colors"
               />
             </div>
           </div>
@@ -608,7 +607,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
           <div className="flex-1 overflow-auto bg-black">
             {loadingMessages ? (
               <div className="p-8 text-center">
-                <Loader className="w-5 h-5 animate-spin text-white/40 mx-auto" />
+                <ArrowPathIcon className="w-5 h-5 animate-spin text-white/40 mx-auto" />
               </div>
             ) : messages.length === 0 ? (
               <div className="p-8 text-center text-white/40 text-sm">
@@ -617,10 +616,18 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
             ) : (
               <>
                 {messages.map(msg => (
-                  <button
+                  <div
                     key={msg.messageId}
-                    onClick={() => loadMessage(msg.messageId)}
-                    className={`w-full p-3 text-left border-b border-white/5 transition ${selectedMessage?.messageId === msg.messageId
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => loadMessage(msg.messageId, msg.folderId)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        loadMessage(msg.messageId, msg.folderId);
+                      }
+                    }}
+                    className={`w-full p-3 text-left transition cursor-pointer outline-none ${selectedMessage?.messageId === msg.messageId
                       ? 'bg-white/10'
                       : 'hover:bg-white/5'
                       } ${!msg.isRead ? 'bg-white/[0.02]' : ''}`}
@@ -634,9 +641,9 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                         className="mt-0.5"
                       >
                         {msg.isStarred ? (
-                          <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                          <StarIconSolid className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                         ) : (
-                          <StarOff className="w-4 h-4 text-white/20 hover:text-white/40" />
+                          <StarIcon className="w-4 h-4 text-white/20 hover:text-white/40" />
                         )}
                       </button>
                       <div className="flex-1 min-w-0">
@@ -658,12 +665,12 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                         )}
                         <div className="flex items-center gap-2 mt-1">
                           {msg.hasAttachment && (
-                            <Paperclip className="w-3 h-3 text-white/40" />
+                            <PaperClipIcon className="w-3 h-3 text-white/40" />
                           )}
                         </div>
                       </div>
                     </div>
-                  </button>
+                  </div>
                 ))}
 
                 {/* Pagination */}
@@ -674,7 +681,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                       disabled={page === 0}
                       className="p-2 text-white/40 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
                     >
-                      <ChevronLeft className="w-4 h-4" />
+                      <ChevronLeftIcon className="w-4 h-4" />
                     </button>
                     <span className="text-xs text-white/40">Page {page + 1}</span>
                     <button
@@ -682,7 +689,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                       disabled={!hasMore}
                       className="p-2 text-white/40 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
                     >
-                      <ChevronRight className="w-4 h-4" />
+                      <ChevronRightIcon className="w-4 h-4" />
                     </button>
                   </div>
                 )}
@@ -695,12 +702,12 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
         <div className="flex-1 flex flex-col">
           {loadingMessage ? (
             <div className="flex-1 flex items-center justify-center">
-              <Loader className="w-6 h-6 animate-spin text-white/40" />
+              <ArrowPathIcon className="w-6 h-6 animate-spin text-white/40" />
             </div>
           ) : selectedMessage ? (
             <>
               {/* Message header */}
-              <div className="p-4 border-b border-white/10">
+              <div className="p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <h2 className="text-lg font-semibold text-white truncate">
@@ -737,14 +744,14 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                       className="p-2 text-white/60 hover:text-white hover:bg-white/10 transition"
                       title="Reply"
                     >
-                      <Reply className="w-4 h-4" />
+                      <ArrowUturnLeftIcon className="w-4 h-4" />
                     </button>
                     <button
                       onClick={handleForward}
                       className="p-2 text-white/60 hover:text-white hover:bg-white/10 transition"
                       title="Forward"
                     >
-                      <Forward className="w-4 h-4" />
+                      <ArrowUturnRightIcon className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleToggleStar(selectedMessage.messageId, selectedMessage.isStarred)}
@@ -752,9 +759,9 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                       title={selectedMessage.isStarred ? 'Unstar' : 'Star'}
                     >
                       {selectedMessage.isStarred ? (
-                        <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                        <StarIconSolid className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                       ) : (
-                        <Star className="w-4 h-4" />
+                        <StarIcon className="w-4 h-4" />
                       )}
                     </button>
                     <div className="relative">
@@ -763,10 +770,10 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                         className="p-2 text-white/60 hover:text-white hover:bg-white/10 transition"
                         title="Move to folder"
                       >
-                        <FolderOpen className="w-4 h-4" />
+                        <FolderOpenIcon className="w-4 h-4" />
                       </button>
                       {showMoveMenu && (
-                        <div className="absolute right-0 top-full mt-1 bg-black border border-white/20 shadow-xl z-50 min-w-[150px]">
+                        <div className="absolute right-0 top-full mt-1 bg-black shadow-xl z-50 min-w-[150px]">
                           {folders.filter(f => f.folderId !== selectedFolder?.folderId).map(folder => (
                             <button
                               key={folder.folderId}
@@ -789,7 +796,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                       className="p-2 text-red-400/60 hover:text-red-400 hover:bg-red-400/10 transition"
                       title="Delete"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <TrashIcon className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -806,7 +813,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                         onClick={() => handleDownloadAttachment(selectedMessage.messageId, att)}
                         className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 transition text-sm"
                       >
-                        <Paperclip className="w-4 h-4 text-white/40" />
+                        <PaperClipIcon className="w-4 h-4 text-white/40" />
                         <span className="text-white/80">{att.attachmentName}</span>
                         <span className="text-white/40 text-xs">
                           ({formatSize(att.attachmentSize)})
@@ -842,7 +849,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
           ) : (
             <div className="flex-1 flex items-center justify-center text-white/40">
               <div className="text-center">
-                <Mail className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <EnvelopeIcon className="w-12 h-12 mx-auto mb-4 opacity-50" />
                 <p>Select a message to read</p>
               </div>
             </div>
@@ -852,102 +859,103 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
 
       {/* Compose Modal */}
       {showCompose && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4">
-          <div className="bg-black border border-white/20 w-full max-w-2xl max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-xl p-4 animate-in fade-in duration-300">
+          <div className="bg-[#0A0A0A] border border-white/5 w-full max-w-3xl h-full max-h-[85vh] flex flex-col shadow-2xl animate-in zoom-in-95 duration-300">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-              <h3 className="font-semibold text-white">
-                {composeData.isReply ? 'Reply' : composeData.isForward ? 'Forward' : 'New Message'}
+            <div className="flex items-center justify-between px-8 py-5 border-b border-white/5 bg-white/[0.02]">
+              <h3 className="text-xs font-black text-white uppercase tracking-[0.2em]">
+                {composeData.isReply ? 'REPLY TO MESSAGE' : composeData.isForward ? 'FORWARD MESSAGE' : 'NEW COMMUNICATION'}
               </h3>
               <button
                 onClick={() => setShowCompose(false)}
-                className="p-1 text-white/60 hover:text-white"
+                className="p-1 text-white/20 hover:text-white transition-colors"
               >
-                <X className="w-5 h-5" />
+                <XMarkIcon className="w-6 h-6" />
               </button>
             </div>
 
             {/* Form */}
-            <div className="flex-1 overflow-auto p-4 space-y-3">
-              <div>
-                <label className="text-xs text-white/40 mb-1 block">To *</label>
-                <input
-                  type="text"
-                  value={composeData.to}
-                  onChange={(e) => setComposeData(prev => ({ ...prev, to: e.target.value }))}
-                  className="w-full bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30"
-                  placeholder="recipient@example.com"
-                />
+            <div className="flex-1 overflow-auto p-8 space-y-8 custom-scrollbar">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <label className="text-[10px] font-black text-white/20 mb-3 block uppercase tracking-widest">To</label>
+                  <input
+                    type="text"
+                    value={composeData.to}
+                    onChange={(e) => setComposeData(prev => ({ ...prev, to: e.target.value }))}
+                    className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm text-white focus:outline-none focus:border-white/40 transition-colors"
+                    placeholder="recipient@domain.com"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-white/20 mb-3 block uppercase tracking-widest">Subject</label>
+                  <input
+                    type="text"
+                    value={composeData.subject}
+                    onChange={(e) => setComposeData(prev => ({ ...prev, subject: e.target.value }))}
+                    className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm text-white focus:outline-none focus:border-white/40 transition-colors"
+                  />
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-8">
                 <div>
-                  <label className="text-xs text-white/40 mb-1 block">CC</label>
+                  <label className="text-[10px] font-black text-white/20 mb-3 block uppercase tracking-widest">CC</label>
                   <input
                     type="text"
                     value={composeData.cc}
                     onChange={(e) => setComposeData(prev => ({ ...prev, cc: e.target.value }))}
-                    className="w-full bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30"
+                    className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm text-white focus:outline-none focus:border-white/40 transition-colors"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-white/40 mb-1 block">BCC</label>
+                  <label className="text-[10px] font-black text-white/20 mb-3 block uppercase tracking-widest">BCC</label>
                   <input
                     type="text"
                     value={composeData.bcc}
                     onChange={(e) => setComposeData(prev => ({ ...prev, bcc: e.target.value }))}
-                    className="w-full bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30"
+                    className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm text-white focus:outline-none focus:border-white/40 transition-colors"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-xs text-white/40 mb-1 block">Subject *</label>
-                <input
-                  type="text"
-                  value={composeData.subject}
-                  onChange={(e) => setComposeData(prev => ({ ...prev, subject: e.target.value }))}
-                  className="w-full bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs text-white/40 mb-1 block">Message</label>
+                <label className="text-[10px] font-black text-white/20 mb-3 block uppercase tracking-widest">Communication Body</label>
                 <textarea
                   value={composeData.content}
                   onChange={(e) => setComposeData(prev => ({ ...prev, content: e.target.value }))}
-                  rows={12}
-                  className="w-full bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30 resize-none"
+                  rows={15}
+                  className="w-full bg-white/5 border border-white/10 px-4 py-4 text-sm text-white focus:outline-none focus:border-white/40 resize-none transition-colors"
                 />
               </div>
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between px-4 py-3 border-t border-white/10">
+            <div className="px-8 py-5 border-t border-white/5 bg-white/[0.02] flex items-center justify-between">
               <button
                 onClick={handleSaveDraft}
-                className="px-4 py-2 text-sm text-white/60 hover:text-white transition"
+                className="text-[10px] font-black text-white/40 hover:text-white uppercase tracking-[0.2em] transition-all"
               >
-                Save Draft
+                SAVE AS DRAFT
               </button>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-6">
                 <button
                   onClick={() => setShowCompose(false)}
-                  className="px-4 py-2 text-sm text-white/60 hover:text-white transition"
+                  className="text-[10px] font-black text-white/20 hover:text-white uppercase tracking-[0.2em] transition-all"
                 >
-                  Cancel
+                  CANCEL
                 </button>
                 <button
                   onClick={handleSend}
                   disabled={sending}
-                  className="flex items-center gap-2 px-4 py-2 bg-white text-black font-semibold hover:bg-white/90 transition disabled:opacity-50"
+                  className="flex items-center gap-3 px-10 py-3 bg-white text-black font-black uppercase tracking-[0.2em] text-[10px] hover:bg-white/90 transition-all disabled:opacity-50"
                 >
                   {sending ? (
-                    <Loader className="w-4 h-4 animate-spin" />
+                    <ArrowPathIcon className="w-4 h-4 animate-spin" />
                   ) : (
-                    <Send className="w-4 h-4" />
+                    <PaperAirplaneIcon className="w-4 h-4" />
                   )}
-                  Send
+                  {sending ? 'COMMUNICATING...' : 'TRANSMIT MESSAGE'}
                 </button>
               </div>
             </div>

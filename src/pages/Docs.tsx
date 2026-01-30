@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Book, FileText, HelpCircle, Shield, Code, Wrench } from 'lucide-react';
+import { BookOpenIcon, DocumentTextIcon, QuestionMarkCircleIcon, ShieldCheckIcon, CodeBracketIcon, WrenchIcon } from '@heroicons/react/24/outline';
 import GettingStarted from './docs/GettingStarted';
 import ToolsDocs from './docs/Tools';
 import APIDocs from './docs/API';
@@ -13,12 +13,12 @@ import Privacy from './docs/Privacy';
 import Terms from './docs/Terms';
 
 const docSections = [
-  { id: 'getting-started', label: 'Getting Started', icon: Book },
-  { id: 'tools-guide', label: 'Tools Guide', icon: Wrench },
-  { id: 'api-reference', label: 'API Reference', icon: Code },
-  { id: 'faq', label: 'FAQ', icon: HelpCircle },
-  { id: 'privacy', label: 'Privacy Policy', icon: Shield },
-  { id: 'terms', label: 'Terms of Service', icon: FileText },
+  { id: 'getting-started', label: 'Getting Started', icon: BookOpenIcon },
+  { id: 'tools-guide', label: 'Tools Guide', icon: WrenchIcon },
+  { id: 'api-reference', label: 'API Reference', icon: CodeBracketIcon },
+  { id: 'faq', label: 'FAQ', icon: QuestionMarkCircleIcon },
+  { id: 'privacy', label: 'Privacy Policy', icon: ShieldCheckIcon },
+  { id: 'terms', label: 'Terms of Service', icon: DocumentTextIcon },
 ];
 
 export default function Docs() {

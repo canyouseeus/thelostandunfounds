@@ -2,7 +2,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Link as LinkIcon, X } from 'lucide-react';
+import { LinkIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import Placeholder from '@tiptap/extension-placeholder';
 
 import { BLOG_CONTENT_CLASS } from '../utils/blogStyles';
@@ -198,7 +198,7 @@ export default function RichTextEditor({ content, initialLinks = [], onChange, p
                                     onClick={() => removeLink(index)}
                                     className="ml-2 text-white/40 hover:text-red-400 transition"
                                 >
-                                    <X className="w-4 h-4" />
+                                    <XMarkIcon className="w-4 h-4" />
                                 </button>
                             </div>
                         ))}
@@ -246,7 +246,7 @@ export default function RichTextEditor({ content, initialLinks = [], onChange, p
                                     onClick={closeLinkModal}
                                     className="text-white/40 hover:text-white transition"
                                 >
-                                    <X className="w-5 h-5" />
+                                    <XMarkIcon className="w-5 h-5" />
                                 </button>
                             </div>
 

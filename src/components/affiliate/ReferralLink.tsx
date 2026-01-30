@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, Copy, Share2 } from 'lucide-react';
+import { CheckIcon, ClipboardIcon, ShareIcon } from '@heroicons/react/24/outline';
 
 interface ReferralLinkProps {
   affiliateCode: string;
@@ -64,14 +64,14 @@ export default function ReferralLink({ affiliateCode }: ReferralLinkProps) {
               className="bg-white text-black px-4 py-3 rounded-none hover:bg-white/90 transition-colors"
               title="Copy link"
             >
-              {copiedCustomer ? <Check size={20} /> : <Copy size={20} />}
+              {copiedCustomer ? <CheckIcon className="w-5 h-5" /> : <ClipboardIcon className="w-5 h-5" />}
             </button>
             <button
               onClick={() => shareLink(customerLink, 'Check out The Lost+Unfounds!')}
               className="bg-white/10 text-white border border-white/20 px-4 py-3 rounded-none hover:bg-white/20 transition-colors"
               title="Share link"
             >
-              <Share2 size={20} />
+              <ShareIcon className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -95,14 +95,14 @@ export default function ReferralLink({ affiliateCode }: ReferralLinkProps) {
               className="bg-white text-black px-4 py-3 rounded-none hover:bg-white/90 transition-colors"
               title="Copy link"
             >
-              {copiedAffiliate ? <Check size={20} /> : <Copy size={20} />}
+              {copiedAffiliate ? <CheckIcon className="w-5 h-5" /> : <ClipboardIcon className="w-5 h-5" />}
             </button>
             <button
               onClick={() => shareLink(affiliateLink, 'Join The Lost+Unfounds Affiliate Program!')}
               className="bg-white/10 text-white border border-white/20 px-4 py-3 rounded-none hover:bg-white/20 transition-colors"
               title="Share link"
             >
-              <Share2 size={20} />
+              <ShareIcon className="w-5 h-5" />
             </button>
           </div>
         </div>

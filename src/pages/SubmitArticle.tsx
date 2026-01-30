@@ -13,7 +13,18 @@ import AuthModal from '../components/auth/AuthModal';
 import SubdomainRegistration from '../components/SubdomainRegistration';
 import UserRegistration from '../components/UserRegistration';
 import StorefrontRegistration from '../components/StorefrontRegistration';
-import { FileText, Plus, X, BookOpen, Mail, User, Copy, Check, AlertTriangle, ArrowRight } from 'lucide-react';
+import {
+  DocumentTextIcon,
+  PlusIcon,
+  XMarkIcon,
+  BookOpenIcon,
+  EnvelopeIcon,
+  UserIcon,
+  ClipboardIcon,
+  CheckIcon,
+  ExclamationTriangleIcon,
+  ArrowRightIcon
+} from '@heroicons/react/24/outline';
 import RichTextEditor from '../components/RichTextEditor';
 
 interface AffiliateLink {
@@ -696,7 +707,7 @@ export default function SubmitArticle() {
                   {conf.description}
                 </p>
                 <div className="mt-auto flex items-center text-white/40 text-xs font-medium uppercase tracking-wider group-hover:text-white transition-colors gap-2">
-                  Select Column <ArrowRight className="w-4 h-4" />
+                  Select Column <ArrowRightIcon className="w-4 h-4" />
                 </div>
               </button>
             ))}
@@ -810,7 +821,7 @@ export default function SubmitArticle() {
           </div>
         )}
         <div className="mb-8 text-center">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white mb-4 tracking-wide whitespace-nowrap">
+          <h1 className="font-black text-white mb-4 tracking-wide whitespace-nowrap text-[clamp(1.5rem,5vw,3rem)]">
             {config.title}
           </h1>
           <p className="text-white/70 text-lg max-w-2xl mx-auto mb-4 text-left">
@@ -826,7 +837,7 @@ export default function SubmitArticle() {
                 <h2 className="text-xl font-bold text-white mb-1">AI Writing Prompt for Contributors</h2>
                 <p className="text-white/60 text-sm mb-2">Copy this prompt to use with your AI assistant</p>
                 <div className="bg-yellow-900/20 rounded-none p-3 mt-3 flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+                  <ExclamationTriangleIcon className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
                   <p className="text-yellow-300 text-xs">
                     <strong>Important:</strong> Do not modify this prompt. Use it exactly as provided to ensure your article matches our format and style requirements.
                   </p>
@@ -845,9 +856,9 @@ export default function SubmitArticle() {
                       title={copiedPrompt ? "Copied!" : "Copy Prompt"}
                     >
                       {copiedPrompt ? (
-                        <Check className="w-3 h-3" />
+                        <CheckIcon className="w-3 h-3" />
                       ) : (
-                        <Copy className="w-3 h-3" />
+                        <ClipboardIcon className="w-3 h-3" />
                       )}
                     </button>
                     <code className="text-left">{promptContent || 'Failed to load prompt. Please refresh the page.'}</code>
@@ -859,12 +870,12 @@ export default function SubmitArticle() {
                     >
                       {copiedPrompt ? (
                         <>
-                          <Check className="w-4 h-4" />
+                          <CheckIcon className="w-4 h-4" />
                           Copied!
                         </>
                       ) : (
                         <>
-                          <Copy className="w-4 h-4" />
+                          <ClipboardIcon className="w-4 h-4" />
                           Copy Prompt
                         </>
                       )}
@@ -963,7 +974,7 @@ export default function SubmitArticle() {
               {/* Article Title */}
               <div>
                 <label className="block text-white/80 text-sm mb-2 flex items-center gap-2">
-                  <FileText className="w-4 h-4" />
+                  <DocumentTextIcon className="w-4 h-4" />
                   Article Title *
                 </label>
                 <input

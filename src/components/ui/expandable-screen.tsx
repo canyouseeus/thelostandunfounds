@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { X } from 'lucide-react';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 import { cn } from './utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -121,7 +121,7 @@ export function ExpandableScreen({
                 onClick={() => setIsOpen(false)}
                 className="absolute top-20 right-8 z-[110] p-2 bg-black/50 hover:bg-white/10 transition-colors rounded-none"
               >
-                <X className="w-6 h-6 text-white" />
+                <XMarkIcon className="w-6 h-6 text-white" />
               </button>
 
               {/* Content */}

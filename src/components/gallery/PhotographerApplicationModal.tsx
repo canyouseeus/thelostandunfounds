@@ -1,5 +1,15 @@
 import { useState } from 'react';
-import { X, Plus, Trash2, Check, Camera, Mail, MapPin, Link as LinkIcon, User } from 'lucide-react';
+import {
+    XMarkIcon,
+    PlusIcon,
+    TrashIcon,
+    CheckIcon,
+    CameraIcon,
+    EnvelopeIcon,
+    MapPinIcon,
+    LinkIcon,
+    UserIcon
+} from '@heroicons/react/24/outline';
 import { supabase } from '../../lib/supabase';
 
 interface PhotographerApplicationModalProps {
@@ -123,18 +133,18 @@ export default function PhotographerApplicationModal({ isOpen, onClose }: Photog
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
             {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={handleClose} />
+            <div className="absolute inset-0 bg-black/90 backdrop-blur-sm" onClick={handleClose} />
 
             {/* Modal */}
-            <div className="relative w-full max-w-md bg-black/95 backdrop-blur-md">
+            <div className="relative w-full max-w-md bg-black/50 border border-white/10 rounded-none backdrop-blur-md">
                 {/* Close Button */}
                 <button
                     onClick={handleClose}
                     className="absolute top-4 right-4 text-white/40 hover:text-white transition-colors z-10"
                 >
-                    <X className="w-5 h-5" />
+                    <XMarkIcon className="w-5 h-5" />
                 </button>
 
                 <div className="p-6">
@@ -151,7 +161,7 @@ export default function PhotographerApplicationModal({ isOpen, onClose }: Photog
                         /* Success State */
                         <div className="text-center py-8">
                             <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <Check className="w-8 h-8 text-black stroke-[3]" />
+                                <CheckIcon className="w-8 h-8 text-black stroke-[3]" />
                             </div>
                             <h2 className="text-2xl font-bold text-white mb-2">Application Submitted</h2>
                             <p className="text-white/60 text-sm mb-6">
@@ -171,7 +181,7 @@ export default function PhotographerApplicationModal({ isOpen, onClose }: Photog
                                 <div>
                                     <div className="flex items-center gap-3 mb-4">
                                         <div className="w-10 h-10 bg-white/10 flex items-center justify-center">
-                                            <User className="w-5 h-5 text-white/60" />
+                                            <UserIcon className="w-5 h-5 text-white/60" />
                                         </div>
                                         <div>
                                             <h2 className="text-xl font-bold text-white">What's your name?</h2>
@@ -194,7 +204,7 @@ export default function PhotographerApplicationModal({ isOpen, onClose }: Photog
                                 <div>
                                     <div className="flex items-center gap-3 mb-4">
                                         <div className="w-10 h-10 bg-white/10 flex items-center justify-center">
-                                            <Mail className="w-5 h-5 text-white/60" />
+                                            <EnvelopeIcon className="w-5 h-5 text-white/60" />
                                         </div>
                                         <div>
                                             <h2 className="text-xl font-bold text-white">Your email</h2>
@@ -217,7 +227,7 @@ export default function PhotographerApplicationModal({ isOpen, onClose }: Photog
                                 <div>
                                     <div className="flex items-center gap-3 mb-4">
                                         <div className="w-10 h-10 bg-white/10 flex items-center justify-center">
-                                            <Camera className="w-5 h-5 text-white/60" />
+                                            <CameraIcon className="w-5 h-5 text-white/60" />
                                         </div>
                                         <div>
                                             <h2 className="text-xl font-bold text-white">Your gear</h2>
@@ -240,7 +250,7 @@ export default function PhotographerApplicationModal({ isOpen, onClose }: Photog
                                                         onClick={() => removeCamera(index)}
                                                         className="px-3 bg-white/5 text-white/40 hover:text-red-400 hover:bg-white/10 transition-colors"
                                                     >
-                                                        <Trash2 className="w-4 h-4" />
+                                                        <TrashIcon className="w-4 h-4" />
                                                     </button>
                                                 )}
                                             </div>
@@ -251,7 +261,7 @@ export default function PhotographerApplicationModal({ isOpen, onClose }: Photog
                                             onClick={addCamera}
                                             className="flex items-center gap-2 text-white/40 hover:text-white text-sm transition-colors"
                                         >
-                                            <Plus className="w-4 h-4" /> Add another camera
+                                            <PlusIcon className="w-4 h-4" /> Add another camera
                                         </button>
                                     )}
                                 </div>
@@ -262,7 +272,7 @@ export default function PhotographerApplicationModal({ isOpen, onClose }: Photog
                                 <div>
                                     <div className="flex items-center gap-3 mb-4">
                                         <div className="w-10 h-10 bg-white/10 flex items-center justify-center">
-                                            <MapPin className="w-5 h-5 text-white/60" />
+                                            <MapPinIcon className="w-5 h-5 text-white/60" />
                                         </div>
                                         <div>
                                             <h2 className="text-xl font-bold text-white">Final details</h2>

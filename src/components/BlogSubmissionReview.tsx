@@ -9,7 +9,20 @@ import { supabase } from '../lib/supabase';
 import { useToast } from './Toast';
 import { LoadingSpinner } from './Loading';
 import RichTextEditor from './RichTextEditor';
-import { FileText, CheckCircle, XCircle, Eye, Mail, Calendar, BookOpen, MessageSquare, User, X, AlertTriangle, Check } from 'lucide-react';
+import {
+  DocumentTextIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  EyeIcon,
+  EnvelopeIcon,
+  CalendarIcon,
+  BookOpenIcon,
+  ChatBubbleLeftRightIcon,
+  UserIcon,
+  XMarkIcon,
+  ExclamationTriangleIcon,
+  CheckIcon
+} from '@heroicons/react/24/outline';
 
 interface AffiliateLink {
   book_title?: string;
@@ -843,15 +856,15 @@ export default function BlogSubmissionReview() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-yellow-400/20 text-yellow-400 border-white';
+        return 'bg-yellow-400/10 text-yellow-400 border-yellow-400/20';
       case 'approved':
-        return 'bg-blue-400/20 text-blue-400 border-white';
+        return 'bg-blue-400/10 text-blue-400 border-blue-400/20';
       case 'rejected':
-        return 'bg-red-400/20 text-red-400 border-white';
+        return 'bg-red-400/10 text-red-400 border-red-400/20';
       case 'published':
-        return 'bg-green-400/20 text-green-400 border-white';
+        return 'bg-green-400/10 text-green-400 border-green-400/20';
       default:
-        return 'bg-white/10 text-white/60 border-white';
+        return 'bg-white/5 text-white/40 border-white/10';
     }
   };
 
@@ -867,7 +880,7 @@ export default function BlogSubmissionReview() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          <FileText className="w-5 h-5" />
+          <DocumentTextIcon className="w-5 h-5" />
           Blog Submissions Review
         </h2>
         <div className="flex gap-2">
@@ -875,9 +888,9 @@ export default function BlogSubmissionReview() {
             <button
               key={status}
               onClick={() => setFilterStatus(status)}
-              className={`px-3 py-1 text-sm rounded transition ${filterStatus === status
-                ? 'bg-white/20 text-white'
-                : 'bg-white/5 text-white/60 hover:bg-white/10'
+              className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all ${filterStatus === status
+                ? 'bg-white text-black'
+                : 'bg-white/5 text-white/40 hover:bg-white/10'
                 }`}
             >
               {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -887,37 +900,37 @@ export default function BlogSubmissionReview() {
       </div>
 
       {/* Submissions List */}
-      <div className="bg-black/50 border border-white rounded-none p-6">
+      <div className="bg-black/20 border border-white/5 overflow-hidden">
         {submissions.length === 0 ? (
-          <p className="text-white/60 text-left py-8">No submissions found</p>
+          <p className="text-white/40 text-[10px] uppercase font-bold text-center py-12 tracking-widest">No submissions found</p>
         ) : (
-          <div className="space-y-4">
+          <div className="divide-y divide-white/5">
             {submissions.map((submission) => (
               <div
                 key={submission.id}
-                className="bg-black/30 border border-white rounded-none p-4 hover:border-white transition"
+                className="group p-6 hover:bg-white/[0.02] transition-colors"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="text-white font-bold text-lg mb-2">{submission.title}</h3>
-                    <div className="flex items-center gap-4 text-sm text-white/60 mb-2 flex-wrap">
-                      <span className="flex items-center gap-1">
-                        <User className="w-3 h-3" />
+                    <h3 className="text-white font-bold text-lg mb-2 group-hover:text-white transition-colors">{submission.title}</h3>
+                    <div className="flex items-center gap-4 text-[10px] uppercase tracking-wider text-white/40 mb-4 flex-wrap">
+                      <span className="flex items-center gap-1.5">
+                        <UserIcon className="w-3.5 h-3.5 opacity-50" />
                         {submission.author_name}
                       </span>
-                      <span className="flex items-center gap-1">
-                        <Mail className="w-3 h-3" />
+                      <span className="flex items-center gap-1.5">
+                        <EnvelopeIcon className="w-3.5 h-3.5 opacity-50" />
                         {submission.author_email}
                       </span>
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
+                      <span className="flex items-center gap-1.5">
+                        <CalendarIcon className="w-3.5 h-3.5 opacity-50" />
                         {formatDate(submission.created_at)}
                       </span>
-                      <span className={`px-2 py-1 rounded text-xs border ${getStatusColor(submission.status)}`}>
+                      <span className={`px-2 py-0.5 border ${getStatusColor(submission.status)} font-black text-[9px]`}>
                         {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
                         {submission.status === 'approved' && (
-                          <span className="ml-1 text-yellow-400" title="Approved but not yet published - click to publish">
-                            ⚠️ Needs Publishing
+                          <span className="ml-1 text-yellow-500">
+                            (NEEDS PUBLISHING)
                           </span>
                         )}
                       </span>
@@ -927,22 +940,22 @@ export default function BlogSubmissionReview() {
                     )}
                     {submission.amazon_affiliate_links && submission.amazon_affiliate_links.length > 0 && (
                       <div className="flex items-center gap-2 text-xs text-white/50">
-                        <BookOpen className="w-3 h-3" />
+                        <BookOpenIcon className="w-3 h-3" />
                         <span>{submission.amazon_affiliate_links.length} affiliate link(s)</span>
                       </div>
                     )}
                     {submission.subdomain && (
-                      <div className="flex items-center gap-2 text-xs text-white/50">
-                        <span>Subdomain: {submission.subdomain}</span>
+                      <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-white/30 mb-1">
+                        <span>Subdomain: <span className="text-white/60">{submission.subdomain}</span></span>
                       </div>
                     )}
                     {submission.amazon_storefront_id && (
-                      <div className="flex items-center gap-2 text-xs text-white/50">
-                        <span>Storefront ID: {submission.amazon_storefront_id} <span className="text-white/30">(internal)</span></span>
+                      <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-white/30 mb-2">
+                        <span>Storefront ID: <span className="text-white/60">{submission.amazon_storefront_id}</span></span>
                       </div>
                     )}
-                    <div className="flex items-center gap-2 text-xs text-white/50 mt-1">
-                      <span className="px-1.5 py-0.5 border border-white/20 rounded text-[10px] uppercase tracking-wider">
+                    <div className="flex items-center gap-2 text-[10px] text-white/40 mt-1">
+                      <span className="px-2 py-0.5 border border-white/10 text-[9px] uppercase tracking-widest font-bold">
                         {BLOG_COLUMNS.find(c => c.value === (submission.blog_column || 'main'))?.label || submission.blog_column || 'Main Blog'}
                       </span>
                     </div>
@@ -954,18 +967,17 @@ export default function BlogSubmissionReview() {
                       setRejectionReason(submission.rejected_reason || '');
                       setSelectedColumn(submission.blog_column || 'main');
                       setEditableContent(convertToHtml(submission.content || ''));
-                      // Transform DB links to RTE format
                       const initialLinks = (submission.amazon_affiliate_links || []).map((link: any) => ({
                         url: link.link,
                         title: link.product_title || link.book_title || link.item_title || 'Untitled',
-                        phrase: '' // We don't have the phrase in DB, but it's okay for existing links
+                        phrase: ''
                       }));
                       setEditableLinks(initialLinks);
                     }}
-                    className="ml-4 p-2 hover:bg-white/10 rounded transition"
+                    className="ml-4 p-3 bg-white/5 hover:bg-white text-white hover:text-black transition-all flex-shrink-0"
                     title="Review submission"
                   >
-                    <Eye className="w-4 h-4 text-white/60" />
+                    <EyeIcon className="w-5 h-5" />
                   </button>
                 </div>
               </div>
@@ -976,228 +988,234 @@ export default function BlogSubmissionReview() {
 
       {/* Review Modal */}
       {selectedSubmission && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-black border border-white rounded-none p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-white">Review Submission</h3>
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-xl p-4 overflow-hidden">
+          <div className="bg-[#0A0A0A] border border-white/5 w-full max-w-5xl h-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+            <div className="flex items-center justify-between p-6 border-b border-white/5 bg-white/[0.02]">
+              <h3 className="text-xl font-bold text-white tracking-widest uppercase">Review Submission</h3>
               <button
                 onClick={() => {
                   setSelectedSubmission(null);
                   setReviewNotes('');
                   setRejectionReason('');
                 }}
-                className="text-white/60 hover:text-white transition"
+                className="p-2 hover:bg-white/10 text-white/40 hover:text-white transition-all ring-offset-black focus:outline-none"
               >
-                <X className="w-6 h-6" />
+                <XMarkIcon className="w-6 h-6" />
               </button>
             </div>
 
-            <div className="space-y-6">
+            <div className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar">
               {/* Submission Details */}
-              <div className="bg-black/50 border border-white rounded-none p-4">
-                <h4 className="text-white font-bold mb-2">Title</h4>
-                <p className="text-white/90 mb-4">{selectedSubmission.title}</p>
+              <section>
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-4 flex items-center gap-2">
+                  <DocumentTextIcon className="w-3.5 h-3.5" />
+                  General Information
+                </h4>
 
-                <h4 className="text-white font-bold mb-2">Column Classification</h4>
-                <div className="mb-4">
-                  <select
-                    value={selectedColumn}
-                    onChange={(e) => setSelectedColumn(e.target.value)}
-                    className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none"
-                  >
-                    {BLOG_COLUMNS.map(column => (
-                      <option key={column.value} value={column.value}>
-                        {column.label}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-white/50 text-xs mt-1">
-                    Select the column this article belongs to. This determines where it appears on the site.
-                  </p>
-                </div>
-
-                <h4 className="text-white font-bold mb-2">Author</h4>
-                <p className="text-white/90 mb-2">{selectedSubmission.author_name}</p>
-                <p className="text-white/60 text-sm mb-4">{selectedSubmission.author_email}</p>
-
-                {selectedSubmission.excerpt && (
-                  <>
-                    <h4 className="text-white font-bold mb-2">Excerpt</h4>
-                    <p className="text-white/90 mb-4">{selectedSubmission.excerpt}</p>
-                  </>
-                )}
-
-                <h4 className="text-white font-bold mb-2">Content (Editable - Select text to add links)</h4>
-                <RichTextEditor
-                  content={editableContent}
-                  initialLinks={editableLinks}
-                  onChange={(html, links) => {
-                    setEditableContent(html);
-                    setEditableLinks(links);
-                  }}
-                  placeholder="Article content..."
-                />
-
-                {selectedSubmission.amazon_storefront_id && (
-                  <>
-                    <h4 className="text-white font-bold mb-2">Amazon Storefront ID <span className="text-white/50 text-xs font-normal">(Internal - Not displayed publicly)</span></h4>
-                    <div className="bg-black/30 border border-white rounded-none p-3 mb-4">
-                      <p className="text-white/70 text-sm mb-2">This storefront ID is stored for tracking purposes only and will not be displayed on the published blog post.</p>
-                      <a
-                        href={`https://www.amazon.com/shop/${selectedSubmission.amazon_storefront_id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-400 hover:text-blue-300 text-sm break-all"
-                      >
-                        {selectedSubmission.amazon_storefront_id}
-                      </a>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-white/20 mb-2">Title</label>
+                      <p className="text-lg font-bold text-white">{selectedSubmission.title}</p>
                     </div>
-                  </>
-                )}
 
-                {selectedSubmission.amazon_affiliate_links && selectedSubmission.amazon_affiliate_links.length > 0 && (
-                  <>
-                    <h4 className="text-white font-bold mb-2 flex items-center gap-2">
-                      <BookOpen className="w-4 h-4" />
-                      Amazon Affiliate Links
-                    </h4>
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-white/20 mb-2">Column Classification</label>
+                      <select
+                        value={selectedColumn}
+                        onChange={(e) => setSelectedColumn(e.target.value)}
+                        className="w-full px-4 py-2.5 bg-white/5 border border-white/10 text-white text-sm focus:border-white focus:outline-none transition-colors"
+                      >
+                        {BLOG_COLUMNS.map(column => (
+                          <option key={column.value} value={column.value} className="bg-black">
+                            {column.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
 
-                    {/* Link Health Check */}
-                    <div className="bg-white/5 border border-white/10 rounded-none p-4 mb-4">
-                      <h5 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-green-400" />
-                        Link Formatting Check
-                      </h5>
-                      <p className="text-white/60 text-xs mb-3">
-                        Verifies if book titles in the content will be correctly hyperlinked based on the latest formatting rules (including apostrophe and "The" prefix fixes).
-                      </p>
-                      <div className="space-y-2">
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-white/20 mb-2">Author</label>
+                      <p className="text-white font-bold">{selectedSubmission.author_name}</p>
+                      <p className="text-white/40 text-xs font-mono mt-1">{selectedSubmission.author_email}</p>
+                    </div>
+
+                    {selectedSubmission.subdomain && (
+                      <div>
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-white/20 mb-2">Subdomain</label>
+                        <p className="text-white font-mono text-sm">{selectedSubmission.subdomain}.thelostandunfounds.com</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </section>
+
+              <section>
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-6 flex items-center gap-2">
+                  <BookOpenIcon className="w-3.5 h-3.5" />
+                  Article Content
+                </h4>
+
+                <div className="space-y-8">
+                  {selectedSubmission.excerpt && (
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-white/20 mb-2">Excerpt</label>
+                      <p className="text-white/60 text-sm italic border-l border-white/10 pl-4 py-2 bg-white/[0.02]">{selectedSubmission.excerpt}</p>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-white/20 mb-4">Body Content</label>
+                    <div className="border border-white/5">
+                      <RichTextEditor
+                        content={editableContent}
+                        initialLinks={editableLinks}
+                        onChange={(html, links) => {
+                          setEditableContent(html);
+                          setEditableLinks(links);
+                        }}
+                        placeholder="Article content..."
+                      />
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {(selectedSubmission.amazon_storefront_id || (selectedSubmission.amazon_affiliate_links && selectedSubmission.amazon_affiliate_links.length > 0)) && (
+                <section>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-6 flex items-center gap-2">
+                    <CheckCircleIcon className="w-3.5 h-3.5" />
+                    Affiliate & Commercial Assets
+                  </h4>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {selectedSubmission.amazon_storefront_id && (
+                      <div className="space-y-4">
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-white/20">Storefront</label>
+                        <div className="p-4 bg-white/5 border border-white/5 space-y-2">
+                          <p className="text-white text-sm font-bold">{selectedSubmission.amazon_storefront_id}</p>
+                          <a
+                            href={`https://www.amazon.com/shop/${selectedSubmission.amazon_storefront_id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-white/40 hover:text-white text-[10px] uppercase font-bold tracking-widest block transition-colors"
+                          >
+                            Verify on Amazon →
+                          </a>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedSubmission.amazon_affiliate_links && selectedSubmission.amazon_affiliate_links.length > 0 && (
+                      <div className="space-y-4">
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-white/20">Embedded Links</label>
+                        <div className="divide-y divide-white/5 border border-white/5">
+                          {selectedSubmission.amazon_affiliate_links.map((link, idx) => (
+                            <div key={idx} className="p-3 bg-white/[0.02]">
+                              <p className="text-white text-[11px] font-bold mb-0.5">{getLinkTitle(link)}</p>
+                              <p className="text-white/30 text-[9px] truncate font-mono">{link.link}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Link Health */}
+                  {selectedSubmission.amazon_affiliate_links && selectedSubmission.amazon_affiliate_links.length > 0 && (
+                    <div className="mt-8">
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-white/20 mb-4">Link Detection Health</label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {analyzeLinkHealth(selectedSubmission.content, selectedSubmission.amazon_affiliate_links).map((result, idx) => (
-                          <div key={idx} className="flex items-center justify-between text-sm p-2 bg-black/30 border border-white/5 rounded">
-                            <div className="flex items-center gap-2">
-                              {result.count > 0 ? (
-                                <Check className="w-4 h-4 text-green-400" />
-                              ) : (
-                                <AlertTriangle className="w-4 h-4 text-red-400" />
-                              )}
-                              <span className="text-white/90">{result.title}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className={`px-2 py-0.5 rounded text-xs font-mono ${result.count > 0 ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
-                                Found: {result.count}
-                              </span>
-                            </div>
+                          <div key={idx} className="flex items-center justify-between p-3 bg-white/5 border border-white/5">
+                            <span className="text-[10px] font-bold text-white uppercase tracking-wider truncate mr-4">{result.title}</span>
+                            <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-tighter ${result.count > 0 ? 'text-green-400 bg-green-400/10' : 'text-red-400 bg-red-400/10'}`}>
+                              {result.count} Matches
+                            </span>
                           </div>
                         ))}
                       </div>
                     </div>
-
-                    <div className="space-y-2 mb-4">
-                      {selectedSubmission.amazon_affiliate_links.map((link, index) => (
-                        <div key={index} className="bg-black/30 border border-white rounded-none p-3">
-                          <p className="text-white/90 font-medium mb-1">{getLinkTitle(link)}</p>
-                          <a
-                            href={link.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-400 hover:text-blue-300 text-sm break-all"
-                          >
-                            {link.link}
-                          </a>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* Admin Notes */}
-              <div>
-                <label className="block text-white/80 text-sm mb-2 flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4" />
-                  Admin Notes (optional)
-                </label>
-                <textarea
-                  value={reviewNotes}
-                  onChange={(e) => setReviewNotes(e.target.value)}
-                  className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none"
-                  rows={3}
-                  placeholder="Internal notes about this submission..."
-                />
-              </div>
-
-              {/* Rejection Reason (if rejecting) */}
-              {selectedSubmission.status === 'pending' && (
-                <div>
-                  <label className="block text-white/80 text-sm mb-2">Rejection Reason (required if rejecting)</label>
-                  <textarea
-                    value={rejectionReason}
-                    onChange={(e) => setRejectionReason(e.target.value)}
-                    className="w-full px-4 py-2 bg-black/50 border border-white rounded-none text-white focus:border-white focus:outline-none"
-                    rows={2}
-                    placeholder="Reason for rejection (will be shared with submitter)..."
-                  />
-                </div>
+                  )}
+                </section>
               )}
 
-              {/* Actions */}
-              <div className="flex gap-4 pt-4 border-t border-white">
-                <button
-                  onClick={() => handleSaveRevisions(selectedSubmission)}
-                  disabled={isSaving}
-                  className="px-6 py-2 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-none transition flex items-center gap-2 disabled:opacity-50"
-                >
-                  <Check className="w-4 h-4" />
-                  {isSaving ? 'Saving...' : 'Save Revisions'}
-                </button>
+              <section className="pt-10 border-t border-white/5">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-6 flex items-center gap-2">
+                  <ChatBubbleLeftRightIcon className="w-3.5 h-3.5" />
+                  Editorial Action
+                </h4>
 
-                {selectedSubmission.status === 'pending' && (
-                  <>
-                    <button
-                      onClick={() => handleApprove(selectedSubmission)}
-                      className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-none transition flex items-center gap-2"
-                    >
-                      <CheckCircle className="w-4 h-4" />
-                      Approve
-                    </button>
-                    <button
-                      onClick={() => handleReject(selectedSubmission)}
-                      className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-none transition flex items-center gap-2"
-                    >
-                      <XCircle className="w-4 h-4" />
-                      Reject
-                    </button>
-                  </>
-                )}
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-white/20 mb-2">Internal Admin Notes</label>
+                    <textarea
+                      value={reviewNotes}
+                      onChange={(e) => setReviewNotes(e.target.value)}
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/20 focus:border-white focus:outline-none transition-colors"
+                      rows={3}
+                      placeholder="Notes for fellow admins..."
+                    />
+                  </div>
 
-                {selectedSubmission.status === 'approved' && (
-                  <div className="flex flex-col gap-2">
-                    <p className="text-white/70 text-xs mb-1">
-                      Publishing to: <span className="text-white font-bold">{BLOG_COLUMNS.find(c => c.value === selectedColumn)?.label}</span>
-                    </p>
-                    {!selectedSubmission.subdomain && (
-                      <div className="bg-yellow-900/20 border border-white rounded-none p-3 mb-2">
-                        <p className="text-yellow-400 text-sm">
-                          ⚠️ No subdomain set. This post may not appear on the Book Club page. Consider setting a subdomain before publishing.
-                        </p>
-                      </div>
-                    )}
+                  {selectedSubmission.status === 'pending' && (
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-white/20 mb-2">Author Rejection Feedback</label>
+                      <textarea
+                        value={rejectionReason}
+                        onChange={(e) => setRejectionReason(e.target.value)}
+                        className="w-full px-4 py-3 bg-red-900/5 border border-red-900/20 text-white placeholder-white/20 focus:border-red-500 focus:outline-none transition-colors"
+                        rows={2}
+                        placeholder="Why is this being rejected? (Author will see this)"
+                      />
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              <div className="p-6 bg-white/[0.02] border-t border-white/5 flex flex-wrap items-center justify-between gap-4">
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => handleSaveRevisions(selectedSubmission)}
+                    disabled={isSaving}
+                    className="px-6 py-2 bg-white/5 hover:bg-white text-white hover:text-black font-black uppercase tracking-widest text-[10px] transition-all disabled:opacity-50"
+                  >
+                    {isSaving ? 'SAVING...' : 'SAVE REVISIONS'}
+                  </button>
+
+                  {selectedSubmission.status === 'pending' && (
+                    <>
+                      <button
+                        onClick={() => handleApprove(selectedSubmission)}
+                        className="px-6 py-2 bg-blue-500/20 hover:bg-blue-500 text-blue-400 hover:text-white font-black uppercase tracking-widest text-[10px] transition-all"
+                      >
+                        APPROVE
+                      </button>
+                      <button
+                        onClick={() => handleReject(selectedSubmission)}
+                        className="px-6 py-2 bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white font-black uppercase tracking-widest text-[10px] transition-all"
+                      >
+                        REJECT
+                      </button>
+                    </>
+                  )}
+
+                  {selectedSubmission.status === 'approved' && (
                     <button
                       onClick={() => {
-                        // Update the submission object with the selected column before publishing
-                        const submissionToPublish = {
-                          ...selectedSubmission,
-                          blog_column: selectedColumn
-                        };
+                        const submissionToPublish = { ...selectedSubmission, blog_column: selectedColumn };
                         handlePublish(submissionToPublish);
                       }}
-                      className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-none transition flex items-center gap-2"
+                      className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white font-black uppercase tracking-widest text-[10px] transition-all flex items-center gap-2"
                     >
-                      <CheckCircle className="w-4 h-4" />
-                      Publish to Blog
+                      <CheckCircleIcon className="w-4 h-4" />
+                      PUBLISH TO BLOG
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
+
                 <button
                   onClick={() => {
                     setSelectedSubmission(null);
@@ -1205,9 +1223,9 @@ export default function BlogSubmissionReview() {
                     setRejectionReason('');
                     setSelectedColumn('main');
                   }}
-                  className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded text-white transition"
+                  className="px-6 py-2 bg-white/5 hover:bg-white/10 text-white/40 hover:text-white font-black uppercase tracking-widest text-[10px] transition-all"
                 >
-                  Close
+                  CLOSE
                 </button>
               </div>
             </div>

@@ -16,7 +16,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical } from 'lucide-react';
+import { Bars2Icon } from '@heroicons/react/24/outline';
 import { cn } from './utils';
 
 interface SortableItemProps {
@@ -60,7 +60,7 @@ function SortableItem({ id, children, className }: SortableItemProps) {
         {...listeners}
         className="cursor-grab active:cursor-grabbing p-1 hover:bg-white/10 transition-colors"
       >
-        <GripVertical className="w-4 h-4 text-white/50" />
+        <Bars2Icon className="w-4 h-4 text-white/50" />
       </div>
       <div className="flex-1">{children}</div>
     </div>

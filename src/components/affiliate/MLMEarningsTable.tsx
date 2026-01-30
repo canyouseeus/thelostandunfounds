@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { DollarSign } from 'lucide-react';
+import { CurrencyDollarIcon } from '@heroicons/react/24/outline';
 
 interface MLMEarningsTableProps {
   affiliateId: string;
@@ -65,7 +65,7 @@ export default function MLMEarningsTable({ affiliateId }: MLMEarningsTableProps)
     <div className="bg-black/50 border-0 rounded-none p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <DollarSign className="text-green-400" size={24} />
+          <CurrencyDollarIcon className="text-green-400 w-6 h-6" />
           <h3 className="text-xl font-bold text-white">MLM Earnings History</h3>
         </div>
       </div>
@@ -139,8 +139,8 @@ export default function MLMEarningsTable({ affiliateId }: MLMEarningsTableProps)
                     </td>
                     <td className="py-3 text-center">
                       <span className={`text-xs px-2 py-1 rounded-none ${earning.level === 1
-                          ? 'bg-purple-500/20 text-purple-400'
-                          : 'bg-blue-500/20 text-blue-400'
+                        ? 'bg-purple-500/20 text-purple-400'
+                        : 'bg-blue-500/20 text-blue-400'
                         }`}>
                         L{earning.level} ({earning.level === 1 ? '2%' : '1%'})
                       </span>
@@ -159,7 +159,7 @@ export default function MLMEarningsTable({ affiliateId }: MLMEarningsTableProps)
         </div>
       ) : (
         <div className="text-center py-8">
-          <DollarSign className="text-white/20 mx-auto mb-3" size={48} />
+          <CurrencyDollarIcon className="text-white/20 mx-auto mb-3 w-12 h-12" />
           <p className="text-white/60 text-sm">No MLM earnings yet</p>
           <p className="text-white/40 text-xs mt-1">Build your affiliate network to earn MLM bonuses!</p>
         </div>

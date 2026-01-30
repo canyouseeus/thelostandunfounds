@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, Copy, Tag } from 'lucide-react';
+import { CheckIcon, ClipboardIcon, TagIcon } from '@heroicons/react/24/outline';
 
 interface DiscountCodeDisplayProps {
   affiliateCode: string;
@@ -27,7 +27,7 @@ export default function DiscountCodeDisplay({ affiliateCode, discountPercent, cr
     return (
       <div className="bg-black/50 border-2 border-white/20 rounded-none p-6 opacity-50">
         <div className="flex items-center gap-3 mb-4">
-          <Tag className="text-white/40" size={24} />
+          <TagIcon className="text-white/40 w-6 h-6" />
           <h3 className="text-xl font-bold text-white/40">Employee Discount (Inactive)</h3>
         </div>
         <p className="text-white/60 text-sm">Switch to Discount Mode to activate your employee discount code</p>
@@ -38,7 +38,7 @@ export default function DiscountCodeDisplay({ affiliateCode, discountPercent, cr
   return (
     <div className="bg-black/50 border-2 border-green-400 rounded-none p-6">
       <div className="flex items-center gap-3 mb-4">
-        <Tag className="text-green-400" size={24} />
+        <TagIcon className="text-green-400 w-6 h-6" />
         <h3 className="text-xl font-bold text-white">Employee Discount</h3>
         <span className="bg-green-400/20 text-green-400 text-xs px-2 py-1 rounded-none">ACTIVE</span>
       </div>
@@ -55,7 +55,7 @@ export default function DiscountCodeDisplay({ affiliateCode, discountPercent, cr
             className="bg-white text-black px-4 py-3 rounded-none hover:bg-white/90 transition-colors"
             title="Copy code"
           >
-            {copied ? <Check size={20} /> : <Copy size={20} />}
+            {copied ? <CheckIcon className="w-5 h-5" /> : <ClipboardIcon className="w-5 h-5" />}
           </button>
         </div>
       </div>

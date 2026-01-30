@@ -71,17 +71,16 @@ async function getBalanceBreakdown(supabase: SupabaseClient, affiliateId: string
     .from('affiliate_commissions')
     .select('amount, available_date')
     .eq('affiliate_id', affiliateId)
-    .eq('status', 'pending')
-    .not('available_date', 'is', null)
-    .lte('available_date', now);
+    .eq('status', 'approved')
+    .or(`available_date.lte.${now},available_date.is.null`);
 
   // Get pending commissions (still in holding period)
   const { data: pendingCommissions, error: pendingError } = await supabase
     .from('affiliate_commissions')
     .select('amount, available_date')
     .eq('affiliate_id', affiliateId)
-    .eq('status', 'pending')
-    .or(`available_date.is.null,available_date.gt.${now}`)
+    .eq('status', 'approved')
+    .gt('available_date', now)
     .order('available_date', { ascending: true });
 
   // Get total paid out
@@ -429,16 +428,16 @@ function getStatusLabel(status: string, availableDate?: string): string {
     return 'Cancelled';
   }
 
-  if (statusLower === 'pending' && availableDate) {
+  if ((statusLower === 'pending' || statusLower === 'approved') && availableDate) {
     const available = new Date(availableDate);
     const now = new Date();
 
     if (available <= now) {
-      return 'Available';
+      return statusLower === 'approved' ? 'Approved (Available)' : 'Pending (Reviewing)';
     }
 
     const daysUntil = Math.ceil((available.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    return `Pending (${daysUntil} day${daysUntil === 1 ? '' : 's'})`;
+    return `Holding (${daysUntil} day${daysUntil === 1 ? '' : 's'})`;
   }
 
   return 'Pending';

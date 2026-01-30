@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { cn } from './utils';
-import { Play, Pause, RotateCcw } from 'lucide-react';
+import { PlayIcon, PauseIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 
 type ClockMode = 'clock' | 'stopwatch' | 'timer';
 type TimerState = 'set' | 'countdown' | 'running';
@@ -301,10 +301,10 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
                     {/* Controls */}
                     <div className="absolute bottom-6 flex items-center gap-4">
                         <button onClick={handleSwToggle} className="p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all">
-                            {swRunning ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-1" />}
+                            {swRunning ? <PauseIcon className="w-5 h-5" /> : <PlayIcon className="w-5 h-5 ml-1" />}
                         </button>
                         <button onClick={handleSwReset} className="p-3 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all">
-                            <RotateCcw className="w-4 h-4" />
+                            <ArrowPathIcon className="w-4 h-4" />
                         </button>
                     </div>
                 </div>
@@ -352,11 +352,11 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
                             <div className="absolute bottom-6 flex items-center gap-4">
                                 {!alarmTriggered && (
                                     <button onClick={() => setTimerRunning(!timerRunning)} className="p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all">
-                                        {timerRunning ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-1" />}
+                                        {timerRunning ? <PauseIcon className="w-5 h-5" /> : <PlayIcon className="w-5 h-5 ml-1" />}
                                     </button>
                                 )}
                                 <button onClick={handleTimerReset} className="p-3 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all">
-                                    <RotateCcw className="w-4 h-4" />
+                                    <ArrowPathIcon className="w-4 h-4" />
                                 </button>
                             </div>
                         </>

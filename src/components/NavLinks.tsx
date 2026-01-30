@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { User as UserIcon, LogOut, Sparkles } from 'lucide-react';
+import { UserIcon, ArrowRightStartOnRectangleIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
 import { useSageMode } from '../contexts/SageModeContext';
 import { useState } from 'react';
@@ -140,7 +140,7 @@ export default function NavLinks({
                             }}
                         >
                             <div className="flex items-center gap-2">
-                                <Sparkles className="w-4 h-4" />
+                                <SparklesIcon className="w-4 h-4" />
                                 SAGE MODE
                             </div>
                             <span className={`text-xs ${sageModeState.enabled ? 'text-yellow-400' : 'text-white/40'}`}>
@@ -150,7 +150,7 @@ export default function NavLinks({
                     )}
                     <button type="button" className="menu-item w-full text-left" onClick={handleSignOut}>
                         <div className="flex items-center gap-2">
-                            <LogOut className="w-4 h-4" />
+                            <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
                             LOG OUT
                         </div>
                     </button>

@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronDownIcon } from '@heroicons/react/24/outline';
 import { cn } from '@/components/ui/utils';
 
 interface AdminBentoCardProps {
@@ -10,6 +12,8 @@ interface AdminBentoCardProps {
   rowSpan?: 1 | 2 | 3;
   className?: string;
   action?: React.ReactNode;
+  collapsible?: boolean;
+  defaultCollapsed?: boolean;
 }
 
 export function AdminBentoCard({
@@ -20,8 +24,12 @@ export function AdminBentoCard({
   colSpan = 1,
   rowSpan = 1,
   className,
-  action
+  action,
+  collapsible = true,
+  defaultCollapsed = false
 }: AdminBentoCardProps) {
+  const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
+
   const colSpanClasses = {
     1: 'md:col-span-1',
     2: 'md:col-span-2',
@@ -43,6 +51,9 @@ export function AdminBentoCard({
     3: 'md:row-span-3',
   };
 
+  // If collapsed, force rowSpan to 1 to avoid empty space
+  const currentRowSpan = isCollapsed ? 1 : rowSpan;
+
   return (
     <div
       className={cn(
@@ -51,19 +62,26 @@ export function AdminBentoCard({
         'rounded-none',
         // Blog card-style hover effects - subtle lift
         'transition-all duration-300 ease-out',
-        'hover:-translate-y-0.5 hover:scale-[1.01]',
+        !isCollapsed && 'hover:-translate-y-0.5 hover:scale-[1.01]',
         'hover:bg-[#0a0a0a]',
-        'hover:shadow-[0_8px_30px_rgba(0,0,0,0.5)]',
+        !isCollapsed && 'hover:shadow-[0_8px_30px_rgba(0,0,0,0.5)]',
         // Mobile: no overflow, allow natural height
         // Desktop: allow overflow for fixed-height grid
         'overflow-visible md:overflow-hidden',
         colSpanClasses[colSpan],
-        rowSpanClasses[rowSpan],
+        rowSpanClasses[currentRowSpan],
         className
       )}
     >
       {/* Header - compact on mobile */}
-      <div className="flex items-center justify-between px-4 py-3 md:px-5 md:py-4 bg-[#0a0a0a]">
+      <div
+        className={cn(
+          "flex items-center justify-between px-4 py-3 md:px-5 md:py-4 bg-[#0a0a0a]",
+          "min-h-[56px] md:min-h-[64px]",
+          collapsible && "cursor-pointer select-none"
+        )}
+        onClick={() => collapsible && setIsCollapsed(!isCollapsed)}
+      >
         <div className="flex items-center gap-2 md:gap-3 min-w-0">
           {icon && (
             <div className="text-white/50 group-hover:text-white/80 transition-colors flex-shrink-0">
@@ -74,20 +92,42 @@ export function AdminBentoCard({
             {title}
           </h3>
         </div>
-        {action && <div className="flex-shrink-0 ml-2">{action}</div>}
-      </div>
-
-      {/* Content Body - no scroll on mobile, scroll on desktop if needed */}
-      <div className="flex-1 p-4 md:p-5 flex flex-col md:overflow-y-auto">
-        {children}
-      </div>
-
-      {/* Footer */}
-      {footer && (
-        <div className="mt-auto px-4 py-3 md:px-5 md:py-4 bg-black/30">
-          {footer}
+        <div className="flex items-center gap-2">
+          {action && <div className="flex-shrink-0" onClick={e => e.stopPropagation()}>{action}</div>}
+          {collapsible && (
+            <ChevronDownIcon
+              className={cn(
+                "w-4 h-4 text-white/40 transition-transform duration-300",
+                isCollapsed ? "" : "rotate-180"
+              )}
+            />
+          )}
         </div>
-      )}
+      </div>
+
+      {/* Content Body */}
+      <AnimatePresence initial={false}>
+        {!isCollapsed && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="flex-col md:overflow-hidden"
+          >
+            <div className="flex-1 p-4 md:p-5 flex flex-col">
+              {children}
+            </div>
+
+            {/* Footer */}
+            {footer && (
+              <div className="mt-auto px-4 py-3 md:px-5 md:py-4 bg-black/30">
+                {footer}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

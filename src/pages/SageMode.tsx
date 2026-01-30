@@ -6,7 +6,15 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useSageMode } from '../contexts/SageModeContext';
-import { Sparkles, CheckSquare, Square, Code, FileText, Eye, Download } from 'lucide-react';
+import {
+  SparklesIcon,
+  CheckBadgeIcon,
+  StopIcon,
+  CodeBracketIcon,
+  DocumentTextIcon,
+  EyeIcon,
+  ArrowDownTrayIcon
+} from '@heroicons/react/24/outline';
 
 export default function SageMode() {
   const {
@@ -66,7 +74,7 @@ export default function SageMode() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-2 tracking-wide flex items-center gap-3">
-                <Sparkles className="w-10 h-10 text-yellow-400" />
+                <SparklesIcon className="w-10 h-10 text-yellow-400" />
                 SAGE MODE
               </h1>
               <p className="text-white/60 text-sm">
@@ -76,11 +84,10 @@ export default function SageMode() {
             <div className="flex items-center gap-4">
               <button
                 onClick={toggleSageMode}
-                className={`px-6 py-3 rounded-none border font-medium transition ${
-                  state.enabled
+                className={`px-6 py-3 rounded-none border font-medium transition ${state.enabled
                     ? 'bg-yellow-400/20 border-yellow-400 text-yellow-400 hover:bg-yellow-400/30'
                     : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
-                }`}
+                  }`}
               >
                 {state.enabled ? 'SAGE MODE: ON' : 'SAGE MODE: OFF'}
               </button>
@@ -88,14 +95,14 @@ export default function SageMode() {
                 to="/designsystem/preview"
                 className="px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white font-medium transition flex items-center gap-2"
               >
-                <Eye className="w-4 h-4" />
+                <EyeIcon className="w-4 h-4" />
                 Preview
               </Link>
               <Link
                 to="/sagemode/reports"
                 className="px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white font-medium transition flex items-center gap-2"
               >
-                <FileText className="w-4 h-4" />
+                <DocumentTextIcon className="w-4 h-4" />
                 Reports
               </Link>
             </div>
@@ -104,7 +111,7 @@ export default function SageMode() {
           {state.enabled && (
             <div className="bg-yellow-400/10 border border-yellow-400/30 rounded-none p-4">
               <p className="text-yellow-400 text-sm">
-                <strong>SAGE MODE ACTIVE:</strong> Select components below to experiment with design changes. 
+                <strong>SAGE MODE ACTIVE:</strong> Select components below to experiment with design changes.
                 Add notes and code snippets for each component, then preview changes on the Preview page.
               </p>
             </div>
@@ -116,11 +123,10 @@ export default function SageMode() {
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setSelectedCategory('all')}
-              className={`px-4 py-2 rounded-none border text-sm font-medium transition ${
-                selectedCategory === 'all'
+              className={`px-4 py-2 rounded-none border text-sm font-medium transition ${selectedCategory === 'all'
                   ? 'bg-white text-black border-white'
                   : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
-              }`}
+                }`}
             >
               All
             </button>
@@ -128,11 +134,10 @@ export default function SageMode() {
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-none border text-sm font-medium transition ${
-                  selectedCategory === category
+                className={`px-4 py-2 rounded-none border text-sm font-medium transition ${selectedCategory === category
                     ? 'bg-white text-black border-white'
                     : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
-                }`}
+                  }`}
               >
                 {category}
               </button>
@@ -145,7 +150,7 @@ export default function SageMode() {
           <div className="lg:col-span-2 space-y-4">
             <div className="bg-black/50 border border-white/10 rounded-none p-6">
               <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <CheckSquare className="w-5 h-5" />
+                <CheckBadgeIcon className="w-5 h-5" />
                 Select Components
               </h2>
               <div className="space-y-2">
@@ -160,9 +165,9 @@ export default function SageMode() {
                         className="flex items-center justify-center w-5 h-5 border border-white/40 rounded-none"
                       >
                         {selection.selected ? (
-                          <CheckSquare className="w-4 h-4 text-white" />
+                          <CheckBadgeIcon className="w-4 h-4 text-white" />
                         ) : (
-                          <Square className="w-4 h-4 text-white/40" />
+                          <StopIcon className="w-4 h-4 text-white/40" />
                         )}
                       </button>
                       <div>
@@ -184,7 +189,7 @@ export default function SageMode() {
             {/* Custom Code Section */}
             <div className="bg-black/50 border border-white/10 rounded-none p-6">
               <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <Code className="w-5 h-5" />
+                <CodeBracketIcon className="w-5 h-5" />
                 Custom Code / CSS
               </h2>
               <textarea
@@ -203,7 +208,7 @@ export default function SageMode() {
           <div className="space-y-4">
             <div className="bg-black/50 border border-white/10 rounded-none p-6">
               <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <FileText className="w-5 h-5" />
+                <DocumentTextIcon className="w-5 h-5" />
                 Component Notes
               </h2>
 
@@ -288,7 +293,7 @@ export default function SageMode() {
                   onClick={handleExport}
                   className="w-full px-4 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white font-medium transition flex items-center justify-center gap-2"
                 >
-                  <Download className="w-4 h-4" />
+                  <ArrowDownTrayIcon className="w-4 h-4" />
                   Export Report
                 </button>
                 <button

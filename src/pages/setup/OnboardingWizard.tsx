@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Check, Copy, ArrowRight, Loader2, AlertCircle, X } from 'lucide-react';
+import { CheckIcon, ClipboardDocumentIcon, ArrowRightIcon, ArrowPathIcon, ExclamationCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -416,7 +416,7 @@ export default function OnboardingWizard() {
                                 disabled={savingUsername || !username.trim()}
                                 className="w-full px-4 py-2 bg-white text-black font-semibold hover:bg-white/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
-                                {savingUsername ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Continue'}
+                                {savingUsername ? <ArrowPathIcon className="w-4 h-4 animate-spin" /> : 'Continue'}
                             </button>
 
                             <button
@@ -445,7 +445,7 @@ export default function OnboardingWizard() {
                                         className="p-2 hover:bg-white/10 transition-colors shrink-0"
                                         title="Copy Email"
                                     >
-                                        {copySuccess ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-white/60" />}
+                                        {copySuccess ? <CheckIcon className="w-4 h-4 text-green-500" /> : <ClipboardDocumentIcon className="w-4 h-4 text-white/60" />}
                                     </button>
                                 </div>
                                 <p className="text-xs text-white/40 mt-2">Give "Viewer" access in Google Drive sharing settings.</p>
@@ -531,7 +531,7 @@ export default function OnboardingWizard() {
                             >
                                 {publishLoading ? (
                                     <>
-                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        <ArrowPathIcon className="w-4 h-4 animate-spin" />
                                         {syncStatus || 'Processing...'}
                                     </>
                                 ) : 'Publish Gallery'}
@@ -550,7 +550,7 @@ export default function OnboardingWizard() {
                     {step === 5 && (
                         <div className="text-center py-4">
                             <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Check className="w-8 h-8 text-black stroke-[3]" />
+                                <CheckIcon className="w-8 h-8 text-black stroke-[3]" />
                             </div>
                             <h2 className="text-2xl font-bold text-white mb-2">Gallery Published!</h2>
                             <p className="text-white/60 text-sm mb-6">

@@ -3,7 +3,7 @@
  * Reusable loading spinners and skeleton components
  */
 
-import { Loader2 } from 'lucide-react';
+import { ArrowPathIcon } from '@heroicons/react/24/outline';
 
 export function LoadingSpinner({ size = 'md', className = '' }: { size?: 'sm' | 'md' | 'lg'; className?: string }) {
   const sizes = {
@@ -13,13 +13,13 @@ export function LoadingSpinner({ size = 'md', className = '' }: { size?: 'sm' | 
   };
 
   return (
-    <Loader2 className={`${sizes[size]} animate-spin text-white/60 ${className}`} />
+    <ArrowPathIcon className={`${sizes[size]} animate-spin text-white/60 ${className}`} />
   );
 }
 
 export function LoadingOverlay({ message }: { message?: string }) {
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center">
+    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[11000] flex items-center justify-center">
       <div className="text-center">
         <LoadingSpinner size="lg" className="mx-auto mb-4" />
         {message && <p className="text-white/80">{message}</p>}
@@ -60,12 +60,12 @@ export function SkeletonCard() {
   );
 }
 
-export function LoadingButton({ 
-  loading, 
-  children, 
-  ...props 
-}: { 
-  loading?: boolean; 
+export function LoadingButton({
+  loading,
+  children,
+  ...props
+}: {
+  loading?: boolean;
   children: React.ReactNode;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (

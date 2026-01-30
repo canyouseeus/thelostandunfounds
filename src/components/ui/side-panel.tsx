@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useEffect } from 'react';
-import { X } from 'lucide-react';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 import { cn } from '@/components/ui/utils';
 
 interface SidePanelProps {
@@ -81,7 +81,7 @@ export function SidePanel({
               onClick={onClose}
               className="p-2 hover:bg-white/10 transition-colors"
             >
-              <X className="w-5 h-5 text-white/70" />
+              <XMarkIcon className="w-5 h-5 text-white/70" />
             </button>
           </div>
         )}

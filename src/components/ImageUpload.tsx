@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, X, Loader2 } from 'lucide-react';
+import { ArrowUpTrayIcon, XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../lib/supabase';
 import { useToast } from './Toast';
 
@@ -91,7 +91,7 @@ export default function ImageUpload({
 
     try {
       setUploading(true);
-      
+
       // Delete from storage
       const path = currentImageUrl.split('/').slice(-2).join('/');
       const { error: deleteError } = await supabase.storage
@@ -129,9 +129,8 @@ export default function ImageUpload({
             <img
               src={preview}
               alt={type === 'avatar' ? 'Profile picture' : 'Banner'}
-              className={`w-full h-full object-cover ${
-                type === 'avatar' ? 'rounded-full' : 'rounded-none'
-              }`}
+              className={`w-full h-full object-cover ${type === 'avatar' ? 'rounded-full' : 'rounded-none'
+                }`}
             />
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
               <button
@@ -140,7 +139,7 @@ export default function ImageUpload({
                 className="p-2 bg-white text-black rounded-full hover:bg-white/90 transition"
                 title="Change"
               >
-                <Upload className="w-4 h-4" />
+                <ArrowUpTrayIcon className="w-4 h-4" />
               </button>
               <button
                 onClick={handleRemove}
@@ -148,22 +147,21 @@ export default function ImageUpload({
                 className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition"
                 title="Remove"
               >
-                <X className="w-4 h-4" />
+                <XMarkIcon className="w-4 h-4" />
               </button>
             </div>
           </div>
         ) : (
           <label
             htmlFor={`${type}-upload-${userId}`}
-            className={`flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-white/20 hover:border-white/40 transition ${
-              type === 'avatar' ? 'w-32 h-32 rounded-full' : 'w-full h-48 rounded-none'
-            }`}
+            className={`flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-white/20 hover:border-white/40 transition ${type === 'avatar' ? 'w-32 h-32 rounded-full' : 'w-full h-48 rounded-none'
+              }`}
           >
             {uploading ? (
-              <Loader2 className="w-8 h-8 text-white/60 animate-spin" />
+              <ArrowPathIcon className="w-8 h-8 text-white/60 animate-spin" />
             ) : (
               <>
-                <Upload className="w-8 h-8 text-white/60 mb-2" />
+                <ArrowUpTrayIcon className="w-8 h-8 text-white/60 mb-2" />
                 <span className="text-white/60 text-sm">
                   Upload {type === 'avatar' ? 'Avatar' : 'Banner'}
                 </span>

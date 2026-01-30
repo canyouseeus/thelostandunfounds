@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { cn } from '@/components/ui/utils';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 
 interface BentoCardProps {
   colSpan?: 1 | 2 | 3 | 4;
@@ -55,9 +55,9 @@ export function BentoCard({
           aria-label={isExpanded ? 'Collapse card' : 'Expand card'}
         >
           {isExpanded ? (
-            <ChevronUp className="w-4 h-4" />
+            <ChevronUpIcon className="w-4 h-4" />
           ) : (
-            <ChevronDown className="w-4 h-4" />
+            <ChevronDownIcon className="w-4 h-4" />
           )}
         </button>
       )}

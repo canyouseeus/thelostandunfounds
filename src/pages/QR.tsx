@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { QRCodeSVG } from 'qrcode.react'
-import { Download, Link as LinkIcon, Upload, X } from 'lucide-react'
+import { ArrowDownTrayIcon, LinkIcon, ArrowUpTrayIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 const LANDING_PAGE_URL = 'https://www.thelostandunfounds.com/'
 // Portrait dimensions for phone wallpaper (9:16 aspect ratio)
@@ -23,7 +23,7 @@ export default function QR() {
   const customCompositedCanvasRef = useRef<HTMLCanvasElement>(null)
   const backgroundFileInputRef = useRef<HTMLInputElement>(null)
   const logoFileInputRef = useRef<HTMLInputElement>(null)
-  
+
   // Load default logo
   useEffect(() => {
     const loadDefaultLogo = async () => {
@@ -45,8 +45,8 @@ export default function QR() {
     if (!url.trim()) return false
     try {
       // Add protocol if missing
-      const urlWithProtocol = url.startsWith('http://') || url.startsWith('https://') 
-        ? url 
+      const urlWithProtocol = url.startsWith('http://') || url.startsWith('https://')
+        ? url
         : `https://${url}`
       new URL(urlWithProtocol)
       return true
@@ -57,8 +57,8 @@ export default function QR() {
 
   const normalizeUrl = (url: string): string => {
     if (!url.trim()) return ''
-    return url.startsWith('http://') || url.startsWith('https://') 
-      ? url 
+    return url.startsWith('http://') || url.startsWith('https://')
+      ? url
       : `https://${url}`
   }
 
@@ -147,7 +147,7 @@ export default function QR() {
 
       // Clone the SVG to avoid modifying the original
       const clonedSvg = svg.cloneNode(true) as SVGElement
-      
+
       // Set background color to white
       const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
       rect.setAttribute('width', '100%')
@@ -176,7 +176,7 @@ export default function QR() {
   const getLogoImage = async (): Promise<HTMLImageElement | null> => {
     try {
       let logoUrl: string
-      
+
       if (useDefaultLogo) {
         // Use our default logo
         logoUrl = '/logo.png'
@@ -210,12 +210,12 @@ export default function QR() {
   ) => {
     try {
       const qrImage = await getQRCodeAsImage(qrRef)
-      
+
       const canvas = document.createElement('canvas')
       canvas.width = PORTRAIT_WIDTH
       canvas.height = PORTRAIT_HEIGHT
       const ctx = canvas.getContext('2d')
-      
+
       if (!ctx) {
         setError('Failed to create canvas context')
         return
@@ -233,7 +233,7 @@ export default function QR() {
         // Calculate dimensions to fill portrait canvas while maintaining aspect ratio
         const bgAspect = bgImg.width / bgImg.height
         const canvasAspect = PORTRAIT_WIDTH / PORTRAIT_HEIGHT
-        
+
         let drawWidth = PORTRAIT_WIDTH
         let drawHeight = PORTRAIT_HEIGHT
         let offsetX = 0
@@ -281,11 +281,11 @@ export default function QR() {
           const logoSize = qrSizeOnCanvas * 0.3 // Logo is 30% of QR code size
           const logoX = qrX + (qrSizeOnCanvas - logoSize) / 2
           const logoY = qrY + (qrSizeOnCanvas - logoSize) / 2
-          
+
           // Draw white background circle/square for logo
           ctx.fillStyle = 'white'
           ctx.fillRect(logoX - 2, logoY - 2, logoSize + 4, logoSize + 4)
-          
+
           // Draw logo
           ctx.drawImage(logo, logoX, logoY, logoSize, logoSize)
         }
@@ -330,16 +330,16 @@ export default function QR() {
 
     // Get QR code as image
     const qrImage = await getQRCodeAsImage(ref)
-    
+
     // Get logo
     const logo = await getLogoImage()
-    
+
     // Create canvas
     const canvas = document.createElement('canvas')
     canvas.width = qrImage.width
     canvas.height = qrImage.height
     const ctx = canvas.getContext('2d')
-    
+
     if (!ctx) {
       setError('Failed to create canvas context')
       return
@@ -348,24 +348,24 @@ export default function QR() {
     // Fill white background
     ctx.fillStyle = 'white'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
-    
+
     // Draw the QR code
     ctx.drawImage(qrImage, 0, 0)
-    
+
     // Draw logo in center if available
     if (logo) {
       const logoSize = canvas.width * 0.2 // Logo is 20% of QR code size
       const logoX = (canvas.width - logoSize) / 2
       const logoY = (canvas.height - logoSize) / 2
-      
+
       // Draw white background for logo
       ctx.fillStyle = 'white'
       ctx.fillRect(logoX - 4, logoY - 4, logoSize + 8, logoSize + 8)
-      
+
       // Draw logo
       ctx.drawImage(logo, logoX, logoY, logoSize, logoSize)
     }
-    
+
     // Convert to blob and download
     canvas.toBlob((blob) => {
       if (blob) {
@@ -390,7 +390,7 @@ export default function QR() {
   ) => {
     const targetCanvas = canvasRef?.current || customCompositedCanvasRef.current
     if (!targetCanvas || !qrRef.current) return
-    
+
     const ctx = targetCanvas.getContext('2d')
     if (!ctx) return
 
@@ -431,7 +431,7 @@ export default function QR() {
           {/* Image and Logo Upload Section - Always Visible */}
           <div className="mb-8 bg-white/5 border border-white/10 rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4 text-left">Customize Your QR Codes</h2>
-            
+
             {/* Background Image Upload */}
             <div className="mb-4">
               <label className="block text-sm font-medium mb-2 text-left">
@@ -450,7 +450,7 @@ export default function QR() {
                   htmlFor="background-image-upload"
                   className="px-4 py-2 bg-white/10 border border-white/20 hover:bg-white/20 transition-colors rounded-none cursor-pointer flex items-center gap-2"
                 >
-                  <Upload className="w-4 h-4" />
+                  <ArrowUpTrayIcon className="w-4 h-4" />
                   Upload Background
                 </label>
                 {backgroundImage && (
@@ -458,7 +458,7 @@ export default function QR() {
                     onClick={removeBackgroundImage}
                     className="px-4 py-2 bg-red-600/20 border border-red-600/40 hover:bg-red-600/30 transition-colors rounded-none flex items-center gap-2"
                   >
-                    <X className="w-4 h-4" />
+                    <XMarkIcon className="w-4 h-4" />
                     Remove
                   </button>
                 )}
@@ -486,7 +486,7 @@ export default function QR() {
                   htmlFor="logo-upload"
                   className="px-4 py-2 bg-white/10 border border-white/20 hover:bg-white/20 transition-colors rounded-none cursor-pointer flex items-center gap-2"
                 >
-                  <Upload className="w-4 h-4" />
+                  <ArrowUpTrayIcon className="w-4 h-4" />
                   Upload Custom Logo
                 </label>
                 {(logoImage || useDefaultLogo) && (
@@ -496,7 +496,7 @@ export default function QR() {
                         onClick={removeLogo}
                         className="px-4 py-2 bg-red-600/20 border border-red-600/40 hover:bg-red-600/30 transition-colors rounded-none flex items-center gap-2"
                       >
-                        <X className="w-4 h-4" />
+                        <XMarkIcon className="w-4 h-4" />
                         Remove Custom Logo
                       </button>
                     )}
@@ -631,7 +631,7 @@ export default function QR() {
               <div className="flex flex-col lg:flex-row items-start gap-8">
                 {/* QR Code Only */}
                 <div className="flex-shrink-0">
-                  <div 
+                  <div
                     ref={landingQRRef}
                     className="bg-white p-4 rounded-lg relative"
                     style={{ width: `${qrSize + 32}px`, height: `${qrSize + 32}px` }}
@@ -667,7 +667,7 @@ export default function QR() {
                         width={270}
                         height={480}
                         className="w-full h-full object-cover"
-                        style={{ imageRendering: 'high-quality' }}
+                        style={{ imageRendering: 'auto' }}
                       />
                     </div>
                   </div>
@@ -684,7 +684,7 @@ export default function QR() {
                       onClick={() => downloadQRCode(landingQRRef, 'thelostandunfounds-landing-qr.png', false)}
                       className="px-6 py-2 bg-white text-black hover:bg-white/90 transition-colors rounded-none flex items-center justify-center gap-2"
                     >
-                      <Download className="w-4 h-4" />
+                      <ArrowDownTrayIcon className="w-4 h-4" />
                       Download QR Only
                     </button>
                     {backgroundImage && (
@@ -692,7 +692,7 @@ export default function QR() {
                         onClick={() => downloadQRCode(landingQRRef, 'thelostandunfounds-wallpaper.png', true)}
                         className="px-6 py-2 bg-white text-black hover:bg-white/90 transition-colors rounded-none flex items-center justify-center gap-2"
                       >
-                        <Download className="w-4 h-4" />
+                        <ArrowDownTrayIcon className="w-4 h-4" />
                         Download Wallpaper
                       </button>
                     )}
@@ -708,7 +708,7 @@ export default function QR() {
             <p className="text-white/60 mb-6 text-left text-sm">
               Enter any URL to generate a QR code
             </p>
-            
+
             <div className="mb-6">
               <div className="flex flex-col sm:flex-row gap-4">
                 <input
@@ -744,7 +744,7 @@ export default function QR() {
                 <div className="flex flex-col lg:flex-row items-start gap-8">
                   {/* QR Code Only */}
                   <div className="flex-shrink-0">
-                    <div 
+                    <div
                       ref={customQRRef}
                       className="bg-white p-4 rounded-lg relative"
                       style={{ width: `${qrSize + 32}px`, height: `${qrSize + 32}px` }}
@@ -780,7 +780,7 @@ export default function QR() {
                           width={270}
                           height={480}
                           className="w-full h-full object-cover"
-                          style={{ imageRendering: 'high-quality' }}
+                          style={{ imageRendering: 'auto' }}
                         />
                       </div>
                     </div>
@@ -803,7 +803,7 @@ export default function QR() {
                         }}
                         className="px-6 py-2 bg-white text-black hover:bg-white/90 transition-colors rounded-none flex items-center justify-center gap-2"
                       >
-                        <Download className="w-4 h-4" />
+                        <ArrowDownTrayIcon className="w-4 h-4" />
                         Download QR Only
                       </button>
                       {backgroundImage && (
@@ -817,7 +817,7 @@ export default function QR() {
                           }}
                           className="px-6 py-2 bg-white text-black hover:bg-white/90 transition-colors rounded-none flex items-center justify-center gap-2"
                         >
-                          <Download className="w-4 h-4" />
+                          <ArrowDownTrayIcon className="w-4 h-4" />
                           Download Wallpaper
                         </button>
                       )}

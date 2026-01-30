@@ -92,6 +92,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'Failed to create affiliate account' });
     }
 
+    // Initialize payout settings if PayPal email is provided
+    const paypal_email = req.body.paypal_email;
+    if (paypal_email) {
+      const { error: settingsError } = await supabase
+        .from('affiliate_payout_settings')
+        .insert({
+          affiliate_id: affiliate.id,
+          paypal_email: paypal_email,
+          payment_threshold: 10.00 // Default threshold
+        });
+
+      if (settingsError) {
+        console.error('Error creating payout settings:', settingsError);
+        // Do not fail the request, just log it. User can set it up later.
+      }
+    }
+
     return res.status(200).json({
       success: true,
       affiliate,

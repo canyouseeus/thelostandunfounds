@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Mail, RefreshCw, CheckCircle, XCircle, Loader } from 'lucide-react';
+import { EnvelopeIcon, ArrowPathIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 
 export default function ResetNewsletter() {
   const [loading, setLoading] = useState(false);
@@ -13,7 +13,7 @@ export default function ResetNewsletter() {
       // Try the direct REST API endpoint first, fallback to regular endpoint
       const response = await fetch('/api/reset-newsletter-direct?token=reset-newsletter-2024', {
         method: 'GET',
-      }).catch(() => 
+      }).catch(() =>
         fetch('/api/reset-newsletter?token=reset-newsletter-2024', {
           method: 'GET',
         })
@@ -48,22 +48,21 @@ export default function ResetNewsletter() {
     <div className="min-h-screen bg-black flex items-center justify-center px-4">
       <div className="max-w-md w-full bg-black/50 border border-white rounded-none p-8">
         <div className="text-center mb-8">
-          <Mail className="w-16 h-16 text-white mx-auto mb-4" />
+          <EnvelopeIcon className="w-16 h-16 text-white mx-auto mb-4" />
           <h1 className="text-3xl font-bold text-white mb-2">Reset Newsletter List</h1>
           <p className="text-white/60">Clear all newsletter subscribers for testing</p>
         </div>
 
         {result && (
-          <div className={`mb-6 p-4 rounded-none border ${
-            result.success 
-              ? 'bg-green-400/10 border-white' 
-              : 'bg-red-400/10 border-white'
-          }`}>
+          <div className={`mb-6 p-4 rounded-none border ${result.success
+            ? 'bg-green-400/10 border-white'
+            : 'bg-red-400/10 border-white'
+            }`}>
             <div className="flex items-start gap-3">
               {result.success ? (
-                <CheckCircle className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
+                <CheckCircleIcon className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
               ) : (
-                <XCircle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
+                <XCircleIcon className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
               )}
               <div className="flex-1">
                 <p className={`font-medium ${result.success ? 'text-green-400' : 'text-red-400'}`}>
@@ -88,12 +87,12 @@ export default function ResetNewsletter() {
         >
           {loading ? (
             <>
-              <Loader className="w-5 h-5 animate-spin" />
+              <ArrowPathIcon className="w-5 h-5 animate-spin" />
               <span>Resetting...</span>
             </>
           ) : (
             <>
-              <RefreshCw className="w-5 h-5" />
+              <ArrowPathIcon className="w-5 h-5" />
               <span>Reset Newsletter List</span>
             </>
           )}
@@ -102,10 +101,10 @@ export default function ResetNewsletter() {
         <p className="text-white/40 text-xs text-center mt-6">
           This will delete all newsletter subscribers from the database.
         </p>
-        
+
         <div className="mt-6 pt-6 border-t border-white">
           <p className="text-white/60 text-xs text-center mb-3">Or use direct REST API link:</p>
-          <a 
+          <a
             href="/api/reset-newsletter-direct?token=reset-newsletter-2024"
             target="_blank"
             rel="noopener noreferrer"

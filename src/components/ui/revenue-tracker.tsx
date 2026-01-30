@@ -4,7 +4,12 @@
  */
 
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, TrendingUp, DollarSign } from 'lucide-react';
+import {
+    ChevronDownIcon,
+    ChevronRightIcon,
+    ArrowTrendingUpIcon,
+    CurrencyDollarIcon
+} from '@heroicons/react/24/outline';
 import { AnimatedNumber } from './animated-number';
 import { DashboardCharts } from '../admin/DashboardCharts';
 import { cn } from './utils';
@@ -133,7 +138,7 @@ export function RevenueTracker({
                     <div className="flex flex-col items-center justify-center py-8 px-4">
                         {/* Label */}
                         <div className="flex items-center gap-2 mb-4">
-                            <DollarSign className="w-4 h-4 text-white/50" />
+                            <CurrencyDollarIcon className="w-4 h-4 text-white/50" />
                             <span className="text-xs text-white/40 uppercase tracking-[0.2em] font-medium">
                                 Total Revenue
                             </span>
@@ -147,7 +152,7 @@ export function RevenueTracker({
                             </span>
                             {totalRevenue > 0 && (
                                 <div className="flex items-center gap-1 text-green-400 ml-2">
-                                    <TrendingUp className="w-4 h-4 md:w-5 md:h-5" />
+                                    <ArrowTrendingUpIcon className="w-4 h-4 md:w-5 md:h-5" />
                                     <span className="text-sm md:text-lg font-bold font-mono">+{((getDisplayRevenue() / totalRevenue) * 100).toFixed(0)}%</span>
                                 </div>
                             )}
