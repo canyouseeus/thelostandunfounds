@@ -396,12 +396,17 @@ async function handleCapture(req: VercelRequest, res: VercelResponse) {
         const { data: existingOrder } = await query.maybeSingle();
 
         if (existingOrder?.payment_status === 'completed') {
-            const { data: ents } = await supabase
+            const { data: ents, error: entsError } = await supabase
                 .from('photo_entitlements')
-                .select('*, photos(title, library_id, google_drive_file_id, photo_libraries(name))')
+                .select('*, photos(title, google_drive_file_id)')
                 .eq('order_id', existingOrder.id);
 
-            const libraryTitle = (ents?.[0]?.photos as any)?.photo_libraries?.name || 'GALLERY';
+            if (entsError) {
+                console.error('Error fetching entitlements (idempotency):', entsError);
+            }
+
+            // Default title since we removed the join
+            let libraryTitle = 'GALLERY';
 
             return res.status(200).json({
                 success: true,
@@ -412,7 +417,7 @@ async function handleCapture(req: VercelRequest, res: VercelResponse) {
                     token: e.token,
                     photoTitle: (e.photos as any)?.title,
                     thumbnailUrl: (e.photos as any)?.google_drive_file_id ? `/api/gallery/stream?fileId=${(e.photos as any).google_drive_file_id}&size=400` : null
-                }))
+                })) || []
             });
         }
 
@@ -520,7 +525,7 @@ async function handleCapture(req: VercelRequest, res: VercelResponse) {
         // 5. Ensure Entitlements Exist (Create if from new flow)
         let { data: ents, error: entsError } = await supabase
             .from('photo_entitlements')
-            .select('*, photos(title, google_drive_file_id, photo_libraries(name))')
+            .select('*, photos(title, google_drive_file_id)')
             .eq('order_id', photoOrder.id);
 
         if (!ents || ents.length === 0) {
@@ -546,7 +551,7 @@ async function handleCapture(req: VercelRequest, res: VercelResponse) {
                     // Refetch with joins
                     const { data: refreshed, error: refetchErr } = await supabase
                         .from('photo_entitlements')
-                        .select('*, photos(title, google_drive_file_id, photo_libraries(name))')
+                        .select('*, photos(title, google_drive_file_id)')
                         .eq('order_id', photoOrder.id);
 
                     if (refreshed) ents = refreshed;

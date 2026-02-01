@@ -74,6 +74,9 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
     const [showBackToTop, setShowBackToTop] = useState(false);
     const [viewMode, setViewMode] = useState<'grid' | 'single'>('grid');
     const [authModalOpen, setAuthModalOpen] = useState(false);
+    const [authMessage, setAuthMessage] = useState<string | undefined>(undefined);
+    const [authTitle, setAuthTitle] = useState<string | undefined>(undefined);
+    const [pendingCheckout, setPendingCheckout] = useState(false);
     const photosRef = useRef<HTMLDivElement>(null);
 
     const storageKey = `gallery_selection_${librarySlug}`;
@@ -91,6 +94,17 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
             }
         }
     }, [librarySlug]);
+
+    // Resume checkout after login
+    useEffect(() => {
+        if (user && pendingCheckout) {
+            setPendingCheckout(false);
+            // Small delay to ensure state is settled
+            setTimeout(() => {
+                handleCheckout();
+            }, 500);
+        }
+    }, [user, pendingCheckout]);
 
     // Persist selections to localStorage
     useEffect(() => {
@@ -210,14 +224,19 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
 
     const handleCheckout = async () => {
         try {
+            // REQUIRE LOGIN
+            if (!user) {
+                setPendingCheckout(true);
+                setAuthTitle("SECURE YOUR ASSETS");
+                setAuthMessage("Creating an account ensures you never lose access to your photos. You'll be able to redownload them anytime from your asset library.");
+                setAuthModalOpen(true);
+                return;
+            }
+
             setCheckoutLoading(true);
 
             // If user is logged in, use their email directly
-            const email = user?.email || prompt('Enter your email for delivery:');
-            if (!email) {
-                setCheckoutLoading(false);
-                return;
-            }
+            const email = user.email!;
 
             // Save email for guest retrieval after redirect
             if (!user?.email) {
@@ -379,7 +398,11 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                                         If you are the owner of this gallery, please log in to view and manage your photos.
                                     </p>
                                     <button
-                                        onClick={() => setAuthModalOpen(true)}
+                                        onClick={() => {
+                                            setAuthTitle(undefined);
+                                            setAuthMessage(undefined);
+                                            setAuthModalOpen(true);
+                                        }}
                                         className="inline-block mt-4 px-8 py-3 bg-transparent border border-white text-white font-bold uppercase tracking-widest text-xs hover:bg-white hover:text-black transition-colors"
                                     >
                                         Log In
@@ -549,10 +572,15 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
             {/* Auth Modal */}
             <AuthModal
                 isOpen={authModalOpen}
-                onClose={() => setAuthModalOpen(false)}
+                onClose={() => {
+                    setAuthModalOpen(false);
+                    setPendingCheckout(false); // Cancel pending checkout if closed manually
+                }}
+                message={authMessage}
+                title={authTitle}
                 onLoginSuccess={() => {
-                    // Reload to clean URL (stripping error params)
-                    window.location.href = window.location.pathname;
+                    setAuthModalOpen(false);
+                    // Do not reload; useEffect will trigger handleCheckout()
                 }}
             />
         </div>

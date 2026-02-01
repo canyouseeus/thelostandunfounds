@@ -95,11 +95,10 @@ const PhotoSuccessPage: React.FC = () => {
                 <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-8 gap-6">
                     <div className="text-left max-w-2xl">
                         <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tighter uppercase">
-                            Access Granted
+                            Archive Unlocked
                         </h1>
                         <p className="text-zinc-500 text-lg text-left max-w-xl">
-                            Your payment was successful. You can now download your high-resolution photos.
-                            These links will expire in 48 hours.
+                            Your high-resolution assets are secured and ready for download. System access will remain active for 48 hours.
                         </p>
                     </div>
 
