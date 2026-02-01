@@ -104,11 +104,18 @@ export async function syncGalleryPhotos(librarySlug: string, limit: number = 100
                     const min = parts[5];
                     const sec = parts[6];
 
-                    // FORCE CENTRAL TIME (CST) interpretation
-                    // We construct an ISO string with explicit -06:00 offset
-                    // This creates a Date that is internally UTC-shifted correctly from CST
-                    const isoWithOffset = `${year}-${month}-${day}T${hour}:${min}:${sec}-06:00`;
-                    captureDate = new Date(isoWithOffset);
+                    // Treating Camera Time as "Floating" (stored as UTC)
+                    // We treat "10:00:00" from camera as "10:00:00 UTC"
+                    // The Frontend will unpack this UTC value and display it as local/floating time
+                    // effectively ignoring the viewer's or server's timezone
+                    captureDate = new Date(Date.UTC(
+                        parseInt(year),
+                        parseInt(month) - 1,
+                        parseInt(day),
+                        parseInt(hour),
+                        parseInt(min),
+                        parseInt(sec)
+                    ));
 
                     // Fallback if the constructed date is invalid (e.g. edge cases)
                     if (isNaN(captureDate.getTime())) {
