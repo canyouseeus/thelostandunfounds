@@ -1187,218 +1187,218 @@ export default function AffiliateDashboard() {
                       </div>
                     )}
                   </div>
-                  </div>
-            )
+
+                )
               }
-          </div>
-
-        {/* Payout Request Modal */}
-        {
-          showPayoutRequest && (
-            <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-              <div className="bg-black border-0 rounded-none p-8 max-w-md w-full">
-                <h3 className="text-xl font-black text-white uppercase tracking-tighter mb-6">Instant Payout</h3>
-
-                {payoutRequestError && (
-                  <div className="bg-white/10 border border-white/20 text-white px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider mb-6">
-                    {payoutRequestError}
-                  </div>
-                )}
-
-                <div className="space-y-6">
-                  <div className="bg-white/5 border border-white/20 p-4 rounded-none">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Available Now</span>
-                      <span className="text-white font-black font-mono text-lg">
-                        ${(data?.balance?.available_balance || 0).toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {(data?.balance?.pending_balance || 0) > 0 && (
-                    <div className="bg-white/5 border border-white/20 p-4 rounded-none">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Pending</span>
-                        <span className="text-white font-mono font-bold">
-                          ${(data?.balance?.pending_balance || 0).toFixed(2)}
-                        </span>
-                      </div>
-                      {data?.balance?.upcoming_availability && data.balance.upcoming_availability.length > 0 && (
-                        <div className="mt-3 pt-3 border-t border-white/10">
-                          <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest mb-2">Upcoming:</p>
-                          {data.balance.upcoming_availability.slice(0, 3).map((item, idx) => (
-                            <div key={idx} className="flex justify-between text-[10px] text-white/60 uppercase tracking-wider mb-1">
-                              <span>{new Date(item.date).toLocaleDateString()}</span>
-                              <span className="font-mono">+${item.amount.toFixed(2)}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">
-                      Payout Amount
-                    </label>
-                    <input
-                      type="number"
-                      min={payoutSettings?.payment_threshold || 10}
-                      max={data?.balance?.available_balance || 0}
-                      step="0.01"
-                      value={payoutAmount}
-                      onChange={(e) => setPayoutAmount(parseFloat(e.target.value) || 0)}
-                      className="w-full px-4 py-3 bg-black border border-white/20 rounded-none text-white focus:outline-none focus:border-white transition-colors font-mono text-sm"
-                    />
-                    <p className="text-[10px] font-medium text-white/40 uppercase tracking-wider mt-2">
-                      Min: ${payoutSettings?.payment_threshold || 10} • Max: ${(data?.balance?.available_balance || 0).toFixed(2)}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">
-                      PayPal Email
-                    </label>
-                    <div className="px-4 py-3 bg-white/5 border border-white/10 rounded-none text-white font-mono text-sm">
-                      {payoutSettings?.paypal_email || 'Not set'}
-                    </div>
-                  </div>
-
-                  <div className="bg-white/5 border border-white/10 p-4 rounded-none text-[10px] text-white/60 font-medium uppercase tracking-wider leading-relaxed">
-                    <p className="mb-2"><strong>Instant payout:</strong> Funds are sent immediately to your PayPal account.</p>
-                    <p>Physical products: 30-day hold • Digital products: 7-day hold</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-4 mt-8">
-                  <button
-                    onClick={handleRequestPayout}
-                    disabled={requestingPayout || payoutAmount < (payoutSettings?.payment_threshold || 10) || payoutAmount > (data?.balance?.available_balance || 0)}
-                    className="flex-1 px-4 py-3 bg-white text-black font-bold uppercase tracking-widest hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs"
-                  >
-                    {requestingPayout ? 'Processing...' : `Send $${payoutAmount.toFixed(2)} to PayPal`}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowPayoutRequest(false)
-                      setPayoutRequestError(null)
-                      setPayoutAmount(0)
-                    }}
-                    disabled={requestingPayout}
-                    className="px-6 py-3 bg-transparent border border-white/20 text-white font-bold uppercase tracking-widest hover:bg-white/10 transition-colors disabled:opacity-50 text-xs"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
             </div>
-          )
-        }
 
-        {/* Recent Commissions */}
-        <div className="bg-black border-0 rounded-none overflow-hidden mb-8">
-          <div className="p-6">
-            <h2 className="text-lg font-black text-white uppercase tracking-widest">Recent Commissions</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-black border-b border-white/20">
-                <tr>
-                  <th className="px-6 py-4 text-left text-[10px] font-bold text-white/40 uppercase tracking-widest">Order ID</th>
-                  <th className="px-6 py-4 text-left text-[10px] font-bold text-white/40 uppercase tracking-widest">Date</th>
-                  <th className="px-6 py-4 text-right text-[10px] font-bold text-white/40 uppercase tracking-widest">Commission</th>
-                  <th className="px-6 py-4 text-right text-[10px] font-bold text-white/40 uppercase tracking-widest">Profit</th>
-                  <th className="px-6 py-4 text-left text-[10px] font-bold text-white/40 uppercase tracking-widest">Source</th>
-                  <th className="px-6 py-4 text-center text-[10px] font-bold text-white/40 uppercase tracking-widest">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/10">
-                {data.recent_commissions.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-white/40 text-xs font-medium uppercase tracking-widest">
-                      No commissions yet. Share your referral link to start earning!
-                    </td>
-                  </tr>
-                ) : (
-                  data.recent_commissions.map((commission) => (
-                    <tr key={commission.id} className={`hover:bg-white/5 transition-colors ${commission.status === 'cancelled' ? 'opacity-40' : ''}`}>
-                      <td className="px-6 py-4 text-white font-mono text-xs">
-                        {commission.order_id.substring(0, 16)}...
-                      </td>
-                      <td className="px-6 py-4 text-white/60 text-xs font-mono">
-                        {new Date(commission.created_at).toLocaleDateString()}
-                      </td>
-                      <td className={`px-6 py-4 text-right font-black text-xs font-mono tracking-tight ${commission.status === 'cancelled' ? 'text-red-500 line-through' : 'text-white'}`}>
-                        ${commission.amount.toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 text-right text-white font-mono text-xs font-bold">
-                        ${commission.profit_generated.toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 text-white/60 capitalize text-xs font-medium uppercase tracking-wider">
-                        {commission.source}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <div className="flex flex-col items-center gap-1">
-                          <span className={`px-2 py-1 border text-[10px] font-bold uppercase tracking-widest ${commission.status === 'paid' ? 'border-green-500 text-green-500' :
-                            commission.status === 'cancelled' ? 'border-red-500 text-red-500' :
-                              commission.status_label?.includes('Available') ? 'border-green-500 text-green-500' :
-                                commission.status_label?.includes('Pending') ? 'border-white/40 text-white/60' :
-                                  'border-white/40 text-white/60'
-                            }`}>
-                            {commission.status_label || commission.status}
+            {/* Payout Request Modal */}
+            {
+              showPayoutRequest && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                  <div className="bg-black border-0 rounded-none p-8 max-w-md w-full">
+                    <h3 className="text-xl font-black text-white uppercase tracking-tighter mb-6">Instant Payout</h3>
+
+                    {payoutRequestError && (
+                      <div className="bg-white/10 border border-white/20 text-white px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider mb-6">
+                        {payoutRequestError}
+                      </div>
+                    )}
+
+                    <div className="space-y-6">
+                      <div className="bg-white/5 border border-white/20 p-4 rounded-none">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Available Now</span>
+                          <span className="text-white font-black font-mono text-lg">
+                            ${(data?.balance?.available_balance || 0).toFixed(2)}
                           </span>
                         </div>
-                      </td>
+                      </div>
+
+                      {(data?.balance?.pending_balance || 0) > 0 && (
+                        <div className="bg-white/5 border border-white/20 p-4 rounded-none">
+                          <div className="flex justify-between items-center">
+                            <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Pending</span>
+                            <span className="text-white font-mono font-bold">
+                              ${(data?.balance?.pending_balance || 0).toFixed(2)}
+                            </span>
+                          </div>
+                          {data?.balance?.upcoming_availability && data.balance.upcoming_availability.length > 0 && (
+                            <div className="mt-3 pt-3 border-t border-white/10">
+                              <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest mb-2">Upcoming:</p>
+                              {data.balance.upcoming_availability.slice(0, 3).map((item, idx) => (
+                                <div key={idx} className="flex justify-between text-[10px] text-white/60 uppercase tracking-wider mb-1">
+                                  <span>{new Date(item.date).toLocaleDateString()}</span>
+                                  <span className="font-mono">+${item.amount.toFixed(2)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">
+                          Payout Amount
+                        </label>
+                        <input
+                          type="number"
+                          min={payoutSettings?.payment_threshold || 10}
+                          max={data?.balance?.available_balance || 0}
+                          step="0.01"
+                          value={payoutAmount}
+                          onChange={(e) => setPayoutAmount(parseFloat(e.target.value) || 0)}
+                          className="w-full px-4 py-3 bg-black border border-white/20 rounded-none text-white focus:outline-none focus:border-white transition-colors font-mono text-sm"
+                        />
+                        <p className="text-[10px] font-medium text-white/40 uppercase tracking-wider mt-2">
+                          Min: ${payoutSettings?.payment_threshold || 10} • Max: ${(data?.balance?.available_balance || 0).toFixed(2)}
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">
+                          PayPal Email
+                        </label>
+                        <div className="px-4 py-3 bg-white/5 border border-white/10 rounded-none text-white font-mono text-sm">
+                          {payoutSettings?.paypal_email || 'Not set'}
+                        </div>
+                      </div>
+
+                      <div className="bg-white/5 border border-white/10 p-4 rounded-none text-[10px] text-white/60 font-medium uppercase tracking-wider leading-relaxed">
+                        <p className="mb-2"><strong>Instant payout:</strong> Funds are sent immediately to your PayPal account.</p>
+                        <p>Physical products: 30-day hold • Digital products: 7-day hold</p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4 mt-8">
+                      <button
+                        onClick={handleRequestPayout}
+                        disabled={requestingPayout || payoutAmount < (payoutSettings?.payment_threshold || 10) || payoutAmount > (data?.balance?.available_balance || 0)}
+                        className="flex-1 px-4 py-3 bg-white text-black font-bold uppercase tracking-widest hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs"
+                      >
+                        {requestingPayout ? 'Processing...' : `Send $${payoutAmount.toFixed(2)} to PayPal`}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowPayoutRequest(false)
+                          setPayoutRequestError(null)
+                          setPayoutAmount(0)
+                        }}
+                        disabled={requestingPayout}
+                        className="px-6 py-3 bg-transparent border border-white/20 text-white font-bold uppercase tracking-widest hover:bg-white/10 transition-colors disabled:opacity-50 text-xs"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+
+            {/* Recent Commissions */}
+            <div className="bg-black border-0 rounded-none overflow-hidden mb-8">
+              <div className="p-6">
+                <h2 className="text-lg font-black text-white uppercase tracking-widest">Recent Commissions</h2>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-black border-b border-white/20">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-[10px] font-bold text-white/40 uppercase tracking-widest">Order ID</th>
+                      <th className="px-6 py-4 text-left text-[10px] font-bold text-white/40 uppercase tracking-widest">Date</th>
+                      <th className="px-6 py-4 text-right text-[10px] font-bold text-white/40 uppercase tracking-widest">Commission</th>
+                      <th className="px-6 py-4 text-right text-[10px] font-bold text-white/40 uppercase tracking-widest">Profit</th>
+                      <th className="px-6 py-4 text-left text-[10px] font-bold text-white/40 uppercase tracking-widest">Source</th>
+                      <th className="px-6 py-4 text-center text-[10px] font-bold text-white/40 uppercase tracking-widest">Status</th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody className="divide-y divide-white/10">
+                    {data.recent_commissions.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-6 py-12 text-center text-white/40 text-xs font-medium uppercase tracking-widest">
+                          No commissions yet. Share your referral link to start earning!
+                        </td>
+                      </tr>
+                    ) : (
+                      data.recent_commissions.map((commission) => (
+                        <tr key={commission.id} className={`hover:bg-white/5 transition-colors ${commission.status === 'cancelled' ? 'opacity-40' : ''}`}>
+                          <td className="px-6 py-4 text-white font-mono text-xs">
+                            {commission.order_id.substring(0, 16)}...
+                          </td>
+                          <td className="px-6 py-4 text-white/60 text-xs font-mono">
+                            {new Date(commission.created_at).toLocaleDateString()}
+                          </td>
+                          <td className={`px-6 py-4 text-right font-black text-xs font-mono tracking-tight ${commission.status === 'cancelled' ? 'text-red-500 line-through' : 'text-white'}`}>
+                            ${commission.amount.toFixed(2)}
+                          </td>
+                          <td className="px-6 py-4 text-right text-white font-mono text-xs font-bold">
+                            ${commission.profit_generated.toFixed(2)}
+                          </td>
+                          <td className="px-6 py-4 text-white/60 capitalize text-xs font-medium uppercase tracking-wider">
+                            {commission.source}
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <div className="flex flex-col items-center gap-1">
+                              <span className={`px-2 py-1 border text-[10px] font-bold uppercase tracking-widest ${commission.status === 'paid' ? 'border-green-500 text-green-500' :
+                                commission.status === 'cancelled' ? 'border-red-500 text-red-500' :
+                                  commission.status_label?.includes('Available') ? 'border-green-500 text-green-500' :
+                                    commission.status_label?.includes('Pending') ? 'border-white/40 text-white/60' :
+                                      'border-white/40 text-white/60'
+                                }`}>
+                                {commission.status_label || commission.status}
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* End Overview Tab Content */}
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Link
+            to="/king-midas-leaderboard"
+            className="bg-black border-0 rounded-none p-6 hover:bg-white hover:text-black transition-colors group"
+          >
+            <TrophyIcon className="w-8 h-8 text-white mb-4 group-hover:text-black transition-colors" />
+            <h3 className="text-sm font-bold uppercase tracking-widest mb-2">
+              View Leaderboard
+            </h3>
+            <p className="text-white/60 text-xs font-medium uppercase tracking-wider group-hover:text-black/60">
+              See how you rank against other affiliates
+            </p>
+          </Link>
+
+          <Link
+            to="/affiliate-profile"
+            className="bg-black border-0 rounded-none p-6 hover:bg-white hover:text-black transition-colors group"
+          >
+            <CursorArrowRaysIcon className="w-8 h-8 text-white mb-4 group-hover:text-black transition-colors" />
+            <h3 className="text-sm font-bold uppercase tracking-widest mb-2">
+              My Profile
+            </h3>
+            <p className="text-white/60 text-xs font-medium uppercase tracking-wider group-hover:text-black/60">
+              View and edit your affiliate profile
+            </p>
+          </Link>
+
+          <div className="bg-black border-0 rounded-none p-6 opacity-50 cursor-not-allowed">
+            <CurrencyDollarIcon className="w-8 h-8 text-white mb-4" />
+            <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-2">
+              Marketing Tools
+            </h3>
+            <p className="text-white/60 text-xs font-medium uppercase tracking-wider">
+              Coming soon: Banners, email templates
+            </p>
           </div>
         </div>
       </div>
-      )}
-      {/* End Overview Tab Content */}
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Link
-          to="/king-midas-leaderboard"
-          className="bg-black border-0 rounded-none p-6 hover:bg-white hover:text-black transition-colors group"
-        >
-          <TrophyIcon className="w-8 h-8 text-white mb-4 group-hover:text-black transition-colors" />
-          <h3 className="text-sm font-bold uppercase tracking-widest mb-2">
-            View Leaderboard
-          </h3>
-          <p className="text-white/60 text-xs font-medium uppercase tracking-wider group-hover:text-black/60">
-            See how you rank against other affiliates
-          </p>
-        </Link>
-
-        <Link
-          to="/affiliate-profile"
-          className="bg-black border-0 rounded-none p-6 hover:bg-white hover:text-black transition-colors group"
-        >
-          <CursorArrowRaysIcon className="w-8 h-8 text-white mb-4 group-hover:text-black transition-colors" />
-          <h3 className="text-sm font-bold uppercase tracking-widest mb-2">
-            My Profile
-          </h3>
-          <p className="text-white/60 text-xs font-medium uppercase tracking-wider group-hover:text-black/60">
-            View and edit your affiliate profile
-          </p>
-        </Link>
-
-        <div className="bg-black border-0 rounded-none p-6 opacity-50 cursor-not-allowed">
-          <CurrencyDollarIcon className="w-8 h-8 text-white mb-4" />
-          <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-2">
-            Marketing Tools
-          </h3>
-          <p className="text-white/60 text-xs font-medium uppercase tracking-wider">
-            Coming soon: Banners, email templates
-          </p>
-        </div>
-      </div>
-    </div>
     </div >
   )
 }
