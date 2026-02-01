@@ -396,87 +396,116 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                         </div>
                     ) : (
                         Object.entries(
-                            // Sort photos by date taken first
-                            [...displayedPhotos].sort((a, b) => {
-                                const getDate = (p: Photo) => {
-                                    // Prioritize metadata.time (Google Drive) or date_taken, fall back to created_at
-                                    return new Date(p.metadata?.time || p.metadata?.date_taken || p.created_at).getTime();
-                                };
-                                return getDate(b) - getDate(a); // Descending (Newest first)
-                            })
+                                    // Priority: Date Taken (EXIF) > Time > Created At
+                                    const dateStr = p.metadata?.date_taken || p.metadata?.time || p.created_at;
+
+                    // Treat the database timestamp as Local Time (ignore Z/Timezone shift)
+                    // If DB says "05:06:00Z", we want "05:06:00 Local"
+                    const d = new Date(dateStr);
+                    if (!isNaN(d.getTime())) {
+                                        // Construct a new date using the UTC components as Local components
+                                        return new Date(
+                    d.getUTCFullYear(),
+                    d.getUTCMonth(),
+                    d.getUTCDate(),
+                    d.getUTCHours(),
+                    d.getUTCMinutes(),
+                    d.getUTCSeconds()
+                    displayedPhotos
+                                .sort((a, b) => {
+                                    // Priority: Date Taken (EXIF) > Time > Created At
+                                    const dateStrA = a.metadata?.date_taken || a.metadata?.time || a.created_at;
+                    const dateStrB = b.metadata?.date_taken || b.metadata?.time || b.created_at;
+
+                    const d1 = new Date(dateStrA);
+                    const d2 = new Date(dateStrB);
+
+                                    // Treat the database timestamp as Local Time (ignore Z/Timezone shift)
+                                    // If DB says "05:06:00Z", we want "05:06:00 Local"
+                                    const getTimeAsLocal = (dateStr: string) => {
+                                        const d = new Date(dateStr);
+                    if (!isNaN(d.getTime())) {
+                                            // Construct a new date using the UTC components as Local components
+                                            return new Date(
+                    d.getUTCFullYear(),
+                    d.getUTCMonth(),
+                    d.getUTCDate(),
+                    d.getUTCHours(),
+                    d.getUTCMinutes(),
+                    d.getUTCSeconds()
+                    ).getTime();
+                                        }
+                    return d.getTime();
+                                    };
+
+                    return getTimeAsLocal(dateStrB) - getTimeAsLocal(dateStrA);
+                                })
                                 .reduce((acc, photo) => {
-                                    const date = new Date(photo.metadata?.date_taken || photo.created_at);
-                                    const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
-                                    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+                    const year = date.getFullYear();
 
-                                    const dayName = days[date.getDay()];
-                                    const monthName = months[date.getMonth()];
-                                    const dayNum = date.getDate();
-                                    const year = date.getFullYear();
+                    let suffix = 'TH';
+                    if (dayNum % 10 === 1 && dayNum !== 11) suffix = 'ST';
+                    if (dayNum % 10 === 2 && dayNum !== 12) suffix = 'ND';
+                    if (dayNum % 10 === 3 && dayNum !== 13) suffix = 'RD';
 
-                                    let suffix = 'TH';
-                                    if (dayNum % 10 === 1 && dayNum !== 11) suffix = 'ST';
-                                    if (dayNum % 10 === 2 && dayNum !== 12) suffix = 'ND';
-                                    if (dayNum % 10 === 3 && dayNum !== 13) suffix = 'RD';
+                    const dateString = `${dayName} ${monthName} ${dayNum}${suffix}, ${year}`;
 
-                                    const dateString = `${dayName} ${monthName} ${dayNum}${suffix}, ${year}`;
-
-                                    if (!acc[dateString]) acc[dateString] = [];
-                                    acc[dateString].push(photo);
-                                    return acc;
-                                }, {} as Record<string, Photo[]>)
+                    if (!acc[dateString]) acc[dateString] = [];
+                    acc[dateString].push(photo);
+                    return acc;
+                                }, { } as Record<string, Photo[]>)
                         ).map(([dateHeader, groupPhotos]) => {
                             const isGroupAllSelected = groupPhotos.every(gp => selectedPhotos.find(p => p.id === gp.id));
 
-                            return (
-                                <div key={dateHeader}>
-                                    <div className="flex items-center justify-between mb-6">
-                                        <div className="flex flex-col items-start">
-                                            <h2 className="text-lg md:text-2xl font-black text-white uppercase tracking-tight whitespace-nowrap">
-                                                {dateHeader}
-                                            </h2>
-                                            {/* Camera Model Display (Group Level - optional fallback) */}
-                                            {(() => {
-                                                const modelPhoto = groupPhotos.find(p => p.metadata?.cameraModel);
-                                                if (modelPhoto?.metadata?.cameraModel) {
-                                                    return (
-                                                        <span className="text-[10px] md:text-xs font-bold text-white/50 tracking-widest uppercase mt-1">
-                                                            {modelPhoto.metadata.cameraMake ? `${modelPhoto.metadata.cameraMake} ` : ''}{modelPhoto.metadata.cameraModel}
-                                                        </span>
-                                                    );
-                                                }
-                                                return null;
-                                            })()}
-                                        </div>
-                                        {activeTab === 'storefront' && (
-                                            <button
-                                                onClick={() => handleToggleGroup(groupPhotos, isGroupAllSelected)}
-                                                className="flex items-center gap-2 px-2 md:px-3 py-1 bg-white/5 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-colors"
-                                                title={isGroupAllSelected ? 'Unselect Group' : 'Select Group'}
-                                            >
-                                                <QueueListIcon className={`w-3 h-3 ${isGroupAllSelected ? 'text-white' : 'text-white/60'}`} />
-                                                <span className="hidden md:inline">{isGroupAllSelected ? 'Unselect Group' : 'Select Group'}</span>
-                                            </button>
-                                        )}
-                                    </div>
-                                    <div className={`grid ${viewMode === 'single' ? 'grid-cols-1 gap-4 md:gap-16' : 'grid-cols-3 gap-1 md:gap-2'}`}>
-                                        {groupPhotos.map((photo, index) => (
-                                            <PhotoCard
-                                                key={photo.id}
-                                                photo={photo}
-                                                index={index}
-                                                isSelected={!!selectedPhotos.find(p => p.id === photo.id)}
-                                                isPurchased={!!purchasedPhotos.find(p => p.id === photo.id)}
-                                                activeTab={activeTab}
-                                                singlePrice={singlePrice}
-                                                viewMode={viewMode}
-                                                onToggleSelect={() => handleToggleSelect(photo)}
-                                                onLightbox={() => setActivePhotoIndex(photos.findIndex(p => p.id === photo.id))}
-                                            />
-                                        ))}
-                                    </div>
-                                </div>
-                            );
+                    return (
+                    <div key={dateHeader}>
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="flex flex-col items-start">
+                                <h2 className="text-lg md:text-2xl font-black text-white uppercase tracking-tight whitespace-nowrap">
+                                    {dateHeader}
+                                </h2>
+                                {/* Camera Model Display (Group Level - optional fallback) */}
+                                {(() => {
+                                    const modelPhoto = groupPhotos.find(p => p.metadata?.cameraModel);
+                                    if (modelPhoto?.metadata?.cameraModel) {
+                                        return (
+                                            <span className="text-[10px] md:text-xs font-bold text-white/50 tracking-widest uppercase mt-1">
+                                                {modelPhoto.metadata.cameraMake ? `${modelPhoto.metadata.cameraMake} ` : ''}{modelPhoto.metadata.cameraModel}
+                                            </span>
+                                        );
+                                    }
+                                    return null;
+                                })()}
+                            </div>
+                            {activeTab === 'storefront' && (
+                                <button
+                                    onClick={() => handleToggleGroup(groupPhotos, isGroupAllSelected)}
+                                    className="flex items-center gap-2 px-2 md:px-3 py-1 bg-white/5 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-colors"
+                                    title={isGroupAllSelected ? 'Unselect Group' : 'Select Group'}
+                                >
+                                    <QueueListIcon className={`w-3 h-3 ${isGroupAllSelected ? 'text-white' : 'text-white/60'}`} />
+                                    <span className="hidden md:inline">{isGroupAllSelected ? 'Unselect Group' : 'Select Group'}</span>
+                                </button>
+                            )}
+                        </div>
+                        <div className={`grid ${viewMode === 'single' ? 'grid-cols-1 gap-4 md:gap-16' : 'grid-cols-3 gap-1 md:gap-2'}`}>
+                            {groupPhotos.map((photo, index) => (
+                                <PhotoCard
+                                    key={photo.id}
+                                    photo={photo}
+                                    index={index}
+                                    isSelected={!!selectedPhotos.find(p => p.id === photo.id)}
+                                    isPurchased={!!purchasedPhotos.find(p => p.id === photo.id)}
+                                    activeTab={activeTab}
+                                    singlePrice={singlePrice}
+                                    viewMode={viewMode}
+                                    onToggleSelect={() => handleToggleSelect(photo)}
+                                    onLightbox={() => setActivePhotoIndex(photos.findIndex(p => p.id === photo.id))}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                    );
                         })
                     )}
                 </div>

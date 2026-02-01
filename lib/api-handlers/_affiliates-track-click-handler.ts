@@ -10,7 +10,7 @@ export default async function handler(
   }
 
   try {
-    const { affiliateCode } = req.body
+    const { affiliateCode, metadata } = req.body
     console.log('📥 Received affiliate click tracking request:', { affiliateCode, method: req.method })
 
     if (!affiliateCode || typeof affiliateCode !== 'string') {
@@ -84,6 +84,30 @@ export default async function handler(
       console.error('❌ Error incrementing affiliate clicks:', functionError)
       // Still return success to not break user flow
       return res.status(200).json({ success: true, message: 'Click tracking failed' })
+    }
+
+    // Log detailed click event (for Sub-ID/Campaign tracking)
+    try {
+      const userAgent = req.headers['user-agent'] || null
+      const ipAddress = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || req.socket.remoteAddress || null
+
+      const { error: eventLogError } = await supabase
+        .from('affiliate_click_events')
+        .insert({
+          affiliate_id: affiliate.id,
+          metadata: metadata || {},
+          user_agent: userAgent,
+          ip_address: ipAddress
+        })
+
+      if (eventLogError) {
+        // Just warn, don't fail the request (table might not exist yet)
+        console.warn('⚠️ Failed to log affiliate click event (check if affiliate_click_events table exists):', eventLogError.message)
+      } else {
+        console.log('📝 Logged affiliate click event with metadata')
+      }
+    } catch (err) {
+      console.warn('⚠️ Error logging affiliate click event:', err)
     }
 
     console.log('✅ Successfully incremented clicks for affiliate:', affiliate.id)

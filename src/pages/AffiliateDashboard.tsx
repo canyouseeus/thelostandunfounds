@@ -1187,13 +1187,10 @@ export default function AffiliateDashboard() {
                       </div>
                     )}
                   </div>
-                )
+                  </div>
+            )
               }
-            </div>
-
           </div>
-        )}
-        {/* End Overview Tab */}
 
         {/* Payout Request Modal */}
         {
@@ -1359,47 +1356,50 @@ export default function AffiliateDashboard() {
             </table>
           </div>
         </div>
+      </div>
+      )}
+      {/* End Overview Tab Content */}
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Link
-            to="/king-midas-leaderboard"
-            className="bg-black border-0 rounded-none p-6 hover:bg-white hover:text-black transition-colors group"
-          >
-            <TrophyIcon className="w-8 h-8 text-white mb-4 group-hover:text-black transition-colors" />
-            <h3 className="text-sm font-bold uppercase tracking-widest mb-2">
-              View Leaderboard
-            </h3>
-            <p className="text-white/60 text-xs font-medium uppercase tracking-wider group-hover:text-black/60">
-              See how you rank against other affiliates
-            </p>
-          </Link>
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Link
+          to="/king-midas-leaderboard"
+          className="bg-black border-0 rounded-none p-6 hover:bg-white hover:text-black transition-colors group"
+        >
+          <TrophyIcon className="w-8 h-8 text-white mb-4 group-hover:text-black transition-colors" />
+          <h3 className="text-sm font-bold uppercase tracking-widest mb-2">
+            View Leaderboard
+          </h3>
+          <p className="text-white/60 text-xs font-medium uppercase tracking-wider group-hover:text-black/60">
+            See how you rank against other affiliates
+          </p>
+        </Link>
 
-          <Link
-            to="/affiliate-profile"
-            className="bg-black border-0 rounded-none p-6 hover:bg-white hover:text-black transition-colors group"
-          >
-            <CursorArrowRaysIcon className="w-8 h-8 text-white mb-4 group-hover:text-black transition-colors" />
-            <h3 className="text-sm font-bold uppercase tracking-widest mb-2">
-              My Profile
-            </h3>
-            <p className="text-white/60 text-xs font-medium uppercase tracking-wider group-hover:text-black/60">
-              View and edit your affiliate profile
-            </p>
-          </Link>
+        <Link
+          to="/affiliate-profile"
+          className="bg-black border-0 rounded-none p-6 hover:bg-white hover:text-black transition-colors group"
+        >
+          <CursorArrowRaysIcon className="w-8 h-8 text-white mb-4 group-hover:text-black transition-colors" />
+          <h3 className="text-sm font-bold uppercase tracking-widest mb-2">
+            My Profile
+          </h3>
+          <p className="text-white/60 text-xs font-medium uppercase tracking-wider group-hover:text-black/60">
+            View and edit your affiliate profile
+          </p>
+        </Link>
 
-          <div className="bg-black border-0 rounded-none p-6 opacity-50 cursor-not-allowed">
-            <CurrencyDollarIcon className="w-8 h-8 text-white mb-4" />
-            <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-2">
-              Marketing Tools
-            </h3>
-            <p className="text-white/60 text-xs font-medium uppercase tracking-wider">
-              Coming soon: Banners, email templates
-            </p>
-          </div>
+        <div className="bg-black border-0 rounded-none p-6 opacity-50 cursor-not-allowed">
+          <CurrencyDollarIcon className="w-8 h-8 text-white mb-4" />
+          <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-2">
+            Marketing Tools
+          </h3>
+          <p className="text-white/60 text-xs font-medium uppercase tracking-wider">
+            Coming soon: Banners, email templates
+          </p>
         </div>
       </div>
     </div>
+    </div >
   )
 }
 

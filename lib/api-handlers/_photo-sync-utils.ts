@@ -97,14 +97,30 @@ export async function syncGalleryPhotos(librarySlug: string, limit: number = 100
                 // Try parsing "YYYY:MM:DD HH:MM:SS" manually
                 const parts = captureTimeStr.match(/(\d{4}):(\d{2}):(\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
                 if (parts) {
-                    captureDate = new Date(
-                        parseInt(parts[1]),
-                        parseInt(parts[2]) - 1, // Month is 0-indexed
-                        parseInt(parts[3]),
-                        parseInt(parts[4]),
-                        parseInt(parts[5]),
-                        parseInt(parts[6])
-                    );
+                    const year = parts[1];
+                    const month = parts[2];
+                    const day = parts[3];
+                    const hour = parts[4];
+                    const min = parts[5];
+                    const sec = parts[6];
+
+                    // FORCE CENTRAL TIME (CST) interpretation
+                    // We construct an ISO string with explicit -06:00 offset
+                    // This creates a Date that is internally UTC-shifted correctly from CST
+                    const isoWithOffset = `${year}-${month}-${day}T${hour}:${min}:${sec}-06:00`;
+                    captureDate = new Date(isoWithOffset);
+
+                    // Fallback if the constructed date is invalid (e.g. edge cases)
+                    if (isNaN(captureDate.getTime())) {
+                        captureDate = new Date(
+                            parseInt(year),
+                            parseInt(month) - 1,
+                            parseInt(day),
+                            parseInt(hour),
+                            parseInt(min),
+                            parseInt(sec)
+                        );
+                    }
                 }
             }
 

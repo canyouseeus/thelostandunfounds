@@ -40,35 +40,54 @@ const FOLDER_CONFIG = {
     }
 };
 
-async function getOrCreateFolder(name: string, parentId: string) {
-    const res = await drive.files.list({
-        q: `name = '${name}' and '${parentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
-        fields: 'files(id)',
-    });
-
-    if (res.data.files && res.data.files.length > 0) {
-        return res.data.files[0].id;
+// Helper to retry any async operation
+async function retryApiCall<T>(operation: () => Promise<T>, description: string, retries = 5): Promise<T> {
+    try {
+        return await operation();
+    } catch (err: any) {
+        if (retries > 0) {
+            const delay = Math.pow(2, 6 - retries) * 1000; // 2s, 4s, 8s, 16s, 32s
+            console.log(`Error ${description}: ${err.message}. Retrying in ${delay / 1000}s...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return retryApiCall(operation, description, retries - 1);
+        }
+        throw err;
     }
+}
 
-    const folder = await drive.files.create({
-        requestBody: {
-            name: name,
-            mimeType: 'application/vnd.google-apps.folder',
-            parents: [parentId],
-        },
-        fields: 'id',
-    });
+async function getOrCreateFolder(name: string, parentId: string) {
+    return retryApiCall(async () => {
+        const res = await drive.files.list({
+            q: `name = '${name}' and '${parentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+            fields: 'files(id)',
+        });
 
-    return folder.data.id;
+        if (res.data.files && res.data.files.length > 0) {
+            return res.data.files[0].id;
+        }
+
+        const folder = await drive.files.create({
+            requestBody: {
+                name: name,
+                mimeType: 'application/vnd.google-apps.folder',
+                parents: [parentId],
+            },
+            fields: 'id',
+        });
+
+        return folder.data.id;
+    }, `getOrCreateFolder(${name})`);
 }
 
 async function findDuplicates(fileName: string, parentId: string) {
-    const res = await drive.files.list({
-        q: `name = '${fileName}' and '${parentId}' in parents and trashed = false`,
-        fields: 'files(id, name, createdTime)',
-        orderBy: 'createdTime',
-    });
-    return res.data.files || [];
+    return retryApiCall(async () => {
+        const res = await drive.files.list({
+            q: `name = '${fileName}' and '${parentId}' in parents and trashed = false`,
+            fields: 'files(id, name, createdTime)',
+            orderBy: 'createdTime',
+        });
+        return res.data.files || [];
+    }, `findDuplicates(${fileName})`);
 }
 
 async function removeDuplicates(fileName: string, parentId: string) {
@@ -79,54 +98,25 @@ async function removeDuplicates(fileName: string, parentId: string) {
 
         // Keep the first (oldest) file, delete the rest
         for (let i = 1; i < files.length; i++) {
-            try {
+            await retryApiCall(async () => {
                 await drive.files.delete({ fileId: files[i].id! });
                 console.log(`  Removed duplicate: ${files[i].id}`);
-            } catch (err: any) {
-                console.error(`  Error removing duplicate ${files[i].id}:`, err.message);
-            }
+            }, `removeDuplicate(${files[i].id})`);
         }
-    }
-}
-
-async function uploadFile(filePath: string, parentId: string) {
-    const fileName = path.basename(filePath);
-
-    // Check if file already exists
-    const existing = await findDuplicates(fileName, parentId);
-
-    if (existing.length > 0) {
-        console.log(`Skipping ${fileName} (already exists in Drive)`);
-        // Clean up any duplicates
-        await removeDuplicates(fileName, parentId);
-        return;
-    }
-
-    console.log(`Uploading ${fileName}...`);
-
-    try {
-        await drive.files.create({
-            requestBody: {
-                name: fileName,
-                parents: [parentId],
-            },
-            media: {
-                body: fs.createReadStream(filePath),
-            },
-        });
-        console.log(`Successfully uploaded ${fileName}`);
-    } catch (err: any) {
-        console.error(`Error uploading ${fileName}:`, err.message);
     }
 }
 
 async function cleanupDuplicatesInFolder(parentId: string, folderName: string) {
     console.log(`\nScanning ${folderName} for duplicates...`);
 
-    const res = await drive.files.list({
-        q: `'${parentId}' in parents and trashed = false`,
-        fields: 'files(id, name)',
-    });
+    const res = await retryApiCall(async () => {
+        return await drive.files.list({
+            q: `'${parentId}' in parents and trashed = false`,
+            fields: 'files(id, name)',
+        });
+    }, `listDuplicates(${folderName})`);
+
+
 
     const files = res.data.files || [];
     const fileNames = new Set<string>();
@@ -150,13 +140,71 @@ async function cleanupDuplicatesInFolder(parentId: string, folderName: string) {
     }
 }
 
+async function uploadFile(filePath: string, parentId: string, retryCount = 0) {
+    const fileName = path.basename(filePath);
+    const MAX_RETRIES = 5; // Increased retries
+    const stats = fs.statSync(filePath);
+    const fileSize = stats.size;
+
+    // Check if file already exists (only on first try)
+    if (retryCount === 0) {
+        const existing = await findDuplicates(fileName, parentId);
+        if (existing.length > 0) {
+            console.log(`Skipping ${fileName} (already exists in Drive)`);
+            await removeDuplicates(fileName, parentId);
+            return;
+        }
+    }
+
+    console.log(`Uploading ${fileName} (${(fileSize / 1024 / 1024).toFixed(2)} MB)${retryCount > 0 ? ` (Retry ${retryCount}/${MAX_RETRIES})` : ''}...`);
+
+    try {
+        await drive.files.create({
+            requestBody: {
+                name: fileName,
+                parents: [parentId],
+            },
+            media: {
+                // Use stream for lower memory usage, but create a new stream for each retry
+                body: fs.createReadStream(filePath),
+            },
+        }, {
+            // Enable resumable uploads for better reliability with large files
+            onUploadProgress: (evt) => {
+                const progress = (evt.bytesRead / fileSize) * 100;
+                process.stdout.write(`\rUploading ${fileName}: ${progress.toFixed(0)}%`);
+            },
+        });
+        process.stdout.write('\n'); // New line after progress bar
+        console.log(`Successfully uploaded ${fileName}`);
+    } catch (err: any) {
+        process.stdout.write('\n'); // Ensure error is on new line
+        console.error(`Error uploading ${fileName}:`, err.message);
+
+        if (retryCount < MAX_RETRIES) {
+            // Exponential backoff: 2s, 4s, 8s, 16s, 32s
+            const delay = Math.pow(2, retryCount + 1) * 1000;
+            console.log(`Retrying upload for ${fileName} in ${delay / 1000} seconds...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            await uploadFile(filePath, parentId, retryCount + 1);
+        } else {
+            console.error(`Failed to upload ${fileName} after ${MAX_RETRIES} retries.`);
+        }
+    }
+}
+
 async function startSync() {
+
     // First, clean up any existing duplicates in all folders
     console.log('\n=== Cleaning up existing duplicates ===');
     for (const [key, config] of Object.entries(FOLDER_CONFIG)) {
-        const targetFolderId = await getOrCreateFolder('NEW UPLOADS', config.parent!);
-        if (targetFolderId) {
-            await cleanupDuplicatesInFolder(targetFolderId, `${key} NEW UPLOADS`);
+        try {
+            const targetFolderId = await getOrCreateFolder('NEW UPLOADS', config.parent!);
+            if (targetFolderId) {
+                await cleanupDuplicatesInFolder(targetFolderId, `${key} NEW UPLOADS`);
+            }
+        } catch (err: any) {
+            console.error(`Error processing folder ${key}: ${err.message}`);
         }
     }
 
@@ -169,24 +217,28 @@ async function startSync() {
             continue;
         }
 
-        const targetFolderId = await getOrCreateFolder('NEW UPLOADS', config.parent!);
-        if (!targetFolderId) {
-            console.error(`Could not find or create NEW UPLOADS folder in ${key} parent.`);
-            continue;
-        }
-
-        const files = fs.readdirSync(config.local).filter(f => !f.startsWith('.'));
-
-        if (files.length === 0) {
-            console.log(`No files to upload in ${config.local}`);
-            continue;
-        }
-
-        for (const file of files) {
-            const filePath = path.join(config.local, file);
-            if (fs.statSync(filePath).isFile()) {
-                await uploadFile(filePath, targetFolderId);
+        try {
+            const targetFolderId = await getOrCreateFolder('NEW UPLOADS', config.parent!);
+            if (!targetFolderId) {
+                console.error(`Could not find or create NEW UPLOADS folder in ${key} parent.`);
+                continue;
             }
+
+            const files = fs.readdirSync(config.local).filter(f => !f.startsWith('.'));
+
+            if (files.length === 0) {
+                console.log(`No files to upload in ${config.local}`);
+                continue;
+            }
+
+            for (const file of files) {
+                const filePath = path.join(config.local, file);
+                if (fs.statSync(filePath).isFile()) {
+                    await uploadFile(filePath, targetFolderId);
+                }
+            }
+        } catch (err: any) {
+            console.error(`Error processing uploads for ${key}: ${err.message}`);
         }
     }
 }

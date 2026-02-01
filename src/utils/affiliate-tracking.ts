@@ -11,6 +11,8 @@
 const AFFILIATE_COOKIE_NAME = 'affiliate_ref'
 const AFFILIATE_COOKIE_EXPIRY_DAYS = 30
 
+const AFFILIATE_SUBID_COOKIE_NAME = 'affiliate_subid'
+
 /**
  * Get affiliate reference from URL query parameter, cookie, or localStorage
  * Checks URL params first -> cookie -> localStorage
@@ -22,6 +24,12 @@ export function getAffiliateRef(): string | null {
   const params = new URLSearchParams(window.location.search)
   const urlRef = params.get('ref') || params.get('affiliate') || params.get('aff')
 
+  // Also capture Sub-ID / Campaign if present
+  const subId = params.get('subid') || params.get('sid') || params.get('campaign')
+  if (subId) {
+    setAffiliateSubId(subId)
+  }
+
   if (urlRef) {
     console.log(`🔗 URL parameter detected: ${urlRef} (updating storage)`)
     setAffiliateRef(urlRef)
@@ -31,6 +39,11 @@ export function getAffiliateRef(): string | null {
     url.searchParams.delete('ref')
     url.searchParams.delete('affiliate')
     url.searchParams.delete('aff')
+    // Don't remove subid yet, maybe user wants to see it? Or cleaner to remove.
+    url.searchParams.delete('subid')
+    url.searchParams.delete('sid')
+    url.searchParams.delete('campaign')
+
     window.history.replaceState({}, '', url.toString())
 
     return urlRef
@@ -44,6 +57,22 @@ export function getAffiliateRef(): string | null {
 
   // 3. Fall back to localStorage
   return localStorage.getItem(AFFILIATE_COOKIE_NAME)
+}
+
+/**
+ * Get affiliate sub-id from storage
+ */
+export function getAffiliateSubId(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem(AFFILIATE_SUBID_COOKIE_NAME)
+}
+
+/**
+ * Set affiliate sub-id
+ */
+export function setAffiliateSubId(subId: string): void {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(AFFILIATE_SUBID_COOKIE_NAME, subId)
 }
 
 /**
@@ -114,14 +143,20 @@ export function clearAffiliateCookie(): void {
 export async function trackAffiliateClick(affiliateCode: string): Promise<boolean> {
   if (!affiliateCode) return false
 
+  // Get Sub-ID / Campaign if available
+  const subId = getAffiliateSubId()
+
   try {
-    console.log('📡 Tracking affiliate click:', affiliateCode)
+    console.log('📡 Tracking affiliate click:', affiliateCode, subId ? `(SubID: ${subId})` : '')
     const response = await fetch('/api/shop/affiliates/track-click', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ affiliateCode }),
+      body: JSON.stringify({
+        affiliateCode,
+        metadata: subId ? { sub_id: subId } : undefined
+      }),
     })
 
     if (!response.ok) {
