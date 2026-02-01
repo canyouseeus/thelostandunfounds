@@ -20,6 +20,7 @@ const PhotoSuccessPage: React.FC = () => {
     const [zipping, setZipping] = useState(false);
     const [entitlements, setEntitlements] = useState<Entitlement[]>([]);
     const [libraryTitle, setLibraryTitle] = useState<string>('GALLERY');
+    const [librarySlug, setLibrarySlug] = useState<string>('');
 
     useEffect(() => {
         if (orderId) {
@@ -41,6 +42,9 @@ const PhotoSuccessPage: React.FC = () => {
                 setEntitlements(data.entitlements || []);
                 if (data.libraryTitle) {
                     setLibraryTitle(data.libraryTitle);
+                }
+                if (data.librarySlug) {
+                    setLibrarySlug(data.librarySlug);
                 }
             }
         } catch (err) {
@@ -95,10 +99,10 @@ const PhotoSuccessPage: React.FC = () => {
                 <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-8 gap-6">
                     <div className="text-left max-w-2xl">
                         <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tighter uppercase">
-                            Archive Unlocked
+                            THANK YOU!
                         </h1>
                         <p className="text-zinc-500 text-lg text-left max-w-xl">
-                            Your high-resolution assets are secured and ready for download. System access will remain active for 48 hours.
+                            Your high-resolution assets are secured and ready for download. This download link will expire in 48 hours, but you can always download from "YOUR ASSETS" within THE GALLERY.
                         </p>
                     </div>
 
@@ -167,7 +171,7 @@ const PhotoSuccessPage: React.FC = () => {
 
                 <div className="border-t border-zinc-800 pt-8 flex justify-between items-center">
                     <Link
-                        to="/gallery/kattitude-tattoo"
+                        to={librarySlug ? `/gallery/${librarySlug}` : "/gallery"}
                         className="inline-flex items-center gap-2 text-zinc-500 hover:text-white transition-colors"
                     >
                         <ArrowLeftIcon className="w-4 h-4" />
