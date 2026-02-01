@@ -165,10 +165,10 @@ async function handleCheckout(req: VercelRequest, res: VercelResponse) {
 
         const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY!);
 
-        // Calculate total price
+        // Calculate total price with Tiered Pricing support
         const { data: photos, error: photoError } = await supabase
             .from('photos')
-            .select('price_cents')
+            .select('id, price_cents, library_id')
             .in('id', photoIds);
 
         if (photoError || !photos) {
@@ -176,7 +176,49 @@ async function handleCheckout(req: VercelRequest, res: VercelResponse) {
             return res.status(500).json({ error: 'Failed to fetch photo prices' });
         }
 
-        const totalCents = photos.reduce((sum, p) => sum + (p.price_cents || 500), 0);
+        // Group photos by library to apply library-specific pricing
+        const photosByLibrary: Record<string, typeof photos> = {};
+        photos.forEach(p => {
+            const libId = p.library_id || 'unknown';
+            if (!photosByLibrary[libId]) photosByLibrary[libId] = [];
+            photosByLibrary[libId].push(p);
+        });
+
+        let totalCents = 0;
+
+        for (const [libId, libPhotos] of Object.entries(photosByLibrary)) {
+            if (libId === 'unknown') {
+                // Fallback for unknown library
+                totalCents += libPhotos.reduce((sum, p) => sum + (p.price_cents || 500), 0);
+                continue;
+            }
+
+            // Fetch pricing options for this library
+            const { data: options } = await supabase
+                .from('gallery_pricing_options')
+                .select('*')
+                .eq('library_id', libId)
+                .eq('is_active', true);
+
+            const count = libPhotos.length;
+            const bundleOption = options?.find(o => o.photo_count === count);
+
+            if (bundleOption) {
+                console.log(`[Pricing] Found bundle for ${count} photos: $${bundleOption.price}`);
+                totalCents += Math.round(bundleOption.price * 100);
+            } else {
+                // Use "Single Photo" price or fallback
+                const singleOption = options?.find(o => o.photo_count === 1);
+                if (singleOption) {
+                    console.log(`[Pricing] Using single photo price: $${singleOption.price} x ${count}`);
+                    totalCents += Math.round(singleOption.price * 100) * count;
+                } else {
+                    console.log(`[Pricing] Fallback to legacy price_cents`);
+                    totalCents += libPhotos.reduce((sum, p) => sum + (p.price_cents || 500), 0);
+                }
+            }
+        }
+
         const amount = totalCents / 100;
 
         // --- NEW LOGIC: Create Pending Order in DB FIRST ---
