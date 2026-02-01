@@ -637,16 +637,15 @@ export default function AffiliateDashboard() {
             {/* Affiliate Code Setup */}
             <div className="mb-8">
               <h3 className="text-white text-lg font-bold uppercase tracking-widest mb-4">Your Identity</h3>
-              <AffiliateCodeSetup
-                currentCode={data.affiliate.code}
-                onUpdate={(newCode) => {
-                  // optimistic update
-                  setData(prev => prev ? {
-                    ...prev,
-                    affiliate: { ...prev.affiliate, code: newCode }
-                  } : null)
-                }}
-              />
+              <div className="bg-black border border-white/20 p-6 rounded-none">
+                <div className="text-[10px] items-center font-bold text-white/40 uppercase tracking-widest mb-2">Your Affiliate Code</div>
+                <div className="text-3xl font-black text-white font-mono tracking-tighter mb-2">
+                  {data.affiliate.code}
+                </div>
+                <div className="text-xs text-white/40 font-medium uppercase tracking-wider">
+                  Share this code with your audience to earn {data.affiliate.commission_rate}% commission on every sale.
+                </div>
+              </div>
             </div>
 
             {/* Deep Link Generator */}
