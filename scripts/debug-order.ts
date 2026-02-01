@@ -3,55 +3,68 @@ import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Load envs
+// Load environment variables
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+const supabaseUrl = process.env.SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-    console.error('Missing Supabase credentials');
+if (!supabaseUrl || !supabaseServiceKey) {
+    console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
     process.exit(1);
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-async function checkOrder() {
-    const orderId = '5MF67410CU6953335';
-    console.log(`Checking order: ${orderId}`);
+async function debugOrder(orderId: string) {
+    console.log(`Debugging Order: ${orderId}`);
 
-    // Check by paypal_order_id
-    const { data: byPaypalId, error: err1 } = await supabase
+    // 1. Fetch Order
+    const { data: order, error: orderError } = await supabase
         .from('photo_orders')
         .select('*')
-        .eq('paypal_order_id', orderId);
-
-    if (byPaypalId && byPaypalId.length > 0) {
-        console.log('Found by PayPal ID:', JSON.stringify(byPaypalId, null, 2));
-        return;
-    }
-
-    // Check by ID (if it was somehow stored as the main ID, though unlikely for that format)
-    const { data: byId, error: err2 } = await supabase
-        .from('photo_orders')
-        .select('*')
-        .eq('id', orderId) // This will likely fail if id is UUID and this string is not
+        .or(`id.eq.${orderId},paypal_order_id.eq.${orderId}`)
         .maybeSingle();
 
-    if (byId) {
-        console.log('Found by ID:', JSON.stringify(byId, null, 2));
+    if (orderError) {
+        console.error('Error fetching order:', orderError);
         return;
     }
 
-    // Check recent orders to see if we have any pending ones that might match
-    const { data: recent, error: err3 } = await supabase
-        .from('photo_orders')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(5);
+    if (!order) {
+        console.error('Order not found!');
+        return;
+    }
 
-    console.log('No direct match found. Recent 5 orders:', JSON.stringify(recent, null, 2));
+    console.log('Order Found:', {
+        id: order.id,
+        paypal_order_id: order.paypal_order_id,
+        status: order.payment_status,
+        email: order.email,
+        metadata: order.metadata
+    });
+
+    // 2. Fetch Entitlements
+    const { data: entitlements, error: entError } = await supabase
+        .from('photo_entitlements')
+        .select('*, photos(id, title, google_drive_file_id)')
+        .eq('order_id', order.id);
+
+    if (entError) {
+        console.error('Error fetching entitlements:', entError);
+        return;
+    }
+
+    console.log(`Entitlements Found: ${entitlements?.length}`);
+    if (entitlements && entitlements.length > 0) {
+        entitlements.forEach((e, i) => {
+            console.log(`[${i}] Token: ${e.token}, Expires: ${e.expires_at}, Photo:`, e.photos);
+        });
+    } else {
+        console.log('No entitlements found for this order.');
+    }
 }
 
-checkOrder();
+// Order ID from the screenshot
+const targetOrderId = '86f3bf98-73ba-409b-9f96-761a3c4fba57';
+debugOrder(targetOrderId);

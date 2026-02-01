@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { google } from 'googleapis';
 import dotenv from 'dotenv';
 import path from 'path';
-import { generateTransactionalEmail, EMAIL_STYLES } from '../../lib/email-template';
+import { generateTransactionalEmail, EMAIL_STYLES } from '../utils/email-template';
 
 // Load env vars if running locally
 if (process.env.NODE_ENV !== 'production') {
