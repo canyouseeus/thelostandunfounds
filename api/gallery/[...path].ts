@@ -11,7 +11,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
@@ -301,10 +301,15 @@ async function handleCheckout(req: VercelRequest, res: VercelResponse) {
         const order = await orderRes.json();
 
         // UPDATE pending order with PayPal Order ID
-        await supabase
+        const { error: updateError } = await supabase
             .from('photo_orders')
             .update({ paypal_order_id: order.id })
             .eq('id', internalRefId);
+
+        if (updateError) {
+            console.error('Failed to link PayPal order ID to DB:', updateError);
+            return res.status(500).json({ error: 'Failed to link order' });
+        }
 
         const approvalUrl = order.links.find((l: any) => l.rel === 'approve')?.href;
         return res.status(200).json({ approvalUrl });
@@ -327,6 +332,12 @@ async function handleCapture(req: VercelRequest, res: VercelResponse) {
             hasUrl: !!SUPABASE_URL,
             hasSvcKey: !!SUPABASE_SERVICE_ROLE_KEY
         });
+
+        if (!SUPABASE_SERVICE_ROLE_KEY) {
+            console.error('Critical: SUPABASE_SERVICE_ROLE_KEY is missing');
+            return res.status(500).json({ error: 'Server configuration error: Missing database keys' });
+        }
+
         const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
         // 1. Initial Idempotency Check
@@ -391,32 +402,72 @@ async function handleCapture(req: VercelRequest, res: VercelResponse) {
         const { access_token } = await tokenRes.json();
 
         // 3. Capture Order
+        let captureData;
         const captureRes = await fetch(`${baseUrl}/v2/checkout/orders/${orderId}/capture`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${access_token}`, 'Content-Type': 'application/json' }
         });
 
         if (!captureRes.ok) {
-            const err = await captureRes.json();
-            console.error('PayPal Capture Error:', JSON.stringify(err, null, 2));
-            return res.status(500).json({
-                error: 'Failed to capture payment',
-                details: err,
-                debug: {
-                    environment,
-                    usedBaseUrl: baseUrl,
-                    orderId
-                }
+            const err = await captureRes.json().catch(() => ({}));
+            console.warn('PayPal Capture returned error, checking status...', err);
+
+            // Check if actually completed (handle idempotency or "Already Captured" error)
+            const checkRes = await fetch(`${baseUrl}/v2/checkout/orders/${orderId}`, {
+                headers: { 'Authorization': `Bearer ${access_token}` }
             });
+
+            let recovered = false;
+            if (checkRes.ok) {
+                const checkData = await checkRes.json();
+                if (checkData.status === 'COMPLETED' || checkData.status === 'APPROVED') {
+                    captureData = checkData;
+                    recovered = true;
+                    console.log('Order verified as COMPLETED/APPROVED despite capture error.');
+                }
+            }
+
+            if (!recovered) {
+                console.error('PayPal Capture Error (Fatal):', JSON.stringify(err, null, 2));
+                return res.status(500).json({
+                    error: 'Failed to capture payment',
+                    details: err
+                });
+            }
+        } else {
+            captureData = await captureRes.json();
         }
 
         // 4. Update Database
-        const { data: photoOrder, error: orderError } = await supabase
+        // First try updating by PayPal ID
+        let { data: photoOrder, error: orderError } = await supabase
             .from('photo_orders')
             .update({ payment_status: 'completed' })
             .eq('paypal_order_id', orderId)
             .select()
             .single();
+
+        // If not found, try to recover via custom_id (if we have it from PayPal data)
+        const customId = captureData?.purchase_units?.[0]?.custom_id;
+        if ((!photoOrder || orderError) && customId) {
+            console.log('Recovering order via custom_id:', customId);
+            const { data: recoveredOrder, error: recoverError } = await supabase
+                .from('photo_orders')
+                .update({
+                    payment_status: 'completed',
+                    paypal_order_id: orderId
+                })
+                .eq('id', customId)
+                .select()
+                .single();
+
+            if (recoveredOrder) {
+                photoOrder = recoveredOrder;
+                orderError = null;
+            } else if (recoverError) {
+                console.error('Recovery failed:', recoverError);
+            }
+        }
 
         if (orderError || !photoOrder) {
             console.error('DB Update Error:', orderError);
