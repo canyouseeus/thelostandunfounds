@@ -140,18 +140,31 @@ async function cleanupDuplicatesInFolder(parentId: string, folderName: string) {
     }
 }
 
+async function findGlobalFile(fileName: string, fileSize: number) {
+    return retryApiCall(async () => {
+        const res = await drive.files.list({
+            q: `name = '${fileName}' and trashed = false`,
+            fields: 'files(id, name, size, createdTime, parents)',
+            orderBy: 'createdTime desc',
+        });
+
+        const files = res.data.files || [];
+        // Find a file with matching size
+        return files.find(f => f.size && parseInt(f.size) === fileSize);
+    }, `findGlobalFile(${fileName})`);
+}
+
 async function uploadFile(filePath: string, parentId: string, retryCount = 0) {
     const fileName = path.basename(filePath);
     const MAX_RETRIES = 5; // Increased retries
     const stats = fs.statSync(filePath);
     const fileSize = stats.size;
 
-    // Check if file already exists (only on first try)
+    // Check if file already exists globally (only on first try)
     if (retryCount === 0) {
-        const existing = await findDuplicates(fileName, parentId);
-        if (existing.length > 0) {
-            console.log(`Skipping ${fileName} (already exists in Drive)`);
-            await removeDuplicates(fileName, parentId);
+        const existing = await findGlobalFile(fileName, fileSize);
+        if (existing) {
+            console.log(`Skipping ${fileName} (already exists in Drive, ID: ${existing.id})`);
             return;
         }
     }

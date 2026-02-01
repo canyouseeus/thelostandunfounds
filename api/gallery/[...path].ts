@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { google } from 'googleapis';
 import dotenv from 'dotenv';
 import path from 'path';
+import { generateTransactionalEmail, EMAIL_STYLES } from '../../lib/email-template';
 
 // Load env vars if running locally
 if (process.env.NODE_ENV !== 'production') {
@@ -530,7 +531,8 @@ async function handleCapture(req: VercelRequest, res: VercelResponse) {
                 console.log('Creating entitlements from metadata for order:', photoOrder.id);
                 const newEntitlements = meta.photoIds.map((pid: string) => ({
                     order_id: photoOrder.id,
-                    photo_id: pid
+                    photo_id: pid,
+                    expires_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString() // 48 hours
                 }));
 
                 const { error: insertErr } = await supabase
@@ -564,26 +566,22 @@ async function handleCapture(req: VercelRequest, res: VercelResponse) {
                 auth: zohoAuth,
                 to: photoOrder.email,
                 subject: 'ARCHIVE ACCESS GRANTED | THE LOST+UNFOUNDS',
-                htmlContent: `
-                    <div style="background-color: #000; color: #fff; padding: 40px; font-family: monospace; text-align: left;">
-                        <h1 style="font-size: 28px; font-weight: 900; letter-spacing: -1px; margin-bottom: 30px; border-bottom: 2px solid #fff; padding-bottom: 10px; display: inline-block;">
-                            ACCESS GRANTED
-                        </h1>
-                        <p style="color: #666; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; margin: 20px 0 40px 0;">
-                            YOUR SECURED ARCHIVE ITEMS ARE READY FOR DOWNLOAD.
-                        </p>
-                        <div style="margin: 40px 0;">
-                            <a href="${galleryUrl}" style="display: inline-block; padding: 14px 28px; background-color: #fff; color: #000; text-decoration: none; font-weight: bold; font-size: 16px; border: 2px solid #fff;">ACCESS GALLERY</a>
-                        </div>
-                        <div style="margin-top: 60px; padding-top: 20px; border-top: 1px solid #1a1a1a;">
-                            <p style="color: #333; font-size: 9px; line-height: 1.6; text-transform: uppercase; letter-spacing: 1px;">
-                                SECURE AUTOMATED DELIVERY SYSTEM<br/>
-                                ORDER ID: ${photoOrder.id}<br/>
-                                DESTINATION: ${photoOrder.email}
-                            </p>
-                        </div>
+                htmlContent: generateTransactionalEmail(`
+                    <h1 style="${EMAIL_STYLES.heading1}">ORDER CONFIRMED</h1>
+                    <p style="${EMAIL_STYLES.paragraph}">
+                        Thank you for your purchase. Your high-resolution photos are ready for download.
+                    </p>
+                    <div style="margin: 40px 0;">
+                        <a href="${galleryUrl}" style="${EMAIL_STYLES.button}">DOWNLOAD PHOTOS</a>
                     </div>
-                `
+                    <div style="margin-top: 60px; padding-top: 20px; border-top: 1px solid #1a1a1a;">
+                        <p style="${EMAIL_STYLES.muted}">
+                            SECURE AUTOMATED DELIVERY SYSTEM<br/>
+                            ORDER ID: ${photoOrder.id}<br/>
+                            DESTINATION: ${photoOrder.email}
+                        </p>
+                    </div>
+                `)
             });
         } catch (emailErr) {
             console.error('Post-capture email failure:', emailErr);
@@ -599,7 +597,8 @@ async function handleCapture(req: VercelRequest, res: VercelResponse) {
                 token: e.token,
                 photoTitle: (e.photos as any)?.title,
                 thumbnailUrl: (e.photos as any)?.google_drive_file_id ? `/api/gallery/stream?fileId=${(e.photos as any).google_drive_file_id}&size=400` : null
-            }))
+            })),
+            librarySlug: photoOrder?.metadata?.librarySlug || 'gallery'
         });
 
     } catch (err: any) {

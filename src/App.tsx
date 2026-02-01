@@ -56,6 +56,7 @@ import Gallery from './pages/Gallery'
 import DownloadPortal from './pages/DownloadPortal'
 import OnboardingWizard from './pages/setup/OnboardingWizard'
 import PhotographerGuide from './pages/docs/PhotographerGuide'
+import Events from './pages/Events'
 
 
 
@@ -82,6 +83,9 @@ function App() {
               </Route>
               <Route path="/support" element={<Layout />}>
                 <Route index element={<Support />} />
+              </Route>
+              <Route path="/events" element={<Layout />}>
+                <Route index element={<Events />} />
               </Route>
               <Route path="/qr" element={<Layout />}>
                 <Route index element={<QR />} />

@@ -34,7 +34,7 @@ export default async function handler(
         }
 
         // 2. Check expiration
-        if (new Date(entitlement.expires_at) < new Date()) {
+        if (entitlement.expires_at && new Date(entitlement.expires_at) < new Date()) {
             return res.status(403).json({ error: 'Download link has expired' })
         }
 

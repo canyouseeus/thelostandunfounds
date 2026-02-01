@@ -28,7 +28,7 @@ import {
   CpuChipIcon, // Using CpuChipIcon for "Network" concept or similar connectivity
   EyeIcon,
   EnvelopeIcon,
-  CalendarIcon,
+
   DocumentTextIcon,
   UserIcon,
   MagnifyingGlassIcon,
@@ -44,6 +44,7 @@ import {
   ArchiveBoxIcon,
   BookOpenIcon,
   PaperAirplaneIcon,
+  CalendarIcon,
   FolderOpenIcon,
   ArrowUpIcon,
   ArrowsPointingOutIcon,
@@ -77,6 +78,7 @@ import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import AdminOverviewView from '../components/admin/AdminOverviewView';
 import { DashboardCharts } from '../components/admin/DashboardCharts';
 import AdminGalleryView from '../components/admin/AdminGalleryView';
+import AdminEventsView from '../components/admin/AdminEventsView';
 import { RevenueTracker } from '../components/ui/revenue-tracker';
 import { ClockWidget } from '../components/ui/clock-widget';
 import { CalendarWidget } from '../components/ui/calendar-widget';
@@ -220,6 +222,7 @@ export default function Admin() {
   const usersSectionRef = useRef<HTMLDivElement>(null);
   const affiliatesSectionRef = useRef<HTMLDivElement>(null);
   const submissionsSectionRef = useRef<HTMLDivElement>(null);
+  const eventsSectionRef = useRef<HTMLDivElement>(null);
   const settingsSectionRef = useRef<HTMLDivElement>(null);
 
   // Expanded state for controlled CollapsibleSections
@@ -233,6 +236,7 @@ export default function Admin() {
     affiliates: false,
     submissions: false,
     settings: false,
+    events: false,
   });
 
   const handleSectionToggle = (key: string) => {
@@ -295,6 +299,7 @@ export default function Admin() {
       case 'users': ref = usersSectionRef; break;
       case 'affiliates': ref = affiliatesSectionRef; break;
       case 'submissions': ref = submissionsSectionRef; break;
+      case 'events': ref = eventsSectionRef; break;
       case 'settings':
         key = 'settings';
         ref = settingsSectionRef;
@@ -1495,6 +1500,7 @@ export default function Admin() {
                 { id: 'users', icon: UsersIcon, title: 'Users' },
                 { id: 'affiliates', icon: LinkIcon, title: 'Affiliates' },
                 { id: 'submissions', icon: DocumentTextIcon, title: 'Submissions', badge: pendingSubmissions },
+                { id: 'events', icon: CalendarIcon, title: 'Events' },
                 { id: 'settings', icon: BoltIcon, title: 'Settings' }
               ].map((app) => (
                 <button
@@ -1638,6 +1644,22 @@ export default function Admin() {
               </div>
               <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Submissions</div>}>
                 <BlogSubmissionReview />
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* Events Section */}
+          {expandedSections['events'] && (
+            <div ref={eventsSectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex flex-col px-0 py-2 mb-8 items-start">
+                <div className="flex items-center gap-3">
+                  <CalendarIcon className="w-5 h-5 text-white/40" />
+                  <h2 className="text-lg font-black text-white tracking-widest uppercase">Event Management</h2>
+                </div>
+                <button onClick={() => handleSectionToggle('events')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
+              </div>
+              <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Events</div>}>
+                <AdminEventsView onBack={scrollToTop} />
               </ErrorBoundary>
             </div>
           )}
