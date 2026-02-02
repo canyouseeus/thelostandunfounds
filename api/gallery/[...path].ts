@@ -3,7 +3,134 @@ import { createClient } from '@supabase/supabase-js';
 // import { google } from 'googleapis'; // Moved to dynamic import to prevent cold start crashes
 import dotenv from 'dotenv';
 import path from 'path';
-import { generateTransactionalEmail, EMAIL_STYLES } from './../email-template';
+
+// --- INLINED EMAIL TEMPLATE UTILS (to avoid Vercel module resolution path errors) ---
+const BRAND = {
+    name: 'THE LOST+UNFOUNDS',
+    logo: 'https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png',
+    website: 'https://www.thelostandunfounds.com',
+    colors: {
+        background: '#000000',
+        text: '#ffffff',
+        textMuted: 'rgba(255, 255, 255, 0.6)',
+        border: 'rgba(255, 255, 255, 0.1)',
+        link: 'rgba(255, 255, 255, 0.9)',
+    },
+};
+
+const EMAIL_STYLES = {
+    heading1: `color: ${BRAND.colors.text} !important; font-size: 28px; font-weight: bold; margin: 0 0 20px 0; letter-spacing: 0.1em;`,
+    heading2: `color: ${BRAND.colors.text} !important; font-size: 24px; font-weight: bold; margin: 30px 0 20px 0; letter-spacing: 0.1em;`,
+    heading3: `color: ${BRAND.colors.text} !important; font-size: 20px; font-weight: bold; margin: 25px 0 15px 0;`,
+    paragraph: `color: ${BRAND.colors.text} !important; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;`,
+    link: `color: ${BRAND.colors.link}; text-decoration: underline;`,
+    button: `display: inline-block; padding: 14px 28px; background-color: ${BRAND.colors.text}; color: ${BRAND.colors.background}; text-decoration: none; font-weight: bold; font-size: 16px; border: 2px solid ${BRAND.colors.text};`,
+    divider: `border: none; border-top: 1px solid ${BRAND.colors.border}; margin: 30px 0;`,
+    muted: `color: ${BRAND.colors.textMuted}; font-size: 14px; line-height: 1.5;`,
+};
+
+function generateTransactionalEmail(bodyContent: string): string {
+    const currentYear = new Date().getFullYear();
+    const footerHtml = `
+              <hr style="border: none; border-top: 1px solid ${BRAND.colors.border}; margin: 30px 0;">
+              <p style="color: ${BRAND.colors.textMuted}; font-size: 12px; line-height: 1.5; margin: 0 0 10px 0; text-align: left;">
+                © ${currentYear} ${BRAND.name}. All rights reserved.
+              </p>
+  `;
+
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>${BRAND.name}</title>
+  <style>
+    /* Reset styles */
+    body, table, td, p, a, li, blockquote {
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
+    table, td {
+      mso-table-lspace: 0pt;
+      mso-table-rspace: 0pt;
+    }
+    img {
+      -ms-interpolation-mode: bicubic;
+      border: 0;
+      height: auto;
+      line-height: 100%;
+      outline: none;
+      text-decoration: none;
+    }
+    /* Brand styles */
+    body {
+      background-color: ${BRAND.colors.background} !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      font-family: Arial, Helvetica, sans-serif;
+      color: ${BRAND.colors.text};
+    }
+    table {
+      background-color: ${BRAND.colors.background} !important;
+      border-collapse: collapse !important;
+    }
+    td {
+      background-color: ${BRAND.colors.background} !important;
+    }
+    a {
+      color: ${BRAND.colors.link};
+    }
+    h1, h2, h3, h4, h5, h6 {
+      color: ${BRAND.colors.text} !important;
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 0 0 20px 0;
+    }
+    p {
+      color: ${BRAND.colors.text} !important;
+      font-size: 16px;
+      line-height: 1.6;
+      margin: 0 0 20px 0;
+    }
+    ul, ol {
+      color: ${BRAND.colors.text} !important;
+      font-size: 16px;
+      line-height: 1.8;
+      margin: 0 0 20px 0;
+      padding-left: 20px;
+    }
+  </style>
+</head>
+<body style="margin: 0 !important; padding: 0 !important; background-color: ${BRAND.colors.background} !important; font-family: Arial, Helvetica, sans-serif;">
+  <!-- Email wrapper table -->
+  <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100% !important; border-collapse: collapse !important; background-color: ${BRAND.colors.background} !important; margin: 0 !important; padding: 0 !important;">
+    <tr>
+      <td align="center" style="padding: 40px 20px !important; background-color: ${BRAND.colors.background} !important;">
+        <!-- Content container -->
+        <table role="presentation" cellpadding="0" cellspacing="0" style="max-width: 600px !important; width: 100% !important; background-color: ${BRAND.colors.background} !important; margin: 0 auto !important;">
+          <!-- Logo -->
+          <tr>
+            <td align="left" style="padding: 0 0 30px 0 !important;">
+              <a href="${BRAND.website}" target="_blank">
+                <img src="${BRAND.logo}" alt="${BRAND.name}" style="max-width: 100%; height: auto; display: block;">
+              </a>
+            </td>
+          </tr>
+          <!-- Main content -->
+          <tr>
+            <td style="padding: 0 !important; color: ${BRAND.colors.text} !important;">
+              ${bodyContent}
+              ${footerHtml}
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+// ---------------------------------------------------------------------------------------------------
 
 // Load env vars if running locally
 if (process.env.NODE_ENV !== 'production') {
