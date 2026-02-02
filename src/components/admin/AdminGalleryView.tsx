@@ -688,13 +688,19 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                     await new Promise(resolve => setTimeout(resolve, 1000));
                     await loadGalleryStats(); // Refresh the list to show any new photo counts
                 } else {
-                    const errData = await syncRes.json().catch(() => ({ error: 'Unknown sync error' }));
-                    error(`Sync failed: ${errData.error || errData.details || 'Check server logs.'}`);
-                    console.error('Sync failed during connection test:', errData);
+                    const text = await syncRes.text();
+                    let errData;
+                    try {
+                        errData = JSON.parse(text);
+                    } catch {
+                        errData = { error: 'Non-JSON response', body: text };
+                    }
+                    error(`Sync failed: ${errData.error || errData.details || text.substring(0, 50)}`);
+                    console.error('Sync failed during connection test:', JSON.stringify(errData, null, 2));
                 }
             } catch (syncErr: any) {
                 error(`Sync error: ${syncErr.message || 'Network error. Check connection.'}`);
-                console.error('Connection test sync error:', syncErr);
+                console.error('Connection test sync error:', JSON.stringify(syncErr, null, 2));
             }
             setVerifying(false);
         }

@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import { google } from 'googleapis';
+// import { google } from 'googleapis'; // Moved to dynamic import to prevent cold start crashes
 import dotenv from 'dotenv';
 import path from 'path';
 import { generateTransactionalEmail, EMAIL_STYLES } from '../utils/email-template';
@@ -401,8 +401,13 @@ async function handleCapture(req: VercelRequest, res: VercelResponse) {
                 .select('*, photos(title, google_drive_file_id)')
                 .eq('order_id', existingOrder.id);
 
+            console.log(`[Capture-Idempotent] Order ${existingOrder.id} already completed.`);
+            console.log(`[Capture-Idempotent] Entitlements found: ${ents?.length ?? 0}`);
             if (entsError) {
-                console.error('Error fetching entitlements (idempotency):', entsError);
+                console.error('[Capture-Idempotent] Error fetching entitlements:', entsError);
+            }
+            if (ents && ents.length > 0) {
+                console.log('[Capture-Idempotent] First ent sample:', JSON.stringify(ents[0], null, 2));
             }
 
             // Default title since we removed the join
@@ -1030,6 +1035,18 @@ async function syncGalleryPhotos(librarySlug: string) {
     if (!folderId) {
         throw new Error(`Library ${librarySlug} has no Google Drive folder ID configured`);
     }
+
+    const { google } = await import('googleapis');
+
+    // Key is already processed above
+
+    // Debug log (redacted)
+    console.log('[Sync] Key format check:', {
+        length: GOOGLE_KEY.length,
+        hasHeader: GOOGLE_KEY.startsWith('-----BEGIN PRIVATE KEY-----'),
+        hasFooter: GOOGLE_KEY.endsWith('-----END PRIVATE KEY-----'),
+        newlineCount: (GOOGLE_KEY.match(/\n/g) || []).length
+    });
 
     const auth = new google.auth.GoogleAuth({
         credentials: {
