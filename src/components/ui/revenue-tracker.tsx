@@ -164,7 +164,7 @@ export function RevenueTracker({
                         <div className="text-center">
                             <div className="text-[9px] md:text-[10px] text-white/40 uppercase tracking-wider mb-1">Gallery</div>
                             <div className="text-lg md:text-xl font-bold text-white font-mono">
-                                <AnimatedNumber value={galleryPhotoCount} />
+                                $<AnimatedNumber value={galleryRevenue} decimals={0} />
                             </div>
                         </div>
                         <div className="text-center">
@@ -174,9 +174,9 @@ export function RevenueTracker({
                             </div>
                         </div>
                         <div className="text-center">
-                            <div className="text-[9px] md:text-[10px] text-white/40 uppercase tracking-wider mb-1">Users</div>
+                            <div className="text-[9px] md:text-[10px] text-white/40 uppercase tracking-wider mb-1">Subs</div>
                             <div className="text-lg md:text-xl font-bold text-white font-mono">
-                                <AnimatedNumber value={usersCount} />
+                                $<AnimatedNumber value={subscriberRevenue} decimals={0} />
                             </div>
                         </div>
                     </div>
