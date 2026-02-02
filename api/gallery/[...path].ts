@@ -1079,14 +1079,24 @@ async function syncGalleryPhotos(librarySlug: string) {
         throw new Error(`Google Drive API failed (${driveRes.status}): ${errorBody}`);
     }
 
-    const driveData = await driveRes.json();
+    interface GoogleDriveFile {
+        id: string;
+        name: string;
+        mimeType: string;
+        thumbnailLink?: string;
+        webContentLink?: string;
+        createdTime?: string;
+        imageMediaMetadata?: Record<string, any>;
+    }
+
+    const driveData = await driveRes.json() as { files: GoogleDriveFile[] };
     const response = { data: driveData }; // Mock the structure of googleapis response
 
-    const allFiles = response.data.files || [];
+    const allFiles: GoogleDriveFile[] = response.data.files || [];
     console.log(`[Sync Debug] Found ${allFiles.length} total files in folder ${librarySlug}`);
 
     // Filter manually so we can log what we skip
-    const files = allFiles.filter(f => {
+    const files = allFiles.filter((f: GoogleDriveFile) => {
         const isImage = f.mimeType?.includes('image/');
         const isVideo = f.mimeType === 'video/quicktime' || f.mimeType === 'video/mp4';
         if (!isImage && !isVideo) {
