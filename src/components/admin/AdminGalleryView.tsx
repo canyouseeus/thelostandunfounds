@@ -32,6 +32,7 @@ interface PhotoLibrary {
     commercial_included?: boolean;
     owner_id?: string;
     invited_emails?: string; // Comma-separated list of invited client emails
+    user_id?: string;
 }
 
 interface PricingOption {
@@ -247,8 +248,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 cover_image_url: modalData.cover_image_url || null,
                 price: modalData.price || 5.00,
                 invited_emails: invitedEmails.join(','), // Persist invited emails
-                // Assign owner if new and in photographer mode
-                ...(isPhotographerView && user && !editingId ? { owner_id: user.id } : {})
+                // Assign owner to current user for all new galleries
+                ...(user && !editingId ? { user_id: user.id, owner_id: user.id } : {})
             };
 
             if (editingId) {

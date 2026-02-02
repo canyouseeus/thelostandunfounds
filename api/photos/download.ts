@@ -99,8 +99,9 @@ export default async function handler(
         res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.jpg"`);
 
         // Pipe the stream
-        if (!driveRes.body) {
-            throw new Error('Failed to get stream body');
+        const reader = driveRes.body?.getReader();
+        if (!reader) {
+            throw new Error('Failed to get stream reader');
         }
 
         // Stream via generator or pipe

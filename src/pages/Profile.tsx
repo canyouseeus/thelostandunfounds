@@ -283,32 +283,42 @@ export default function Profile() {
         commissionsData = commissions || [];
       }
 
-      // 2. Fetch gallery orders
-      const { data: orders } = await supabase
+      // 2. Fetch gallery purchases (buyer)
+      const { data: purchases } = await supabase
         .from('photo_orders')
         .select('created_at, total_amount_cents')
         .eq('user_id', user.id)
         .eq('payment_status', 'completed')
         .order('created_at', { ascending: true });
 
-      const ordersData = orders || [];
+      // 3. Fetch gallery sales (seller)
+      const { data: sales, error: salesError } = await supabase
+        .rpc('get_seller_orders', { p_user_id: user.id });
 
-      // Calculate total gallery revenue
-      const galleryTotal = ordersData.reduce((sum, o) => sum + (o.total_amount_cents || 0), 0) / 100;
+      if (salesError) {
+        console.warn('Error fetching seller orders RPC:', salesError);
+      }
+
+      // Combine unique orders (avoid duplicates if user bought from themselves)
+      // Use "salesData" for Gallery Revenue display (Earnings)
+      const salesData = sales || [];
+
+      const galleryTotal = salesData.reduce((sum: any, o: any) => sum + (o.total_amount_cents || 0), 0) / 100;
+
       setGalleryRevenueTotal(galleryTotal);
 
       // Combine and format for revenue history
       const revenueHistory: { date: string; amount: number }[] = [
         ...commissionsData.map(c => ({ date: c.created_at, amount: Number(c.amount) })),
-        ...ordersData.map(o => ({ date: o.created_at, amount: (o.total_amount_cents || 0) / 100 }))
-      ];
+        ...salesData.map((o: any) => ({ date: o.created_at, amount: (o.total_amount_cents || 0) / 100 }))
+      ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
       // Format for affiliate history (conversions)
       const affiliateHistory = commissionsData.map(c => c.created_at);
 
       setHistory({
         revenue: revenueHistory,
-        newsletter: [], // User profile doesn't show newsletter growth for now
+        newsletter: [],
         affiliates: affiliateHistory
       });
     } catch (err) {
