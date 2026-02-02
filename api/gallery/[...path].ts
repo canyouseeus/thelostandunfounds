@@ -1036,7 +1036,8 @@ async function syncGalleryPhotos(librarySlug: string) {
         throw new Error(`Library ${librarySlug} has no Google Drive folder ID configured`);
     }
 
-    const { google } = await import('googleapis');
+    // --- LIGHTWEIGHT REFACTOR: Use google-auth-library + fetch instead of googleapis ---
+    const { GoogleAuth } = await import('google-auth-library');
 
     // Key is already processed above
 
@@ -1048,7 +1049,7 @@ async function syncGalleryPhotos(librarySlug: string) {
         newlineCount: (GOOGLE_KEY.match(/\n/g) || []).length
     });
 
-    const auth = new google.auth.GoogleAuth({
+    const auth = new GoogleAuth({
         credentials: {
             client_email: GOOGLE_EMAIL,
             private_key: GOOGLE_KEY,
@@ -1056,7 +1057,7 @@ async function syncGalleryPhotos(librarySlug: string) {
         scopes: ['https://www.googleapis.com/auth/drive.readonly'],
     });
 
-    const drive = google.drive({ version: 'v3', auth });
+    const headers = await auth.getRequestHeaders();
 
     const syncStats = {
         added: 0,
@@ -1065,11 +1066,21 @@ async function syncGalleryPhotos(librarySlug: string) {
         total: 0
     };
 
-    const response = await drive.files.list({
-        q: `'${folderId}' in parents and trashed = false`,
-        fields: 'files(id, name, thumbnailLink, webContentLink, createdTime, mimeType, imageMediaMetadata)',
-        pageSize: 1000,
-    });
+    const query = `'${folderId}' in parents and trashed = false`;
+    const fields = 'files(id, name, thumbnailLink, webContentLink, createdTime, mimeType, imageMediaMetadata)';
+
+    // Explicitly use REST API
+    const driveUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=${encodeURIComponent(fields)}&pageSize=1000`;
+
+    const driveRes = await fetch(driveUrl, { headers });
+
+    if (!driveRes.ok) {
+        const errorBody = await driveRes.text();
+        throw new Error(`Google Drive API failed (${driveRes.status}): ${errorBody}`);
+    }
+
+    const driveData = await driveRes.json();
+    const response = { data: driveData }; // Mock the structure of googleapis response
 
     const allFiles = response.data.files || [];
     console.log(`[Sync Debug] Found ${allFiles.length} total files in folder ${librarySlug}`);
