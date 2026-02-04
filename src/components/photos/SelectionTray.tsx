@@ -79,7 +79,7 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
             exit={{ y: 200 }}
             className="fixed bottom-0 left-0 right-0 z-50 px-4 md:px-8 py-0 flex justify-center pointer-events-none"
         >
-            <div className="bg-zinc-950/95 backdrop-blur-2xl border border-white/10 rounded-none shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-full max-w-5xl px-4 md:px-6 py-1.5 md:py-2 flex flex-col md:flex-row items-center gap-6 pointer-events-auto">
+            <div className="bg-zinc-950/95 backdrop-blur-2xl rounded-none shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-full max-w-5xl px-4 md:px-6 py-1.5 md:py-2 flex flex-col md:flex-row items-center gap-6 pointer-events-auto">
 
                 {/* Thumbnails Section */}
                 <div className="hidden md:flex flex-1 w-full h-16 items-center order-1 mt-0">
