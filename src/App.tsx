@@ -106,6 +106,7 @@ function App() {
               <Route path="/privacy" element={<Layout />}>
                 <Route index element={<Privacy />} />
               </Route>
+              <Route path="/privacy-policy" element={<Navigate to="/privacy" replace />} />
               <Route path="/terms" element={<Layout />}>
                 <Route index element={<Terms />} />
               </Route>
