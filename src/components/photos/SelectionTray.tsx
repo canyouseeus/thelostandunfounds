@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBagIcon, XMarkIcon, CheckCircleIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { ShoppingBagIcon, XMarkIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { PricingOption } from './PhotoGallery';
 
 interface Photo {
@@ -137,19 +137,15 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
                         <div className="flex flex-col space-y-0.5">
                             {pricing.messages.map((msg, idx) => (
                                 <div key={idx} className="flex items-start gap-1.5">
-                                    <div className={`w-1 h-1 rounded-full shrink-0 mt-1 ${msg.highlight ? 'bg-white' : 'bg-zinc-700'}`} />
-                                    <div className="flex flex-col">
-                                        <div className="flex items-center justify-between gap-4">
-                                            <span className={msg.highlight ? 'text-white' : 'text-zinc-400'}>
-                                                {msg.text}
+                                    <div className={`w-1 h-1 rounded-full shrink-0 mt-1 ${msg.highlight ? 'bg-green-500' : 'bg-zinc-700'}`} />
+                                    <p className="text-[7px] md:text-[9px] font-black tracking-widest uppercase leading-tight">
+                                        <span className="text-zinc-500">{msg.text}</span>
+                                        {msg.secondary && (
+                                            <span className={msg.highlight ? 'text-green-500' : 'text-zinc-400'}>
+                                                {msg.secondary}
                                             </span>
-                                            {msg.secondary && (
-                                                <span className={msg.highlight ? 'text-zinc-200' : 'text-zinc-400'}>
-                                                    {msg.secondary}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
+                                        )}
+                                    </p>
                                 </div>
                             ))}
                         </div>
@@ -170,9 +166,9 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
                             </>
                         )}
 
-                        {count > 0 && (
-                            <div className="absolute -top-1.5 -right-1.5 md:-top-2 md:-right-2 bg-white text-black p-0.5 md:p-1 rounded-full shadow-lg">
-                                <CheckIcon className="w-2 h-2 md:w-3 md:h-3" />
+                        {count >= 3 && (
+                            <div className="absolute -top-1.5 -right-1.5 md:-top-2 md:-right-2 bg-green-500 text-black p-0.5 md:p-1 rounded-full shadow-lg">
+                                <CheckCircleIcon className="w-2.5 h-2.5 md:w-3.5 md:h-3.5" />
                             </div>
                         )}
                     </button>
