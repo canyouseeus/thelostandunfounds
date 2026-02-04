@@ -5,7 +5,8 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import PhotoGallery from '../components/photos/PhotoGallery';
 import AuthModal from '../components/auth/AuthModal';
-import { LockClosedIcon, ArrowRightIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { LockClosedIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
+import { LoadingOverlay } from '../components/Loading';
 import { motion } from 'framer-motion';
 import GalleryItem from './GalleryItem';
 import PhotographerApplicationModal from '../components/gallery/PhotographerApplicationModal';
@@ -179,10 +180,7 @@ export default function Gallery() {
                 </div>
 
                 {loading ? (
-                    <div className="flex flex-col items-center justify-center py-40 gap-4">
-                        <ArrowPathIcon className="w-8 h-8 text-white animate-spin" />
-                        <span className="text-xs font-bold tracking-widest text-white/40 uppercase">Decrypting Archives...</span>
-                    </div>
+                    <LoadingOverlay message="Decrypting Archives..." />
                 ) : (
                     <div className="animate-in fade-in duration-500">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

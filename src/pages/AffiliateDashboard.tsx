@@ -25,6 +25,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '../components/ui/button'
 import AuthModal from '../components/auth/AuthModal'
 import KingMidasTicker from '../components/KingMidasTicker'
+import { LoadingOverlay } from '../components/Loading'
 import EmployeeDiscount from '../components/affiliate/EmployeeDiscount'
 import RewardPointsBadge from '../components/affiliate/RewardPointsBadge'
 import ReferralLink from '../components/affiliate/ReferralLink'
@@ -467,11 +468,7 @@ export default function AffiliateDashboard() {
 
   // Show loading while checking auth
   if (authLoading || checkingAffiliate) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <ArrowPathIcon className="w-8 h-8 animate-spin text-white" />
-      </div>
-    )
+    return <LoadingOverlay message="Checking affiliate status..." />;
   }
 
   // Show login prompt if not logged in
@@ -556,11 +553,7 @@ export default function AffiliateDashboard() {
 
   // Show loading while fetching dashboard data
   if (loading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <ArrowPathIcon className="w-8 h-8 animate-spin text-white" />
-      </div>
-    )
+    return <LoadingOverlay message="Loading dashboard..." />;
   }
 
   if (error || !data) {

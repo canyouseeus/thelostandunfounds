@@ -8,9 +8,9 @@ import {
   ShoppingCartIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
-  ArrowPathIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
+import { LoadingOverlay } from '../components/Loading';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { initAffiliateTracking, getAffiliateRef } from '../utils/affiliate-tracking';
@@ -125,16 +125,7 @@ export default function Shop() {
   const regularProducts = filteredProducts.filter((p) => !p.featured);
 
   if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <ArrowPathIcon className="w-8 h-8 animate-spin mx-auto mb-4 text-white" />
-            <p className="text-white/70">Loading products...</p>
-          </div>
-        </div>
-      </div>
-    );
+    return <LoadingOverlay message="Loading products..." />;
   }
 
   if (error) {

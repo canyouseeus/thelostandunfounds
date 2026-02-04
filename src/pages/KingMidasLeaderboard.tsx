@@ -10,11 +10,11 @@ import {
   CurrencyDollarIcon,
   CalendarIcon,
   StarIcon,
-  ArrowPathIcon,
   ChartBarIcon,
   UsersIcon,
   SparklesIcon
 } from '@heroicons/react/24/outline';
+import { LoadingOverlay } from '../components/Loading';
 import KingMidasTicker from '../components/KingMidasTicker';
 import { supabase } from '../lib/supabase';
 
@@ -143,15 +143,7 @@ export default function KingMidasLeaderboard() {
   const sortedDates = Object.keys(rankingsByDate).sort((a, b) => b.localeCompare(a));
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-black text-white">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <ArrowPathIcon className="w-8 h-8 animate-spin text-white" />
-          </div>
-        </div>
-      </div>
-    );
+    return <LoadingOverlay message="Loading leaderboard..." />;
   }
 
   return (

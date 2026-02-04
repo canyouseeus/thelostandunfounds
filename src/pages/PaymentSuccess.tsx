@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { CheckCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
+import { CheckCircleIcon } from '@heroicons/react/24/outline'
+import { LoadingOverlay } from '../components/Loading'
 
 export default function PaymentSuccess() {
   const [searchParams] = useSearchParams()
@@ -73,9 +74,7 @@ export default function PaymentSuccess() {
       <div className="max-w-md w-full bg-black/50 border border-white/10 rounded-none p-8 text-center">
         {status === 'processing' && (
           <>
-            <ArrowPathIcon className="w-16 h-16 animate-spin mx-auto mb-4 text-white" />
-            <h1 className="text-2xl font-bold text-white mb-2">Processing Payment...</h1>
-            <p className="text-white/70">Please wait while we confirm your payment.</p>
+            <LoadingOverlay message="Processing payment..." />
           </>
         )}
 
