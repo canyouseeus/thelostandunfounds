@@ -18,6 +18,7 @@ import SageModeOverlay from './SageModeOverlay'
 import { supabase } from '../lib/supabase'
 import Footer from './Footer'
 import NavLinks from './NavLinks'
+import { LoadingOverlay } from './Loading'
 
 export default function Layout({ children }: { children?: ReactNode }) {
   const location = useLocation()
@@ -32,6 +33,8 @@ export default function Layout({ children }: { children?: ReactNode }) {
   // but for simple navigation, independent state in NavLinks is fine (submenus reset on close).
 
   const [homeHeaderReady, setHomeHeaderReady] = useState(location.pathname !== '/')
+  const [isRouteLoading, setIsRouteLoading] = useState(false)
+  const previousPathRef = useRef(location.pathname)
   const menuRef = useRef<HTMLDivElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const isOpeningModalRef = useRef(false)
@@ -95,6 +98,25 @@ export default function Layout({ children }: { children?: ReactNode }) {
       document.body.style.overflow = ''
     }
   }, [menuOpen])
+
+  // Route change loading animation (skip for homepage)
+  useEffect(() => {
+    const isNavigatingFromHome = previousPathRef.current === '/' && location.pathname !== '/'
+    const isNavigatingToNonHome = previousPathRef.current !== location.pathname && location.pathname !== '/'
+
+    if (isNavigatingFromHome || isNavigatingToNonHome) {
+      setIsRouteLoading(true)
+      const timer = setTimeout(() => {
+        setIsRouteLoading(false)
+      }, 1200) // Show loading for 1.2 seconds
+
+      previousPathRef.current = location.pathname
+      return () => clearTimeout(timer)
+    }
+
+    previousPathRef.current = location.pathname
+  }, [location.pathname])
+
 
   useEffect(() => {
     // On home, wait for the intro animation to finish before showing the header row
@@ -290,6 +312,9 @@ export default function Layout({ children }: { children?: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
+      {/* Route transition loading overlay */}
+      {isRouteLoading && <LoadingOverlay />}
+
       <SageModeOverlay />
       <nav className="fixed top-0 left-0 w-full bg-black backdrop-blur-md z-[999]">
         <div className="w-full px-4 sm:px-6 lg:px-8">
