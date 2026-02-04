@@ -1,42 +1,50 @@
 
 
-
-
-
-
-
 /**
  * Loading Components
  * Reusable loading spinners and skeleton components
  */
 
-import { ArrowPathIcon } from '@heroicons/react/24/outline';
-
 export function LoadingSpinner({ size = 'md', className = '' }: { size?: 'sm' | 'md' | 'lg'; className?: string }) {
   const sizes = {
-    sm: 'w-4 h-4',
-    md: 'w-6 h-6',
-    lg: 'w-8 h-8',
+    sm: 'w-1 h-1',
+    md: 'w-1.5 h-1.5',
+    lg: 'w-2 h-2',
+  };
+
+  const gaps = {
+    sm: 'gap-0.5',
+    md: 'gap-1',
+    lg: 'gap-1.5',
   };
 
   return (
-    <ArrowPathIcon className={`${sizes[size]} animate-spin text-white/60 ${className}`} />
+    <span className={`inline-flex items-center ${gaps[size]} ${className}`}>
+      <span className={`${sizes[size]} bg-current rounded-full animate-[loading-dot_1.5s_infinite_0s]`} />
+      <span className={`${sizes[size]} bg-current rounded-full animate-[loading-dot_1.5s_infinite_0.3s]`} />
+      <span className={`${sizes[size]} bg-current rounded-full animate-[loading-dot_1.5s_infinite_0.6s]`} />
+    </span>
   );
 }
 
+import { useState } from 'react';
+
 export function LoadingOverlay({ message }: { message?: string }) {
+  const [imageLoaded, setImageLoaded] = useState(false);
+
   // Create 5 blocks for the filling animation
   const blocks = Array.from({ length: 5 });
 
   return (
     <div className="fixed inset-0 bg-black z-[11000] flex items-center justify-center">
-      <div className="flex flex-col items-center gap-8 w-full max-w-[80vw] sm:max-w-md px-4 scale-90 sm:scale-100">
+      <div className={`flex flex-col items-center gap-8 w-full max-w-[80vw] sm:max-w-md px-4 scale-90 sm:scale-100 transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}>
         {/* Logo - Full opacity */}
         <div className="w-full flex justify-center">
           <img
             src="https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/toulouse.png"
             alt="Logo"
             className="w-full h-auto object-contain"
+            onLoad={() => setImageLoaded(true)}
           />
         </div>
 

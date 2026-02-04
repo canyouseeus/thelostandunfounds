@@ -9,9 +9,9 @@ import {
   ArrowTrendingUpIcon,
   CurrencyDollarIcon,
   CalendarIcon,
-  StarIcon,
-  ArrowPathIcon
+  StarIcon
 } from '@heroicons/react/24/outline';
+import { LoadingSpinner } from './Loading';
 
 interface DailyStat {
   id: string;
@@ -103,7 +103,7 @@ export function KingMidasView() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <ArrowPathIcon className="w-8 h-8 animate-spin text-white" />
+        <LoadingSpinner size="lg" className="text-white" />
       </div>
     );
   }
@@ -231,8 +231,8 @@ export function KingMidasView() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 rounded text-xs font-medium ${stat.pool_share > 0
-                            ? 'bg-green-400/20 text-green-400'
-                            : 'bg-white/10 text-white/60'
+                          ? 'bg-green-400/20 text-green-400'
+                          : 'bg-white/10 text-white/60'
                           }`}>
                           {stat.pool_share > 0 ? 'Eligible' : 'No payout'}
                         </span>
@@ -278,10 +278,10 @@ export function KingMidasView() {
                 </div>
                 <div>
                   <span className={`px-2 py-1 rounded text-xs font-medium ${payout.status === 'paid'
-                      ? 'bg-green-400/20 text-green-400'
-                      : payout.status === 'pending'
-                        ? 'bg-yellow-400/20 text-yellow-400'
-                        : 'bg-red-400/20 text-red-400'
+                    ? 'bg-green-400/20 text-green-400'
+                    : payout.status === 'pending'
+                      ? 'bg-yellow-400/20 text-yellow-400'
+                      : 'bg-red-400/20 text-red-400'
                     }`}>
                     {payout.status === 'paid' ? 'Paid' : payout.status === 'pending' ? 'Pending' : 'Cancelled'}
                   </span>

@@ -6,7 +6,6 @@ import {
     UserIcon,
     LinkIcon,
     TrashIcon,
-    ArrowPathIcon,
     CheckCircleIcon,
     XCircleIcon,
     ArrowTopRightOnSquareIcon,
@@ -15,6 +14,7 @@ import {
     EnvelopeIcon,
     FolderPlusIcon
 } from '@heroicons/react/24/outline';
+import { LoadingSpinner } from '../Loading';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/Toast';
 
@@ -280,7 +280,7 @@ export default function PhotoCollectionsView() {
                             disabled={submitting}
                             className="w-full md:w-auto px-8 py-3 bg-white text-black font-black uppercase tracking-tighter hover:bg-zinc-200 transition disabled:opacity-50 flex items-center justify-center gap-2"
                         >
-                            {submitting ? <ArrowPathIcon className="w-5 h-5 animate-spin" /> : <FolderPlusIcon className="w-5 h-5" />}
+                            {submitting ? <LoadingSpinner size="sm" /> : <FolderPlusIcon className="w-5 h-5" />}
                             Create Client Collection
                         </button>
                     </form>
@@ -303,7 +303,7 @@ export default function PhotoCollectionsView() {
                 <div className="space-y-3">
                     {loading ? (
                         <div className="py-20 flex flex-col items-center justify-center text-zinc-600">
-                            <ArrowPathIcon className="w-8 h-8 animate-spin mb-2" />
+                            <LoadingSpinner size="lg" className="mb-2" />
                             <p className="text-xs uppercase font-black tracking-widest">Loading Collections...</p>
                         </div>
                     ) : filteredCollections.length > 0 ? (
@@ -348,7 +348,7 @@ export default function PhotoCollectionsView() {
                                         className="p-2 bg-zinc-900 text-zinc-400 hover:text-white hover:border-white/30 transition"
                                         title="Refresh Data"
                                     >
-                                        <ArrowPathIcon className="w-4 h-4" />
+                                        ↻
                                     </button>
                                     <button
                                         onClick={() => handleDelete(collection.id)}

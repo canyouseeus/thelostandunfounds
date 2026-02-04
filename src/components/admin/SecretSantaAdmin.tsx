@@ -4,7 +4,8 @@
  */
 
 import { useState, useEffect } from 'react';
-import { GiftIcon, CalendarIcon, CurrencyDollarIcon, UsersIcon, ArrowTrendingUpIcon, DocumentTextIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { GiftIcon, CalendarIcon, CurrencyDollarIcon, UsersIcon, ArrowTrendingUpIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import { LoadingSpinner } from '../Loading';
 
 interface SecretSantaData {
   current_year: number;
@@ -110,7 +111,7 @@ export default function SecretSantaAdmin() {
     return (
       <div className="bg-black/50 rounded-none p-6">
         <div className="flex items-center justify-center py-12">
-          <ArrowPathIcon className="w-6 h-6 animate-spin text-white/60" />
+          <LoadingSpinner size="lg" className="text-white/60" />
           <span className="ml-3 text-white/60">Loading Secret Santa data...</span>
         </div>
       </div>
@@ -164,7 +165,7 @@ export default function SecretSantaAdmin() {
               onClick={loadData}
               className="px-4 py-2 bg-white text-black rounded-none hover:bg-white/90 transition flex items-center gap-2"
             >
-              <ArrowPathIcon className="w-4 h-4" />
+              ↻
               Refresh
             </button>
           </div>
@@ -294,8 +295,8 @@ export default function SecretSantaAdmin() {
                     <td className="py-2 text-white font-semibold">{formatCurrency(item.amount)}</td>
                     <td className="py-2">
                       <span className={`px-2 py-1 rounded-none text-xs ${item.status === 'paid' ? 'bg-green-500/20 text-green-400' :
-                          item.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                            'bg-red-500/20 text-red-400'
+                        item.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                          'bg-red-500/20 text-red-400'
                         }`}>
                         {item.status}
                       </span>
@@ -321,8 +322,8 @@ export default function SecretSantaAdmin() {
               <div
                 key={pot.year}
                 className={`border rounded-none p-4 cursor-pointer transition ${pot.year === selectedYear
-                    ? 'bg-white/10 border-white/50'
-                    : 'bg-black/30 border-white/10 hover:border-white/30'
+                  ? 'bg-white/10 border-white/50'
+                  : 'bg-black/30 border-white/10 hover:border-white/30'
                   }`}
                 onClick={() => setSelectedYear(pot.year)}
               >

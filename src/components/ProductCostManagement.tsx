@@ -4,7 +4,8 @@
  */
 
 import { useState, useEffect } from 'react';
-import { PlusIcon, PencilIcon, TrashIcon, MagnifyingGlassIcon, ArrowPathIcon, CurrencyDollarIcon, CubeIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, TrashIcon, MagnifyingGlassIcon, CurrencyDollarIcon, CubeIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { LoadingSpinner } from './Loading';
 
 interface ProductCost {
   id: string;
@@ -168,7 +169,7 @@ export function ProductCostManagement() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <ArrowPathIcon className="w-8 h-8 animate-spin text-white" />
+        <LoadingSpinner size="lg" className="text-white" />
       </div>
     );
   }
