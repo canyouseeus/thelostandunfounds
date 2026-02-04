@@ -31,27 +31,24 @@ export function LoadingOverlay({ message }: { message?: string }) {
   return (
     <div className="fixed inset-0 bg-black z-[11000] flex items-center justify-center">
       <div className="flex flex-col items-center gap-8 w-full max-w-[80vw] sm:max-w-md px-4 scale-90 sm:scale-100">
-        {/* Logo - Exactly 2x the width of the loader below */}
+        {/* Logo - Full opacity */}
         <div className="w-full flex justify-center">
           <img
             src="https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/toulouse.png"
             alt="Logo"
-            className="w-full h-auto object-contain opacity-70"
+            className="w-full h-auto object-contain"
           />
         </div>
 
-        {/* Block Loader - No Shadow/Gradient. Exactly 50% of the logo width */}
+        {/* Block Loader - Uses same animation logic as dots */}
         <div className="border border-white p-1 flex gap-1 h-8 w-1/2 bg-black">
           {blocks.map((_, i) => (
             <div
               key={i}
-              className="flex-1 bg-white animate-flash"
+              className="flex-1 bg-white"
               style={{
-                animationDuration: '0.6s', // Much faster
-                animationDelay: `${i * 0.1}s`, // Tight stagger
-                opacity: 0,
-                animationIterationCount: 'infinite',
-                animationFillMode: 'both'
+                animation: 'loading-dot 1.5s infinite',
+                animationDelay: `${i * 0.25}s`,
               }}
             />
           ))}

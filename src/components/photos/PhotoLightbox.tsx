@@ -86,19 +86,43 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                                         src="/logo.png"
                                         alt="Watermark"
                                         className="w-1/2 h-auto brightness-0 invert opacity-[0.09] select-none"
+                                        style={{
+                                            WebkitTouchCallout: 'none',
+                                            WebkitUserSelect: 'none',
+                                            userSelect: 'none'
+                                        }}
                                     />
                                 </div>
+                            )}
+
+                            {/* Protection Layer - Intercepts all touch/click events when not purchased */}
+                            {!isPurchased && (
+                                <div
+                                    className={`absolute inset-0 z-20 transition-opacity duration-300 ${isImageLoading ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+                                    onContextMenu={(e) => e.preventDefault()}
+                                    onTouchStart={(e) => e.preventDefault()}
+                                    style={{
+                                        WebkitTouchCallout: 'none',
+                                        WebkitUserSelect: 'none',
+                                        userSelect: 'none'
+                                    }}
+                                />
                             )}
 
                             <img
                                 src={`https://lh3.googleusercontent.com/d/${photo.google_drive_file_id}=s3000`}
                                 alt={photo.title}
-                                className="max-h-[70vh] w-auto object-contain shadow-2xl select-none pointer-events-auto grayscale hover:grayscale-0 transition-all duration-700"
+                                className={`max-h-[70vh] w-auto object-contain shadow-2xl select-none grayscale hover:grayscale-0 transition-all duration-700 ${!isPurchased ? 'pointer-events-none' : 'pointer-events-auto'}`}
                                 onContextMenu={(e) => e.preventDefault()}
                                 draggable={false}
                                 onLoad={() => setIsImageLoading(false)}
                                 referrerPolicy="no-referrer"
                                 crossOrigin="anonymous"
+                                style={{
+                                    WebkitTouchCallout: 'none',
+                                    WebkitUserSelect: 'none',
+                                    userSelect: 'none'
+                                }}
                             />
 
                             {/* Close Button - Overlaid on Photo - Only show when loaded */}

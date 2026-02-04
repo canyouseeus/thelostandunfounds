@@ -110,16 +110,36 @@ const PhotoCard: React.FC<{
                 >
                     {/* Wrapper to constrain overlays to image bounds */}
                     <div className={`relative ${isSingle ? 'w-auto h-auto' : 'w-full h-full'}`}>
+                        {/* Protection Layer - Intercepts all touch/click events to prevent saving */}
+                        {!isPurchased && (
+                            <div
+                                className="absolute inset-0 z-20 cursor-pointer"
+                                onClick={(e) => { e.stopPropagation(); onLightbox(); }}
+                                onContextMenu={(e) => e.preventDefault()}
+                                onTouchStart={(e) => e.preventDefault()}
+                                onTouchEnd={(e) => { e.preventDefault(); onLightbox(); }}
+                                style={{
+                                    WebkitTouchCallout: 'none',
+                                    WebkitUserSelect: 'none',
+                                    userSelect: 'none'
+                                }}
+                            />
+                        )}
                         <img
                             src={`https://lh3.googleusercontent.com/d/${photo.google_drive_file_id}=s1200`}
                             alt={photo.title}
-                            onClick={(e) => { e.stopPropagation(); onLightbox(); }}
-                            className={`${isSingle ? 'max-w-full w-auto h-auto max-h-[85vh] object-contain' : 'w-full h-full object-cover'} select-none cursor-pointer grayscale hover:grayscale-0 transition-all duration-500`}
+                            onClick={(e) => { e.stopPropagation(); if (isPurchased) onLightbox(); }}
+                            className={`${isSingle ? 'max-w-full w-auto h-auto max-h-[85vh] object-contain' : 'w-full h-full object-cover'} select-none grayscale hover:grayscale-0 transition-all duration-500 ${!isPurchased ? 'pointer-events-none' : 'cursor-pointer'}`}
                             draggable={false}
                             loading="lazy"
                             referrerPolicy="no-referrer"
                             crossOrigin="anonymous"
                             onContextMenu={(e) => e.preventDefault()}
+                            style={{
+                                WebkitTouchCallout: 'none',
+                                WebkitUserSelect: 'none',
+                                userSelect: 'none'
+                            }}
                         />
 
                         {/* Watermark (Front) */}
@@ -580,15 +600,10 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                 </div>
             </div>
 
-            {/* Sticky Toolbar - Full Width Container */}
+            {/* Sticky Toolbar - Full Width, Plain Black Bar */}
             <div
                 ref={toolbarRef}
-                className={cn(
-                    "sticky z-[100] transition-all duration-500 ease-in-out py-4 mb-8",
-                    isSticky
-                        ? "bg-zinc-900/40 backdrop-blur-2xl shadow-2xl shadow-black/80 rounded-2xl mx-4 sm:mx-8 md:mx-auto max-w-7xl mt-2 border border-white/10"
-                        : "bg-transparent w-full border-none"
-                )}
+                className="sticky z-[100] bg-black w-full py-4 mb-8"
                 style={{ top: '64px' }}
             >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center gap-4">
