@@ -116,12 +116,10 @@ export default function PhotoCollectionsView() {
                 return;
             }
 
-            // 2. Extract Folder ID from Google Drive Link
-            // https://drive.google.com/drive/folders/FOLDER_ID?usp=sharing
-            let folderId = formData.driveLink;
-            if (formData.driveLink.includes('/folders/')) {
-                folderId = formData.driveLink.split('/folders/')[1].split('?')[0].split('/')[0];
-            }
+            const match = formData.driveLink.match(/\/folders\/([a-zA-Z0-9-_]+)/) ||
+                formData.driveLink.match(/id=([a-zA-Z0-9-_]+)/) ||
+                formData.driveLink.match(/^([a-zA-Z0-9-_]+)$/);
+            const folderId = match ? match[1] : formData.driveLink;
 
             // 3. Create Library
             const slug = formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -251,13 +249,17 @@ export default function PhotoCollectionsView() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-zinc-500 uppercase tracking-widest">Google Drive Folder Link</label>
+                                <label className="text-xs font-black text-zinc-500 uppercase tracking-widest">Google Drive Folder Link or ID</label>
                                 <input
                                     required
                                     type="text"
                                     value={formData.driveLink}
-                                    onChange={e => setFormData({ ...formData, driveLink: e.target.value })}
-                                    placeholder="https://drive.google.com/..."
+                                    onChange={e => {
+                                        const val = e.target.value;
+                                        const match = val.match(/\/folders\/([a-zA-Z0-9-_]+)/) || val.match(/id=([a-zA-Z0-9-_]+)/);
+                                        setFormData({ ...formData, driveLink: match ? match[1] : val });
+                                    }}
+                                    placeholder="Paste link or ID..."
                                     className="w-full bg-black p-3 text-white focus:border-white focus:outline-none transition"
                                 />
                             </div>

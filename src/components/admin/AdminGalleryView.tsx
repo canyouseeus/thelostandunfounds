@@ -1233,13 +1233,19 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
 
                                     {uploadMode === 'drive' ? (
                                         <div className="animate-in fade-in slide-in-from-top-2 duration-200">
-                                            <label className="block text-xs uppercase text-white/40 mb-1">Google Drive Folder ID</label>
+                                            <label className="block text-xs uppercase text-white/40 mb-1">Google Drive Folder ID or Link</label>
                                             <input
                                                 type="text"
                                                 value={modalData.google_drive_folder_id}
-                                                onChange={(e) => setModalData({ ...modalData, google_drive_folder_id: e.target.value })}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    // Detect if it's a Drive URL and extract ID
+                                                    const match = val.match(/\/folders\/([a-zA-Z0-9-_]+)/) || val.match(/id=([a-zA-Z0-9-_]+)/);
+                                                    const extractedId = match ? match[1] : val;
+                                                    setModalData({ ...modalData, google_drive_folder_id: extractedId });
+                                                }}
                                                 className="w-full bg-white/5 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 font-mono text-xs"
-                                                placeholder="1AbCdEfGhIjK..."
+                                                placeholder="Paste folder link or ID here..."
                                                 required={uploadMode === 'drive' && !filesData.length} // Only required if not uploading files in mixed mode (simplified logic)
                                             />
                                             <p className="text-[10px] text-white/40 mt-1 flex items-center gap-1">

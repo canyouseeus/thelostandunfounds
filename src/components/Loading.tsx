@@ -1,3 +1,10 @@
+
+
+
+
+
+
+
 /**
  * Loading Components
  * Reusable loading spinners and skeleton components
@@ -18,11 +25,49 @@ export function LoadingSpinner({ size = 'md', className = '' }: { size?: 'sm' | 
 }
 
 export function LoadingOverlay({ message }: { message?: string }) {
+  // Create 5 blocks for the filling animation
+  const blocks = Array.from({ length: 5 });
+
   return (
-    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[11000] flex items-center justify-center">
-      <div className="text-center">
-        <LoadingSpinner size="lg" className="mx-auto mb-4" />
-        {message && <p className="text-white/80">{message}</p>}
+    <div className="fixed inset-0 bg-black z-[11000] flex items-center justify-center">
+      <div className="flex flex-col items-center gap-8 w-full max-w-[80vw] sm:max-w-md px-4 scale-90 sm:scale-100">
+        {/* Logo - Exactly 2x the width of the loader below */}
+        <div className="w-full flex justify-center">
+          <img
+            src="https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/toulouse.png"
+            alt="Logo"
+            className="w-full h-auto object-contain opacity-70"
+          />
+        </div>
+
+        {/* Block Loader - No Shadow/Gradient. Exactly 50% of the logo width */}
+        <div className="border border-white p-1 flex gap-1 h-8 w-1/2 bg-black">
+          {blocks.map((_, i) => (
+            <div
+              key={i}
+              className="flex-1 bg-white animate-flash"
+              style={{
+                animationDuration: '0.6s', // Much faster
+                animationDelay: `${i * 0.1}s`, // Tight stagger
+                opacity: 0,
+                animationIterationCount: 'infinite',
+                animationFillMode: 'both'
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Retro Counter */}
+        <div className="text-white font-black tracking-widest text-[10px] uppercase flex items-center gap-1">
+          <span>LOADING DATA</span>
+          <span className="flex w-6">
+            <span className="animate-[loading-dot_1.5s_infinite_0s]">.</span>
+            <span className="animate-[loading-dot_1.5s_infinite_0.3s]">.</span>
+            <span className="animate-[loading-dot_1.5s_infinite_0.6s]">.</span>
+          </span>
+        </div>
+
+        {message && <p className="text-white text-[9px] font-black tracking-[0.2em] uppercase opacity-40">{message}</p>}
       </div>
     </div>
   );
@@ -85,7 +130,5 @@ export function LoadingButton({
     </button>
   );
 }
-
-
 
 export default LoadingOverlay;

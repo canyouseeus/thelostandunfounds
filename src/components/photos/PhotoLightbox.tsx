@@ -93,7 +93,7 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                             <img
                                 src={`https://lh3.googleusercontent.com/d/${photo.google_drive_file_id}=s3000`}
                                 alt={photo.title}
-                                className="max-h-[70vh] w-auto object-contain shadow-2xl select-none pointer-events-auto"
+                                className="max-h-[70vh] w-auto object-contain shadow-2xl select-none pointer-events-auto grayscale hover:grayscale-0 transition-all duration-700"
                                 onContextMenu={(e) => e.preventDefault()}
                                 draggable={false}
                                 onLoad={() => setIsImageLoading(false)}
@@ -111,7 +111,7 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
 
                             {/* Status Badge - Only show when loaded */}
                             {isPurchased && (
-                                <div className={`absolute top-4 left-4 z-20 flex items-center gap-1.5 bg-green-500 text-black px-2 py-1 rounded-none text-[8px] md:text-[9px] font-black uppercase tracking-[0.15em] shadow-lg transition-opacity duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}>
+                                <div className={`absolute top-4 left-4 z-20 flex items-center gap-1.5 bg-white text-black px-2 py-1 rounded-none text-[8px] md:text-[9px] font-black uppercase tracking-[0.15em] shadow-lg transition-opacity duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}>
                                     <CheckCircleIcon className="w-3 h-3" />
                                     PROPRIETARY
                                 </div>
@@ -165,7 +165,7 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                             >
                                 {isSelected ? (
                                     <>
-                                        <CheckIcon className="w-5 h-5 text-green-500" />
+                                        <CheckIcon className="w-5 h-5 text-zinc-900" />
                                         <span>Selected</span>
                                     </>
                                 ) : (

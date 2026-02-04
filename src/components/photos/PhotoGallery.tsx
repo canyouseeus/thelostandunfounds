@@ -12,7 +12,10 @@ import {
     LockOpenIcon,
     QueueListIcon,
     StopIcon,
-    ArrowUpIcon
+    ArrowUpIcon,
+    CalendarIcon,
+    FunnelIcon,
+    XMarkIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -20,6 +23,8 @@ import PhotoLightbox from './PhotoLightbox';
 import SelectionTray from './SelectionTray';
 import Loading from '../Loading';
 import AuthModal from '../auth/AuthModal';
+import { cn } from '../ui/utils';
+import { NoirDateRangePicker } from '../ui/NoirDateRangePicker';
 
 interface Photo {
     id: string;
@@ -60,11 +65,191 @@ export interface PricingOption {
     photo_count: number;
 }
 
+const PhotoCard: React.FC<{
+    photo: Photo;
+    index: number;
+    isSelected: boolean;
+    isPurchased: boolean;
+    activeTab: string;
+    singlePrice: number;
+    viewMode: 'grid' | 'single';
+    onToggleSelect: () => void;
+    onLightbox: () => void;
+}> = ({ photo, index, isSelected, isPurchased, activeTab, singlePrice, viewMode, onToggleSelect, onLightbox }) => {
+    const [rotation, setRotation] = useState(0);
+
+    // Dynamic styles based on view mode (Grid vs Single)
+    const isSingle = viewMode === 'single';
+
+    const handleFlip = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setRotation(prev => prev + 180);
+    };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className={`relative bg-black group perspective-1000 ${isSingle ? 'w-full' : 'aspect-square'}`}
+            style={{ perspective: '1000px' }}
+        >
+            <div
+                className={`w-full relative transition-transform duration-700 ${isSingle ? 'h-auto' : 'h-full'}`}
+                style={{
+                    transformStyle: 'preserve-3d',
+                    WebkitTransformStyle: 'preserve-3d',
+                    transform: `rotateY(${rotation}deg)`
+                }}
+            >
+                {/* FRONT SIDE */}
+                <div
+                    className={`${isSingle ? 'relative w-full h-auto' : 'absolute inset-0 w-full h-full'} backface-hidden flex items-center justify-center bg-black cursor-pointer`}
+                    style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', zIndex: rotation % 360 === 0 ? 2 : 1 }}
+                    onClick={handleFlip}
+                >
+                    {/* Wrapper to constrain overlays to image bounds */}
+                    <div className={`relative ${isSingle ? 'w-auto h-auto' : 'w-full h-full'}`}>
+                        <img
+                            src={`https://lh3.googleusercontent.com/d/${photo.google_drive_file_id}=s1200`}
+                            alt={photo.title}
+                            onClick={(e) => { e.stopPropagation(); onLightbox(); }}
+                            className={`${isSingle ? 'max-w-full w-auto h-auto max-h-[85vh] object-contain' : 'w-full h-full object-cover'} select-none cursor-pointer grayscale hover:grayscale-0 transition-all duration-500`}
+                            draggable={false}
+                            loading="lazy"
+                            referrerPolicy="no-referrer"
+                            crossOrigin="anonymous"
+                            onContextMenu={(e) => e.preventDefault()}
+                        />
+
+                        {/* Watermark (Front) */}
+                        {!isPurchased && (
+                            <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center overflow-hidden">
+                                <img src="/logo.png" alt="Watermark" className="w-1/2 opacity-[0.09] brightness-0 invert select-none object-contain" />
+                            </div>
+                        )}
+
+                        {/* Meta Flip Button */}
+                        <button
+                            onClick={handleFlip}
+                            className="absolute bottom-2 right-2 z-[45] outline-none"
+                            title="View Metadata"
+                        >
+                            <div className={`w-7 h-7 md:w-8 md:h-8 bg-black/40 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-black/60 transition-all ${isSingle ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
+                                <EyeIcon className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                            </div>
+                        </button>
+
+                        {/* Selection Checkbox (Front) */}
+                        {activeTab === 'storefront' && !isPurchased && (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}
+                                className="absolute top-2 right-2 z-[45] outline-none"
+                            >
+                                <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full border-[1px] md:border-2 flex items-center justify-center transition-all ${isSelected
+                                    ? 'bg-white border-white scale-110'
+                                    : 'bg-black/20 backdrop-blur-md border-white/20 hover:border-white/50'
+                                    }`}>
+                                    {isSelected && <CheckIcon className="w-3.5 h-3.5 md:w-5 md:h-5 text-black stroke-[3]" />}
+                                </div>
+                            </button>
+                        )}
+
+                        {/* Purchased Badge */}
+                        {isPurchased && (
+                            <div className="absolute top-1.5 left-1.5 z-[45] flex items-center gap-1 bg-white text-black px-1.5 py-0.5 text-[7px] md:text-[8px] font-black uppercase tracking-[0.1em] shadow-lg">
+                                <CheckCircleIcon className="w-2.5 h-2.5" />
+                                PROPRIETARY
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* BACK SIDE (METADATA) */}
+                <div
+                    className="absolute inset-0 w-full h-full backface-hidden bg-black flex flex-col justify-between cursor-pointer"
+                    style={{
+                        backfaceVisibility: 'hidden',
+                        WebkitBackfaceVisibility: 'hidden',
+                        transform: 'rotateY(180deg)',
+                        zIndex: rotation % 360 === 180 ? 2 : 1,
+                        padding: isSingle ? '1.25rem' : '1.5vw'
+                    }}
+                    onClick={handleFlip}
+                >
+                    <div className={isSingle ? 'space-y-4 md:space-y-8' : 'space-y-[0.5vw] md:space-y-4'}>
+                        <div className="space-y-[0.2vw] md:space-y-1">
+                            <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Camera</p>
+                            <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono uppercase leading-tight truncate`}>
+                                {photo.metadata?.cameraMake || photo.metadata?.camera_make || ''} {photo.metadata?.cameraModel || photo.metadata?.camera_model || 'Unknown'}
+                            </p>
+                        </div>
+                        <div className={`grid grid-cols-2 ${isSingle ? 'gap-y-4 gap-x-4 md:gap-x-12' : 'gap-y-[0.5vw] gap-x-[1vw] md:gap-x-4'}`}>
+                            <div>
+                                <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>ISO</p>
+                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>{photo.metadata?.isoSpeed || photo.metadata?.iso || '-'}</p>
+                            </div>
+                            <div>
+                                <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Aperture</p>
+                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>f/{photo.metadata?.aperture || '-'}</p>
+                            </div>
+                            <div>
+                                <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Focal</p>
+                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>{(photo.metadata?.focalLength || photo.metadata?.focal_length) ? `${photo.metadata?.focalLength || photo.metadata?.focal_length}mm` : '-'}</p>
+                            </div>
+                            <div>
+                                <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Shutter</p>
+                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>
+                                    {(() => {
+                                        const shutter = photo.metadata?.exposureTime || photo.metadata?.shutter_speed;
+                                        if (!shutter) return '-';
+                                        return Number(shutter) < 1
+                                            ? `1/${Math.round(1 / Number(shutter))}s`
+                                            : `${shutter}s`;
+                                    })()}
+                                </p>
+                            </div>
+                        </div>
+                        <div className={`grid grid-cols-2 ${isSingle ? 'gap-y-4 gap-x-4 md:gap-x-12' : 'gap-y-[0.5vw] gap-x-[1vw] md:gap-x-4'}`}>
+                            <div>
+                                <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Date Taken</p>
+                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono uppercase leading-tight`}>
+                                    {(() => {
+                                        const dateVal = photo.metadata?.time || photo.metadata?.date_taken;
+                                        return dateVal ? new Date(dateVal).toLocaleDateString() : 'Unknown';
+                                    })()}
+                                </p>
+                            </div>
+                            <div>
+                                <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Location</p>
+                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono uppercase leading-tight truncate whitespace-nowrap`}>
+                                    {photo.metadata?.city || 'Austin, TX'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="pt-1 md:pt-4">
+                        <p className={`${isSingle ? 'text-[8px] md:text-sm' : 'text-[1.2vw] md:text-[10px]'} text-white font-medium tracking-widest uppercase mb-[0.1vw] md:mb-2 text-center w-full`}>
+                            © {new Date(photo.metadata?.date_taken || photo.created_at).getFullYear()} {photo.metadata?.copyright || 'THE LOST+UNFOUNDS'}
+                        </p>
+                        <p className={`${isSingle ? 'text-[7px] md:text-xs' : 'text-[1vw] md:text-[8px]'} text-white/50 uppercase tracking-wider text-center font-bold`}>
+                            TAP TO FLIP
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </motion.div>
+    );
+};
+
 const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
     const { user } = useAuth();
     const [library, setLibrary] = useState<PhotoLibrary | null>(null);
     const [pricingOptions, setPricingOptions] = useState<PricingOption[]>([]);
     const [photos, setPhotos] = useState<Photo[]>([]);
+    const [isSticky, setIsSticky] = useState(false);
+    const toolbarRef = useRef<HTMLDivElement>(null);
     const [purchasedPhotos, setPurchasedPhotos] = useState<Photo[]>([]);
     const [selectedPhotos, setSelectedPhotos] = useState<Photo[]>([]);
     const [activePhotoIndex, setActivePhotoIndex] = useState<number | null>(null);
@@ -77,12 +262,31 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
     const [authMessage, setAuthMessage] = useState<string | undefined>(undefined);
     const [authTitle, setAuthTitle] = useState<string | undefined>(undefined);
     const [pendingCheckout, setPendingCheckout] = useState(false);
+
+    // Dynamic sticky detection
+    useEffect(() => {
+        const handleScroll = () => {
+            if (!toolbarRef.current) return;
+            const rect = toolbarRef.current.getBoundingClientRect();
+            // Header is 64px, so sticky threshold is 64
+            setIsSticky(rect.top <= 65);
+        };
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        handleScroll();
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const [startDate, setStartDate] = useState<string>('');
+    const [endDate, setEndDate] = useState<string>('');
+    const [showCalendar, setShowCalendar] = useState(false);
     const photosRef = useRef<HTMLDivElement>(null);
 
     const storageKey = `gallery_selection_${librarySlug}`;
 
     useEffect(() => {
-        fetchGallery();
+        const controller = new AbortController();
+        fetchGallery(controller.signal);
+
         // Load saved selections from localStorage
         const saved = localStorage.getItem(storageKey);
         if (saved) {
@@ -93,6 +297,8 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                 console.error('Error parsing saved selections:', err);
             }
         }
+
+        return () => controller.abort();
     }, [librarySlug]);
 
     // Resume checkout after login
@@ -127,12 +333,14 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
 
     // Check for purchased assets if user is logged in
     useEffect(() => {
+        const controller = new AbortController();
         if (user?.email && library) {
-            fetchPurchasedAssets();
+            fetchPurchasedAssets(controller.signal);
         }
+        return () => controller.abort();
     }, [user, library]);
 
-    async function fetchPurchasedAssets() {
+    async function fetchPurchasedAssets(signal?: AbortSignal) {
         // Check for logged in user OR guest email
         const userEmail = user?.email || localStorage.getItem('guest_email');
         if (!library || !userEmail) return;
@@ -141,9 +349,12 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
             const { data, error } = await supabase
                 .from('photo_entitlements')
                 .select('photo_id, photos (*), photo_orders!inner(email)')
-                .eq('photo_orders.email', userEmail); // Use the resolved email
+                .eq('photo_orders.email', userEmail);
 
-            if (error) throw error;
+            if (error) {
+                if (error.message === 'Fetch is aborted' || error.code === '20') return;
+                throw error;
+            }
 
             // Filter photos that belong to this library
             const filtered = data
@@ -151,12 +362,13 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                 ?.filter(p => p && p.library_id === library.id) as any as Photo[] || [];
 
             setPurchasedPhotos(filtered);
-        } catch (err) {
+        } catch (err: any) {
+            if (err.name === 'AbortError') return;
             console.error('Error fetching purchased assets:', err);
         }
     }
 
-    async function fetchGallery() {
+    async function fetchGallery(signal?: AbortSignal) {
         try {
             setLoading(true);
             const { data: libData, error: libError } = await supabase
@@ -165,7 +377,10 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                 .eq('slug', librarySlug)
                 .single();
 
-            if (libError) throw libError;
+            if (libError) {
+                if (libError.message === 'Fetch is aborted' || libError.code === '20') return;
+                throw libError;
+            }
             setLibrary(libData);
 
             // Fetch pricing options
@@ -185,11 +400,16 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                 .order('created_at', { ascending: false })
                 .order('title', { ascending: false });
 
-            if (photoError) throw photoError;
+            if (photoError) {
+                if (photoError.message === 'Fetch is aborted' || photoError.code === '20') return;
+                throw photoError;
+            }
             setPhotos(photoData || []);
-        } catch (err) {
+        } catch (err: any) {
+            if (err.name === 'AbortError') return;
             console.error('Error fetching gallery:', err);
         } finally {
+            // Only set loading false if not aborted (or just always set it, if we're unmounting it doesn't matter)
             setLoading(false);
         }
     }
@@ -274,7 +494,28 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
 
     if (loading) return <Loading />;
 
-    const displayedPhotos = activeTab === 'storefront' ? photos : purchasedPhotos;
+    // Filter photos based on date range
+    const filteredPhotos = (activeTab === 'storefront' ? photos : purchasedPhotos).filter(photo => {
+        if (!startDate && !endDate) return true;
+
+        const photoDateStr = photo.metadata?.date_taken || photo.metadata?.time || photo.created_at;
+        const photoDate = new Date(photoDateStr).getTime();
+
+        if (startDate) {
+            const start = new Date(startDate).getTime();
+            if (photoDate < start) return false;
+        }
+
+        if (endDate) {
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            if (photoDate > end.getTime()) return false;
+        }
+
+        return true;
+    });
+
+    const displayedPhotos = filteredPhotos;
     const singlePrice = pricingOptions.find(o => o.photo_count === 1)?.price || library?.price || 5.00;
 
     return (
@@ -296,10 +537,10 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                     <div className="space-y-2 max-w-sm">
                         {pricingOptions.map((option) => (
                             <div key={option.id} className="flex items-center justify-between group py-2">
-                                <span className={`text-[10px] font-black tracking-[0.2em] uppercase transition-colors ${option.photo_count >= 10 ? 'text-green-500' : 'text-white/40'}`}>
+                                <span className={`text-[10px] font-black tracking-[0.2em] uppercase transition-colors ${option.photo_count >= 10 ? 'text-green-400' : 'text-white/40'}`}>
                                     {option.name} {option.photo_count > 1 && `(${option.photo_count})`}
                                 </span>
-                                <span className={`text-sm font-bold tracking-[0.1em] ${option.photo_count >= 10 ? 'text-green-500' : 'text-white'}`}>
+                                <span className={`text-sm font-bold tracking-[0.1em] ${option.photo_count >= 10 ? 'text-green-400' : 'text-white'}`}>
                                     ${option.price.toFixed(2)}
                                 </span>
                             </div>
@@ -307,64 +548,56 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                     </div>
 
                     {/* Right Column: Instructions */}
-                    <div className="space-y-10">
-                        <div className="flex gap-8 items-start">
-                            <span className="text-[10px] font-black text-white/10 pt-1">01</span>
-                            <p className="text-[10px] font-black tracking-[0.25em] uppercase text-white/40 leading-relaxed max-w-[320px]">
-                                Select frames by clicking the SELECT button on any photo or video.
+                    <div className="space-y-4 max-w-sm flex flex-col justify-start pt-2">
+                        <div className="flex items-start gap-4 text-left">
+                            <span className="text-[10px] font-black text-white/20 w-4 pt-0.5">01</span>
+                            <p className="text-[9px] font-black tracking-[0.2em] uppercase text-white/40 leading-relaxed">
+                                Select frames by clicking the SELECT button.
                             </p>
                         </div>
-                        <div className="flex gap-8 items-start">
-                            <span className="text-[10px] font-black text-white/10 pt-1">02</span>
-                            <p className="text-[10px] font-black tracking-[0.25em] uppercase text-white/40 leading-relaxed max-w-[320px]">
-                                Review your selection in the vault tray at the bottom of the screen.
+                        <div className="flex items-start gap-4 text-left">
+                            <span className="text-[10px] font-black text-white/20 w-4 pt-0.5">02</span>
+                            <p className="text-[9px] font-black tracking-[0.2em] uppercase text-white/40 leading-relaxed">
+                                Review selection in the vault tray below.
                             </p>
                         </div>
-                        <div className="flex gap-8 items-start">
-                            <span className="text-[10px] font-black text-white/10 pt-1">03</span>
-                            <p className="text-[10px] font-black tracking-[0.25em] uppercase text-white/40 leading-relaxed max-w-[320px]">
-                                Complete secure checkout to receive your high-resolution download links via email.
+                        <div className="flex items-start gap-4 text-left">
+                            <span className="text-[10px] font-black text-white/20 w-4 pt-0.5">03</span>
+                            <p className="text-[9px] font-black tracking-[0.2em] uppercase text-white/40 leading-relaxed">
+                                Checkout to receive high-res links via email.
                             </p>
                         </div>
                     </div>
-                </div>
 
-                {/* Sandbox Banner - ONLY SHOW IN DEV */}
-                {!import.meta.env.PROD && (
-                    <div className="mt-4 bg-white/[0.02] py-5 text-center">
-                        <span className="text-[9px] font-black tracking-[0.8em] uppercase text-white/10">
-                            [ SANDBOX MODE ENABLED ] - NO REAL CURRENCY WILL BE CHARGED
-                        </span>
-                    </div>
-                )}
+                    {/* Sandbox Banner - ONLY SHOW IN DEV */}
+                    {typeof process !== 'undefined' && process.env.NODE_ENV !== 'production' && (
+                        <div className="mt-4 bg-white/[0.02] py-5 text-center">
+                            <span className="text-[9px] font-black tracking-[0.8em] uppercase text-white/10">
+                                [ SANDBOX MODE ENABLED ] - NO REAL CURRENCY WILL BE CHARGED
+                            </span>
+                        </div>
+                    )}
+                </div>
             </div>
 
-            <div className="max-w-7xl mx-auto">
-
-                {/* Tab Switcher & Batch Actions */}
-                <div className="sticky top-16 z-40 bg-black/95 backdrop-blur-md flex flex-col md:flex-row justify-center items-center gap-4 md:gap-8 mb-2 py-2 -mx-4 px-4 md:-mx-8 md:px-8 transition-all">
-                    <div className="flex gap-4 items-center">
-                        <button
-                            onClick={() => setViewMode('single')}
-                            className={`p-2 transition-colors ${viewMode === 'single' ? 'text-white' : 'text-white/40 hover:text-white/60'}`}
-                            title="Single Column View"
-                        >
-                            <StopIcon className="w-4 h-4" />
-                        </button>
-                        <button
-                            onClick={() => setViewMode('grid')}
-                            className={`p-2 transition-colors ${viewMode === 'grid' ? 'text-white' : 'text-white/40 hover:text-white/60'}`}
-                            title="Grid View"
-                        >
-                            <Squares2X2Icon className="w-4 h-4" />
-                        </button>
-                    </div>
-
+            {/* Sticky Toolbar - Full Width Container */}
+            <div
+                ref={toolbarRef}
+                className={cn(
+                    "sticky z-[100] transition-all duration-500 ease-in-out py-4 mb-8",
+                    isSticky
+                        ? "bg-zinc-900/40 backdrop-blur-2xl shadow-2xl shadow-black/80 rounded-2xl mx-4 sm:mx-8 md:mx-auto max-w-7xl mt-2 border border-white/10"
+                        : "bg-transparent w-full border-none"
+                )}
+                style={{ top: '64px' }}
+            >
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center gap-4">
+                    {/* Row 1: Tabs */}
                     {user && (
-                        <div className="flex gap-8">
+                        <div className="flex gap-8 text-center justify-center w-full relative z-[101]">
                             <button
                                 onClick={() => setActiveTab('storefront')}
-                                className={`text-[10px] font-black tracking-[0.3em] uppercase transition-colors relative pb-2 ${activeTab === 'storefront' ? 'text-white' : 'text-white/40 hover:text-white/60'}`}
+                                className={`text-[10px] sm:text-xs font-black tracking-[0.2em] uppercase transition-colors relative pb-2 ${activeTab === 'storefront' ? 'text-white' : 'text-white/40 hover:text-white/60'}`}
                             >
                                 Storefront
                                 {activeTab === 'storefront' && (
@@ -373,7 +606,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                             </button>
                             <button
                                 onClick={() => setActiveTab('assets')}
-                                className={`text-[10px] font-black tracking-[0.3em] uppercase transition-colors relative pb-2 ${activeTab === 'assets' ? 'text-white' : 'text-white/40 hover:text-white/60'}`}
+                                className={`text-[10px] sm:text-xs font-black tracking-[0.2em] uppercase transition-colors relative pb-2 ${activeTab === 'assets' ? 'text-white' : 'text-white/40 hover:text-white/60'}`}
                             >
                                 Your Assets
                                 {activeTab === 'assets' && (
@@ -382,7 +615,46 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                             </button>
                         </div>
                     )}
+
+                    {/* Row 2: Icons (Centered underneath) */}
+                    <div className="flex items-center justify-center gap-12 sm:gap-16 w-full relative z-[101]">
+                        <button
+                            onClick={() => setViewMode('single')}
+                            className={cn("p-2 transition-colors", viewMode === 'single' ? "text-white" : "text-white/40 hover:text-white/60")}
+                            title="Single Column View"
+                        >
+                            <StopIcon className="w-5 h-5" />
+                        </button>
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={cn("p-2 transition-colors", viewMode === 'grid' ? "text-white" : "text-white/40 hover:text-white/60")}
+                            title="Grid View"
+                        >
+                            <Squares2X2Icon className="w-5 h-5" />
+                        </button>
+                        <button
+                            onClick={() => {
+                                if (startDate || endDate) {
+                                    setStartDate('');
+                                    setEndDate('');
+                                    setShowCalendar(false);
+                                } else {
+                                    setShowCalendar(true);
+                                }
+                            }}
+                            className={cn(
+                                "p-2 transition-colors",
+                                startDate || endDate ? "text-white" : "text-white/40 hover:text-white/60"
+                            )}
+                            title={startDate && endDate ? "Clear Dates" : "Filter by Date"}
+                        >
+                            <CalendarIcon className="w-5 h-5" />
+                        </button>
+                    </div>
                 </div>
+            </div>
+
+            <div className="max-w-7xl mx-auto">
 
                 {/* Photos Grouped by Date */}
                 <div ref={photosRef} className="space-y-16 scroll-mt-40">
@@ -583,187 +855,22 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                     // Do not reload; useEffect will trigger handleCheckout()
                 }}
             />
+
+            {/* Calendar Modal - Render at root level to prevent clipping */}
+            <AnimatePresence>
+                {showCalendar && (
+                    <NoirDateRangePicker
+                        startDate={startDate}
+                        endDate={endDate}
+                        onChange={(start, end) => {
+                            setStartDate(start);
+                            setEndDate(end);
+                        }}
+                        onClose={() => setShowCalendar(false)}
+                    />
+                )}
+            </AnimatePresence>
         </div>
-    );
-};
-
-
-
-const PhotoCard: React.FC<{
-    photo: Photo;
-    index: number;
-    isSelected: boolean;
-    isPurchased: boolean;
-    activeTab: string;
-    singlePrice: number;
-    viewMode: 'grid' | 'single';
-    onToggleSelect: () => void;
-    onLightbox: () => void;
-}> = ({ photo, index, isSelected, isPurchased, activeTab, singlePrice, viewMode, onToggleSelect, onLightbox }) => {
-    const [rotation, setRotation] = useState(0);
-
-    // Dynamic styles based on view mode (Grid vs Single)
-    const isSingle = viewMode === 'single';
-
-    const handleFlip = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setRotation(prev => prev + 180);
-    };
-
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className={`relative bg-black group perspective-1000 ${isSingle ? 'w-full' : 'aspect-square'}`}
-            style={{ perspective: '1000px' }}
-        >
-            <div
-                className={`w-full relative transition-transform duration-700 ${isSingle ? 'h-auto' : 'h-full'}`}
-                style={{
-                    transformStyle: 'preserve-3d',
-                    WebkitTransformStyle: 'preserve-3d',
-                    transform: `rotateY(${rotation}deg)`
-                }}
-            >
-                {/* FRONT SIDE */}
-                <div
-                    className={`${isSingle ? 'relative w-full h-auto' : 'absolute inset-0 w-full h-full'} backface-hidden flex items-center justify-center bg-black cursor-pointer`}
-                    style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', zIndex: rotation % 360 === 0 ? 2 : 1 }}
-                    onClick={handleFlip}
-                >
-                    {/* Wrapper to constrain overlays to image bounds */}
-                    <div className={`relative ${isSingle ? 'w-auto h-auto' : 'w-full h-full'}`}>
-                        <img
-                            src={`https://lh3.googleusercontent.com/d/${photo.google_drive_file_id}=s1200`}
-                            alt={photo.title}
-                            onClick={(e) => { e.stopPropagation(); onLightbox(); }}
-                            className={`${isSingle ? 'max-w-full w-auto h-auto max-h-[85vh] object-contain' : 'w-full h-full object-cover'} select-none cursor-pointer`}
-                            draggable={false}
-                            loading="lazy"
-                            referrerPolicy="no-referrer"
-                            crossOrigin="anonymous"
-                            onContextMenu={(e) => e.preventDefault()}
-                        />
-
-                        {/* Watermark (Front) */}
-                        {!isPurchased && (
-                            <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center overflow-hidden">
-                                <img src="/logo.png" alt="Watermark" className="w-1/2 opacity-[0.09] brightness-0 invert select-none object-contain" />
-                            </div>
-                        )}
-
-                        {/* Meta Flip Button */}
-                        <button
-                            onClick={handleFlip}
-                            className="absolute bottom-2 right-2 z-[45] outline-none"
-                            title="View Metadata"
-                        >
-                            <div className={`w-7 h-7 md:w-8 md:h-8 bg-black/40 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-black/60 transition-all ${isSingle ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
-                                <EyeIcon className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                            </div>
-                        </button>
-
-                        {/* Selection Checkbox (Front) */}
-                        {activeTab === 'storefront' && !isPurchased && (
-                            <button
-                                onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}
-                                className="absolute top-2 right-2 z-[45] outline-none"
-                            >
-                                <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full border-[1px] md:border-2 flex items-center justify-center transition-all ${isSelected
-                                    ? 'bg-white border-white scale-110'
-                                    : 'bg-black/20 backdrop-blur-md border-white/20 hover:border-white/50'
-                                    }`}>
-                                    {isSelected && <CheckIcon className="w-3.5 h-3.5 md:w-5 md:h-5 text-black stroke-[3]" />}
-                                </div>
-                            </button>
-                        )}
-
-                        {/* Purchased Badge */}
-                        {isPurchased && (
-                            <div className="absolute top-1.5 left-1.5 z-[45] flex items-center gap-1 bg-green-500 text-black px-1.5 py-0.5 text-[7px] md:text-[8px] font-black uppercase tracking-[0.1em] shadow-lg">
-                                <CheckCircleIcon className="w-2.5 h-2.5" />
-                                PROPRIETARY
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* BACK SIDE (METADATA) */}
-                <div
-                    className="absolute inset-0 w-full h-full backface-hidden bg-black flex flex-col justify-between cursor-pointer"
-                    style={{
-                        backfaceVisibility: 'hidden',
-                        WebkitBackfaceVisibility: 'hidden',
-                        transform: 'rotateY(180deg)',
-                        zIndex: rotation % 360 === 180 ? 2 : 1,
-                        padding: isSingle ? '1.25rem' : '1.5vw'
-                    }}
-                    onClick={handleFlip}
-                >
-                    <div className={isSingle ? 'space-y-4 md:space-y-8' : 'space-y-[0.5vw] md:space-y-4'}>
-                        <div className="space-y-[0.2vw] md:space-y-1">
-                            <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Camera</p>
-                            <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono uppercase leading-tight truncate`}>
-                                {photo.metadata?.cameraMake || photo.metadata?.camera_make || ''} {photo.metadata?.cameraModel || photo.metadata?.camera_model || 'Unknown'}
-                            </p>
-                        </div>
-                        <div className={`grid grid-cols-2 ${isSingle ? 'gap-y-4 gap-x-4 md:gap-x-12' : 'gap-y-[0.5vw] gap-x-[1vw] md:gap-x-4'}`}>
-                            <div>
-                                <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>ISO</p>
-                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>{photo.metadata?.isoSpeed || photo.metadata?.iso || '-'}</p>
-                            </div>
-                            <div>
-                                <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Aperture</p>
-                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>f/{photo.metadata?.aperture || '-'}</p>
-                            </div>
-                            <div>
-                                <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Focal</p>
-                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>{(photo.metadata?.focalLength || photo.metadata?.focal_length) ? `${photo.metadata?.focalLength || photo.metadata?.focal_length}mm` : '-'}</p>
-                            </div>
-                            <div>
-                                <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Shutter</p>
-                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono leading-tight`}>
-                                    {(() => {
-                                        const shutter = photo.metadata?.exposureTime || photo.metadata?.shutter_speed;
-                                        if (!shutter) return '-';
-                                        return Number(shutter) < 1
-                                            ? `1/${Math.round(1 / Number(shutter))}s`
-                                            : `${shutter}s`;
-                                    })()}
-                                </p>
-                            </div>
-                        </div>
-                        <div className={`grid grid-cols-2 ${isSingle ? 'gap-y-4 gap-x-4 md:gap-x-12' : 'gap-y-[0.5vw] gap-x-[1vw] md:gap-x-4'}`}>
-                            <div>
-                                <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Date Taken</p>
-                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono uppercase leading-tight`}>
-                                    {(() => {
-                                        const dateVal = photo.metadata?.time || photo.metadata?.date_taken;
-                                        return dateVal ? new Date(dateVal).toLocaleDateString() : 'Unknown';
-                                    })()}
-                                </p>
-                            </div>
-                            <div>
-                                <p className={`${isSingle ? 'text-[9px] md:text-base mb-1' : 'text-[1.4vw] md:text-xs mb-[0.1vw]'} text-white/50 uppercase tracking-widest font-bold leading-none`}>Location</p>
-                                <p className={`${isSingle ? 'text-sm md:text-2xl' : 'text-[1.8vw] md:text-sm'} text-white font-mono uppercase leading-tight truncate whitespace-nowrap`}>
-                                    {photo.metadata?.city || 'Austin, TX'}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="pt-1 md:pt-4">
-                        <p className={`${isSingle ? 'text-[8px] md:text-sm' : 'text-[1.2vw] md:text-[10px]'} text-white font-medium tracking-widest uppercase mb-[0.1vw] md:mb-2 text-center w-full`}>
-                            © {new Date(photo.metadata?.date_taken || photo.created_at).getFullYear()} {photo.metadata?.copyright || 'THE LOST+UNFOUNDS'}
-                        </p>
-                        <p className={`${isSingle ? 'text-[7px] md:text-xs' : 'text-[1vw] md:text-[8px]'} text-white/50 uppercase tracking-wider text-center font-bold`}>
-                            TAP TO FLIP
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </motion.div>
     );
 };
 

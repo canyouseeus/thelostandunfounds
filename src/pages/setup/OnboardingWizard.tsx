@@ -136,7 +136,9 @@ export default function OnboardingWizard() {
         setError(null);
 
         try {
-            const match = folderLink.match(/folders\/([a-zA-Z0-9-_]+)/) || folderLink.match(/^([a-zA-Z0-9-_]+)$/);
+            const match = folderLink.match(/\/folders\/([a-zA-Z0-9-_]+)/) ||
+                folderLink.match(/id=([a-zA-Z0-9-_]+)/) ||
+                folderLink.match(/^([a-zA-Z0-9-_]+)$/);
             const folderId = match ? match[1] : folderLink;
 
             const response = await fetch('/api/admin/onboard-gallery', {
@@ -517,8 +519,12 @@ export default function OnboardingWizard() {
                                     <input
                                         type="text"
                                         value={folderLink}
-                                        onChange={(e) => setFolderLink(e.target.value)}
-                                        placeholder="https://drive.google.com/drive/folders/..."
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            const match = val.match(/\/folders\/([a-zA-Z0-9-_]+)/) || val.match(/id=([a-zA-Z0-9-_]+)/);
+                                            setFolderLink(match ? match[1] : val);
+                                        }}
+                                        placeholder="Paste folder link or ID here..."
                                         className="w-full px-4 py-2 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors"
                                     />
                                 </div>

@@ -9,6 +9,7 @@ import { LockClosedIcon, ArrowRightIcon, ArrowPathIcon } from '@heroicons/react/
 import { motion } from 'framer-motion';
 import GalleryItem from './GalleryItem';
 import PhotographerApplicationModal from '../components/gallery/PhotographerApplicationModal';
+import { cn } from '../components/ui/utils';
 
 interface PhotoLibrary {
     id: string;
@@ -87,95 +88,142 @@ export default function Gallery() {
         navigate(`/gallery/${library.slug}`);
     };
 
+    const [activeGalleryTab, setActiveGalleryTab] = useState<'public' | 'private'>('public');
+
     // If a slug is present, render the specific gallery component
     if (slug) {
         return <PhotoGallery librarySlug={slug} />;
     }
 
+    const publicLibraries = libraries.filter(lib => !lib.is_private);
+    const privateLibraries = libraries.filter(lib => lib.is_private);
+    const displayedLibraries = activeGalleryTab === 'public' ? publicLibraries : privateLibraries;
+
     return (
-        <div className="min-h-screen bg-black pt-24 pb-48 px-4 md:px-8 max-w-[100vw] overflow-x-hidden">
+        <div className="min-h-screen bg-black pt-32 pb-48 px-4 md:px-8 max-w-[100vw] overflow-x-hidden">
             <Helmet>
                 <title>THE GALLERY | THE LOST+UNFOUNDS</title>
                 <meta name="description" content="Exclusive high-resolution photography collections. Findings from the field, captured in high definition." />
             </Helmet>
 
-            <div className="max-w-7xl mx-auto mb-20">
-                <div className="text-left space-y-6 max-w-3xl pb-12">
+            <div className="max-w-7xl mx-auto mb-20 relative z-10">
+                <div className="text-left space-y-6 max-w-4xl pb-12">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8 }}
+                    >
+                        <h1 className="font-black text-white tracking-tighter leading-[0.8] uppercase text-[clamp(3.5rem,12vw,10rem)] mb-8">
+                            THE GALLERY
+                        </h1>
+                        <div className="text-xl md:text-2xl text-white/50 font-light leading-relaxed max-w-2xl">
+                            <p>
+                                Welcome to <span className="font-bold text-white">THE GALLERY</span> — an invite-only platform for photographers to host, share, and sell their work.
+                            </p>
+                        </div>
 
-                    <h1 className="font-black text-white tracking-tighter leading-[0.8] uppercase whitespace-nowrap text-[clamp(2.5rem,8vw,6rem)]">
-                        THE GALLERY
-                    </h1>
-                    <div className="text-xl md:text-2xl text-white/50 font-light leading-relaxed space-y-6">
-                        <p>
-                            Welcome to <span className="font-bold">THE GALLERY</span> — an invite-only platform for photographers to host, share, and sell their work.
-                        </p>
-                        <p>
-                            Private galleries are reserved for invited photographers. If you're a photographer interested in joining, submit your application below and we'll review your work.
-                        </p>
-                        <p>
-                            Public albums contain content available for anyone to browse and purchase.
-                        </p>
-                    </div>
-
-                    {/* Application CTA */}
-                    <div className="pt-4">
-                        <button
-                            onClick={() => setApplicationModalOpen(true)}
-                            className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-bold uppercase tracking-wider text-sm hover:bg-white/90 transition-colors"
-                        >
-                            Apply to Join
-                            <ArrowRightIcon className="w-4 h-4" />
-                        </button>
-                        <p className="text-white/30 text-xs mt-3">
-                            Already have an invite? <button onClick={() => setAuthModalOpen(true)} className="text-white/50 hover:text-white underline">Sign in here</button>
-                        </p>
-                    </div>
+                        {/* Application CTA */}
+                        <div className="pt-8 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                            <button
+                                onClick={() => setApplicationModalOpen(true)}
+                                className="inline-flex items-center gap-2 px-8 py-4 bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-zinc-200 transition-all active:scale-95 shadow-[0_0_30px_rgba(255,255,255,0.1)]"
+                            >
+                                Apply to Join
+                                <ArrowRightIcon className="w-4 h-4" />
+                            </button>
+                            <p className="text-white/30 text-[10px] font-bold uppercase tracking-widest">
+                                Already have an invite? <button onClick={() => setAuthModalOpen(true)} className="text-white/60 hover:text-white underline underline-offset-4 decoration-white/20 hover:decoration-white transition-all">Sign in here</button>
+                            </p>
+                        </div>
+                    </motion.div>
                 </div>
             </div>
 
-            {loading ? (
-                <div className="flex flex-col items-center justify-center py-40 gap-4">
-                    <ArrowPathIcon className="w-8 h-8 text-white animate-spin" />
-                    <span className="text-xs font-bold tracking-widest text-white/40 uppercase">Decrypting Archives...</span>
-                </div>
-            ) : (
-                <div className="max-w-7xl mx-auto">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {libraries.map((lib, index) => (
-                            <GalleryItem
-                                key={lib.id}
-                                lib={lib}
-                                index={index}
-                                userIsAdmin={userIsAdmin}
-                                authLoading={authLoading}
-                                onGalleryClick={handleGalleryClick}
+            <div className="max-w-7xl mx-auto">
+                {/* Tabs styled like PhotoGallery Storefront/Assets */}
+                <div className="flex gap-12 border-b border-white/5 mb-12 pb-2">
+                    <button
+                        onClick={() => setActiveGalleryTab('public')}
+                        className={cn(
+                            "text-[10px] font-black uppercase tracking-[0.3em] transition-all relative pb-2",
+                            activeGalleryTab === 'public'
+                                ? "text-white"
+                                : "text-white/30 hover:text-white/60"
+                        )}
+                    >
+                        Public Albums
+                        {activeGalleryTab === 'public' && (
+                            <motion.div
+                                layoutId="galleryTabUnderline"
+                                className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-white"
                             />
-                        ))}
-                    </div>
-
-                    {libraries.length === 0 && (
-                        <div className="text-center py-40">
-                            <p className="text-white/40 font-bold tracking-widest uppercase">No available archives found.</p>
-                        </div>
-                    )}
-
-
-                    <AuthModal
-                        isOpen={authModalOpen}
-                        onClose={() => {
-                            setAuthModalOpen(false);
-                            setAuthMessage(undefined);
-                        }}
-                        message={authMessage}
-                        title={authMessage ? "Private Access" : undefined}
-                    />
-
-                    <PhotographerApplicationModal
-                        isOpen={applicationModalOpen}
-                        onClose={() => setApplicationModalOpen(false)}
-                    />
+                        )}
+                    </button>
+                    <button
+                        onClick={() => setActiveGalleryTab('private')}
+                        className={cn(
+                            "text-[10px] font-black uppercase tracking-[0.3em] transition-all relative pb-2",
+                            activeGalleryTab === 'private'
+                                ? "text-white"
+                                : "text-white/30 hover:text-white/60"
+                        )}
+                    >
+                        Private Archives
+                        {activeGalleryTab === 'private' && (
+                            <motion.div
+                                layoutId="galleryTabUnderline"
+                                className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-white"
+                            />
+                        )}
+                    </button>
                 </div>
-            )}
+
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-40 gap-4">
+                        <ArrowPathIcon className="w-8 h-8 text-white animate-spin" />
+                        <span className="text-xs font-bold tracking-widest text-white/40 uppercase">Decrypting Archives...</span>
+                    </div>
+                ) : (
+                    <div className="animate-in fade-in duration-500">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {displayedLibraries.map((lib, index) => (
+                                <GalleryItem
+                                    key={lib.id}
+                                    lib={lib}
+                                    index={index}
+                                    userIsAdmin={userIsAdmin}
+                                    authLoading={authLoading}
+                                    onGalleryClick={handleGalleryClick}
+                                />
+                            ))}
+                        </div>
+
+                        {displayedLibraries.length === 0 && (
+                            <div className="text-center py-40 bg-white/[0.02] border border-dashed border-white/5">
+                                <p className="text-white/20 text-[10px] font-black tracking-widest uppercase">
+                                    No {activeGalleryTab} archives found in this sector.
+                                </p>
+                            </div>
+                        )}
+
+
+                        <AuthModal
+                            isOpen={authModalOpen}
+                            onClose={() => {
+                                setAuthModalOpen(false);
+                                setAuthMessage(undefined);
+                            }}
+                            message={authMessage}
+                            title={authMessage ? "Private Access" : undefined}
+                        />
+
+                        <PhotographerApplicationModal
+                            isOpen={applicationModalOpen}
+                            onClose={() => setApplicationModalOpen(false)}
+                        />
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
