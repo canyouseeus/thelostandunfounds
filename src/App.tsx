@@ -110,6 +110,7 @@ function App() {
               <Route path="/terms" element={<Layout />}>
                 <Route index element={<Terms />} />
               </Route>
+              <Route path="/terms-of-service" element={<Navigate to="/terms" replace />} />
               <Route path="/tools" element={<Layout />}>
                 <Route index element={<ToolsDashboard />} />
                 <Route path="tiktok-downloader" element={<TikTokDownloader />} />
