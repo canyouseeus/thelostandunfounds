@@ -129,7 +129,7 @@ const PhotoCard: React.FC<{
                             src={`https://lh3.googleusercontent.com/d/${photo.google_drive_file_id}=s1200`}
                             alt={photo.title}
                             onClick={(e) => { e.stopPropagation(); if (isPurchased) onLightbox(); }}
-                            className={`${isSingle ? 'max-w-full w-auto h-auto max-h-[85vh] object-contain' : 'w-full h-full object-cover'} select-none grayscale hover:grayscale-0 transition-all duration-500 ${!isPurchased ? 'pointer-events-none' : 'cursor-pointer'}`}
+                            className={`${isSingle ? 'max-w-full w-auto h-auto max-h-[85vh] object-contain' : 'w-full h-full object-cover'} select-none transition-all duration-500 ${!isPurchased ? 'pointer-events-none' : 'cursor-pointer'}`}
                             draggable={false}
                             loading="lazy"
                             referrerPolicy="no-referrer"
