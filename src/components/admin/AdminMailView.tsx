@@ -31,6 +31,7 @@ import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../Toast';
 import { cn } from '../ui/utils';
+import { LoadingSpinner, LoadingOverlay } from '../Loading';
 import DOMPurify from 'dompurify';
 
 // Types
@@ -496,18 +497,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
 
   // Render loading state
   if (loading) {
-    return (
-      <div className="space-y-6">
-        <button onClick={onBack} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
-          <ArrowLeftIcon className="w-4 h-4" />
-          Back to Dashboard
-        </button>
-        <div className="bg-black/50 p-12 flex items-center justify-center">
-          <ArrowPathIcon className="w-6 h-6 animate-spin text-white/60" />
-          <span className="ml-3 text-white/60">Loading mail...</span>
-        </div>
-      </div>
-    );
+    return <LoadingOverlay message="Loading Mailbox" />;
   }
 
   return (
@@ -606,8 +596,8 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
           {/* Messages */}
           <div className="flex-1 overflow-auto bg-black">
             {loadingMessages ? (
-              <div className="p-8 text-center">
-                <ArrowPathIcon className="w-5 h-5 animate-spin text-white/40 mx-auto" />
+              <div className="p-8 text-center flex justify-center">
+                <LoadingSpinner size="md" className="text-white/40" />
               </div>
             ) : messages.length === 0 ? (
               <div className="p-8 text-center text-white/40 text-sm">
@@ -702,7 +692,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
         <div className="flex-1 flex flex-col">
           {loadingMessage ? (
             <div className="flex-1 flex items-center justify-center">
-              <ArrowPathIcon className="w-6 h-6 animate-spin text-white/40" />
+              <LoadingSpinner size="lg" className="text-white/40" />
             </div>
           ) : selectedMessage ? (
             <>
@@ -951,7 +941,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                   className="flex items-center gap-3 px-10 py-3 bg-white text-black font-black uppercase tracking-[0.2em] text-[10px] hover:bg-white/90 transition-all disabled:opacity-50"
                 >
                   {sending ? (
-                    <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                    <LoadingSpinner size="sm" />
                   ) : (
                     <PaperAirplaneIcon className="w-4 h-4" />
                   )}

@@ -5,6 +5,7 @@ import { AnimatedNumber } from '@/components/ui/animated-number';
 import { useToast } from '@/components/Toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { GalleryCountdownOverlay, shouldShowCountdown } from '@/components/ui/gallery-countdown-overlay';
+import { LoadingSpinner } from '@/components/Loading';
 import { isAdminEmail } from '@/utils/admin';
 
 interface AdminGalleryViewProps {
@@ -858,7 +859,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                         className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white/60 text-xs uppercase tracking-wider font-bold flex items-center justify-center gap-2 w-full sm:w-auto"
                     >
                         {verifying ? (
-                            <ArrowPathIcon className="w-3 h-3 animate-spin" />
+                            <LoadingSpinner size="sm" />
                         ) : (
                             <ChartBarIcon className="w-3 h-3" />
                         )}
@@ -1420,7 +1421,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                     Active Galleries ({libraries.length})
                                 </h3>
                                 <button onClick={loadGalleryStats} className="text-white/40 hover:text-white">
-                                    <ArrowPathIcon className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+                                    {loading ? <LoadingSpinner size="sm" /> : <ArrowPathIcon className="w-3 h-3" />}
                                 </button>
                             </div>
 
@@ -1553,7 +1554,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                 Pending Applications ({pendingAppsCount})
                             </h3>
                             <button onClick={loadApplications} className="text-white/40 hover:text-white">
-                                <ArrowPathIcon className={`w-3 h-3 ${appsLoading ? 'animate-spin' : ''}`} />
+                                {appsLoading ? <LoadingSpinner size="sm" /> : <ArrowPathIcon className="w-3 h-3" />}
                             </button>
                         </div>
 

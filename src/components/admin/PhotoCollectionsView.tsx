@@ -14,7 +14,7 @@ import {
     EnvelopeIcon,
     FolderPlusIcon
 } from '@heroicons/react/24/outline';
-import { LoadingSpinner } from '../Loading';
+import { LoadingSpinner, LoadingOverlay } from '../Loading';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/Toast';
 
@@ -190,6 +190,10 @@ export default function PhotoCollectionsView() {
         c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.user_email?.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    if (loading) {
+        return <LoadingOverlay message="Loading Collections" />;
+    }
 
     return (
         <div className="space-y-6">

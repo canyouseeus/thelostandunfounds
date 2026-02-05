@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useToast } from './Toast';
-import { LoadingSpinner } from './Loading';
+import { LoadingOverlay } from './Loading';
 import { isAdminEmail } from '../utils/admin';
 import { DocumentTextIcon, PlusIcon, PencilSquareIcon, TrashIcon, EyeIcon, EyeSlashIcon, CalendarIcon } from '@heroicons/react/24/outline';
 import RichTextEditor from './RichTextEditor';
@@ -397,11 +397,7 @@ export default function BlogManagement() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <LoadingSpinner />
-      </div>
-    );
+    return <LoadingOverlay message="Loading Blog Posts" />;
   }
 
   // Separate posts into categories

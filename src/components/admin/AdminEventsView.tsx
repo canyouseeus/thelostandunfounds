@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { LoadingSpinner, LoadingOverlay } from '../Loading';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../../components/Toast';
 import {
@@ -171,6 +172,10 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
         }
     };
 
+    if (loading) {
+        return <LoadingOverlay message="Loading Events" />;
+    }
+
     return (
         <div className="space-y-6 h-full flex flex-col">
             <div className="flex items-center justify-between mb-2">
@@ -206,7 +211,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                     <div className="flex-1 overflow-y-auto p-2 space-y-1">
                         {loading ? (
                             <div className="p-12 flex flex-col items-center justify-center text-white/20 gap-4">
-                                <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                                <LoadingSpinner size="sm" className="text-white" />
                                 <div className="text-[10px] font-mono uppercase tracking-widest">Loading...</div>
                             </div>
                         ) : events.length === 0 ? (

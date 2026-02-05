@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { GiftIcon, CalendarIcon, CurrencyDollarIcon, UsersIcon, ArrowTrendingUpIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
-import { LoadingSpinner } from '../Loading';
+import { LoadingOverlay } from '../Loading';
 
 interface SecretSantaData {
   current_year: number;
@@ -108,14 +108,7 @@ export default function SecretSantaAdmin() {
   };
 
   if (loading) {
-    return (
-      <div className="bg-black/50 rounded-none p-6">
-        <div className="flex items-center justify-center py-12">
-          <LoadingSpinner size="lg" className="text-white/60" />
-          <span className="ml-3 text-white/60">Loading Secret Santa data...</span>
-        </div>
-      </div>
-    );
+    return <LoadingOverlay message="Loading Secret Santa Data" />;
   }
 
   if (error) {

@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { UsersIcon, MagnifyingGlassIcon, EyeIcon, ArrowTrendingUpIcon, CurrencyDollarIcon, ShareIcon, GiftIcon } from '@heroicons/react/24/outline';
+import { LoadingOverlay } from '../Loading';
 import { useNavigate } from 'react-router-dom';
 import { safeJsonParse } from '../../utils/helpers';
 
@@ -78,13 +79,7 @@ export default function AffiliateAdminView() {
   };
 
   if (loading) {
-    return (
-      <div className="bg-black/50 rounded-none p-6">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-white/60">Loading affiliates...</div>
-        </div>
-      </div>
-    );
+    return <LoadingOverlay message="Loading Affiliate Data" />;
   }
 
   if (error) {
