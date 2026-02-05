@@ -42,6 +42,8 @@ export default function UserMenu() {
     try {
       await signOut();
       setMenuOpen(false);
+      // Force reload to ensure all state is cleared
+      window.location.reload();
     } catch (error) {
       console.warn('Error signing out:', error);
       setMenuOpen(false);

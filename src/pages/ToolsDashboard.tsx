@@ -94,8 +94,8 @@ export default function ToolsDashboard() {
                 </Link>
                 <div className="tool-card-back bg-black/50 border border-white rounded-none px-6 py-4 flex items-center justify-center cursor-pointer">
                   <div className="text-center">
-                    <div className="w-16 h-16 border-2 border-white rounded-none flex items-center justify-center text-white mx-auto mb-4 animate-spin">
-                      <ArrowRightIcon className="w-8 h-8" />
+                    <div className="flex justify-center mb-4">
+                      <LoadingSpinner size="lg" className="text-white" />
                     </div>
                     <p className="text-white/80 text-sm">Loading...</p>
                   </div>

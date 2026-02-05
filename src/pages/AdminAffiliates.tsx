@@ -22,6 +22,8 @@ import {
   ExpandableCardContent,
   ExpandableContent,
 } from '@/components/ui/expandable';
+import { useToast } from '../components/Toast';
+import { LoadingSpinner } from '../components/Loading';
 import { cn } from '@/components/ui/utils';
 
 type AffiliateSummary = {
@@ -412,7 +414,7 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
             onClick={load}
             className="flex items-center gap-2 text-sm sm:text-base px-3 py-2 rounded-none border border-white/20 hover:border-white/60 transition-colors"
           >
-            <ArrowPathIcon className={cn('w-4 h-4', refreshing && 'animate-spin')} />
+            {refreshing ? <LoadingSpinner size="sm" /> : <ArrowPathIcon className="w-4 h-4" />}
             Refresh
           </button>
         </div>

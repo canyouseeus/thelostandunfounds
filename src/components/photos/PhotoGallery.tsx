@@ -116,8 +116,6 @@ const PhotoCard: React.FC<{
                                 className="absolute inset-0 z-20 cursor-pointer"
                                 onClick={(e) => { e.stopPropagation(); onLightbox(); }}
                                 onContextMenu={(e) => e.preventDefault()}
-                                onTouchStart={(e) => e.preventDefault()}
-                                onTouchEnd={(e) => { e.preventDefault(); onLightbox(); }}
                                 style={{
                                     WebkitTouchCallout: 'none',
                                     WebkitUserSelect: 'none',

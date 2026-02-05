@@ -6,7 +6,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useToast } from './Toast';
-import { ArrowUpTrayIcon, PhotoIcon, VideoCameraIcon, XMarkIcon, TrashIcon, ArrowDownTrayIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { ArrowUpTrayIcon, PhotoIcon, VideoCameraIcon, XMarkIcon, TrashIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { LoadingSpinner } from './Loading';
 
 interface BrandAsset {
@@ -252,7 +252,7 @@ export default function BrandAssets() {
           >
             {uploading ? (
               <>
-                <ArrowPathIcon className="w-5 h-5 animate-spin" />
+                <LoadingSpinner size="sm" />
                 Uploading...
               </>
             ) : (

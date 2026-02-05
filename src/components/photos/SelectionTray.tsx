@@ -1,4 +1,7 @@
+
 import React, { useMemo } from 'react';
+import { useToast } from '../Toast';
+import { LoadingSpinner } from '../Loading';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBagIcon, XMarkIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { PricingOption } from './PhotoGallery';
@@ -114,14 +117,14 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
                                     >
                                         <XMarkIcon className="w-3 h-3 text-white" />
                                     </button>
-                                </motion.div>
+                                </motion.div >
                             ))}
-                        </AnimatePresence>
-                    </div>
-                </div>
+                        </AnimatePresence >
+                    </div >
+                </div >
 
                 {/* Pricing & Logic Section */}
-                <div className="flex flex-row items-center justify-between gap-6 md:gap-12 w-full md:w-auto order-1 md:order-2">
+                < div className="flex flex-row items-center justify-between gap-6 md:gap-12 w-full md:w-auto order-1 md:order-2" >
                     <div className="flex flex-col justify-center">
                         {/* Price & Count Line */}
                         <div className="flex items-baseline gap-3 mb-1">
@@ -158,7 +161,7 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
                         className="group relative flex items-center gap-2 px-6 py-2 md:px-10 md:py-3.5 bg-white text-black rounded-none font-black uppercase tracking-[0.2em] text-[10px] md:text-[11px] hover:bg-zinc-200 transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap shrink-0"
                     >
                         {loading ? (
-                            <div className="w-3 h-3 md:w-4 md:h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                            <LoadingSpinner size="sm" className="text-black" />
                         ) : (
                             <>
                                 CHECKOUT
@@ -172,9 +175,9 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
                             </div>
                         )}
                     </button>
-                </div>
-            </div>
-        </motion.div>
+                </div >
+            </div >
+        </motion.div >
     );
 };
 

@@ -25,7 +25,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '../components/ui/button'
 import AuthModal from '../components/auth/AuthModal'
 import KingMidasTicker from '../components/KingMidasTicker'
-import { LoadingOverlay } from '../components/Loading'
+import { LoadingOverlay, LoadingSpinner } from '../components/Loading'
 import EmployeeDiscount from '../components/affiliate/EmployeeDiscount'
 import RewardPointsBadge from '../components/affiliate/RewardPointsBadge'
 import ReferralLink from '../components/affiliate/ReferralLink'
@@ -728,7 +728,7 @@ export default function AffiliateDashboard() {
                             autoFocus
                           />
                           <button onClick={handleSaveCode} disabled={updatingCode} className="p-2 hover:bg-white/10 transition-colors">
-                            {updatingCode ? <ArrowPathIcon className="w-4 h-4 animate-spin" /> : <DocumentCheckIcon className="w-4 h-4" />}
+                            {updatingCode ? <LoadingSpinner size="sm" /> : <DocumentCheckIcon className="w-4 h-4" />}
                           </button>
                           <button onClick={handleCancelEdit} disabled={updatingCode} className="p-2 hover:bg-white/10 transition-colors">
                             <XMarkIcon className="w-4 h-4" />

@@ -37,6 +37,9 @@ function isAdminRequest(req: VercelRequest): boolean {
   return false;
 }
 
+// Static import to ensure bundling
+import * as mailHandler from '../../lib/api-handlers/_zoho-mail-handler';
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -79,11 +82,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   console.log('Mail router - path:', pathSegments, 'endpoint:', endpoint, 'method:', req.method, 'url:', req.url);
 
   try {
-    // Dynamic import of mail handler
-    // Try importing with .ts extension for Vercel dev resolution
-    const mailHandler = await import('../../lib/api-handlers/_zoho-mail-handler.ts');
-
-    console.log('Mail handler imported successfully');
+    // Static import used
+    console.log('Mail handler ready');
 
     switch (endpoint) {
       // GET /api/mail/folders

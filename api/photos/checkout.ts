@@ -59,6 +59,10 @@ export default async function handler(
 
     if (pricingError || !pricingOptions || pricingOptions.length === 0) {
       console.warn('No pricing options found for library:', libraryId);
+    } else {
+      console.log(`[Checkout] Found ${pricingOptions.length} options for lib ${libraryId}:`,
+        pricingOptions.map((o: any) => `${o.name} (${o.photo_count}) $${o.price}`).join(', ')
+      );
     }
 
     // Dynamic Pricing Calculation

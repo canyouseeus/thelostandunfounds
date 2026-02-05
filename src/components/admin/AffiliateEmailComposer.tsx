@@ -6,7 +6,8 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '../Toast';
 import { supabase } from '../../lib/supabase';
-import { EnvelopeIcon, PaperAirplaneIcon, EyeIcon, UsersIcon, FunnelIcon, CheckCircleIcon, StopIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { EnvelopeIcon, PaperAirplaneIcon, EyeIcon, UsersIcon, FunnelIcon, CheckCircleIcon, StopIcon } from '@heroicons/react/24/outline';
+import { LoadingSpinner } from '../Loading';
 import { safeJsonParse } from '../../utils/helpers';
 
 interface Affiliate {
@@ -284,7 +285,7 @@ export default function AffiliateEmailComposer() {
               >
                 {sending ? (
                   <>
-                    <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                    <LoadingSpinner size="sm" />
                     SENDING...
                   </>
                 ) : (

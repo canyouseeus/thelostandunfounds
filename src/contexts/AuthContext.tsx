@@ -337,26 +337,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signOut = async () => {
-    try {
-      const { error } = await authService.signOut();
-
-      if (!error) {
-        setUser(null);
-        setSession(null);
-        setTier('free');
-      }
-
-      return { error };
-    } catch (error: any) {
-      // Even if sign out fails, clear local state
-      setUser(null);
-      setSession(null);
-      setTier('free');
-      return { error: error as Error };
-    }
-  };
-
   const clearAuthStorage = async () => {
     try {
       await authService.clearAuthStorage();
@@ -375,6 +355,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       // Still reload to ensure clean state
       window.location.reload();
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      const { error } = await authService.signOut();
+
+      if (!error) {
+        setUser(null);
+        setSession(null);
+        setTier('free');
+      }
+
+      return { error };
+    } catch (error: any) {
+      // Even if sign out fails, clear local state
+      console.warn('Sign out API failed, forcing local storage clear:', error);
+      await clearAuthStorage();
+      return { error: error as Error };
     }
   };
 

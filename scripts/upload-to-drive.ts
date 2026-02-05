@@ -206,9 +206,38 @@ async function uploadFile(filePath: string, parentId: string, retryCount = 0) {
     }
 }
 
-async function startSync() {
+// Add recursive directory traversal
+function getFilesRecursive(dir: string): string[] {
+    let results: string[] = [];
+    if (!fs.existsSync(dir)) return results;
 
-    // First, clean up any existing duplicates in all folders
+    const list = fs.readdirSync(dir);
+    list.forEach(file => {
+        if (file.startsWith('.')) return;
+        const filePath = path.join(dir, file);
+        const stat = fs.statSync(filePath);
+        if (stat && stat.isDirectory()) {
+            results = results.concat(getFilesRecursive(filePath));
+        } else {
+            results.push(filePath);
+        }
+    });
+    return results;
+}
+
+async function startSync() {
+    // 1. Detect Source (SD Card or Desktop)
+    const SD_CARD_PATH = '/Volumes/CLAPTROP II/DCIM';
+    const USE_SD_CARD = fs.existsSync(SD_CARD_PATH);
+
+    console.log('\n=== Source Detection ===');
+    if (USE_SD_CARD) {
+        console.log(`✅ SD Card Detected: ${SD_CARD_PATH}`);
+    } else {
+        console.log('⚠️ SD Card not found. Falling back to Desktop folders.');
+    }
+
+    // 2. Clean up existing duplicates (Target Folders)
     console.log('\n=== Cleaning up existing duplicates ===');
     for (const [key, config] of Object.entries(FOLDER_CONFIG)) {
         try {
@@ -221,37 +250,57 @@ async function startSync() {
         }
     }
 
-    console.log('\n=== Starting file uploads ===');
-    for (const [key, config] of Object.entries(FOLDER_CONFIG)) {
-        console.log(`\nProcessing ${key} folder...`);
+    // 3. Collect Files to Upload
+    console.log('\n=== Scanning Files ===');
+    const filesToUpload: { path: string; type: 'JPG' | 'RAW' | 'MOV' }[] = [];
 
-        if (!fs.existsSync(config.local)) {
-            console.log(`Local folder ${config.local} does not exist. Skipping.`);
-            continue;
+    if (USE_SD_CARD) {
+        const allFiles = getFilesRecursive(SD_CARD_PATH);
+        console.log(`Found ${allFiles.length} files on SD card.`);
+
+        for (const filePath of allFiles) {
+            const ext = path.extname(filePath).toLowerCase();
+            if (ext === '.jpg' || ext === '.jpeg') {
+                filesToUpload.push({ path: filePath, type: 'JPG' });
+            } else if (ext === '.raf') {
+                filesToUpload.push({ path: filePath, type: 'RAW' });
+            } else if (ext === '.mov' || ext === '.mp4') {
+                filesToUpload.push({ path: filePath, type: 'MOV' });
+            }
         }
-
-        try {
-            const targetFolderId = await getOrCreateFolder('NEW UPLOADS', config.parent!);
-            if (!targetFolderId) {
-                console.error(`Could not find or create NEW UPLOADS folder in ${key} parent.`);
-                continue;
-            }
-
-            const files = fs.readdirSync(config.local).filter(f => !f.startsWith('.'));
-
-            if (files.length === 0) {
-                console.log(`No files to upload in ${config.local}`);
-                continue;
-            }
-
-            for (const file of files) {
-                const filePath = path.join(config.local, file);
-                if (fs.statSync(filePath).isFile()) {
-                    await uploadFile(filePath, targetFolderId);
+    } else {
+        // Desktop Fallback
+        for (const [key, config] of Object.entries(FOLDER_CONFIG)) {
+            if (fs.existsSync(config.local)) {
+                const files = fs.readdirSync(config.local).filter(f => !f.startsWith('.'));
+                for (const file of files) {
+                    const filePath = path.join(config.local, file);
+                    if (fs.statSync(filePath).isFile()) {
+                        filesToUpload.push({ path: filePath, type: key as any });
+                    }
                 }
             }
+        }
+    }
+
+    if (filesToUpload.length === 0) {
+        console.log('No files found to upload.');
+        return;
+    }
+
+    console.log(`Prepared ${filesToUpload.length} files for upload.`);
+
+    // 4. Upload Files
+    console.log('\n=== Starting Uploads ===');
+    for (const file of filesToUpload) {
+        const config = FOLDER_CONFIG[file.type];
+        try {
+            const targetFolderId = await getOrCreateFolder('NEW UPLOADS', config.parent!);
+            if (targetFolderId) {
+                await uploadFile(file.path, targetFolderId);
+            }
         } catch (err: any) {
-            console.error(`Error processing uploads for ${key}: ${err.message}`);
+            console.error(`Error uploading ${file.path}: ${err.message}`);
         }
     }
 }

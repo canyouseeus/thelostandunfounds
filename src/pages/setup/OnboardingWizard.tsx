@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CheckIcon, ClipboardDocumentIcon, ArrowRightIcon, ArrowPathIcon, ExclamationCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { LoadingSpinner } from '../../components/Loading';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -418,7 +419,7 @@ export default function OnboardingWizard() {
                                 disabled={savingUsername || !username.trim()}
                                 className="w-full px-4 py-2 bg-white text-black font-semibold hover:bg-white/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
-                                {savingUsername ? <ArrowPathIcon className="w-4 h-4 animate-spin" /> : 'Continue'}
+                                {savingUsername ? <LoadingSpinner size="sm" /> : 'Continue'}
                             </button>
 
                             <button
@@ -537,7 +538,7 @@ export default function OnboardingWizard() {
                             >
                                 {publishLoading ? (
                                     <>
-                                        <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                                        <LoadingSpinner size="sm" />
                                         {syncStatus || 'Processing...'}
                                     </>
                                 ) : 'Publish Gallery'}

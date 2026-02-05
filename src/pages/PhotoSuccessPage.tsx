@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowDownTrayIcon, CheckCircleIcon, ArrowLeftIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { ArrowDownTrayIcon, CheckCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
-import Loading from '../components/Loading';
+import Loading, { LoadingSpinner } from '../components/Loading';
 
 interface Entitlement {
     photoId: string;
@@ -113,7 +113,7 @@ const PhotoSuccessPage: React.FC = () => {
                     >
                         {zipping ? (
                             <>
-                                <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                                <LoadingSpinner size="sm" />
                                 <span>Zipping...</span>
                             </>
                         ) : (

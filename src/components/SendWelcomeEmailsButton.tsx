@@ -4,7 +4,8 @@
 
 import { useState } from 'react';
 import { useToast } from './Toast';
-import { EnvelopeIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { EnvelopeIcon } from '@heroicons/react/24/outline';
+import { LoadingSpinner } from './Loading';
 
 export default function SendWelcomeEmailsButton() {
   const { success, error: showError } = useToast();
@@ -102,7 +103,7 @@ export default function SendWelcomeEmailsButton() {
         >
           {loading ? (
             <>
-              <ArrowPathIcon className="w-4 h-4 animate-spin" />
+              <LoadingSpinner size="sm" />
               Sending Welcome Emails...
             </>
           ) : (

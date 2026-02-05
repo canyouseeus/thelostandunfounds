@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
-import { ArrowUpTrayIcon, XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { ArrowUpTrayIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../lib/supabase';
+import { LoadingSpinner } from './Loading';
 import { useToast } from './Toast';
 
 interface ImageUploadProps {
@@ -158,7 +159,7 @@ export default function ImageUpload({
               }`}
           >
             {uploading ? (
-              <ArrowPathIcon className="w-8 h-8 text-white/60 animate-spin" />
+              <LoadingSpinner size="lg" className="text-white/60" />
             ) : (
               <>
                 <ArrowUpTrayIcon className="w-8 h-8 text-white/60 mb-2" />

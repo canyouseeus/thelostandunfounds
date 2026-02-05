@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
-import { useState, ReactNode } from 'react';
+import { useState } from 'react';
+
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
+import { LoadingSpinner } from './Loading';
 
 interface InteractiveCardProps {
   to?: string;
@@ -138,8 +140,8 @@ export default function InteractiveCard({
         <div className="tool-card-back group relative bg-black/50 border border-white rounded-none px-6 py-4 flex items-center justify-center cursor-pointer">
           {backContent || (
             <div className="text-center">
-              <div className="w-16 h-16 border-2 border-white rounded-none flex items-center justify-center text-white mx-auto mb-4 animate-spin">
-                <ArrowRightIcon className="w-8 h-8" />
+              <div className="flex justify-center mb-4">
+                <LoadingSpinner size="lg" className="text-white" />
               </div>
               <p className="text-white/80 text-sm">Loading...</p>
             </div>

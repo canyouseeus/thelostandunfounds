@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { CheckIcon, XMarkIcon, ArrowPathIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
+import { CheckIcon, XMarkIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
+import { LoadingSpinner } from '../Loading';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../Toast';
 
@@ -134,7 +135,7 @@ export default function AffiliateCodeSetup({ onSuccess }: AffiliateCodeSetupProp
                 className="px-4 py-3 bg-white/10 border border-white/10 text-white rounded-none hover:bg-white/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {checking ? (
-                  <ArrowPathIcon className="w-5 h-5 animate-spin" />
+                  <LoadingSpinner size="sm" />
                 ) : (
                   'Check'
                 )}
@@ -195,7 +196,7 @@ export default function AffiliateCodeSetup({ onSuccess }: AffiliateCodeSetupProp
           >
             {creating ? (
               <span className="flex items-center justify-center gap-2">
-                <ArrowPathIcon className="w-5 h-5 animate-spin" />
+                <LoadingSpinner size="sm" />
                 Creating...
               </span>
             ) : (

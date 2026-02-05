@@ -5,9 +5,10 @@ import {
     ArrowDownTrayIcon,
     CheckIcon,
     ExclamationCircleIcon,
-    ArrowPathIcon,
+    ExclamationTriangleIcon,
     ArrowLeftIcon
 } from '@heroicons/react/24/outline';
+import { LoadingSpinner } from '../components/Loading';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { supabase } from '../lib/supabase';
@@ -184,7 +185,7 @@ const DownloadPortal: React.FC = () => {
                             disabled={verifying}
                             className="w-full bg-white text-black h-12 rounded-xl text-xs font-black uppercase tracking-[0.2em] hover:bg-zinc-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
-                            {verifying ? <ArrowPathIcon className="w-4 h-4 animate-spin" /> : 'Access Vault'}
+                            {verifying ? <LoadingSpinner size="sm" /> : 'Access Vault'}
                         </button>
                     </form>
                 ) : (

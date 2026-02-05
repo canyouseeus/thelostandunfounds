@@ -27,6 +27,7 @@ import {
   ChevronDownIcon,
   ChevronUpIcon
 } from '@heroicons/react/24/outline';
+import { LoadingSpinner } from './Loading';
 import { AdminBentoCard } from './ui/admin-bento-card';
 import { cn } from './ui/utils';
 
@@ -734,7 +735,7 @@ export default function NewsletterManagement() {
             >
               {sending ? (
                 <>
-                  <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                  <LoadingSpinner size="sm" />
                   {scheduleEnabled ? 'SCHEDULING...' : 'SENDING...'}
                 </>
               ) : scheduleEnabled ? (
@@ -805,7 +806,7 @@ export default function NewsletterManagement() {
               className="text-white/40 hover:text-white text-[10px] uppercase tracking-widest font-bold transition flex items-center gap-2"
               disabled={loadingCampaigns}
             >
-              <ArrowPathIcon className={cn("w-3.5 h-3.5", loadingCampaigns && "animate-spin")} />
+              {loadingCampaigns ? <LoadingSpinner size="sm" /> : <ArrowPathIcon className="w-3.5 h-3.5" />}
               {loadingCampaigns ? 'REFRESHING...' : 'REFRESH'}
             </button>
           </div>
@@ -846,7 +847,7 @@ export default function NewsletterManagement() {
 
           {loadingCampaigns ? (
             <div className="flex items-center justify-center py-12">
-              <div className="w-8 h-8 border-2 border-white/20 border-t-white animate-spin" />
+              <LoadingSpinner size="lg" />
             </div>
           ) : campaigns.length === 0 ? (
             <div className="text-left py-12 border border-white/5 bg-white/[0.01]">
@@ -1002,7 +1003,7 @@ export default function NewsletterManagement() {
                               onClick={(e) => { e.stopPropagation(); loadCampaignLogs(campaign.id); }}
                               className="text-white/40 hover:text-white transition"
                             >
-                              <ArrowPathIcon className={cn("w-3.5 h-3.5", loadingLogs === campaign.id && "animate-spin")} />
+                              {loadingLogs === campaign.id ? <LoadingSpinner size="sm" /> : <ArrowPathIcon className="w-3.5 h-3.5" />}
                             </button>
                           </div>
                         </div>
@@ -1010,7 +1011,7 @@ export default function NewsletterManagement() {
                         <div className="max-h-80 overflow-y-auto custom-scrollbar">
                           {loadingLogs === campaign.id ? (
                             <div className="py-12 flex justify-center">
-                              <div className="w-6 h-6 border-2 border-white/10 border-t-white animate-spin" />
+                              <LoadingSpinner size="sm" />
                             </div>
                           ) : campaignLogs[campaign.id] ? (
                             <div className="divide-y divide-white/5">
@@ -1140,7 +1141,9 @@ export default function NewsletterManagement() {
               <div className="flex-1 overflow-y-auto custom-scrollbar border border-white/5 divide-y divide-white/5">
                 {loadingSubscribers ? (
                   <div className="flex flex-col items-center justify-center py-24 gap-4">
-                    <div className="w-12 h-12 border-2 border-white/10 border-t-white animate-spin" />
+                    <div className="flex justify-center">
+                      <LoadingSpinner size="lg" />
+                    </div>
                     <span className="text-[10px] uppercase tracking-widest text-white/40 font-bold">Accessing Index...</span>
                   </div>
                 ) : (

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { EnvelopeIcon, ArrowPathIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { LoadingSpinner } from '../components/Loading';
 
 export default function ResetNewsletter() {
   const [loading, setLoading] = useState(false);
@@ -87,7 +88,7 @@ export default function ResetNewsletter() {
         >
           {loading ? (
             <>
-              <ArrowPathIcon className="w-5 h-5 animate-spin" />
+              <LoadingSpinner size="sm" />
               <span>Resetting...</span>
             </>
           ) : (
