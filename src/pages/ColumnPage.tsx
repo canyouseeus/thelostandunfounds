@@ -3,11 +3,12 @@
  * Displays posts for a specific blog column
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabase';
-import { LoadingSpinner } from '../components/Loading';
+import { LoadingOverlay } from '../components/Loading'; // Updated import
+import { BlogCard } from '../components/BlogCard';
 import { BookOpenIcon, WrenchIcon, MapPinIcon, BeakerIcon, LightBulbIcon } from '@heroicons/react/24/outline';
 
 interface BlogPost {
@@ -44,9 +45,14 @@ export default function ColumnPage({ column, title, description, submitPath, ico
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isMounted = useRef(true);
 
   useEffect(() => {
+    isMounted.current = true;
     loadPosts();
+    return () => {
+      isMounted.current = false;
+    };
   }, [column]);
 
   const loadPosts = async () => {
@@ -54,57 +60,79 @@ export default function ColumnPage({ column, title, description, submitPath, ico
       setLoading(true);
       setError(null);
 
+      // Create a timeout promise to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Query timeout after 15 seconds')), 15000)
+      );
+
       // Try to filter by column field first, fallback to subdomain for bookclub
-      let query = supabase
+      let queryBuilder = supabase
         .from('blog_posts')
         .select('id, title, slug, excerpt, content, published_at, created_at, subdomain, author_id, amazon_affiliate_links, blog_column')
         .eq('published', true);
 
       // Filter by blog_column if it exists, otherwise use fallback logic
-      try {
-        query = query.eq('blog_column', column);
-      } catch (e) {
-        // blog_column field might not exist yet - use fallback
-        if (column === 'bookclub') {
-          query = query.not('subdomain', 'is', null);
-        } else if (column === 'main') {
-          query = query.is('subdomain', null);
-        }
+      // Note: supabase-js query building is synchronous/lazy, it won't throw here for invalid cols.
+      // We rely on the request error to fallback.
+      if (column === 'main') {
+        queryBuilder = queryBuilder.or('blog_column.eq.main,and(blog_column.is.null,subdomain.is.null)');
+      } else if (column === 'bookclub') {
+        queryBuilder = queryBuilder.or('blog_column.eq.bookclub,and(blog_column.is.null,subdomain.not.is.null)');
+      } else {
+        queryBuilder = queryBuilder.eq('blog_column', column);
       }
 
-      const { data, error: fetchError } = await query
+      const queryPromise = queryBuilder
         .order('published_at', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(100);
 
-      if (fetchError) {
-        console.error(`Error loading ${column} posts:`, fetchError);
-        // Don't set error - just show empty state with encouraging message
+      // Race the query against the timeout
+      const result = await Promise.race([queryPromise, timeoutPromise]) as any;
+
+      if (!isMounted.current) return;
+
+      // Handle query result
+      if (result.error) {
+        console.warn(`Primary query failed for ${column}, falling back or handling error:`, result.error);
+
+        // Fallback logic for old schema if column doesn't exist (Error 42703) or generic error
+        // This is a simplified fallback - in reality we should probably just return empty if column schema is enforced
+        if (column === 'bookclub') {
+          // Fallback fetch
+          const fallbackQuery = supabase
+            .from('blog_posts')
+            .select('*')
+            .eq('published', true)
+            .not('subdomain', 'is', null)
+            .order('published_at', { ascending: false })
+            .limit(100);
+          const { data: fallbackData } = await fallbackQuery;
+          if (isMounted.current) {
+            setPosts(fallbackData || []);
+          }
+          return;
+        }
+
         setPosts([]);
         return;
       }
 
-      // Filter by blog_column if blog_column field exists in data
-      const filteredData = data?.filter((post: any) => {
-        if (post.blog_column) {
-          return post.blog_column === column;
-        }
-        // Fallback logic if blog_column field doesn't exist
-        if (column === 'bookclub') {
-          return post.subdomain !== null;
-        } else if (column === 'main') {
-          return post.subdomain === null;
-        }
-        return false;
-      }) || [];
+      setPosts(result.data || []);
 
-      setPosts(filteredData);
     } catch (err: any) {
+      if (!isMounted.current) return;
+      if (err.name === 'AbortError' || err.message?.includes('aborted')) {
+        console.log('🚫 Query aborted (likely due to unmount/navigate)');
+        return;
+      }
       console.error(`Error loading ${column}:`, err);
       // Don't set error - just show empty state with encouraging message
       setPosts([]);
     } finally {
-      setLoading(false);
+      if (isMounted.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -119,13 +147,7 @@ export default function ColumnPage({ column, title, description, submitPath, ico
   };
 
   if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <LoadingSpinner />
-        </div>
-      </div>
-    );
+    return <LoadingOverlay message={`Loading ${title}...`} />;
   }
 
   const displayIcon = icon || COLUMN_ICONS[column];
@@ -181,64 +203,9 @@ export default function ColumnPage({ column, title, description, submitPath, ico
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {posts.map((post) => {
-              const postUrl = post.subdomain
-                ? `/blog/${post.subdomain}/${post.slug}`
-                : `/thelostarchives/${post.slug}`;
-
-              return (
-                <Link
-                  key={post.id}
-                  to={postUrl}
-                  className="group"
-                >
-                  <article className="bg-black/50 border-2 border-white/10 rounded-lg p-5 h-full flex flex-col hover:border-white/30 hover:shadow-lg hover:shadow-white/10 transition-all duration-300 transform hover:-translate-y-1">
-                    <div className="mb-4 pb-3 border-b border-white/10">
-                      <h3 className="text-base font-black text-white mb-2 tracking-wide group-hover:text-white/90 transition line-clamp-2">
-                        {post.title}
-                      </h3>
-                    </div>
-
-                    {(() => {
-                      const excerpt = post.excerpt || (post.content ? (() => {
-                        const firstParagraph = post.content.split(/\n\n+/)[0]?.trim() || '';
-                        if (firstParagraph.length > 0) {
-                          return firstParagraph.length > 200
-                            ? firstParagraph.substring(0, 200).replace(/\s+\S*$/, '') + '...'
-                            : firstParagraph;
-                        }
-                        return '';
-                      })() : '');
-
-                      return excerpt ? (
-                        <div className="flex-1 mb-4">
-                          <p className="text-white/60 text-sm leading-relaxed line-clamp-4 text-left">
-                            {excerpt}
-                          </p>
-                        </div>
-                      ) : null;
-                    })()}
-
-                    {post.amazon_affiliate_links && post.amazon_affiliate_links.length > 0 && (
-                      <div className="mb-4 flex items-center gap-2 text-xs text-white/50">
-                        <span>{post.amazon_affiliate_links.length} item{post.amazon_affiliate_links.length !== 1 ? 's' : ''}</span>
-                      </div>
-                    )}
-
-                    <div className="mt-auto pt-3 border-t border-white/10">
-                      <div className="flex items-center justify-between">
-                        <time className="text-white/40 text-xs font-medium">
-                          {formatDate(post.published_at || post.created_at)}
-                        </time>
-                        <span className="text-white/60 text-xs font-semibold group-hover:text-white transition">
-                          Read →
-                        </span>
-                      </div>
-                    </div>
-                  </article>
-                </Link>
-              );
-            })}
+            {posts.map((post) => (
+              <BlogCard key={post.id} post={post} />
+            ))}
           </div>
         )}
       </div>

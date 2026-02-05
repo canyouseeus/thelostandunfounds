@@ -3,21 +3,13 @@
  * Shows all published articles from user blogs (subdomain blogs)
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabase';
-import { LoadingSpinner } from '../components/Loading';
+import { LoadingOverlay } from '../components/Loading';
 import { BookOpenIcon } from '@heroicons/react/24/outline';
-import {
-  Expandable,
-  ExpandableCard,
-  ExpandableCardHeader,
-  ExpandableCardContent,
-  ExpandableCardFooter,
-  ExpandableContent,
-  ExpandableTrigger,
-} from '../components/ui/expandable';
+import { BlogCard } from '../components/BlogCard';
 
 interface BlogPost {
   id: string;
@@ -36,6 +28,15 @@ export default function BookClub() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isMounted = useRef(true);
+
+  // Set isMounted to false on unmount
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     loadBookClubPosts();
@@ -46,9 +47,14 @@ export default function BookClub() {
       setLoading(true);
       setError(null);
 
+      // Create a timeout promise to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Query timeout after 15 seconds')), 15000)
+      );
+
       // Load all published posts that belong to the "bookclub" column
       // Fallback: if blog_column is null but post has a subdomain, it's also considered book club
-      const { data, error: fetchError } = await supabase
+      const queryPromise = supabase
         .from('blog_posts')
         .select('id, title, slug, excerpt, content, published_at, created_at, subdomain, author_id, amazon_affiliate_links, blog_column')
         .eq('published', true)
@@ -56,6 +62,11 @@ export default function BookClub() {
         .order('published_at', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(100);
+
+      // Race the query against the timeout
+      const { data, error: fetchError } = await Promise.race([queryPromise, timeoutPromise]) as any;
+
+      if (!isMounted.current) return;
 
       if (fetchError) {
         console.error('Error loading book club posts:', fetchError);
@@ -65,10 +76,17 @@ export default function BookClub() {
 
       setPosts(data || []);
     } catch (err: any) {
+      if (!isMounted.current) return;
+      if (err.name === 'AbortError' || err.message?.includes('aborted')) {
+        console.log('🚫 Query aborted (likely due to unmount/navigate)');
+        return;
+      }
       console.error('Error loading book club:', err);
       setError(err.message || 'Failed to load articles');
     } finally {
-      setLoading(false);
+      if (isMounted.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -132,13 +150,7 @@ export default function BookClub() {
   // No longer grouping by author - show all posts in a flat list
 
   if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <LoadingSpinner />
-        </div>
-      </div>
-    );
+    return <LoadingOverlay />;
   }
 
   const description = 'A collection of articles from contributors. Each article features four books with Amazon affiliate links.';
@@ -194,103 +206,11 @@ export default function BookClub() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {posts.map((post) => {
-              const excerpt = buildPreviewExcerpt(post);
-              const imageUrl = extractFirstImage(post.content || post.excerpt || '');
-              const expandedIntro = buildExpandedIntro(post);
-              const showAdditionalContent = !!expandedIntro;
-
-              return (
-                <Expandable
-                  key={post.id}
-                  expandDirection="vertical"
-                  expandBehavior="replace"
-                  initialDelay={0}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                >
-                  {({ isExpanded }) => (
-                    <ExpandableTrigger>
-                      <div
-                        className="rounded-none"
-                        style={{
-                          minHeight: isExpanded ? '420px' : '220px',
-                          transition: 'min-height 0.2s ease-out',
-                        }}
-                      >
-                        <ExpandableCard
-                          className="bg-black rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] cursor-pointer"
-                          collapsedSize={{ height: 220 }}
-                          expandedSize={{ height: 420 }}
-                          hoverToExpand={false}
-                          expandDelay={0}
-                          collapseDelay={0}
-                        >
-                          <ExpandableCardHeader className="mb-1 pb-1">
-                            <h3 className="text-base font-black text-white mb-0 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
-                              {post.title}
-                            </h3>
-                            <time className="text-white/60 text-xs font-medium block mt-1">
-                              {formatDate(post.published_at || post.created_at)}
-                            </time>
-                          </ExpandableCardHeader>
-
-                          <ExpandableCardContent className="flex-1 min-h-0">
-                            {excerpt && (
-                              <div className="mb-1">
-                                <p className="text-white/70 text-sm leading-relaxed line-clamp-4 text-left">
-                                  {excerpt}
-                                </p>
-                              </div>
-                            )}
-
-                            <ExpandableContent
-                              preset="fade"
-                              stagger
-                              staggerChildren={0.1}
-                              keepMounted={false}
-                            >
-                              {imageUrl && (
-                                <div className="mb-3">
-                                  <img
-                                    src={imageUrl}
-                                    alt={post.title}
-                                    className="w-full h-32 object-cover rounded-none bg-white/5"
-                                  />
-                                </div>
-                              )}
-                              {showAdditionalContent && (
-                                <div className="mb-2">
-                                  <p className="text-white/60 text-xs leading-relaxed text-left line-clamp-6">
-                                    {expandedIntro}
-                                  </p>
-                                </div>
-                              )}
-                              <Link
-                                to={`/blog/${post.subdomain}/${post.slug}`}
-                                className="inline-block mt-2 text-white/80 hover:text-white text-xs font-semibold transition"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                Read Full Article →
-                              </Link>
-                            </ExpandableContent>
-                          </ExpandableCardContent>
-
-                          <ExpandableCardFooter className="mt-auto p-3 pt-2 pb-3">
-                            <div className="flex items-center justify-end gap-2 min-w-0 w-full">
-                              {!isExpanded && (
-                                <span className="text-white/90 text-xs font-semibold transition flex-shrink-0 whitespace-nowrap">
-                                  Click to expand →
-                                </span>
-                              )}
-                            </div>
-                          </ExpandableCardFooter>
-                        </ExpandableCard>
-                      </div>
-                    </ExpandableTrigger>
-                  )}
-                </Expandable>
-              );
-            })}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {posts.map((post) => (
+                <BlogCard key={post.id} post={post} />
+              ))}
+            </div>
           </div>
         )}
       </div>

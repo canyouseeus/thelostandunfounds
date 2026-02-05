@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabase';
@@ -40,8 +40,17 @@ export default function Gallery() {
     const [loading, setLoading] = useState(true);
     const [authModalOpen, setAuthModalOpen] = useState(false);
     const [applicationModalOpen, setApplicationModalOpen] = useState(false);
+    const isMounted = useRef(true);
 
     const [authMessage, setAuthMessage] = useState<string | undefined>(undefined);
+
+    // Set isMounted to false on unmount
+    useEffect(() => {
+        isMounted.current = true;
+        return () => {
+            isMounted.current = false;
+        };
+    }, []);
 
     // Track admin status
     useEffect(() => {
@@ -66,15 +75,18 @@ export default function Gallery() {
                 .select('*')
                 .order('created_at', { ascending: false });
 
+            if (!isMounted.current) return;
+
             if (librariesError) throw librariesError;
             setLibraries(librariesData || []);
 
-
-
         } catch (err) {
+            if (!isMounted.current) return;
             console.error('Error fetching galleries:', err);
         } finally {
-            setLoading(false);
+            if (isMounted.current) {
+                setLoading(false);
+            }
         }
     }
 

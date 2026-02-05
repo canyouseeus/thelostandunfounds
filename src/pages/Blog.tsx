@@ -2,20 +2,12 @@
  * Blog Listing Page - THE LOST ARCHIVES
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabase';
-import { LoadingSpinner } from '../components/Loading';
-import {
-  Expandable,
-  ExpandableCard,
-  ExpandableCardHeader,
-  ExpandableCardContent,
-  ExpandableCardFooter,
-  ExpandableContent,
-  ExpandableTrigger,
-} from '../components/ui/expandable';
+import { LoadingOverlay } from '../components/Loading'; // Updated import
+import { BlogCard } from '../components/BlogCard';
 
 interface BlogPost {
   id: string;
@@ -41,8 +33,14 @@ export default function Blog() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const isMounted = useRef(true);
+
   useEffect(() => {
+    isMounted.current = true;
     loadPosts();
+    return () => {
+      isMounted.current = false;
+    };
   }, []);
 
   const loadPosts = async () => {
@@ -53,7 +51,7 @@ export default function Blog() {
       console.log('🔄 Starting to load blog posts...');
 
       // Helper to build a query for a specific column
-      const buildQuery = (column: string, isSubdomainBased = false) => {
+      const buildQuery = (column: string) => {
         let query = supabase
           .from('blog_posts')
           .select('id, title, slug, excerpt, content, published_at, created_at, seo_title, seo_description, published, status, subdomain, blog_column')
@@ -71,10 +69,6 @@ export default function Blog() {
           // Others: strict match
           query = query.eq('blog_column', column);
         }
-
-        // Try to filter by published if possible (client-side fallback handled later)
-        // Note: supabase-js might throw on unknown columns if we're not careful, 
-        // but 'published' exists in the schema based on previous code.
         return query;
       };
 
@@ -88,6 +82,8 @@ export default function Blog() {
       const results = await Promise.all(
         queries.map(q => Promise.race([q, timeoutPromise]))
       ) as any[];
+
+      if (!isMounted.current) return;
 
       // Process results
       const processedPosts = results.map((result, index) => {
@@ -117,10 +113,18 @@ export default function Blog() {
       console.log('✅ Posts loaded via parallel queries');
 
     } catch (err: any) {
+      if (!isMounted.current) return;
+      if (err.name === 'AbortError' || err.message?.includes('aborted')) {
+        console.log('🚫 Query aborted (likely due to unmount/navigate)');
+        return;
+      }
       console.error('❌ Error loading blog posts:', err);
+      // Only set error if it's not a timeout/abort loop issue
       setError(err?.message || 'Failed to load blog posts');
     } finally {
-      setLoading(false);
+      if (isMounted.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -191,13 +195,7 @@ export default function Blog() {
   };
 
   if (loading) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <LoadingSpinner />
-        </div>
-      </div>
-    );
+    return <LoadingOverlay message="Intializing The Lost Archives..." />;
   }
 
   const blogDescription = 'Revealing findings from the frontier and beyond. Intel from the field on development, AI, and building in the age of information.';
@@ -278,115 +276,9 @@ export default function Blog() {
                   )}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {posts.map((post) => {
-                    const excerpt = buildPreviewExcerpt(post);
-                    const imageUrl = extractFirstImage(post.content || post.excerpt || '');
-                    const expandedIntro = buildExpandedIntro(post);
-                    const showAdditionalContent = !!expandedIntro;
-
-                    // Determine link target
-                    let postLink = `/thelostarchives/${post.slug}`;
-                    if (post.subdomain) {
-                      postLink = `/blog/${post.subdomain}/${post.slug}`;
-                    } else if (post.blog_column && post.blog_column !== 'main') {
-                      // If it's a column post without subdomain (old data?), where should it go?
-                      // Defaulting to thelostarchives logic if no subdomain, 
-                      // OR we could construct /blog/[column]/[slug] if subdomains matched columns.
-                      // Safe bet: use thelostarchives if subdomain is missing.
-                      postLink = `/thelostarchives/${post.slug}`;
-                    }
-
-                    return (
-                      <Expandable
-                        key={post.id}
-                        expandDirection="vertical"
-                        expandBehavior="replace"
-                        initialDelay={0}
-                        transition={{ duration: 0.2, ease: "easeOut" }}
-                      >
-                        {({ isExpanded }) => (
-                          <ExpandableTrigger>
-                            <div
-                              className="rounded-none"
-                              style={{
-                                minHeight: isExpanded ? '420px' : '220px',
-                                transition: 'min-height 0.2s ease-out',
-                              }}
-                            >
-                              <ExpandableCard
-                                className="bg-black rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] cursor-pointer"
-                                collapsedSize={{ height: 220 }}
-                                expandedSize={{ height: 420 }}
-                                hoverToExpand={false}
-                                expandDelay={0}
-                                collapseDelay={0}
-                              >
-                                <ExpandableCardHeader className="mb-1 pb-1">
-                                  <h2 className="text-base font-black text-white mb-0 tracking-wide transition whitespace-nowrap overflow-hidden text-ellipsis">
-                                    {post.title}
-                                  </h2>
-                                  <time className="text-white/60 text-xs font-medium block mt-1">
-                                    {formatDate(post.published_at || post.created_at)}
-                                  </time>
-                                </ExpandableCardHeader>
-
-                                <ExpandableCardContent className="flex-1 min-h-0">
-                                  {excerpt && (
-                                    <div className="mb-1">
-                                      <p className="text-white/70 text-sm leading-relaxed line-clamp-4 text-left">
-                                        {excerpt}
-                                      </p>
-                                    </div>
-                                  )}
-
-                                  <ExpandableContent
-                                    preset="fade"
-                                    stagger
-                                    staggerChildren={0.1}
-                                    keepMounted={false}
-                                  >
-                                    {imageUrl && (
-                                      <div className="mb-3">
-                                        <img
-                                          src={imageUrl}
-                                          alt={post.title}
-                                          className="w-full h-32 object-cover rounded-none bg-white/5"
-                                        />
-                                      </div>
-                                    )}
-                                    {showAdditionalContent && (
-                                      <div className="mb-2">
-                                        <p className="text-white/60 text-xs leading-relaxed text-left line-clamp-6">
-                                          {expandedIntro}
-                                        </p>
-                                      </div>
-                                    )}
-                                    <Link
-                                      to={postLink}
-                                      className="inline-block mt-2 text-white/80 hover:text-white text-xs font-semibold transition"
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      Read Full Article →
-                                    </Link>
-                                  </ExpandableContent>
-                                </ExpandableCardContent>
-
-                                <ExpandableCardFooter className="mt-auto p-3 pt-2 pb-3">
-                                  <div className="flex items-center justify-end gap-2 min-w-0 w-full">
-                                    {!isExpanded && (
-                                      <span className="text-white/90 text-xs font-semibold transition flex-shrink-0 whitespace-nowrap">
-                                        Click to expand →
-                                      </span>
-                                    )}
-                                  </div>
-                                </ExpandableCardFooter>
-                              </ExpandableCard>
-                            </div>
-                          </ExpandableTrigger>
-                        )}
-                      </Expandable>
-                    );
-                  })}
+                  {posts.map((post) => (
+                    <BlogCard key={post.id} post={post} />
+                  ))}
                 </div>
               </div>
             );
