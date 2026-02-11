@@ -566,8 +566,8 @@ export default async function handler(
     }
 
     // Send emails in batches
-    // Resend Rate Limit: 2 req/sec. We set batchSize to 1 and delay 600ms to be safe (approx 1.5 req/sec).
-    const batchSize = useResend ? 1 : 10
+    // Resend Rate Limit: 2 req/sec. We set batchSize to 2 and delay 550ms to stay within limits and Vercel's 60s timeout.
+    const batchSize = useResend ? 2 : 10
     const sendLogs: { subscriber_email: string; status: string; error_message: string | null; sent_at: string | null }[] = []
 
     for (let i = 0; i < subscribers.length; i += batchSize) {
@@ -618,7 +618,7 @@ export default async function handler(
 
       // Delay between batches
       if (i + batchSize < subscribers.length) {
-        await new Promise(resolve => setTimeout(resolve, useResend ? 600 : 1000))
+        await new Promise(resolve => setTimeout(resolve, useResend ? 550 : 1000))
       }
     }
 
