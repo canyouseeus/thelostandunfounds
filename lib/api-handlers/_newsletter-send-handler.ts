@@ -429,7 +429,51 @@ export default async function handler(
         return res.status(400).json({ error: 'No subscribers found' })
       }
 
-      subscribers = subscribersData
+      // Filter out subscribers who have already received this newsletter (same subject, sent in last 24h)
+      // This allows resuming a campaign without double-sending
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+
+      // Get all recent logs for this subject (we join through campaign_id, but simple way is to get recent campaigns with this subject)
+      const { data: recentCampaigns } = await supabase
+        .from('newsletter_campaigns')
+        .select('id')
+        .eq('subject', subject)
+        .gt('created_at', oneDayAgo)
+
+      const recentCampaignIds = recentCampaigns?.map(c => c.id) || []
+
+      let alreadySentEmails: Set<string> = new Set()
+
+      if (recentCampaignIds.length > 0) {
+        const { data: sentLogs } = await supabase
+          .from('newsletter_send_logs')
+          .select('subscriber_email')
+          .in('campaign_id', recentCampaignIds)
+          .eq('status', 'sent')
+
+        if (sentLogs) {
+          sentLogs.forEach(log => alreadySentEmails.add(log.subscriber_email))
+        }
+      }
+
+      // Filter subscribers
+      subscribers = subscribersData.filter(sub => !alreadySentEmails.has(sub.email))
+
+      console.log(`Found ${subscribersData.length} total subscribers. Skipping ${alreadySentEmails.size} already sent. Sending to ${subscribers.length} new recipients.`)
+
+      if (subscribers.length === 0) {
+        return res.status(200).json({
+          success: true,
+          message: 'All subscribers have already received this newsletter.',
+          campaignId: null,
+          stats: {
+            totalSubscribers: subscribersData.length,
+            emailsSent: 0,
+            emailsFailed: 0,
+            skipped: alreadySentEmails.size
+          }
+        })
+      }
     }
 
     // Check Zoho configuration
@@ -517,12 +561,13 @@ export default async function handler(
 
     // Per-recipient HTML: use centralized email template
     const buildRecipientHtml = (rawHtml: string, email: string) => {
-      // Process content with standardized template
-      return processEmailContent(rawHtml, email)
+      // Process content with standardized template including branding
+      return generateNewsletterEmail(rawHtml, email)
     }
 
     // Send emails in batches
-    const batchSize = useResend ? 50 : 10  // Resend can handle larger batches
+    // Resend Rate Limit: 2 req/sec. We set batchSize to 1 and delay 600ms to be safe (approx 1.5 req/sec).
+    const batchSize = useResend ? 1 : 10
     const sendLogs: { subscriber_email: string; status: string; error_message: string | null; sent_at: string | null }[] = []
 
     for (let i = 0; i < subscribers.length; i += batchSize) {
@@ -571,9 +616,9 @@ export default async function handler(
         })
       )
 
-      // Delay between batches (shorter for Resend)
+      // Delay between batches
       if (i + batchSize < subscribers.length) {
-        await new Promise(resolve => setTimeout(resolve, useResend ? 200 : 1000))
+        await new Promise(resolve => setTimeout(resolve, useResend ? 600 : 1000))
       }
     }
 
