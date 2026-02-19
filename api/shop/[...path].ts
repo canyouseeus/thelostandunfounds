@@ -7,6 +7,8 @@ import affiliatesTrackClickHandler from '../../lib/api-handlers/_affiliates-trac
 import kingMidasDistributeHandler from '../../lib/api-handlers/_king-midas-distribute-handler.js'
 import paymentsPaypalHandler from '../../lib/api-handlers/_payments-paypal-handler.js'
 import paymentsPaypalCaptureHandler from '../../lib/api-handlers/_payments-paypal-capture-handler.js'
+import paymentsStrikeHandler from '../../lib/api-handlers/_payments-strike-handler.js'
+import paymentsStrikeStatusHandler from '../../lib/api-handlers/_payments-strike-status-handler.js'
 
 export default async function handler(
   req: VercelRequest,
@@ -94,6 +96,14 @@ export default async function handler(
       case 'payments/paypal/capture':
         console.log('👉 Routing to: paymentsPaypalCaptureHandler')
         return await paymentsPaypalCaptureHandler(req, res)
+
+      case 'payments/strike':
+        console.log('👉 Routing to: paymentsStrikeHandler')
+        return await paymentsStrikeHandler(req, res)
+
+      case 'payments/strike/status':
+        console.log('👉 Routing to: paymentsStrikeStatusHandler')
+        return await paymentsStrikeStatusHandler(req, res)
 
       case 'king-midas/distribute':
         console.log('👉 Routing to: kingMidasDistributeHandler')
