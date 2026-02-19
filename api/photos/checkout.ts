@@ -49,16 +49,35 @@ export default async function handler(
 
     const libraryId = photos[0].library_id;
 
-    // Fetch pricing options for this library
-    const { data: pricingOptions, error: pricingError } = await supabase
-      .from('gallery_pricing_options')
-      .select('*')
-      .eq('library_id', libraryId)
-      .eq('is_active', true)
-      .order('photo_count', { ascending: false });
+    // Fetch pricing options for this library with retry logic
+    const MAX_RETRIES = 3;
+    let pricingOptions = null;
+    let pricingError = null;
 
-    if (pricingError || !pricingOptions || pricingOptions.length === 0) {
-      console.warn('No pricing options found for library:', libraryId);
+    for (let i = 0; i < MAX_RETRIES; i++) {
+      try {
+        const result = await supabase
+          .from('gallery_pricing_options')
+          .select('*')
+          .eq('library_id', libraryId)
+          .eq('is_active', true)
+          .order('photo_count', { ascending: false });
+
+        if (!result.error && result.data && result.data.length > 0) {
+          pricingOptions = result.data;
+          break; // Success
+        }
+
+        if (result.error) pricingError = result.error;
+        console.warn(`[Checkout] Attempt ${i + 1} failed to fetch pricing options for library ${libraryId}. Retrying...`);
+        await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms before retry
+      } catch (err) {
+        console.error(`[Checkout] Attempt ${i + 1} threw error fetching pricing:`, err);
+      }
+    }
+
+    if (!pricingOptions || pricingOptions.length === 0) {
+      console.warn('No pricing options found for library:', libraryId, pricingError);
     } else {
       console.log(`[Checkout] Found ${pricingOptions.length} options for lib ${libraryId}:`,
         pricingOptions.map((o: any) => `${o.name} (${o.photo_count}) $${o.price}`).join(', ')
@@ -90,6 +109,12 @@ export default async function handler(
 
     if (remaining > 0) {
       amount += remaining * parseFloat(singlePrice.toString());
+    }
+
+    // Safety Check: Log warning if multiple photos selected but price equals straightforward multiplication of single price
+    // This implies no bundle logic was applied, which might be unintended if bundles exist
+    if (count > 2 && Math.abs(amount - (count * parseFloat(singlePrice.toString()))) < 0.01) {
+      console.warn(`[Pricing Warning] Order for ${count} items resulted in $${amount} (approx ${count} * $${singlePrice}). Possible missed bundle application. Options available: ${pricingOptions ? pricingOptions.length : 0}`);
     }
 
     // Create PayPal order

@@ -1,5 +1,43 @@
 # Cursor Rules for THE LOST+UNFOUNDS
 
+## SKILL UTILIZATION RULE - HIGHEST PRIORITY
+**Before starting ANY task, you MUST scan the skills directories and read the relevant SKILL.md files.**
+
+Skills are located in:
+- `.agent/skills/*/SKILL.md`
+- `skills/*/SKILL.md`
+
+### Mandatory Keyword-to-Skill Mapping
+When the user's request involves any of these domains, you MUST `view_file` the corresponding SKILL.md BEFORE writing any code or making changes:
+
+| Keywords / Domain | Required Skill(s) |
+|---|---|
+| email, newsletter, send, campaign, branding, outreach | `brand-email-manager`, `outreach-ops` |
+| admin, dashboard, analytics | `admin-ops` |
+| affiliate, commission, tracking, Amazon links | `affiliate-ops`, `affiliate-program` |
+| blog, publish, post, SQL script | `blog-publishing` |
+| shop, product, checkout, PayPal, order, payment | `commerce-engine`, `paypal-sandbox` |
+| gallery, photos, upload, sync, Google Drive | `gallery-ops`, `gallery-sync-troubleshooting` |
+| UI, design, components, styling, CSS | `noir-design`, `bento-design`, `no-border-design` |
+| modal, overlay, z-index, popup | `modal-z-index-manager` |
+| database, migration, RLS, schema, Supabase | `infra-ops`, `verify-schema` |
+| environment variables, secrets, .env | `secure-env-manager`, `verify-env` |
+| deploy, production, dev server, build | `dev-parity-guard`, `fix-dev-server` |
+| refactor, cleanup, technical debt | `code-refactor` |
+| revenue, earnings, transactions | `revenue-data-validator` |
+| browser, testing, UI verification | `smart-browsing`, `browser-ops-guard`, `verify_ui_changes` |
+| Google Auth, OAuth, login | `fix-google-auth` |
+| clock, stopwatch, timer widget | `dashboard-clock-interaction` (in `skills/`) |
+| Google service account, photographer | `gallery-agent-management` (in `skills/`) |
+| PayPal credentials, verification | `paypal-verify` (in `skills/`), `fix-paypal-mcp` |
+
+### Rules
+1. **Read FIRST, code SECOND.** Never start implementation before consulting relevant skills.
+2. **Multiple skills may apply.** If a task spans multiple domains (e.g., "send a newsletter with affiliate links"), read ALL relevant skills.
+3. **When in doubt, check.** If you're unsure whether a skill applies, read it anyway — it's cheaper than redoing work.
+4. **Skills override assumptions.** If a skill contradicts what you think is correct, follow the skill.
+5. **Log skill usage.** When starting a task, mention which skills you consulted so the user can verify.
+
 ## TEXT ALIGNMENT RULE - CRITICAL
 **NEVER change text alignment to center or justify. ALWAYS use left alignment.**
 
@@ -127,6 +165,19 @@ For detailed verification workflow and code examples, see: `.cursor/rules/deploy
 - Use shared helpers in `lib/api-handlers/_zoho-email-utils.ts` (or handlers that import it) to send mail.
 - If a send fails, surface the Zoho API error details (status/text) instead of declining.
 - When running locally, ensure env vars exist: `ZOHO_CLIENT_ID`, `ZOHO_CLIENT_SECRET`, `ZOHO_REFRESH_TOKEN`, and `ZOHO_FROM_EMAIL` (or `ZOHO_EMAIL`).
+
+## EMAIL BRANDING RULE - CRITICAL
+**Before writing, modifying, or debugging ANY email-sending code, you MUST read `.agent/skills/brand-email-manager/SKILL.md` FIRST.**
+
+- ALL outgoing emails MUST use the branded template functions from `lib/email-template.ts`:
+  - **Newsletters** → `generateNewsletterEmail(bodyContent, subscriberEmail)`
+  - **Transactional** → `generateTransactionalEmail(bodyContent)`
+  - **Custom** → `wrapEmailContent(bodyContent, options)`
+- ❌ NEVER use `processEmailContent` alone — it does NOT include the logo/banner
+- ❌ NEVER hardcode raw HTML email templates in handlers
+- ✅ ALWAYS verify the handler uses the correct function BEFORE sending a test
+- ✅ ALWAYS deploy handler changes to production BEFORE running test sends against the live API
+- If you modify email handler code, follow the `/send-email` workflow in `.agent/workflows/send-email.md`
 
 ## NEWSLETTER RESEND RULE - CRITICAL
 - Standard operating procedure to resend or test the latest newsletter:

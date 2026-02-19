@@ -25,6 +25,65 @@ oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
 
 const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
+// === UPLOAD HISTORY LOGIC ===
+const HISTORY_FILE = path.join(__dirname, 'upload-history.json');
+const HISTORY_RETENTION_DAYS = 30;
+const HISTORY_RETENTION_MS = HISTORY_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+
+interface UploadHistory {
+    [fileName: string]: number; // timestamp
+}
+
+let uploadHistory: UploadHistory = {};
+
+function loadHistory() {
+    if (fs.existsSync(HISTORY_FILE)) {
+        try {
+            uploadHistory = JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf-8'));
+
+            // Prune old entries
+            const now = Date.now();
+            let scanned = 0;
+            let pruned = 0;
+            for (const [name, timestamp] of Object.entries(uploadHistory)) {
+                scanned++;
+                if (now - timestamp > HISTORY_RETENTION_MS) {
+                    delete uploadHistory[name];
+                    pruned++;
+                }
+            }
+            if (pruned > 0) {
+                console.log(`Pruned ${pruned} old entries from history (scanned ${scanned}).`);
+                saveHistory();
+            } else {
+                console.log(`Loaded history with ${scanned} entries.`);
+            }
+
+        } catch (e) {
+            console.error('Failed to parse upload history, starting fresh.');
+            uploadHistory = {};
+        }
+    }
+}
+
+function saveHistory() {
+    try {
+        fs.writeFileSync(HISTORY_FILE, JSON.stringify(uploadHistory, null, 2));
+    } catch (e) {
+        console.error('Failed to save upload history:', e);
+    }
+}
+
+function addToHistory(fileName: string) {
+    uploadHistory[fileName] = Date.now();
+    saveHistory();
+}
+
+function isInHistory(fileName: string): boolean {
+    return !!uploadHistory[fileName];
+}
+// ============================
+
 const FOLDER_CONFIG = {
     JPG: {
         parent: '1Ouha3XJOQJtgB8RxQDwKdDs5ryADYxD4',
@@ -154,18 +213,25 @@ async function findGlobalFile(fileName: string, fileSize: number) {
     }, `findGlobalFile(${fileName})`);
 }
 
-async function uploadFile(filePath: string, parentId: string, retryCount = 0) {
+async function uploadFile(filePath: string, parentId: string, retryCount = 0): Promise<boolean> {
     const fileName = path.basename(filePath);
     const MAX_RETRIES = 5; // Increased retries
     const stats = fs.statSync(filePath);
     const fileSize = stats.size;
+
+    // 0. Check History (Local Cache)
+    if (isInHistory(fileName)) {
+        console.log(`Skipping ${fileName} (found in local 3-day history)`);
+        return true;
+    }
 
     // Check if file already exists globally (only on first try)
     if (retryCount === 0) {
         const existing = await findGlobalFile(fileName, fileSize);
         if (existing) {
             console.log(`Skipping ${fileName} (already exists in Drive, ID: ${existing.id})`);
-            return;
+            addToHistory(fileName); // Add to history so next time we skip local check
+            return true;
         }
     }
 
@@ -190,6 +256,8 @@ async function uploadFile(filePath: string, parentId: string, retryCount = 0) {
         });
         process.stdout.write('\n'); // New line after progress bar
         console.log(`Successfully uploaded ${fileName}`);
+        addToHistory(fileName); // <--- Add to history on success
+        return true;
     } catch (err: any) {
         process.stdout.write('\n'); // Ensure error is on new line
         console.error(`Error uploading ${fileName}:`, err.message);
@@ -199,9 +267,10 @@ async function uploadFile(filePath: string, parentId: string, retryCount = 0) {
             const delay = Math.pow(2, retryCount + 1) * 1000;
             console.log(`Retrying upload for ${fileName} in ${delay / 1000} seconds...`);
             await new Promise(resolve => setTimeout(resolve, delay));
-            await uploadFile(filePath, parentId, retryCount + 1);
+            return uploadFile(filePath, parentId, retryCount + 1);
         } else {
             console.error(`Failed to upload ${fileName} after ${MAX_RETRIES} retries.`);
+            return false;
         }
     }
 }
@@ -226,6 +295,9 @@ function getFilesRecursive(dir: string): string[] {
 }
 
 async function startSync() {
+    loadHistory();
+    const failedUploads: { filePath: string, parentId: string }[] = [];
+
     // 1. Detect Source (SD Card or Desktop)
     const SD_CARD_PATH = '/Volumes/CLAPTROP II/DCIM';
     const USE_SD_CARD = fs.existsSync(SD_CARD_PATH);
@@ -250,58 +322,108 @@ async function startSync() {
         }
     }
 
-    // 3. Collect Files to Upload
-    console.log('\n=== Scanning Files ===');
-    const filesToUpload: { path: string; type: 'JPG' | 'RAW' | 'MOV' }[] = [];
-
+    // 3. Import from SD Card (if detected)
     if (USE_SD_CARD) {
+        console.log('\n=== Importing from SD Card ===');
         const allFiles = getFilesRecursive(SD_CARD_PATH);
-        console.log(`Found ${allFiles.length} files on SD card.`);
+        console.log(`Found ${allFiles.length} files on SD card. Processing sequentially by type...`);
 
-        for (const filePath of allFiles) {
-            const ext = path.extname(filePath).toLowerCase();
-            if (ext === '.jpg' || ext === '.jpeg') {
-                filesToUpload.push({ path: filePath, type: 'JPG' });
-            } else if (ext === '.raf') {
-                filesToUpload.push({ path: filePath, type: 'RAW' });
-            } else if (ext === '.mov' || ext === '.mp4') {
-                filesToUpload.push({ path: filePath, type: 'MOV' });
+        // Define processing order: JPG, RAW, MOV
+        const processingOrder: { type: 'JPG' | 'RAW' | 'MOV', ext: string[] }[] = [
+            { type: 'JPG', ext: ['.jpg', '.jpeg'] },
+            { type: 'RAW', ext: ['.raf'] },
+            { type: 'MOV', ext: ['.mov', '.mp4'] }
+        ];
+
+        for (const group of processingOrder) {
+            console.log(`\nImporting ${group.type} files...`);
+            const targetConfig = FOLDER_CONFIG[group.type as keyof typeof FOLDER_CONFIG];
+
+            // Ensure target directory exists
+            if (!fs.existsSync(targetConfig.local)) {
+                fs.mkdirSync(targetConfig.local, { recursive: true });
             }
-        }
-    } else {
-        // Desktop Fallback
-        for (const [key, config] of Object.entries(FOLDER_CONFIG)) {
-            if (fs.existsSync(config.local)) {
-                const files = fs.readdirSync(config.local).filter(f => !f.startsWith('.'));
-                for (const file of files) {
-                    const filePath = path.join(config.local, file);
-                    if (fs.statSync(filePath).isFile()) {
-                        filesToUpload.push({ path: filePath, type: key as any });
-                    }
+
+            const filesToCopy = allFiles.filter(f => group.ext.includes(path.extname(f).toLowerCase()));
+
+            if (filesToCopy.length === 0) {
+                console.log(`No ${group.type} files found.`);
+                continue;
+            }
+
+            console.log(`Found ${filesToCopy.length} ${group.type} files.`);
+
+            for (const srcPath of filesToCopy) {
+                const fileName = path.basename(srcPath);
+                const destPath = path.join(targetConfig.local, fileName);
+
+                if (fs.existsSync(destPath)) {
+                    // console.log(`Skipping ${fileName} (already imported)`);
+                    continue;
+                }
+
+                try {
+                    const fileSize = fs.statSync(srcPath).size;
+                    console.log(`Copying ${fileName} (${(fileSize / 1024 / 1024).toFixed(2)} MB)...`);
+                    fs.copyFileSync(srcPath, destPath);
+                } catch (err: any) {
+                    console.error(`Error copying ${fileName}: ${err.message}`);
                 }
             }
         }
+        console.log('\n✅ Import complete.');
     }
 
-    if (filesToUpload.length === 0) {
-        console.log('No files found to upload.');
-        return;
-    }
+    // 4. Upload from Desktop (Standard Logic)
+    console.log('\n=== Starting Uploads from Desktop ===');
 
-    console.log(`Prepared ${filesToUpload.length} files for upload.`);
+    // Process ALL types (JPG, RAW, MOV)
+    const ENABLED_TYPES = ['JPG', 'RAW', 'MOV'] as const;
 
-    // 4. Upload Files
-    console.log('\n=== Starting Uploads ===');
-    for (const file of filesToUpload) {
-        const config = FOLDER_CONFIG[file.type];
-        try {
-            const targetFolderId = await getOrCreateFolder('NEW UPLOADS', config.parent!);
-            if (targetFolderId) {
-                await uploadFile(file.path, targetFolderId);
+    for (const type of ENABLED_TYPES) {
+        const config = FOLDER_CONFIG[type];
+        console.log(`\nProcessing ${type} folder...`);
+
+        if (fs.existsSync(config.local)) {
+            try {
+                const targetFolderId = await getOrCreateFolder('NEW UPLOADS', config.parent!);
+                if (targetFolderId) {
+                    const files = fs.readdirSync(config.local).filter(f => !f.startsWith('.'));
+                    if (files.length > 0) {
+                        for (const file of files) {
+                            const filePath = path.join(config.local, file);
+                            try {
+                                if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+                                    const success = await uploadFile(filePath, targetFolderId);
+                                    if (!success) {
+                                        failedUploads.push({ filePath, parentId: targetFolderId });
+                                    }
+                                }
+                            } catch (loopErr: any) {
+                                console.error(`Warning: Skipping ${file} due to error: ${loopErr.message}`);
+                            }
+                        }
+                    } else {
+                        console.log(`No files to upload in ${config.local}`);
+                    }
+                }
+            } catch (err: any) {
+                console.error(`Error processing uploads for ${type}: ${err.message}`);
             }
-        } catch (err: any) {
-            console.error(`Error uploading ${file.path}: ${err.message}`);
+        } else {
+            console.log(`Local folder ${config.local} does not exist. Skipping.`);
         }
+    }
+
+    // 5. Retry Failed Uploads
+    if (failedUploads.length > 0) {
+        console.log(`\n=== ⚠️ Retrying ${failedUploads.length} Failed Uploads ===`);
+        for (const item of failedUploads) {
+            console.log(`\nRe-attempting ${path.basename(item.filePath)}...`);
+            await uploadFile(item.filePath, item.parentId);
+        }
+    } else {
+        console.log('\n=== ✅ All Uploads Successful ===');
     }
 }
 

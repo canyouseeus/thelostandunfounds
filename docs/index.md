@@ -1,54 +1,92 @@
 # Documentation Index — THE LOST+UNFOUNDS
 
-> This is the master index for all project documentation. If a doc isn't linked here, it may be stale.
+> Master index for all project documentation. Last updated: 2026-02-19.
 
-## Setup & Onboarding
-| Document | Purpose | Status |
-|---|---|---|
-| [QUICK_START.md](../QUICK_START.md) | Getting the project running locally | ✅ Active |
-| [ENV_SETUP.md](../ENV_SETUP.md) | Environment variable configuration | ✅ Active |
-| [HOW_TO_SETUP_DATABASE.md](../HOW_TO_SETUP_DATABASE.md) | Supabase database setup | ✅ Active |
-| [TOOLS_SETUP.md](../TOOLS_SETUP.md) | Development tools installation | ✅ Active |
-| [TURNSTILE_SETUP.md](../TURNSTILE_SETUP.md) | Cloudflare Turnstile setup | ✅ Active |
-| [ZOHO_MAIL_OAUTH_SETUP.md](../ZOHO_MAIL_OAUTH_SETUP.md) | Zoho Mail integration setup | ✅ Active |
+## Setup & Onboarding (`docs/setup/`)
+| Document | Purpose |
+|---|---|
+| QUICK_START.md | Getting the project running locally |
+| SETUP.md | Detailed setup instructions |
+| ENV_SETUP.md | Environment variable configuration |
+| ENV_SETUP_WALKTHROUGH.md | Step-by-step env walkthrough |
+| ENV_VARIABLES_COMPLETE.md | Complete env var reference |
+| ENV_SCRIPTS_SUMMARY.md | Helper scripts for env management |
+| ENV_SCRIPTS_SYSTEM.md | Env scripts system docs |
+| HOW_TO_SETUP_DATABASE.md | Supabase database setup |
+| TOOLS_SETUP.md | Development tools installation |
+| ADMIN_DASHBOARD_SETUP.md | Admin dashboard configuration |
+| ADMIN_SETUP.md | Admin user setup |
+| CLI_LOGIN_GUIDE.md | CLI login procedures |
+| CLI_SETUP_TURNSTILE_SECRET.md | Turnstile secret via CLI |
+| CLI_STEPS_DIVIDED.md | CLI setup steps |
+| CLI_SUPABASE_ENV_SETUP.md | Supabase env via CLI |
+| TURNSTILE_SETUP.md | Cloudflare Turnstile setup |
+| TURNSTILE_KEY_ROTATION_AUTOMATION.md | Turnstile key rotation |
+| UNIFIED_PLATFORM_SETUP.md | Full platform setup guide |
+| VERCEL_ENV_SETUP_GUIDE.md | Vercel environment config |
+| ZOHO_MAIL_OAUTH_SETUP.md | Zoho Mail integration setup |
+| ZOHO_ENV_VALUES.md | Zoho env var reference |
+| HOW_TO_SET_TURNSTILE_SECRET_LOCALLY.md | Local Turnstile dev setup |
 
-## Features
-| Document | Purpose | Status |
-|---|---|---|
-| [BLOG_POST_STYLE_GUIDE.md](../BLOG_POST_STYLE_GUIDE.md) | Blog formatting and styling rules | ✅ Active |
-| [BLOG_COLUMNS_OVERVIEW.md](../BLOG_COLUMNS_OVERVIEW.md) | Blog column/category system | ✅ Active |
-| [EMAIL_BRAND_STYLING.md](../EMAIL_BRAND_STYLING.md) | Email template branding | ✅ Active |
-| [NOTIFICATION_SYSTEM.md](../NOTIFICATION_SYSTEM.md) | Push notification system | ✅ Active |
-| [MLM_QUICK_START.md](../MLM_QUICK_START.md) | Affiliate program guide | ✅ Active |
-| [TELEGRAM_SETUP.md](../TELEGRAM_SETUP.md) | Telegram bot integration | ✅ Active |
+## Features (`docs/features/`)
+| Document | Purpose |
+|---|---|
+| BLOG_COLUMNS_OVERVIEW.md | Blog column/category system |
+| BLOG_POST_BOT_ACCESS_STATUS.md | Bot access for blog posts |
+| BLOG_SEO_IMPROVEMENTS.md | Blog SEO enhancements |
+| BOT_ACCESS_ANALYSIS.md | Bot access analysis |
+| BOT_ACCESS_COMPARISON.md | Bot access comparison |
+| EMAIL_BRAND_STYLING.md | Email template branding |
+| NOTIFICATION_SYSTEM.md | Push notification system |
+| MLM_QUICK_START.md | Affiliate program guide |
+| MLM_IMPLEMENTATION_SUMMARY.md | Affiliate system implementation |
+| AFFILIATE_GO_LIVE_PLAN.md | Affiliate launch plan |
+| AFFILIATE_TESTING_STATUS.md | Affiliate testing status |
+| AI_WRITING_PROMPT_FOR_CONTRIBUTORS.md | AI writing prompt guide |
+| CRM_PRD_NOIR.md | CRM product requirements |
+| SEO_IMPROVEMENTS.md | SEO improvements overview |
+| TELEGRAM_SETUP.md | Telegram bot integration |
+| VERCEL_WEBHOOK_SETUP.md | Webhook configuration |
+| MANTIS_VERSIONS.md | Version tracking |
+| AGENT_SKILLS_GUIDE.md | How to use agent skills |
+| ENHANCED_SKILLS_SYSTEM.md | Enhanced skills docs |
+| SKILLS_INTEGRATION.md | Skills integration guide |
+| SKILL_CREATION_TEMPLATE.md | Template for new skills |
+| API_ROUTES_DEV.md | API route development guide |
+| HOW_TO_TEST.md | Testing guide |
+| TESTING_GUIDE.md | Comprehensive testing docs |
+| TEST_DATA_REFERENCE.md | Test data reference |
 
-## Deployment
-| Document | Purpose | Status |
-|---|---|---|
-| [DEPLOYMENT.md](../DEPLOYMENT.md) | Core deployment process | ✅ Active |
-| [VERCEL_ENV_SETUP_GUIDE.md](../VERCEL_ENV_SETUP_GUIDE.md) | Vercel environment config | ✅ Active |
+## Deployment (`docs/deployment/`)
+| Document | Purpose |
+|---|---|
+| DEPLOYMENT.md | Core deployment process |
+| DEPLOYMENT_ANALYSIS.md | Deployment analysis |
+| DEPLOYMENT_COMPLETE.md | Deployment completion record |
+| DEPLOYMENT_NOTES.md | Deployment notes |
+| DEPLOYMENT_TEST_RESULTS.md | Deployment test results |
+| DEPLOYMENT_VERIFICATION.md | Verification procedures |
+| DEPLOY_NOW.md | Quick deploy instructions |
 
-## Security
-| Document | Purpose | Status |
-|---|---|---|
-| [SECURITY_MONITORING_SYSTEM.md](../SECURITY_MONITORING_SYSTEM.md) | Security monitoring overview | ✅ Active |
-| [SECURITY_QUICK_START.md](../SECURITY_QUICK_START.md) | Security setup guide | ✅ Active |
-| [SECURITY_KEY_ROTATION.md](../SECURITY_KEY_ROTATION.md) | Key rotation procedures | ✅ Active |
+## Security (`docs/security/`)
+| Document | Purpose |
+|---|---|
+| SECURITY_MONITORING_SYSTEM.md | Security monitoring overview |
+| SECURITY_QUICK_START.md | Security setup guide |
+| SECURITY_KEY_ROTATION.md | Key rotation procedures |
+| SECURITY_DEPLOYMENT.md | Security deployment guide |
+| SECURITY_SYSTEM_SUMMARY.md | Security system summary |
+| security-initial-report-20251110-141836.md | Initial security report |
 
-## Agent Reference
-| Document | Purpose | Status |
-|---|---|---|
-| [AGENTS.md](../AGENTS.md) | Agent entry point / table of contents | ✅ Active |
-| [ARCHITECTURE.md](../ARCHITECTURE.md) | Codebase architecture map | ✅ Active |
-| [AGENT_SKILLS_GUIDE.md](../AGENT_SKILLS_GUIDE.md) | How to use agent skills | ✅ Active |
+## Archive (`docs/archive/`)
+One-time status docs, resolved issues, and completed tasks — kept for historical reference.
 
-## Candidates for Archive
-The following root-level docs may be stale or duplicative. Review and consolidate during cleanup:
-- `DEPLOYMENT_ANALYSIS.md`, `DEPLOYMENT_COMPLETE.md`, `DEPLOYMENT_NOTES.md`, `DEPLOYMENT_TEST_RESULTS.md`, `DEPLOYMENT_VERIFICATION.md`, `DEPLOY_NOW.md` — likely one-time status docs
-- `CHECK_DEPLOYMENT_NOW.md`, `CHECK_EMAIL_ERRORS.md` — likely one-time debugging
-- `CLI_LOGIN_GUIDE.md`, `CLI_SETUP_TURNSTILE_SECRET.md`, `CLI_STEPS_DIVIDED.md`, `CLI_SUPABASE_ENV_SETUP.md` — consolidate into setup section
-- `CRITICAL_VERCEL_ISSUE.md`, `DIAGNOSE_VERCEL_ISSUE.md`, `VERCEL_SILENT_FAILURE_DIAGNOSIS.md` — one-time debugging
-- `ENV_SCRIPTS_SUMMARY.md`, `ENV_SCRIPTS_SYSTEM.md`, `ENV_VARIABLES_COMPLETE.md` — consolidate into ENV_SETUP
-- `IMPLEMENTATION_COMPLETE.md`, `PROGRESS_SUMMARY.md`, `PUSH_SUCCESS.md` — one-time status docs
-- `NEXT_STEPS.md`, `NEXT_STEPS_CLEAR.md` — likely outdated
-- Multiple `QUICK_FIX_*.md`, `RUN_THESE_CLI_COMMANDS.md` — one-time fixes
+21 files archived including: deployment checks, CLI commands, Vercel issues, parsing fixes, completed implementation records, and resolved bugs.
+
+## Root-Level Files (Essential Only)
+| File | Purpose |
+|---|---|
+| README.md | Project overview |
+| AGENTS.md | Agent entry point / table of contents |
+| ARCHITECTURE.md | Codebase architecture map |
+| BLOG_POST_STYLE_GUIDE.md | Blog formatting rules (kept in root — referenced by `.cursorrules`) |
