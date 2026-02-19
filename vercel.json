@@ -5,9 +5,6 @@
   "framework": "vite",
   "ignoreCommand": "bash scripts/vercel-ignore-build-step.sh",
   "functions": {
-    "api/newsletter/send.ts": {
-      "maxDuration": 300
-    },
     "api/cron/send-scheduled-newsletters.ts": {
       "maxDuration": 300
     },
