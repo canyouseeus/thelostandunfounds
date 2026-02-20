@@ -483,7 +483,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                 localStorage.setItem('guest_email', email);
             }
 
-            const response = await fetch('/api/gallery/checkout', {
+            const response = await fetch('/api/photos/checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

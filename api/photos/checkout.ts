@@ -226,6 +226,7 @@ export default async function handler(
       invoiceId: invoiceId,
       lnInvoice: quote.lnInvoice,
       expirationInSec: quote.expirationInSec,
+      amount: amount
     })
 
   } catch (error: any) {
