@@ -117,90 +117,67 @@ export default async function handler(
       console.warn(`[Pricing Warning] Order for ${count} items resulted in $${amount} (approx ${count} * $${singlePrice}). Possible missed bundle application. Options available: ${pricingOptions ? pricingOptions.length : 0}`);
     }
 
-    // Create PayPal order
-    const environment = (process.env.PAYPAL_ENVIRONMENT || 'SANDBOX').toUpperCase()
-    const isLive = environment === 'LIVE'
-
-    // Explicitly prioritize the correct key for the environment
-    const clientId = isLive
-      ? (process.env.PAYPAL_CLIENT_ID_LIVE || process.env.PAYPAL_CLIENT_ID)
-      : (process.env.PAYPAL_CLIENT_ID_SANDBOX || process.env.PAYPAL_CLIENT_ID)
-
-    const clientSecret = isLive
-      ? (process.env.PAYPAL_CLIENT_SECRET_LIVE || process.env.PAYPAL_CLIENT_SECRET)
-      : (process.env.PAYPAL_CLIENT_SECRET_SANDBOX || process.env.PAYPAL_CLIENT_SECRET)
-
-    const baseUrl = isLive ? 'https://api.paypal.com' : 'https://api.sandbox.paypal.com'
-
-    console.log(`[PayPal] ${environment} Mode: Using Client ID starting with ${clientId?.substring(0, 5)}`)
-
-    if (!clientId || !clientSecret) {
-      console.error('[PayPal] Missing credentials for', environment)
-      return res.status(500).json({ error: `PayPal credentials not configured for ${environment}` })
+    // Create Strike Invoice
+    const apiKey = process.env.STRIKE_API_KEY
+    if (!apiKey) {
+      console.error('[Checkout] Missing STRIKE_API_KEY')
+      return res.status(500).json({ error: 'Strike API key not configured' })
     }
 
-    // Get PayPal access token
-    const tokenResponse = await fetch(`${baseUrl}/v1/oauth2/token`, {
+    const correlationId = `gallery_${Date.now()}_${Math.random().toString(36).substring(7)}`
+
+    const invoiceResponse = await fetch('https://api.strike.me/v1/invoices', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
-      },
-      body: 'grant_type=client_credentials',
-    })
-
-    if (!tokenResponse.ok) {
-      const errorText = await tokenResponse.text()
-      console.error('PayPal Token Error:', errorText)
-      return res.status(500).json({ error: 'Failed to authenticate with PayPal', details: errorText })
-    }
-
-    const { access_token } = await tokenResponse.json()
-
-    // Create the order (Minimal custom_id to avoid length limits)
-    // We only send EMAIL in custom_id for reference. The real data is stored in our DB.
-    const orderPayload = {
-      intent: 'CAPTURE',
-      purchase_units: [{
-        amount: {
-          currency_code: 'USD',
-          value: amount.toFixed(2),
-        },
-        description: `Photo Download Access (${count} photos)`,
-        custom_id: JSON.stringify({ email }), // Just email, keep it short!
-      }],
-      application_context: {
-        brand_name: 'THE LOST+UNFOUNDS',
-        landing_page: 'NO_PREFERENCE',
-        user_action: 'PAY_NOW',
-        return_url: `${process.env.APP_URL || 'https://www.thelostandunfounds.com'}/photos/success`,
-        cancel_url: `${process.env.APP_URL || 'https://www.thelostandunfounds.com'}/photos/cancel`,
-      },
-    }
-
-    const orderResponse = await fetch(`${baseUrl}/v2/checkout/orders`, {
-      method: 'POST',
-      headers: {
+        'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${access_token}`,
+        'Authorization': `Bearer ${apiKey}`,
       },
-      body: JSON.stringify(orderPayload),
+      body: JSON.stringify({
+        correlationId,
+        description: `Photo Download Access (${count} photos)`,
+        amount: {
+          currency: 'USD',
+          amount: amount.toFixed(2),
+        },
+      }),
     })
 
-    const order = await orderResponse.json()
-
-    if (!orderResponse.ok || !order.id) {
-      console.error('PayPal Order Error:', order)
-      return res.status(500).json({ error: 'Failed to create PayPal order', details: order })
+    if (!invoiceResponse.ok) {
+      const errorText = await invoiceResponse.text()
+      console.error('Strike Invoice Error:', errorText)
+      return res.status(500).json({ error: 'Failed to create Strike invoice', details: errorText })
     }
+
+    const invoice = await invoiceResponse.json()
+    const invoiceId = invoice.invoiceId
+
+    // Get Lightning Quote for the invoice
+    const quoteResponse = await fetch(`https://api.strike.me/v1/invoices/${invoiceId}/quote`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+    })
+
+    if (!quoteResponse.ok) {
+      const errorText = await quoteResponse.text()
+      console.error('Strike Quote Error:', errorText)
+      return res.status(500).json({ error: 'Failed to generate Lightning quote', details: errorText })
+    }
+
+    const quote = await quoteResponse.json()
 
     // Persist Order to Supabase (Pending Status)
+    // We repurpose paypal_order_id to store the Strike invoiceId
     const { data: photoOrder, error: dbOrderError } = await supabase
       .from('photo_orders')
       .insert({
         email,
         total_amount_cents: Math.round(amount * 100),
-        paypal_order_id: order.id,
+        paypal_order_id: invoiceId, // Repurposing this column for Strike reference
         payment_status: 'pending', // Initial status
         affiliate_code: affiliateRef ? String(affiliateRef) : null
       })
@@ -213,7 +190,7 @@ export default async function handler(
         payload: {
           email,
           total_amount_cents: Math.round(amount * 100),
-          paypal_order_id: order.id
+          paypal_order_id: invoiceId
         }
       })
       return res.status(500).json({
@@ -246,8 +223,9 @@ export default async function handler(
     }
 
     return res.status(200).json({
-      orderId: order.id,
-      approvalUrl: order.links.find((l: any) => l.rel === 'approve').href
+      invoiceId: invoiceId,
+      lnInvoice: quote.lnInvoice,
+      expirationInSec: quote.expirationInSec,
     })
 
   } catch (error: any) {

@@ -25,6 +25,7 @@ import Loading from '../Loading';
 import AuthModal from '../auth/AuthModal';
 import { cn } from '../ui/utils';
 import { NoirDateRangePicker } from '../ui/NoirDateRangePicker';
+import { LightningPaymentModal } from '../shop/LightningPaymentModal';
 
 interface Photo {
     id: string;
@@ -280,6 +281,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
     const [authMessage, setAuthMessage] = useState<string | undefined>(undefined);
     const [authTitle, setAuthTitle] = useState<string | undefined>(undefined);
     const [pendingCheckout, setPendingCheckout] = useState(false);
+    const [lightningPayment, setLightningPayment] = useState<any | null>(null);
 
     // Dynamic sticky detection
     useEffect(() => {
@@ -493,10 +495,19 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
             });
 
             const data = await response.json();
-            if (response.ok && data.approvalUrl) {
-                // Clear saved selections before redirecting
+            if (response.ok && data.invoiceId && data.lnInvoice) {
+                // Clear saved selections 
                 localStorage.removeItem(storageKey);
-                window.location.href = data.approvalUrl;
+
+                // Set the pending checkout to false, and show the modal
+                setPendingCheckout(false);
+                setLightningPayment({
+                    invoiceId: data.invoiceId,
+                    lnInvoice: data.lnInvoice,
+                    expirationInSec: data.expirationInSec,
+                    amount: data.amount || 0, // Should calculate from SelectionTray pricing logic, or pass it from API
+                    description: `Photo Download Access (${selectedPhotos.length} photos)`
+                });
             } else {
                 const errorMessage = data.details || data.message || data.error || 'Unknown error';
                 alert(`Checkout failed: ${errorMessage}`);
@@ -875,7 +886,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                     <NoirDateRangePicker
                         startDate={startDate}
                         endDate={endDate}
-                        onChange={(start, end) => {
+                        onChange={(start: string, end: string) => {
                             setStartDate(start);
                             setEndDate(end);
                         }}
@@ -883,6 +894,18 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                     />
                 )}
             </AnimatePresence>
+
+            {/* Lightning Payment Modal */}
+            {lightningPayment && (
+                <LightningPaymentModal
+                    invoiceId={lightningPayment.invoiceId}
+                    lnInvoice={lightningPayment.lnInvoice}
+                    expirationInSec={lightningPayment.expirationInSec}
+                    amount={lightningPayment.amount}
+                    description={lightningPayment.description}
+                    onClose={() => setLightningPayment(null)}
+                />
+            )}
         </div>
     );
 };
