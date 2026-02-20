@@ -1,7 +1,8 @@
 import React from 'react';
 import { ShoppingCartIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { Product } from '../../types/shop';
-import { getPayPalCheckoutUrl } from '../../utils/checkout-utils';
+import { getStrikeCheckoutInvoice } from '../../utils/checkout-utils';
+import { LightningPaymentModal } from './LightningPaymentModal';
 import { trackAffiliateClick, getAffiliateRef } from '../../utils/affiliate-tracking';
 
 interface ProductCardProps {
@@ -65,12 +66,14 @@ export function ProductCard({ product, onOpen }: ProductCardProps) {
 interface ProductModalProps {
     product: Product;
     onClose: () => void;
+    onStrikeCheckout?: (payment: { invoiceId: string; lnInvoice: string; expirationInSec: number; amount: number; description: string }) => void;
 }
 
-export function ProductModal({ product, onClose }: ProductModalProps) {
+export function ProductModal({ product, onClose, onStrikeCheckout }: ProductModalProps) {
     const imageUrl = product.images?.[0];
     const isFourthwallProduct = product.url?.includes('fourthwall.com');
     const affiliateRef = getAffiliateRef();
+    const [checkoutLoading, setCheckoutLoading] = React.useState(false);
 
     const handleCheckout = async () => {
         if (isFourthwallProduct && product.url) {
@@ -83,16 +86,30 @@ export function ProductModal({ product, onClose }: ProductModalProps) {
         }
 
         try {
-            const { approvalUrl } = await getPayPalCheckoutUrl({
+            setCheckoutLoading(true);
+            const result = await getStrikeCheckoutInvoice({
                 amount: product.price,
                 currency: product.currency || 'USD',
                 description: product.title,
                 productId: product.id,
                 affiliateRef,
             });
-            window.location.href = approvalUrl;
+
+            onClose();
+            if (onStrikeCheckout) {
+                onStrikeCheckout({
+                    invoiceId: result.invoiceId,
+                    lnInvoice: result.lnInvoice,
+                    expirationInSec: result.expirationInSec,
+                    amount: product.price,
+                    description: product.title,
+                });
+            }
         } catch (error: any) {
+            console.error("Checkout error:", error);
             alert(`Checkout failed: ${error.message}`);
+        } finally {
+            setCheckoutLoading(false);
         }
     };
 
@@ -133,10 +150,17 @@ export function ProductModal({ product, onClose }: ProductModalProps) {
 
                     <button
                         onClick={handleCheckout}
-                        className="w-full bg-white text-black font-black py-4 uppercase tracking-widest hover:bg-white/90 transition-all flex items-center justify-center gap-3"
+                        disabled={checkoutLoading}
+                        className={`w-full bg-white text-black font-black py-4 uppercase tracking-widest hover:bg-white/90 transition-all flex items-center justify-center gap-3 ${checkoutLoading ? 'opacity-50 pointer-events-none' : ''}`}
                     >
-                        <ShoppingCartIcon className="w-5 h-5" />
-                        {isFourthwallProduct ? 'View External' : 'Secure Checkout'}
+                        {checkoutLoading ? (
+                            <span className="animate-pulse">Creating invoice...</span>
+                        ) : (
+                            <>
+                                <ShoppingCartIcon className="w-5 h-5" />
+                                {isFourthwallProduct ? 'View External' : 'Pay with Bitcoin ⚡'}
+                            </>
+                        )}
                     </button>
 
                     {!product.available && (

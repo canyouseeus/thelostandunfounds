@@ -288,7 +288,7 @@ async function createPayPalOrderDirect(params: {
   let order
   try {
     order = JSON.parse(responseText)
-  } catch (e) {
+  } catch (e: any) {
     console.error('❌ Failed to parse PayPal response:', e, responseText)
     throw new Error('Invalid JSON response from PayPal')
   }
