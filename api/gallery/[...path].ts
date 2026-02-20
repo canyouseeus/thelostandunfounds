@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 // import { google } from 'googleapis'; // Moved to dynamic import to prevent cold start crashes

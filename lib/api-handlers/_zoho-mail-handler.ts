@@ -6,8 +6,8 @@
  */
 
 // Branding and template helpers (inlined to avoid Vercel bundler issues)
-import dotenv from 'dotenv';
-import path from 'path';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
 
 // Explicitly load .env.local
 try {
