@@ -29,7 +29,7 @@ const ZOHO_TOKEN_URL = 'https://accounts.zoho.com/oauth/v2/token'
 const ZOHO_ACCOUNTS_URL = 'https://mail.zoho.com/api/accounts'
 // Inline SVG banner to avoid remote fetch failures in email clients
 const BANNER_URL =
-  "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='400'><rect width='100%25' height='100%25' fill='%23000'/><text x='50%25' y='50%25' fill='%23fff' font-family='Arial, sans-serif' font-size='48' font-weight='bold' text-anchor='middle' dominant-baseline='middle'>THE LOST+UNFOUNDS</text></svg>"
+  "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='400'><rect width='100%25' height='100%25' fill='%23000'/><text x='20' y='50%25' fill='%23fff' font-family='Arial, sans-serif' font-size='48' font-weight='bold' text-anchor='start' dominant-baseline='middle'>THE LOST+UNFOUNDS</text></svg>"
 
 function getZohoEnv() {
   const clientId = process.env.ZOHO_CLIENT_ID
@@ -50,8 +50,10 @@ function getZohoEnv() {
  */
 export function ensureBannerHtml(htmlContent: string): string {
   const bannerBlock = `
-<div style="padding: 0 0 30px 0; background-color: #000000 !important; text-align: center;">
-  <img src="${BANNER_URL}" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block; margin: 0 auto;" />
+<div style="padding: 0 0 30px 0; background-color: #000000 !important; text-align: left;">
+  <a href="https://www.thelostandunfounds.com" style="text-decoration: none;">
+    <img src="${BANNER_URL}" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block; margin: 0;" />
+  </a>
 </div>`
 
   const ensureShell = (html: string) => {

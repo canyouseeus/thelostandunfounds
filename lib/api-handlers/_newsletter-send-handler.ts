@@ -66,12 +66,14 @@ async function sendResendEmail(
 }
 
 const BANNER_URL =
-  "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='400'><rect width='100%25' height='100%25' fill='%23000'/><text x='50%25' y='50%25' fill='%23fff' font-family='Arial, sans-serif' font-size='48' font-weight='bold' text-anchor='middle' dominant-baseline='middle'>THE LOST+UNFOUNDS</text></svg>"
+  "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='400'><rect width='100%25' height='100%25' fill='%23000'/><text x='20' y='50%25' fill='%23fff' font-family='Arial, sans-serif' font-size='48' font-weight='bold' text-anchor='start' dominant-baseline='middle'>THE LOST+UNFOUNDS</text></svg>"
 
 function ensureBannerHtml(htmlContent: string): string {
   const bannerBlock = `
-<div style="padding: 0 0 30px 0; background-color: #000000 !important; text-align: center;">
-  <img src="${BANNER_URL}" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block; margin: 0 auto;" />
+<div style="padding: 0 0 30px 0; background-color: #000000 !important; text-align: left;">
+  <a href="https://www.thelostandunfounds.com" style="text-decoration: none;">
+    <img src="${BANNER_URL}" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block; margin: 0;" />
+  </a>
 </div>`
 
   const ensureShell = (html: string) => {
@@ -137,11 +139,13 @@ function generateNewsletterEmailHtml(bodyHtml: string, subscriberEmail: string):
 <body style="margin: 0 !important; padding: 0 !important; background-color: #000000 !important; font-family: Arial, sans-serif;">
   <table role="presentation" style="width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 !important; padding: 0 !important;">
     <tr>
-      <td align="center" style="padding: 40px 20px !important; background-color: #000000 !important;">
-        <table role="presentation" style="max-width: 600px !important; width: 100% !important; background-color: #000000 !important; margin: 0 auto !important;">
+      <td align="left" style="padding: 40px 20px !important; background-color: #000000 !important;">
+        <table role="presentation" style="max-width: 600px !important; width: 100% !important; background-color: #000000 !important; margin: 0 !important;">
           <tr>
             <td align="left" style="padding: 0 0 30px 0 !important;">
-              <img src="https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
+              <a href="https://www.thelostandunfounds.com" target="_blank">
+                <img src="https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
+              </a>
             </td>
           </tr>
           <tr>

@@ -224,6 +224,7 @@ export default function Admin() {
   const affiliatesSectionRef = useRef<HTMLDivElement>(null);
   const submissionsSectionRef = useRef<HTMLDivElement>(null);
   const eventsSectionRef = useRef<HTMLDivElement>(null);
+  const pricingSectionRef = useRef<HTMLDivElement>(null);
   const settingsSectionRef = useRef<HTMLDivElement>(null);
 
   // Expanded state for controlled CollapsibleSections
@@ -238,6 +239,7 @@ export default function Admin() {
     submissions: false,
     settings: false,
     events: false,
+    pricing: false,
   });
 
   const handleSectionToggle = (key: string) => {
@@ -301,6 +303,7 @@ export default function Admin() {
       case 'affiliates': ref = affiliatesSectionRef; break;
       case 'submissions': ref = submissionsSectionRef; break;
       case 'events': ref = eventsSectionRef; break;
+      case 'pricing': ref = pricingSectionRef; break;
       case 'settings':
         key = 'settings';
         ref = settingsSectionRef;
@@ -1494,6 +1497,7 @@ export default function Admin() {
                 { id: 'affiliates', icon: LinkIcon, title: 'Affiliates' },
                 { id: 'submissions', icon: DocumentTextIcon, title: 'Submissions', badge: pendingSubmissions },
                 { id: 'events', icon: CalendarIcon, title: 'Events' },
+                { id: 'pricing', icon: CurrencyDollarIcon, title: 'Pricing' },
                 { id: 'settings', icon: BoltIcon, title: 'Settings' }
               ].map((app) => (
                 <button
@@ -1653,6 +1657,22 @@ export default function Admin() {
               </div>
               <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Events</div>}>
                 <AdminEventsView onBack={scrollToTop} />
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* Pricing Section */}
+          {expandedSections['pricing'] && (
+            <div ref={pricingSectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex flex-col px-0 py-2 mb-8 items-start">
+                <div className="flex items-center gap-3">
+                  <CurrencyDollarIcon className="w-5 h-5 text-white/40" />
+                  <h2 className="text-lg font-black text-white tracking-widest uppercase">Product Cost Management</h2>
+                </div>
+                <button onClick={() => handleSectionToggle('pricing')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
+              </div>
+              <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Pricing</div>}>
+                <ProductCostManagement />
               </ErrorBoundary>
             </div>
           )}

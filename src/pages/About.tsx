@@ -4,6 +4,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 
+import { Helmet } from 'react-helmet-async';
+
 export default function About() {
   const [animationKey, setAnimationKey] = useState(0);
   const merchRef = useRef<HTMLParagraphElement>(null);
@@ -237,107 +239,111 @@ export default function About() {
   }, []);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div ref={containerRef} style={{ width: '100%', boxSizing: 'border-box' }}>
-        <h1
-          ref={headingRef}
-          className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-8 tracking-wide"
-          style={{
-            fontWeight: 900,
-            letterSpacing: '0.1em',
-            width: '100%',
-            maxWidth: '100%',
-            boxSizing: 'border-box',
-            margin: '0 0 2rem 0',
-            padding: 0,
-            display: 'block',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'clip'
-          }}
-        >
-          ABOUT : <strong className="font-bold">THE LOST+UNFOUNDS</strong>
-        </h1>
-
-        <div ref={bodyTextRef} className="space-y-8 text-white font-black text-xl md:text-2xl lg:text-3xl leading-relaxed tracking-wide" style={{ textAlign: 'justify', fontWeight: 900, letterSpacing: '0.05em', width: '100%', boxSizing: 'border-box', margin: 0 }}>
-          <p>
-            I am grateful for the ability to be able to share my work with people. I want to be able to give people better opportunities and create systems that can benefit anyone willing to participate.
-          </p>
-
-          <p>
-            <strong className="font-bold">THE LOST+UNFOUNDS</strong> is a creative brand, a tech company, and mindset builder all rolled into one. The purpose of building this site is to get people to believe in themselves again. To believe in that random idea they came up with 15 years ago, start a new business, take that risk, and bet it all on themselves.
-          </p>
-
-          <p>
-            We aim to lessen that risk by being a place where you can see an example of how to keep going and understand that whatever it is you want is being brought to you. We will share what we know, and if we don't have an answer, we can at least try to help you find the answer.
-          </p>
-
-          <p>
-            The only thing we are an expert at is being ourselves, and this whole business is about R&D, like the Luscious Fox for artists, solopreneurs, hobbyists, experimenters, tradesmen and women, gig workers, and big dreamers.
-          </p>
-
-          <p>
-            We must get uncomfortable to learn how to adapt. And how uncomfortable we are willing to get is sometimes the only way to find answers. I know I'm killing it on the Batman references, but Bruce Wayne had to leave Gotham to become the Batman.
-          </p>
-
-          <p>
-            The closer you grow into yourself, the less you are willing to give to the noise.
-          </p>
-
-          <p>
-            The beauty of media, comics, literature, movies, TV shows, and so on, lies in the fact that we've witnessed the portrayal of numerous concepts that didn't exist before but now do. This is a testament to our creative prowess. We had flying cars before we had GTA6. Let's continue to create more of these wonders and build the world of tomorrow together.
-          </p>
-
-          <p>
-            The crazy thing is, learning about something unrelated to the thing you are learning for, that opens up the key to all those projects and ideas on the back burner. And I just want to share things that help people quit their jobs and go to work for themselves.
-          </p>
-
-          <p>
-            It is the Age of Aquarius, and all around us is evidence that fully supports the designs of this stage. We are in the age of information, and information has been propelled by the onset of A.I. chat and coding agents. I'm not a "what about our jobs" kind of person; I'm a "I can make robots work for me now?" kind of person.
-          </p>
-
-          <p>
-            "And I can teach them exactly how to do it, so it's the same every time?"
-          </p>
-
-          <p>
-            And now we're here to reveal our findings from the frontier and beyond.
-          </p>
-
-          <p
-            ref={merchRef}
-            className="text-white font-black text-xl md:text-2xl lg:text-3xl leading-relaxed tracking-wide"
+    <>
+      <Helmet>
+        <link rel="canonical" href="https://www.thelostandunfounds.com/about" />
+      </Helmet>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div ref={containerRef} style={{ width: '100%', boxSizing: 'border-box' }}>
+          <h1
+            ref={headingRef}
+            className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-8 tracking-wide"
             style={{
-              perspective: '1000px',
-              textAlign: 'justify',
               fontWeight: 900,
-              letterSpacing: '0.05em'
+              letterSpacing: '0.1em',
+              width: '100%',
+              maxWidth: '100%',
+              boxSizing: 'border-box',
+              margin: '0 0 2rem 0',
+              padding: 0,
+              display: 'block',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'clip'
             }}
           >
-            <span ref={merchFirstLineRef}>
-              Thank you for buying my{' '}
-              <a
-                key={animationKey}
-                href="/shop"
-                className={`inline-block text-white hover:text-green-500 transition-colors duration-200 ${animationKey > 0 ? 'animate-merch-pop' : ''
-                  }`}
-                style={{
-                  transformStyle: 'preserve-3d',
-                  fontWeight: 900,
-                }}
-              >
-                MERCH
-              </a>
-              ! It's my art.
-            </span>
-            <br />
-            <br />
-            More to come…
-          </p>
-        </div>
-      </div>
+            ABOUT : <strong className="font-bold">THE LOST+UNFOUNDS</strong>
+          </h1>
 
-      <style>{`
+          <div ref={bodyTextRef} className="space-y-8 text-white font-black text-xl md:text-2xl lg:text-3xl leading-relaxed tracking-wide" style={{ textAlign: 'justify', fontWeight: 900, letterSpacing: '0.05em', width: '100%', boxSizing: 'border-box', margin: 0 }}>
+            <p>
+              I am grateful for the ability to be able to share my work with people. I want to be able to give people better opportunities and create systems that can benefit anyone willing to participate.
+            </p>
+
+            <p>
+              <strong className="font-bold">THE LOST+UNFOUNDS</strong> is a creative brand, a tech company, and mindset builder all rolled into one. The purpose of building this site is to get people to believe in themselves again. To believe in that random idea they came up with 15 years ago, start a new business, take that risk, and bet it all on themselves.
+            </p>
+
+            <p>
+              We aim to lessen that risk by being a place where you can see an example of how to keep going and understand that whatever it is you want is being brought to you. We will share what we know, and if we don't have an answer, we can at least try to help you find the answer.
+            </p>
+
+            <p>
+              The only thing we are an expert at is being ourselves, and this whole business is about R&D, like the Luscious Fox for artists, solopreneurs, hobbyists, experimenters, tradesmen and women, gig workers, and big dreamers.
+            </p>
+
+            <p>
+              We must get uncomfortable to learn how to adapt. And how uncomfortable we are willing to get is sometimes the only way to find answers. I know I'm killing it on the Batman references, but Bruce Wayne had to leave Gotham to become the Batman.
+            </p>
+
+            <p>
+              The closer you grow into yourself, the less you are willing to give to the noise.
+            </p>
+
+            <p>
+              The beauty of media, comics, literature, movies, TV shows, and so on, lies in the fact that we've witnessed the portrayal of numerous concepts that didn't exist before but now do. This is a testament to our creative prowess. We had flying cars before we had GTA6. Let's continue to create more of these wonders and build the world of tomorrow together.
+            </p>
+
+            <p>
+              The crazy thing is, learning about something unrelated to the thing you are learning for, that opens up the key to all those projects and ideas on the back burner. And I just want to share things that help people quit their jobs and go to work for themselves.
+            </p>
+
+            <p>
+              It is the Age of Aquarius, and all around us is evidence that fully supports the designs of this stage. We are in the age of information, and information has been propelled by the onset of A.I. chat and coding agents. I'm not a "what about our jobs" kind of person; I'm a "I can make robots work for me now?" kind of person.
+            </p>
+
+            <p>
+              "And I can teach them exactly how to do it, so it's the same every time?"
+            </p>
+
+            <p>
+              And now we're here to reveal our findings from the frontier and beyond.
+            </p>
+
+            <p
+              ref={merchRef}
+              className="text-white font-black text-xl md:text-2xl lg:text-3xl leading-relaxed tracking-wide"
+              style={{
+                perspective: '1000px',
+                textAlign: 'justify',
+                fontWeight: 900,
+                letterSpacing: '0.05em'
+              }}
+            >
+              <span ref={merchFirstLineRef}>
+                Thank you for buying my{' '}
+                <a
+                  key={animationKey}
+                  href="/shop"
+                  className={`inline-block text-white hover:text-green-500 transition-colors duration-200 ${animationKey > 0 ? 'animate-merch-pop' : ''
+                    }`}
+                  style={{
+                    transformStyle: 'preserve-3d',
+                    fontWeight: 900,
+                  }}
+                >
+                  MERCH
+                </a>
+                ! It's my art.
+              </span>
+              <br />
+              <br />
+              More to come…
+            </p>
+          </div>
+        </div>
+
+        <style>{`
         h1 {
           max-width: 100%;
         }
@@ -441,7 +447,8 @@ export default function About() {
           backface-visibility: hidden;
         }
       `}</style>
-    </div>
+      </div>
+    </>
   );
 }
 

@@ -121,7 +121,7 @@ async function getZohoAccountInfo(accessToken: string, fallbackEmail: string): P
       } else if (account.accountName && typeof account.accountName === 'string') {
         accountEmail = account.accountName
       }
-      
+
       if (accountId) {
         return { accountId, email: accountEmail }
       }
@@ -181,7 +181,7 @@ async function sendZohoEmail(
 function generateEmailHtml(postTitle: string, postUrl: string, authorName: string, postNumber: number, authorEmail?: string): string {
   const currentYear = new Date().getFullYear()
   const ordinal = getOrdinalSuffix(postNumber)
-  
+
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -192,11 +192,13 @@ function generateEmailHtml(postTitle: string, postUrl: string, authorName: strin
   <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #000000;">
     <tr>
       <td align="left" style="padding: 40px 20px;">
-        <table role="presentation" style="max-width: 600px; width: 100%; border-collapse: collapse; background-color: #000000;">
+        <table role="presentation" style="max-width: 600px; width: 100%; border-collapse: collapse; background-color: #000000; margin: 0;">
           <!-- Branding Header -->
           <tr>
             <td align="left" style="padding: 0 0 30px 0;">
-              <img src="https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
+              <a href="https://www.thelostandunfounds.com" target="_blank">
+                <img src="https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
+              </a>
             </td>
           </tr>
           <!-- Main Content -->
@@ -276,8 +278,8 @@ export default async function handler(
     // Get Zoho access token and account info
     const accessToken = await getZohoAccessToken()
     const accountInfo = await getZohoAccountInfo(accessToken, fromEmail)
-    const actualFromEmail = (accountInfo.email && typeof accountInfo.email === 'string' && accountInfo.email.includes('@')) 
-      ? accountInfo.email 
+    const actualFromEmail = (accountInfo.email && typeof accountInfo.email === 'string' && accountInfo.email.includes('@'))
+      ? accountInfo.email
       : fromEmail
 
     // Generate email content with post number
@@ -295,7 +297,7 @@ export default async function handler(
     )
 
     if (!result.success) {
-      return res.status(500).json({ 
+      return res.status(500).json({
         error: result.error || 'Failed to send email',
         success: false
       })

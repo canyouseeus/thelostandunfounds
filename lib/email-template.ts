@@ -126,9 +126,9 @@ export function wrapEmailContent(
   <!-- Email wrapper table -->
   <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100% !important; border-collapse: collapse !important; background-color: ${BRAND.colors.background} !important; margin: 0 !important; padding: 0 !important;">
     <tr>
-      <td align="center" style="padding: 40px 20px !important; background-color: ${BRAND.colors.background} !important;">
+      <td align="left" style="padding: 40px 20px !important; background-color: ${BRAND.colors.background} !important;">
         <!-- Content container -->
-        <table role="presentation" cellpadding="0" cellspacing="0" style="max-width: 600px !important; width: 100% !important; background-color: ${BRAND.colors.background} !important; margin: 0 auto !important;">
+        <table role="presentation" cellpadding="0" cellspacing="0" style="max-width: 600px !important; width: 100% !important; background-color: ${BRAND.colors.background} !important; margin: 0 !important;">
           <!-- Logo -->
           <tr>
             <td align="left" style="padding: 0 0 30px 0 !important;">
@@ -170,14 +170,14 @@ export function processEmailContent(
 
   // Check if unsubscribe link exists
   const hasUnsubscribeLink = /href=["'][^"']*unsubscribe/i.test(html) || />Unsubscribe<\/a>/i.test(html);
-  
+
   // Add unsubscribe block if missing
   if (!hasUnsubscribeLink) {
     const unsubBlock = `
       <p style="color: ${BRAND.colors.textMuted}; font-size: 12px; line-height: 1.5; margin: 20px 0 0 0; text-align: left;">
         <a href="${unsubscribeUrl}" style="color: ${BRAND.colors.textMuted}; text-decoration: underline;">Unsubscribe</a>
       </p>`;
-    
+
     // Insert before <hr> if exists, otherwise append
     const hrIndex = html.indexOf('<hr');
     if (hrIndex >= 0) {

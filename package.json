@@ -10,7 +10,7 @@
     "dev:full": "concurrently \"npm run dev:api\" \"node local-server.js\"",
     "restart-dev": "./scripts/restart-dev.sh",
     "build": "vite build",
-    "postbuild": "npx tsx scripts/pre-render-blog-posts.ts && npx tsx scripts/generate-sitemap.ts",
+    "postbuild": "npx tsx scripts/pre-render-blog-posts.ts && npx tsx scripts/pre-render-core-pages.ts && npx tsx scripts/generate-sitemap.ts",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "setup:github": "node scripts/setup-github.js",

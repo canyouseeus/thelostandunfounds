@@ -82,8 +82,8 @@ function wrapEmailContent(
 <body style="margin: 0 !important; padding: 0 !important; background-color: ${BRAND.colors.background} !important; font-family: Arial, Helvetica, sans-serif;">
   <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100% !important; border-collapse: collapse !important; background-color: ${BRAND.colors.background} !important; margin: 0 !important; padding: 0 !important;">
     <tr>
-      <td align="center" style="padding: 40px 20px !important; background-color: ${BRAND.colors.background} !important;">
-        <table role="presentation" cellpadding="0" cellspacing="0" style="max-width: 600px !important; width: 100% !important; background-color: ${BRAND.colors.background} !important; margin: 0 auto !important;">
+      <td align="left" style="padding: 40px 20px !important; background-color: ${BRAND.colors.background} !important;">
+        <table role="presentation" cellpadding="0" cellspacing="0" style="max-width: 600px !important; width: 100% !important; background-color: ${BRAND.colors.background} !important; margin: 0 !important;">
           <tr>
             <td align="left" style="padding: 0 0 30px 0 !important;">
               <a href="${BRAND.website}" target="_blank">
@@ -112,7 +112,7 @@ const ZOHO_ACCOUNTS_URL = 'https://mail.zoho.com/api/accounts';
 
 // Inline SVG banner to avoid remote fetch failures in email clients
 const BANNER_URL =
-  "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='400'><rect width='100%25' height='100%25' fill='%23000'/><text x='50%25' y='50%25' fill='%23fff' font-family='Arial, sans-serif' font-size='48' font-weight='bold' text-anchor='middle' dominant-baseline='middle'>THE LOST+UNFOUNDS</text></svg>";
+  "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='400'><rect width='100%25' height='100%25' fill='%23000'/><text x='20' y='50%25' fill='%23fff' font-family='Arial, sans-serif' font-size='48' font-weight='bold' text-anchor='start' dominant-baseline='middle'>THE LOST+UNFOUNDS</text></svg>";
 
 // Rate limit helper - 200ms delay between calls
 let lastApiCall = 0;

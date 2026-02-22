@@ -117,6 +117,7 @@ export default function Gallery() {
             <Helmet>
                 <title>THE GALLERY | THE LOST+UNFOUNDS</title>
                 <meta name="description" content="Exclusive high-resolution photography collections. Findings from the field, captured in high definition." />
+                <link rel="canonical" href="https://www.thelostandunfounds.com/gallery" />
             </Helmet>
 
             <div className="max-w-7xl mx-auto mb-20 relative z-10">
