@@ -1,6 +1,74 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 
+function generateWelcomeHtml(email: string): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        body { background-color: #000000 !important; margin: 0 !important; padding: 0 !important; }
+        table { background-color: #000000 !important; }
+        td { background-color: #000000 !important; }
+      </style>
+    </head>
+    <body style="margin: 0 !important; padding: 0 !important; background-color: #000000 !important; font-family: Arial, sans-serif;">
+      <table role="presentation" style="width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 !important; padding: 0 !important;">
+        <tr>
+          <td align="center" style="padding: 40px 20px !important; background-color: #000000 !important;">
+            <table role="presentation" style="max-width: 600px !important; width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 auto !important;">
+              <!-- Branding Header -->
+              <tr>
+                <td align="left" style="padding: 0 0 30px 0; background-color: #000000 !important;">
+                  <img src="https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
+                </td>
+              </tr>
+              <!-- Main Content -->
+              <tr>
+                <td style="padding: 0 !important; color: #ffffff !important; background-color: #000000 !important;">
+                  <h1 style="color: #ffffff !important; font-size: 28px; font-weight: bold; margin: 0 0 20px 0; text-align: center; letter-spacing: 0.1em; background-color: #000000 !important;">
+                    CAN YOU SEE US?
+                  </h1>
+                  <h2 style="color: #ffffff !important; font-size: 24px; font-weight: 600; margin: 0 0 20px 0; text-align: center; background-color: #000000 !important;">
+                    Thanks for subscribing!
+                  </h2>
+                  <p style="color: #ffffff !important; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: center; background-color: #000000 !important;">
+                    We're excited to have you join THE LOST+UNFOUNDS community.
+                  </p>
+                  <p style="color: #ffffff !important; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0; text-align: center; background-color: #000000 !important;">
+                    You'll receive updates about:
+                  </p>
+                  <ul style="color: #ffffff !important; font-size: 16px; line-height: 1.8; margin: 0 0 30px 0; padding-left: 0; list-style: none; text-align: center; background-color: #000000 !important;">
+                    <li style="margin: 10px 0; color: #ffffff !important; background-color: #000000 !important;">New tools and features</li>
+                    <li style="margin: 10px 0; color: #ffffff !important; background-color: #000000 !important;">Platform updates</li>
+                    <li style="margin: 10px 0; color: #ffffff !important; background-color: #000000 !important;">Special announcements</li>
+                  </ul>
+                  <p style="color: #ffffff !important; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0; text-align: center; background-color: #000000 !important;">
+                    Stay tuned for what's coming next!
+                  </p>
+                  <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0; background-color: #000000 !important;">
+                  <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 0; text-align: center; background-color: #000000 !important;">
+                    If you didn't sign up for this newsletter, you can safely ignore this email.
+                  </p>
+  <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 20px 0 10px 0; text-align: center; background-color: #000000 !important;">
+    © ${new Date().getFullYear()} THE LOST+UNFOUNDS. All rights reserved.
+  </p>
+  <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: center; background-color: #000000 !important;">
+    <a href="https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(email)}" style="color: rgba(255, 255, 255, 0.6) !important; text-decoration: underline;">Unsubscribe from this newsletter</a>
+  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `
+}
+
 interface ZohoTokenResponse {
   access_token: string
   token_type: string
@@ -189,71 +257,7 @@ export default async function handler(
               fromAddress: actualFromEmail,
               toAddress: email,
               subject: 'Welcome to THE LOST+UNFOUNDS',
-              content: `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                  <meta charset="UTF-8">
-                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                  <style>
-                    body { background-color: #000000 !important; margin: 0 !important; padding: 0 !important; }
-                    table { background-color: #000000 !important; }
-                    td { background-color: #000000 !important; }
-                  </style>
-                </head>
-                <body style="margin: 0 !important; padding: 0 !important; background-color: #000000 !important; font-family: Arial, sans-serif;">
-                  <table role="presentation" style="width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 !important; padding: 0 !important;">
-                    <tr>
-                      <td align="center" style="padding: 40px 20px !important; background-color: #000000 !important;">
-                        <table role="presentation" style="max-width: 600px !important; width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 auto !important;">
-                          <!-- Branding Header -->
-                          <tr>
-                            <td align="left" style="padding: 0 0 30px 0; background-color: #000000 !important;">
-                              <img src="https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
-                            </td>
-                          </tr>
-                          <!-- Main Content -->
-                          <tr>
-                            <td style="padding: 0 !important; color: #ffffff !important; background-color: #000000 !important;">
-                              <h1 style="color: #ffffff !important; font-size: 28px; font-weight: bold; margin: 0 0 20px 0; text-align: center; letter-spacing: 0.1em; background-color: #000000 !important;">
-                                CAN YOU SEE US?
-                              </h1>
-                              <h2 style="color: #ffffff !important; font-size: 24px; font-weight: 600; margin: 0 0 20px 0; text-align: center; background-color: #000000 !important;">
-                                Thanks for subscribing!
-                              </h2>
-                              <p style="color: #ffffff !important; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: center; background-color: #000000 !important;">
-                                We're excited to have you join THE LOST+UNFOUNDS community.
-                              </p>
-                              <p style="color: #ffffff !important; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0; text-align: center; background-color: #000000 !important;">
-                                You'll receive updates about:
-                              </p>
-                              <ul style="color: #ffffff !important; font-size: 16px; line-height: 1.8; margin: 0 0 30px 0; padding-left: 0; list-style: none; text-align: center; background-color: #000000 !important;">
-                                <li style="margin: 10px 0; color: #ffffff !important; background-color: #000000 !important;">New tools and features</li>
-                                <li style="margin: 10px 0; color: #ffffff !important; background-color: #000000 !important;">Platform updates</li>
-                                <li style="margin: 10px 0; color: #ffffff !important; background-color: #000000 !important;">Special announcements</li>
-                              </ul>
-                              <p style="color: #ffffff !important; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0; text-align: center; background-color: #000000 !important;">
-                                Stay tuned for what's coming next!
-                              </p>
-                              <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0; background-color: #000000 !important;">
-                              <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 0; text-align: center; background-color: #000000 !important;">
-                                If you didn't sign up for this newsletter, you can safely ignore this email.
-                              </p>
-              <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 20px 0 10px 0; text-align: center; background-color: #000000 !important;">
-                © ${new Date().getFullYear()} THE LOST+UNFOUNDS. All rights reserved.
-              </p>
-              <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: center; background-color: #000000 !important;">
-                <a href="https://www.thelostandunfounds.com/api/newsletter/unsubscribe?email=${encodeURIComponent(email)}" style="color: rgba(255, 255, 255, 0.6) !important; text-decoration: underline;">Unsubscribe from this newsletter</a>
-              </p>
-                            </td>
-                          </tr>
-                        </table>
-                      </td>
-                    </tr>
-                  </table>
-                </body>
-                </html>
-              `,
+              content: generateWelcomeHtml(email),
               mailFormat: 'html',
             }),
           })
@@ -307,8 +311,56 @@ export default async function handler(
           throw new Error('Failed to get email account ID')
         }
       } catch (emailError: any) {
+        // Fallback to Resend API when Zoho inevitably throttles due to hourly limits
+        const resendApiKey = process.env.RESEND_API_KEY
+        const resendFromEmail = process.env.RESEND_FROM_EMAIL || 'noreply@thelostandunfounds.com'
+
+        if (resendApiKey) {
+          console.log(`Zoho failed for ${email}. Falling back to Resend...`)
+          try {
+            const resendResp = await fetch('https://api.resend.com/emails', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${resendApiKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                from: resendFromEmail,
+                to: email,
+                subject: 'Welcome to THE LOST+UNFOUNDS',
+                html: generateWelcomeHtml(email),
+              }),
+            })
+
+            if (resendResp.ok) {
+              console.log(`Resend fallback successful for ${email}`)
+              // Track successful fallback send
+              try {
+                await supabase
+                  .from('newsletter_subscribers')
+                  .update({ welcome_email_sent_at: new Date().toISOString() })
+                  .eq('email', email.toLowerCase().trim())
+              } catch (e: any) {
+                console.error('Failed to track welcome email via Resend:', e.message)
+              }
+
+              return res.status(200).json({
+                success: true,
+                message: 'Successfully subscribed! Check your email for confirmation.',
+                emailConfig: emailConfig,
+                emailSent: true
+              })
+            } else {
+              const resendErr = await resendResp.text()
+              console.error(`Resend fallback failed for ${email}:`, resendErr)
+            }
+          } catch (resendError: any) {
+            console.error(`Resend fallback error for ${email}:`, resendError.message)
+          }
+        }
+
         // Log error but don't fail the subscription
-        console.error('Failed to send confirmation email:', {
+        console.error('Failed to send confirmation email (both providers failed):', {
           error: emailError.message,
           stack: emailError.stack,
           email: email
