@@ -10,7 +10,7 @@ import {
     UsersIcon
 } from '@heroicons/react/24/outline';
 import { cn } from '../components/ui/utils';
-import { LoadingSpinner } from '../components/Loading';
+import { LoadingOverlay } from '../components/Loading';
 
 interface Event {
     id: string;
@@ -78,7 +78,7 @@ export default function Events() {
         }
     };
 
-    if (loading) return <LoadingSpinner />;
+    if (loading) return <LoadingOverlay />;
 
     return (
         <div className="min-h-screen bg-black text-white pt-24 pb-12 px-4 sm:px-6 lg:px-8">

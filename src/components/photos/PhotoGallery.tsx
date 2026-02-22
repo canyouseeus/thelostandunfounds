@@ -94,6 +94,7 @@ const PhotoCard: React.FC<{
             viewport={{ once: true }}
             className={`relative bg-black group perspective-1000 ${isSingle ? 'w-full' : 'aspect-square'}`}
             style={{ perspective: '1000px' }}
+            onContextMenu={(e) => e.preventDefault()}
         >
             <div
                 className={`w-full relative transition-transform duration-700 ${isSingle ? 'h-auto' : 'h-full'}`}
@@ -548,7 +549,10 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
     const singlePrice = pricingOptions.find(o => o.photo_count === 1)?.price || library?.price || 5.00;
 
     return (
-        <div className="min-h-screen bg-black pt-20 pb-40 px-4 md:px-8">
+        <div
+            className="min-h-screen bg-black pt-20 pb-40 px-4 md:px-8"
+            onContextMenu={(e) => e.preventDefault()}
+        >
             {/* Header / Info Section */}
             <div className="max-w-7xl mx-auto mb-6">
                 {/* Title Section */}

@@ -13,6 +13,7 @@ import {
     CreditCardIcon,
     ShareIcon
 } from '@heroicons/react/24/outline';
+import { LoadingOverlay } from '../components/Loading';
 
 export default function PhotographerDashboard() {
     const { user, loading } = useAuth();
@@ -25,7 +26,7 @@ export default function PhotographerDashboard() {
         }
     }, [user, loading, navigate]);
 
-    if (loading) return <div className="p-8 text-center text-white">Loading...</div>;
+    if (loading) return <LoadingOverlay />;
 
     return (
         <div className="container mx-auto py-8 text-white px-4">

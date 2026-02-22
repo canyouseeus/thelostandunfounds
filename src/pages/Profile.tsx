@@ -42,7 +42,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { cn } from '../components/ui/utils';
 import AdminGalleryView from '../components/admin/AdminGalleryView';
-import { LoadingSpinner, SkeletonCard } from '../components/Loading';
+import { LoadingSpinner, LoadingOverlay, SkeletonCard } from '../components/Loading';
 import { SubscriptionTier } from '../types/index';
 import { isAdmin } from '../utils/admin';
 import { supabase } from '../lib/supabase';
@@ -393,11 +393,7 @@ export default function Profile() {
   };
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    );
+    return <LoadingOverlay />;
   }
 
   if (!user) {

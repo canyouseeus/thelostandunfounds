@@ -69,9 +69,14 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
     }
 
     // Process actual history data
+    // For revenue: each item has a date and amount, we sum amounts cumulatively
+    // For newsletter/affiliates: each item is a date string representing a registration,
+    // so we count them cumulatively (1, 2, 3...)
+    const isCountMetric = metric === 'newsletter' || metric === 'affiliates';
+
     const items = metricHistory.map(item => {
       if (typeof item === 'string') {
-        return { time: new Date(item).getTime(), amount: 0 };
+        return { time: new Date(item).getTime(), amount: isCountMetric ? 1 : 0 };
       }
       return { time: new Date(item.date).getTime(), amount: item.amount };
     }).sort((a, b) => a.time - b.time);
@@ -90,12 +95,12 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
       case '24H':
         startTime = now - 24 * 60 * 60 * 1000;
         interval = 60 * 60 * 1000; // 1 hour
-        formatLabel = (d) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        formatLabel = (d) => d.toLocaleDateString([], { weekday: 'short' }) + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         break;
       case '7D':
         startTime = now - 7 * 24 * 60 * 60 * 1000;
         interval = 24 * 60 * 60 * 1000; // 1 day
-        formatLabel = (d) => d.toLocaleDateString([], { weekday: 'short' });
+        formatLabel = (d) => d.toLocaleDateString([], { weekday: 'short', day: 'numeric' });
         break;
       case '30D':
         startTime = now - 30 * 24 * 60 * 60 * 1000;
@@ -105,7 +110,7 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
       case '1Y':
         startTime = now - 365 * 24 * 60 * 60 * 1000;
         interval = 30 * 24 * 60 * 60 * 1000; // ~1 month
-        formatLabel = (d) => d.toLocaleDateString([], { month: 'short', year: '2-digit' });
+        formatLabel = (d) => d.toLocaleDateString([], { month: 'short', year: '2-digit', day: 'numeric' });
         break;
     }
 
@@ -118,9 +123,22 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
       });
     }
 
+    // Ensure the last bucket reaches current time so the final data point is accurate
+    const lastBucket = buckets[buckets.length - 1];
+    if (!lastBucket || now - lastBucket.time > interval * 0.1) {
+      buckets.push({
+        time: now,
+        label: formatLabel(new Date(now))
+      });
+    } else {
+      // Snap the last bucket to now so it captures all current data
+      lastBucket.time = now;
+    }
+
     // Calculate cumulative values
     return buckets.map(bucket => {
-      // Sum amounts for items created before bucket.time
+      // For count metrics (newsletter, affiliates): count items created before bucket.time
+      // For revenue: sum amounts for items created before bucket.time
       const value = items
         .filter(item => item.time <= bucket.time)
         .reduce((sum, item) => sum + item.amount, 0);
@@ -154,7 +172,7 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
       <div className="flex-1 min-h-0 relative mb-4">
         <div className="absolute inset-0">
           <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={100} debounce={200}>
-            <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
               <XAxis
                 dataKey="name"

@@ -54,6 +54,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 import ErrorBoundary from '../components/ErrorBoundary';
+import { LoadingOverlay } from '../components/Loading';
 import { ProductCostManagement } from '../components/ProductCostManagement';
 import BlogManagement from '../components/BlogManagement';
 import NewsletterManagement from '../components/NewsletterManagement';
@@ -696,7 +697,17 @@ export default function Admin() {
       // Detailed Health Check: Base health on real connectivity
       const isDbOnline = !!usersData;
       const isAuthOnline = !!user;
-      const isStorageOnline = !!(lostArchivesPosts.length > 0 || bookClubPosts.length > 0);
+
+      // Check Supabase Storage by pinging the gallery-photos bucket
+      let isStorageOnline = false;
+      try {
+        const { error: storageError } = await supabase.storage
+          .from('gallery-photos')
+          .list('', { limit: 1 });
+        isStorageOnline = !storageError;
+      } catch {
+        isStorageOnline = false;
+      }
 
       let platformHealth: 'healthy' | 'warning' | 'critical' = 'healthy';
       if (!isDbOnline || !isAuthOnline) {
@@ -1294,7 +1305,7 @@ export default function Admin() {
   };
 
   if (loading || authLoading || adminStatus === null) {
-    return null; // Layout handles route transition loading animation
+    return <LoadingOverlay />;
   }
 
   if (adminStatus === false) {
@@ -1330,17 +1341,8 @@ export default function Admin() {
 
   // Default to overview tab if admin status is confirmed
   if (!stats && adminStatus === true) {
-    // Stats haven't loaded yet, but we're confirmed admin - show loading state
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2 uppercase">
-            ADMIN DASHBOARD
-          </h1>
-          <p className="text-white/70">Loading dashboard data...</p>
-        </div>
-      </div>
-    );
+    // Stats haven't loaded yet - show TOULOUSE loading animation
+    return <LoadingOverlay />;
   }
 
 

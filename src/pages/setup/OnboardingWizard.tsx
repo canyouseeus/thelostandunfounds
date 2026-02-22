@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CheckIcon, ClipboardDocumentIcon, ArrowRightIcon, ArrowPathIcon, ExclamationCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { LoadingSpinner } from '../../components/Loading';
+import { LoadingSpinner, LoadingOverlay } from '../../components/Loading';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -194,7 +194,7 @@ export default function OnboardingWizard() {
         }
     };
 
-    if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-white">Loading...</div>;
+    if (loading) return <LoadingOverlay />;
     if (error) return <div className="min-h-screen bg-black flex items-center justify-center text-white font-bold">{error}</div>;
 
     return (

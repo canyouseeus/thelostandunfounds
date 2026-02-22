@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { LoadingSpinner, LoadingOverlay } from '../Loading';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../../components/Toast';
@@ -14,9 +14,293 @@ import {
     ArrowLeftIcon,
     TicketIcon,
     CheckCircleIcon,
-    XCircleIcon
+    XCircleIcon,
+    ChevronLeftIcon,
+    ChevronRightIcon,
+    ClockIcon
 } from '@heroicons/react/24/outline';
 import { cn } from '../../components/ui/utils';
+
+// --- Local time helpers (avoid UTC shifts from toISOString) ---
+function toLocalISOString(date: Date): string {
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
+function formatDisplayDate(dateStr: string): string {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '';
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const day = d.getDate().toString().padStart(2, '0');
+    const year = d.getFullYear();
+    let hours = d.getHours();
+    const minutes = d.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12;
+    return `${month}/${day}/${year}, ${hours.toString().padStart(2, '0')}:${minutes} ${ampm}`;
+}
+
+// --- Custom Date/Time Picker ---
+function EventDateTimePicker({ value, onChange }: { value: string; onChange: (val: string) => void }) {
+    const [open, setOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+
+    // Parse current value into local date parts
+    const currentDate = value ? new Date(value) : new Date();
+    const isValid = value && !isNaN(currentDate.getTime());
+
+    const [viewMonth, setViewMonth] = useState(isValid ? currentDate.getMonth() : new Date().getMonth());
+    const [viewYear, setViewYear] = useState(isValid ? currentDate.getFullYear() : new Date().getFullYear());
+
+    const selectedDay = isValid ? currentDate.getDate() : null;
+    const selectedMonth = isValid ? currentDate.getMonth() : null;
+    const selectedYear = isValid ? currentDate.getFullYear() : null;
+
+    // Time state (12-hour)
+    const rawHours = isValid ? currentDate.getHours() : 12;
+    const currentAmPm = rawHours >= 12 ? 'PM' : 'AM';
+    const currentHour12 = rawHours % 12 || 12;
+    const currentMinute = isValid ? currentDate.getMinutes() : 0;
+
+    // Close on outside click
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+        };
+        if (open) document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, [open]);
+
+    // Build a new date from parts in local time
+    const buildDate = (
+        year: number, month: number, day: number,
+        hour12: number, minute: number, ampm: string
+    ): string => {
+        let h = hour12 % 12;
+        if (ampm === 'PM') h += 12;
+        const d = new Date(year, month, day, h, minute, 0);
+        return toLocalISOString(d);
+    };
+
+    const handleDaySelect = (day: number) => {
+        onChange(buildDate(viewYear, viewMonth, day, currentHour12, currentMinute, currentAmPm));
+    };
+
+    const handleHourChange = (h: number) => {
+        if (!isValid) return;
+        onChange(buildDate(selectedYear!, selectedMonth!, selectedDay!, h, currentMinute, currentAmPm));
+    };
+
+    const handleMinuteChange = (m: number) => {
+        if (!isValid) return;
+        onChange(buildDate(selectedYear!, selectedMonth!, selectedDay!, currentHour12, m, currentAmPm));
+    };
+
+    const handleAmPmToggle = () => {
+        if (!isValid) return;
+        const newAmPm = currentAmPm === 'AM' ? 'PM' : 'AM';
+        onChange(buildDate(selectedYear!, selectedMonth!, selectedDay!, currentHour12, currentMinute, newAmPm));
+    };
+
+    // Calendar data
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
+    const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+    const blanks = Array.from({ length: firstDayOfWeek }, (_, i) => i);
+    const weekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    const monthName = new Date(viewYear, viewMonth).toLocaleString('default', { month: 'long' }).toUpperCase();
+    const today = new Date();
+    const isCurrentMonth = viewMonth === today.getMonth() && viewYear === today.getFullYear();
+
+    // Hour/minute options
+    const hours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    const minutes = Array.from({ length: 12 }, (_, i) => i * 5); // 0, 5, 10, ..., 55
+
+    return (
+        <div ref={ref} className="relative">
+            {/* Display field */}
+            <button
+                type="button"
+                onClick={() => setOpen(!open)}
+                className="w-full bg-black/50 border border-white/10 p-3 text-white text-sm font-mono focus:border-white/40 focus:outline-none focus:bg-white/5 transition-colors text-left flex items-center justify-between"
+            >
+                <span className={isValid ? 'text-white' : 'text-white/30'}>
+                    {isValid ? formatDisplayDate(value) : 'Select date & time'}
+                </span>
+                <CalendarIcon className="w-4 h-4 text-white/40" />
+            </button>
+
+            {/* Dropdown picker */}
+            {open && (
+                <div className="absolute z-50 top-full left-0 mt-1 bg-black border border-white/20 shadow-2xl shadow-black/80 flex">
+                    {/* Calendar side */}
+                    <div className="p-4 min-w-[260px]">
+                        {/* Month/Year header */}
+                        <div className="flex items-center justify-between mb-4">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (viewMonth === 0) { setViewMonth(11); setViewYear(viewYear - 1); }
+                                    else setViewMonth(viewMonth - 1);
+                                }}
+                                className="p-1 hover:text-white text-white/40 transition-colors"
+                            >
+                                <ChevronLeftIcon className="w-4 h-4" />
+                            </button>
+                            <div className="flex gap-2 items-baseline">
+                                <span className="text-sm font-bold text-white tracking-tight">{monthName}</span>
+                                <span className="text-xs text-white/40 font-mono">{viewYear}</span>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (viewMonth === 11) { setViewMonth(0); setViewYear(viewYear + 1); }
+                                    else setViewMonth(viewMonth + 1);
+                                }}
+                                className="p-1 hover:text-white text-white/40 transition-colors"
+                            >
+                                <ChevronRightIcon className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        {/* Weekday headers */}
+                        <div className="grid grid-cols-7 gap-y-1 gap-x-1 text-center mb-1">
+                            {weekDays.map((d, i) => (
+                                <div key={`wd-${i}`} className="text-[10px] text-white/30 font-medium py-1">{d}</div>
+                            ))}
+                        </div>
+
+                        {/* Day grid */}
+                        <div className="grid grid-cols-7 gap-y-1 gap-x-1 text-center">
+                            {blanks.map(i => <div key={`b-${i}`} />)}
+                            {days.map(d => {
+                                const isSelected = selectedDay === d && selectedMonth === viewMonth && selectedYear === viewYear;
+                                const isToday = isCurrentMonth && d === today.getDate();
+                                return (
+                                    <button
+                                        type="button"
+                                        key={d}
+                                        onClick={() => handleDaySelect(d)}
+                                        className={cn(
+                                            "w-8 h-8 flex items-center justify-center text-xs font-mono transition-all rounded-full cursor-pointer",
+                                            isSelected
+                                                ? "bg-white text-black font-bold shadow-[0_0_15px_rgba(255,255,255,0.3)]"
+                                                : isToday
+                                                    ? "text-white font-semibold hover:bg-white/10"
+                                                    : "text-white/60 hover:text-white hover:bg-white/10"
+                                        )}
+                                    >
+                                        {d}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Quick actions */}
+                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/10">
+                            <button
+                                type="button"
+                                onClick={() => onChange('')}
+                                className="text-[10px] font-mono text-white/40 hover:text-white uppercase tracking-widest transition-colors"
+                            >
+                                Clear
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const now = new Date();
+                                    setViewMonth(now.getMonth());
+                                    setViewYear(now.getFullYear());
+                                    handleDaySelect(now.getDate());
+                                }}
+                                className="text-[10px] font-mono text-blue-400 hover:text-blue-300 uppercase tracking-widest transition-colors"
+                            >
+                                Today
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Time side */}
+                    <div className="border-l border-white/10 p-3 flex flex-col min-w-[140px]">
+                        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3 flex items-center gap-1.5">
+                            <ClockIcon className="w-3 h-3" />
+                            Time
+                        </div>
+
+                        <div className="flex gap-1 flex-1">
+                            {/* Hour column */}
+                            <div className="flex-1 overflow-y-auto max-h-[220px] scrollbar-thin">
+                                {hours.map(h => (
+                                    <button
+                                        type="button"
+                                        key={h}
+                                        onClick={() => handleHourChange(h)}
+                                        className={cn(
+                                            "w-full py-1.5 text-center text-xs font-mono transition-all",
+                                            currentHour12 === h && isValid
+                                                ? "bg-white text-black font-bold"
+                                                : "text-white/50 hover:text-white hover:bg-white/10"
+                                        )}
+                                    >
+                                        {h.toString().padStart(2, '0')}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Minute column */}
+                            <div className="flex-1 overflow-y-auto max-h-[220px] scrollbar-thin">
+                                {minutes.map(m => (
+                                    <button
+                                        type="button"
+                                        key={m}
+                                        onClick={() => handleMinuteChange(m)}
+                                        className={cn(
+                                            "w-full py-1.5 text-center text-xs font-mono transition-all",
+                                            currentMinute === m && isValid
+                                                ? "bg-white text-black font-bold"
+                                                : "text-white/50 hover:text-white hover:bg-white/10"
+                                        )}
+                                    >
+                                        {m.toString().padStart(2, '0')}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* AM/PM toggle */}
+                            <div className="flex flex-col gap-1">
+                                <button
+                                    type="button"
+                                    onClick={() => { if (currentAmPm !== 'AM' && isValid) handleAmPmToggle(); }}
+                                    className={cn(
+                                        "px-2 py-1.5 text-[10px] font-bold transition-all",
+                                        currentAmPm === 'AM' && isValid
+                                            ? "bg-white text-black"
+                                            : "text-white/40 hover:text-white hover:bg-white/10"
+                                    )}
+                                >
+                                    AM
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => { if (currentAmPm !== 'PM' && isValid) handleAmPmToggle(); }}
+                                    className={cn(
+                                        "px-2 py-1.5 text-[10px] font-bold transition-all",
+                                        currentAmPm === 'PM' && isValid
+                                            ? "bg-white text-black"
+                                            : "text-white/40 hover:text-white hover:bg-white/10"
+                                    )}
+                                >
+                                    PM
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
 
 interface Event {
     id: string;
@@ -198,10 +482,10 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                 )}
             </div>
 
-            <div className="flex-1 bg-black/50 border border-white/10 flex overflow-hidden">
+            <div className="flex-1 bg-white/5 flex overflow-hidden">
                 {/* Events List */}
-                <div className={`${(selectedEvent || isEditing) ? 'hidden md:flex' : 'flex'} w-full md:w-1/3 flex-col border-r border-white/10`}>
-                    <div className="p-4 border-b border-white/10 bg-black/40 flex items-center justify-between">
+                <div className={`${(selectedEvent || isEditing) ? 'hidden md:flex' : 'flex'} w-full md:w-1/3 flex-col border-r border-white/5`}>
+                    <div className="p-4 border-b border-white/5 bg-white/5 flex items-center justify-between">
                         <h2 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
                             <CalendarIcon className="w-4 h-4" />
                             Events
@@ -215,7 +499,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                 <div className="text-[10px] font-mono uppercase tracking-widest">Loading...</div>
                             </div>
                         ) : events.length === 0 ? (
-                            <div className="p-12 flex flex-col items-center justify-center text-white/20 gap-4 border border-dashed border-white/10 m-2">
+                            <div className="p-12 flex flex-col items-center justify-center text-white/20 gap-4 m-2">
                                 <CalendarIcon className="w-8 h-8 opacity-20" />
                                 <div className="text-[10px] font-mono uppercase tracking-widest">No events found</div>
                             </div>
@@ -268,7 +552,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                         isEditing ? (
                             // Edit Form
                             <div className="p-6 overflow-y-auto">
-                                <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/10">
+                                <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/5">
                                     <h2 className="text-xl font-black text-white uppercase tracking-tighter">
                                         {selectedEvent?.id ? 'Edit Event' : 'New Event'}
                                     </h2>
@@ -298,11 +582,9 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-[10px] uppercase font-black tracking-[0.2em] text-white/40 mb-2">Date & Time</label>
-                                            <input
-                                                type="datetime-local"
-                                                className="w-full bg-black/50 border border-white/10 p-3 text-white text-sm font-mono focus:border-white/40 focus:outline-none focus:bg-white/5 transition-colors"
-                                                value={editForm.event_date ? new Date(editForm.event_date).toISOString().slice(0, 16) : ''}
-                                                onChange={e => setEditForm({ ...editForm, event_date: new Date(e.target.value).toISOString() })}
+                                            <EventDateTimePicker
+                                                value={editForm.event_date || ''}
+                                                onChange={(val) => setEditForm({ ...editForm, event_date: val })}
                                             />
                                         </div>
                                         <div>
@@ -389,7 +671,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                             // View Details
                             <div className="flex flex-col h-full">
                                 {/* Header */}
-                                <div className="p-6 border-b border-white/10 flex justify-between items-start bg-black/40">
+                                <div className="p-6 border-b border-white/5 flex justify-between items-start bg-white/5">
                                     <div>
                                         <div className="flex items-center gap-3 mb-2">
                                             <button
@@ -433,14 +715,14 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                                 setEditForm(selectedEvent!);
                                                 setIsEditing(true);
                                             }}
-                                            className="p-2 border border-white/10 hover:bg-white/10 text-white/60 hover:text-white transition"
+                                            className="p-2 hover:bg-white/10 text-white/60 hover:text-white transition"
                                             title="Edit"
                                         >
                                             <PencilSquareIcon className="w-4 h-4" />
                                         </button>
                                         <button
                                             onClick={() => handleDeleteEvent(selectedEvent!.id)}
-                                            className="p-2 border border-red-500/30 hover:bg-red-500/10 text-red-400 hover:text-red-300 transition"
+                                            className="p-2 hover:bg-red-500/10 text-red-400 hover:text-red-300 transition"
                                             title="Delete"
                                         >
                                             <TrashIcon className="w-4 h-4" />
@@ -450,7 +732,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
 
                                 {/* Description */}
                                 {selectedEvent!.description && (
-                                    <div className="p-6 border-b border-white/10 bg-black/30">
+                                    <div className="p-6 border-b border-white/5 bg-black/30">
                                         <p className="text-white/80 leading-relaxed whitespace-pre-wrap text-sm">{selectedEvent!.description}</p>
                                     </div>
                                 )}
@@ -467,7 +749,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                         </div>
                                     </div>
 
-                                    <div className="flex-1 overflow-y-auto border border-white/10 bg-black/40">
+                                    <div className="flex-1 overflow-y-auto bg-white/5">
                                         {loadingTickets ? (
                                             <div className="p-12 text-center text-[10px] font-mono uppercase tracking-widest text-white/40">Loading tickets...</div>
                                         ) : tickets.length === 0 ? (

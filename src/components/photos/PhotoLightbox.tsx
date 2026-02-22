@@ -49,6 +49,7 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-8"
+                onContextMenu={(e) => e.preventDefault()}
             >
                 {/* Backdrop */}
                 <div

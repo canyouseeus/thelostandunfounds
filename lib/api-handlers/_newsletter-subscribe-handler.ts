@@ -28,7 +28,7 @@ export default async function handler(
   // Siteverify API requires application/x-www-form-urlencoded format, not JSON
   const isDev = process.env.VERCEL_ENV !== 'production' && process.env.NODE_ENV !== 'production'
   const turnstileSecret = process.env.TURNSTILE_SECRET_KEY
-  
+
   // Only verify Turnstile in production
   if (!isDev && turnstileSecret) {
     if (turnstileToken) {
@@ -46,14 +46,14 @@ export default async function handler(
       const verifyData = await verifyResponse.json()
       if (!verifyData.success) {
         console.error('Turnstile verification failed:', verifyData)
-        return res.status(400).json({ 
-          error: 'Security verification failed. Please try again.' 
+        return res.status(400).json({
+          error: 'Security verification failed. Please try again.'
         })
       }
     } else {
       // If Turnstile is configured but no token provided in production, reject
-      return res.status(400).json({ 
-        error: 'Security verification required. Please refresh and try again.' 
+      return res.status(400).json({
+        error: 'Security verification required. Please refresh and try again.'
       })
     }
   }
@@ -66,8 +66,8 @@ export default async function handler(
 
     if (!supabaseUrl || !supabaseKey) {
       console.error('Missing Supabase credentials')
-      return res.status(500).json({ 
-        error: 'Database service not configured' 
+      return res.status(500).json({
+        error: 'Database service not configured'
       })
     }
 
@@ -86,9 +86,9 @@ export default async function handler(
     if (insertError) {
       // If email already exists, that's okay
       if (insertError.code === '23505') {
-        return res.status(200).json({ 
-          success: true, 
-          message: 'Email already subscribed!' 
+        return res.status(200).json({
+          success: true,
+          message: 'Email already subscribed!'
         })
       }
       throw insertError
@@ -148,7 +148,7 @@ export default async function handler(
         let accountId: string | null = null
         let accountInfo: any = null
         let actualFromEmail: string = fromEmail
-        
+
         if (accountInfoResponse.ok) {
           const accounts = await accountInfoResponse.json()
           console.log('Zoho accounts response:', JSON.stringify(accounts, null, 2))
@@ -172,13 +172,13 @@ export default async function handler(
           const emailParts = fromEmail.split('@')
           accountId = emailParts[0]
         }
-        
+
         console.log('Using account ID:', accountId, 'configured email:', fromEmail, 'actual email:', actualFromEmail)
 
         if (accountId) {
           // Send welcome/confirmation email to user
           const mailApiUrl = `https://mail.zoho.com/api/accounts/${accountId}/messages`
-          
+
           const emailResponse = await fetch(mailApiUrl, {
             method: 'POST',
             headers: {
@@ -290,6 +290,18 @@ export default async function handler(
             }
             throw new Error(errorMessage)
           }
+
+          // Welcome email sent successfully — track it in the database
+          try {
+            await supabase
+              .from('newsletter_subscribers')
+              .update({ welcome_email_sent_at: new Date().toISOString() })
+              .eq('email', email.toLowerCase().trim())
+            console.log(`Welcome email tracked for ${email}`)
+          } catch (trackingError: any) {
+            // Don't fail the subscription if tracking fails
+            console.error('Failed to track welcome email:', trackingError.message)
+          }
         } else {
           console.error('No account ID available for sending email')
           throw new Error('Failed to get email account ID')
@@ -303,8 +315,8 @@ export default async function handler(
         })
         // Continue - subscription was saved successfully
         // Return warning in response with diagnostic info
-        return res.status(200).json({ 
-          success: true, 
+        return res.status(200).json({
+          success: true,
           message: 'Successfully subscribed! However, confirmation email failed to send.',
           warning: 'Email sending error: ' + (emailError.message || 'Unknown error'),
           emailSaved: true,
@@ -315,8 +327,8 @@ export default async function handler(
     } else {
       console.warn('Zoho email credentials not configured - skipping email send')
       // Return diagnostic info when credentials are missing
-      return res.status(200).json({ 
-        success: true, 
+      return res.status(200).json({
+        success: true,
         message: 'Successfully subscribed! However, email sending is not configured.',
         warning: 'Zoho email credentials are missing. Check Vercel environment variables.',
         emailSaved: true,
@@ -330,8 +342,8 @@ export default async function handler(
       })
     }
 
-    return res.status(200).json({ 
-      success: true, 
+    return res.status(200).json({
+      success: true,
       message: 'Successfully subscribed! Check your email for confirmation.',
       emailConfig: emailConfig,
       emailSent: true
@@ -339,8 +351,8 @@ export default async function handler(
 
   } catch (error: any) {
     console.error('Newsletter subscription error:', error)
-    return res.status(500).json({ 
-      error: error.message || 'An error occurred. Please try again later.' 
+    return res.status(500).json({
+      error: error.message || 'An error occurred. Please try again later.'
     })
   }
 }
