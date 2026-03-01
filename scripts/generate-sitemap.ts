@@ -16,7 +16,7 @@ function normalizeDate(date: string | null | undefined): string {
   if (!date) {
     return new Date().toISOString();
   }
-  
+
   try {
     const dateObj = new Date(date);
     // Check if date is valid
@@ -48,7 +48,7 @@ async function generateSitemap() {
     // Fetch all published blog posts
     const { data: posts, error } = await supabase
       .from('blog_posts')
-      .select('slug, published_at, updated_at, created_at')
+      .select('slug, published_at, updated_at, created_at, subdomain')
       .eq('published', true)
       .order('published_at', { ascending: false });
 
@@ -88,8 +88,32 @@ async function generateSitemap() {
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
+
+  <!-- Events -->
+  <url>
+    <loc>${baseUrl}/events</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Gallery -->
+  <url>
+    <loc>${baseUrl}/gallery</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Contact -->
+  <url>
+    <loc>${baseUrl}/contact</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
   
-  <!-- About (from MORE menu) -->
+  <!-- About -->
   <url>
     <loc>${baseUrl}/about</loc>
     <lastmod>${currentDate}</lastmod>
@@ -97,31 +121,116 @@ async function generateSitemap() {
     <priority>0.6</priority>
   </url>
   
-  <!-- Privacy Policy (from MORE menu) -->
+  <!-- Pricing -->
+  <url>
+    <loc>${baseUrl}/pricing</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- Support -->
+  <url>
+    <loc>${baseUrl}/support</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- Book Club -->
+  <url>
+    <loc>${baseUrl}/book-club</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Gearheads -->
+  <url>
+    <loc>${baseUrl}/gearheads</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Borderlands -->
+  <url>
+    <loc>${baseUrl}/borderlands</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Science -->
+  <url>
+    <loc>${baseUrl}/science</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- New Theory -->
+  <url>
+    <loc>${baseUrl}/newtheory</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Privacy Policy -->
   <url>
     <loc>${baseUrl}/privacy</loc>
     <lastmod>${currentDate}</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.3</priority>
   </url>
   
-  <!-- Terms and Conditions (from MORE menu) -->
+  <!-- Terms and Conditions -->
   <url>
     <loc>${baseUrl}/terms</loc>
     <lastmod>${currentDate}</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.3</priority>
   </url>`;
+
+    // Add individual galleries
+    const { data: libraries } = await supabase
+      .from('photo_libraries')
+      .select('slug, updated_at, created_at')
+      .eq('is_private', false);
+
+    if (libraries) {
+      console.log(`✅ Found ${libraries.length} public galleries`);
+      for (const lib of libraries) {
+        const libUrl = `${baseUrl}/gallery/${lib.slug}`;
+        const lastmod = normalizeDate(lib.updated_at || lib.created_at);
+        sitemap += `
+  
+  <!-- Gallery: ${lib.slug} -->
+  <url>
+    <loc>${libUrl}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>`;
+      }
+    }
 
     // Add blog posts
     if (posts && posts.length > 0) {
       console.log(`✅ Found ${posts.length} published blog posts`);
-      
+
       for (const post of posts) {
-        const postUrl = `${baseUrl}/thelostarchives/${post.slug}`;
+        // Determine path based on subdomain/column
+        let fullUrlPath = `/thelostarchives/${post.slug}`;
+        if (post.subdomain) {
+          fullUrlPath = `/blog/${post.subdomain}/${post.slug}`;
+        }
+
+        const postUrl = `${baseUrl}${fullUrlPath}`;
         // Normalize the date to ensure it's valid ISO 8601 format
         const lastmod = normalizeDate(post.updated_at || post.published_at || post.created_at);
-        
+
         sitemap += `
   
   <!-- Blog post: ${post.slug} -->
@@ -143,7 +252,7 @@ async function generateSitemap() {
     // Write sitemap to dist directory (output directory)
     const distPath = join(process.cwd(), 'dist');
     const sitemapPath = join(distPath, 'sitemap.xml');
-    
+
     writeFileSync(sitemapPath, sitemap, 'utf-8');
     // Count: Homepage + Shop + Blog listing + About + Privacy + Terms + blog posts
     const totalUrls = (posts?.length || 0) + 6;

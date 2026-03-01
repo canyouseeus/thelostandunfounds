@@ -61,21 +61,38 @@ async function preRenderBlogPosts() {
     await mkdir(blogDir, { recursive: true });
 
     // Pre-render blog posts in parallel
-    // Limit concurrency if needed, but for < 1000 posts Promise.all is usually fine 
-    // and fastest for I/O bound tasks
     await Promise.all(posts.map(async (post) => {
       try {
         const slug = post.slug;
         const title = post.seo_title || post.title;
-        const fullTitle = `${title} | THE LOST ARCHIVES | THE LOST+UNFOUNDS`;
-        const description = post.seo_description || post.excerpt ||
-          post.content.substring(0, 160).replace(/\n/g, ' ').trim();
+
+        // Determine path based on subdomain/column
+        let folderPath = 'thelostarchives';
+        let fullUrlPath = `/thelostarchives/${slug}`;
+        let categoryName = 'THE LOST ARCHIVES';
+
+        if (post.subdomain) {
+          folderPath = `blog/${post.subdomain}`;
+          fullUrlPath = `/blog/${post.subdomain}/${slug}`;
+          categoryName = post.subdomain.replace(/-/g, ' ').toUpperCase();
+        }
+
+        const fullTitle = `${title} | ${categoryName} | THE LOST+UNFOUNDS`;
+
+        let description = post.seo_description || post.excerpt ||
+          post.content.substring(0, 300).replace(/<[^>]*>?/gm, ' ').replace(/\n/g, ' ').trim();
+
+        // Truncate description for SEO (optimal is ~155 chars)
+        if (description.length > 155) {
+          description = description.substring(0, 152) + '...';
+        }
+
         const ogImage = post.og_image_url || post.featured_image;
         const publishedDate = post.published_at || post.created_at;
-        const postUrl = `https://www.thelostandunfounds.com/thelostarchives/${slug}`;
+        const postUrl = `https://www.thelostandunfounds.com${fullUrlPath}`;
 
-        // Escape HTML
-        const escapeHtml = (str: string) => {
+        // Escape HTML for attributes
+        const escapeAttr = (str: string) => {
           return str
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
@@ -84,16 +101,35 @@ async function preRenderBlogPosts() {
             .replace(/'/g, '&#039;');
         };
 
+        // Basic Markdown to HTML converter for pre-rendering
+        const simpleMdToHtml = (md: string) => {
+          if (!md) return '';
+          return md
+            .split(/\n\n+/)
+            .map(block => {
+              block = block.trim();
+              if (block.startsWith('# ')) return `<h1 style="font-size: 2.5rem; margin-top: 2rem; margin-bottom: 1rem;">${block.substring(2)}</h1>`;
+              if (block.startsWith('## ')) return `<h2 style="font-size: 1.8rem; margin-top: 2rem; margin-bottom: 1rem;">${block.substring(3)}</h2>`;
+              if (block.startsWith('### ')) return `<h3 style="font-size: 1.4rem; margin-top: 1.5rem; margin-bottom: 0.8rem;">${block.substring(4)}</h3>`;
+              if (block.startsWith('![')) {
+                const match = block.match(/!\[(.*?)\]\((.*?)\)/);
+                if (match) return `<img src="${match[2]}" alt="${escapeAttr(match[1])}" style="max-width: 100%; height: auto; margin: 2rem 0; border-radius: 4px;" />`;
+              }
+              return `<p style="margin-bottom: 1.5rem; line-height: 1.8; font-size: 1.1rem;">${block.replace(/\n/g, '<br>')}</p>`;
+            })
+            .join('\n');
+        };
+
         let html = htmlTemplate;
 
         // Replace title
         html = html.replace(
           /<title>.*?<\/title>/i,
-          `<title>${escapeHtml(fullTitle)}</title>`
+          `<title>${escapeAttr(fullTitle)}</title>`
         );
 
         // Add or replace canonical URL
-        const canonicalTag = `<link rel="canonical" href="${escapeHtml(postUrl)}" />`;
+        const canonicalTag = `<link rel="canonical" href="${escapeAttr(postUrl)}" />`;
         if (html.includes('rel="canonical"')) {
           html = html.replace(
             /<link\s+rel=["']canonical["'][^>]*>/i,
@@ -106,55 +142,26 @@ async function preRenderBlogPosts() {
         // Replace meta description
         html = html.replace(
           /<meta\s+name=["']description["'][^>]*>/i,
-          `<meta name="description" content="${escapeHtml(description)}" />`
+          `<meta name="description" content="${escapeAttr(description)}" />`
         );
 
         // Replace OG tags
-        html = html.replace(
-          /<meta\s+property=["']og:title["'][^>]*>/i,
-          `<meta property="og:title" content="${escapeHtml(title)}" />`
-        );
-        html = html.replace(
-          /<meta\s+property=["']og:description["'][^>]*>/i,
-          `<meta property="og:description" content="${escapeHtml(description)}" />`
-        );
-        html = html.replace(
-          /<meta\s+property=["']og:url["'][^>]*>/i,
-          `<meta property="og:url" content="${escapeHtml(postUrl)}" />`
-        );
-        html = html.replace(
-          /<meta\s+property=["']og:type["'][^>]*>/i,
-          `<meta property="og:type" content="article" />`
-        );
+        html = html.replace(/<meta\s+property=["']og:title["'][^>]*>/i, `<meta property="og:title" content="${escapeAttr(title)}" />`);
+        html = html.replace(/<meta\s+property=["']og:description["'][^>]*>/i, `<meta property="og:description" content="${escapeAttr(description)}" />`);
+        html = html.replace(/<meta\s+property=["']og:url["'][^>]*>/i, `<meta property="og:url" content="${escapeAttr(postUrl)}" />`);
+        html = html.replace(/<meta\s+property=["']og:type["'][^>]*>/i, `<meta property="og:type" content="article" />`);
         if (ogImage) {
-          html = html.replace(
-            /<meta\s+property=["']og:image["'][^>]*>/i,
-            `<meta property="og:image" content="${escapeHtml(ogImage)}" />`
-          );
+          const ogImgTag = `<meta property="og:image" content="${escapeAttr(ogImage)}" />`;
+          if (html.includes('og:image')) {
+            html = html.replace(/<meta\s+property=["']og:image["'][^>]*>/i, ogImgTag);
+          } else {
+            html = html.replace('</head>', `  ${ogImgTag}\n</head>`);
+          }
         }
 
         // Replace Twitter tags
-        html = html.replace(
-          /<meta\s+name=["']twitter:title["'][^>]*>/i,
-          `<meta name="twitter:title" content="${escapeHtml(title)}" />`
-        );
-        html = html.replace(
-          /<meta\s+name=["']twitter:description["'][^>]*>/i,
-          `<meta name="twitter:description" content="${escapeHtml(description)}" />`
-        );
-
-        // Add keywords if available
-        if (post.seo_keywords) {
-          const keywordsMeta = `<meta name="keywords" content="${escapeHtml(post.seo_keywords)}" />`;
-          if (!html.includes('name="keywords"')) {
-            html = html.replace('</head>', `  ${keywordsMeta}\n</head>`);
-          } else {
-            html = html.replace(
-              /<meta\s+name=["']keywords["'][^>]*>/i,
-              keywordsMeta
-            );
-          }
-        }
+        html = html.replace(/<meta\s+name=["']twitter:title["'][^>]*>/i, `<meta name="twitter:title" content="${escapeAttr(title)}" />`);
+        html = html.replace(/<meta\s+name=["']twitter:description["'][^>]*>/i, `<meta name="twitter:description" content="${escapeAttr(description)}" />`);
 
         // Add BlogPosting structured data
         const structuredData = {
@@ -175,43 +182,103 @@ async function preRenderBlogPosts() {
             "url": "https://www.thelostandunfounds.com"
           },
           ...(ogImage && { "image": ogImage }),
-          "mainEntityOfPage": {
-            "@type": "WebPage",
-            "@id": postUrl
-          }
+          "articleBody": post.content.replace(/<[^>]*>?/gm, ' ').substring(0, 5000)
         };
+
+        // Breadcrumb Schema
+        const breadcrumbSchema = {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://www.thelostandunfounds.com"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": categoryName,
+              "item": `https://www.thelostandunfounds.com/${folderPath}`
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": title,
+              "item": postUrl
+            }
+          ]
+        };
+
+        const allSchema = [structuredData, breadcrumbSchema];
 
         // Replace structured data
         if (html.includes('application/ld+json')) {
           html = html.replace(
             /<script\s+type=["']application\/ld\+json["']>[\s\S]*?<\/script>/i,
-            `<script type="application/ld+json">\n    ${JSON.stringify(structuredData, null, 2)}\n    </script>`
+            `<script type="application/ld+json">\n    ${JSON.stringify(allSchema, null, 2)}\n    </script>`
           );
         } else {
           html = html.replace(
             '</head>',
-            `  <script type="application/ld+json">\n    ${JSON.stringify(structuredData, null, 2)}\n    </script>\n</head>`
+            `  <script type="application/ld+json">\n    ${JSON.stringify(allSchema, null, 2)}\n    </script>\n</head>`
           );
         }
 
+        // Generate Recent Articles for static navigation
+        const recentPosts = posts
+          .filter(p => p.id !== post.id)
+          .slice(0, 3);
+
+        const recentArticlesHtml = recentPosts.length > 0 ? `
+          <div style="margin-top: 4rem; padding-top: 3rem; border-top: 1px solid rgba(255,255,255,0.1); text-align: left;">
+            <h3 style="font-size: 1.2rem; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.5); margin-bottom: 2rem;">Recent Articles</h3>
+            <div style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
+              ${recentPosts.map(rp => {
+          const rpUrl = rp.subdomain ? `/blog/${rp.subdomain}/${rp.slug}` : `/thelostarchives/${rp.slug}`;
+          return `
+                <a href="${rpUrl}" style="color: white; text-decoration: none; display: block; border-left: 1px solid rgba(255,255,255,0.2); padding-left: 1rem;">
+                  <h4 style="font-size: 1.1rem; font-weight: bold; margin-bottom: 0.5rem;">${escapeAttr(rp.title)}</h4>
+                  <p style="font-size: 0.9rem; color: rgba(255,255,255,0.5);">${escapeAttr(rp.excerpt || '').substring(0, 100)}...</p>
+                </a>
+                `;
+        }).join('\n')}
+            </div>
+          </div>
+        ` : '';
+
         // Add pre-rendered blog post content
-        const contentPreview = post.content.substring(0, 2000).replace(/\n\n+/g, ' ').replace(/\n/g, ' ');
-        const excerptHtml = post.excerpt ? `<p style="font-size: 1.25rem; color: rgba(255, 255, 255, 0.8); margin-bottom: 2rem; line-height: 1.6;">${escapeHtml(post.excerpt)}</p>` : '';
+        const excerptHtml = post.excerpt ? `<p style="font-size: 1.4rem; color: rgba(255, 255, 255, 0.7); margin-bottom: 3rem; line-height: 1.6; font-style: italic; border-left: 2px solid rgba(255,255,255,0.2); padding-left: 1.5rem;">${escapeAttr(post.excerpt)}</p>` : '';
+        const featuredImageHtml = ogImage ? `<img src="${escapeAttr(ogImage)}" alt="${escapeAttr(title)}" style="width: 100%; height: auto; margin-bottom: 3rem; border-radius: 4px;" />` : '';
 
         const preRenderContent = `
-          <div id="pre-render-blog" style="background: black; color: white; min-height: 100vh; padding: 2rem; max-width: 900px; margin: 0 auto;">
-            <h1 style="font-size: 2.5rem; margin-bottom: 1rem; font-weight: normal; line-height: 1.2;">${escapeHtml(post.title)}</h1>
+          <article id="pre-render-blog" style="background: black; color: white; min-height: 100vh; padding: 4rem 2rem; max-width: 800px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;">
+            <header style="margin-bottom: 4rem;">
+              <span style="text-transform: uppercase; letter-spacing: 0.2em; font-size: 0.8rem; color: rgba(255,255,255,0.5); font-weight: bold;">${categoryName}</span>
+              <h1 style="font-size: 3.5rem; margin-top: 1rem; margin-bottom: 1.5rem; font-weight: 800; line-height: 1.1; letter-spacing: -0.02em;">${escapeAttr(post.title)}</h1>
+              <div style="color: rgba(255, 255, 255, 0.5); font-size: 0.9rem; font-weight: 500; display: flex; gap: 1rem; align-items: center;">
+                <span>BY THE LOST+UNFOUNDS</span>
+                <span style="width: 4px; height: 4px; background: rgba(255,255,255,0.2); rounded-full;"></span>
+                <time datetime="${publishedDate}">${new Date(publishedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</time>
+              </div>
+            </header>
+
+            ${featuredImageHtml}
             ${excerptHtml}
-            <div style="color: rgba(255, 255, 255, 0.9); line-height: 1.8; margin-bottom: 2rem; font-size: 1.1rem;">
-              ${escapeHtml(contentPreview)}${post.content.length > 2000 ? '...' : ''}
+
+            <div class="content" style="color: rgba(255, 255, 255, 0.9);">
+              ${simpleMdToHtml(post.content)}
             </div>
-            <p style="margin-top: 2rem; color: rgba(255, 255, 255, 0.6); font-size: 0.875rem;">
-              Published: ${new Date(publishedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-            </p>
-            <p style="margin-top: 1rem; color: rgba(255, 255, 255, 0.8);">
-              <a href="${postUrl}" style="color: rgba(255, 255, 255, 0.9); text-decoration: underline;">Read full article →</a>
-            </p>
-          </div>
+
+            <footer style="margin-top: 6rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 3rem; text-align: center;">
+              ${recentArticlesHtml}
+              <p style="margin-top: 4rem; margin-bottom: 2rem; color: rgba(255, 255, 255, 0.8); font-size: 1.1rem;">
+                Explore more from <a href="https://www.thelostandunfounds.com" style="color: white; text-decoration: underline; font-weight: bold;">THE LOST+UNFOUNDS</a>
+              </p>
+              <a href="${postUrl}" style="display: inline-block; background: white; color: black; padding: 1rem 2rem; text-decoration: none; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.9rem;">Back to Full Experience</a>
+            </footer>
+          </article>
         `;
 
         // Replace pre-render content
@@ -228,9 +295,10 @@ async function preRenderBlogPosts() {
         }
 
         // Write the pre-rendered HTML file
-        const filePath = join(blogDir, `${slug}.html`);
+        const finalDir = join(distPath, folderPath);
+        await mkdir(finalDir, { recursive: true });
+        const filePath = join(finalDir, `${slug}.html`);
         await writeFile(filePath, html, 'utf-8');
-        // console.log(`  ✅ Pre-rendered: ${slug}`); // Optional: commented out to reduce noise
       } catch (postErr) {
         console.error(`❌ Error rendering post ${post.slug}:`, postErr);
       }
@@ -244,7 +312,6 @@ async function preRenderBlogPosts() {
   }
 }
 
-// Run the pre-rendering (this script is executed directly)
 preRenderBlogPosts().catch((err) => {
   console.error('Fatal error:', err);
   process.exit(1);
