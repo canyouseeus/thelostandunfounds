@@ -2,6 +2,9 @@
  * Image Sitemap Generator
  * Creates image-sitemap.xml for Google Image Search indexing
  */
+import { config } from 'dotenv';
+config({ path: '.env.local' });
+
 import { createClient } from '@supabase/supabase-js';
 import { writeFile } from 'fs/promises';
 import { join } from 'path';

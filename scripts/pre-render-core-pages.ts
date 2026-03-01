@@ -2,6 +2,9 @@
  * Build-time Core Pages Pre-renderer
  * Generates static HTML folders for core routes so bots can read them immediately.
  */
+import { config } from 'dotenv';
+config({ path: '.env.local' });
+
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { createClient } from '@supabase/supabase-js';

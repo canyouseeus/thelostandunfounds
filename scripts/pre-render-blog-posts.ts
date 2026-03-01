@@ -4,6 +4,9 @@
  * Runs during build, doesn't require serverless functions
  */
 
+import { config } from 'dotenv';
+config({ path: '.env.local' });
+
 import { createClient } from '@supabase/supabase-js';
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';

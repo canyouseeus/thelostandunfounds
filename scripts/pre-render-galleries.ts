@@ -2,6 +2,9 @@
  * Build-time Gallery Pre-renderer
  * Generates static HTML for public photo galleries
  */
+import { config } from 'dotenv';
+config({ path: '.env.local' });
+
 import { createClient } from '@supabase/supabase-js';
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
