@@ -3,6 +3,7 @@ Allow: /
 
 # Sitemap location
 Sitemap: https://www.thelostandunfounds.com/sitemap.xml
+Sitemap: https://www.thelostandunfounds.com/image-sitemap.xml
 
 # Allow all bots to access the site
 User-agent: Googlebot
