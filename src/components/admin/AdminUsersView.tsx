@@ -126,14 +126,14 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
                 placeholder="Search by email, username, or resources..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-black/50 rounded-none text-white placeholder-white/40 focus:border-white/30 focus:outline-none"
+                className="w-full pl-10 pr-4 py-2 bg-black/50 rounded-none text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors"
               />
             </div>
             <div className="flex gap-2">
               <select
                 value={filterTier}
                 onChange={(e) => setFilterTier(e.target.value as any)}
-                className="px-4 py-2 bg-black/50 rounded-none text-white focus:border-white/30 focus:outline-none"
+                className="px-4 py-2 bg-black/50 rounded-none text-white focus:outline-none focus:bg-white/10 transition-colors"
               >
                 <option value="all">All Tiers</option>
                 <option value="free">Free</option>
@@ -143,7 +143,7 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
               <select
                 value={filterAdmin}
                 onChange={(e) => setFilterAdmin(e.target.value as any)}
-                className="px-4 py-2 bg-black/50 rounded-none text-white focus:border-white/30 focus:outline-none"
+                className="px-4 py-2 bg-black/50 rounded-none text-white focus:outline-none focus:bg-white/10 transition-colors"
               >
                 <option value="all">All Users</option>
                 <option value="admin">Admins</option>
@@ -183,7 +183,7 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
                       setSelectedUsers(new Set());
                     }
                   }}
-                  className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-none text-red-400 text-sm transition"
+                  className="px-4 py-2 bg-red-500/20 hover:bg-red-500/40 rounded-none text-red-500 text-sm transition"
                 >
                   Ban Selected
                 </button>
@@ -226,13 +226,13 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className="text-white font-medium truncate">{user.username || user.email}</span>
                       {user.isAdmin && (
-                        <span className="px-2 py-0.5 text-[10px] bg-purple-500/20 text-purple-400 border border-purple-500/30 font-black tracking-tighter">
+                        <span className="px-2 py-0.5 text-[10px] bg-purple-500/20 text-purple-400 font-black tracking-tighter">
                           ADMIN
                         </span>
                       )}
-                      <span className={`px-2 py-0.5 text-[10px] font-black tracking-tighter border ${user.tier === 'free' ? 'bg-white/5 text-white/60 border-white/10' :
-                        user.tier === 'premium' ? 'bg-yellow-400/10 text-yellow-400 border-yellow-400/20' :
-                          'bg-purple-400/10 text-purple-400 border-purple-400/20'
+                      <span className={`px-2 py-0.5 text-[10px] font-black tracking-tighter ${user.tier === 'free' ? 'bg-white/5 text-white/60' :
+                        user.tier === 'premium' ? 'bg-yellow-400/10 text-yellow-400' :
+                          'bg-purple-400/10 text-purple-400'
                         }`}>
                         {user.tier.toUpperCase()}
                       </span>
@@ -241,7 +241,7 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
                       {user.resources?.hasBlog && (
                         <button
                           onClick={() => onNavigateToSection?.('blog')}
-                          className="flex items-center gap-1 px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-black hover:bg-blue-500/20 transition-colors tracking-tighter"
+                          className="flex items-center gap-1 px-2 py-0.5 bg-blue-500/10 text-blue-400 text-[10px] font-black hover:bg-blue-500/20 transition-colors tracking-tighter"
                         >
                           <BookOpenIcon className="w-2.5 h-2.5" />
                           BLOG
@@ -250,7 +250,7 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
                       {user.resources?.galleries && user.resources.galleries.length > 0 && (
                         <button
                           onClick={() => onNavigateToSection?.('gallery')}
-                          className="flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black hover:bg-emerald-500/20 transition-colors tracking-tighter"
+                          className="flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black hover:bg-emerald-500/20 transition-colors tracking-tighter"
                         >
                           <ImageIcon className="w-2.5 h-2.5" />
                           {user.resources.galleries.length === 1 ? '1 GALLERY' : `${user.resources.galleries.length} GALLERIES`}

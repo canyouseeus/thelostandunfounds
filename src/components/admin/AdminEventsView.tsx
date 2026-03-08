@@ -670,7 +670,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                     <div className="flex-1 bg-black flex h-full overflow-hidden rounded-none">
                         {/* Events List */}
                         <div className={(selectedEvent || isEditing) ? 'hidden' : 'flex w-full md:w-1/3 flex-col bg-black rounded-none overflow-hidden'}>
-                            <div className="p-4 bg-black border-b border-white/10">
+                            <div className="p-4 bg-black border-none">
                                 <div className="flex items-center justify-between mb-3">
                                     <h2 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
                                         <CalendarIcon className="w-4 h-4" />
@@ -732,7 +732,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                         >
                                             <div className="flex justify-between items-start mb-3">
                                                 <span className={cn(
-                                                    "text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 border",
+                                                    "text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 border-none",
                                                     getStatusColor(event.status)
                                                 )}>
                                                     {event.status}
@@ -927,7 +927,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                             </div>
 
                                             {(editForm.settings?.pricing_format === 'tickets' || !editForm.settings?.pricing_format) && (
-                                                <div className="space-y-4 pt-4 border-t border-white/10 text-left animate-in fade-in duration-300">
+                                                <div className="space-y-4 pt-4 text-left animate-in fade-in duration-300">
                                                     <div className="flex items-center justify-between">
                                                         <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white">Ticket Tiers</h4>
                                                         <button
@@ -950,7 +950,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                                     </div>
 
                                                     {(editForm.ticket_tiers || []).length === 0 ? (
-                                                        <div className="text-[10px] font-mono text-white/20 uppercase tracking-widest text-center py-4 border border-dashed border-white/5">
+                                                        <div className="text-[10px] font-mono text-white/20 uppercase tracking-widest text-center py-4">
                                                             No custom tiers defined. Uses base price.
                                                         </div>
                                                     ) : (
@@ -961,7 +961,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                                                         <label className="block text-[8px] uppercase font-black tracking-widest text-white/30 mb-1 leading-none">Tier Name</label>
                                                                         <input
                                                                             type="text"
-                                                                            className="w-full bg-black p-2 text-xs font-mono text-white rounded-none border-b border-white/10 focus:border-white focus:outline-none transition-colors"
+                                                                            className="w-full bg-black p-2 text-xs font-mono text-white rounded-none border-none focus:outline-none transition-colors"
                                                                             value={tier.name}
                                                                             onChange={e => {
                                                                                 const tiers = [...(editForm.ticket_tiers || [])];
@@ -976,7 +976,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                                                         <input
                                                                             type="number"
                                                                             step="0.01"
-                                                                            className="w-full bg-black p-2 text-xs font-mono text-white rounded-none border-b border-white/10 focus:border-white focus:outline-none transition-colors"
+                                                                            className="w-full bg-black p-2 text-xs font-mono text-white rounded-none border-none focus:outline-none transition-colors"
                                                                             value={tier.price_cents / 100}
                                                                             onChange={e => {
                                                                                 const tiers = [...(editForm.ticket_tiers || [])];
@@ -990,7 +990,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                                                             <label className="block text-[8px] uppercase font-black tracking-widest text-white/30 mb-1 leading-none">Cap</label>
                                                                             <input
                                                                                 type="number"
-                                                                                className="w-full bg-black p-2 text-xs font-mono text-white rounded-none border-b border-white/10 focus:border-white focus:outline-none transition-colors"
+                                                                                className="w-full bg-black p-2 text-xs font-mono text-white rounded-none border-none focus:outline-none transition-colors"
                                                                                 value={tier.capacity || ''}
                                                                                 onChange={e => {
                                                                                     const tiers = [...(editForm.ticket_tiers || [])];
@@ -1020,18 +1020,18 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                             )}
 
                                             {/* Advanced Settings Section */}
-                                            <div className="space-y-4 pt-4 border-t border-white/10 text-left">
+                                            <div className="space-y-4 pt-4 text-left">
                                                 <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white">Advanced Settings</h4>
 
                                                 {/* Promotion Settings */}
-                                                <div className="grid grid-cols-1 gap-4 p-3 bg-white/5 border border-white/10 mb-4">
+                                                <div className="grid grid-cols-1 gap-4 p-3 bg-white/5 mb-4">
                                                     <div className="flex items-center justify-between">
                                                         <label className="text-[10px] font-black uppercase tracking-widest text-white/60">Promote on Banner</label>
                                                         <button
                                                             type="button"
                                                             onClick={() => setEditForm({ ...editForm, is_promoted: !editForm.is_promoted })}
                                                             className={cn(
-                                                                "w-12 h-6 transition-colors border border-white/20 relative",
+                                                                "w-12 h-6 transition-colors relative",
                                                                 editForm.is_promoted ? "bg-white" : "bg-black"
                                                             )}
                                                         >
@@ -1051,7 +1051,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                                                     value={editForm.promotion_tagline || ''}
                                                                     onChange={(e) => setEditForm({ ...editForm, promotion_tagline: e.target.value })}
                                                                     placeholder="e.g. JOIN US FOR AN EXCLUSIVE NIGHT"
-                                                                    className="w-full bg-black border border-white/10 px-3 py-2 text-xs text-white focus:outline-none focus:border-white transition-colors uppercase tracking-widest"
+                                                                    className="w-full bg-black border-none px-3 py-2 text-xs text-white focus:outline-none transition-colors uppercase tracking-widest"
                                                                 />
                                                             </div>
                                                             <div className="space-y-1 text-left">
@@ -1061,7 +1061,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                                                     value={editForm.promotion_banner_url || ''}
                                                                     onChange={(e) => setEditForm({ ...editForm, promotion_banner_url: e.target.value })}
                                                                     placeholder="https://..."
-                                                                    className="w-full bg-black border border-white/10 px-3 py-2 text-xs text-white focus:outline-none focus:border-white transition-colors"
+                                                                    className="w-full bg-black border-none px-3 py-2 text-xs text-white focus:outline-none transition-colors"
                                                                 />
                                                             </div>
                                                         </>
@@ -1076,7 +1076,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                                             <input
                                                                 type="number"
                                                                 step="0.1"
-                                                                className="w-full bg-black p-2 text-xs font-mono text-white rounded-none border-b border-white/10 focus:border-white focus:outline-none transition-colors"
+                                                                className="w-full bg-black p-2 text-xs font-mono text-white rounded-none border-none focus:outline-none transition-colors"
                                                                 value={editForm.price_increment_percent || 0}
                                                                 onChange={e => setEditForm({ ...editForm, price_increment_percent: parseFloat(e.target.value) })}
                                                                 placeholder="e.g. 5.0"
@@ -1086,7 +1086,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                                             <label className="block text-[8px] uppercase font-black tracking-widest text-white/30 mb-1 leading-none">Increase every N tickets</label>
                                                             <input
                                                                 type="number"
-                                                                className="w-full bg-black p-2 text-xs font-mono text-white rounded-none border-b border-white/10 focus:border-white focus:outline-none transition-colors"
+                                                                className="w-full bg-black p-2 text-xs font-mono text-white rounded-none border-none focus:outline-none transition-colors"
                                                                 value={editForm.price_scaling_trigger || 0}
                                                                 onChange={e => setEditForm({ ...editForm, price_scaling_trigger: parseInt(e.target.value) })}
                                                                 placeholder="e.g. 10"
@@ -1101,7 +1101,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                                 )}
 
                                                 {/* Registration Form Builder */}
-                                                <div className="space-y-4 pt-4 border-t border-white/10 text-left animate-in fade-in duration-300">
+                                                <div className="space-y-4 pt-4 text-left animate-in fade-in duration-300">
                                                     <div className="flex items-center justify-between">
                                                         <div className="flex items-center gap-2">
                                                             <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white">Registration Form Fields</h4>
@@ -1132,19 +1132,19 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                                     </div>
 
                                                     {(editForm.settings?.custom_form || []).length === 0 ? (
-                                                        <div className="text-[10px] font-mono text-white/20 uppercase tracking-widest text-center py-4 border border-dashed border-white/5">
+                                                        <div className="text-[10px] font-mono text-white/20 uppercase tracking-widest text-center py-4">
                                                             No custom form fields. Only email/name collected.
                                                         </div>
                                                     ) : (
                                                         <div className="space-y-3">
                                                             {(editForm.settings?.custom_form || []).map((field, idx) => (
-                                                                <div key={field.id} className="bg-white/5 p-4 rounded-none group border border-white/5 space-y-3">
+                                                                <div key={field.id} className="bg-white/5 p-4 rounded-none group space-y-3">
                                                                     <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
                                                                         <div className="md:col-span-3">
                                                                             <label className="block text-[8px] uppercase font-black tracking-widest text-white/30 mb-1 leading-none">Field Label</label>
                                                                             <input
                                                                                 type="text"
-                                                                                className="w-full bg-black p-2 text-xs font-mono text-white rounded-none border-b border-white/10 focus:border-white focus:outline-none transition-colors"
+                                                                                className="w-full bg-black p-2 text-xs font-mono text-white rounded-none border-none focus:outline-none transition-colors"
                                                                                 value={field.label}
                                                                                 onChange={e => {
                                                                                     const fields = [...(editForm.settings?.custom_form || [])];
@@ -1157,7 +1157,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                                                         <div className="md:col-span-2">
                                                                             <label className="block text-[8px] uppercase font-black tracking-widest text-white/30 mb-1 leading-none">Type</label>
                                                                             <select
-                                                                                className="w-full bg-black p-2 text-xs font-mono text-white rounded-none border-b border-white/10 focus:border-white focus:outline-none transition-colors uppercase"
+                                                                                className="w-full bg-black p-2 text-xs font-mono text-white rounded-none border-none focus:outline-none transition-colors uppercase"
                                                                                 value={field.type}
                                                                                 onChange={e => {
                                                                                     const fields = [...(editForm.settings?.custom_form || [])];
@@ -1184,8 +1184,8 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                                                                     }}
                                                                                 />
                                                                                 <div className={cn(
-                                                                                    "w-4 h-4 border flex items-center justify-center transition-colors",
-                                                                                    field.required ? "bg-white border-white" : "bg-black border-white/20 group-hover/req:border-white/40"
+                                                                                    "w-4 h-4 flex items-center justify-center transition-colors",
+                                                                                    field.required ? "bg-white" : "bg-black group-hover/req:bg-white/10"
                                                                                 )}>
                                                                                     {field.required && <CheckCircleIconOutline className="w-3 h-3 text-black" />}
                                                                                 </div>
@@ -1205,10 +1205,10 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                                                         </div>
                                                                     </div>
                                                                     {field.type === 'select' && (
-                                                                        <div className="pl-4 border-l border-white/10 space-y-2 animate-in slide-in-from-left-2 duration-300">
+                                                                        <div className="pl-4 space-y-2 animate-in slide-in-from-left-2 duration-300">
                                                                             <label className="block text-[8px] uppercase font-black tracking-widest text-white/30 mb-1 leading-none">Options (one per line)</label>
                                                                             <textarea
-                                                                                className="w-full bg-black p-2 text-xs font-mono text-white rounded-none border-b border-white/10 focus:border-white focus:outline-none transition-colors min-h-[60px]"
+                                                                                className="w-full bg-black p-2 text-xs font-mono text-white rounded-none border-none focus:outline-none transition-colors min-h-[60px]"
                                                                                 value={field.options?.join('\n') || ''}
                                                                                 onChange={e => {
                                                                                     const fields = [...(editForm.settings?.custom_form || [])];
@@ -1230,7 +1230,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                                         <label className="block text-[8px] uppercase font-black tracking-widest text-white/30 mb-1 leading-none">Early Bird Deadline</label>
                                                         <input
                                                             type="datetime-local"
-                                                            className="w-full bg-black p-2 text-xs font-mono text-white rounded-none border-b border-white/10 focus:border-white focus:outline-none transition-colors"
+                                                            className="w-full bg-black p-2 text-xs font-mono text-white rounded-none border-none focus:outline-none transition-colors"
                                                             value={editForm.settings?.early_bird_deadline || ''}
                                                             onChange={e => setEditForm({
                                                                 ...editForm,
@@ -1242,7 +1242,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                                         <input
                                                             type="checkbox"
                                                             id="show_remaining"
-                                                            className="w-4 h-4 bg-black border border-white/20 rounded-none checked:bg-white checked:border-white transition-all cursor-pointer"
+                                                            className="w-4 h-4 bg-black rounded-none checked:bg-white transition-all cursor-pointer"
                                                             checked={editForm.settings?.show_remaining_capacity ?? true}
                                                             onChange={e => setEditForm({
                                                                 ...editForm,
@@ -1256,7 +1256,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                                     <label className="block text-[8px] uppercase font-black tracking-widest text-white/30 mb-1 leading-none">Refund Policy</label>
                                                     <input
                                                         type="text"
-                                                        className="w-full bg-black p-2 text-xs font-mono text-white rounded-none border-b border-white/10 focus:border-white focus:outline-none transition-colors"
+                                                        className="w-full bg-black p-2 text-xs font-mono text-white rounded-none border-none focus:outline-none transition-colors"
                                                         value={editForm.settings?.refund_policy || ''}
                                                         onChange={e => setEditForm({
                                                             ...editForm,
@@ -1292,7 +1292,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                                     </button>
                                                     <h2 className="text-2xl font-black text-white uppercase tracking-tighter">{selectedEvent!.title}</h2>
                                                     <span className={cn(
-                                                        "text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 border",
+                                                        "text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5",
                                                         getStatusColor(selectedEvent!.status)
                                                     )}>
                                                         {selectedEvent!.status}
@@ -1371,8 +1371,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                                 </button>
                                                 <button
                                                     onClick={() => handleDeleteEvent(selectedEvent!.id)}
-                                                    className="p-2 hover:bg-red-500/10 text-red-400 hover:text-red-300 transition"
-                                                    title={selectedEvent!.status === 'pending' ? 'Reject & Delete' : 'Delete'}
+                                                    className="flex-1 px-4 py-3 bg-red-500/20 text-red-500 hover:bg-red-500/30 transition rounded-none uppercase text-xs font-bold"                                                 title={selectedEvent!.status === 'pending' ? 'Reject & Delete' : 'Delete'}
                                                 >
                                                     {selectedEvent!.status === 'pending' ? <XCircleIcon className="w-4 h-4" /> : <TrashIcon className="w-4 h-4" />}
                                                 </button>
@@ -1381,18 +1380,18 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
 
                                         {/* Description */}
                                         {selectedEvent!.description && (
-                                            <div className="p-6 bg-black rounded-none mb-4 mx-6 border border-white/10">
+                                            <div className="bg-black rounded-none mb-4 mx-6">
                                                 <p className="text-white/80 leading-relaxed whitespace-pre-wrap text-sm">{selectedEvent!.description}</p>
                                             </div>
                                         )}
 
                                         {/* Stats Overview */}
                                         <div className="grid grid-cols-2 gap-4 px-6 mb-4">
-                                            <div className="bg-white/5 p-4 border border-white/10">
+                                            <div className="bg-white/5 p-4">
                                                 <div className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">Tickets Sold</div>
                                                 <div className="text-2xl font-black text-white">{tickets.length} / {selectedEvent?.capacity || '∞'}</div>
                                             </div>
-                                            <div className="bg-white/5 p-4 border border-white/10">
+                                            <div className="bg-white/5 p-4">
                                                 <div className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">RSVPs (Free)</div>
                                                 <div className="text-2xl font-black text-white">{rsvps.length}</div>
                                             </div>
@@ -1400,12 +1399,12 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
 
                                         {/* Tabs for Tickets/RSVPs */}
                                         <div className="flex-1 flex flex-col p-6 overflow-hidden">
-                                            <div className="flex border-b border-white/10 mb-4">
+                                            <div className="flex mb-4">
                                                 <button
                                                     onClick={() => setRSVPsActive(false)}
                                                     className={cn(
-                                                        "px-4 py-2 text-[10px] font-black uppercase tracking-widest border-b-2 transition-colors",
-                                                        !rsvpsActive ? "border-white text-white" : "border-transparent text-white/40 hover:text-white"
+                                                        "px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-colors",
+                                                        !rsvpsActive ? "text-white" : "text-white/40 hover:text-white"
                                                     )}
                                                 >
                                                     Tickets ({tickets.length})
@@ -1413,8 +1412,8 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                                 <button
                                                     onClick={() => setRSVPsActive(true)}
                                                     className={cn(
-                                                        "px-4 py-2 text-[10px] font-black uppercase tracking-widest border-b-2 transition-colors",
-                                                        rsvpsActive ? "border-white text-white" : "border-transparent text-white/40 hover:text-white"
+                                                        "px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-colors",
+                                                        rsvpsActive ? "text-white" : "text-white/40 hover:text-white"
                                                     )}
                                                 >
                                                     RSVPs ({rsvps.length})
@@ -1444,10 +1443,10 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                                                     <tr key={ticket.id} className="hover:bg-white/5 transition-colors">
                                                                         <td className="p-3">
                                                                             <span className={cn(
-                                                                                "text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 border",
-                                                                                ticket.status === 'valid' ? "text-green-400 border-green-500/20 bg-green-500/10" :
-                                                                                    ticket.status === 'used' ? "text-blue-400 border-blue-500/20 bg-blue-500/10" :
-                                                                                        "text-red-400 border-red-500/20 bg-red-500/10"
+                                                                                "text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5",
+                                                                                ticket.status === 'valid' ? "text-green-400 bg-green-500/10" :
+                                                                                    ticket.status === 'used' ? "text-blue-400 bg-blue-500/10" :
+                                                                                        "text-red-400 bg-red-500/10"
                                                                             )}>
                                                                                 {ticket.status}
                                                                             </span>

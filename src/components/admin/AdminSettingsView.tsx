@@ -48,17 +48,17 @@ export default function AdminSettingsView({ stats, onBack }: AdminSettingsViewPr
             <div className="space-y-2">
               <div className="flex items-center justify-between p-3 bg-white/5">
                 <span className="text-white/80 text-sm uppercase tracking-wide">Platform Status</span>
-                <span className="px-2 py-0.5 bg-green-500/10 text-green-400 border border-green-500/20 text-[10px] uppercase tracking-wider font-bold">Operational</span>
+                <span className="px-2 py-0.5 bg-green-500/10 text-green-400 text-[10px] uppercase tracking-wider font-bold">Operational</span>
               </div>
               <div className="flex items-center justify-between p-3 bg-white/5">
                 <span className="text-white/80 text-sm uppercase tracking-wide">Database Connection</span>
-                <span className="px-2 py-0.5 bg-green-500/10 text-green-400 border border-green-500/20 text-[10px] uppercase tracking-wider font-bold">Connected</span>
+                <span className="px-2 py-0.5 bg-green-500/10 text-green-400 text-[10px] uppercase tracking-wider font-bold">Connected</span>
               </div>
               <div className="flex items-center justify-between p-3 bg-white/5">
                 <span className="text-white/80 text-sm uppercase tracking-wide">Platform Health</span>
-                <span className={`px-2 py-0.5 border text-[10px] uppercase tracking-wider font-bold ${stats?.platformHealth === 'healthy' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                  stats?.platformHealth === 'warning' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' :
-                    'bg-red-500/10 text-red-400 border-red-500/20'
+                <span className={`px-2 py-0.5 text-[10px] uppercase tracking-wider font-bold ${stats?.platformHealth === 'healthy' ? 'bg-green-500/10 text-green-400' :
+                  stats?.platformHealth === 'warning' ? 'bg-yellow-500/10 text-yellow-400' :
+                    'bg-red-500/10 text-red-400'
                   }`}>
                   {stats?.platformHealth === 'healthy' ? 'Healthy' :
                     stats?.platformHealth === 'warning' ? 'Warning' : 'Critical'}
@@ -80,7 +80,7 @@ export default function AdminSettingsView({ stats, onBack }: AdminSettingsViewPr
               </div>
               <div className="flex items-center justify-between p-3 bg-white/5">
                 <span className="text-white/80 text-sm uppercase tracking-wide">Tool Status</span>
-                <span className="px-2 py-0.5 bg-green-500/10 text-green-400 border border-green-500/20 text-[10px] uppercase tracking-wider font-bold">Active</span>
+                <span className="px-2 py-0.5 bg-green-500/10 text-green-400 text-[10px] uppercase tracking-wider font-bold">Active</span>
               </div>
             </div>
           </div>

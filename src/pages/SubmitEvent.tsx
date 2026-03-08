@@ -143,7 +143,7 @@ export default function SubmitEvent() {
             <div className="min-h-screen bg-black text-white pt-24 pb-24 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-3xl mx-auto">
 
-                    <div className="mb-12 border-b border-white/10 pb-8">
+                    <div className="mb-12 pb-8">
                         <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter mb-4">
                             Submit an Event
                         </h1>
@@ -163,7 +163,7 @@ export default function SubmitEvent() {
                                 required
                                 value={formData.title}
                                 onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                                className="w-full bg-white/5 px-4 py-3 text-white focus:bg-white/10 outline-none transition-colors"
+                                className="w-full bg-white/5 px-4 py-3 text-white focus:bg-white/10 border-none outline-none transition-colors"
                                 placeholder="E.g., Summer Gallery Showcase"
                             />
                         </div>
@@ -178,7 +178,7 @@ export default function SubmitEvent() {
                                 rows={6}
                                 value={formData.description}
                                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                                className="w-full bg-white/5 px-4 py-3 text-white focus:bg-white/10 outline-none transition-colors resize-y"
+                                className="w-full bg-white/5 px-4 py-3 text-white focus:bg-white/10 border-none outline-none transition-colors resize-y"
                                 placeholder="Describe the event, what attendees can expect, and any important details..."
                             />
                         </div>
@@ -194,7 +194,7 @@ export default function SubmitEvent() {
                                     required
                                     value={formData.event_date}
                                     onChange={(e) => setFormData(prev => ({ ...prev, event_date: e.target.value }))}
-                                    className="w-full bg-white/5 px-4 py-3 text-white focus:bg-white/10 outline-none transition-colors [color-scheme:dark]"
+                                    className="w-full bg-white/5 px-4 py-3 text-white focus:bg-white/10 border-none outline-none transition-colors [color-scheme:dark]"
                                 />
                             </div>
 
@@ -207,7 +207,7 @@ export default function SubmitEvent() {
                                             <TooltipTrigger type="button" className="cursor-help">
                                                 <InformationCircleIcon className="w-4 h-4 text-white/40 hover:text-white transition-colors" />
                                             </TooltipTrigger>
-                                            <TooltipContent className="bg-zinc-900 border border-white/10 text-white rounded-none p-3 max-w-xs shadow-xl z-50">
+                                            <TooltipContent className="bg-zinc-900 text-white rounded-none p-3 max-w-xs shadow-xl z-50">
                                                 <div className="space-y-2 text-xs uppercase tracking-wider leading-relaxed">
                                                     <p><span className="text-white font-black">Tickets:</span> Standard paid entry with optional tiers and scaling.</p>
                                                     <p><span className="text-white font-black">RSVP:</span> Free registration for headcount tracking.</p>
@@ -229,7 +229,7 @@ export default function SubmitEvent() {
                                         },
                                         price_cents: e.target.value === 'rsvp' ? '0' : prev.price_cents
                                     }))}
-                                    className="w-full bg-white/5 px-4 py-3 text-white focus:bg-white/10 outline-none transition-colors appearance-none uppercase text-sm font-black tracking-widest"
+                                    className="w-full bg-white/5 px-4 py-3 text-white focus:bg-white/10 border-none outline-none transition-colors appearance-none uppercase text-sm font-black tracking-widest"
                                 >
                                     <option value="tickets">Tickets (Paid/Standard)</option>
                                     <option value="rsvp">RSVP (Free)</option>
@@ -240,7 +240,7 @@ export default function SubmitEvent() {
 
                             {/* External URL - Only shown if format is external */}
                             {formData.settings.pricing_format === 'external' && (
-                                <div className="md:col-span-2 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                                <div className="md:col-span-2 space-y-2 animate-in fade-in duration-200">
                                     <label className="block text-xs font-black text-white/60 uppercase tracking-widest">
                                         External Ticketing URL *
                                     </label>
@@ -252,7 +252,7 @@ export default function SubmitEvent() {
                                             ...prev,
                                             settings: { ...prev.settings, external_url: e.target.value }
                                         }))}
-                                        className="w-full bg-white/5 px-4 py-3 text-white focus:bg-white/10 outline-none transition-colors border border-white/10"
+                                        className="w-full bg-white/5 px-4 py-3 text-white focus:bg-white/10 outline-none transition-colors"
                                         placeholder="https://eventbrite.com/your-event-link"
                                     />
                                 </div>
@@ -268,7 +268,7 @@ export default function SubmitEvent() {
                                     required
                                     value={formData.location}
                                     onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                                    className="w-full bg-white/5 px-4 py-3 text-white focus:bg-white/10 outline-none transition-colors"
+                                    className="w-full bg-white/5 px-4 py-3 text-white focus:bg-white/10 border-none outline-none transition-colors"
                                     placeholder="Venue name or full address"
                                 />
                             </div>
@@ -276,7 +276,7 @@ export default function SubmitEvent() {
                             {/* Price - Only if tickets or external */}
                             {/* Ticket Price - Only for Ticketed events & not Donation based */}
                             {formData.settings.pricing_format === 'tickets' && formData.settings.pricing_model !== 'donation' && (
-                                <div className="space-y-2 animate-in fade-in slide-in-from-top-1 duration-300">
+                                <div className="space-y-2 animate-in fade-in duration-300">
                                     <label className="flex items-center gap-2 text-xs font-black text-white/60 uppercase tracking-widest">
                                         <CurrencyDollarIcon className="w-4 h-4" />
                                         {formData.settings.pricing_model === 'early_bird' ? 'Post-Early Bird Price *' : 'Base Ticket Price *'}
@@ -290,7 +290,7 @@ export default function SubmitEvent() {
                                             required
                                             value={parseInt(formData.price_cents) / 100}
                                             onChange={(e) => setFormData(prev => ({ ...prev, price_cents: Math.round(parseFloat(e.target.value) * 100).toString() }))}
-                                            className="w-full bg-white/5 pl-10 pr-4 py-3 text-white focus:bg-white/10 outline-none transition-colors font-mono"
+                                            className="w-full bg-white/5 pl-10 pr-4 py-3 text-white focus:bg-white/10 border-none outline-none transition-colors font-mono"
                                             placeholder="20.00"
                                         />
                                     </div>
@@ -305,7 +305,7 @@ export default function SubmitEvent() {
                             )}
                             {/* Pricing Model - Only for Tickets */}
                             {formData.settings.pricing_format === 'tickets' && (
-                                <div className="space-y-4 pt-8 border-t border-white/5 animate-in fade-in duration-500">
+                                <div className="md:col-span-2 space-y-4 pt-8 animate-in fade-in duration-500">
                                     <div className="flex items-center gap-2">
                                         <h4 className="text-xs font-black text-white/60 uppercase tracking-widest">Pricing Model</h4>
                                         <TooltipProvider>
@@ -313,7 +313,7 @@ export default function SubmitEvent() {
                                                 <TooltipTrigger type="button" className="cursor-help">
                                                     <InformationCircleIcon className="w-4 h-4 text-white/40 hover:text-white transition-colors" />
                                                 </TooltipTrigger>
-                                                <TooltipContent className="bg-zinc-900 border border-white/10 text-white rounded-none p-3 max-w-xs shadow-xl z-50">
+                                                <TooltipContent className="bg-zinc-900 text-white rounded-none p-3 max-w-xs shadow-xl z-50">
                                                     <p className="text-xs font-medium tracking-normal normal-case">Choose how your tickets are priced. Standard is fixed, Donation is pay-what-you-want, Rate Changer increases prices as tickets sell, and Early Bird is a flat rate that jumps after a limit.</p>
                                                 </TooltipContent>
                                             </Tooltip>
@@ -333,9 +333,9 @@ export default function SubmitEvent() {
                                                     ...prev,
                                                     settings: { ...prev.settings, pricing_model: model.id as any }
                                                 }))}
-                                                className={`p-3 border text-left transition-all ${formData.settings.pricing_model === model.id
-                                                        ? 'bg-white border-white text-black'
-                                                        : 'bg-white/5 border-white/10 text-white hover:border-white/30'
+                                                className={`p-3 text-left transition-all ${formData.settings.pricing_model === model.id
+                                                        ? 'bg-white text-black'
+                                                        : 'bg-white/5 text-white hover:bg-white/10'
                                                     }`}
                                             >
                                                 <div className="text-[10px] font-black uppercase tracking-widest mb-1">{model.label}</div>
@@ -347,13 +347,13 @@ export default function SubmitEvent() {
                                     </div>
                                     {/* Donation Model Info */}
                                     {formData.settings.pricing_model === 'donation' && (
-                                        <div className="bg-white/5 p-4 animate-in slide-in-from-top-1 duration-300">
+                                        <div className="bg-white/5 p-4">
                                             <p className="text-xs text-white/60 font-medium">Guests will be prompted to enter a custom amount during checkout. You can set a minimum suggested donation in the description.</p>
                                         </div>
                                     )}
                                     {/* Early Bird Fields */}
                                     {formData.settings.pricing_model === 'early_bird' && (
-                                        <div className="bg-white/5 p-6 space-y-6 border border-white/5 animate-in slide-in-from-top-1 duration-300">
+                                        <div className="bg-white/5 p-6 space-y-6">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 <div className="space-y-2">
                                                     <label className="block text-[10px] uppercase font-black tracking-widest text-white/40">Early Bird Price (USD)</label>
@@ -398,9 +398,9 @@ export default function SubmitEvent() {
                                                                 ...prev,
                                                                 settings: { ...prev.settings, after_early_bird_model: opt as any }
                                                             }))}
-                                                            className={`flex-1 py-2 px-3 border text-[10px] uppercase font-black tracking-widest transition-colors ${formData.settings.after_early_bird_model === opt
-                                                                    ? 'bg-white text-black border-white'
-                                                                    : 'bg-white/5 text-white border-white/10 hover:border-white/30'
+                                                            className={`flex-1 py-2 px-3 text-[10px] uppercase font-black tracking-widest transition-colors ${formData.settings.after_early_bird_model === opt
+                                                                    ? 'bg-white text-black'
+                                                                    : 'bg-white/5 text-white hover:bg-white/10'
                                                                 }`}
                                                         >
                                                             {opt === 'standard' ? 'Standard Price' : 'Rate Changer (Scaling)'}
@@ -412,7 +412,7 @@ export default function SubmitEvent() {
                                     )}
                                     {/* Dynamic (Rate Changer) Fields */}
                                     {(formData.settings.pricing_model === 'dynamic' || (formData.settings.pricing_model === 'early_bird' && formData.settings.after_early_bird_model === 'dynamic')) && (
-                                        <div className="bg-white/5 p-6 border border-white/5 animate-in slide-in-from-top-1 duration-300">
+                                        <div className="bg-white/5 p-6">
                                             <div className="flex items-center gap-2 mb-4">
                                                 <h5 className="text-[10px] font-black text-white/60 uppercase tracking-widest">Pricing Scaling (Rate Changer)</h5>
                                             </div>
@@ -450,7 +450,7 @@ export default function SubmitEvent() {
 
                             {/* Capacity - Only if not Open Admission */}
                             {formData.settings.pricing_format !== 'open' && (
-                                <div className="space-y-2 animate-in fade-in duration-200">
+                                <div className="md:col-span-2 space-y-2">
                                     <label className="flex items-center gap-2 text-xs font-black text-white/60 uppercase tracking-widest">
                                         <UsersIcon className="w-4 h-4" /> {formData.settings.pricing_format === 'external' ? 'Venue Capacity' : 'Total Capacity *'}
                                         <TooltipProvider>
@@ -458,7 +458,7 @@ export default function SubmitEvent() {
                                                 <TooltipTrigger type="button" className="cursor-help">
                                                     <InformationCircleIcon className="w-4 h-4 text-white/40 hover:text-white transition-colors" />
                                                 </TooltipTrigger>
-                                                <TooltipContent className="bg-zinc-900 border border-white/10 text-white rounded-none p-3 max-w-xs shadow-xl z-50">
+                                                <TooltipContent className="bg-zinc-900 text-white rounded-none p-3 max-w-xs shadow-xl z-50">
                                                     <p className="text-xs font-medium tracking-normal normal-case">
                                                         {formData.settings.pricing_format === 'external'
                                                             ? 'Total capacity of the venue for informational purposes.'
@@ -483,7 +483,7 @@ export default function SubmitEvent() {
 
                         {/* Ticket Tiers - Only for Ticketed events */}
                         {formData.settings.pricing_format === 'tickets' && (
-                            <div className="space-y-4 pt-8 border-t border-white/5 animate-in fade-in duration-300">
+                            <div className="md:col-span-2 space-y-4 pt-8">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <div className="flex items-center gap-2">
@@ -493,7 +493,7 @@ export default function SubmitEvent() {
                                                     <TooltipTrigger type="button" className="cursor-help">
                                                         <InformationCircleIcon className="w-4 h-4 text-white/40 hover:text-white transition-colors" />
                                                     </TooltipTrigger>
-                                                    <TooltipContent className="bg-zinc-900 border border-white/10 text-white rounded-none p-3 max-w-xs shadow-xl z-50">
+                                                    <TooltipContent className="bg-zinc-900 text-white rounded-none p-3 max-w-xs shadow-xl z-50">
                                                         <p className="text-xs font-medium tracking-normal normal-case">Offer multiple pricing options like "VIP" or "Early Bird". Each tier acts as a separate ticket option with its own price and optional quantity limit.</p>
                                                     </TooltipContent>
                                                 </Tooltip>
@@ -597,7 +597,7 @@ export default function SubmitEvent() {
 
                         {/* Registration Form Builder - Only if RSVP or Tickets */}
                         {(formData.settings.pricing_format === 'rsvp' || formData.settings.pricing_format === 'tickets') && (
-                            <div className="space-y-4 pt-8 border-t border-white/5 animate-in fade-in duration-300">
+                            <div className="md:col-span-2 space-y-4 pt-8">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <div className="flex items-center gap-2">
@@ -607,7 +607,7 @@ export default function SubmitEvent() {
                                                     <TooltipTrigger type="button" className="cursor-help">
                                                         <InformationCircleIcon className="w-4 h-4 text-white/40 hover:text-white transition-colors" />
                                                     </TooltipTrigger>
-                                                    <TooltipContent className="bg-zinc-900 border border-white/10 text-white rounded-none p-3 max-w-xs shadow-xl z-50">
+                                                    <TooltipContent className="bg-zinc-900 text-white rounded-none p-3 max-w-xs shadow-xl z-50">
                                                         <p className="text-xs font-medium tracking-normal normal-case">Collect custom information from attendees during registration (e.g., dietary needs, how they found out, etc).</p>
                                                     </TooltipContent>
                                                 </Tooltip>
@@ -636,7 +636,7 @@ export default function SubmitEvent() {
                                 {formData.settings?.custom_form?.length > 0 && (
                                     <div className="space-y-4">
                                         {formData.settings.custom_form.map((field, idx) => (
-                                            <div key={field.id} className="bg-white/5 p-6 space-y-4 border border-white/5">
+                                            <div key={field.id} className="bg-white/5 p-6 space-y-4">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div className="space-y-2">
                                                         <label className="block text-[10px] uppercase font-black tracking-widest text-white/40">Field Label</label>
@@ -673,7 +673,7 @@ export default function SubmitEvent() {
                                                 </div>
 
                                                 {field.type === 'select' && (
-                                                    <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
+                                                    <div className="space-y-2">
                                                         <label className="block text-[10px] uppercase font-black tracking-widest text-white/40">Options (Comma separated)</label>
                                                         <input
                                                             type="text"
@@ -702,7 +702,7 @@ export default function SubmitEvent() {
                                                                 setFormData(prev => ({ ...prev, settings: { ...prev.settings, custom_form: fields } }));
                                                             }}
                                                         />
-                                                        <div className={`w-4 h-4 border flex items-center justify-center transition-colors ${field.required ? 'bg-white border-white' : 'bg-black border-white/20 group-hover:border-white/40'}`}>
+                                                        <div className={`w-4 h-4 flex items-center justify-center transition-colors ${field.required ? 'bg-white' : 'bg-white/10 group-hover:bg-white/20'}`}>
                                                             {field.required && <PlusIcon className="w-3 h-3 text-black rotate-45" />}
                                                         </div>
                                                         <span className="text-[10px] uppercase font-black tracking-widest text-white/40">Required Field</span>
@@ -739,7 +739,7 @@ export default function SubmitEvent() {
                                 placeholder="https://example.com/image.jpg"
                             />
                             {formData.image_url && (
-                                <div className="mt-4 aspect-video w-full max-w-sm border border-white/10 overflow-hidden bg-black/50">
+                                <div className="mt-4 aspect-video w-full max-w-sm overflow-hidden bg-black/50">
                                     <img
                                         src={formData.image_url}
                                         alt="Preview"
@@ -751,7 +751,7 @@ export default function SubmitEvent() {
                         </div>
 
                         {/* Submit Button */}
-                        <div className="pt-8 border-t border-white/10">
+                        <div className="pt-8">
                             <button
                                 type="submit"
                                 disabled={loading}

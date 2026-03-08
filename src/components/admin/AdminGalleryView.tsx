@@ -1256,7 +1256,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                         </div>
                                     ) : (
                                         <div className="animate-in fade-in slide-in-from-top-2 duration-200 space-y-3">
-                                            <div className="border border-dashed border-white/20 bg-white/5 p-6 text-center hover:bg-white/10 transition-colors relative">
+                                            <div className="bg-white/5 p-6 text-center hover:bg-white/10 transition-colors relative">
                                                 <input
                                                     type="file"
                                                     multiple
@@ -1348,7 +1348,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
 
                 {/* Health Check Status Banner */}
                 {healthStatus === 'issues' && (
-                    <div className="mb-6 p-4 bg-red-500/10 border-l-2 border-red-500 text-red-500 flex items-center gap-3">
+                    <div className="mb-6 p-4 bg-red-500/10 text-red-500 flex items-center gap-3">
                         <ExclamationCircleIcon className="w-5 h-5 flex-shrink-0" />
                         <div>
                             <p className="font-bold uppercase text-sm">System Alert: Asset Delivery Issue Detected</p>
@@ -1358,7 +1358,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 )}
 
                 {healthStatus === 'healthy' && (
-                    <div className="mb-6 p-4 bg-green-500/10 border-l-2 border-green-500 text-green-500 flex items-center gap-3">
+                    <div className="mb-6 p-4 bg-green-500/10 text-green-500 flex items-center gap-3">
                         <CheckCircleIcon className="w-5 h-5 flex-shrink-0" />
                         <div>
                             <p className="font-bold uppercase text-sm">System Healthy</p>

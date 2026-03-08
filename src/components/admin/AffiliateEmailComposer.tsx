@@ -233,7 +233,7 @@ export default function AffiliateEmailComposer() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-black rounded-none p-6 border-b border-white/10">
+      <div className="bg-black rounded-none p-6 border-none">
         <div className="flex items-center justify-between mb-0">
           <div className="flex items-center gap-3">
             <EnvelopeIcon className="w-6 h-6 text-white" />
@@ -242,9 +242,9 @@ export default function AffiliateEmailComposer() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 border-b border-white/10">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 border-none">
         {/* Compose Email */}
-        <div className="bg-black rounded-none p-8 border-r border-white/10">
+        <div className="bg-black rounded-none p-8 border-none">
           <h3 className="text-lg font-black text-white uppercase tracking-widest mb-8">Compose Email</h3>
 
           <div className="space-y-6">
@@ -255,7 +255,7 @@ export default function AffiliateEmailComposer() {
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder="EMAIL SUBJECT..."
-                className="w-full px-0 py-3 bg-transparent border-b border-white/20 rounded-none text-white placeholder-white/20 focus:outline-none focus:border-white transition-colors text-lg font-bold"
+                className="w-full px-0 py-3 bg-transparent border-none rounded-none text-white placeholder-white/20 focus:outline-none transition-colors text-lg font-bold"
               />
             </div>
 
@@ -266,14 +266,14 @@ export default function AffiliateEmailComposer() {
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="WRITE YOUR MESSAGE..."
                 rows={12}
-                className="w-full px-0 py-3 bg-transparent border-b border-white/20 rounded-none text-white placeholder-white/20 focus:outline-none focus:border-white transition-colors font-mono text-sm resize-none leading-relaxed"
+                className="w-full px-0 py-3 bg-transparent border-none rounded-none text-white placeholder-white/20 focus:outline-none transition-colors font-mono text-sm resize-none leading-relaxed"
               />
             </div>
 
             <div className="flex gap-4 pt-4">
               <button
                 onClick={() => setShowPreview(!showPreview)}
-                className="px-6 py-3 bg-transparent border border-white/20 text-white rounded-none hover:bg-white hover:text-black transition-all flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider"
+                className="px-6 py-3 bg-transparent border-none text-white rounded-none hover:bg-white hover:text-black transition-all flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider"
               >
                 <EyeIcon className="w-4 h-4" />
                 {showPreview ? 'HIDE PREVIEW' : 'PREVIEW'}
@@ -301,7 +301,7 @@ export default function AffiliateEmailComposer() {
 
         {/* Select Recipients */}
         <div className="bg-black rounded-none p-8">
-          <div className="flex items-center justify-between mb-8 pb-2 border-b border-white/10">
+          <div className="flex items-center justify-between mb-8 pb-2 border-none">
             <h3 className="text-lg font-black text-white uppercase tracking-widest">Recipients</h3>
             <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest bg-white/5 px-2 py-1">
               {selectedCount} / {totalCount} SELECTED
@@ -316,7 +316,7 @@ export default function AffiliateEmailComposer() {
                 onClick={() => setFilterStatus(status)}
                 className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-none transition-all ${filterStatus === status
                   ? 'bg-white text-black'
-                  : 'bg-transparent text-white/40 border border-white/10 hover:border-white hover:text-white'
+                   : 'bg-transparent text-white/40 border-none hover:bg-white/10 hover:text-white'
                   }`}
               >
                 {status}
@@ -327,7 +327,7 @@ export default function AffiliateEmailComposer() {
           {/* Select All */}
           <button
             onClick={handleSelectAll}
-            className="w-full mb-6 px-4 py-3 bg-white/5 border border-white/10 text-white rounded-none hover:bg-white/10 transition flex items-center justify-center gap-3 text-xs font-bold uppercase tracking-wider group"
+            className="w-full mb-6 px-4 py-3 bg-white/5 border-none text-white rounded-none hover:bg-white/10 transition flex items-center justify-center gap-3 text-xs font-bold uppercase tracking-wider group"
           >
             {selectAll ? <CheckCircleIcon className="w-4 h-4 text-white" /> : <StopIcon className="w-4 h-4 text-white/40 group-hover:text-white" />}
             {selectAll ? 'DESELECT ALL' : 'SELECT ALL'}
@@ -343,9 +343,9 @@ export default function AffiliateEmailComposer() {
               filteredAffiliates.map((affiliate) => (
                 <label
                   key={affiliate.id}
-                  className={`flex items-center gap-4 p-3 border border-transparent hover:bg-white/5 transition-all cursor-pointer group ${selectedAffiliates.has(affiliate.id) ? 'bg-white/5 border-white/10' : ''}`}
+                  className={`flex items-center gap-4 p-3 border-none hover:bg-white/5 transition-all cursor-pointer group ${selectedAffiliates.has(affiliate.id) ? 'bg-white/5' : ''}`}
                 >
-                  <div className={`w-4 h-4 border flex items-center justify-center transition-colors ${selectedAffiliates.has(affiliate.id) ? 'bg-white border-white' : 'border-white/20 group-hover:border-white/60'}`}>
+                  <div className={`w-4 h-4 border-none flex items-center justify-center transition-colors ${selectedAffiliates.has(affiliate.id) ? 'bg-white' : 'bg-white/10 group-hover:bg-white/20'}`}>
                     {selectedAffiliates.has(affiliate.id) && <CheckCircleIcon className="w-3 h-3 text-black" />}
                   </div>
 
@@ -370,10 +370,10 @@ export default function AffiliateEmailComposer() {
 
       {/* Preview */}
       {showPreview && (
-        <div className="bg-black rounded-none p-8 border-b border-white/10 animate-in fade-in slide-in-from-top-4 duration-500">
+        <div className="bg-black rounded-none p-8 border-none animate-in fade-in slide-in-from-top-4 duration-500">
           <h3 className="text-lg font-black text-white uppercase tracking-widest mb-8">Email Preview</h3>
-          <div className="bg-black border border-white/20 rounded-none p-8 max-w-3xl mx-auto">
-            <div className="border-b border-white/10 pb-6 mb-6 workspace-font">
+          <div className="bg-black border-none rounded-none p-8 max-w-3xl mx-auto">
+            <div className="border-none pb-6 mb-6 workspace-font">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Recipient Group</span>
                 <span className="text-xs text-white uppercase tracking-wider">{selectedCount} affiliate(s)</span>
@@ -395,8 +395,8 @@ export default function AffiliateEmailComposer() {
       {campaigns.length > 0 && (
         <div className="bg-black rounded-none p-8">
           <h3 className="text-lg font-black text-white uppercase tracking-widest mb-6">Campaign History</h3>
-          <div className="border border-white/10">
-            <div className="grid grid-cols-12 gap-4 p-3 border-b border-white/10 bg-white/5 text-[10px] font-bold text-white/40 uppercase tracking-widest">
+          <div className="border-none">
+            <div className="grid grid-cols-12 gap-4 p-3 border-none bg-white/5 text-[10px] font-bold text-white/40 uppercase tracking-widest">
               <div className="col-span-5">Subject</div>
               <div className="col-span-2 text-right">Recipients</div>
               <div className="col-span-2 text-center">Status</div>

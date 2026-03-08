@@ -1422,7 +1422,7 @@ export default function Admin() {
             <span className="text-white/40">Storage</span>
             <span className={healthMetrics.storage ? "text-green-400" : "text-amber-500"}>{healthMetrics.storage ? 'Online' : 'Degraded'}</span>
           </div>
-          <div className="mt-2 pt-2 border-t border-white/5 flex items-center gap-2">
+          <div className="mt-2 pt-2 border-t border-transparent flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
             <span className="text-[9px] text-white/60 font-bold uppercase tracking-tighter">Latency: 42ms</span>
           </div>
@@ -1452,7 +1452,7 @@ export default function Admin() {
         <div className="space-y-3 pt-2">
           {alerts.length > 0 ? (
             alerts.slice(0, 3).map(alert => (
-              <div key={alert.id} className="flex flex-col gap-1 py-1 border-b border-white/5 last:border-0">
+              <div key={alert.id} className="flex flex-col gap-1 py-1 border-b border-transparent last:border-0">
                 <div className="flex items-center justify-between">
                   <span className={cn(
                     "text-[8px] font-bold uppercase px-1.5 py-0.5",
@@ -1502,7 +1502,7 @@ export default function Admin() {
         <div className="space-y-4 pt-2">
           <AdminBentoRow label="New Feedback" value="5" />
           <AdminBentoRow label="Resolved" value="128" />
-          <div className="relative p-2 bg-white/5 border-l-2 border-white/20">
+          <div className="relative p-2 bg-white/5 border-l-2 border-transparent">
             <p className="text-[9px] text-white/60 italic line-clamp-2">"Would be great to see a dark mode toggle in the..."</p>
             <span className="text-[8px] text-white/30 block mt-1">- user@example.com</span>
           </div>
@@ -1520,7 +1520,7 @@ export default function Admin() {
             <div className="text-[8px] text-white/30 uppercase font-black tracking-widest">OpenAI</div>
             <p className="text-[10px] text-white/80 font-bold leading-tight">GPT-5 details leaked in developer documentation...</p>
           </div>
-          <div className="flex flex-col gap-1 py-1 mt-2 border-t border-white/5 pt-2">
+          <div className="flex flex-col gap-1 py-1 mt-2 border-t border-transparent pt-2">
             <div className="text-[8px] text-white/30 uppercase font-black tracking-widest">Anthropic</div>
             <p className="text-[10px] text-white/80 font-bold leading-tight">Claude 4 sets new benchmarks for coding tasks...</p>
           </div>
@@ -1543,7 +1543,7 @@ export default function Admin() {
               <div className="text-[10px] text-green-400 font-black uppercase">Deep Think: ENGAGED</div>
             </div>
           </div>
-          <div className="p-2 bg-white/5 border border-white/10 rounded-none mt-2">
+          <div className="p-2 bg-white/5 border-none rounded-none mt-2">
             <div className="text-[8px] text-white/40 uppercase mb-1">Last Analysis Result</div>
             <p className="text-[10px] text-white/70">Optimized asset caching for mobile users in EU-west-1 region.</p>
           </div>
@@ -1677,7 +1677,7 @@ export default function Admin() {
                 >
                   <app.icon className="w-5 h-5" />
                   {app.badge ? (
-                    <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-black">
+                    <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[8px] font-black flex items-center justify-center rounded-full border-0">
                       {app.badge}
                     </span>
                   ) : null}
@@ -1696,7 +1696,7 @@ export default function Admin() {
         <div className="space-y-12 pb-24">
           {/* Gallery Section */}
           {expandedSections['gallery'] && (
-            <div ref={gallerySectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div ref={gallerySectionRef} className="animate-in fade-in duration-500">
               <div className="flex flex-col px-0 py-2 mb-8 items-start">
                 <div className="flex items-center gap-3">
                   <PhotoIcon className="w-5 h-5 text-white/40" />
@@ -1712,7 +1712,7 @@ export default function Admin() {
 
           {/* Blog Section */}
           {expandedSections['blog'] && (
-            <div ref={blogSectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div ref={blogSectionRef} className="animate-in fade-in duration-500">
               <div className="flex flex-col px-0 py-2 mb-8 items-start">
                 <div className="flex items-center gap-3">
                   <BookOpenIcon className="w-5 h-5 text-white/40" />
@@ -1728,7 +1728,7 @@ export default function Admin() {
 
           {/* Newsletter Section */}
           {expandedSections['newsletter'] && (
-            <div ref={newsletterSectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div ref={newsletterSectionRef} className="animate-in fade-in duration-500">
               <div className="flex flex-col px-0 py-2 mb-8 items-start">
                 <div className="flex items-center gap-3">
                   <EnvelopeIcon className="w-5 h-5 text-white/40" />
@@ -1744,7 +1744,7 @@ export default function Admin() {
 
           {/* Mail Section */}
           {expandedSections['mail'] && (
-            <div ref={mailSectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div ref={mailSectionRef} className="animate-in fade-in duration-500">
               <div className="flex flex-col px-0 py-2 mb-8 items-start">
                 <div className="flex items-center gap-3">
                   <PaperAirplaneIcon className="w-5 h-5 text-white/40" />
@@ -1760,7 +1760,7 @@ export default function Admin() {
 
           {/* Users Section */}
           {expandedSections['users'] && (
-            <div ref={usersSectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div ref={usersSectionRef} className="animate-in fade-in duration-500">
               <div className="flex flex-col px-0 py-2 mb-8 items-start">
                 <div className="flex items-center gap-3">
                   <UsersIcon className="w-5 h-5 text-white/40" />
@@ -1779,7 +1779,7 @@ export default function Admin() {
 
           {/* Affiliates Section */}
           {expandedSections['affiliates'] && (
-            <div ref={usersSectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div ref={usersSectionRef} className="animate-in fade-in duration-500">
               <div className="flex flex-col px-0 py-2 mb-8 items-start">
                 <div className="flex items-center gap-3">
                   <UsersIcon className="w-5 h-5 text-white/40" />
@@ -1794,7 +1794,7 @@ export default function Admin() {
 
           {/* Submissions Section */}
           {expandedSections['submissions'] && pendingSubmissions > 0 && (
-            <div ref={submissionsSectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div ref={submissionsSectionRef} className="animate-in fade-in duration-500">
               <div className="flex flex-col px-0 py-2 mb-8 items-start">
                 <div className="flex items-center gap-3">
                   <DocumentTextIcon className="w-5 h-5 text-white/40" />
@@ -1813,7 +1813,7 @@ export default function Admin() {
 
           {/* Events Section */}
           {expandedSections['events'] && (
-            <div ref={eventsSectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div ref={eventsSectionRef} className="animate-in fade-in duration-500">
               <div className="flex flex-col px-0 py-2 mb-8 items-start">
                 <div className="flex items-center gap-3">
                   <CalendarIcon className="w-5 h-5 text-white/40" />
@@ -1829,7 +1829,7 @@ export default function Admin() {
 
           {/* Pricing Section */}
           {expandedSections['pricing'] && (
-            <div ref={pricingSectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div ref={pricingSectionRef} className="animate-in fade-in duration-500">
               <div className="flex flex-col px-0 py-2 mb-8 items-start">
                 <div className="flex items-center gap-3">
                   <CurrencyDollarIcon className="w-5 h-5 text-white/40" />
@@ -1845,7 +1845,7 @@ export default function Admin() {
 
           {/* Settings Section */}
           {expandedSections['settings'] && (
-            <div ref={settingsSectionRef} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div ref={settingsSectionRef} className="animate-in fade-in duration-500">
               <div className="flex items-center justify-between px-4 py-2 mb-6">
                 <div className="flex items-center gap-3">
                   <BoltIcon className="w-5 h-5 text-white/40" />
@@ -1940,7 +1940,7 @@ export default function Admin() {
                       setSidePanelOpen(false);
                     }
                   }}
-                  className="flex-1 px-4 py-3 bg-red-500/20 text-red-500 border border-red-500/30 hover:bg-red-500/30 transition rounded-none uppercase text-xs font-bold"
+                  className="flex-1 px-4 py-3 bg-red-500/20 text-red-500 hover:bg-red-500/30 transition uppercase text-xs font-bold"
                 >
                   Ban User
                 </button>
@@ -1961,7 +1961,7 @@ export default function Admin() {
               <div className="mb-8">
                 <div className="flex items-center gap-3 mb-4">
                   {'subdomain' in expandedPost && expandedPost.subdomain && (
-                    <span className="px-3 py-1 bg-white/10 text-white/80 border border-white/20 rounded-full text-sm">
+                    <span className="px-3 py-1 bg-white/10 text-white/80 border-none rounded-full text-sm">
                       {expandedPost.subdomain}
                     </span>
                   )}
