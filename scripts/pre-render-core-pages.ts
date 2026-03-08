@@ -14,21 +14,21 @@ const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPA
 const supabase = (SUPABASE_URL && SUPABASE_ANON_KEY) ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
 const CORE_PAGES = [
-    { path: 'about', title: 'About | THE LOST+UNFOUNDS', description: 'Who we are and what we do at THE LOST+UNFOUNDS.' },
-    { path: 'privacy', title: 'Privacy Policy | THE LOST+UNFOUNDS', description: 'Our privacy policy and data protection practices.' },
-    { path: 'terms', title: 'Terms of Service | THE LOST+UNFOUNDS', description: 'Our terms of service and usage conditions.' },
-    { path: 'shop', title: 'Shop | THE LOST+UNFOUNDS', description: 'Shop exclusive findings from the field. Intel and equipment.' },
-    { path: 'events', title: 'Events | THE LOST+UNFOUNDS', description: 'Upcoming events, gatherings, and workshops from THE LOST+UNFOUNDS.' },
-    { path: 'gallery', title: 'The Gallery | THE LOST+UNFOUNDS', description: 'Exclusive high-resolution photography collections and findings from the field.' },
-    { path: 'contact', title: 'Contact | THE LOST+UNFOUNDS', description: 'Get in touch with the team at THE LOST+UNFOUNDS.' },
-    { path: 'pricing', title: 'Pricing | THE LOST+UNFOUNDS', description: 'Subscription plans and pricing for THE LOST+UNFOUNDS services.' },
-    { path: 'support', title: 'Support | THE LOST+UNFOUNDS', description: 'Help and documentation for THE LOST+UNFOUNDS platform.' },
-    { path: 'thelostarchives', title: 'THE LOST ARCHIVES | THE LOST+UNFOUNDS', description: 'Revealing findings from the frontier and beyond. Official articles.' },
-    { path: 'book-club', title: 'BOOK CLUB | THE LOST+UNFOUNDS', description: 'Join the community reading and analyzing literature on technology and society.' },
-    { path: 'gearheads', title: 'GEARHEADS | THE LOST+UNFOUNDS', description: 'Technical deep dives, equipment reviews, and developer intel.' },
-    { path: 'borderlands', title: 'EDGE OF THE BORDERLANDS | THE LOST+UNFOUNDS', description: 'Exploring the boundaries of information, society, and technology.' },
-    { path: 'science', title: 'MAD SCIENTISTS | THE LOST+UNFOUNDS', description: 'Experimental research and technical breakthroughs from the field.' },
-    { path: 'newtheory', title: 'NEW THEORY | THE LOST+UNFOUNDS', description: 'Fresh perspectives and evolving theories on the digital age.' }
+    { path: 'about', title: 'ABOUT | THE LOST+UNFOUNDS', description: 'Learn about THE LOST+UNFOUNDS, a creative brand and mindset builder dedicated to help you believe in yourself again. Discover our mission and vision.' },
+    { path: 'privacy', title: 'PRIVACY POLICY | THE LOST+UNFOUNDS', description: 'Review the Privacy Policy for THE LOST+UNFOUNDS. Learn how protecting your personal privacy is prioritized and how we securely handle your data.' },
+    { path: 'terms', title: 'TERMS OF SERVICE | THE LOST+UNFOUNDS', description: 'Review the Terms of Service for THE LOST+UNFOUNDS. Read our rules and regulations to understand your rights and responsibilities when using our platform.' },
+    { path: 'shop', title: 'SHOP | THE LOST+UNFOUNDS', description: 'Shop exclusive THE LOST+UNFOUNDS apparel, gear, and digital products. Discover unique findings from the field, delivered directly to your door.' },
+    { path: 'events', title: 'EVENTS | THE LOST+UNFOUNDS', description: 'Join THE LOST+UNFOUNDS for exclusive gatherings, workshops, and experiences pushing boundaries at the frontier. Book tickets for upcoming events.' },
+    { path: 'gallery', title: 'THE GALLERY | THE LOST+UNFOUNDS', description: 'Explore exclusive high-resolution photography collections. Unique findings from the field, beautifully captured in high definition for your inspiration.' },
+    { path: 'contact', title: 'CONTACT | THE LOST+UNFOUNDS', description: 'Get in touch with THE LOST+UNFOUNDS. We\'d love to hear from you and help with any questions, inquiries, or feedback you might have about our platform.' },
+    { path: 'pricing', title: 'PRICING | THE LOST+UNFOUNDS', description: 'Choose the plan that\'s right for you. Flexible pricing for creators, developers, and power users of THE LOST+UNFOUNDS.' },
+    { path: 'support', title: 'SUPPORT CENTER | THE LOST+UNFOUNDS', description: 'Get help and support for THE LOST+UNFOUNDS. Find our FAQs, documentation, troubleshooting guides, and contact information to resolve any issues quickly.' },
+    { path: 'thelostarchives', title: 'THE LOST ARCHIVES | THE LOST+UNFOUNDS', description: 'Revealing findings from the frontier and beyond. Intel from the field on development, AI, and building in the age of information.' },
+    { path: 'book-club', title: 'BOOK CLUB | THE LOST+UNFOUNDS', description: 'A collection of curated articles from contributors. Each article features four books with Amazon affiliate links, offering discoveries and insights.' },
+    { path: 'gearheads', title: 'GEARHEADS | THE LOST+UNFOUNDS', description: 'Technical deep dives, equipment reviews, developer intel, and findings from the digital frontier.' },
+    { path: 'borderlands', title: 'EDGE OF THE BORDERLANDS | THE LOST+UNFOUNDS', description: 'Exploring the boundaries of information, society, and technology. Share travel experiences and practical adventure insights from the field.' },
+    { path: 'science', title: 'MAD SCIENTISTS | THE LOST+UNFOUNDS', description: 'Experimental research and technical breakthroughs from the field. Deep dives into scientific concepts and applied innovation.' },
+    { path: 'newtheory', title: 'NEW THEORY | THE LOST+UNFOUNDS', description: 'Fresh perspectives and evolving theories on the digital age. Discover new insights and ideas from the information frontier.' }
 ];
 
 async function preRenderCorePages() {
