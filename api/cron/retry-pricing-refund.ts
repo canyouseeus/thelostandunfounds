@@ -1,6 +1,5 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import fetch from 'node-fetch';
 import { sendMessage } from '../../lib/api-handlers/_zoho-mail-handler';
 
 /**
