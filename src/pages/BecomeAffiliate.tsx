@@ -8,9 +8,16 @@ import {
     CheckIcon
 } from '@heroicons/react/24/outline';
 import KingMidasTicker from '../components/KingMidasTicker';
+import SEOHead from '../components/SEOHead';
 
 export default function BecomeAffiliate() {
     return (
+        <>
+        <SEOHead
+            title="Become an Affiliate - Earn 42% Commission"
+            description="Join THE LOST+UNFOUNDS affiliate network. Earn 42% commission on every sale, compete for the King Midas 8% profit pool, and build your earning network."
+            canonicalPath="/become-affiliate"
+        />
         <div className="min-h-screen bg-black text-white">
             <KingMidasTicker />
 
@@ -148,5 +155,6 @@ export default function BecomeAffiliate() {
                 </div>
             </div>
         </div>
+        </>
     );
 }

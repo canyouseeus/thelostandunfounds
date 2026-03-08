@@ -51,6 +51,7 @@ import { ClockWidget } from '../components/ui/clock-widget';
 import { CalendarWidget } from '../components/ui/calendar-widget';
 import { RevenueTracker } from '../components/ui/revenue-tracker';
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
+import SEOHead from '../components/SEOHead';
 
 interface BlogPost {
   id: string;
@@ -411,6 +412,13 @@ export default function Profile() {
   const hasAffiliate = !!affiliateData || userIsAdmin;
 
   return (
+    <>
+      <SEOHead 
+        title="My Dashboard" 
+        description="User dashboard and profile." 
+        canonicalPath="/profile" 
+        noIndex={true} 
+      />
     <div className="min-h-screen bg-black text-white selection:bg-white/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
@@ -843,5 +851,6 @@ export default function Profile() {
 
       </div>
     </div >
+    </>
   );
 }

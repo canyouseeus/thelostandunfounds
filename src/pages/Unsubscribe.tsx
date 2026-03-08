@@ -1,4 +1,5 @@
 import { FormEvent, useState } from 'react'
+import SEOHead from '../components/SEOHead'
 
 const Unsubscribe = () => {
   const [email, setEmail] = useState('')
@@ -30,6 +31,13 @@ const Unsubscribe = () => {
   }
 
   return (
+    <>
+      <SEOHead
+        title="Unsubscribe from Newsletter"
+        description="Unsubscribe from THE LOST+UNFOUNDS newsletter mailing list."
+        canonicalPath="/unsubscribe"
+        noIndex={true}
+      />
     <div className="min-h-screen bg-black text-white flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-xl border border-white/10 bg-white/5 p-8 rounded-none">
         <h1 className="text-2xl font-bold mb-3 tracking-wide">THE LOST+UNFOUNDS</h1>
@@ -68,6 +76,7 @@ const Unsubscribe = () => {
         </p>
       </div>
     </div>
+    </>
   )
 }
 

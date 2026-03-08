@@ -486,12 +486,12 @@ export default function BlogPost() {
     <>
       <Helmet>
         <title>{title} | THE LOST ARCHIVES | THE LOST+UNFOUNDS</title>
-        <link rel="canonical" href={`https://www.thelostandunfounds.com/thelostarchives/${post.slug}`} />
+        <link rel="canonical" href={post.subdomain ? `https://www.thelostandunfounds.com/blog/${post.subdomain}/${post.slug}` : `https://www.thelostandunfounds.com/thelostarchives/${post.slug}`} />
         <meta name="description" content={description} />
         {post.seo_keywords && <meta name="keywords" content={post.seo_keywords} />}
         <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />
-        <meta property="og:url" content={`https://www.thelostandunfounds.com/thelostarchives/${post.slug}`} />
+        <meta property="og:url" content={post.subdomain ? `https://www.thelostandunfounds.com/blog/${post.subdomain}/${post.slug}` : `https://www.thelostandunfounds.com/thelostarchives/${post.slug}`} />
         <meta property="og:type" content="article" />
         {ogImage && <meta property="og:image" content={ogImage} />}
         <meta name="twitter:card" content="summary" />

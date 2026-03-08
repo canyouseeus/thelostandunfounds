@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { BookOpenIcon, DocumentTextIcon, QuestionMarkCircleIcon, ShieldCheckIcon, CodeBracketIcon, WrenchIcon } from '@heroicons/react/24/outline';
 import GettingStarted from './docs/GettingStarted';
 import ToolsDocs from './docs/Tools';
+import SEOHead from '../components/SEOHead';
 import APIDocs from './docs/API';
 import FAQ from './docs/FAQ';
 import Privacy from './docs/Privacy';
@@ -51,6 +52,12 @@ export default function Docs() {
   }, []);
 
   return (
+    <>
+      <SEOHead
+        title="DOCUMENTATION"
+        description="Everything you need to know about THE LOST+UNFOUNDS. Getting started guides, tools documentation, API reference, FAQ, and policies."
+        canonicalPath="/docs"
+      />
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-white mb-2">DOCUMENTATION</h1>
@@ -120,6 +127,7 @@ export default function Docs() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 

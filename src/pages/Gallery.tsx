@@ -11,6 +11,7 @@ import { motion } from 'framer-motion';
 import GalleryItem from './GalleryItem';
 import PhotographerApplicationModal from '../components/gallery/PhotographerApplicationModal';
 import { cn } from '../components/ui/utils';
+import MarketplaceBanner from '../components/events/MarketplaceBanner';
 
 interface PhotoLibrary {
     id: string;
@@ -116,9 +117,11 @@ export default function Gallery() {
         <div className="min-h-screen bg-black pt-32 pb-48 px-4 md:px-8 max-w-[100vw] overflow-x-hidden">
             <Helmet>
                 <title>THE GALLERY | THE LOST+UNFOUNDS</title>
-                <meta name="description" content="Exclusive high-resolution photography collections. Findings from the field, captured in high definition." />
+                <meta name="description" content="Explore exclusive high-resolution photography collections. Unique findings from the field, beautifully captured in high definition for your inspiration." />
                 <link rel="canonical" href="https://www.thelostandunfounds.com/gallery" />
             </Helmet>
+
+            <MarketplaceBanner surface="gallery" />
 
             <div className="max-w-7xl mx-auto mb-20 relative z-10">
                 <div className="text-left space-y-6 max-w-4xl pb-12">

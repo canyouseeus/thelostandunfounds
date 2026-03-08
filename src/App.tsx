@@ -57,6 +57,7 @@ import DownloadPortal from './pages/DownloadPortal'
 import OnboardingWizard from './pages/setup/OnboardingWizard'
 import PhotographerGuide from './pages/docs/PhotographerGuide'
 import Events from './pages/Events'
+import SubmitEvent from './pages/SubmitEvent'
 
 
 
@@ -86,6 +87,9 @@ function App() {
               </Route>
               <Route path="/events" element={<Layout />}>
                 <Route index element={<Events />} />
+              </Route>
+              <Route path="/submit-event" element={<Layout />}>
+                <Route index element={<SubmitEvent />} />
               </Route>
               <Route path="/qr" element={<Layout />}>
                 <Route index element={<QR />} />

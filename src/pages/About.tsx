@@ -241,6 +241,8 @@ export default function About() {
   return (
     <>
       <Helmet>
+        <title>ABOUT | THE LOST+UNFOUNDS</title>
+        <meta name="description" content="Learn about THE LOST+UNFOUNDS, a creative brand and mindset builder dedicated to help you believe in yourself again. Discover our mission and vision." />
         <link rel="canonical" href="https://www.thelostandunfounds.com/about" />
       </Helmet>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

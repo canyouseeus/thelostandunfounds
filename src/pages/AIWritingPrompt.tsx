@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useToast } from '../components/Toast';
 import { DocumentDuplicateIcon, CheckIcon } from '@heroicons/react/24/outline';
+import SEOHead from '../components/SEOHead';
 
 const COLUMN_PROMPT_PATHS: Record<string, string> = {
   bookclub: '/prompts/AI_WRITING_PROMPT_FOR_CONTRIBUTORS.md',
@@ -64,7 +65,15 @@ export default function AIWritingPrompt() {
     }
   };
 
+  const columnName = COLUMN_NAMES[column || 'bookclub'] || 'Contributors';
+
   return (
+    <>
+      <SEOHead
+        title={`AI Writing Prompt for ${columnName}`}
+        description={`Copy this AI writing prompt to use with your AI assistant when writing articles for ${columnName} on THE LOST+UNFOUNDS.`}
+        canonicalPath={`/${column}/prompt`}
+      />
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-8">
@@ -161,5 +170,6 @@ export default function AIWritingPrompt() {
         </div>
       </div>
     </div>
+    </>
   );
 }

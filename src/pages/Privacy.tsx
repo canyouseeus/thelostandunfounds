@@ -10,6 +10,8 @@ export default function Privacy() {
   return (
     <>
       <Helmet>
+        <title>PRIVACY POLICY | THE LOST+UNFOUNDS</title>
+        <meta name="description" content="Review the Privacy Policy for THE LOST+UNFOUNDS. Learn how protecting your personal privacy is prioritized and how we securely handle your data." />
         <link rel="canonical" href="https://www.thelostandunfounds.com/privacy" />
       </Helmet>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

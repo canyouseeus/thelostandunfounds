@@ -12,6 +12,7 @@ import { LoadingSpinner } from '../components/Loading';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { supabase } from '../lib/supabase';
+import SEOHead from '../components/SEOHead';
 
 const DownloadPortal: React.FC = () => {
     const { orderId } = useParams<{ orderId: string }>();
@@ -140,6 +141,13 @@ const DownloadPortal: React.FC = () => {
     };
 
     return (
+        <>
+            <SEOHead
+                title="Vault Access - Download Portal"
+                description="Securely access and download your purchased photo collections from THE LOST+UNFOUNDS Gallery."
+                canonicalPath="/download"
+                noIndex={true}
+            />
         <div className="min-h-screen bg-black text-white p-6 flex flex-col items-center justify-center font-sans selection:bg-white selection:text-black">
 
             {/* Header */}
@@ -251,6 +259,7 @@ const DownloadPortal: React.FC = () => {
                 )}
             </motion.div>
         </div>
+        </>
     );
 };
 

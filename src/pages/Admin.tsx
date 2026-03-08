@@ -5,11 +5,13 @@
  * Single-page scrollable layout with inline module sections
  */
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
 import AdminAffiliates from './AdminAffiliates';
+import SEOHead from '../components/SEOHead';
 import { isAdmin } from '../utils/admin';
 import { supabase } from '../lib/supabase';
 import {
@@ -50,7 +52,12 @@ import {
   ArrowsPointingOutIcon,
   InboxIcon,
   PhotoIcon,
-  LinkIcon
+  LinkIcon,
+  NewspaperIcon,
+  ChatBubbleLeftRightIcon,
+  SparklesIcon,
+  MegaphoneIcon,
+  Bars3Icon
 } from '@heroicons/react/24/outline';
 
 import ErrorBoundary from '../components/ErrorBoundary';
@@ -213,6 +220,7 @@ export default function Admin() {
   });
 
   const [allUsers, setAllUsers] = useState<RecentUser[]>([]);
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
   // Refs for scroll navigation
   const pageTopRef = useRef<HTMLDivElement>(null);
@@ -1342,6 +1350,212 @@ export default function Admin() {
     );
   }
 
+  const dashboardCategories = [
+    {
+      id: 'operational-load',
+      title: 'Operational Load',
+      icon: <ChartBarIcon className="w-4 h-4" />,
+      footer: <span className="text-[10px] text-white/40">Real-time sync</span>,
+      content: (
+        <div className="space-y-4 pt-2">
+          <AdminBentoRow
+            label="Total Users"
+            value={<AnimatedNumber value={stats?.totalUsers || 0} />}
+            className="cursor-pointer hover:bg-white/5 p-1 transition-colors"
+            onClick={() => setActiveTab('users')}
+          />
+          <AdminBentoRow
+            label="Subscribers"
+            value={<AnimatedNumber value={stats?.newsletterSubscribers || 0} />}
+            className="cursor-pointer hover:bg-white/5 p-1 transition-colors"
+            onClick={() => setActiveTab('newsletter')}
+          />
+          <AdminBentoRow
+            label="Affiliates"
+            value={<AnimatedNumber value={affiliateStats?.totalAffiliates || 0} />}
+            className="cursor-pointer hover:bg-white/5 p-1 transition-colors"
+            onClick={() => setActiveTab('affiliates')}
+          />
+          <AdminBentoRow
+            label="Pending Reviews"
+            value={<span className={pendingSubmissions > 0 ? "text-amber-400 font-bold" : ""}>{pendingSubmissions}</span>}
+            className="cursor-pointer hover:bg-white/5 p-1 transition-colors"
+            onClick={() => setActiveTab('submissions')}
+          />
+        </div>
+      )
+    },
+    {
+      id: 'revenue-performance',
+      title: 'Revenue Performance',
+      icon: <ArrowTrendingUpIcon className="w-4 h-4" />,
+      footer: <span className="text-[10px] text-white/40">Gross profit estimate</span>,
+      content: (
+        <div className="space-y-4 pt-2">
+          <AdminBentoRow label="Affiliate" value={`$${(stats?.affiliateRevenue || 0).toLocaleString()}`} />
+          <AdminBentoRow label="Gallery" value={`$${(stats?.galleryRevenue || 0).toLocaleString()}`} />
+          <AdminBentoRow label="Subs" value={`$${(0).toLocaleString()}`} />
+          <AdminBentoRow label="Total" valueClassName="text-green-400 font-bold" value={`$${((stats?.affiliateRevenue || 0) + (stats?.galleryRevenue || 0)).toLocaleString()}`} />
+        </div>
+      )
+    },
+    {
+      id: 'network-status',
+      title: 'Network Status',
+      icon: <CpuChipIcon className="w-4 h-4" />,
+      footer: <span className="text-[10px] text-white/40">System health</span>,
+      content: (
+        <div className="flex flex-col gap-2 pt-2">
+          <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+            <span className="text-white/40">Database</span>
+            <span className={healthMetrics.db ? "text-green-400" : "text-red-500"}>{healthMetrics.db ? 'Online' : 'Offline'}</span>
+          </div>
+          <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+            <span className="text-white/40">API Engine</span>
+            <span className={healthMetrics.api ? "text-green-400" : "text-red-500"}>{healthMetrics.api ? 'Online' : 'Offline'}</span>
+          </div>
+          <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+            <span className="text-white/40">Auth Service</span>
+            <span className={healthMetrics.auth ? "text-green-400" : "text-red-500"}>{healthMetrics.auth ? 'Online' : 'Offline'}</span>
+          </div>
+          <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+            <span className="text-white/40">Storage</span>
+            <span className={healthMetrics.storage ? "text-green-400" : "text-amber-500"}>{healthMetrics.storage ? 'Online' : 'Degraded'}</span>
+          </div>
+          <div className="mt-2 pt-2 border-t border-white/5 flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-[9px] text-white/60 font-bold uppercase tracking-tighter">Latency: 42ms</span>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 'registry',
+      title: 'Registry',
+      icon: <ShieldCheckIcon className="w-4 h-4" />,
+      footer: <Link to="/admin/affiliates" className="text-[10px] text-white/60 hover:text-white underline" onClick={e => e.stopPropagation()}>Manage Affiliates</Link>,
+      content: (
+        <div className="space-y-4 pt-2">
+          <AdminBentoRow label="Writers" value={registeredWriters} />
+          <AdminBentoRow label="Gallery Photos" value={stats?.galleryPhotoCount || 0} />
+          <AdminBentoRow label="Active Admins" value="2" />
+          <AdminBentoRow label="Environment" value={<span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-[9px] font-bold rounded">PRODUCTION</span>} />
+        </div>
+      )
+    },
+    {
+      id: 'notifications',
+      title: 'Notifications',
+      icon: <BellIcon className="w-4 h-4" />,
+      footer: <span className="text-[10px] text-white/40">System alerts</span>,
+      content: (
+        <div className="space-y-3 pt-2">
+          {alerts.length > 0 ? (
+            alerts.slice(0, 3).map(alert => (
+              <div key={alert.id} className="flex flex-col gap-1 py-1 border-b border-white/5 last:border-0">
+                <div className="flex items-center justify-between">
+                  <span className={cn(
+                    "text-[8px] font-bold uppercase px-1.5 py-0.5",
+                    alert.type === 'error' ? "bg-red-500/20 text-red-500" :
+                      alert.type === 'warning' ? "bg-amber-500/20 text-amber-500" :
+                        "bg-blue-500/20 text-blue-500"
+                  )}>
+                    {alert.type}
+                  </span>
+                  <span className="text-[8px] text-white/30">{alert.time}</span>
+                </div>
+                <p className="text-[10px] text-white/70 line-clamp-1">{alert.message}</p>
+              </div>
+            ))
+          ) : (
+            <div className="py-4 text-center">
+              <p className="text-white/40 text-[10px] uppercase font-bold tracking-widest">No active alerts</p>
+            </div>
+          )}
+        </div>
+      )
+    },
+    {
+      id: 'site-analytics',
+      title: 'Site Analytics',
+      icon: <ChartBarIcon className="w-4 h-4" />,
+      footer: <span className="text-[10px] text-white/40">Last 24 hours</span>,
+      content: (
+        <div className="space-y-4 pt-2">
+          <AdminBentoRow label="Total Views" value="12,842" />
+          <AdminBentoRow label="Unique Visitors" value="3,104" />
+          <AdminBentoRow label="Bounce Rate" value="24.2%" />
+          <div className="flex gap-1 h-8 items-end justify-between mt-2">
+            {[40, 70, 45, 90, 65, 80, 50, 60, 85, 45].map((h, i) => (
+              <div key={i} className="bg-white/10 w-full hover:bg-white/30 transition-colors" style={{ height: `${h}%` }} />
+            ))}
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 'suggestion-box',
+      title: 'Suggestion Box',
+      icon: <InboxIcon className="w-4 h-4" />,
+      footer: <span className="text-[10px] text-white/40">User feedback</span>,
+      content: (
+        <div className="space-y-4 pt-2">
+          <AdminBentoRow label="New Feedback" value="5" />
+          <AdminBentoRow label="Resolved" value="128" />
+          <div className="relative p-2 bg-white/5 border-l-2 border-white/20">
+            <p className="text-[9px] text-white/60 italic line-clamp-2">"Would be great to see a dark mode toggle in the..."</p>
+            <span className="text-[8px] text-white/30 block mt-1">- user@example.com</span>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 'ai-news',
+      title: 'A.I. News',
+      icon: <NewspaperIcon className="w-4 h-4" />,
+      footer: <span className="text-[10px] text-white/40">Curated intelligence</span>,
+      content: (
+        <div className="space-y-3 pt-2">
+          <div className="flex flex-col gap-1 py-1">
+            <div className="text-[8px] text-white/30 uppercase font-black tracking-widest">OpenAI</div>
+            <p className="text-[10px] text-white/80 font-bold leading-tight">GPT-5 details leaked in developer documentation...</p>
+          </div>
+          <div className="flex flex-col gap-1 py-1 mt-2 border-t border-white/5 pt-2">
+            <div className="text-[8px] text-white/30 uppercase font-black tracking-widest">Anthropic</div>
+            <p className="text-[10px] text-white/80 font-bold leading-tight">Claude 4 sets new benchmarks for coding tasks...</p>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 'art3mis',
+      title: 'ART3MIS - A.I. Site Concierge',
+      icon: <SparklesIcon className="w-4 h-4" />,
+      footer: <span className="text-[10px] text-white/40">Status: Online</span>,
+      content: (
+        <div className="space-y-4 pt-2">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center animate-pulse">
+              <SparklesIcon className="w-4 h-4 text-white/60" />
+            </div>
+            <div>
+              <div className="text-[8px] text-white/30 uppercase font-black tracking-widest">Current Status</div>
+              <div className="text-[10px] text-green-400 font-black uppercase">Deep Think: ENGAGED</div>
+            </div>
+          </div>
+          <div className="p-2 bg-white/5 border border-white/10 rounded-none mt-2">
+            <div className="text-[8px] text-white/40 uppercase mb-1">Last Analysis Result</div>
+            <p className="text-[10px] text-white/70">Optimized asset caching for mobile users in EU-west-1 region.</p>
+          </div>
+          <div className="flex items-center justify-between text-[8px] font-black uppercase tracking-widest text-white/40">
+            <span>Inference Load</span>
+            <span>12%</span>
+          </div>
+        </div>
+      )
+    }
+  ];
+
   // Default to overview tab if admin status is confirmed
   if (!stats && adminStatus === true) {
     // Stats haven't loaded yet - show TOULOUSE loading animation
@@ -1350,8 +1564,15 @@ export default function Admin() {
 
 
   return (
-    <div ref={pageTopRef} className="min-h-screen bg-black text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-x-hidden">
-      {/* Header */}
+    <>
+      <SEOHead 
+        title="Admin Dashboard" 
+        description="Platform administration and management interface." 
+        canonicalPath="/admin" 
+        noIndex={true} 
+      />
+      <div ref={pageTopRef} className="min-h-screen bg-black text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-x-hidden">
+        {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between gap-4">
           <h1 className="font-bold text-white uppercase whitespace-nowrap text-[clamp(1.5rem,4vw,2.25rem)]">
@@ -1392,95 +1613,40 @@ export default function Admin() {
           </div>
         </div>
 
-        {/* Row 2: Stats & Health */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <AdminBentoCard
-            title="Operational Load"
-            icon={<ChartBarIcon className="w-4 h-4" />}
-            footer={<span className="text-[10px] text-white/40">Real-time sync</span>}
-          >
-            <div className="space-y-4 pt-2">
-              <AdminBentoRow
-                label="Total Users"
-                value={<AnimatedNumber value={stats?.totalUsers || 0} />}
-                className="cursor-pointer hover:bg-white/5 p-1 transition-colors"
-                onClick={() => setActiveTab('users')}
-              />
-              <AdminBentoRow
-                label="Subscribers"
-                value={<AnimatedNumber value={stats?.newsletterSubscribers || 0} />}
-                className="cursor-pointer hover:bg-white/5 p-1 transition-colors"
-                onClick={() => setActiveTab('newsletter')}
-              />
-              <AdminBentoRow
-                label="Affiliates"
-                value={<AnimatedNumber value={affiliateStats?.totalAffiliates || 0} />}
-                className="cursor-pointer hover:bg-white/5 p-1 transition-colors"
-                onClick={() => setActiveTab('affiliates')}
-              />
-              <AdminBentoRow
-                label="Pending Reviews"
-                value={<span className={pendingSubmissions > 0 ? "text-amber-400 font-bold" : ""}>{pendingSubmissions}</span>}
-                className="cursor-pointer hover:bg-white/5 p-1 transition-colors"
-                onClick={() => setActiveTab('submissions')}
-              />
-            </div>
-          </AdminBentoCard>
+        {/* Row 2: Category Grid (3x3 on Mobile, 4-col on Desktop) */}
+        <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-6">
+          {dashboardCategories.map((category) => (
+            <div key={category.id} className="contents">
+              {/* Mobile-only compact card */}
+              <div
+                className="flex md:hidden flex-col items-center justify-center p-2.5 bg-white/5 rounded-none aspect-square active:scale-95 transition-all duration-200"
+                onClick={() => setExpandedCardId(category.id)}
+              >
+                <div className="p-2 bg-white/10 rounded-full mb-1 group-active:bg-white group-active:text-black transition-colors">
+                  {React.cloneElement(category.icon as React.ReactElement, { className: "w-4 h-4 text-white/40" })}
+                </div>
+                <span className="text-[8px] font-black uppercase tracking-[0.05em] text-center leading-tight text-white/60 px-1">
+                  {category.title.split(' ')[0]}
+                </span>
+                {category.title.split(' ').length > 1 && (
+                  <span className="text-[6px] font-bold uppercase tracking-[0.05em] text-center leading-none text-white/30">
+                    {category.title.split(' ').slice(1).join(' ')}
+                  </span>
+                )}
+              </div>
 
-          <AdminBentoCard
-            title="Revenue Performance"
-            icon={<ArrowTrendingUpIcon className="w-4 h-4" />}
-            footer={<span className="text-[10px] text-white/40">Gross profit estimate</span>}
-          >
-            <div className="space-y-4 pt-2">
-              <AdminBentoRow label="Affiliate" value={`$${(stats?.affiliateRevenue || 0).toLocaleString()}`} />
-              <AdminBentoRow label="Gallery" value={`$${(stats?.galleryRevenue || 0).toLocaleString()}`} />
-              <AdminBentoRow label="Subs" value={`$${(0).toLocaleString()}`} />
-              <AdminBentoRow label="Total" valueClassName="text-green-400 font-bold" value={`$${((stats?.affiliateRevenue || 0) + (stats?.galleryRevenue || 0)).toLocaleString()}`} />
-            </div>
-          </AdminBentoCard>
-
-          <AdminBentoCard
-            title="Network Status"
-            icon={<CpuChipIcon className="w-4 h-4" />}
-            footer={<span className="text-[10px] text-white/40">System health</span>}
-          >
-            <div className="flex flex-col gap-2 pt-2">
-              <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
-                <span className="text-white/40">Database</span>
-                <span className={healthMetrics.db ? "text-green-400" : "text-red-500"}>{healthMetrics.db ? 'Online' : 'Offline'}</span>
-              </div>
-              <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
-                <span className="text-white/40">API Engine</span>
-                <span className={healthMetrics.api ? "text-green-400" : "text-red-500"}>{healthMetrics.api ? 'Online' : 'Offline'}</span>
-              </div>
-              <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
-                <span className="text-white/40">Auth Service</span>
-                <span className={healthMetrics.auth ? "text-green-400" : "text-red-500"}>{healthMetrics.auth ? 'Online' : 'Offline'}</span>
-              </div>
-              <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
-                <span className="text-white/40">Storage</span>
-                <span className={healthMetrics.storage ? "text-green-400" : "text-amber-500"}>{healthMetrics.storage ? 'Online' : 'Degraded'}</span>
-              </div>
-              <div className="mt-2 pt-2 border-t border-white/5 flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-[9px] text-white/60 font-bold uppercase tracking-tighter">Latency: 42ms</span>
+              {/* Desktop-only full card */}
+              <div className="hidden md:block">
+                <AdminBentoCard
+                  title={category.title}
+                  icon={category.icon}
+                  footer={category.footer}
+                >
+                  {category.content}
+                </AdminBentoCard>
               </div>
             </div>
-          </AdminBentoCard>
-
-          <AdminBentoCard
-            title="Registry"
-            icon={<ShieldCheckIcon className="w-4 h-4" />}
-            footer={<Link to="/admin/affiliates" className="text-[10px] text-white/60 hover:text-white underline">Manage Affiliates</Link>}
-          >
-            <div className="space-y-4 pt-2">
-              <AdminBentoRow label="Writers" value={registeredWriters} />
-              <AdminBentoRow label="Gallery Photos" value={stats?.galleryPhotoCount || 0} />
-              <AdminBentoRow label="Active Admins" value="2" />
-              <AdminBentoRow label="Environment" value={<span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-[9px] font-bold rounded">PRODUCTION</span>} />
-            </div>
-          </AdminBentoCard>
+          ))}
         </div>
 
         {/* Console / My Apps Tab Bar (Premium Dock) */}
@@ -1832,8 +1998,73 @@ export default function Admin() {
             </div>
           )}
         </ExpandableScreen>
+
+        {/* Expanded Card Overlay for Mobile */}
+        <AnimatePresence>
+          {expandedCardId && (
+            <motion.div
+              initial={{ opacity: 0, scale: 1.05 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.05 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="fixed inset-0 z-[9999] bg-black md:hidden flex flex-col overflow-y-auto overscroll-none"
+              style={{
+                paddingTop: 'env(safe-area-inset-top, 0px)',
+                paddingBottom: 'env(safe-area-inset-bottom, 0px)'
+              }}
+            >
+              {/* Fake Global Header to cover real one and fix clipping */}
+              <div className="flex items-center justify-between px-6 py-4 bg-black sticky top-0 z-10">
+                <h1 className="font-bold text-white uppercase tracking-tighter text-sm">
+                  THE LOST+UNFOUNDS
+                </h1>
+                <button
+                  onClick={() => setExpandedCardId(null)}
+                  className="p-1 hover:bg-white/10 transition-colors"
+                >
+                  <Bars3Icon className="w-6 h-6 text-white" />
+                </button>
+              </div>
+
+              <div className="flex flex-col p-6">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white/10 rounded-full">
+                      {dashboardCategories.find(c => c.id === expandedCardId)?.icon}
+                    </div>
+                    <h2 className="text-sm font-black uppercase tracking-[0.2em] text-white">
+                      {dashboardCategories.find(c => c.id === expandedCardId)?.title}
+                    </h2>
+                  </div>
+                  <button
+                    onClick={() => setExpandedCardId(null)}
+                    className="p-2 bg-white/10 rounded-full active:bg-white active:text-black transition-colors"
+                  >
+                    <XCircleIcon className="w-5 h-5 text-white" />
+                  </button>
+                </div>
+
+                <div className="flex-1 bg-white/5 p-6 rounded-none shadow-2xl">
+                  {dashboardCategories.find(c => c.id === expandedCardId)?.content}
+                </div>
+
+                <div className="mt-8 pt-6">
+                  {dashboardCategories.find(c => c.id === expandedCardId)?.footer}
+                </div>
+
+                <button
+                  onClick={() => setExpandedCardId(null)}
+                  className="mt-12 w-full py-4 bg-white text-black font-black uppercase tracking-widest active:bg-white/80 transition-colors"
+                >
+                  CLOSE DASHBOARD CARD
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
+    </>
   );
 }
 

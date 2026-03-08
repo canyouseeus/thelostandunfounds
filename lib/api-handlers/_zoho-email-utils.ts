@@ -19,6 +19,11 @@ export interface ZohoSendEmailParams {
   htmlContent: string
 }
 
+/**
+ * Utility to wait for a specified amount of time.
+ */
+export const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
 interface ZohoTokenResponse {
   access_token: string
   token_type: string

@@ -419,7 +419,8 @@ export default function QR() {
     <>
       <Helmet>
         <title>QR Code Generator - THE LOST+UNFOUNDS</title>
-        <meta name="description" content="Generate QR codes for links. Download QR codes for easy sharing." />
+        <meta name="description" content="Generate custom high-resolution QR codes with background images and logos. Perfect for easy link sharing, marketing materials, and digital distribution." />
+        <link rel="canonical" href="https://www.thelostandunfounds.com/qr" />
       </Helmet>
       <div className="min-h-screen bg-black text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

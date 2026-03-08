@@ -1,0 +1,124 @@
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { supabase } from '../../lib/supabase';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowRightIcon, MegaphoneIcon } from '@heroicons/react/24/outline';
+
+interface PromotedEvent {
+    id: string;
+    title: string;
+    slug: string;
+    promotion_tagline?: string;
+    promotion_banner_url?: string;
+    image_url: string;
+}
+
+export default function EventBanner() {
+    const [event, setEvent] = useState<PromotedEvent | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchPromotedEvent();
+    }, []);
+
+    async function fetchPromotedEvent() {
+        try {
+            const { data, error } = await supabase
+                .from('events')
+                .select('id, title, slug, promotion_tagline, promotion_banner_url, image_url')
+                .eq('is_promoted', true)
+                .eq('status', 'published')
+                .order('event_date', { ascending: true })
+                .limit(1)
+                .maybeSingle();
+
+            if (error) throw error;
+            setEvent(data);
+        } catch (err) {
+            console.error('Error fetching promoted event:', err);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    if (loading || (!event)) {
+        return (
+            <div className="max-w-7xl mx-auto mb-12 px-4 md:px-8">
+                <Link
+                    to="/events"
+                    className="group relative block w-full bg-zinc-900/50 border border-white/5 py-4 px-6 overflow-hidden transition-all hover:bg-zinc-900 hover:border-white/10"
+                >
+                    <div className="flex items-center justify-between relative z-10">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-white/5 flex items-center justify-center border border-white/10">
+                                <MegaphoneIcon className="w-5 h-5 text-white/40" />
+                            </div>
+                            <div className="text-left">
+                                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 leading-none mb-1">PROMOTIONS</p>
+                                <p className="text-sm font-light text-white uppercase tracking-widest">ADVERTISE YOUR EVENT WITH US</p>
+                            </div>
+                        </div>
+                        <ArrowRightIcon className="w-5 h-5 text-white/20 group-hover:text-white transition-all transform group-hover:translate-x-1" />
+                    </div>
+                </Link>
+            </div>
+        );
+    }
+
+    const bannerImage = event.promotion_banner_url || event.image_url;
+
+    return (
+        <div className="max-w-7xl mx-auto mb-12 px-4 md:px-8">
+            <Link
+                to={`/events?id=${event.id}`}
+                className="group relative block w-full aspect-[21/9] md:aspect-[32/9] bg-black border border-white/10 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+            >
+                {/* Background Image */}
+                <div className="absolute inset-0">
+                    <img
+                        src={bannerImage}
+                        alt={event.title}
+                        className="w-full h-full object-cover opacity-60 grayscale transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent" />
+                </div>
+
+                {/* Content */}
+                <div className="absolute inset-0 flex flex-col justify-center p-8 md:p-12">
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="space-y-2 md:space-y-4 max-w-2xl text-left"
+                    >
+                        <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.4em] text-white/60 mb-2">FEATURED EVENT</p>
+                        <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter leading-none mb-4 group-hover:tracking-tight transition-all duration-500">
+                            {event.title}
+                        </h2>
+                        {event.promotion_tagline && (
+                            <p className="text-xs md:text-sm font-light text-white/80 uppercase tracking-[0.2em] max-w-md hidden sm:block">
+                                {event.promotion_tagline}
+                            </p>
+                        )}
+                        <div className="pt-4">
+                            <span className="inline-flex items-center gap-3 px-6 py-3 bg-white text-black text-[10px] font-black uppercase tracking-[0.2em] group-hover:bg-zinc-200 transition-colors">
+                                GET DETAILS
+                                <ArrowRightIcon className="w-4 h-4" />
+                            </span>
+                        </div>
+                    </motion.div>
+                </div>
+
+                {/* Advertise Ribbon */}
+                <div className="absolute top-0 right-0 p-4">
+                    <Link
+                        to="/events"
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-[8px] font-black uppercase tracking-widest text-white/30 hover:text-white transition-colors bg-black/50 backdrop-blur-sm px-3 py-1 border border-white/5"
+                    >
+                        ADVERTISE YOUR EVENT
+                    </Link>
+                </div>
+            </Link>
+        </div>
+    );
+}

@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { ExclamationTriangleIcon, XMarkIcon, ArrowPathIcon, TrashIcon } from '@heroicons/react/24/outline';
+import SEOHead from '../components/SEOHead';
 
 interface LogEntry {
   id: number;
@@ -187,6 +188,13 @@ export default function Debug() {
   };
 
   return (
+    <>
+      <SEOHead 
+        title="Debug Console" 
+        description="Real-time console error and log capture." 
+        canonicalPath="/debug" 
+        noIndex={true} 
+      />
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8 flex items-center justify-between">
         <div>
@@ -259,5 +267,6 @@ export default function Debug() {
         )}
       </div>
     </div>
+    </>
   );
 }

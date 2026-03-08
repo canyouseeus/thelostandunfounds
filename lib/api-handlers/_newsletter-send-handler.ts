@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import { generateNewsletterEmail, processEmailContent, BRAND } from '../email-template.js'
+import { delay } from './_zoho-email-utils.js'
 
 interface ZohoTokenResponse {
   access_token: string
@@ -569,60 +570,55 @@ export default async function handler(
       return generateNewsletterEmail(rawHtml, email)
     }
 
-    // Send emails in batches
-    // Resend Rate Limit: 2 req/sec. We set batchSize to 2 and delay 550ms to stay within limits and Vercel's 60s timeout.
-    const batchSize = useResend ? 2 : 10
+    // Send emails
     const sendLogs: { subscriber_email: string; status: string; error_message: string | null; sent_at: string | null }[] = []
 
-    for (let i = 0; i < subscribers.length; i += batchSize) {
-      const batch = subscribers.slice(i, i + batchSize)
+    for (const subscriber of subscribers) {
+      try {
+        const recipientHtml = buildRecipientHtml(contentHtml, subscriber.email)
 
-      await Promise.all(
-        batch.map(async (subscriber) => {
-          try {
-            const recipientHtml = buildRecipientHtml(contentHtml, subscriber.email)
+        // Use Resend or Zoho based on configuration
+        const result = useResend
+          ? await sendResendEmail(subscriber.email, subject, recipientHtml)
+          : await sendZohoEmail(accessToken, accountId, actualFromEmail, subscriber.email, subject, recipientHtml)
 
-            // Use Resend or Zoho based on configuration
-            const result = useResend
-              ? await sendResendEmail(subscriber.email, subject, recipientHtml)
-              : await sendZohoEmail(accessToken, accountId, actualFromEmail, subscriber.email, subject, recipientHtml)
-
-            if (result.success) {
-              emailsSent++
-              sendLogs.push({
-                subscriber_email: subscriber.email,
-                status: 'sent',
-                error_message: null,
-                sent_at: new Date().toISOString()
-              })
-            } else {
-              emailsFailed++
-              const errorMsg = result.error || 'Unknown error'
-              errors.push(`${subscriber.email}: ${errorMsg}`)
-              sendLogs.push({
-                subscriber_email: subscriber.email,
-                status: 'failed',
-                error_message: errorMsg,
-                sent_at: null
-              })
-            }
-          } catch (error: any) {
-            emailsFailed++
-            const errorMsg = error.message || 'Unknown error'
-            errors.push(`${subscriber.email}: ${errorMsg}`)
-            sendLogs.push({
-              subscriber_email: subscriber.email,
-              status: 'failed',
-              error_message: errorMsg,
-              sent_at: null
-            })
-          }
+        if (result.success) {
+          emailsSent++
+          sendLogs.push({
+            subscriber_email: subscriber.email,
+            status: 'sent',
+            error_message: null,
+            sent_at: new Date().toISOString()
+          })
+        } else {
+          emailsFailed++
+          const errorMsg = result.error || 'Unknown error'
+          errors.push(`${subscriber.email}: ${errorMsg}`)
+          sendLogs.push({
+            subscriber_email: subscriber.email,
+            status: 'failed',
+            error_message: errorMsg,
+            sent_at: new Date().toISOString()
+          })
+        }
+      } catch (error: any) {
+        emailsFailed++
+        const errorMsg = error.message || 'Unknown error'
+        errors.push(`${subscriber.email}: ${errorMsg}`)
+        sendLogs.push({
+          subscriber_email: subscriber.email,
+          status: 'failed',
+          error_message: errorMsg,
+          sent_at: new Date().toISOString()
         })
-      )
+      }
 
-      // Delay between batches
-      if (i + batchSize < subscribers.length) {
-        await new Promise(resolve => setTimeout(resolve, useResend ? 550 : 1000))
+      // Rate limiting delay
+      // Zoho limit: 2 req/sec. Current delay: 750ms between EMAILS (sequential)
+      // Resend limit: 2 req/sec. Current delay: 550ms between EMAILS (sequential)
+      const throttleDelay = useResend ? 550 : 750
+      if (emailsSent + emailsFailed < subscribers.length) {
+        await new Promise(resolve => setTimeout(resolve, throttleDelay))
       }
     }
 

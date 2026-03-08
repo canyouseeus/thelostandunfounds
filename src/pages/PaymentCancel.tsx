@@ -1,10 +1,18 @@
 import { useNavigate } from 'react-router-dom'
 import { XCircleIcon } from '@heroicons/react/24/outline'
+import SEOHead from '../components/SEOHead'
 
 export default function PaymentCancel() {
   const navigate = useNavigate()
 
   return (
+    <>
+      <SEOHead
+        title="Payment Cancelled"
+        description="Your payment was cancelled. No charges were made."
+        canonicalPath="/payment/cancel"
+        noIndex={true}
+      />
     <div className="min-h-screen bg-black flex items-start justify-center px-4 pt-16 pb-12">
       <div className="max-w-md w-full bg-black/50 border border-white/10 rounded-none p-8 text-center">
         <XCircleIcon className="w-16 h-16 mx-auto mb-4 text-yellow-400" />
@@ -18,5 +26,6 @@ export default function PaymentCancel() {
         </button>
       </div>
     </div>
+    </>
   )
 }

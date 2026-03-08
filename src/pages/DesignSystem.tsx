@@ -62,7 +62,8 @@ export default function DesignSystem() {
     <>
       <Helmet>
         <title>Design System | THE LOST+UNFOUNDS</title>
-        <meta name="description" content="Visual UI/UX library reference for THE LOST+UNFOUNDS design system" />
+        <meta name="description" content="Visual UI/UX library reference for THE LOST+UNFOUNDS design system. Explore our core visual patterns, components, typography, and color palettes." />
+        <link rel="canonical" href="https://www.thelostandunfounds.com/design-system" />
       </Helmet>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-8">

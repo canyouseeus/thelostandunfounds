@@ -4,9 +4,17 @@
 
 import { Link } from 'react-router-dom';
 import { HomeIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import SEOHead from '../components/SEOHead';
 
 export default function NotFound() {
   return (
+    <>
+      <SEOHead
+        title="Page Not Found"
+        description="The page you're looking for doesn't exist or has been moved. Return to THE LOST+UNFOUNDS homepage to continue exploring."
+        canonicalPath="/404"
+        noIndex={true}
+      />
     <div className="min-h-screen bg-black flex items-center justify-center px-4">
       <div className="max-w-md w-full text-center">
         <div className="mb-8">
@@ -38,6 +46,7 @@ export default function NotFound() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 

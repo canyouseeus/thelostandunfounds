@@ -39,6 +39,7 @@ import PayoutHistoryTable from '../components/affiliate/PayoutHistoryTable'
 import { AdminBentoCard, AdminBentoRow } from '../components/ui/admin-bento-card'
 import { ExpandableBentoCard } from '../components/ui/expandable-bento-card'
 import { cn } from '../components/ui/utils'
+import SEOHead from '../components/SEOHead'
 
 interface DashboardData {
   affiliate: {
@@ -567,6 +568,13 @@ export default function AffiliateDashboard() {
   }
 
   return (
+    <>
+      <SEOHead 
+        title="Affiliate Dashboard" 
+        description="Affiliate Dashboard" 
+        canonicalPath="/affiliate-dashboard" 
+        noIndex={true} 
+      />
     <div className="min-h-screen bg-black text-white">
       <KingMidasTicker />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -1392,6 +1400,7 @@ export default function AffiliateDashboard() {
         </div>
       </div>
     </div >
+    </>
   )
 }
 

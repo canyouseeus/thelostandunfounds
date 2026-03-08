@@ -1,27 +1,25 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import { processEmailContent } from '../email-template.js'
+import { delay, getZohoAuthContext, sendZohoEmail as sendZohoEmailUtil } from './_zoho-email-utils.js'
 
-interface ZohoTokenResponse {
-  access_token: string
-  token_type: string
-  expires_in: number
+/**
+ * Build recipient HTML with unsubscribe link
+ * Uses centralized email template for consistency
+ */
+function buildRecipientHtml(rawHtml: string, email: string): string {
+  return processEmailContent(rawHtml, email)
 }
 
-interface ZohoEmailResult {
-  success: boolean
-  error?: string
+// Check if Resend is configured
+function isResendConfigured(): boolean {
+  return !!process.env.RESEND_API_KEY
 }
 
 interface ResendEmailResult {
   success: boolean
   id?: string
   error?: string
-}
-
-// Check if Resend is configured
-function isResendConfigured(): boolean {
-  return !!process.env.RESEND_API_KEY
 }
 
 // Send email via Resend API
@@ -61,127 +59,6 @@ async function sendResendEmail(
   } catch (error: any) {
     return { success: false, error: error.message || 'Failed to send email' }
   }
-}
-
-/**
- * Get Zoho access token
- */
-async function getZohoAccessToken(): Promise<string> {
-  const clientId = process.env.ZOHO_CLIENT_ID
-  const clientSecret = process.env.ZOHO_CLIENT_SECRET
-  const refreshToken = process.env.ZOHO_REFRESH_TOKEN
-
-  if (!clientId || !clientSecret || !refreshToken) {
-    throw new Error('Zoho credentials not configured')
-  }
-
-  const tokenResponse = await fetch('https://accounts.zoho.com/oauth/v2/token', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      refresh_token: refreshToken,
-      client_id: clientId,
-      client_secret: clientSecret,
-      grant_type: 'refresh_token',
-    }),
-  })
-
-  if (!tokenResponse.ok) {
-    const errorText = await tokenResponse.text()
-    throw new Error(`Failed to refresh Zoho token: ${tokenResponse.status} ${errorText}`)
-  }
-
-  const tokenData: ZohoTokenResponse = await tokenResponse.json()
-  return tokenData.access_token
-}
-
-/**
- * Get Zoho account ID and email
- */
-async function getZohoAccountInfo(accessToken: string, fallbackEmail: string): Promise<{ accountId: string; email: string }> {
-  const accountInfoResponse = await fetch('https://mail.zoho.com/api/accounts', {
-    method: 'GET',
-    headers: {
-      'Authorization': `Zoho-oauthtoken ${accessToken}`,
-    },
-  })
-
-  if (accountInfoResponse.ok) {
-    const accounts = await accountInfoResponse.json()
-    if (accounts.data && accounts.data.length > 0) {
-      const account = accounts.data[0]
-      const accountId = account.accountId || account.account_id
-      let accountEmail = fallbackEmail
-      if (account.emailAddress && typeof account.emailAddress === 'string') {
-        accountEmail = account.emailAddress
-      } else if (account.email && typeof account.email === 'string') {
-        accountEmail = account.email
-      }
-      if (accountId) {
-        return { accountId, email: accountEmail }
-      }
-    }
-  }
-
-  const emailParts = fallbackEmail.split('@')
-  return { accountId: emailParts[0], email: fallbackEmail }
-}
-
-/**
- * Send email via Zoho Mail API
- */
-async function sendZohoEmail(
-  accessToken: string,
-  accountId: string,
-  fromEmail: string,
-  toEmail: string,
-  subject: string,
-  htmlContent: string
-): Promise<ZohoEmailResult> {
-  const mailApiUrl = `https://mail.zoho.com/api/accounts/${accountId}/messages`
-
-  const emailResponse = await fetch(mailApiUrl, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Zoho-oauthtoken ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      fromAddress: fromEmail,
-      toAddress: toEmail,
-      subject: subject,
-      content: htmlContent,
-      mailFormat: 'html',
-    }),
-  })
-
-  if (!emailResponse.ok) {
-    const errorText = await emailResponse.text()
-    let errorMessage = `Failed to send email: ${emailResponse.status}`
-    try {
-      const errorJson = JSON.parse(errorText)
-      if (errorJson.data?.moreInfo) {
-        errorMessage = `Zoho Error: ${errorJson.data.moreInfo}`
-      } else if (errorJson.status?.description) {
-        errorMessage = `Zoho Error: ${errorJson.status.description}`
-      }
-    } catch {
-      errorMessage = `Failed to send email: ${emailResponse.status}. Details: ${errorText}`
-    }
-    return { success: false, error: errorMessage }
-  }
-
-  return { success: true }
-}
-
-/**
- * Build recipient HTML with unsubscribe link
- * Uses centralized email template for consistency
- */
-function buildRecipientHtml(rawHtml: string, email: string): string {
-  return processEmailContent(rawHtml, email)
 }
 
 export default async function handler(
@@ -280,22 +157,18 @@ export default async function handler(
     console.log(`Retry using email provider: ${useResend ? 'Resend' : 'Zoho'}`)
 
     // Initialize Zoho if needed
-    let accessToken: string = ''
-    let accountId: string = ''
-    let actualFromEmail: string = ''
+    let zohoAuth: any = null
 
     if (!useResend) {
-      const fromEmail = process.env.ZOHO_FROM_EMAIL || process.env.ZOHO_EMAIL
-      if (!fromEmail) {
-        return res.status(500).json({ error: 'Email service not configured. Please set up Resend or Zoho.' })
+      try {
+        zohoAuth = await getZohoAuthContext()
+        console.log('Zoho auth context initialized:', {
+          accountId: zohoAuth.accountId,
+          fromEmail: zohoAuth.fromEmail
+        })
+      } catch (error: any) {
+        throw new Error(`Failed to authenticate with Zoho: ${error.message}`)
       }
-
-      accessToken = await getZohoAccessToken()
-      const accountInfo = await getZohoAccountInfo(accessToken, fromEmail)
-      accountId = accountInfo.accountId
-      actualFromEmail = (accountInfo.email && accountInfo.email.includes('@'))
-        ? accountInfo.email
-        : fromEmail
     }
 
     // Send emails
@@ -303,81 +176,80 @@ export default async function handler(
     let emailsFailed = 0
     const results: { email: string; status: 'sent' | 'failed'; error?: string }[] = []
 
-    const batchSize = useResend ? 50 : 10
-    for (let i = 0; i < emailsToRetry.length; i += batchSize) {
-      const batch = emailsToRetry.slice(i, i + batchSize)
+    for (const email of emailsToRetry) {
+      try {
+        const recipientHtml = buildRecipientHtml(campaign.content_html, email)
 
-      await Promise.all(
-        batch.map(async (email) => {
-          try {
-            const recipientHtml = buildRecipientHtml(campaign.content_html, email)
+        // Use Resend or Zoho based on configuration
+        const result = useResend
+          ? await sendResendEmail(email, campaign.subject, recipientHtml)
+          : await sendZohoEmailUtil({
+            auth: zohoAuth,
+            to: email,
+            subject: campaign.subject,
+            htmlContent: recipientHtml
+          })
 
-            // Use Resend or Zoho based on configuration
-            const result = useResend
-              ? await sendResendEmail(email, campaign.subject, recipientHtml)
-              : await sendZohoEmail(accessToken, accountId, actualFromEmail, email, campaign.subject, recipientHtml)
+        if (result.success) {
+          emailsSent++
+          results.push({ email, status: 'sent' })
 
-            if (result.success) {
-              emailsSent++
-              results.push({ email, status: 'sent' })
-
-              // Upsert log entry (insert if not exists, update if exists)
-              if (isLegacyRetry) {
-                await supabase
-                  .from('newsletter_send_logs')
-                  .insert({
-                    campaign_id: campaignId,
-                    subscriber_email: email,
-                    status: 'sent',
-                    error_message: null,
-                    sent_at: new Date().toISOString()
-                  })
-              } else {
-                await supabase
-                  .from('newsletter_send_logs')
-                  .update({
-                    status: 'sent',
-                    error_message: null,
-                    sent_at: new Date().toISOString()
-                  })
-                  .eq('campaign_id', campaignId)
-                  .eq('subscriber_email', email)
-              }
-            } else {
-              emailsFailed++
-              results.push({ email, status: 'failed', error: result.error })
-
-              // Upsert log entry with error
-              if (isLegacyRetry) {
-                await supabase
-                  .from('newsletter_send_logs')
-                  .insert({
-                    campaign_id: campaignId,
-                    subscriber_email: email,
-                    status: 'failed',
-                    error_message: result.error,
-                    sent_at: null
-                  })
-              } else {
-                await supabase
-                  .from('newsletter_send_logs')
-                  .update({
-                    error_message: result.error
-                  })
-                  .eq('campaign_id', campaignId)
-                  .eq('subscriber_email', email)
-              }
-            }
-          } catch (error: any) {
-            emailsFailed++
-            results.push({ email, status: 'failed', error: error.message })
+          // Upsert log entry (insert if not exists, update if exists)
+          if (isLegacyRetry) {
+            await supabase
+              .from('newsletter_send_logs')
+              .insert({
+                campaign_id: campaignId,
+                subscriber_email: email,
+                status: 'sent',
+                error_message: null,
+                sent_at: new Date().toISOString()
+              })
+          } else {
+            await supabase
+              .from('newsletter_send_logs')
+              .update({
+                status: 'sent',
+                error_message: null,
+                sent_at: new Date().toISOString()
+              })
+              .eq('campaign_id', campaignId)
+              .eq('subscriber_email', email)
           }
-        })
-      )
+        } else {
+          emailsFailed++
+          results.push({ email, status: 'failed', error: result.error })
 
-      // Delay between batches (shorter for Resend)
-      if (i + batchSize < emailsToRetry.length) {
-        await new Promise(resolve => setTimeout(resolve, useResend ? 200 : 1000))
+          // Upsert log entry with error
+          if (isLegacyRetry) {
+            await supabase
+              .from('newsletter_send_logs')
+              .insert({
+                campaign_id: campaignId,
+                subscriber_email: email,
+                status: 'failed',
+                error_message: result.error,
+                sent_at: null
+              })
+          } else {
+            await supabase
+              .from('newsletter_send_logs')
+              .update({
+                error_message: result.error
+              })
+              .eq('campaign_id', campaignId)
+              .eq('subscriber_email', email)
+          }
+        }
+      } catch (error: any) {
+        emailsFailed++
+        results.push({ email, status: 'failed', error: error.message })
+      }
+
+      // Rate limiting delay
+      const throttleDelay = useResend ? 550 : 750
+      if (emailsSent + emailsFailed < emailsToRetry.length) {
+        await delay(throttleDelay)
       }
     }
 

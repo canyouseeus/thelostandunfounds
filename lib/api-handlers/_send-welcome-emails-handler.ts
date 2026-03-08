@@ -666,7 +666,7 @@ export default async function handler(
       }
 
       // Small delay to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 500))
+      await new Promise(resolve => setTimeout(resolve, 750))
     }
 
     return res.status(200).json({

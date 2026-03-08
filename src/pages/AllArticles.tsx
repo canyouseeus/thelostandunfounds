@@ -68,7 +68,7 @@ export default function AllArticles() {
       );
 
       // Execute query
-      const result = await Promise.race([queryPromise, timeoutPromise]) as Promise<any>;
+      const result = await Promise.race([queryPromise, timeoutPromise]) as any;
 
       if (!isMounted.current) return;
 
@@ -169,7 +169,7 @@ export default function AllArticles() {
     return <LoadingOverlay />;
   }
 
-  const blogDescription = 'All articles from THE LOST ARCHIVES. Revealing findings from the frontier and beyond. Intel from the field on development, AI, and building in the age of information.';
+  const blogDescription = 'Explore all articles from THE LOST ARCHIVES. Revealing findings from the frontier. Intel on development, AI, and building in the age of information.';
 
   return (
     <>

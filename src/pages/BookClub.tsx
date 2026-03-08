@@ -153,7 +153,7 @@ export default function BookClub() {
     return <LoadingOverlay />;
   }
 
-  const description = 'A collection of articles from contributors. Each article features four books with Amazon affiliate links.';
+  const description = 'A collection of curated articles from contributors. Each article features four books with Amazon affiliate links, offering discoveries and insights.';
 
   return (
     <>

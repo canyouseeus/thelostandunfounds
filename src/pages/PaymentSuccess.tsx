@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { CheckCircleIcon } from '@heroicons/react/24/outline'
 import { LoadingOverlay } from '../components/Loading'
+import SEOHead from '../components/SEOHead'
 
 export default function PaymentSuccess() {
   const [searchParams] = useSearchParams()
@@ -70,6 +71,13 @@ export default function PaymentSuccess() {
   }, [searchParams, navigate, redirectPath])
 
   return (
+    <>
+      <SEOHead
+        title="Payment Successful"
+        description="Your payment has been processed successfully."
+        canonicalPath="/payment/success"
+        noIndex={true}
+      />
     <div className="min-h-screen bg-black flex items-start justify-center px-4 pt-16 pb-12">
       <div className="max-w-md w-full bg-black/50 border border-white/10 rounded-none p-8 text-center">
         {status === 'processing' && (
@@ -102,5 +110,6 @@ export default function PaymentSuccess() {
         )}
       </div>
     </div>
+    </>
   )
 }

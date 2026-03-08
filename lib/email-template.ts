@@ -13,9 +13,9 @@ export const BRAND = {
   colors: {
     background: '#000000',
     text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.6)',
-    border: 'rgba(255, 255, 255, 0.1)',
-    link: 'rgba(255, 255, 255, 0.9)',
+    textMuted: '#999999',
+    border: '#1a1a1a',
+    link: '#eeeeee',
   },
 };
 
@@ -65,8 +65,14 @@ export function wrapEmailContent(
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
   <title>${BRAND.name}</title>
   <style>
+    :root {
+      color-scheme: light dark;
+      supported-color-schemes: light dark;
+    }
     /* Reset styles */
     body, table, td, p, a, li, blockquote {
       -webkit-text-size-adjust: 100%;
@@ -91,6 +97,7 @@ export function wrapEmailContent(
       padding: 0 !important;
       font-family: Arial, Helvetica, sans-serif;
       color: ${BRAND.colors.text};
+      width: 100% !important;
     }
     table {
       background-color: ${BRAND.colors.background} !important;
@@ -122,26 +129,29 @@ export function wrapEmailContent(
     }
   </style>
 </head>
-<body style="margin: 0 !important; padding: 0 !important; background-color: ${BRAND.colors.background} !important; font-family: Arial, Helvetica, sans-serif;">
-  <!-- Email wrapper table -->
-  <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100% !important; border-collapse: collapse !important; background-color: ${BRAND.colors.background} !important; margin: 0 !important; padding: 0 !important;">
+<body bgcolor="${BRAND.colors.background}" style="margin: 0; padding: 0; background-color: ${BRAND.colors.background}; color: ${BRAND.colors.text}; font-family: Arial, Helvetica, sans-serif; -webkit-font-smoothing: antialiased; width: 100% !important; height: 100% !important;">
+  <!-- Full wrapper table for background -->
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" height="100%" bgcolor="${BRAND.colors.background}" style="border-collapse: collapse; background-color: ${BRAND.colors.background}; background: ${BRAND.colors.background}; margin: 0; padding: 0; width: 100% !important; height: 100% !important;">
     <tr>
-      <td align="left" style="padding: 40px 20px !important; background-color: ${BRAND.colors.background} !important;">
-        <!-- Content container -->
-        <table role="presentation" cellpadding="0" cellspacing="0" style="max-width: 600px !important; width: 100% !important; background-color: ${BRAND.colors.background} !important; margin: 0 !important;">
-          <!-- Logo -->
+      <td align="center" bgcolor="${BRAND.colors.background}" style="padding: 0; background-color: ${BRAND.colors.background};">
+        <!-- Center column wrapper -->
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" bgcolor="${BRAND.colors.background}" style="max-width: 600px; width: 100%; background-color: ${BRAND.colors.background}; margin: 0 auto; border-collapse: collapse;">
+          <!-- Responsive Banner -->
           <tr>
-            <td align="left" style="padding: 0 0 30px 0 !important;">
-              <a href="${BRAND.website}" target="_blank">
-                <img src="${BRAND.logo}" alt="${BRAND.name}" style="max-width: 100%; height: auto; display: block;">
+            <td align="left" bgcolor="${BRAND.colors.background}" style="padding: 0; background-color: ${BRAND.colors.background}; font-size: 0; line-height: 0;">
+              <a href="${BRAND.website}" target="_blank" style="display: block; width: 100%;">
+                <img src="${BRAND.logo}" alt="${BRAND.name}" style="width: 100%; max-width: 600px; height: auto; display: block; border: 0;" border="0">
               </a>
             </td>
           </tr>
           <!-- Main content -->
           <tr>
-            <td style="padding: 0 !important; color: ${BRAND.colors.text} !important;">
-              ${bodyContent}
-              ${footerHtml}
+            <td align="left" bgcolor="${BRAND.colors.background}" style="padding: 40px 20px; color: ${BRAND.colors.text}; background-color: ${BRAND.colors.background};">
+              <!-- Force inner white text -->
+              <div style="color: ${BRAND.colors.text}; font-size: 16px; line-height: 1.6; text-align: left;">
+                ${bodyContent}
+                ${footerHtml}
+              </div>
             </td>
           </tr>
         </table>

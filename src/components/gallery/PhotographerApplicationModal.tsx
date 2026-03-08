@@ -50,6 +50,17 @@ export default function PhotographerApplicationModal({ isOpen, onClose }: Photog
         setCameras(updated);
     };
 
+    const isValidInstagramLink = (link: string) => {
+        const cleanLink = link.trim().toLowerCase();
+        try {
+            const urlToTest = cleanLink.startsWith('http') ? cleanLink : `https://${cleanLink}`;
+            const url = new URL(urlToTest);
+            return url.hostname.includes('instagram.com') && url.pathname.length > 1 && url.pathname !== '/';
+        } catch {
+            return false;
+        }
+    };
+
     const canProceed = () => {
         switch (step) {
             case 0:
@@ -59,7 +70,7 @@ export default function PhotographerApplicationModal({ isOpen, onClose }: Photog
             case 2:
                 return cameras.some(c => c.trim().length > 0);
             case 3:
-                return location.trim().length > 0 && portfolioLink.trim().length > 0;
+                return location.trim().length > 0 && isValidInstagramLink(portfolioLink);
             default:
                 return false;
         }
@@ -294,11 +305,11 @@ export default function PhotographerApplicationModal({ isOpen, onClose }: Photog
                                         <div>
                                             <label className="block text-sm font-medium text-white/80 mb-2">
                                                 <LinkIcon className="w-4 h-4 inline mr-1" />
-                                                Portfolio / Social Media
+                                                Instagram Link
                                             </label>
                                             <input
                                                 type="url"
-                                                placeholder="https://yourwebsite.com or @instagram"
+                                                placeholder="https://instagram.com/yourusername"
                                                 value={portfolioLink}
                                                 onChange={(e) => setPortfolioLink(e.target.value)}
                                                 className="w-full px-4 py-3 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors"

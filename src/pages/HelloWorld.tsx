@@ -5,7 +5,8 @@ export default function HelloWorld() {
     <>
       <Helmet>
         <title>Hello World - THE LOST+UNFOUNDS</title>
-        <meta name="description" content="Hello World test page" />
+        <meta name="description" content="Hello World test page for THE LOST+UNFOUNDS. A simple diagnostic page to ensure core routing and platform functionality are working properly." />
+        <link rel="canonical" href="https://www.thelostandunfounds.com/hello-world" />
       </Helmet>
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">

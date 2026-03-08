@@ -13,6 +13,7 @@ import {
 import { LoadingOverlay } from '../components/Loading';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import MarketplaceBanner from '../components/events/MarketplaceBanner';
 import { initAffiliateTracking, getAffiliateRef } from '../utils/affiliate-tracking';
 import { getStrikeCheckoutInvoice, pollStrikeInvoiceStatus } from '../utils/checkout-utils';
 import { LightningPaymentModal } from "../components/shop/LightningPaymentModal";
@@ -151,8 +152,13 @@ export default function Shop() {
   return (
     <>
       <Helmet>
+        <title>SHOP | THE LOST+UNFOUNDS</title>
+        <meta name="description" content="Shop exclusive THE LOST+UNFOUNDS apparel, gear, and digital products. Discover unique findings from the field, delivered directly to your door." />
         <link rel="canonical" href="https://www.thelostandunfounds.com/shop" />
       </Helmet>
+
+      <MarketplaceBanner surface="shop" />
+
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
         {/* Header */}
         <div className="text-center space-y-3 sm:space-y-4">

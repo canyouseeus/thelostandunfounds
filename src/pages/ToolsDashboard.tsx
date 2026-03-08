@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { ArrowDownTrayIcon, ArrowRightIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
 import SubscriptionStatus from '../components/subscription/SubscriptionStatus'
+import SEOHead from '../components/SEOHead'
 
 interface Tool {
   id: string
@@ -50,6 +51,12 @@ export default function ToolsDashboard() {
   }
 
   return (
+    <>
+      <SEOHead
+        title="TOOL BOX"
+        description="Explore custom tools and utilities from THE LOST+UNFOUNDS. Free downloads, TikTok tools, and more creative resources for builders."
+        canonicalPath="/tools"
+      />
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
       <div className="text-center mb-6">
         <h1 className="text-5xl font-bold text-white mb-4 uppercase">
@@ -113,6 +120,7 @@ export default function ToolsDashboard() {
         </div>
       )}
     </div>
+    </>
   )
 }
 

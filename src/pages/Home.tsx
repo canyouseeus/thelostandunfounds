@@ -164,7 +164,7 @@ export default function Home() {
       <Helmet>
         <title>THE LOST+UNFOUNDS - CAN YOU SEE US?</title>
         <link rel="canonical" href="https://www.thelostandunfounds.com/" />
-        <meta name="description" content="CAN YOU SEE US? THE LOST+UNFOUNDS - Revealing findings from the frontier and beyond. Intel from the field on development, AI, and building in the age of information." />
+        <meta name="description" content="CAN YOU SEE US? THE LOST+UNFOUNDS - Findings from the frontier and beyond. Intel on development, AI, programming, and building in the age of information." />
         <meta property="og:title" content="THE LOST+UNFOUNDS - CAN YOU SEE US?" />
         <meta property="og:description" content="Thanks for stopping by. Sign-up for updates and news! Revealing findings from the frontier and beyond." />
         <meta property="og:type" content="website" />
@@ -207,7 +207,7 @@ export default function Home() {
 
           {/* Typing text - expands after cursor disappears */}
           {showTyping && (
-            <div
+            <h1
               className="center-text fixed text-base sm:text-2xl md:text-3xl"
               style={{
                 opacity: typingComplete ? 0.3 : 1,
@@ -237,7 +237,7 @@ export default function Home() {
               >
                 |
               </span>
-            </div>
+            </h1>
           )}
 
           {/* Email Signup - slides up from bottom */}

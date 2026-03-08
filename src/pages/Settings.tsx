@@ -14,6 +14,7 @@ import {
   KeyIcon
 } from '@heroicons/react/24/outline';
 import { LoadingSpinner } from '../components/Loading';
+import SEOHead from '../components/SEOHead';
 
 export default function SettingsPage() {
   const { user, signOut } = useAuth();
@@ -111,6 +112,13 @@ export default function SettingsPage() {
   }
 
   return (
+    <>
+      <SEOHead 
+        title="Settings" 
+        description="Manage your preferences and account settings." 
+        canonicalPath="/settings" 
+        noIndex={true} 
+      />
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-2">
@@ -300,6 +308,7 @@ export default function SettingsPage() {
         </div>
       )}
     </div>
+    </>
   );
 }
 

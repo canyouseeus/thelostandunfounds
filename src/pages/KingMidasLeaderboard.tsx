@@ -17,6 +17,7 @@ import {
 import { LoadingOverlay } from '../components/Loading';
 import KingMidasTicker from '../components/KingMidasTicker';
 import { supabase } from '../lib/supabase';
+import SEOHead from '../components/SEOHead';
 
 interface Ranking {
   rank: number;
@@ -147,6 +148,12 @@ export default function KingMidasLeaderboard() {
   }
 
   return (
+    <>
+      <SEOHead
+        title="KING MIDAS Leaderboard"
+        description="Daily affiliate profit rankings and pool distributions. Top affiliates compete for 8% of daily profit at THE LOST+UNFOUNDS."
+        canonicalPath="/king-midas-leaderboard"
+      />
     <div className="min-h-screen bg-black text-white">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
@@ -343,6 +350,7 @@ export default function KingMidasLeaderboard() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 

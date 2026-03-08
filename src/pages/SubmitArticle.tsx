@@ -676,7 +676,8 @@ export default function SubmitArticle() {
       <>
         <Helmet>
           <title>Submit Article | THE LOST ARCHIVES</title>
-          <meta name="description" content="Choose a column to submit your article to." />
+          <meta name="description" content="Submit your article to THE LOST ARCHIVES. Contribute your findings, research, and reflections to our expanding columns and earn as an Amazon Affiliate." />
+          <link rel="canonical" href="https://www.thelostandunfounds.com/submit-article" />
         </Helmet>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 min-h-[60vh]">
           <div className="text-center mb-12">
@@ -722,6 +723,7 @@ export default function SubmitArticle() {
       <Helmet>
         <title>Submit to {config.name} | THE LOST ARCHIVES | THE LOST+UNFOUNDS</title>
         <meta name="description" content={config.description} />
+        <link rel="canonical" href={`https://www.thelostandunfounds.com/submit-article/${column}`} />
       </Helmet>
       <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
       <UserRegistration
