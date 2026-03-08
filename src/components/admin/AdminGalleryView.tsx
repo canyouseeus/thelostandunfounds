@@ -903,7 +903,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                     setModalData({ ...modalData, name });
                                                 }
                                             }}
-                                            className="w-full bg-white/5 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 rounded-none"
+                                            className="w-full bg-white/5 p-2 text-white placeholder-white/20 focus:outline-none rounded-none"
                                             placeholder="e.g. Summer 2025 Collection"
                                         />
                                     </div>
@@ -949,7 +949,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                                         setPricingOptions(newOptions);
                                                                     }}
                                                                     placeholder="Option Name"
-                                                                    className="w-full bg-transparent text-sm text-white focus:outline-none border-b border-white/20 pb-1 rounded-none"
+                                                                    className="w-full bg-transparent text-sm text-white focus:outline-none pb-1 rounded-none"
                                                                     autoFocus
                                                                 />
                                                             </div>
@@ -966,7 +966,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                                     }}
                                                                     placeholder="Count"
                                                                     title="Number of photos (-1 for All)"
-                                                                    className="w-full bg-white/5 rounded-none px-2 py-1 text-xs text-center text-white font-mono focus:outline-none focus:border-white/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                    className="w-full bg-white/5 rounded-none px-2 py-1 text-xs text-center text-white font-mono focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                                 />
                                                             </div>
                                                             {/* Price Input */}
@@ -982,7 +982,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                                         newOptions[idx].price = isNaN(val) ? 0 : val;
                                                                         setPricingOptions(newOptions);
                                                                     }}
-                                                                    className="w-full bg-white/5 rounded-none px-2 py-1 text-xs text-white font-bold font-mono focus:outline-none focus:border-white/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                    className="w-full bg-white/5 rounded-none px-2 py-1 text-xs text-white font-bold font-mono focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                                 />
                                                             </div>
                                                             {/* Done Button */}
@@ -1004,21 +1004,21 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                                 {option.name || <span className="text-white/20 italic">No Name</span>}
                                                             </div>
                                                             {/* Count Display */}
-                                                            <div className="text-center border-l border-white/10 pl-2">
+                                                            <div className="text-center pl-2">
                                                                 <div className="flex items-center justify-center gap-1">
                                                                     <span className="text-[10px] text-white/40">Count:</span>
                                                                     <span className="text-xs font-mono text-white/80">{option.photo_count === -1 ? 'ALL' : option.photo_count}</span>
                                                                 </div>
                                                             </div>
                                                             {/* Price Display */}
-                                                            <div className="text-center border-l border-white/10 pl-2">
+                                                            <div className="text-center pl-2">
                                                                 <div className="flex items-center justify-center gap-1">
                                                                     <span className="text-xs text-white/40">$</span>
                                                                     <span className="text-sm font-bold font-mono text-green-400">{option.price.toFixed(2)}</span>
                                                                 </div>
                                                             </div>
                                                             {/* Action Buttons */}
-                                                            <div className="flex gap-1 justify-end pl-2 border-l border-white/10">
+                                                            <div className="flex gap-1 justify-end pl-2">
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => setEditingPricingIdx(idx)}
@@ -1068,7 +1068,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                 setPricingOptions([...pricingOptions, newOption]);
                                                 setEditingPricingIdx(pricingOptions.length);
                                             }}
-                                            className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-[10px] text-emerald-400 border border-emerald-500/50 rounded-none transition-colors uppercase tracking-wider"
+                                            className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-[10px] text-emerald-400 rounded-none transition-colors uppercase tracking-wider"
                                         >
                                             + Add Full License
                                         </button>
@@ -1083,7 +1083,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                     <textarea
                                         value={modalData.description}
                                         onChange={(e) => setModalData({ ...modalData, description: e.target.value })}
-                                        className="w-full bg-white/5 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 min-h-[80px] rounded-none"
+                                        className="w-full bg-white/5 p-2 text-white placeholder-white/20 focus:outline-none min-h-[80px] rounded-none"
                                         placeholder="Brief description of the gallery contents..."
                                     />
                                 </div>
@@ -1135,7 +1135,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                     }
                                                 }
                                             }}
-                                            className="flex-1 bg-white/5 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 rounded-none font-mono text-xs"
+                                            className="flex-1 bg-white/5 p-2 text-white placeholder-white/20 focus:outline-none rounded-none font-mono text-xs"
                                             placeholder="client@example.com"
                                         />
                                         <button
@@ -1180,7 +1180,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                     type="checkbox"
                                                     checked={modalData.is_private}
                                                     onChange={(e) => setModalData({ ...modalData, is_private: e.target.checked })}
-                                                    className="w-4 h-4 bg-white/5 border border-white/20 rounded-none focus:ring-0 text-white"
+                                                    className="w-4 h-4 bg-white/5 border-none rounded-none focus:ring-0 text-white"
                                                 />
                                                 <span className="text-white text-xs uppercase tracking-widest">Private Gallery</span>
                                             </div>
@@ -1189,7 +1189,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                     type="checkbox"
                                                     checked={modalData.commercial_included}
                                                     onChange={(e) => setModalData({ ...modalData, commercial_included: e.target.checked })}
-                                                    className="w-4 h-4 bg-white/5 border border-white/20 rounded-none focus:ring-0 text-emerald-500"
+                                                    className="w-4 h-4 bg-white/5 border-none rounded-none focus:ring-0 text-emerald-500"
                                                 />
                                                 <span className="text-emerald-400 text-xs uppercase tracking-widest font-bold">Commercial Rights Included</span>
                                             </div>
@@ -1211,7 +1211,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                     </div>
                                 </div>
 
-                                <hr className="border-white/10" />
+                                <hr className="border-none" />
 
                                 <div>
                                     <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Asset Source</label>
@@ -1219,14 +1219,14 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                         <button
                                             type="button"
                                             onClick={() => setUploadMode('drive')}
-                                            className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs uppercase font-bold border ${uploadMode === 'drive' ? 'bg-white text-black border-white' : 'bg-transparent text-white/40 border-white/20 hover:text-white hover:border-white/40'}`}
+                                            className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs uppercase font-bold border-none transition-all ${uploadMode === 'drive' ? 'bg-white text-black' : 'bg-transparent text-white/40 hover:text-white hover:bg-white/10'}`}
                                         >
                                             <CloudIcon className="w-4 h-4" /> {editingId ? 'Update Drive Folder' : 'Link Google Drive'}
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setUploadMode('upload')}
-                                            className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs uppercase font-bold border ${uploadMode === 'upload' ? 'bg-white text-black border-white' : 'bg-transparent text-white/40 border-white/20 hover:text-white hover:border-white/40'}`}
+                                            className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs uppercase font-bold border-none transition-all ${uploadMode === 'upload' ? 'bg-white text-black' : 'bg-transparent text-white/40 hover:text-white hover:bg-white/10'}`}
                                         >
                                             <ArrowUpTrayIcon className="w-4 h-4" /> {editingId ? 'Add More Photos' : 'Direct Upload'}
                                         </button>
@@ -1245,7 +1245,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                     const extractedId = match ? match[1] : val;
                                                     setModalData({ ...modalData, google_drive_folder_id: extractedId });
                                                 }}
-                                                className="w-full bg-white/5 p-2 text-white placeholder-white/20 focus:outline-none focus:border-white/40 font-mono text-xs"
+                                                className="w-full bg-white/5 p-2 text-white placeholder-white/20 focus:outline-none font-mono text-xs"
                                                 placeholder="Paste folder link or ID here..."
                                                 required={uploadMode === 'drive' && !filesData.length} // Only required if not uploading files in mixed mode (simplified logic)
                                             />

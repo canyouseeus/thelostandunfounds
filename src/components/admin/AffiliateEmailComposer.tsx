@@ -403,7 +403,7 @@ export default function AffiliateEmailComposer() {
               <div className="col-span-3 text-right">Date</div>
             </div>
 
-            <div className="divide-y divide-white/5">
+            <div className="space-y-1">
               {campaigns.map((campaign) => (
                 <div
                   key={campaign.id}

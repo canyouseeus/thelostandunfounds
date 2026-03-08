@@ -109,7 +109,7 @@ export default function ProfitGraph() {
 
   if (error) {
     return (
-      <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
+      <div className="bg-red-900/20 rounded-none p-6">
         <p className="text-red-400">Error: {error}</p>
       </div>
     );
@@ -142,25 +142,25 @@ export default function ProfitGraph() {
       {/* Summary Stats */}
       {summary && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white/5 rounded-none p-3 border border-white/10">
+          <div className="bg-white/5 rounded-none p-3">
             <div className="text-white/60 text-xs mb-1">Total Profit</div>
             <div className="text-2xl font-bold text-white">
               ${summary.totalProfit.toFixed(2)}
             </div>
           </div>
-          <div className="bg-white/5 rounded-none p-3 border border-white/10">
+          <div className="bg-white/5 rounded-none p-3">
             <div className="text-white/60 text-xs mb-1">Today</div>
             <div className="text-2xl font-bold text-green-400">
               ${summary.todayProfit.toFixed(2)}
             </div>
           </div>
-          <div className="bg-white/5 rounded-none p-3 border border-white/10">
+          <div className="bg-white/5 rounded-none p-3">
             <div className="text-white/60 text-xs mb-1">Daily Avg</div>
             <div className="text-2xl font-bold text-yellow-400">
               ${summary.averageDailyProfit.toFixed(2)}
             </div>
           </div>
-          <div className="bg-white/5 rounded-none p-3 border border-white/10">
+          <div className="bg-white/5 rounded-none p-3">
             <div className="text-white/60 text-xs mb-1">Peak Day</div>
             <div className="text-2xl font-bold text-purple-400">
               ${summary.maxDailyProfit.toFixed(2)}

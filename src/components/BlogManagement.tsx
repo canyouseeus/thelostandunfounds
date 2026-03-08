@@ -454,7 +454,7 @@ export default function BlogManagement() {
             className="md:col-span-2"
           >
             {isBookClubPost && !editingPost && userSubdomain && (
-              <div className="mb-8 p-4 bg-white/5 border-l-2 border-white/20">
+              <div className="mb-8 p-4 bg-white/10">
                 <p className="text-white text-[10px] font-bold uppercase tracking-widest">
                   Target Destination: <span className="text-blue-400">{userSubdomain}.thelostandunfounds.com</span>
                 </p>
@@ -467,7 +467,7 @@ export default function BlogManagement() {
                   type="text"
                   value={formData.title}
                   onChange={(e) => handleTitleChange(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/20 focus:border-white focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 bg-white/5 text-white placeholder-white/20 focus:bg-white/10 focus:outline-none transition-colors"
                   required
                 />
               </div>
@@ -478,14 +478,14 @@ export default function BlogManagement() {
                   type="text"
                   value={formData.slug}
                   onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/20 focus:border-white focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 bg-white/5 text-white placeholder-white/20 focus:bg-white/10 focus:outline-none transition-colors"
                   placeholder="auto-generated-from-title"
                 />
               </div>
 
               <div>
                 <label className="block text-white/80 text-xs uppercase tracking-wider mb-2 font-medium">Content</label>
-                <div className="border border-white/5">
+                <div className="bg-white/5">
                   <RichTextEditor
                     content={formData.content}
                     onChange={(html, links) => {
@@ -502,7 +502,7 @@ export default function BlogManagement() {
                 <textarea
                   value={formData.excerpt}
                   onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/20 focus:border-white focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 bg-white/5 text-white placeholder-white/20 focus:bg-white/10 focus:outline-none transition-colors"
                   rows={3}
                 />
               </div>
@@ -512,7 +512,7 @@ export default function BlogManagement() {
                 <select
                   value={formData.blog_column}
                   onChange={(e) => setFormData({ ...formData, blog_column: e.target.value })}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/20 focus:border-white focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 bg-white/5 text-white placeholder-white/20 focus:bg-white/10 focus:outline-none transition-colors"
                 >
                   {BLOG_COLUMNS.map(column => (
                     <option key={column.value} value={column.value} className="bg-black">
@@ -529,7 +529,7 @@ export default function BlogManagement() {
                     type="text"
                     value={formData.seo_title}
                     onChange={(e) => setFormData({ ...formData, seo_title: e.target.value })}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/20 focus:border-white focus:outline-none transition-colors"
+                    className="w-full px-4 py-3 bg-white/5 text-white placeholder-white/20 focus:bg-white/10 focus:outline-none transition-colors"
                   />
                 </div>
 
@@ -539,7 +539,7 @@ export default function BlogManagement() {
                     type="url"
                     value={formData.og_image_url}
                     onChange={(e) => setFormData({ ...formData, og_image_url: e.target.value })}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/20 focus:border-white focus:outline-none transition-colors"
+                    className="w-full px-4 py-3 bg-white/5 text-white placeholder-white/20 focus:bg-white/10 focus:outline-none transition-colors"
                   />
                 </div>
               </div>
@@ -549,7 +549,7 @@ export default function BlogManagement() {
                 <textarea
                   value={formData.seo_description}
                   onChange={(e) => setFormData({ ...formData, seo_description: e.target.value })}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/20 focus:border-white focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 bg-white/5 text-white placeholder-white/20 focus:bg-white/10 focus:outline-none transition-colors"
                   rows={2}
                 />
               </div>
@@ -560,13 +560,13 @@ export default function BlogManagement() {
                   type="text"
                   value={formData.seo_keywords}
                   onChange={(e) => setFormData({ ...formData, seo_keywords: e.target.value })}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/20 focus:border-white focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 bg-white/5 text-white placeholder-white/20 focus:bg-white/10 focus:outline-none transition-colors"
                   placeholder="keyword1, keyword2, keyword3"
                 />
               </div>
 
               <div className="flex items-center gap-3 py-2">
-                <div className="w-5 h-5 border border-white/20 flex items-center justify-center transition-colors group-hover:border-white/40">
+                <div className="w-5 h-5 bg-white/10 flex items-center justify-center transition-colors group-hover:bg-white/20">
                   <input
                     type="checkbox"
                     id="published"
@@ -645,7 +645,7 @@ export default function BlogManagement() {
             </button>
           }
         >
-          <div id="lost-archives-posts" className="divide-y divide-white/5">
+          <div id="lost-archives-posts" className="space-y-1">
             {lostArchivesPosts.length === 0 ? (
               <p className="text-white/40 text-sm py-4">No THE LOST ARCHIVES posts yet.</p>
             ) : (
@@ -666,10 +666,10 @@ export default function BlogManagement() {
                           {post.title}
                         </h4>
                         <span className={cn(
-                          "flex-shrink-0 px-1.5 py-0.5 text-[8px] uppercase tracking-widest font-bold border",
+                          "flex-shrink-0 px-1.5 py-0.5 text-[8px] uppercase tracking-widest font-bold",
                           post.published
-                            ? "text-green-400 border-green-400/30 bg-green-400/5"
-                            : "text-amber-400 border-amber-400/30 bg-amber-400/5"
+                            ? "text-green-400 bg-green-400/5"
+                            : "text-amber-400 bg-amber-400/5"
                         )}>
                           {post.published ? 'Published' : 'Draft'}
                         </span>
@@ -765,7 +765,7 @@ export default function BlogManagement() {
             </button>
           }
         >
-          <div id="book-club-posts" className="divide-y divide-white/5">
+          <div id="book-club-posts" className="space-y-1">
             {bookClubPosts.length === 0 ? (
               <p className="text-white/40 text-sm py-4">No book club posts yet.</p>
             ) : (
@@ -786,10 +786,10 @@ export default function BlogManagement() {
                           {post.title}
                         </h4>
                         <span className={cn(
-                          "flex-shrink-0 px-1.5 py-0.5 text-[8px] uppercase tracking-widest font-bold border",
+                          "flex-shrink-0 px-1.5 py-0.5 text-[8px] uppercase tracking-widest font-bold",
                           post.published
-                            ? "text-green-400 border-green-400/30 bg-green-400/5"
-                            : "text-amber-400 border-amber-400/30 bg-amber-400/5"
+                            ? "text-green-400 bg-green-400/5"
+                            : "text-amber-400 bg-amber-400/5"
                         )}>
                           {post.published ? 'Published' : 'Draft'}
                         </span>
@@ -801,7 +801,7 @@ export default function BlogManagement() {
                           {formatDate(post.published_at || post.created_at)}
                         </span>
                         {post.subdomain && (
-                          <span className="text-blue-400/60 border-l border-white/10 pl-4">
+                          <span className="text-blue-400/60 bg-white/5 px-2 py-0.5 ml-4">
                             {post.subdomain}
                           </span>
                         )}
@@ -905,7 +905,7 @@ function UnpublishModal({
 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-xl p-4 animate-in fade-in duration-300">
-      <div className="bg-[#0A0A0A] border border-white/5 p-10 w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-300">
+      <div className="bg-[#0A0A0A] p-10 w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-300">
         <h3 className="text-xl font-black text-white uppercase tracking-[0.3em] mb-4">Unpublish Article</h3>
         <p className="text-white/30 mb-10 text-[10px] leading-relaxed uppercase tracking-[0.15em] font-medium">
           This operation will revert the post to DRAFT status and return the source material to the REVIEW CYCLE.
@@ -917,7 +917,7 @@ function UnpublishModal({
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            className="w-full px-4 py-4 bg-white/5 border border-white/10 text-white focus:border-white transition-colors outline-none h-40 resize-none text-xs uppercase tracking-widest"
+            className="w-full px-4 py-4 bg-white/5 text-white focus:bg-white/10 transition-colors outline-none h-40 resize-none text-xs uppercase tracking-widest"
             placeholder="EXPLAIN THE REASON FOR WITHDRAWAL..."
             autoFocus
           />

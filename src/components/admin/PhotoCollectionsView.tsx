@@ -227,7 +227,7 @@ export default function PhotoCollectionsView() {
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
                                     placeholder="e.g. Kattitude Tattoo Studio"
-                                    className="w-full bg-black p-3 text-white focus:border-white focus:outline-none transition"
+                                    className="w-full bg-black p-3 text-white focus:bg-white/5 focus:outline-none transition"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -238,7 +238,7 @@ export default function PhotoCollectionsView() {
                                     value={formData.clientName}
                                     onChange={e => setFormData({ ...formData, clientName: e.target.value })}
                                     placeholder="e.g. John Doe"
-                                    className="w-full bg-black p-3 text-white focus:border-white focus:outline-none transition"
+                                    className="w-full bg-black p-3 text-white focus:bg-white/5 focus:outline-none transition"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -249,7 +249,7 @@ export default function PhotoCollectionsView() {
                                     value={formData.email}
                                     onChange={e => setFormData({ ...formData, email: e.target.value })}
                                     placeholder="client@example.com"
-                                    className="w-full bg-black p-3 text-white focus:border-white focus:outline-none transition"
+                                    className="w-full bg-black p-3 text-white focus:bg-white/5 focus:outline-none transition"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -264,7 +264,7 @@ export default function PhotoCollectionsView() {
                                         setFormData({ ...formData, driveLink: match ? match[1] : val });
                                     }}
                                     placeholder="Paste link or ID..."
-                                    className="w-full bg-black p-3 text-white focus:border-white focus:outline-none transition"
+                                    className="w-full bg-black p-3 text-white focus:bg-white/5 focus:outline-none transition"
                                 />
                             </div>
                         </div>
@@ -300,7 +300,7 @@ export default function PhotoCollectionsView() {
                         placeholder="Filter collections by name or email..."
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
-                        className="w-full bg-black pl-10 pr-4 py-2 text-white text-sm focus:border-white focus:outline-none transition"
+                        className="w-full bg-black pl-10 pr-4 py-2 text-white text-sm focus:bg-white/5 focus:outline-none transition"
                     />
                 </div>
 
@@ -312,7 +312,7 @@ export default function PhotoCollectionsView() {
                         </div>
                     ) : filteredCollections.length > 0 ? (
                         filteredCollections.map(collection => (
-                            <div key={collection.id} className="group flex flex-col md:flex-row md:items-center justify-between p-4 bg-black hover:border-white/20 transition">
+                            <div key={collection.id} className="group flex flex-col md:flex-row md:items-center justify-between p-4 bg-black hover:bg-white/[0.02] transition">
                                 <div className="flex items-center gap-4 mb-4 md:mb-0">
                                     <div className="w-12 h-12 bg-zinc-900 flex items-center justify-center">
                                         <CameraIcon className="w-6 h-6 text-zinc-600 group-hover:text-white transition" />
@@ -321,9 +321,9 @@ export default function PhotoCollectionsView() {
                                         <h3 className="text-white font-black uppercase text-sm flex items-center gap-2">
                                             {collection.name}
                                             {collection.is_private ? (
-                                                <span className="px-2 py-0.5 bg-zinc-800 text-[10px] text-zinc-500 border border-white/10">PRIVATE</span>
+                                                <span className="px-2 py-0.5 bg-zinc-800 text-[10px] text-zinc-500">PRIVATE</span>
                                             ) : (
-                                                <span className="px-2 py-0.5 bg-green-500/10 text-[10px] text-green-500 border border-green-500/20">PUBLIC</span>
+                                                <span className="px-2 py-0.5 bg-green-500/10 text-[10px] text-green-500">PUBLIC</span>
                                             )}
                                         </h3>
                                         <div className="flex flex-col text-[11px] text-zinc-500 font-mono mt-1">
@@ -365,7 +365,7 @@ export default function PhotoCollectionsView() {
                             </div>
                         ))
                     ) : (
-                        <div className="text-center py-20 text-zinc-600 border border-dashed border-white/5">
+                        <div className="text-center py-20 text-zinc-600 bg-white/5">
                             <CameraIcon className="w-12 h-12 mx-auto mb-4 opacity-10" />
                             <p className="text-xs uppercase font-black tracking-widest">No Collections Found</p>
                         </div>

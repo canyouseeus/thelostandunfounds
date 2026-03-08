@@ -502,7 +502,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
           <ArrowLeft className="w-4 h-4" />
           Back to Dashboard
         </button>
-        <div className="bg-black/50 border border-white/10 rounded-none p-12 flex items-center justify-center">
+        <div className="bg-black/50 border-none rounded-none p-12 flex items-center justify-center">
           <Loader className="w-6 h-6 animate-spin text-white/60" />
           <span className="ml-3 text-white/60">Loading mail...</span>
         </div>
@@ -532,7 +532,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
 
       {/* Error display */}
       {error && (
-        <div className="bg-red-500/10 border border-red-500/30 p-4 flex items-center gap-3">
+        <div className="bg-red-500/10 border-none p-4 flex items-center gap-3">
           <AlertCircle className="w-5 h-5 text-red-400" />
           <span className="text-red-400">{error}</span>
           <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-300">
@@ -542,9 +542,9 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
       )}
 
       {/* Main layout */}
-      <div className="bg-black/50 border border-white/10 rounded-none min-h-[600px] flex">
+      <div className="bg-black/50 border-none rounded-none min-h-[600px] flex">
         {/* Folder sidebar */}
-        <div className="w-48 border-r border-white/10 p-3 space-y-1">
+        <div className="w-48 border-none p-3 space-y-1">
           <div className="text-xs text-white/40 uppercase tracking-wider mb-3 px-2">Folders</div>
           {folders.map(folder => (
             <button
@@ -565,7 +565,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
             </button>
           ))}
 
-          <div className="pt-4 border-t border-white/10 mt-4">
+          <div className="pt-4 border-none mt-4">
             <button
               onClick={() => loadFolders(true)}
               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-white/40 hover:text-white transition"
@@ -577,9 +577,9 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
         </div>
 
         {/* Message list */}
-        <div className="w-80 border-r border-white/10 flex flex-col">
+        <div className="w-80 border-none flex flex-col">
           {/* Search bar */}
-          <div className="p-3 border-b border-white/10">
+          <div className="p-3 border-none">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
               <input
@@ -588,7 +588,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 placeholder="Search messages..."
-                className="w-full bg-white/5 border border-white/10 pl-9 pr-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:border-white/30"
+                className="w-full bg-white/5 border-none pl-9 pr-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none"
               />
             </div>
           </div>
@@ -609,7 +609,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                   <button
                     key={msg.messageId}
                     onClick={() => loadMessage(msg.messageId)}
-                    className={`w-full p-3 text-left border-b border-white/5 transition ${selectedMessage?.messageId === msg.messageId
+                    className={`w-full p-3 text-left border-none transition ${selectedMessage?.messageId === msg.messageId
                       ? 'bg-white/10'
                       : 'hover:bg-white/5'
                       } ${!msg.isRead ? 'bg-white/[0.02]' : ''}`}
@@ -689,7 +689,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
           ) : selectedMessage ? (
             <>
               {/* Message header */}
-              <div className="p-4 border-b border-white/10">
+              <div className="p-4 border-none">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <h2 className="text-lg font-semibold text-white truncate">
@@ -755,7 +755,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                         <FolderOpen className="w-4 h-4" />
                       </button>
                       {showMoveMenu && (
-                        <div className="absolute right-0 top-full mt-1 bg-black border border-white/20 shadow-xl z-50 min-w-[150px]">
+                        <div className="absolute right-0 top-full mt-1 bg-black border-none shadow-xl z-50 min-w-[150px]">
                           {folders.filter(f => f.folderId !== selectedFolder?.folderId).map(folder => (
                             <button
                               key={folder.folderId}
@@ -786,14 +786,14 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
 
               {/* Attachments */}
               {selectedMessage.attachments && selectedMessage.attachments.length > 0 && (
-                <div className="px-4 py-3 border-b border-white/10 bg-white/[0.02]">
+                <div className="px-4 py-3 border-none bg-white/[0.02]">
                   <div className="text-xs text-white/40 mb-2">Attachments</div>
                   <div className="flex flex-wrap gap-2">
                     {selectedMessage.attachments.map(att => (
                       <button
                         key={att.attachmentId}
                         onClick={() => handleDownloadAttachment(selectedMessage.messageId, att)}
-                        className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 hover:bg-white/10 transition text-sm"
+                        className="flex items-center gap-2 px-3 py-2 bg-white/5 border-none hover:bg-white/10 transition text-sm"
                       >
                         <Paperclip className="w-4 h-4 text-white/40" />
                         <span className="text-white/80">{att.attachmentName}</span>
@@ -842,9 +842,9 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
       {/* Compose Modal */}
       {showCompose && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4">
-          <div className="bg-black border border-white/20 w-full max-w-2xl max-h-[90vh] flex flex-col">
+          <div className="bg-black border-none w-full max-w-2xl max-h-[90vh] flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+            <div className="flex items-center justify-between px-4 py-3 border-none">
               <h3 className="font-semibold text-white">
                 {composeData.isReply ? 'Reply' : composeData.isForward ? 'Forward' : 'New Message'}
               </h3>
@@ -864,7 +864,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                   type="text"
                   value={composeData.to}
                   onChange={(e) => setComposeData(prev => ({ ...prev, to: e.target.value }))}
-                  className="w-full bg-white/5 border border-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30"
+                  className="w-full bg-white/5 border-none px-3 py-2 text-sm text-white focus:outline-none"
                   placeholder="recipient@example.com"
                 />
               </div>
@@ -876,7 +876,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                     type="text"
                     value={composeData.cc}
                     onChange={(e) => setComposeData(prev => ({ ...prev, cc: e.target.value }))}
-                    className="w-full bg-white/5 border border-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30"
+                    className="w-full bg-white/5 border-none px-3 py-2 text-sm text-white focus:outline-none"
                   />
                 </div>
                 <div>
@@ -885,7 +885,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                     type="text"
                     value={composeData.bcc}
                     onChange={(e) => setComposeData(prev => ({ ...prev, bcc: e.target.value }))}
-                    className="w-full bg-white/5 border border-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30"
+                    className="w-full bg-white/5 border-none px-3 py-2 text-sm text-white focus:outline-none"
                   />
                 </div>
               </div>
@@ -896,7 +896,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                   type="text"
                   value={composeData.subject}
                   onChange={(e) => setComposeData(prev => ({ ...prev, subject: e.target.value }))}
-                  className="w-full bg-white/5 border border-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30"
+                  className="w-full bg-white/5 border-none px-3 py-2 text-sm text-white focus:outline-none"
                 />
               </div>
 
@@ -906,13 +906,13 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                   value={composeData.content}
                   onChange={(e) => setComposeData(prev => ({ ...prev, content: e.target.value }))}
                   rows={12}
-                  className="w-full bg-white/5 border border-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30 resize-none"
+                  className="w-full bg-white/5 border-none px-3 py-2 text-sm text-white focus:outline-none focus:bg-white/10 resize-none"
                 />
               </div>
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between px-4 py-3 border-t border-white/10">
+            <div className="flex items-center justify-between px-4 py-3 border-none">
               <button
                 onClick={handleSaveDraft}
                 className="px-4 py-2 text-sm text-white/60 hover:text-white transition"

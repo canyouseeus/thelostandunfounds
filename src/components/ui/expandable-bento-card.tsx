@@ -138,7 +138,7 @@ export function ExpandableBentoCard({
                             <ExpandableCardContent className="p-4 md:p-5 flex-1 rounded-none">
                                 {children}
                                 <ExpandableContent>
-                                    <div className="pt-4 mt-4 border-t border-white/10 space-y-4">
+                                    <div className="pt-4 mt-4 space-y-4">
                                         {details}
                                     </div>
                                 </ExpandableContent>

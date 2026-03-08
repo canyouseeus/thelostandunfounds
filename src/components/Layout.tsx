@@ -36,11 +36,6 @@ export default function Layout({ children }: { children?: ReactNode }) {
   const [isRouteLoading, setIsRouteLoading] = useState(false)
   const previousPathRef = useRef(location.pathname)
   const menuRef = useRef<HTMLDivElement>(null)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-  const isOpeningModalRef = useRef(false)
-  const justClickedRef = useRef(false)
-  const menuCloseTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const mousePositionRef = useRef<{ x: number; y: number } | null>(null)
   const { user, tier, signOut, loading, clearAuthStorage } = useAuth()
   const { state: sageModeState, toggleSageMode } = useSageMode()
   const navigate = useNavigate()
@@ -78,14 +73,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
     }
   }, [user])
 
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (menuCloseTimeoutRef.current) {
-        clearTimeout(menuCloseTimeoutRef.current)
-      }
-    }
-  }, [])
+  // Cleanup ref is removed as it's no longer used
 
   useEffect(() => {
     // Disable body scroll when mobile menu is open
@@ -134,64 +122,15 @@ export default function Layout({ children }: { children?: ReactNode }) {
     }
   }, [location.pathname])
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      // Only runs for desktop dropdown behavior
-      if (window.innerWidth < 640) return; // Don't auto-close on mobile taps outside (mobile matches width)
-
-      // Don't close if we're in the process of opening a modal
-      if (isOpeningModalRef.current) {
-        return
-      }
-
-      const target = event.target as HTMLElement
-
-      // Don't close if clicking on login button
-      if (target.closest('button.menu-item')) {
-        const button = target.closest('button.menu-item') as HTMLElement
-        const buttonText = button.textContent?.trim() || ''
-        if (buttonText === 'LOG IN') {
-          return // Let the button's onClick handle it
-        }
-      }
-
-      if (menuRef.current && !menuRef.current.contains(target)) {
-        // Clear any pending timeout before closing
-        if (menuCloseTimeoutRef.current) {
-          clearTimeout(menuCloseTimeoutRef.current)
-          menuCloseTimeoutRef.current = null
-        }
-        setMenuOpen(false)
-      }
-    }
-
-    if (menuOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside)
-      }
-    }
-  }, [menuOpen])
+  // Click-outside handler is removed as the menu is now a full-screen portal
 
   const handleLoginClick = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
 
-    // Set flag to prevent click-outside handler from interfering
-    isOpeningModalRef.current = true
-
     // Close menu and open modal
     setMenuOpen(false)
-
-    // Use requestAnimationFrame to ensure DOM updates before opening modal
-    requestAnimationFrame(() => {
-      setAuthModalOpen(true)
-      // Reset flag after modal opens
-      setTimeout(() => {
-        isOpeningModalRef.current = false
-      }, 200)
-    })
+    setAuthModalOpen(true)
   }
 
   const handleSignOut = async () => {
@@ -201,83 +140,21 @@ export default function Layout({ children }: { children?: ReactNode }) {
     window.location.href = '/'
   }
 
-  // Track mouse position globally
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      mousePositionRef.current = { x: e.clientX, y: e.clientY }
-    }
-    document.addEventListener('mousemove', handleMouseMove)
-    return () => document.removeEventListener('mousemove', handleMouseMove)
-  }, [])
+  // Mouse position tracking is removed as it's no longer used
 
-  // Handle menu hover behavior
-  const handleMenuMouseEnter = useCallback(() => {
-    // Disable hover open on mobile
-    if (window.innerWidth < 640) return;
+  // Hover handlers are removed as we're moving to a full-screen menu
 
-    // Clear any pending close timeout
-    if (menuCloseTimeoutRef.current) {
-      clearTimeout(menuCloseTimeoutRef.current)
-      menuCloseTimeoutRef.current = null
-    }
-    // Don't open on hover if we just clicked the button
-    if (!justClickedRef.current) {
-      setMenuOpen(true)
-    }
-  }, [])
-
-  const handleMenuMouseLeave = useCallback(() => {
-    // Disable hover close on mobile
-    if (window.innerWidth < 640) return;
-
-    // Add delay before closing - check if mouse is still over menu before closing
-    menuCloseTimeoutRef.current = setTimeout(() => {
-      // Check if mouse is still over the menu area (button OR dropdown)
-      if (mousePositionRef.current) {
-        const { x, y } = mousePositionRef.current
-        let isOver = false
-
-        // Check button/container
-        if (menuRef.current) {
-          const rect = menuRef.current.getBoundingClientRect()
-          if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-            isOver = true
-          }
-        }
-
-        // Check dropdown
-        if (!isOver && dropdownRef.current) {
-          const rect = dropdownRef.current.getBoundingClientRect()
-          // Add a small buffer (20px) around dropdown to handle fast movements/gaps
-          const buffer = 20
-          if (x >= rect.left - buffer && x <= rect.right + buffer && y >= rect.top - buffer && y <= rect.bottom + buffer) {
-            isOver = true
-          }
-        }
-
-        // If mouse is still within bounds, don't close
-        if (isOver) {
-          menuCloseTimeoutRef.current = null
-          return
-        }
-      }
-
-      setMenuOpen(false)
-      menuCloseTimeoutRef.current = null
-    }, 300)
-  }, [])
-
-  // Mobile Menu Portal Component
-  const MobileMenuPortal = () => {
+  // Full-Screen Menu Portal Component (Mobile & Desktop)
+  const MenuPortal = () => {
     if (!menuOpen) return null;
 
     return createPortal(
       <div
-        className="fixed inset-0 z-[99999] bg-black sm:hidden flex flex-col"
+        className="fixed inset-0 z-[99999] bg-black flex flex-col"
         style={{ touchAction: 'none' }}
       >
-        {/* Mobile Header Row (for close button) */}
-        <div className="flex items-center justify-between h-16 w-full px-4 border-b border-white/10 shrink-0">
+        {/* Header Row (for close button) */}
+        <div className="flex items-center justify-between h-16 w-full px-4 shrink-0">
           <div className="flex items-center h-12">
             <span className="text-white text-sm font-bold">MENU</span>
           </div>
@@ -340,8 +217,6 @@ export default function Layout({ children }: { children?: ReactNode }) {
               <div
                 className="header-nav"
                 ref={menuRef}
-                onMouseEnter={handleMenuMouseEnter}
-                onMouseLeave={handleMenuMouseLeave}
               >
                 <button
                   type="button"
@@ -349,45 +224,21 @@ export default function Layout({ children }: { children?: ReactNode }) {
                   style={{ transform: 'translateY(0)' }}
                   onClick={(e) => {
                     e.stopPropagation();
-                    justClickedRef.current = true;
                     setMenuOpen(!menuOpen);
-                    // Reset the flag after a short delay to allow hover to work again
-                    setTimeout(() => {
-                      justClickedRef.current = false;
-                    }, 300);
                   }}
                   aria-label="Toggle menu"
                   aria-expanded={menuOpen}
                 >
                   <Bars3Icon className="w-6 h-6 text-white" />
                 </button>
-
-                {/* Desktop Dropdown (Hidden on Mobile) */}
-                <div
-                  className={`menu-dropdown hidden sm:block ${menuOpen ? 'open' : ''}`}
-                  ref={dropdownRef}
-                  onMouseEnter={handleMenuMouseEnter}
-                  onMouseLeave={handleMenuMouseLeave}
-                >
-                  <NavLinks
-                    user={user}
-                    userIsAdmin={userIsAdmin}
-                    userSubdomain={userSubdomain}
-                    sageModeState={sageModeState}
-                    toggleSageMode={toggleSageMode}
-                    handleSignOut={handleSignOut}
-                    onLinkClick={() => setMenuOpen(false)}
-                    onLoginClick={handleLoginClick}
-                  />
-                </div>
               </div>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Render Mobile Menu Portal */}
-      <MobileMenuPortal />
+      {/* Render Menu Portal */}
+      <MenuPortal />
 
       <main className="pb-6 pt-20 flex-1">
         {children || <Outlet />}

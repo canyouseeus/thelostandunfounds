@@ -12,9 +12,7 @@ import {
     TagIcon,
     GlobeAltIcon,
     ClockIcon,
-    ArrowPathIcon,
     CheckCircleIcon,
-    XCircleIcon,
     CalendarIcon
 } from '@heroicons/react/24/outline';
 import { cn } from '../../components/ui/utils';
@@ -168,7 +166,7 @@ export default function AdminBannersView() {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1 bg-white/5 p-1 border border-white/10">
+            <div className="flex gap-1 bg-white/5 p-1 border-none">
                 {(['campaigns', 'queue', 'enterprise'] as const).map(tab => (
                     <button
                         key={tab}
@@ -184,12 +182,12 @@ export default function AdminBannersView() {
             </div>
 
             {/* Content */}
-            <div className="bg-zinc-900/50 border border-white/5 overflow-hidden">
+            <div className="bg-zinc-900/50 border-none overflow-hidden">
                 {activeTab === 'campaigns' && (
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
+                        <table className="w-full text-left">
                             <thead>
-                                <tr className="border-b border-white/10 bg-white/5">
+                                <tr className="border-none bg-white/5">
                                     <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-widest">Campaign</th>
                                     <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-widest">Owner</th>
                                     <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-widest">Status</th>
@@ -197,12 +195,12 @@ export default function AdminBannersView() {
                                     <th className="px-6 py-4 text-[10px] font-black text-white/40 uppercase tracking-widest text-right">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-white/5">
+                            <tbody className="bg-black/20">
                                 {campaigns.map(c => (
                                     <tr key={c.id} className="hover:bg-white/[0.02] transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-4">
-                                                <img src={c.image_url} alt="" className="w-10 h-10 object-cover border border-white/10" />
+                                                <img src={c.image_url} alt="" className="w-10 h-10 object-cover border-none" />
                                                 <div>
                                                     <p className="text-xs font-bold text-white uppercase tracking-tight">{c.title}</p>
                                                     <p className="text-[10px] text-white/40 truncate max-w-[200px]">{c.link_url}</p>
@@ -212,8 +210,8 @@ export default function AdminBannersView() {
                                         <td className="px-6 py-4 text-xs text-white/60 font-mono">{c.owner_email}</td>
                                         <td className="px-6 py-4">
                                             <span className={cn(
-                                                "px-2 py-0.5 text-[8px] font-black uppercase tracking-widest border",
-                                                c.status === 'active' ? "text-emerald-500 border-emerald-500/20 bg-emerald-500/10" : "text-white/40 border-white/10 bg-white/5"
+                                                "px-2 py-0.5 text-[8px] font-black uppercase tracking-widest border-none",
+                                                c.status === 'active' ? "text-emerald-500 bg-emerald-500/10" : "text-white/40 bg-white/5"
                                             )}>
                                                 {c.status}
                                             </span>
@@ -263,7 +261,7 @@ export default function AdminBannersView() {
 
                 {activeTab === 'queue' && (
                     <div className="p-6">
-                        <div className="bg-amber-500/10 border border-amber-500/20 p-4 mb-6">
+                        <div className="bg-amber-500/10 border-none p-4 mb-6">
                             <p className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em] mb-1">Queue Synchronisation</p>
                             <p className="text-xs text-amber-500/80 leading-relaxed font-light">
                                 Slot rotation is granular (8 seconds). The slot index is shared across all surfaces.
@@ -272,7 +270,7 @@ export default function AdminBannersView() {
                         </div>
                         <div className="space-y-2">
                             {publicSlots.map(s => (
-                                <div key={s.slot_index} className="flex items-center justify-between p-3 bg-white/5 border border-white/10">
+                                <div key={s.slot_index} className="flex items-center justify-between p-3 bg-white/5 border-none">
                                     <div className="flex items-center gap-4">
                                         <div className="text-[10px] font-mono text-white/20">#{s.slot_index}</div>
                                         <div>
@@ -299,9 +297,9 @@ export default function AdminBannersView() {
                 {activeTab === 'enterprise' && (
                     <div className="p-6 space-y-4">
                         {reservations.map(r => (
-                            <div key={r.id} className="p-4 bg-white/5 border border-amber-500/20 flex items-center justify-between">
+                            <div key={r.id} className="p-4 bg-white/5 border-none flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
+                                    <div className="w-10 h-10 bg-amber-500/10 flex items-center justify-center border-none">
                                         <TagIcon className="w-5 h-5 text-amber-500" />
                                     </div>
                                     <div>
@@ -322,7 +320,7 @@ export default function AdminBannersView() {
                             </div>
                         ))}
                         {reservations.length === 0 && (
-                            <div className="text-center py-12 border border-dashed border-white/10">
+                            <div className="text-center py-12 border-none">
                                 <p className="text-[10px] text-white/40 uppercase tracking-widest">No active enterprise reservations</p>
                             </div>
                         )}
@@ -336,7 +334,7 @@ export default function AdminBannersView() {
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="w-full max-w-md bg-zinc-900 border border-white/10 shadow-2xl p-8"
+                        className="w-full max-w-md bg-zinc-900 border-none shadow-2xl p-8"
                     >
                         <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-6">{editingCampaign ? 'Edit' : 'New'} Campaign</h3>
                         <form onSubmit={handleSubmit} className="space-y-4">
@@ -347,7 +345,7 @@ export default function AdminBannersView() {
                                     required
                                     value={formData.title}
                                     onChange={e => setFormData({ ...formData, title: e.target.value })}
-                                    className="w-full bg-white/5 border border-white/10 px-4 py-2 text-xs text-white uppercase tracking-widest focus:border-white/20 outline-none transition-colors"
+                                    className="w-full bg-white/5 border-none px-4 py-2 text-xs text-white uppercase tracking-widest outline-none transition-colors"
                                 />
                             </div>
                             <div>
@@ -357,7 +355,7 @@ export default function AdminBannersView() {
                                     required
                                     value={formData.image_url}
                                     onChange={e => setFormData({ ...formData, image_url: e.target.value })}
-                                    className="w-full bg-white/5 border border-white/10 px-4 py-2 text-xs text-white focus:border-white/20 outline-none transition-colors"
+                                    className="w-full bg-white/5 border-none px-4 py-2 text-xs text-white outline-none transition-colors"
                                 />
                             </div>
                             <div>
@@ -367,7 +365,7 @@ export default function AdminBannersView() {
                                     required
                                     value={formData.link_url}
                                     onChange={e => setFormData({ ...formData, link_url: e.target.value })}
-                                    className="w-full bg-white/5 border border-white/10 px-4 py-2 text-xs text-white focus:border-white/20 outline-none transition-colors"
+                                    className="w-full bg-white/5 border-none px-4 py-2 text-xs text-white outline-none transition-colors"
                                 />
                             </div>
                             <div>
@@ -377,7 +375,7 @@ export default function AdminBannersView() {
                                     required
                                     value={formData.owner_email}
                                     onChange={e => setFormData({ ...formData, owner_email: e.target.value })}
-                                    className="w-full bg-white/5 border border-white/10 px-4 py-2 text-xs text-white font-mono focus:border-white/20 outline-none transition-colors"
+                                    className="w-full bg-white/5 border-none px-4 py-2 text-xs text-white font-mono outline-none transition-colors"
                                 />
                             </div>
                             <div className="flex items-center gap-4 pt-2">
@@ -389,8 +387,8 @@ export default function AdminBannersView() {
                                         className="sr-only"
                                     />
                                     <div className={cn(
-                                        "w-4 h-4 border flex items-center justify-center transition-all",
-                                        formData.is_enterprise ? "bg-amber-500 border-amber-500" : "border-white/20 bg-white/5"
+                                        "w-4 h-4 border-none flex items-center justify-center transition-all",
+                                        formData.is_enterprise ? "bg-amber-500" : "bg-white/5"
                                     )}>
                                         {formData.is_enterprise && <CheckCircleIcon className="w-3 h-3 text-black" />}
                                     </div>

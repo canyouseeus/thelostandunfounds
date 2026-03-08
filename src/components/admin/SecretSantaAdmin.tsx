@@ -113,7 +113,7 @@ export default function SecretSantaAdmin() {
 
   if (error) {
     return (
-      <div className="bg-red-900/20 border border-red-500/50 rounded-none p-6">
+      <div className="bg-red-900/20 rounded-none p-6">
         <p className="text-red-400">Error: {error}</p>
         <button
           onClick={loadData}
@@ -146,7 +146,7 @@ export default function SecretSantaAdmin() {
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-              className="bg-black/50 border border-white/30 rounded-none text-white px-4 py-2"
+              className="bg-black/50 rounded-none text-white px-4 py-2 focus:bg-white/10 outline-none transition-colors"
             >
               {data.all_pots.map((pot) => (
                 <option key={pot.year} value={pot.year}>
@@ -176,13 +176,13 @@ export default function SecretSantaAdmin() {
             {data.pot.year} Pot Summary
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-red-500/10 border border-red-500/30 rounded-none p-4">
+            <div className="bg-red-500/10 rounded-none p-4">
               <div className="text-red-400 text-sm mb-1">Total Pot</div>
               <div className="text-white text-3xl font-bold">
                 {formatCurrency(data.pot.total_amount)}
               </div>
             </div>
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-none p-4">
+            <div className="bg-blue-500/10 rounded-none p-4">
               <div className="text-blue-400 text-sm mb-1">Status</div>
               <div className="text-white text-xl font-bold">
                 {data.pot.distributed ? 'Distributed' : 'Accumulating'}
@@ -193,7 +193,7 @@ export default function SecretSantaAdmin() {
                 </div>
               )}
             </div>
-            <div className="bg-green-500/10 border border-green-500/30 rounded-none p-4">
+            <div className="bg-green-500/10 rounded-none p-4">
               <div className="text-green-400 text-sm mb-1">Share Per Affiliate</div>
               <div className="text-white text-xl font-bold">
                 {data.distribution.share_per_affiliate
@@ -240,7 +240,7 @@ export default function SecretSantaAdmin() {
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="border-b border-white/10">
+                  <tr className="bg-white/5 whitespace-nowrap">
                     <th className="pb-2 text-white/60 text-sm">Date</th>
                     <th className="pb-2 text-white/60 text-sm">Amount</th>
                     <th className="pb-2 text-white/60 text-sm">Reason</th>
@@ -248,7 +248,7 @@ export default function SecretSantaAdmin() {
                 </thead>
                 <tbody>
                   {data.contributions.items.slice(0, 10).map((contrib) => (
-                    <tr key={contrib.id} className="border-b border-white/5">
+                    <tr key={contrib.id} className="hover:bg-white/5">
                       <td className="py-2 text-white/80 text-sm">{formatDate(contrib.created_at)}</td>
                       <td className="py-2 text-white font-semibold">{formatCurrency(contrib.amount)}</td>
                       <td className="py-2 text-white/60 text-sm">{contrib.reason || 'N/A'}</td>
@@ -274,7 +274,7 @@ export default function SecretSantaAdmin() {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-white/10">
+                <tr className="bg-white/5 whitespace-nowrap">
                   <th className="pb-2 text-white/60 text-sm">Affiliate Code</th>
                   <th className="pb-2 text-white/60 text-sm">Amount</th>
                   <th className="pb-2 text-white/60 text-sm">Status</th>
@@ -283,7 +283,7 @@ export default function SecretSantaAdmin() {
               </thead>
               <tbody>
                 {data.distribution.items.map((item) => (
-                  <tr key={item.id} className="border-b border-white/5">
+                  <tr key={item.id} className="hover:bg-white/5">
                     <td className="py-2 text-white font-mono">{item.affiliates?.affiliate_code || 'N/A'}</td>
                     <td className="py-2 text-white font-semibold">{formatCurrency(item.amount)}</td>
                     <td className="py-2">
@@ -314,9 +314,9 @@ export default function SecretSantaAdmin() {
             {data.all_pots.map((pot) => (
               <div
                 key={pot.year}
-                className={`border rounded-none p-4 cursor-pointer transition ${pot.year === selectedYear
-                  ? 'bg-white/10 border-white/50'
-                  : 'bg-black/30 border-white/10 hover:border-white/30'
+                className={`rounded-none p-4 cursor-pointer transition ${pot.year === selectedYear
+                  ? 'bg-white/10'
+                  : 'bg-black/30 hover:bg-white/5'
                   }`}
                 onClick={() => setSelectedYear(pot.year)}
               >

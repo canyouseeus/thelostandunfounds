@@ -412,7 +412,7 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
           </button>
           <button
             onClick={load}
-            className="flex items-center gap-2 text-sm sm:text-base px-3 py-2 rounded-none border border-white/20 hover:border-white/60 transition-colors"
+            className="flex items-center gap-2 text-sm sm:text-base px-3 py-2 rounded-none bg-white/5 hover:bg-white/10 transition-colors"
           >
             {refreshing ? <LoadingSpinner size="sm" /> : <ArrowPathIcon className="w-4 h-4" />}
             Refresh
@@ -433,12 +433,12 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
   /* rest of component ... */
 
       {error && (
-        <div className="mb-4 p-4 border border-red-500/50 text-red-200 bg-red-500/5 rounded-none">
+        <div className="mb-4 p-4 text-red-200 bg-red-500/10 rounded-none">
           {error}
         </div>
       )}
       {actionMessage && (
-        <div className="mb-4 p-3 border border-white/10 text-white/80 bg-white/5 rounded-none text-sm">
+        <div className="mb-4 p-3 text-white/80 bg-white/10 rounded-none text-sm">
           {actionMessage}
         </div>
       )}
@@ -459,7 +459,7 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
             <div className="flex flex-wrap gap-2 mb-4">
               <button
                 onClick={handleApproveAllPending}
-                className="px-3 py-2 text-sm border border-white/20 text-white rounded-none hover:border-white/60"
+                className="px-3 py-2 text-sm bg-white/10 text-white rounded-none hover:bg-white/20"
               >
                 Approve All Pending
               </button>
@@ -471,7 +471,7 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
               </button>
               <button
                 onClick={() => exportCsv(data?.payoutRequests || [], 'payout-requests')}
-                className="px-3 py-2 text-sm border border-white/20 text-white rounded-none hover:border-white/60"
+                className="px-3 py-2 text-sm bg-white/10 text-white rounded-none hover:bg-white/20"
               >
                 Export CSV
               </button>
@@ -529,7 +529,7 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
                         {(payout.status === 'pending' || payout.status === 'approved') && (
                           <button
                             onClick={() => handleRetryPayout(payout.id)}
-                            className="px-2 py-1 text-xs border border-white/20 text-white rounded-none hover:border-white/60"
+                            className="px-2 py-1 text-xs bg-white/10 text-white rounded-none hover:bg-white/20"
                           >
                             Retry
                           </button>
@@ -548,7 +548,7 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
             <div className="flex flex-wrap gap-2 mb-2">
               <button
                 onClick={() => exportCsv(data?.affiliates || [], 'affiliates')}
-                className="px-3 py-2 text-sm border border-white/20 text-white rounded-none hover:border-white/60"
+                className="px-3 py-2 text-sm bg-white/10 text-white rounded-none hover:bg-white/20"
               >
                 Export CSV
               </button>
@@ -581,19 +581,19 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
                       <div className="flex flex-wrap gap-1 justify-start sm:justify-end">
                         <button
                           onClick={() => handleEditAffiliate(affiliate, 'paypal_email')}
-                          className="px-2 py-1 text-xs border border-white/20 text-white rounded-none hover:border-white/60"
+                          className="px-2 py-1 text-xs bg-white/10 text-white rounded-none hover:bg-white/20"
                         >
                           Edit PayPal
                         </button>
                         <button
                           onClick={() => handleEditAffiliate(affiliate, 'commission_rate')}
-                          className="px-2 py-1 text-xs border border-white/20 text-white rounded-none hover:border-white/60"
+                          className="px-2 py-1 text-xs bg-white/10 text-white rounded-none hover:bg-white/20"
                         >
                           Edit Rate
                         </button>
                         <button
                           onClick={() => handleEditAffiliate(affiliate, 'payment_threshold')}
-                          className="px-2 py-1 text-xs border border-white/20 text-white rounded-none hover:border-white/60"
+                          className="px-2 py-1 text-xs bg-white/10 text-white rounded-none hover:bg-white/20"
                         >
                           Edit Threshold
                         </button>
@@ -617,7 +617,7 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
             <div className="flex flex-wrap gap-2 mb-2">
               <button
                 onClick={() => exportCsv(data?.commissions || [], 'commissions')}
-                className="px-3 py-2 text-sm border border-white/20 text-white rounded-none hover:border-white/60"
+                className="px-3 py-2 text-sm bg-white/10 text-white rounded-none hover:bg-white/20"
               >
                 Export CSV
               </button>
@@ -629,7 +629,7 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
                     key={commission.id}
                     className={cn(
                       "flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 sm:p-4 bg-black text-white rounded-none",
-                      commission.status === 'cancelled' && "opacity-60 border-l-2 border-red-500"
+                      commission.status === 'cancelled' && "opacity-60 bg-red-950/20"
                     )}
                   >
                     <div className="space-y-1">
@@ -680,7 +680,7 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
                   cancelled.map((commission) => (
                     <div
                       key={commission.id}
-                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 sm:p-4 bg-red-950/30 text-white rounded-none border-l-2 border-red-500"
+                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 sm:p-4 bg-red-950/30 text-white rounded-none"
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
@@ -708,7 +708,7 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
                     </div>
                   ))
                 ) : (
-                  <div className="text-white/60 text-sm p-4 bg-emerald-950/20 border border-emerald-500/20 rounded-none">
+                  <div className="text-white/60 text-sm p-4 bg-emerald-950/20 rounded-none">
                     ✓ No cancelled commissions or chargebacks. All commissions are in good standing.
                   </div>
                 );

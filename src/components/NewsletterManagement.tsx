@@ -570,7 +570,7 @@ export default function NewsletterManagement() {
             className="h-full"
           >
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-500/10 border border-blue-500/20">
+              <div className="p-3 bg-blue-500/10">
                 <UsersIcon className="w-6 h-6 text-blue-400" />
               </div>
               <div>
@@ -580,7 +580,7 @@ export default function NewsletterManagement() {
                 </div>
               </div>
             </div>
-            <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
+            <div className="mt-4 pt-4 flex items-center justify-between">
               <span className="text-[10px] text-blue-400/60 uppercase tracking-widest font-bold">View List</span>
               <span className="text-white/20 text-xs">→</span>
             </div>
@@ -589,7 +589,7 @@ export default function NewsletterManagement() {
 
         <AdminBentoCard title="EMAILS SENT">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-green-500/10 border border-green-500/20">
+            <div className="p-3 bg-green-500/10">
               <ChartBarIcon className="w-6 h-6 text-green-400" />
             </div>
             <div>
@@ -603,7 +603,7 @@ export default function NewsletterManagement() {
 
         <AdminBentoCard title="AVG. REACH">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-purple-500/10 border border-purple-500/20">
+            <div className="p-3 bg-purple-500/10">
               <ArrowTrendingUpIcon className="w-6 h-6 text-purple-400" />
             </div>
             <div>
@@ -639,7 +639,7 @@ export default function NewsletterManagement() {
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder="ENTER SUBJECT..."
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/20 focus:border-white focus:outline-none transition-colors text-sm"
+              className="w-full px-4 py-3 bg-white/5 text-white placeholder-white/20 focus:bg-white/10 focus:outline-none transition-colors text-sm"
               disabled={sending}
             />
           </div>
@@ -655,7 +655,7 @@ export default function NewsletterManagement() {
               onChange={(e) => handleContentChange(e.target.value)}
               placeholder="WRITE YOUR CONTENT HERE. USE DOUBLE LINE BREAKS FOR PARAGRAPHS..."
               rows={12}
-              className="w-full px-4 py-4 bg-white/5 border border-white/10 text-white placeholder-white/20 focus:border-white focus:outline-none font-mono text-sm resize-none transition-colors"
+              className="w-full px-4 py-4 bg-white/5 text-white placeholder-white/20 focus:bg-white/10 focus:outline-none font-mono text-sm resize-none transition-colors"
               disabled={sending}
             />
             <p className="text-white/20 text-[10px] mt-2 uppercase tracking-tight">
@@ -664,15 +664,15 @@ export default function NewsletterManagement() {
           </div>
 
           {/* Schedule */}
-          <div className="border border-white/5 p-6 bg-white/[0.02]">
+          <div className="p-6 bg-white/[0.02]">
             <div className="flex items-center justify-between mb-4">
               <label
                 className="flex items-center gap-3 cursor-pointer group"
                 onClick={() => setScheduleEnabled(!scheduleEnabled)}
               >
                 <div className={cn(
-                  "w-4 h-4 border flex items-center justify-center transition-colors",
-                  scheduleEnabled ? "bg-white border-white" : "border-white/20 group-hover:border-white/40"
+                  "w-4 h-4 flex items-center justify-center transition-colors",
+                  scheduleEnabled ? "bg-white" : "bg-white/10 group-hover:bg-white/20"
                 )}>
                   {scheduleEnabled && <CheckCircleIcon className="w-3 h-3 text-black" />}
                 </div>
@@ -700,7 +700,7 @@ export default function NewsletterManagement() {
                     value={scheduledDate}
                     onChange={(e) => setScheduledDate(e.target.value)}
                     min={new Date().toISOString().split('T')[0]}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white focus:border-white outline-none [color-scheme:dark] text-sm transition-colors"
+                    className="w-full px-4 py-3 bg-white/5 text-white focus:bg-white/10 outline-none [color-scheme:dark] text-sm transition-colors"
                     disabled={sending}
                   />
                 </div>
@@ -713,7 +713,7 @@ export default function NewsletterManagement() {
                     id="scheduled-time"
                     value={scheduledTime}
                     onChange={(e) => setScheduledTime(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white focus:border-white outline-none [color-scheme:dark] text-sm transition-colors"
+                    className="w-full px-4 py-3 bg-white/5 text-white focus:bg-white/10 outline-none [color-scheme:dark] text-sm transition-colors"
                     disabled={sending}
                   />
                 </div>
@@ -752,7 +752,7 @@ export default function NewsletterManagement() {
             </button>
             <button
               onClick={() => setShowPreview(!showPreview)}
-              className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white font-bold uppercase tracking-[0.2em] text-xs transition-all flex items-center gap-2 border border-white/10"
+              className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white font-bold uppercase tracking-[0.2em] text-xs transition-all flex items-center gap-2"
             >
               <EyeIcon className="w-4 h-4" />
               {showPreview ? 'HIDE' : 'SHOW'} PREVIEW
@@ -761,8 +761,8 @@ export default function NewsletterManagement() {
 
           {/* Preview */}
           {showPreview && (
-            <div className="mt-8 border border-white/5 animate-in fade-in zoom-in-95 duration-500 overflow-hidden shadow-2xl">
-              <div className="flex items-center justify-between px-6 py-4 bg-white/[0.05] border-b border-white/5">
+            <div className="mt-8 animate-in fade-in zoom-in-95 duration-500 overflow-hidden shadow-2xl">
+              <div className="flex items-center justify-between px-6 py-4 bg-white/[0.05]">
                 <span className="text-white/40 text-[10px] uppercase tracking-[0.2em]">Live Preview</span>
                 <span className="text-white/60 text-xs font-medium">Subject: {subject || '(No subject)'}</span>
               </div>
@@ -786,7 +786,7 @@ export default function NewsletterManagement() {
             {selectedCampaigns.size > 0 && (
               <button
                 onClick={deleteSelectedCampaigns}
-                className="px-3 py-1 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 transition"
+                className="px-3 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 transition"
               >
                 <TrashIcon className="w-3.5 h-3.5" />
                 DELETE SELECTED ({selectedCampaigns.size})
@@ -815,16 +815,16 @@ export default function NewsletterManagement() {
         <div className="space-y-4">
           {/* Select All Row */}
           {campaigns.length > 0 && (
-            <div className="flex items-center gap-3 pb-3 border-b border-white/5">
+            <div className="flex items-center gap-3 pb-3">
               <button
                 onClick={toggleSelectAll}
                 className={cn(
-                  "w-4 h-4 border flex items-center justify-center transition-colors",
+                  "w-4 h-4 flex items-center justify-center transition-colors",
                   selectedCampaigns.size === campaigns.length && campaigns.length > 0
-                    ? "bg-white border-white"
+                    ? "bg-white"
                     : selectedCampaigns.size > 0
-                      ? "bg-white/30 border-white/30"
-                      : "border-white/20 hover:border-white/40"
+                      ? "bg-white/30"
+                      : "bg-white/10 hover:bg-white/20"
                 )}
                 aria-label={selectedCampaigns.size === campaigns.length ? 'Deselect all' : 'Select all'}
               >
@@ -850,7 +850,7 @@ export default function NewsletterManagement() {
               <LoadingSpinner size="lg" />
             </div>
           ) : campaigns.length === 0 ? (
-            <div className="text-left py-12 border border-white/5 bg-white/[0.01]">
+            <div className="text-left py-12 bg-white/[0.01]">
               <div className="flex items-center gap-4 px-6">
                 <EnvelopeIcon className="w-8 h-8 text-white/10" />
                 <div>
@@ -860,13 +860,13 @@ export default function NewsletterManagement() {
               </div>
             </div>
           ) : (
-            <div className="divide-y divide-white/5">
+            <div className="space-y-1">
               {campaigns.map((campaign) => (
                 <div
                   key={campaign.id}
                   className={cn(
-                    "group/item py-6 transition-all border-l-2",
-                    selectedCampaigns.has(campaign.id) ? "bg-white/[0.03] border-white" : "border-transparent hover:bg-white/[0.02]"
+                    "group/item py-6 transition-all",
+                    selectedCampaigns.has(campaign.id) ? "bg-white/[0.03]" : "hover:bg-white/[0.02]"
                   )}
                   onClick={() => toggleCampaign(campaign.id)}
                   onKeyDown={(e) => handleCampaignKeyDown(e, campaign.id)}
@@ -881,10 +881,10 @@ export default function NewsletterManagement() {
                         toggleCampaignSelection(campaign.id, e);
                       }}
                       className={cn(
-                        "w-4 h-4 mt-1 border flex items-center justify-center transition-colors flex-shrink-0",
+                        "w-4 h-4 mt-1 flex items-center justify-center transition-colors flex-shrink-0",
                         selectedCampaigns.has(campaign.id)
-                          ? "bg-white border-white"
-                          : "border-white/20 hover:border-white/40"
+                          ? "bg-white"
+                          : "bg-white/10 hover:bg-white/20"
                       )}
                     >
                       {selectedCampaigns.has(campaign.id) && <CheckCircleIcon className="w-3 h-3 text-black" />}
@@ -898,11 +898,11 @@ export default function NewsletterManagement() {
                           </h3>
                           <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest">
                             <span className={cn(
-                              "px-1.5 py-0.5 border",
-                              campaign.status === 'sent' ? "text-green-400 border-green-400/30 bg-green-400/5" :
-                                campaign.status === 'scheduled' ? "text-blue-400 border-blue-400/30 bg-blue-400/5" :
-                                  campaign.status === 'sending' ? "text-yellow-400 border-yellow-400/30 bg-yellow-400/5" :
-                                    "text-white/40 border-white/10 bg-white/5"
+                              "px-1.5 py-0.5",
+                              campaign.status === 'sent' ? "text-green-400 bg-green-400/5" :
+                                campaign.status === 'scheduled' ? "text-blue-400 bg-blue-400/5" :
+                                  campaign.status === 'sending' ? "text-yellow-400 bg-yellow-400/5" :
+                                    "text-white/40 bg-white/5"
                             )}>
                               {campaign.status}
                             </span>
@@ -952,10 +952,10 @@ export default function NewsletterManagement() {
 
                   {/* Expanded Content */}
                   {expandedCampaignId === campaign.id && (
-                    <div className="mt-8 mx-4 p-6 bg-black border border-white/5 animate-in fade-in slide-in-from-top-4 duration-300" onClick={(e) => e.stopPropagation()}>
+                    <div className="mt-8 mx-4 p-6 bg-black animate-in fade-in duration-300" onClick={(e) => e.stopPropagation()}>
                       {/* Campaign Deep Stats */}
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                        <div className="p-4 bg-white/[0.02] border border-white/5 relative group/stat">
+                        <div className="p-4 bg-white/[0.04] relative group/stat">
                           <div className="text-white/20 text-[8px] uppercase tracking-widest mb-1 font-bold">Delivery Status</div>
                           <div className={cn(
                             "text-base font-bold uppercase tracking-tight",
@@ -965,13 +965,13 @@ export default function NewsletterManagement() {
                             {campaign.status}
                           </div>
                         </div>
-                        <div className="p-4 bg-white/[0.02] border border-white/5 relative group/stat">
+                        <div className="p-4 bg-white/[0.04] relative group/stat">
                           <div className="text-white/20 text-[8px] uppercase tracking-widest mb-1 font-bold">Successful Sends</div>
                           <div className="text-base font-bold text-white tracking-tight">
                             {Math.round((campaign.emails_sent / (campaign.total_subscribers || 1)) * 100)}%
                           </div>
                         </div>
-                        <div className="p-4 bg-white/[0.02] border border-white/5 relative group/stat">
+                        <div className="p-4 bg-white/[0.04] relative group/stat">
                           <div className="text-white/20 text-[8px] uppercase tracking-widest mb-1 font-bold">Failed Count</div>
                           <div className="text-base font-bold text-red-400/80 tracking-tight">
                             {campaign.emails_failed}
@@ -980,8 +980,8 @@ export default function NewsletterManagement() {
                       </div>
 
                       {/* Delivery Details Table-like List */}
-                      <div className="border border-white/5">
-                        <div className="bg-white/[0.03] px-4 py-3 border-b border-white/10 flex items-center justify-between">
+                      <div>
+                        <div className="bg-white/[0.03] px-4 py-3 flex items-center justify-between">
                           <h4 className="text-white text-[10px] uppercase tracking-[0.2em] font-bold flex items-center gap-2">
                             <EnvelopeIcon className="w-3.5 h-3.5" />
                             Delivery Details
@@ -1014,7 +1014,7 @@ export default function NewsletterManagement() {
                               <LoadingSpinner size="sm" />
                             </div>
                           ) : campaignLogs[campaign.id] ? (
-                            <div className="divide-y divide-white/5">
+                            <div className="space-y-1">
                               {campaignLogs[campaign.id].map((log) => (
                                 <div key={log.id} className="px-4 py-3 flex items-center justify-between group/log">
                                   <div className="flex-1 min-w-0">
@@ -1027,8 +1027,8 @@ export default function NewsletterManagement() {
                                   </div>
                                   <div className="flex items-center gap-4">
                                     <span className={cn(
-                                      "text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 border",
-                                      log.status === 'sent' ? "text-green-400/80 border-green-400/20" : "text-red-400/80 border-red-400/20"
+                                      "text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5",
+                                      log.status === 'sent' ? "text-green-400/80 bg-green-400/5" : "text-red-400/80 bg-red-400/5"
                                     )}>
                                       {log.status}
                                     </span>
@@ -1062,11 +1062,11 @@ export default function NewsletterManagement() {
           onClick={() => setShowSubscriberModal(false)}
         >
           <div
-            className="bg-black/50 border border-white/10 rounded-none w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden flex flex-col relative shadow-2xl"
+            className="bg-black/50 rounded-none w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden flex flex-col relative shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-8 border-b border-white/5 bg-[#0a0a0a]">
+            <div className="flex items-center justify-between p-8 bg-[#0a0a0a]">
               <div>
                 <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
                   <UsersIcon className="w-6 h-6" />
@@ -1085,7 +1085,7 @@ export default function NewsletterManagement() {
             <div className="p-8 space-y-6 overflow-hidden flex flex-col flex-1">
               {/* Tabs and Search */}
               <div className="space-y-4">
-                <div className="flex gap-1 bg-white/[0.02] border border-white/5 p-1">
+                <div className="flex gap-1 bg-white/[0.02] p-1">
                   <button
                     onClick={() => setSubscriberTab('subscribed')}
                     className={cn(
@@ -1113,7 +1113,7 @@ export default function NewsletterManagement() {
                     placeholder="QUERY EMAIL INDEX..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 bg-black border border-white/10 text-white placeholder-white/20 focus:border-white transition-colors outline-none text-xs uppercase tracking-widest"
+                    className="w-full pl-12 pr-4 py-3 bg-black text-white placeholder-white/20 focus:bg-white/5 transition-colors outline-none text-xs uppercase tracking-widest"
                   />
                 </div>
               </div>
@@ -1129,7 +1129,7 @@ export default function NewsletterManagement() {
                 return filteredSubscribers.length > 0 && (
                   <button
                     onClick={() => copyEmailsToClipboard(filteredSubscribers.map(s => s.email))}
-                    className="w-full py-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all"
+                    className="w-full py-4 bg-white/5 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all"
                   >
                     <ClipboardIcon className="w-4 h-4" />
                     EXPORT {filteredSubscribers.length} ENTITIES TO CLIPBOARD
@@ -1138,7 +1138,7 @@ export default function NewsletterManagement() {
               })()}
 
               {/* List Container */}
-              <div className="flex-1 overflow-y-auto custom-scrollbar border border-white/5 divide-y divide-white/5">
+              <div className="flex-1 overflow-y-auto custom-scrollbar space-y-1">
                 {loadingSubscribers ? (
                   <div className="flex flex-col items-center justify-center py-24 gap-4">
                     <div className="flex justify-center">

@@ -518,7 +518,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
             const contentHtml = `
                 <div style="font-family: Arial, sans-serif; color: #ffffff; text-align: left; padding: 20px;">
                     ${messageHtml}
-                    <div style="background-color: #111111; padding: 20px; border: 1px solid #333333;">
+                    <div style="background-color: #111111; padding: 20px; border: none;">
                         <h2 style="font-size: 24px; font-weight: bold; margin-bottom: 20px;">${event.title}</h2>
                         ${event.image_url ? `<img src="${event.image_url}" alt="Event Image" style="max-width: 100%; border-radius: 0; margin-bottom: 20px;" />` : ''}
                         <p style="font-size: 16px; margin-bottom: 10px;"><strong>When:</strong> ${eventDateStr}</p>
@@ -1438,7 +1438,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                                                     <th className="p-3 font-black uppercase text-[10px] tracking-widest text-right">Amount</th>
                                                                 </tr>
                                                             </thead>
-                                                            <tbody className="divide-y divide-white/5 text-sm font-mono text-left">
+                                                            <tbody className="border-none text-sm font-mono text-left">
                                                                 {tickets.map(ticket => (
                                                                     <tr key={ticket.id} className="hover:bg-white/5 transition-colors">
                                                                         <td className="p-3">
@@ -1486,7 +1486,7 @@ export default function AdminEventsView({ onBack }: AdminEventsViewProps) {
                                                                     <th className="p-3 font-black uppercase text-[10px] tracking-widest text-right">Date</th>
                                                                 </tr>
                                                             </thead>
-                                                            <tbody className="divide-y divide-white/5 text-sm font-mono text-left">
+                                                            <tbody className="border-none text-sm font-mono text-left">
                                                                 {rsvps.map(rsvp => (
                                                                     <tr key={rsvp.id} className="hover:bg-white/5 transition-colors">
                                                                         <td className="p-3">
