@@ -58,6 +58,8 @@ import OnboardingWizard from './pages/setup/OnboardingWizard'
 import PhotographerGuide from './pages/docs/PhotographerGuide'
 import Events from './pages/Events'
 import SubmitEvent from './pages/SubmitEvent'
+import Advertise from './pages/Advertise'
+
 
 
 
@@ -248,7 +250,11 @@ function App() {
               <Route path="/photos/:slug" element={<Layout />}>
                 <Route index element={<PhotoLibraryPage />} />
               </Route>
+              <Route path="/advertise" element={<Layout />}>
+                <Route index element={<Advertise />} />
+              </Route>
               <Route path="/reset-newsletter" element={<ResetNewsletter />} />
+
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Analytics />

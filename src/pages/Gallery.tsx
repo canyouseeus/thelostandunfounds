@@ -114,7 +114,8 @@ export default function Gallery() {
     const displayedLibraries = activeGalleryTab === 'public' ? publicLibraries : privateLibraries;
 
     return (
-        <div className="min-h-screen bg-black pt-32 pb-48 px-4 md:px-8 max-w-[100vw] overflow-x-hidden">
+        <div className="min-h-screen bg-black pt-0 pb-48 max-w-[100vw] overflow-x-hidden">
+
             <Helmet>
                 <title>THE GALLERY | THE LOST+UNFOUNDS</title>
                 <meta name="description" content="Explore exclusive high-resolution photography collections. Unique findings from the field, beautifully captured in high definition for your inspiration." />
@@ -122,6 +123,9 @@ export default function Gallery() {
             </Helmet>
 
             <MarketplaceBanner surface="gallery" />
+            
+            <div className="px-4 md:px-8">
+
 
             <div className="max-w-7xl mx-auto mb-20 relative z-10">
                 <div className="text-left space-y-6 max-w-4xl pb-12">
@@ -238,6 +242,8 @@ export default function Gallery() {
                     </div>
                 )}
             </div>
+          </div>
         </div>
     );
 }
+
