@@ -28,7 +28,8 @@ const CORE_PAGES = [
     { path: 'gearheads', title: 'GEARHEADS | THE LOST+UNFOUNDS', description: 'Technical deep dives, equipment reviews, developer intel, and findings from the digital frontier.' },
     { path: 'borderlands', title: 'EDGE OF THE BORDERLANDS | THE LOST+UNFOUNDS', description: 'Exploring the boundaries of information, society, and technology. Share travel experiences and practical adventure insights from the field.' },
     { path: 'science', title: 'MAD SCIENTISTS | THE LOST+UNFOUNDS', description: 'Experimental research and technical breakthroughs from the field. Deep dives into scientific concepts and applied innovation.' },
-    { path: 'newtheory', title: 'NEW THEORY | THE LOST+UNFOUNDS', description: 'Fresh perspectives and evolving theories on the digital age. Discover new insights and ideas from the information frontier.' }
+    { path: 'newtheory', title: 'NEW THEORY | THE LOST+UNFOUNDS', description: 'Fresh perspectives and evolving theories on the digital age. Discover new insights and ideas from the information frontier.' },
+    { path: 'advertise', title: 'ADVERTISE | THE LOST+UNFOUNDS', description: 'Partner with THE LOST+UNFOUNDS. Discover premium advertising opportunities across our ecosystem of tools, galleries, and editorial content.' }
 ];
 
 async function preRenderCorePages() {

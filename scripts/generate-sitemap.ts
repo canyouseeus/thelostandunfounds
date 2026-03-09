@@ -140,6 +140,14 @@ async function generateSitemap() {
     <priority>0.6</priority>
   </url>
 
+  <!-- Advertise -->
+  <url>
+    <loc>${baseUrl}/advertise</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
   <!-- Book Club -->
   <url>
     <loc>${baseUrl}/book-club</loc>
