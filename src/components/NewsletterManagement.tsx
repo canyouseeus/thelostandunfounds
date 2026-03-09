@@ -93,6 +93,10 @@ export default function NewsletterManagement() {
   const [campaignLogs, setCampaignLogs] = useState<Record<string, SendLog[]>>({});
   const [loadingLogs, setLoadingLogs] = useState<string | null>(null);
   const [retrying, setRetrying] = useState<string | null>(null);
+  const [testEmail, setTestEmail] = useState('');
+  const [sendingTest, setSendingTest] = useState(false);
+  const [selectedSubscriberEmails, setSelectedSubscriberEmails] = useState<Set<string>>(new Set());
+  const [showRecipientSelection, setShowRecipientSelection] = useState(false);
 
   useEffect(() => {
     loadSubscriberCount();
@@ -374,8 +378,17 @@ export default function NewsletterManagement() {
     });
 
     const gettingStartedUrl = 'https://www.thelostandunfounds.com/blog/getting-started';
-    const bannerUrl =
-      "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='400'><rect width='100%25' height='100%25' fill='%23000'/><text x='50%25' y='50%25' fill='%23fff' font-family='Arial, sans-serif' font-size='48' font-weight='bold' text-anchor='middle' dominant-baseline='middle'>THE LOST+UNFOUNDS</text></svg>";
+    const hasGettingStarted = text.toLowerCase().includes('getting-started') || text.toLowerCase().includes('view the getting started guide');
+
+    const ctaHtml = !hasGettingStarted ? `
+      <div style="margin: 30px 0;">
+        <a href="${gettingStartedUrl}" style="display: inline-block; padding: 14px 20px; background-color: #ffffff; color: #000000; text-decoration: none; font-weight: bold; font-size: 16px; font-family: Arial, sans-serif; border: 2px solid #ffffff; letter-spacing: 0.05em;">
+          View the Getting Started Guide →
+        </a>
+      </div>
+    ` : '';
+
+    const bannerUrl = "https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png";
 
     return `
       <!DOCTYPE html>
@@ -392,24 +405,17 @@ export default function NewsletterManagement() {
       <body style="margin: 0 !important; padding: 0 !important; background-color: #000000 !important; font-family: Arial, sans-serif;">
         <table role="presentation" style="width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 !important; padding: 0 !important;">
           <tr>
-            <td align="center" style="padding: 40px 20px !important; background-color: #000000 !important;">
-              <table role="presentation" style="max-width: 600px !important; width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 auto !important;">
+            <td align="left" style="padding: 40px 20px !important; background-color: #000000 !important;">
+              <table role="presentation" style="max-width: 600px !important; width: 100% !important; border-collapse: collapse !important; background-color: #000000 !important; margin: 0 !important;">
                 <tr>
-                  <td align="center" style="padding: 0 0 30px 0; background-color: #000000 !important;">
-                    <img src="${bannerUrl}" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block; margin: 0 auto;" />
+                  <td align="left" style="padding: 0 0 30px 0; background-color: #000000 !important;">
+                    <img src="${bannerUrl}" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;" />
                   </td>
                 </tr>
                 <tr>
                   <td style="padding: 0 !important; color: #ffffff !important; background-color: #000000 !important;">
-                    <h1 style="color: #ffffff !important; font-size: 28px; font-weight: bold; margin: 0 0 20px 0; text-align: left; letter-spacing: 0.1em; background-color: #000000 !important;">
-                      THE LOST+UNFOUNDS
-                    </h1>
                     ${htmlParagraphs.join('')}
-                    <div style="margin: 30px 0;">
-                      <a href="${gettingStartedUrl}" style="display: inline-block; padding: 14px 20px; background-color: #ffffff; color: #000000; text-decoration: none; font-weight: bold; font-size: 16px; font-family: Arial, sans-serif; border: 2px solid #ffffff; letter-spacing: 0.05em;">
-                        View the Getting Started Guide →
-                      </a>
-                    </div>
+                    ${ctaHtml}
                     <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0; background-color: #000000 !important;">
                     <p style="color: rgba(255, 255, 255, 0.6) !important; font-size: 12px; line-height: 1.5; margin: 0; text-align: left; background-color: #000000 !important;">
                       © ${new Date().getFullYear()} THE LOST+UNFOUNDS. All rights reserved.
@@ -503,6 +509,7 @@ export default function NewsletterManagement() {
           content: content.trim(),
           contentHtml: (contentHtml || convertToHtml(content)).trim(),
           scheduledFor: scheduledDateTime ? scheduledDateTime.toISOString() : null,
+          recipients: selectedSubscriberEmails.size > 0 ? Array.from(selectedSubscriberEmails) : null,
         }),
       });
 
@@ -534,6 +541,62 @@ export default function NewsletterManagement() {
     } finally {
       setSending(false);
     }
+  };
+
+  const handleSendTest = async () => {
+    if (!testEmail.trim() || !testEmail.includes('@')) {
+      showError('Valid test email is required');
+      return;
+    }
+
+    if (!subject.trim()) {
+      showError('Subject is required');
+      return;
+    }
+
+    if (!content.trim()) {
+      showError('Content is required');
+      return;
+    }
+
+    try {
+      setSendingTest(true);
+      const response = await fetch('/api/newsletter/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          subject: subject.trim(),
+          content: content.trim(),
+          contentHtml: (contentHtml || convertToHtml(content)).trim(),
+          testEmail: testEmail.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send test newsletter');
+      }
+
+      success(`Test newsletter sent to ${testEmail}!`);
+    } catch (error: any) {
+      console.error('Error sending test newsletter:', error);
+      showError(error.message || 'Failed to send test newsletter');
+    } finally {
+      setSendingTest(false);
+    }
+  };
+
+  const handleResend = (campaign: NewsletterCampaign) => {
+    setSubject(campaign.subject);
+    setContent(campaign.content);
+    // contentHtml is auto-regenerated by handleContentChange logic if we just set subject/content
+    // but better to set it directly for preview
+    setContentHtml(campaign.content_html);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    success('Campaign data loaded into composer');
   };
 
   const formatDate = (dateString: string) => {
@@ -658,9 +721,46 @@ export default function NewsletterManagement() {
               className="w-full px-4 py-4 bg-white/5 text-white placeholder-white/20 focus:bg-white/10 focus:outline-none font-mono text-sm resize-none transition-colors"
               disabled={sending}
             />
-            <p className="text-white/20 text-[10px] mt-2 uppercase tracking-tight">
-              Tip: Use double line breaks to separate paragraphs.
-            </p>
+          </div>
+
+          {/* Targeting */}
+          <div className="p-6 bg-white/[0.02] border-t border-white/5">
+            <div className="flex items-center justify-between mb-4">
+              <label className="block text-white/40 text-[10px] uppercase tracking-[0.2em] font-medium">
+                Target Audience
+              </label>
+              <button
+                onClick={() => setShowRecipientSelection(!showRecipientSelection)}
+                className="text-blue-400 hover:text-blue-300 text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-2"
+              >
+                {selectedSubscriberEmails.size > 0 ? `EDIT SELECTION (${selectedSubscriberEmails.size})` : 'SELECT SPECIFIC RECIPIPIENTS'}
+              </button>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "px-3 py-1.5 rounded-none border text-[10px] font-bold uppercase tracking-widest transition-all",
+                selectedSubscriberEmails.size === 0 
+                  ? "bg-white/10 border-white/20 text-white" 
+                  : "bg-transparent border-white/10 text-white/40"
+              )}>
+                {selectedSubscriberEmails.size === 0 ? 'ALL VERIFIED SUBSCRIBERS' : `${subscriberCount} TOTAL VERIFIED`}
+              </div>
+              {selectedSubscriberEmails.size > 0 && (
+                <>
+                  <div className="px-3 py-1.5 rounded-none border border-blue-500/30 bg-blue-500/10 text-blue-400 text-[10px] font-bold uppercase tracking-widest">
+                    {selectedSubscriberEmails.size} SELECTED RECIPIENTS
+                  </div>
+                  <button 
+                    onClick={() => setSelectedSubscriberEmails(new Set())}
+                    className="text-white/20 hover:text-white transition-colors"
+                    title="Clear Selection"
+                  >
+                    <XMarkIcon className="w-4 h-4" />
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Schedule */}
@@ -719,6 +819,35 @@ export default function NewsletterManagement() {
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Test Email Section */}
+          <div className="p-6 bg-white/[0.02] border-t border-white/5">
+            <label htmlFor="test-email" className="block text-white/40 text-[10px] uppercase tracking-[0.2em] mb-3 font-medium">
+              Send Formatting Test
+            </label>
+            <div className="flex gap-4">
+              <input
+                type="email"
+                id="test-email"
+                value={testEmail}
+                onChange={(e) => setTestEmail(e.target.value)}
+                placeholder="ENTER TEST EMAIL ADDRESS..."
+                className="flex-1 px-4 py-3 bg-white/5 text-white placeholder-white/20 focus:bg-white/10 focus:outline-none transition-colors text-sm"
+                disabled={sendingTest}
+              />
+              <button
+                onClick={handleSendTest}
+                disabled={sendingTest || !testEmail.trim() || !subject.trim() || !content.trim()}
+                className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-bold uppercase tracking-[0.2em] text-[10px] transition-all flex items-center gap-2 disabled:opacity-50"
+              >
+                {sendingTest ? <LoadingSpinner size="sm" /> : <PaperAirplaneIcon className="w-4 h-4" />}
+                SEND TEST
+              </button>
+            </div>
+            <p className="text-white/20 text-[8px] mt-2 uppercase tracking-widest font-bold">
+              Test emails do not affect subscriber stats or campaign history.
+            </p>
           </div>
 
           {/* Actions */}
@@ -916,6 +1045,16 @@ export default function NewsletterManagement() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
+                              handleResend(campaign);
+                            }}
+                            className="p-2 text-white/20 hover:text-blue-400 hover:bg-blue-400/10 transition-all"
+                            title="Load into composer"
+                          >
+                            <ArrowPathIcon className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
                               deleteCampaign(campaign.id, e);
                             }}
                             className="p-2 text-white/20 hover:text-red-400 hover:bg-red-400/10 transition-all"
@@ -1055,6 +1194,118 @@ export default function NewsletterManagement() {
         </div>
       </AdminBentoCard>
 
+      {/* Recipient Selection Modal */}
+      {showRecipientSelection && (
+        <div
+          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-sm"
+          onClick={() => setShowRecipientSelection(false)}
+        >
+          <div
+            className="bg-black/50 rounded-none w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden flex flex-col relative shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-8 bg-[#0a0a0a]">
+              <div>
+                <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
+                  <UsersIcon className="w-6 h-6" />
+                  RECIPIENT SELECTION
+                </h2>
+                <div className="text-white/40 text-[10px] uppercase tracking-[0.2em] mt-1">
+                  {selectedSubscriberEmails.size} SELECTED / {subscriberCount} ACTIVE
+                </div>
+              </div>
+              <button
+                onClick={() => setShowRecipientSelection(false)}
+                className="text-white/30 hover:text-white transition-all p-2 hover:bg-white/5"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="p-8 space-y-6 overflow-hidden flex flex-col flex-1">
+              <div className="flex gap-4">
+                <div className="relative flex-1">
+                  <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                  <input
+                    type="text"
+                    placeholder="QUERY EMAIL INDEX..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 bg-black text-white placeholder-white/20 focus:bg-white/5 transition-colors outline-none text-xs uppercase tracking-widest"
+                  />
+                </div>
+                <button
+                  onClick={() => {
+                    const activeEmails = subscribers.filter((s: Subscriber) => s.verified).map((s: Subscriber) => s.email);
+                    if (selectedSubscriberEmails.size === activeEmails.length) {
+                      setSelectedSubscriberEmails(new Set());
+                    } else {
+                      setSelectedSubscriberEmails(new Set(activeEmails));
+                    }
+                  }}
+                  className="px-4 py-3 bg-white/5 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-widest transition-all"
+                >
+                  {selectedSubscriberEmails.size === subscriberCount ? 'DESELECT ALL' : 'SELECT ALL'}
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto custom-scrollbar space-y-1">
+                {loadingSubscribers ? (
+                  <div className="flex items-center justify-center py-24">
+                    <LoadingSpinner size="lg" />
+                  </div>
+                ) : (
+                  subscribers
+                    .filter((sub: Subscriber) => sub.verified && sub.email.toLowerCase().includes(searchQuery.toLowerCase()))
+                    .map((subscriber: Subscriber) => {
+                      const isSelected = selectedSubscriberEmails.has(subscriber.email);
+                      return (
+                        <div
+                          key={subscriber.id}
+                          onClick={() => {
+                            const next = new Set(selectedSubscriberEmails);
+                            if (isSelected) next.delete(subscriber.email);
+                            else next.add(subscriber.email);
+                            setSelectedSubscriberEmails(next);
+                          }}
+                          className={cn(
+                            "flex items-center justify-between p-4 cursor-pointer transition-all",
+                            isSelected ? "bg-white/10" : "hover:bg-white/[0.02]"
+                          )}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className={cn(
+                              "w-4 h-4 flex items-center justify-center transition-colors",
+                              isSelected ? "bg-white" : "bg-white/10"
+                            )}>
+                              {isSelected && <CheckCircleIcon className="w-3 h-3 text-black" />}
+                            </div>
+                            <div>
+                              <div className="text-white font-medium text-sm tracking-tight">{subscriber.email}</div>
+                              <div className="text-[10px] text-white/30 uppercase tracking-widest font-bold mt-1">
+                                JOINED: {formatDate(subscriber.created_at)}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                )}
+              </div>
+
+              <div className="pt-6 border-t border-white/5 flex justify-end">
+                <button
+                  onClick={() => setShowRecipientSelection(false)}
+                  className="px-8 py-3 bg-white text-black font-bold uppercase tracking-[0.2em] text-xs hover:bg-white/90 transition-all"
+                >
+                  CONFIRM SELECTION
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Subscriber List Modal */}
       {showSubscriberModal && (
         <div
@@ -1128,7 +1379,7 @@ export default function NewsletterManagement() {
 
                 return filteredSubscribers.length > 0 && (
                   <button
-                    onClick={() => copyEmailsToClipboard(filteredSubscribers.map(s => s.email))}
+                    onClick={() => copyEmailsToClipboard(filteredSubscribers.map((s: Subscriber) => s.email))}
                     className="w-full py-4 bg-white/5 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all"
                   >
                     <ClipboardIcon className="w-4 h-4" />
@@ -1148,12 +1399,12 @@ export default function NewsletterManagement() {
                   </div>
                 ) : (
                   subscribers
-                    .filter(sub => {
+                    .filter((sub: Subscriber) => {
                       const matchesTab = subscriberTab === 'subscribed' ? sub.verified : !sub.verified;
                       const matchesSearch = sub.email.toLowerCase().includes(searchQuery.toLowerCase());
                       return matchesTab && matchesSearch;
                     })
-                    .map((subscriber) => (
+                    .map((subscriber: Subscriber) => (
                       <div
                         key={subscriber.id}
                         className="flex items-center justify-between p-4 group transition-colors hover:bg-white/[0.01]"

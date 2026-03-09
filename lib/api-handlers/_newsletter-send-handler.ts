@@ -319,7 +319,7 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { subject, content, contentHtml, campaignId, testEmail, scheduledFor } = req.body
+  const { subject, content, contentHtml, campaignId, testEmail, scheduledFor, recipients } = req.body
 
   // Validate input
   if (!subject || !content || !contentHtml) {
@@ -419,6 +419,9 @@ export default async function handler(
     if (testEmail) {
       // Test mode: only send to the specified email
       subscribers = [{ email: testEmail }]
+    } else if (recipients && Array.isArray(recipients) && recipients.length > 0) {
+      // Target mode: send only to selected recipients
+      subscribers = recipients.map((email: string) => ({ email }))
     } else {
       // Normal mode: get all verified subscribers
       const { data: subscribersData, error: subscribersError } = await supabase

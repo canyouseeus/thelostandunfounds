@@ -38,7 +38,7 @@ function isAdminRequest(req: VercelRequest): boolean {
 }
 
 // Static import to ensure bundling
-import * as mailHandler from '../../lib/api-handlers/_zoho-mail-handler';
+import * as mailHandler from '../../lib/api-handlers/_zoho-mail-handler.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS headers

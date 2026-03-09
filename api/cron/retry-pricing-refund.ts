@@ -1,6 +1,6 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { sendMessage } from '../../lib/api-handlers/_zoho-mail-handler';
+import { sendMessage } from '../../lib/api-handlers/_zoho-mail-handler.js';
 
 /**
  * Cron Job: Retry Pricing Refund
