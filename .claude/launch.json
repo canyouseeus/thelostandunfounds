@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Vercel API Server",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vercel", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "Vite Frontend",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite"],
+      "port": 5173
+    },
+    {
+      "name": "Local Backend Server",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["local-server.js"],
+      "port": 3001
+    }
+  ]
+}
