@@ -207,11 +207,11 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 validOrders = [];
             }
 
-            // 3. Get Recent Photos (Sorted by updated_at for real-time dashboard updates)
+            // 3. Get Recent Photos (Sorted by created_at to show newest uploads)
             const { data: recentPhotos, error: photosError } = await supabase
                 .from('photos')
                 .select('*')
-                .order('updated_at', { ascending: false })
+                .order('created_at', { ascending: false })
                 .limit(3);
 
             if (photosError) console.error('Error fetching recent photos:', photosError);
