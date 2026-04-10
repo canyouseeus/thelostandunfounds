@@ -444,40 +444,44 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
             )}
         </div> {/* end gallery grid wrapper */}
 
-            {/* Newsletter bottom bar — visible to visitors after 1.5s */}
+            {/* Newsletter modal — slides up from bottom to center, like the old homepage */}
             <AnimatePresence>
-                {isHomepage && newsletterBarVisible && !newsletterBarDismissed && (
+                {isHomepage && !activeGallery && newsletterBarVisible && !newsletterBarDismissed && (
                     <motion.div
-                        initial={{ opacity: 0, y: 40 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 40 }}
-                        transition={{ duration: 0.4 }}
-                        className="fixed bottom-0 left-0 right-0 z-[9998] bg-black px-4 py-5"
+                        initial={{ y: '110%', opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: '110%', opacity: 0 }}
+                        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                        className="fixed left-1/2 -translate-x-1/2 bottom-8 z-[9997] w-full max-w-[min(480px,90vw)]"
                     >
-                        {/* Dismiss — top right, no cookie (only subscribe sets cookie) */}
-                        <button
-                            onClick={() => {
-                                setNewsletterBarVisible(false);
-                                setNewsletterBarDismissed(true);
-                            }}
-                            className="absolute top-2 right-4 text-white/20 hover:text-white/60 transition-colors"
-                            aria-label="Dismiss"
-                        >
-                            <XMarkIcon className="w-4 h-4" />
-                        </button>
+                        <div className="relative bg-black px-8 py-8">
+                            {/* Close button */}
+                            <button
+                                onClick={() => {
+                                    setNewsletterBarVisible(false);
+                                    setNewsletterBarDismissed(true);
+                                }}
+                                className="absolute top-4 right-4 text-white/30 hover:text-white transition-colors"
+                                aria-label="Close"
+                            >
+                                <XMarkIcon className="w-5 h-5" />
+                            </button>
 
-                        <div className="max-w-xl mx-auto flex flex-col sm:flex-row items-center gap-4">
                             {newsletterSuccess ? (
-                                <div className="flex items-center gap-2 text-white text-[11px] font-black uppercase tracking-[0.2em] w-full justify-center py-1">
-                                    <CheckIcon className="w-4 h-4 text-green-400" />
-                                    You're in — check your email.
+                                <div className="flex flex-col items-center gap-3 py-4 text-center">
+                                    <CheckIcon className="w-8 h-8 text-white" />
+                                    <p className="text-white font-black uppercase tracking-[0.2em] text-sm">You're in.</p>
+                                    <p className="text-white/40 text-[11px]">Check your email.</p>
                                 </div>
                             ) : (
                                 <>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/50 shrink-0">
-                                        Stay in the loop
+                                    <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/30 mb-2">
+                                        Stay in the Loop
                                     </p>
-                                    <form onSubmit={handleNewsletterSubmit} className="flex flex-1 gap-2 w-full">
+                                    <p className="text-white/50 text-sm font-light mb-6">
+                                        Sign up for updates and news.
+                                    </p>
+                                    <form onSubmit={handleNewsletterSubmit} className="flex gap-0">
                                         <input
                                             type="email"
                                             name="email"
@@ -487,12 +491,12 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                                             value={newsletterEmail}
                                             onChange={(e) => setNewsletterEmail(e.target.value)}
                                             required
-                                            className="flex-1 min-w-0 px-3 py-2 bg-white/5 text-white text-[11px] placeholder-white/20 focus:outline-none transition-colors"
+                                            className="flex-1 min-w-0 px-4 py-3 bg-white/5 text-white text-sm placeholder-white/20 focus:outline-none focus:bg-white/8 transition-colors"
                                         />
                                         <button
                                             type="submit"
                                             disabled={newsletterLoading}
-                                            className="px-4 py-2 bg-white text-black text-[10px] font-black uppercase tracking-[0.2em] hover:bg-white/90 transition-colors disabled:opacity-50 shrink-0"
+                                            className="px-5 py-3 bg-white text-black text-[10px] font-black uppercase tracking-[0.2em] hover:bg-zinc-200 transition-colors disabled:opacity-50 shrink-0"
                                         >
                                             {newsletterLoading ? '...' : 'Subscribe'}
                                         </button>
