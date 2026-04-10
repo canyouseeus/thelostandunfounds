@@ -40,8 +40,11 @@ async function uploadToSupabase(filename: string, blob: Blob): Promise<string | 
             }
         );
         if (res.ok) return supabasePublicUrl(filename);
+        const body = await res.text().catch(() => '');
+        console.warn('Supabase upload failed', res.status, body);
         return null;
-    } catch {
+    } catch (e) {
+        console.warn('Supabase upload error', e);
         return null;
     }
 }
