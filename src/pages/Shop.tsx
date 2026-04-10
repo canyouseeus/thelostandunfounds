@@ -38,7 +38,7 @@ interface Product {
   featured?: boolean;
 }
 
-export default function Shop({ hideBanner = false }: { hideBanner?: boolean }) {
+export default function Shop({ hideBanner = false, embedded = false }: { hideBanner?: boolean; embedded?: boolean }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [products, setProducts] = useState<Product[]>([]);
@@ -161,49 +161,50 @@ export default function Shop({ hideBanner = false }: { hideBanner?: boolean }) {
       {!hideBanner && <MarketplaceBanner surface="shop" />}
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
-        {/* Header */}
-        <div className="text-center space-y-3 sm:space-y-4">
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-white">SHOP</h1>
-        </div>
+        {!embedded && (
+          <>
+            {/* Header */}
+            <div className="text-center space-y-3 sm:space-y-4">
+              <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-white">SHOP</h1>
+            </div>
 
-        {/* Search and Filter */}
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-          {/** keep controls consistent sizing */}
-          {/** shared style for inputs/selects */}
-          {/** note: using min-h-[48px] for parity */}
-          <div className="flex-1 relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 sm:py-2.5 bg-black/60 border border-white rounded-none text-white placeholder-white/50 text-base
-                       hover:border-white hover:bg-black/70 
-                       focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white focus:bg-black/80
-                       transition-all duration-150 shadow-lg hover:shadow-white/10 focus:shadow-white/20
-                       min-h-[48px] touch-action: manipulation"
-            />
-          </div>
-          <div className="flex items-center sm:w-56 relative">
-            <FunnelIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 flex-shrink-0 pointer-events-none" />
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 sm:py-2.5 bg-black/60 border border-white rounded-none text-white text-base
-                       hover:border-white hover:bg-black/70 
-                       focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white focus:bg-black/80
-                       transition-all duration-150 shadow-lg hover:shadow-white/10 focus:shadow-white/20 cursor-pointer
-                       min-h-[48px] touch-action: manipulation appearance-none"
-            >
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+            {/* Search and Filter */}
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+              <div className="flex-1 relative">
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 sm:py-2.5 bg-black/60 border border-white rounded-none text-white placeholder-white/50 text-base
+                           hover:border-white hover:bg-black/70
+                           focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white focus:bg-black/80
+                           transition-all duration-150 shadow-lg hover:shadow-white/10 focus:shadow-white/20
+                           min-h-[48px] touch-action: manipulation"
+                />
+              </div>
+              <div className="flex items-center sm:w-56 relative">
+                <FunnelIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 flex-shrink-0 pointer-events-none" />
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 sm:py-2.5 bg-black/60 border border-white rounded-none text-white text-base
+                           hover:border-white hover:bg-black/70
+                           focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white focus:bg-black/80
+                           transition-all duration-150 shadow-lg hover:shadow-white/10 focus:shadow-white/20 cursor-pointer
+                           min-h-[48px] touch-action: manipulation appearance-none"
+                >
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Featured Products */}
         {featuredProducts.length > 0 && (

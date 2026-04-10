@@ -193,7 +193,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
             {/* Shop view — preloaded silently, revealed via display when tab is active */}
             {isHomepage && (
                 <div style={{ display: viewMode === 'shop' ? 'block' : 'none' }}>
-                    <Shop hideBanner />
+                    <Shop hideBanner embedded />
                 </div>
             )}
 
