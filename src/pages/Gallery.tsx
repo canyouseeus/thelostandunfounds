@@ -185,6 +185,15 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
     const [activeGalleryTab, setActiveGalleryTab] = useState<'public' | 'private'>('public');
     const [viewMode, setViewMode] = useState<'gallery' | 'shop'>('gallery');
 
+    // Scroll to top when returning from an inline gallery back to the grid
+    const prevActiveGallery = useRef<string | null>(null);
+    useEffect(() => {
+        if (prevActiveGallery.current !== null && activeGallery === null) {
+            window.scrollTo({ top: 0, behavior: 'instant' });
+        }
+        prevActiveGallery.current = activeGallery;
+    }, [activeGallery]);
+
     // Route-based direct URL (non-homepage /gallery/:slug)
     if (slug) {
         return <PhotoGallery librarySlug={slug} />;
