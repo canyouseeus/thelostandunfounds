@@ -50,6 +50,11 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
 
     const [authMessage, setAuthMessage] = useState<string | undefined>(undefined);
 
+    // Background removal progress — receives events from the hidden Shop component
+    const [bgrRemaining, setBgrRemaining] = useState(0);
+    const [bgrEnhanced, setBgrEnhanced] = useState(0);
+    const [bgrCountdown, setBgrCountdown] = useState<number | null>(null);
+
     // Set isMounted to false on unmount
     useEffect(() => {
         isMounted.current = true;
@@ -57,6 +62,25 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
             isMounted.current = false;
         };
     }, []);
+
+    useEffect(() => {
+        if (!isHomepage) return;
+        const onProgress = (e: Event) => {
+            const { remaining, newlyEnhanced } = (e as CustomEvent).detail;
+            setBgrRemaining(remaining);
+            setBgrEnhanced(newlyEnhanced);
+        };
+        const onReload = (e: Event) => {
+            const { countdown } = (e as CustomEvent).detail;
+            setBgrCountdown(countdown);
+        };
+        window.addEventListener('bgr:progress', onProgress);
+        window.addEventListener('bgr:reload', onReload);
+        return () => {
+            window.removeEventListener('bgr:progress', onProgress);
+            window.removeEventListener('bgr:reload', onReload);
+        };
+    }, [isHomepage]);
 
     // Track admin status
     useEffect(() => {
@@ -126,6 +150,37 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
 
     return (
         <div className="min-h-screen bg-black pt-0 pb-48 max-w-[100vw] overflow-x-hidden">
+
+            {/* Background removal progress banner — fixed at bottom, visible on any tab */}
+            {isHomepage && (bgrRemaining > 0 || bgrCountdown !== null) && (
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl ${
+                        bgrCountdown !== null
+                            ? 'bg-white text-black'
+                            : 'bg-black border border-white/20 text-white'
+                    }`}
+                    style={{ whiteSpace: 'nowrap' }}
+                >
+                    {bgrCountdown !== null ? (
+                        <>
+                            {bgrEnhanced} image{bgrEnhanced !== 1 ? 's' : ''} enhanced — reloading in {bgrCountdown}s
+                        </>
+                    ) : (
+                        <span className="flex items-center gap-2">
+                            Enhancing images
+                            <span className="inline-flex gap-0.5">
+                                <span className="animate-bounce" style={{ animationDelay: '0ms' }}>.</span>
+                                <span className="animate-bounce" style={{ animationDelay: '150ms' }}>.</span>
+                                <span className="animate-bounce" style={{ animationDelay: '300ms' }}>.</span>
+                            </span>
+                            <span className="text-white/40">({bgrRemaining} remaining)</span>
+                        </span>
+                    )}
+                </motion.div>
+            )}
 
             {/* Inline gallery — collapses back to grid via the nav back button */}
             <AnimatePresence mode="wait">

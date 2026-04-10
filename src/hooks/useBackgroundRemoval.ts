@@ -50,11 +50,18 @@ async function uploadToSupabase(filename: string, blob: Blob): Promise<string | 
  * Removes the background from a product image.
  *
  * Cache hierarchy:
- *   1. Supabase storage (shared across ALL visitors — processed once, instant forever)
- *   2. localStorage (instant repeat visits before Supabase check resolves)
+ *   1. localStorage (instant — same browser)
+ *   2. Supabase storage (shared across ALL visitors — processed once, instant forever)
  *   3. Process in browser via @imgly/background-removal, then upload to Supabase
+ *
+ * onComplete(wasNew) fires when settled:
+ *   wasNew = true  → image was freshly processed by AI this session
+ *   wasNew = false → image was already cached (localStorage or Supabase)
  */
-export function useBackgroundRemoval(imageUrl: string | null) {
+export function useBackgroundRemoval(
+    imageUrl: string | null,
+    onComplete?: (wasNew: boolean) => void,
+) {
     const [processedUrl, setProcessedUrl] = useState<string | null>(null);
     const [processing, setProcessing] = useState(false);
 
@@ -66,45 +73,49 @@ export function useBackgroundRemoval(imageUrl: string | null) {
         let cancelled = false;
 
         async function run() {
-            // 1. Check localStorage for instant result
+            // 1. localStorage hit — instant
             const cached = localStorage.getItem(localKey);
             if (cached) {
                 setProcessedUrl(cached);
+                onComplete?.(false);
                 return;
             }
 
-            // 2. Check Supabase — already processed by a previous visitor
+            // 2. Supabase hit — already processed by a previous visitor
             const exists = await existsInSupabase(filename);
             if (cancelled) return;
             if (exists) {
                 const url = supabasePublicUrl(filename);
                 localStorage.setItem(localKey, url);
                 setProcessedUrl(url);
+                onComplete?.(false);
                 return;
             }
 
-            // 3. Process in browser and upload so every future visitor gets it instantly
+            // 3. Process fresh in browser, upload so every future visitor gets it instantly
             setProcessing(true);
             try {
                 const { removeBackground } = await import('@imgly/background-removal');
 
-                // Proxy the image through our server so the WASM can read it
-                // without being blocked by Fourthwall's CORS policy.
+                // Proxy through our server so WASM isn't blocked by Fourthwall CORS
                 const proxiedUrl = `/api/image-proxy?url=${encodeURIComponent(imageUrl)}`;
                 const blob = await removeBackground(proxiedUrl, {
                     output: { format: 'image/png', quality: 0.9 },
                 });
                 if (cancelled) return;
 
-                // Try to upload to Supabase (shared cache)
                 const uploadedUrl = await uploadToSupabase(filename, blob);
                 if (cancelled) return;
 
                 const finalUrl = uploadedUrl || URL.createObjectURL(blob);
                 localStorage.setItem(localKey, uploadedUrl || '');
                 setProcessedUrl(finalUrl);
+                onComplete?.(true);
             } catch (err) {
-                if (!cancelled) console.warn('Background removal failed, using original:', err);
+                if (!cancelled) {
+                    console.warn('Background removal failed, using original:', err);
+                    onComplete?.(false);
+                }
             } finally {
                 if (!cancelled) setProcessing(false);
             }
@@ -112,7 +123,7 @@ export function useBackgroundRemoval(imageUrl: string | null) {
 
         run();
         return () => { cancelled = true; };
-    }, [imageUrl]);
+    }, [imageUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
     return { processedUrl, processing };
 }

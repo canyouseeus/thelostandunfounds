@@ -3,7 +3,7 @@
  * Fetches native products from our database
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useBackgroundRemoval } from '../hooks/useBackgroundRemoval';
 import {
   ShoppingCartIcon,
@@ -11,7 +11,6 @@ import {
   FunnelIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
-import { LoadingOverlay } from '../components/Loading';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import MarketplaceBanner from '../components/events/MarketplaceBanner';
@@ -46,6 +45,51 @@ export default function Shop({ hideBanner = false, embedded = false }: { hideBan
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  // Background removal tracking across all product cards
+  const [settledCount, setSettledCount] = useState(0);
+  const [newlyEnhanced, setNewlyEnhanced] = useState(0);
+  const [reloadCountdown, setReloadCountdown] = useState<number | null>(null);
+
+  const handleImageSettled = useCallback((wasNew: boolean) => {
+    setSettledCount(s => s + 1);
+    if (wasNew) setNewlyEnhanced(n => n + 1);
+  }, []);
+
+  // Reset tracking counters whenever the product list changes
+  useEffect(() => {
+    setSettledCount(0);
+    setNewlyEnhanced(0);
+    setReloadCountdown(null);
+  }, [products.length]);
+
+  // Broadcast progress so the gallery-level banner stays visible even on the Gallery tab
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('bgr:progress', {
+      detail: { remaining: products.length - settledCount, total: products.length, newlyEnhanced }
+    }));
+  }, [settledCount, products.length, newlyEnhanced]);
+
+  // Once all images have settled and at least one was newly processed, trigger reload
+  useEffect(() => {
+    if (products.length === 0) return;
+    if (settledCount < products.length) return;
+    if (newlyEnhanced === 0) return;
+    if (reloadCountdown !== null) return;
+    setReloadCountdown(3);
+  }, [settledCount, products.length, newlyEnhanced, reloadCountdown]);
+
+  // Broadcast reload countdown
+  useEffect(() => {
+    if (reloadCountdown === null) return;
+    window.dispatchEvent(new CustomEvent('bgr:reload', { detail: { countdown: reloadCountdown } }));
+    if (reloadCountdown === 0) {
+      window.location.reload();
+      return;
+    }
+    const t = setTimeout(() => setReloadCountdown(c => (c ?? 1) - 1), 1000);
+    return () => clearTimeout(t);
+  }, [reloadCountdown]);
   const [lightningPayment, setLightningPayment] = useState<{
     invoiceId: string;
     lnInvoice: string;
@@ -136,10 +180,6 @@ export default function Shop({ hideBanner = false, embedded = false }: { hideBan
   const featuredProducts = filteredProducts.filter((p) => p.featured);
   const regularProducts = filteredProducts.filter((p) => !p.featured);
 
-  if (loading) {
-    return <LoadingOverlay message="Loading products..." />;
-  }
-
   if (error) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -207,25 +247,39 @@ export default function Shop({ hideBanner = false, embedded = false }: { hideBan
           </>
         )}
 
+        {/* Skeleton — shown while products are loading */}
+        {loading && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 animate-pulse">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i}>
+                <div className="aspect-square bg-white/5" />
+                <div className="p-4 space-y-2">
+                  <div className="h-3 bg-white/5 w-3/4" />
+                  <div className="h-3 bg-white/5 w-1/4" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Featured Products */}
-        {featuredProducts.length > 0 && (
+        {!loading && featuredProducts.length > 0 && (
           <div className="space-y-4 sm:space-y-6">
             <h2 className="text-xl sm:text-2xl font-bold text-white">Featured Products</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
               {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} onOpen={() => setSelectedProduct(product)} />
+                <ProductCard key={product.id} product={product} onOpen={() => setSelectedProduct(product)} onSettled={handleImageSettled} />
               ))}
             </div>
           </div>
         )}
 
         {/* Regular Products */}
-        {regularProducts.length > 0 && (
+        {!loading && regularProducts.length > 0 && (
           <div className="space-y-4 sm:space-y-6">
-            <h2 className="text-xl sm:text-2xl font-bold text-white">All Products</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
               {regularProducts.map((product) => (
-                <ProductCard key={product.id} product={product} onOpen={() => setSelectedProduct(product)} />
+                <ProductCard key={product.id} product={product} onOpen={() => setSelectedProduct(product)} onSettled={handleImageSettled} />
               ))}
             </div>
           </div>
@@ -377,12 +431,12 @@ function extractOffers(data: any): any[] {
   return [];
 }
 
-function ProductCard({ product, onOpen }: { product: Product; onOpen: () => void }) {
+function ProductCard({ product, onOpen, onSettled }: { product: Product; onOpen: () => void; onSettled?: (wasNew: boolean) => void }) {
   const { user } = useAuth();
   const imageUrl = product.images && product.images.length > 0 ? product.images[0] : null;
   const displayPrice = product.price;
   const displayComparePrice = product.compareAtPrice || null;
-  const { processedUrl, processing } = useBackgroundRemoval(imageUrl);
+  const { processedUrl, processing } = useBackgroundRemoval(imageUrl, onSettled);
   const displayUrl = processedUrl || imageUrl;
 
   // Get affiliate ref for tracking
