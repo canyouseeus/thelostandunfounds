@@ -21,24 +21,22 @@ export default function PreviewAdminLoginPage() {
   return (
     <div className="min-h-screen bg-black">
 
-      {/* Preview banner — sits above everything */}
-      <div className="fixed top-0 left-0 w-full h-8 bg-black flex items-center justify-center z-[1000]">
-        <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30">
-          Preview Mode — Admin Login
-        </p>
-      </div>
-
-      {/* Minimal nav */}
-      <nav className="fixed top-8 left-0 w-full bg-black z-[999]">
-        <div className="flex items-center h-16 px-4 sm:px-6 lg:px-8">
+      {/* Single fixed block: banner on top, nav below it */}
+      <div className="fixed top-0 left-0 w-full bg-black z-[999]">
+        <div className="h-8 flex items-center justify-center">
+          <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30">
+            Preview Mode — Admin Login
+          </p>
+        </div>
+        <nav className="h-16 flex items-center px-4 sm:px-6 lg:px-8">
           <Link
             to="/"
             className="text-white font-bold text-sm sm:text-lg md:text-xl whitespace-nowrap"
           >
             THE LOST+UNFOUNDS
           </Link>
-        </div>
-      </nav>
+        </nav>
+      </div>
 
       {/* Slide-up login card — identical to AdminAuthGate */}
       <div
