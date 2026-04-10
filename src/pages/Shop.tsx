@@ -401,7 +401,7 @@ function ProductCard({ product, onOpen }: { product: Product; onOpen: () => void
 
   return (
     <div
-      className="bg-black/70 rounded-none hover:bg-white/5 hover:shadow-[0_8px_30px_rgba(255,255,255,0.12)] transition-all duration-300 h-full cursor-pointer"
+      className="border border-white hover:border-white/60 transition-all duration-300 h-full cursor-pointer flex flex-col"
       onClick={onOpen}
       role="button"
       tabIndex={0}
@@ -412,55 +412,44 @@ function ProductCard({ product, onOpen }: { product: Product; onOpen: () => void
         }
       }}
     >
-      {imageUrl && (
-        <div className="relative aspect-[4/5] sm:aspect-[3/4] overflow-hidden bg-white/5">
+      {/* Product image — contain so the full silhouette shows, no cropping */}
+      <div className="relative aspect-square overflow-hidden bg-black flex items-center justify-center p-4">
+        {imageUrl ? (
           <img
             src={imageUrl}
             alt={product.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain mix-blend-luminosity hover:mix-blend-normal transition-all duration-500"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-          <div className="absolute top-3 left-3 flex items-center gap-2">
-            {product.featured && (
-              <div className="bg-yellow-400/20 text-yellow-300 text-[11px] font-semibold px-2 py-1 rounded-none uppercase tracking-[0.08em]">
-                Featured
-              </div>
-            )}
-            {product.category && (
-              <div className="bg-white/10 text-white text-[11px] px-2 py-1 rounded-none uppercase tracking-[0.08em]">
-                {product.category}
-              </div>
-            )}
-          </div>
-          <div className="absolute bottom-3 left-3 right-3 flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h3
-                className="text-lg sm:text-xl font-semibold text-white line-clamp-2"
-                title={product.title}
-              >
-                {product.title.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim()}
-              </h3>
-              <div className="mt-1 flex items-center gap-2 text-white">
-                {displayPrice === 0 ? (
-                  <span className="text-base sm:text-lg font-semibold text-green-300">Free</span>
-                ) : (
-                  <>
-                    <span className="text-base sm:text-lg font-semibold">${displayPrice.toFixed(2)}</span>
-                    {displayComparePrice && displayComparePrice > displayPrice && (
-                      <span className="text-xs text-white/60 line-through">
-                        ${displayComparePrice.toFixed(2)}
-                      </span>
-                    )}
-                  </>
-                )}
-              </div>
-              <p className="text-white/70 text-sm mt-1 line-clamp-2">
-                {product.description}
-              </p>
-            </div>
-          </div>
+        ) : (
+          <div className="w-full h-full bg-white/5" />
+        )}
+      </div>
+
+      {/* Text below the image */}
+      <div className="p-4 flex-1 flex flex-col gap-1">
+        <h3 className="text-sm font-black text-white uppercase tracking-tight leading-tight line-clamp-2">
+          {product.title.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim()}
+        </h3>
+        <div className="flex items-center gap-2 text-white mt-1">
+          {displayPrice === 0 ? (
+            <span className="text-sm font-black">Free</span>
+          ) : (
+            <>
+              <span className="text-sm font-black">${displayPrice.toFixed(2)}</span>
+              {displayComparePrice && displayComparePrice > displayPrice && (
+                <span className="text-xs text-white/40 line-through">
+                  ${displayComparePrice.toFixed(2)}
+                </span>
+              )}
+            </>
+          )}
         </div>
-      )}
+        {product.description && (
+          <p className="text-white/40 text-xs mt-1 line-clamp-2 font-light">
+            {product.description}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
