@@ -92,7 +92,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
     // Helper: read/write newsletter cookie (30-day expiry)
     const hasNewsletterCookie = () => document.cookie.split(';').some(c => c.trim().startsWith('nl_done='));
     const setNewsletterCookie = () => {
-        const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString();
+        const expires = new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000).toUTCString();
         document.cookie = `nl_done=1; expires=${expires}; path=/; SameSite=Lax`;
     };
 
