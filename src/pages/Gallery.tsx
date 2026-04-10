@@ -89,12 +89,18 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
         };
     }, [isHomepage]);
 
-    // Show newsletter bar to visitors after 8s (homepage only, not already dismissed, not logged in)
+    // Helper: read/write newsletter cookie (30-day expiry)
+    const hasNewsletterCookie = () => document.cookie.split(';').some(c => c.trim().startsWith('nl_done='));
+    const setNewsletterCookie = () => {
+        const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString();
+        document.cookie = `nl_done=1; expires=${expires}; path=/; SameSite=Lax`;
+    };
+
+    // Show newsletter bar to visitors after 1.5s (homepage only, not logged in, no cookie)
     useEffect(() => {
         if (!isHomepage || user || newsletterBarDismissed) return;
-        const dismissed = sessionStorage.getItem('newsletter_bar_dismissed');
-        if (dismissed) return;
-        const t = setTimeout(() => setNewsletterBarVisible(true), 8000);
+        if (hasNewsletterCookie()) return;
+        const t = setTimeout(() => setNewsletterBarVisible(true), 1500);
         return () => clearTimeout(t);
     }, [isHomepage, user, newsletterBarDismissed]);
 
@@ -110,10 +116,10 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                 body: JSON.stringify({ email: email.toLowerCase() }),
             });
             setNewsletterSuccess(true);
+            setNewsletterCookie();
             setTimeout(() => {
                 setNewsletterBarDismissed(true);
                 setNewsletterBarVisible(false);
-                sessionStorage.setItem('newsletter_bar_dismissed', '1');
             }, 2500);
         } catch {
             // silent fail
@@ -252,7 +258,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
 
             {/* Gallery / Shop toggle — homepage visitor mode only */}
             {isHomepage && (
-                <div className="px-4 md:px-8 pt-4">
+                <div className="sticky z-[98] bg-black px-4 md:px-8 pt-2 pb-0" style={{ top: 'var(--nav-height, 64px)' }}>
                     <div className="max-w-7xl mx-auto">
                         <div className="flex justify-center gap-12 pb-2 mb-0">
                             <button
@@ -423,7 +429,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
             )}
         </div> {/* end gallery grid wrapper */}
 
-            {/* Newsletter bottom bar — visible to visitors after 8s */}
+            {/* Newsletter bottom bar — visible to visitors after 1.5s */}
             <AnimatePresence>
                 {isHomepage && newsletterBarVisible && !newsletterBarDismissed && (
                     <motion.div
@@ -431,8 +437,20 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 40 }}
                         transition={{ duration: 0.4 }}
-                        className="fixed bottom-0 left-0 right-0 z-[9998] bg-black border-t border-white/10 px-4 py-4"
+                        className="fixed bottom-0 left-0 right-0 z-[9998] bg-black border-t border-white/10 px-4 py-5"
                     >
+                        {/* Dismiss — top right, no cookie (only subscribe sets cookie) */}
+                        <button
+                            onClick={() => {
+                                setNewsletterBarVisible(false);
+                                setNewsletterBarDismissed(true);
+                            }}
+                            className="absolute top-2 right-4 text-white/20 hover:text-white/60 transition-colors"
+                            aria-label="Dismiss"
+                        >
+                            <XMarkIcon className="w-4 h-4" />
+                        </button>
+
                         <div className="max-w-xl mx-auto flex flex-col sm:flex-row items-center gap-4">
                             {newsletterSuccess ? (
                                 <div className="flex items-center gap-2 text-white text-[11px] font-black uppercase tracking-[0.2em] w-full justify-center py-1">
@@ -454,7 +472,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                                             value={newsletterEmail}
                                             onChange={(e) => setNewsletterEmail(e.target.value)}
                                             required
-                                            className="flex-1 min-w-0 px-3 py-2 bg-white/5 border border-white/10 text-white text-[11px] placeholder-white/20 focus:outline-none focus:border-white/30 transition-colors"
+                                            className="flex-1 min-w-0 px-3 py-2 bg-white/5 text-white text-[11px] placeholder-white/20 focus:outline-none transition-colors"
                                         />
                                         <button
                                             type="submit"
@@ -464,17 +482,6 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                                             {newsletterLoading ? '...' : 'Subscribe'}
                                         </button>
                                     </form>
-                                    <button
-                                        onClick={() => {
-                                            setNewsletterBarVisible(false);
-                                            setNewsletterBarDismissed(true);
-                                            sessionStorage.setItem('newsletter_bar_dismissed', '1');
-                                        }}
-                                        className="text-white/20 hover:text-white/60 transition-colors shrink-0"
-                                        aria-label="Dismiss"
-                                    >
-                                        <XMarkIcon className="w-4 h-4" />
-                                    </button>
                                 </>
                             )}
                         </div>

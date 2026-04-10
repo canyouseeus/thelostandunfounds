@@ -237,7 +237,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
                 // Ensure row is always tall enough for the 84px logo + padding.
                 // Without this, an empty flex row (visitor, no hamburger) collapses
                 // to padding-only height and the absolutely-positioned logo overflows above it.
-                minHeight: '140px',
+                minHeight: '110px',
               }}
             >
               {/* Persistent back button — shown in nav whenever a gallery is open */}
@@ -254,14 +254,14 @@ export default function Layout({ children }: { children?: ReactNode }) {
               <Link
                 to="/"
                 className={`flex items-center hover:opacity-70 transition-opacity ${
-                  userIsAdmin ? 'flex-shrink-0' : 'absolute left-1/2 -translate-x-1/2 top-4'
+                  userIsAdmin ? 'flex-shrink-0' : 'absolute left-1/2 -translate-x-1/2 top-0'
                 }`}
                 style={{ display: 'flex', alignItems: 'center' }}
               >
                 <img
                   src="/logo.png"
                   alt="THE LOST+UNFOUNDS"
-                  style={{ height: '84px', width: 'auto', display: 'block' }}
+                  style={{ height: userIsAdmin ? '84px' : '112px', width: 'auto', display: 'block' }}
                 />
               </Link>
               {userIsAdmin && (
