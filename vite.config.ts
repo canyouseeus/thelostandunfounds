@@ -102,13 +102,13 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: true,
     rollupOptions: {
-      // Externalize @scot33/tools-registry - it's optional and loaded dynamically
-      external: ['@scot33/tools-registry'],
-      // Handle @tools imports gracefully - they're optional dependencies
-      // wrapped in try-catch blocks, so Rollup warnings are expected
+      external: ['@scot33/tools-registry', 'onnxruntime-web/webgpu'],
       onwarn(warning, warn) {
-        // Suppress warnings for @tools imports - they're handled at runtime
-        if (warning.message && (warning.message.includes('@tools') || warning.message.includes('@scot33/tools-registry'))) {
+        if (warning.message && (
+          warning.message.includes('@tools') ||
+          warning.message.includes('@scot33/tools-registry') ||
+          warning.message.includes('onnxruntime-web')
+        )) {
           return;
         }
         warn(warning);
