@@ -220,7 +220,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
           <div className="w-full px-4 sm:px-6 lg:px-8">
             {/* Top row */}
             <div
-              className="relative flex items-center h-16 gap-4 flex-nowrap"
+              className="relative flex items-center py-4 gap-4 flex-nowrap"
               style={{
                 opacity: homeHeaderReady ? 1 : 0,
                 pointerEvents: homeHeaderReady ? 'auto' : 'none',
