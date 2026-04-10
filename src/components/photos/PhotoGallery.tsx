@@ -283,6 +283,11 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     const [pendingCheckout, setPendingCheckout] = useState(false);
     const [lightningPayment, setLightningPayment] = useState<any | null>(null);
 
+    // Guest checkout email modal
+    const [guestEmailModalOpen, setGuestEmailModalOpen] = useState(false);
+    const [guestEmail, setGuestEmail] = useState('');
+    const [guestNewsletterOptIn, setGuestNewsletterOptIn] = useState(true);
+
 
     const [startDate, setStartDate] = useState<string>('');
     const [endDate, setEndDate] = useState<string>('');
@@ -309,16 +314,6 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         return () => controller.abort();
     }, [librarySlug]);
 
-    // Resume checkout after login
-    useEffect(() => {
-        if (user && pendingCheckout) {
-            setPendingCheckout(false);
-            // Small delay to ensure state is settled
-            setTimeout(() => {
-                handleCheckout();
-            }, 500);
-        }
-    }, [user, pendingCheckout]);
 
     // Persist selections to localStorage
     useEffect(() => {
@@ -451,25 +446,21 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     };
 
     const handleCheckout = async () => {
+        // If not logged in, show guest email modal instead of forcing auth
+        if (!user) {
+            // Pre-fill with previously used guest email if available
+            const saved = localStorage.getItem('guest_email');
+            if (saved) setGuestEmail(saved);
+            setGuestEmailModalOpen(true);
+            return;
+        }
+        await proceedToCheckout(user.email!);
+    };
+
+    const proceedToCheckout = async (email: string) => {
         try {
-            // REQUIRE LOGIN
-            if (!user) {
-                setPendingCheckout(true);
-                setAuthTitle("SECURE YOUR ASSETS");
-                setAuthMessage("Creating an account ensures you never lose access to your photos. You'll be able to redownload them anytime from your asset library.");
-                setAuthModalOpen(true);
-                return;
-            }
-
             setCheckoutLoading(true);
-
-            // If user is logged in, use their email directly
-            const email = user.email!;
-
-            // Save email for guest retrieval after redirect
-            if (!user?.email) {
-                localStorage.setItem('guest_email', email);
-            }
+            localStorage.setItem('guest_email', email);
 
             const response = await fetch('/api/photos/checkout', {
                 method: 'POST',
@@ -484,16 +475,12 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
 
             const data = await response.json();
             if (response.ok && data.invoiceId && data.lnInvoice) {
-                // Clear saved selections 
                 localStorage.removeItem(storageKey);
-
-                // Set the pending checkout to false, and show the modal
-                setPendingCheckout(false);
                 setLightningPayment({
                     invoiceId: data.invoiceId,
                     lnInvoice: data.lnInvoice,
                     expirationInSec: data.expirationInSec,
-                    amount: data.amount || 0, // Should calculate from SelectionTray pricing logic, or pass it from API
+                    amount: data.amount || 0,
                     description: `Photo Download Access (${selectedPhotos.length} photos)`
                 });
             } else {
@@ -507,6 +494,25 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         } finally {
             setCheckoutLoading(false);
         }
+    };
+
+    const handleGuestEmailSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const email = guestEmail.trim();
+        if (!email || !email.includes('@')) return;
+
+        setGuestEmailModalOpen(false);
+
+        // Subscribe to newsletter if opted in
+        if (guestNewsletterOptIn) {
+            fetch('/api/newsletter/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email.toLowerCase() }),
+            }).catch(() => {}); // fire-and-forget
+        }
+
+        await proceedToCheckout(email);
     };
 
     if (loading) {
@@ -876,17 +882,113 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             />
 
             {/* Auth Modal */}
+            {/* Guest email + newsletter opt-in modal — shows at checkout for non-logged-in users */}
+            <AnimatePresence>
+                {guestEmailModalOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[9999] flex items-center justify-center px-4 bg-black/80 backdrop-blur-sm"
+                        onClick={() => setGuestEmailModalOpen(false)}
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, y: 16 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 16 }}
+                            transition={{ duration: 0.2 }}
+                            className="relative bg-black border border-white/20 w-full max-w-sm p-8"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <button
+                                onClick={() => setGuestEmailModalOpen(false)}
+                                className="absolute top-4 right-4 text-white/40 hover:text-white transition-colors"
+                                aria-label="Close"
+                            >
+                                <XMarkIcon className="w-5 h-5" />
+                            </button>
+
+                            <h2 className="text-[13px] font-black uppercase tracking-[0.25em] text-white mb-2">
+                                Where to send your photos
+                            </h2>
+                            <p className="text-white/40 text-[11px] leading-relaxed mb-6">
+                                We'll email your download links here after payment.
+                            </p>
+
+                            <form onSubmit={handleGuestEmailSubmit} className="space-y-4">
+                                <div>
+                                    <label htmlFor="guest-email" className="block text-[10px] font-black uppercase tracking-widest text-white/50 mb-2">
+                                        Email
+                                    </label>
+                                    <input
+                                        id="guest-email"
+                                        type="email"
+                                        name="email"
+                                        autoComplete="email"
+                                        inputMode="email"
+                                        placeholder="your@email.com"
+                                        value={guestEmail}
+                                        onChange={(e) => setGuestEmail(e.target.value)}
+                                        required
+                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/20 text-sm focus:outline-none focus:border-white/40 transition-colors"
+                                    />
+                                </div>
+
+                                <label className="flex items-start gap-3 cursor-pointer group">
+                                    <div className="relative flex-shrink-0 mt-0.5">
+                                        <input
+                                            type="checkbox"
+                                            checked={guestNewsletterOptIn}
+                                            onChange={(e) => setGuestNewsletterOptIn(e.target.checked)}
+                                            className="sr-only"
+                                        />
+                                        <div className={`w-4 h-4 border transition-colors ${guestNewsletterOptIn ? 'bg-white border-white' : 'bg-transparent border-white/30 group-hover:border-white/60'}`}>
+                                            {guestNewsletterOptIn && <CheckIcon className="w-3 h-3 text-black mx-auto mt-0.5" />}
+                                        </div>
+                                    </div>
+                                    <span className="text-[10px] text-white/40 group-hover:text-white/60 transition-colors leading-relaxed">
+                                        Subscribe to updates and exclusive drops
+                                    </span>
+                                </label>
+
+                                <button
+                                    type="submit"
+                                    className="w-full py-3 bg-white text-black text-[11px] font-black uppercase tracking-[0.2em] hover:bg-white/90 transition-colors"
+                                >
+                                    Continue to Checkout
+                                </button>
+
+                                <p className="text-center text-[10px] text-white/25">
+                                    Already have an account?{' '}
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setGuestEmailModalOpen(false);
+                                            setAuthTitle(undefined);
+                                            setAuthMessage(undefined);
+                                            setAuthModalOpen(true);
+                                        }}
+                                        className="text-white/50 hover:text-white underline transition-colors"
+                                    >
+                                        Sign in
+                                    </button>{' '}
+                                    to save to your asset library.
+                                </p>
+                            </form>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             <AuthModal
                 isOpen={authModalOpen}
                 onClose={() => {
                     setAuthModalOpen(false);
-                    setPendingCheckout(false); // Cancel pending checkout if closed manually
                 }}
                 message={authMessage}
                 title={authTitle}
                 onLoginSuccess={() => {
                     setAuthModalOpen(false);
-                    // Do not reload; useEffect will trigger handleCheckout()
                 }}
             />
 
