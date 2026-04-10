@@ -230,12 +230,16 @@ export default function Layout({ children }: { children?: ReactNode }) {
               {/* Logo — centered for visitors, left-aligned for admins */}
               <Link
                 to="/"
-                className={`flex items-center text-white hover:text-white/80 transition h-12 ${
+                className={`flex items-center hover:opacity-70 transition-opacity h-12 ${
                   userIsAdmin ? 'flex-shrink-0' : 'absolute left-1/2 -translate-x-1/2'
                 }`}
                 style={{ display: 'flex', alignItems: 'center' }}
               >
-                <span className="text-sm sm:text-lg md:text-xl font-bold whitespace-nowrap">THE LOST+UNFOUNDS</span>
+                <img
+                  src="/logo.png"
+                  alt="THE LOST+UNFOUNDS"
+                  style={{ height: '28px', width: 'auto', display: 'block' }}
+                />
               </Link>
               {userIsAdmin && (
                 <div className="flex items-center space-x-4 ml-auto flex-shrink-0 leading-none h-12">
