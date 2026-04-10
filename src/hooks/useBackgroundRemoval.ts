@@ -96,6 +96,12 @@ export function useBackgroundRemoval(
             // 3. Process fresh in browser, upload so every future visitor gets it instantly
             setProcessing(true);
             try {
+                // Configure onnxruntime-web to load its worker/WASM from our own static
+                // files rather than relying on Vite bundling (which breaks module workers).
+                const ort = await import('onnxruntime-web');
+                const base = `${window.location.origin}/onnxruntime-web/`;
+                ort.env.wasm.wasmPaths = base;
+
                 const { removeBackground } = await import('@imgly/background-removal');
 
                 // Proxy through our server so WASM isn't blocked by Fourthwall CORS
