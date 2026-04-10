@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Image — Before & After Background Removal</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #000;
+    color: #fff;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 40px 20px;
+    gap: 48px;
+  }
+  h1 {
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+  }
+  .comparison {
+    display: flex;
+    gap: 48px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    width: 280px;
+  }
+  .label {
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+  }
+  .image-box {
+    width: 280px;
+    height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    position: relative;
+  }
+  .image-box.before {
+    background: #c8c8c8; /* typical Fourthwall grey mockup background */
+  }
+  .image-box.after {
+    background: #000;
+  }
+
+  /* The hat SVG — represents a product on grey mockup */
+  .hat-svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* AFTER: same hat SVG, transparent bg, white outline glow */
+  .after img, .after svg {
+    filter:
+      drop-shadow(0 0 1px white)
+      drop-shadow(0 0 2px white)
+      drop-shadow(0 0 4px rgba(255,255,255,0.6));
+  }
+</style>
+</head>
+<body>
+
+<h1>Product Image — Before &amp; After Background Removal</h1>
+
+<div class="comparison">
+
+  <!-- BEFORE: product on grey mockup background -->
+  <div class="panel">
+    <div class="label">Before</div>
+    <div class="image-box before">
+      <svg class="hat-svg" viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
+        <!-- Hat crown -->
+        <path d="M40 100 Q40 40 100 35 Q160 40 160 100 Z" fill="#1a1a1a"/>
+        <!-- Hat brim -->
+        <ellipse cx="100" cy="100" rx="75" ry="14" fill="#111"/>
+        <!-- Brim shadow/depth -->
+        <ellipse cx="100" cy="102" rx="75" ry="10" fill="#0a0a0a"/>
+        <!-- Hat band detail -->
+        <path d="M44 88 Q100 82 156 88" stroke="#2a2a2a" stroke-width="4" fill="none"/>
+        <!-- Small logo patch area -->
+        <rect x="86" y="60" width="28" height="18" rx="2" fill="#222" opacity="0.6"/>
+        <!-- Brim front edge highlight -->
+        <path d="M30 100 Q100 108 170 100" stroke="#333" stroke-width="1.5" fill="none"/>
+        <!-- Grey background fill (simulating mockup grey) -->
+        <rect x="0" y="0" width="200" height="160" fill="#c8c8c8" z="-1"/>
+        <!-- Redraw hat on top -->
+        <path d="M40 100 Q40 40 100 35 Q160 40 160 100 Z" fill="#1a1a1a"/>
+        <ellipse cx="100" cy="100" rx="75" ry="14" fill="#111"/>
+        <ellipse cx="100" cy="102" rx="75" ry="10" fill="#0a0a0a"/>
+        <path d="M44 88 Q100 82 156 88" stroke="#2a2a2a" stroke-width="4" fill="none"/>
+        <rect x="86" y="60" width="28" height="18" rx="2" fill="#222" opacity="0.6"/>
+        <path d="M30 100 Q100 108 170 100" stroke="#333" stroke-width="1.5" fill="none"/>
+      </svg>
+    </div>
+    <p style="font-size:10px;color:rgba(255,255,255,0.25);text-align:center;line-height:1.6">
+      Original Fourthwall mockup.<br>Grey background included.
+    </p>
+  </div>
+
+  <!-- AFTER: product on black, transparent background, white outline -->
+  <div class="panel">
+    <div class="label">After — Background Removed</div>
+    <div class="image-box after">
+      <svg class="hat-svg" viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg"
+        style="filter: drop-shadow(0 0 1px white) drop-shadow(0 0 2px white) drop-shadow(0 0 4px rgba(255,255,255,0.6))">
+        <!-- Transparent background — only the hat silhouette -->
+        <path d="M40 100 Q40 40 100 35 Q160 40 160 100 Z" fill="#1a1a1a"/>
+        <ellipse cx="100" cy="100" rx="75" ry="14" fill="#111"/>
+        <ellipse cx="100" cy="102" rx="75" ry="10" fill="#0a0a0a"/>
+        <path d="M44 88 Q100 82 156 88" stroke="#2a2a2a" stroke-width="4" fill="none"/>
+        <rect x="86" y="60" width="28" height="18" rx="2" fill="#222" opacity="0.6"/>
+        <path d="M30 100 Q100 108 170 100" stroke="#333" stroke-width="1.5" fill="none"/>
+      </svg>
+    </div>
+    <p style="font-size:10px;color:rgba(255,255,255,0.25);text-align:center;line-height:1.6">
+      Grey removed by AI.<br>White outline traces the hat's exact shape.
+    </p>
+  </div>
+
+</div>
+
+<p style="font-size:9px;color:rgba(255,255,255,0.15);letter-spacing:0.2em;text-transform:uppercase;text-align:center;max-width:420px;line-height:2">
+  The white outline uses CSS <code style="color:rgba(255,255,255,0.3)">drop-shadow</code> — it traces the alpha channel (transparent areas vs product pixels),<br>
+  so it follows curves, fabric folds, and brim edges exactly.
+</p>
+
+</body>
+</html>
