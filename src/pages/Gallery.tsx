@@ -447,7 +447,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
 
             {/* Newsletter modal — slides up from bottom to center, like the old homepage */}
             <AnimatePresence>
-                {isHomepage && newsletterBarVisible && !newsletterBarDismissed && (
+                {isHomepage && !activeGallery && newsletterBarVisible && !newsletterBarDismissed && (
                     <motion.div
                         initial={{ y: '110%', opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
