@@ -72,7 +72,7 @@ export default function MarketplaceBanner({ surface, noMargin }: MarketplaceBann
                         <div className="text-left">
                             <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30 leading-none mb-2" style={{ textAlign: 'left' }}>Marketplace</p>
                             <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-tighter leading-none group-hover:tracking-tight transition-all duration-500" style={{ textAlign: 'left' }}>
-                                Advertise Your Content <span className="text-white/40 font-light">With Us</span>
+                                Advertise <span className="text-white/40 font-light">With Us</span>
                             </h3>
                         </div>
                         <div className="flex items-center gap-4">

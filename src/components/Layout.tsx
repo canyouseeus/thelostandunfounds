@@ -242,7 +242,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
               {/* Logo — centered for visitors, left-aligned for admins */}
               <Link
                 to="/"
-                className={`flex items-center hover:opacity-70 transition-opacity h-12 ${
+                className={`flex items-center hover:opacity-70 transition-opacity ${
                   userIsAdmin ? 'flex-shrink-0' : 'absolute left-1/2 -translate-x-1/2'
                 }`}
                 style={{ display: 'flex', alignItems: 'center' }}

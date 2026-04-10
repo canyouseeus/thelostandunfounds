@@ -39,9 +39,6 @@ export default function Advertise() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
                     >
-                        <span className="inline-block px-4 py-1 bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-[0.4em] mb-8">
-                            Marketplace
-                        </span>
                         <h1 className="text-[clamp(3.5rem,10vw,8rem)] font-black tracking-tighter leading-[0.85] uppercase mb-8">
                             Advertise <br /> <span className="text-white/40">With Us</span>
                         </h1>
