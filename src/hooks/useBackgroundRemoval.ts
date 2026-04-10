@@ -117,8 +117,9 @@ export function useBackgroundRemoval(
 
                 const { removeBackground } = await import('@imgly/background-removal');
 
-                // Proxy through our server so WASM isn't blocked by Fourthwall CORS
-                const proxiedUrl = `/api/image-proxy?url=${encodeURIComponent(imageUrl)}`;
+                // Proxy through our server so WASM isn't blocked by Fourthwall CORS.
+                // Must be absolute — @imgly resolves relative URLs against publicPath (CDN).
+                const proxiedUrl = `${window.location.origin}/api/image-proxy?url=${encodeURIComponent(imageUrl)}`;
                 const blob = await removeBackground(proxiedUrl, {
                     output: { format: 'image/png', quality: 0.9 },
                 });
