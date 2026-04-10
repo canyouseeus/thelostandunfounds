@@ -98,6 +98,9 @@ export default defineConfig({
       },
     },
   },
+  optimizeDeps: {
+    exclude: ['onnxruntime-web', '@imgly/background-removal'],
+  },
   build: {
     outDir: 'dist',
     sourcemap: true,
