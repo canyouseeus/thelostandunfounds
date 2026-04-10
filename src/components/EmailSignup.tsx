@@ -13,11 +13,12 @@ export default function EmailSignup({ onSuccess }: { onSuccess?: () => void } = 
   const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
   const isDev =
     import.meta.env.DEV ||
-      typeof window !== 'undefined'
-      ? window.location.hostname === 'localhost' ||
+    (typeof window !== 'undefined' && (
+      window.location.hostname === 'localhost' ||
       window.location.hostname === '127.0.0.1' ||
-      window.location.hostname.endsWith('.local')
-      : false;
+      window.location.hostname.endsWith('.local') ||
+      window.location.hostname.endsWith('.vercel.app')
+    ));
   const requiresTurnstile = turnstileSiteKey && !isDev;
 
   const handleSubmit = async (e: React.FormEvent) => {
