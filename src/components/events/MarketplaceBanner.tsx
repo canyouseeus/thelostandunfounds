@@ -66,7 +66,7 @@ export default function MarketplaceBanner({ surface, noMargin }: MarketplaceBann
             <div className={`w-full bg-black relative overflow-hidden group${noMargin ? '' : ' mb-12'}`}>
                 <Link
                     to="/advertise"
-                    className="relative block w-full py-8 px-4 md:px-8 transition-all hover:bg-white/[0.02]"
+                    className="relative block w-full py-6 px-4 md:px-8 transition-all hover:bg-white/[0.02]"
                 >
                     <div className="max-w-7xl mx-auto flex items-center justify-between relative z-10">
                         <div className="text-left">
@@ -102,7 +102,7 @@ export default function MarketplaceBanner({ surface, noMargin }: MarketplaceBann
                 >
                     <Link
                         to={banner.link_url}
-                        className="group relative block w-full aspect-[21/9] md:aspect-[32/7] bg-black overflow-hidden"
+                        className="group relative block w-full aspect-[28/9] md:aspect-[43/7] bg-black overflow-hidden"
                     >
                         {/* Background Image */}
                         <div className="absolute inset-0">
