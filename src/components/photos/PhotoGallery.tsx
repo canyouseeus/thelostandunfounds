@@ -268,7 +268,6 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     const [library, setLibrary] = useState<PhotoLibrary | null>(null);
     const [pricingOptions, setPricingOptions] = useState<PricingOption[]>([]);
     const [photos, setPhotos] = useState<Photo[]>([]);
-    const [isSticky, setIsSticky] = useState(false);
     const toolbarRef = useRef<HTMLDivElement>(null);
     const [purchasedPhotos, setPurchasedPhotos] = useState<Photo[]>([]);
     const [selectedPhotos, setSelectedPhotos] = useState<Photo[]>([]);
@@ -284,18 +283,6 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     const [pendingCheckout, setPendingCheckout] = useState(false);
     const [lightningPayment, setLightningPayment] = useState<any | null>(null);
 
-    // Dynamic sticky detection
-    useEffect(() => {
-        const handleScroll = () => {
-            if (!toolbarRef.current) return;
-            const rect = toolbarRef.current.getBoundingClientRect();
-            // Header is 64px, so sticky threshold is 64
-            setIsSticky(rect.top <= 65);
-        };
-        window.addEventListener('scroll', handleScroll, { passive: true });
-        handleScroll();
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
 
     const [startDate, setStartDate] = useState<string>('');
     const [endDate, setEndDate] = useState<string>('');
@@ -636,7 +623,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             <div
                 ref={toolbarRef}
                 className="sticky z-[100] bg-black w-full py-4 mb-8"
-                style={{ top: '64px' }}
+                style={{ top: 'var(--nav-height, 64px)' }}
             >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center gap-4">
                     {/* Row 1: Tabs */}

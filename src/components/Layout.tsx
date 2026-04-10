@@ -133,13 +133,20 @@ export default function Layout({ children }: { children?: ReactNode }) {
     }
   }, [location.pathname, loading, userIsAdmin])
 
-  // Track fixed header height so main content padding stays correct
+  // Track fixed header height so main content padding and sticky elements stay correct
   useEffect(() => {
     const el = fixedHeaderRef.current
     if (!el) return
-    const ro = new ResizeObserver(() => setHeaderHeight(el.offsetHeight))
+    const update = () => {
+      const h = el.offsetHeight
+      setHeaderHeight(h)
+      // CSS custom property so any child (e.g. PhotoGallery sticky toolbar)
+      // can stick just below the fixed header without hardcoding a pixel value.
+      document.documentElement.style.setProperty('--nav-height', `${h}px`)
+    }
+    const ro = new ResizeObserver(update)
     ro.observe(el)
-    setHeaderHeight(el.offsetHeight)
+    update()
     return () => ro.disconnect()
   }, [showAdBanner])
 
