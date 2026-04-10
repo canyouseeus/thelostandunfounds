@@ -6,17 +6,22 @@ import {
     CheckIcon,
     ExclamationCircleIcon,
     ExclamationTriangleIcon,
-    ArrowLeftIcon
+    ArrowLeftIcon,
+    XMarkIcon
 } from '@heroicons/react/24/outline';
 import { LoadingSpinner } from '../components/Loading';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { supabase } from '../lib/supabase';
 import SEOHead from '../components/SEOHead';
+import { useAuth } from '../contexts/AuthContext';
+import AuthModal from '../components/auth/AuthModal';
 
 const DownloadPortal: React.FC = () => {
     const { orderId } = useParams<{ orderId: string }>();
     const navigate = useNavigate();
+
+    const { user } = useAuth();
 
     // State
     const [email, setEmail] = useState('');
@@ -27,6 +32,9 @@ const DownloadPortal: React.FC = () => {
     const [progress, setProgress] = useState(0);
     const [status, setStatus] = useState('');
     const [error, setError] = useState('');
+    const [downloadComplete, setDownloadComplete] = useState(false);
+    const [vaultPromptDismissed, setVaultPromptDismissed] = useState(false);
+    const [authModalOpen, setAuthModalOpen] = useState(false);
 
     // Verify order and fetch photos
     const handleVerify = async (e: React.FormEvent) => {
@@ -132,6 +140,7 @@ const DownloadPortal: React.FC = () => {
                 setDownloading(false);
                 setProgress(0);
                 setStatus('');
+                setDownloadComplete(true);
             }, 3000);
 
         } catch (err: any) {
@@ -249,14 +258,44 @@ const DownloadPortal: React.FC = () => {
                         )}
 
                         <button
-                            onClick={() => navigate('/gallery')}
+                            onClick={() => navigate('/')}
                             className="w-full text-[10px] text-white/30 uppercase tracking-widest hover:text-white transition-colors flex items-center justify-center gap-2"
                         >
                             <ArrowLeftIcon className="w-3 h-3" />
                             Return to Gallery
                         </button>
+
+                        {/* Optional vault prompt — shown after download, only for guests */}
+                        {downloadComplete && !user && !vaultPromptDismissed && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="border border-white/10 p-4 relative bg-white/[0.02]"
+                            >
+                                <button
+                                    onClick={() => setVaultPromptDismissed(true)}
+                                    className="absolute top-3 right-3 text-white/30 hover:text-white/60 transition"
+                                    aria-label="Dismiss"
+                                >
+                                    <XMarkIcon className="w-4 h-4" />
+                                </button>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">Optional</p>
+                                <p className="text-sm font-bold text-white mb-1">Save photos to your vault</p>
+                                <p className="text-white/40 text-xs mb-4 leading-relaxed">
+                                    Create a free account to access your purchases anytime.
+                                </p>
+                                <button
+                                    onClick={() => setAuthModalOpen(true)}
+                                    className="w-full py-3 bg-white text-black text-xs font-black uppercase tracking-[0.2em] hover:bg-zinc-200 transition-all"
+                                >
+                                    Create Free Account
+                                </button>
+                            </motion.div>
+                        )}
                     </div>
                 )}
+
+                <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
             </motion.div>
         </div>
         </>

@@ -12,6 +12,7 @@ import GalleryItem from './GalleryItem';
 import PhotographerApplicationModal from '../components/gallery/PhotographerApplicationModal';
 import { cn } from '../components/ui/utils';
 import MarketplaceBanner from '../components/events/MarketplaceBanner';
+import Shop from './Shop';
 
 interface PhotoLibrary {
     id: string;
@@ -29,8 +30,11 @@ interface PhotoLibrary {
 /**
  * Photos Page - Handles the gallery listing index and individual specialized galleries.
  * Part of the "Noir" architectural refactor.
+ *
+ * When `isHomepage` is true, this component is mounted at `/` as the visitor homepage.
+ * A Gallery / Shop toggle appears at the top so visitors can switch views without navigating away.
  */
-export default function Gallery() {
+export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }) {
     const { slug } = useParams<{ slug: string }>();
     const navigate = useNavigate();
     const { user, loading: authLoading } = useAuth();
@@ -103,6 +107,7 @@ export default function Gallery() {
     };
 
     const [activeGalleryTab, setActiveGalleryTab] = useState<'public' | 'private'>('public');
+    const [viewMode, setViewMode] = useState<'gallery' | 'shop'>('gallery');
 
     // If a slug is present, render the specific gallery component
     if (slug) {
@@ -117,11 +122,61 @@ export default function Gallery() {
         <div className="min-h-screen bg-black pt-0 pb-48 max-w-[100vw] overflow-x-hidden">
 
             <Helmet>
-                <title>THE GALLERY | THE LOST+UNFOUNDS</title>
+                {isHomepage ? (
+                    <title>THE LOST+UNFOUNDS | Browse &amp; Buy Photos</title>
+                ) : (
+                    <title>THE GALLERY | THE LOST+UNFOUNDS</title>
+                )}
                 <meta name="description" content="Explore exclusive high-resolution photography collections. Unique findings from the field, beautifully captured in high definition for your inspiration." />
-                <link rel="canonical" href="https://www.thelostandunfounds.com/gallery" />
+                <link rel="canonical" href={isHomepage ? 'https://www.thelostandunfounds.com/' : 'https://www.thelostandunfounds.com/gallery'} />
             </Helmet>
 
+            {/* Gallery / Shop toggle — homepage visitor mode only */}
+            {isHomepage && (
+                <div className="px-4 md:px-8 pt-4">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="flex gap-12 border-b border-white/5 pb-2 mb-0">
+                            <button
+                                onClick={() => setViewMode('gallery')}
+                                className={cn(
+                                    "text-[10px] font-black uppercase tracking-[0.3em] transition-all relative pb-2",
+                                    viewMode === 'gallery' ? "text-white" : "text-white/30 hover:text-white/60"
+                                )}
+                            >
+                                Gallery
+                                {viewMode === 'gallery' && (
+                                    <motion.div
+                                        layoutId="viewModeUnderline"
+                                        className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-white"
+                                    />
+                                )}
+                            </button>
+                            <button
+                                onClick={() => setViewMode('shop')}
+                                className={cn(
+                                    "text-[10px] font-black uppercase tracking-[0.3em] transition-all relative pb-2",
+                                    viewMode === 'shop' ? "text-white" : "text-white/30 hover:text-white/60"
+                                )}
+                            >
+                                Shop
+                                {viewMode === 'shop' && (
+                                    <motion.div
+                                        layoutId="viewModeUnderline"
+                                        className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-white"
+                                    />
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Shop view — rendered inline when visitor switches to shop tab */}
+            {isHomepage && viewMode === 'shop' && <Shop />}
+
+            {/* Gallery view */}
+            {(!isHomepage || viewMode === 'gallery') && (
+            <>
             <MarketplaceBanner surface="gallery" />
             
             <div className="px-4 md:px-8">
@@ -243,6 +298,8 @@ export default function Gallery() {
                 )}
             </div>
           </div>
+            </>
+            )}
         </div>
     );
 }
