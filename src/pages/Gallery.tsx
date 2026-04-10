@@ -443,9 +443,9 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                         exit={{ top: '110%', opacity: 0 }}
                         transition={{ duration: 1.5, ease: 'easeInOut' }}
                         style={{ transform: 'translate(-50%, -50%)' }}
-                        className="fixed left-1/2 z-[9997] w-full max-w-[min(500px,90vw)]"
+                        className="fixed left-1/2 z-[9997] w-full max-w-md px-4 sm:px-0"
                     >
-                        <div className="relative">
+                        <div className="relative w-full">
                             {/* Close button */}
                             <button
                                 onClick={() => {
@@ -453,7 +453,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                                     setNewsletterBarVisible(false);
                                     setNewsletterBarDismissed(true);
                                 }}
-                                className="absolute top-4 right-4 z-10 text-white/30 hover:text-white transition-colors"
+                                className="absolute top-4 right-4 z-10 text-white/50 hover:text-white transition-colors"
                                 aria-label="Close"
                             >
                                 <XMarkIcon className="w-5 h-5" />

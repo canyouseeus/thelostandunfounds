@@ -90,7 +90,7 @@ export default function EmailSignup({ onSuccess }: { onSuccess?: () => void } = 
 
   if (success) {
     return (
-      <div className="w-full max-w-md bg-black/90 backdrop-blur-md p-6">
+      <div className="w-full bg-black/90 backdrop-blur-md p-6">
         <div className="text-center">
           <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckIcon className="w-6 h-6 text-black stroke-[3]" />
@@ -113,7 +113,7 @@ export default function EmailSignup({ onSuccess }: { onSuccess?: () => void } = 
   }
 
   return (
-    <div className="w-full max-w-md bg-black/90 backdrop-blur-md p-6">
+    <div className="w-full bg-black/90 backdrop-blur-md p-6">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-white/80 mb-2">Email</label>
