@@ -20,6 +20,7 @@ import Footer from './Footer'
 import NavLinks from './NavLinks'
 import { LoadingOverlay } from './Loading'
 import MarketplaceBanner from './events/MarketplaceBanner'
+import { useGallery } from '../contexts/GalleryContext'
 
 export default function Layout({ children }: { children?: ReactNode }) {
   const location = useLocation()
@@ -43,6 +44,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
   const userIsAdmin = !loading && !!user && isAdminEmail(user.email || '')
   // Show advertising banner above nav for visitors on the homepage
   const showAdBanner = location.pathname === '/' && !userIsAdmin && !loading
+  const { activeGallery, closeGallery } = useGallery()
   const { state: sageModeState, toggleSageMode } = useSageMode()
   const navigate = useNavigate()
 
@@ -227,6 +229,16 @@ export default function Layout({ children }: { children?: ReactNode }) {
                 transition: 'opacity 0.6s ease-in-out',
               }}
             >
+              {/* Persistent back button — shown in nav whenever a gallery is open */}
+              {activeGallery && location.pathname === '/' && (
+                <button
+                  onClick={closeGallery}
+                  className="absolute left-0 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-white/50 hover:text-white transition-colors"
+                >
+                  ← Gallery
+                </button>
+              )}
+
               {/* Logo — centered for visitors, left-aligned for admins */}
               <Link
                 to="/"

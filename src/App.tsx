@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { Analytics } from '@vercel/analytics/react'
 import { AuthProvider } from './contexts/AuthContext'
 import { SageModeProvider } from './contexts/SageModeContext'
+import { GalleryProvider } from './contexts/GalleryContext'
 import ErrorBoundary from './components/ErrorBoundary'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -70,6 +71,7 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <GalleryProvider>
         <SageModeProvider>
           <ErrorBoundary>
             <Routes>
@@ -267,6 +269,7 @@ function App() {
             <Analytics />
           </ErrorBoundary>
         </SageModeProvider>
+        </GalleryProvider>
       </AuthProvider>
     </BrowserRouter>
   )

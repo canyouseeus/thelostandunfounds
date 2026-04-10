@@ -3,11 +3,11 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useGallery } from '../contexts/GalleryContext';
 import PhotoGallery from '../components/photos/PhotoGallery';
 import AuthModal from '../components/auth/AuthModal';
 import { LockClosedIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
-import { LoadingOverlay } from '../components/Loading';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import GalleryItem from './GalleryItem';
 import PhotographerApplicationModal from '../components/gallery/PhotographerApplicationModal';
 import { cn } from '../components/ui/utils';
@@ -38,6 +38,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
     const { slug } = useParams<{ slug: string }>();
     const navigate = useNavigate();
     const { user, loading: authLoading } = useAuth();
+    const { activeGallery, openGallery, closeGallery } = useGallery();
     const [userIsAdmin, setUserIsAdmin] = useState(false);
 
     const [libraries, setLibraries] = useState<PhotoLibrary[]>([]);
@@ -95,8 +96,6 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
         }
     }
 
-    const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
-
     const handleGalleryClick = (library: PhotoLibrary) => {
         if (library.is_private && !user && !userIsAdmin && !authLoading) {
             setAuthMessage(
@@ -106,8 +105,8 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
             return;
         }
         if (isHomepage) {
-            // Open inline — no navigation, stay on the same page
-            setSelectedSlug(library.slug);
+            openGallery(library.slug);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
             navigate(`/gallery/${library.slug}`);
         }
@@ -116,21 +115,9 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
     const [activeGalleryTab, setActiveGalleryTab] = useState<'public' | 'private'>('public');
     const [viewMode, setViewMode] = useState<'gallery' | 'shop'>('gallery');
 
-    // Route-based gallery (non-homepage /gallery/:slug) or inline selected gallery
-    if (slug || selectedSlug) {
-        return (
-            <div>
-                {selectedSlug && (
-                    <button
-                        onClick={() => setSelectedSlug(null)}
-                        className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors px-4 md:px-8 py-4"
-                    >
-                        ← Back to Gallery
-                    </button>
-                )}
-                <PhotoGallery librarySlug={slug || selectedSlug!} />
-            </div>
-        );
+    // Route-based direct URL (non-homepage /gallery/:slug)
+    if (slug) {
+        return <PhotoGallery librarySlug={slug} />;
     }
 
     const publicLibraries = libraries.filter(lib => !lib.is_private);
@@ -139,6 +126,24 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
 
     return (
         <div className="min-h-screen bg-black pt-0 pb-48 max-w-[100vw] overflow-x-hidden">
+
+            {/* Inline gallery — collapses back to grid via the nav back button */}
+            <AnimatePresence mode="wait">
+                {isHomepage && activeGallery && (
+                    <motion.div
+                        key={activeGallery}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <PhotoGallery librarySlug={activeGallery} />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Gallery grid — hidden (not unmounted) while a gallery is open */}
+            <div style={{ display: isHomepage && activeGallery ? 'none' : 'block' }}>
 
             <Helmet>
                 {isHomepage ? (
@@ -321,6 +326,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
           </div>
             </>
             )}
+        </div> {/* end gallery grid wrapper */}
         </div>
     );
 }
