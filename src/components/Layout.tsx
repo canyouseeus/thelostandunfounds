@@ -19,6 +19,7 @@ import { supabase } from '../lib/supabase'
 import Footer from './Footer'
 import NavLinks from './NavLinks'
 import { LoadingOverlay } from './Loading'
+import MarketplaceBanner from './events/MarketplaceBanner'
 
 export default function Layout({ children }: { children?: ReactNode }) {
   const location = useLocation()
@@ -27,6 +28,8 @@ export default function Layout({ children }: { children?: ReactNode }) {
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
   const [userSubdomain, setUserSubdomain] = useState<string | null>(null)
+  const [headerHeight, setHeaderHeight] = useState(80)
+  const fixedHeaderRef = useRef<HTMLDivElement>(null)
 
   // State from NavLinks component needs to be lifted if we want to sync between desktop/mobile,
   // but for simple navigation, independent state in NavLinks is fine (submenus reset on close).
@@ -38,6 +41,8 @@ export default function Layout({ children }: { children?: ReactNode }) {
   const { user, tier, signOut, loading, clearAuthStorage } = useAuth()
   // Derived synchronously from auth state — no extra DB round-trip needed for UI gating
   const userIsAdmin = !loading && !!user && isAdminEmail(user.email || '')
+  // Show advertising banner above nav for visitors on the homepage
+  const showAdBanner = location.pathname === '/' && !userIsAdmin && !loading
   const { state: sageModeState, toggleSageMode } = useSageMode()
   const navigate = useNavigate()
 
@@ -126,6 +131,16 @@ export default function Layout({ children }: { children?: ReactNode }) {
     }
   }, [location.pathname, loading, userIsAdmin])
 
+  // Track fixed header height so main content padding stays correct
+  useEffect(() => {
+    const el = fixedHeaderRef.current
+    if (!el) return
+    const ro = new ResizeObserver(() => setHeaderHeight(el.offsetHeight))
+    ro.observe(el)
+    setHeaderHeight(el.offsetHeight)
+    return () => ro.disconnect()
+  }, [showAdBanner])
+
   // Click-outside handler is removed as the menu is now a full-screen portal
 
   const handleLoginClick = (e: React.MouseEvent) => {
@@ -197,56 +212,58 @@ export default function Layout({ children }: { children?: ReactNode }) {
       {isRouteLoading && <LoadingOverlay />}
 
       <SageModeOverlay />
-      <nav className="fixed top-0 left-0 w-full bg-black backdrop-blur-md z-[999]">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          {/* Top row: Title left, Menu button right */}
-          <div
-            className="flex items-center justify-between h-16 gap-4 flex-nowrap"
-            style={{
-              opacity: homeHeaderReady ? 1 : 0,
-              pointerEvents: homeHeaderReady ? 'auto' : 'none',
-              transition: 'opacity 0.6s ease-in-out',
-            }}
-          >
-            <div className="flex items-center gap-4 flex-shrink-0 leading-none h-12">
+      <div ref={fixedHeaderRef} className="fixed top-0 left-0 w-full bg-black z-[999]">
+        {/* Advertising banner — sits above the nav for homepage visitors */}
+        {showAdBanner && <MarketplaceBanner surface="gallery" noMargin />}
+
+        <nav className="w-full backdrop-blur-md">
+          <div className="w-full px-4 sm:px-6 lg:px-8">
+            {/* Top row */}
+            <div
+              className="relative flex items-center h-16 gap-4 flex-nowrap"
+              style={{
+                opacity: homeHeaderReady ? 1 : 0,
+                pointerEvents: homeHeaderReady ? 'auto' : 'none',
+                transition: 'opacity 0.6s ease-in-out',
+              }}
+            >
+              {/* Logo — centered for visitors, left-aligned for admins */}
               <Link
                 to="/"
-                className="flex items-center text-white hover:text-white/80 transition h-12"
-                style={{ transform: 'translateY(7%)', display: 'flex', alignItems: 'center' }}
+                className={`flex items-center text-white hover:text-white/80 transition h-12 ${
+                  userIsAdmin ? 'flex-shrink-0' : 'absolute left-1/2 -translate-x-1/2'
+                }`}
+                style={{ display: 'flex', alignItems: 'center' }}
               >
                 <span className="text-sm sm:text-lg md:text-xl font-bold whitespace-nowrap">THE LOST+UNFOUNDS</span>
               </Link>
-            </div>
-            {userIsAdmin && (
-              <div className="flex items-center space-x-4 ml-auto flex-shrink-0 leading-none h-12">
-                <div
-                  className="header-nav"
-                  ref={menuRef}
-                >
-                  <button
-                    type="button"
-                    className="menu-toggle flex items-center justify-center h-12 w-12 leading-none"
-                    style={{ transform: 'translateY(0)' }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMenuOpen(!menuOpen);
-                    }}
-                    aria-label="Toggle menu"
-                    aria-expanded={menuOpen}
-                  >
-                    <Bars3Icon className="w-6 h-6 text-white" />
-                  </button>
+              {userIsAdmin && (
+                <div className="flex items-center space-x-4 ml-auto flex-shrink-0 leading-none h-12">
+                  <div className="header-nav" ref={menuRef}>
+                    <button
+                      type="button"
+                      className="menu-toggle flex items-center justify-center h-12 w-12 leading-none"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMenuOpen(!menuOpen);
+                      }}
+                      aria-label="Toggle menu"
+                      aria-expanded={menuOpen}
+                    >
+                      <Bars3Icon className="w-6 h-6 text-white" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      </div>
 
       {/* Render Menu Portal */}
       <MenuPortal />
 
-      <main className="pb-6 pt-20 flex-1">
+      <main className="pb-6 flex-1" style={{ paddingTop: headerHeight }}>
         {children || <Outlet />}
       </main>
       <Footer />

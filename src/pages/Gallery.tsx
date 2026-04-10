@@ -95,6 +95,8 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
         }
     }
 
+    const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
+
     const handleGalleryClick = (library: PhotoLibrary) => {
         if (library.is_private && !user && !userIsAdmin && !authLoading) {
             setAuthMessage(
@@ -103,15 +105,32 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
             setAuthModalOpen(true);
             return;
         }
-        navigate(`/gallery/${library.slug}`);
+        if (isHomepage) {
+            // Open inline — no navigation, stay on the same page
+            setSelectedSlug(library.slug);
+        } else {
+            navigate(`/gallery/${library.slug}`);
+        }
     };
 
     const [activeGalleryTab, setActiveGalleryTab] = useState<'public' | 'private'>('public');
     const [viewMode, setViewMode] = useState<'gallery' | 'shop'>('gallery');
 
-    // If a slug is present, render the specific gallery component
-    if (slug) {
-        return <PhotoGallery librarySlug={slug} />;
+    // Route-based gallery (non-homepage /gallery/:slug) or inline selected gallery
+    if (slug || selectedSlug) {
+        return (
+            <div>
+                {selectedSlug && (
+                    <button
+                        onClick={() => setSelectedSlug(null)}
+                        className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors px-4 md:px-8 py-4"
+                    >
+                        ← Back to Gallery
+                    </button>
+                )}
+                <PhotoGallery librarySlug={slug || selectedSlug!} />
+            </div>
+        );
     }
 
     const publicLibraries = libraries.filter(lib => !lib.is_private);
@@ -130,9 +149,6 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                 <meta name="description" content="Explore exclusive high-resolution photography collections. Unique findings from the field, beautifully captured in high definition for your inspiration." />
                 <link rel="canonical" href={isHomepage ? 'https://www.thelostandunfounds.com/' : 'https://www.thelostandunfounds.com/gallery'} />
             </Helmet>
-
-            {/* Advertising banner — always at the very top */}
-            <MarketplaceBanner surface="gallery" />
 
             {/* Gallery / Shop toggle — homepage visitor mode only */}
             {isHomepage && (

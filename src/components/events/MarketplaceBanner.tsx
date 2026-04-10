@@ -15,13 +15,15 @@ interface BannerData {
 
 interface MarketplaceBannerProps {
     surface: 'gallery' | 'shop' | 'blog';
+    /** Suppress the bottom margin — use when rendering inside a fixed header */
+    noMargin?: boolean;
 }
 
 /**
  * MarketplaceBanner - A surface-aware, dual-layer banner component.
  * Synchronized to 8-second global slots.
  */
-export default function MarketplaceBanner({ surface }: MarketplaceBannerProps) {
+export default function MarketplaceBanner({ surface, noMargin }: MarketplaceBannerProps) {
     const [banner, setBanner] = useState<BannerData | null>(null);
     const [loading, setLoading] = useState(true);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -61,7 +63,7 @@ export default function MarketplaceBanner({ surface }: MarketplaceBannerProps) {
 
     if (loading || !banner) {
         return (
-            <div className="w-full mb-12 bg-black border-y border-white/5 relative overflow-hidden group">
+            <div className={`w-full bg-black border-y border-white/5 relative overflow-hidden group${noMargin ? '' : ' mb-12'}`}>
                 <Link
                     to="/advertise"
                     className="relative block w-full py-8 px-4 md:px-8 transition-all hover:bg-white/[0.02]"
@@ -89,7 +91,7 @@ export default function MarketplaceBanner({ surface }: MarketplaceBannerProps) {
     const isEnterprise = banner.layer === 'enterprise';
 
     return (
-        <div className="w-full mb-12 border-b border-white/10 bg-black">
+        <div className={`w-full border-b border-white/10 bg-black${noMargin ? '' : ' mb-12'}`}>
             <AnimatePresence mode="wait">
                 <motion.div
                     key={banner.campaign_id}
