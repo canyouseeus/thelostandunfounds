@@ -238,7 +238,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
                 <img
                   src="/logo.png"
                   alt="THE LOST+UNFOUNDS"
-                  style={{ height: '28px', width: 'auto', display: 'block' }}
+                  style={{ height: '84px', width: 'auto', display: 'block' }}
                 />
               </Link>
               {userIsAdmin && (
