@@ -192,25 +192,29 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                         <h1 className="font-black text-white tracking-tighter leading-[0.8] uppercase text-[clamp(3.5rem,12vw,10rem)] mb-8">
                             THE GALLERY
                         </h1>
-                        <div className="text-xl md:text-2xl text-white/50 font-light leading-relaxed max-w-2xl">
-                            <p>
-                                Welcome to <span className="font-bold text-white">THE GALLERY</span> — an invite-only platform for photographers to host, share, and sell their work.
-                            </p>
-                        </div>
+                        {!isHomepage && (
+                            <>
+                                <div className="text-xl md:text-2xl text-white/50 font-light leading-relaxed max-w-2xl">
+                                    <p>
+                                        Welcome to <span className="font-bold text-white">THE GALLERY</span> — an invite-only platform for photographers to host, share, and sell their work.
+                                    </p>
+                                </div>
 
-                        {/* Application CTA */}
-                        <div className="pt-8 flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                            <button
-                                onClick={() => setApplicationModalOpen(true)}
-                                className="inline-flex items-center gap-2 px-8 py-4 bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-zinc-200 transition-all active:scale-95 shadow-[0_0_30px_rgba(255,255,255,0.1)]"
-                            >
-                                Apply to Join
-                                <ArrowRightIcon className="w-4 h-4" />
-                            </button>
-                            <p className="text-white/30 text-[10px] font-bold uppercase tracking-widest">
-                                Already have an invite? <button onClick={() => setAuthModalOpen(true)} className="text-white/60 hover:text-white underline underline-offset-4 decoration-white/20 hover:decoration-white transition-all">Sign in here</button>
-                            </p>
-                        </div>
+                                {/* Application CTA */}
+                                <div className="pt-8 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                                    <button
+                                        onClick={() => setApplicationModalOpen(true)}
+                                        className="inline-flex items-center gap-2 px-8 py-4 bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-zinc-200 transition-all active:scale-95 shadow-[0_0_30px_rgba(255,255,255,0.1)]"
+                                    >
+                                        Apply to Join
+                                        <ArrowRightIcon className="w-4 h-4" />
+                                    </button>
+                                    <p className="text-white/30 text-[10px] font-bold uppercase tracking-widest">
+                                        Already have an invite? <button onClick={() => setAuthModalOpen(true)} className="text-white/60 hover:text-white underline underline-offset-4 decoration-white/20 hover:decoration-white transition-all">Sign in here</button>
+                                    </p>
+                                </div>
+                            </>
+                        )}
                     </motion.div>
                 </div>
             </div>
