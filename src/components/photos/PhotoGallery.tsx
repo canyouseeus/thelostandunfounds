@@ -263,7 +263,7 @@ const PhotoCard: React.FC<{
     );
 };
 
-const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
+const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ librarySlug, inline = false }) => {
     const { user } = useAuth();
     const [library, setLibrary] = useState<PhotoLibrary | null>(null);
     const [pricingOptions, setPricingOptions] = useState<PricingOption[]>([]);
@@ -522,7 +522,26 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
         }
     };
 
-    if (loading) return <Loading />;
+    if (loading) {
+        // Inline mode: show a skeleton that doesn't cover the whole screen.
+        // Full-page mode: show the standard full-screen overlay.
+        if (inline) {
+            return (
+                <div className="min-h-screen bg-black pt-0 pb-40 px-4 md:px-8 animate-pulse">
+                    <div className="max-w-7xl mx-auto pt-12">
+                        <div className="h-12 w-64 bg-white/5 mb-4" />
+                        <div className="h-4 w-96 bg-white/5 mb-12" />
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                            {Array.from({ length: 8 }).map((_, i) => (
+                                <div key={i} className="aspect-square bg-white/5" />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        return <Loading />;
+    }
 
     // Filter photos based on date range
     const filteredPhotos = (activeTab === 'storefront' ? photos : purchasedPhotos).filter(photo => {
@@ -550,7 +569,7 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
 
     return (
         <div
-            className="min-h-screen bg-black pt-20 pb-40 px-4 md:px-8"
+            className={`min-h-screen bg-black ${inline ? 'pt-0' : 'pt-20'} pb-40 px-4 md:px-8`}
             onContextMenu={(e) => e.preventDefault()}
         >
             {/* Header / Info Section */}

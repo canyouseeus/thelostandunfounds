@@ -137,7 +137,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.3 }}
                     >
-                        <PhotoGallery librarySlug={activeGallery} />
+                        <PhotoGallery librarySlug={activeGallery} inline />
                     </motion.div>
                 )}
             </AnimatePresence>
