@@ -385,7 +385,13 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
 
                 {loading ? null : (
                     <div className="animate-in fade-in duration-500">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className={`grid gap-3 md:gap-6 md:grid-cols-2 lg:grid-cols-3 ${
+                            displayedLibraries.length <= 1
+                                ? 'grid-cols-1'
+                                : displayedLibraries.length === 2 || (displayedLibraries.length > 2 && displayedLibraries.length % 2 === 0)
+                                    ? 'grid-cols-2'
+                                    : 'grid-cols-3'
+                        }`}>
                             {displayedLibraries.map((lib, index) => (
                                 <GalleryItem
                                     key={lib.id}
