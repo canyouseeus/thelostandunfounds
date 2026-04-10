@@ -49,7 +49,7 @@ export default function Shop({ hideBanner = false, embedded = false }: { hideBan
   // Background removal tracking across all product cards
   const [settledCount, setSettledCount] = useState(0);
   const [newlyEnhanced, setNewlyEnhanced] = useState(0);
-  const [reloadCountdown, setReloadCountdown] = useState<number | null>(null);
+  // reloadCountdown removed — auto-reload caused images to revert when Supabase upload failed
 
   const handleImageSettled = useCallback((wasNew: boolean) => {
     setSettledCount(s => s + 1);
@@ -60,7 +60,6 @@ export default function Shop({ hideBanner = false, embedded = false }: { hideBan
   useEffect(() => {
     setSettledCount(0);
     setNewlyEnhanced(0);
-    setReloadCountdown(null);
   }, [products.length]);
 
   // Broadcast progress so the gallery-level banner stays visible even on the Gallery tab
@@ -70,26 +69,6 @@ export default function Shop({ hideBanner = false, embedded = false }: { hideBan
     }));
   }, [settledCount, products.length, newlyEnhanced]);
 
-  // Once all images have settled and at least one was newly processed, trigger reload
-  useEffect(() => {
-    if (products.length === 0) return;
-    if (settledCount < products.length) return;
-    if (newlyEnhanced === 0) return;
-    if (reloadCountdown !== null) return;
-    setReloadCountdown(3);
-  }, [settledCount, products.length, newlyEnhanced, reloadCountdown]);
-
-  // Broadcast reload countdown
-  useEffect(() => {
-    if (reloadCountdown === null) return;
-    window.dispatchEvent(new CustomEvent('bgr:reload', { detail: { countdown: reloadCountdown } }));
-    if (reloadCountdown === 0) {
-      window.location.reload();
-      return;
-    }
-    const t = setTimeout(() => setReloadCountdown(c => (c ?? 1) - 1), 1000);
-    return () => clearTimeout(t);
-  }, [reloadCountdown]);
   const [lightningPayment, setLightningPayment] = useState<{
     invoiceId: string;
     lnInvoice: string;
