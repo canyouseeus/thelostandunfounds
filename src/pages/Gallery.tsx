@@ -437,7 +437,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 40 }}
                         transition={{ duration: 0.4 }}
-                        className="fixed bottom-0 left-0 right-0 z-[9998] bg-black border-t border-white/10 px-4 py-5"
+                        className="fixed bottom-0 left-0 right-0 z-[9998] bg-black px-4 py-5"
                     >
                         {/* Dismiss — top right, no cookie (only subscribe sets cookie) */}
                         <button
