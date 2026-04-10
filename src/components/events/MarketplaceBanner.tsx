@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRightIcon, MegaphoneIcon } from '@heroicons/react/24/outline';
+import { ArrowRightIcon } from '@heroicons/react/24/outline';
 
 interface BannerData {
     campaign_id: string;
@@ -61,25 +61,17 @@ export default function MarketplaceBanner({ surface }: MarketplaceBannerProps) {
 
     if (loading || !banner) {
         return (
-            <div className="w-full mb-12 bg-zinc-950 border-y border-white/5 relative overflow-hidden group">
-                <div className="absolute inset-0 opacity-10">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent" />
-                </div>
+            <div className="w-full mb-12 bg-black border-y border-white/5 relative overflow-hidden group">
                 <Link
                     to="/advertise"
                     className="relative block w-full py-8 px-4 md:px-8 transition-all hover:bg-white/[0.02]"
                 >
                     <div className="max-w-7xl mx-auto flex items-center justify-between relative z-10">
-                        <div className="flex items-center gap-6">
-                            <div className="w-12 h-12 bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-white/30 transition-colors">
-                                <MegaphoneIcon className="w-6 h-6 text-white/40 group-hover:text-white transition-colors" />
-                            </div>
-                            <div className="text-left">
-                                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30 leading-none mb-2" style={{ textAlign: 'left' }}>Marketplace</p>
-                                <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-tighter leading-none group-hover:tracking-tight transition-all duration-500" style={{ textAlign: 'left' }}>
-                                    Advertise Your Content <span className="text-white/40 font-light">With Us</span>
-                                </h3>
-                            </div>
+                        <div className="text-left">
+                            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30 leading-none mb-2" style={{ textAlign: 'left' }}>Marketplace</p>
+                            <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-tighter leading-none group-hover:tracking-tight transition-all duration-500" style={{ textAlign: 'left' }}>
+                                Advertise Your Content <span className="text-white/40 font-light">With Us</span>
+                            </h3>
                         </div>
                         <div className="flex items-center gap-4">
                             <span className="hidden md:inline-block text-[10px] font-black uppercase tracking-widest text-white/20 group-hover:text-white/60 transition-colors">

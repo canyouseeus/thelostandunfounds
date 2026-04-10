@@ -131,6 +131,9 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                 <link rel="canonical" href={isHomepage ? 'https://www.thelostandunfounds.com/' : 'https://www.thelostandunfounds.com/gallery'} />
             </Helmet>
 
+            {/* Advertising banner — always at the very top */}
+            <MarketplaceBanner surface="gallery" />
+
             {/* Gallery / Shop toggle — homepage visitor mode only */}
             {isHomepage && (
                 <div className="px-4 md:px-8 pt-4">
@@ -171,13 +174,16 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                 </div>
             )}
 
-            {/* Shop view — rendered inline when visitor switches to shop tab */}
-            {isHomepage && viewMode === 'shop' && <Shop />}
+            {/* Shop view — preloaded silently, revealed via display when tab is active */}
+            {isHomepage && (
+                <div style={{ display: viewMode === 'shop' ? 'block' : 'none' }}>
+                    <Shop />
+                </div>
+            )}
 
             {/* Gallery view */}
             {(!isHomepage || viewMode === 'gallery') && (
             <>
-            {!isHomepage && <MarketplaceBanner surface="gallery" />}
 
             <div className="px-4 md:px-8">
 
