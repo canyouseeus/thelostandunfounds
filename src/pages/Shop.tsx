@@ -438,6 +438,20 @@ function ProductCard({ product, onOpen }: { product: Product; onOpen: () => void
         ) : (
           <div className="w-full h-full bg-white/5" />
         )}
+
+        {/* Processing indicator — visible while AI removes background */}
+        {processing && (
+          <div className="absolute inset-0 flex flex-col items-center justify-end pb-4 pointer-events-none">
+            <div className="bg-black/70 backdrop-blur-sm px-3 py-1.5 flex items-center gap-2">
+              <span className="flex gap-[3px]">
+                <span className="w-1 h-1 bg-white rounded-full animate-[loading-dot_1.2s_infinite_0s]" />
+                <span className="w-1 h-1 bg-white rounded-full animate-[loading-dot_1.2s_infinite_0.2s]" />
+                <span className="w-1 h-1 bg-white rounded-full animate-[loading-dot_1.2s_infinite_0.4s]" />
+              </span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-white/60">Enhancing</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Text below the image */}
