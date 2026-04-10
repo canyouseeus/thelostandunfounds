@@ -96,10 +96,11 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
         document.cookie = `nl_done=1; expires=${expires}; path=/; SameSite=Lax`;
     };
 
-    // Show newsletter bar to visitors after 1.5s (homepage only, not logged in, no cookie)
+    // Show newsletter modal to visitors after 1.5s (homepage only, not logged in, not subscribed, not dismissed this session)
     useEffect(() => {
         if (!isHomepage || user || newsletterBarDismissed) return;
         if (hasNewsletterCookie()) return;
+        if (sessionStorage.getItem('nl_dismissed')) return;
         const t = setTimeout(() => setNewsletterBarVisible(true), 1500);
         return () => clearTimeout(t);
     }, [isHomepage, user, newsletterBarDismissed]);
@@ -446,7 +447,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
 
             {/* Newsletter modal — slides up from bottom to center, like the old homepage */}
             <AnimatePresence>
-                {isHomepage && !activeGallery && newsletterBarVisible && !newsletterBarDismissed && (
+                {isHomepage && newsletterBarVisible && !newsletterBarDismissed && (
                     <motion.div
                         initial={{ y: '110%', opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
@@ -458,6 +459,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                             {/* Close button */}
                             <button
                                 onClick={() => {
+                                    sessionStorage.setItem('nl_dismissed', '1');
                                     setNewsletterBarVisible(false);
                                     setNewsletterBarDismissed(true);
                                 }}
