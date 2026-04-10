@@ -38,7 +38,7 @@ interface Product {
   featured?: boolean;
 }
 
-export default function Shop() {
+export default function Shop({ hideBanner = false }: { hideBanner?: boolean }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [products, setProducts] = useState<Product[]>([]);
@@ -158,7 +158,7 @@ export default function Shop() {
         <link rel="canonical" href="https://www.thelostandunfounds.com/shop" />
       </Helmet>
 
-      <MarketplaceBanner surface="shop" />
+      {!hideBanner && <MarketplaceBanner surface="shop" />}
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
         {/* Header */}
