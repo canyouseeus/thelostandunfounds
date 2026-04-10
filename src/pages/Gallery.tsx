@@ -177,8 +177,8 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
             {/* Gallery view */}
             {(!isHomepage || viewMode === 'gallery') && (
             <>
-            <MarketplaceBanner surface="gallery" />
-            
+            {!isHomepage && <MarketplaceBanner surface="gallery" />}
+
             <div className="px-4 md:px-8">
 
 
@@ -189,9 +189,11 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
                     >
+                        {!isHomepage && (
                         <h1 className="font-black text-white tracking-tighter leading-[0.8] uppercase text-[clamp(3.5rem,12vw,10rem)] mb-8">
                             THE GALLERY
                         </h1>
+                        )}
                         {!isHomepage && (
                             <>
                                 <div className="text-xl md:text-2xl text-white/50 font-light leading-relaxed max-w-2xl">
