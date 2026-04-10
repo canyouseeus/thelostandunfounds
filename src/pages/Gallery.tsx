@@ -6,13 +6,14 @@ import { useAuth } from '../contexts/AuthContext';
 import { useGallery } from '../contexts/GalleryContext';
 import PhotoGallery from '../components/photos/PhotoGallery';
 import AuthModal from '../components/auth/AuthModal';
-import { LockClosedIcon, ArrowRightIcon, XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { LockClosedIcon, ArrowRightIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence } from 'framer-motion';
 import GalleryItem from './GalleryItem';
 import PhotographerApplicationModal from '../components/gallery/PhotographerApplicationModal';
 import { cn } from '../components/ui/utils';
 import MarketplaceBanner from '../components/events/MarketplaceBanner';
 import Shop from './Shop';
+import EmailSignup from '../components/EmailSignup';
 
 interface PhotoLibrary {
     id: string;
@@ -55,12 +56,9 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
     const [bgrEnhanced, setBgrEnhanced] = useState(0);
     const [bgrCountdown, setBgrCountdown] = useState<number | null>(null);
 
-    // Newsletter bottom bar — shown to visitors after a delay
+    // Newsletter modal — shown to visitors after a delay
     const [newsletterBarVisible, setNewsletterBarVisible] = useState(false);
     const [newsletterBarDismissed, setNewsletterBarDismissed] = useState(false);
-    const [newsletterEmail, setNewsletterEmail] = useState('');
-    const [newsletterSuccess, setNewsletterSuccess] = useState(false);
-    const [newsletterLoading, setNewsletterLoading] = useState(false);
 
     // Set isMounted to false on unmount
     useEffect(() => {
@@ -105,28 +103,12 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
         return () => clearTimeout(t);
     }, [isHomepage, user, newsletterBarDismissed]);
 
-    const handleNewsletterSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        const email = newsletterEmail.trim();
-        if (!email || !email.includes('@')) return;
-        setNewsletterLoading(true);
-        try {
-            await fetch('/api/newsletter/subscribe', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: email.toLowerCase() }),
-            });
-            setNewsletterSuccess(true);
-            setNewsletterCookie();
-            setTimeout(() => {
-                setNewsletterBarDismissed(true);
-                setNewsletterBarVisible(false);
-            }, 2500);
-        } catch {
-            // silent fail
-        } finally {
-            setNewsletterLoading(false);
-        }
+    const handleNewsletterSuccess = () => {
+        setNewsletterCookie();
+        setTimeout(() => {
+            setNewsletterBarDismissed(true);
+            setNewsletterBarVisible(false);
+        }, 2500);
     };
 
     // Track admin status
@@ -455,7 +437,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                         className="fixed left-1/2 -translate-x-1/2 bottom-8 z-[9997] w-full max-w-[min(480px,90vw)]"
                     >
-                        <div className="relative bg-black px-8 py-8">
+                        <div className="relative">
                             {/* Close button */}
                             <button
                                 onClick={() => {
@@ -463,48 +445,13 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                                     setNewsletterBarVisible(false);
                                     setNewsletterBarDismissed(true);
                                 }}
-                                className="absolute top-4 right-4 text-white/30 hover:text-white transition-colors"
+                                className="absolute top-4 right-4 z-10 text-white/30 hover:text-white transition-colors"
                                 aria-label="Close"
                             >
                                 <XMarkIcon className="w-5 h-5" />
                             </button>
 
-                            {newsletterSuccess ? (
-                                <div className="flex flex-col items-center gap-3 py-4 text-center">
-                                    <CheckIcon className="w-8 h-8 text-white" />
-                                    <p className="text-white font-black uppercase tracking-[0.2em] text-sm">You're in.</p>
-                                    <p className="text-white/40 text-[11px]">Check your email.</p>
-                                </div>
-                            ) : (
-                                <>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/30 mb-2">
-                                        Stay in the Loop
-                                    </p>
-                                    <p className="text-white/50 text-sm font-light mb-6">
-                                        Sign up for updates and news.
-                                    </p>
-                                    <form onSubmit={handleNewsletterSubmit} className="flex gap-0">
-                                        <input
-                                            type="email"
-                                            name="email"
-                                            autoComplete="email"
-                                            inputMode="email"
-                                            placeholder="your@email.com"
-                                            value={newsletterEmail}
-                                            onChange={(e) => setNewsletterEmail(e.target.value)}
-                                            required
-                                            className="flex-1 min-w-0 px-4 py-3 bg-white/5 text-white text-sm placeholder-white/20 focus:outline-none focus:bg-white/8 transition-colors"
-                                        />
-                                        <button
-                                            type="submit"
-                                            disabled={newsletterLoading}
-                                            className="px-5 py-3 bg-white text-black text-[10px] font-black uppercase tracking-[0.2em] hover:bg-zinc-200 transition-colors disabled:opacity-50 shrink-0"
-                                        >
-                                            {newsletterLoading ? '...' : 'Subscribe'}
-                                        </button>
-                                    </form>
-                                </>
-                            )}
+                            <EmailSignup onSuccess={handleNewsletterSuccess} />
                         </div>
                     </motion.div>
                 )}

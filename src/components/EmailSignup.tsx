@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import Turnstile from 'react-turnstile';
 import { CheckIcon } from '@heroicons/react/24/outline';
 
-export default function EmailSignup() {
+export default function EmailSignup({ onSuccess }: { onSuccess?: () => void } = {}) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -70,6 +70,7 @@ export default function EmailSignup() {
       // Success
       setSuccess(true);
       setEmail('');
+      onSuccess?.();
 
       // Reset Turnstile
       setTurnstileKey(prev => prev + 1);
