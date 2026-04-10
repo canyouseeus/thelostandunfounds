@@ -35,7 +35,7 @@ export default function GalleryItem({ lib, index, userIsAdmin, authLoading, onGa
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
             onClick={() => !isLocked && onGalleryClick(lib)}
-            className={`group relative bg-black transition-all duration-500 overflow-hidden aspect-square flex flex-col justify-end p-8 ${!isLocked ? 'hover:bg-[#0a0a0a] cursor-pointer' : 'cursor-not-allowed'} rounded-none`}
+            className={`group relative bg-black transition-all duration-500 overflow-hidden aspect-square flex flex-col justify-end p-3 sm:p-6 md:p-8 ${!isLocked ? 'hover:bg-[#0a0a0a] cursor-pointer' : 'cursor-not-allowed'} rounded-none`}
         >
             {/* Background Image/Overlay */}
             {lib.cover_image_url ? (
@@ -66,35 +66,35 @@ export default function GalleryItem({ lib, index, userIsAdmin, authLoading, onGa
             {/* Content Wrapper - Fixed height layout so title doesn't move */}
             <div className={`relative z-10 ${isLocked ? 'opacity-20' : 'opacity-100'}`}>
                 {/* Badge */}
-                <div className="flex items-center mb-3">
+                <div className="flex items-center mb-1 sm:mb-3">
                     {lib.is_private ? (
-                        <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1">
-                            <LockClosedIcon className="w-3 h-3 text-white" />
-                            <span className="text-[10px] font-bold text-white tracking-widest uppercase">Private</span>
+                        <div className="flex items-center gap-1 sm:gap-2 bg-white/10 backdrop-blur-md px-2 py-0.5 sm:px-3 sm:py-1">
+                            <LockClosedIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" />
+                            <span className="text-[8px] sm:text-[10px] font-bold text-white tracking-widest uppercase">Private</span>
                         </div>
                     ) : (
-                        <div className="flex items-center gap-2 bg-white px-3 py-1">
-                            <span className="text-[10px] font-bold text-black tracking-widest uppercase">Public</span>
+                        <div className="flex items-center gap-1 sm:gap-2 bg-white px-2 py-0.5 sm:px-3 sm:py-1">
+                            <span className="text-[8px] sm:text-[10px] font-bold text-black tracking-widest uppercase">Public</span>
                         </div>
                     )}
                 </div>
 
                 {/* Title - Fixed position, no movement */}
-                <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-tight uppercase group-hover:translate-x-2 transition-transform duration-500">
+                <h2 className="text-[11px] sm:text-xl md:text-2xl font-black text-white tracking-tight leading-tight uppercase line-clamp-2 group-hover:translate-x-2 transition-transform duration-500">
                     {lib.name}
                 </h2>
 
-                {/* Description - Fixed 2-line container height */}
-                <div className="h-[2.75rem] mt-3">
+                {/* Description - Hidden on narrow mobile, visible sm+ */}
+                <div className="hidden sm:block h-[2.75rem] mt-3">
                     <p className="text-sm text-white/60 line-clamp-2 font-light leading-relaxed group-hover:text-white/80 transition-colors duration-500">
                         {lib.description}
                     </p>
                 </div>
 
                 {/* View Gallery Link */}
-                <div className="pt-2 flex items-center gap-2 text-[10px] font-black tracking-widest uppercase text-white opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-500">
+                <div className="pt-1 sm:pt-2 flex items-center gap-1 sm:gap-2 text-[8px] sm:text-[10px] font-black tracking-widest uppercase text-white opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-500">
                     {lib.is_private && !user ? 'Log in to View' : 'View Gallery'}
-                    <ArrowRightIcon className="w-3 h-3" />
+                    <ArrowRightIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                 </div>
             </div>
         </motion.div>
