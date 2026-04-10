@@ -3,7 +3,8 @@
  * Fetches native products from our database
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useBackgroundRemoval } from '../hooks/useBackgroundRemoval';
 import {
   ShoppingCartIcon,
   MagnifyingGlassIcon,
@@ -379,8 +380,10 @@ function extractOffers(data: any): any[] {
 function ProductCard({ product, onOpen }: { product: Product; onOpen: () => void }) {
   const { user } = useAuth();
   const imageUrl = product.images && product.images.length > 0 ? product.images[0] : null;
-  const displayPrice = product.price; // Prices are already in dollars from API
+  const displayPrice = product.price;
   const displayComparePrice = product.compareAtPrice || null;
+  const { processedUrl, processing } = useBackgroundRemoval(imageUrl);
+  const displayUrl = processedUrl || imageUrl;
 
   // Get affiliate ref for tracking
   const affiliateRef = getAffiliateRef();
@@ -412,14 +415,24 @@ function ProductCard({ product, onOpen }: { product: Product; onOpen: () => void
         }
       }}
     >
-      {/* Product image — contain so the full silhouette shows, no cropping */}
-      <div className="relative aspect-square overflow-hidden bg-black flex items-center justify-center p-4">
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={product.title}
-            className="w-full h-full object-contain mix-blend-luminosity hover:mix-blend-normal transition-all duration-500"
-          />
+      {/* Product image — transparent bg, white outline follows the product shape */}
+      <div className="relative aspect-square overflow-hidden bg-black flex items-center justify-center p-6">
+        {displayUrl ? (
+          <>
+            <img
+              src={displayUrl}
+              alt={product.title}
+              className="w-full h-full object-contain transition-all duration-700"
+              style={processedUrl ? {
+                filter: 'drop-shadow(0 0 0px white) drop-shadow(0 0 1px white) drop-shadow(0 0 2px white)',
+              } : { opacity: processing ? 0.4 : 1 }}
+            />
+            {processing && (
+              <div className="absolute inset-0 flex items-end justify-center pb-3 pointer-events-none">
+                <span className="text-[8px] font-black uppercase tracking-widest text-white/20 animate-pulse">Processing</span>
+              </div>
+            )}
+          </>
         ) : (
           <div className="w-full h-full bg-white/5" />
         )}
