@@ -1,54 +1,38 @@
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion';
-import { 
-  MegaphoneIcon, 
-  SparklesIcon, 
-  UserGroupIcon, 
-  PresentationChartBarIcon,
+import {
+  MegaphoneIcon,
   ArrowRightIcon,
   ChatBubbleBottomCenterTextIcon
 } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 
 export default function Advertise() {
-    const opportunities = [
+    const placements = [
         {
-            title: "Premium Placements",
-            description: "Secure high-visibility slots across THE GALLERY, Shop, and all editorial columns.",
-            icon: SparklesIcon,
-            color: "text-amber-500",
-            bg: "bg-amber-500/10"
+            title: "Above the Fold",
+            description: "Your campaign runs at the very top of the page — above the navigation bar. The first thing every visitor sees, before anything else loads.",
         },
         {
-            title: "Audience Targeting",
-            description: "Reach our dedicated community of photographers, tech enthusiasts, and creative professionals.",
-            icon: UserGroupIcon,
-            color: "text-blue-500",
-            bg: "bg-blue-500/10"
+            title: "Synchronized Slots",
+            description: "Campaigns rotate on synchronized 8-second global intervals. Every visitor on the site sees the same slot at the same time — no impression is wasted.",
         },
         {
-            title: "Live Performance",
-            description: "Real-time analytics and campaign performance tracking for every impression counts.",
-            icon: PresentationChartBarIcon,
-            color: "text-green-500",
-            bg: "bg-green-500/10"
+            title: "Homepage Priority",
+            description: "The banner lives on the visitor homepage — the gallery and shop every visitor lands on. Prime real estate with maximum dwell time.",
         }
     ];
 
     return (
-        <div className="min-h-screen bg-black text-white pt-20">
+        <div className="min-h-screen bg-black text-white">
             <Helmet>
                 <title>ADVERTISE | THE LOST+UNFOUNDS</title>
-                <meta name="description" content="Partner with THE LOST+UNFOUNDS. Discover premium advertising opportunities across our ecosystem of tools, galleries, and editorial content." />
+                <meta name="description" content="Partner with THE LOST+UNFOUNDS. Your campaign sits above the navigation bar — the first impression for every visitor, every time." />
                 <link rel="canonical" href="https://www.thelostandunfounds.com/advertise" />
             </Helmet>
 
             {/* Hero Section */}
-            <section className="relative h-[70vh] flex items-center justify-center overflow-hidden border-b border-white/5">
-                <div className="absolute inset-0 opacity-20">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent " />
-                </div>
-                
+            <section className="relative h-[70vh] flex items-center justify-center overflow-hidden">
                 <div className="relative z-10 max-w-5xl mx-auto px-4 text-center">
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
@@ -62,41 +46,36 @@ export default function Advertise() {
                             Advertise <br /> <span className="text-white/40">With Us</span>
                         </h1>
                         <p className="text-lg md:text-2xl font-light text-white/50 max-w-2xl mx-auto mb-12">
-                            Connect your brand with the most influential photographers and creators in the field.
+                            Your brand. Above the navigation. First impression, every visit.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-                            <a 
-                                href="mailto:media@thelostandunfounds.com" 
+                            <a
+                                href="mailto:media@thelostandunfounds.com"
                                 className="px-10 py-5 bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-zinc-200 transition-all flex items-center gap-3"
                             >
-                                Contact Sales
+                                Contact Us
                                 <ArrowRightIcon className="w-4 h-4" />
                             </a>
-                            <Link 
-                                to="/docs/photographer-guide" 
-                                className="text-white/40 hover:text-white text-xs font-black uppercase tracking-widest transition-colors flex items-center gap-2"
-                            >
-                                Read Guidelines
-                            </Link>
                         </div>
                     </motion.div>
                 </div>
             </section>
 
-            {/* Features */}
-            <section className="py-24 border-b border-white/5">
+            {/* How It Works */}
+            <section className="py-24">
                 <div className="max-w-7xl mx-auto px-4 md:px-8">
+                    <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/20 mb-16 text-center">How It Works</p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-                        {opportunities.map((item, i) => (
+                        {placements.map((item, i) => (
                             <motion.div
                                 key={item.title}
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 transition={{ delay: i * 0.1 }}
-                                className="p-8 bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors group"
+                                className="p-8 border border-white/10 hover:border-white/30 transition-colors group"
                             >
-                                <item.icon className={`w-12 h-12 ${item.color} mb-6 transition-transform group-hover:scale-110`} />
-                                <h3 className="text-xl font-bold uppercase tracking-tight mb-4">{item.title}</h3>
+                                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30 mb-4">0{i + 1}</p>
+                                <h3 className="text-xl font-black uppercase tracking-tight mb-4">{item.title}</h3>
                                 <p className="text-white/40 text-sm leading-relaxed font-light">
                                     {item.description}
                                 </p>
@@ -106,46 +85,59 @@ export default function Advertise() {
                 </div>
             </section>
 
-            {/* Reach Section */}
-            <section className="py-24 bg-white/[0.01]">
-                <div className="max-w-5xl mx-auto px-4 text-center">
-                    <h2 className="text-xs font-black uppercase tracking-[0.5em] text-white/20 mb-8">Ecosystem Reach</h2>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {/* Placement Detail */}
+            <section className="py-24 bg-white text-black">
+                <div className="max-w-5xl mx-auto px-4 md:px-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
                         <div>
-                            <p className="text-4xl font-black mb-1 tracking-tighter">THE BLOG</p>
-                            <p className="text-[10px] text-white/30 uppercase tracking-widest">Thought Leadership</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.5em] text-black/30 mb-6">The Placement</p>
+                            <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-8">
+                                Above Everything
+                            </h2>
+                            <p className="text-black/60 leading-relaxed mb-6 font-light">
+                                Our banner sits at the very top of the page — pinned above the navigation bar in a fixed position. Visitors see your campaign the instant they arrive, before they interact with a single element.
+                            </p>
+                            <p className="text-black/60 leading-relaxed font-light">
+                                Campaigns are delivered on a synchronized 8-second rotation. Multiple brands can run concurrently, sharing slots across the global audience without cannibalizing each other's visibility.
+                            </p>
                         </div>
-                        <div>
-                            <p className="text-4xl font-black mb-1 tracking-tighter">GALLERY</p>
-                            <p className="text-[10px] text-white/30 uppercase tracking-widest">Premium Visuals</p>
-                        </div>
-                        <div>
-                            <p className="text-4xl font-black mb-1 tracking-tighter">TOOLS</p>
-                            <p className="text-[10px] text-white/30 uppercase tracking-widest">Utility First</p>
-                        </div>
-                        <div>
-                            <p className="text-4xl font-black mb-1 tracking-tighter">SHOP</p>
-                            <p className="text-[10px] text-white/30 uppercase tracking-widest">Commerce Driven</p>
+                        <div className="space-y-6">
+                            <div className="border-t border-black/10 pt-6">
+                                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-black/30 mb-2">Position</p>
+                                <p className="font-black text-xl uppercase tracking-tight">Above the Navigation Bar</p>
+                            </div>
+                            <div className="border-t border-black/10 pt-6">
+                                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-black/30 mb-2">Rotation</p>
+                                <p className="font-black text-xl uppercase tracking-tight">8-Second Global Slots</p>
+                            </div>
+                            <div className="border-t border-black/10 pt-6">
+                                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-black/30 mb-2">Surface</p>
+                                <p className="font-black text-xl uppercase tracking-tight">Visitor Homepage</p>
+                            </div>
+                            <div className="border-t border-black/10 pt-6">
+                                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-black/30 mb-2">Audience</p>
+                                <p className="font-black text-xl uppercase tracking-tight">Photographers &amp; Creatives</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
             {/* CTA */}
-            <section className="py-32 border-t border-white/5">
+            <section className="py-32">
                 <div className="max-w-3xl mx-auto px-4 text-center">
-                    <MegaphoneIcon className="w-20 h-20 text-white/10 mx-auto mb-12" />
+                    <MegaphoneIcon className="w-16 h-16 text-white/10 mx-auto mb-12" />
                     <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter mb-8 leading-none">
-                        Ready to make <br /> an impression?
+                        Secure your <br /> placement
                     </h2>
                     <p className="text-white/40 mb-12 text-lg font-light">
-                        Our team will work with you to design a campaign that aligns with our aesthetic and resonates with our audience.
+                        Reach out to discuss rates, availability, and campaign specs.
                     </p>
-                    <a 
-                        href="mailto:media@thelostandunfounds.com" 
-                        className="inline-flex items-center gap-3 px-12 py-6 bg-white text-black font-black uppercase tracking-[0.2em] text-sm hover:scale-105 transition-transform"
+                    <a
+                        href="mailto:media@thelostandunfounds.com"
+                        className="inline-flex items-center gap-3 px-12 py-6 bg-white text-black font-black uppercase tracking-[0.2em] text-sm hover:bg-zinc-200 transition-colors"
                     >
-                        Get in Touch
+                        media@thelostandunfounds.com
                         <ChatBubbleBottomCenterTextIcon className="w-5 h-5" />
                     </a>
                 </div>
