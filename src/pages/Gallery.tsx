@@ -435,7 +435,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: '110%', opacity: 0 }}
                         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                        className="fixed left-1/2 -translate-x-1/2 bottom-8 z-[9997] w-full max-w-[min(480px,90vw)]"
+                        className="fixed bottom-8 left-0 right-0 mx-auto z-[9997] w-[90vw] max-w-lg px-4"
                     >
                         <div className="relative">
                             {/* Close button */}
