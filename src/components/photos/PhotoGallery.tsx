@@ -697,7 +697,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             <div className="max-w-7xl mx-auto">
 
                 {/* Photos Grouped by Date */}
-                <div ref={photosRef} className="space-y-16 scroll-mt-40">
+                <div ref={photosRef} className="space-y-16">
                     {displayedPhotos.length === 0 ? (
                         <div className="py-40 text-center space-y-6">
                             {library?.is_private && !user ? (
@@ -863,7 +863,22 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             {
                 showBackToTop && (
                     <button
-                        onClick={() => photosRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                        onClick={() => {
+                            if (!photosRef.current) return;
+                            // Account for fixed nav + sticky toolbar so the first date group
+                            // isn't hidden behind them after scrolling
+                            const navH = parseInt(
+                                getComputedStyle(document.documentElement)
+                                    .getPropertyValue('--nav-height') || '64'
+                            );
+                            const toolbarH = toolbarRef.current?.offsetHeight ?? 72;
+                            const offset = navH + toolbarH + 8; // 8px breathing room
+                            const top =
+                                photosRef.current.getBoundingClientRect().top +
+                                window.scrollY -
+                                offset;
+                            window.scrollTo({ top, behavior: 'smooth' });
+                        }}
                         className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-10 h-10 bg-white/10 backdrop-blur-md flex items-center justify-center active:bg-white active:text-black md:hover:bg-white md:hover:text-black transition-all rounded-full"
                         aria-label="Back to top"
                     >
