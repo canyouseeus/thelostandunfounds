@@ -549,27 +549,9 @@ function ProductModal({
   onStrikeCheckout: (payment: { invoiceId: string; lnInvoice: string; expirationInSec: number; amount: number; description: string }) => void;
 }) {
   useEffect(() => {
-    const handleDocumentClick = (event: MouseEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (target?.closest('[data-product-modal-close="true"]')) {
-        event.preventDefault();
-        event.stopPropagation();
-        onClose();
-      }
-    };
-
-    const handleDocumentKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    document.addEventListener('click', handleDocumentClick, true);
-    document.addEventListener('keydown', handleDocumentKey, true);
-    return () => {
-      document.removeEventListener('click', handleDocumentClick, true);
-      document.removeEventListener('keydown', handleDocumentKey, true);
-    };
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
   }, [onClose]);
 
   const { user } = useAuth();
@@ -577,16 +559,6 @@ function ProductModal({
   const displayPrice = product.price;
   const displayComparePrice = product.compareAtPrice || null;
   const isFourthwallProduct = product.url?.includes('fourthwall.com');
-
-  const handleClose = (e?: React.MouseEvent | React.KeyboardEvent) => {
-    console.debug('ProductModal: close triggered');
-    if (e) {
-      e.preventDefault?.();
-      e.stopPropagation();
-      e.nativeEvent?.stopImmediatePropagation?.();
-    }
-    onClose();
-  };
 
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
@@ -641,28 +613,21 @@ function ProductModal({
       className="fixed inset-0 z-[9999] flex items-center justify-center px-4"
       role="dialog"
       aria-modal="true"
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') {
-          handleClose(e);
-        }
-      }}
     >
+      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-        onClick={handleClose}
-        data-product-modal-close="true"
+        onClick={onClose}
       />
       <div
         className="relative bg-black/90 border border-white rounded-none shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <button
-          onClick={handleClose}
-          onMouseDown={(e) => e.stopPropagation()}
+          onClick={onClose}
           type="button"
-          className="absolute top-3 right-3 text-white/80 hover:text-white flex items-center justify-center w-10 h-10"
+          className="absolute top-3 right-3 text-white/80 hover:text-white flex items-center justify-center w-10 h-10 z-10"
           aria-label="Close"
-          data-product-modal-close="true"
         >
           <XMarkIcon className="w-5 h-5" />
         </button>
