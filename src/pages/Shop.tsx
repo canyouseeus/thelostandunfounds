@@ -404,7 +404,7 @@ function ProductCard({ product, onOpen }: { product: Product; onOpen: () => void
 
   return (
     <div
-      className="border border-white hover:border-white/60 transition-all duration-300 h-full cursor-pointer flex flex-col"
+      className="transition-all duration-300 h-full cursor-pointer flex flex-col"
       onClick={onOpen}
       role="button"
       tabIndex={0}
@@ -415,24 +415,23 @@ function ProductCard({ product, onOpen }: { product: Product; onOpen: () => void
         }
       }}
     >
-      {/* Product image — transparent bg, white outline follows the product shape */}
-      <div className="relative aspect-square overflow-hidden bg-black flex items-center justify-center p-6">
+      {/* Product image — drop-shadow traces the product silhouette once bg is removed */}
+      <div className="relative aspect-square bg-black flex items-center justify-center p-6">
         {displayUrl ? (
-          <>
-            <img
-              src={displayUrl}
-              alt={product.title}
-              className="w-full h-full object-contain transition-all duration-700"
-              style={processedUrl ? {
-                filter: 'drop-shadow(0 0 0px white) drop-shadow(0 0 1px white) drop-shadow(0 0 2px white)',
-              } : { opacity: processing ? 0.4 : 1 }}
-            />
-            {processing && (
-              <div className="absolute inset-0 flex items-end justify-center pb-3 pointer-events-none">
-                <span className="text-[8px] font-black uppercase tracking-widest text-white/20 animate-pulse">Processing</span>
-              </div>
-            )}
-          </>
+          <img
+            src={displayUrl}
+            alt={product.title}
+            className="w-full h-full object-contain transition-all duration-700"
+            style={processedUrl ? {
+              filter: [
+                'drop-shadow(0 0 1px white)',
+                'drop-shadow(0 0 2px white)',
+                'drop-shadow(0 0 4px rgba(255,255,255,0.6))',
+              ].join(' '),
+            } : {
+              opacity: processing ? 0.5 : 1,
+            }}
+          />
         ) : (
           <div className="w-full h-full bg-white/5" />
         )}
