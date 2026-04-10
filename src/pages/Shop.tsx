@@ -59,8 +59,9 @@ export default function Shop() {
   const searchParams = new URLSearchParams(location.search);
   const hasRef = searchParams.get('ref') || searchParams.get('affiliate') || searchParams.get('aff');
 
-  // If there's an affiliate ref, redirect to home page preserving the query params
-  if (hasRef) {
+  // If there's an affiliate ref on any page other than /, redirect home so the ref
+  // is captured by the root layout's affiliate tracking (avoids an infinite loop at /).
+  if (hasRef && location.pathname !== '/') {
     return <Navigate to={`/${location.search}`} replace />;
   }
 

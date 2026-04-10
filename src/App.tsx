@@ -5,7 +5,8 @@ import { SageModeProvider } from './contexts/SageModeContext'
 import ErrorBoundary from './components/ErrorBoundary'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
-import Home from './pages/Home'
+import RootPage from './pages/RootPage'
+import AdminAuthGate from './components/AdminAuthGate'
 import ToolsDashboard from './pages/ToolsDashboard'
 import TikTokDownloader from './pages/TikTokDownloader'
 import AuthCallback from './pages/AuthCallback'
@@ -71,7 +72,7 @@ function App() {
           <ErrorBoundary>
             <Routes>
               <Route path="/" element={<Layout />}>
-                <Route index element={<Home />} />
+                <Route index element={<RootPage />} />
               </Route>
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/zoho/callback" element={<ZohoCallback />} />
@@ -146,16 +147,16 @@ function App() {
               <Route path="/admin" element={<Layout />}>
                 <Route index element={
                   <ErrorBoundary>
-                    <ProtectedRoute requireAdmin={true}>
+                    <AdminAuthGate>
                       <Admin />
-                    </ProtectedRoute>
+                    </AdminAuthGate>
                   </ErrorBoundary>
                 } />
                 <Route path="affiliates" element={
                   <ErrorBoundary>
-                    <ProtectedRoute requireAdmin={true}>
+                    <AdminAuthGate>
                       <AdminAffiliates />
-                    </ProtectedRoute>
+                    </AdminAuthGate>
                   </ErrorBoundary>
                 } />
               </Route>

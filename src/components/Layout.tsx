@@ -11,7 +11,7 @@ import { useState, useEffect, useRef, useCallback, ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useSageMode } from '../contexts/SageModeContext'
-import { isAdmin } from '../utils/admin'
+import { isAdminEmail } from '../utils/admin'
 import { initAffiliateTracking } from '../utils/affiliate-tracking'
 import AuthModal from './auth/AuthModal'
 import SageModeOverlay from './SageModeOverlay'
@@ -26,7 +26,6 @@ export default function Layout({ children }: { children?: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
-  const [userIsAdmin, setUserIsAdmin] = useState(false)
   const [userSubdomain, setUserSubdomain] = useState<string | null>(null)
 
   // State from NavLinks component needs to be lifted if we want to sync between desktop/mobile,
@@ -37,6 +36,8 @@ export default function Layout({ children }: { children?: ReactNode }) {
   const previousPathRef = useRef(location.pathname)
   const menuRef = useRef<HTMLDivElement>(null)
   const { user, tier, signOut, loading, clearAuthStorage } = useAuth()
+  // Derived synchronously from auth state — no extra DB round-trip needed for UI gating
+  const userIsAdmin = !loading && !!user && isAdminEmail(user.email || '')
   const { state: sageModeState, toggleSageMode } = useSageMode()
   const navigate = useNavigate()
 
@@ -63,15 +64,6 @@ export default function Layout({ children }: { children?: ReactNode }) {
       loadSubdomain()
     }
   }, [user]);
-
-  // Check if user is admin
-  useEffect(() => {
-    if (user) {
-      isAdmin().then(setUserIsAdmin).catch(() => setUserIsAdmin(false))
-    } else {
-      setUserIsAdmin(false)
-    }
-  }, [user])
 
   // Cleanup ref is removed as it's no longer used
 
@@ -107,20 +99,32 @@ export default function Layout({ children }: { children?: ReactNode }) {
 
 
   useEffect(() => {
-    // On home, wait for the intro animation to finish before showing the header row
+    // Non-root pages: always show header immediately
     if (location.pathname !== '/') {
       setHomeHeaderReady(true)
       return
     }
 
+    // Root page, still loading auth: hide header until we know who the visitor is
+    if (loading) {
+      setHomeHeaderReady(false)
+      return
+    }
+
+    // Root page, visitor (non-admin): show header immediately — no animation to wait for
+    if (!userIsAdmin) {
+      setHomeHeaderReady(true)
+      return
+    }
+
+    // Root page, admin: wait for the brand intro animation to signal completion
     setHomeHeaderReady(false)
     const handleAnimationComplete = () => setHomeHeaderReady(true)
     window.addEventListener('home-animation-complete', handleAnimationComplete)
-
     return () => {
       window.removeEventListener('home-animation-complete', handleAnimationComplete)
     }
-  }, [location.pathname])
+  }, [location.pathname, loading, userIsAdmin])
 
   // Click-outside handler is removed as the menu is now a full-screen portal
 
@@ -213,26 +217,28 @@ export default function Layout({ children }: { children?: ReactNode }) {
                 <span className="text-sm sm:text-lg md:text-xl font-bold whitespace-nowrap">THE LOST+UNFOUNDS</span>
               </Link>
             </div>
-            <div className="flex items-center space-x-4 ml-auto flex-shrink-0 leading-none h-12">
-              <div
-                className="header-nav"
-                ref={menuRef}
-              >
-                <button
-                  type="button"
-                  className="menu-toggle flex items-center justify-center h-12 w-12 leading-none"
-                  style={{ transform: 'translateY(0)' }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setMenuOpen(!menuOpen);
-                  }}
-                  aria-label="Toggle menu"
-                  aria-expanded={menuOpen}
+            {userIsAdmin && (
+              <div className="flex items-center space-x-4 ml-auto flex-shrink-0 leading-none h-12">
+                <div
+                  className="header-nav"
+                  ref={menuRef}
                 >
-                  <Bars3Icon className="w-6 h-6 text-white" />
-                </button>
+                  <button
+                    type="button"
+                    className="menu-toggle flex items-center justify-center h-12 w-12 leading-none"
+                    style={{ transform: 'translateY(0)' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMenuOpen(!menuOpen);
+                    }}
+                    aria-label="Toggle menu"
+                    aria-expanded={menuOpen}
+                  >
+                    <Bars3Icon className="w-6 h-6 text-white" />
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </nav>
