@@ -95,12 +95,25 @@ export function useBackgroundRemoval(
 
             // 3. Process fresh in browser, upload so every future visitor gets it instantly
             setProcessing(true);
+            // onnxruntime-web creates a type:"module" Worker via
+            //   new Worker(new URL("ort-wasm-simd-threaded.mjs", import.meta.url), {type:"module"})
+            // In the Vite production bundle import.meta.url is the chunk URL, so the
+            // resolved path doesn't exist → "Importing a module script failed".
+            // Fix: intercept Worker construction and redirect to our static copy.
+            const staticBase = `${window.location.origin}/onnxruntime-web/`;
+            const OrigWorker = (globalThis as any).Worker;
+            (globalThis as any).Worker = class extends OrigWorker {
+                constructor(url: string | URL, options?: WorkerOptions) {
+                    const urlStr = url instanceof URL ? url.href : String(url);
+                    if (urlStr.includes('ort-wasm-simd-threaded') || urlStr.includes('ort.wasm')) {
+                        url = `${staticBase}ort-wasm-simd-threaded.mjs`;
+                    }
+                    super(url, options);
+                }
+            };
             try {
-                // Configure onnxruntime-web to load its worker/WASM from our own static
-                // files rather than relying on Vite bundling (which breaks module workers).
                 const ort = await import('onnxruntime-web');
-                const base = `${window.location.origin}/onnxruntime-web/`;
-                ort.env.wasm.wasmPaths = base;
+                ort.env.wasm.wasmPaths = staticBase;
 
                 const { removeBackground } = await import('@imgly/background-removal');
 
@@ -126,6 +139,8 @@ export function useBackgroundRemoval(
                     onComplete?.(false);
                 }
             } finally {
+                // Always restore the original Worker constructor
+                (globalThis as any).Worker = OrigWorker;
                 if (!cancelled) setProcessing(false);
             }
         }
