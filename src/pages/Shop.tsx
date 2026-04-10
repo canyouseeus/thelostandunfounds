@@ -415,21 +415,24 @@ function ProductCard({ product, onOpen }: { product: Product; onOpen: () => void
         }
       }}
     >
-      {/* Product image — drop-shadow traces the product silhouette once bg is removed */}
-      <div className="relative aspect-square bg-black flex items-center justify-center p-6">
+      {/* Product image */}
+      <div className="relative aspect-square bg-black overflow-hidden">
         {displayUrl ? (
           <img
             src={displayUrl}
             alt={product.title}
-            className="w-full h-full object-contain transition-all duration-700"
+            className="w-full h-full transition-all duration-700"
             style={processedUrl ? {
+              objectFit: 'contain',
+              padding: '24px',
               filter: [
                 'drop-shadow(0 0 1px white)',
                 'drop-shadow(0 0 2px white)',
                 'drop-shadow(0 0 4px rgba(255,255,255,0.6))',
               ].join(' '),
             } : {
-              opacity: processing ? 0.5 : 1,
+              objectFit: 'cover',
+              objectPosition: 'center',
             }}
           />
         ) : (

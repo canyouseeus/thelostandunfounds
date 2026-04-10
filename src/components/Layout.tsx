@@ -227,6 +227,10 @@ export default function Layout({ children }: { children?: ReactNode }) {
                 opacity: homeHeaderReady ? 1 : 0,
                 pointerEvents: homeHeaderReady ? 'auto' : 'none',
                 transition: 'opacity 0.6s ease-in-out',
+                // Ensure row is always tall enough for the 84px logo + padding.
+                // Without this, an empty flex row (visitor, no hamburger) collapses
+                // to padding-only height and the absolutely-positioned logo overflows above it.
+                minHeight: '140px',
               }}
             >
               {/* Persistent back button — shown in nav whenever a gallery is open */}
@@ -243,7 +247,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
               <Link
                 to="/"
                 className={`flex items-center hover:opacity-70 transition-opacity ${
-                  userIsAdmin ? 'flex-shrink-0' : 'absolute left-1/2 -translate-x-1/2'
+                  userIsAdmin ? 'flex-shrink-0' : 'absolute left-1/2 -translate-x-1/2 top-4'
                 }`}
                 style={{ display: 'flex', alignItems: 'center' }}
               >
