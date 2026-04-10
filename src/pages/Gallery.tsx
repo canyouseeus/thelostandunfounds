@@ -154,7 +154,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
             {isHomepage && (
                 <div className="px-4 md:px-8 pt-4">
                     <div className="max-w-7xl mx-auto">
-                        <div className="flex justify-center gap-12 border-b border-white/5 pb-2 mb-0">
+                        <div className="flex justify-center gap-12 pb-2 mb-0">
                             <button
                                 onClick={() => setViewMode('gallery')}
                                 className={cn(
@@ -245,7 +245,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
 
             <div className="max-w-7xl mx-auto">
                 {/* Tabs styled like PhotoGallery Storefront/Assets */}
-                <div className="flex justify-center gap-12 border-b border-white/5 mb-12 pb-2">
+                <div className="flex justify-center gap-12 mb-12 pb-2">
                     <button
                         onClick={() => setActiveGalleryTab('public')}
                         className={cn(

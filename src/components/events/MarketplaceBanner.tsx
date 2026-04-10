@@ -63,7 +63,7 @@ export default function MarketplaceBanner({ surface, noMargin }: MarketplaceBann
 
     if (loading || !banner) {
         return (
-            <div className={`w-full bg-black border-y border-white/5 relative overflow-hidden group${noMargin ? '' : ' mb-12'}`}>
+            <div className={`w-full bg-black relative overflow-hidden group${noMargin ? '' : ' mb-12'}`}>
                 <Link
                     to="/advertise"
                     className="relative block w-full py-8 px-4 md:px-8 transition-all hover:bg-white/[0.02]"
@@ -91,7 +91,7 @@ export default function MarketplaceBanner({ surface, noMargin }: MarketplaceBann
     const isEnterprise = banner.layer === 'enterprise';
 
     return (
-        <div className={`w-full border-b border-white/10 bg-black${noMargin ? '' : ' mb-12'}`}>
+        <div className={`w-full bg-black${noMargin ? '' : ' mb-12'}`}>
             <AnimatePresence mode="wait">
                 <motion.div
                     key={banner.campaign_id}
