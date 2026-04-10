@@ -436,7 +436,7 @@ function ProductCard({ product, onOpen, onSettled }: { product: Product; onOpen:
   const imageUrl = product.images && product.images.length > 0 ? product.images[0] : null;
   const displayPrice = product.price;
   const displayComparePrice = product.compareAtPrice || null;
-  const { processedUrl, processing } = useBackgroundRemoval(imageUrl, onSettled);
+  const { processedUrl, processing, error: bgrError } = useBackgroundRemoval(imageUrl, onSettled);
   const displayUrl = processedUrl || imageUrl;
 
   // Get affiliate ref for tracking
@@ -491,6 +491,13 @@ function ProductCard({ product, onOpen, onSettled }: { product: Product; onOpen:
           />
         ) : (
           <div className="w-full h-full bg-white/5" />
+        )}
+
+        {/* Background removal error — temporary debug indicator */}
+        {bgrError && !processing && (
+          <div className="absolute bottom-2 left-2 right-2 pointer-events-none">
+            <p className="text-[8px] text-red-400 bg-black/80 px-2 py-1 leading-tight break-all">{bgrError}</p>
+          </div>
         )}
 
         {/* Processing indicator — visible while AI removes background */}

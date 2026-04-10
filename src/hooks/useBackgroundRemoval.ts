@@ -64,6 +64,7 @@ export function useBackgroundRemoval(
 ) {
     const [processedUrl, setProcessedUrl] = useState<string | null>(null);
     const [processing, setProcessing] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (!imageUrl) return;
@@ -113,7 +114,9 @@ export function useBackgroundRemoval(
                 onComplete?.(true);
             } catch (err) {
                 if (!cancelled) {
-                    console.warn('Background removal failed, using original:', err);
+                    const msg = err instanceof Error ? err.message : String(err);
+                    console.warn('Background removal failed:', msg);
+                    setError(msg);
                     onComplete?.(false);
                 }
             } finally {
@@ -125,5 +128,5 @@ export function useBackgroundRemoval(
         return () => { cancelled = true; };
     }, [imageUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    return { processedUrl, processing };
+    return { processedUrl, processing, error };
 }
