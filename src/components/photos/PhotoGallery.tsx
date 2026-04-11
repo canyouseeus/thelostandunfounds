@@ -129,7 +129,7 @@ const PhotoCard: React.FC<{
                             src={`https://lh3.googleusercontent.com/d/${photo.google_drive_file_id}=s1200`}
                             alt={photo.title}
                             onClick={(e) => { e.stopPropagation(); if (isPurchased) onLightbox(); }}
-                            className={`${isSingle ? 'max-w-full w-auto h-auto max-h-[85vh] object-contain' : 'w-full h-full object-cover'} select-none transition-all duration-500 ${!isPurchased ? 'pointer-events-none' : 'cursor-pointer'}`}
+                            className={`${isSingle ? 'max-w-full w-auto h-auto max-h-[85vh] object-contain' : 'w-full h-full object-contain'} select-none transition-all duration-500 ${!isPurchased ? 'pointer-events-none' : 'cursor-pointer'}`}
                             draggable={false}
                             loading="lazy"
                             referrerPolicy="no-referrer"
@@ -524,8 +524,8 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                     <div className="max-w-7xl mx-auto pt-12">
                         <div className="h-12 w-64 bg-white/5 mb-4" />
                         <div className="h-4 w-96 bg-white/5 mb-12" />
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                            {Array.from({ length: 8 }).map((_, i) => (
+                        <div className="grid grid-cols-3 gap-1 md:gap-2">
+                            {Array.from({ length: 9 }).map((_, i) => (
                                 <div key={i} className="aspect-square bg-white/5" />
                             ))}
                         </div>
