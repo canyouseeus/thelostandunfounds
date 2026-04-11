@@ -151,6 +151,11 @@ export async function syncGalleryPhotos(librarySlug: string, limit: number = 100
             }
         }
 
+        // Ensure date_taken is always set (fallback to Drive's createdTime for EXIF-less photos)
+        if (!metadata.date_taken) {
+            metadata.date_taken = file.createdTime || new Date().toISOString();
+        }
+
         // ----------------------------------------
 
         const { data: upsertedPhoto } = await supabase
