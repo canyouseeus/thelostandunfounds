@@ -23,28 +23,29 @@ async function existsInSupabase(filename: string): Promise<boolean> {
     }
 }
 
-/** Uploads a blob to Supabase storage using the anon key */
-async function uploadToSupabase(filename: string, blob: Blob): Promise<string | null> {
-    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+/**
+ * Uploads a processed PNG blob via the server-side API route so that the
+ * Supabase service-role key is never exposed to the browser.
+ */
+async function uploadViaApi(filename: string, blob: Blob): Promise<string | null> {
     try {
-        const res = await fetch(
-            `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${filename}`,
-            {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${anonKey}`,
-                    'Content-Type': 'image/png',
-                    'x-upsert': 'false',
-                },
-                body: blob,
-            }
-        );
-        if (res.ok) return supabasePublicUrl(filename);
+        const res = await fetch('/api/upload-processed-image', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/octet-stream',
+                'x-filename': filename,
+            },
+            body: blob,
+        });
+        if (res.ok) {
+            const data = await res.json();
+            return data.url ?? null;
+        }
         const body = await res.text().catch(() => '');
-        console.warn('Supabase upload failed', res.status, body);
+        console.warn('Upload API failed', res.status, body);
         return null;
     } catch (e) {
-        console.warn('Supabase upload error', e);
+        console.warn('Upload API error', e);
         return null;
     }
 }
@@ -70,7 +71,7 @@ function enqueue(task: () => Promise<void>): Promise<void> {
  * Cache hierarchy:
  *   1. localStorage (instant — same browser)
  *   2. Supabase storage (shared across ALL visitors — processed once, instant forever)
- *   3. Process in browser via @imgly/background-removal, then upload to Supabase
+ *   3. Process in browser via @imgly/background-removal, then upload via API
  *
  * onComplete(wasNew) fires when settled:
  *   wasNew = true  → image was freshly processed by AI this session
@@ -147,7 +148,7 @@ export function useBackgroundRemoval(
                     });
                     if (cancelled) return;
 
-                    const uploadedUrl = await uploadToSupabase(filename, blob);
+                    const uploadedUrl = await uploadViaApi(filename, blob);
                     if (cancelled) return;
 
                     if (uploadedUrl) {
