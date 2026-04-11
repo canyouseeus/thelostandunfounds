@@ -207,12 +207,20 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 validOrders = [];
             }
 
-            // 3. Get Recent Photos (Sorted by created_at to show newest uploads)
-            const { data: recentPhotos, error: photosError } = await supabase
+            // 3. Get Recent Photos (Sorted by capture date to show most recently taken photos)
+            // Fetch a pool of recent candidates, then sort client-side by metadata.date_taken
+            const { data: recentPhotosRaw, error: photosError } = await supabase
                 .from('photos')
                 .select('*')
                 .order('created_at', { ascending: false })
-                .limit(3);
+                .limit(100);
+            const recentPhotos = (recentPhotosRaw || [])
+                .sort((a, b) => {
+                    const aDate = a.metadata?.date_taken || a.created_at || '';
+                    const bDate = b.metadata?.date_taken || b.created_at || '';
+                    return bDate.localeCompare(aDate);
+                })
+                .slice(0, 3);
 
             if (photosError) console.error('Error fetching recent photos:', photosError);
 
