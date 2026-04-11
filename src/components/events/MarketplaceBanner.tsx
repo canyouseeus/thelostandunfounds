@@ -66,12 +66,12 @@ export default function MarketplaceBanner({ surface, noMargin }: MarketplaceBann
             <div className={`w-full bg-black relative overflow-hidden group${noMargin ? '' : ' mb-12'}`}>
                 <Link
                     to="/advertise"
-                    className="relative block w-full py-6 px-4 md:px-8 transition-all hover:bg-white/[0.02]"
+                    className="relative block w-full py-4 px-4 md:px-8 transition-all hover:bg-white/[0.02]"
                 >
                     <div className="max-w-7xl mx-auto flex items-center justify-between relative z-10">
                         <div className="text-left">
                             <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30 leading-none mb-2" style={{ textAlign: 'left' }}>Marketplace</p>
-                            <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-tighter leading-none group-hover:tracking-tight transition-all duration-500" style={{ textAlign: 'left' }}>
+                            <h3 className="text-lg md:text-xl font-black text-white uppercase tracking-tighter leading-none group-hover:tracking-tight transition-all duration-500" style={{ textAlign: 'left' }}>
                                 Advertise <span className="text-white/40 font-light">With Us</span>
                             </h3>
                         </div>

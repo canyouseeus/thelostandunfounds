@@ -628,7 +628,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             {/* Sticky Toolbar - Full Width, Plain Black Bar */}
             <div
                 ref={toolbarRef}
-                className="sticky z-[100] bg-black w-full py-4 mb-8"
+                className="sticky z-[100] bg-black w-full py-3 mb-6"
                 style={{ top: 'var(--nav-height, 64px)' }}
             >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center gap-4">

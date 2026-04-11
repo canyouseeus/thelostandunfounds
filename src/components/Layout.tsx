@@ -229,15 +229,12 @@ export default function Layout({ children }: { children?: ReactNode }) {
           <div className="w-full px-4 sm:px-6 lg:px-8">
             {/* Top row */}
             <div
-              className="relative flex items-center pt-4 pb-10 gap-4 flex-nowrap"
+              className="relative flex items-center pt-3 pb-7 gap-4 flex-nowrap"
               style={{
                 opacity: homeHeaderReady ? 1 : 0,
                 pointerEvents: homeHeaderReady ? 'auto' : 'none',
                 transition: 'opacity 0.6s ease-in-out',
-                // Ensure row is always tall enough for the 84px logo + padding.
-                // Without this, an empty flex row (visitor, no hamburger) collapses
-                // to padding-only height and the absolutely-positioned logo overflows above it.
-                minHeight: '110px',
+                minHeight: '84px',
               }}
             >
               {/* Persistent back button — shown in nav whenever a gallery is open */}
@@ -261,7 +258,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
                 <img
                   src="/logo.png"
                   alt="THE LOST+UNFOUNDS"
-                  style={{ height: userIsAdmin ? '84px' : '112px', width: 'auto', display: 'block' }}
+                  style={{ height: userIsAdmin ? '63px' : '84px', width: 'auto', display: 'block' }}
                 />
               </Link>
               {userIsAdmin && (
