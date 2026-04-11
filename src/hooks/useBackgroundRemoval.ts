@@ -5,7 +5,10 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 
 /** Stable filename derived from the original image URL */
 function toFilename(url: string): string {
-    return btoa(url).replace(/[^a-zA-Z0-9]/g, '').slice(0, 80) + '.png';
+    // encodeURIComponent first so btoa handles any Unicode characters.
+    // Do NOT truncate — Fourthwall URLs share a long common prefix that pushes
+    // the product-specific UUID past the 80-char mark, causing collisions.
+    return btoa(encodeURIComponent(url)).replace(/[^a-zA-Z0-9]/g, '') + '.png';
 }
 
 /** Public URL in Supabase storage for a given filename */
@@ -89,7 +92,7 @@ export function useBackgroundRemoval(
         if (!imageUrl) return;
 
         const filename = toFilename(imageUrl);
-        const localKey = 'bgr_v2_' + filename;
+        const localKey = 'bgr_v3_' + filename;
         let cancelled = false;
 
         async function run() {
