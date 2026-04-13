@@ -1,6 +1,104 @@
 import React, { useState, useEffect } from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { pollStrikeInvoiceStatus } from '../../utils/checkout-utils';
+
+const WALLETS = [
+  {
+    name: 'Strike',
+    description: 'Easiest for beginners. Buy with a bank account or card.',
+    ios: 'https://apps.apple.com/us/app/strike-bitcoin-payments/id1304396990',
+    android: 'https://play.google.com/store/apps/details?id=zap.org',
+    web: 'https://strike.me',
+  },
+  {
+    name: 'Cash App',
+    description: 'Already have Cash App? Enable Bitcoin and Lightning in settings.',
+    ios: 'https://apps.apple.com/us/app/cash-app/id711923939',
+    android: 'https://play.google.com/store/apps/details?id=com.squareup.cash',
+    web: 'https://cash.app',
+  },
+  {
+    name: 'Muun',
+    description: 'Self-custody wallet. No account required.',
+    ios: 'https://apps.apple.com/us/app/muun-wallet/id1482037683',
+    android: 'https://play.google.com/store/apps/details?id=io.muun.apollo',
+    web: 'https://muun.com',
+  },
+  {
+    name: 'Phoenix',
+    description: 'Non-custodial Lightning wallet for advanced users.',
+    ios: 'https://apps.apple.com/us/app/phoenix-wallet/id1544097028',
+    android: 'https://play.google.com/store/apps/details?id=fr.acinq.phoenix.mainnet',
+    web: 'https://phoenix.acinq.co',
+  },
+];
+
+function BitcoinInfoSection() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="border border-white/10 rounded-none">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-4 py-3 text-white/50 hover:text-white/80 transition-colors text-sm"
+      >
+        <span>New to Bitcoin Lightning? How to pay</span>
+        {open ? <ChevronUpIcon className="w-4 h-4 flex-shrink-0" /> : <ChevronDownIcon className="w-4 h-4 flex-shrink-0" />}
+      </button>
+
+      {open && (
+        <div className="px-4 pb-4 space-y-4 text-white/70 text-sm">
+          <ol className="space-y-3 list-none">
+            <li className="flex gap-3">
+              <span className="text-yellow-400 font-bold flex-shrink-0">1.</span>
+              <div>
+                <p className="font-semibold text-white/90">Get a Lightning wallet</p>
+                <p className="text-white/50 text-xs mt-0.5">Download any of these free apps on your phone:</p>
+              </div>
+            </li>
+          </ol>
+
+          <div className="space-y-2 pl-5">
+            {WALLETS.map((w) => (
+              <div key={w.name} className="bg-white/5 px-3 py-2 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-white/90">{w.name}</span>
+                  <div className="flex gap-2 text-xs">
+                    <a href={w.ios} target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-white/80 underline">iOS</a>
+                    <a href={w.android} target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-white/80 underline">Android</a>
+                    <a href={w.web} target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-white/80 underline">Web</a>
+                  </div>
+                </div>
+                <p className="text-white/40 text-xs">{w.description}</p>
+              </div>
+            ))}
+          </div>
+
+          <ol className="space-y-3 list-none">
+            <li className="flex gap-3">
+              <span className="text-yellow-400 font-bold flex-shrink-0">2.</span>
+              <div>
+                <p className="font-semibold text-white/90">Add funds</p>
+                <p className="text-white/50 text-xs mt-0.5">Buy Bitcoin inside the app using a debit card or bank transfer. Strike and Cash App make this easiest.</p>
+              </div>
+            </li>
+            <li className="flex gap-3">
+              <span className="text-yellow-400 font-bold flex-shrink-0">3.</span>
+              <div>
+                <p className="font-semibold text-white/90">Scan or paste to pay</p>
+                <p className="text-white/50 text-xs mt-0.5">Point your wallet's camera at the QR code above, or tap <span className="text-white/70">"Send"</span> and paste the invoice string. The exact dollar amount is pre-set — no math needed.</p>
+              </div>
+            </li>
+          </ol>
+
+          <p className="text-white/30 text-xs border-t border-white/10 pt-3">
+            Bitcoin Lightning is instant and has near-zero fees. Your payment is final once confirmed.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 /**
  * Lightning Payment Modal
@@ -104,7 +202,7 @@ export function LightningPaymentModal({
         onClick={onClose}
       />
       <div
-        className="relative bg-black border border-white rounded-none shadow-2xl max-w-md w-full overflow-hidden"
+        className="relative bg-black border border-white rounded-none shadow-2xl max-w-md w-full overflow-y-auto max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -138,6 +236,8 @@ export function LightningPaymentModal({
               <p className="text-center text-white/50 text-xs">
                 Scan with Strike, Cash App, Muun, Phoenix, or any Lightning wallet
               </p>
+
+              <BitcoinInfoSection />
 
               <div className="space-y-2">
                 <div className="flex items-stretch gap-2">
