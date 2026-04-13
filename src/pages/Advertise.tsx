@@ -27,7 +27,7 @@ export default function Advertise() {
         },
         {
             title: "Synchronized Slots",
-            description: "Campaigns rotate on synchronized 8-second global intervals. Every visitor on the site sees the same slot at the same time — no impression is wasted.",
+            description: "The banner cycles through active campaigns on a fixed 8-second clock — shared across every visitor at once. When your slot is live, every person on the site sees your campaign simultaneously. No random distribution, no missed impressions.",
         },
         {
             title: "Homepage Priority",
@@ -132,7 +132,7 @@ export default function Advertise() {
                                 Our banner sits at the very top of the page — pinned above the navigation bar in a fixed position. Visitors see your campaign the instant they arrive, before they interact with a single element.
                             </p>
                             <p className="text-black/60 leading-relaxed font-light text-sm md:text-base">
-                                Campaigns are delivered on a synchronized 8-second rotation. Multiple brands can run concurrently, sharing slots across the global audience without cannibalizing each other's visibility.
+                                Think of it like a TV broadcast schedule — not an ad auction. Every 8 seconds the banner advances to the next active campaign, in sync for every visitor on the site. If three brands are running, each gets an equal, predictable share of the rotation. Your slot is guaranteed, not competed for.
                             </p>
                         </div>
                         <div className="space-y-0">
