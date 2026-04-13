@@ -46,7 +46,7 @@ export const NoirDateRangePicker: React.FC<NoirDateRangePickerProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90">
             {/* Backdrop click handler */}
             <div className="absolute inset-0" onClick={onClose} />
 

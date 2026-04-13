@@ -1,13 +1,25 @@
+import { useState, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion';
 import {
   MegaphoneIcon,
   ArrowRightIcon,
-  ChatBubbleBottomCenterTextIcon
+  CheckCircleIcon,
+  PaperAirplaneIcon,
 } from '@heroicons/react/24/outline';
-import { Link } from 'react-router-dom';
 
 export default function Advertise() {
+    const formRef = useRef<HTMLDivElement>(null);
+
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        brand: '',
+        message: '',
+    });
+    const [loading, setLoading] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
+
     const placements = [
         {
             title: "Above the Fold",
@@ -22,6 +34,31 @@ export default function Advertise() {
             description: "The banner lives on the visitor homepage — the gallery and shop every visitor lands on. Prime real estate with maximum dwell time.",
         }
     ];
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+
+        try {
+            // TODO: wire up to backend / email endpoint
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            setSubmitted(true);
+            setFormData({ name: '', email: '', brand: '', message: '' });
+        } catch {
+            // handle error
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const scrollToForm = () => {
+        formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    const inputClass =
+        "w-full px-4 py-3 bg-black border border-white/20 text-white placeholder-white/25 focus:outline-none focus:border-white transition-colors text-sm font-mono uppercase tracking-wider";
+    const labelClass =
+        "block text-[10px] font-black uppercase tracking-[0.4em] text-white/40 mb-2";
 
     return (
         <div className="min-h-screen bg-black text-white overflow-x-hidden">
@@ -46,13 +83,13 @@ export default function Advertise() {
                             Your brand. Above the navigation. First impression, every visit.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                            <a
-                                href="mailto:media@thelostandunfounds.com"
-                                className="w-full sm:w-auto px-8 py-4 bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-zinc-200 transition-all flex items-center justify-center gap-3"
+                            <button
+                                onClick={scrollToForm}
+                                className="w-full sm:w-auto px-8 py-4 bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-zinc-200 transition-all flex items-center justify-center gap-3 whitespace-nowrap"
                             >
-                                Contact Us
-                                <ArrowRightIcon className="w-4 h-4" />
-                            </a>
+                                Get In Touch
+                                <ArrowRightIcon className="w-4 h-4 shrink-0" />
+                            </button>
                         </div>
                     </motion.div>
                 </div>
@@ -115,23 +152,105 @@ export default function Advertise() {
                 </div>
             </section>
 
-            {/* CTA */}
-            <section className="py-20 md:py-32">
-                <div className="max-w-3xl mx-auto px-6 text-center">
-                    <MegaphoneIcon className="w-12 h-12 md:w-16 md:h-16 text-white/10 mx-auto mb-10" />
-                    <h2 className="text-[clamp(2rem,8vw,4rem)] font-black uppercase tracking-tighter mb-6 leading-none">
-                        Secure your <br /> placement
-                    </h2>
-                    <p className="text-white/40 mb-10 text-base font-light">
-                        Reach out to discuss rates, availability, and campaign specs.
-                    </p>
-                    <a
-                        href="mailto:media@thelostandunfounds.com"
-                        className="inline-flex items-center justify-center gap-3 w-full sm:w-auto px-8 py-5 bg-white text-black font-black uppercase tracking-[0.15em] text-xs hover:bg-zinc-200 transition-colors break-all sm:break-normal"
-                    >
-                        media@thelostandunfounds.com
-                        <ChatBubbleBottomCenterTextIcon className="w-5 h-5 shrink-0" />
-                    </a>
+            {/* Contact Form CTA */}
+            <section ref={formRef} className="py-20 md:py-32">
+                <div className="max-w-xl mx-auto px-6">
+                    <div className="text-center mb-12">
+                        <MegaphoneIcon className="w-12 h-12 md:w-16 md:h-16 text-white/10 mx-auto mb-10" />
+                        <h2 className="text-[clamp(2rem,8vw,4rem)] font-black uppercase tracking-tighter mb-4 leading-none">
+                            Secure your <br /> placement
+                        </h2>
+                        <p className="text-white/40 text-base font-light">
+                            Reach out to discuss rates, availability, and campaign specs.
+                        </p>
+                    </div>
+
+                    {submitted ? (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-center py-12 border border-white/10 px-8"
+                        >
+                            <CheckCircleIcon className="w-12 h-12 text-white/60 mx-auto mb-6" />
+                            <h3 className="text-xl font-black uppercase tracking-tight mb-3">Inquiry Received</h3>
+                            <p className="text-white/40 text-sm font-light mb-8">
+                                We'll be in touch shortly to discuss your campaign.
+                            </p>
+                            <button
+                                onClick={() => setSubmitted(false)}
+                                className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 hover:text-white transition-colors"
+                            >
+                                Submit Another
+                            </button>
+                        </motion.div>
+                    ) : (
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                            <div>
+                                <label htmlFor="adv-name" className={labelClass}>Name</label>
+                                <input
+                                    id="adv-name"
+                                    type="text"
+                                    required
+                                    placeholder="Your name"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    className={inputClass}
+                                />
+                            </div>
+
+                            <div>
+                                <label htmlFor="adv-email" className={labelClass}>Email</label>
+                                <input
+                                    id="adv-email"
+                                    type="email"
+                                    required
+                                    placeholder="your@email.com"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    className={inputClass}
+                                />
+                            </div>
+
+                            <div>
+                                <label htmlFor="adv-brand" className={labelClass}>Brand / Company</label>
+                                <input
+                                    id="adv-brand"
+                                    type="text"
+                                    required
+                                    placeholder="Your brand or company"
+                                    value={formData.brand}
+                                    onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                                    className={inputClass}
+                                />
+                            </div>
+
+                            <div>
+                                <label htmlFor="adv-message" className={labelClass}>Campaign Brief</label>
+                                <textarea
+                                    id="adv-message"
+                                    required
+                                    rows={5}
+                                    placeholder="Tell us about your campaign, goals, and timeline..."
+                                    value={formData.message}
+                                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                                    className={`${inputClass} resize-none`}
+                                />
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full px-8 py-4 bg-white text-black font-black uppercase tracking-[0.2em] text-xs hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 whitespace-nowrap"
+                            >
+                                {loading ? 'Sending...' : (
+                                    <>
+                                        Send Inquiry
+                                        <PaperAirplaneIcon className="w-4 h-4 shrink-0" />
+                                    </>
+                                )}
+                            </button>
+                        </form>
+                    )}
                 </div>
             </section>
         </div>
