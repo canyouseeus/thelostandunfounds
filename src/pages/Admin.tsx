@@ -87,6 +87,7 @@ import AdminOverviewView from '../components/admin/AdminOverviewView';
 import { DashboardCharts } from '../components/admin/DashboardCharts';
 import AdminGalleryView from '../components/admin/AdminGalleryView';
 import AdminEventsView from '../components/admin/AdminEventsView';
+import AdminBookingView from '../components/admin/AdminBookingView';
 import { RevenueTracker } from '../components/ui/revenue-tracker';
 import { ClockWidget } from '../components/ui/clock-widget';
 import { CalendarWidget } from '../components/ui/calendar-widget';
@@ -247,6 +248,7 @@ export default function Admin() {
     submissions: false,
     settings: false,
     events: false,
+    bookings: false,
     pricing: false,
   });
 
@@ -311,6 +313,7 @@ export default function Admin() {
       case 'affiliates': ref = affiliatesSectionRef; break;
       case 'submissions': ref = submissionsSectionRef; break;
       case 'events': ref = eventsSectionRef; break;
+      case 'bookings': ref = null; break;
       case 'pricing': ref = pricingSectionRef; break;
       case 'settings':
         key = 'settings';
@@ -1663,6 +1666,7 @@ export default function Admin() {
                 { id: 'affiliates', icon: LinkIcon, title: 'Affiliates' },
                 { id: 'submissions', icon: DocumentTextIcon, title: 'Submissions', badge: pendingSubmissions },
                 { id: 'events', icon: CalendarIcon, title: 'Events' },
+                { id: 'bookings', icon: CalendarIcon, title: 'Bookings' },
                 { id: 'pricing', icon: CurrencyDollarIcon, title: 'Pricing' },
                 { id: 'settings', icon: BoltIcon, title: 'Settings' }
               ].map((app) => (
@@ -1823,6 +1827,22 @@ export default function Admin() {
               </div>
               <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Events</div>}>
                 <AdminEventsView onBack={scrollToTop} />
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* Booking Management Section */}
+          {expandedSections['bookings'] && (
+            <div ref={null} className="animate-in fade-in duration-500">
+              <div className="flex flex-col px-0 py-2 mb-8 items-start">
+                <div className="flex items-center gap-3">
+                  <CalendarIcon className="w-5 h-5 text-white/40" />
+                  <h2 className="text-lg font-black text-white tracking-widest uppercase">Booking Management</h2>
+                </div>
+                <button onClick={() => handleSectionToggle('bookings')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
+              </div>
+              <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Bookings</div>}>
+                <AdminBookingView />
               </ErrorBoundary>
             </div>
           )}

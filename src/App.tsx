@@ -63,6 +63,7 @@ import SubmitEvent from './pages/SubmitEvent'
 import Advertise from './pages/Advertise'
 import PreviewVisitorPage from './pages/PreviewVisitorPage'
 import PreviewAdminLoginPage from './pages/PreviewAdminLoginPage'
+import BookingPage from './pages/BookingPage'
 
 
 
@@ -259,6 +260,10 @@ function App() {
                 <Route index element={<Advertise />} />
               </Route>
               <Route path="/reset-newsletter" element={<ResetNewsletter />} />
+
+              <Route path="/booking" element={<Layout />}>
+                <Route index element={<BookingPage />} />
+              </Route>
 
               {/* Temporary preview routes — remove after gallery-homepage branch ships */}
               <Route path="/preview/visitor" element={<PreviewVisitorPage />} />

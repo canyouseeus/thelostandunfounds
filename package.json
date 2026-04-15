@@ -66,6 +66,7 @@
     "react-router-dom": "*",
     "react-turnstile": "^1.1.4",
     "recharts": "^3.5.1",
+    "sharp": "^0.34.5",
     "tailwind-merge": "^3.4.0"
   },
   "engines": {
