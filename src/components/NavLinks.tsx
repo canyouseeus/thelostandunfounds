@@ -46,6 +46,9 @@ export default function NavLinks({
             <Link to="/events" className="menu-item" onClick={onLinkClick}>
                 EVENTS
             </Link>
+            <Link to="/booking" className="menu-item" onClick={onLinkClick}>
+                BOOK ME
+            </Link>
 
             <div
                 className="menu-item menu-toggle-section flex items-center justify-start w-full gap-0 cursor-pointer"

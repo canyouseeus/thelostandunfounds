@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 // import { google } from 'googleapis'; // Moved to dynamic import to prevent cold start crashes
 import dotenv from 'dotenv';
 import path from 'path';
+import sharp from 'sharp';
 
 // --- INLINED EMAIL TEMPLATE UTILS (to avoid Vercel module resolution path errors) ---
 const BRAND = {
@@ -205,24 +206,72 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 }
 
+async function addWatermark(imageBuffer: Buffer): Promise<Buffer> {
+    const image = sharp(imageBuffer);
+    const { width = 1600, height = 1200 } = await image.metadata();
+
+    const fontSize = Math.max(24, Math.round(Math.min(width, height) * 0.04));
+    const padding = Math.round(fontSize * 0.8);
+    const textWidth = Math.round(fontSize * 7.5); // approx width of "@tlau.photos"
+    const textHeight = Math.round(fontSize * 1.4);
+
+    // SVG watermark: bottom-right corner, semi-transparent
+    const watermarkSvg = `<svg width="${textWidth + padding * 2}" height="${textHeight + padding}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100%" height="100%" fill="rgba(0,0,0,0.35)" rx="4"/>
+      <text
+        x="${padding}"
+        y="${textHeight * 0.82}"
+        font-family="Arial, Helvetica, sans-serif"
+        font-size="${fontSize}"
+        font-weight="bold"
+        fill="rgba(255,255,255,0.75)"
+        letter-spacing="1"
+      >@tlau.photos</text>
+    </svg>`;
+
+    const watermarkBuffer = Buffer.from(watermarkSvg);
+    const wmWidth = textWidth + padding * 2;
+    const wmHeight = textHeight + padding;
+
+    return image
+        .jpeg({ quality: 92 })
+        .composite([{
+            input: watermarkBuffer,
+            gravity: 'southeast',
+            left: width - wmWidth - Math.round(width * 0.015),
+            top: height - wmHeight - Math.round(height * 0.015),
+        }])
+        .toBuffer();
+}
+
 async function handleStream(req: VercelRequest, res: VercelResponse) {
-    const { fileId, size } = req.query;
+    const { fileId, size, download } = req.query;
+    const isDownload = download === 'true';
+
     try {
         if (!fileId) {
             return res.status(400).json({ error: 'Missing fileId' });
         }
 
-        // Try lh3 first (direct link)
-        const lh3Url = `https://lh3.googleusercontent.com/d/${fileId}=s${size || 1600}`;
+        // Try lh3 first (direct link) — use full resolution for downloads
+        const fetchSize = isDownload ? 'w4096-h4096' : (size || 1600);
+        const lh3Url = `https://lh3.googleusercontent.com/d/${fileId}=s${fetchSize}`;
         const response = await fetch(lh3Url);
 
         if (response.ok && response.headers.get('content-type')?.includes('image')) {
+            const rawBuffer = Buffer.from(await response.arrayBuffer());
+
+            if (isDownload) {
+                const watermarked = await addWatermark(rawBuffer);
+                res.setHeader('Content-Type', 'image/jpeg');
+                res.setHeader('Cache-Control', 'no-store');
+                return res.send(watermarked);
+            }
+
             const contentType = response.headers.get('content-type') || 'image/jpeg';
             res.setHeader('Content-Type', contentType);
             res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-
-            const buffer = await response.arrayBuffer();
-            return res.send(Buffer.from(buffer));
+            return res.send(rawBuffer);
         }
 
         console.warn('lh3 stream failed, trying fallback:', {
@@ -236,12 +285,19 @@ async function handleStream(req: VercelRequest, res: VercelResponse) {
         const driveRes = await fetch(driveUrl);
 
         if (driveRes.ok && driveRes.headers.get('content-type')?.includes('image')) {
+            const rawBuffer = Buffer.from(await driveRes.arrayBuffer());
+
+            if (isDownload) {
+                const watermarked = await addWatermark(rawBuffer);
+                res.setHeader('Content-Type', 'image/jpeg');
+                res.setHeader('Cache-Control', 'no-store');
+                return res.send(watermarked);
+            }
+
             const contentType = driveRes.headers.get('content-type') || 'image/jpeg';
             res.setHeader('Content-Type', contentType);
             res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-
-            const buffer = await driveRes.arrayBuffer();
-            return res.send(Buffer.from(buffer));
+            return res.send(rawBuffer);
         }
 
         console.error('All stream methods failed for fileId:', fileId, {

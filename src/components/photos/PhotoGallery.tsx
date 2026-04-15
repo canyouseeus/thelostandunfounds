@@ -1,20 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    CameraIcon,
     Squares2X2Icon,
-    ShoppingBagIcon,
     CheckCircleIcon,
-    ArrowDownTrayIcon,
     EyeIcon,
     CheckIcon,
     LockClosedIcon,
-    LockOpenIcon,
     QueueListIcon,
     StopIcon,
     ArrowUpIcon,
     CalendarIcon,
-    FunnelIcon,
     XMarkIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../../lib/supabase';
@@ -23,9 +18,11 @@ import PhotoLightbox from './PhotoLightbox';
 import SelectionTray from './SelectionTray';
 import Loading from '../Loading';
 import AuthModal from '../auth/AuthModal';
+import TipModal from '../TipModal';
 import { cn } from '../ui/utils';
 import { NoirDateRangePicker } from '../ui/NoirDateRangePicker';
-import { LightningPaymentModal } from '../shop/LightningPaymentModal';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 
 interface Photo {
     id: string;
@@ -273,20 +270,22 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     const [selectedPhotos, setSelectedPhotos] = useState<Photo[]>([]);
     const [activePhotoIndex, setActivePhotoIndex] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
-    const [checkoutLoading, setCheckoutLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<'storefront' | 'assets'>('storefront');
     const [showBackToTop, setShowBackToTop] = useState(false);
     const [viewMode, setViewMode] = useState<'grid' | 'single'>('grid');
     const [authModalOpen, setAuthModalOpen] = useState(false);
     const [authMessage, setAuthMessage] = useState<string | undefined>(undefined);
     const [authTitle, setAuthTitle] = useState<string | undefined>(undefined);
-    const [pendingCheckout, setPendingCheckout] = useState(false);
-    const [lightningPayment, setLightningPayment] = useState<any | null>(null);
-
-    // Guest checkout email modal
+    // Guest email modal (for free download attribution)
     const [guestEmailModalOpen, setGuestEmailModalOpen] = useState(false);
     const [guestEmail, setGuestEmail] = useState('');
     const [guestNewsletterOptIn, setGuestNewsletterOptIn] = useState(true);
+
+    // Tip modal + download progress
+    const [tipModalOpen, setTipModalOpen] = useState(false);
+    const [downloadProgress, setDownloadProgress] = useState(0);
+    const [downloadStatus, setDownloadStatus] = useState('');
+    const [isDownloading, setIsDownloading] = useState(false);
 
 
     const [startDate, setStartDate] = useState<string>('');
@@ -446,53 +445,68 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     };
 
     const handleCheckout = async () => {
-        // If not logged in, show guest email modal instead of forcing auth
-        if (!user) {
-            // Pre-fill with previously used guest email if available
-            const saved = localStorage.getItem('guest_email');
-            if (saved) setGuestEmail(saved);
-            setGuestEmailModalOpen(true);
-            return;
-        }
-        await proceedToCheckout(user.email!);
+        // Show tip modal first, then proceed to free download
+        setTipModalOpen(true);
     };
 
-    const proceedToCheckout = async (email: string) => {
+    const startFreeDownload = async (photos: Photo[]) => {
+        if (!photos.length) return;
+
+        setIsDownloading(true);
+        setDownloadStatus('Preparing download...');
+        setDownloadProgress(5);
+
         try {
-            setCheckoutLoading(true);
-            localStorage.setItem('guest_email', email);
+            const zip = new JSZip();
+            const folder = zip.folder('TLAU_PHOTOS');
 
-            const response = await fetch('/api/photos/checkout', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    photoIds: selectedPhotos.map(p => p.id),
-                    email,
-                    userId: user?.id,
-                    librarySlug
-                })
-            });
+            let completed = 0;
+            const total = photos.length;
 
-            const data = await response.json();
-            if (response.ok && data.invoiceId && data.lnInvoice) {
-                localStorage.removeItem(storageKey);
-                setLightningPayment({
-                    invoiceId: data.invoiceId,
-                    lnInvoice: data.lnInvoice,
-                    expirationInSec: data.expirationInSec,
-                    amount: data.amount || 0,
-                    description: `Photo Download Access (${selectedPhotos.length} photos)`
-                });
-            } else {
-                const errorMessage = data.details || data.message || data.error || 'Unknown error';
-                alert(`Checkout failed: ${errorMessage}`);
-                console.error('Checkout error details:', data);
+            for (const photo of photos) {
+                setDownloadStatus(`Downloading: ${photo.title || 'photo'}...`);
+
+                try {
+                    const response = await fetch(
+                        `/api/gallery/stream?fileId=${photo.google_drive_file_id}&download=true`
+                    );
+
+                    if (!response.ok) {
+                        console.error(`Failed to fetch ${photo.title}`);
+                        continue;
+                    }
+
+                    const blob = await response.blob();
+                    const cleanTitle = (photo.title || 'untitled').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                    folder?.file(`${cleanTitle}_${photo.id.slice(0, 6)}.jpg`, blob);
+                } catch (err) {
+                    console.error(`Error downloading ${photo.id}`, err);
+                }
+
+                completed++;
+                setDownloadProgress(Math.round((completed / total) * 85) + 5);
             }
+
+            setDownloadStatus('Compressing archive...');
+            setDownloadProgress(95);
+            const content = await zip.generateAsync({ type: 'blob' });
+
+            setDownloadStatus('Saving...');
+            saveAs(content, `tlau-photos-${Date.now()}.zip`);
+
+            setDownloadProgress(100);
+            setDownloadStatus('Done!');
+            setTimeout(() => {
+                setIsDownloading(false);
+                setDownloadProgress(0);
+                setDownloadStatus('');
+                setSelectedPhotos([]);
+                localStorage.removeItem(storageKey);
+            }, 2000);
         } catch (err: any) {
-            console.error('Checkout fetch error:', err);
-            alert(`Checkout error: ${err.message || 'Check your connection'}`);
-        } finally {
-            setCheckoutLoading(false);
+            console.error('Free download error:', err);
+            alert('Download failed. Please try again.');
+            setIsDownloading(false);
         }
     };
 
@@ -503,16 +517,22 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
 
         setGuestEmailModalOpen(false);
 
-        // Subscribe to newsletter if opted in
         if (guestNewsletterOptIn) {
             fetch('/api/newsletter/subscribe', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: email.toLowerCase() }),
-            }).catch(() => {}); // fire-and-forget
+            }).catch(() => {});
         }
 
-        await proceedToCheckout(email);
+        // Register free order for asset tracking, then download
+        fetch('/api/photos/free-checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ photoIds: selectedPhotos.map(p => p.id), email }),
+        }).catch(() => {});
+
+        await startFreeDownload(selectedPhotos);
     };
 
     if (loading) {
@@ -578,18 +598,27 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-32">
-                    {/* Left Column: Pricing */}
-                    <div className="space-y-2 max-w-sm">
-                        {pricingOptions.map((option) => (
-                            <div key={option.id} className="flex items-center justify-between group py-2">
-                                <span className={`text-[10px] font-black tracking-[0.2em] uppercase transition-colors ${option.photo_count >= 10 ? 'text-green-400' : 'text-white/40'}`}>
-                                    {option.name} {option.photo_count > 1 && `(${option.photo_count})`}
-                                </span>
-                                <span className={`text-sm font-bold tracking-[0.1em] ${option.photo_count >= 10 ? 'text-green-400' : 'text-white'}`}>
-                                    ${option.price.toFixed(2)}
-                                </span>
-                            </div>
-                        ))}
+                    {/* Left Column: Free badge */}
+                    <div className="space-y-3 max-w-sm">
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10">
+                            <span className="text-[9px] font-black tracking-[0.3em] uppercase text-green-400">
+                                FREE DOWNLOAD
+                            </span>
+                        </div>
+                        <p className="text-white/30 text-[10px] font-bold tracking-widest uppercase leading-relaxed">
+                            All photos are free. Downloads include an{' '}
+                            <span className="text-white/60">@tlau.photos</span>{' '}
+                            watermark — tag us when you post!
+                        </p>
+                        <a
+                            href="https://instagram.com/tlau.photos"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors"
+                        >
+                            <span className="w-1 h-1 rounded-full bg-white/30" />
+                            Follow @tlau.photos on Instagram
+                        </a>
                     </div>
 
                     {/* Right Column: Instructions */}
@@ -597,31 +626,22 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                         <div className="flex items-start gap-4 text-left">
                             <span className="text-[10px] font-black text-white/20 w-4 pt-0.5">01</span>
                             <p className="text-[9px] font-black tracking-[0.2em] uppercase text-white/40 leading-relaxed">
-                                Select frames by clicking the SELECT button.
+                                Select photos using the checkboxes.
                             </p>
                         </div>
                         <div className="flex items-start gap-4 text-left">
                             <span className="text-[10px] font-black text-white/20 w-4 pt-0.5">02</span>
                             <p className="text-[9px] font-black tracking-[0.2em] uppercase text-white/40 leading-relaxed">
-                                Review selection in the vault tray below.
+                                Click "Download Free" in the tray below.
                             </p>
                         </div>
                         <div className="flex items-start gap-4 text-left">
                             <span className="text-[10px] font-black text-white/20 w-4 pt-0.5">03</span>
                             <p className="text-[9px] font-black tracking-[0.2em] uppercase text-white/40 leading-relaxed">
-                                Checkout to receive high-res links via email.
+                                Tag @tlau.photos when you share — and tips are always appreciated!
                             </p>
                         </div>
                     </div>
-
-                    {/* Sandbox Banner - ONLY SHOW IN DEV */}
-                    {typeof process !== 'undefined' && process.env.NODE_ENV !== 'production' && (
-                        <div className="mt-4 bg-white/[0.02] py-5 text-center">
-                            <span className="text-[9px] font-black tracking-[0.8em] uppercase text-white/10">
-                                [ SANDBOX MODE ENABLED ] - NO REAL CURRENCY WILL BE CHARGED
-                            </span>
-                        </div>
-                    )}
                 </div>
             </div>
 
@@ -887,12 +907,40 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 )
             }
 
+            {/* Download Progress Overlay */}
+            <AnimatePresence>
+                {isDownloading && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/90 backdrop-blur-sm"
+                    >
+                        <div className="w-full max-w-sm px-8 space-y-4 text-center">
+                            <p className="text-xs font-black uppercase tracking-[0.3em] text-white/60">
+                                Downloading
+                            </p>
+                            <div className="h-1 bg-white/10 w-full overflow-hidden">
+                                <motion.div
+                                    className="h-full bg-white"
+                                    animate={{ width: `${downloadProgress}%` }}
+                                    transition={{ duration: 0.3 }}
+                                />
+                            </div>
+                            <p className="text-[10px] text-white/40 uppercase tracking-widest animate-pulse">
+                                {downloadStatus}
+                            </p>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Tray */}
             <SelectionTray
                 selectedPhotos={selectedPhotos}
                 onRemove={(id) => setSelectedPhotos(prev => prev.filter(p => p.id !== id))}
                 onCheckout={handleCheckout}
-                loading={checkoutLoading}
+                loading={isDownloading}
                 pricingOptions={pricingOptions}
             />
 
@@ -924,16 +972,16 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                             </button>
 
                             <h2 className="text-[13px] font-black uppercase tracking-[0.25em] text-white mb-2">
-                                Where to send your photos
+                                Quick — before you download
                             </h2>
                             <p className="text-white/40 text-[11px] leading-relaxed mb-6">
-                                We'll email your download links here after payment.
+                                Drop your email to save your downloads to your account, or skip and download now.
                             </p>
 
                             <form onSubmit={handleGuestEmailSubmit} className="space-y-4">
                                 <div>
                                     <label htmlFor="guest-email" className="block text-[10px] font-black uppercase tracking-widest text-white/50 mb-2">
-                                        Email
+                                        Email (optional)
                                     </label>
                                     <input
                                         id="guest-email"
@@ -944,7 +992,6 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                         placeholder="your@email.com"
                                         value={guestEmail}
                                         onChange={(e) => setGuestEmail(e.target.value)}
-                                        required
                                         className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/20 text-sm focus:outline-none focus:border-white/40 transition-colors"
                                     />
                                 </div>
@@ -962,7 +1009,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                         </div>
                                     </div>
                                     <span className="text-[10px] text-white/40 group-hover:text-white/60 transition-colors leading-relaxed">
-                                        Subscribe to updates and exclusive drops
+                                        Subscribe to updates and new drops
                                     </span>
                                 </label>
 
@@ -970,25 +1017,19 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                     type="submit"
                                     className="w-full py-3 bg-white text-black text-[11px] font-black uppercase tracking-[0.2em] hover:bg-white/90 transition-colors"
                                 >
-                                    Continue to Checkout
+                                    Download Free
                                 </button>
 
-                                <p className="text-center text-[10px] text-white/25">
-                                    Already have an account?{' '}
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setGuestEmailModalOpen(false);
-                                            setAuthTitle(undefined);
-                                            setAuthMessage(undefined);
-                                            setAuthModalOpen(true);
-                                        }}
-                                        className="text-white/50 hover:text-white underline transition-colors"
-                                    >
-                                        Sign in
-                                    </button>{' '}
-                                    to save to your asset library.
-                                </p>
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        setGuestEmailModalOpen(false);
+                                        await startFreeDownload(selectedPhotos);
+                                    }}
+                                    className="w-full text-[10px] text-white/25 hover:text-white/50 uppercase tracking-widest transition-colors"
+                                >
+                                    Skip — just download
+                                </button>
                             </form>
                         </motion.div>
                     </motion.div>
@@ -1022,17 +1063,22 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 )}
             </AnimatePresence>
 
-            {/* Lightning Payment Modal */}
-            {lightningPayment && (
-                <LightningPaymentModal
-                    invoiceId={lightningPayment.invoiceId}
-                    lnInvoice={lightningPayment.lnInvoice}
-                    expirationInSec={lightningPayment.expirationInSec}
-                    amount={lightningPayment.amount}
-                    description={lightningPayment.description}
-                    onClose={() => setLightningPayment(null)}
-                />
-            )}
+            {/* Tip Modal */}
+            <TipModal
+                isOpen={tipModalOpen}
+                onClose={() => {
+                    setTipModalOpen(false);
+                    // After tip modal dismissed, check if email needed then start download
+                    const email = user?.email || localStorage.getItem('guest_email');
+                    if (!email) {
+                        const saved = localStorage.getItem('guest_email');
+                        if (saved) setGuestEmail(saved);
+                        setGuestEmailModalOpen(true);
+                    } else {
+                        startFreeDownload(selectedPhotos);
+                    }
+                }}
+            />
         </div>
     );
 };

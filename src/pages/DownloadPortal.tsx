@@ -5,7 +5,6 @@ import {
     ArrowDownTrayIcon,
     CheckIcon,
     ExclamationCircleIcon,
-    ExclamationTriangleIcon,
     ArrowLeftIcon,
     XMarkIcon
 } from '@heroicons/react/24/outline';
@@ -16,6 +15,7 @@ import { supabase } from '../lib/supabase';
 import SEOHead from '../components/SEOHead';
 import { useAuth } from '../contexts/AuthContext';
 import AuthModal from '../components/auth/AuthModal';
+import TipModal from '../components/TipModal';
 
 const DownloadPortal: React.FC = () => {
     const { orderId } = useParams<{ orderId: string }>();
@@ -35,6 +35,7 @@ const DownloadPortal: React.FC = () => {
     const [downloadComplete, setDownloadComplete] = useState(false);
     const [vaultPromptDismissed, setVaultPromptDismissed] = useState(false);
     const [authModalOpen, setAuthModalOpen] = useState(false);
+    const [tipModalOpen, setTipModalOpen] = useState(false);
 
     // Verify order and fetch photos
     const handleVerify = async (e: React.FormEvent) => {
@@ -100,11 +101,10 @@ const DownloadPortal: React.FC = () => {
                     let response;
 
                     if (photo.storage_path && photo.thumbnail_url) {
-                        // Direct Storage Download
+                        // Direct Storage Download (no Drive file — skip watermark path)
                         response = await fetch(photo.thumbnail_url);
                     } else {
-                        // Google Drive Proxy Download
-                        // Use the local proxy stream to get the blob directly (bypassing CORS and Google's redirect issues)
+                        // Google Drive Proxy Download — watermark applied server-side
                         response = await fetch(`/api/gallery/stream?fileId=${photo.google_drive_file_id}&download=true`);
                     }
 
@@ -141,6 +141,7 @@ const DownloadPortal: React.FC = () => {
                 setProgress(0);
                 setStatus('');
                 setDownloadComplete(true);
+                setTipModalOpen(true);
             }, 3000);
 
         } catch (err: any) {
@@ -298,6 +299,8 @@ const DownloadPortal: React.FC = () => {
                 <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
             </motion.div>
         </div>
+
+        <TipModal isOpen={tipModalOpen} onClose={() => setTipModalOpen(false)} />
         </>
     );
 };
