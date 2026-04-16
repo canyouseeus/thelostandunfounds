@@ -20,19 +20,19 @@ export default function Advertise() {
     const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
 
-    const placements = [
+    const howItWorks = [
         {
             title: "Above the Fold",
-            description: "Your campaign runs at the very top of the page — above the navigation bar. The first thing every visitor sees, before anything else loads.",
+            description: "Your campaign runs pinned above the navigation bar — the very first thing every visitor sees when they land on the site, before they scroll or click anything.",
         },
         {
-            title: "Synchronized Slots",
-            description: "The banner cycles through active campaigns on a fixed 8-second clock — shared across every visitor at once. When your slot is live, every person on the site sees your campaign simultaneously. No random distribution, no missed impressions.",
+            title: "One Slot = 8 Seconds",
+            description: "The banner runs on a global 8-second clock. Each tick is a \"slot.\" Your campaign fills the banner for the full duration of every slot you own. The clock is shared — when your slot is live, every visitor on the site sees it at the same moment.",
         },
         {
-            title: "Homepage Priority",
-            description: "The banner lives on the visitor homepage — the gallery and shop every visitor lands on. Prime real estate with maximum dwell time.",
-        }
+            title: "Idle Bonus",
+            description: "When your last slot ends and no new campaign has started, your banner keeps running in idle until another brand takes over. You're never cut off cold — and you get a renewal offer before that window closes.",
+        },
     ];
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -68,7 +68,7 @@ export default function Advertise() {
                 <link rel="canonical" href="https://www.thelostandunfounds.com/advertise" />
             </Helmet>
 
-            {/* Hero Section */}
+            {/* Hero */}
             <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
                 <div className="relative z-10 w-full max-w-5xl mx-auto px-6 text-center">
                     <motion.div
@@ -82,15 +82,13 @@ export default function Advertise() {
                         <p className="text-base md:text-2xl font-light text-white/50 max-w-2xl mx-auto mb-10">
                             Your brand. Above the navigation. First impression, every visit.
                         </p>
-                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                            <button
-                                onClick={scrollToForm}
-                                className="w-full sm:w-auto px-8 py-4 bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-zinc-200 transition-all flex items-center justify-center gap-3 whitespace-nowrap"
-                            >
-                                Get In Touch
-                                <ArrowRightIcon className="w-4 h-4 shrink-0" />
-                            </button>
-                        </div>
+                        <button
+                            onClick={scrollToForm}
+                            className="w-full sm:w-auto px-8 py-4 bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-zinc-200 transition-all inline-flex items-center justify-center gap-3 whitespace-nowrap"
+                        >
+                            Get In Touch
+                            <ArrowRightIcon className="w-4 h-4 shrink-0" />
+                        </button>
                     </motion.div>
                 </div>
             </section>
@@ -100,13 +98,13 @@ export default function Advertise() {
                 <div className="max-w-7xl mx-auto px-6 md:px-8">
                     <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/20 mb-12 text-center">How It Works</p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-12">
-                        {placements.map((item, i) => (
+                        {howItWorks.map((item, i) => (
                             <motion.div
                                 key={item.title}
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 transition={{ delay: i * 0.1 }}
-                                className="p-6 md:p-8 border border-white/10 hover:border-white/30 transition-colors group"
+                                className="p-6 md:p-8 border border-white/10 hover:border-white/30 transition-colors"
                             >
                                 <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30 mb-4">0{i + 1}</p>
                                 <h3 className="text-lg md:text-xl font-black uppercase tracking-tight mb-3">{item.title}</h3>
@@ -115,6 +113,90 @@ export default function Advertise() {
                                 </p>
                             </motion.div>
                         ))}
+                    </div>
+
+                    {/* Slots math callout */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        className="mt-10 border border-white/10 px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+                    >
+                        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30 shrink-0">Slots at a Glance</p>
+                        <div className="flex flex-wrap gap-x-8 gap-y-2">
+                            {[
+                                { slots: '1 slot', time: '8 seconds' },
+                                { slots: '100 slots', time: '~13 minutes' },
+                                { slots: '450 slots', time: '~1 hour' },
+                                { slots: '10,800 slots', time: '~1 day' },
+                            ].map(({ slots, time }) => (
+                                <div key={slots} className="flex items-baseline gap-2">
+                                    <span className="text-sm font-black text-white uppercase tracking-tight">{slots}</span>
+                                    <span className="text-[10px] text-white/30 font-mono">=</span>
+                                    <span className="text-sm text-white/50 font-light">{time}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </motion.div>
+                </div>
+            </section>
+
+            {/* Two Tiers */}
+            <section className="py-16 md:py-24 border-t border-white/10">
+                <div className="max-w-5xl mx-auto px-6 md:px-8">
+                    <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/20 mb-12 text-center">Two Ways to Run</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-white/10">
+
+                        {/* Public Slots */}
+                        <div className="p-8 md:p-10 border-b md:border-b-0 md:border-r border-white/10">
+                            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30 mb-6">Public Queue</p>
+                            <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter leading-none mb-6">
+                                Buy Slots,<br />Own the Clock
+                            </h3>
+                            <ul className="space-y-4 text-sm text-white/50 font-light leading-relaxed">
+                                <li className="flex gap-3">
+                                    <span className="text-white/20 shrink-0 mt-0.5">—</span>
+                                    Purchase individual 8-second slots. Each slot you own is a guaranteed moment of exclusive airtime.
+                                </li>
+                                <li className="flex gap-3">
+                                    <span className="text-white/20 shrink-0 mt-0.5">—</span>
+                                    Multiple brands can each hold different slots and cycle in sequence — no one shares a slot, no impressions are split.
+                                </li>
+                                <li className="flex gap-3">
+                                    <span className="text-white/20 shrink-0 mt-0.5">—</span>
+                                    When your last slot passes and no new campaign takes over, your banner continues in <span className="text-white/70">idle mode</span> — still live, still visible — until another brand purchases the next slot.
+                                </li>
+                                <li className="flex gap-3">
+                                    <span className="text-white/20 shrink-0 mt-0.5">—</span>
+                                    Runs on the gallery, shop, and blog surfaces.
+                                </li>
+                            </ul>
+                        </div>
+
+                        {/* Enterprise */}
+                        <div className="p-8 md:p-10">
+                            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30 mb-6">Enterprise</p>
+                            <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter leading-none mb-6">
+                                Reserve a<br />Time Block
+                            </h3>
+                            <ul className="space-y-4 text-sm text-white/50 font-light leading-relaxed">
+                                <li className="flex gap-3">
+                                    <span className="text-white/20 shrink-0 mt-0.5">—</span>
+                                    Reserve a continuous window — hours, days, or longer. Your campaign holds the banner for the entire duration without rotation.
+                                </li>
+                                <li className="flex gap-3">
+                                    <span className="text-white/20 shrink-0 mt-0.5">—</span>
+                                    Enterprise reservations override all public slots. While your block is active, no other campaign appears — on any surface you've reserved.
+                                </li>
+                                <li className="flex gap-3">
+                                    <span className="text-white/20 shrink-0 mt-0.5">—</span>
+                                    Target one surface (gallery, shop, or blog) or all three simultaneously.
+                                </li>
+                                <li className="flex gap-3">
+                                    <span className="text-white/20 shrink-0 mt-0.5">—</span>
+                                    Rates and availability discussed directly. Contact us to reserve.
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -129,18 +211,19 @@ export default function Advertise() {
                                 Above Everything
                             </h2>
                             <p className="text-black/60 leading-relaxed mb-4 font-light text-sm md:text-base">
-                                Our banner sits at the very top of the page — pinned above the navigation bar in a fixed position. Visitors see your campaign the instant they arrive, before they interact with a single element.
+                                The banner is pinned above the navigation bar in a fixed position. Visitors see your campaign the instant they arrive — before they scroll, before they search, before they interact with anything.
                             </p>
                             <p className="text-black/60 leading-relaxed font-light text-sm md:text-base">
-                                Think of it like a TV broadcast schedule — not an ad auction. Every 8 seconds the banner advances to the next active campaign, in sync for every visitor on the site. If three brands are running, each gets an equal, predictable share of the rotation. Your slot is guaranteed, not competed for.
+                                The 8-second clock is synchronized globally, not per-user. There is no randomization — when the slot ticks over, every person on the site sees the transition at the same moment. If you own the next slot, you own the next moment for every visitor simultaneously.
                             </p>
                         </div>
                         <div className="space-y-0">
                             {[
                                 { label: 'Position', value: 'Above the Navigation Bar' },
-                                { label: 'Rotation', value: '8-Second Global Slots' },
-                                { label: 'Surface', value: 'Visitor Homepage' },
+                                { label: 'Slot Duration', value: '8 Seconds Per Slot' },
+                                { label: 'Surfaces', value: 'Gallery, Shop & Blog' },
                                 { label: 'Audience', value: 'Photographers & Creatives' },
+                                { label: 'Minimum', value: 'Discussed on Inquiry' },
                             ].map(({ label, value }) => (
                                 <div key={label} className="border-t border-black/10 py-4">
                                     <p className="text-[10px] font-black uppercase tracking-[0.4em] text-black/30 mb-1">{label}</p>
@@ -152,7 +235,7 @@ export default function Advertise() {
                 </div>
             </section>
 
-            {/* Contact Form CTA */}
+            {/* Contact Form */}
             <section ref={formRef} className="py-20 md:py-32">
                 <div className="max-w-xl mx-auto px-6">
                     <div className="text-center mb-12">
@@ -161,7 +244,7 @@ export default function Advertise() {
                             Secure your <br /> placement
                         </h2>
                         <p className="text-white/40 text-base font-light">
-                            Reach out to discuss rates, availability, and campaign specs.
+                            Reach out to discuss rates, slot counts, and availability.
                         </p>
                     </div>
 
