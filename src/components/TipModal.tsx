@@ -7,8 +7,23 @@ interface TipModalProps {
     onClose: () => void;
 }
 
-const VENMO_URL = 'https://venmo.com/u/thelostandunfounds';
-const CASHAPP_URL = 'https://cash.app/$ILLKID24';
+const TIPS = [
+    {
+        label: 'Venmo',
+        handle: '@thelostandunfounds',
+        url: 'https://venmo.com/u/thelostandunfounds',
+    },
+    {
+        label: 'Cash App',
+        handle: '$ILLKID24',
+        url: 'https://cash.app/$ILLKID24',
+    },
+    {
+        label: 'Bitcoin',
+        handle: 'bc1q…tip',
+        url: 'bitcoin:bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+    },
+];
 
 const TipModal: React.FC<TipModalProps> = ({ isOpen, onClose }) => {
     return (
@@ -26,60 +41,56 @@ const TipModal: React.FC<TipModalProps> = ({ isOpen, onClose }) => {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20, scale: 0.97 }}
                         transition={{ duration: 0.2 }}
-                        className="relative bg-black border border-white/20 w-full max-w-sm p-8"
+                        className="relative bg-black border border-white/10 w-full max-w-sm p-8"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <button
                             onClick={onClose}
-                            className="absolute top-4 right-4 text-white/40 hover:text-white transition-colors"
+                            className="absolute top-4 right-4 text-white/30 hover:text-white transition-colors"
                             aria-label="Close"
                         >
-                            <XMarkIcon className="w-5 h-5" />
+                            <XMarkIcon className="w-4 h-4" />
                         </button>
 
-                        <div className="flex items-center gap-2 mb-1">
-                            <HeartIcon className="w-4 h-4 text-white/60" />
-                            <span className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40">
+                        <div className="flex items-center gap-2 mb-4">
+                            <HeartIcon className="w-3.5 h-3.5 text-white/30" />
+                            <span className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30">
                                 Optional
                             </span>
                         </div>
 
-                        <h2 className="text-lg font-black uppercase tracking-[0.15em] text-white mb-2">
-                            Enjoy the photos!
+                        <h2 className="text-xl font-black uppercase tracking-tight text-white mb-2">
+                            Enjoy the photos.
                         </h2>
                         <p className="text-white/40 text-[11px] leading-relaxed mb-6">
-                            Photos are free — but if you love the work and want to show some
-                            love back, a tip goes a long way. Follow{' '}
-                            <span className="text-white font-bold">@tlau.photos</span> on
-                            Instagram too!
+                            Everything's free — tips are appreciated but never expected.
+                            Tag <span className="text-white font-bold">@tlau.photos</span> when you post.
                         </p>
 
-                        <div className="space-y-3 mb-6">
-                            <a
-                                href={VENMO_URL}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center justify-between w-full px-5 py-3.5 bg-[#3D95CE] text-white font-black text-[11px] uppercase tracking-[0.2em] hover:bg-[#2d85be] transition-colors"
-                            >
-                                <span>Tip on Venmo</span>
-                                <span className="opacity-70 text-xs font-bold">@thelostandunfounds</span>
-                            </a>
-                            <a
-                                href={CASHAPP_URL}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center justify-between w-full px-5 py-3.5 bg-[#00D632] text-black font-black text-[11px] uppercase tracking-[0.2em] hover:bg-[#00c02c] transition-colors"
-                            >
-                                <span>Tip on Cash App</span>
-                                <span className="opacity-60 text-xs font-bold">$ILLKID24</span>
-                            </a>
+                        <div className="space-y-2 mb-6">
+                            {TIPS.map((tip) => (
+                                <a
+                                    key={tip.label}
+                                    href={tip.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center justify-between w-full px-4 py-3 bg-white/5 border border-white/10 hover:bg-white hover:text-black group transition-all"
+                                >
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white group-hover:text-black transition-colors">
+                                        {tip.label}
+                                    </span>
+                                    <span className="text-[10px] font-mono text-white/40 group-hover:text-black/60 transition-colors">
+                                        {tip.handle}
+                                    </span>
+                                </a>
+                            ))}
                         </div>
 
                         <button
                             onClick={onClose}
-                            className="w-full text-[10px] text-white/25 hover:text-white/50 uppercase tracking-widest transition-colors"
+                            className="w-full text-[9px] font-black uppercase tracking-[0.2em] text-white/20 hover:text-white/50 transition-colors"
                         >
-                            No thanks, just download
+                            No thanks
                         </button>
                     </motion.div>
                 </motion.div>
