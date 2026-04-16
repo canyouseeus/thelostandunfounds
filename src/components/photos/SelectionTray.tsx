@@ -129,7 +129,7 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
                         {/* Price & Count Line */}
                         <div className="flex items-baseline gap-3 mb-1">
                             <span className="text-xl md:text-3xl font-black text-white tracking-tighter tabular-nums leading-none">
-                                ${pricing.total.toFixed(2)}
+                                {pricing.total === 0 ? 'FREE' : `$${pricing.total.toFixed(2)}`}
                             </span>
                             <span className="text-[8px] md:text-[9px] font-black text-zinc-500 tracking-[0.2em] uppercase leading-none">
                                 {count} COLLECTED
@@ -164,7 +164,7 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
                             <LoadingSpinner size="sm" className="text-black" />
                         ) : (
                             <>
-                                CHECKOUT
+                                {pricing.total === 0 ? 'CLAIM FREE' : 'CHECKOUT'}
                                 <ShoppingBagIcon className="w-3 h-3 md:w-4 md:h-4 transition-transform group-hover:translate-x-0.5" />
                             </>
                         )}

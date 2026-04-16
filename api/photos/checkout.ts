@@ -117,6 +117,45 @@ export default async function handler(
       console.warn(`[Pricing Warning] Order for ${count} items resulted in $${amount} (approx ${count} * $${singlePrice}). Possible missed bundle application. Options available: ${pricingOptions ? pricingOptions.length : 0}`);
     }
 
+    // Free path — skip payment entirely, grant access immediately
+    if (amount === 0) {
+      const freeOrderId = `free_${Date.now()}_${Math.random().toString(36).substring(7)}`
+
+      const { data: photoOrder, error: dbOrderError } = await supabase
+        .from('photo_orders')
+        .insert({
+          email,
+          total_amount_cents: 0,
+          paypal_order_id: freeOrderId,
+          payment_status: 'completed',
+          affiliate_code: affiliateRef ? String(affiliateRef) : null
+        })
+        .select()
+        .single()
+
+      if (dbOrderError) {
+        console.error('[Checkout] Free order insert error:', dbOrderError)
+        return res.status(500).json({ error: 'Failed to save free order', details: dbOrderError.message })
+      }
+
+      const entitlements = photoIds.map((photoId: string) => ({
+        order_id: photoOrder.id,
+        photo_id: photoId,
+        expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+      }))
+
+      const { error: dbEntitlementsError } = await supabase
+        .from('photo_entitlements')
+        .insert(entitlements)
+
+      if (dbEntitlementsError) {
+        console.error('[Checkout] Free entitlements error:', dbEntitlementsError)
+        return res.status(500).json({ error: 'Failed to save entitlements', details: dbEntitlementsError.message })
+      }
+
+      return res.status(200).json({ free: true, orderId: photoOrder.id })
+    }
+
     // Create Strike Invoice
     const apiKey = process.env.STRIKE_API_KEY
     if (!apiKey) {

@@ -474,7 +474,11 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             });
 
             const data = await response.json();
-            if (response.ok && data.invoiceId && data.lnInvoice) {
+            if (response.ok && data.free === true) {
+                localStorage.removeItem(storageKey);
+                setSelectedPhotos([]);
+                await fetchPurchasedAssets();
+            } else if (response.ok && data.invoiceId && data.lnInvoice) {
                 localStorage.removeItem(storageKey);
                 setLightningPayment({
                     invoiceId: data.invoiceId,
