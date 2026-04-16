@@ -238,6 +238,37 @@ export function generateContract(params: ContractParams): string {
                 </tr>
               </table>
 
+              <!-- Accepted payment methods -->
+              <p style="margin:24px 0 12px 0; font-size:11px; font-weight:bold; letter-spacing:0.15em; text-transform:uppercase; color:#111;">
+                Accepted Payment Methods
+              </p>
+              <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%; border-collapse:collapse;">
+                <tr>
+                  <td style="padding: 9px 0; border-bottom: 1px solid #e5e5e5; font-size:13px; color:#111; width:36%;">
+                    <strong>Bitcoin</strong> <span style="font-size:10px; color:#fff; background:#111; padding:2px 6px; letter-spacing:0.08em; text-transform:uppercase;">Preferred</span>
+                  </td>
+                  <td style="padding: 9px 0; border-bottom: 1px solid #e5e5e5; font-size:12px; color:#555; word-break:break-all;">
+                    bc1qpr8hj6t3cjrwyfpeyugdzm64pmxz95tan08fdc
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 9px 0; border-bottom: 1px solid #e5e5e5; font-size:13px; color:#111;"><strong>Venmo</strong></td>
+                  <td style="padding: 9px 0; border-bottom: 1px solid #e5e5e5; font-size:13px; color:#555;">
+                    <a href="https://venmo.com/u/thelostandunfounds" style="color:#555; text-decoration:none;">@thelostandunfounds</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 9px 0; border-bottom: 1px solid #e5e5e5; font-size:13px; color:#111;"><strong>Cash App</strong></td>
+                  <td style="padding: 9px 0; border-bottom: 1px solid #e5e5e5; font-size:13px; color:#555;">
+                    <a href="https://cash.app/$ILLKID24" style="color:#555; text-decoration:none;">$ILLKID24</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 9px 0; font-size:13px; color:#111;"><strong>Apple Pay</strong></td>
+                  <td style="padding: 9px 0; font-size:13px; color:#555;">737-296-1598</td>
+                </tr>
+              </table>
+
               <!-- Deposit callout box -->
               <table role="presentation" cellpadding="0" cellspacing="0"
                 style="width:100%; border-collapse:collapse; margin-top:20px; background:#000; border:2px solid #000;">
@@ -248,8 +279,8 @@ export function generateContract(params: ContractParams): string {
                     </p>
                     <p style="margin:6px 0 0 0; font-size:13px; color:rgba(255,255,255,0.75);">
                       Your booking is <strong style="color:#fff;">not confirmed</strong> until the ${formatCurrency(deposit)} deposit
-                      is received. Reach out to <a href="mailto:${PHOTOGRAPHER_EMAIL}" style="color:#fff;">${PHOTOGRAPHER_EMAIL}</a>
-                      to arrange payment.
+                      is received. Send payment via any method above or email
+                      <a href="mailto:${PHOTOGRAPHER_EMAIL}" style="color:#fff;">${PHOTOGRAPHER_EMAIL}</a> to arrange.
                     </p>
                   </td>
                 </tr>
