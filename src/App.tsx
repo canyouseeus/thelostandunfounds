@@ -64,6 +64,7 @@ import Advertise from './pages/Advertise'
 import PreviewVisitorPage from './pages/PreviewVisitorPage'
 import PreviewAdminLoginPage from './pages/PreviewAdminLoginPage'
 import BookingPage from './pages/BookingPage'
+import ScrollToTop from './components/ui/ScrollToTop'
 
 
 
@@ -71,6 +72,7 @@ import BookingPage from './pages/BookingPage'
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <AuthProvider>
         <GalleryProvider>
         <SageModeProvider>
