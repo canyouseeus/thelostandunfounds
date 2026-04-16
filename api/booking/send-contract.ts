@@ -22,9 +22,12 @@ import { getZohoAuthContext } from '../../lib/api-handlers/_zoho-email-utils.js'
 
 const FROM_EMAIL = 'media@thelostandunfounds.com'
 const FROM_NAME = 'THE LOST+UNFOUNDS'
+const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com']
 
 function isAdmin(req: VercelRequest): boolean {
-  return req.headers['x-admin-secret'] === process.env.ADMIN_SECRET
+  if (req.headers['x-admin-secret'] === process.env.ADMIN_SECRET) return true
+  const adminEmail = (req.headers['x-admin-email'] as string || '').toLowerCase()
+  return ADMIN_EMAILS.includes(adminEmail)
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
