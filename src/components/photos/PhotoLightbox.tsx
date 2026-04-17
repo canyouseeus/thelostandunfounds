@@ -196,7 +196,7 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                                 ) : (
                                     <>
                                         <PlusIcon className="w-5 h-5" />
-                                        <span>Add to Selection (${singlePhotoPrice.toFixed(2)})</span>
+                                        <span>Add to Selection ({singlePhotoPrice === 0 ? 'Free' : `$${singlePhotoPrice.toFixed(2)}`})</span>
                                     </>
                                 )}
                             </button>
