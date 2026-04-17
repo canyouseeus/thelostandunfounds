@@ -96,8 +96,7 @@ export default async function handler(
       .eq('id', libraryId)
       .single();
 
-    const singleOption = sortedOptions.find((o: any) => o.photo_count === 1);
-    const singlePrice = singleOption != null ? singleOption.price : (library?.price ?? 0);
+    const singlePrice = 0;
 
     for (const option of sortedOptions) {
       if (option.photo_count <= 0) continue;
