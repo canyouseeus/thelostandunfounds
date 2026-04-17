@@ -578,7 +578,8 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     });
 
     const displayedPhotos = filteredPhotos;
-    const singlePrice = pricingOptions.find(o => o.photo_count === 1)?.price || library?.price || 5.00;
+    const singleOption = pricingOptions.find(o => o.photo_count === 1);
+    const singlePrice = singleOption != null ? singleOption.price : (library?.price ?? 0);
 
     return (
         <div
