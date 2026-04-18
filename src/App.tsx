@@ -64,6 +64,7 @@ import Advertise from './pages/Advertise'
 import PreviewVisitorPage from './pages/PreviewVisitorPage'
 import PreviewAdminLoginPage from './pages/PreviewAdminLoginPage'
 import BookingPage from './pages/BookingPage'
+import Marty from './pages/Marty'
 
 
 
@@ -264,6 +265,8 @@ function App() {
               <Route path="/booking" element={<Layout />}>
                 <Route index element={<BookingPage />} />
               </Route>
+
+              <Route path="/marty" element={<Marty />} />
 
               {/* Temporary preview routes — remove after gallery-homepage branch ships */}
               <Route path="/preview/visitor" element={<PreviewVisitorPage />} />
