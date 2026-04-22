@@ -39,6 +39,7 @@ export default function AdminTagsPanel() {
     const { success, error: toastError } = useToast();
 
     const [tags, setTags] = useState<Tag[]>([]);
+    const [recentTagIds, setRecentTagIds] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [filterType, setFilterType] = useState<TagType | 'all'>('all');
     const [searchQuery, setSearchQuery] = useState('');
@@ -57,6 +58,7 @@ export default function AdminTagsPanel() {
 
     useEffect(() => {
         loadTags();
+        loadRecent();
     }, []);
 
     async function loadTags() {
@@ -79,6 +81,28 @@ export default function AdminTagsPanel() {
             toastError(e.message);
         } finally {
             setLoading(false);
+        }
+    }
+
+    async function loadRecent() {
+        try {
+            const { data, error } = await supabase
+                .from('photo_tags')
+                .select('tag_id, created_at')
+                .order('created_at', { ascending: false })
+                .limit(200);
+            if (error) throw error;
+            const seen = new Set<string>();
+            const ordered: string[] = [];
+            for (const row of (data || []) as Array<{ tag_id: string }>) {
+                if (seen.has(row.tag_id)) continue;
+                seen.add(row.tag_id);
+                ordered.push(row.tag_id);
+                if (ordered.length >= 10) break;
+            }
+            setRecentTagIds(ordered);
+        } catch {
+            // Non-critical — silently skip if the query fails
         }
     }
 
@@ -294,6 +318,36 @@ export default function AdminTagsPanel() {
                     ))}
                 </div>
             </div>
+
+            {/* Recently Used */}
+            {recentTagIds.length > 0 && (() => {
+                const recent = recentTagIds
+                    .map(id => tags.find(t => t.id === id))
+                    .filter((t): t is Tag => Boolean(t));
+                if (recent.length === 0) return null;
+                return (
+                    <div>
+                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40 mb-2">
+                            Recently Used
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                            {recent.map(tag => (
+                                <button
+                                    key={tag.id}
+                                    onClick={() => {
+                                        setFilterType(tag.type);
+                                        setSearchQuery(tag.name);
+                                    }}
+                                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 border transition-colors hover:opacity-80 ${TYPE_COLORS[tag.type]}`}
+                                    title={`Filter by ${tag.name}`}
+                                >
+                                    {tag.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                );
+            })()}
 
             {/* Tag List */}
             {loading ? (
