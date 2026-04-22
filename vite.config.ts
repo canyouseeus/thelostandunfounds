@@ -29,7 +29,7 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173,
+    port: 3000,
     strictPort: true,
     open: false,
     proxy: {
@@ -95,6 +95,13 @@ export default defineConfig({
         target: 'http://localhost:3001',
         changeOrigin: true,
         secure: false,
+      },
+      // Catch-all to proxy any OTHER /api/ route (e.g. blog, admin, shop, etc) to production
+      // so you can use dev:fast without vercel CLI locally
+      '/api': {
+        target: 'https://www.thelostandunfounds.com',
+        changeOrigin: true,
+        secure: true,
       },
     },
   },
