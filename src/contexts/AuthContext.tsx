@@ -155,7 +155,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
       } else {
-        // No session found, ensure state is cleared
+        // No session found — in dev on localhost, attempt auto-login so the
+        // Claude Code preview button works without manual eval injection.
+        if (import.meta.env.DEV && typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+          try {
+            const res = await fetch('/api/dev/auto-login', { method: 'POST' });
+            if (res.ok) {
+              const data = await res.json();
+              const { data: setData, error: setError } = await supabase.auth.setSession({
+                access_token: data.access_token,
+                refresh_token: data.refresh_token,
+              });
+              if (!setError && setData.session) {
+                setSession(setData.session as any);
+                setUser(setData.session.user as any);
+                if (setData.session.user?.id && setData.session.user?.email && isAdminEmail(setData.session.user.email)) {
+                  try { await autoPromoteToAdmin(setData.session.user.id, setData.session.user.email); } catch {}
+                }
+                try {
+                  const userTier = await subscriptionService.getTier(setData.session.user!.id);
+                  setTier(userTier);
+                } catch { setTier('free'); }
+                setLoading(false);
+                return;
+              }
+            }
+          } catch {
+            // Non-fatal — fall through to unauthenticated state
+          }
+        }
         setUser(null);
         setSession(null);
         setTier('free');
