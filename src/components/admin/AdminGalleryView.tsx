@@ -1399,17 +1399,17 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 </div>
 
                 {!isPhotographerView && (
-                    <div className="flex mb-8">
+                    <div className="flex flex-wrap mb-8">
                         <button
                             onClick={() => setActiveTab('galleries')}
-                            className={`px-6 py-3 text-xs uppercase font-bold tracking-widest transition-colors relative ${activeTab === 'galleries' ? 'text-white' : 'text-white/40 hover:text-white'}`}
+                            className={`px-3 sm:px-6 py-3 text-[11px] sm:text-xs uppercase font-bold tracking-wider sm:tracking-widest transition-colors relative ${activeTab === 'galleries' ? 'text-white' : 'text-white/40 hover:text-white'}`}
                         >
                             Active Galleries
                             {activeTab === 'galleries' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />}
                         </button>
                         <button
                             onClick={() => setActiveTab('applications')}
-                            className={`px-6 py-3 text-xs uppercase font-bold tracking-widest transition-colors relative flex items-center gap-2 ${activeTab === 'applications' ? 'text-white' : 'text-white/40 hover:text-white'}`}
+                            className={`px-3 sm:px-6 py-3 text-[11px] sm:text-xs uppercase font-bold tracking-wider sm:tracking-widest transition-colors relative flex items-center gap-2 ${activeTab === 'applications' ? 'text-white' : 'text-white/40 hover:text-white'}`}
                         >
                             Photographer Applications
                             {pendingAppsCount > 0 && (
@@ -1421,7 +1421,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                         </button>
                         <button
                             onClick={() => setActiveTab('photos')}
-                            className={`px-6 py-3 text-xs uppercase font-bold tracking-widest transition-colors relative flex items-center gap-2 ${activeTab === 'photos' ? 'text-white' : 'text-white/40 hover:text-white'}`}
+                            className={`px-3 sm:px-6 py-3 text-[11px] sm:text-xs uppercase font-bold tracking-wider sm:tracking-widest transition-colors relative flex items-center gap-2 ${activeTab === 'photos' ? 'text-white' : 'text-white/40 hover:text-white'}`}
                         >
                             <PhotoIcon className="w-3.5 h-3.5" />
                             All Photos
@@ -1429,7 +1429,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                         </button>
                         <button
                             onClick={() => setActiveTab('tags')}
-                            className={`px-6 py-3 text-xs uppercase font-bold tracking-widest transition-colors relative flex items-center gap-2 ${activeTab === 'tags' ? 'text-white' : 'text-white/40 hover:text-white'}`}
+                            className={`px-3 sm:px-6 py-3 text-[11px] sm:text-xs uppercase font-bold tracking-wider sm:tracking-widest transition-colors relative flex items-center gap-2 ${activeTab === 'tags' ? 'text-white' : 'text-white/40 hover:text-white'}`}
                         >
                             <TagIcon className="w-3.5 h-3.5" />
                             Tags
