@@ -126,14 +126,35 @@ async function getOrCreateFolder(name: string, parentId: string): Promise<string
     }, `getOrCreateFolder(${name})`);
 }
 
-async function fileExistsInDrive(fileName: string, fileSize: number): Promise<boolean> {
-    return retryApiCall(async () => {
-        const res = await drive.files.list({
-            q: `name = '${fileName}' and trashed = false`,
-            fields: 'files(id, size)',
-        });
-        return (res.data.files || []).some(f => f.size && parseInt(f.size) === fileSize);
-    }, `fileExistsInDrive(${fileName})`);
+// Build a Set of all filenames (lowercased) in a Drive folder tree.
+// Called once per type folder at startup so every subsequent lookup is O(1).
+async function buildDriveFileIndex(folderId: string): Promise<Set<string>> {
+    const names = new Set<string>();
+    let pageToken: string | undefined;
+
+    do {
+        const res = await retryApiCall(() => drive.files.list({
+            q: `'${folderId}' in parents and trashed = false`,
+            fields: 'nextPageToken, files(id, name, mimeType)',
+            pageSize: 1000,
+            ...(pageToken ? { pageToken } : {}),
+        }), `buildIndex(${folderId})`);
+
+        for (const f of res.data.files || []) {
+            if (!f.id) continue;
+            if (f.mimeType === 'application/vnd.google-apps.folder') {
+                // Recurse into subfolders (e.g. "NEW UPLOADS" sub-tree)
+                const sub = await buildDriveFileIndex(f.id);
+                for (const n of sub) names.add(n);
+            } else if (f.name) {
+                names.add(f.name.toLowerCase());
+            }
+        }
+
+        pageToken = res.data.nextPageToken ?? undefined;
+    } while (pageToken);
+
+    return names;
 }
 
 async function removeDuplicatesInFolder(parentId: string, label: string) {
@@ -147,7 +168,6 @@ async function removeDuplicatesInFolder(parentId: string, label: string) {
     for (const f of res.data.files || []) {
         if (!f.name || !f.id) continue;
         if (seen.has(f.name)) {
-            // Delete the newer duplicate (keep the older one already in `seen`)
             await retryApiCall(() => drive.files.delete({ fileId: f.id! }), `deleteDup(${f.name})`);
             console.log(`  Removed duplicate: ${f.name}`);
         } else {
@@ -158,25 +178,23 @@ async function removeDuplicatesInFolder(parentId: string, label: string) {
 
 // ─── Upload a single file → Drive, then delete local copy ────────────────────
 
-async function uploadAndClean(filePath: string, parentId: string, deleteAfter = false): Promise<boolean> {
+async function uploadAndClean(
+    filePath: string,
+    parentId: string,
+    deleteAfter = false,
+    driveIndex?: Set<string>,   // pre-built index for this type folder
+): Promise<boolean> {
     const fileName = path.basename(filePath);
     const fileSize = fs.statSync(filePath).size;
 
-    if (isInHistory(fileName)) {
-        console.log(`  Skipping ${fileName} (in history)`);
-        if (deleteAfter && fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-            console.log(`  Deleted local: ${fileName}`);
-        }
-        return true;
-    }
+    const alreadyUploaded = isInHistory(fileName) || driveIndex?.has(fileName.toLowerCase());
 
-    if (await fileExistsInDrive(fileName, fileSize)) {
-        console.log(`  Skipping ${fileName} (already in Drive)`);
+    if (alreadyUploaded) {
+        console.log(`  Skipping ${fileName} (${isInHistory(fileName) ? 'in history' : 'found in Drive index'})`);
         addToHistory(fileName);
         if (deleteAfter && fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
-            console.log(`  Deleted local: ${fileName}`);
+            console.log(`  🗑  Deleted local: ${fileName}`);
         }
         return true;
     }
@@ -214,6 +232,7 @@ async function uploadAndClean(filePath: string, parentId: string, deleteAfter = 
 
     if (success) {
         addToHistory(fileName);
+        driveIndex?.add(fileName.toLowerCase()); // keep index current within this run
         console.log(`  ✅ Uploaded: ${fileName}`);
         if (deleteAfter && fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
@@ -239,7 +258,7 @@ function getFilesRecursive(dir: string): string[] {
 
 // ─── Phase 0: Flush local staging → Drive (frees disk space) ─────────────────
 
-async function flushStagingToDrive() {
+async function flushStagingToDrive(indexes: Record<string, Set<string>>) {
     console.log('\n=== Phase 0: Flushing local staging to Drive (freeing disk space) ===');
     const failed: string[] = [];
 
@@ -254,7 +273,7 @@ async function flushStagingToDrive() {
         for (const file of files) {
             const filePath = path.join(config.local, file);
             if (!fs.statSync(filePath).isFile()) continue;
-            const ok = await uploadAndClean(filePath, targetId, true /* deleteAfter */);
+            const ok = await uploadAndClean(filePath, targetId, true, indexes[type]);
             if (!ok) failed.push(filePath);
         }
     }
@@ -324,36 +343,34 @@ async function importFromSDCard(sdPath: string) {
 
 // ─── Phase 2: Upload Desktop staging → Drive ──────────────────────────────────
 
-async function uploadStagingToDrive() {
+async function uploadStagingToDrive(indexes: Record<string, Set<string>>) {
     if (SKIP_DRIVE) { console.log('\n⏭  --skip-drive set. Skipping Drive upload.'); return; }
 
     console.log('\n=== Phase 2: Uploading staging to Drive ===');
-    const failed: { filePath: string; parentId: string }[] = [];
+    const failed: { filePath: string; parentId: string; type: string }[] = [];
 
     for (const [type, config] of Object.entries(FOLDER_CONFIG)) {
         if (!fs.existsSync(config.local)) continue;
         const files = fs.readdirSync(config.local).filter(f => !f.startsWith('.'));
         if (!files.length) { console.log(`\nNo files in ${type} staging.`); continue; }
 
-        console.log(`\nDeduplicating Drive ${type} folder…`);
         const targetId = await getOrCreateFolder('NEW UPLOADS', config.parent);
         await removeDuplicatesInFolder(targetId, type);
 
-        console.log(`Uploading ${files.length} ${type} file(s)…`);
+        console.log(`\nUploading ${files.length} ${type} file(s)…`);
         for (const file of files) {
             const filePath = path.join(config.local, file);
             if (!fs.statSync(filePath).isFile()) continue;
-            // Delete local after upload — keeps disk clear
-            const ok = await uploadAndClean(filePath, targetId, true /* deleteAfter */);
-            if (!ok) failed.push({ filePath, parentId: targetId });
+            const ok = await uploadAndClean(filePath, targetId, true, indexes[type]);
+            if (!ok) failed.push({ filePath, parentId: targetId, type });
         }
     }
 
-    // Retry failures (without deleting — leave them safe on disk)
+    // Retry failures — keep local file safe if it still fails
     if (failed.length) {
         console.log(`\n=== Retrying ${failed.length} failed upload(s) ===`);
-        for (const { filePath, parentId } of failed) {
-            await uploadAndClean(filePath, parentId, false);
+        for (const { filePath, parentId, type } of failed) {
+            await uploadAndClean(filePath, parentId, false, indexes[type]);
         }
     } else {
         console.log('\n✅ All uploads complete. Local staging cleared.');
@@ -373,6 +390,14 @@ async function startSync() {
     else if (USE_SD_CARD) console.log('Mode: Full pipeline (SD → Local → Drive)');
     else                  console.log('Mode: Flush existing staging → Drive');
 
+    // ── Build Drive file indexes (one API walk per folder, then O(1) lookups) ──
+    console.log('\nBuilding Drive file indexes…');
+    const driveIndexes: Record<string, Set<string>> = {};
+    for (const [type, config] of Object.entries(FOLDER_CONFIG)) {
+        driveIndexes[type] = await buildDriveFileIndex(config.parent);
+        console.log(`  ${type}: ${driveIndexes[type].size} files indexed`);
+    }
+
     // ── Check disk space ───────────────────────────────────────────────────────
     const desktopPath = path.join(process.env.HOME || '', 'Desktop');
     const available   = getAvailableBytes(desktopPath);
@@ -382,7 +407,7 @@ async function startSync() {
 
     if (available < threshold) {
         console.log(`⚠️  Low disk space (< ${LOW_DISK_THRESHOLD_GB} GB). Flushing staging to Drive first…`);
-        await flushStagingToDrive();
+        await flushStagingToDrive(driveIndexes);
 
         const nowAvailable = getAvailableBytes(desktopPath);
         console.log(`Disk available after flush: ${formatBytes(nowAvailable)}`);
@@ -402,7 +427,7 @@ async function startSync() {
     }
 
     // ── Upload staging → Drive (and clean up local files) ─────────────────────
-    await uploadStagingToDrive();
+    await uploadStagingToDrive(driveIndexes);
 
     // ── Write rename log ───────────────────────────────────────────────────────
     flushRenameLogs();
