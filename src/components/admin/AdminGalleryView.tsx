@@ -1440,17 +1440,17 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 )}
 
                 {activeTab === 'tags' ? (
-                    <div className="bg-white/[0.02] p-6">
+                    <div className="bg-white/[0.02] p-4 sm:p-6">
                         <AdminTagsPanel />
                     </div>
                 ) : activeTab === 'photos' ? (
-                    <div className="bg-white/[0.02] p-6">
+                    <div className="bg-white/[0.02] p-4 sm:p-6">
                         <AdminPhotosBrowse />
                     </div>
                 ) : activeTab === 'galleries' ? (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* Active Galleries */}
-                        <div className="bg-white/[0.02] p-6 rounded-none h-full">
+                        <div className="bg-white/[0.02] p-4 sm:p-6 rounded-none h-full">
                             <div className="flex items-center justify-between mb-4 pb-2">
                                 <h3 className="text-sm font-bold text-white uppercase tracking-wide">
                                     Active Galleries ({libraries.length})
@@ -1583,7 +1583,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                         </div>
                     </div>
                 ) : (
-                    <div className="bg-white/[0.02] p-6 rounded-none h-full animate-in fade-in duration-300">
+                    <div className="bg-white/[0.02] p-4 sm:p-6 rounded-none h-full animate-in fade-in duration-300">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-sm font-bold text-white uppercase tracking-wide">
                                 Pending Applications ({pendingAppsCount})

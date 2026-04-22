@@ -491,7 +491,7 @@ export default function AdminPhotosBrowse() {
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[15000] shadow-2xl">
           {/* Tag panel (above the bar) */}
           {showTagPanel && (
-            <div className="mb-2 bg-black border border-white/20 p-4 w-[360px] max-h-[50vh] flex flex-col">
+            <div className="mb-2 bg-black border border-white/20 p-4 w-[calc(100vw-2rem)] max-w-[360px] max-h-[50vh] flex flex-col">
               <p className="text-[10px] uppercase font-bold text-white/40 tracking-wider mb-3 flex-shrink-0">
                 Apply Tags to {selectedIds.size} photo{selectedIds.size !== 1 ? 's' : ''}
               </p>
