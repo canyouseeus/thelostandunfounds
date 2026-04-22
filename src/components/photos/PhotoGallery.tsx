@@ -300,6 +300,12 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
     const [startDate, setStartDate] = useState<string>('');
     const [endDate, setEndDate] = useState<string>('');
     const [showCalendar, setShowCalendar] = useState(false);
+
+    // Tag filter state
+    const [availableTags, setAvailableTags] = useState<{ id: string; name: string; type: string }[]>([]);
+    const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+    // Map of photo_id → set of tag_ids it belongs to
+    const [photoTagsMap, setPhotoTagsMap] = useState<Map<string, Set<string>>>(new Map());
     const photosRef = useRef<HTMLDivElement>(null);
 
     const storageKey = `gallery_selection_${librarySlug}`;
@@ -425,7 +431,29 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                 if (photoError.message === 'Fetch is aborted' || photoError.code === '20') return;
                 throw photoError;
             }
-            setPhotos(photoData || []);
+            const fetchedPhotos = photoData || [];
+            setPhotos(fetchedPhotos);
+
+            // Fetch tags for photos in this gallery
+            if (fetchedPhotos.length > 0) {
+                const photoIds = fetchedPhotos.map((p: Photo) => p.id);
+                const { data: ptData } = await supabase
+                    .from('photo_tags')
+                    .select('photo_id, tag_id, tags(id, name, type)')
+                    .in('photo_id', photoIds);
+
+                if (ptData && ptData.length > 0) {
+                    const tagMap = new Map<string, Set<string>>();
+                    const tagIndex = new Map<string, { id: string; name: string; type: string }>();
+                    for (const row of ptData as any[]) {
+                        if (!tagMap.has(row.photo_id)) tagMap.set(row.photo_id, new Set());
+                        tagMap.get(row.photo_id)!.add(row.tag_id);
+                        if (row.tags) tagIndex.set(row.tags.id, row.tags);
+                    }
+                    setPhotoTagsMap(tagMap);
+                    setAvailableTags(Array.from(tagIndex.values()).sort((a, b) => a.name.localeCompare(b.name)));
+                }
+            }
         } catch (err: any) {
             if (err.name === 'AbortError') return;
             console.error('Error fetching gallery:', err);
@@ -524,22 +552,25 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
 
     if (loading) return <Loading />;
 
-    // Filter photos based on date range
+    // Filter photos based on date range and/or tag selection
     const filteredPhotos = (activeTab === 'storefront' ? photos : purchasedPhotos).filter(photo => {
-        if (!startDate && !endDate) return true;
-
-        const photoDateStr = photo.metadata?.date_taken || photo.metadata?.time || photo.created_at;
-        const photoDate = new Date(photoDateStr).getTime();
-
-        if (startDate) {
-            const start = new Date(startDate).getTime();
-            if (photoDate < start) return false;
+        // Date filter
+        if (startDate || endDate) {
+            const photoDateStr = photo.metadata?.date_taken || photo.metadata?.time || photo.created_at;
+            const photoDate = new Date(photoDateStr).getTime();
+            if (startDate && photoDate < new Date(startDate).getTime()) return false;
+            if (endDate) {
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999);
+                if (photoDate > end.getTime()) return false;
+            }
         }
 
-        if (endDate) {
-            const end = new Date(endDate);
-            end.setHours(23, 59, 59, 999);
-            if (photoDate > end.getTime()) return false;
+        // Tag filter (union: photo must have at least one of the selected tags)
+        if (selectedTagIds.length > 0) {
+            const photoTags = photoTagsMap.get(photo.id);
+            if (!photoTags) return false;
+            if (!selectedTagIds.some(id => photoTags.has(id))) return false;
         }
 
         return true;
@@ -681,6 +712,41 @@ const PhotoGallery: React.FC<{ librarySlug: string }> = ({ librarySlug }) => {
                     </div>
                 </div>
             </div>
+
+            {/* Tag Filter Chips */}
+            {availableTags.length > 0 && (
+                <div className="max-w-7xl mx-auto mb-6 px-4 md:px-8">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        {selectedTagIds.length > 0 && (
+                            <button
+                                onClick={() => setSelectedTagIds([])}
+                                className="flex items-center gap-1 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-white/40 hover:text-white border border-white/10 hover:border-white/30 transition-colors"
+                            >
+                                <XMarkIcon className="w-2.5 h-2.5" />
+                                Clear
+                            </button>
+                        )}
+                        {availableTags.map(tag => {
+                            const active = selectedTagIds.includes(tag.id);
+                            return (
+                                <button
+                                    key={tag.id}
+                                    onClick={() => setSelectedTagIds(prev =>
+                                        active ? prev.filter(id => id !== tag.id) : [...prev, tag.id]
+                                    )}
+                                    className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest border transition-colors ${
+                                        active
+                                            ? 'bg-white text-black border-white'
+                                            : 'text-white/40 border-white/20 hover:text-white hover:border-white/40'
+                                    }`}
+                                >
+                                    {tag.name}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
 
             <div className="max-w-7xl mx-auto">
 
