@@ -11,6 +11,15 @@
     "api/admin/retrograde-rename.ts": {
       "maxDuration": 300
     },
+    "api/gallery/[...path].ts": {
+      "maxDuration": 300
+    },
+    "api/cron/sync-photos.ts": {
+      "maxDuration": 300
+    },
+    "api/admin/sync-library.ts": {
+      "maxDuration": 300
+    },
     "api/**/*.ts": {
       "maxDuration": 60
     },
