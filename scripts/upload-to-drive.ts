@@ -3,14 +3,14 @@ import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
+import { buildName, getAvailableBytes, formatBytes, resetSeqs } from './claptrop-namer.js';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname  = path.dirname(__filename);
 
-// Load env vars from the root .env.local
 dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 
-const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const CLIENT_ID     = process.env.GOOGLE_CLIENT_ID;
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const REFRESH_TOKEN = process.env.GOOGLE_REFRESH_TOKEN;
 
@@ -25,406 +25,392 @@ oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
 
 const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
-// === UPLOAD HISTORY LOGIC ===
-const HISTORY_FILE = path.join(__dirname, 'upload-history.json');
-const HISTORY_RETENTION_DAYS = 30;
-const HISTORY_RETENTION_MS = HISTORY_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+// ─── CLI Flags ────────────────────────────────────────────────────────────────
 
-interface UploadHistory {
-    [fileName: string]: number; // timestamp
-}
+const args              = process.argv.slice(2);
+const SKIP_DRIVE        = args.includes('--skip-drive');   // /claptrop-ii
+const SUBJECT_OVERRIDE  = (() => { const i = args.indexOf('--subject'); return i !== -1 ? args[i + 1] : undefined; })();
+const LOW_DISK_THRESHOLD_GB = 2; // flush local staging when available < 2 GB
 
+// ─── Upload History ───────────────────────────────────────────────────────────
+
+const HISTORY_FILE          = path.join(__dirname, 'upload-history.json');
+const HISTORY_RETENTION_MS  = 30 * 24 * 60 * 60 * 1000;
+
+interface UploadHistory { [fileName: string]: number }
 let uploadHistory: UploadHistory = {};
 
 function loadHistory() {
-    if (fs.existsSync(HISTORY_FILE)) {
-        try {
-            uploadHistory = JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf-8'));
-
-            // Prune old entries
-            const now = Date.now();
-            let scanned = 0;
-            let pruned = 0;
-            for (const [name, timestamp] of Object.entries(uploadHistory)) {
-                scanned++;
-                if (now - timestamp > HISTORY_RETENTION_MS) {
-                    delete uploadHistory[name];
-                    pruned++;
-                }
-            }
-            if (pruned > 0) {
-                console.log(`Pruned ${pruned} old entries from history (scanned ${scanned}).`);
-                saveHistory();
-            } else {
-                console.log(`Loaded history with ${scanned} entries.`);
-            }
-
-        } catch (e) {
-            console.error('Failed to parse upload history, starting fresh.');
-            uploadHistory = {};
+    if (!fs.existsSync(HISTORY_FILE)) return;
+    try {
+        uploadHistory = JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf-8'));
+        const now = Date.now();
+        let pruned = 0;
+        for (const [name, ts] of Object.entries(uploadHistory)) {
+            if (now - ts > HISTORY_RETENTION_MS) { delete uploadHistory[name]; pruned++; }
         }
-    }
+        if (pruned) saveHistory();
+        console.log(`Loaded upload history (${Object.keys(uploadHistory).length} entries).`);
+    } catch { uploadHistory = {}; }
 }
 
 function saveHistory() {
+    try { fs.writeFileSync(HISTORY_FILE, JSON.stringify(uploadHistory, null, 2)); } catch {}
+}
+
+function isInHistory(name: string)     { return !!uploadHistory[name]; }
+function addToHistory(name: string)    { uploadHistory[name] = Date.now(); saveHistory(); }
+
+// ─── Rename Log ───────────────────────────────────────────────────────────────
+
+const RENAME_LOG_FILE = path.join(__dirname, 'claptrop-rename-log.json');
+const renameLogs: object[] = [];
+
+function flushRenameLogs() {
+    if (!renameLogs.length) return;
     try {
-        fs.writeFileSync(HISTORY_FILE, JSON.stringify(uploadHistory, null, 2));
-    } catch (e) {
-        console.error('Failed to save upload history:', e);
-    }
+        const existing = fs.existsSync(RENAME_LOG_FILE)
+            ? JSON.parse(fs.readFileSync(RENAME_LOG_FILE, 'utf-8'))
+            : [];
+        fs.writeFileSync(RENAME_LOG_FILE, JSON.stringify([...existing, ...renameLogs], null, 2));
+    } catch {}
 }
 
-function addToHistory(fileName: string) {
-    uploadHistory[fileName] = Date.now();
-    saveHistory();
-}
-
-function isInHistory(fileName: string): boolean {
-    return !!uploadHistory[fileName];
-}
-// ============================
+// ─── Drive Folder Config ──────────────────────────────────────────────────────
 
 const FOLDER_CONFIG = {
     JPG: {
         parent: '1Ouha3XJOQJtgB8RxQDwKdDs5ryADYxD4',
-        local: path.join(process.env.HOME || '', 'Desktop', 'PHOTO UPLOADS', 'jpg')
+        local:  path.join(process.env.HOME || '', 'Desktop', 'PHOTO UPLOADS', 'jpg'),
+        exts:   ['.jpg', '.jpeg'],
     },
     RAW: {
         parent: '1BMLrQ6JhHOW7osSZSxl8-Ve4nBAzrPEV',
-        local: path.join(process.env.HOME || '', 'Desktop', 'PHOTO UPLOADS', 'raf')
+        local:  path.join(process.env.HOME || '', 'Desktop', 'PHOTO UPLOADS', 'raf'),
+        exts:   ['.raf'],
     },
     MOV: {
         parent: '13yWZiOr6UpDhS1VDtKVonx441O137Lc-',
-        local: path.join(process.env.HOME || '', 'Desktop', 'PHOTO UPLOADS', 'mov')
-    }
-};
+        local:  path.join(process.env.HOME || '', 'Desktop', 'PHOTO UPLOADS', 'mov'),
+        exts:   ['.mov', '.mp4'],
+    },
+} as const;
 
-// Helper to retry any async operation
-async function retryApiCall<T>(operation: () => Promise<T>, description: string, retries = 5): Promise<T> {
-    try {
-        return await operation();
-    } catch (err: any) {
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+async function retryApiCall<T>(op: () => Promise<T>, desc: string, retries = 5): Promise<T> {
+    try { return await op(); }
+    catch (err: any) {
         if (retries > 0) {
-            const delay = Math.pow(2, 6 - retries) * 1000; // 2s, 4s, 8s, 16s, 32s
-            console.log(`Error ${description}: ${err.message}. Retrying in ${delay / 1000}s...`);
-            await new Promise(resolve => setTimeout(resolve, delay));
-            return retryApiCall(operation, description, retries - 1);
+            const delay = Math.pow(2, 6 - retries) * 1000;
+            console.log(`Error ${desc}: ${err.message}. Retrying in ${delay / 1000}s…`);
+            await new Promise(r => setTimeout(r, delay));
+            return retryApiCall(op, desc, retries - 1);
         }
         throw err;
     }
 }
 
-async function getOrCreateFolder(name: string, parentId: string) {
+async function getOrCreateFolder(name: string, parentId: string): Promise<string> {
     return retryApiCall(async () => {
         const res = await drive.files.list({
             q: `name = '${name}' and '${parentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
             fields: 'files(id)',
         });
-
-        if (res.data.files && res.data.files.length > 0) {
-            return res.data.files[0].id;
-        }
-
+        if (res.data.files?.length) return res.data.files[0].id!;
         const folder = await drive.files.create({
-            requestBody: {
-                name: name,
-                mimeType: 'application/vnd.google-apps.folder',
-                parents: [parentId],
-            },
+            requestBody: { name, mimeType: 'application/vnd.google-apps.folder', parents: [parentId] },
             fields: 'id',
         });
-
-        return folder.data.id;
+        return folder.data.id!;
     }, `getOrCreateFolder(${name})`);
 }
 
-async function findDuplicates(fileName: string, parentId: string) {
-    return retryApiCall(async () => {
-        const res = await drive.files.list({
-            q: `name = '${fileName}' and '${parentId}' in parents and trashed = false`,
-            fields: 'files(id, name, createdTime)',
-            orderBy: 'createdTime',
-        });
-        return res.data.files || [];
-    }, `findDuplicates(${fileName})`);
-}
-
-async function removeDuplicates(fileName: string, parentId: string) {
-    const files = await findDuplicates(fileName, parentId);
-
-    if (files.length > 1) {
-        console.log(`Found ${files.length} copies of ${fileName}, keeping the oldest and removing ${files.length - 1} duplicate(s)...`);
-
-        // Keep the first (oldest) file, delete the rest
-        for (let i = 1; i < files.length; i++) {
-            await retryApiCall(async () => {
-                await drive.files.delete({ fileId: files[i].id! });
-                console.log(`  Removed duplicate: ${files[i].id}`);
-            }, `removeDuplicate(${files[i].id})`);
-        }
-    }
-}
-
-async function cleanupDuplicatesInFolder(parentId: string, folderName: string) {
-    console.log(`\nScanning ${folderName} for duplicates...`);
-
-    const res = await retryApiCall(async () => {
-        return await drive.files.list({
-            q: `'${parentId}' in parents and trashed = false`,
-            fields: 'files(id, name)',
-        });
-    }, `listDuplicates(${folderName})`);
-
-
-
-    const files = res.data.files || [];
-    const fileNames = new Set<string>();
-    const duplicates = new Set<string>();
-
-    for (const file of files) {
-        if (fileNames.has(file.name!)) {
-            duplicates.add(file.name!);
-        } else {
-            fileNames.add(file.name!);
-        }
-    }
-
-    if (duplicates.size > 0) {
-        console.log(`Found duplicates for ${duplicates.size} file(s), cleaning up...`);
-        for (const fileName of duplicates) {
-            await removeDuplicates(fileName, parentId);
-        }
-    } else {
-        console.log(`No duplicates found in ${folderName}`);
-    }
-}
-
-async function findGlobalFile(fileName: string, fileSize: number) {
+async function fileExistsInDrive(fileName: string, fileSize: number): Promise<boolean> {
     return retryApiCall(async () => {
         const res = await drive.files.list({
             q: `name = '${fileName}' and trashed = false`,
-            fields: 'files(id, name, size, createdTime, parents)',
-            orderBy: 'createdTime desc',
+            fields: 'files(id, size)',
         });
-
-        const files = res.data.files || [];
-        // Find a file with matching size
-        return files.find(f => f.size && parseInt(f.size) === fileSize);
-    }, `findGlobalFile(${fileName})`);
+        return (res.data.files || []).some(f => f.size && parseInt(f.size) === fileSize);
+    }, `fileExistsInDrive(${fileName})`);
 }
 
-async function uploadFile(filePath: string, parentId: string, retryCount = 0): Promise<boolean> {
+async function removeDuplicatesInFolder(parentId: string, label: string) {
+    const res = await retryApiCall(() => drive.files.list({
+        q: `'${parentId}' in parents and trashed = false`,
+        fields: 'files(id, name, createdTime)',
+        orderBy: 'createdTime',
+    }), `listForDedupe(${label})`);
+
+    const seen = new Map<string, string>();
+    for (const f of res.data.files || []) {
+        if (!f.name || !f.id) continue;
+        if (seen.has(f.name)) {
+            // Delete the newer duplicate (keep the older one already in `seen`)
+            await retryApiCall(() => drive.files.delete({ fileId: f.id! }), `deleteDup(${f.name})`);
+            console.log(`  Removed duplicate: ${f.name}`);
+        } else {
+            seen.set(f.name, f.id);
+        }
+    }
+}
+
+// ─── Upload a single file → Drive, then delete local copy ────────────────────
+
+async function uploadAndClean(filePath: string, parentId: string, deleteAfter = false): Promise<boolean> {
     const fileName = path.basename(filePath);
-    const MAX_RETRIES = 5; // Increased retries
-    const stats = fs.statSync(filePath);
-    const fileSize = stats.size;
+    const fileSize = fs.statSync(filePath).size;
 
-    // 0. Check History (Local Cache)
     if (isInHistory(fileName)) {
-        console.log(`Skipping ${fileName} (found in local 3-day history)`);
+        console.log(`  Skipping ${fileName} (in history)`);
+        if (deleteAfter && fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            console.log(`  Deleted local: ${fileName}`);
+        }
         return true;
     }
 
-    // Check if file already exists globally (only on first try)
-    if (retryCount === 0) {
-        const existing = await findGlobalFile(fileName, fileSize);
-        if (existing) {
-            console.log(`Skipping ${fileName} (already exists in Drive, ID: ${existing.id})`);
-            addToHistory(fileName); // Add to history so next time we skip local check
-            return true;
+    if (await fileExistsInDrive(fileName, fileSize)) {
+        console.log(`  Skipping ${fileName} (already in Drive)`);
+        addToHistory(fileName);
+        if (deleteAfter && fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            console.log(`  Deleted local: ${fileName}`);
         }
-    }
-
-    console.log(`Uploading ${fileName} (${(fileSize / 1024 / 1024).toFixed(2)} MB)${retryCount > 0 ? ` (Retry ${retryCount}/${MAX_RETRIES})` : ''}...`);
-
-    try {
-        await drive.files.create({
-            requestBody: {
-                name: fileName,
-                parents: [parentId],
-            },
-            media: {
-                // Use stream for lower memory usage, but create a new stream for each retry
-                body: fs.createReadStream(filePath),
-            },
-        }, {
-            // Enable resumable uploads for better reliability with large files
-            onUploadProgress: (evt) => {
-                const progress = (evt.bytesRead / fileSize) * 100;
-                process.stdout.write(`\rUploading ${fileName}: ${progress.toFixed(0)}%`);
-            },
-        });
-        process.stdout.write('\n'); // New line after progress bar
-        console.log(`Successfully uploaded ${fileName}`);
-        addToHistory(fileName); // <--- Add to history on success
         return true;
-    } catch (err: any) {
-        process.stdout.write('\n'); // Ensure error is on new line
-        console.error(`Error uploading ${fileName}:`, err.message);
+    }
 
-        if (retryCount < MAX_RETRIES) {
-            // Exponential backoff: 2s, 4s, 8s, 16s, 32s
-            const delay = Math.pow(2, retryCount + 1) * 1000;
-            console.log(`Retrying upload for ${fileName} in ${delay / 1000} seconds...`);
-            await new Promise(resolve => setTimeout(resolve, delay));
-            return uploadFile(filePath, parentId, retryCount + 1);
-        } else {
-            console.error(`Failed to upload ${fileName} after ${MAX_RETRIES} retries.`);
-            return false;
+    console.log(`  Uploading ${fileName} (${formatBytes(fileSize)})…`);
+
+    const success = await (async () => {
+        for (let attempt = 0; attempt <= 5; attempt++) {
+            try {
+                await drive.files.create({
+                    requestBody: { name: fileName, parents: [parentId] },
+                    media: { body: fs.createReadStream(filePath) },
+                }, {
+                    onUploadProgress: (evt) => {
+                        const pct = ((evt.bytesRead / fileSize) * 100).toFixed(0);
+                        process.stdout.write(`\r  ${fileName}: ${pct}%`);
+                    },
+                });
+                process.stdout.write('\n');
+                return true;
+            } catch (err: any) {
+                process.stdout.write('\n');
+                if (attempt < 5) {
+                    const delay = Math.pow(2, attempt + 1) * 1000;
+                    console.log(`  Upload failed (${err.message}). Retry in ${delay / 1000}s…`);
+                    await new Promise(r => setTimeout(r, delay));
+                } else {
+                    console.error(`  Failed after 5 retries: ${fileName}`);
+                    return false;
+                }
+            }
+        }
+        return false;
+    })();
+
+    if (success) {
+        addToHistory(fileName);
+        console.log(`  ✅ Uploaded: ${fileName}`);
+        if (deleteAfter && fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            console.log(`  🗑  Deleted local: ${fileName}`);
         }
     }
+    return success;
 }
 
-// Add recursive directory traversal
-function getFilesRecursive(dir: string): string[] {
-    let results: string[] = [];
-    if (!fs.existsSync(dir)) return results;
+// ─── Recursive file list ──────────────────────────────────────────────────────
 
-    const list = fs.readdirSync(dir);
-    list.forEach(file => {
-        if (file.startsWith('.')) return;
-        const filePath = path.join(dir, file);
-        const stat = fs.statSync(filePath);
-        if (stat && stat.isDirectory()) {
-            results = results.concat(getFilesRecursive(filePath));
-        } else {
-            results.push(filePath);
-        }
-    });
+function getFilesRecursive(dir: string): string[] {
+    if (!fs.existsSync(dir)) return [];
+    const results: string[] = [];
+    for (const entry of fs.readdirSync(dir)) {
+        if (entry.startsWith('.')) continue;
+        const full = path.join(dir, entry);
+        if (fs.statSync(full).isDirectory()) results.push(...getFilesRecursive(full));
+        else results.push(full);
+    }
     return results;
 }
 
+// ─── Phase 0: Flush local staging → Drive (frees disk space) ─────────────────
+
+async function flushStagingToDrive() {
+    console.log('\n=== Phase 0: Flushing local staging to Drive (freeing disk space) ===');
+    const failed: string[] = [];
+
+    for (const [type, config] of Object.entries(FOLDER_CONFIG)) {
+        if (!fs.existsSync(config.local)) continue;
+        const files = fs.readdirSync(config.local).filter(f => !f.startsWith('.'));
+        if (!files.length) continue;
+
+        console.log(`\nFlushing ${type} (${files.length} files)…`);
+        const targetId = await getOrCreateFolder('NEW UPLOADS', config.parent);
+
+        for (const file of files) {
+            const filePath = path.join(config.local, file);
+            if (!fs.statSync(filePath).isFile()) continue;
+            const ok = await uploadAndClean(filePath, targetId, true /* deleteAfter */);
+            if (!ok) failed.push(filePath);
+        }
+    }
+
+    if (failed.length) {
+        console.warn(`\n⚠️  ${failed.length} file(s) failed to upload — NOT deleted:\n` +
+            failed.map(f => `  ${f}`).join('\n'));
+    } else {
+        console.log('\n✅ Staging flushed. Disk space reclaimed.');
+    }
+}
+
+// ─── Phase 1: Import from SD card (with claptrop naming) ─────────────────────
+
+async function importFromSDCard(sdPath: string) {
+    console.log(`\n=== Phase 1: Importing from SD card (${sdPath}) ===`);
+    resetSeqs();
+
+    const allFiles = getFilesRecursive(sdPath);
+    console.log(`Found ${allFiles.length} files on SD card.`);
+
+    const order: { type: keyof typeof FOLDER_CONFIG; exts: string[] }[] = [
+        { type: 'JPG', exts: ['.jpg', '.jpeg'] },
+        { type: 'RAW', exts: ['.raf'] },
+        { type: 'MOV', exts: ['.mov', '.mp4'] },
+    ];
+
+    for (const group of order) {
+        const config  = FOLDER_CONFIG[group.type];
+        const toImport = allFiles.filter(f => group.exts.includes(path.extname(f).toLowerCase()));
+        if (!toImport.length) continue;
+
+        console.log(`\nImporting ${toImport.length} ${group.type} file(s)…`);
+        fs.mkdirSync(config.local, { recursive: true });
+
+        // Build set of names already in destination (for collision detection)
+        const existingNames = new Set(
+            fs.readdirSync(config.local).map(f => f.toLowerCase())
+        );
+
+        for (const srcPath of toImport) {
+            const srcFolder = path.basename(path.dirname(srcPath));
+            const { meta, log } = await buildName({
+                originalName:  path.basename(srcPath),
+                filePath:      srcPath,
+                subject:       SUBJECT_OVERRIDE,
+                parentFolder:  srcFolder,
+                existingNames,
+            });
+
+            const destPath = path.join(config.local, meta.filename);
+
+            if (fs.existsSync(destPath)) continue; // already imported under new name
+
+            try {
+                console.log(`  ${log.original} → ${meta.filename}`);
+                fs.copyFileSync(srcPath, destPath);
+                renameLogs.push(log);
+            } catch (err: any) {
+                console.error(`  Error copying ${log.original}: ${err.message}`);
+            }
+        }
+    }
+
+    console.log('\n✅ SD card import complete.');
+}
+
+// ─── Phase 2: Upload Desktop staging → Drive ──────────────────────────────────
+
+async function uploadStagingToDrive() {
+    if (SKIP_DRIVE) { console.log('\n⏭  --skip-drive set. Skipping Drive upload.'); return; }
+
+    console.log('\n=== Phase 2: Uploading staging to Drive ===');
+    const failed: { filePath: string; parentId: string }[] = [];
+
+    for (const [type, config] of Object.entries(FOLDER_CONFIG)) {
+        if (!fs.existsSync(config.local)) continue;
+        const files = fs.readdirSync(config.local).filter(f => !f.startsWith('.'));
+        if (!files.length) { console.log(`\nNo files in ${type} staging.`); continue; }
+
+        console.log(`\nDeduplicating Drive ${type} folder…`);
+        const targetId = await getOrCreateFolder('NEW UPLOADS', config.parent);
+        await removeDuplicatesInFolder(targetId, type);
+
+        console.log(`Uploading ${files.length} ${type} file(s)…`);
+        for (const file of files) {
+            const filePath = path.join(config.local, file);
+            if (!fs.statSync(filePath).isFile()) continue;
+            // Delete local after upload — keeps disk clear
+            const ok = await uploadAndClean(filePath, targetId, true /* deleteAfter */);
+            if (!ok) failed.push({ filePath, parentId: targetId });
+        }
+    }
+
+    // Retry failures (without deleting — leave them safe on disk)
+    if (failed.length) {
+        console.log(`\n=== Retrying ${failed.length} failed upload(s) ===`);
+        for (const { filePath, parentId } of failed) {
+            await uploadAndClean(filePath, parentId, false);
+        }
+    } else {
+        console.log('\n✅ All uploads complete. Local staging cleared.');
+    }
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+
 async function startSync() {
     loadHistory();
-    const failedUploads: { filePath: string, parentId: string }[] = [];
 
-    // 1. Detect Source (SD Card or Desktop)
     const SD_CARD_PATH = '/Volumes/CLAPTROP II/DCIM';
-    const USE_SD_CARD = fs.existsSync(SD_CARD_PATH);
+    const USE_SD_CARD  = fs.existsSync(SD_CARD_PATH);
 
-    console.log('\n=== Source Detection ===');
+    console.log('\n=== CLAPTROP Pipeline ===');
+    if (SKIP_DRIVE)       console.log('Mode: Import only (--skip-drive)');
+    else if (USE_SD_CARD) console.log('Mode: Full pipeline (SD → Local → Drive)');
+    else                  console.log('Mode: Flush existing staging → Drive');
+
+    // ── Check disk space ───────────────────────────────────────────────────────
+    const desktopPath = path.join(process.env.HOME || '', 'Desktop');
+    const available   = getAvailableBytes(desktopPath);
+    const threshold   = LOW_DISK_THRESHOLD_GB * 1e9;
+
+    console.log(`\nDisk available: ${formatBytes(available)}`);
+
+    if (available < threshold) {
+        console.log(`⚠️  Low disk space (< ${LOW_DISK_THRESHOLD_GB} GB). Flushing staging to Drive first…`);
+        await flushStagingToDrive();
+
+        const nowAvailable = getAvailableBytes(desktopPath);
+        console.log(`Disk available after flush: ${formatBytes(nowAvailable)}`);
+
+        if (nowAvailable < threshold && USE_SD_CARD) {
+            console.error('❌ Still insufficient disk space after flush. Cannot import from SD card.');
+            process.exit(1);
+        }
+    }
+
+    // ── SD card import (with claptrop naming) ──────────────────────────────────
     if (USE_SD_CARD) {
-        console.log(`✅ SD Card Detected: ${SD_CARD_PATH}`);
+        console.log(`\n✅ SD Card detected: ${SD_CARD_PATH}`);
+        await importFromSDCard(SD_CARD_PATH);
     } else {
-        console.log('⚠️ SD Card not found. Falling back to Desktop folders.');
+        console.log('\n⚠️  SD Card not found. Skipping import step.');
     }
 
-    // 2. Clean up existing duplicates (Target Folders)
-    console.log('\n=== Cleaning up existing duplicates ===');
-    for (const [key, config] of Object.entries(FOLDER_CONFIG)) {
-        try {
-            const targetFolderId = await getOrCreateFolder('NEW UPLOADS', config.parent!);
-            if (targetFolderId) {
-                await cleanupDuplicatesInFolder(targetFolderId, `${key} NEW UPLOADS`);
-            }
-        } catch (err: any) {
-            console.error(`Error processing folder ${key}: ${err.message}`);
-        }
+    // ── Upload staging → Drive (and clean up local files) ─────────────────────
+    await uploadStagingToDrive();
+
+    // ── Write rename log ───────────────────────────────────────────────────────
+    flushRenameLogs();
+    if (renameLogs.length) {
+        console.log(`\n📋 Rename log written → scripts/claptrop-rename-log.json (${renameLogs.length} entries)`);
     }
 
-    // 3. Import from SD Card (if detected)
-    if (USE_SD_CARD) {
-        console.log('\n=== Importing from SD Card ===');
-        const allFiles = getFilesRecursive(SD_CARD_PATH);
-        console.log(`Found ${allFiles.length} files on SD card. Processing sequentially by type...`);
-
-        // Define processing order: JPG, RAW, MOV
-        const processingOrder: { type: 'JPG' | 'RAW' | 'MOV', ext: string[] }[] = [
-            { type: 'JPG', ext: ['.jpg', '.jpeg'] },
-            { type: 'RAW', ext: ['.raf'] },
-            { type: 'MOV', ext: ['.mov', '.mp4'] }
-        ];
-
-        for (const group of processingOrder) {
-            console.log(`\nImporting ${group.type} files...`);
-            const targetConfig = FOLDER_CONFIG[group.type as keyof typeof FOLDER_CONFIG];
-
-            // Ensure target directory exists
-            if (!fs.existsSync(targetConfig.local)) {
-                fs.mkdirSync(targetConfig.local, { recursive: true });
-            }
-
-            const filesToCopy = allFiles.filter(f => group.ext.includes(path.extname(f).toLowerCase()));
-
-            if (filesToCopy.length === 0) {
-                console.log(`No ${group.type} files found.`);
-                continue;
-            }
-
-            console.log(`Found ${filesToCopy.length} ${group.type} files.`);
-
-            for (const srcPath of filesToCopy) {
-                const fileName = path.basename(srcPath);
-                const destPath = path.join(targetConfig.local, fileName);
-
-                if (fs.existsSync(destPath)) {
-                    // console.log(`Skipping ${fileName} (already imported)`);
-                    continue;
-                }
-
-                try {
-                    const fileSize = fs.statSync(srcPath).size;
-                    console.log(`Copying ${fileName} (${(fileSize / 1024 / 1024).toFixed(2)} MB)...`);
-                    fs.copyFileSync(srcPath, destPath);
-                } catch (err: any) {
-                    console.error(`Error copying ${fileName}: ${err.message}`);
-                }
-            }
-        }
-        console.log('\n✅ Import complete.');
-    }
-
-    // 4. Upload from Desktop (Standard Logic)
-    console.log('\n=== Starting Uploads from Desktop ===');
-
-    // Process ALL types (JPG, RAW, MOV)
-    const ENABLED_TYPES = ['JPG', 'RAW', 'MOV'] as const;
-
-    for (const type of ENABLED_TYPES) {
-        const config = FOLDER_CONFIG[type];
-        console.log(`\nProcessing ${type} folder...`);
-
-        if (fs.existsSync(config.local)) {
-            try {
-                const targetFolderId = await getOrCreateFolder('NEW UPLOADS', config.parent!);
-                if (targetFolderId) {
-                    const files = fs.readdirSync(config.local).filter(f => !f.startsWith('.'));
-                    if (files.length > 0) {
-                        for (const file of files) {
-                            const filePath = path.join(config.local, file);
-                            try {
-                                if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-                                    const success = await uploadFile(filePath, targetFolderId);
-                                    if (!success) {
-                                        failedUploads.push({ filePath, parentId: targetFolderId });
-                                    }
-                                }
-                            } catch (loopErr: any) {
-                                console.error(`Warning: Skipping ${file} due to error: ${loopErr.message}`);
-                            }
-                        }
-                    } else {
-                        console.log(`No files to upload in ${config.local}`);
-                    }
-                }
-            } catch (err: any) {
-                console.error(`Error processing uploads for ${type}: ${err.message}`);
-            }
-        } else {
-            console.log(`Local folder ${config.local} does not exist. Skipping.`);
-        }
-    }
-
-    // 5. Retry Failed Uploads
-    if (failedUploads.length > 0) {
-        console.log(`\n=== ⚠️ Retrying ${failedUploads.length} Failed Uploads ===`);
-        for (const item of failedUploads) {
-            console.log(`\nRe-attempting ${path.basename(item.filePath)}...`);
-            await uploadFile(item.filePath, item.parentId);
-        }
-    } else {
-        console.log('\n=== ✅ All Uploads Successful ===');
-    }
+    console.log('\n=== Done ===');
 }
 
 startSync().catch(console.error);
