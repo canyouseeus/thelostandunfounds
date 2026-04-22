@@ -4,6 +4,7 @@ import path from 'path';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { buildName, getAvailableBytes, formatBytes, resetSeqs } from './claptrop-namer.js';
+import { run as runRetrograde } from './claptrop-retrograde.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -433,6 +434,17 @@ async function startSync() {
     flushRenameLogs();
     if (renameLogs.length) {
         console.log(`\n📋 Rename log written → scripts/claptrop-rename-log.json (${renameLogs.length} entries)`);
+    }
+
+    // ── Phase 3: Retrograde rename existing Drive files + update gallery titles
+    if (!SKIP_DRIVE) {
+        console.log('\n=== Phase 3: Retrograde rename (existing Drive files + gallery) ===');
+        try {
+            await runRetrograde();
+        } catch (err: any) {
+            console.warn(`⚠️  Retrograde rename failed: ${err.message}`);
+            console.warn('   Run manually: node_modules/.bin/tsx scripts/claptrop-retrograde.ts');
+        }
     }
 
     console.log('\n=== Done ===');

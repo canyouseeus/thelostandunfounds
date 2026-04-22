@@ -32,28 +32,9 @@ const DRY_RUN          = args.includes('--dry-run');
 const LIBRARY_FILTER   = (() => { const i = args.indexOf('--library'); return i !== -1 ? args[i + 1] : null; })();
 const SUBJECT_OVERRIDE = (() => { const i = args.indexOf('--subject'); return i !== -1 ? args[i + 1] : undefined; })();
 
-if (DRY_RUN) console.log('🔍 DRY RUN — no changes will be made.\n');
-
-// ─── Clients ──────────────────────────────────────────────────────────────────
-
-const SUPABASE_URL             = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const CLIENT_ID                = process.env.GOOGLE_CLIENT_ID;
-const CLIENT_SECRET            = process.env.GOOGLE_CLIENT_SECRET;
-const REFRESH_TOKEN            = process.env.GOOGLE_REFRESH_TOKEN;
-
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-    console.error('❌ Missing Supabase credentials in .env.local'); process.exit(1);
-}
-if (!CLIENT_ID || !CLIENT_SECRET || !REFRESH_TOKEN) {
-    console.error('❌ Missing Google OAuth2 credentials in .env.local'); process.exit(1);
-}
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
-const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET);
-oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
-const drive = google.drive({ version: 'v3', auth: oauth2Client });
+// Clients are initialized lazily inside run() so this module is safe to import
+let supabase: ReturnType<typeof createClient>;
+let drive: ReturnType<typeof google.drive>;
 
 // ─── Log ─────────────────────────────────────────────────────────────────────
 
@@ -184,8 +165,27 @@ async function processLibrary(library: { id: string; slug: string; name: string 
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-async function run() {
-    console.log('=== CLAPTROP Retrograde ===');
+export async function run() {
+    console.log('\n=== Phase 3: CLAPTROP Retrograde ===');
+
+    if (DRY_RUN) console.log('🔍 DRY RUN — no changes will be made.\n');
+
+    const SUPABASE_URL              = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const CLIENT_ID                 = process.env.GOOGLE_CLIENT_ID;
+    const CLIENT_SECRET             = process.env.GOOGLE_CLIENT_SECRET;
+    const REFRESH_TOKEN             = process.env.GOOGLE_REFRESH_TOKEN;
+
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY)
+        throw new Error('Missing Supabase credentials in .env.local');
+    if (!CLIENT_ID || !CLIENT_SECRET || !REFRESH_TOKEN)
+        throw new Error('Missing Google OAuth2 credentials in .env.local');
+
+    supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET);
+    oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
+    drive = google.drive({ version: 'v3', auth: oauth2Client });
 
     let query = supabase.from('photo_libraries').select('id, slug, name').order('name');
     if (LIBRARY_FILTER) query = query.eq('slug', LIBRARY_FILTER) as typeof query;
@@ -193,8 +193,7 @@ async function run() {
     const { data: libraries, error } = await query;
 
     if (error || !libraries) {
-        console.error('❌ Failed to load libraries:', error?.message);
-        process.exit(1);
+        throw new Error(`Failed to load libraries: ${error?.message}`);
     }
 
     console.log(`Found ${libraries.length} librar${libraries.length === 1 ? 'y' : 'ies'} to process.`);
@@ -208,4 +207,9 @@ async function run() {
     console.log('\n=== Done ===');
 }
 
-run().catch(console.error);
+// Only auto-run when executed directly, not when imported
+const isMain = process.argv[1] && (
+    process.argv[1].endsWith('claptrop-retrograde.ts') ||
+    process.argv[1].endsWith('claptrop-retrograde.js')
+);
+if (isMain) run().catch(console.error);
