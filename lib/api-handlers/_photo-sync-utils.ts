@@ -181,7 +181,8 @@ export async function syncGalleryPhotos(librarySlug: string, limit: number = 100
         if (latitude != null && longitude != null && upsertedPhoto?.id && venueTagsWithGps.length > 0) {
             const nearbyVenueTags = venueTagsWithGps.filter(tag => {
                 const dist = haversineMeters(latitude, longitude, tag.metadata.latitude, tag.metadata.longitude);
-                return dist <= 100;
+                const radius = tag.metadata.radius_meters || 300;
+                return dist <= radius;
             });
 
             if (nearbyVenueTags.length > 0) {
