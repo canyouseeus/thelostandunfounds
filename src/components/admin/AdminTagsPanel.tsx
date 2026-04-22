@@ -186,16 +186,16 @@ export default function AdminTagsPanel() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
+            <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
                     <h3 className="text-sm font-bold text-white uppercase tracking-widest">
                         Tags ({tags.length})
                     </h3>
-                    <p className="text-white/30 text-xs mt-1">Organize photos with location, venue, collection, and people tags</p>
+                    <p className="text-white/30 text-xs mt-1 hidden sm:block">Organize photos with location, venue, collection, and people tags</p>
                 </div>
                 <button
                     onClick={() => { setShowCreate(v => !v); setEditingId(null); }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-black text-xs font-bold uppercase tracking-widest hover:bg-white/80 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-black text-xs font-bold uppercase tracking-widest hover:bg-white/80 transition-colors whitespace-nowrap flex-shrink-0"
                 >
                     <PlusIcon className="w-3 h-3" />
                     New Tag
@@ -206,7 +206,7 @@ export default function AdminTagsPanel() {
             {showCreate && (
                 <div className="bg-white/5 border border-white/10 p-4 space-y-3">
                     <p className="text-white/60 text-[10px] uppercase tracking-widest font-bold">New Tag</p>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <input
                             type="text"
                             placeholder="Tag name"
@@ -227,7 +227,7 @@ export default function AdminTagsPanel() {
                         </select>
                     </div>
                     {showGpsFields(createForm.type) && (
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <input
                                 type="number"
                                 step="any"
@@ -268,15 +268,15 @@ export default function AdminTagsPanel() {
             )}
 
             {/* Filters */}
-            <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
                 <input
                     type="text"
                     placeholder="Search tags…"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    className="bg-black border border-white/20 text-white text-xs px-3 py-1.5 placeholder-white/20 focus:outline-none focus:border-white/50 w-40"
+                    className="bg-black border border-white/20 text-white text-xs px-3 py-1.5 placeholder-white/20 focus:outline-none focus:border-white/50 w-full sm:w-40"
                 />
-                <div className="flex gap-1">
+                <div className="flex gap-1 flex-wrap">
                     <button
                         onClick={() => setFilterType('all')}
                         className={`px-2 py-1 text-[9px] uppercase font-bold tracking-widest border transition-colors ${filterType === 'all' ? 'bg-white text-black border-white' : 'text-white/40 border-white/20 hover:text-white'}`}
@@ -349,25 +349,21 @@ export default function AdminTagsPanel() {
                                         ) : (
                                             /* Display row */
                                             <>
-                                                <TagIcon className="w-3 h-3 text-white/20 flex-shrink-0" />
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-white text-xs font-bold truncate">{tag.name}</span>
-                                                        <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 border ${TYPE_COLORS[tag.type]}`}>
-                                                            {tag.type}
+                                                    <div className="flex items-baseline gap-2 flex-wrap">
+                                                        <span className="text-white text-sm font-bold break-words">{tag.name}</span>
+                                                        <span className="text-white/30 text-[10px] font-mono whitespace-nowrap">
+                                                            {tag.photo_count} {tag.photo_count === 1 ? 'photo' : 'photos'}
                                                         </span>
-                                                        {tag.metadata?.latitude && (
-                                                            <span className="text-white/20 text-[9px] font-mono">
-                                                                📍 {Number(tag.metadata.latitude).toFixed(4)}, {Number(tag.metadata.longitude).toFixed(4)}
-                                                            </span>
-                                                        )}
                                                     </div>
-                                                    <p className="text-white/20 text-[9px] font-mono">{tag.slug}</p>
+                                                    <p className="text-white/20 text-[9px] font-mono break-all mt-1">{tag.slug}</p>
+                                                    {tag.metadata?.latitude && (
+                                                        <p className="text-white/20 text-[9px] font-mono mt-0.5">
+                                                            {Number(tag.metadata.latitude).toFixed(4)}, {Number(tag.metadata.longitude).toFixed(4)}
+                                                        </p>
+                                                    )}
                                                 </div>
-                                                <span className="text-white/20 text-[9px] font-mono flex-shrink-0">
-                                                    {tag.photo_count} {tag.photo_count === 1 ? 'photo' : 'photos'}
-                                                </span>
-                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0">
                                                     <button
                                                         onClick={() => startEdit(tag)}
                                                         className="p-1 text-white/30 hover:text-white transition-colors"
