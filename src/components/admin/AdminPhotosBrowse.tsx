@@ -279,16 +279,16 @@ export default function AdminPhotosBrowse() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-sm font-bold text-white uppercase tracking-wide flex items-center gap-2">
-            <PhotoIcon className="w-4 h-4" />
-            All Photos
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="text-sm font-bold text-white uppercase tracking-wide flex items-center gap-2 flex-wrap">
+            <PhotoIcon className="w-4 h-4 flex-shrink-0" />
+            <span>All Photos</span>
             <span className="text-white/40 font-mono text-xs">({totalCount.toLocaleString()})</span>
           </h3>
-          <p className="text-[10px] text-white/30 mt-0.5">Browse all synced photos across every library</p>
+          <p className="text-[10px] text-white/30 mt-0.5 hidden sm:block">Browse all synced photos across every library</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {/* Selection mode toggle */}
           <button
             onClick={() => selectionMode ? exitSelectionMode() : setSelectionMode(true)}
@@ -316,7 +316,8 @@ export default function AdminPhotosBrowse() {
       {/* Selection hint */}
       {selectionMode && (
         <p className="text-[10px] text-white/30">
-          Click photos to select · Drag on the background to rubber-band select · Click <strong className="text-white/50">Select</strong> again to exit
+          <span className="sm:hidden">Tap photos to select. Tap <strong className="text-white/50">Selecting…</strong> again to exit.</span>
+          <span className="hidden sm:inline">Click photos to select · Drag on the background to rubber-band select · Click <strong className="text-white/50">Select</strong> again to exit</span>
         </p>
       )}
 
