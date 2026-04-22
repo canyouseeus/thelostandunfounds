@@ -16,10 +16,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         console.log(`[Sync Library] Starting sync for slug: ${slug}`);
 
-        // Call the sync utility
-        // Using a reasonable limit (e.g. 100) for the immediate UI feedback loop
-        // The background cron will pick up the rest later
-        const result = await syncGalleryPhotos(slug, 100);
+        const result = await syncGalleryPhotos(slug);
 
         return res.status(200).json({
             success: true,
