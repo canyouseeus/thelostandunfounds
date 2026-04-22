@@ -244,6 +244,16 @@ async function addWatermark(imageBuffer: Buffer): Promise<Buffer> {
         .toBuffer();
 }
 
+// Build a branded download filename: the_lost_and_unfounds_llc_joshua_abram_greene_[title].jpg
+function buildDownloadFilename(rawTitle: string): string {
+    const PREFIX = 'the_lost_and_unfounds_llc_joshua_abram_greene';
+    const sanitized = rawTitle
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')  // non-alphanumeric → underscore
+        .replace(/^_+|_+$/g, '');      // trim leading/trailing underscores
+    return `${PREFIX}_${sanitized || 'photo'}.jpg`;
+}
+
 async function handleStream(req: VercelRequest, res: VercelResponse) {
     const { fileId, size, download } = req.query;
     const isDownload = download === 'true';
@@ -251,6 +261,24 @@ async function handleStream(req: VercelRequest, res: VercelResponse) {
     try {
         if (!fileId) {
             return res.status(400).json({ error: 'Missing fileId' });
+        }
+
+        // Look up photo title from DB for branded download filename
+        let downloadFilename = buildDownloadFilename('photo');
+        if (isDownload) {
+            try {
+                const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+                const { data: photo } = await supabase
+                    .from('photos')
+                    .select('title')
+                    .eq('google_drive_file_id', fileId as string)
+                    .single();
+                if (photo?.title) {
+                    downloadFilename = buildDownloadFilename(photo.title);
+                }
+            } catch {
+                // Non-fatal — fall back to generic filename
+            }
         }
 
         // Try lh3 first (direct link) — use full resolution for downloads
@@ -264,6 +292,7 @@ async function handleStream(req: VercelRequest, res: VercelResponse) {
             if (isDownload) {
                 const watermarked = await addWatermark(rawBuffer);
                 res.setHeader('Content-Type', 'image/jpeg');
+                res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
                 res.setHeader('Cache-Control', 'no-store');
                 return res.send(watermarked);
             }
@@ -290,6 +319,7 @@ async function handleStream(req: VercelRequest, res: VercelResponse) {
             if (isDownload) {
                 const watermarked = await addWatermark(rawBuffer);
                 res.setHeader('Content-Type', 'image/jpeg');
+                res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
                 res.setHeader('Cache-Control', 'no-store');
                 return res.send(watermarked);
             }
