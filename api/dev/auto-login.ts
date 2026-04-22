@@ -7,6 +7,14 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Vercel dev doesn't inject .env.local into serverless function processes
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+  dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+}
 
 const ADMIN_EMAIL = 'thelostandunfounds@gmail.com';
 

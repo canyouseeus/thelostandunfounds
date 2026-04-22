@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeftIcon, PhotoIcon, CurrencyDollarIcon, ArrowDownTrayIcon, ExclamationCircleIcon, CheckCircleIcon, ArrowPathIcon, ChartBarIcon, PlusIcon, LockClosedIcon, LockOpenIcon, TrashIcon, GlobeAltIcon, ArrowUpTrayIcon, XMarkIcon, CloudIcon, CircleStackIcon, PencilIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, PhotoIcon, CurrencyDollarIcon, ArrowDownTrayIcon, ExclamationCircleIcon, CheckCircleIcon, ArrowPathIcon, ChartBarIcon, PlusIcon, LockClosedIcon, LockOpenIcon, TrashIcon, GlobeAltIcon, ArrowUpTrayIcon, XMarkIcon, CloudIcon, CircleStackIcon, PencilIcon, EnvelopeIcon, TagIcon } from '@heroicons/react/24/outline';
+import AdminTagsPanel from './AdminTagsPanel';
+import AdminPhotosBrowse from './AdminPhotosBrowse';
 import { AnimatedNumber } from '@/components/ui/animated-number';
 import { useToast } from '@/components/Toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -61,7 +63,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
     const [filesData, setFilesData] = useState<{ file: File; thumbnail?: Blob; previewUrl: string }[]>([]);
     const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
     const [uploadProgress, setUploadProgress] = useState(0);
-    const [activeTab, setActiveTab] = useState<'galleries' | 'applications'>('galleries');
+    const [activeTab, setActiveTab] = useState<'galleries' | 'applications' | 'photos' | 'tags'>('galleries');
     const [applications, setApplications] = useState<any[]>([]);
     const [appsLoading, setAppsLoading] = useState(false);
     const [pendingAppsCount, setPendingAppsCount] = useState(0);
@@ -1409,10 +1411,34 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                             )}
                             {activeTab === 'applications' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />}
                         </button>
+                        <button
+                            onClick={() => setActiveTab('photos')}
+                            className={`px-6 py-3 text-xs uppercase font-bold tracking-widest transition-colors relative flex items-center gap-2 ${activeTab === 'photos' ? 'text-white' : 'text-white/40 hover:text-white'}`}
+                        >
+                            <PhotoIcon className="w-3.5 h-3.5" />
+                            All Photos
+                            {activeTab === 'photos' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />}
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('tags')}
+                            className={`px-6 py-3 text-xs uppercase font-bold tracking-widest transition-colors relative flex items-center gap-2 ${activeTab === 'tags' ? 'text-white' : 'text-white/40 hover:text-white'}`}
+                        >
+                            <TagIcon className="w-3.5 h-3.5" />
+                            Tags
+                            {activeTab === 'tags' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />}
+                        </button>
                     </div>
                 )}
 
-                {activeTab === 'galleries' ? (
+                {activeTab === 'tags' ? (
+                    <div className="bg-white/[0.02] p-6">
+                        <AdminTagsPanel />
+                    </div>
+                ) : activeTab === 'photos' ? (
+                    <div className="bg-white/[0.02] p-6">
+                        <AdminPhotosBrowse />
+                    </div>
+                ) : activeTab === 'galleries' ? (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* Active Galleries */}
                         <div className="bg-white/[0.02] p-6 rounded-none h-full">
