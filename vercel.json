@@ -8,6 +8,9 @@
     "api/cron/send-scheduled-newsletters.ts": {
       "maxDuration": 300
     },
+    "api/admin/retrograde-rename.ts": {
+      "maxDuration": 300
+    },
     "api/**/*.ts": {
       "maxDuration": 60
     },

@@ -216,20 +216,24 @@ async function upsertPhoto(ctx: SyncCtx, file: DriveFile): Promise<string | null
     const thumbnailUrl = file.thumbnailLink?.replace(/=s220$/, '=s1200');
     const { metadata, finalCreatedAt, latitude, longitude } = parsePhotoFields(file);
 
+    const payload: Record<string, unknown> = {
+        library_id: ctx.library.id,
+        google_drive_file_id: file.id,
+        title,
+        thumbnail_url: thumbnailUrl,
+        status: 'active',
+        mime_type: file.mimeType,
+        created_at: finalCreatedAt,
+        metadata,
+    };
+    // Don't overwrite existing GPS with null — the retrograde rename may have
+    // populated lat/lng/location_name from a separate source.
+    if (latitude != null) payload.latitude = latitude;
+    if (longitude != null) payload.longitude = longitude;
+
     const { data, error } = await ctx.supabase
         .from('photos')
-        .upsert({
-            library_id: ctx.library.id,
-            google_drive_file_id: file.id,
-            title,
-            thumbnail_url: thumbnailUrl,
-            status: 'active',
-            mime_type: file.mimeType,
-            created_at: finalCreatedAt,
-            metadata,
-            latitude,
-            longitude,
-        }, { onConflict: 'google_drive_file_id' })
+        .upsert(payload, { onConflict: 'google_drive_file_id' })
         .select('id')
         .single();
 
@@ -238,6 +242,17 @@ async function upsertPhoto(ctx: SyncCtx, file: DriveFile): Promise<string | null
         return null;
     }
     return data.id;
+}
+
+function parseLocationFromClaptropTitle(title: string | null | undefined): string | null {
+    if (!title) return null;
+    // @tlau_YYYY-MM-DD_{location}_{subject}_{###}
+    const m = title.match(/^@tlau_\d{4}-\d{2}-\d{2}_([a-z0-9_]+?)_[a-z0-9_]+_\d{3}$/);
+    if (!m) return null;
+    const raw = m[1].replace(/_/g, ' ').trim();
+    if (!raw) return null;
+    // Title-case for display
+    return raw.split(/\s+/).map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
 }
 
 async function applyPhotoLevelVenueTags(
@@ -343,6 +358,17 @@ async function processFolder(
 
         const perPhotoVenues = await applyPhotoLevelVenueTags(ctx, photoId, latitude, longitude);
         for (const id of perPhotoVenues) tagIds.add(id);
+
+        // Fallback: if photo has no EXIF GPS and no folder-level venue/location tag,
+        // parse an @tlau_ filename for its encoded city (e.g. "austin").
+        if (!folderVenueOrLocationTagId && (latitude == null || longitude == null) && file.name) {
+            const fileStem = file.name.split('.').slice(0, -1).join('.');
+            const filenameLocation = parseLocationFromClaptropTitle(fileStem);
+            if (filenameLocation) {
+                const tagId = await ensureTag(ctx, filenameLocation, 'location');
+                if (tagId) tagIds.add(tagId);
+            }
+        }
 
         await writePhotoTags(ctx, photoId, tagIds);
         ctx.stats.synced++;
