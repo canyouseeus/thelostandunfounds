@@ -674,6 +674,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 info('Renaming Drive files to standard format…');
                 let totalRenamed = 0;
                 let totalFailed = 0;
+                let finishedCleanly = false;
                 const MAX_ITERATIONS = 30;
                 for (let i = 0; i < MAX_ITERATIONS; i++) {
                     const renameRes = await fetch('/api/admin/retrograde-rename', {
@@ -683,22 +684,33 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                     });
                     if (!renameRes.ok) {
                         const body = await renameRes.text();
-                        console.warn('[checkAssetHealth] rename chunk failed:', body);
+                        console.warn('[checkAssetHealth] rename chunk failed:', renameRes.status, body);
+                        let parsed: any = null;
+                        try { parsed = JSON.parse(body); } catch { /* not json */ }
+                        error(`Rename failed (${renameRes.status}): ${parsed?.error || body.substring(0, 120)}`);
                         break;
                     }
                     const data = await renameRes.json();
                     totalRenamed += data.renamed || 0;
                     totalFailed += data.failed || 0;
                     if (data.done || (data.renamed === 0 && data.failed === 0)) {
+                        finishedCleanly = true;
                         if (totalRenamed > 0 || totalFailed > 0) {
                             success(`Rename complete: ${totalRenamed} renamed, ${totalFailed} skipped.`);
+                        } else {
+                            info('No files needed renaming — all photos already use @tlau_ names.');
                         }
                         break;
                     }
                     info(`Renamed ${totalRenamed} so far (${data.remaining} remaining)…`);
                 }
+                if (!finishedCleanly && totalRenamed === 0 && totalFailed === 0) {
+                    // We hit an error before surfacing anything meaningful
+                    console.warn('[checkAssetHealth] rename did not complete cleanly');
+                }
             } catch (renameErr: any) {
                 console.warn('[checkAssetHealth] rename step failed:', renameErr);
+                error(`Rename step threw: ${renameErr?.message || 'unknown error'}`);
             }
 
             try {
@@ -738,10 +750,13 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                     try {
                         errData = JSON.parse(text);
                     } catch {
-                        errData = { error: 'Non-JSON response', body: text };
+                        // Strip HTML tags and whitespace so the toast shows readable text
+                        const stripped = text.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+                        errData = { error: `HTTP ${syncRes.status}`, body: stripped };
                     }
-                    error(`Sync failed: ${errData.error || errData.details || text.substring(0, 50)}`);
-                    console.error('Sync failed during connection test:', JSON.stringify(errData, null, 2));
+                    const bodySnippet = (errData.body || '').substring(0, 160);
+                    error(`Sync failed (${syncRes.status}): ${errData.error || errData.details || 'see console'}${bodySnippet ? ` — ${bodySnippet}` : ''}`);
+                    console.error('Sync failed during connection test:', syncRes.status, text);
                 }
             } catch (syncErr: any) {
                 error(`Sync error: ${syncErr.message || 'Network error. Check connection.'}`);
