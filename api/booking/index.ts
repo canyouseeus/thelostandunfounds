@@ -161,22 +161,35 @@ async function handleBookingRequest(req: VercelRequest, res: VercelResponse) {
 
     if (error) {
         console.error('[BookingRequest] Insert error:', error)
-        return res.status(500).json({ error: 'Failed to submit booking request' })
+        return res.status(500).json({ error: 'Failed to submit booking request', details: error.message })
     }
 
-    // Fire-and-forget notification email (best effort)
-    const notifyUrl = process.env.VITE_SITE_URL
-        ? `${process.env.VITE_SITE_URL}/api/booking?action=notify`
-        : null
-    if (notifyUrl) {
-        fetch(notifyUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ bookingId: data.id })
-        }).catch(() => {})
+    // Send notification email inline (best-effort). We await it so there's no
+    // dangling promise after res.json() — Vercel kills the function when the
+    // response is sent, and a rejected pending fetch was surfacing as
+    // FUNCTION_INVOCATION_FAILED.
+    try {
+        await sendBookingNotification(data.id as string, supabase)
+    } catch (notifyErr: any) {
+        // Non-fatal — booking is saved, admin just didn't get the email.
+        console.warn('[BookingRequest] notify failed:', notifyErr?.message)
     }
 
     return res.status(200).json({ success: true, bookingId: data.id })
+}
+
+async function sendBookingNotification(bookingId: string, supabase: ReturnType<typeof getSupabase>) {
+    const { data: booking, error } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('id', bookingId)
+        .single()
+    if (error || !booking) return
+
+    const subject = `New Booking Inquiry — ${booking.event_type || 'Other'} — ${booking.name}`
+    const html = buildBookingEmailHtml(booking)
+    const auth = await getZohoAuthContext()
+    await sendZohoEmail({ auth, to: NOTIFY_TO, subject, htmlContent: html })
 }
 
 async function handleAdminList(req: VercelRequest, res: VercelResponse) {
@@ -266,15 +279,17 @@ async function handleNotify(req: VercelRequest, res: VercelResponse) {
     if (!bookingId) return res.status(400).json({ error: 'bookingId required' })
 
     const supabase = getSupabase(true)
-    const { data: booking, error } = await supabase
-        .from('bookings')
-        .select('*')
-        .eq('id', bookingId)
-        .single()
-    if (error || !booking) return res.status(404).json({ error: 'Booking not found' })
+    try {
+        await sendBookingNotification(bookingId, supabase)
+        return res.status(200).json({ success: true })
+    } catch (err: any) {
+        console.error('[booking notify] threw:', err?.message)
+        return res.status(500).json({ error: err?.message || 'Notify failed' })
+    }
+}
 
-    const subject = `New Booking Inquiry — ${booking.event_type || 'Other'} — ${booking.name}`
-    const html = `
+function buildBookingEmailHtml(booking: any): string {
+    return `
         <h2 style="font-family:Arial,sans-serif">New booking inquiry</h2>
         <table style="font-family:Arial,sans-serif;font-size:14px;border-collapse:collapse">
             <tr><td style="padding:6px 12px 6px 0"><b>Name</b></td><td>${escapeHtml(booking.name)}</td></tr>
@@ -293,24 +308,6 @@ async function handleNotify(req: VercelRequest, res: VercelResponse) {
             Submitted: ${new Date(booking.created_at).toLocaleString()}
         </p>
     `
-
-    try {
-        const auth = await getZohoAuthContext()
-        const result = await sendZohoEmail({
-            auth,
-            to: NOTIFY_TO,
-            subject,
-            htmlContent: html,
-        })
-        if (!result.success) {
-            console.error('[booking notify] zoho send failed:', result.error)
-            return res.status(500).json({ error: result.error || 'Email send failed' })
-        }
-        return res.status(200).json({ success: true })
-    } catch (err: any) {
-        console.error('[booking notify] threw:', err?.message)
-        return res.status(500).json({ error: err?.message || 'Notify failed' })
-    }
 }
 
 function escapeHtml(s: string): string {
