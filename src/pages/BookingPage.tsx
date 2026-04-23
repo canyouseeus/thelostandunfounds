@@ -289,7 +289,7 @@ const BookingPage: React.FC = () => {
                                         { label: 'Single Event', desc: 'Concert, show, portrait session, or any one-time gig.' },
                                         { label: 'Monthly Retainer', desc: 'Consistent coverage — locked-in rate, priority access to my schedule.' },
                                     ].map(item => (
-                                        <div key={item.label} className="border border-white/10 p-5">
+                                        <div key={item.label} className="bg-white/[0.03] p-5">
                                             <p className="text-sm font-black uppercase tracking-wider text-white mb-1">{item.label}</p>
                                             <p className="text-white/40 text-xs leading-relaxed">{item.desc}</p>
                                         </div>
@@ -347,7 +347,7 @@ const BookingPage: React.FC = () => {
                                             onChange={e => set('name', e.target.value)}
                                             required
                                             placeholder="Full name"
-                                            className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/40 transition-colors"
+                                            className="w-full bg-white/5 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:bg-white/10 transition-colors"
                                         />
                                     </div>
 
@@ -360,7 +360,7 @@ const BookingPage: React.FC = () => {
                                             onChange={e => set('email', e.target.value)}
                                             required
                                             placeholder="your@email.com"
-                                            className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/40 transition-colors"
+                                            className="w-full bg-white/5 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:bg-white/10 transition-colors"
                                         />
                                     </div>
 
@@ -372,7 +372,7 @@ const BookingPage: React.FC = () => {
                                             value={form.phone}
                                             onChange={e => set('phone', e.target.value)}
                                             placeholder="+1 (555) 000-0000"
-                                            className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/40 transition-colors"
+                                            className="w-full bg-white/5 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:bg-white/10 transition-colors"
                                         />
                                     </div>
 
@@ -383,7 +383,7 @@ const BookingPage: React.FC = () => {
                                             value={form.event_type}
                                             onChange={e => set('event_type', e.target.value)}
                                             required
-                                            className="w-full bg-zinc-950 border border-white/10 px-4 py-3 text-sm text-white focus:outline-none focus:border-white/40 transition-colors appearance-none"
+                                            className="w-full bg-zinc-950 px-4 py-3 text-sm text-white focus:outline-none focus:bg-zinc-900 transition-colors appearance-none"
                                         >
                                             <option value="" disabled>Select type...</option>
                                             {EVENT_TYPES.map(t => (
@@ -400,7 +400,7 @@ const BookingPage: React.FC = () => {
                                                 type="time"
                                                 value={form.start_time}
                                                 onChange={e => set('start_time', e.target.value)}
-                                                className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm text-white focus:outline-none focus:border-white/40 transition-colors"
+                                                className="w-full bg-white/5 px-4 py-3 text-sm text-white focus:outline-none focus:bg-white/10 transition-colors"
                                             />
                                         </div>
                                         <div>
@@ -409,7 +409,7 @@ const BookingPage: React.FC = () => {
                                                 type="time"
                                                 value={form.end_time}
                                                 onChange={e => set('end_time', e.target.value)}
-                                                className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm text-white focus:outline-none focus:border-white/40 transition-colors"
+                                                className="w-full bg-white/5 px-4 py-3 text-sm text-white focus:outline-none focus:bg-white/10 transition-colors"
                                             />
                                         </div>
                                     </div>
@@ -422,7 +422,7 @@ const BookingPage: React.FC = () => {
                                             value={form.location}
                                             onChange={e => set('location', e.target.value)}
                                             placeholder="Venue name or city"
-                                            className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/40 transition-colors"
+                                            className="w-full bg-white/5 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:bg-white/10 transition-colors"
                                         />
                                     </div>
 
@@ -434,7 +434,7 @@ const BookingPage: React.FC = () => {
                                             onChange={e => set('notes', e.target.value)}
                                             rows={3}
                                             placeholder="Any details I should know..."
-                                            className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/40 transition-colors resize-none"
+                                            className="w-full bg-white/5 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:bg-white/10 transition-colors resize-none"
                                         />
                                     </div>
 
