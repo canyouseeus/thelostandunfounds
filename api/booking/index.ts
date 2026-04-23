@@ -1,6 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import { getZohoAuthContext, sendZohoEmail } from '../../lib/api-handlers/_zoho-email-utils.js'
+import { generateTransactionalEmail } from '../../lib/email-template.js'
 
 const NOTIFY_TO = 'media@thelostandunfounds.com'
 
@@ -212,10 +213,25 @@ async function sendBookingNotification(bookingId: string, supabase: ReturnType<t
         .single()
     if (error || !booking) return
 
-    const subject = `New Booking Inquiry — ${booking.event_type || 'Other'} — ${booking.name}`
-    const html = buildBookingEmailHtml(booking)
     const auth = await getZohoAuthContext()
-    await sendZohoEmail({ auth, to: NOTIFY_TO, subject, htmlContent: html })
+
+    // Admin notification — structured summary wrapped in brand template
+    const adminSubject = `New Booking Inquiry — ${booking.event_type || 'Other'} — ${booking.name}`
+    const adminHtml = generateTransactionalEmail(buildAdminSummaryBody(booking))
+    await sendZohoEmail({ auth, to: NOTIFY_TO, subject: adminSubject, htmlContent: adminHtml })
+
+    // Client confirmation — warm recap of what they submitted, wrapped in
+    // the same branded template so the header + logo match the site.
+    if (booking.email) {
+        const clientSubject = `We got your booking request — TLAU`
+        const clientHtml = generateTransactionalEmail(buildClientConfirmationBody(booking))
+        try {
+            await sendZohoEmail({ auth, to: booking.email, subject: clientSubject, htmlContent: clientHtml })
+        } catch (err) {
+            // Don't let a client-send failure abort the admin flow
+            console.warn('[BookingNotify] client confirmation failed:', (err as any)?.message)
+        }
+    }
 }
 
 async function handleAdminList(req: VercelRequest, res: VercelResponse) {
@@ -314,25 +330,73 @@ async function handleNotify(req: VercelRequest, res: VercelResponse) {
     }
 }
 
-function buildBookingEmailHtml(booking: any): string {
+function formatEventDate(isoDate: string | null | undefined): string {
+    if (!isoDate) return '—'
+    const [y, m, d] = isoDate.split('-').map(Number)
+    if (!y || !m || !d) return isoDate
+    return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-US', {
+        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+    })
+}
+
+function buildAdminSummaryBody(booking: any): string {
+    const label = 'color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;font-weight:bold;padding:8px 16px 4px 0;vertical-align:top;white-space:nowrap;'
+    const value = 'color:#fff;font-size:14px;padding:8px 0;vertical-align:top;'
+    const row = (k: string, v: string) =>
+        `<tr><td style="${label}">${k}</td><td style="${value}">${v}</td></tr>`
     return `
-        <h2 style="font-family:Arial,sans-serif">New booking inquiry</h2>
-        <table style="font-family:Arial,sans-serif;font-size:14px;border-collapse:collapse">
-            <tr><td style="padding:6px 12px 6px 0"><b>Name</b></td><td>${escapeHtml(booking.name)}</td></tr>
-            ${booking.business_name ? `<tr><td style="padding:6px 12px 6px 0"><b>Business</b></td><td>${escapeHtml(booking.business_name)}</td></tr>` : ''}
-            <tr><td style="padding:6px 12px 6px 0"><b>Email</b></td><td><a href="mailto:${escapeHtml(booking.email)}">${escapeHtml(booking.email)}</a></td></tr>
-            ${booking.phone ? `<tr><td style="padding:6px 12px 6px 0"><b>Phone</b></td><td>${escapeHtml(booking.phone)}</td></tr>` : ''}
-            <tr><td style="padding:6px 12px 6px 0"><b>Type</b></td><td>${escapeHtml(booking.event_type || '—')}</td></tr>
-            <tr><td style="padding:6px 12px 6px 0"><b>Date</b></td><td>${escapeHtml(booking.event_date || '—')}</td></tr>
-            ${booking.start_time || booking.end_time ? `<tr><td style="padding:6px 12px 6px 0"><b>Time</b></td><td>${escapeHtml(booking.start_time || '?')} – ${escapeHtml(booking.end_time || '?')}</td></tr>` : ''}
-            ${booking.location ? `<tr><td style="padding:6px 12px 6px 0"><b>Location</b></td><td>${escapeHtml(booking.location)}</td></tr>` : ''}
-            ${booking.retainer ? `<tr><td style="padding:6px 12px 6px 0"><b>Retainer</b></td><td>Yes</td></tr>` : ''}
+        <h1 style="color:#fff !important;font-size:24px;font-weight:bold;margin:0 0 8px 0;letter-spacing:0.05em;">NEW BOOKING INQUIRY</h1>
+        <p style="color:#999;font-size:13px;margin:0 0 24px 0;">Submitted ${escapeHtml(new Date(booking.created_at).toLocaleString())}</p>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
+            ${row('Name', escapeHtml(booking.name))}
+            ${booking.business_name ? row('Business', escapeHtml(booking.business_name)) : ''}
+            ${row('Email', `<a href="mailto:${escapeHtml(booking.email)}" style="color:#fff;text-decoration:underline;">${escapeHtml(booking.email)}</a>`)}
+            ${booking.phone ? row('Phone', escapeHtml(booking.phone)) : ''}
+            ${row('Shoot Type', escapeHtml(booking.event_type || '—'))}
+            ${row('Date', escapeHtml(formatEventDate(booking.event_date)))}
+            ${booking.start_time || booking.end_time ? row('Time', `${escapeHtml(booking.start_time || '?')} – ${escapeHtml(booking.end_time || '?')}`) : ''}
+            ${booking.location ? row('Location', escapeHtml(booking.location)) : ''}
+            ${booking.retainer ? row('Retainer', 'Yes (monthly)') : ''}
         </table>
-        ${booking.notes ? `<p style="font-family:Arial,sans-serif;font-size:14px;margin-top:18px"><b>Notes:</b><br>${escapeHtml(booking.notes).replace(/\n/g, '<br>')}</p>` : ''}
-        <p style="font-family:Arial,sans-serif;font-size:12px;color:#666;margin-top:24px">
-            Booking ID: <code>${booking.id}</code><br>
-            Submitted: ${new Date(booking.created_at).toLocaleString()}
+        ${booking.notes ? `
+            <p style="color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;font-weight:bold;margin:24px 0 8px 0;">Notes</p>
+            <p style="color:#fff !important;font-size:14px;line-height:1.6;margin:0 0 24px 0;">${escapeHtml(booking.notes).replace(/\n/g, '<br>')}</p>
+        ` : ''}
+        <p style="color:#666;font-size:12px;margin:32px 0 0 0;">Booking ID: <code style="color:#888;">${escapeHtml(booking.id)}</code></p>
+    `
+}
+
+function buildClientConfirmationBody(booking: any): string {
+    const firstName = (booking.name || '').split(' ')[0] || 'there'
+    const label = 'color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;font-weight:bold;padding:8px 16px 4px 0;vertical-align:top;white-space:nowrap;'
+    const value = 'color:#fff;font-size:14px;padding:8px 0;vertical-align:top;'
+    const row = (k: string, v: string) =>
+        `<tr><td style="${label}">${k}</td><td style="${value}">${v}</td></tr>`
+    return `
+        <h1 style="color:#fff !important;font-size:24px;font-weight:bold;margin:0 0 16px 0;letter-spacing:0.05em;">YOUR BOOKING REQUEST IS IN</h1>
+        <p style="color:#fff !important;font-size:16px;line-height:1.6;margin:0 0 20px 0;">
+            Hey ${escapeHtml(firstName)} — thanks for reaching out. Your request is held while we talk.
+            I'll get back to you within 24 hours to scope the shoot and sort out logistics.
+            Nothing is finalized until we've aligned and the 50% deposit is received.
         </p>
+        <p style="color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;font-weight:bold;margin:24px 0 8px 0;">What you submitted</p>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+            ${booking.business_name ? row('Business', escapeHtml(booking.business_name)) : ''}
+            ${row('Shoot Type', escapeHtml(booking.event_type || '—'))}
+            ${row('Date', escapeHtml(formatEventDate(booking.event_date)))}
+            ${booking.start_time || booking.end_time ? row('Time', `${escapeHtml(booking.start_time || '?')} – ${escapeHtml(booking.end_time || '?')}`) : ''}
+            ${booking.location ? row('Location', escapeHtml(booking.location)) : ''}
+        </table>
+        <p style="color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;font-weight:bold;margin:24px 0 8px 0;">The deposit</p>
+        <p style="color:#fff !important;font-size:14px;line-height:1.6;margin:0 0 16px 0;">
+            A <b>50% non-refundable deposit</b> holds the date and locks the booking. Once we
+            confirm scope, I'll send a contract and a payment link. We accept
+            <b>Bitcoin (Strike)</b>, Apple Pay, Cashapp, and Venmo.
+        </p>
+        <p style="color:#fff !important;font-size:14px;line-height:1.6;margin:24px 0 8px 0;">
+            If anything needs to change on your end, just reply to this email.
+        </p>
+        <p style="color:#fff !important;font-size:14px;margin:32px 0 0 0;">— Joshua / TLAU</p>
     `
 }
 
