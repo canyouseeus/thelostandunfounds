@@ -337,53 +337,53 @@ const BookingPage: React.FC = () => {
                                 </div>
 
                                 {/* Right: form */}
-                                <form onSubmit={handleSubmit} className="space-y-4">
+                                <form onSubmit={handleSubmit} className="space-y-3">
                                     {/* Name */}
                                     <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5">Your Name *</label>
+                                        <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1">Your Name *</label>
                                         <input
                                             type="text"
                                             value={form.name}
                                             onChange={e => set('name', e.target.value)}
                                             required
                                             placeholder="Full name"
-                                            className="w-full bg-white/5 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:bg-white/10 transition-colors"
+                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:bg-white/10 transition-colors"
                                         />
                                     </div>
 
                                     {/* Email */}
                                     <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5">Email *</label>
+                                        <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1">Email *</label>
                                         <input
                                             type="email"
                                             value={form.email}
                                             onChange={e => set('email', e.target.value)}
                                             required
                                             placeholder="your@email.com"
-                                            className="w-full bg-white/5 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:bg-white/10 transition-colors"
+                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:bg-white/10 transition-colors"
                                         />
                                     </div>
 
                                     {/* Phone */}
                                     <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5">Phone</label>
+                                        <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1">Phone</label>
                                         <input
                                             type="tel"
                                             value={form.phone}
                                             onChange={e => set('phone', e.target.value)}
                                             placeholder="+1 (555) 000-0000"
-                                            className="w-full bg-white/5 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:bg-white/10 transition-colors"
+                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:bg-white/10 transition-colors"
                                         />
                                     </div>
 
                                     {/* Event Type */}
                                     <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5">Event Type *</label>
+                                        <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1">Event Type *</label>
                                         <select
                                             value={form.event_type}
                                             onChange={e => set('event_type', e.target.value)}
                                             required
-                                            className="w-full bg-zinc-950 px-4 py-3 text-sm text-white focus:outline-none focus:bg-zinc-900 transition-colors appearance-none"
+                                            className="w-full bg-zinc-950 rounded-none px-4 py-3 text-sm text-white focus:outline-none focus:bg-zinc-900 transition-colors appearance-none"
                                         >
                                             <option value="" disabled>Select type...</option>
                                             {EVENT_TYPES.map(t => (
@@ -395,40 +395,40 @@ const BookingPage: React.FC = () => {
                                     {/* Times */}
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5">Start Time</label>
+                                            <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1">Start Time</label>
                                             <input
                                                 type="time"
                                                 value={form.start_time}
                                                 onChange={e => set('start_time', e.target.value)}
-                                                className="w-full bg-white/5 px-4 py-3 text-sm text-white focus:outline-none focus:bg-white/10 transition-colors"
+                                                className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white focus:outline-none focus:bg-white/10 transition-colors"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5">End Time</label>
+                                            <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1">End Time</label>
                                             <input
                                                 type="time"
                                                 value={form.end_time}
                                                 onChange={e => set('end_time', e.target.value)}
-                                                className="w-full bg-white/5 px-4 py-3 text-sm text-white focus:outline-none focus:bg-white/10 transition-colors"
+                                                className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white focus:outline-none focus:bg-white/10 transition-colors"
                                             />
                                         </div>
                                     </div>
 
                                     {/* Location */}
                                     <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5">Venue / Location</label>
+                                        <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1">Venue / Location</label>
                                         <input
                                             type="text"
                                             value={form.location}
                                             onChange={e => set('location', e.target.value)}
                                             placeholder="Venue name or city"
-                                            className="w-full bg-white/5 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:bg-white/10 transition-colors"
+                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:bg-white/10 transition-colors"
                                         />
                                     </div>
 
                                     {/* Notes */}
                                     <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5">Additional Notes</label>
+                                        <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1">Additional Notes</label>
                                         <textarea
                                             value={form.notes}
                                             onChange={e => set('notes', e.target.value)}
