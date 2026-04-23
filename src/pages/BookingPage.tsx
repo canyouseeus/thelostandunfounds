@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     CalendarIcon,
@@ -216,6 +216,7 @@ const BookingPage: React.FC = () => {
     const [notifyDebug, setNotifyDebug] = useState<string | null>(null);
     const [contextOpen, setContextOpen] = useState(false);
     const [bookedSlots, setBookedSlots] = useState<Array<{ start_time: string | null; end_time: string | null }>>([]);
+    const wizardRef = useRef<HTMLDivElement>(null);
 
     // Fetch time-slot conflicts when the selected date changes.
     useEffect(() => {
@@ -225,6 +226,19 @@ const BookingPage: React.FC = () => {
             .then(d => setBookedSlots(d.slots || []))
             .catch(() => setBookedSlots([]));
     }, [form.event_date]);
+
+    // Scroll the wizard (or the full page on success) to the top whenever the
+    // active step changes. Prevents the page from staying scrolled partway
+    // down from the previous step.
+    useEffect(() => {
+        requestAnimationFrame(() => {
+            if (step === 'details' && wizardRef.current) {
+                wizardRef.current.scrollIntoView({ block: 'start', behavior: 'smooth' });
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+    }, [detailsStep, step]);
 
     const canProceedDetails = (): boolean => {
         switch (detailsStep) {
@@ -401,10 +415,11 @@ const BookingPage: React.FC = () => {
                         {step === 'details' && (
                             <motion.div
                                 key="details"
+                                ref={wizardRef}
                                 initial={{ opacity: 0, y: 16 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -16 }}
-                                className="max-w-md mx-auto"
+                                className="max-w-md mx-auto scroll-mt-4"
                             >
                                 {/* Context chip (collapsed by default, tap to expand) + progress */}
                                 <div className="flex items-center gap-3 mb-6">
@@ -511,13 +526,13 @@ const BookingPage: React.FC = () => {
                                                 <p className="text-white/40 text-sm">Candid-style, your vibe</p>
                                             </div>
                                         </div>
-                                        <div className="grid grid-cols-1 gap-2">
+                                        <div className="grid grid-cols-2 gap-2">
                                             {EVENT_TYPES.map(t => (
                                                 <button
                                                     key={t}
                                                     type="button"
                                                     onClick={() => set('event_type', t)}
-                                                    className={`w-full px-4 py-3 text-sm text-left uppercase tracking-wider font-bold transition-colors rounded-none ${form.event_type === t ? 'bg-white text-black' : 'bg-white/5 text-white hover:bg-white/10'}`}
+                                                    className={`w-full px-3 py-2.5 text-[11px] text-center uppercase tracking-wider font-bold transition-colors rounded-none leading-tight ${form.event_type === t ? 'bg-white text-black' : 'bg-white/5 text-white hover:bg-white/10'}`}
                                                 >
                                                     {t}
                                                 </button>
