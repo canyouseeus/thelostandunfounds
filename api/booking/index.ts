@@ -1,5 +1,8 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
+import { getZohoAuthContext, sendZohoEmail } from '../../lib/api-handlers/_zoho-email-utils'
+
+const NOTIFY_TO = 'media@thelostandunfounds.com'
 
 function getSupabase(serviceRole = false) {
     const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
@@ -41,6 +44,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         if (req.method === 'DELETE' && action === 'block') {
             return await handleUnblockDate(req, res)
+        }
+
+        if (req.method === 'POST' && action === 'notify') {
+            return await handleNotify(req, res)
         }
 
         return res.status(404).json({ error: 'Route not found' })
@@ -220,4 +227,65 @@ function isAdmin(req: VercelRequest): boolean {
     // Check for admin secret header from internal calls or admin UI
     const secret = req.headers['x-admin-secret']
     return secret === process.env.ADMIN_SECRET
+}
+
+async function handleNotify(req: VercelRequest, res: VercelResponse) {
+    const { bookingId } = req.body
+    if (!bookingId) return res.status(400).json({ error: 'bookingId required' })
+
+    const supabase = getSupabase(true)
+    const { data: booking, error } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('id', bookingId)
+        .single()
+    if (error || !booking) return res.status(404).json({ error: 'Booking not found' })
+
+    const subject = `New Booking Inquiry — ${booking.event_type || 'Other'} — ${booking.name}`
+    const html = `
+        <h2 style="font-family:Arial,sans-serif">New booking inquiry</h2>
+        <table style="font-family:Arial,sans-serif;font-size:14px;border-collapse:collapse">
+            <tr><td style="padding:6px 12px 6px 0"><b>Name</b></td><td>${escapeHtml(booking.name)}</td></tr>
+            <tr><td style="padding:6px 12px 6px 0"><b>Email</b></td><td><a href="mailto:${escapeHtml(booking.email)}">${escapeHtml(booking.email)}</a></td></tr>
+            ${booking.phone ? `<tr><td style="padding:6px 12px 6px 0"><b>Phone</b></td><td>${escapeHtml(booking.phone)}</td></tr>` : ''}
+            <tr><td style="padding:6px 12px 6px 0"><b>Type</b></td><td>${escapeHtml(booking.event_type || '—')}</td></tr>
+            <tr><td style="padding:6px 12px 6px 0"><b>Date</b></td><td>${escapeHtml(booking.event_date || '—')}</td></tr>
+            ${booking.start_time || booking.end_time ? `<tr><td style="padding:6px 12px 6px 0"><b>Time</b></td><td>${escapeHtml(booking.start_time || '?')} – ${escapeHtml(booking.end_time || '?')}</td></tr>` : ''}
+            ${booking.location ? `<tr><td style="padding:6px 12px 6px 0"><b>Location</b></td><td>${escapeHtml(booking.location)}</td></tr>` : ''}
+            ${booking.retainer ? `<tr><td style="padding:6px 12px 6px 0"><b>Retainer</b></td><td>Yes</td></tr>` : ''}
+        </table>
+        ${booking.notes ? `<p style="font-family:Arial,sans-serif;font-size:14px;margin-top:18px"><b>Notes:</b><br>${escapeHtml(booking.notes).replace(/\n/g, '<br>')}</p>` : ''}
+        <p style="font-family:Arial,sans-serif;font-size:12px;color:#666;margin-top:24px">
+            Booking ID: <code>${booking.id}</code><br>
+            Submitted: ${new Date(booking.created_at).toLocaleString()}
+        </p>
+    `
+
+    try {
+        const auth = await getZohoAuthContext()
+        const result = await sendZohoEmail({
+            auth,
+            to: NOTIFY_TO,
+            subject,
+            htmlContent: html,
+        })
+        if (!result.success) {
+            console.error('[booking notify] zoho send failed:', result.error)
+            return res.status(500).json({ error: result.error || 'Email send failed' })
+        }
+        return res.status(200).json({ success: true })
+    } catch (err: any) {
+        console.error('[booking notify] threw:', err?.message)
+        return res.status(500).json({ error: err?.message || 'Notify failed' })
+    }
+}
+
+function escapeHtml(s: string): string {
+    if (s == null) return ''
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
 }
