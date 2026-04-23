@@ -1,5 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
+import { getZohoAuthContext, sendZohoEmail } from '../../lib/api-handlers/_zoho-email-utils.js'
 
 const NOTIFY_TO = 'media@thelostandunfounds.com'
 
@@ -213,9 +214,6 @@ async function sendBookingNotification(bookingId: string, supabase: ReturnType<t
 
     const subject = `New Booking Inquiry — ${booking.event_type || 'Other'} — ${booking.name}`
     const html = buildBookingEmailHtml(booking)
-    // Dynamic import so a module-load issue in _zoho-email-utils can't crash
-    // the main request handler. This only runs after the booking is saved.
-    const { getZohoAuthContext, sendZohoEmail } = await import('../../lib/api-handlers/_zoho-email-utils')
     const auth = await getZohoAuthContext()
     await sendZohoEmail({ auth, to: NOTIFY_TO, subject, htmlContent: html })
 }
