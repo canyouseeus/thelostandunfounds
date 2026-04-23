@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeftIcon, PhotoIcon, CurrencyDollarIcon, ArrowDownTrayIcon, ExclamationCircleIcon, CheckCircleIcon, ArrowPathIcon, ChartBarIcon, PlusIcon, LockClosedIcon, LockOpenIcon, TrashIcon, GlobeAltIcon, ArrowUpTrayIcon, XMarkIcon, CloudIcon, CircleStackIcon, PencilIcon, EnvelopeIcon, TagIcon } from '@heroicons/react/24/outline';
 import AdminTagsPanel from './AdminTagsPanel';
+import AdminDownloadsPanel from './AdminDownloadsPanel';
 import AdminPhotosBrowse from './AdminPhotosBrowse';
 import { AnimatedNumber } from '@/components/ui/animated-number';
 import { useToast } from '@/components/Toast';
@@ -63,7 +64,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
     const [filesData, setFilesData] = useState<{ file: File; thumbnail?: Blob; previewUrl: string }[]>([]);
     const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
     const [uploadProgress, setUploadProgress] = useState(0);
-    const [activeTab, setActiveTab] = useState<'galleries' | 'applications' | 'photos' | 'tags'>('galleries');
+    const [activeTab, setActiveTab] = useState<'galleries' | 'applications' | 'photos' | 'tags' | 'downloads'>('galleries');
     const [applications, setApplications] = useState<any[]>([]);
     const [appsLoading, setAppsLoading] = useState(false);
     const [pendingAppsCount, setPendingAppsCount] = useState(0);
@@ -1484,10 +1485,22 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                             Tags
                             {activeTab === 'tags' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />}
                         </button>
+                        <button
+                            onClick={() => setActiveTab('downloads')}
+                            className={`px-2 sm:px-6 py-3 text-[11px] sm:text-xs uppercase font-bold tracking-wider sm:tracking-widest transition-colors relative flex items-center justify-center gap-2 text-center leading-tight ${activeTab === 'downloads' ? 'text-white' : 'text-white/40 hover:text-white'}`}
+                        >
+                            <ArrowDownTrayIcon className="w-3.5 h-3.5" />
+                            Downloads
+                            {activeTab === 'downloads' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />}
+                        </button>
                     </div>
                 )}
 
-                {activeTab === 'tags' ? (
+                {activeTab === 'downloads' ? (
+                    <div className="bg-white/[0.02] p-4 sm:p-6">
+                        <AdminDownloadsPanel />
+                    </div>
+                ) : activeTab === 'tags' ? (
                     <div className="bg-white/[0.02] p-4 sm:p-6">
                         <AdminTagsPanel />
                     </div>

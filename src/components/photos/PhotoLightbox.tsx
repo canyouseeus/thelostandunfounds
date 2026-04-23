@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon, CheckIcon, ArrowDownTrayIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import DownloadEmailModal from '../DownloadEmailModal';
 
 interface Photo {
     id: string;
@@ -33,6 +34,23 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
     galleryName
 }) => {
     const [isImageLoading, setIsImageLoading] = useState(true);
+    const [downloadEmailOpen, setDownloadEmailOpen] = useState(false);
+
+    const triggerDownload = (email: string) => {
+        const fileId = photo.google_drive_file_id || photo.id;
+        const url = `/api/gallery/stream?fileId=${fileId}&download=true&email=${encodeURIComponent(email)}`;
+        window.open(url, '_blank');
+    };
+
+    const handleDownloadClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const cached = typeof window !== 'undefined' ? localStorage.getItem('tlau_download_email') : null;
+        if (cached && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cached)) {
+            triggerDownload(cached);
+            return;
+        }
+        setDownloadEmailOpen(true);
+    };
 
     // Reset loading state when photo changes
     useEffect(() => {
@@ -171,10 +189,7 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
 
                         {isPurchased ? (
                             <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    window.open(`/api/gallery/stream?fileId=${photo.google_drive_file_id || photo.id}&download=true`, '_blank');
-                                }}
+                                onClick={handleDownloadClick}
                                 className="flex items-center gap-2 px-8 py-3 bg-white hover:bg-zinc-200 text-black rounded-none font-black text-[10px] uppercase tracking-[0.25em] transition-all shadow-xl"
                             >
                                 <ArrowDownTrayIcon className="w-4 h-4" />
@@ -204,6 +219,16 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                     </motion.div>
                 </div>
             </motion.div>
+            <DownloadEmailModal
+                isOpen={downloadEmailOpen}
+                onClose={() => setDownloadEmailOpen(false)}
+                onSubmit={(email) => {
+                    localStorage.setItem('tlau_download_email', email);
+                    setDownloadEmailOpen(false);
+                    triggerDownload(email);
+                }}
+                photoCount={1}
+            />
         </AnimatePresence>
     );
 };
