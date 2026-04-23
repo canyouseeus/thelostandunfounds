@@ -9,6 +9,9 @@ import {
     ChevronLeftIcon,
     ChevronRightIcon,
     ArrowLongRightIcon,
+    UserIcon,
+    EnvelopeIcon,
+    ChatBubbleLeftRightIcon,
 } from '@heroicons/react/24/outline';
 import SEOHead from '../components/SEOHead';
 
@@ -178,8 +181,21 @@ const BookingPage: React.FC = () => {
     const [form, setForm] = useState<FormData>(EMPTY_FORM);
     const [blockedDates, setBlockedDates] = useState<string[]>([]);
     const [step, setStep] = useState<'calendar' | 'details' | 'success'>('calendar');
+    const [detailsStep, setDetailsStep] = useState(0);
+    const TOTAL_DETAILS_STEPS = 5;
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
+
+    const canProceedDetails = (): boolean => {
+        switch (detailsStep) {
+            case 0: return form.name.trim().length > 0;
+            case 1: return form.email.trim().length > 0 && form.email.includes('@');
+            case 2: return form.event_type.trim().length > 0;
+            case 3: return true; // times are optional
+            case 4: return true; // venue + notes optional
+            default: return false;
+        }
+    };
 
     // Fetch blocked dates
     useEffect(() => {
@@ -301,166 +317,217 @@ const BookingPage: React.FC = () => {
                             </motion.div>
                         )}
 
-                        {/* ── Step 2: Details Form ── */}
+                        {/* ── Step 2: Details (stepped wizard, one question per screen) ── */}
                         {step === 'details' && (
                             <motion.div
                                 key="details"
                                 initial={{ opacity: 0, y: 16 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -16 }}
-                                className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24"
+                                className="max-w-md mx-auto"
                             >
-                                {/* Left: summary + back */}
-                                <div>
-                                    <button
-                                        onClick={() => setStep('calendar')}
-                                        className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/30 hover:text-white mb-8 transition-colors"
-                                    >
-                                        <ChevronLeftIcon className="w-3 h-3" />
-                                        Change date
-                                    </button>
+                                {/* Back to calendar */}
+                                <button
+                                    onClick={() => { setStep('calendar'); setDetailsStep(0); setError(''); }}
+                                    className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/30 hover:text-white mb-6 transition-colors"
+                                >
+                                    <ChevronLeftIcon className="w-3 h-3" />
+                                    Change date — {formatDate(form.event_date)}
+                                </button>
 
-                                    <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30 mb-1">Selected Date</p>
-                                    <p className="text-xl font-black uppercase tracking-tight text-white mb-8">
-                                        {formatDate(form.event_date)}
-                                    </p>
-
-                                    <p className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40 mb-4">
-                                        02 — Tell Me About the Shoot
-                                    </p>
-
-                                    <div className="space-y-3 text-[10px] text-white/30 font-bold uppercase tracking-widest">
-                                        <div className="flex items-center gap-2"><CalendarIcon className="w-3.5 h-3.5" /> Event type & details</div>
-                                        <div className="flex items-center gap-2"><ClockIcon className="w-3.5 h-3.5" /> Start & end times</div>
-                                        <div className="flex items-center gap-2"><MapPinIcon className="w-3.5 h-3.5" /> Venue / location</div>
-                                    </div>
+                                {/* Progress bar */}
+                                <div className="flex items-center justify-center gap-2 mb-8">
+                                    {Array.from({ length: TOTAL_DETAILS_STEPS }).map((_, s) => (
+                                        <div key={s} className={`h-1 flex-1 max-w-12 ${detailsStep >= s ? 'bg-white' : 'bg-white/20'}`} />
+                                    ))}
                                 </div>
 
-                                {/* Right: form */}
-                                <form onSubmit={handleSubmit} className="space-y-3">
-                                    {/* Name */}
+                                {/* Step 0: Name */}
+                                {detailsStep === 0 && (
                                     <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1">Your Name *</label>
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="w-10 h-10 bg-white/10 flex items-center justify-center">
+                                                <UserIcon className="w-5 h-5 text-white/60" />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-xl font-bold text-white">What's your name?</h2>
+                                                <p className="text-white/40 text-sm">So I know who's booking</p>
+                                            </div>
+                                        </div>
                                         <input
                                             type="text"
+                                            autoFocus
+                                            placeholder="Full name"
                                             value={form.name}
                                             onChange={e => set('name', e.target.value)}
-                                            required
-                                            placeholder="Full name"
-                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:bg-white/10 transition-colors"
+                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors"
                                         />
                                     </div>
+                                )}
 
-                                    {/* Email */}
+                                {/* Step 1: Email */}
+                                {detailsStep === 1 && (
                                     <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1">Email *</label>
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="w-10 h-10 bg-white/10 flex items-center justify-center">
+                                                <EnvelopeIcon className="w-5 h-5 text-white/60" />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-xl font-bold text-white">Your email</h2>
+                                                <p className="text-white/40 text-sm">I'll reach out here</p>
+                                            </div>
+                                        </div>
                                         <input
                                             type="email"
+                                            autoFocus
+                                            placeholder="your@email.com"
                                             value={form.email}
                                             onChange={e => set('email', e.target.value)}
-                                            required
-                                            placeholder="your@email.com"
-                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:bg-white/10 transition-colors"
+                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors mb-3"
                                         />
-                                    </div>
-
-                                    {/* Phone */}
-                                    <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1">Phone</label>
                                         <input
                                             type="tel"
+                                            placeholder="Phone (optional)"
                                             value={form.phone}
                                             onChange={e => set('phone', e.target.value)}
-                                            placeholder="+1 (555) 000-0000"
-                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:bg-white/10 transition-colors"
+                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors"
                                         />
                                     </div>
+                                )}
 
-                                    {/* Event Type */}
+                                {/* Step 2: Event Type */}
+                                {detailsStep === 2 && (
                                     <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1">Event Type *</label>
-                                        <select
-                                            value={form.event_type}
-                                            onChange={e => set('event_type', e.target.value)}
-                                            required
-                                            className="w-full bg-zinc-950 rounded-none px-4 py-3 text-sm text-white focus:outline-none focus:bg-zinc-900 transition-colors appearance-none"
-                                        >
-                                            <option value="" disabled>Select type...</option>
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="w-10 h-10 bg-white/10 flex items-center justify-center">
+                                                <CalendarIcon className="w-5 h-5 text-white/60" />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-xl font-bold text-white">What kind of shoot?</h2>
+                                                <p className="text-white/40 text-sm">Candid-style, your vibe</p>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 gap-2">
                                             {EVENT_TYPES.map(t => (
-                                                <option key={t} value={t}>{t}</option>
+                                                <button
+                                                    key={t}
+                                                    type="button"
+                                                    onClick={() => set('event_type', t)}
+                                                    className={`w-full px-4 py-3 text-sm text-left uppercase tracking-wider font-bold transition-colors rounded-none ${form.event_type === t ? 'bg-white text-black' : 'bg-white/5 text-white hover:bg-white/10'}`}
+                                                >
+                                                    {t}
+                                                </button>
                                             ))}
-                                        </select>
-                                    </div>
-
-                                    {/* Times */}
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1">Start Time</label>
-                                            <input
-                                                type="time"
-                                                value={form.start_time}
-                                                onChange={e => set('start_time', e.target.value)}
-                                                className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white focus:outline-none focus:bg-white/10 transition-colors"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1">End Time</label>
-                                            <input
-                                                type="time"
-                                                value={form.end_time}
-                                                onChange={e => set('end_time', e.target.value)}
-                                                className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white focus:outline-none focus:bg-white/10 transition-colors"
-                                            />
                                         </div>
                                     </div>
+                                )}
 
-                                    {/* Location */}
+                                {/* Step 3: Times */}
+                                {detailsStep === 3 && (
                                     <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1">Venue / Location</label>
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="w-10 h-10 bg-white/10 flex items-center justify-center">
+                                                <ClockIcon className="w-5 h-5 text-white/60" />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-xl font-bold text-white">When does it run?</h2>
+                                                <p className="text-white/40 text-sm">Rough times are fine — we can refine later</p>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1">Start</label>
+                                                <input
+                                                    type="time"
+                                                    value={form.start_time}
+                                                    onChange={e => set('start_time', e.target.value)}
+                                                    className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white focus:outline-none focus:bg-white/10 transition-colors"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1">End</label>
+                                                <input
+                                                    type="time"
+                                                    value={form.end_time}
+                                                    onChange={e => set('end_time', e.target.value)}
+                                                    className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white focus:outline-none focus:bg-white/10 transition-colors"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Step 4: Venue + Notes */}
+                                {detailsStep === 4 && (
+                                    <div>
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="w-10 h-10 bg-white/10 flex items-center justify-center">
+                                                <MapPinIcon className="w-5 h-5 text-white/60" />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-xl font-bold text-white">Where & anything else?</h2>
+                                                <p className="text-white/40 text-sm">Venue + any details I should know</p>
+                                            </div>
+                                        </div>
                                         <input
                                             type="text"
+                                            autoFocus
+                                            placeholder="Venue name or city"
                                             value={form.location}
                                             onChange={e => set('location', e.target.value)}
-                                            placeholder="Venue name or city"
-                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:bg-white/10 transition-colors"
+                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors mb-3"
                                         />
-                                    </div>
-
-                                    {/* Notes */}
-                                    <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1">Additional Notes</label>
                                         <textarea
+                                            rows={3}
+                                            placeholder="Anything else — vibe, references, guests, crew…"
                                             value={form.notes}
                                             onChange={e => set('notes', e.target.value)}
-                                            rows={3}
-                                            placeholder="Any details I should know..."
-                                            className="w-full bg-white/5 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:bg-white/10 transition-colors resize-none"
+                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors resize-none"
                                         />
                                     </div>
+                                )}
 
-                                    {error && (
-                                        <p className="text-red-400 text-[10px] font-bold uppercase tracking-widest">
-                                            {error}
-                                        </p>
-                                    )}
-
-                                    <button
-                                        type="submit"
-                                        disabled={submitting}
-                                        className="w-full flex items-center justify-center gap-3 bg-white text-black py-4 text-[11px] font-black uppercase tracking-[0.2em] hover:bg-zinc-200 transition-colors disabled:opacity-50"
-                                    >
-                                        {submitting ? 'Sending...' : (
-                                            <>
-                                                Submit Booking Request
-                                                <ArrowLongRightIcon className="w-4 h-4" />
-                                            </>
-                                        )}
-                                    </button>
-
-                                    <p className="text-white/20 text-[9px] text-center uppercase tracking-widest">
-                                        I'll respond within 24 hours to confirm availability.
+                                {error && (
+                                    <p className="text-red-400 text-[10px] font-bold uppercase tracking-widest mt-4">
+                                        {error}
                                     </p>
-                                </form>
+                                )}
+
+                                {/* Navigation */}
+                                <div className="flex gap-3 mt-6">
+                                    {detailsStep > 0 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setDetailsStep(s => s - 1)}
+                                            className="px-5 py-3 bg-white/5 text-white text-[11px] font-black uppercase tracking-widest hover:bg-white/10 transition-colors"
+                                        >
+                                            Back
+                                        </button>
+                                    )}
+                                    {detailsStep < TOTAL_DETAILS_STEPS - 1 ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => { if (canProceedDetails()) setDetailsStep(s => s + 1); }}
+                                            disabled={!canProceedDetails()}
+                                            className="flex-1 px-5 py-3 bg-white text-black text-[11px] font-black uppercase tracking-widest hover:bg-white/80 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        >
+                                            Continue
+                                        </button>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={(e) => handleSubmit(e as unknown as React.FormEvent)}
+                                            disabled={submitting}
+                                            className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-white text-black text-[11px] font-black uppercase tracking-widest hover:bg-white/80 transition-colors disabled:opacity-40"
+                                        >
+                                            {submitting ? 'Sending…' : (<>Submit Request <ArrowLongRightIcon className="w-4 h-4" /></>)}
+                                        </button>
+                                    )}
+                                </div>
+
+                                <p className="text-white/20 text-[9px] text-center uppercase tracking-widest mt-4">
+                                    I'll respond within 24 hours to confirm availability.
+                                </p>
                             </motion.div>
                         )}
 
