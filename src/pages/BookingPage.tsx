@@ -188,6 +188,7 @@ const BookingPage: React.FC = () => {
     const TOTAL_DETAILS_STEPS = 5;
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
+    const [notifyDebug, setNotifyDebug] = useState<string | null>(null);
 
     const canProceedDetails = (): boolean => {
         switch (detailsStep) {
@@ -247,6 +248,12 @@ const BookingPage: React.FC = () => {
                 throw new Error(data?.error || `Submission failed (${res.status})`);
             }
 
+            if (data?.notify && data.notify.sent === false && data.notify.error) {
+                console.warn('[booking] notify did not send:', data.notify.error);
+                setNotifyDebug(data.notify.error);
+            } else {
+                setNotifyDebug(null);
+            }
             setStep('success');
         } catch (err: any) {
             setError(err?.message || 'Something went wrong. Please try again.');
@@ -601,6 +608,12 @@ const BookingPage: React.FC = () => {
                                     out logistics — nothing is finalized until we've scoped the shoot and
                                     the 50% deposit is received.
                                 </p>
+                                {notifyDebug && (
+                                    <div className="bg-yellow-500/10 text-yellow-300 text-[10px] leading-relaxed p-3 text-left">
+                                        <p className="font-black uppercase tracking-widest mb-1">Admin notice (debug)</p>
+                                        <p className="break-all">Notify: {notifyDebug}</p>
+                                    </div>
+                                )}
                                 <p className="text-white/30 text-xs">
                                     In the meantime, follow{' '}
                                     <a

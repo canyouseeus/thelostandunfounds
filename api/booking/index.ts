@@ -180,14 +180,18 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
     // dangling promise after res.json() — Vercel kills the function when the
     // response is sent, and a rejected pending fetch was surfacing as
     // FUNCTION_INVOCATION_FAILED.
+    let notify: { sent: boolean; error?: string } = { sent: false }
     try {
         await sendBookingNotification(data.id as string, supabase)
+        notify = { sent: true }
     } catch (notifyErr: any) {
         // Non-fatal — booking is saved, admin just didn't get the email.
-        console.warn('[BookingRequest] notify failed:', notifyErr?.message)
+        const msg = notifyErr?.message || String(notifyErr)
+        console.warn('[BookingRequest] notify failed:', msg)
+        notify = { sent: false, error: msg }
     }
 
-    return res.status(200).json({ success: true, bookingId: data.id })
+    return res.status(200).json({ success: true, bookingId: data.id, notify })
 }
 
 async function sendBookingNotification(bookingId: string, supabase: ReturnType<typeof getSupabase>) {
