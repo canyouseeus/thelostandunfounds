@@ -86,6 +86,19 @@ async function handleGetAvailability(req: VercelRequest, res: VercelResponse) {
 }
 
 async function handleBookingRequest(req: VercelRequest, res: VercelResponse) {
+    try {
+        return await handleBookingRequestInner(req, res)
+    } catch (err: any) {
+        console.error('[BookingRequest] Uncaught error:', err)
+        return res.status(500).json({
+            error: 'Booking request crashed',
+            message: err?.message || String(err),
+            stack: err?.stack?.split('\n').slice(0, 6).join(' | '),
+        })
+    }
+}
+
+async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse) {
     const supabase = getSupabase(true)
     const {
         name,
