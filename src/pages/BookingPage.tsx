@@ -512,8 +512,11 @@ const BookingPage: React.FC = () => {
 
                                         <div className="bg-white/[0.04] p-3 mt-4">
                                             <p className="text-white/70 text-[11px] leading-relaxed">
-                                                Heads up: booking requires a <span className="text-white font-bold">50% non-refundable booking fee</span>{' '}
-                                                to hold the date. I'll send a contract + payment link after we confirm scope.
+                                                Submitting holds the date for you while we talk. Booking requires a{' '}
+                                                <span className="text-white font-bold">50% non-refundable deposit</span>{' '}
+                                                to finalize — I'll send a contract + payment link after we scope the shoot.
+                                                We accept <span className="text-white font-bold">Bitcoin (Strike)</span>,
+                                                Apple Pay, Cashapp, and Venmo.
                                             </p>
                                         </div>
                                     </div>
@@ -573,10 +576,11 @@ const BookingPage: React.FC = () => {
                             >
                                 <CheckCircleIcon className="w-12 h-12 text-green-400 mx-auto" />
                                 <h2 className="text-2xl font-black uppercase tracking-tight">Request Sent!</h2>
-                                <p className="text-white/40 text-sm leading-relaxed">
-                                    Your booking request for{' '}
+                                <p className="text-white/50 text-sm leading-relaxed">
                                     <span className="text-white font-bold">{formatDate(form.event_date)}</span>{' '}
-                                    has been received. I'll be in touch within 24 hours.
+                                    is on hold for you while we talk. I'll reach out within 24 hours to sort
+                                    out logistics — nothing is finalized until we've scoped the shoot and
+                                    the 50% deposit is received.
                                 </p>
                                 <p className="text-white/30 text-xs">
                                     In the meantime, follow{' '}

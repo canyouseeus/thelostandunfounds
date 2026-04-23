@@ -109,6 +109,36 @@ async function handleBookingRequest(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'Invalid email' })
     }
 
+    // Race-condition guard: if any active booking (pending or confirmed) already
+    // holds this date, reject before inserting. The calendar normally hides taken
+    // dates, but two clients submitting simultaneously would both see it as free.
+    const { data: existing } = await supabase
+        .from('bookings')
+        .select('id, status')
+        .eq('event_date', event_date)
+        .in('status', ['pending', 'confirmed'])
+        .limit(1)
+
+    if (existing && existing.length > 0) {
+        return res.status(409).json({
+            error: 'This date was just requested by someone else. Please pick another date.'
+        })
+    }
+
+    // Also respect any admin-blocked dates
+    const { data: adminBlocked } = await supabase
+        .from('booking_availability')
+        .select('date')
+        .eq('date', event_date)
+        .eq('is_blocked', true)
+        .limit(1)
+
+    if (adminBlocked && adminBlocked.length > 0) {
+        return res.status(409).json({
+            error: 'This date is not available. Please pick another date.'
+        })
+    }
+
     const { data, error } = await supabase
         .from('bookings')
         .insert({
