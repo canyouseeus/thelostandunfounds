@@ -385,7 +385,7 @@ const BookingPage: React.FC = () => {
                                             placeholder="Full name"
                                             value={form.name}
                                             onChange={e => set('name', e.target.value)}
-                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors"
+                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-base sm:text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors"
                                         />
                                     </div>
                                 )}
@@ -408,14 +408,14 @@ const BookingPage: React.FC = () => {
                                             placeholder="your@email.com"
                                             value={form.email}
                                             onChange={e => set('email', e.target.value)}
-                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors mb-3"
+                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-base sm:text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors mb-3"
                                         />
                                         <input
                                             type="tel"
                                             placeholder="Phone (optional)"
                                             value={form.phone}
                                             onChange={e => set('phone', e.target.value)}
-                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors"
+                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-base sm:text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors"
                                         />
                                     </div>
                                 )}
@@ -466,7 +466,7 @@ const BookingPage: React.FC = () => {
                                                     type="time"
                                                     value={form.start_time}
                                                     onChange={e => set('start_time', e.target.value)}
-                                                    className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white focus:outline-none focus:bg-white/10 transition-colors"
+                                                    className="w-full bg-white/5 rounded-none px-4 py-3 text-base sm:text-sm text-white focus:outline-none focus:bg-white/10 transition-colors"
                                                 />
                                             </div>
                                             <div>
@@ -475,7 +475,7 @@ const BookingPage: React.FC = () => {
                                                     type="time"
                                                     value={form.end_time}
                                                     onChange={e => set('end_time', e.target.value)}
-                                                    className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white focus:outline-none focus:bg-white/10 transition-colors"
+                                                    className="w-full bg-white/5 rounded-none px-4 py-3 text-base sm:text-sm text-white focus:outline-none focus:bg-white/10 transition-colors"
                                                 />
                                             </div>
                                         </div>
@@ -500,14 +500,14 @@ const BookingPage: React.FC = () => {
                                             placeholder="Venue name or city"
                                             value={form.location}
                                             onChange={e => set('location', e.target.value)}
-                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors mb-3"
+                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-base sm:text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors mb-3"
                                         />
                                         <textarea
                                             rows={3}
                                             placeholder="Anything else — vibe, references, guests, crew…"
                                             value={form.notes}
                                             onChange={e => set('notes', e.target.value)}
-                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors resize-none"
+                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-base sm:text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors resize-none"
                                         />
 
                                         <div className="bg-white/[0.04] p-3 mt-4">
