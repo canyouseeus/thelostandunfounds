@@ -26,6 +26,31 @@ const EVENT_TYPES = [
     'Other',
 ];
 
+interface TimeSlot { label: string; start: string; end: string; display: string }
+
+// Canonical time windows the photographer offers. Start/end are 24h so they
+// round-trip to Postgres TIME cleanly; display is what the client sees.
+const TIME_SLOTS: TimeSlot[] = [
+    { label: 'Morning',   start: '09:00', end: '12:00', display: '9AM – 12PM' },
+    { label: 'Afternoon', start: '12:00', end: '17:00', display: '12PM – 5PM' },
+    { label: 'Evening',   start: '17:00', end: '20:00', display: '5PM – 8PM' },
+    { label: 'Night',     start: '20:00', end: '23:00', display: '8PM – 11PM' },
+];
+
+// Compare two HH:MM strings. Returns true when the ranges overlap at all.
+function rangesOverlap(aStart: string, aEnd: string, bStart: string, bEnd: string): boolean {
+    return aStart < bEnd && bStart < aEnd;
+}
+
+function isSlotBlocked(slot: TimeSlot, taken: Array<{ start_time: string | null; end_time: string | null }>): boolean {
+    return taken.some(t => {
+        if (!t.start_time || !t.end_time) return false;
+        const bs = t.start_time.slice(0, 5);
+        const be = t.end_time.slice(0, 5);
+        return rangesOverlap(slot.start, slot.end, bs, be);
+    });
+}
+
 interface FormData {
     name: string;
     business_name: string;
@@ -189,6 +214,17 @@ const BookingPage: React.FC = () => {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [notifyDebug, setNotifyDebug] = useState<string | null>(null);
+    const [contextOpen, setContextOpen] = useState(false);
+    const [bookedSlots, setBookedSlots] = useState<Array<{ start_time: string | null; end_time: string | null }>>([]);
+
+    // Fetch time-slot conflicts when the selected date changes.
+    useEffect(() => {
+        if (!form.event_date) { setBookedSlots([]); return; }
+        fetch(`/api/booking?action=slots&date=${form.event_date}`)
+            .then(r => r.ok ? r.json() : { slots: [] })
+            .then(d => setBookedSlots(d.slots || []))
+            .catch(() => setBookedSlots([]));
+    }, [form.event_date]);
 
     const canProceedDetails = (): boolean => {
         switch (detailsStep) {
@@ -370,21 +406,38 @@ const BookingPage: React.FC = () => {
                                 exit={{ opacity: 0, y: -16 }}
                                 className="max-w-md mx-auto"
                             >
-                                {/* Back to calendar */}
-                                <button
-                                    onClick={() => { setStep('calendar'); setDetailsStep(0); setError(''); }}
-                                    className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/30 hover:text-white mb-6 transition-colors"
-                                >
-                                    <ChevronLeftIcon className="w-3 h-3" />
-                                    Change date — {formatDate(form.event_date)}
-                                </button>
-
-                                {/* Progress bar */}
-                                <div className="flex items-center justify-center gap-2 mb-8">
-                                    {Array.from({ length: TOTAL_DETAILS_STEPS }).map((_, s) => (
-                                        <div key={s} className={`h-1 flex-1 max-w-12 ${detailsStep >= s ? 'bg-white' : 'bg-white/20'}`} />
-                                    ))}
+                                {/* Context chip (collapsed by default, tap to expand) + progress */}
+                                <div className="flex items-center gap-3 mb-6">
+                                    <button
+                                        onClick={() => setContextOpen(v => !v)}
+                                        className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 transition-colors px-2.5 py-1.5"
+                                        title="Selected date"
+                                    >
+                                        <CalendarIcon className="w-3.5 h-3.5 text-white/60" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-white/60">
+                                            {new Date(form.event_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                        </span>
+                                    </button>
+                                    <div className="flex-1 flex items-center gap-1">
+                                        {Array.from({ length: TOTAL_DETAILS_STEPS }).map((_, s) => (
+                                            <div key={s} className={`h-1 flex-1 ${detailsStep >= s ? 'bg-white' : 'bg-white/20'}`} />
+                                        ))}
+                                    </div>
                                 </div>
+                                {contextOpen && (
+                                    <div className="bg-white/5 p-3 mb-6 flex items-center justify-between gap-3">
+                                        <div>
+                                            <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white/40 mb-1">Selected Date</p>
+                                            <p className="text-sm font-bold text-white">{formatDate(form.event_date)}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => { setStep('calendar'); setDetailsStep(0); setError(''); setContextOpen(false); }}
+                                            className="text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-white transition-colors px-3 py-2 bg-white/5 hover:bg-white/10 whitespace-nowrap"
+                                        >
+                                            Change date
+                                        </button>
+                                    </div>
+                                )}
 
                                 {/* Step 0: Name */}
                                 {detailsStep === 0 && (
@@ -473,7 +526,7 @@ const BookingPage: React.FC = () => {
                                     </div>
                                 )}
 
-                                {/* Step 3: Times */}
+                                {/* Step 3: Time slots (preset ranges, blocked slots greyed out) */}
                                 {detailsStep === 3 && (
                                     <div>
                                         <div className="flex items-center gap-3 mb-4">
@@ -482,29 +535,54 @@ const BookingPage: React.FC = () => {
                                             </div>
                                             <div>
                                                 <h2 className="text-xl font-bold text-white">When does it run?</h2>
-                                                <p className="text-white/40 text-sm">Rough times are fine — we can refine later</p>
+                                                <p className="text-white/40 text-sm">Pick a window — we'll refine when we talk</p>
                                             </div>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div>
-                                                <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1">Start</label>
-                                                <input
-                                                    type="time"
-                                                    value={form.start_time}
-                                                    onChange={e => set('start_time', e.target.value)}
-                                                    className="w-full bg-white/5 rounded-none px-4 py-3 text-base sm:text-sm text-white focus:outline-none focus:bg-white/10 transition-colors"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1">End</label>
-                                                <input
-                                                    type="time"
-                                                    value={form.end_time}
-                                                    onChange={e => set('end_time', e.target.value)}
-                                                    className="w-full bg-white/5 rounded-none px-4 py-3 text-base sm:text-sm text-white focus:outline-none focus:bg-white/10 transition-colors"
-                                                />
-                                            </div>
+                                        <div className="grid grid-cols-1 gap-2">
+                                            {TIME_SLOTS.map(slot => {
+                                                const blocked = isSlotBlocked(slot, bookedSlots);
+                                                const selected = form.start_time === slot.start && form.end_time === slot.end;
+                                                return (
+                                                    <button
+                                                        key={slot.label}
+                                                        type="button"
+                                                        disabled={blocked}
+                                                        onClick={() => { set('start_time', slot.start); set('end_time', slot.end); }}
+                                                        className={`w-full px-4 py-3 text-left transition-colors rounded-none flex items-center justify-between ${
+                                                            blocked
+                                                                ? 'bg-white/[0.02] text-white/20 cursor-not-allowed'
+                                                                : selected
+                                                                    ? 'bg-white text-black'
+                                                                    : 'bg-white/5 text-white hover:bg-white/10'
+                                                        }`}
+                                                    >
+                                                        <span className="font-black uppercase tracking-wider text-sm">{slot.label}</span>
+                                                        <span className={`text-[10px] font-mono ${selected ? 'text-black/60' : blocked ? 'text-white/20' : 'text-white/40'}`}>
+                                                            {blocked ? 'BOOKED' : slot.display}
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
+                                            <button
+                                                type="button"
+                                                onClick={() => { set('start_time', ''); set('end_time', ''); }}
+                                                className={`w-full px-4 py-3 text-left transition-colors rounded-none flex items-center justify-between ${
+                                                    !form.start_time && !form.end_time
+                                                        ? 'bg-white text-black'
+                                                        : 'bg-white/5 text-white hover:bg-white/10'
+                                                }`}
+                                            >
+                                                <span className="font-black uppercase tracking-wider text-sm">Flexible</span>
+                                                <span className={`text-[10px] font-mono ${!form.start_time && !form.end_time ? 'text-black/60' : 'text-white/40'}`}>
+                                                    LET'S TALK
+                                                </span>
+                                            </button>
                                         </div>
+                                        {bookedSlots.length > 0 && (
+                                            <p className="text-white/30 text-[10px] mt-3 leading-relaxed">
+                                                Some windows are already booked on this date. Pick an open one or choose Flexible and we'll work it out.
+                                            </p>
+                                        )}
                                     </div>
                                 )}
 

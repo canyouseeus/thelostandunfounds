@@ -21,6 +21,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return await handleGetAvailability(req, res)
         }
 
+        // Public: get booked time slots for a specific date (for conflict UI)
+        if (req.method === 'GET' && action === 'slots') {
+            return await handleGetSlots(req, res)
+        }
+
         // Public: submit a booking request
         if (req.method === 'POST' && action === 'request') {
             return await handleBookingRequest(req, res)
@@ -70,17 +75,32 @@ async function handleGetAvailability(req: VercelRequest, res: VercelResponse) {
         return res.status(500).json({ error: 'Failed to fetch availability' })
     }
 
-    // Also get pending/confirmed bookings so dates can be shown as taken
-    const { data: bookings } = await supabase
-        .from('bookings')
-        .select('event_date, status')
-        .in('status', ['pending', 'confirmed'])
-
-    const bookedDates = bookings?.map(b => b.event_date) || []
-    const blockedDates = blocked?.map(b => b.date) || []
-
+    // Only dates explicitly blocked by the admin are unselectable. Multiple
+    // bookings can exist on the same day (different time slots / types).
     return res.status(200).json({
-        blockedDates: [...new Set([...blockedDates, ...bookedDates])]
+        blockedDates: (blocked || []).map(b => b.date)
+    })
+}
+
+async function handleGetSlots(req: VercelRequest, res: VercelResponse) {
+    const date = (req.query.date as string | undefined) || ''
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return res.status(400).json({ error: 'date (YYYY-MM-DD) required' })
+    }
+    const supabase = getSupabase(true)
+    const { data, error } = await supabase
+        .from('bookings')
+        .select('start_time, end_time, status')
+        .eq('event_date', date)
+        .in('status', ['pending', 'confirmed'])
+    if (error) {
+        console.error('[Slots] Query error:', error)
+        return res.status(500).json({ error: 'Failed to fetch slots' })
+    }
+    return res.status(200).json({
+        slots: (data || [])
+            .filter(b => b.start_time || b.end_time)
+            .map(b => ({ start_time: b.start_time, end_time: b.end_time })),
     })
 }
 
@@ -122,23 +142,12 @@ async function handleBookingRequestInner(req: VercelRequest, res: VercelResponse
         return res.status(400).json({ error: 'Invalid email' })
     }
 
-    // Race-condition guard: if any active booking (pending or confirmed) already
-    // holds this date, reject before inserting. The calendar normally hides taken
-    // dates, but two clients submitting simultaneously would both see it as free.
-    const { data: existing } = await supabase
-        .from('bookings')
-        .select('id, status')
-        .eq('event_date', event_date)
-        .in('status', ['pending', 'confirmed'])
-        .limit(1)
-
-    if (existing && existing.length > 0) {
-        return res.status(409).json({
-            error: 'This date was just requested by someone else. Please pick another date.'
-        })
-    }
-
-    // Also respect any admin-blocked dates
+    // Respect admin-blocked dates only. We intentionally do NOT treat other
+    // pending/confirmed bookings as a hard block on the date — multiple shoots
+    // per day are common (a morning portrait + an evening show, etc.), and
+    // the admin will handle scheduling conflicts manually through the
+    // dashboard. Dates only become unselectable when explicitly blocked in
+    // booking_availability.
     const { data: adminBlocked } = await supabase
         .from('booking_availability')
         .select('date')
