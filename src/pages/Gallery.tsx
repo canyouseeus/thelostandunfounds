@@ -13,6 +13,7 @@ import PhotographerApplicationModal from '../components/gallery/PhotographerAppl
 import { cn } from '../components/ui/utils';
 import MarketplaceBanner from '../components/events/MarketplaceBanner';
 import Shop from './Shop';
+import BookingPage from './BookingPage';
 import EmailSignup from '../components/EmailSignup';
 
 interface PhotoLibrary {
@@ -149,7 +150,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
     };
 
     const [activeGalleryTab, setActiveGalleryTab] = useState<'public' | 'private'>('public');
-    const [viewMode, setViewMode] = useState<'gallery' | 'shop'>('gallery');
+    const [viewMode, setViewMode] = useState<'gallery' | 'shop' | 'booking'>('gallery');
 
     // Scroll to top when returning from an inline gallery back to the grid
     const prevActiveGallery = useRef<string | null>(null);
@@ -200,11 +201,11 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                 <link rel="canonical" href={isHomepage ? 'https://www.thelostandunfounds.com/' : 'https://www.thelostandunfounds.com/gallery'} />
             </Helmet>
 
-            {/* Gallery / Shop toggle — homepage visitor mode only */}
+            {/* Gallery / Shop / Booking toggle — homepage visitor mode only */}
             {isHomepage && (
                 <div className="sticky z-[98] bg-black px-4 md:px-8 pt-2 pb-0" style={{ top: 'var(--nav-height, 64px)' }}>
                     <div className="max-w-7xl mx-auto">
-                        <div className="flex justify-center gap-12 pb-2 mb-0">
+                        <div className="flex justify-center gap-8 sm:gap-12 pb-2 mb-0">
                             <button
                                 onClick={() => setViewMode('gallery')}
                                 className={cn(
@@ -235,6 +236,21 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                                     />
                                 )}
                             </button>
+                            <button
+                                onClick={() => setViewMode('booking')}
+                                className={cn(
+                                    "text-[10px] font-black uppercase tracking-[0.3em] transition-all relative pb-2",
+                                    viewMode === 'booking' ? "text-white" : "text-white/30 hover:text-white/60"
+                                )}
+                            >
+                                Booking
+                                {viewMode === 'booking' && (
+                                    <motion.div
+                                        layoutId="viewModeUnderline"
+                                        className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-white"
+                                    />
+                                )}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -245,6 +261,11 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                 <div style={{ display: viewMode === 'shop' ? 'block' : 'none' }}>
                     <Shop hideBanner embedded />
                 </div>
+            )}
+
+            {/* Booking view — shown only when the booking tab is active */}
+            {isHomepage && viewMode === 'booking' && (
+                <BookingPage />
             )}
 
             {/* Gallery view */}
