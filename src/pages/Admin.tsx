@@ -233,6 +233,7 @@ export default function Admin() {
   const affiliatesSectionRef = useRef<HTMLDivElement>(null);
   const submissionsSectionRef = useRef<HTMLDivElement>(null);
   const eventsSectionRef = useRef<HTMLDivElement>(null);
+  const bookingsSectionRef = useRef<HTMLDivElement>(null);
   const pricingSectionRef = useRef<HTMLDivElement>(null);
   const settingsSectionRef = useRef<HTMLDivElement>(null);
 
@@ -313,7 +314,7 @@ export default function Admin() {
       case 'affiliates': ref = affiliatesSectionRef; break;
       case 'submissions': ref = submissionsSectionRef; break;
       case 'events': ref = eventsSectionRef; break;
-      case 'bookings': ref = null; break;
+      case 'bookings': ref = bookingsSectionRef; break;
       case 'pricing': ref = pricingSectionRef; break;
       case 'settings':
         key = 'settings';
@@ -1833,7 +1834,7 @@ export default function Admin() {
 
           {/* Booking Management Section */}
           {expandedSections['bookings'] && (
-            <div ref={null} className="animate-in fade-in duration-500">
+            <div ref={bookingsSectionRef} className="animate-in fade-in duration-500">
               <div className="flex flex-col px-0 py-2 mb-8 items-start">
                 <div className="flex items-center gap-3">
                   <CalendarIcon className="w-5 h-5 text-white/40" />
