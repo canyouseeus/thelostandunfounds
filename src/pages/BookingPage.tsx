@@ -231,15 +231,25 @@ const BookingPage: React.FC = () => {
                 }),
             });
 
-            const data = await res.json();
+            // Read as text first so we can surface a useful error when the
+            // endpoint returns HTML (Vercel timeout, 500 page, etc.) instead of
+            // the generic Safari "The string did not match the expected pattern"
+            // that comes from JSON.parse on HTML.
+            const rawText = await res.text();
+            let data: any = null;
+            try {
+                data = rawText ? JSON.parse(rawText) : null;
+            } catch {
+                data = { error: `Server returned non-JSON (${res.status}): ${rawText.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 180)}` };
+            }
 
             if (!res.ok) {
-                throw new Error(data.error || 'Submission failed');
+                throw new Error(data?.error || `Submission failed (${res.status})`);
             }
 
             setStep('success');
         } catch (err: any) {
-            setError(err.message || 'Something went wrong. Please try again.');
+            setError(err?.message || 'Something went wrong. Please try again.');
         } finally {
             setSubmitting(false);
         }
