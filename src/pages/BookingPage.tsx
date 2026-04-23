@@ -18,6 +18,7 @@ import SEOHead from '../components/SEOHead';
 const EVENT_TYPES = [
     'Concert / Show',
     'Club / Nightlife',
+    'Lifestyle Shoot',
     'Portrait Session',
     'Brand / Editorial',
     'Wedding / Event',
@@ -254,7 +255,7 @@ const BookingPage: React.FC = () => {
         <>
             <SEOHead
                 title="Book TLAU | THE LOST+UNFOUNDS"
-                description="Book @tlau.photos for your next event, shoot, or on retainer. Check availability and submit a booking request."
+                description="Candid-style photography for events, portraits, and brands. Shot primarily on Fujifilm X-S20. Check availability and submit a booking request."
                 canonicalPath="/booking"
             />
 
@@ -269,8 +270,10 @@ const BookingPage: React.FC = () => {
                         <h1 className="text-4xl md:text-7xl font-black uppercase tracking-tight leading-none mb-4">
                             Book Me
                         </h1>
-                        <p className="text-white/40 text-sm md:text-base max-w-md leading-relaxed">
-                            Available for concerts, events, portraits, brand work, and monthly retainer contracts.
+                        <p className="text-white/50 text-sm md:text-base max-w-lg leading-relaxed">
+                            Candid-style photography for events, lifestyle shoots, portraits, and brand work.
+                            I shoot primarily on a <span className="text-white font-bold">Fujifilm X-S20</span>,
+                            and I'm happy to mix in other cameras when the project calls for a different feel.
                             Pick a date and I'll get back to you within 24 hours.
                         </p>
                     </div>
@@ -297,10 +300,22 @@ const BookingPage: React.FC = () => {
                                     />
                                 </div>
 
-                                <div className="space-y-6 md:pt-10">
+                                <div className="space-y-4 md:pt-10">
                                     <p className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">
-                                        Booking Types
+                                        What to Expect
                                     </p>
+
+                                    <div className="bg-white/[0.03] p-5">
+                                        <p className="text-sm font-black uppercase tracking-wider text-white mb-1">The Approach</p>
+                                        <p className="text-white/50 text-xs leading-relaxed">
+                                            Candid-first. Minimal direction, real moments — whether it's a
+                                            show, a lifestyle shoot, or a portrait, I photograph the way it
+                                            actually feels, not the way a pose-me brief would want it. Primary
+                                            body is a Fujifilm X-S20; I'll bring a different camera when the
+                                            project calls for a different grain or feel.
+                                        </p>
+                                    </div>
+
                                     {[
                                         { label: 'Single Event', desc: 'Concert, show, portrait session, or any one-time gig.' },
                                         { label: 'Monthly Retainer', desc: 'Consistent coverage — locked-in rate, priority access to my schedule.' },
@@ -310,8 +325,18 @@ const BookingPage: React.FC = () => {
                                             <p className="text-white/40 text-xs leading-relaxed">{item.desc}</p>
                                         </div>
                                     ))}
+
+                                    <div className="bg-white text-black p-5">
+                                        <p className="text-sm font-black uppercase tracking-wider mb-1">50% Booking Fee</p>
+                                        <p className="text-black/70 text-xs leading-relaxed">
+                                            A 50% non-refundable booking fee is required to hold the date.
+                                            Balance is due on or before the shoot. I'll send a contract + payment
+                                            link after we confirm scope.
+                                        </p>
+                                    </div>
+
                                     <p className="text-white/20 text-[10px] leading-relaxed">
-                                        Rates discussed after booking request is submitted. All pricing is custom based on scope.
+                                        Rates are custom based on scope — we'll discuss after your booking request comes in.
                                     </p>
                                 </div>
                             </motion.div>
@@ -484,6 +509,13 @@ const BookingPage: React.FC = () => {
                                             onChange={e => set('notes', e.target.value)}
                                             className="w-full bg-white/5 rounded-none px-4 py-3 text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors resize-none"
                                         />
+
+                                        <div className="bg-white/[0.04] p-3 mt-4">
+                                            <p className="text-white/70 text-[11px] leading-relaxed">
+                                                Heads up: booking requires a <span className="text-white font-bold">50% non-refundable booking fee</span>{' '}
+                                                to hold the date. I'll send a contract + payment link after we confirm scope.
+                                            </p>
+                                        </div>
                                     </div>
                                 )}
 
