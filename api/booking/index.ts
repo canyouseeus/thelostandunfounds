@@ -89,6 +89,7 @@ async function handleBookingRequest(req: VercelRequest, res: VercelResponse) {
     const supabase = getSupabase(true)
     const {
         name,
+        business_name,
         email,
         phone,
         event_type,
@@ -143,6 +144,7 @@ async function handleBookingRequest(req: VercelRequest, res: VercelResponse) {
         .from('bookings')
         .insert({
             name: name.trim(),
+            business_name: business_name?.trim() || null,
             email: email.toLowerCase().trim(),
             phone: phone?.trim() || null,
             event_type: event_type.trim(),
@@ -276,6 +278,7 @@ async function handleNotify(req: VercelRequest, res: VercelResponse) {
         <h2 style="font-family:Arial,sans-serif">New booking inquiry</h2>
         <table style="font-family:Arial,sans-serif;font-size:14px;border-collapse:collapse">
             <tr><td style="padding:6px 12px 6px 0"><b>Name</b></td><td>${escapeHtml(booking.name)}</td></tr>
+            ${booking.business_name ? `<tr><td style="padding:6px 12px 6px 0"><b>Business</b></td><td>${escapeHtml(booking.business_name)}</td></tr>` : ''}
             <tr><td style="padding:6px 12px 6px 0"><b>Email</b></td><td><a href="mailto:${escapeHtml(booking.email)}">${escapeHtml(booking.email)}</a></td></tr>
             ${booking.phone ? `<tr><td style="padding:6px 12px 6px 0"><b>Phone</b></td><td>${escapeHtml(booking.phone)}</td></tr>` : ''}
             <tr><td style="padding:6px 12px 6px 0"><b>Type</b></td><td>${escapeHtml(booking.event_type || '—')}</td></tr>

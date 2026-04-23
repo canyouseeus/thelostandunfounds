@@ -28,6 +28,7 @@ const EVENT_TYPES = [
 
 interface FormData {
     name: string;
+    business_name: string;
     email: string;
     phone: string;
     event_type: string;
@@ -41,6 +42,7 @@ interface FormData {
 
 const EMPTY_FORM: FormData = {
     name: '',
+    business_name: '',
     email: '',
     phone: '',
     event_type: '',
@@ -385,6 +387,13 @@ const BookingPage: React.FC = () => {
                                             placeholder="Full name"
                                             value={form.name}
                                             onChange={e => set('name', e.target.value)}
+                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-base sm:text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors mb-3"
+                                        />
+                                        <input
+                                            type="text"
+                                            placeholder="Business / Organization (optional)"
+                                            value={form.business_name}
+                                            onChange={e => set('business_name', e.target.value)}
                                             className="w-full bg-white/5 rounded-none px-4 py-3 text-base sm:text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors"
                                         />
                                     </div>
