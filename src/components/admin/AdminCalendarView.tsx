@@ -7,6 +7,9 @@ import {
     PhotoIcon,
     TicketIcon,
     ArrowRightIcon,
+    PencilSquareIcon,
+    TrashIcon,
+    PlusIcon,
 } from '@heroicons/react/24/outline';
 import { CalendarWidget } from '../ui/calendar-widget';
 
@@ -38,13 +41,20 @@ interface CalendarPhoto {
     thumbnail_url: string;
     created_at: string;
 }
+interface CalendarNote {
+    id: string;
+    date: string;
+    note: string;
+    created_at: string;
+}
 interface CalendarRangeResponse {
     range: { start: string; end: string };
     bookings: CalendarBooking[];
     events: CalendarEventRow[];
     adminBlocked: Array<{ date: string; note: string | null }>;
+    notes: CalendarNote[];
     photos: Record<string, CalendarPhoto[]>;
-    summary: { bookingCount: number; eventCount: number; photoCount: number; blockedCount: number };
+    summary: { bookingCount: number; eventCount: number; photoCount: number; blockedCount: number; noteCount: number };
 }
 
 function toYMD(d: Date): string {
@@ -150,19 +160,39 @@ export default function AdminCalendarView() {
         return { start: s, end: e };
     }, [startDate, endDate]);
 
-    // Bookings, events, photos in the currently selected range (from state)
+    // Bookings, events, photos, notes in the currently selected range
     const review = useMemo(() => {
         if (!selectedRange || !data) return null;
         const days = new Set(datesInRange(selectedRange.start, selectedRange.end));
         const bookings = data.bookings.filter(b => days.has(b.event_date));
         const events = data.events.filter(e => days.has(e.event_date));
+        const notes = (data.notes || []).filter(n => days.has(n.date));
         const photos: CalendarPhoto[] = [];
         for (const d of days) {
             const list = data.photos[d];
             if (list) photos.push(...list);
         }
-        return { bookings, events, photos };
+        return { bookings, events, photos, notes };
     }, [selectedRange, data]);
+
+    async function addNote(date: string, note: string) {
+        const res = await fetch('/api/calendar/notes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date, note }),
+        });
+        if (!res.ok) return;
+        // Reload the current window so the new note appears
+        const { start, end } = monthWindow(monthCursor);
+        load(start, end);
+    }
+
+    async function deleteNote(id: string) {
+        const res = await fetch(`/api/calendar/notes?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+        if (!res.ok) return;
+        const { start, end } = monthWindow(monthCursor);
+        load(start, end);
+    }
 
     return (
         <div className="space-y-6">
@@ -229,6 +259,8 @@ export default function AdminCalendarView() {
                     onToggle={() => setReviewExpanded(prev =>
                         prev === 'collapsed' ? 'glance' : prev === 'glance' ? 'deep' : 'collapsed'
                     )}
+                    onAddNote={addNote}
+                    onDeleteNote={deleteNote}
                 />
             )}
         </div>
@@ -304,11 +336,15 @@ function TimeInReviewCard({
     review,
     expanded,
     onToggle,
+    onAddNote,
+    onDeleteNote,
 }: {
     range: { start: string; end: string };
-    review: { bookings: CalendarBooking[]; events: CalendarEventRow[]; photos: CalendarPhoto[] };
+    review: { bookings: CalendarBooking[]; events: CalendarEventRow[]; photos: CalendarPhoto[]; notes: CalendarNote[] };
     expanded: 'collapsed' | 'glance' | 'deep';
     onToggle: () => void;
+    onAddNote: (date: string, note: string) => void;
+    onDeleteNote: (id: string) => void;
 }) {
     const isCollapsed = expanded === 'collapsed';
     const isDeep = expanded === 'deep';
@@ -321,7 +357,7 @@ function TimeInReviewCard({
                 <div className="text-left">
                     <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40 mb-1">Time in Review</p>
                     <p className="text-sm font-bold text-white">
-                        {review.bookings.length} bookings · {review.events.length} events · {review.photos.length} uploads
+                        {review.bookings.length} bookings · {review.events.length} events · {review.photos.length} uploads{review.notes.length > 0 ? ` · ${review.notes.length} notes` : ''}
                     </p>
                 </div>
                 {isCollapsed ? <ChevronDownIcon className="w-4 h-4 text-white/40" /> : <ChevronUpIcon className="w-4 h-4 text-white/40" />}
@@ -329,6 +365,14 @@ function TimeInReviewCard({
 
             {!isCollapsed && (
                 <div className="p-4 sm:p-6 pt-0 space-y-6">
+                    {/* Notes */}
+                    <NotesSection
+                        range={range}
+                        notes={review.notes}
+                        onAdd={onAddNote}
+                        onDelete={onDeleteNote}
+                    />
+
                     {/* Bookings */}
                     <Section title="Bookings">
                         {review.bookings.length === 0 ? (
@@ -425,6 +469,114 @@ function Section({ title, children }: { title: string; children: React.ReactNode
         <div>
             <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40 mb-2">{title}</p>
             {children}
+        </div>
+    );
+}
+
+function NotesSection({
+    range,
+    notes,
+    onAdd,
+    onDelete,
+}: {
+    range: { start: string; end: string };
+    notes: CalendarNote[];
+    onAdd: (date: string, note: string) => void;
+    onDelete: (id: string) => void;
+}) {
+    const [drafting, setDrafting] = useState(false);
+    const [draft, setDraft] = useState('');
+    const [draftDate, setDraftDate] = useState(range.start);
+
+    // When the selected range changes, reset the add-form date to the range start
+    useEffect(() => { setDraftDate(range.start); }, [range.start, range.end]);
+
+    const handleSave = () => {
+        const trimmed = draft.trim();
+        if (!trimmed) return;
+        onAdd(draftDate, trimmed);
+        setDraft('');
+        setDrafting(false);
+    };
+
+    return (
+        <div>
+            <div className="flex items-center justify-between mb-2">
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40 flex items-center gap-1.5">
+                    <PencilSquareIcon className="w-3 h-3" />
+                    Notes
+                </p>
+                {!drafting && (
+                    <button
+                        onClick={() => setDrafting(true)}
+                        className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-white transition-colors px-2 py-1 bg-white/5 hover:bg-white/10"
+                    >
+                        <PlusIcon className="w-3 h-3" />
+                        Add
+                    </button>
+                )}
+            </div>
+
+            {drafting && (
+                <div className="bg-white/5 p-3 mb-2 space-y-2">
+                    <div className="flex items-center gap-2">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-white/40">On</label>
+                        <input
+                            type="date"
+                            value={draftDate}
+                            min={range.start}
+                            max={range.end}
+                            onChange={e => setDraftDate(e.target.value)}
+                            className="bg-black text-white text-[11px] px-2 py-1 rounded-none focus:outline-none"
+                        />
+                    </div>
+                    <textarea
+                        value={draft}
+                        onChange={e => setDraft(e.target.value)}
+                        rows={3}
+                        autoFocus
+                        placeholder="Note for this day…"
+                        className="w-full bg-black text-white text-sm px-3 py-2 rounded-none placeholder-white/30 focus:outline-none focus:bg-black/80 resize-none"
+                    />
+                    <div className="flex gap-2 justify-end">
+                        <button
+                            onClick={() => { setDrafting(false); setDraft(''); }}
+                            className="text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white px-3 py-1.5 bg-white/5 hover:bg-white/10 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleSave}
+                            disabled={!draft.trim()}
+                            className="text-[10px] font-black uppercase tracking-widest text-black bg-white hover:bg-white/80 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1.5 transition-colors"
+                        >
+                            Save Note
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {notes.length === 0 && !drafting ? (
+                <p className="text-white/30 text-xs italic py-2">No notes in this window.</p>
+            ) : (
+                <div className="space-y-1">
+                    {notes.map(n => (
+                        <div key={n.id} className="flex items-start gap-3 p-2 bg-white/[0.03] group">
+                            <div className="flex-1 min-w-0">
+                                <p className="text-white/50 text-[10px] font-mono mb-1">{n.date}</p>
+                                <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{n.note}</p>
+                            </div>
+                            <button
+                                onClick={() => onDelete(n.id)}
+                                className="text-white/30 hover:text-red-400 transition-colors p-1 opacity-0 group-hover:opacity-100"
+                                title="Delete note"
+                            >
+                                <TrashIcon className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }

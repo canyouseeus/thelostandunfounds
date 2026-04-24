@@ -27,7 +27,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const supabase = createClient(url, key)
 
     try {
-        const [bookingsRes, eventsRes, photosRes, availabilityRes] = await Promise.all([
+        const [bookingsRes, eventsRes, photosRes, availabilityRes, notesRes] = await Promise.all([
             supabase
                 .from('bookings')
                 .select('id, name, business_name, email, event_type, event_date, start_time, end_time, location, status, retainer')
@@ -56,12 +56,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 .eq('is_blocked', true)
                 .gte('date', start)
                 .lte('date', end),
+            supabase
+                .from('calendar_notes')
+                .select('id, date, note, created_at')
+                .gte('date', start)
+                .lte('date', end)
+                .order('created_at', { ascending: false }),
         ])
 
         const bookings = bookingsRes.data || []
         const events = eventsRes.data || []
         const photos = photosRes.data || []
         const adminBlocked = availabilityRes.data || []
+        const notes = notesRes.data || []
 
         // Group photos by effective date (EXIF date_taken when present,
         // else created_at). The grouped bucket is what the "day at a glance"
@@ -89,12 +96,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             bookings,
             events,
             adminBlocked,
+            notes,
             photos: photosByDateObj,
             summary: {
                 bookingCount: bookings.length,
                 eventCount: events.length,
                 photoCount: photos.length,
                 blockedCount: adminBlocked.length,
+                noteCount: notes.length,
             },
         })
     } catch (err: any) {
