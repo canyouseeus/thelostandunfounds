@@ -62,7 +62,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (dateTo && typeof dateTo === 'string') photoQuery = photoQuery.lte('created_at', dateTo + 'T23:59:59');
 
     if (searchQuery) {
-      const orFilter = `title.ilike.%${searchQuery}%,location_name.ilike.%${searchQuery}%`;
+      const orFilter = [
+        `title.ilike.%${searchQuery}%`,
+        `location_name.ilike.%${searchQuery}%`,
+        `metadata->>camera_make.ilike.%${searchQuery}%`,
+        `metadata->>camera_model.ilike.%${searchQuery}%`,
+        `search_date_text.ilike.%${searchQuery}%`,
+      ].join(',');
       if (tagPhotoIds && tagPhotoIds.length > 0) {
         photoQuery = photoQuery.or(`${orFilter},id.in.(${tagPhotoIds.join(',')})`);
       } else {
