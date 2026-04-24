@@ -74,7 +74,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                         <p style="font-size: 14px; color: #888;">
                             Your content is being rotated across our Gallery, Shop, and Blog surfaces.
                         </p>
-                        <a href="https://www.thelostandunfounds.com" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background-color: #ffffff; color: #000000; text-decoration: none; font-weight: 900; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">View Live Site</a>
+                        <a href="https://www.thelostandunfounds.com" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background-color: #000000; color: #ffffff; border: 2px solid #ffffff; text-decoration: none; font-weight: 900; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">View Live Site</a>
                     </div>
                 `
                 });
@@ -173,7 +173,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                                 <p style="font-size: 14px; color: #888; margin: 20px 0;">
                                     A new campaign has taken over the current time slot. If you'd like to return to the marketplace, you can purchase new slots at any time.
                                 </p>
-                                <a href="https://www.thelostandunfounds.com/advertise" style="display: inline-block; padding: 12px 24px; background-color: #ffffff; color: #000000; text-decoration: none; font-weight: 900; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">Buy New Slots</a>
+                                <a href="https://www.thelostandunfounds.com/advertise" style="display: inline-block; padding: 12px 24px; background-color: #000000; color: #ffffff; border: 2px solid #ffffff; text-decoration: none; font-weight: 900; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">Buy New Slots</a>
                             </div>
                         `
                         });

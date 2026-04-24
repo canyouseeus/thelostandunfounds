@@ -57,7 +57,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     <p><strong>Location:</strong> ${event.location}</p>
                     <p><strong>Submitted by:</strong> ${userEmail || 'Unknown user'}</p>
                     <hr style="border-color: #333;" />
-                    <a href="https://www.thelostandunfounds.com/admin" style="display: inline-block; padding: 10px 20px; background-color: #fff; color: #000; text-decoration: none; font-weight: bold; text-transform: uppercase;">Review in Admin Panel</a>
+                    <a href="https://www.thelostandunfounds.com/admin" style="display: inline-block; padding: 10px 20px; background-color: #000; color: #fff; border: 2px solid #fff; text-decoration: none; font-weight: bold; text-transform: uppercase;">Review in Admin Panel</a>
                 </div>
             `;
         } else if (action === 'approved') {
@@ -71,7 +71,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     <p><strong>Date:</strong> ${new Date(event.event_date).toLocaleString()}</p>
                     <p><strong>Location:</strong> ${event.location}</p>
                     <hr style="border-color: #333;" />
-                    <a href="https://www.thelostandunfounds.com/events" style="display: inline-block; padding: 10px 20px; background-color: #fff; color: #000; text-decoration: none; font-weight: bold; text-transform: uppercase;">View Events</a>
+                    <a href="https://www.thelostandunfounds.com/events" style="display: inline-block; padding: 10px 20px; background-color: #000; color: #fff; border: 2px solid #fff; text-decoration: none; font-weight: bold; text-transform: uppercase;">View Events</a>
                 </div>
             `;
         } else if (action === 'rejected') {

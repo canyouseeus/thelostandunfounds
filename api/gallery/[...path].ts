@@ -910,7 +910,7 @@ async function handleResendOrder(req: VercelRequest, res: VercelResponse) {
                         YOUR SECURED ARCHIVE ITEMS ARE READY FOR ACCESS.
                     </p>
                     <div style="margin: 40px 0;">
-                        <a href="${galleryUrl}" style="display: inline-block; padding: 14px 28px; background-color: #fff; color: #000; text-decoration: none; font-weight: bold; font-size: 16px; border: 2px solid #fff;">ACCESS GALLERY</a>
+                        <a href="${galleryUrl}" style="display: inline-block; padding: 14px 28px; background-color: #000; color: #fff; text-decoration: none; font-weight: bold; font-size: 16px; border: 2px solid #fff;">ACCESS GALLERY</a>
                     </div>
                     <div style="margin-top: 60px; padding-top: 20px; border-top: 1px solid #1a1a1a;">
                         <p style="color: #333; font-size: 9px; line-height: 1.6; text-transform: uppercase; letter-spacing: 1px;">
@@ -981,7 +981,7 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
                             </p>
                             <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 10px;">${library.name}</h2>
                             <div style="margin: 40px 0;">
-                                <a href="${galleryUrl}" style="display: inline-block; padding: 14px 28px; background-color: #fff; color: #000; text-decoration: none; font-weight: bold; font-size: 16px; border: 2px solid #fff;">ENTER GALLERY</a>
+                                <a href="${galleryUrl}" style="display: inline-block; padding: 14px 28px; background-color: #000; color: #fff; text-decoration: none; font-weight: bold; font-size: 16px; border: 2px solid #fff;">ENTER GALLERY</a>
                             </div>
                             <div style="margin-top: 60px; padding-top: 20px; border-top: 1px solid #1a1a1a;">
                                 <p style="color: #333; font-size: 9px; line-height: 1.6; text-transform: uppercase; letter-spacing: 1px;">

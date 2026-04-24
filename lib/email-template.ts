@@ -238,7 +238,7 @@ export const EMAIL_STYLES = {
   heading3: `color: ${BRAND.colors.text} !important; font-size: 20px; font-weight: bold; margin: 25px 0 15px 0;`,
   paragraph: `color: ${BRAND.colors.text} !important; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;`,
   link: `color: ${BRAND.colors.link}; text-decoration: underline;`,
-  button: `display: inline-block; padding: 14px 28px; background-color: ${BRAND.colors.text}; color: ${BRAND.colors.background}; text-decoration: none; font-weight: bold; font-size: 16px; border: 2px solid ${BRAND.colors.text};`,
+  button: `display: inline-block; padding: 14px 28px; background-color: ${BRAND.colors.background}; color: ${BRAND.colors.text}; text-decoration: none; font-weight: bold; font-size: 16px; border: 2px solid ${BRAND.colors.text};`,
   divider: `border: none; border-top: 1px solid ${BRAND.colors.border}; margin: 30px 0;`,
   muted: `color: ${BRAND.colors.textMuted}; font-size: 14px; line-height: 1.5;`,
 };

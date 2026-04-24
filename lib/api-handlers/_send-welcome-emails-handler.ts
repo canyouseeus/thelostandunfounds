@@ -223,7 +223,7 @@ function generateWelcomeEmailHtml(userName: string, gettingStartedUrl: string, u
               <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0 0 30px 0;">
                 <tr>
                   <td align="left">
-                    <a href="${gettingStartedUrl}" style="display: inline-block; padding: 12px 24px; background-color: #ffffff; color: #000000; text-decoration: none; font-weight: bold; font-size: 16px; font-family: Arial, sans-serif; border: 2px solid #ffffff;">
+                    <a href="${gettingStartedUrl}" style="display: inline-block; padding: 12px 24px; background-color: #000000; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 16px; font-family: Arial, sans-serif; border: 2px solid #ffffff;">
                       View Getting Started Guide →
                     </a>
                   </td>

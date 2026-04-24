@@ -18,7 +18,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { generateContract } from './contract-template.js'
-import { getZohoAuthContext } from '../../lib/api-handlers/_zoho-email-utils.js'
+import { getZohoAuthContext, sendZohoEmail } from '../../lib/api-handlers/_zoho-email-utils.js'
 
 const FROM_EMAIL = 'media@thelostandunfounds.com'
 const FROM_NAME = 'THE LOST+UNFOUNDS'
@@ -81,31 +81,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       notes,
     })
 
-    // Get Zoho auth context
     const auth = await getZohoAuthContext()
-
-    const mailApiUrl = `https://mail.zoho.com/api/accounts/${auth.accountId}/messages`
-
-    const response = await fetch(mailApiUrl, {
-      method: 'POST',
-      headers: {
-        Authorization: `Zoho-oauthtoken ${auth.accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        fromAddress: FROM_EMAIL,
-        fromName: FROM_NAME,
-        toAddress: clientEmail,
-        subject: `Photography Services Agreement — ${FROM_NAME}`,
-        content: htmlContent,
-        mailFormat: 'html',
-      }),
+    const result = await sendZohoEmail({
+      auth,
+      to: clientEmail,
+      subject: `Photography Services Agreement — ${FROM_NAME}`,
+      htmlContent,
     })
 
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('[send-contract] Zoho error:', response.status, errorText)
-      return res.status(500).json({ error: 'Failed to send contract email', details: errorText })
+    if (!result.success) {
+      console.error('[send-contract] Zoho error:', result.error)
+      return res.status(500).json({ error: 'Failed to send contract email', details: result.error })
     }
 
     console.log(`[send-contract] Contract sent to ${clientEmail} for ${clientName}`)
