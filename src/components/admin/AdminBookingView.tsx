@@ -1,15 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
-    CalendarIcon,
     CheckCircleIcon,
     XCircleIcon,
-    ClockIcon,
-    LockClosedIcon,
-    LockOpenIcon,
     ChevronLeftIcon,
     ChevronRightIcon,
+    ChevronDownIcon,
 } from '@heroicons/react/24/outline';
+import {
+    Expandable,
+    ExpandableTrigger,
+    ExpandableCard,
+    ExpandableCardHeader,
+    ExpandableCardContent,
+    ExpandableContent,
+} from '../ui/expandable';
 
 interface Booking {
     id: string;
@@ -49,17 +54,157 @@ function getAdminHeaders(): HeadersInit {
     };
 }
 
+interface BookingCardProps {
+    booking: Booking;
+    onStatusChange: () => void;
+}
+
+const BookingCard: React.FC<BookingCardProps> = ({ booking: b, onStatusChange }) => {
+    const [adminNotes, setAdminNotes] = useState(b.admin_notes || '');
+    const [saving, setSaving] = useState(false);
+    const [expanded, setExpanded] = useState(false);
+
+    const updateStatus = async (status: string) => {
+        setSaving(true);
+        await fetch('/api/booking?action=admin', {
+            method: 'PATCH',
+            headers: getAdminHeaders(),
+            body: JSON.stringify({ id: b.id, status, admin_notes: adminNotes }),
+        });
+        setSaving(false);
+        setExpanded(false);
+        onStatusChange();
+    };
+
+    const fmtDate = (d: string) => {
+        const [y, m, day] = d.split('-').map(Number);
+        return new Date(y, m - 1, day).toLocaleDateString('en-US', {
+            weekday: 'short', month: 'short', day: 'numeric',
+        });
+    };
+
+    return (
+        <Expandable
+            expandDirection="vertical"
+            expandBehavior="replace"
+            expanded={expanded}
+            onToggle={() => setExpanded(prev => !prev)}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+        >
+            {({ isExpanded }) => (
+                <ExpandableTrigger>
+                    <ExpandableCard
+                        className="w-full bg-zinc-950 border border-white/10 cursor-pointer hover:border-white/20 transition-colors"
+                        collapsedSize={{ width: '100%', height: 'auto' }}
+                        expandedSize={{ width: '100%', height: 'auto' }}
+                        hoverToExpand={false}
+                    >
+                        <ExpandableCardHeader className="p-4">
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-sm font-black text-white truncate">{b.name}</span>
+                                        <span className={`px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest border ${STATUS_COLORS[b.status]}`}>
+                                            {b.status}
+                                        </span>
+                                        {b.retainer && (
+                                            <span className="px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest border border-purple-400/20 bg-purple-400/10 text-purple-400">
+                                                Retainer
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-white/50 text-xs">{b.email}</p>
+                                    {(b.location || b.start_time) && (
+                                        <div className="flex gap-4 mt-1 text-[10px] text-white/30">
+                                            {b.location && <span>📍 {b.location}</span>}
+                                            {b.start_time && <span>🕐 {b.start_time}{b.end_time ? ` – ${b.end_time}` : ''}</span>}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-3 shrink-0">
+                                    <div className="text-right">
+                                        <p className="text-xs font-bold text-white">{fmtDate(b.event_date)}</p>
+                                        <p className="text-white/40 text-[10px]">{b.event_type}</p>
+                                    </div>
+                                    <ChevronDownIcon
+                                        className={`w-4 h-4 text-white/30 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                                    />
+                                </div>
+                            </div>
+                        </ExpandableCardHeader>
+
+                        <ExpandableCardContent className="pt-0 px-4 pb-0">
+                            <ExpandableContent preset="fade" keepMounted={false}>
+                                <div
+                                    className="border-t border-white/10 pt-4 pb-4 space-y-4"
+                                    onClick={e => e.stopPropagation()}
+                                >
+                                    <div className="grid grid-cols-2 gap-3 text-xs">
+                                        <div><p className="text-white/30 uppercase tracking-widest mb-0.5">Date</p><p className="font-bold">{fmtDate(b.event_date)}</p></div>
+                                        <div><p className="text-white/30 uppercase tracking-widest mb-0.5">Type</p><p className="font-bold">{b.event_type}</p></div>
+                                        {b.start_time && <div><p className="text-white/30 uppercase tracking-widest mb-0.5">Time</p><p className="font-bold">{b.start_time}{b.end_time ? ` – ${b.end_time}` : ''}</p></div>}
+                                        {b.location && <div><p className="text-white/30 uppercase tracking-widest mb-0.5">Location</p><p className="font-bold">{b.location}</p></div>}
+                                        {b.phone && <div><p className="text-white/30 uppercase tracking-widest mb-0.5">Phone</p><p className="font-bold">{b.phone}</p></div>}
+                                    </div>
+
+                                    {b.notes && (
+                                        <div>
+                                            <p className="text-white/30 text-[9px] uppercase tracking-widest mb-1">Client Notes</p>
+                                            <p className="text-white/70 text-sm leading-relaxed bg-white/5 p-3">{b.notes}</p>
+                                        </div>
+                                    )}
+
+                                    <div>
+                                        <p className="text-white/30 text-[9px] uppercase tracking-widest mb-1">Admin Notes</p>
+                                        <textarea
+                                            value={adminNotes}
+                                            onChange={e => setAdminNotes(e.target.value)}
+                                            rows={2}
+                                            className="w-full bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none resize-none"
+                                            placeholder="Internal notes..."
+                                        />
+                                    </div>
+
+                                    <div className="flex gap-2 flex-wrap">
+                                        <button
+                                            onClick={() => updateStatus('confirmed')}
+                                            disabled={saving}
+                                            className="flex items-center gap-1.5 px-4 py-2 bg-green-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-green-500 transition-colors disabled:opacity-50"
+                                        >
+                                            <CheckCircleIcon className="w-3.5 h-3.5" /> Confirm
+                                        </button>
+                                        <button
+                                            onClick={() => updateStatus('declined')}
+                                            disabled={saving}
+                                            className="flex items-center gap-1.5 px-4 py-2 bg-red-900 text-red-300 text-[10px] font-black uppercase tracking-widest hover:bg-red-800 transition-colors disabled:opacity-50"
+                                        >
+                                            <XCircleIcon className="w-3.5 h-3.5" /> Decline
+                                        </button>
+                                        <button
+                                            onClick={() => updateStatus('cancelled')}
+                                            disabled={saving}
+                                            className="flex items-center gap-1.5 px-4 py-2 border border-white/20 text-white/40 text-[10px] font-black uppercase tracking-widest hover:border-white/40 hover:text-white/60 transition-colors disabled:opacity-50"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            </ExpandableContent>
+                        </ExpandableCardContent>
+                    </ExpandableCard>
+                </ExpandableTrigger>
+            )}
+        </Expandable>
+    );
+};
+
 const AdminBookingView: React.FC = () => {
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [blockedDates, setBlockedDates] = useState<string[]>([]);
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [loading, setLoading] = useState(true);
-    const [selected, setSelected] = useState<Booking | null>(null);
-    const [adminNotes, setAdminNotes] = useState('');
-    const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState<'bookings' | 'calendar'>('bookings');
 
-    // Calendar state for blocking dates
     const today = new Date();
     const [cursor, setCursor] = useState({ year: today.getFullYear(), month: today.getMonth() });
     const [blockNote, setBlockNote] = useState('');
@@ -90,18 +235,6 @@ const AdminBookingView: React.FC = () => {
     useEffect(() => { fetchBookings(); }, [fetchBookings]);
     useEffect(() => { fetchAvailability(); }, [fetchAvailability]);
 
-    const updateStatus = async (id: string, status: string) => {
-        setSaving(true);
-        await fetch('/api/booking?action=admin', {
-            method: 'PATCH',
-            headers: getAdminHeaders(),
-            body: JSON.stringify({ id, status, admin_notes: adminNotes }),
-        });
-        setSaving(false);
-        setSelected(null);
-        fetchBookings();
-    };
-
     const toggleBlock = async (dateStr: string) => {
         const isBlocked = blockedDates.includes(dateStr);
         if (isBlocked) {
@@ -110,11 +243,10 @@ const AdminBookingView: React.FC = () => {
                 headers: getAdminHeaders(),
                 body: JSON.stringify({ date: dateStr }),
             });
+            fetchAvailability();
         } else {
             setBlockingDate(dateStr);
-            return; // Let the UI show the note input
         }
-        fetchAvailability();
     };
 
     const confirmBlock = async () => {
@@ -136,7 +268,6 @@ const AdminBookingView: React.FC = () => {
         });
     };
 
-    // Calendar days
     const calDays = (() => {
         const firstDay = new Date(cursor.year, cursor.month, 1).getDay();
         const daysInMonth = new Date(cursor.year, cursor.month + 1, 0).getDate();
@@ -179,7 +310,6 @@ const AdminBookingView: React.FC = () => {
             {/* ── Bookings Tab ── */}
             {activeTab === 'bookings' && (
                 <div className="space-y-4">
-                    {/* Status filter */}
                     <div className="flex gap-2 flex-wrap">
                         {['all', 'pending', 'confirmed', 'declined', 'cancelled'].map(s => (
                             <button
@@ -203,38 +333,7 @@ const AdminBookingView: React.FC = () => {
                     ) : (
                         <div className="space-y-2">
                             {bookings.map(b => (
-                                <div
-                                    key={b.id}
-                                    onClick={() => { setSelected(b); setAdminNotes(b.admin_notes || ''); }}
-                                    className="border border-white/10 p-4 cursor-pointer hover:border-white/30 transition-colors"
-                                >
-                                    <div className="flex items-start justify-between gap-4">
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <span className="text-sm font-black text-white truncate">{b.name}</span>
-                                                <span className={`px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest border ${STATUS_COLORS[b.status]}`}>
-                                                    {b.status}
-                                                </span>
-                                                {b.retainer && (
-                                                    <span className="px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest border border-purple-400/20 bg-purple-400/10 text-purple-400">
-                                                        Retainer
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <p className="text-white/50 text-xs">{b.email}</p>
-                                        </div>
-                                        <div className="text-right shrink-0">
-                                            <p className="text-xs font-bold text-white">{fmtDate(b.event_date)}</p>
-                                            <p className="text-white/40 text-[10px]">{b.event_type}</p>
-                                        </div>
-                                    </div>
-                                    {(b.location || b.start_time) && (
-                                        <div className="flex gap-4 mt-2 text-[10px] text-white/30">
-                                            {b.location && <span>📍 {b.location}</span>}
-                                            {b.start_time && <span>🕐 {b.start_time}{b.end_time ? ` – ${b.end_time}` : ''}</span>}
-                                        </div>
-                                    )}
-                                </div>
+                                <BookingCard key={b.id} booking={b} onStatusChange={fetchBookings} />
                             ))}
                         </div>
                     )}
@@ -312,71 +411,6 @@ const AdminBookingView: React.FC = () => {
                         </div>
                     )}
                 </div>
-            )}
-
-            {/* ── Booking Detail Drawer ── */}
-            {selected && (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/80 backdrop-blur-sm"
-                    onClick={() => setSelected(null)}
-                >
-                    <motion.div
-                        initial={{ y: 40, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        className="bg-zinc-950 border border-white/20 w-full max-w-lg p-6 space-y-5 max-h-[90vh] overflow-y-auto"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <h3 className="text-lg font-black text-white">{selected.name}</h3>
-                                <p className="text-white/40 text-xs">{selected.email}</p>
-                            </div>
-                            <button onClick={() => setSelected(null)} className="text-white/30 hover:text-white">
-                                <XCircleIcon className="w-5 h-5" />
-                            </button>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 text-xs">
-                            <div><p className="text-white/30 uppercase tracking-widest mb-0.5">Date</p><p className="font-bold">{fmtDate(selected.event_date)}</p></div>
-                            <div><p className="text-white/30 uppercase tracking-widest mb-0.5">Type</p><p className="font-bold">{selected.event_type}</p></div>
-                            {selected.start_time && <div><p className="text-white/30 uppercase tracking-widest mb-0.5">Time</p><p className="font-bold">{selected.start_time}{selected.end_time ? ` – ${selected.end_time}` : ''}</p></div>}
-                            {selected.location && <div><p className="text-white/30 uppercase tracking-widest mb-0.5">Location</p><p className="font-bold">{selected.location}</p></div>}
-                            {selected.phone && <div><p className="text-white/30 uppercase tracking-widest mb-0.5">Phone</p><p className="font-bold">{selected.phone}</p></div>}
-                        </div>
-
-                        {selected.notes && (
-                            <div>
-                                <p className="text-white/30 text-[9px] uppercase tracking-widest mb-1">Client Notes</p>
-                                <p className="text-white/70 text-sm leading-relaxed bg-white/5 p-3">{selected.notes}</p>
-                            </div>
-                        )}
-
-                        <div>
-                            <p className="text-white/30 text-[9px] uppercase tracking-widest mb-1">Admin Notes</p>
-                            <textarea
-                                value={adminNotes}
-                                onChange={e => setAdminNotes(e.target.value)}
-                                rows={2}
-                                className="w-full bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none resize-none"
-                                placeholder="Internal notes..."
-                            />
-                        </div>
-
-                        <div className="flex gap-2 flex-wrap">
-                            <button onClick={() => updateStatus(selected.id, 'confirmed')} disabled={saving} className="flex items-center gap-1.5 px-4 py-2 bg-green-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-green-500 transition-colors disabled:opacity-50">
-                                <CheckCircleIcon className="w-3.5 h-3.5" /> Confirm
-                            </button>
-                            <button onClick={() => updateStatus(selected.id, 'declined')} disabled={saving} className="flex items-center gap-1.5 px-4 py-2 bg-red-900 text-red-300 text-[10px] font-black uppercase tracking-widest hover:bg-red-800 transition-colors disabled:opacity-50">
-                                <XCircleIcon className="w-3.5 h-3.5" /> Decline
-                            </button>
-                            <button onClick={() => updateStatus(selected.id, 'cancelled')} disabled={saving} className="flex items-center gap-1.5 px-4 py-2 border border-white/20 text-white/40 text-[10px] font-black uppercase tracking-widest hover:border-white/40 hover:text-white/60 transition-colors disabled:opacity-50">
-                                Cancel
-                            </button>
-                        </div>
-                    </motion.div>
-                </motion.div>
             )}
         </div>
     );
