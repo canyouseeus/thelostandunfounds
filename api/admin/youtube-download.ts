@@ -12,7 +12,7 @@ const execFileAsync = promisify(execFile);
 const DRIVE_FOLDER_ID = '1U02vZ2JXr7UcSSnxn832pig1m8sTZ3Ko';
 const YT_DLP_PATH = '/tmp/yt-dlp';
 const YT_DLP_TMP = '/tmp/yt-dlp.tmp';
-const MAX_BUFFER = 50 * 1024 * 1024; // 50MB — yt-dlp metadata JSON can be large
+const MAX_BUFFER = 50 * 1024 * 1024;
 
 function getOAuth2Client() {
     const oauth2Client = new google.auth.OAuth2(
@@ -30,8 +30,6 @@ async function ensureYtDlp(): Promise<void> {
 
     // Download to a staging file first so concurrent requests never see a
     // partial binary — executing a partially-written file causes ETXTBSY.
-    // The final fs.renameSync is atomic: existsSync(YT_DLP_PATH) only
-    // returns true once the complete, chmod'd binary is in place.
     return new Promise((resolve, reject) => {
         const url = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux';
 
@@ -69,6 +67,40 @@ async function ensureYtDlp(): Promise<void> {
     });
 }
 
+// Extract 11-character YouTube video ID from any YouTube URL format.
+function extractVideoId(url: string): string | null {
+    const patterns = [
+        /[?&]v=([a-zA-Z0-9_-]{11})/,   // watch?v=
+        /youtu\.be\/([a-zA-Z0-9_-]{11})/, // youtu.be/
+        /shorts\/([a-zA-Z0-9_-]{11})/,   // shorts/
+        /embed\/([a-zA-Z0-9_-]{11})/,    // embed/
+    ];
+    for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match) return match[1];
+    }
+    return null;
+}
+
+// Fetch title/author via YouTube oEmbed — no auth, no bot detection.
+function fetchOEmbedMetadata(videoId: string): Promise<{ title: string; author: string }> {
+    const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
+    return new Promise((resolve, reject) => {
+        https.get(oembedUrl, (res) => {
+            let raw = '';
+            res.on('data', (chunk) => raw += chunk);
+            res.on('end', () => {
+                try {
+                    const info = JSON.parse(raw);
+                    resolve({ title: info.title || 'Unknown', author: info.author_name || '' });
+                } catch {
+                    reject(new Error(`oEmbed parse failed (status ${res.statusCode}): ${raw.substring(0, 100)}`));
+                }
+            });
+        }).on('error', reject);
+    });
+}
+
 function extractTitleArtist(rawTitle: string): { title: string; artist: string } {
     const sep = rawTitle.indexOf(' - ');
     if (sep !== -1) {
@@ -99,52 +131,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let audioFilePath: string | null = null;
 
     try {
+        // --- Metadata via oEmbed (bypasses bot detection entirely) ---
+        const videoId = extractVideoId(url);
+        if (!videoId) throw new Error(`Could not extract video ID from URL: ${url}`);
+
+        const { title: rawTitle, author } = await fetchOEmbedMetadata(videoId);
+        console.log(`[YouTube Download] Fetched metadata: "${rawTitle}" by "${author}" (id=${videoId})`);
+
+        // --- Ensure yt-dlp binary ---
         await ensureYtDlp();
 
-        // Get metadata first
-        const { stdout: infoJson } = await execFileAsync(YT_DLP_PATH, [
-            '--dump-json',
-            '--no-playlist',
-            url,
-        ], { timeout: 30_000, maxBuffer: MAX_BUFFER });
-
-        const trimmed = infoJson.trim();
-        if (!trimmed) throw new Error('yt-dlp returned empty metadata — the URL may be invalid');
-
-        let info: any;
-        try {
-            info = JSON.parse(trimmed);
-        } catch {
-            console.error('[YouTube Download] JSON parse failed, raw output:', trimmed.substring(0, 300));
-            throw new Error('Failed to parse video metadata from yt-dlp');
-        }
-
-        const rawTitle: string = info.title || 'Unknown';
-        const duration: number = info.duration || 0;
-
-        // Extract audio to mp3
+        // --- Extract audio ---
         const safeTitle = rawTitle.replace(/[^a-zA-Z0-9 _-]/g, '_').substring(0, 80);
         audioFilePath = path.join(tmpDir, `${safeTitle}.mp3`);
 
-        await execFileAsync(YT_DLP_PATH, [
+        const { stdout: dlOut, stderr: dlErr } = await execFileAsync(YT_DLP_PATH, [
             '-x',
             '--audio-format', 'mp3',
             '--audio-quality', '192K',
             '--no-playlist',
+            '--no-warnings',
+            // Try multiple YouTube player clients so bot detection on one doesn't block all
+            '--extractor-args', 'youtube:player_client=web,mweb,android',
             '-o', audioFilePath,
-            url,
+            `https://www.youtube.com/watch?v=${videoId}`,
         ], { timeout: 240_000, maxBuffer: MAX_BUFFER });
 
+        if (dlErr) console.log('[YouTube Download] yt-dlp stderr:', dlErr.substring(0, 800));
+        if (dlOut) console.log('[YouTube Download] yt-dlp stdout:', dlOut.substring(0, 200));
+
         if (!fs.existsSync(audioFilePath)) {
-            // yt-dlp may add extra chars; find the file
             const files = fs.readdirSync(tmpDir).filter(f => f.endsWith('.mp3') && f.includes(safeTitle.substring(0, 20)));
-            if (files.length === 0) throw new Error('Audio extraction failed — output file not found');
+            if (files.length === 0) {
+                throw new Error(`Audio extraction failed. yt-dlp stderr: ${dlErr?.substring(0, 400) || 'none'}`);
+            }
             audioFilePath = path.join(tmpDir, files[0]);
         }
 
-        // Upload to Google Drive
+        // --- Upload to Google Drive ---
         const drive = google.drive({ version: 'v3', auth: getOAuth2Client() });
-
         const fileStream = fs.createReadStream(audioFilePath);
         const fileName = path.basename(audioFilePath);
 
@@ -164,14 +189,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const fileId = driveFile.data.id!;
         const { title, artist } = extractTitleArtist(rawTitle);
 
-        // Insert into Supabase
+        // --- Insert into Supabase ---
         const { data: track, error: dbError } = await supabase
             .from('admin_playlist')
             .insert({
                 title,
-                artist,
+                artist: artist || author,
                 file_id: fileId,
-                duration: Math.round(duration),
+                duration: 0,
                 source_url: url,
             })
             .select()
