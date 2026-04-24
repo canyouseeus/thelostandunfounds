@@ -1,27 +1,43 @@
--- Invoices / CRM revenue table.
--- Stores manually-entered booking invoices so their revenue appears in the
--- admin dashboard alongside photo-order sales.
+-- CRM invoices and clients tables.
+-- Creates both tables IF NOT EXISTS so the migration is safe to apply when
+-- the tables were already created directly in Supabase.
 
-CREATE TABLE IF NOT EXISTS invoices (
-    id           UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    booking_id   UUID REFERENCES bookings(id) ON DELETE SET NULL,
-    client_name  TEXT,
-    amount       NUMERIC(10, 2) NOT NULL DEFAULT 0,
-    status       TEXT NOT NULL DEFAULT 'pending'
-                   CHECK (status IN ('pending', 'paid', 'cancelled', 'voided')),
-    description  TEXT,
-    created_at   TIMESTAMPTZ DEFAULT NOW(),
-    paid_at      TIMESTAMPTZ
+CREATE TABLE IF NOT EXISTS clients (
+    id         UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name       TEXT NOT NULL,
+    email      TEXT,
+    phone      TEXT,
+    business   TEXT,
+    notes      TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS invoices_status_idx ON invoices (status);
-CREATE INDEX IF NOT EXISTS invoices_booking_id_idx ON invoices (booking_id);
+CREATE TABLE IF NOT EXISTS invoices (
+    id             UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    client_id      UUID REFERENCES clients(id) ON DELETE SET NULL,
+    invoice_number TEXT,
+    date           DATE NOT NULL DEFAULT CURRENT_DATE,
+    event_date     DATE,
+    description    TEXT,
+    line_items     JSONB NOT NULL DEFAULT '[]',
+    subtotal       NUMERIC(10, 2) NOT NULL DEFAULT 0,
+    total          NUMERIC(10, 2) NOT NULL DEFAULT 0,
+    status         TEXT NOT NULL DEFAULT 'draft'
+                     CHECK (status IN ('draft', 'sent', 'paid', 'overdue')),
+    payment_method TEXT,
+    paid_at        TIMESTAMPTZ,
+    created_at     TIMESTAMPTZ DEFAULT NOW()
+);
 
--- Enable Row Level Security (admin-only access via service role key)
-ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
+CREATE TABLE IF NOT EXISTS invoice_payments (
+    id         UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    invoice_id UUID NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+    amount     NUMERIC(10, 2) NOT NULL,
+    method     TEXT,
+    paid_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    notes      TEXT
+);
 
--- Allow all operations via the service role key used by API functions
-CREATE POLICY IF NOT EXISTS "Service role full access"
-  ON invoices FOR ALL
-  USING (true)
-  WITH CHECK (true);
+CREATE INDEX IF NOT EXISTS invoices_status_idx     ON invoices (status);
+CREATE INDEX IF NOT EXISTS invoices_client_id_idx  ON invoices (client_id);
+CREATE INDEX IF NOT EXISTS invoice_payments_inv_idx ON invoice_payments (invoice_id);

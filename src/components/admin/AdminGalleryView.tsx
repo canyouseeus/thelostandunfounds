@@ -236,9 +236,9 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
             try {
                 const { data: paidInvoices } = await supabase
                     .from('invoices')
-                    .select('amount')
+                    .select('total')
                     .eq('status', 'paid');
-                bookingRevenue = (paidInvoices || []).reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0);
+                bookingRevenue = (paidInvoices || []).reduce((sum, inv) => sum + (Number(inv.total) || 0), 0);
             } catch (invoiceErr) {
                 console.warn('[loadGalleryStats] Could not load invoice revenue:', invoiceErr);
             }
