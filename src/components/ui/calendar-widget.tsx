@@ -8,6 +8,9 @@ interface CalendarWidgetProps {
     endDate?: Date | null;
     onDateSelect?: (date: Date) => void;
     interactive?: boolean;
+    viewDate?: Date;
+    onMonthChange?: (d: Date) => void;
+    dotsByDate?: Map<string, { bookings: number; events: number; photos: number; blocked: boolean }>;
 }
 
 export function CalendarWidget({
@@ -15,10 +18,14 @@ export function CalendarWidget({
     startDate,
     endDate,
     onDateSelect,
-    interactive = false
+    interactive = false,
+    viewDate: controlledViewDate,
+    onMonthChange,
+    dotsByDate,
 }: CalendarWidgetProps) {
     const today = new Date();
-    const [viewDate, setViewDate] = useState(startDate || today);
+    const [internalViewDate, setInternalViewDate] = useState(startDate || today);
+    const viewDate = controlledViewDate ?? internalViewDate;
 
     const currentMonth = viewDate.toLocaleString('default', { month: 'long' }).toUpperCase();
     const currentYear = viewDate.getFullYear();
@@ -33,21 +40,22 @@ export function CalendarWidget({
 
     const weekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-    const handlePrev = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setViewDate(new Date(currentYear, viewDate.getMonth() - 1, 1));
+    const navigate = (delta: number) => {
+        const next = new Date(currentYear, viewDate.getMonth() + delta, 1);
+        if (onMonthChange) onMonthChange(next);
+        else setInternalViewDate(next);
     };
 
-    const handleNext = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setViewDate(new Date(currentYear, viewDate.getMonth() + 1, 1));
-    };
+    const handlePrev = (e: React.MouseEvent) => { e.stopPropagation(); navigate(-1); };
+    const handleNext = (e: React.MouseEvent) => { e.stopPropagation(); navigate(1); };
 
     const normalize = (d: Date) => {
         const copy = new Date(d);
         copy.setHours(0, 0, 0, 0);
         return copy;
     };
+
+    const toYMD = (d: Date) => d.toLocaleDateString('en-CA');
 
     const getDayDate = (day: number) => normalize(new Date(currentYear, viewDate.getMonth(), day));
 
@@ -83,7 +91,7 @@ export function CalendarWidget({
                     )}
                 </div>
 
-                {/* Grid — no gap-x so range fill is seamless between cells */}
+                {/* Grid */}
                 <div className="grid grid-cols-7 text-center">
                     {weekDays.map((d, i) => (
                         <div key={`${d}-${i}`} className="text-[10px] text-white/30 font-medium h-8 flex items-center justify-center">
@@ -92,7 +100,7 @@ export function CalendarWidget({
                     ))}
 
                     {blanks.map(i => (
-                        <div key={`blank-${i}`} className="h-8" />
+                        <div key={`blank-${i}`} className="h-10" />
                     ))}
 
                     {days.map(d => {
@@ -103,13 +111,17 @@ export function CalendarWidget({
                         const isToday = isCurrentMonth && d === currentDay;
                         const hasRange = !!(startNorm && endNorm && startNorm.getTime() !== endNorm.getTime());
 
+                        const ymd = toYMD(new Date(currentYear, viewDate.getMonth(), d));
+                        const dots = dotsByDate?.get(ymd);
+                        const hasDots = dots && (dots.bookings > 0 || dots.events > 0 || dots.photos > 0 || dots.blocked);
+
                         return (
-                            <div key={d} className="relative h-8 flex items-center justify-center">
-                                {/* Airbnb-style pill fill — transparent band connecting start→end */}
+                            <div key={d} className="relative h-10 flex flex-col items-center justify-start pt-[3px]">
+                                {/* Range fill */}
                                 {hasRange && (dayIsStart || dayIsEnd || dayInRange) && (
                                     <div
                                         className={cn(
-                                            "absolute inset-y-[5px] bg-transparent border-y border-white/20",
+                                            "absolute top-[3px] bottom-[3px] bg-transparent border-y border-white/20",
                                             dayInRange && "inset-x-0",
                                             dayIsStart && !dayIsEnd && "left-1/2 right-0",
                                             dayIsEnd && !dayIsStart && "left-0 right-1/2",
@@ -140,6 +152,16 @@ export function CalendarWidget({
                                 >
                                     {d}
                                 </button>
+
+                                {/* Activity dots */}
+                                {hasDots && (
+                                    <div className="flex items-center gap-[2px] mt-[1px]">
+                                        {dots!.bookings > 0 && <span className="w-[3px] h-[3px] bg-yellow-400 rounded-full" />}
+                                        {dots!.events > 0 && <span className="w-[3px] h-[3px] bg-green-400 rounded-full" />}
+                                        {dots!.photos > 0 && <span className="w-[3px] h-[3px] bg-white/60 rounded-full" />}
+                                        {dots!.blocked && <span className="w-[3px] h-[3px] bg-red-400 rounded-full" />}
+                                    </div>
+                                )}
                             </div>
                         );
                     })}
