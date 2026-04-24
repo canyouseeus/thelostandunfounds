@@ -10,7 +10,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const body = (req.body && typeof req.body === 'object') ? req.body : {};
         const librarySlug: string | undefined = body.librarySlug || body.slug;
         const dryRun: boolean = Boolean(body.dryRun);
-        const timeBudgetSeconds: number = Number(body.timeBudgetSeconds) || 270;
+        const timeBudgetSeconds: number = Number(body.timeBudgetSeconds) || 50;
 
         const result = await retrogradeRename({
             librarySlug,

@@ -314,64 +314,76 @@ async function handleStream(req: VercelRequest, res: VercelResponse) {
         // Try lh3 first (direct link) — use full resolution for downloads
         const fetchSize = isDownload ? 'w4096-h4096' : (size || 1600);
         const lh3Url = `https://lh3.googleusercontent.com/d/${fileId}=s${fetchSize}`;
-        const response = await fetch(lh3Url);
 
-        if (response.ok && response.headers.get('content-type')?.includes('image')) {
-            const rawBuffer = Buffer.from(await response.arrayBuffer());
+        let lh3Status = 0;
+        let lh3ContentType = '';
+        let lh3Buffer: Buffer | null = null;
 
+        try {
+            const response = await fetch(lh3Url, { signal: AbortSignal.timeout(15000) });
+            lh3Status = response.status;
+            lh3ContentType = response.headers.get('content-type') || '';
+            if (response.ok && lh3ContentType.includes('image')) {
+                lh3Buffer = Buffer.from(await response.arrayBuffer());
+            }
+        } catch (lh3Err: any) {
+            console.warn('[stream] lh3 fetch failed:', lh3Err?.message);
+        }
+
+        if (lh3Buffer) {
             if (isDownload) {
-                const watermarked = await addWatermark(rawBuffer);
+                const watermarked = await addWatermark(lh3Buffer);
                 res.setHeader('Content-Type', 'image/jpeg');
                 res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
                 res.setHeader('Cache-Control', 'no-store');
                 return res.send(watermarked);
             }
-
-            const contentType = response.headers.get('content-type') || 'image/jpeg';
-            res.setHeader('Content-Type', contentType);
+            res.setHeader('Content-Type', lh3ContentType || 'image/jpeg');
             res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-            return res.send(rawBuffer);
+            return res.send(lh3Buffer);
         }
 
-        console.warn('lh3 stream failed, trying fallback:', {
-            fileId,
-            status: response.status,
-            contentType: response.headers.get('content-type')
-        });
+        console.warn('[stream] lh3 failed, trying drive thumbnail:', { fileId, lh3Status, lh3ContentType });
 
         // Fallback to drive thumbnail
         const driveUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w${size || 1600}`;
-        const driveRes = await fetch(driveUrl);
+        let driveStatus = 0;
+        let driveContentType = '';
+        let driveBuffer: Buffer | null = null;
 
-        if (driveRes.ok && driveRes.headers.get('content-type')?.includes('image')) {
-            const rawBuffer = Buffer.from(await driveRes.arrayBuffer());
+        try {
+            const driveRes = await fetch(driveUrl, { signal: AbortSignal.timeout(15000) });
+            driveStatus = driveRes.status;
+            driveContentType = driveRes.headers.get('content-type') || '';
+            if (driveRes.ok && driveContentType.includes('image')) {
+                driveBuffer = Buffer.from(await driveRes.arrayBuffer());
+            }
+        } catch (driveErr: any) {
+            console.warn('[stream] drive thumbnail fetch failed:', driveErr?.message);
+        }
 
+        if (driveBuffer) {
             if (isDownload) {
-                const watermarked = await addWatermark(rawBuffer);
+                const watermarked = await addWatermark(driveBuffer);
                 res.setHeader('Content-Type', 'image/jpeg');
                 res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
                 res.setHeader('Cache-Control', 'no-store');
                 return res.send(watermarked);
             }
-
-            const contentType = driveRes.headers.get('content-type') || 'image/jpeg';
-            res.setHeader('Content-Type', contentType);
+            res.setHeader('Content-Type', driveContentType || 'image/jpeg');
             res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-            return res.send(rawBuffer);
+            return res.send(driveBuffer);
         }
 
-        console.error('All stream methods failed for fileId:', fileId, {
-            lh3Status: response.status,
-            driveStatus: driveRes.status,
-            driveContentType: driveRes.headers.get('content-type')
-        });
+        console.error('[stream] All methods failed for fileId:', fileId, { lh3Status, driveStatus });
 
-        return res.status(driveRes.status === 403 ? 403 : 404).json({
-            error: 'Image not found or inaccessible',
-            debug: {
-                lh3: response.status,
-                drive: driveRes.status
-            }
+        // 403 = Drive permissions; anything else = file not found / inaccessible
+        const statusCode = (lh3Status === 403 || driveStatus === 403) ? 403 : 404;
+        return res.status(statusCode).json({
+            error: statusCode === 403
+                ? 'File not publicly accessible. Set Drive sharing to "Anyone with the link".'
+                : 'Image not found or inaccessible',
+            debug: { lh3: lh3Status, drive: driveStatus }
         });
     } catch (err: any) {
         console.error('Stream error:', {

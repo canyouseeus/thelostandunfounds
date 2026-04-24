@@ -19,6 +19,7 @@ interface AdminGalleryViewProps {
 interface GalleryStats {
     totalOrders: number;
     totalRevenue: number;
+    bookingRevenue: number;
     recentOrders: any[];
     recentPhotos: any[];
 }
@@ -227,12 +228,27 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
 
             if (photosError) console.error('Error fetching recent photos:', photosError);
 
-            // Calculate stats
-            const totalRevenue = validOrders.reduce((sum, order) => sum + (order.total_amount_cents || 0), 0) / 100 || 0;
+            // Calculate photo-order revenue
+            const photoRevenue = validOrders.reduce((sum, order) => sum + (order.total_amount_cents || 0), 0) / 100 || 0;
+
+            // 4. Get paid booking invoices (CRM revenue)
+            let bookingRevenue = 0;
+            try {
+                const { data: paidInvoices } = await supabase
+                    .from('invoices')
+                    .select('amount')
+                    .eq('status', 'paid');
+                bookingRevenue = (paidInvoices || []).reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0);
+            } catch (invoiceErr) {
+                console.warn('[loadGalleryStats] Could not load invoice revenue:', invoiceErr);
+            }
+
+            const totalRevenue = photoRevenue + bookingRevenue;
 
             setStats({
                 totalOrders: validOrders.length || 0,
                 totalRevenue,
+                bookingRevenue,
                 recentOrders: validOrders.slice(0, 10) || [],
                 recentPhotos: recentPhotos || []
             });
@@ -802,6 +818,11 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                             <div className="text-2xl font-bold font-mono text-green-400">
                                 $<AnimatedNumber value={stats?.totalRevenue || 0} decimals={2} />
                             </div>
+                            {(stats?.bookingRevenue ?? 0) > 0 && (
+                                <div className="text-[9px] text-white/30 mt-1">
+                                    incl. ${(stats!.bookingRevenue).toFixed(2)} bookings
+                                </div>
+                            )}
                         </div>
                         <div className="bg-white/5 p-4">
                             <div className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] mb-1">Recent Activity</div>
@@ -1411,7 +1432,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                         <ExclamationCircleIcon className="w-5 h-5 flex-shrink-0" />
                         <div>
                             <p className="font-bold uppercase text-sm">System Alert: Asset Delivery Issue Detected</p>
-                            <p className="text-xs opacity-80 mt-1">Google Drive files may not be public. Users cannot download. Please check 'gallery-ops' skill.</p>
+                            <p className="text-xs opacity-80 mt-1">Image streaming is returning errors. Check that Drive files are shared "Anyone with the link can view", then run Test Connection again.</p>
                         </div>
                     </div>
                 )}
@@ -1444,6 +1465,11 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                         <div className="text-3xl font-bold text-green-400">
                             $<AnimatedNumber value={stats?.totalRevenue || 0} />
                         </div>
+                        {(stats?.bookingRevenue ?? 0) > 0 && (
+                            <div className="text-[9px] text-white/30 mt-1">
+                                incl. ${(stats!.bookingRevenue).toFixed(2)} bookings
+                            </div>
+                        )}
                     </div>
                 </div>
 
