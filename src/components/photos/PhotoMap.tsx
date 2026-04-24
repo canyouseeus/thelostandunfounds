@@ -4,7 +4,6 @@ import {
   XMarkIcon,
   TagIcon,
   MapPinIcon,
-  ArrowTopRightOnSquareIcon,
   Squares2X2Icon,
 } from '@heroicons/react/24/outline';
 import { supabase } from '@/lib/supabase';
@@ -54,6 +53,7 @@ export function PhotoMap({ onPhotoClick, className = '' }: PhotoMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const photosRef = useRef<MapPhoto[]>([]);
+  const onPhotoClickRef = useRef(onPhotoClick);
 
   const [photos, setPhotos] = useState<MapPhoto[]>([]);
   const [allTags, setAllTags] = useState<Tag[]>([]);
@@ -64,6 +64,7 @@ export function PhotoMap({ onPhotoClick, className = '' }: PhotoMapProps) {
   const [showTagFilter, setShowTagFilter] = useState(false);
 
   photosRef.current = photos;
+  onPhotoClickRef.current = onPhotoClick;
 
   useEffect(() => {
     supabase
@@ -186,9 +187,15 @@ export function PhotoMap({ onPhotoClick, className = '' }: PhotoMapProps) {
         const f = e.features?.[0];
         if (!f) return;
         const coords = (f.geometry as GeoJSON.Point).coordinates as [number, number];
-        const pt = map.project(coords);
         const photo = photosRef.current.find(p => p.id === f.properties?.id);
-        if (photo) setPopup({ photo, x: pt.x, y: pt.y });
+        if (photo) {
+          if (onPhotoClickRef.current) {
+            onPhotoClickRef.current(photo);
+          } else {
+            const pt = map.project(coords);
+            setPopup({ photo, x: pt.x, y: pt.y });
+          }
+        }
         e.originalEvent.stopPropagation();
       });
 
@@ -379,23 +386,12 @@ export function PhotoMap({ onPhotoClick, className = '' }: PhotoMapProps) {
               )}
             </div>
             <div className="flex border-t border-white/10">
-              {popup.photo.google_drive_file_id && (
-                <a
-                  href={`https://drive.google.com/file/d/${popup.photo.google_drive_file_id}/view`}
-                  target="_blank" rel="noreferrer"
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2 text-[9px] uppercase font-bold tracking-wider text-white/30 hover:text-white hover:bg-white/5 transition-colors"
-                >
-                  <ArrowTopRightOnSquareIcon className="w-3 h-3" />Drive
-                </a>
-              )}
-              {onPhotoClick && (
-                <button
-                  onClick={() => { onPhotoClick(popup.photo); setPopup(null); }}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2 text-[9px] uppercase font-bold tracking-wider text-white/30 hover:text-white hover:bg-white/5 transition-colors border-l border-white/10"
-                >
-                  <Squares2X2Icon className="w-3 h-3" />View
-                </button>
-              )}
+              <button
+                onClick={() => { onPhotoClickRef.current?.(popup.photo); setPopup(null); }}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-[9px] uppercase font-bold tracking-wider text-white/30 hover:text-white hover:bg-white/5 transition-colors"
+              >
+                <Squares2X2Icon className="w-3 h-3" />View
+              </button>
             </div>
             {/* Arrow */}
             <div

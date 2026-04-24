@@ -275,6 +275,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     const [purchasedPhotos, setPurchasedPhotos] = useState<Photo[]>([]);
     const [selectedPhotos, setSelectedPhotos] = useState<Photo[]>([]);
     const [activePhotoIndex, setActivePhotoIndex] = useState<number | null>(null);
+    const [mapActivePhoto, setMapActivePhoto] = useState<Photo | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'storefront' | 'assets'>('storefront');
     const [showBackToTop, setShowBackToTop] = useState(false);
@@ -938,7 +939,25 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             {/* Map View */}
             {viewMode === 'map' && (
                 <div className="w-full" style={{ height: 'calc(100vh - 200px)' }}>
-                    <PhotoMap className="w-full h-full" />
+                    <PhotoMap
+                        className="w-full h-full"
+                        onPhotoClick={(mapPhoto) => {
+                            const idx = photos.findIndex(p => p.id === mapPhoto.id);
+                            if (idx !== -1) {
+                                setActivePhotoIndex(idx);
+                            } else {
+                                setMapActivePhoto({
+                                    id: mapPhoto.id,
+                                    title: mapPhoto.title,
+                                    google_drive_file_id: mapPhoto.google_drive_file_id || '',
+                                    thumbnail_url: mapPhoto.thumbnail_url || '',
+                                    created_at: '',
+                                    library_id: mapPhoto.library_id,
+                                    metadata: mapPhoto.metadata,
+                                });
+                            }
+                        }}
+                    />
                 </div>
             )}
 
@@ -1103,6 +1122,19 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 isSelected={activePhotoIndex !== null && !!photos[activePhotoIndex] && !!selectedPhotos.find(p => p.id === photos[activePhotoIndex!].id)}
                 isPurchased={activePhotoIndex !== null && !!photos[activePhotoIndex] && !!purchasedPhotos.find(p => p.id === photos[activePhotoIndex!].id)}
                 onToggleSelect={() => activePhotoIndex !== null && !!photos[activePhotoIndex] && handleToggleSelect(photos[activePhotoIndex!])}
+                singlePhotoPrice={singlePrice}
+                galleryName={library?.name}
+            />
+
+            {/* Map lightbox — for photos clicked on the map that aren't in the current gallery view */}
+            <PhotoLightbox
+                photo={mapActivePhoto}
+                onClose={() => setMapActivePhoto(null)}
+                onNext={() => {}}
+                onPrev={() => {}}
+                isSelected={false}
+                isPurchased={false}
+                onToggleSelect={() => {}}
                 singlePhotoPrice={singlePrice}
                 galleryName={library?.name}
             />
