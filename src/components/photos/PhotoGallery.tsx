@@ -10,7 +10,9 @@ import {
     StopIcon,
     ArrowUpIcon,
     CalendarIcon,
-    XMarkIcon
+    XMarkIcon,
+    MagnifyingGlassIcon,
+    MapPinIcon,
 } from '@heroicons/react/24/outline';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -21,6 +23,8 @@ import AuthModal from '../auth/AuthModal';
 import TipModal from '../TipModal';
 import DownloadEmailModal from '../DownloadEmailModal';
 import CreditModal from './CreditModal';
+import { SearchModal } from './SearchModal';
+import { PhotoMap } from './PhotoMap';
 import { cn } from '../ui/utils';
 import { NoirDateRangePicker } from '../ui/NoirDateRangePicker';
 import JSZip from 'jszip';
@@ -274,7 +278,8 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'storefront' | 'assets'>('storefront');
     const [showBackToTop, setShowBackToTop] = useState(false);
-    const [viewMode, setViewMode] = useState<'grid' | 'single'>('grid');
+    const [viewMode, setViewMode] = useState<'grid' | 'single' | 'map'>('grid');
+    const [searchModalOpen, setSearchModalOpen] = useState(false);
     const [authModalOpen, setAuthModalOpen] = useState(false);
     const [authMessage, setAuthMessage] = useState<string | undefined>(undefined);
     const [authTitle, setAuthTitle] = useState<string | undefined>(undefined);
@@ -356,11 +361,22 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     // Track scroll position to show/hide back to top button
     useEffect(() => {
         const handleScroll = () => {
-            // Show button when scrolled down more than 500px
             setShowBackToTop(window.scrollY > 500);
         };
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    // ⌘K / Ctrl+K opens search modal
+    useEffect(() => {
+        const handleKey = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                setSearchModalOpen(v => !v);
+            }
+        };
+        window.addEventListener('keydown', handleKey);
+        return () => window.removeEventListener('keydown', handleKey);
     }, []);
 
     // Check for purchased assets if user is logged in
@@ -839,6 +855,13 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                             <Squares2X2Icon className="w-5 h-5" />
                         </button>
                         <button
+                            onClick={() => setViewMode(viewMode === 'map' ? 'grid' : 'map')}
+                            className={cn("p-2 transition-colors", viewMode === 'map' ? "text-white" : "text-white/40 hover:text-white/60")}
+                            title="Map View"
+                        >
+                            <MapPinIcon className="w-5 h-5" />
+                        </button>
+                        <button
                             onClick={() => {
                                 if (startDate || endDate) {
                                     setStartDate('');
@@ -855,6 +878,13 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                             title={startDate && endDate ? "Clear Dates" : "Filter by Date"}
                         >
                             <CalendarIcon className="w-5 h-5" />
+                        </button>
+                        <button
+                            onClick={() => setSearchModalOpen(true)}
+                            className="p-2 transition-colors text-white/40 hover:text-white/60"
+                            title="Search (⌘K)"
+                        >
+                            <MagnifyingGlassIcon className="w-5 h-5" />
                         </button>
                     </div>
                 </div>
@@ -895,7 +925,14 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 </div>
             )}
 
-            <div className="max-w-7xl mx-auto">
+            {/* Map View */}
+            {viewMode === 'map' && (
+                <div className="w-full" style={{ height: 'calc(100vh - 200px)' }}>
+                    <PhotoMap className="w-full h-full" />
+                </div>
+            )}
+
+            <div className={`max-w-7xl mx-auto ${viewMode === 'map' ? 'hidden' : ''}`}>
 
                 {/* Photos Grouped by Date */}
                 <div ref={photosRef} className="space-y-16">
@@ -1034,7 +1071,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                                 isPurchased={!!purchasedPhotos.find(p => p.id === photo.id)}
                                                 activeTab={activeTab}
                                                 singlePrice={singlePrice}
-                                                viewMode={viewMode}
+                                                viewMode={viewMode === 'map' ? 'grid' : viewMode}
                                                 onToggleSelect={() => handleToggleSelect(photo)}
                                                 onLightbox={() => setActivePhotoIndex(photos.findIndex(p => p.id === photo.id))}
                                             />
@@ -1230,6 +1267,12 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                         startFreeDownload(selectedPhotos);
                     }
                 }}
+            />
+
+            {/* Search Modal */}
+            <SearchModal
+                isOpen={searchModalOpen}
+                onClose={() => setSearchModalOpen(false)}
             />
         </div>
     );

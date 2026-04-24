@@ -351,17 +351,14 @@ async function uploadStagingToDrive(indexes: Record<string, Set<string>>) {
     const failed: { filePath: string; parentId: string; type: string }[] = [];
 
     for (const [type, config] of Object.entries(FOLDER_CONFIG)) {
-        if (!fs.existsSync(config.local)) continue;
-        const files = fs.readdirSync(config.local).filter(f => !f.startsWith('.'));
-        if (!files.length) { console.log(`\nNo files in ${type} staging.`); continue; }
+        const filePaths = getFilesRecursive(config.local).filter(f => !path.basename(f).startsWith('.'));
+        if (!filePaths.length) { console.log(`\nNo files in ${type} staging.`); continue; }
 
         const targetId = await getOrCreateFolder('NEW UPLOADS', config.parent);
         await removeDuplicatesInFolder(targetId, type);
 
-        console.log(`\nUploading ${files.length} ${type} file(s)…`);
-        for (const file of files) {
-            const filePath = path.join(config.local, file);
-            if (!fs.statSync(filePath).isFile()) continue;
+        console.log(`\nUploading ${filePaths.length} ${type} file(s)…`);
+        for (const filePath of filePaths) {
             const ok = await uploadAndClean(filePath, targetId, true, indexes[type]);
             if (!ok) failed.push({ filePath, parentId: targetId, type });
         }

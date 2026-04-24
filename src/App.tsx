@@ -65,6 +65,10 @@ import PreviewVisitorPage from './pages/PreviewVisitorPage'
 import PreviewAdminLoginPage from './pages/PreviewAdminLoginPage'
 import BookingPage from './pages/BookingPage'
 import Marty from './pages/Marty'
+import Kattitude from './pages/Kattitude'
+import KattitudeWaiver from './pages/KattitudeWaiver'
+import AdminKattitude from './pages/AdminKattitude'
+import AdminKattitudeArtist from './pages/AdminKattitudeArtist'
 
 
 
@@ -162,6 +166,20 @@ function App() {
                   <ErrorBoundary>
                     <AdminAuthGate>
                       <AdminAffiliates />
+                    </AdminAuthGate>
+                  </ErrorBoundary>
+                } />
+                <Route path="kattitude" element={
+                  <ErrorBoundary>
+                    <AdminAuthGate>
+                      <AdminKattitude />
+                    </AdminAuthGate>
+                  </ErrorBoundary>
+                } />
+                <Route path="kattitude/artist/:artistId" element={
+                  <ErrorBoundary>
+                    <AdminAuthGate>
+                      <AdminKattitudeArtist />
                     </AdminAuthGate>
                   </ErrorBoundary>
                 } />
@@ -271,6 +289,12 @@ function App() {
               {/* Temporary preview routes — remove after gallery-homepage branch ships */}
               <Route path="/preview/visitor" element={<PreviewVisitorPage />} />
               <Route path="/preview/admin-login" element={<PreviewAdminLoginPage />} />
+
+              {/* Kattitude Tattoo Studio */}
+              <Route path="/kattitude" element={<Layout />}>
+                <Route index element={<Kattitude />} />
+              </Route>
+              <Route path="/kattitude/waiver" element={<KattitudeWaiver />} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>

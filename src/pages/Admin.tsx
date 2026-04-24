@@ -57,7 +57,9 @@ import {
   ChatBubbleLeftRightIcon,
   SparklesIcon,
   MegaphoneIcon,
-  Bars3Icon
+  Bars3Icon,
+  BuildingStorefrontIcon,
+  ChevronDownIcon,
 } from '@heroicons/react/24/outline';
 
 import ErrorBoundary from '../components/ErrorBoundary';
@@ -180,6 +182,7 @@ export default function Admin() {
   const { user, loading: authLoading } = useAuth();
   const { success, error: showError } = useToast();
   const navigate = useNavigate();
+  const [businessSwitcherOpen, setBusinessSwitcherOpen] = useState(false);
   const [userSubdomain, setUserSubdomain] = useState<string | null>(null);
   const [adminStatus, setAdminStatus] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1582,9 +1585,52 @@ export default function Admin() {
         {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between gap-4">
-          <h1 className="font-bold text-white uppercase whitespace-nowrap text-[clamp(1.5rem,4vw,2.25rem)]">
-            ADMIN DASHBOARD
-          </h1>
+          {/* Business Switcher */}
+          <div className="relative">
+            <button
+              onClick={() => setBusinessSwitcherOpen(o => !o)}
+              className="flex items-center gap-2 group"
+              aria-label="Switch business"
+            >
+              <h1 className="font-bold text-white uppercase whitespace-nowrap text-[clamp(1.5rem,4vw,2.25rem)]">
+                ADMIN DASHBOARD
+              </h1>
+              <ChevronDownIcon className={cn(
+                'w-4 h-4 text-white/40 transition-transform mt-1',
+                businessSwitcherOpen && 'rotate-180'
+              )} />
+            </button>
+
+            <AnimatePresence>
+              {businessSwitcherOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute top-full left-0 mt-2 bg-black border border-white/10 shadow-2xl z-50 min-w-[220px]"
+                >
+                  <div className="py-1">
+                    <button
+                      className="w-full text-left px-4 py-3 text-xs font-black uppercase tracking-widest text-white bg-white/10 flex items-center gap-2"
+                      onClick={() => setBusinessSwitcherOpen(false)}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-white flex-shrink-0" />
+                      The Lost+Unfounds
+                    </button>
+                    <Link
+                      to="/admin/kattitude"
+                      className="flex items-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-widest text-white/50 hover:text-white hover:bg-white/5 transition-colors"
+                      onClick={() => setBusinessSwitcherOpen(false)}
+                    >
+                      <BuildingStorefrontIcon className="w-3.5 h-3.5 flex-shrink-0" />
+                      Kattitude Tattoo Studio
+                    </Link>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
           <Link
             to={userSubdomain ? `/${userSubdomain}/profile` : "/profile"}
             className="p-2 bg-white text-black hover:bg-white/90 transition"
