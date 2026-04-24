@@ -54,11 +54,18 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!api|_next|static|sql|@vite|@react-refresh|.*\\..*).*)",
+      "source": "/((?!api|_next|static|sql|\\.well-known|@vite|@react-refresh|.*\\..*).*)",
       "destination": "/index.html"
     }
   ],
   "headers": [
+    {
+      "source": "/.well-known/nostr.json",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Content-Type", "value": "application/json" }
+      ]
+    },
     {
       "source": "/(.*)",
       "headers": [
