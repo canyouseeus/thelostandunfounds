@@ -69,6 +69,7 @@ import Kattitude from './pages/Kattitude'
 import KattitudeWaiver from './pages/KattitudeWaiver'
 import AdminKattitude from './pages/AdminKattitude'
 import AdminKattitudeArtist from './pages/AdminKattitudeArtist'
+import AdminInvoices from './pages/AdminInvoices'
 import MusicPlayer from './components/admin/MusicPlayer'
 
 
@@ -190,6 +191,13 @@ function App() {
                   <ErrorBoundary>
                     <AdminAuthGate>
                       <AdminKattitudeArtist />
+                    </AdminAuthGate>
+                  </ErrorBoundary>
+                } />
+                <Route path="invoices" element={
+                  <ErrorBoundary>
+                    <AdminAuthGate>
+                      <AdminInvoices />
                     </AdminAuthGate>
                   </ErrorBoundary>
                 } />

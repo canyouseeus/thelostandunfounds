@@ -20,17 +20,20 @@ interface RevenueTrackerProps {
     affiliateRevenue: number;
     galleryRevenue: number;
     subscriberRevenue: number;
+    bookingRevenue?: number;
     galleryPhotoCount?: number;
     usersCount?: number;
     history?: {
         revenue: (string | { date: string; amount: number })[];
         newsletter: string[];
         affiliates: string[];
+        bookings?: (string | { date: string; amount: number })[];
     };
     stats?: {
         revenue: number;
         newsletter: number;
         affiliates: number;
+        bookings?: number;
     };
 }
 
@@ -38,6 +41,7 @@ export function RevenueTracker({
     affiliateRevenue = 0,
     galleryRevenue = 0,
     subscriberRevenue = 0,
+    bookingRevenue = 0,
     galleryPhotoCount = 0,
     usersCount = 0,
     history,
@@ -46,7 +50,7 @@ export function RevenueTracker({
     const [timePeriod, setTimePeriod] = useState<TimePeriod>('all');
     const [isExpanded, setIsExpanded] = useState(true);
 
-    const totalRevenue = affiliateRevenue + galleryRevenue + subscriberRevenue;
+    const totalRevenue = affiliateRevenue + galleryRevenue + subscriberRevenue + bookingRevenue;
 
     // Use actual history data to calculate values for specific time periods
     const getDisplayRevenue = () => {
@@ -160,7 +164,7 @@ export function RevenueTracker({
                     </div>
 
                     {/* Revenue Breakdown - Responsive Grid */}
-                    <div className="grid grid-cols-3 gap-2 md:gap-4 py-4 px-4 bg-white/[0.02]">
+                    <div className="grid grid-cols-4 gap-2 md:gap-4 py-4 px-4 bg-white/[0.02]">
                         <div className="text-center">
                             <div className="text-[9px] md:text-[10px] text-white/40 uppercase tracking-wider mb-1">Gallery</div>
                             <div className="text-lg md:text-xl font-bold text-white font-mono">
@@ -179,6 +183,12 @@ export function RevenueTracker({
                                 $<AnimatedNumber value={subscriberRevenue} decimals={0} />
                             </div>
                         </div>
+                        <div className="text-center">
+                            <div className="text-[9px] md:text-[10px] text-amber-400/70 uppercase tracking-wider mb-1">Bookings</div>
+                            <div className="text-lg md:text-xl font-bold text-amber-400 font-mono">
+                                $<AnimatedNumber value={bookingRevenue} decimals={0} />
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -191,6 +201,7 @@ export function RevenueTracker({
                                     revenue: subscriberRevenue,
                                     newsletter: 0,
                                     affiliates: affiliateRevenue + galleryRevenue,
+                                    bookings: bookingRevenue,
                                 }}
                                 history={history}
                             />

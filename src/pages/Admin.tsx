@@ -110,6 +110,7 @@ interface DashboardStats {
     revenue: (string | { date: string; amount: number })[];
     newsletter: string[];
     affiliates: string[];
+    bookings: (string | { date: string; amount: number })[];
   };
   // Blog-specific metrics
   blogWriters?: number;
@@ -117,6 +118,7 @@ interface DashboardStats {
   publishedThisMonth?: number;
   affiliateRevenue?: number;
   galleryRevenue?: number;
+  bookingRevenue?: number;
   contributorDetails?: Array<{
     authorName: string;
     email: string;
@@ -665,11 +667,12 @@ export default function Admin() {
       let historyData: {
         revenue: (string | { date: string; amount: number })[];
         newsletter: string[];
-        affiliates: string[]
-      } = { revenue: [], newsletter: [], affiliates: [] };
+        affiliates: string[];
+        bookings: (string | { date: string; amount: number })[];
+      } = { revenue: [], newsletter: [], affiliates: [], bookings: [] };
 
       try {
-        const [newsHist, affHist, commissionsHist, ordersHist] = await Promise.all([
+        const [newsHist, affHist, commissionsHist, ordersHist, invoicesHist] = await Promise.all([
           supabase.from('newsletter_subscribers')
             .select('created_at')
             .eq('verified', true)
@@ -685,7 +688,12 @@ export default function Admin() {
           supabase.from('photo_orders')
             .select('created_at, total_amount_cents, email, payment_status, metadata')
             .gte('created_at', PLATFORM_LAUNCH_DATE)
-            .order('created_at', { ascending: true })
+            .order('created_at', { ascending: true }),
+          supabase.from('invoices')
+            .select('paid_at, total')
+            .eq('status', 'paid')
+            .not('paid_at', 'is', null)
+            .order('paid_at', { ascending: true }),
         ]);
 
         // Filter and process revenue history
@@ -706,10 +714,16 @@ export default function Admin() {
           amount: (o.total_amount_cents || 0) / 100
         }));
 
+        const bookingHistory = (invoicesHist.data || []).map((inv: any) => ({
+          date: inv.paid_at,
+          amount: Number(inv.total || 0),
+        }));
+
         historyData = {
           revenue: [...commissions, ...orders],
           newsletter: newsHist.data?.map((r: any) => r.created_at) || [],
-          affiliates: affHist.data?.map((r: any) => r.created_at) || []
+          affiliates: affHist.data?.map((r: any) => r.created_at) || [],
+          bookings: bookingHistory,
         };
       } catch (hErr) {
         console.warn('Error loading history data:', hErr);
@@ -760,6 +774,7 @@ export default function Admin() {
       let publishedThisMonthCount = 0;
       let affiliateRevenueTotal = 0;
       let galleryRevenueTotal = 0;
+      let bookingRevenueTotal = 0;
       let contributorDetailsArray: Array<{
         authorId: string;
         authorName: string;
@@ -897,6 +912,16 @@ export default function Admin() {
           ) / 100;
           console.log('Total gallery revenue (real customers only):', galleryRevenueTotal);
         }
+
+        // Get booking (invoice) revenue — paid invoices only
+        const { data: paidInvoices } = await supabase
+          .from('invoices')
+          .select('total')
+          .eq('status', 'paid');
+
+        if (paidInvoices) {
+          bookingRevenueTotal = paidInvoices.reduce((sum, inv) => sum + Number(inv.total || 0), 0);
+        }
       } catch (err) {
         console.warn('Error loading blog metrics:', err);
       }
@@ -918,6 +943,7 @@ export default function Admin() {
         publishedThisMonth: publishedThisMonthCount,
         affiliateRevenue: affiliateRevenueTotal,
         galleryRevenue: galleryRevenueTotal,
+        bookingRevenue: bookingRevenueTotal,
         contributorDetails: contributorDetailsArray,
         galleryPhotoCount: galleryPhotoCountVal,
       });
@@ -1166,7 +1192,7 @@ export default function Admin() {
         recentActivity: 0,
         platformHealth: 'warning',
         newsletterSubscribers: 0,
-        history: { revenue: [], newsletter: [], affiliates: [] },
+        history: { revenue: [], newsletter: [], affiliates: [], bookings: [] },
       });
       setAlerts([{
         id: 1,
@@ -1651,12 +1677,14 @@ export default function Admin() {
             <RevenueTracker
               affiliateRevenue={stats?.affiliateRevenue || 0}
               galleryRevenue={stats?.galleryRevenue || 0}
-              subscriberRevenue={0} // No active paid subscriptions yet
+              subscriberRevenue={0}
+              bookingRevenue={stats?.bookingRevenue || 0}
               history={stats?.history}
               stats={{
                 revenue: (stats?.affiliateRevenue || 0) + (stats?.galleryRevenue || 0),
                 newsletter: stats?.newsletterSubscribers || 0,
                 affiliates: affiliateStats?.totalAffiliates || 0,
+                bookings: stats?.bookingRevenue || 0,
               }}
             />
           </div>

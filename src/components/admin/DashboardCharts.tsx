@@ -16,16 +16,18 @@ interface DashboardChartsProps {
     revenue: number;
     newsletter: number;
     affiliates: number;
+    bookings?: number;
   } | null;
   history?: {
     revenue: (string | { date: string; amount: number })[];
     newsletter: string[];
     affiliates: string[];
+    bookings?: (string | { date: string; amount: number })[];
   };
 }
 
 type TimeRange = '1H' | '24H' | '7D' | '30D' | '1Y';
-type MetricType = 'revenue' | 'newsletter' | 'affiliates';
+type MetricType = 'revenue' | 'newsletter' | 'affiliates' | 'bookings';
 
 export function DashboardCharts({ stats, history }: DashboardChartsProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>('7D');
@@ -35,8 +37,8 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
     // If we have history but the requested metric history is empty, 
     // and we have a corresponding stats value, we should still show 0 or a flat line
     // rather than falling back to simulated "fake" data which is misleading.
-    const hasAnyHistory = history && (history.revenue.length > 0 || history.newsletter.length > 0 || history.affiliates.length > 0);
-    const metricHistory = history?.[metric] || [];
+    const hasAnyHistory = history && (history.revenue.length > 0 || history.newsletter.length > 0 || history.affiliates.length > 0 || (history.bookings?.length ?? 0) > 0);
+    const metricHistory = (history?.[metric as keyof typeof history] || []) as (string | { date: string; amount: number })[];
 
     if (!history) {
       // Fallback to simulated data if no history object provided AT ALL
@@ -47,6 +49,7 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
 
       const baseValue = metric === 'revenue' ? (stats?.revenue || 0) :
         metric === 'newsletter' ? (stats?.newsletter || 0) :
+        metric === 'bookings' ? (stats?.bookings || 0) :
           (stats?.affiliates || 0);
 
       // If stats are 0, don't simulate growth
@@ -73,6 +76,7 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
     // For newsletter/affiliates: each item is a date string representing a registration,
     // so we count them cumulatively (1, 2, 3...)
     const isCountMetric = metric === 'newsletter' || metric === 'affiliates';
+    void hasAnyHistory;
 
     const items = metricHistory.map(item => {
       if (typeof item === 'string') {
@@ -155,6 +159,7 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
     revenue: { color: '#4ade80', label: 'Revenue', prefix: '$' },
     newsletter: { color: '#60a5fa', label: 'Newsletter', prefix: '' },
     affiliates: { color: '#c084fc', label: 'Affiliates', prefix: '' },
+    bookings: { color: '#f59e0b', label: 'Bookings', prefix: '$' },
   };
 
   return (
@@ -241,7 +246,7 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
 
         {/* Metric Toggle - Full Width */}
         <div className="flex w-full bg-white/5">
-          {(['revenue', 'newsletter', 'affiliates'] as MetricType[]).map((m) => (
+          {(['revenue', 'newsletter', 'affiliates', 'bookings'] as MetricType[]).map((m) => (
             <button
               key={m}
               onClick={() => setMetric(m)}
