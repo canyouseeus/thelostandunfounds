@@ -5,8 +5,10 @@ import {
   ShieldCheckIcon,
   BoltIcon,
   UsersIcon,
-  ArrowLeftIcon
+  ArrowLeftIcon,
+  KeyIcon,
 } from '@heroicons/react/24/outline';
+import AdminEnvVarsView from './AdminEnvVarsView';
 
 interface DashboardStats {
   totalUsers: number;
@@ -92,6 +94,16 @@ export default function AdminSettingsView({ stats, onBack }: AdminSettingsViewPr
             </h3>
             <p className="text-white/60 text-sm mb-4">Advanced user management features</p>
             <p className="text-white/40 text-sm">Additional configuration options coming soon...</p>
+          </div>
+
+          {/* Environment Variables Panel */}
+          <div className="pb-4">
+            <h3 className="text-white font-medium mb-2 flex items-center gap-2">
+              <KeyIcon className="w-4 h-4" />
+              Environment Variables
+            </h3>
+            <p className="text-white/60 text-sm mb-4">Manage Vercel project environment variables. Values are masked — only the last 4 characters are shown.</p>
+            <AdminEnvVarsView />
           </div>
 
           <div className="pt-4">

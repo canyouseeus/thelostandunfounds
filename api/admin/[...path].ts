@@ -135,6 +135,8 @@ export default async function handler(
         return await handlePayPalPayouts(req, res)
       case 'paypal-test':
         return await handlePayPalTest(req, res)
+      case 'env-vars':
+        return await handleEnvVars(req, res)
       default:
         console.error('Admin route not found:', fullRoute, 'query:', req.query, 'url:', req.url)
         return res.status(404).json({ error: `Admin route not found: ${fullRoute}` })
@@ -266,6 +268,14 @@ async function handlePayPalPayouts(req: VercelRequest, res: VercelResponse) {
  */
 async function handlePayPalTest(req: VercelRequest, res: VercelResponse) {
   const handler = await import('../../lib/api-handlers/_paypal-test-handler.js')
+  return handler.default(req, res)
+}
+
+/**
+ * Environment Variables Handler
+ */
+async function handleEnvVars(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/admin/env-vars.js')
   return handler.default(req, res)
 }
 
