@@ -39,9 +39,9 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 function thumbUrl(p: MapPhoto) {
-  return p.google_drive_file_id
-    ? `/api/gallery/stream?fileId=${p.google_drive_file_id}&size=400`
-    : p.thumbnail_url || '';
+  if (p.google_drive_file_id)
+    return `https://lh3.googleusercontent.com/d/${p.google_drive_file_id}=s400`;
+  return p.thumbnail_url || '';
 }
 
 interface PhotoMapProps {
@@ -187,15 +187,9 @@ export function PhotoMap({ onPhotoClick, className = '' }: PhotoMapProps) {
         const f = e.features?.[0];
         if (!f) return;
         const coords = (f.geometry as GeoJSON.Point).coordinates as [number, number];
+        const pt = map.project(coords);
         const photo = photosRef.current.find(p => p.id === f.properties?.id);
-        if (photo) {
-          if (onPhotoClickRef.current) {
-            onPhotoClickRef.current(photo);
-          } else {
-            const pt = map.project(coords);
-            setPopup({ photo, x: pt.x, y: pt.y });
-          }
-        }
+        if (photo) setPopup({ photo, x: pt.x, y: pt.y });
         e.originalEvent.stopPropagation();
       });
 
@@ -375,10 +369,9 @@ export function PhotoMap({ onPhotoClick, className = '' }: PhotoMapProps) {
               </button>
             </div>
             <div className="p-2.5 space-y-1">
-              <p className="text-white text-[10px] font-bold uppercase tracking-wide truncate">{popup.photo.title || 'Untitled'}</p>
-              {popup.photo.location_name && (
-                <p className="flex items-center gap-1 text-white/40 text-[9px]">
-                  <MapPinIcon className="w-2.5 h-2.5" />{popup.photo.location_name}
+              {(popup.photo.location_name || popup.photo.metadata?.date_taken) && (
+                <p className="text-white text-[10px] font-bold uppercase tracking-wide truncate">
+                  {popup.photo.location_name || popup.photo.metadata?.date_taken}
                 </p>
               )}
               {popup.photo.metadata?.camera_model && (
@@ -388,9 +381,9 @@ export function PhotoMap({ onPhotoClick, className = '' }: PhotoMapProps) {
             <div className="flex border-t border-white/10">
               <button
                 onClick={() => { onPhotoClickRef.current?.(popup.photo); setPopup(null); }}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-[9px] uppercase font-bold tracking-wider text-white/30 hover:text-white hover:bg-white/5 transition-colors"
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-[9px] uppercase font-bold tracking-wider text-white/40 hover:text-white hover:bg-white/5 transition-colors"
               >
-                <Squares2X2Icon className="w-3 h-3" />View
+                <Squares2X2Icon className="w-3 h-3" />View in Gallery
               </button>
             </div>
             {/* Arrow */}
