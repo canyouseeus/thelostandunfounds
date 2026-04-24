@@ -228,12 +228,17 @@ const BookingPage: React.FC = () => {
     }, [form.event_date]);
 
     // Scroll the wizard (or the full page on success) to the top whenever the
-    // active step changes. Prevents the page from staying scrolled partway
-    // down from the previous step.
+    // active step changes. Offsets the scroll by the sticky nav + tab bar
+    // height so the wizard header isn't hidden under them.
     useEffect(() => {
         requestAnimationFrame(() => {
             if (step === 'details' && wizardRef.current) {
-                wizardRef.current.scrollIntoView({ block: 'start', behavior: 'smooth' });
+                const navVar = getComputedStyle(document.documentElement).getPropertyValue('--nav-height').trim();
+                const navH = navVar ? parseInt(navVar) : 64;
+                const tabsH = 56; // Gallery/Shop/Booking sticky toggle row
+                const rect = wizardRef.current.getBoundingClientRect();
+                const top = window.pageYOffset + rect.top - navH - tabsH - 8;
+                window.scrollTo({ top, behavior: 'smooth' });
             } else {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
