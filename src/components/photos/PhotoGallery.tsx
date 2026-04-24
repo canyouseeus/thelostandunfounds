@@ -601,7 +601,9 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
 
     const requestDownloadEmail = (photos: Photo[]): Promise<string | null> => {
         return new Promise((resolve) => {
-            const cached = typeof window !== 'undefined' ? localStorage.getItem('tlau_download_email') : null;
+            const cached = typeof window !== 'undefined'
+                ? (localStorage.getItem('tlau_download_email') || localStorage.getItem('credit_email'))
+                : null;
             if (cached && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cached)) {
                 resolve(cached);
                 return;
@@ -610,6 +612,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             setDownloadEmailModalOpen(true);
             const onSubmit = (email: string) => {
                 localStorage.setItem('tlau_download_email', email);
+                localStorage.setItem('credit_email', email);
                 setDownloadEmailModalOpen(false);
                 (window as any).__tlauDownloadEmailResolver = null;
                 resolve(email);

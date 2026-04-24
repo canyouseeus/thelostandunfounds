@@ -44,6 +44,7 @@ const CreditModal: React.FC<CreditModalProps> = ({ isOpen, onClose, onSuccess })
       }
 
       localStorage.setItem('credit_email', trimmed);
+      localStorage.setItem('tlau_download_email', trimmed);
       onSuccess(trimmed, data.credits_remaining);
     } catch {
       setError('Network error. Please try again.');

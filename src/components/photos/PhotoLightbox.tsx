@@ -45,7 +45,9 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
 
     const handleDownloadClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-        const cached = typeof window !== 'undefined' ? localStorage.getItem('tlau_download_email') : null;
+        const cached = typeof window !== 'undefined'
+            ? (localStorage.getItem('tlau_download_email') || localStorage.getItem('credit_email'))
+            : null;
         if (cached && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cached)) {
             triggerDownload(cached);
             return;
@@ -226,6 +228,7 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                 onClose={() => setDownloadEmailOpen(false)}
                 onSubmit={(email) => {
                     localStorage.setItem('tlau_download_email', email);
+                    localStorage.setItem('credit_email', email);
                     setDownloadEmailOpen(false);
                     triggerDownload(email);
                 }}
