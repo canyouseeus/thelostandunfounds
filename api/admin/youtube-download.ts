@@ -11,6 +11,7 @@ const execFileAsync = promisify(execFile);
 
 const DRIVE_FOLDER_ID = '1U02vZ2JXr7UcSSnxn832pig1m8sTZ3Ko';
 const YT_DLP_PATH = '/tmp/yt-dlp';
+const YT_DLP_TMP = '/tmp/yt-dlp.tmp';
 
 function getOAuth2Client() {
     const oauth2Client = new google.auth.OAuth2(
@@ -26,33 +27,42 @@ function getOAuth2Client() {
 async function ensureYtDlp(): Promise<void> {
     if (fs.existsSync(YT_DLP_PATH)) return;
 
+    // Download to a staging file first so concurrent requests never see a
+    // partial binary — executing a partially-written file causes ETXTBSY.
+    // The final fs.renameSync is atomic: existsSync(YT_DLP_PATH) only
+    // returns true once the complete, chmod'd binary is in place.
     return new Promise((resolve, reject) => {
-        const file = fs.createWriteStream(YT_DLP_PATH);
         const url = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux';
 
-        const request = https.get(url, (response) => {
-            if (response.statusCode === 302 || response.statusCode === 301) {
-                const redirectFile = fs.createWriteStream(YT_DLP_PATH);
-                https.get(response.headers.location!, (redirectResponse) => {
-                    redirectResponse.pipe(redirectFile);
-                    redirectFile.on('finish', () => {
-                        redirectFile.close();
-                        fs.chmodSync(YT_DLP_PATH, '755');
-                        resolve();
-                    });
-                }).on('error', reject);
-                return;
-            }
+        function pipeToStaging(response: any) {
+            const file = fs.createWriteStream(YT_DLP_TMP);
             response.pipe(file);
             file.on('finish', () => {
                 file.close();
-                fs.chmodSync(YT_DLP_PATH, '755');
+                try {
+                    fs.chmodSync(YT_DLP_TMP, '755');
+                    fs.renameSync(YT_DLP_TMP, YT_DLP_PATH);
+                } catch {
+                    try { fs.unlinkSync(YT_DLP_TMP); } catch {}
+                }
                 resolve();
             });
+            file.on('error', (err) => {
+                try { fs.unlinkSync(YT_DLP_TMP); } catch {}
+                reject(err);
+            });
+        }
+
+        const request = https.get(url, (response) => {
+            if (response.statusCode === 301 || response.statusCode === 302) {
+                https.get(response.headers.location!, pipeToStaging).on('error', reject);
+                return;
+            }
+            pipeToStaging(response);
         });
 
         request.on('error', (err) => {
-            try { fs.unlinkSync(YT_DLP_PATH); } catch {}
+            try { fs.unlinkSync(YT_DLP_TMP); } catch {}
             reject(err);
         });
     });
@@ -85,7 +95,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     );
 
     const tmpDir = '/tmp';
-    const outputTemplate = path.join(tmpDir, '%(title)s.%(ext)s');
     let audioFilePath: string | null = null;
 
     try {
