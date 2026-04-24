@@ -559,26 +559,22 @@ const BookingPage: React.FC = () => {
                                             </div>
                                         </div>
                                         <div className="grid grid-cols-1 gap-2">
-                                            {TIME_SLOTS.map(slot => {
-                                                const blocked = isSlotBlocked(slot, bookedSlots);
+                                            {TIME_SLOTS.filter(slot => !isSlotBlocked(slot, bookedSlots)).map(slot => {
                                                 const selected = form.start_time === slot.start && form.end_time === slot.end;
                                                 return (
                                                     <button
                                                         key={slot.label}
                                                         type="button"
-                                                        disabled={blocked}
                                                         onClick={() => { set('start_time', slot.start); set('end_time', slot.end); }}
                                                         className={`w-full px-4 py-3 text-left transition-colors rounded-none flex items-center justify-between ${
-                                                            blocked
-                                                                ? 'bg-white/[0.02] text-white/20 cursor-not-allowed'
-                                                                : selected
-                                                                    ? 'bg-white text-black'
-                                                                    : 'bg-white/5 text-white hover:bg-white/10'
+                                                            selected
+                                                                ? 'bg-white text-black'
+                                                                : 'bg-white/5 text-white hover:bg-white/10'
                                                         }`}
                                                     >
                                                         <span className="font-black uppercase tracking-wider text-sm">{slot.label}</span>
-                                                        <span className={`text-[10px] font-mono ${selected ? 'text-black/60' : blocked ? 'text-white/20' : 'text-white/40'}`}>
-                                                            {blocked ? 'BOOKED' : slot.display}
+                                                        <span className={`text-[10px] font-mono ${selected ? 'text-black/60' : 'text-white/40'}`}>
+                                                            {slot.display}
                                                         </span>
                                                     </button>
                                                 );
@@ -598,11 +594,6 @@ const BookingPage: React.FC = () => {
                                                 </span>
                                             </button>
                                         </div>
-                                        {bookedSlots.length > 0 && (
-                                            <p className="text-white/30 text-[10px] mt-3 leading-relaxed">
-                                                Some windows are already booked on this date. Pick an open one or choose Flexible and we'll work it out.
-                                            </p>
-                                        )}
                                     </div>
                                 )}
 
