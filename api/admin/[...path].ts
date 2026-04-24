@@ -137,6 +137,8 @@ export default async function handler(
         return await handlePayPalTest(req, res)
       case 'env-vars':
         return await handleEnvVars(req, res)
+      case 'post-to-nostr':
+        return await handlePostToNostr(req, res)
       default:
         console.error('Admin route not found:', fullRoute, 'query:', req.query, 'url:', req.url)
         return res.status(404).json({ error: `Admin route not found: ${fullRoute}` })
@@ -276,6 +278,14 @@ async function handlePayPalTest(req: VercelRequest, res: VercelResponse) {
  */
 async function handleEnvVars(req: VercelRequest, res: VercelResponse) {
   const handler = await import('../../lib/api-handlers/admin/env-vars.js')
+  return handler.default(req, res)
+}
+
+/**
+ * Post to Nostr Handler
+ */
+async function handlePostToNostr(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/admin/post-to-nostr.js')
   return handler.default(req, res)
 }
 

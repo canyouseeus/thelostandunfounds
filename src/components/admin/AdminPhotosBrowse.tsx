@@ -15,6 +15,7 @@ import {
   ArrowTopRightOnSquareIcon,
   ChevronRightIcon,
   FunnelIcon,
+  ShareIcon,
 } from '@heroicons/react/24/outline';
 import { LoadingSpinner } from '@/components/Loading';
 import { removeTagFromPhoto } from '@/lib/tags';
@@ -102,6 +103,12 @@ export default function AdminPhotosBrowse() {
   const [selectedTagsToApply, setSelectedTagsToApply] = useState<Set<string>>(new Set());
   const [applyingTags, setApplyingTags] = useState(false);
   const [applySuccess, setApplySuccess] = useState(false);
+
+  // Post to Social
+  const [showSocialPanel, setShowSocialPanel] = useState(false);
+  const [socialCaption, setSocialCaption] = useState('');
+  const [posting, setPosting] = useState(false);
+  const [postResult, setPostResult] = useState<{ success: boolean; message: string } | null>(null);
 
   // Detail drawer
   const [drawerPhoto, setDrawerPhoto] = useState<Photo | null>(null);
@@ -250,6 +257,9 @@ export default function AdminPhotosBrowse() {
     setSelectedIds(new Set());
     setShowTagPanel(false);
     setSelectedTagsToApply(new Set());
+    setShowSocialPanel(false);
+    setSocialCaption('');
+    setPostResult(null);
   };
 
   const exitSelectionMode = () => {
@@ -367,6 +377,29 @@ export default function AdminPhotosBrowse() {
       setPhotos(prev => prev.filter(p => p.id !== drawerPhoto.id));
       setTotalCount(prev => prev - 1);
       setDrawerPhoto(null);
+    }
+  };
+
+  const postToNostr = async () => {
+    if (selectedIds.size === 0 || posting) return;
+    setPosting(true);
+    setPostResult(null);
+    try {
+      const res = await fetch('/api/admin/post-to-nostr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photoIds: [...selectedIds], caption: socialCaption }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPostResult({ success: true, message: `Published to ${data.publishedTo}/${data.totalRelays} relays` });
+      } else {
+        setPostResult({ success: false, message: data.error || `Failed (${data.publishedTo}/${data.totalRelays} relays)` });
+      }
+    } catch (err: any) {
+      setPostResult({ success: false, message: err.message || 'Network error' });
+    } finally {
+      setPosting(false);
     }
   };
 
@@ -631,6 +664,7 @@ export default function AdminPhotosBrowse() {
       {/* Bulk batch bar */}
       {selectionMode && selectedIds.size > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[15000] shadow-2xl">
+          {/* Tag panel */}
           {showTagPanel && (
             <div className="mb-2 bg-black border border-white/20 p-4 w-[calc(100vw-2rem)] max-w-[360px] max-h-[50vh] flex flex-col">
               <p className="text-[10px] uppercase font-bold text-white/40 tracking-wider mb-3 flex-shrink-0">
@@ -669,13 +703,64 @@ export default function AdminPhotosBrowse() {
               </button>
             </div>
           )}
+
+          {/* Post to Social panel */}
+          {showSocialPanel && (
+            <div className="mb-2 bg-black border border-white/20 p-4 w-[calc(100vw-2rem)] max-w-[360px] flex flex-col gap-3">
+              <p className="text-[10px] uppercase font-bold text-white/40 tracking-wider">
+                Post {selectedIds.size} photo{selectedIds.size !== 1 ? 's' : ''} to Social
+              </p>
+
+              {/* Platform options */}
+              <div className="space-y-1">
+                <button className="w-full flex items-center gap-3 px-3 py-2 bg-white/5 border border-white/10 text-left group hover:bg-white/10 transition-colors">
+                  <span className="text-[10px] font-bold tracking-widest text-white uppercase">Nostr</span>
+                  <span className="ml-auto text-[9px] text-white/30 uppercase tracking-widest">npub1rr9…lap3s</span>
+                </button>
+                <div className="flex items-center gap-3 px-3 py-2 bg-white/[0.02] border border-white/5 opacity-40 cursor-not-allowed">
+                  <span className="text-[10px] font-bold tracking-widest text-white/60 uppercase">Instagram</span>
+                  <span className="ml-auto text-[9px] text-white/20 uppercase tracking-widest">Coming Soon</span>
+                </div>
+                <div className="flex items-center gap-3 px-3 py-2 bg-white/[0.02] border border-white/5 opacity-40 cursor-not-allowed">
+                  <span className="text-[10px] font-bold tracking-widest text-white/60 uppercase">X / Twitter</span>
+                  <span className="ml-auto text-[9px] text-white/20 uppercase tracking-widest">Coming Soon</span>
+                </div>
+              </div>
+
+              {/* Caption input */}
+              <textarea
+                value={socialCaption}
+                onChange={e => setSocialCaption(e.target.value)}
+                placeholder="Add a caption… (optional)"
+                rows={3}
+                className="w-full bg-white/5 border border-white/10 text-white text-[11px] px-3 py-2 placeholder-white/20 focus:outline-none focus:border-white/30 resize-none font-mono"
+              />
+
+              {/* Post result feedback */}
+              {postResult && (
+                <p className={`text-[10px] font-bold tracking-wider ${postResult.success ? 'text-green-400' : 'text-red-400'}`}>
+                  {postResult.success ? '✓' : '✗'} {postResult.message}
+                </p>
+              )}
+
+              <button
+                onClick={postToNostr}
+                disabled={posting}
+                className="w-full py-2 bg-white text-black text-[10px] uppercase font-bold tracking-wider hover:bg-white/90 transition-colors disabled:opacity-40"
+              >
+                {posting ? 'Publishing…' : 'Post to Nostr'}
+              </button>
+            </div>
+          )}
+
+          {/* Action bar */}
           <div className="flex items-center gap-3 bg-black border border-white/20 px-4 py-3">
             <span className="text-xs font-mono text-white/60">
-              {applySuccess ? '✓ Tags applied' : `${selectedIds.size} selected`}
+              {applySuccess ? '✓ Tags applied' : postResult?.success ? '✓ Posted' : `${selectedIds.size} selected`}
             </span>
             <div className="w-px h-4 bg-white/20" />
             <button
-              onClick={() => setShowTagPanel(v => !v)}
+              onClick={() => { setShowTagPanel(v => !v); setShowSocialPanel(false); setPostResult(null); }}
               className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider transition-colors ${showTagPanel ? 'text-white' : 'text-white/60 hover:text-white'}`}
             >
               <TagIcon className="w-3.5 h-3.5" />
@@ -683,6 +768,14 @@ export default function AdminPhotosBrowse() {
               {selectedTagsToApply.size > 0 && (
                 <span className="ml-0.5 bg-white text-black text-[8px] font-black px-1 py-0.5 rounded-sm">{selectedTagsToApply.size}</span>
               )}
+            </button>
+            <div className="w-px h-4 bg-white/20" />
+            <button
+              onClick={() => { setShowSocialPanel(v => !v); setShowTagPanel(false); setPostResult(null); }}
+              className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider transition-colors ${showSocialPanel ? 'text-white' : 'text-white/60 hover:text-white'}`}
+            >
+              <ShareIcon className="w-3.5 h-3.5" />
+              Share
             </button>
             <div className="w-px h-4 bg-white/20" />
             <button onClick={clearSelection} className="text-white/30 hover:text-white transition-colors">
