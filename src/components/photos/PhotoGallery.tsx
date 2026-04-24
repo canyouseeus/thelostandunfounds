@@ -19,6 +19,7 @@ import SelectionTray from './SelectionTray';
 import Loading from '../Loading';
 import AuthModal from '../auth/AuthModal';
 import TipModal from '../TipModal';
+import DownloadEmailModal from '../DownloadEmailModal';
 import CreditModal from './CreditModal';
 import { cn } from '../ui/utils';
 import { NoirDateRangePicker } from '../ui/NoirDateRangePicker';
@@ -579,8 +580,38 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         }
     };
 
+    const [downloadEmailModalOpen, setDownloadEmailModalOpen] = useState(false);
+    const [pendingDownloadPhotos, setPendingDownloadPhotos] = useState<Photo[] | null>(null);
+
+    const requestDownloadEmail = (photos: Photo[]): Promise<string | null> => {
+        return new Promise((resolve) => {
+            const cached = typeof window !== 'undefined' ? localStorage.getItem('tlau_download_email') : null;
+            if (cached && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cached)) {
+                resolve(cached);
+                return;
+            }
+            setPendingDownloadPhotos(photos);
+            setDownloadEmailModalOpen(true);
+            const onSubmit = (email: string) => {
+                localStorage.setItem('tlau_download_email', email);
+                setDownloadEmailModalOpen(false);
+                (window as any).__tlauDownloadEmailResolver = null;
+                resolve(email);
+            };
+            const onClose = () => {
+                setDownloadEmailModalOpen(false);
+                (window as any).__tlauDownloadEmailResolver = null;
+                resolve(null);
+            };
+            (window as any).__tlauDownloadEmailResolver = { onSubmit, onClose };
+        });
+    };
+
     const startFreeDownload = async (photos: Photo[]) => {
         if (!photos.length) return;
+
+        const email = await requestDownloadEmail(photos);
+        if (!email) return; // user cancelled
 
         setIsDownloading(true);
         setDownloadStatus('Preparing download...');
@@ -598,7 +629,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
 
                 try {
                     const response = await fetch(
-                        `/api/gallery/stream?fileId=${photo.google_drive_file_id}&download=true`
+                        `/api/gallery/stream?fileId=${photo.google_drive_file_id}&download=true&email=${encodeURIComponent(email)}`
                     );
 
                     if (!response.ok) {
@@ -1172,6 +1203,22 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                     />
                 )}
             </AnimatePresence>
+
+            {/* Download Email Modal */}
+            <DownloadEmailModal
+                isOpen={downloadEmailModalOpen}
+                onClose={() => {
+                    const r = (window as any).__tlauDownloadEmailResolver;
+                    if (r) r.onClose();
+                    else setDownloadEmailModalOpen(false);
+                }}
+                onSubmit={(email) => {
+                    const r = (window as any).__tlauDownloadEmailResolver;
+                    if (r) r.onSubmit(email);
+                    else setDownloadEmailModalOpen(false);
+                }}
+                photoCount={pendingDownloadPhotos?.length ?? 1}
+            />
 
             {/* Tip Modal */}
             <TipModal

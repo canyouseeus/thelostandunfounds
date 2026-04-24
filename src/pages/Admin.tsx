@@ -88,6 +88,7 @@ import { DashboardCharts } from '../components/admin/DashboardCharts';
 import AdminGalleryView from '../components/admin/AdminGalleryView';
 import AdminEventsView from '../components/admin/AdminEventsView';
 import AdminBookingView from '../components/admin/AdminBookingView';
+import AdminCalendarView from '../components/admin/AdminCalendarView';
 import { RevenueTracker } from '../components/ui/revenue-tracker';
 import { ClockWidget } from '../components/ui/clock-widget';
 import { CalendarWidget } from '../components/ui/calendar-widget';
@@ -233,6 +234,8 @@ export default function Admin() {
   const affiliatesSectionRef = useRef<HTMLDivElement>(null);
   const submissionsSectionRef = useRef<HTMLDivElement>(null);
   const eventsSectionRef = useRef<HTMLDivElement>(null);
+  const bookingsSectionRef = useRef<HTMLDivElement>(null);
+  const calendarSectionRef = useRef<HTMLDivElement>(null);
   const pricingSectionRef = useRef<HTMLDivElement>(null);
   const settingsSectionRef = useRef<HTMLDivElement>(null);
 
@@ -313,7 +316,8 @@ export default function Admin() {
       case 'affiliates': ref = affiliatesSectionRef; break;
       case 'submissions': ref = submissionsSectionRef; break;
       case 'events': ref = eventsSectionRef; break;
-      case 'bookings': ref = null; break;
+      case 'bookings': ref = bookingsSectionRef; break;
+      case 'calendar': ref = calendarSectionRef; break;
       case 'pricing': ref = pricingSectionRef; break;
       case 'settings':
         key = 'settings';
@@ -1665,8 +1669,7 @@ export default function Admin() {
                 { id: 'users', icon: UsersIcon, title: 'Users' },
                 { id: 'affiliates', icon: LinkIcon, title: 'Affiliates' },
                 { id: 'submissions', icon: DocumentTextIcon, title: 'Submissions', badge: pendingSubmissions },
-                { id: 'events', icon: CalendarIcon, title: 'Events' },
-                { id: 'bookings', icon: CalendarIcon, title: 'Bookings' },
+                { id: 'calendar', icon: CalendarIcon, title: 'Calendar' },
                 { id: 'pricing', icon: CurrencyDollarIcon, title: 'Pricing' },
                 { id: 'settings', icon: BoltIcon, title: 'Settings' }
               ].map((app) => (
@@ -1833,7 +1836,7 @@ export default function Admin() {
 
           {/* Booking Management Section */}
           {expandedSections['bookings'] && (
-            <div ref={null} className="animate-in fade-in duration-500">
+            <div ref={bookingsSectionRef} className="animate-in fade-in duration-500">
               <div className="flex flex-col px-0 py-2 mb-8 items-start">
                 <div className="flex items-center gap-3">
                   <CalendarIcon className="w-5 h-5 text-white/40" />
@@ -1843,6 +1846,22 @@ export default function Admin() {
               </div>
               <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Bookings</div>}>
                 <AdminBookingView />
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* Master Calendar Section */}
+          {expandedSections['calendar'] && (
+            <div ref={calendarSectionRef} className="animate-in fade-in duration-500">
+              <div className="flex flex-col px-0 py-2 mb-8 items-start">
+                <div className="flex items-center gap-3">
+                  <CalendarIcon className="w-5 h-5 text-white/40" />
+                  <h2 className="text-lg font-black text-white tracking-widest uppercase">Master Calendar</h2>
+                </div>
+                <button onClick={() => handleSectionToggle('calendar')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
+              </div>
+              <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Calendar</div>}>
+                <AdminCalendarView />
               </ErrorBoundary>
             </div>
           )}

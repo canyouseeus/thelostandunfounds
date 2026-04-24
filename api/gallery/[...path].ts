@@ -256,7 +256,7 @@ function buildDownloadFilename(rawTitle: string): string {
 }
 
 async function handleStream(req: VercelRequest, res: VercelResponse) {
-    const { fileId, size, download } = req.query;
+    const { fileId, size, download, email } = req.query;
     const isDownload = download === 'true';
 
     try {
@@ -264,21 +264,50 @@ async function handleStream(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ error: 'Missing fileId' });
         }
 
-        // Look up photo title from DB for branded download filename
+        // Downloads require an email for tracking + contact follow-up.
+        // Views (no download flag) stay public as before.
+        const emailStr = typeof email === 'string' ? email.trim() : '';
+        const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr);
+        if (isDownload && !emailValid) {
+            return res.status(400).json({ error: 'A valid email is required to download.' });
+        }
+
+        // Look up photo (id + title) from DB — id goes into the download event log,
+        // title drives the branded filename.
         let downloadFilename = buildDownloadFilename('photo');
+        let photoIdForEvent: string | null = null;
         if (isDownload) {
             try {
                 const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
                 const { data: photo } = await supabase
                     .from('photos')
-                    .select('title')
+                    .select('id, title')
                     .eq('google_drive_file_id', fileId as string)
                     .single();
-                if (photo?.title) {
-                    downloadFilename = buildDownloadFilename(photo.title);
-                }
+                if (photo?.title) downloadFilename = buildDownloadFilename(photo.title);
+                if (photo?.id) photoIdForEvent = photo.id as string;
             } catch {
                 // Non-fatal — fall back to generic filename
+            }
+
+            // Fire-and-forget: write the download event.
+            try {
+                const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+                const ipRaw = (req.headers['x-forwarded-for'] as string | undefined) || (req.socket as any)?.remoteAddress || '';
+                const ip = ipRaw.split(',')[0].trim() || null;
+                const ua = (req.headers['user-agent'] as string | undefined) || null;
+                void supabase.from('photo_download_events').insert({
+                    photo_id: photoIdForEvent,
+                    google_drive_file_id: fileId as string,
+                    email: emailStr,
+                    ip_address: ip,
+                    user_agent: ua,
+                    source: 'free',
+                }).then(({ error: insErr }) => {
+                    if (insErr) console.warn('[download-event] insert failed:', insErr.message);
+                });
+            } catch (err: any) {
+                console.warn('[download-event] skipped:', err?.message);
             }
         }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     CalendarIcon,
@@ -9,12 +9,16 @@ import {
     ChevronLeftIcon,
     ChevronRightIcon,
     ArrowLongRightIcon,
+    UserIcon,
+    EnvelopeIcon,
+    ChatBubbleLeftRightIcon,
 } from '@heroicons/react/24/outline';
 import SEOHead from '../components/SEOHead';
 
 const EVENT_TYPES = [
     'Concert / Show',
     'Club / Nightlife',
+    'Lifestyle Shoot',
     'Portrait Session',
     'Brand / Editorial',
     'Wedding / Event',
@@ -22,8 +26,34 @@ const EVENT_TYPES = [
     'Other',
 ];
 
+interface TimeSlot { label: string; start: string; end: string; display: string }
+
+// Canonical time windows the photographer offers. Start/end are 24h so they
+// round-trip to Postgres TIME cleanly; display is what the client sees.
+const TIME_SLOTS: TimeSlot[] = [
+    { label: 'Morning',   start: '09:00', end: '12:00', display: '9AM – 12PM' },
+    { label: 'Afternoon', start: '12:00', end: '17:00', display: '12PM – 5PM' },
+    { label: 'Evening',   start: '17:00', end: '20:00', display: '5PM – 8PM' },
+    { label: 'Night',     start: '20:00', end: '23:00', display: '8PM – 11PM' },
+];
+
+// Compare two HH:MM strings. Returns true when the ranges overlap at all.
+function rangesOverlap(aStart: string, aEnd: string, bStart: string, bEnd: string): boolean {
+    return aStart < bEnd && bStart < aEnd;
+}
+
+function isSlotBlocked(slot: TimeSlot, taken: Array<{ start_time: string | null; end_time: string | null }>): boolean {
+    return taken.some(t => {
+        if (!t.start_time || !t.end_time) return false;
+        const bs = t.start_time.slice(0, 5);
+        const be = t.end_time.slice(0, 5);
+        return rangesOverlap(slot.start, slot.end, bs, be);
+    });
+}
+
 interface FormData {
     name: string;
+    business_name: string;
     email: string;
     phone: string;
     event_type: string;
@@ -37,6 +67,7 @@ interface FormData {
 
 const EMPTY_FORM: FormData = {
     name: '',
+    business_name: '',
     email: '',
     phone: '',
     event_type: '',
@@ -178,8 +209,56 @@ const BookingPage: React.FC = () => {
     const [form, setForm] = useState<FormData>(EMPTY_FORM);
     const [blockedDates, setBlockedDates] = useState<string[]>([]);
     const [step, setStep] = useState<'calendar' | 'details' | 'success'>('calendar');
+    const [detailsStep, setDetailsStep] = useState(0);
+    const TOTAL_DETAILS_STEPS = 5;
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
+    const [notifyDebug, setNotifyDebug] = useState<string | null>(null);
+    const [contextOpen, setContextOpen] = useState(false);
+    const [bookedSlots, setBookedSlots] = useState<Array<{ start_time: string | null; end_time: string | null }>>([]);
+    const [conflictingEvents, setConflictingEvents] = useState<Array<{ id: string; title: string; location: string | null }>>([]);
+    const wizardRef = useRef<HTMLDivElement>(null);
+
+    // Fetch time-slot conflicts + events on the selected date.
+    useEffect(() => {
+        if (!form.event_date) { setBookedSlots([]); setConflictingEvents([]); return; }
+        fetch(`/api/booking?action=slots&date=${form.event_date}`)
+            .then(r => r.ok ? r.json() : { slots: [], events: [] })
+            .then(d => {
+                setBookedSlots(d.slots || []);
+                setConflictingEvents(d.events || []);
+            })
+            .catch(() => { setBookedSlots([]); setConflictingEvents([]); });
+    }, [form.event_date]);
+
+    // Scroll the wizard (or the full page on success) to the top whenever the
+    // active step changes. Offsets the scroll by the sticky nav + tab bar
+    // height so the wizard header isn't hidden under them.
+    useEffect(() => {
+        requestAnimationFrame(() => {
+            if (step === 'details' && wizardRef.current) {
+                const navVar = getComputedStyle(document.documentElement).getPropertyValue('--nav-height').trim();
+                const navH = navVar ? parseInt(navVar) : 64;
+                const tabsH = 56; // Gallery/Shop/Booking sticky toggle row
+                const rect = wizardRef.current.getBoundingClientRect();
+                const top = window.pageYOffset + rect.top - navH - tabsH - 8;
+                window.scrollTo({ top, behavior: 'smooth' });
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+    }, [detailsStep, step]);
+
+    const canProceedDetails = (): boolean => {
+        switch (detailsStep) {
+            case 0: return form.name.trim().length > 0;
+            case 1: return form.email.trim().length > 0 && form.email.includes('@');
+            case 2: return form.event_type.trim().length > 0;
+            case 3: return true; // times are optional
+            case 4: return true; // venue + notes optional
+            default: return false;
+        }
+    };
 
     // Fetch blocked dates
     useEffect(() => {
@@ -212,15 +291,31 @@ const BookingPage: React.FC = () => {
                 }),
             });
 
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.error || 'Submission failed');
+            // Read as text first so we can surface a useful error when the
+            // endpoint returns HTML (Vercel timeout, 500 page, etc.) instead of
+            // the generic Safari "The string did not match the expected pattern"
+            // that comes from JSON.parse on HTML.
+            const rawText = await res.text();
+            let data: any = null;
+            try {
+                data = rawText ? JSON.parse(rawText) : null;
+            } catch {
+                data = { error: `Server returned non-JSON (${res.status}): ${rawText.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 180)}` };
             }
 
+            if (!res.ok) {
+                throw new Error(data?.error || `Submission failed (${res.status})`);
+            }
+
+            if (data?.notify && data.notify.sent === false && data.notify.error) {
+                console.warn('[booking] notify did not send:', data.notify.error);
+                setNotifyDebug(data.notify.error);
+            } else {
+                setNotifyDebug(null);
+            }
             setStep('success');
         } catch (err: any) {
-            setError(err.message || 'Something went wrong. Please try again.');
+            setError(err?.message || 'Something went wrong. Please try again.');
         } finally {
             setSubmitting(false);
         }
@@ -237,27 +332,31 @@ const BookingPage: React.FC = () => {
     return (
         <>
             <SEOHead
-                title="Book TLAU | THE LOST+UNFOUNDS"
-                description="Book @tlau.photos for your next event, shoot, or on retainer. Check availability and submit a booking request."
+                title="Booking | THE LOST+UNFOUNDS"
+                description="Candid-style photography for events, portraits, and brands. Shot primarily on Fujifilm X-S20. Check availability and submit a booking request."
                 canonicalPath="/booking"
             />
 
             <div className="min-h-screen bg-black text-white px-4 py-16 md:py-24">
                 <div className="max-w-5xl mx-auto">
 
-                    {/* Header */}
-                    <div className="mb-12 md:mb-16">
-                        <p className="text-[9px] font-black uppercase tracking-[0.4em] text-white/30 mb-3">
-                            @tlau.photos
-                        </p>
-                        <h1 className="text-4xl md:text-7xl font-black uppercase tracking-tight leading-none mb-4">
-                            Book Me
-                        </h1>
-                        <p className="text-white/40 text-sm md:text-base max-w-md leading-relaxed">
-                            Available for concerts, events, portraits, brand work, and monthly retainer contracts.
-                            Pick a date and I'll get back to you within 24 hours.
-                        </p>
-                    </div>
+                    {/* Header — hidden on success so the confirmation gets full focus */}
+                    {step !== 'success' && (
+                        <div className="mb-12 md:mb-16">
+                            <p className="text-[9px] font-black uppercase tracking-[0.4em] text-white/30 mb-3">
+                                @tlau.photos
+                            </p>
+                            <h1 className="text-4xl md:text-7xl font-black uppercase tracking-tight leading-none mb-4">
+                                Booking
+                            </h1>
+                            <p className="text-white/50 text-sm md:text-base max-w-lg leading-relaxed">
+                                Candid-style photography for events, lifestyle shoots, portraits, and brand work.
+                                I shoot primarily on a <span className="text-white font-bold">Fujifilm X-S20</span>,
+                                and I'm happy to mix in other cameras when the project calls for a different feel.
+                                Pick a date and I'll get back to you within 24 hours.
+                            </p>
+                        </div>
+                    )}
 
                     <AnimatePresence mode="wait">
 
@@ -281,186 +380,323 @@ const BookingPage: React.FC = () => {
                                     />
                                 </div>
 
-                                <div className="space-y-6 md:pt-10">
+                                <div className="space-y-4 md:pt-10">
                                     <p className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">
-                                        Booking Types
+                                        What to Expect
                                     </p>
+
+                                    <div className="bg-white/[0.03] p-5">
+                                        <p className="text-sm font-black uppercase tracking-wider text-white mb-1">The Approach</p>
+                                        <p className="text-white/50 text-xs leading-relaxed">
+                                            Candid-first. Minimal direction, real moments — whether it's a
+                                            show, a lifestyle shoot, or a portrait, I photograph the way it
+                                            actually feels, not the way a pose-me brief would want it. Primary
+                                            body is a Fujifilm X-S20; I'll bring a different camera when the
+                                            project calls for a different grain or feel.
+                                        </p>
+                                    </div>
+
                                     {[
                                         { label: 'Single Event', desc: 'Concert, show, portrait session, or any one-time gig.' },
                                         { label: 'Monthly Retainer', desc: 'Consistent coverage — locked-in rate, priority access to my schedule.' },
                                     ].map(item => (
-                                        <div key={item.label} className="border border-white/10 p-5">
+                                        <div key={item.label} className="bg-white/[0.03] p-5">
                                             <p className="text-sm font-black uppercase tracking-wider text-white mb-1">{item.label}</p>
                                             <p className="text-white/40 text-xs leading-relaxed">{item.desc}</p>
                                         </div>
                                     ))}
+
+                                    <div className="bg-white text-black p-5">
+                                        <p className="text-sm font-black uppercase tracking-wider mb-1">50% Booking Fee</p>
+                                        <p className="text-black/70 text-xs leading-relaxed">
+                                            A 50% non-refundable booking fee is required to hold the date.
+                                            Balance is due on or before the shoot. I'll send a contract + payment
+                                            link after we confirm scope.
+                                        </p>
+                                    </div>
+
                                     <p className="text-white/20 text-[10px] leading-relaxed">
-                                        Rates discussed after booking request is submitted. All pricing is custom based on scope.
+                                        Rates are custom based on scope — we'll discuss after your booking request comes in.
                                     </p>
                                 </div>
                             </motion.div>
                         )}
 
-                        {/* ── Step 2: Details Form ── */}
+                        {/* ── Step 2: Details (stepped wizard, one question per screen) ── */}
                         {step === 'details' && (
                             <motion.div
                                 key="details"
+                                ref={wizardRef}
                                 initial={{ opacity: 0, y: 16 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -16 }}
-                                className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24"
+                                className="max-w-md mx-auto scroll-mt-4"
                             >
-                                {/* Left: summary + back */}
-                                <div>
+                                {/* Context chip (collapsed by default, tap to expand) + progress */}
+                                <div className="flex items-center gap-3 mb-6">
                                     <button
-                                        onClick={() => setStep('calendar')}
-                                        className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/30 hover:text-white mb-8 transition-colors"
+                                        onClick={() => setContextOpen(v => !v)}
+                                        className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 transition-colors px-2.5 py-1.5"
+                                        title="Selected date"
                                     >
-                                        <ChevronLeftIcon className="w-3 h-3" />
-                                        Change date
+                                        <CalendarIcon className="w-3.5 h-3.5 text-white/60" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-white/60">
+                                            {new Date(form.event_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                        </span>
                                     </button>
-
-                                    <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30 mb-1">Selected Date</p>
-                                    <p className="text-xl font-black uppercase tracking-tight text-white mb-8">
-                                        {formatDate(form.event_date)}
-                                    </p>
-
-                                    <p className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40 mb-4">
-                                        02 — Tell Me About the Shoot
-                                    </p>
-
-                                    <div className="space-y-3 text-[10px] text-white/30 font-bold uppercase tracking-widest">
-                                        <div className="flex items-center gap-2"><CalendarIcon className="w-3.5 h-3.5" /> Event type & details</div>
-                                        <div className="flex items-center gap-2"><ClockIcon className="w-3.5 h-3.5" /> Start & end times</div>
-                                        <div className="flex items-center gap-2"><MapPinIcon className="w-3.5 h-3.5" /> Venue / location</div>
+                                    <div className="flex-1 flex items-center gap-1">
+                                        {Array.from({ length: TOTAL_DETAILS_STEPS }).map((_, s) => (
+                                            <div key={s} className={`h-1 flex-1 ${detailsStep >= s ? 'bg-white' : 'bg-white/20'}`} />
+                                        ))}
                                     </div>
                                 </div>
+                                {contextOpen && (
+                                    <div className="bg-white/5 p-3 mb-6 flex items-center justify-between gap-3">
+                                        <div>
+                                            <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white/40 mb-1">Selected Date</p>
+                                            <p className="text-sm font-bold text-white">{formatDate(form.event_date)}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => { setStep('calendar'); setDetailsStep(0); setError(''); setContextOpen(false); }}
+                                            className="text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-white transition-colors px-3 py-2 bg-white/5 hover:bg-white/10 whitespace-nowrap"
+                                        >
+                                            Change date
+                                        </button>
+                                    </div>
+                                )}
 
-                                {/* Right: form */}
-                                <form onSubmit={handleSubmit} className="space-y-4">
-                                    {/* Name */}
+                                {/* Step 0: Name */}
+                                {detailsStep === 0 && (
                                     <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5">Your Name *</label>
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="w-10 h-10 bg-white/10 flex items-center justify-center">
+                                                <UserIcon className="w-5 h-5 text-white/60" />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-xl font-bold text-white">What's your name?</h2>
+                                                <p className="text-white/40 text-sm">So I know who's booking</p>
+                                            </div>
+                                        </div>
                                         <input
                                             type="text"
+                                            autoFocus
+                                            placeholder="Full name"
                                             value={form.name}
                                             onChange={e => set('name', e.target.value)}
-                                            required
-                                            placeholder="Full name"
-                                            className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/40 transition-colors"
+                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-base sm:text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors mb-3"
                                         />
-                                    </div>
-
-                                    {/* Email */}
-                                    <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5">Email *</label>
-                                        <input
-                                            type="email"
-                                            value={form.email}
-                                            onChange={e => set('email', e.target.value)}
-                                            required
-                                            placeholder="your@email.com"
-                                            className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/40 transition-colors"
-                                        />
-                                    </div>
-
-                                    {/* Phone */}
-                                    <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5">Phone</label>
-                                        <input
-                                            type="tel"
-                                            value={form.phone}
-                                            onChange={e => set('phone', e.target.value)}
-                                            placeholder="+1 (555) 000-0000"
-                                            className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/40 transition-colors"
-                                        />
-                                    </div>
-
-                                    {/* Event Type */}
-                                    <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5">Event Type *</label>
-                                        <select
-                                            value={form.event_type}
-                                            onChange={e => set('event_type', e.target.value)}
-                                            required
-                                            className="w-full bg-zinc-950 border border-white/10 px-4 py-3 text-sm text-white focus:outline-none focus:border-white/40 transition-colors appearance-none"
-                                        >
-                                            <option value="" disabled>Select type...</option>
-                                            {EVENT_TYPES.map(t => (
-                                                <option key={t} value={t}>{t}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    {/* Times */}
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5">Start Time</label>
-                                            <input
-                                                type="time"
-                                                value={form.start_time}
-                                                onChange={e => set('start_time', e.target.value)}
-                                                className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm text-white focus:outline-none focus:border-white/40 transition-colors"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5">End Time</label>
-                                            <input
-                                                type="time"
-                                                value={form.end_time}
-                                                onChange={e => set('end_time', e.target.value)}
-                                                className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm text-white focus:outline-none focus:border-white/40 transition-colors"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Location */}
-                                    <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5">Venue / Location</label>
                                         <input
                                             type="text"
+                                            placeholder="Business / Organization (optional)"
+                                            value={form.business_name}
+                                            onChange={e => set('business_name', e.target.value)}
+                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-base sm:text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors"
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Step 1: Email */}
+                                {detailsStep === 1 && (
+                                    <div>
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="w-10 h-10 bg-white/10 flex items-center justify-center">
+                                                <EnvelopeIcon className="w-5 h-5 text-white/60" />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-xl font-bold text-white">Your email</h2>
+                                                <p className="text-white/40 text-sm">I'll reach out here</p>
+                                            </div>
+                                        </div>
+                                        <input
+                                            type="email"
+                                            autoFocus
+                                            placeholder="your@email.com"
+                                            value={form.email}
+                                            onChange={e => set('email', e.target.value)}
+                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-base sm:text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors mb-3"
+                                        />
+                                        <input
+                                            type="tel"
+                                            placeholder="Phone (optional)"
+                                            value={form.phone}
+                                            onChange={e => set('phone', e.target.value)}
+                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-base sm:text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors"
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Step 2: Event Type */}
+                                {detailsStep === 2 && (
+                                    <div>
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="w-10 h-10 bg-white/10 flex items-center justify-center">
+                                                <CalendarIcon className="w-5 h-5 text-white/60" />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-xl font-bold text-white">What kind of shoot?</h2>
+                                                <p className="text-white/40 text-sm">Candid-style, your vibe</p>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {EVENT_TYPES.map(t => (
+                                                <button
+                                                    key={t}
+                                                    type="button"
+                                                    onClick={() => set('event_type', t)}
+                                                    className={`w-full px-3 py-2.5 text-[11px] text-center uppercase tracking-wider font-bold transition-colors rounded-none leading-tight ${form.event_type === t ? 'bg-white text-black' : 'bg-white/5 text-white hover:bg-white/10'}`}
+                                                >
+                                                    {t}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Step 3: Time slots (preset ranges, blocked slots greyed out) */}
+                                {detailsStep === 3 && (
+                                    <div>
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="w-10 h-10 bg-white/10 flex items-center justify-center">
+                                                <ClockIcon className="w-5 h-5 text-white/60" />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-xl font-bold text-white">When does it run?</h2>
+                                                <p className="text-white/40 text-sm">Pick a window — we'll refine when we talk</p>
+                                            </div>
+                                        </div>
+                                        {conflictingEvents.length > 0 && (
+                                            <div className="bg-yellow-500/10 text-yellow-300 p-3 mb-3 text-[11px] leading-relaxed">
+                                                <p className="font-black uppercase tracking-widest mb-1 text-[9px]">Heads up — already scheduled that day</p>
+                                                {conflictingEvents.map(e => (
+                                                    <p key={e.id}>
+                                                        {e.title}{e.location ? ` · ${e.location}` : ''}
+                                                    </p>
+                                                ))}
+                                                <p className="mt-2 text-yellow-300/70">
+                                                    Pick a non-overlapping window, or choose Flexible and we'll work it out.
+                                                </p>
+                                            </div>
+                                        )}
+                                        <div className="grid grid-cols-1 gap-2">
+                                            {TIME_SLOTS.filter(slot => !isSlotBlocked(slot, bookedSlots)).map(slot => {
+                                                const selected = form.start_time === slot.start && form.end_time === slot.end;
+                                                return (
+                                                    <button
+                                                        key={slot.label}
+                                                        type="button"
+                                                        onClick={() => { set('start_time', slot.start); set('end_time', slot.end); }}
+                                                        className={`w-full px-4 py-3 text-left transition-colors rounded-none flex items-center justify-between ${
+                                                            selected
+                                                                ? 'bg-white text-black'
+                                                                : 'bg-white/5 text-white hover:bg-white/10'
+                                                        }`}
+                                                    >
+                                                        <span className="font-black uppercase tracking-wider text-sm">{slot.label}</span>
+                                                        <span className={`text-[10px] font-mono ${selected ? 'text-black/60' : 'text-white/40'}`}>
+                                                            {slot.display}
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
+                                            <button
+                                                type="button"
+                                                onClick={() => { set('start_time', ''); set('end_time', ''); }}
+                                                className={`w-full px-4 py-3 text-left transition-colors rounded-none flex items-center justify-between ${
+                                                    !form.start_time && !form.end_time
+                                                        ? 'bg-white text-black'
+                                                        : 'bg-white/5 text-white hover:bg-white/10'
+                                                }`}
+                                            >
+                                                <span className="font-black uppercase tracking-wider text-sm">Flexible</span>
+                                                <span className={`text-[10px] font-mono ${!form.start_time && !form.end_time ? 'text-black/60' : 'text-white/40'}`}>
+                                                    LET'S TALK
+                                                </span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Step 4: Venue + Notes */}
+                                {detailsStep === 4 && (
+                                    <div>
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="w-10 h-10 bg-white/10 flex items-center justify-center">
+                                                <MapPinIcon className="w-5 h-5 text-white/60" />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-xl font-bold text-white">Where & anything else?</h2>
+                                                <p className="text-white/40 text-sm">Venue + any details I should know</p>
+                                            </div>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            autoFocus
+                                            placeholder="Venue name or city"
                                             value={form.location}
                                             onChange={e => set('location', e.target.value)}
-                                            placeholder="Venue name or city"
-                                            className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/40 transition-colors"
+                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-base sm:text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors mb-3"
                                         />
-                                    </div>
-
-                                    {/* Notes */}
-                                    <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5">Additional Notes</label>
                                         <textarea
+                                            rows={3}
+                                            placeholder="Anything else — vibe, references, guests, crew…"
                                             value={form.notes}
                                             onChange={e => set('notes', e.target.value)}
-                                            rows={3}
-                                            placeholder="Any details I should know..."
-                                            className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/40 transition-colors resize-none"
+                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-base sm:text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors resize-none"
                                         />
+
+                                        <div className="bg-white/[0.04] p-3 mt-4">
+                                            <p className="text-white/70 text-[11px] leading-relaxed">
+                                                Submitting holds the date for you while we talk. Booking requires a{' '}
+                                                <span className="text-white font-bold">50% non-refundable deposit</span>{' '}
+                                                to finalize — I'll send a contract + payment link after we scope the shoot.
+                                                We accept <span className="text-white font-bold">Bitcoin (Strike)</span>,
+                                                Apple Pay, Cashapp, and Venmo.
+                                            </p>
+                                        </div>
                                     </div>
+                                )}
 
-                                    {error && (
-                                        <p className="text-red-400 text-[10px] font-bold uppercase tracking-widest">
-                                            {error}
-                                        </p>
-                                    )}
-
-                                    <button
-                                        type="submit"
-                                        disabled={submitting}
-                                        className="w-full flex items-center justify-center gap-3 bg-white text-black py-4 text-[11px] font-black uppercase tracking-[0.2em] hover:bg-zinc-200 transition-colors disabled:opacity-50"
-                                    >
-                                        {submitting ? 'Sending...' : (
-                                            <>
-                                                Submit Booking Request
-                                                <ArrowLongRightIcon className="w-4 h-4" />
-                                            </>
-                                        )}
-                                    </button>
-
-                                    <p className="text-white/20 text-[9px] text-center uppercase tracking-widest">
-                                        I'll respond within 24 hours to confirm availability.
+                                {error && (
+                                    <p className="text-red-400 text-[10px] font-bold uppercase tracking-widest mt-4">
+                                        {error}
                                     </p>
-                                </form>
+                                )}
+
+                                {/* Navigation */}
+                                <div className="flex gap-3 mt-6">
+                                    {detailsStep > 0 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setDetailsStep(s => s - 1)}
+                                            className="px-5 py-3 bg-white/5 text-white text-[11px] font-black uppercase tracking-widest hover:bg-white/10 transition-colors"
+                                        >
+                                            Back
+                                        </button>
+                                    )}
+                                    {detailsStep < TOTAL_DETAILS_STEPS - 1 ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => { if (canProceedDetails()) setDetailsStep(s => s + 1); }}
+                                            disabled={!canProceedDetails()}
+                                            className="flex-1 px-5 py-3 bg-white text-black text-[11px] font-black uppercase tracking-widest hover:bg-white/80 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        >
+                                            Continue
+                                        </button>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={(e) => handleSubmit(e as unknown as React.FormEvent)}
+                                            disabled={submitting}
+                                            className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-white text-black text-[11px] font-black uppercase tracking-widest hover:bg-white/80 transition-colors disabled:opacity-40"
+                                        >
+                                            {submitting ? 'Sending…' : (<>Submit Request <ArrowLongRightIcon className="w-4 h-4" /></>)}
+                                        </button>
+                                    )}
+                                </div>
+
+                                <p className="text-white/20 text-[9px] text-center uppercase tracking-widest mt-4">
+                                    I'll respond within 24 hours to confirm availability.
+                                </p>
                             </motion.div>
                         )}
 
@@ -474,11 +710,18 @@ const BookingPage: React.FC = () => {
                             >
                                 <CheckCircleIcon className="w-12 h-12 text-green-400 mx-auto" />
                                 <h2 className="text-2xl font-black uppercase tracking-tight">Request Sent!</h2>
-                                <p className="text-white/40 text-sm leading-relaxed">
-                                    Your booking request for{' '}
+                                <p className="text-white/50 text-sm leading-relaxed">
                                     <span className="text-white font-bold">{formatDate(form.event_date)}</span>{' '}
-                                    has been received. I'll be in touch within 24 hours.
+                                    is on hold for you while we talk. I'll reach out within 24 hours to sort
+                                    out logistics — nothing is finalized until we've scoped the shoot and
+                                    the 50% deposit is received.
                                 </p>
+                                {notifyDebug && (
+                                    <div className="bg-yellow-500/10 text-yellow-300 text-[10px] leading-relaxed p-3 text-left">
+                                        <p className="font-black uppercase tracking-widest mb-1">Admin notice (debug)</p>
+                                        <p className="break-all">Notify: {notifyDebug}</p>
+                                    </div>
+                                )}
                                 <p className="text-white/30 text-xs">
                                     In the meantime, follow{' '}
                                     <a

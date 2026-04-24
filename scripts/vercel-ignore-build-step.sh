@@ -18,17 +18,25 @@ fi
 # Get list of changed files
 # VERCEL_GIT_PREVIOUS_SHA is not always available on first build, so fallback to HEAD^
 if [ -z "$VERCEL_GIT_PREVIOUS_SHA" ]; then
-  CHANGED_FILES=$(git diff --name-only HEAD^ HEAD)
+  CHANGED_FILES=$(git diff --name-only HEAD^ HEAD 2>/dev/null)
 else
-  CHANGED_FILES=$(git diff --name-only $VERCEL_GIT_PREVIOUS_SHA $VERCEL_GIT_COMMIT_SHA)
+  CHANGED_FILES=$(git diff --name-only $VERCEL_GIT_PREVIOUS_SHA $VERCEL_GIT_COMMIT_SHA 2>/dev/null)
 fi
 
 echo "Changed files:"
 echo "$CHANGED_FILES"
 
-# Define important patterns that SHOULD trigger a build
-# If any file matches these, we build (exit 1)
-IMPORTANT_PATTERNS="src/|public/|scripts/|package.json|vite.config.ts|tsconfig.json|vercel.json|tailwind.config.js|postcss.config.js|index.html"
+# Safety net: if we can't determine changed files (shallow clone, missing SHA,
+# etc.), BUILD anyway rather than silently skip. Skipping a legitimate preview
+# is much worse than running an occasional unneeded build.
+if [ -z "$CHANGED_FILES" ]; then
+  echo "⚠️  Could not determine changed files. Proceeding with build as a safe default."
+  exit 1
+fi
+
+# Define important patterns that SHOULD trigger a build.
+# Any code that affects the deployed app or serverless functions belongs here.
+IMPORTANT_PATTERNS="src/|public/|scripts/|api/|lib/|supabase/|package.json|package-lock.json|vite.config.ts|tsconfig.json|vercel.json|tailwind.config.js|postcss.config.js|index.html"
 
 if echo "$CHANGED_FILES" | grep -qE "$IMPORTANT_PATTERNS"; then
   echo "✅ Important files changed. Proceeding with build."
