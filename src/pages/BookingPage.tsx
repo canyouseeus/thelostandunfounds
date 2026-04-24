@@ -328,7 +328,7 @@ const BookingPage: React.FC = () => {
     return (
         <>
             <SEOHead
-                title="Book TLAU | THE LOST+UNFOUNDS"
+                title="Booking | THE LOST+UNFOUNDS"
                 description="Candid-style photography for events, portraits, and brands. Shot primarily on Fujifilm X-S20. Check availability and submit a booking request."
                 canonicalPath="/booking"
             />
@@ -336,21 +336,23 @@ const BookingPage: React.FC = () => {
             <div className="min-h-screen bg-black text-white px-4 py-16 md:py-24">
                 <div className="max-w-5xl mx-auto">
 
-                    {/* Header */}
-                    <div className="mb-12 md:mb-16">
-                        <p className="text-[9px] font-black uppercase tracking-[0.4em] text-white/30 mb-3">
-                            @tlau.photos
-                        </p>
-                        <h1 className="text-4xl md:text-7xl font-black uppercase tracking-tight leading-none mb-4">
-                            Book Me
-                        </h1>
-                        <p className="text-white/50 text-sm md:text-base max-w-lg leading-relaxed">
-                            Candid-style photography for events, lifestyle shoots, portraits, and brand work.
-                            I shoot primarily on a <span className="text-white font-bold">Fujifilm X-S20</span>,
-                            and I'm happy to mix in other cameras when the project calls for a different feel.
-                            Pick a date and I'll get back to you within 24 hours.
-                        </p>
-                    </div>
+                    {/* Header — hidden on success so the confirmation gets full focus */}
+                    {step !== 'success' && (
+                        <div className="mb-12 md:mb-16">
+                            <p className="text-[9px] font-black uppercase tracking-[0.4em] text-white/30 mb-3">
+                                @tlau.photos
+                            </p>
+                            <h1 className="text-4xl md:text-7xl font-black uppercase tracking-tight leading-none mb-4">
+                                Booking
+                            </h1>
+                            <p className="text-white/50 text-sm md:text-base max-w-lg leading-relaxed">
+                                Candid-style photography for events, lifestyle shoots, portraits, and brand work.
+                                I shoot primarily on a <span className="text-white font-bold">Fujifilm X-S20</span>,
+                                and I'm happy to mix in other cameras when the project calls for a different feel.
+                                Pick a date and I'll get back to you within 24 hours.
+                            </p>
+                        </div>
+                    )}
 
                     <AnimatePresence mode="wait">
 
