@@ -12,6 +12,7 @@ import {
     PlusIcon,
     XMarkIcon,
     ArrowDownTrayIcon,
+    CheckIcon,
 } from '@heroicons/react/24/outline';
 import { supabase } from '@/lib/supabase';
 
@@ -23,6 +24,14 @@ interface Track {
     duration: number | null;
     source_url: string | null;
     created_at: string;
+}
+
+interface PlaylistEntry {
+    id: string;
+    title: string;
+    url: string;
+    duration: number | null;
+    uploader: string;
 }
 
 function formatTime(seconds: number): string {
@@ -48,6 +57,11 @@ export default function MusicPlayer() {
     const [isDownloading, setIsDownloading] = useState(false);
     const [downloadError, setDownloadError] = useState('');
     const [downloadStatus, setDownloadStatus] = useState('');
+    const [playlistInfo, setPlaylistInfo] = useState<{ title: string; entries: PlaylistEntry[] } | null>(null);
+    const [isFetchingPlaylist, setIsFetchingPlaylist] = useState(false);
+    const [downloadingEntries, setDownloadingEntries] = useState<Set<string>>(new Set());
+    const [downloadedEntries, setDownloadedEntries] = useState<Set<string>>(new Set());
+    const [isDownloadingAll, setIsDownloadingAll] = useState(false);
 
     const currentTrack = currentIndex >= 0 ? tracks[currentIndex] : null;
 
@@ -142,6 +156,8 @@ export default function MusicPlayer() {
         setCurrentTime(t);
     };
 
+    const isPlaylistUrl = (url: string) => url.includes('list=');
+
     const handleDownload = async () => {
         if (!youtubeUrl.trim()) return;
         setIsDownloading(true);
@@ -166,6 +182,60 @@ export default function MusicPlayer() {
         } finally {
             setIsDownloading(false);
         }
+    };
+
+    const handleFetchPlaylist = async () => {
+        setIsFetchingPlaylist(true);
+        setDownloadError('');
+        setPlaylistInfo(null);
+        try {
+            const res = await fetch('/api/admin/youtube-playlist-info', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: youtubeUrl.trim() }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to fetch playlist');
+            setPlaylistInfo(data);
+        } catch (err: any) {
+            setDownloadError(err.message);
+        } finally {
+            setIsFetchingPlaylist(false);
+        }
+    };
+
+    const handleDownloadEntry = async (entry: PlaylistEntry) => {
+        setDownloadingEntries(prev => new Set(prev).add(entry.id));
+        try {
+            const res = await fetch('/api/admin/youtube-download', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: entry.url }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Download failed');
+            setDownloadedEntries(prev => new Set(prev).add(entry.id));
+            await loadTracks();
+        } catch (err: any) {
+            setDownloadError(`"${entry.title}": ${err.message}`);
+        } finally {
+            setDownloadingEntries(prev => {
+                const next = new Set(prev);
+                next.delete(entry.id);
+                return next;
+            });
+        }
+    };
+
+    const handleDownloadAll = async () => {
+        if (!playlistInfo || isDownloadingAll) return;
+        setIsDownloadingAll(true);
+        setDownloadError('');
+        for (const entry of playlistInfo.entries) {
+            if (downloadedEntries.has(entry.id)) continue;
+            await handleDownloadEntry(entry);
+        }
+        setIsDownloadingAll(false);
     };
 
     const progressPct = duration > 0 ? (currentTime / duration) * 100 : 0;
@@ -219,34 +289,112 @@ export default function MusicPlayer() {
 
             {/* YouTube input panel */}
             {showYtInput && (
-                <div className="fixed bottom-16 left-0 right-0 z-50 bg-black border-t border-white/10 px-4 py-3">
-                    <div className="flex items-center gap-2">
-                        <input
-                            type="url"
-                            value={youtubeUrl}
-                            onChange={(e) => setYoutubeUrl(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleDownload()}
-                            placeholder="Paste YouTube URL…"
-                            className="flex-1 bg-white/5 border border-white/20 text-white text-sm px-3 py-2 rounded-none outline-none focus:border-white/50 font-inter placeholder:text-white/30"
-                            disabled={isDownloading}
-                        />
-                        <button
-                            onClick={handleDownload}
-                            disabled={isDownloading || !youtubeUrl.trim()}
-                            className="flex items-center gap-1.5 px-3 py-2 bg-white text-black text-sm font-medium font-inter hover:bg-white/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                            <ArrowDownTrayIcon className="w-4 h-4" />
-                            {isDownloading ? downloadStatus || 'Downloading…' : 'Download'}
-                        </button>
-                        <button
-                            onClick={() => { setShowYtInput(false); setDownloadError(''); setYoutubeUrl(''); }}
-                            className="text-white/50 hover:text-white transition-colors px-1"
-                        >
-                            <XMarkIcon className="w-4 h-4" />
-                        </button>
+                <div className="fixed bottom-16 left-0 right-0 z-50 bg-black border-t border-white/10">
+                    <div className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="url"
+                                value={youtubeUrl}
+                                onChange={(e) => { setYoutubeUrl(e.target.value); setPlaylistInfo(null); }}
+                                onKeyDown={(e) => {
+                                    if (e.key !== 'Enter' || !youtubeUrl.trim()) return;
+                                    isPlaylistUrl(youtubeUrl) ? handleFetchPlaylist() : handleDownload();
+                                }}
+                                placeholder="Paste YouTube URL or playlist…"
+                                className="flex-1 bg-white/5 border border-white/20 text-white text-sm px-3 py-2 rounded-none outline-none focus:border-white/50 font-inter placeholder:text-white/30"
+                                disabled={isDownloading || isFetchingPlaylist}
+                            />
+                            {isPlaylistUrl(youtubeUrl) ? (
+                                <button
+                                    onClick={handleFetchPlaylist}
+                                    disabled={isFetchingPlaylist || !youtubeUrl.trim()}
+                                    className="flex items-center gap-1.5 px-3 py-2 bg-white text-black text-sm font-medium font-inter hover:bg-white/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+                                >
+                                    {isFetchingPlaylist ? 'Loading…' : 'Load Playlist'}
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={handleDownload}
+                                    disabled={isDownloading || !youtubeUrl.trim()}
+                                    className="flex items-center gap-1.5 px-3 py-2 bg-white text-black text-sm font-medium font-inter hover:bg-white/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                    <ArrowDownTrayIcon className="w-4 h-4" />
+                                    {isDownloading ? downloadStatus || 'Downloading…' : 'Download'}
+                                </button>
+                            )}
+                            <button
+                                onClick={() => {
+                                    setShowYtInput(false);
+                                    setDownloadError('');
+                                    setYoutubeUrl('');
+                                    setPlaylistInfo(null);
+                                    setDownloadingEntries(new Set());
+                                    setDownloadedEntries(new Set());
+                                    setIsDownloadingAll(false);
+                                }}
+                                className="text-white/50 hover:text-white transition-colors px-1"
+                            >
+                                <XMarkIcon className="w-4 h-4" />
+                            </button>
+                        </div>
+                        {downloadError && (
+                            <p className="mt-2 text-xs text-red-400 font-inter">{downloadError}</p>
+                        )}
                     </div>
-                    {downloadError && (
-                        <p className="mt-2 text-xs text-red-400 font-inter">{downloadError}</p>
+
+                    {/* Playlist entries */}
+                    {playlistInfo && (
+                        <div className="border-t border-white/10 max-h-64 overflow-y-auto">
+                            <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 sticky top-0 bg-black">
+                                <div className="min-w-0 flex-1">
+                                    <span className="text-xs uppercase tracking-widest text-white/60 font-inter">{playlistInfo.title}</span>
+                                    <span className="ml-2 text-xs text-white/30 font-inter">({playlistInfo.entries.length} tracks)</span>
+                                </div>
+                                <button
+                                    onClick={handleDownloadAll}
+                                    disabled={isDownloadingAll}
+                                    className="flex items-center gap-1.5 px-2 py-1 text-xs bg-white text-black font-medium font-inter hover:bg-white/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0 ml-3"
+                                >
+                                    <ArrowDownTrayIcon className="w-3 h-3" />
+                                    {isDownloadingAll ? 'Downloading…' : 'Download All'}
+                                </button>
+                            </div>
+                            {playlistInfo.entries.length === 0 ? (
+                                <div className="px-4 py-4 text-sm text-white/40 font-inter">No tracks found in playlist.</div>
+                            ) : (
+                                playlistInfo.entries.map((entry) => (
+                                    <div
+                                        key={entry.id}
+                                        className="flex items-center gap-3 px-4 py-2.5 border-b border-white/5 hover:bg-white/5 transition-colors"
+                                    >
+                                        <div className="min-w-0 flex-1">
+                                            <div className="text-sm text-white truncate font-inter">{entry.title}</div>
+                                            {entry.uploader && (
+                                                <div className="text-xs text-white/40 truncate font-inter">{entry.uploader}</div>
+                                            )}
+                                        </div>
+                                        {entry.duration && (
+                                            <span className="text-xs text-white/40 shrink-0 font-inter">{formatTime(entry.duration)}</span>
+                                        )}
+                                        <div className="shrink-0 w-7 flex justify-center">
+                                            {downloadedEntries.has(entry.id) ? (
+                                                <CheckIcon className="w-4 h-4 text-white/60" />
+                                            ) : downloadingEntries.has(entry.id) ? (
+                                                <div className="w-4 h-4 border border-white/40 border-t-white/80 rounded-full animate-spin" />
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleDownloadEntry(entry)}
+                                                    disabled={isDownloadingAll}
+                                                    className="text-white/40 hover:text-white transition-colors disabled:opacity-30"
+                                                >
+                                                    <ArrowDownTrayIcon className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
                     )}
                 </div>
             )}

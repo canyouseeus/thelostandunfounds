@@ -12,6 +12,7 @@ const execFileAsync = promisify(execFile);
 const DRIVE_FOLDER_ID = '1U02vZ2JXr7UcSSnxn832pig1m8sTZ3Ko';
 const YT_DLP_PATH = '/tmp/yt-dlp';
 const YT_DLP_TMP = '/tmp/yt-dlp.tmp';
+const MAX_BUFFER = 50 * 1024 * 1024; // 50MB — yt-dlp metadata JSON can be large
 
 function getOAuth2Client() {
     const oauth2Client = new google.auth.OAuth2(
@@ -105,9 +106,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             '--dump-json',
             '--no-playlist',
             url,
-        ], { timeout: 30_000 });
+        ], { timeout: 30_000, maxBuffer: MAX_BUFFER });
 
-        const info = JSON.parse(infoJson);
+        const trimmed = infoJson.trim();
+        if (!trimmed) throw new Error('yt-dlp returned empty metadata — the URL may be invalid');
+
+        let info: any;
+        try {
+            info = JSON.parse(trimmed);
+        } catch {
+            console.error('[YouTube Download] JSON parse failed, raw output:', trimmed.substring(0, 300));
+            throw new Error('Failed to parse video metadata from yt-dlp');
+        }
+
         const rawTitle: string = info.title || 'Unknown';
         const duration: number = info.duration || 0;
 
@@ -122,7 +133,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             '--no-playlist',
             '-o', audioFilePath,
             url,
-        ], { timeout: 240_000 });
+        ], { timeout: 240_000, maxBuffer: MAX_BUFFER });
 
         if (!fs.existsSync(audioFilePath)) {
             // yt-dlp may add extra chars; find the file
