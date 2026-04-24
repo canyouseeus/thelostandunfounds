@@ -151,7 +151,7 @@ function ensureBannerHtml(htmlContent: string): string {
     }
 
     let html = htmlContent || ''
-    if (html.includes(BANNER_URL)) {
+    if (html.includes(BANNER_URL) || html.includes('nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/')) {
         return ensureShell(html)
     }
 
