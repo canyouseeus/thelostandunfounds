@@ -226,8 +226,8 @@ async function upsertPhoto(ctx: SyncCtx, file: DriveFile): Promise<string | null
         created_at: finalCreatedAt,
         metadata,
     };
-    // Don't overwrite existing GPS with null — the retrograde rename may have
-    // populated lat/lng/location_name from a separate source.
+    // Don't overwrite existing GPS/location with null — the migration backfill
+    // and retrograde rename may have set these from a more accurate source.
     if (latitude != null) payload.latitude = latitude;
     if (longitude != null) payload.longitude = longitude;
 
