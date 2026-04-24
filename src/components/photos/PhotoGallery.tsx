@@ -20,6 +20,7 @@ import Loading from '../Loading';
 import AuthModal from '../auth/AuthModal';
 import TipModal from '../TipModal';
 import DownloadEmailModal from '../DownloadEmailModal';
+import CreditModal from './CreditModal';
 import { cn } from '../ui/utils';
 import { NoirDateRangePicker } from '../ui/NoirDateRangePicker';
 import JSZip from 'jszip';
@@ -277,16 +278,23 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     const [authModalOpen, setAuthModalOpen] = useState(false);
     const [authMessage, setAuthMessage] = useState<string | undefined>(undefined);
     const [authTitle, setAuthTitle] = useState<string | undefined>(undefined);
-    // Guest email modal (for free download attribution)
-    const [guestEmailModalOpen, setGuestEmailModalOpen] = useState(false);
-    const [guestEmail, setGuestEmail] = useState('');
-    const [guestNewsletterOptIn, setGuestNewsletterOptIn] = useState(true);
+
+    // Credit system state
+    const [creditEmail, setCreditEmail] = useState<string | null>(null);
+    const [creditBalance, setCreditBalance] = useState<number | null>(null);
+    const [creditModalOpen, setCreditModalOpen] = useState(false);
+    const creditDeductedRef = useRef(false);
 
     // Tip modal + download progress
     const [tipModalOpen, setTipModalOpen] = useState(false);
     const [downloadProgress, setDownloadProgress] = useState(0);
     const [downloadStatus, setDownloadStatus] = useState('');
     const [isDownloading, setIsDownloading] = useState(false);
+
+    // Lightning payment state (out-of-credits path)
+    const [lightningInvoice, setLightningInvoice] = useState<string | null>(null);
+    const [lightningAmount, setLightningAmount] = useState<number>(0);
+    const [lightningModalOpen, setLightningModalOpen] = useState(false);
 
 
     const [startDate, setStartDate] = useState<string>('');
@@ -317,8 +325,23 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             }
         }
 
+        // Load saved credit email
+        const savedEmail = localStorage.getItem('credit_email');
+        if (savedEmail) {
+            setCreditEmail(savedEmail);
+        }
+
         return () => controller.abort();
     }, [librarySlug]);
+
+    // Fetch credit balance whenever creditEmail changes
+    useEffect(() => {
+        if (!creditEmail) return;
+        fetch(`/api/credits/balance?email=${encodeURIComponent(creditEmail)}`)
+            .then(r => r.json())
+            .then(d => setCreditBalance(d.credits_remaining ?? 0))
+            .catch(() => {});
+    }, [creditEmail]);
 
 
     // Persist selections to localStorage
@@ -351,7 +374,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
 
     async function fetchPurchasedAssets(signal?: AbortSignal) {
         // Check for logged in user OR guest email
-        const userEmail = user?.email || localStorage.getItem('guest_email');
+        const userEmail = user?.email || localStorage.getItem('credit_email');
         if (!library || !userEmail) return;
 
         try {
@@ -474,8 +497,87 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     };
 
     const handleCheckout = async () => {
-        // Show tip modal first, then proceed to free download
-        setTipModalOpen(true);
+        const email = creditEmail || localStorage.getItem('credit_email');
+        if (!email) {
+            setCreditModalOpen(true);
+            return;
+        }
+        await proceedWithCredits(email);
+    };
+
+    const proceedWithCredits = async (email: string) => {
+        const count = selectedPhotos.length;
+        if (count === 0) return;
+
+        // Use cached balance or fetch fresh
+        let balance = creditBalance;
+        if (balance === null) {
+            try {
+                const r = await fetch(`/api/credits/balance?email=${encodeURIComponent(email)}`);
+                const d = await r.json();
+                balance = d.credits_remaining ?? 0;
+                setCreditBalance(balance);
+            } catch {
+                balance = 0;
+            }
+        }
+
+        if (balance! >= count) {
+            // Deduct credits atomically, then show tip modal
+            try {
+                const r = await fetch('/api/credits/deduct', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, count })
+                });
+                const d = await r.json();
+
+                if (!r.ok) {
+                    // Insufficient credits (race condition — refresh balance and re-evaluate)
+                    setCreditBalance(d.credits_remaining ?? 0);
+                    if ((d.credits_remaining ?? 0) < count) {
+                        handlePaidCheckout(email);
+                    }
+                    return;
+                }
+
+                setCreditBalance(d.credits_remaining);
+                creditDeductedRef.current = true;
+                setTipModalOpen(true);
+            } catch {
+                alert('Failed to process credits. Please try again.');
+            }
+        } else {
+            handlePaidCheckout(email);
+        }
+    };
+
+    const handlePaidCheckout = async (email: string) => {
+        const photoIds = selectedPhotos.map(p => p.id);
+        setIsDownloading(true);
+        try {
+            const r = await fetch('/api/photos/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ photoIds, email, paidCheckout: true })
+            });
+            const d = await r.json();
+
+            if (!r.ok) {
+                alert('Checkout failed: ' + (d.error || 'Unknown error'));
+                return;
+            }
+
+            if (d.free) return; // shouldn't happen in paid path
+
+            setLightningInvoice(d.lnInvoice);
+            setLightningAmount(d.amount);
+            setLightningModalOpen(true);
+        } catch {
+            alert('Checkout failed. Please try again.');
+        } finally {
+            setIsDownloading(false);
+        }
     };
 
     const [downloadEmailModalOpen, setDownloadEmailModalOpen] = useState(false);
@@ -569,29 +671,11 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         }
     };
 
-    const handleGuestEmailSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        const email = guestEmail.trim();
-        if (!email || !email.includes('@')) return;
-
-        setGuestEmailModalOpen(false);
-
-        if (guestNewsletterOptIn) {
-            fetch('/api/newsletter/subscribe', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: email.toLowerCase() }),
-            }).catch(() => {});
-        }
-
-        // Register free order for asset tracking, then download
-        fetch('/api/photos/free-checkout', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ photoIds: selectedPhotos.map(p => p.id), email }),
-        }).catch(() => {});
-
-        await startFreeDownload(selectedPhotos);
+    const handleCreditModalSuccess = async (email: string, balance: number) => {
+        setCreditEmail(email);
+        setCreditBalance(balance);
+        setCreditModalOpen(false);
+        await proceedWithCredits(email);
     };
 
     if (loading) {
@@ -1039,95 +1123,55 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 onCheckout={handleCheckout}
                 loading={isDownloading}
                 pricingOptions={pricingOptions}
+                creditBalance={creditBalance}
+                creditEmail={creditEmail}
             />
 
-            {/* Auth Modal */}
-            {/* Guest email + newsletter opt-in modal — shows at checkout for non-logged-in users */}
+            {/* Credit claim modal */}
+            <CreditModal
+                isOpen={creditModalOpen}
+                onClose={() => setCreditModalOpen(false)}
+                onSuccess={handleCreditModalSuccess}
+            />
+
+            {/* Lightning payment modal (out-of-credits path) */}
             <AnimatePresence>
-                {guestEmailModalOpen && (
+                {lightningModalOpen && lightningInvoice && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[9999] flex items-center justify-center px-4 bg-black/80 backdrop-blur-sm"
-                        onClick={() => setGuestEmailModalOpen(false)}
+                        className="fixed inset-0 z-[9999] flex items-center justify-center px-4 bg-black/90"
+                        onClick={() => setLightningModalOpen(false)}
                     >
                         <motion.div
                             initial={{ opacity: 0, y: 16 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 16 }}
                             transition={{ duration: 0.2 }}
-                            className="relative bg-black border border-white/20 w-full max-w-sm p-8"
+                            className="relative bg-black border border-white/20 w-full max-w-sm p-8 text-center"
                             onClick={(e) => e.stopPropagation()}
                         >
                             <button
-                                onClick={() => setGuestEmailModalOpen(false)}
+                                onClick={() => setLightningModalOpen(false)}
                                 className="absolute top-4 right-4 text-white/40 hover:text-white transition-colors"
                                 aria-label="Close"
                             >
                                 <XMarkIcon className="w-5 h-5" />
                             </button>
-
-                            <h2 className="text-[13px] font-black uppercase tracking-[0.25em] text-white mb-2">
-                                Quick — before you download
-                            </h2>
-                            <p className="text-white/40 text-[11px] leading-relaxed mb-6">
-                                Drop your email to save your downloads to your account, or skip and download now.
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-1">Lightning Payment</p>
+                            <p className="text-xl font-black text-white mb-1">${lightningAmount.toFixed(2)}</p>
+                            <p className="text-[10px] text-white/40 mb-6">Scan with any Lightning wallet</p>
+                            <div className="bg-white p-4 inline-block mb-4">
+                                <img
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(lightningInvoice)}`}
+                                    alt="Lightning Invoice QR"
+                                    className="w-48 h-48"
+                                />
+                            </div>
+                            <p className="text-[9px] text-white/30 font-mono break-all leading-relaxed">
+                                {lightningInvoice.slice(0, 40)}...
                             </p>
-
-                            <form onSubmit={handleGuestEmailSubmit} className="space-y-4">
-                                <div>
-                                    <label htmlFor="guest-email" className="block text-[10px] font-black uppercase tracking-widest text-white/50 mb-2">
-                                        Email (optional)
-                                    </label>
-                                    <input
-                                        id="guest-email"
-                                        type="email"
-                                        name="email"
-                                        autoComplete="email"
-                                        inputMode="email"
-                                        placeholder="your@email.com"
-                                        value={guestEmail}
-                                        onChange={(e) => setGuestEmail(e.target.value)}
-                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-white/20 text-sm focus:outline-none focus:border-white/40 transition-colors"
-                                    />
-                                </div>
-
-                                <label className="flex items-start gap-3 cursor-pointer group">
-                                    <div className="relative flex-shrink-0 mt-0.5">
-                                        <input
-                                            type="checkbox"
-                                            checked={guestNewsletterOptIn}
-                                            onChange={(e) => setGuestNewsletterOptIn(e.target.checked)}
-                                            className="sr-only"
-                                        />
-                                        <div className={`w-4 h-4 border transition-colors ${guestNewsletterOptIn ? 'bg-white border-white' : 'bg-transparent border-white/30 group-hover:border-white/60'}`}>
-                                            {guestNewsletterOptIn && <CheckIcon className="w-3 h-3 text-black mx-auto mt-0.5" />}
-                                        </div>
-                                    </div>
-                                    <span className="text-[10px] text-white/40 group-hover:text-white/60 transition-colors leading-relaxed">
-                                        Subscribe to updates and new drops
-                                    </span>
-                                </label>
-
-                                <button
-                                    type="submit"
-                                    className="w-full py-3 bg-white text-black text-[11px] font-black uppercase tracking-[0.2em] hover:bg-white/90 transition-colors"
-                                >
-                                    Download Free
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={async () => {
-                                        setGuestEmailModalOpen(false);
-                                        await startFreeDownload(selectedPhotos);
-                                    }}
-                                    className="w-full text-[10px] text-white/25 hover:text-white/50 uppercase tracking-widest transition-colors"
-                                >
-                                    Skip — just download
-                                </button>
-                            </form>
                         </motion.div>
                     </motion.div>
                 )}
@@ -1181,13 +1225,8 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 isOpen={tipModalOpen}
                 onClose={() => {
                     setTipModalOpen(false);
-                    // After tip modal dismissed, check if email needed then start download
-                    const email = user?.email || localStorage.getItem('guest_email');
-                    if (!email) {
-                        const saved = localStorage.getItem('guest_email');
-                        if (saved) setGuestEmail(saved);
-                        setGuestEmailModalOpen(true);
-                    } else {
+                    if (creditDeductedRef.current) {
+                        creditDeductedRef.current = false;
                         startFreeDownload(selectedPhotos);
                     }
                 }}
