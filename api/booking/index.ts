@@ -90,19 +90,34 @@ async function handleGetSlots(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'date (YYYY-MM-DD) required' })
     }
     const supabase = getSupabase(true)
-    const { data, error } = await supabase
-        .from('bookings')
-        .select('start_time, end_time, status')
-        .eq('event_date', date)
-        .in('status', ['pending', 'confirmed'])
-    if (error) {
-        console.error('[Slots] Query error:', error)
+    const [bookingsRes, eventsRes] = await Promise.all([
+        supabase
+            .from('bookings')
+            .select('start_time, end_time, status')
+            .eq('event_date', date)
+            .in('status', ['pending', 'confirmed']),
+        // Events on this date — the photographer is already committed to them.
+        // Surface them so the booking form can warn the client before picking
+        // a conflicting window.
+        supabase
+            .from('events')
+            .select('id, title, status, location')
+            .eq('event_date', date)
+            .neq('status', 'cancelled'),
+    ])
+    if (bookingsRes.error) {
+        console.error('[Slots] Query error:', bookingsRes.error)
         return res.status(500).json({ error: 'Failed to fetch slots' })
     }
     return res.status(200).json({
-        slots: (data || [])
+        slots: (bookingsRes.data || [])
             .filter(b => b.start_time || b.end_time)
             .map(b => ({ start_time: b.start_time, end_time: b.end_time })),
+        events: (eventsRes.data || []).map(e => ({
+            id: e.id,
+            title: e.title,
+            location: e.location,
+        })),
     })
 }
 

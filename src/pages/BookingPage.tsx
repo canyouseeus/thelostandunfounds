@@ -216,15 +216,19 @@ const BookingPage: React.FC = () => {
     const [notifyDebug, setNotifyDebug] = useState<string | null>(null);
     const [contextOpen, setContextOpen] = useState(false);
     const [bookedSlots, setBookedSlots] = useState<Array<{ start_time: string | null; end_time: string | null }>>([]);
+    const [conflictingEvents, setConflictingEvents] = useState<Array<{ id: string; title: string; location: string | null }>>([]);
     const wizardRef = useRef<HTMLDivElement>(null);
 
-    // Fetch time-slot conflicts when the selected date changes.
+    // Fetch time-slot conflicts + events on the selected date.
     useEffect(() => {
-        if (!form.event_date) { setBookedSlots([]); return; }
+        if (!form.event_date) { setBookedSlots([]); setConflictingEvents([]); return; }
         fetch(`/api/booking?action=slots&date=${form.event_date}`)
-            .then(r => r.ok ? r.json() : { slots: [] })
-            .then(d => setBookedSlots(d.slots || []))
-            .catch(() => setBookedSlots([]));
+            .then(r => r.ok ? r.json() : { slots: [], events: [] })
+            .then(d => {
+                setBookedSlots(d.slots || []);
+                setConflictingEvents(d.events || []);
+            })
+            .catch(() => { setBookedSlots([]); setConflictingEvents([]); });
     }, [form.event_date]);
 
     // Scroll the wizard (or the full page on success) to the top whenever the
@@ -560,6 +564,19 @@ const BookingPage: React.FC = () => {
                                                 <p className="text-white/40 text-sm">Pick a window — we'll refine when we talk</p>
                                             </div>
                                         </div>
+                                        {conflictingEvents.length > 0 && (
+                                            <div className="bg-yellow-500/10 text-yellow-300 p-3 mb-3 text-[11px] leading-relaxed">
+                                                <p className="font-black uppercase tracking-widest mb-1 text-[9px]">Heads up — already scheduled that day</p>
+                                                {conflictingEvents.map(e => (
+                                                    <p key={e.id}>
+                                                        {e.title}{e.location ? ` · ${e.location}` : ''}
+                                                    </p>
+                                                ))}
+                                                <p className="mt-2 text-yellow-300/70">
+                                                    Pick a non-overlapping window, or choose Flexible and we'll work it out.
+                                                </p>
+                                            </div>
+                                        )}
                                         <div className="grid grid-cols-1 gap-2">
                                             {TIME_SLOTS.filter(slot => !isSlotBlocked(slot, bookedSlots)).map(slot => {
                                                 const selected = form.start_time === slot.start && form.end_time === slot.end;
