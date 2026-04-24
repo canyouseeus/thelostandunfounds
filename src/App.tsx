@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { Analytics } from '@vercel/analytics/react'
 import { AuthProvider } from './contexts/AuthContext'
 import { SageModeProvider } from './contexts/SageModeContext'
@@ -69,9 +69,19 @@ import Kattitude from './pages/Kattitude'
 import KattitudeWaiver from './pages/KattitudeWaiver'
 import AdminKattitude from './pages/AdminKattitude'
 import AdminKattitudeArtist from './pages/AdminKattitudeArtist'
+import MusicPlayer from './components/admin/MusicPlayer'
 
 
 
+
+function AdminLayout() {
+  return (
+    <Layout>
+      <Outlet />
+      <MusicPlayer />
+    </Layout>
+  )
+}
 
 function App() {
   return (
@@ -154,7 +164,7 @@ function App() {
               <Route path="/become-affiliate" element={<Layout />}>
                 <Route index element={<BecomeAffiliate />} />
               </Route>
-              <Route path="/admin" element={<Layout />}>
+              <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={
                   <ErrorBoundary>
                     <AdminAuthGate>
