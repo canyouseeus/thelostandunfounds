@@ -10,7 +10,7 @@ export default async function handler(
   }
 
   try {
-    const { photoIds, email } = req.body
+    const { photoIds, email, paidCheckout } = req.body
 
     // Get affiliate reference from header or cookie
     const affiliateRef = req.headers['x-affiliate-ref'] ||
@@ -96,7 +96,8 @@ export default async function handler(
       .eq('id', libraryId)
       .single();
 
-    const singlePrice = 0;
+    // paidCheckout = out-of-credits path; charge $1,000/photo regardless of DB price
+    const singlePrice = paidCheckout ? 1000 : 0;
 
     for (const option of sortedOptions) {
       if (option.photo_count <= 0) continue;
