@@ -35,6 +35,8 @@ const ZOHO_ACCOUNTS_URL = 'https://mail.zoho.com/api/accounts'
 // Inline SVG banner to avoid remote fetch failures in email clients
 const BANNER_URL =
   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='400'><rect width='100%25' height='100%25' fill='%23000'/><text x='20' y='50%25' fill='%23fff' font-family='Arial, sans-serif' font-size='48' font-weight='bold' text-anchor='start' dominant-baseline='middle'>THE LOST+UNFOUNDS</text></svg>"
+// Supabase-hosted brand logo used by the standard email template
+const BRAND_LOGO_DOMAIN = 'nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/'
 
 function getZohoEnv() {
   const clientId = process.env.ZOHO_CLIENT_ID
@@ -74,7 +76,7 @@ export function ensureBannerHtml(htmlContent: string): string {
   }
 
   let html = htmlContent || ''
-  if (html.includes(BANNER_URL)) {
+  if (html.includes(BANNER_URL) || html.includes(BRAND_LOGO_DOMAIN)) {
     return ensureShell(html)
   }
 
