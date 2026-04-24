@@ -452,7 +452,14 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 if (photoError.message === 'Fetch is aborted' || photoError.code === '20') return;
                 throw photoError;
             }
-            const fetchedPhotos = photoData || [];
+            // Deduplicate by google_drive_file_id in case the DB constraint is not yet applied
+            const seen = new Set<string>();
+            const fetchedPhotos = (photoData || []).filter((p: Photo) => {
+                const key = p.google_drive_file_id || p.id;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
             setPhotos(fetchedPhotos);
 
             // Fetch tags for photos in this gallery
