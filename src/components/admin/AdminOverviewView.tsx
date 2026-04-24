@@ -2,6 +2,7 @@
 import { ArrowLeftIcon, ChartBarIcon, BoltIcon, UsersIcon, CurrencyDollarIcon, EnvelopeIcon, BellIcon, DocumentTextIcon, ArrowTrendingUpIcon, EyeIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { AnimatedNumber } from '@/components/ui/animated-number';
 import { useState } from 'react';
+import { WebsiteValuationCard } from './WebsiteValuationCard';
 
 interface DashboardStats {
   totalUsers: number;
@@ -162,6 +163,11 @@ export default function AdminOverviewView({ stats, alerts, onBack }: AdminOvervi
             </div>
             <p className="text-[10px] text-white/40 mt-1">Verified subscribers</p>
           </div>
+        </div>
+
+        {/* Website Valuation */}
+        <div className="mb-6">
+          <WebsiteValuationCard />
         </div>
 
         {/* Detailed Breakdown */}
