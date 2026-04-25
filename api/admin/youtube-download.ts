@@ -1,18 +1,12 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { google } from 'googleapis';
 import { createClient } from '@supabase/supabase-js';
-import { execFile } from 'child_process';
-import { promisify } from 'util';
-import * as fs from 'fs';
-import * as https from 'https';
-import * as path from 'path';
-
-const execFileAsync = promisify(execFile);
+import { Readable } from 'stream';
 
 const DRIVE_FOLDER_ID = '1U02vZ2JXr7UcSSnxn832pig1m8sTZ3Ko';
-const YT_DLP_PATH = '/tmp/yt-dlp';
-const YT_DLP_TMP = '/tmp/yt-dlp.tmp';
-const MAX_BUFFER = 50 * 1024 * 1024;
+const COBALT_API = 'https://api.cobalt.tools';
+const COBALT_TIMEOUT_MS = 60_000;
+const STREAM_TIMEOUT_MS = 240_000;
 
 function getOAuth2Client() {
     const oauth2Client = new google.auth.OAuth2(
@@ -25,55 +19,12 @@ function getOAuth2Client() {
     return oauth2Client;
 }
 
-async function ensureYtDlp(): Promise<void> {
-    if (fs.existsSync(YT_DLP_PATH)) return;
-
-    // Download to a staging file first so concurrent requests never see a
-    // partial binary — executing a partially-written file causes ETXTBSY.
-    return new Promise((resolve, reject) => {
-        const url = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux';
-
-        function pipeToStaging(response: any) {
-            const file = fs.createWriteStream(YT_DLP_TMP);
-            response.pipe(file);
-            file.on('finish', () => {
-                file.close();
-                try {
-                    fs.chmodSync(YT_DLP_TMP, '755');
-                    fs.renameSync(YT_DLP_TMP, YT_DLP_PATH);
-                } catch {
-                    try { fs.unlinkSync(YT_DLP_TMP); } catch {}
-                }
-                resolve();
-            });
-            file.on('error', (err) => {
-                try { fs.unlinkSync(YT_DLP_TMP); } catch {}
-                reject(err);
-            });
-        }
-
-        const request = https.get(url, (response) => {
-            if (response.statusCode === 301 || response.statusCode === 302) {
-                https.get(response.headers.location!, pipeToStaging).on('error', reject);
-                return;
-            }
-            pipeToStaging(response);
-        });
-
-        request.on('error', (err) => {
-            try { fs.unlinkSync(YT_DLP_TMP); } catch {}
-            reject(err);
-        });
-    });
-}
-
-// Extract 11-character YouTube video ID from any YouTube URL format.
 function extractVideoId(url: string): string | null {
     const patterns = [
-        /[?&]v=([a-zA-Z0-9_-]{11})/,   // watch?v=
-        /youtu\.be\/([a-zA-Z0-9_-]{11})/, // youtu.be/
-        /shorts\/([a-zA-Z0-9_-]{11})/,   // shorts/
-        /embed\/([a-zA-Z0-9_-]{11})/,    // embed/
+        /[?&]v=([a-zA-Z0-9_-]{11})/,
+        /youtu\.be\/([a-zA-Z0-9_-]{11})/,
+        /shorts\/([a-zA-Z0-9_-]{11})/,
+        /embed\/([a-zA-Z0-9_-]{11})/,
     ];
     for (const pattern of patterns) {
         const match = url.match(pattern);
@@ -82,23 +33,12 @@ function extractVideoId(url: string): string | null {
     return null;
 }
 
-// Fetch title/author via YouTube oEmbed — no auth, no bot detection.
-function fetchOEmbedMetadata(videoId: string): Promise<{ title: string; author: string }> {
+async function fetchOEmbedMetadata(videoId: string): Promise<{ title: string; author: string }> {
     const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
-    return new Promise((resolve, reject) => {
-        https.get(oembedUrl, (res) => {
-            let raw = '';
-            res.on('data', (chunk) => raw += chunk);
-            res.on('end', () => {
-                try {
-                    const info = JSON.parse(raw);
-                    resolve({ title: info.title || 'Unknown', author: info.author_name || '' });
-                } catch {
-                    reject(new Error(`oEmbed parse failed (status ${res.statusCode}): ${raw.substring(0, 100)}`));
-                }
-            });
-        }).on('error', reject);
-    });
+    const r = await fetch(oembedUrl);
+    if (!r.ok) throw new Error(`oEmbed HTTP ${r.status}`);
+    const info = await r.json() as any;
+    return { title: info.title || 'Unknown', author: info.author_name || '' };
 }
 
 function extractTitleArtist(rawTitle: string): { title: string; artist: string } {
@@ -110,6 +50,70 @@ function extractTitleArtist(rawTitle: string): { title: string; artist: string }
         };
     }
     return { title: rawTitle.trim(), artist: '' };
+}
+
+// Resolve a downloadable audio stream URL via cobalt.tools.
+// cobalt response shapes (v10): { status: "tunnel"|"redirect", url, filename }
+// Older/picker variants surface the audio URL via `audio` or pick first picker entry.
+async function resolveAudioStream(youtubeUrl: string): Promise<{ url: string; filename: string }> {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), COBALT_TIMEOUT_MS);
+    let response: Response;
+    try {
+        response = await fetch(COBALT_API + '/', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'User-Agent': 'thelostandunfounds-music/1.0',
+            },
+            body: JSON.stringify({
+                url: youtubeUrl,
+                downloadMode: 'audio',
+                audioFormat: 'mp3',
+                audioBitrate: '192',
+                filenameStyle: 'basic',
+            }),
+            signal: ctrl.signal,
+        });
+    } finally {
+        clearTimeout(timer);
+    }
+
+    const text = await response.text();
+    let body: any;
+    try {
+        body = JSON.parse(text);
+    } catch {
+        throw new Error(`cobalt non-JSON response (HTTP ${response.status}): ${text.substring(0, 200)}`);
+    }
+
+    if (!response.ok || body.status === 'error') {
+        const msg = body?.error?.code || body?.text || `HTTP ${response.status}`;
+        throw new Error(`cobalt rejected request: ${msg}`);
+    }
+
+    if ((body.status === 'tunnel' || body.status === 'redirect' || body.status === 'stream') && body.url) {
+        return { url: body.url, filename: body.filename || 'audio.mp3' };
+    }
+    if (body.status === 'picker') {
+        const audioUrl = body.audio || body.picker?.[0]?.url;
+        if (audioUrl) return { url: audioUrl, filename: body.filename || 'audio.mp3' };
+    }
+    throw new Error(`cobalt returned unexpected status: ${body.status || 'unknown'}`);
+}
+
+async function downloadBuffer(url: string): Promise<Buffer> {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), STREAM_TIMEOUT_MS);
+    try {
+        const r = await fetch(url, { signal: ctrl.signal });
+        if (!r.ok) throw new Error(`Audio stream HTTP ${r.status}`);
+        const ab = await r.arrayBuffer();
+        return Buffer.from(ab);
+    } finally {
+        clearTimeout(timer);
+    }
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -127,52 +131,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    const tmpDir = '/tmp';
-    let audioFilePath: string | null = null;
-
     try {
-        // --- Metadata via oEmbed (bypasses bot detection entirely) ---
         const videoId = extractVideoId(url);
         if (!videoId) throw new Error(`Could not extract video ID from URL: ${url}`);
+        const canonicalUrl = `https://www.youtube.com/watch?v=${videoId}`;
 
         const { title: rawTitle, author } = await fetchOEmbedMetadata(videoId);
-        console.log(`[YouTube Download] Fetched metadata: "${rawTitle}" by "${author}" (id=${videoId})`);
+        console.log(`[YouTube Download] Metadata: "${rawTitle}" by "${author}" (id=${videoId})`);
 
-        // --- Ensure yt-dlp binary ---
-        await ensureYtDlp();
+        const stream = await resolveAudioStream(canonicalUrl);
+        console.log(`[YouTube Download] cobalt resolved stream (filename=${stream.filename})`);
 
-        // --- Extract audio ---
+        const audioBuffer = await downloadBuffer(stream.url);
+        if (audioBuffer.length === 0) throw new Error('Audio stream returned empty buffer');
+        console.log(`[YouTube Download] Downloaded ${audioBuffer.length} bytes`);
+
         const safeTitle = rawTitle.replace(/[^a-zA-Z0-9 _-]/g, '_').substring(0, 80);
-        audioFilePath = path.join(tmpDir, `${safeTitle}.mp3`);
+        const fileName = `${safeTitle}.mp3`;
 
-        const { stdout: dlOut, stderr: dlErr } = await execFileAsync(YT_DLP_PATH, [
-            '-x',
-            '--audio-format', 'mp3',
-            '--audio-quality', '192K',
-            '--no-playlist',
-            '--no-warnings',
-            // Try multiple YouTube player clients so bot detection on one doesn't block all
-            '--extractor-args', 'youtube:player_client=web,mweb,android',
-            '-o', audioFilePath,
-            `https://www.youtube.com/watch?v=${videoId}`,
-        ], { timeout: 240_000, maxBuffer: MAX_BUFFER });
-
-        if (dlErr) console.log('[YouTube Download] yt-dlp stderr:', dlErr.substring(0, 800));
-        if (dlOut) console.log('[YouTube Download] yt-dlp stdout:', dlOut.substring(0, 200));
-
-        if (!fs.existsSync(audioFilePath)) {
-            const files = fs.readdirSync(tmpDir).filter(f => f.endsWith('.mp3') && f.includes(safeTitle.substring(0, 20)));
-            if (files.length === 0) {
-                throw new Error(`Audio extraction failed. yt-dlp stderr: ${dlErr?.substring(0, 400) || 'none'}`);
-            }
-            audioFilePath = path.join(tmpDir, files[0]);
-        }
-
-        // --- Upload to Google Drive ---
         const drive = google.drive({ version: 'v3', auth: getOAuth2Client() });
-        const fileStream = fs.createReadStream(audioFilePath);
-        const fileName = path.basename(audioFilePath);
-
         const driveFile = await drive.files.create({
             requestBody: {
                 name: fileName,
@@ -181,7 +158,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             },
             media: {
                 mimeType: 'audio/mpeg',
-                body: fileStream,
+                body: Readable.from(audioBuffer),
             },
             fields: 'id,name',
         });
@@ -189,7 +166,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const fileId = driveFile.data.id!;
         const { title, artist } = extractTitleArtist(rawTitle);
 
-        // --- Insert into Supabase ---
         const { data: track, error: dbError } = await supabase
             .from('admin_playlist')
             .insert({
@@ -209,9 +185,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } catch (error: any) {
         console.error('[YouTube Download] Error:', error.message);
         return res.status(500).json({ error: error.message || 'Download failed' });
-    } finally {
-        if (audioFilePath) {
-            try { fs.unlinkSync(audioFilePath); } catch {}
-        }
     }
 }
