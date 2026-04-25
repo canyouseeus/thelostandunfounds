@@ -1,52 +1,85 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { execFile } from 'child_process';
-import { promisify } from 'util';
-import * as fs from 'fs';
-import * as https from 'https';
 
-const execFileAsync = promisify(execFile);
-const YT_DLP_PATH = '/tmp/yt-dlp';
-const YT_DLP_TMP = '/tmp/yt-dlp.tmp';
-const MAX_BUFFER = 50 * 1024 * 1024;
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36';
 
-async function ensureYtDlp(): Promise<void> {
-    if (fs.existsSync(YT_DLP_PATH)) return;
+function extractPlaylistId(url: string): string | null {
+    const m = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+    return m ? m[1] : null;
+}
 
-    return new Promise((resolve, reject) => {
-        const url = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux';
-
-        function pipeToStaging(response: any) {
-            const file = fs.createWriteStream(YT_DLP_TMP);
-            response.pipe(file);
-            file.on('finish', () => {
-                file.close();
-                try {
-                    fs.chmodSync(YT_DLP_TMP, '755');
-                    fs.renameSync(YT_DLP_TMP, YT_DLP_PATH);
-                } catch {
-                    try { fs.unlinkSync(YT_DLP_TMP); } catch {}
-                }
-                resolve();
-            });
-            file.on('error', (err) => {
-                try { fs.unlinkSync(YT_DLP_TMP); } catch {}
-                reject(err);
-            });
+// Find the matching closing brace for the `{` at `start`, respecting strings/escapes.
+function findMatchingBrace(str: string, start: number): number {
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+    for (let i = start; i < str.length; i++) {
+        const c = str[i];
+        if (escaped) { escaped = false; continue; }
+        if (inString) {
+            if (c === '\\') escaped = true;
+            else if (c === '"') inString = false;
+            continue;
         }
+        if (c === '"') { inString = true; continue; }
+        if (c === '{') depth++;
+        else if (c === '}') {
+            depth--;
+            if (depth === 0) return i;
+        }
+    }
+    return -1;
+}
 
-        const request = https.get(url, (response) => {
-            if (response.statusCode === 301 || response.statusCode === 302) {
-                https.get(response.headers.location!, pipeToStaging).on('error', reject);
-                return;
+function extractInitialData(html: string): any {
+    const markers = [
+        'var ytInitialData = ',
+        'window["ytInitialData"] = ',
+        'ytInitialData = ',
+    ];
+    for (const marker of markers) {
+        const idx = html.indexOf(marker);
+        if (idx === -1) continue;
+        const start = html.indexOf('{', idx + marker.length);
+        if (start === -1) continue;
+        const end = findMatchingBrace(html, start);
+        if (end === -1) continue;
+        try {
+            return JSON.parse(html.substring(start, end + 1));
+        } catch {}
+    }
+    throw new Error('Could not extract ytInitialData from playlist page');
+}
+
+function findPlaylistVideos(data: any): any[] {
+    const tabs = data?.contents?.twoColumnBrowseResultsRenderer?.tabs || [];
+    for (const tab of tabs) {
+        const sections = tab?.tabRenderer?.content?.sectionListRenderer?.contents || [];
+        for (const section of sections) {
+            const items = section?.itemSectionRenderer?.contents || [];
+            for (const item of items) {
+                const list = item?.playlistVideoListRenderer?.contents;
+                if (Array.isArray(list)) return list;
             }
-            pipeToStaging(response);
-        });
+        }
+    }
+    return [];
+}
 
-        request.on('error', (err) => {
-            try { fs.unlinkSync(YT_DLP_TMP); } catch {}
-            reject(err);
-        });
-    });
+function findPlaylistMeta(data: any): { title: string; uploader: string } {
+    const title =
+        data?.metadata?.playlistMetadataRenderer?.title ||
+        data?.header?.playlistHeaderRenderer?.title?.simpleText ||
+        data?.header?.pageHeaderRenderer?.pageTitle ||
+        'Playlist';
+
+    const uploader =
+        data?.header?.playlistHeaderRenderer?.ownerText?.runs?.[0]?.text ||
+        data?.sidebar?.playlistSidebarRenderer?.items?.[1]
+            ?.playlistSidebarSecondaryInfoRenderer?.videoOwner?.videoOwnerRenderer
+            ?.title?.runs?.[0]?.text ||
+        '';
+
+    return { title, uploader };
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -60,35 +93,51 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        await ensureYtDlp();
+        const playlistId = extractPlaylistId(url);
+        if (!playlistId) throw new Error('Could not extract playlist ID from URL');
 
-        const { stdout } = await execFileAsync(YT_DLP_PATH, [
-            '--flat-playlist',
-            '--dump-single-json',
-            url,
-        ], { timeout: 60_000, maxBuffer: MAX_BUFFER });
+        const resp = await fetch(`https://www.youtube.com/playlist?list=${playlistId}&hl=en`, {
+            headers: {
+                'User-Agent': UA,
+                'Accept-Language': 'en-US,en;q=0.9',
+            },
+        });
+        if (!resp.ok) throw new Error(`YouTube returned ${resp.status}`);
 
-        const trimmed = stdout.trim();
-        if (!trimmed) throw new Error('yt-dlp returned empty output — the URL may be invalid');
+        const html = await resp.text();
+        const initialData = extractInitialData(html);
+        const { title: playlistTitle, uploader } = findPlaylistMeta(initialData);
 
-        let info: any;
-        try {
-            info = JSON.parse(trimmed);
-        } catch {
-            throw new Error('Failed to parse playlist metadata from yt-dlp');
+        const videos = findPlaylistVideos(initialData);
+        const entries = videos
+            .filter((v: any) => v?.playlistVideoRenderer?.videoId)
+            .map((v: any) => {
+                const r = v.playlistVideoRenderer;
+                const videoTitle =
+                    r?.title?.runs?.[0]?.text ||
+                    r?.title?.simpleText ||
+                    r.videoId;
+                const duration = r?.lengthSeconds ? parseInt(r.lengthSeconds, 10) : null;
+                const author =
+                    r?.shortBylineText?.runs?.[0]?.text ||
+                    r?.longBylineText?.runs?.[0]?.text ||
+                    '';
+                return {
+                    id: r.videoId,
+                    title: videoTitle,
+                    url: `https://www.youtube.com/watch?v=${r.videoId}`,
+                    duration,
+                    uploader: author,
+                };
+            });
+
+        if (entries.length === 0) {
+            throw new Error('No videos found in playlist (empty, private, or unavailable)');
         }
 
-        const entries = (info.entries || []).map((entry: any) => ({
-            id: entry.id,
-            title: entry.title || entry.id,
-            url: `https://www.youtube.com/watch?v=${entry.id}`,
-            duration: entry.duration || null,
-            uploader: entry.uploader || entry.channel || info.uploader || info.channel || '',
-        }));
-
         return res.status(200).json({
-            title: info.title || 'Playlist',
-            uploader: info.uploader || info.channel || '',
+            title: playlistTitle,
+            uploader,
             entries,
         });
     } catch (error: any) {
