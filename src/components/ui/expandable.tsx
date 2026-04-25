@@ -239,8 +239,7 @@ const ExpandableCard = ({
       ref={ref}
       className={cn(
         "relative overflow-hidden",
-        "rounded-none", // Ensure sharp corners
-        "transition-all duration-300",
+        "rounded-none",
         className
       )}
       style={heightStyle}

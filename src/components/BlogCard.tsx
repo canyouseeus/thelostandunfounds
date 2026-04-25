@@ -123,7 +123,7 @@ export const BlogCard: React.FC<BlogCardProps> = ({ post, link }) => {
                         }}
                     >
                         <ExpandableCard
-                            className="bg-black rounded-none h-full flex flex-col relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] cursor-pointer"
+                            className="bg-black rounded-none h-full flex flex-col relative overflow-hidden transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.02] cursor-pointer"
                             collapsedSize={{ height: 220 }}
                             expandedSize={{ height: 420 }}
                             hoverToExpand={false}
