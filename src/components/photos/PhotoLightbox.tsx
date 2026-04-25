@@ -132,14 +132,12 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                             )}
 
                             <img
-                                src={`https://lh3.googleusercontent.com/d/${photo.google_drive_file_id}=s3000`}
+                                src={`/api/gallery/stream?fileId=${photo.google_drive_file_id}&size=3000`}
                                 alt={photo.title}
                                 className={`max-h-[70vh] w-auto object-contain shadow-2xl select-none transition-all duration-700 ${!isPurchased ? 'pointer-events-none' : 'pointer-events-auto'}`}
                                 onContextMenu={(e) => e.preventDefault()}
                                 draggable={false}
                                 onLoad={() => setIsImageLoading(false)}
-                                referrerPolicy="no-referrer"
-                                crossOrigin="anonymous"
                                 style={{
                                     WebkitTouchCallout: 'none',
                                     WebkitUserSelect: 'none',

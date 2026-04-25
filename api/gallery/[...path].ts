@@ -5,7 +5,8 @@ import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import path from 'path';
 import sharp from 'sharp';
-import { syncGalleryPhotos } from '../../lib/api-handlers/_photo-sync-utils';
+// syncGalleryPhotos is dynamically imported inside handleSync to avoid loading
+// googleapis on every cold start (stream/checkout/capture don't need it)
 
 // --- INLINED EMAIL TEMPLATE UTILS (to avoid Vercel module resolution path errors) ---
 const BRAND = {
@@ -1215,6 +1216,7 @@ async function sendZohoEmail({
 
 async function handleSync(req: VercelRequest, res: VercelResponse) {
     try {
+        const { syncGalleryPhotos } = await import('../../lib/api-handlers/_photo-sync-utils');
         const { slug: querySlug } = req.query;
         const { libraryId, slug: bodySlug } = req.body || {};
 
