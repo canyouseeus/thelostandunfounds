@@ -1255,13 +1255,29 @@ async function sendZohoEmail({
 
 async function handleSync(req: VercelRequest, res: VercelResponse) {
     try {
-        const { syncGalleryPhotos } = await import('../../lib/api-handlers/_photo-sync-utils');
-        const { slug: querySlug } = req.query;
-        const { libraryId, slug: bodySlug } = req.body || {};
+        const {
+            syncGalleryPhotos,
+            listLibrarySubfolders,
+            syncSingleSubfolder,
+            cleanupOrphanedPhotos,
+        } = await import('../../lib/api-handlers/_photo-sync-utils');
 
-        // Use supplied service key or fallback
+        const querySlug = typeof req.query.slug === 'string' ? req.query.slug : null;
+        const queryAction = typeof req.query.action === 'string' ? req.query.action : null;
+        const body = (req.body && typeof req.body === 'object') ? req.body as Record<string, any> : {};
+        const {
+            libraryId,
+            slug: bodySlug,
+            action: bodyAction,
+            subfolderId,
+            subfolderName,
+            seenFileIds,
+            timeBudgetSeconds,
+        } = body;
+
+        const action: string | null = bodyAction || queryAction;
+
         const SVC_KEY = SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
-
         if (!SVC_KEY) {
             console.error('[Sync] SUPABASE_SERVICE_ROLE_KEY is missing from environment variables.');
             return res.status(500).json({
@@ -1271,7 +1287,7 @@ async function handleSync(req: VercelRequest, res: VercelResponse) {
         }
         const supabase = createClient(SUPABASE_URL!, SVC_KEY);
 
-        let targetSlug = (typeof querySlug === 'string' ? querySlug : null) || bodySlug;
+        let targetSlug: string | null = querySlug || bodySlug || null;
 
         // If we only have libraryId, look up the slug
         if (!targetSlug && libraryId) {
@@ -1280,23 +1296,49 @@ async function handleSync(req: VercelRequest, res: VercelResponse) {
                 .select('slug')
                 .eq('id', libraryId)
                 .single();
-
             if (lookupError || !lib) {
                 return res.status(404).json({ error: 'Library not found by ID' });
             }
             targetSlug = lib.slug;
         }
 
-        if (targetSlug) {
-            const result = await syncGalleryPhotos(targetSlug);
-            return res.json({ success: true, results: [result] });
+        // --- ACTION: list subfolders for batched sync ---
+        if (action === 'list') {
+            if (!targetSlug) return res.status(400).json({ error: 'slug or libraryId required for list action' });
+            const info = await listLibrarySubfolders(targetSlug);
+            return res.json({ success: true, ...info });
         }
 
-        // Sync all if no slug/id provided (only allow this for admins ideally, but acceptable for now)
+        // --- ACTION: sync a single subfolder (or root) ---
+        if (action === 'sync-folder') {
+            if (!targetSlug) return res.status(400).json({ error: 'slug or libraryId required for sync-folder action' });
+            const result = await syncSingleSubfolder({
+                librarySlug: targetSlug,
+                subfolderId,
+                subfolderName,
+                timeBudgetSeconds: typeof timeBudgetSeconds === 'number' ? timeBudgetSeconds : undefined,
+            });
+            return res.json({ success: true, ...result });
+        }
+
+        // --- ACTION: orphan cleanup, given the union of seen file IDs ---
+        if (action === 'cleanup') {
+            if (!targetSlug) return res.status(400).json({ error: 'slug or libraryId required for cleanup action' });
+            if (!Array.isArray(seenFileIds)) return res.status(400).json({ error: 'seenFileIds (array) required for cleanup' });
+            const deleted = await cleanupOrphanedPhotos(targetSlug, seenFileIds);
+            return res.json({ success: true, deleted });
+        }
+
+        // --- DEFAULT: one-shot sync (back-compat). Time-budget bounded so it
+        // can't crash Vercel even if it doesn't finish. ---
+        if (targetSlug) {
+            const result = await syncGalleryPhotos(targetSlug);
+            return res.json({ success: true, results: [{ slug: targetSlug, ...result }] });
+        }
+
         const { data: libraries, error: libError } = await supabase
             .from('photo_libraries')
             .select('slug');
-
         if (libError || !libraries) {
             return res.status(500).json({ error: 'Failed to fetch galleries for sync' });
         }

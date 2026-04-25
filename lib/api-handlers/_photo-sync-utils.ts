@@ -11,6 +11,7 @@ import { reverseGeocodeNeighborhood } from './_reverse-geocode';
 const MAX_DEPTH = 3;
 const SAMPLE_SIZE = 5;
 const DRIVE_PAGE_SIZE = 1000;
+const DEFAULT_TIME_BUDGET_SECONDS = 250;
 const MONTH_NAMES = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December',
@@ -33,6 +34,8 @@ interface SyncCtx {
     stats: SyncStats;
     seenFileIds: Set<string>;
     limit: number;
+    deadline: number;
+    timedOut: boolean;
 }
 
 function generateSlug(name: string, type: string): string {
@@ -316,6 +319,10 @@ async function processFolder(
     depth: number,
 ): Promise<void> {
     if (ctx.stats.synced >= ctx.limit) return;
+    if (Date.now() > ctx.deadline) {
+        ctx.timedOut = true;
+        return;
+    }
     ctx.stats.foldersVisited++;
 
     const { photos, subfolders } = await listFolderEntries(ctx.drive, folderId);
@@ -323,12 +330,20 @@ async function processFolder(
     let collectionTagId: string | null = null;
     let folderVenueOrLocationTagId: string | null = null;
     if (depth > 0 && folderName && photos.length > 0) {
+        // Subfolder name itself is always tagged on the photos as a 'collection'.
         collectionTagId = await ensureTag(ctx, folderName, 'collection');
-        folderVenueOrLocationTagId = await determineFolderTag(ctx, folderName, photos);
+        // Best-effort: also try to derive a venue/neighborhood from the folder.
+        try {
+            folderVenueOrLocationTagId = await determineFolderTag(ctx, folderName, photos);
+        } catch (err: any) {
+            console.warn(`[sync] determineFolderTag failed for ${folderName}:`, err?.message);
+            folderVenueOrLocationTagId = null;
+        }
     }
 
     for (const file of photos) {
         if (ctx.stats.synced >= ctx.limit) return;
+        if (Date.now() > ctx.deadline) { ctx.timedOut = true; return; }
         if (!file.id) continue;
         ctx.seenFileIds.add(file.id);
 
@@ -377,12 +392,20 @@ async function processFolder(
     if (depth < MAX_DEPTH) {
         for (const sub of subfolders) {
             if (ctx.stats.synced >= ctx.limit) break;
+            if (Date.now() > ctx.deadline) { ctx.timedOut = true; break; }
             await processFolder(ctx, sub.id!, sub.name || null, depth + 1);
         }
     }
 }
 
-export async function syncGalleryPhotos(librarySlug: string, limit: number = 10000) {
+interface ResolvedCreds {
+    SUPABASE_URL: string;
+    SUPABASE_SERVICE_ROLE_KEY: string;
+    GOOGLE_EMAIL: string;
+    GOOGLE_KEY: string;
+}
+
+function resolveCreds(): ResolvedCreds {
     const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
     const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
     const rawEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
@@ -397,6 +420,15 @@ export async function syncGalleryPhotos(librarySlug: string, limit: number = 100
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !GOOGLE_EMAIL || !GOOGLE_KEY) {
         throw new Error(`Missing credentials for sync. Email: ${!!GOOGLE_EMAIL}, Key: ${!!GOOGLE_KEY}`);
     }
+    return { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, GOOGLE_EMAIL, GOOGLE_KEY };
+}
+
+async function buildCtx(
+    librarySlug: string,
+    limit: number,
+    timeBudgetSeconds: number,
+): Promise<{ ctx: SyncCtx; folderId: string }> {
+    const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, GOOGLE_EMAIL, GOOGLE_KEY } = resolveCreds();
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -408,6 +440,7 @@ export async function syncGalleryPhotos(librarySlug: string, limit: number = 100
     if (libError || !library) throw new Error(`Library not found: ${librarySlug}`);
 
     const folderId = library.google_drive_folder_id || library.gdrive_folder_id;
+    if (!folderId) throw new Error(`Library ${librarySlug} has no google_drive_folder_id`);
 
     const auth = new google.auth.GoogleAuth({
         credentials: { client_email: GOOGLE_EMAIL, private_key: GOOGLE_KEY },
@@ -434,23 +467,164 @@ export async function syncGalleryPhotos(librarySlug: string, limit: number = 100
         stats: { synced: 0, foldersVisited: 0, tagsCreated: 0 },
         seenFileIds: new Set<string>(),
         limit: limit > 0 ? limit : Number.MAX_SAFE_INTEGER,
+        deadline: Date.now() + timeBudgetSeconds * 1000,
+        timedOut: false,
     };
+    return { ctx, folderId };
+}
+
+export interface SubfolderEntry {
+    id: string;
+    name: string;
+}
+
+/**
+ * List the immediate subfolders of a library's root Drive folder, plus any
+ * photos at the root. Used to plan a batched sync where each subfolder is
+ * synced in its own request.
+ */
+export async function listLibrarySubfolders(librarySlug: string): Promise<{
+    libraryId: string;
+    libraryName: string;
+    rootFolderId: string;
+    subfolders: SubfolderEntry[];
+    rootPhotoCount: number;
+}> {
+    const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, GOOGLE_EMAIL, GOOGLE_KEY } = resolveCreds();
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    const { data: library, error: libError } = await supabase
+        .from('photo_libraries')
+        .select('id, name, slug, google_drive_folder_id, gdrive_folder_id')
+        .eq('slug', librarySlug)
+        .single();
+    if (libError || !library) throw new Error(`Library not found: ${librarySlug}`);
+
+    const folderId = library.google_drive_folder_id || library.gdrive_folder_id;
+    if (!folderId) throw new Error(`Library ${librarySlug} has no google_drive_folder_id`);
+
+    const auth = new google.auth.GoogleAuth({
+        credentials: { client_email: GOOGLE_EMAIL, private_key: GOOGLE_KEY },
+        scopes: ['https://www.googleapis.com/auth/drive.readonly'],
+    });
+    const drive = google.drive({ version: 'v3', auth });
+
+    const { photos, subfolders } = await listFolderEntries(drive, folderId);
+
+    return {
+        libraryId: library.id,
+        libraryName: library.name,
+        rootFolderId: folderId,
+        subfolders: subfolders
+            .filter(s => s.id && s.name)
+            .map(s => ({ id: s.id!, name: s.name! })),
+        rootPhotoCount: photos.length,
+    };
+}
+
+/**
+ * Sync a single subfolder of a library (or the library's root if no subfolderId
+ * is provided). Each invocation is bounded by `timeBudgetSeconds`. Returns
+ * `timedOut: true` if the budget ran out before the folder was fully processed
+ * — caller can re-invoke to resume (the upserts are idempotent).
+ *
+ * No orphaned-photo cleanup happens here; call `cleanupOrphanedPhotos` after
+ * all subfolders have synced.
+ */
+export async function syncSingleSubfolder(opts: {
+    librarySlug: string;
+    subfolderId?: string;
+    subfolderName?: string;
+    limit?: number;
+    timeBudgetSeconds?: number;
+}) {
+    const limit = opts.limit && opts.limit > 0 ? opts.limit : Number.MAX_SAFE_INTEGER;
+    const budget = opts.timeBudgetSeconds ?? DEFAULT_TIME_BUDGET_SECONDS;
+    const { ctx, folderId: rootFolderId } = await buildCtx(opts.librarySlug, limit, budget);
+
+    const targetId = opts.subfolderId || rootFolderId;
+    const targetName = opts.subfolderName ?? null;
+    // depth=1 when a subfolder was given (so its name is tagged); depth=0 for root.
+    const depth = opts.subfolderId ? 1 : 0;
+
+    await processFolder(ctx, targetId, targetName, depth);
+
+    return {
+        synced: ctx.stats.synced,
+        foldersVisited: ctx.stats.foldersVisited,
+        tagsCreated: ctx.stats.tagsCreated,
+        seenFileIds: [...ctx.seenFileIds],
+        timedOut: ctx.timedOut,
+    };
+}
+
+/**
+ * Remove photos from Supabase whose Drive file IDs are not in `seenFileIds`.
+ * Pass the union of `seenFileIds` from every successful subfolder run.
+ * If `seenFileIds` is empty, nothing is deleted (treated as inconclusive).
+ */
+export async function cleanupOrphanedPhotos(librarySlug: string, seenFileIds: string[]): Promise<number> {
+    if (seenFileIds.length === 0) return 0;
+    const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = resolveCreds();
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    const { data: library } = await supabase
+        .from('photo_libraries')
+        .select('id')
+        .eq('slug', librarySlug)
+        .single();
+    if (!library) return 0;
+
+    const seen = new Set(seenFileIds);
+    const { data: existingPhotos } = await supabase
+        .from('photos')
+        .select('google_drive_file_id')
+        .eq('library_id', library.id);
+    if (!existingPhotos) return 0;
+
+    const toDelete = existingPhotos
+        .filter(p => p.google_drive_file_id && !seen.has(p.google_drive_file_id))
+        .map(p => p.google_drive_file_id!);
+    if (toDelete.length === 0) return 0;
+
+    const { error } = await supabase.from('photos').delete().in('google_drive_file_id', toDelete);
+    if (error) {
+        console.error(`[sync] cleanup failed for ${librarySlug}:`, error.message);
+        return 0;
+    }
+    return toDelete.length;
+}
+
+/**
+ * One-shot sync: walks the entire library tree in one invocation. Bounded by
+ * `timeBudgetSeconds` so it doesn't trigger Vercel's 300s function ceiling.
+ * For large libraries, prefer the batched flow (`listLibrarySubfolders` +
+ * `syncSingleSubfolder` per folder + `cleanupOrphanedPhotos`).
+ */
+export async function syncGalleryPhotos(
+    librarySlug: string,
+    limit: number = Number.MAX_SAFE_INTEGER,
+    timeBudgetSeconds: number = DEFAULT_TIME_BUDGET_SECONDS,
+) {
+    const { ctx, folderId } = await buildCtx(librarySlug, limit, timeBudgetSeconds);
 
     await processFolder(ctx, folderId, null, 0);
 
-    // Cleanup: remove photos no longer present in Drive
+    // Cleanup: remove photos no longer present in Drive — only if we walked the
+    // full tree without timing out (otherwise we'd delete photos in unscanned
+    // subfolders).
     let deletedCount = 0;
-    if (ctx.stats.synced < ctx.limit) {
-        const { data: existingPhotos } = await supabase
+    if (!ctx.timedOut && ctx.stats.synced < ctx.limit) {
+        const { data: existingPhotos } = await ctx.supabase
             .from('photos')
             .select('google_drive_file_id')
-            .eq('library_id', library.id);
+            .eq('library_id', ctx.library.id);
         if (existingPhotos) {
             const toDelete = existingPhotos
                 .filter(p => p.google_drive_file_id && !ctx.seenFileIds.has(p.google_drive_file_id))
                 .map(p => p.google_drive_file_id!);
             if (toDelete.length > 0) {
-                const { error } = await supabase.from('photos').delete().in('google_drive_file_id', toDelete);
+                const { error } = await ctx.supabase.from('photos').delete().in('google_drive_file_id', toDelete);
                 if (!error) deletedCount = toDelete.length;
             }
         }
@@ -461,5 +635,6 @@ export async function syncGalleryPhotos(librarySlug: string, limit: number = 100
         foldersVisited: ctx.stats.foldersVisited,
         tagsCreated: ctx.stats.tagsCreated,
         deleted: deletedCount,
+        timedOut: ctx.timedOut,
     };
 }
