@@ -17,6 +17,9 @@
     "api/cron/sync-photos.ts": {
       "maxDuration": 300
     },
+    "api/cron/sync-gallery.ts": {
+      "maxDuration": 250
+    },
     "api/admin/sync-library.ts": {
       "maxDuration": 300
     },
@@ -35,6 +38,10 @@
     {
       "path": "/api/cron/sync-photos",
       "schedule": "0 3,15 * * *"
+    },
+    {
+      "path": "/api/cron/sync-gallery",
+      "schedule": "*/2 * * * *"
     },
     {
       "path": "/api/cron/retry-pricing-refund",
