@@ -11,6 +11,7 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
   PlusCircleIcon,
+  PaperAirplaneIcon,
 } from '@heroicons/react/24/outline';
 import { supabase } from '../lib/supabase';
 import { cn } from '../components/ui/utils';
@@ -90,6 +91,44 @@ export default function AdminInvoices() {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
+  const [sendingId, setSendingId] = useState<string | null>(null);
+
+  async function sendInvoice(inv: Invoice) {
+    if (sendingId) return;
+    const clientEmail = (inv.clients as any)?.email || '';
+    const promptMsg = clientEmail
+      ? `Send ${inv.invoice_number} to ${clientEmail}?\n\n(Leave blank to use that address, or enter a different email to override.)`
+      : `No email on file for this client. Enter an email to send ${inv.invoice_number} to:`;
+    const override = window.prompt(promptMsg, clientEmail);
+    if (override === null) return;
+    const to_email = override.trim() || clientEmail;
+    if (!to_email) {
+      alert('No recipient email provided.');
+      return;
+    }
+    setSendingId(inv.id);
+    try {
+      const res = await fetch('/api/invoices/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-email': 'thelostandunfounds@gmail.com',
+        },
+        body: JSON.stringify({ invoice_id: inv.id, to_email }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        alert(`Failed to send invoice: ${data.error || res.statusText}`);
+      } else {
+        alert(`Invoice ${inv.invoice_number} sent to ${data.sentTo}`);
+        load();
+      }
+    } catch (e: any) {
+      alert(`Error sending invoice: ${e?.message || e}`);
+    } finally {
+      setSendingId(null);
+    }
+  }
 
   useEffect(() => {
     load();
@@ -224,11 +263,27 @@ export default function AdminInvoices() {
                       </p>
                     </div>
                   </div>
-                  <div className="text-right shrink-0 ml-4">
-                    <p className="text-lg font-black font-mono text-white">{fmtUSD(inv.total)}</p>
-                    <p className="text-[9px] text-white/20 uppercase tracking-wider">
-                      {inv.payment_method || '—'}
-                    </p>
+                  <div className="flex items-center gap-3 shrink-0 ml-4">
+                    <div className="text-right">
+                      <p className="text-lg font-black font-mono text-white">{fmtUSD(inv.total)}</p>
+                      <p className="text-[9px] text-white/20 uppercase tracking-wider">
+                        {inv.payment_method || '—'}
+                      </p>
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); sendInvoice(inv); }}
+                      disabled={sendingId === inv.id}
+                      title="Send invoice email to client"
+                      className={cn(
+                        'flex items-center gap-1.5 px-3 py-2 text-[9px] font-bold uppercase tracking-widest transition-colors',
+                        sendingId === inv.id
+                          ? 'bg-white/5 text-white/30 cursor-wait'
+                          : 'bg-white/5 hover:bg-white text-white hover:text-black'
+                      )}
+                    >
+                      <PaperAirplaneIcon className="w-3 h-3" />
+                      {sendingId === inv.id ? 'Sending…' : 'Send'}
+                    </button>
                   </div>
                 </div>
               ))}
