@@ -95,7 +95,7 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
                                     style={{ marginLeft: index === 0 ? '0' : '-1.5rem' }}
                                 >
                                     <img
-                                        src={`https://lh3.googleusercontent.com/d/${photo.google_drive_file_id}=s160`}
+                                        src={`/api/gallery/stream?fileId=${photo.google_drive_file_id}&size=160`}
                                         alt={photo.title}
                                         className="w-12 h-12 md:w-16 md:h-16 object-cover rounded border border-white/10 group-hover:border-white/30 transition-all group-hover:-translate-y-1"
                                     />

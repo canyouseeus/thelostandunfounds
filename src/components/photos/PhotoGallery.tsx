@@ -13,6 +13,7 @@ import {
     XMarkIcon,
     MagnifyingGlassIcon,
     MapPinIcon,
+    RectangleGroupIcon,
 } from '@heroicons/react/24/outline';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -129,14 +130,12 @@ const PhotoCard: React.FC<{
                             />
                         )}
                         <img
-                            src={`https://lh3.googleusercontent.com/d/${photo.google_drive_file_id}=s1200`}
+                            src={`/api/gallery/stream?fileId=${photo.google_drive_file_id}&size=1200`}
                             alt={photo.title}
                             onClick={(e) => { e.stopPropagation(); if (isPurchased) onLightbox(); }}
                             className={`${isSingle ? 'max-w-full w-auto h-auto max-h-[85vh] md:max-h-[calc(100vh-280px)] object-contain' : 'w-full h-full object-contain'} select-none transition-all duration-500 ${!isPurchased ? 'pointer-events-none' : 'cursor-pointer'}`}
                             draggable={false}
                             loading="lazy"
-                            referrerPolicy="no-referrer"
-                            crossOrigin="anonymous"
                             onContextMenu={(e) => e.preventDefault()}
                             style={{
                                 WebkitTouchCallout: 'none',
@@ -279,7 +278,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'storefront' | 'assets'>('storefront');
     const [showBackToTop, setShowBackToTop] = useState(false);
-    const [viewMode, setViewMode] = useState<'grid' | 'single' | 'map'>('grid');
+    const [viewMode, setViewMode] = useState<'grid' | 'single' | 'map' | 'albums'>('grid');
     const [searchModalOpen, setSearchModalOpen] = useState(false);
     const [authModalOpen, setAuthModalOpen] = useState(false);
     const [authMessage, setAuthMessage] = useState<string | undefined>(undefined);
@@ -873,6 +872,13 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                             <MapPinIcon className="w-5 h-5" />
                         </button>
                         <button
+                            onClick={() => setViewMode(viewMode === 'albums' ? 'grid' : 'albums')}
+                            className={cn("p-2 transition-colors", viewMode === 'albums' ? "text-white" : "text-white/40 hover:text-white/60")}
+                            title="Albums View"
+                        >
+                            <RectangleGroupIcon className="w-5 h-5" />
+                        </button>
+                        <button
                             onClick={() => {
                                 if (startDate || endDate) {
                                     setStartDate('');
@@ -902,7 +908,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             </div>
 
             {/* Tag Filter Chips */}
-            {availableTags.length > 0 && (
+            {availableTags.length > 0 && viewMode !== 'albums' && (
                 <div className="max-w-7xl mx-auto mb-6 px-4 md:px-8">
                     <div className="flex items-center gap-2 flex-wrap">
                         {selectedTagIds.length > 0 && (
@@ -936,6 +942,78 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 </div>
             )}
 
+            {/* Albums View */}
+            {viewMode === 'albums' && (() => {
+                const MONTH_NAMES_SET = new Set(['January', 'February', 'March', 'April', 'May', 'June',
+                    'July', 'August', 'September', 'October', 'November', 'December']);
+                const isDateTag = (name: string) => {
+                    if (/^\d{4}$/.test(name)) return true;
+                    if (MONTH_NAMES_SET.has(name)) return true;
+                    if (/^(January|February|March|April|May|June|July|August|September|October|November|December) \d{4}$/.test(name)) return true;
+                    return false;
+                };
+                const albumTags = availableTags.filter(t => t.type === 'collection' && !isDateTag(t.name));
+
+                // Build tag → photos index
+                const tagToPhotos = new Map<string, Photo[]>();
+                for (const [photoId, tagIds] of photoTagsMap.entries()) {
+                    const photo = photos.find(p => p.id === photoId);
+                    if (!photo) continue;
+                    for (const tid of tagIds) {
+                        if (!tagToPhotos.has(tid)) tagToPhotos.set(tid, []);
+                        tagToPhotos.get(tid)!.push(photo);
+                    }
+                }
+
+                return (
+                    <div className="max-w-7xl mx-auto">
+                        {albumTags.length === 0 ? (
+                            <div className="py-40 text-center">
+                                <p className="text-zinc-500 uppercase tracking-widest font-bold text-sm">No albums found</p>
+                                <p className="text-white/30 text-xs mt-2">Sync photos from Drive subfolders to create albums.</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3">
+                                {albumTags.sort((a, b) => a.name.localeCompare(b.name)).map(tag => {
+                                    const albumPhotos = tagToPhotos.get(tag.id) || [];
+                                    const cover = albumPhotos[0];
+                                    return (
+                                        <button
+                                            key={tag.id}
+                                            onClick={() => {
+                                                setSelectedTagIds([tag.id]);
+                                                setViewMode('grid');
+                                            }}
+                                            className="group relative aspect-square bg-white/5 overflow-hidden text-left focus:outline-none"
+                                        >
+                                            {cover ? (
+                                                <img
+                                                    src={`/api/gallery/stream?fileId=${cover.google_drive_file_id}&size=400`}
+                                                    alt={tag.name}
+                                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                    loading="lazy"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full bg-white/5" />
+                                            )}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                                            <div className="absolute inset-x-0 bottom-0 p-3">
+                                                <p className="text-white font-black text-xs md:text-sm uppercase tracking-wider leading-tight truncate">
+                                                    {tag.name}
+                                                </p>
+                                                <p className="text-white/40 text-[9px] font-bold uppercase tracking-widest mt-0.5">
+                                                    {albumPhotos.length} {albumPhotos.length === 1 ? 'photo' : 'photos'}
+                                                </p>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                );
+            })()}
+
             {/* Map View */}
             {viewMode === 'map' && (
                 <div className="w-full" style={{ height: 'calc(100vh - 200px)' }}>
@@ -961,7 +1039,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 </div>
             )}
 
-            <div className={`max-w-7xl mx-auto ${viewMode === 'map' ? 'hidden' : ''}`}>
+            <div className={`max-w-7xl mx-auto ${viewMode === 'map' || viewMode === 'albums' ? 'hidden' : ''}`}>
 
                 {/* Photos Grouped by Date */}
                 <div ref={photosRef} className="space-y-16">
