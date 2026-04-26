@@ -5,7 +5,6 @@ import {
     syncSingleSubfolder,
 } from '../../lib/api-handlers/_photo-sync-utils.js';
 
-const LIBRARY_SLUG = 'main';
 const SUBFOLDER_TIME_BUDGET_SECONDS = 230;
 
 function isAuthorized(req: VercelRequest): boolean {
@@ -29,35 +28,63 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
         const supabase = getSupabase();
 
-        const { subfolders } = await listLibrarySubfolders(LIBRARY_SLUG);
+        const { data: libraries, error: libErr } = await supabase
+            .from('photo_libraries')
+            .select('slug, google_drive_folder_id, gdrive_folder_id')
+            .order('slug', { ascending: true });
+        if (libErr) throw libErr;
 
-        if (subfolders.length > 0) {
-            const rows = subfolders.map(s => ({
-                library_slug: LIBRARY_SLUG,
-                subfolder_id: s.id,
-                subfolder_name: s.name,
-            }));
-            const { error: upsertErr } = await supabase
-                .from('sync_progress')
-                .upsert(rows, {
-                    onConflict: 'library_slug,subfolder_id',
-                    ignoreDuplicates: true,
-                });
-            if (upsertErr) {
-                console.error('[cron sync-gallery] upsert pending failed:', upsertErr.message);
+        const librarySlugs = (libraries ?? [])
+            .filter(l => l.google_drive_folder_id || l.gdrive_folder_id)
+            .map(l => l.slug as string);
+
+        if (librarySlugs.length === 0) {
+            return res.status(200).json({
+                status: 'complete',
+                message: 'No libraries with Drive folder IDs',
+                total_count: 0,
+                remaining_count: 0,
+            });
+        }
+
+        const listingReport: Array<{ slug: string; error?: string; count: number }> = [];
+        for (const slug of librarySlugs) {
+            try {
+                const { subfolders } = await listLibrarySubfolders(slug);
+                listingReport.push({ slug, count: subfolders.length });
+                if (subfolders.length === 0) continue;
+                const rows = subfolders.map(s => ({
+                    library_slug: slug,
+                    subfolder_id: s.id,
+                    subfolder_name: s.name,
+                }));
+                const { error: upsertErr } = await supabase
+                    .from('sync_progress')
+                    .upsert(rows, {
+                        onConflict: 'library_slug,subfolder_id',
+                        ignoreDuplicates: true,
+                    });
+                if (upsertErr) {
+                    console.error(`[cron sync-gallery] upsert pending failed for ${slug}:`, upsertErr.message);
+                }
+            } catch (listErr: any) {
+                const message = listErr?.message || String(listErr);
+                console.error(`[cron sync-gallery] listing subfolders for ${slug} failed:`, message);
+                listingReport.push({ slug, error: message, count: 0 });
             }
         }
 
         const { count: totalCount } = await supabase
             .from('sync_progress')
             .select('*', { count: 'exact', head: true })
-            .eq('library_slug', LIBRARY_SLUG);
+            .in('library_slug', librarySlugs);
 
         const { data: nextRows, error: nextErr } = await supabase
             .from('sync_progress')
-            .select('id, subfolder_id, subfolder_name, status')
-            .eq('library_slug', LIBRARY_SLUG)
+            .select('id, library_slug, subfolder_id, subfolder_name, status')
+            .in('library_slug', librarySlugs)
             .in('status', ['pending', 'error'])
+            .order('library_slug', { ascending: true })
             .order('subfolder_name', { ascending: true, nullsFirst: false })
             .limit(1);
         if (nextErr) throw nextErr;
@@ -70,6 +97,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 message: 'All subfolders synced',
                 total_count: totalCount ?? 0,
                 remaining_count: 0,
+                libraries: listingReport,
             });
         }
 
@@ -86,7 +114,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         try {
             const result = await syncSingleSubfolder({
-                librarySlug: LIBRARY_SLUG,
+                librarySlug: next.library_slug,
                 subfolderId: next.subfolder_id,
                 subfolderName: next.subfolder_name ?? undefined,
                 timeBudgetSeconds: SUBFOLDER_TIME_BUDGET_SECONDS,
@@ -107,12 +135,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const { count: remainingCount } = await supabase
                 .from('sync_progress')
                 .select('*', { count: 'exact', head: true })
-                .eq('library_slug', LIBRARY_SLUG)
+                .in('library_slug', librarySlugs)
                 .in('status', ['pending', 'error', 'syncing']);
 
             return res.status(200).json({
                 status: finalStatus === 'completed' ? 'ok' : 'timed_out',
                 subfolder_synced: {
+                    library_slug: next.library_slug,
                     id: next.subfolder_id,
                     name: next.subfolder_name,
                     photos_synced: result.synced,
@@ -135,17 +164,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     updated_at: completedAt,
                 })
                 .eq('id', next.id);
-            console.error(`[cron sync-gallery] subfolder ${next.subfolder_name} failed:`, syncErr);
+            console.error(
+                `[cron sync-gallery] subfolder ${next.subfolder_name} (${next.library_slug}) failed:`,
+                syncErr,
+            );
 
             const { count: remainingCount } = await supabase
                 .from('sync_progress')
                 .select('*', { count: 'exact', head: true })
-                .eq('library_slug', LIBRARY_SLUG)
+                .in('library_slug', librarySlugs)
                 .in('status', ['pending', 'error', 'syncing']);
 
             return res.status(200).json({
                 status: 'error',
                 subfolder_synced: {
+                    library_slug: next.library_slug,
                     id: next.subfolder_id,
                     name: next.subfolder_name,
                     error: message,
