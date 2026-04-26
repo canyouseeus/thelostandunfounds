@@ -144,10 +144,10 @@ const PhotoCard: React.FC<{
                             }}
                         />
 
-                        {/* Watermark (Front) */}
+                        {/* Brand overlay (preview protection) */}
                         {!isPurchased && (
                             <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center overflow-hidden">
-                                <img src="/logo.png" alt="Watermark" className="w-1/2 opacity-[0.09] brightness-0 invert select-none object-contain" />
+                                <img src="/logo.png" alt="" className="w-1/2 opacity-[0.09] brightness-0 invert select-none object-contain" />
                             </div>
                         )}
 
@@ -770,27 +770,41 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-32">
-                    {/* Left Column: Free badge */}
+                    {/* Left Column: Credit counter */}
                     <div className="space-y-3 max-w-sm">
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10">
-                            <span className="text-[9px] font-black tracking-[0.3em] uppercase text-green-400">
-                                FREE DOWNLOAD
-                            </span>
-                        </div>
-                        <p className="text-white/30 text-[10px] font-bold tracking-widest uppercase leading-relaxed">
-                            All photos are free. Downloads include an{' '}
-                            <span className="text-white/60">@tlau.photos</span>{' '}
-                            watermark — tag us when you post!
-                        </p>
-                        <a
-                            href="https://instagram.com/tlau.photos"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors"
-                        >
-                            <span className="w-1 h-1 rounded-full bg-white/30" />
-                            Follow @tlau.photos on Instagram
-                        </a>
+                        {creditEmail && creditBalance !== null ? (
+                            <>
+                                <div className="inline-flex items-baseline gap-3">
+                                    <span className="text-4xl md:text-5xl font-black text-white tracking-tighter leading-none">
+                                        {creditBalance}
+                                    </span>
+                                    <span className="text-[9px] font-black tracking-[0.3em] uppercase text-white/50">
+                                        Credits Remaining
+                                    </span>
+                                </div>
+                                <p className="text-white/30 text-[10px] font-bold tracking-widest uppercase leading-relaxed">
+                                    1 credit per photo. Additional credits $1 each.
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/5">
+                                    <span className="text-[9px] font-black tracking-[0.3em] uppercase text-white/70">
+                                        10 Free Credits
+                                    </span>
+                                </div>
+                                <p className="text-white/30 text-[10px] font-bold tracking-widest uppercase leading-relaxed">
+                                    Each photo costs 1 credit. Start with 10 free credits — additional credits $1 each.
+                                </p>
+                                <button
+                                    onClick={() => setCreditModalOpen(true)}
+                                    className="inline-flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors"
+                                >
+                                    <span className="w-1 h-1 rounded-full bg-white/30" />
+                                    Claim your 10 free credits
+                                </button>
+                            </>
+                        )}
                     </div>
 
                     {/* Right Column: Instructions */}
@@ -804,13 +818,13 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                         <div className="flex items-start gap-4 text-left">
                             <span className="text-[10px] font-black text-white/20 w-4 pt-0.5">02</span>
                             <p className="text-[9px] font-black tracking-[0.2em] uppercase text-white/40 leading-relaxed">
-                                Click "Download Free" in the tray below.
+                                Click "Download" in the tray below.
                             </p>
                         </div>
                         <div className="flex items-start gap-4 text-left">
                             <span className="text-[10px] font-black text-white/20 w-4 pt-0.5">03</span>
                             <p className="text-[9px] font-black tracking-[0.2em] uppercase text-white/40 leading-relaxed">
-                                Tag @tlau.photos when you share — and tips are always appreciated!
+                                Each download uses 1 credit. Tips are always appreciated!
                             </p>
                         </div>
                     </div>
@@ -847,6 +861,20 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                             </button>
                         </div>
                     )}
+
+                    {/* Credit pill - always visible while scrolling */}
+                    <button
+                        onClick={() => !creditEmail && setCreditModalOpen(true)}
+                        className={`inline-flex items-baseline gap-2 px-3 py-1 bg-white/5 transition-colors ${!creditEmail ? 'hover:bg-white/10 cursor-pointer' : 'cursor-default'}`}
+                        title={creditEmail ? 'Your credit balance' : 'Claim 10 free credits'}
+                    >
+                        <span className="text-sm font-black text-white tracking-tighter leading-none">
+                            {creditEmail && creditBalance !== null ? creditBalance : 10}
+                        </span>
+                        <span className="text-[8px] font-black tracking-[0.25em] uppercase text-white/50 leading-none">
+                            {creditEmail ? 'Credits' : 'Free Credits'}
+                        </span>
+                    </button>
 
                     {/* Row 2: Icons (Centered underneath) */}
                     <div className="flex items-center justify-center gap-12 sm:gap-16 w-full relative z-[101]">

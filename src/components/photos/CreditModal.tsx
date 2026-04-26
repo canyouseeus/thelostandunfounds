@@ -81,13 +81,13 @@ const CreditModal: React.FC<CreditModalProps> = ({ isOpen, onClose, onSuccess })
 
             <div className="mb-6">
               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-1">
-                Free Access
+                Get Started
               </p>
               <h2 className="text-xl font-black uppercase tracking-tight text-white mb-2">
-                100 Free Credits
+                10 Free Credits
               </h2>
               <p className="text-white/40 text-[11px] leading-relaxed">
-                Every download uses 1 credit. Enter your email to claim 100 credits — enough to download 100 photos, free.
+                Each photo costs 1 credit to download. Enter your email to claim 10 free credits to start. Additional credits are $1 each.
               </p>
             </div>
 
@@ -148,7 +148,7 @@ const CreditModal: React.FC<CreditModalProps> = ({ isOpen, onClose, onSuccess })
                 disabled={loading}
                 className="w-full py-3 bg-white text-black text-[11px] font-black uppercase tracking-[0.2em] hover:bg-white/90 transition-colors disabled:opacity-50"
               >
-                {loading ? 'Claiming...' : 'Claim 100 Free Credits'}
+                {loading ? 'Claiming...' : 'Claim 10 Free Credits'}
               </button>
             </form>
           </motion.div>

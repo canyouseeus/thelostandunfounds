@@ -208,44 +208,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 }
 
-async function addWatermark(imageBuffer: Buffer): Promise<Buffer> {
-    const image = sharp(imageBuffer);
-    const { width = 1600, height = 1200 } = await image.metadata();
-
-    const fontSize = Math.max(24, Math.round(Math.min(width, height) * 0.04));
-    const padding = Math.round(fontSize * 0.8);
-    const textWidth = Math.round(fontSize * 7.5); // approx width of "@tlau.photos"
-    const textHeight = Math.round(fontSize * 1.4);
-
-    // SVG watermark: bottom-right corner, semi-transparent
-    const watermarkSvg = `<svg width="${textWidth + padding * 2}" height="${textHeight + padding}" xmlns="http://www.w3.org/2000/svg">
-      <rect width="100%" height="100%" fill="rgba(0,0,0,0.35)" rx="4"/>
-      <text
-        x="${padding}"
-        y="${textHeight * 0.82}"
-        font-family="Arial, Helvetica, sans-serif"
-        font-size="${fontSize}"
-        font-weight="bold"
-        fill="rgba(255,255,255,0.75)"
-        letter-spacing="1"
-      >@tlau.photos</text>
-    </svg>`;
-
-    const watermarkBuffer = Buffer.from(watermarkSvg);
-    const wmWidth = textWidth + padding * 2;
-    const wmHeight = textHeight + padding;
-
-    return image
-        .jpeg({ quality: 92 })
-        .composite([{
-            input: watermarkBuffer,
-            gravity: 'southeast',
-            left: width - wmWidth - Math.round(width * 0.015),
-            top: height - wmHeight - Math.round(height * 0.015),
-        }])
-        .toBuffer();
-}
-
 // Build a branded download filename: the_lost_and_unfounds_llc_joshua_abram_greene_[title].jpg
 function buildDownloadFilename(rawTitle: string): string {
     const PREFIX = 'the_lost_and_unfounds_llc_joshua_abram_greene';
@@ -374,11 +336,10 @@ async function handleStream(req: VercelRequest, res: VercelResponse) {
 
         if (lh3Buffer) {
             if (isDownload) {
-                const watermarked = await addWatermark(lh3Buffer);
                 res.setHeader('Content-Type', 'image/jpeg');
                 res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
                 res.setHeader('Cache-Control', 'no-store');
-                return res.send(watermarked);
+                return res.send(lh3Buffer);
             }
             res.setHeader('Content-Type', lh3ContentType || 'image/jpeg');
             res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
@@ -393,11 +354,10 @@ async function handleStream(req: VercelRequest, res: VercelResponse) {
 
         if (saResult) {
             if (isDownload) {
-                const watermarked = await addWatermark(saResult.buffer);
                 res.setHeader('Content-Type', 'image/jpeg');
                 res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
                 res.setHeader('Cache-Control', 'no-store');
-                return res.send(watermarked);
+                return res.send(saResult.buffer);
             }
             res.setHeader('Content-Type', saResult.contentType);
             res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');

@@ -44,9 +44,13 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
     let buttonLabel: React.ReactNode;
 
     if (!hasEmail) {
-        labelLine1 = <span className="text-xl md:text-3xl font-black text-white tracking-tighter leading-none">FREE</span>;
+        labelLine1 = (
+            <span className="text-xl md:text-3xl font-black text-white tracking-tighter leading-none">
+                {count} CREDIT{count !== 1 ? 'S' : ''}
+            </span>
+        );
         labelLine2 = `${count} SELECTED`;
-        buttonLabel = 'GET FREE ACCESS';
+        buttonLabel = 'GET STARTED';
     } else if (canCoverAll) {
         labelLine1 = (
             <span className="text-xl md:text-3xl font-black text-white tracking-tighter leading-none">
@@ -56,7 +60,7 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
         labelLine2 = `${balance - count} REMAINING AFTER`;
         buttonLabel = (
             <>
-                DOWNLOAD FREE
+                DOWNLOAD
                 <ArrowDownTrayIcon className="w-3 h-3 md:w-4 md:h-4 transition-transform group-hover:translate-y-0.5" />
             </>
         );
@@ -67,7 +71,7 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
             </span>
         );
         labelLine2 = shortfall > 0 ? `${shortfall} REQUIRE PAYMENT` : `${count} SELECTED`;
-        buttonLabel = `CHECKOUT ($${(shortfall * 1000).toLocaleString()})`;
+        buttonLabel = `CHECKOUT ($${shortfall.toLocaleString()})`;
     }
 
     return (
@@ -122,12 +126,12 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
                         </div>
                         {hasEmail && creditBalance !== null && (
                             <p className="text-[7px] text-white/30 uppercase tracking-widest mt-0.5">
-                                {canCoverAll ? '@tlau.photos watermark included' : `${balance} credit${balance !== 1 ? 's' : ''} available`}
+                                {balance} credit{balance !== 1 ? 's' : ''} available
                             </p>
                         )}
                         {!hasEmail && (
                             <p className="text-[7px] text-white/30 uppercase tracking-widest mt-0.5">
-                                Enter email for 100 free credits
+                                Enter email for 10 free credits
                             </p>
                         )}
                     </div>

@@ -101,10 +101,8 @@ const DownloadPortal: React.FC = () => {
                     let response;
 
                     if (photo.storage_path && photo.thumbnail_url) {
-                        // Direct Storage Download (no Drive file — skip watermark path)
                         response = await fetch(photo.thumbnail_url);
                     } else {
-                        // Google Drive Proxy Download — watermark applied server-side
                         response = await fetch(`/api/gallery/stream?fileId=${photo.google_drive_file_id}&download=true`);
                     }
 

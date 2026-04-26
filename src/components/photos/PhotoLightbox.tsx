@@ -101,12 +101,12 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                         {/* Inner generic wrapper that shrinks to fit the image */}
                         <div className="relative w-fit h-auto flex items-center justify-center">
 
-                            {/* Watermark Overlay (Security) - Only if not purchased and image is loaded */}
+                            {/* Brand Overlay (preview protection) - Only if not purchased and image is loaded */}
                             {!isPurchased && (
                                 <div className={`absolute inset-0 z-10 flex items-center justify-center pointer-events-none overflow-hidden transition-opacity duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}>
                                     <img
                                         src="/logo.png"
-                                        alt="Watermark"
+                                        alt=""
                                         className="w-1/2 h-auto brightness-0 invert opacity-[0.09] select-none"
                                         style={{
                                             WebkitTouchCallout: 'none',
