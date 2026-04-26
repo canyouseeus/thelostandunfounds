@@ -29,7 +29,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Bot protection: honeypot field filled = bot
   if (hp) {
     // Silent accept — don't reveal rejection
-    return res.status(200).json({ credits_remaining: 100, is_new: true })
+    return res.status(200).json({ credits_remaining: 10, is_new: true })
   }
 
   if (!email || typeof email !== 'string') {
@@ -70,13 +70,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     })
   }
 
-  // New email — grant 100 credits
   const { data: newRecord, error: insertError } = await supabase
     .from('gallery_credits')
     .insert({
       email: normalized,
-      credits_remaining: 100,
-      total_claimed: 100,
+      credits_remaining: 10,
+      total_claimed: 10,
       last_claim_ip: ip
     })
     .select()
