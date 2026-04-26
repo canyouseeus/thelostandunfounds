@@ -11,7 +11,7 @@
 import { google } from 'googleapis';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import path from 'path';
-import { buildName, normalizeText, resetSeqs } from '../../scripts/claptrop-namer';
+import { buildName, normalizeText, resetSeqs } from '../../scripts/claptrop-namer.js';
 
 export interface RetrogradeOptions {
     librarySlug?: string;

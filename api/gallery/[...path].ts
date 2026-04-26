@@ -1260,7 +1260,7 @@ async function handleSync(req: VercelRequest, res: VercelResponse) {
             listLibrarySubfolders,
             syncSingleSubfolder,
             cleanupOrphanedPhotos,
-        } = await import('../../lib/api-handlers/_photo-sync-utils');
+        } = await import('../../lib/api-handlers/_photo-sync-utils.js');
 
         const querySlug = typeof req.query.slug === 'string' ? req.query.slug : null;
         const queryAction = typeof req.query.action === 'string' ? req.query.action : null;

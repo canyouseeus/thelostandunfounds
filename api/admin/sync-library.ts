@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { syncGalleryPhotos } from '../../lib/api-handlers/_photo-sync-utils';
+import { syncGalleryPhotos } from '../../lib/api-handlers/_photo-sync-utils.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Check method

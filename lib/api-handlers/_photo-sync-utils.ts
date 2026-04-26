@@ -5,8 +5,8 @@ import {
     haversineMeters,
     medianGps,
     VenueTag,
-} from './_venue-match';
-import { reverseGeocodeNeighborhood } from './_reverse-geocode';
+} from './_venue-match.js';
+import { reverseGeocodeNeighborhood } from './_reverse-geocode.js';
 
 const MAX_DEPTH = 3;
 const SAMPLE_SIZE = 5;

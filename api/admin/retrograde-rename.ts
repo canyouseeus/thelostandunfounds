@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { retrogradeRename } from '../../lib/api-handlers/_retrograde-rename';
+import { retrogradeRename } from '../../lib/api-handlers/_retrograde-rename.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
