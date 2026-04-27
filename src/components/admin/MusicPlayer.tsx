@@ -156,10 +156,17 @@ export default function MusicPlayer() {
         setCurrentTime(t);
     };
 
-    const isPlaylistUrl = (url: string) => url.includes('list=');
+    const isYouTubeUrl = (url: string) => /(?:^|\.)(?:youtube\.com|youtu\.be)(?:\/|$)/i.test(url.trim());
+    const isPlaylistUrl = (url: string) => isYouTubeUrl(url) && url.includes('list=');
+    const trimmedUrl = youtubeUrl.trim();
+    const urlIsValid = trimmedUrl === '' || isYouTubeUrl(trimmedUrl);
 
     const handleDownload = async () => {
         if (!youtubeUrl.trim()) return;
+        if (!isYouTubeUrl(youtubeUrl)) {
+            setDownloadError('Only YouTube URLs are supported (youtube.com / youtu.be).');
+            return;
+        }
         setIsDownloading(true);
         setDownloadError('');
         setDownloadStatus('Downloading…');
@@ -185,6 +192,10 @@ export default function MusicPlayer() {
     };
 
     const handleFetchPlaylist = async () => {
+        if (!isPlaylistUrl(youtubeUrl)) {
+            setDownloadError('Only YouTube playlist URLs are supported (must include list=…).');
+            return;
+        }
         setIsFetchingPlaylist(true);
         setDownloadError('');
         setPlaylistInfo(null);
@@ -297,17 +308,17 @@ export default function MusicPlayer() {
                                 value={youtubeUrl}
                                 onChange={(e) => { setYoutubeUrl(e.target.value); setPlaylistInfo(null); }}
                                 onKeyDown={(e) => {
-                                    if (e.key !== 'Enter' || !youtubeUrl.trim()) return;
-                                    isPlaylistUrl(youtubeUrl) ? handleFetchPlaylist() : handleDownload();
+                                    if (e.key !== 'Enter' || !trimmedUrl || !urlIsValid) return;
+                                    isPlaylistUrl(trimmedUrl) ? handleFetchPlaylist() : handleDownload();
                                 }}
                                 placeholder="Paste YouTube URL or playlist…"
-                                className="flex-1 bg-white/5 border border-white/20 text-white text-sm px-3 py-2 rounded-none outline-none focus:border-white/50 font-inter placeholder:text-white/30"
+                                className={`flex-1 bg-white/5 border text-white text-sm px-3 py-2 rounded-none outline-none font-inter placeholder:text-white/30 ${urlIsValid ? 'border-white/20 focus:border-white/50' : 'border-red-400/60 focus:border-red-400'}`}
                                 disabled={isDownloading || isFetchingPlaylist}
                             />
-                            {isPlaylistUrl(youtubeUrl) ? (
+                            {isPlaylistUrl(trimmedUrl) ? (
                                 <button
                                     onClick={handleFetchPlaylist}
-                                    disabled={isFetchingPlaylist || !youtubeUrl.trim()}
+                                    disabled={isFetchingPlaylist || !urlIsValid || !trimmedUrl}
                                     className="flex items-center gap-1.5 px-3 py-2 bg-white text-black text-sm font-medium font-inter hover:bg-white/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
                                 >
                                     {isFetchingPlaylist ? 'Loading…' : 'Load Playlist'}
@@ -315,7 +326,7 @@ export default function MusicPlayer() {
                             ) : (
                                 <button
                                     onClick={handleDownload}
-                                    disabled={isDownloading || !youtubeUrl.trim()}
+                                    disabled={isDownloading || !urlIsValid || !trimmedUrl}
                                     className="flex items-center gap-1.5 px-3 py-2 bg-white text-black text-sm font-medium font-inter hover:bg-white/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                     <ArrowDownTrayIcon className="w-4 h-4" />
@@ -337,6 +348,11 @@ export default function MusicPlayer() {
                                 <XMarkIcon className="w-4 h-4" />
                             </button>
                         </div>
+                        {!urlIsValid && (
+                            <p className="mt-2 text-xs text-red-400/80 font-inter">
+                                Only YouTube URLs are supported (youtube.com / youtu.be).
+                            </p>
+                        )}
                         {downloadError && (
                             <p className="mt-2 text-xs text-red-400 font-inter">{downloadError}</p>
                         )}

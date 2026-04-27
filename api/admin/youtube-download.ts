@@ -2,10 +2,9 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import { google } from 'googleapis';
 import { createClient } from '@supabase/supabase-js';
 import { Readable } from 'stream';
+import ytdl from '@distube/ytdl-core';
 
 const DRIVE_FOLDER_ID = '1U02vZ2JXr7UcSSnxn832pig1m8sTZ3Ko';
-const COBALT_API = 'https://api.cobalt.tools';
-const COBALT_TIMEOUT_MS = 60_000;
 const STREAM_TIMEOUT_MS = 240_000;
 
 function getOAuth2Client() {
@@ -33,14 +32,6 @@ function extractVideoId(url: string): string | null {
     return null;
 }
 
-async function fetchOEmbedMetadata(videoId: string): Promise<{ title: string; author: string }> {
-    const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
-    const r = await fetch(oembedUrl);
-    if (!r.ok) throw new Error(`oEmbed HTTP ${r.status}`);
-    const info = await r.json() as any;
-    return { title: info.title || 'Unknown', author: info.author_name || '' };
-}
-
 function extractTitleArtist(rawTitle: string): { title: string; artist: string } {
     const sep = rawTitle.indexOf(' - ');
     if (sep !== -1) {
@@ -52,68 +43,68 @@ function extractTitleArtist(rawTitle: string): { title: string; artist: string }
     return { title: rawTitle.trim(), artist: '' };
 }
 
-// Resolve a downloadable audio stream URL via cobalt.tools.
-// cobalt response shapes (v10): { status: "tunnel"|"redirect", url, filename }
-// Older/picker variants surface the audio URL via `audio` or pick first picker entry.
-async function resolveAudioStream(youtubeUrl: string): Promise<{ url: string; filename: string }> {
+interface DownloadedAudio {
+    buffer: Buffer;
+    mimeType: string;
+    extension: string;
+    title: string;
+    author: string;
+    durationSec: number;
+}
+
+async function downloadAudio(canonicalUrl: string): Promise<DownloadedAudio> {
+    const info = await ytdl.getInfo(canonicalUrl);
+    const format = ytdl.chooseFormat(info.formats, {
+        quality: 'highestaudio',
+        filter: 'audioonly',
+    });
+    if (!format) throw new Error('No audio-only format available for this video');
+
+    const isMp4 = (format.container || '').toLowerCase() === 'mp4';
+    const mimeType = isMp4 ? 'audio/mp4' : 'audio/webm';
+    const extension = isMp4 ? 'm4a' : 'webm';
+
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), COBALT_TIMEOUT_MS);
-    let response: Response;
+    const timer = setTimeout(() => ctrl.abort(), STREAM_TIMEOUT_MS);
+
+    const stream = ytdl.downloadFromInfo(info, { format });
+    const chunks: Buffer[] = [];
+
     try {
-        response = await fetch(COBALT_API + '/', {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'User-Agent': 'thelostandunfounds-music/1.0',
-            },
-            body: JSON.stringify({
-                url: youtubeUrl,
-                downloadMode: 'audio',
-                audioFormat: 'mp3',
-                audioBitrate: '192',
-                filenameStyle: 'basic',
-            }),
-            signal: ctrl.signal,
+        await new Promise<void>((resolve, reject) => {
+            const onAbort = () => {
+                stream.destroy(new Error('Download timed out'));
+            };
+            ctrl.signal.addEventListener('abort', onAbort, { once: true });
+
+            stream.on('data', (chunk: Buffer) => {
+                chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+            });
+            stream.on('end', () => {
+                ctrl.signal.removeEventListener('abort', onAbort);
+                resolve();
+            });
+            stream.on('error', (err) => {
+                ctrl.signal.removeEventListener('abort', onAbort);
+                reject(err);
+            });
         });
     } finally {
         clearTimeout(timer);
     }
 
-    const text = await response.text();
-    let body: any;
-    try {
-        body = JSON.parse(text);
-    } catch {
-        throw new Error(`cobalt non-JSON response (HTTP ${response.status}): ${text.substring(0, 200)}`);
-    }
+    const buffer = Buffer.concat(chunks);
+    if (buffer.length === 0) throw new Error('ytdl returned an empty audio stream');
 
-    if (!response.ok || body.status === 'error') {
-        const msg = body?.error?.code || body?.text || `HTTP ${response.status}`;
-        throw new Error(`cobalt rejected request: ${msg}`);
-    }
-
-    if ((body.status === 'tunnel' || body.status === 'redirect' || body.status === 'stream') && body.url) {
-        return { url: body.url, filename: body.filename || 'audio.mp3' };
-    }
-    if (body.status === 'picker') {
-        const audioUrl = body.audio || body.picker?.[0]?.url;
-        if (audioUrl) return { url: audioUrl, filename: body.filename || 'audio.mp3' };
-    }
-    throw new Error(`cobalt returned unexpected status: ${body.status || 'unknown'}`);
-}
-
-async function downloadBuffer(url: string): Promise<Buffer> {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), STREAM_TIMEOUT_MS);
-    try {
-        const r = await fetch(url, { signal: ctrl.signal });
-        if (!r.ok) throw new Error(`Audio stream HTTP ${r.status}`);
-        const ab = await r.arrayBuffer();
-        return Buffer.from(ab);
-    } finally {
-        clearTimeout(timer);
-    }
+    const durationSec = parseInt(info.videoDetails.lengthSeconds || '0', 10) || 0;
+    return {
+        buffer,
+        mimeType,
+        extension,
+        title: info.videoDetails.title || 'Unknown',
+        author: info.videoDetails.author?.name || '',
+        durationSec,
+    };
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -126,54 +117,51 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'url is required' });
     }
 
+    const videoId = extractVideoId(url);
+    if (!videoId) {
+        return res.status(400).json({
+            error: 'Only YouTube URLs are supported. Paste a youtube.com/watch, youtu.be, /shorts, or /embed link.',
+        });
+    }
+
     const supabase = createClient(
         process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
     try {
-        const videoId = extractVideoId(url);
-        if (!videoId) throw new Error(`Could not extract video ID from URL: ${url}`);
         const canonicalUrl = `https://www.youtube.com/watch?v=${videoId}`;
+        const audio = await downloadAudio(canonicalUrl);
+        console.log(`[YouTube Download] ${audio.buffer.length} bytes (${audio.mimeType}) for "${audio.title}"`);
 
-        const { title: rawTitle, author } = await fetchOEmbedMetadata(videoId);
-        console.log(`[YouTube Download] Metadata: "${rawTitle}" by "${author}" (id=${videoId})`);
-
-        const stream = await resolveAudioStream(canonicalUrl);
-        console.log(`[YouTube Download] cobalt resolved stream (filename=${stream.filename})`);
-
-        const audioBuffer = await downloadBuffer(stream.url);
-        if (audioBuffer.length === 0) throw new Error('Audio stream returned empty buffer');
-        console.log(`[YouTube Download] Downloaded ${audioBuffer.length} bytes`);
-
-        const safeTitle = rawTitle.replace(/[^a-zA-Z0-9 _-]/g, '_').substring(0, 80);
-        const fileName = `${safeTitle}.mp3`;
+        const safeTitle = audio.title.replace(/[^a-zA-Z0-9 _-]/g, '_').substring(0, 80);
+        const fileName = `${safeTitle}.${audio.extension}`;
 
         const drive = google.drive({ version: 'v3', auth: getOAuth2Client() });
         const driveFile = await drive.files.create({
             requestBody: {
                 name: fileName,
                 parents: [DRIVE_FOLDER_ID],
-                mimeType: 'audio/mpeg',
+                mimeType: audio.mimeType,
             },
             media: {
-                mimeType: 'audio/mpeg',
-                body: Readable.from(audioBuffer),
+                mimeType: audio.mimeType,
+                body: Readable.from(audio.buffer),
             },
             fields: 'id,name',
         });
 
         const fileId = driveFile.data.id!;
-        const { title, artist } = extractTitleArtist(rawTitle);
+        const { title, artist } = extractTitleArtist(audio.title);
 
         const { data: track, error: dbError } = await supabase
             .from('admin_playlist')
             .insert({
                 title,
-                artist: artist || author,
+                artist: artist || audio.author,
                 file_id: fileId,
-                duration: 0,
-                source_url: url,
+                duration: audio.durationSec,
+                source_url: canonicalUrl,
             })
             .select()
             .single();
