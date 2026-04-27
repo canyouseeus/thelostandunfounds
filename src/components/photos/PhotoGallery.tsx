@@ -277,6 +277,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'storefront' | 'assets'>('storefront');
     const [showBackToTop, setShowBackToTop] = useState(false);
+    const isAllPublic = librarySlug === 'all-public';
     const [viewMode, setViewMode] = useState<'grid' | 'single' | 'map'>('grid');
     const [searchModalOpen, setSearchModalOpen] = useState(false);
     const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -403,10 +404,11 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 throw error;
             }
 
-            // Filter photos that belong to this library
+            // Filter photos that belong to this library (or all photos in all-public mode)
+            const photosLoadedIds = new Set(photos.map(p => p.id));
             const filtered = data
                 ?.map(ent => Array.isArray(ent.photos) ? ent.photos[0] : ent.photos)
-                ?.filter(p => p && p.library_id === library.id) as any as Photo[] || [];
+                ?.filter(p => p && (isAllPublic ? photosLoadedIds.has(p.id) : p.library_id === library.id)) as any as Photo[] || [];
 
             setPurchasedPhotos(filtered);
         } catch (err: any) {
@@ -418,34 +420,69 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     async function fetchGallery(signal?: AbortSignal) {
         try {
             setLoading(true);
-            const { data: libData, error: libError } = await supabase
-                .from('photo_libraries')
-                .select('*')
-                .eq('slug', librarySlug)
-                .single();
 
-            if (libError) {
-                if (libError.message === 'Fetch is aborted' || libError.code === '20') return;
-                throw libError;
+            let libraryIds: string[];
+
+            if (isAllPublic) {
+                // Aggregate mode: load every public library's photos in one view
+                const { data: pubLibs, error: pubLibsError } = await supabase
+                    .from('photo_libraries')
+                    .select('id, name, slug, description, is_private')
+                    .eq('is_private', false);
+
+                if (pubLibsError) {
+                    if (pubLibsError.message === 'Fetch is aborted' || pubLibsError.code === '20') return;
+                    throw pubLibsError;
+                }
+
+                libraryIds = (pubLibs || []).map(l => l.id);
+
+                setLibrary({
+                    id: 'all-public',
+                    name: 'THE GALLERY',
+                    slug: 'all-public',
+                    description: 'Free public photos — organized by album.',
+                    price: 0,
+                    is_private: false,
+                });
+                setPricingOptions([]);
+            } else {
+                const { data: libData, error: libError } = await supabase
+                    .from('photo_libraries')
+                    .select('*')
+                    .eq('slug', librarySlug)
+                    .single();
+
+                if (libError) {
+                    if (libError.message === 'Fetch is aborted' || libError.code === '20') return;
+                    throw libError;
+                }
+                setLibrary(libData);
+                libraryIds = [libData.id];
+
+                // Fetch pricing options
+                const { data: pricingData } = await supabase
+                    .from('gallery_pricing_options')
+                    .select('*')
+                    .eq('library_id', libData.id)
+                    .eq('is_active', true)
+                    .order('photo_count', { ascending: true });
+
+                setPricingOptions(pricingData || []);
             }
-            setLibrary(libData);
 
-            // Fetch pricing options
-            const { data: pricingData } = await supabase
-                .from('gallery_pricing_options')
-                .select('*')
-                .eq('library_id', libData.id)
-                .eq('is_active', true)
-                .order('photo_count', { ascending: true });
-
-            setPricingOptions(pricingData || []);
+            if (libraryIds.length === 0) {
+                setPhotos([]);
+                return;
+            }
 
             const { data: photoData, error: photoError } = await supabase
                 .from('photos')
                 .select('*')
-                .eq('library_id', libData.id)
+                .in('library_id', libraryIds)
                 .order('created_at', { ascending: false })
-                .order('title', { ascending: false });
+                .order('title', { ascending: false })
+                .limit(5000);
 
             if (photoError) {
                 if (photoError.message === 'Fetch is aborted' || photoError.code === '20') return;
@@ -461,22 +498,28 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             });
             setPhotos(fetchedPhotos);
 
-            // Fetch tags for photos in this gallery
+            // Fetch tags for photos in this gallery (chunk by 200 to stay under URL length limits)
             if (fetchedPhotos.length > 0) {
                 const photoIds = fetchedPhotos.map((p: Photo) => p.id);
-                const { data: ptData } = await supabase
-                    .from('photo_tags')
-                    .select('photo_id, tag_id, tags(id, name, type)')
-                    .in('photo_id', photoIds);
+                const tagMap = new Map<string, Set<string>>();
+                const tagIndex = new Map<string, { id: string; name: string; type: string }>();
 
-                if (ptData && ptData.length > 0) {
-                    const tagMap = new Map<string, Set<string>>();
-                    const tagIndex = new Map<string, { id: string; name: string; type: string }>();
-                    for (const row of ptData as any[]) {
+                const chunkSize = 200;
+                for (let i = 0; i < photoIds.length; i += chunkSize) {
+                    const chunk = photoIds.slice(i, i + chunkSize);
+                    const { data: ptData } = await supabase
+                        .from('photo_tags')
+                        .select('photo_id, tag_id, tags(id, name, type)')
+                        .in('photo_id', chunk);
+
+                    for (const row of (ptData || []) as any[]) {
                         if (!tagMap.has(row.photo_id)) tagMap.set(row.photo_id, new Set());
                         tagMap.get(row.photo_id)!.add(row.tag_id);
                         if (row.tags) tagIndex.set(row.tags.id, row.tags);
                     }
+                }
+
+                if (tagIndex.size > 0) {
                     setPhotoTagsMap(tagMap);
                     setAvailableTags(Array.from(tagIndex.values()).sort((a, b) => a.name.localeCompare(b.name)));
                 }

@@ -86,6 +86,11 @@ export default function Layout({ children }: { children?: ReactNode }) {
     }
   }, [menuOpen])
 
+  // Scroll to top whenever the route changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+  }, [location.pathname])
+
   // Route change loading animation (skip for homepage)
   useEffect(() => {
     const isNavigatingFromHome = previousPathRef.current === '/' && location.pathname !== '/'

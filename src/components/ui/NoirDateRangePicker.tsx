@@ -75,7 +75,14 @@ export const NoirDateRangePicker: React.FC<NoirDateRangePickerProps> = ({
                     onDateSelect={handleDateSelect}
                 />
 
-                <div className="mt-6 text-center">
+                <div className="mt-6 flex items-center justify-between gap-4">
+                    <button
+                        onClick={() => onChange('', '')}
+                        disabled={!startDate && !endDate}
+                        className="text-[10px] font-black tracking-[0.2em] uppercase text-white/50 hover:text-white disabled:text-white/15 disabled:cursor-not-allowed transition-colors"
+                    >
+                        Clear
+                    </button>
                     <p className="text-[10px] tracking-widest text-white/40">
                         SELECTION APPLIES AUTOMATICALLY
                     </p>
