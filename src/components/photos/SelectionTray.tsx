@@ -136,17 +136,25 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
                         )}
                     </div>
 
-                    <button
-                        onClick={onCheckout}
-                        disabled={loading}
-                        className="group flex items-center gap-2 px-6 py-2 md:px-10 md:py-3.5 bg-white text-black font-black uppercase tracking-[0.2em] text-[10px] md:text-[11px] hover:bg-zinc-200 transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap shrink-0"
-                    >
-                        {loading ? (
-                            <LoadingSpinner size="sm" className="text-black" />
-                        ) : (
-                            buttonLabel
-                        )}
-                    </button>
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                        <button
+                            onClick={onCheckout}
+                            disabled={loading}
+                            className="group flex items-center gap-2 px-6 py-2 md:px-10 md:py-3.5 bg-white text-black font-black uppercase tracking-[0.2em] text-[10px] md:text-[11px] hover:bg-zinc-200 transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap shrink-0"
+                        >
+                            {loading ? (
+                                <LoadingSpinner size="sm" className="text-black" />
+                            ) : (
+                                buttonLabel
+                            )}
+                        </button>
+                        <p className="text-[7px] text-white/30 uppercase tracking-[0.2em] whitespace-nowrap">
+                            Personal use only ·{' '}
+                            <a href="/licensing" className="text-white/50 hover:text-white transition-colors">
+                                Commercial →
+                            </a>
+                        </p>
+                    </div>
                 </div>
             </div>
         </motion.div>

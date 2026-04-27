@@ -826,6 +826,17 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                 Each download uses 1 credit. Tips are always appreciated!
                             </p>
                         </div>
+                        <div className="pt-3 mt-2 border-t border-white/5">
+                            <p className="text-[8px] font-black tracking-[0.25em] uppercase text-white/30 leading-relaxed">
+                                Personal use only
+                            </p>
+                            <p className="text-[9px] text-white/30 leading-relaxed mt-1">
+                                Free downloads are licensed for personal use — social media, wallpapers, personal printing.{' '}
+                                <a href="/licensing" className="text-white/50 hover:text-white underline underline-offset-2 transition-colors">
+                                    Commercial licensing →
+                                </a>
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1217,6 +1228,12 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                             </div>
                             <p className="text-[10px] text-white/40 uppercase tracking-widest animate-pulse">
                                 {downloadStatus}
+                            </p>
+                            <p className="text-[8px] text-white/20 uppercase tracking-[0.25em] pt-2">
+                                Personal use only ·{' '}
+                                <a href="/licensing" className="text-white/40 hover:text-white/70 transition-colors">
+                                    Commercial →
+                                </a>
                             </p>
                         </div>
                     </motion.div>

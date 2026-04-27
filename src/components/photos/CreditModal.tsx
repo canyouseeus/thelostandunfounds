@@ -150,6 +150,13 @@ const CreditModal: React.FC<CreditModalProps> = ({ isOpen, onClose, onSuccess })
               >
                 {loading ? 'Claiming...' : 'Claim 10 Free Credits'}
               </button>
+
+              <p className="text-[9px] text-white/30 leading-relaxed text-center pt-1">
+                Credits download photos licensed for personal use.{' '}
+                <a href="/licensing" className="text-white/50 hover:text-white underline underline-offset-2 transition-colors">
+                  Commercial licensing →
+                </a>
+              </p>
             </form>
           </motion.div>
         </motion.div>

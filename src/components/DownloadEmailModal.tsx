@@ -93,6 +93,13 @@ const DownloadEmailModal: React.FC<DownloadEmailModalProps> = ({
                             </button>
                         </form>
 
+                        <p className="text-[9px] text-white/30 leading-relaxed text-center mt-4">
+                            Licensed for personal use only.{' '}
+                            <a href="/licensing" className="text-white/50 hover:text-white underline underline-offset-2 transition-colors">
+                                Commercial licensing →
+                            </a>
+                        </p>
+
                         <button
                             onClick={onClose}
                             className="w-full text-[10px] text-white/25 hover:text-white/50 uppercase tracking-widest transition-colors mt-4"
