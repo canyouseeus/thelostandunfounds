@@ -158,13 +158,21 @@ export default function MusicPlayer() {
 
     const isYouTubeUrl = (url: string) => /(?:^|\.)(?:youtube\.com|youtu\.be)(?:\/|$)/i.test(url.trim());
     const isPlaylistUrl = (url: string) => isYouTubeUrl(url) && url.includes('list=');
+    const isDriveFolderUrl = (url: string) => /drive\.google\.com\/.*\/folders\/[a-zA-Z0-9_-]{20,}/i.test(url.trim());
+    const isDriveFileUrl = (url: string) => {
+        const u = url.trim();
+        if (!/drive\.google\.com/i.test(u)) return false;
+        if (isDriveFolderUrl(u)) return false;
+        return /\/file\/d\/[a-zA-Z0-9_-]{20,}/.test(u) || /[?&]id=[a-zA-Z0-9_-]{20,}/.test(u);
+    };
+    const isDriveUrl = (url: string) => isDriveFolderUrl(url) || isDriveFileUrl(url);
     const trimmedUrl = youtubeUrl.trim();
-    const urlIsValid = trimmedUrl === '' || isYouTubeUrl(trimmedUrl);
+    const urlIsValid = trimmedUrl === '' || isYouTubeUrl(trimmedUrl) || isDriveUrl(trimmedUrl);
 
     const handleDownload = async () => {
         if (!youtubeUrl.trim()) return;
         if (!isYouTubeUrl(youtubeUrl)) {
-            setDownloadError('Only YouTube URLs are supported (youtube.com / youtu.be).');
+            setDownloadError('Only YouTube URLs are supported here.');
             return;
         }
         setIsDownloading(true);
@@ -179,6 +187,35 @@ export default function MusicPlayer() {
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Download failed');
+            setYoutubeUrl('');
+            setShowYtInput(false);
+            setDownloadStatus('');
+            await loadTracks();
+        } catch (err: any) {
+            setDownloadError(err.message);
+            setDownloadStatus('');
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+
+    const handleAddDrive = async () => {
+        if (!youtubeUrl.trim()) return;
+        if (!isDriveUrl(youtubeUrl)) {
+            setDownloadError('Paste a drive.google.com file or folder URL.');
+            return;
+        }
+        setIsDownloading(true);
+        setDownloadError('');
+        setDownloadStatus(isDriveFolderUrl(youtubeUrl) ? 'Loading folder…' : 'Adding…');
+        try {
+            const res = await fetch('/api/admin/drive-add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: youtubeUrl.trim() }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Add failed');
             setYoutubeUrl('');
             setShowYtInput(false);
             setDownloadStatus('');
@@ -269,7 +306,7 @@ export default function MusicPlayer() {
                     </div>
                     {tracks.length === 0 ? (
                         <div className="px-4 py-6 text-center text-white/40 text-sm font-inter">
-                            No tracks yet. Add one via YouTube below.
+                            No tracks yet. Add one via YouTube or Google Drive below.
                         </div>
                     ) : (
                         tracks.map((track, i) => (
@@ -309,9 +346,11 @@ export default function MusicPlayer() {
                                 onChange={(e) => { setYoutubeUrl(e.target.value); setPlaylistInfo(null); }}
                                 onKeyDown={(e) => {
                                     if (e.key !== 'Enter' || !trimmedUrl || !urlIsValid) return;
-                                    isPlaylistUrl(trimmedUrl) ? handleFetchPlaylist() : handleDownload();
+                                    if (isPlaylistUrl(trimmedUrl)) handleFetchPlaylist();
+                                    else if (isDriveUrl(trimmedUrl)) handleAddDrive();
+                                    else handleDownload();
                                 }}
-                                placeholder="Paste YouTube URL or playlist…"
+                                placeholder="Paste YouTube URL, playlist, or Google Drive link…"
                                 className={`flex-1 bg-white/5 border text-white text-sm px-3 py-2 rounded-none outline-none font-inter placeholder:text-white/30 ${urlIsValid ? 'border-white/20 focus:border-white/50' : 'border-red-400/60 focus:border-red-400'}`}
                                 disabled={isDownloading || isFetchingPlaylist}
                             />
@@ -322,6 +361,17 @@ export default function MusicPlayer() {
                                     className="flex items-center gap-1.5 px-3 py-2 bg-white text-black text-sm font-medium font-inter hover:bg-white/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
                                 >
                                     {isFetchingPlaylist ? 'Loading…' : 'Load Playlist'}
+                                </button>
+                            ) : isDriveUrl(trimmedUrl) ? (
+                                <button
+                                    onClick={handleAddDrive}
+                                    disabled={isDownloading || !urlIsValid || !trimmedUrl}
+                                    className="flex items-center gap-1.5 px-3 py-2 bg-white text-black text-sm font-medium font-inter hover:bg-white/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+                                >
+                                    <PlusIcon className="w-4 h-4" />
+                                    {isDownloading
+                                        ? downloadStatus || 'Adding…'
+                                        : isDriveFolderUrl(trimmedUrl) ? 'Add Folder' : 'Add'}
                                 </button>
                             ) : (
                                 <button
@@ -350,7 +400,7 @@ export default function MusicPlayer() {
                         </div>
                         {!urlIsValid && (
                             <p className="mt-2 text-xs text-red-400/80 font-inter">
-                                Only YouTube URLs are supported (youtube.com / youtu.be).
+                                Paste a YouTube link (youtube.com / youtu.be) or a Google Drive file/folder URL.
                             </p>
                         )}
                         {downloadError && (
@@ -511,7 +561,7 @@ export default function MusicPlayer() {
                         <button
                             onClick={() => { setShowYtInput(!showYtInput); setShowPlaylist(false); }}
                             className="text-white/50 hover:text-white transition-colors"
-                            title="Add from YouTube"
+                            title="Add from YouTube or Google Drive"
                         >
                             <PlusIcon className="w-4 h-4" />
                         </button>
