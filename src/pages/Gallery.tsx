@@ -166,11 +166,6 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
         return <PhotoGallery librarySlug={slug} />;
     }
 
-    // /gallery (non-homepage) — show the unified public archive view by default.
-    if (!isHomepage) {
-        return <PhotoGallery librarySlug="all-public" />;
-    }
-
     const publicLibraries = libraries.filter(lib => !lib.is_private);
     const privateLibraries = libraries.filter(lib => lib.is_private);
     const displayedLibraries = activeGalleryTab === 'public' ? publicLibraries : privateLibraries;
@@ -193,13 +188,8 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                 )}
             </AnimatePresence>
 
-            {/* Default homepage gallery — unified view of all public photos (organized by tag-albums) */}
-            {isHomepage && !activeGallery && viewMode === 'gallery' && (
-                <PhotoGallery librarySlug="all-public" inline />
-            )}
-
-            {/* Library-card grid — kept for the non-homepage /gallery path, hidden on the homepage */}
-            <div style={{ display: isHomepage ? 'none' : 'block' }}>
+            {/* Gallery grid — hidden (not unmounted) while a gallery is open */}
+            <div style={{ display: isHomepage && activeGallery ? 'none' : 'block' }}>
 
             <Helmet>
                 {isHomepage ? (
