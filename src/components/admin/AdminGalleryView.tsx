@@ -668,52 +668,6 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
             setHealthStatus('issues');
             error('Failed to verify asset health. Check network connection and API endpoints.');
         } finally {
-            // Retrograde rename — renames old Drive filenames to @tlau_ convention
-            // and populates latitude/longitude/location_name. Loop in chunks (each
-            // endpoint call honors a ~270s time budget) until nothing remains.
-            try {
-                info('Renaming Drive files to standard format…');
-                let totalRenamed = 0;
-                let totalFailed = 0;
-                let finishedCleanly = false;
-                const MAX_ITERATIONS = 30;
-                for (let i = 0; i < MAX_ITERATIONS; i++) {
-                    const renameRes = await fetch('/api/admin/retrograde-rename', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({}),
-                    });
-                    if (!renameRes.ok) {
-                        const body = await renameRes.text();
-                        console.warn('[checkAssetHealth] rename chunk failed:', renameRes.status, body);
-                        let parsed: any = null;
-                        try { parsed = JSON.parse(body); } catch { /* not json */ }
-                        error(`Rename failed (${renameRes.status}): ${parsed?.error || body.substring(0, 120)}`);
-                        break;
-                    }
-                    const data = await renameRes.json();
-                    totalRenamed += data.renamed || 0;
-                    totalFailed += data.failed || 0;
-                    if (data.done || (data.renamed === 0 && data.failed === 0)) {
-                        finishedCleanly = true;
-                        if (totalRenamed > 0 || totalFailed > 0) {
-                            success(`Rename complete: ${totalRenamed} renamed, ${totalFailed} skipped.`);
-                        } else {
-                            info('No files needed renaming — all photos already use @tlau_ names.');
-                        }
-                        break;
-                    }
-                    info(`Renamed ${totalRenamed} so far (${data.remaining} remaining)…`);
-                }
-                if (!finishedCleanly && totalRenamed === 0 && totalFailed === 0) {
-                    // We hit an error before surfacing anything meaningful
-                    console.warn('[checkAssetHealth] rename did not complete cleanly');
-                }
-            } catch (renameErr: any) {
-                console.warn('[checkAssetHealth] rename step failed:', renameErr);
-                error(`Rename step threw: ${renameErr?.message || 'unknown error'}`);
-            }
-
             try {
                 info('Resyncing all libraries with Google Drive...');
                 const syncRes = await fetch('/api/gallery/sync');
