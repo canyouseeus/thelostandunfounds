@@ -213,11 +213,18 @@ function parsePhotoFields(file: DriveFile) {
     return { metadata, finalCreatedAt, latitude, longitude };
 }
 
-async function upsertPhoto(ctx: SyncCtx, file: DriveFile): Promise<string | null> {
+async function upsertPhoto(
+    ctx: SyncCtx,
+    file: DriveFile,
+    folderInfo?: { folderName?: string | null; venue?: VenueTag | null },
+): Promise<string | null> {
     if (!file.id || !file.name) return null;
     const title = file.name.split('.').slice(0, -1).join('.');
     const thumbnailUrl = file.thumbnailLink?.replace(/=s220$/, '=s1200');
     const { metadata, finalCreatedAt, latitude, longitude } = parsePhotoFields(file);
+
+    const venue = folderInfo?.venue ?? null;
+    const folderName = folderInfo?.folderName ?? null;
 
     const payload: Record<string, unknown> = {
         library_id: ctx.library.id,
@@ -229,10 +236,18 @@ async function upsertPhoto(ctx: SyncCtx, file: DriveFile): Promise<string | null
         created_at: finalCreatedAt,
         metadata,
     };
-    // Don't overwrite existing GPS/location with null — the migration backfill
-    // and retrograde rename may have set these from a more accurate source.
-    if (latitude != null) payload.latitude = latitude;
-    if (longitude != null) payload.longitude = longitude;
+    // Venue folder is the primary source of truth: override EXIF GPS with the
+    // venue's canonical coords and use the venue name as the location label.
+    // Otherwise, fall back to EXIF GPS and the literal folder name.
+    if (venue) {
+        payload.latitude = venue.metadata.latitude;
+        payload.longitude = venue.metadata.longitude;
+        payload.location_name = venue.name;
+    } else {
+        if (latitude != null) payload.latitude = latitude;
+        if (longitude != null) payload.longitude = longitude;
+        if (folderName) payload.location_name = folderName;
+    }
 
     const { data, error } = await ctx.supabase
         .from('photos')
@@ -287,7 +302,7 @@ async function determineFolderTag(
     ctx: SyncCtx,
     folderName: string,
     photos: DriveFile[],
-): Promise<string | null> {
+): Promise<{ tagId: string | null; venue: VenueTag | null }> {
     const samples = photos
         .slice(0, SAMPLE_SIZE)
         .map(p => p.imageMediaMetadata?.location)
@@ -298,18 +313,19 @@ async function determineFolderTag(
     const mid = medianGps(samples);
 
     const venue = findVenueForFolder(folderName, mid, ctx.venues);
-    if (venue) return venue.id;
+    if (venue) return { tagId: venue.id, venue };
 
     if (mid) {
         const neighborhood = await reverseGeocodeNeighborhood(mid.latitude, mid.longitude);
         if (neighborhood) {
-            return await ensureTag(ctx, neighborhood, 'location', {
+            const tagId = await ensureTag(ctx, neighborhood, 'location', {
                 latitude: mid.latitude,
                 longitude: mid.longitude,
             });
+            return { tagId, venue: null };
         }
     }
-    return null;
+    return { tagId: null, venue: null };
 }
 
 async function processFolder(
@@ -329,15 +345,19 @@ async function processFolder(
 
     let collectionTagId: string | null = null;
     let folderVenueOrLocationTagId: string | null = null;
+    let folderVenue: VenueTag | null = null;
     if (depth > 0 && folderName && photos.length > 0) {
         // Subfolder name itself is always tagged on the photos as a 'collection'.
         collectionTagId = await ensureTag(ctx, folderName, 'collection');
         // Best-effort: also try to derive a venue/neighborhood from the folder.
         try {
-            folderVenueOrLocationTagId = await determineFolderTag(ctx, folderName, photos);
+            const result = await determineFolderTag(ctx, folderName, photos);
+            folderVenueOrLocationTagId = result.tagId;
+            folderVenue = result.venue;
         } catch (err: any) {
             console.warn(`[sync] determineFolderTag failed for ${folderName}:`, err?.message);
             folderVenueOrLocationTagId = null;
+            folderVenue = null;
         }
     }
 
@@ -347,7 +367,10 @@ async function processFolder(
         if (!file.id) continue;
         ctx.seenFileIds.add(file.id);
 
-        const photoId = await upsertPhoto(ctx, file);
+        const photoId = await upsertPhoto(ctx, file, {
+            folderName: depth > 0 ? folderName : null,
+            venue: folderVenue,
+        });
         if (!photoId) continue;
 
         const tagIds = new Set<string>();

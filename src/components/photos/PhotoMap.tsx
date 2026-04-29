@@ -369,9 +369,14 @@ export function PhotoMap({ onPhotoClick, className = '' }: PhotoMapProps) {
               </button>
             </div>
             <div className="p-2.5 space-y-1">
-              {(popup.photo.location_name || popup.photo.metadata?.date_taken) && (
+              {popup.photo.location_name && (
                 <p className="text-white text-[10px] font-bold uppercase tracking-wide truncate">
-                  {popup.photo.location_name || popup.photo.metadata?.date_taken}
+                  {popup.photo.location_name}
+                </p>
+              )}
+              {popup.photo.metadata?.date_taken && (
+                <p className="text-white/40 text-[9px] font-mono">
+                  {new Date(popup.photo.metadata.date_taken).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                 </p>
               )}
               {popup.photo.metadata?.camera_model && (
