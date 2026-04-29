@@ -418,7 +418,7 @@ export default function QR() {
   return (
     <>
       <Helmet>
-        <title>QR Code Generator - THE LOST+UNFOUNDS</title>
+        <title>THE LOST+UNFOUNDS | QR Code Generator</title>
         <meta name="description" content="Generate custom high-resolution QR codes with background images and logos. Perfect for easy link sharing, marketing materials, and digital distribution." />
         <link rel="canonical" href="https://www.thelostandunfounds.com/qr" />
       </Helmet>

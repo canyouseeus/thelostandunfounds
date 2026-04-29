@@ -4,7 +4,7 @@ export default function HelloWorld() {
   return (
     <>
       <Helmet>
-        <title>Hello World - THE LOST+UNFOUNDS</title>
+        <title>THE LOST+UNFOUNDS | Hello World</title>
         <meta name="description" content="Hello World test page for THE LOST+UNFOUNDS. A simple diagnostic page to ensure core routing and platform functionality are working properly." />
         <link rel="canonical" href="https://www.thelostandunfounds.com/hello-world" />
       </Helmet>

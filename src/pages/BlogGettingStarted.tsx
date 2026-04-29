@@ -5,7 +5,7 @@ export default function BlogGettingStarted() {
   return (
     <>
       <Helmet>
-        <title>Contributor Getting Started Guide | THE LOST ARCHIVES</title>
+        <title>THE LOST+UNFOUNDS | Contributor Getting Started Guide</title>
         <meta name="description" content="A guide for contributors to share thoughtful reflections, engage readers, and earn as Amazon affiliates on THE LOST ARCHIVES." />
         <link rel="canonical" href="https://www.thelostandunfounds.com/blog/getting-started" />
       </Helmet>

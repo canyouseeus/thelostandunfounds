@@ -204,10 +204,10 @@ export default function Blog() {
   return (
     <>
       <Helmet>
-        <title>THE LOST ARCHIVES | THE LOST+UNFOUNDS</title>
+        <title>THE LOST+UNFOUNDS | The Lost Archives</title>
         <link rel="canonical" href="https://www.thelostandunfounds.com/thelostarchives" />
         <meta name="description" content={blogDescription} />
-        <meta property="og:title" content="THE LOST ARCHIVES | THE LOST+UNFOUNDS" />
+        <meta property="og:title" content="THE LOST+UNFOUNDS | The Lost Archives" />
         <meta property="og:description" content={blogDescription} />
         <meta property="og:url" content="https://www.thelostandunfounds.com/thelostarchives" />
         <meta property="og:type" content="website" />

@@ -9,7 +9,7 @@ const PhotoLibraryPage: React.FC = () => {
     return (
         <>
             <Helmet>
-                <title>The Lost Archives - {slug?.replace(/-/g, ' ').toUpperCase()}</title>
+                <title>THE LOST+UNFOUNDS | Photo Library | {slug?.replace(/-/g, ' ').toUpperCase()}</title>
                 <meta name="description" content="Explore our exclusive high-resolution photography collections available for purchase. Findings from the field, captured in stunning detail for you." />
                 <link rel="canonical" href={`https://www.thelostandunfounds.com/photos/${slug || 'kattitude-tattoo'}`} />
             </Helmet>

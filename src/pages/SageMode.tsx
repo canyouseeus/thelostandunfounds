@@ -66,8 +66,10 @@ export default function SageMode() {
   return (
     <>
       <Helmet>
-        <title>SAGE MODE | Admin | THE LOST+UNFOUNDS</title>
-        <link rel="canonical" href="https://www.thelostandunfounds.com/sage-mode" />
+        <title>THE LOST+UNFOUNDS | Admin | Sage Mode</title>
+        <meta name="description" content="Internal admin observability surface. Not indexed." />
+        <meta name="robots" content="noindex, nofollow" />
+        <link rel="canonical" href="https://www.thelostandunfounds.com/sagemode" />
       </Helmet>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}

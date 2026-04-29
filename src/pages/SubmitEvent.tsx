@@ -135,7 +135,7 @@ export default function SubmitEvent() {
     return (
         <>
             <Helmet>
-                <title>SUBMIT EVENT | THE LOST+UNFOUNDS</title>
+                <title>THE LOST+UNFOUNDS | Submit Event</title>
                 <meta name="description" content="Submit your unique event to be featured on THE LOST+UNFOUNDS. We are looking for gatherings, workshops, and experiences from the frontier." />
                 <link rel="canonical" href="https://www.thelostandunfounds.com/submit-event" />
             </Helmet>

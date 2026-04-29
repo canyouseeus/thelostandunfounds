@@ -174,10 +174,10 @@ export default function AllArticles() {
   return (
     <>
       <Helmet>
-        <title>All Articles | THE LOST ARCHIVES | THE LOST+UNFOUNDS</title>
+        <title>THE LOST+UNFOUNDS | The Lost Archives | All Articles</title>
         <link rel="canonical" href="https://www.thelostandunfounds.com/thelostarchives/all" />
         <meta name="description" content={blogDescription} />
-        <meta property="og:title" content="All Articles | THE LOST ARCHIVES | THE LOST+UNFOUNDS" />
+        <meta property="og:title" content="THE LOST+UNFOUNDS | The Lost Archives | All Articles" />
         <meta property="og:description" content={blogDescription} />
         <meta property="og:url" content="https://www.thelostandunfounds.com/thelostarchives/all" />
         <meta property="og:type" content="website" />

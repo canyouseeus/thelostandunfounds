@@ -8,7 +8,7 @@
 import { Helmet } from 'react-helmet-async';
 
 interface SEOHeadProps {
-  /** Page title - will be appended with " | THE LOST+UNFOUNDS" unless noSuffix is true */
+  /** Page title - will be prefixed with "THE LOST+UNFOUNDS | " unless noSuffix/noPrefix is true */
   title: string;
   /** Meta description (aim for 120-155 characters) */
   description: string;
@@ -24,7 +24,7 @@ interface SEOHeadProps {
   ogType?: string;
   /** Whether to add noindex,nofollow */
   noIndex?: boolean;
-  /** Skip the " | THE LOST+UNFOUNDS" suffix on title */
+  /** Skip the brand prefix on the title (use bare title only) */
   noSuffix?: boolean;
   /** Additional structured data (JSON-LD) */
   structuredData?: Record<string, any>;
@@ -46,7 +46,18 @@ export default function SEOHead({
   noSuffix = false,
   structuredData,
 }: SEOHeadProps) {
-  const fullTitle = noSuffix ? title : `${title} | ${SITE_NAME}`;
+  // Brand-first format: "THE LOST+UNFOUNDS | Page Name", or just "THE LOST+UNFOUNDS" on homepage.
+  // If the caller already passed the brand, don't double it up.
+  const trimmedTitle = title.trim();
+  const isBareBrand = trimmedTitle.toUpperCase() === SITE_NAME;
+  let fullTitle: string;
+  if (noSuffix) {
+    fullTitle = trimmedTitle;
+  } else if (isBareBrand || !trimmedTitle) {
+    fullTitle = SITE_NAME;
+  } else {
+    fullTitle = `${SITE_NAME} | ${trimmedTitle}`;
+  }
   const canonicalUrl = `${SITE_URL}${canonicalPath}`;
   const resolvedOgImage = ogImage || DEFAULT_OG_IMAGE;
 

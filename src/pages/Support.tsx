@@ -17,7 +17,7 @@ export default function Support() {
   return (
     <>
       <Helmet>
-        <title>SUPPORT CENTER | THE LOST+UNFOUNDS</title>
+        <title>THE LOST+UNFOUNDS | Support Center</title>
         <meta name="description" content="Get help and support for THE LOST+UNFOUNDS. Find our FAQs, documentation, troubleshooting guides, and contact information to resolve any issues quickly." />
         <link rel="canonical" href="https://www.thelostandunfounds.com/support" />
       </Helmet>
@@ -31,7 +31,7 @@ export default function Support() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
           <Link
-            to="/docs/faq"
+            to="/docs#faq"
             className="group relative bg-black/50 border border-white rounded-none px-6 py-4 hover:border-white hover:bg-white/5 hover:shadow-[0_8px_30px_rgba(255,255,255,0.12)] hover:-translate-y-1 transition-all duration-300 flex items-center justify-between cursor-pointer"
           >
             <div className="flex items-center gap-4">

@@ -332,7 +332,7 @@ const BookingPage: React.FC = () => {
     return (
         <>
             <SEOHead
-                title="Booking | THE LOST+UNFOUNDS"
+                title="Booking"
                 description="Candid-style photography for events, portraits, and brands. Shot primarily on Fujifilm X-S20. Check availability and submit a booking request."
                 canonicalPath="/booking"
             />

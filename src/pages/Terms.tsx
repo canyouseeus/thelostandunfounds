@@ -10,7 +10,7 @@ export default function Terms() {
   return (
     <>
       <Helmet>
-        <title>TERMS OF SERVICE | THE LOST+UNFOUNDS</title>
+        <title>THE LOST+UNFOUNDS | Terms of Service</title>
         <meta name="description" content="Review the Terms of Service for THE LOST+UNFOUNDS. Read our rules and regulations to understand your rights and responsibilities when using our platform." />
         <link rel="canonical" href="https://www.thelostandunfounds.com/terms" />
       </Helmet>

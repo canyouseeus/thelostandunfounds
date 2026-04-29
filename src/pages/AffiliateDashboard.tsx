@@ -569,11 +569,11 @@ export default function AffiliateDashboard() {
 
   return (
     <>
-      <SEOHead 
-        title="Affiliate Dashboard" 
-        description="Affiliate Dashboard" 
-        canonicalPath="/affiliate-dashboard" 
-        noIndex={true} 
+      <SEOHead
+        title="Affiliate Dashboard"
+        description="Track your commissions, monitor your conversion funnel, and review payout history from THE LOST+UNFOUNDS affiliate program."
+        canonicalPath="/affiliate/dashboard"
+        noIndex={true}
       />
     <div className="min-h-screen bg-black text-white">
       <KingMidasTicker />
@@ -1376,7 +1376,7 @@ export default function AffiliateDashboard() {
           </Link>
 
           <Link
-            to="/affiliate-profile"
+            to="/dashboard"
             className="bg-black border-0 rounded-none p-6 hover:bg-white hover:text-black transition-colors group"
           >
             <CursorArrowRaysIcon className="w-8 h-8 text-white mb-4 group-hover:text-black transition-colors" />

@@ -675,7 +675,7 @@ export default function SubmitArticle() {
     return (
       <>
         <Helmet>
-          <title>Submit Article | THE LOST ARCHIVES</title>
+          <title>THE LOST+UNFOUNDS | Submit Article</title>
           <meta name="description" content="Submit your article to THE LOST ARCHIVES. Contribute your findings, research, and reflections to our expanding columns and earn as an Amazon Affiliate." />
           <link rel="canonical" href="https://www.thelostandunfounds.com/submit-article" />
         </Helmet>
@@ -721,7 +721,7 @@ export default function SubmitArticle() {
   return (
     <>
       <Helmet>
-        <title>Submit to {config.name} | THE LOST ARCHIVES | THE LOST+UNFOUNDS</title>
+        <title>THE LOST+UNFOUNDS | Submit to {config.name}</title>
         <meta name="description" content={config.description} />
         <link rel="canonical" href={`https://www.thelostandunfounds.com/submit-article/${column}`} />
       </Helmet>

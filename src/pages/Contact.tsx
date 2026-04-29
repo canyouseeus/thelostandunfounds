@@ -40,7 +40,7 @@ export default function Contact() {
   return (
     <>
       <Helmet>
-        <title>CONTACT US | THE LOST+UNFOUNDS</title>
+        <title>THE LOST+UNFOUNDS | Contact</title>
         <meta name="description" content="Get in touch with THE LOST+UNFOUNDS. We'd love to hear from you and help with any questions, inquiries, or feedback you might have about our platform." />
         <link rel="canonical" href="https://www.thelostandunfounds.com/contact" />
       </Helmet>

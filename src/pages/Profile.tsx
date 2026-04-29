@@ -416,7 +416,7 @@ export default function Profile() {
       <SEOHead 
         title="My Dashboard" 
         description="User dashboard and profile." 
-        canonicalPath="/profile" 
+        canonicalPath="/dashboard"
         noIndex={true} 
       />
     <div className="min-h-screen bg-black text-white selection:bg-white/20">

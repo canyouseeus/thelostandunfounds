@@ -231,7 +231,7 @@ export default function Events() {
     return (
         <>
             <Helmet>
-                <title>UPCOMING EVENTS | THE LOST+UNFOUNDS</title>
+                <title>THE LOST+UNFOUNDS | Upcoming Events</title>
                 <meta name="description" content="Join THE LOST+UNFOUNDS for exclusive gatherings, workshops, and experiences pushing boundaries at the frontier. Book tickets for upcoming events." />
                 <link rel="canonical" href="https://www.thelostandunfounds.com/events" />
             </Helmet>

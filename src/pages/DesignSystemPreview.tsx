@@ -147,8 +147,10 @@ export default function DesignSystemPreview() {
   return (
     <>
       <Helmet>
-        <title>Design System Preview | SAGE MODE | THE LOST+UNFOUNDS</title>
-        <link rel="canonical" href="https://www.thelostandunfounds.com/sage-mode/design-system" />
+        <title>THE LOST+UNFOUNDS | Design System Preview</title>
+        <meta name="description" content="Internal design system preview surface. Not indexed." />
+        <meta name="robots" content="noindex, nofollow" />
+        <link rel="canonical" href="https://www.thelostandunfounds.com/designsystem/preview" />
       </Helmet>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}

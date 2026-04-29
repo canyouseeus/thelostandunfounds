@@ -158,10 +158,10 @@ export default function BookClub() {
   return (
     <>
       <Helmet>
-        <title>BOOK CLUB | THE LOST ARCHIVES | THE LOST+UNFOUNDS</title>
+        <title>THE LOST+UNFOUNDS | Book Club</title>
         <link rel="canonical" href="https://www.thelostandunfounds.com/book-club" />
         <meta name="description" content={description} />
-        <meta property="og:title" content="BOOK CLUB | THE LOST ARCHIVES" />
+        <meta property="og:title" content="THE LOST+UNFOUNDS | Book Club" />
         <meta property="og:description" content={description} />
         <meta property="og:url" content="https://www.thelostandunfounds.com/book-club" />
         <meta property="og:type" content="website" />

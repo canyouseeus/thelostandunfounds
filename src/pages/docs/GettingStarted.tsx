@@ -114,7 +114,7 @@ export default function GettingStarted() {
       <div className="mt-12 p-6 bg-black/50 border border-white rounded-none">
         <h3 className="text-xl font-bold text-white mb-3">Need Help?</h3>
         <p className="text-white/70 mb-4">
-          If you have questions or need assistance, check out our <Link to="/docs/faq" className="text-white underline">FAQ</Link> or
+          If you have questions or need assistance, check out our <Link to="/docs#faq" className="text-white underline">FAQ</Link> or
           contact our support team.
         </p>
         <Link

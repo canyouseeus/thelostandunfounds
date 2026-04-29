@@ -155,10 +155,10 @@ export default function ColumnPage({ column, title, description, submitPath, ico
   return (
     <>
       <Helmet>
-        <title>{title} | THE LOST ARCHIVES | THE LOST+UNFOUNDS</title>
+        <title>THE LOST+UNFOUNDS | The Lost Archives | {title}</title>
         <link rel="canonical" href={`https://www.thelostandunfounds.com/${column === 'main' ? 'thelostarchives' : column === 'bookclub' ? 'book-club' : column}`} />
         <meta name="description" content={description} />
-        <meta property="og:title" content={`${title} | THE LOST ARCHIVES`} />
+        <meta property="og:title" content={`THE LOST+UNFOUNDS | The Lost Archives | ${title}`} />
         <meta property="og:description" content={description} />
         <meta property="og:url" content={`https://www.thelostandunfounds.com/${column === 'main' ? 'thelostarchives' : column === 'bookclub' ? 'book-club' : column}`} />
         <meta property="og:type" content="website" />

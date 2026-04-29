@@ -485,7 +485,7 @@ export default function BlogPost() {
   return (
     <>
       <Helmet>
-        <title>{title} | THE LOST ARCHIVES | THE LOST+UNFOUNDS</title>
+        <title>THE LOST+UNFOUNDS | The Lost Archives | {title}</title>
         <link rel="canonical" href={post.subdomain ? `https://www.thelostandunfounds.com/blog/${post.subdomain}/${post.slug}` : `https://www.thelostandunfounds.com/thelostarchives/${post.slug}`} />
         <meta name="description" content={description} />
         {post.seo_keywords && <meta name="keywords" content={post.seo_keywords} />}

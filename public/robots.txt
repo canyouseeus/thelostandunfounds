@@ -1,22 +1,49 @@
 User-agent: *
 Allow: /
 
-# Sitemap location
+# Sitemaps
 Sitemap: https://www.thelostandunfounds.com/sitemap.xml
 Sitemap: https://www.thelostandunfounds.com/image-sitemap.xml
 
-# Allow all bots to access the site
+# Block API routes, admin surfaces, and internal-only pages from search indexes.
+Disallow: /api/
+Disallow: /admin
+Disallow: /admin/
+Disallow: /sagemode
+Disallow: /sagemode/
+Disallow: /designsystem
+Disallow: /designsystem/
+Disallow: /debug
+Disallow: /helloworld
+Disallow: /reset-newsletter
+Disallow: /unsubscribe
+Disallow: /auth/
+Disallow: /zoho/
+Disallow: /payment/
+Disallow: /preview/
+Disallow: /setup
+Disallow: /settings
+Disallow: /dashboard
+Disallow: /affiliate/dashboard
+Disallow: /download
+Disallow: /sql
+Disallow: /sql/
+
+# Per-bot allowlist (kept for clarity; same rules above apply)
 User-agent: Googlebot
 Allow: /
+Disallow: /api/
+Disallow: /admin
+Disallow: /admin/
 
 User-agent: Bingbot
 Allow: /
+Disallow: /api/
+Disallow: /admin
+Disallow: /admin/
 
 User-agent: NotebookLM
 Allow: /
-
-# Disallow admin and debug pages from indexing
-User-agent: *
+Disallow: /api/
 Disallow: /admin
-Disallow: /debug
-Disallow: /sql
+Disallow: /admin/

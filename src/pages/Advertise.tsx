@@ -63,7 +63,7 @@ export default function Advertise() {
     return (
         <div className="min-h-screen bg-black text-white overflow-x-hidden">
             <Helmet>
-                <title>ADVERTISE | THE LOST+UNFOUNDS</title>
+                <title>THE LOST+UNFOUNDS | Advertise</title>
                 <meta name="description" content="Partner with THE LOST+UNFOUNDS. Your campaign sits above the navigation bar — the first impression for every visitor, every time." />
                 <link rel="canonical" href="https://www.thelostandunfounds.com/advertise" />
             </Helmet>

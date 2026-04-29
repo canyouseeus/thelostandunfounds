@@ -203,9 +203,9 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
 
             <Helmet>
                 {isHomepage ? (
-                    <title>THE LOST+UNFOUNDS | Browse &amp; Buy Photos</title>
+                    <title>THE LOST+UNFOUNDS</title>
                 ) : (
-                    <title>THE GALLERY | THE LOST+UNFOUNDS</title>
+                    <title>THE LOST+UNFOUNDS | The Gallery</title>
                 )}
                 <meta name="description" content="Explore exclusive high-resolution photography collections. Unique findings from the field, beautifully captured in high definition for your inspiration." />
                 <link rel="canonical" href={isHomepage ? 'https://www.thelostandunfounds.com/' : 'https://www.thelostandunfounds.com/gallery'} />

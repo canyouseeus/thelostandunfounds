@@ -69,7 +69,7 @@ export default function Pricing() {
   return (
     <>
       <Helmet>
-        <title>PRICING | THE LOST+UNFOUNDS</title>
+        <title>THE LOST+UNFOUNDS | Pricing</title>
         <meta name="description" content="Choose the plan that's right for you. Flexible pricing for creators, developers, and power users of THE LOST+UNFOUNDS." />
         <link rel="canonical" href="https://www.thelostandunfounds.com/pricing" />
       </Helmet>

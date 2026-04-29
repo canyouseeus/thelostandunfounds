@@ -275,10 +275,10 @@ export default function UserBlog() {
   // If using subdomain as fallback, display it in uppercase
   const displayTitle = blogTitleDisplay || blogTitle || authorName || (subdomain ? subdomain.toUpperCase() : null) || 'User';
   const pageTitle = blogTitle
-    ? `${blogTitle} | COLLECTION | THE LOST ARCHIVES`
+    ? `THE LOST+UNFOUNDS | The Lost Archives | ${blogTitle}`
     : authorName
-      ? `${authorName} | COLLECTION | THE LOST ARCHIVES`
-      : `${subdomain}'s Collection | THE LOST ARCHIVES`;
+      ? `THE LOST+UNFOUNDS | The Lost Archives | ${authorName}`
+      : `THE LOST+UNFOUNDS | The Lost Archives | ${subdomain}'s Collection`;
   const blogDescription = blogTitle
     ? `Articles and insights from ${blogTitle} in this collection on THE LOST ARCHIVES.`
     : authorName
