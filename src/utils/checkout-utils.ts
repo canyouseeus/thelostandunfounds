@@ -1,9 +1,10 @@
 /**
  * Checkout Utilities
- * 
+ *
  * Utilities for generating checkout URLs with affiliate tracking.
- * Default: Strike (Bitcoin Lightning) checkout
- * Fallback: PayPal checkout (when available)
+ * Active payment paths:
+ *   - Stripe (cards, hosted checkout)            → getStripeCheckoutUrl
+ *   - Strike (Bitcoin Lightning, on-site QR)     → getStrikeCheckoutInvoice
  */
 
 /**
@@ -169,5 +170,61 @@ export async function getPayPalCheckoutUrl(params: {
   return {
     orderId: data.orderId,
     approvalUrl,
+  }
+}
+
+/**
+ * Create a Stripe Checkout Session and return the hosted-checkout URL.
+ * The caller should redirect the browser to `url` (window.location = url).
+ */
+export async function getStripeCheckoutUrl(params: {
+  amount: number
+  currency?: string
+  description?: string
+  productId?: string
+  variantId?: string
+  affiliateRef?: string | null
+}): Promise<{ sessionId: string; url: string }> {
+  // Get affiliate ref if not provided
+  let affiliateRef = params.affiliateRef
+  if (!affiliateRef && typeof window !== 'undefined') {
+    const { getAffiliateRef } = await import('./affiliate-tracking')
+    affiliateRef = getAffiliateRef()
+  }
+
+  const response = await fetch('/api/shop/payments/stripe', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(affiliateRef ? { 'X-Affiliate-Ref': affiliateRef } : {}),
+    },
+    body: JSON.stringify({
+      amount: params.amount,
+      currency: params.currency || 'USD',
+      description: params.description,
+      productId: params.productId,
+      variantId: params.variantId,
+    }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Payment creation failed' }))
+    throw new Error(error.error || 'Failed to create Stripe checkout session')
+  }
+
+  const data = await response.json()
+
+  if (!data.success || !data.url || !data.sessionId) {
+    throw new Error('Invalid response from Stripe API')
+  }
+
+  // Sanity-check that we got an actual https URL back
+  if (!/^https?:\/\//i.test(data.url)) {
+    throw new Error('Invalid checkout URL returned from Stripe API')
+  }
+
+  return {
+    sessionId: data.sessionId,
+    url: data.url,
   }
 }

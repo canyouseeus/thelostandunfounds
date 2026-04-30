@@ -9,13 +9,14 @@ import {
   ShoppingCartIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
-  XMarkIcon
+  XMarkIcon,
+  CreditCardIcon
 } from '@heroicons/react/24/outline';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import MarketplaceBanner from '../components/events/MarketplaceBanner';
 import { initAffiliateTracking, getAffiliateRef } from '../utils/affiliate-tracking';
-import { getStrikeCheckoutInvoice, pollStrikeInvoiceStatus } from '../utils/checkout-utils';
+import { getStrikeCheckoutInvoice, pollStrikeInvoiceStatus, getStripeCheckoutUrl } from '../utils/checkout-utils';
 import { LightningPaymentModal } from "../components/shop/LightningPaymentModal";
 import { TEST_PRODUCTS } from '../data/test-products';
 import { transformProduct } from '../../lib/fourthwall/utils';
@@ -552,6 +553,7 @@ function ProductModal({
   const isFourthwallProduct = product.url?.includes('fourthwall.com');
 
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [stripeLoading, setStripeLoading] = useState(false);
 
   const handleCheckoutClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
@@ -596,6 +598,44 @@ function ProductModal({
       alert(`Checkout Error: ${error.message || 'Failed to start checkout. Please try again.'}`);
     } finally {
       setCheckoutLoading(false);
+    }
+  };
+
+  const handleStripeCheckoutClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    if (isFourthwallProduct && product.url) {
+      window.location.href = product.url;
+      return;
+    }
+    if (affiliateRef) {
+      import('../utils/affiliate-tracking').then(({ trackAffiliateClick }) => {
+        trackAffiliateClick(affiliateRef);
+      });
+    }
+    try {
+      setStripeLoading(true);
+      console.log('💳 Starting Stripe (card) checkout for product:', {
+        id: product.id,
+        title: product.title,
+        price: product.price,
+      });
+
+      const result = await getStripeCheckoutUrl({
+        amount: product.price,
+        currency: product.currency || 'USD',
+        description: product.title,
+        productId: product.id,
+        affiliateRef,
+      });
+
+      console.log('💳 Stripe session created, redirecting:', result.sessionId);
+
+      // Hand off to Stripe's hosted checkout page.
+      window.location.href = result.url;
+    } catch (error: any) {
+      console.error('❌ Error creating Stripe checkout:', error);
+      alert(`Checkout Error: ${error.message || 'Failed to start checkout. Please try again.'}`);
+      setStripeLoading(false);
     }
   };
 
@@ -685,6 +725,23 @@ function ProductModal({
                   </>
                 )}
               </a>
+              {!isFourthwallProduct && displayPrice > 0 && (
+                <a
+                  href="#"
+                  onClick={handleStripeCheckoutClick}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 bg-transparent text-white border border-white px-4 py-3 sm:py-2 rounded-none hover:bg-white hover:text-black transition-colors font-semibold text-sm sm:text-base min-h-[44px] touch-action: manipulation cursor-pointer ${stripeLoading ? 'opacity-50 pointer-events-none' : ''}`}
+                  aria-label="Pay with card"
+                >
+                  {stripeLoading ? (
+                    <span className="animate-pulse">Redirecting…</span>
+                  ) : (
+                    <>
+                      <CreditCardIcon className="w-4 h-4" />
+                      Pay with Card
+                    </>
+                  )}
+                </a>
+              )}
               {!product.available && (
                 <div className="text-xs text-red-400">Out of Stock</div>
               )}
