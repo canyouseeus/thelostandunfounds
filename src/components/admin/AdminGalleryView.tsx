@@ -19,6 +19,7 @@ interface AdminGalleryViewProps {
 interface GalleryStats {
     totalOrders: number;
     totalRevenue: number;
+    bookingRevenue?: number;
     recentOrders: any[];
     recentPhotos: any[];
 }
@@ -227,12 +228,28 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
 
             if (photosError) console.error('Error fetching recent photos:', photosError);
 
-            // Calculate gallery credit revenue only (booking/invoice revenue is shown elsewhere)
-            const totalRevenue = validOrders.reduce((sum, order) => sum + (order.total_amount_cents || 0), 0) / 100 || 0;
+            // Calculate photo-order revenue
+            const photoRevenue = validOrders.reduce((sum, order) => sum + (order.total_amount_cents || 0), 0) / 100 || 0;
 
+            // 4. Get paid booking invoices (CRM revenue)
+            let bookingRevenue = 0;
+            try {
+                const { data: paidInvoices } = await supabase
+                    .from('invoices')
+                    .select('total')
+                    .eq('status', 'paid');
+                bookingRevenue = (paidInvoices || []).reduce((sum, inv) => sum + (Number(inv.total) || 0), 0);
+            } catch (invoiceErr) {
+                console.warn('[loadGalleryStats] Could not load invoice revenue:', invoiceErr);
+            }
+
+            // Gallery cards show photo (gallery-order) revenue ONLY.
+            // Booking revenue is surfaced in its own dedicated card so the two streams
+            // are never conflated.
             setStats({
                 totalOrders: validOrders.length || 0,
-                totalRevenue,
+                totalRevenue: photoRevenue,
+                bookingRevenue,
                 recentOrders: validOrders.slice(0, 10) || [],
                 recentPhotos: recentPhotos || []
             });
@@ -752,7 +769,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                             </div>
                         </div>
                         <div className="bg-white/5 p-4">
-                            <div className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] mb-1">Total Revenue</div>
+                            <div className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] mb-1">Gallery Revenue</div>
                             <div className="text-2xl font-bold font-mono text-green-400">
                                 $<AnimatedNumber value={stats?.totalRevenue || 0} decimals={2} />
                             </div>
@@ -801,6 +818,19 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                             </div>
                         </div>
                     </div>
+
+                    {/* Bookings revenue — surfaced separately from gallery sales */}
+                    {(stats?.bookingRevenue ?? 0) > 0 && (
+                        <div className="bg-white/5 p-4 border-l-2 border-blue-400/40">
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em]">Bookings Revenue</span>
+                                <span className="text-[9px] text-white/30">CRM invoices · separate from gallery</span>
+                            </div>
+                            <div className="text-2xl font-bold font-mono text-blue-300">
+                                $<AnimatedNumber value={stats?.bookingRevenue || 0} decimals={2} />
+                            </div>
+                        </div>
+                    )}
 
                 </>
             )
@@ -1393,13 +1423,28 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
 
                     <div className="bg-white/5 p-4 rounded-none">
                         <div className="flex items-center gap-2 mb-2 text-white/60 text-xs uppercase tracking-wider">
-                            <CurrencyDollarIcon className="w-3 h-3" /> Total Sales
+                            <CurrencyDollarIcon className="w-3 h-3" /> Gallery Sales
                         </div>
                         <div className="text-3xl font-bold text-green-400">
                             $<AnimatedNumber value={stats?.totalRevenue || 0} />
                         </div>
                     </div>
                 </div>
+
+                {/* Bookings revenue — shown separately so it is never conflated with gallery sales */}
+                {(stats?.bookingRevenue ?? 0) > 0 && (
+                    <div className="grid grid-cols-1 gap-4 mb-8">
+                        <div className="bg-white/5 p-4 rounded-none border-l-2 border-blue-400/40">
+                            <div className="flex items-center gap-2 mb-2 text-white/60 text-xs uppercase tracking-wider">
+                                <CurrencyDollarIcon className="w-3 h-3" /> Bookings Revenue
+                                <span className="text-[9px] text-white/30 normal-case tracking-normal ml-1">(CRM invoices, separate from gallery)</span>
+                            </div>
+                            <div className="text-3xl font-bold text-blue-300">
+                                $<AnimatedNumber value={stats?.bookingRevenue || 0} />
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {!isPhotographerView && (
                     <div className="grid grid-cols-2 sm:flex mb-8">
