@@ -3,7 +3,6 @@ import React from 'react';
 import { LoadingSpinner } from '../Loading';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowDownTrayIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { PricingOption } from './PhotoGallery';
 
 interface Photo {
     id: string;
@@ -17,9 +16,6 @@ interface SelectionTrayProps {
     onRemove: (id: string) => void;
     onCheckout: () => void;
     loading?: boolean;
-    pricingOptions?: PricingOption[];
-    creditBalance: number | null;
-    creditEmail: string | null;
 }
 
 const SelectionTray: React.FC<SelectionTrayProps> = ({
@@ -27,52 +23,10 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
     onRemove,
     onCheckout,
     loading,
-    creditBalance,
-    creditEmail,
 }) => {
     const count = selectedPhotos.length;
 
     if (count === 0) return null;
-
-    const hasEmail = !!creditEmail;
-    const balance = creditBalance ?? 0;
-    const canCoverAll = hasEmail && balance >= count;
-    const shortfall = hasEmail ? Math.max(0, count - balance) : 0;
-
-    let labelLine1: React.ReactNode;
-    let labelLine2: string;
-    let buttonLabel: React.ReactNode;
-
-    if (!hasEmail) {
-        labelLine1 = (
-            <span className="text-xl md:text-3xl font-black text-white tracking-tighter leading-none">
-                {count} CREDIT{count !== 1 ? 'S' : ''}
-            </span>
-        );
-        labelLine2 = `${count} SELECTED`;
-        buttonLabel = 'GET STARTED';
-    } else if (canCoverAll) {
-        labelLine1 = (
-            <span className="text-xl md:text-3xl font-black text-white tracking-tighter leading-none">
-                {count} CREDIT{count !== 1 ? 'S' : ''}
-            </span>
-        );
-        labelLine2 = `${balance - count} REMAINING AFTER`;
-        buttonLabel = (
-            <>
-                DOWNLOAD
-                <ArrowDownTrayIcon className="w-3 h-3 md:w-4 md:h-4 transition-transform group-hover:translate-y-0.5" />
-            </>
-        );
-    } else {
-        labelLine1 = (
-            <span className="text-xl md:text-3xl font-black text-white tracking-tighter leading-none">
-                {balance > 0 ? `${balance} / ${count}` : `${count}`}
-            </span>
-        );
-        labelLine2 = shortfall > 0 ? `${shortfall} REQUIRE PAYMENT` : `${count} SELECTED`;
-        buttonLabel = `CHECKOUT ($${shortfall.toLocaleString()})`;
-    }
 
     return (
         <motion.div
@@ -119,21 +73,16 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
                 <div className="flex flex-row items-center justify-between gap-6 md:gap-12 w-full md:w-auto order-1 md:order-2">
                     <div className="flex flex-col justify-center">
                         <div className="flex items-baseline gap-3">
-                            {labelLine1}
+                            <span className="text-xl md:text-3xl font-black text-white tracking-tighter leading-none">
+                                {count}
+                            </span>
                             <span className="text-[8px] md:text-[9px] font-black text-zinc-500 tracking-[0.2em] uppercase leading-none">
-                                {labelLine2}
+                                {count === 1 ? 'SELECTED' : 'SELECTED'}
                             </span>
                         </div>
-                        {hasEmail && creditBalance !== null && (
-                            <p className="text-[7px] text-white/30 uppercase tracking-widest mt-0.5">
-                                {balance} credit{balance !== 1 ? 's' : ''} available
-                            </p>
-                        )}
-                        {!hasEmail && (
-                            <p className="text-[7px] text-white/30 uppercase tracking-widest mt-0.5">
-                                Enter email for 10 free credits
-                            </p>
-                        )}
+                        <p className="text-[7px] text-white/30 uppercase tracking-widest mt-0.5">
+                            Free download · Tips appreciated
+                        </p>
                     </div>
 
                     <div className="flex flex-col items-end gap-1 shrink-0">
@@ -145,7 +94,10 @@ const SelectionTray: React.FC<SelectionTrayProps> = ({
                             {loading ? (
                                 <LoadingSpinner size="sm" className="text-black" />
                             ) : (
-                                buttonLabel
+                                <>
+                                    DOWNLOAD
+                                    <ArrowDownTrayIcon className="w-3 h-3 md:w-4 md:h-4 transition-transform group-hover:translate-y-0.5" />
+                                </>
                             )}
                         </button>
                         <p className="text-[7px] text-white/30 uppercase tracking-[0.2em] whitespace-nowrap">

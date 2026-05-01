@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon, CheckIcon, ArrowDownTrayIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import DownloadEmailModal from '../DownloadEmailModal';
-import { ZapButton } from '../ZapButton';
 
 interface Photo {
     id: string;
@@ -217,7 +216,6 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                                 )}
                             </button>
                         )}
-                        <ZapButton photoTitle={photo.title} />
                     </motion.div>
                 </div>
             </motion.div>
