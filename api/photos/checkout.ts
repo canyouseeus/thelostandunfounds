@@ -49,8 +49,9 @@ export default async function handler(
 
     const libraryId = photos[0].library_id;
 
-    // Server-side credit guard: never charge a user who already has enough credits,
-    // regardless of what the client sent. Deduct atomically and grant free access.
+    // Server-side credit guard: never charge for photos a user has credits for,
+    // regardless of what the client sent. Apply credits to as many photos as
+    // possible, then price/charge only the leftover photos.
     const normalizedEmail = String(email).trim().toLowerCase()
     const { data: creditRow } = await supabase
       .from('gallery_credits')
@@ -59,16 +60,26 @@ export default async function handler(
       .single()
 
     const availableCredits = creditRow?.credits_remaining ?? 0
+    const creditsToApply = Math.min(availableCredits, count)
 
-    if (availableCredits >= count) {
+    let paidPhotoIds: string[] = photoIds
+    let creditedOrderId: string | null = null
+    let creditsRemainingAfter = availableCredits
+
+    if (creditsToApply > 0) {
       const { data: deductResult, error: deductError } = await supabase.rpc(
         'deduct_gallery_credits',
-        { p_email: normalizedEmail, p_count: count }
+        { p_email: normalizedEmail, p_count: creditsToApply }
       )
 
-      if (!deductError && deductResult && deductResult.success !== false) {
-        const freeOrderId = `credits_${Date.now()}_${Math.random().toString(36).substring(7)}`
+      if (deductError || !deductResult || deductResult.success === false) {
+        console.warn('[Checkout] Credit deduct RPC failed, proceeding without credits:', deductError)
+      } else {
+        creditsRemainingAfter = deductResult.credits_remaining ?? 0
+        const creditedPhotoIds = photoIds.slice(0, creditsToApply)
+        paidPhotoIds = photoIds.slice(creditsToApply)
 
+        const freeOrderId = `credits_${Date.now()}_${Math.random().toString(36).substring(7)}`
         const { data: photoOrder, error: dbOrderError } = await supabase
           .from('photo_orders')
           .insert({
@@ -81,12 +92,14 @@ export default async function handler(
           .select()
           .single()
 
-        if (dbOrderError) {
+        if (dbOrderError || !photoOrder) {
           console.error('[Checkout] Credit order insert error:', dbOrderError)
-          return res.status(500).json({ error: 'Failed to save credit order', details: dbOrderError.message })
+          return res.status(500).json({ error: 'Failed to save credit order', details: dbOrderError?.message })
         }
 
-        const entitlements = photoIds.map((photoId: string) => ({
+        creditedOrderId = photoOrder.id
+
+        const creditEntitlements = creditedPhotoIds.map((photoId: string) => ({
           order_id: photoOrder.id,
           photo_id: photoId,
           expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
@@ -94,23 +107,27 @@ export default async function handler(
 
         const { error: dbEntitlementsError } = await supabase
           .from('photo_entitlements')
-          .insert(entitlements)
+          .insert(creditEntitlements)
 
         if (dbEntitlementsError) {
           console.error('[Checkout] Credit entitlements error:', dbEntitlementsError)
           return res.status(500).json({ error: 'Failed to save entitlements', details: dbEntitlementsError.message })
         }
 
-        return res.status(200).json({
-          free: true,
-          orderId: photoOrder.id,
-          credits_used: count,
-          credits_remaining: deductResult.credits_remaining
-        })
+        // All photos covered by credits — done.
+        if (paidPhotoIds.length === 0) {
+          return res.status(200).json({
+            free: true,
+            orderId: creditedOrderId,
+            credits_used: creditsToApply,
+            credits_remaining: creditsRemainingAfter
+          })
+        }
       }
-
-      console.warn('[Checkout] Credit deduct RPC failed despite sufficient balance, falling back to pricing path:', deductError)
     }
+
+    // Re-scope pricing variables to the leftover photos only.
+    const paidCount = paidPhotoIds.length
 
     // Fetch pricing options for this library with retry logic
     const MAX_RETRIES = 3;
@@ -147,20 +164,24 @@ export default async function handler(
       );
     }
 
-    // Dynamic Pricing Calculation
+    // Dynamic Pricing Calculation (scoped to photos NOT covered by credits)
     let amount = 0;
-    let remaining = count;
+    let remaining = paidCount;
     const sortedOptions = pricingOptions || [];
 
-    // Fallback single price
+    // Fallback single price for any photos that don't fit a bundle.
+    // Prefer the library's DB-configured per-photo price; only fall back to
+    // a deterrent when nothing is configured AND this is the no-credits path.
     const { data: library } = await supabase
       .from('photo_libraries')
       .select('price')
       .eq('id', libraryId)
       .single();
 
-    // paidCheckout = out-of-credits path; charge $1,000/photo regardless of DB price
-    const singlePrice = paidCheckout ? 1000 : 0;
+    const libraryPrice = library?.price != null ? parseFloat(library.price.toString()) : 0;
+    const singlePrice = libraryPrice > 0
+      ? libraryPrice
+      : (paidCheckout && creditsToApply === 0 ? 1000 : 0);
 
     for (const option of sortedOptions) {
       if (option.photo_count <= 0) continue;
@@ -177,8 +198,8 @@ export default async function handler(
 
     // Safety Check: Log warning if multiple photos selected but price equals straightforward multiplication of single price
     // This implies no bundle logic was applied, which might be unintended if bundles exist
-    if (count > 2 && Math.abs(amount - (count * parseFloat(singlePrice.toString()))) < 0.01) {
-      console.warn(`[Pricing Warning] Order for ${count} items resulted in $${amount} (approx ${count} * $${singlePrice}). Possible missed bundle application. Options available: ${pricingOptions ? pricingOptions.length : 0}`);
+    if (paidCount > 2 && Math.abs(amount - (paidCount * parseFloat(singlePrice.toString()))) < 0.01) {
+      console.warn(`[Pricing Warning] Order for ${paidCount} items resulted in $${amount} (approx ${paidCount} * $${singlePrice}). Possible missed bundle application. Options available: ${pricingOptions ? pricingOptions.length : 0}`);
     }
 
     // Free path — skip payment entirely, grant access immediately
@@ -202,7 +223,7 @@ export default async function handler(
         return res.status(500).json({ error: 'Failed to save free order', details: dbOrderError.message })
       }
 
-      const entitlements = photoIds.map((photoId: string) => ({
+      const entitlements = paidPhotoIds.map((photoId: string) => ({
         order_id: photoOrder.id,
         photo_id: photoId,
         expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
@@ -217,7 +238,12 @@ export default async function handler(
         return res.status(500).json({ error: 'Failed to save entitlements', details: dbEntitlementsError.message })
       }
 
-      return res.status(200).json({ free: true, orderId: photoOrder.id })
+      return res.status(200).json({
+        free: true,
+        orderId: photoOrder.id,
+        credits_used: creditsToApply,
+        credits_remaining: creditsRemainingAfter
+      })
     }
 
     // Create Strike Invoice
@@ -238,7 +264,7 @@ export default async function handler(
       },
       body: JSON.stringify({
         correlationId,
-        description: `Photo Download Access (${count} photos)`,
+        description: `Photo Download Access (${paidCount} photos)`,
         amount: {
           currency: 'USD',
           amount: amount.toFixed(2),
@@ -302,8 +328,8 @@ export default async function handler(
       })
     }
 
-    // Create Pending Entitlements
-    const entitlements = photoIds.map((photoId: string) => ({
+    // Create Pending Entitlements (only for the photos NOT covered by credits)
+    const entitlements = paidPhotoIds.map((photoId: string) => ({
       order_id: photoOrder.id,
       photo_id: photoId,
       expires_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
@@ -317,7 +343,7 @@ export default async function handler(
       console.error('[Checkout] Database Entitlements Error:', {
         error: dbEntitlementsError,
         orderId: photoOrder.id,
-        photoIds
+        paidPhotoIds
       })
       return res.status(500).json({
         error: 'Failed to save order items',
@@ -329,7 +355,11 @@ export default async function handler(
       invoiceId: invoiceId,
       lnInvoice: quote.lnInvoice,
       expirationInSec: quote.expirationInSec,
-      amount: amount
+      amount: amount,
+      credits_used: creditsToApply,
+      credits_remaining: creditsRemainingAfter,
+      credited_order_id: creditedOrderId,
+      paid_photo_count: paidCount
     })
 
   } catch (error: any) {

@@ -633,9 +633,11 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 return;
             }
 
+            // Reflect any server-side credit deduction in the tray immediately.
+            if (typeof d.credits_remaining === 'number') setCreditBalance(d.credits_remaining);
+
             if (d.free) {
-                // Server applied credits despite paid request — switch to free flow.
-                if (typeof d.credits_remaining === 'number') setCreditBalance(d.credits_remaining);
+                // Server fully covered with credits — switch to free flow.
                 creditDeductedRef.current = true;
                 setTipModalOpen(true);
                 return;
