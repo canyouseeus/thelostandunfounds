@@ -49,6 +49,69 @@ export default async function handler(
 
     const libraryId = photos[0].library_id;
 
+    // Server-side credit guard: never charge a user who already has enough credits,
+    // regardless of what the client sent. Deduct atomically and grant free access.
+    const normalizedEmail = String(email).trim().toLowerCase()
+    const { data: creditRow } = await supabase
+      .from('gallery_credits')
+      .select('credits_remaining')
+      .eq('email', normalizedEmail)
+      .single()
+
+    const availableCredits = creditRow?.credits_remaining ?? 0
+
+    if (availableCredits >= count) {
+      const { data: deductResult, error: deductError } = await supabase.rpc(
+        'deduct_gallery_credits',
+        { p_email: normalizedEmail, p_count: count }
+      )
+
+      if (!deductError && deductResult && deductResult.success !== false) {
+        const freeOrderId = `credits_${Date.now()}_${Math.random().toString(36).substring(7)}`
+
+        const { data: photoOrder, error: dbOrderError } = await supabase
+          .from('photo_orders')
+          .insert({
+            email: normalizedEmail,
+            total_amount_cents: 0,
+            paypal_order_id: freeOrderId,
+            payment_status: 'completed',
+            affiliate_code: affiliateRef ? String(affiliateRef) : null
+          })
+          .select()
+          .single()
+
+        if (dbOrderError) {
+          console.error('[Checkout] Credit order insert error:', dbOrderError)
+          return res.status(500).json({ error: 'Failed to save credit order', details: dbOrderError.message })
+        }
+
+        const entitlements = photoIds.map((photoId: string) => ({
+          order_id: photoOrder.id,
+          photo_id: photoId,
+          expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+        }))
+
+        const { error: dbEntitlementsError } = await supabase
+          .from('photo_entitlements')
+          .insert(entitlements)
+
+        if (dbEntitlementsError) {
+          console.error('[Checkout] Credit entitlements error:', dbEntitlementsError)
+          return res.status(500).json({ error: 'Failed to save entitlements', details: dbEntitlementsError.message })
+        }
+
+        return res.status(200).json({
+          free: true,
+          orderId: photoOrder.id,
+          credits_used: count,
+          credits_remaining: deductResult.credits_remaining
+        })
+      }
+
+      console.warn('[Checkout] Credit deduct RPC failed despite sufficient balance, falling back to pricing path:', deductError)
+    }
+
     // Fetch pricing options for this library with retry logic
     const MAX_RETRIES = 3;
     let pricingOptions = null;

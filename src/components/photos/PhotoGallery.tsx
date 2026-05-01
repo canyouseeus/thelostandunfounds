@@ -574,20 +574,20 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         const count = selectedPhotos.length;
         if (count === 0) return;
 
-        // Use cached balance or fetch fresh
-        let balance = creditBalance;
-        if (balance === null) {
-            try {
-                const r = await fetch(`/api/credits/balance?email=${encodeURIComponent(email)}`);
-                const d = await r.json();
-                balance = d.credits_remaining ?? 0;
-                setCreditBalance(balance);
-            } catch {
-                balance = 0;
-            }
+        // Always fetch fresh balance — cached state can be stale across sessions
+        // or after a different email was used, leading to false "out of credits"
+        // routing into paid checkout.
+        let balance = creditBalance ?? 0;
+        try {
+            const r = await fetch(`/api/credits/balance?email=${encodeURIComponent(email)}`);
+            const d = await r.json();
+            balance = d.credits_remaining ?? 0;
+            setCreditBalance(balance);
+        } catch {
+            // Network failure: fall back to cached value rather than charging.
         }
 
-        if (balance! >= count) {
+        if (balance >= count) {
             // Deduct credits atomically, then show tip modal
             try {
                 const r = await fetch('/api/credits/deduct', {
@@ -633,7 +633,13 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 return;
             }
 
-            if (d.free) return; // shouldn't happen in paid path
+            if (d.free) {
+                // Server applied credits despite paid request — switch to free flow.
+                if (typeof d.credits_remaining === 'number') setCreditBalance(d.credits_remaining);
+                creditDeductedRef.current = true;
+                setTipModalOpen(true);
+                return;
+            }
 
             setLightningInvoice(d.lnInvoice);
             setLightningAmount(d.amount);
