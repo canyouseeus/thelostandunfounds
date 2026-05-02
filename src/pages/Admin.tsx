@@ -91,6 +91,8 @@ import AdminGalleryView from '../components/admin/AdminGalleryView';
 import AdminEventsView from '../components/admin/AdminEventsView';
 import AdminBookingView from '../components/admin/AdminBookingView';
 import AdminCalendarView from '../components/admin/AdminCalendarView';
+import AdminDriveDownload from '../components/admin/AdminDriveDownload';
+import { CloudArrowDownIcon } from '@heroicons/react/24/outline';
 import { RevenueTracker } from '../components/ui/revenue-tracker';
 import { ClockWidget } from '../components/ui/clock-widget';
 import { CalendarWidget } from '../components/ui/calendar-widget';
@@ -243,6 +245,7 @@ export default function Admin() {
   const calendarSectionRef = useRef<HTMLDivElement>(null);
   const pricingSectionRef = useRef<HTMLDivElement>(null);
   const settingsSectionRef = useRef<HTMLDivElement>(null);
+  const driveSectionRef = useRef<HTMLDivElement>(null);
 
   // Expanded state for controlled CollapsibleSections
   // All collapsed by default
@@ -324,6 +327,7 @@ export default function Admin() {
       case 'bookings': ref = bookingsSectionRef; break;
       case 'calendar': ref = calendarSectionRef; break;
       case 'pricing': ref = pricingSectionRef; break;
+      case 'drive': ref = driveSectionRef; break;
       case 'settings':
         key = 'settings';
         ref = settingsSectionRef;
@@ -1745,6 +1749,7 @@ export default function Admin() {
                 { id: 'submissions', icon: DocumentTextIcon, title: 'Submissions', badge: pendingSubmissions },
                 { id: 'calendar', icon: CalendarIcon, title: 'Calendar' },
                 { id: 'pricing', icon: CurrencyDollarIcon, title: 'Pricing' },
+                { id: 'drive', icon: CloudArrowDownIcon, title: 'Drive' },
                 { id: 'settings', icon: BoltIcon, title: 'Settings' }
               ].map((app) => (
                 <button
@@ -1952,6 +1957,22 @@ export default function Admin() {
               </div>
               <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Pricing</div>}>
                 <ProductCostManagement />
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* Drive Download Section */}
+          {expandedSections['drive'] && (
+            <div ref={driveSectionRef} className="animate-in fade-in duration-500">
+              <div className="flex flex-col px-0 py-2 mb-8 items-start">
+                <div className="flex items-center gap-3">
+                  <CloudArrowDownIcon className="w-5 h-5 text-white/40" />
+                  <h2 className="text-lg font-black text-white tracking-widest uppercase">Drive Download Portal</h2>
+                </div>
+                <button onClick={() => handleSectionToggle('drive')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
+              </div>
+              <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Drive Download</div>}>
+                <AdminDriveDownload />
               </ErrorBoundary>
             </div>
           )}

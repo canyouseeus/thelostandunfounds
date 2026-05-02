@@ -23,6 +23,9 @@
     "api/admin/sync-library.ts": {
       "maxDuration": 300
     },
+    "api/admin/drive-download.ts": {
+      "maxDuration": 300
+    },
     "api/**/*.ts": {
       "maxDuration": 60
     },
