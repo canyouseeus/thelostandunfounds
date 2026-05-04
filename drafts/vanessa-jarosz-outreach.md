@@ -1,0 +1,43 @@
+# Outreach Email — Vanessa Jarosz / Ghost Beverages
+
+**To:** vjarosz@ghostbeverages.com
+**From:** [your email]
+**Subject:** Great meeting you at Bentley's — photo/video support for Ghost activations?
+
+---
+
+Hi Vanessa,
+
+Really enjoyed connecting at Bentley's the other night — that opening had a great energy, and the live music lineup is going to do well on 36th.
+
+I wanted to follow up properly now that I've had a chance to look at your card. I want to make sure I understand your role correctly before pitching anything: as On-Premise Manager for Ghost, are you primarily running brand activations and promo events at bars and venues across the Austin market, or does your scope cover account relationships and placement as well? I ask because I'd rather tailor what I send you to what you actually need, instead of a generic pitch.
+
+A bit about us: we're THE LOST+UNFOUNDS, a photo and video team based here in Austin. We specialize in event coverage — brand activations, launch nights, live music, sponsored pop-ups — and we deliver fast turnarounds for social-ready content (Reels, TikTok, stills) plus a polished long-form recap when the brand needs it.
+
+Here's what I'd love to explore with you:
+
+- **On-call event coverage** for Ghost activations across Austin — sampling nights, sponsored shows, account openings like Bentley's, and anything else on your calendar. We can keep a standing rate so booking us is as simple as a text.
+- **Same-night or next-day social deliverables** so the @ghostenergy feed (or your venue partners' feeds) gets content while the event is still relevant.
+- **Behind-the-scenes / team content** if you ever need lifestyle or BTS material for internal decks, sales sheets, or trade work.
+
+If any of that sounds useful, I'd love to grab 15 minutes — coffee, a call, or I can swing by wherever you're working out of. Even if the timing isn't right for a project, I'd genuinely like to know what you've got coming up so we can be ready when it is.
+
+Either way, glad we crossed paths. Looking forward to seeing what Ghost has cooking in Austin.
+
+Best,
+[Your name]
+THE LOST+UNFOUNDS
+[phone] · [website] · [IG]
+
+---
+
+## Notes for review
+
+- **Tone:** warm but direct — assumes she gets a lot of generic pitches and tries to stand out by asking about her actual scope first.
+- **Ask:** soft — 15 min meeting, or just an open line for future events. Doesn't push for a contract.
+- **Hooks used:** Bentley's reference, 36th Street, @ghostenergy handle from her card, Austin local angle.
+- **What to fill in before sending:** your name, phone, website, IG handle in the signature.
+- **Optional add-ons** if you want to make it stronger:
+  - Attach a 1-page rate card or a link to a recent event reel
+  - Mention any mutual venues/promoters you've already worked with in Austin
+  - If you have shots from Bentley's opening, lead with "I grabbed a few frames the other night — happy to send them over" as a free-value opener
