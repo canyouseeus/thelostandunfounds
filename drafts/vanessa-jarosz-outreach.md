@@ -8,7 +8,7 @@
 
 Hi Vanessa,
 
-Really enjoyed connecting at Bentley's the other night — that opening had a great energy, and the live music lineup is going to do well on 36th.
+Really enjoyed connecting at Bentley's the other night — that opening had a great energy, and the live music lineup is going to do well on 6th.
 
 I wanted to follow up properly now that I've had a chance to look at your card. I want to make sure I understand your role correctly before pitching anything: as On-Premise Manager for Ghost, are you primarily running brand activations and promo events at bars and venues across the Austin market, or does your scope cover account relationships and placement as well? I ask because I'd rather tailor what I send you to what you actually need, instead of a generic pitch.
 
@@ -35,7 +35,7 @@ THE LOST+UNFOUNDS — in collaboration with Four5 Culture & A-City Productions
 
 - **Tone:** warm but direct — assumes she gets a lot of generic pitches and tries to stand out by asking about her actual scope first.
 - **Ask:** soft — 15 min meeting, or just an open line for future events. Doesn't push for a contract.
-- **Hooks used:** Bentley's reference, 36th Street, @ghostenergy handle from her card, Austin local angle.
+- **Hooks used:** Bentley's reference, 6th Street, @ghostenergy handle from her card, Austin local angle.
 - **Partners named:** Four5 Culture and A-City Productions framed as the on-ground team — signals capacity and seriousness without overselling.
 - **What to fill in before sending:** your name, phone, website, IG handle in the signature.
 - **Share with associates:** before sending, run this past Four5 Culture and A-City Productions so they're aligned on how the partnership is being represented and rate-card commitments.
