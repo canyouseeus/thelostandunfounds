@@ -715,23 +715,32 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-32">
-                    {/* Left Column: Pricing */}
-                    {!isAllPublic && library && Number(library.price) > 0 && (
-                        <div className="space-y-3 max-w-sm">
-                            <div className="inline-flex items-baseline gap-3">
-                                <span className="text-4xl md:text-5xl font-black text-white tracking-tighter leading-none">
-                                    ${Number(library.price).toFixed(0)}
-                                </span>
-                                <span className="text-[9px] font-black tracking-[0.3em] uppercase text-white/50">
-                                    Per Photo
-                                </span>
-                            </div>
-                            {pricingOptions.filter(o => o.photo_count > 1).length > 0 && (
-                                <div className="space-y-1 pt-1">
-                                    {pricingOptions
-                                        .filter(o => o.photo_count > 1)
-                                        .sort((a, b) => a.photo_count - b.photo_count)
-                                        .map(opt => (
+                    {/* Left Column: Pricing — single-photo price comes from the
+                        'photo_count=1' pricing option if present, else falls back
+                        to library.price. Server-side checkout uses the same
+                        precedence, so this matches the tray total. */}
+                    {!isAllPublic && library && (() => {
+                        const singleOption = pricingOptions.find(o => o.photo_count === 1);
+                        const headlinePrice = singleOption
+                            ? Number(singleOption.price)
+                            : Number(library.price);
+                        if (!headlinePrice || headlinePrice <= 0) return null;
+                        const bundles = pricingOptions
+                            .filter(o => o.photo_count > 1)
+                            .sort((a, b) => a.photo_count - b.photo_count);
+                        return (
+                            <div className="space-y-3 max-w-sm">
+                                <div className="inline-flex items-baseline gap-3">
+                                    <span className="text-4xl md:text-5xl font-black text-white tracking-tighter leading-none">
+                                        ${headlinePrice.toFixed(0)}
+                                    </span>
+                                    <span className="text-[9px] font-black tracking-[0.3em] uppercase text-white/50">
+                                        Per Photo
+                                    </span>
+                                </div>
+                                {bundles.length > 0 && (
+                                    <div className="space-y-1 pt-1">
+                                        {bundles.map(opt => (
                                             <p
                                                 key={opt.id}
                                                 className="text-white/40 text-[10px] font-bold tracking-widest uppercase leading-relaxed"
@@ -742,13 +751,14 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                                 </span>
                                             </p>
                                         ))}
-                                </div>
-                            )}
-                            <p className="text-white/30 text-[10px] font-bold tracking-widest uppercase leading-relaxed pt-2">
-                                Pay with Card or Bitcoin
-                            </p>
-                        </div>
-                    )}
+                                    </div>
+                                )}
+                                <p className="text-white/30 text-[10px] font-bold tracking-widest uppercase leading-relaxed pt-2">
+                                    Pay with Card or Bitcoin
+                                </p>
+                            </div>
+                        );
+                    })()}
 
                     {/* Right Column: Instructions */}
                     <div className="space-y-4 max-w-sm flex flex-col justify-start pt-2">
