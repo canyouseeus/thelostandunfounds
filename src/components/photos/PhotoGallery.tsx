@@ -20,15 +20,11 @@ import PhotoLightbox from './PhotoLightbox';
 import SelectionTray from './SelectionTray';
 import Loading from '../Loading';
 import AuthModal from '../auth/AuthModal';
-import TipModal from '../TipModal';
 import DownloadEmailModal from '../DownloadEmailModal';
-import CreditModal from './CreditModal';
 import { SearchModal } from './SearchModal';
 import { PhotoMap } from './PhotoMap';
 import { cn } from '../ui/utils';
 import { NoirDateRangePicker } from '../ui/NoirDateRangePicker';
-import JSZip from 'jszip';
-import { saveAs } from 'file-saver';
 
 interface Photo {
     id: string;
@@ -284,19 +280,14 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     const [authMessage, setAuthMessage] = useState<string | undefined>(undefined);
     const [authTitle, setAuthTitle] = useState<string | undefined>(undefined);
 
-    // Credit system state
-    const [creditEmail, setCreditEmail] = useState<string | null>(null);
-    const [creditBalance, setCreditBalance] = useState<number | null>(null);
-    const [creditModalOpen, setCreditModalOpen] = useState(false);
-    const creditDeductedRef = useRef(false);
+    // Buyer email (used for order receipts + entitlement lookup)
+    const [buyerEmail, setBuyerEmail] = useState<string | null>(null);
 
-    // Tip modal + download progress
-    const [tipModalOpen, setTipModalOpen] = useState(false);
-    const [downloadProgress, setDownloadProgress] = useState(0);
-    const [downloadStatus, setDownloadStatus] = useState('');
-    const [isDownloading, setIsDownloading] = useState(false);
+    // Checkout modal state — picks BTC vs Fiat after email is collected
+    const [paymentPickerOpen, setPaymentPickerOpen] = useState(false);
+    const [checkoutPending, setCheckoutPending] = useState(false);
 
-    // Lightning payment state (out-of-credits path)
+    // Lightning payment state (BTC path)
     const [lightningInvoice, setLightningInvoice] = useState<string | null>(null);
     const [lightningAmount, setLightningAmount] = useState<number>(0);
     const [lightningModalOpen, setLightningModalOpen] = useState(false);
@@ -330,23 +321,16 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             }
         }
 
-        // Load saved credit email
-        const savedEmail = localStorage.getItem('credit_email');
+        // Restore buyer email from past purchases / downloads
+        const savedEmail =
+            localStorage.getItem('tlau_download_email') ||
+            localStorage.getItem('credit_email');
         if (savedEmail) {
-            setCreditEmail(savedEmail);
+            setBuyerEmail(savedEmail);
         }
 
         return () => controller.abort();
     }, [librarySlug]);
-
-    // Fetch credit balance whenever creditEmail changes
-    useEffect(() => {
-        if (!creditEmail) return;
-        fetch(`/api/credits/balance?email=${encodeURIComponent(creditEmail)}`)
-            .then(r => r.json())
-            .then(d => setCreditBalance(d.credits_remaining ?? 0))
-            .catch(() => {});
-    }, [creditEmail]);
 
 
     // Persist selections to localStorage
@@ -561,70 +545,54 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         }
     };
 
+    // Compute the order total from the selected photos using the gallery's
+    // per-photo price + bundle tiers (mirrors the server-side math).
+    const computeTotal = (count: number): number => {
+        if (count <= 0 || !library) return 0;
+        const single = Number(library.price) || 0;
+        const sortedBundles = [...pricingOptions]
+            .filter(o => o.photo_count && o.photo_count > 0)
+            .sort((a, b) => b.photo_count - a.photo_count);
+
+        let amount = 0;
+        let remaining = count;
+        for (const opt of sortedBundles) {
+            const numBundles = Math.floor(remaining / opt.photo_count);
+            if (numBundles > 0) {
+                amount += numBundles * Number(opt.price);
+                remaining %= opt.photo_count;
+            }
+        }
+        amount += remaining * single;
+        return amount;
+    };
+
     const handleCheckout = async () => {
-        const email = creditEmail || localStorage.getItem('credit_email');
+        if (selectedPhotos.length === 0) return;
+        let email = buyerEmail;
         if (!email) {
-            setCreditModalOpen(true);
-            return;
+            email = await requestDownloadEmail(selectedPhotos);
+            if (!email) return; // user cancelled
+            setBuyerEmail(email);
         }
-        await proceedWithCredits(email);
+        setPaymentPickerOpen(true);
     };
 
-    const proceedWithCredits = async (email: string) => {
-        const count = selectedPhotos.length;
-        if (count === 0) return;
+    const submitPayment = async (paymentMethod: 'stripe' | 'strike') => {
+        const email = buyerEmail;
+        if (!email || selectedPhotos.length === 0) return;
 
-        // Use cached balance or fetch fresh
-        let balance = creditBalance;
-        if (balance === null) {
-            try {
-                const r = await fetch(`/api/credits/balance?email=${encodeURIComponent(email)}`);
-                const d = await r.json();
-                balance = d.credits_remaining ?? 0;
-                setCreditBalance(balance);
-            } catch {
-                balance = 0;
-            }
-        }
-
-        if (balance! >= count) {
-            // Deduct credits atomically, then show tip modal
-            try {
-                const r = await fetch('/api/credits/deduct', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, count })
-                });
-                const d = await r.json();
-
-                if (!r.ok) {
-                    // Insufficient credits (race condition — refresh balance and re-evaluate)
-                    setCreditBalance(d.credits_remaining ?? 0);
-                    if ((d.credits_remaining ?? 0) < count) {
-                        handlePaidCheckout(email);
-                    }
-                    return;
-                }
-
-                setCreditBalance(d.credits_remaining);
-                creditDeductedRef.current = true;
-                setTipModalOpen(true);
-            } catch {
-                alert('Failed to process credits. Please try again.');
-            }
-        } else {
-            handlePaidCheckout(email);
-        }
-    };
-
-    const handlePaidCheckout = async (email: string) => {
-        const photoIds = selectedPhotos.map(p => p.id);
-        setIsDownloading(true);
+        setCheckoutPending(true);
         try {
             const r = await fetch('/api/photos/checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ photoIds, email, paidCheckout: true })
+                body: JSON.stringify({
+                    photoIds: selectedPhotos.map(p => p.id),
+                    email,
+                    paymentMethod,
+                    returnPath: typeof window !== 'undefined' ? window.location.pathname : undefined,
+                }),
             });
             const d = await r.json();
 
@@ -633,15 +601,21 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 return;
             }
 
-            if (d.free) return; // shouldn't happen in paid path
+            if (paymentMethod === 'stripe' && d.url) {
+                window.location.href = d.url;
+                return;
+            }
 
-            setLightningInvoice(d.lnInvoice);
-            setLightningAmount(d.amount);
-            setLightningModalOpen(true);
+            if (paymentMethod === 'strike' && d.lnInvoice) {
+                setPaymentPickerOpen(false);
+                setLightningInvoice(d.lnInvoice);
+                setLightningAmount(d.amount);
+                setLightningModalOpen(true);
+            }
         } catch {
             alert('Checkout failed. Please try again.');
         } finally {
-            setIsDownloading(false);
+            setCheckoutPending(false);
         }
     };
 
@@ -673,77 +647,6 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             };
             (window as any).__tlauDownloadEmailResolver = { onSubmit, onClose };
         });
-    };
-
-    const startFreeDownload = async (photos: Photo[]) => {
-        if (!photos.length) return;
-
-        const email = await requestDownloadEmail(photos);
-        if (!email) return; // user cancelled
-
-        setIsDownloading(true);
-        setDownloadStatus('Preparing download...');
-        setDownloadProgress(5);
-
-        try {
-            const zip = new JSZip();
-            const folder = zip.folder('TLAU_PHOTOS');
-
-            let completed = 0;
-            const total = photos.length;
-
-            for (const photo of photos) {
-                setDownloadStatus(`Downloading: ${photo.title || 'photo'}...`);
-
-                try {
-                    const response = await fetch(
-                        `/api/gallery/stream?fileId=${photo.google_drive_file_id}&download=true&email=${encodeURIComponent(email)}`
-                    );
-
-                    if (!response.ok) {
-                        console.error(`Failed to fetch ${photo.title}`);
-                        continue;
-                    }
-
-                    const blob = await response.blob();
-                    const cleanTitle = (photo.title || 'untitled').replace(/[^a-z0-9]/gi, '_').toLowerCase();
-                    folder?.file(`${cleanTitle}_${photo.id.slice(0, 6)}.jpg`, blob);
-                } catch (err) {
-                    console.error(`Error downloading ${photo.id}`, err);
-                }
-
-                completed++;
-                setDownloadProgress(Math.round((completed / total) * 85) + 5);
-            }
-
-            setDownloadStatus('Compressing archive...');
-            setDownloadProgress(95);
-            const content = await zip.generateAsync({ type: 'blob' });
-
-            setDownloadStatus('Saving...');
-            saveAs(content, `tlau-photos-${Date.now()}.zip`);
-
-            setDownloadProgress(100);
-            setDownloadStatus('Done!');
-            setTimeout(() => {
-                setIsDownloading(false);
-                setDownloadProgress(0);
-                setDownloadStatus('');
-                setSelectedPhotos([]);
-                localStorage.removeItem(storageKey);
-            }, 2000);
-        } catch (err: any) {
-            console.error('Free download error:', err);
-            alert('Download failed. Please try again.');
-            setIsDownloading(false);
-        }
-    };
-
-    const handleCreditModalSuccess = async (email: string, balance: number) => {
-        setCreditEmail(email);
-        setCreditBalance(balance);
-        setCreditModalOpen(false);
-        await proceedWithCredits(email);
     };
 
     if (loading) {
@@ -792,7 +695,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     });
 
     const displayedPhotos = filteredPhotos;
-    const singlePrice = 0;
+    const singlePrice = library ? Number(library.price) || 0 : 0;
 
     return (
         <div
@@ -812,42 +715,40 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-32">
-                    {/* Left Column: Credit counter */}
-                    <div className="space-y-3 max-w-sm">
-                        {creditEmail && creditBalance !== null ? (
-                            <>
-                                <div className="inline-flex items-baseline gap-3">
-                                    <span className="text-4xl md:text-5xl font-black text-white tracking-tighter leading-none">
-                                        {creditBalance}
-                                    </span>
-                                    <span className="text-[9px] font-black tracking-[0.3em] uppercase text-white/50">
-                                        Credits Remaining
-                                    </span>
+                    {/* Left Column: Pricing */}
+                    {!isAllPublic && library && Number(library.price) > 0 && (
+                        <div className="space-y-3 max-w-sm">
+                            <div className="inline-flex items-baseline gap-3">
+                                <span className="text-4xl md:text-5xl font-black text-white tracking-tighter leading-none">
+                                    ${Number(library.price).toFixed(0)}
+                                </span>
+                                <span className="text-[9px] font-black tracking-[0.3em] uppercase text-white/50">
+                                    Per Photo
+                                </span>
+                            </div>
+                            {pricingOptions.filter(o => o.photo_count > 1).length > 0 && (
+                                <div className="space-y-1 pt-1">
+                                    {pricingOptions
+                                        .filter(o => o.photo_count > 1)
+                                        .sort((a, b) => a.photo_count - b.photo_count)
+                                        .map(opt => (
+                                            <p
+                                                key={opt.id}
+                                                className="text-white/40 text-[10px] font-bold tracking-widest uppercase leading-relaxed"
+                                            >
+                                                {opt.photo_count} for ${Number(opt.price).toFixed(0)}
+                                                <span className="text-white/20 ml-2">
+                                                    (${(Number(opt.price) / opt.photo_count).toFixed(2)} ea)
+                                                </span>
+                                            </p>
+                                        ))}
                                 </div>
-                                <p className="text-white/30 text-[10px] font-bold tracking-widest uppercase leading-relaxed">
-                                    1 credit per photo. Additional credits $1 each.
-                                </p>
-                            </>
-                        ) : (
-                            <>
-                                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/5">
-                                    <span className="text-[9px] font-black tracking-[0.3em] uppercase text-white/70">
-                                        10 Free Credits
-                                    </span>
-                                </div>
-                                <p className="text-white/30 text-[10px] font-bold tracking-widest uppercase leading-relaxed">
-                                    Each photo costs 1 credit. Start with 10 free credits — additional credits $1 each.
-                                </p>
-                                <button
-                                    onClick={() => setCreditModalOpen(true)}
-                                    className="inline-flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors"
-                                >
-                                    <span className="w-1 h-1 rounded-full bg-white/30" />
-                                    Claim your 10 free credits
-                                </button>
-                            </>
-                        )}
-                    </div>
+                            )}
+                            <p className="text-white/30 text-[10px] font-bold tracking-widest uppercase leading-relaxed pt-2">
+                                Pay with Card or Bitcoin
+                            </p>
+                        </div>
+                    )}
 
                     {/* Right Column: Instructions */}
                     <div className="space-y-4 max-w-sm flex flex-col justify-start pt-2">
@@ -860,13 +761,13 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                         <div className="flex items-start gap-4 text-left">
                             <span className="text-[10px] font-black text-white/20 w-4 pt-0.5">02</span>
                             <p className="text-[9px] font-black tracking-[0.2em] uppercase text-white/40 leading-relaxed">
-                                Click "Download" in the tray below.
+                                Click "Checkout" in the tray below.
                             </p>
                         </div>
                         <div className="flex items-start gap-4 text-left">
                             <span className="text-[10px] font-black text-white/20 w-4 pt-0.5">03</span>
                             <p className="text-[9px] font-black tracking-[0.2em] uppercase text-white/40 leading-relaxed">
-                                Each download uses 1 credit. Tips are always appreciated!
+                                Pick Card or Bitcoin and complete payment.
                             </p>
                         </div>
                         <div className="pt-3 mt-2 border-t border-white/5">
@@ -874,7 +775,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                 Personal use only
                             </p>
                             <p className="text-[9px] text-white/30 leading-relaxed mt-1">
-                                Free downloads are licensed for personal use — social media, wallpapers, personal printing.{' '}
+                                Purchased downloads are licensed for personal use — social media, wallpapers, personal printing.{' '}
                                 <a href="/licensing" className="text-white/50 hover:text-white underline underline-offset-2 transition-colors">
                                     Commercial licensing →
                                 </a>
@@ -914,20 +815,6 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                             </button>
                         </div>
                     )}
-
-                    {/* Credit pill - always visible while scrolling */}
-                    <button
-                        onClick={() => !creditEmail && setCreditModalOpen(true)}
-                        className={`inline-flex items-baseline gap-2 px-3 py-1 bg-white/5 transition-colors ${!creditEmail ? 'hover:bg-white/10 cursor-pointer' : 'cursor-default'}`}
-                        title={creditEmail ? 'Your credit balance' : 'Claim 10 free credits'}
-                    >
-                        <span className="text-sm font-black text-white tracking-tighter leading-none">
-                            {creditEmail && creditBalance !== null ? creditBalance : 10}
-                        </span>
-                        <span className="text-[8px] font-black tracking-[0.25em] uppercase text-white/50 leading-none">
-                            {creditEmail ? 'Credits' : 'Free Credits'}
-                        </span>
-                    </button>
 
                     {/* Row 2: Icons (Centered underneath) */}
                     <div className="flex items-center justify-center gap-12 sm:gap-16 w-full relative z-[101]">
@@ -1249,57 +1136,72 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 )
             }
 
-            {/* Download Progress Overlay */}
-            <AnimatePresence>
-                {isDownloading && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/90 backdrop-blur-sm"
-                    >
-                        <div className="w-full max-w-sm px-8 space-y-4 text-center">
-                            <p className="text-xs font-black uppercase tracking-[0.3em] text-white/60">
-                                Downloading
-                            </p>
-                            <div className="h-1 bg-white/10 w-full overflow-hidden">
-                                <motion.div
-                                    className="h-full bg-white"
-                                    animate={{ width: `${downloadProgress}%` }}
-                                    transition={{ duration: 0.3 }}
-                                />
-                            </div>
-                            <p className="text-[10px] text-white/40 uppercase tracking-widest animate-pulse">
-                                {downloadStatus}
-                            </p>
-                            <p className="text-[8px] text-white/20 uppercase tracking-[0.25em] pt-2">
-                                Personal use only ·{' '}
-                                <a href="/licensing" className="text-white/40 hover:text-white/70 transition-colors">
-                                    Commercial →
-                                </a>
-                            </p>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
             {/* Tray */}
             <SelectionTray
                 selectedPhotos={selectedPhotos}
                 onRemove={(id) => setSelectedPhotos(prev => prev.filter(p => p.id !== id))}
                 onCheckout={handleCheckout}
-                loading={isDownloading}
-                pricingOptions={pricingOptions}
-                creditBalance={creditBalance}
-                creditEmail={creditEmail}
+                loading={checkoutPending}
+                totalAmount={computeTotal(selectedPhotos.length)}
             />
 
-            {/* Credit claim modal */}
-            <CreditModal
-                isOpen={creditModalOpen}
-                onClose={() => setCreditModalOpen(false)}
-                onSuccess={handleCreditModalSuccess}
-            />
+            {/* Payment method picker — Card vs Bitcoin */}
+            <AnimatePresence>
+                {paymentPickerOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[9999] flex items-center justify-center px-4 bg-black/90"
+                        onClick={() => !checkoutPending && setPaymentPickerOpen(false)}
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, y: 16 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 16 }}
+                            transition={{ duration: 0.2 }}
+                            className="relative bg-black border border-white/20 w-full max-w-sm p-8"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <button
+                                onClick={() => !checkoutPending && setPaymentPickerOpen(false)}
+                                className="absolute top-4 right-4 text-white/40 hover:text-white transition-colors"
+                                aria-label="Close"
+                            >
+                                <XMarkIcon className="w-5 h-5" />
+                            </button>
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-1">
+                                Checkout
+                            </p>
+                            <h2 className="text-xl font-black uppercase tracking-tight text-white mb-1">
+                                ${computeTotal(selectedPhotos.length).toFixed(2)}
+                            </h2>
+                            <p className="text-white/40 text-[11px] leading-relaxed mb-6">
+                                {selectedPhotos.length} photo{selectedPhotos.length === 1 ? '' : 's'} from {library?.name}
+                            </p>
+                            <div className="space-y-3">
+                                <button
+                                    onClick={() => submitPayment('stripe')}
+                                    disabled={checkoutPending}
+                                    className="w-full py-4 bg-white text-black text-[11px] font-black uppercase tracking-[0.2em] hover:bg-white/90 transition-colors disabled:opacity-50"
+                                >
+                                    Pay with Card
+                                </button>
+                                <button
+                                    onClick={() => submitPayment('strike')}
+                                    disabled={checkoutPending}
+                                    className="w-full py-4 bg-transparent border border-white/30 text-white text-[11px] font-black uppercase tracking-[0.2em] hover:border-white hover:bg-white/5 transition-colors disabled:opacity-50"
+                                >
+                                    Pay with Bitcoin
+                                </button>
+                            </div>
+                            <p className="text-[9px] text-white/30 leading-relaxed text-center pt-4">
+                                Card payments via Stripe. Bitcoin via Lightning.
+                            </p>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Lightning payment modal (out-of-credits path) */}
             <AnimatePresence>
@@ -1385,18 +1287,6 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                     else setDownloadEmailModalOpen(false);
                 }}
                 photoCount={pendingDownloadPhotos?.length ?? 1}
-            />
-
-            {/* Tip Modal */}
-            <TipModal
-                isOpen={tipModalOpen}
-                onClose={() => {
-                    setTipModalOpen(false);
-                    if (creditDeductedRef.current) {
-                        creditDeductedRef.current = false;
-                        startFreeDownload(selectedPhotos);
-                    }
-                }}
             />
 
             {/* Search Modal */}

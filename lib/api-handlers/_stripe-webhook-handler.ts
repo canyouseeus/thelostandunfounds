@@ -96,7 +96,10 @@ export default async function handler(
 
 /**
  * Finalize an order whose checkout session is now paid.
- * - Confirms the affiliate commission row we wrote at session-creation time.
+ * - For photo orders (metadata.source === 'tlau-photos'): mark the
+ *   photo_orders row paid and grant photo_entitlements.
+ * - For all paid sessions with an affiliate ref: flip the pending commission
+ *   to confirmed.
  */
 async function finalizeCheckoutSession(session: Stripe.Checkout.Session) {
     if (session.payment_status !== 'paid') {
@@ -110,6 +113,7 @@ async function finalizeCheckoutSession(session: Stripe.Checkout.Session) {
         currency: session.currency,
         paymentIntent: session.payment_intent,
         customerEmail: session.customer_details?.email,
+        source: session.metadata?.source,
     })
 
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
@@ -125,7 +129,12 @@ async function finalizeCheckoutSession(session: Stripe.Checkout.Session) {
 
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // Flip the pending affiliate commission to confirmed.
+    if (session.metadata?.source === 'tlau-photos') {
+        await finalizePhotoOrder(supabase, session)
+    }
+
+    // Flip the pending affiliate commission to confirmed (works for both
+    // shop and photo orders since both write commissions keyed by session id).
     const { data: updated, error } = await supabase
         .from('affiliate_commissions')
         .update({ status: 'confirmed' })
@@ -138,6 +147,55 @@ async function finalizeCheckoutSession(session: Stripe.Checkout.Session) {
     } else if (updated && updated.length > 0) {
         console.log('✅ Affiliate commission confirmed for session:', session.id)
     }
+}
+
+/**
+ * Mark a photo order paid and grant entitlements for its selected photos.
+ * Idempotent: a replayed webhook will see the order already completed and
+ * the entitlements already inserted (UPSERT-shaped via upsert).
+ */
+async function finalizePhotoOrder(
+    supabase: any,
+    session: Stripe.Checkout.Session
+) {
+    const photoOrderId = session.metadata?.photoOrderId
+    const photoIdsRaw = session.metadata?.photoIds || ''
+    const photoIds = photoIdsRaw.split(',').filter(Boolean)
+
+    if (!photoOrderId || photoIds.length === 0) {
+        console.error('❌ tlau-photos session missing metadata:', session.metadata)
+        return
+    }
+
+    const { error: updateError } = await supabase
+        .from('photo_orders')
+        .update({ payment_status: 'completed', paypal_order_id: session.id })
+        .eq('id', photoOrderId)
+
+    if (updateError) {
+        console.error('❌ Failed to mark photo_order completed:', updateError)
+        return
+    }
+
+    // 1-year entitlements for paid orders (matches the historical free-checkout
+    // window). Strike-only orders use a 48-hour window per checkout.ts.
+    const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+    const rows = photoIds.map(photoId => ({
+        order_id: photoOrderId,
+        photo_id: photoId,
+        expires_at: expiresAt,
+    }))
+
+    const { error: entError } = await supabase
+        .from('photo_entitlements')
+        .upsert(rows, { onConflict: 'order_id,photo_id', ignoreDuplicates: true })
+
+    if (entError) {
+        console.error('❌ Failed to insert photo_entitlements:', entError)
+        return
+    }
+
+    console.log('✅ Photo order finalized:', { photoOrderId, photoCount: photoIds.length })
 }
 
 /**
