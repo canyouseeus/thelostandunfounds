@@ -1,6 +1,7 @@
 import { google, drive_v3 } from 'googleapis';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import {
+    DEFAULT_VENUE_RADIUS_M,
     findVenueForFolder,
     haversineMeters,
     medianGps,
@@ -258,9 +259,14 @@ function parseLocationFromClaptropTitle(title: string | null | undefined): strin
     return raw.split(/\s+/).map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
 }
 
+/**
+ * Find every venue whose canonical coords are within radius of the photo's GPS.
+ * Used as a fallback ONLY when the parent folder didn't already resolve to a
+ * specific venue — folder is the authoritative signal.
+ */
 async function applyPhotoLevelVenueTags(
     ctx: SyncCtx,
-    photoId: string,
+    _photoId: string,
     latitude: number | null,
     longitude: number | null,
 ): Promise<string[]> {
@@ -268,10 +274,27 @@ async function applyPhotoLevelVenueTags(
     const hits: string[] = [];
     for (const v of ctx.venues) {
         const dist = haversineMeters(latitude, longitude, v.metadata.latitude, v.metadata.longitude);
-        const radius = v.metadata.radius_meters || 300;
+        const radius = v.metadata.radius_meters || DEFAULT_VENUE_RADIUS_M;
         if (dist <= radius) hits.push(v.id);
     }
     return hits;
+}
+
+/**
+ * When the folder venue is set, attach the venue tag only if the photo's own
+ * GPS supports it (or it has no GPS, in which case we trust the folder). A
+ * photo with GPS more than 2x the venue's radius away is almost certainly
+ * misfiled into this folder, so we drop the tag for that one photo.
+ */
+function photoSupportsFolderVenue(
+    venue: VenueTag,
+    latitude: number | null,
+    longitude: number | null,
+): boolean {
+    if (latitude == null || longitude == null) return true; // no GPS — trust folder
+    const dist = haversineMeters(latitude, longitude, venue.metadata.latitude, venue.metadata.longitude);
+    const radius = venue.metadata.radius_meters || DEFAULT_VENUE_RADIUS_M;
+    return dist <= radius * 2;
 }
 
 async function writePhotoTags(ctx: SyncCtx, photoId: string, tagIds: Set<string>): Promise<void> {
@@ -287,7 +310,7 @@ async function determineFolderTag(
     ctx: SyncCtx,
     folderName: string,
     photos: DriveFile[],
-): Promise<string | null> {
+): Promise<{ tagId: string | null; venue: VenueTag | null }> {
     const samples = photos
         .slice(0, SAMPLE_SIZE)
         .map(p => p.imageMediaMetadata?.location)
@@ -298,18 +321,19 @@ async function determineFolderTag(
     const mid = medianGps(samples);
 
     const venue = findVenueForFolder(folderName, mid, ctx.venues);
-    if (venue) return venue.id;
+    if (venue) return { tagId: venue.id, venue };
 
     if (mid) {
         const neighborhood = await reverseGeocodeNeighborhood(mid.latitude, mid.longitude);
         if (neighborhood) {
-            return await ensureTag(ctx, neighborhood, 'location', {
+            const tagId = await ensureTag(ctx, neighborhood, 'location', {
                 latitude: mid.latitude,
                 longitude: mid.longitude,
             });
+            return { tagId, venue: null };
         }
     }
-    return null;
+    return { tagId: null, venue: null };
 }
 
 async function processFolder(
@@ -329,15 +353,19 @@ async function processFolder(
 
     let collectionTagId: string | null = null;
     let folderVenueOrLocationTagId: string | null = null;
+    let folderVenue: VenueTag | null = null;
     if (depth > 0 && folderName && photos.length > 0) {
         // Subfolder name itself is always tagged on the photos as a 'collection'.
         collectionTagId = await ensureTag(ctx, folderName, 'collection');
         // Best-effort: also try to derive a venue/neighborhood from the folder.
         try {
-            folderVenueOrLocationTagId = await determineFolderTag(ctx, folderName, photos);
+            const result = await determineFolderTag(ctx, folderName, photos);
+            folderVenueOrLocationTagId = result.tagId;
+            folderVenue = result.venue;
         } catch (err: any) {
             console.warn(`[sync] determineFolderTag failed for ${folderName}:`, err?.message);
             folderVenueOrLocationTagId = null;
+            folderVenue = null;
         }
     }
 
@@ -352,9 +380,19 @@ async function processFolder(
 
         const tagIds = new Set<string>();
         if (collectionTagId) tagIds.add(collectionTagId);
-        if (folderVenueOrLocationTagId) tagIds.add(folderVenueOrLocationTagId);
 
         const { metadata, latitude, longitude } = parsePhotoFields(file);
+
+        // Folder venue / neighborhood tag attaches per-photo only when the
+        // photo's GPS supports it (or has no GPS). A photo whose GPS sits far
+        // from the folder venue is almost certainly misfiled into the folder,
+        // so we drop the venue tag for that one photo to avoid wrong-place
+        // tags on the gallery and map.
+        if (folderVenueOrLocationTagId) {
+            if (!folderVenue || photoSupportsFolderVenue(folderVenue, latitude, longitude)) {
+                tagIds.add(folderVenueOrLocationTagId);
+            }
+        }
         const dateStr = metadata.date_taken || file.createdTime;
         if (dateStr) {
             const d = new Date(dateStr);
@@ -371,8 +409,14 @@ async function processFolder(
             }
         }
 
-        const perPhotoVenues = await applyPhotoLevelVenueTags(ctx, photoId, latitude, longitude);
-        for (const id of perPhotoVenues) tagIds.add(id);
+        // GPS-only venue tagging is a fallback for photos whose folder didn't
+        // resolve to a venue (e.g. a generic "uploads" or year-named folder).
+        // Folder is the authoritative signal — when it identified a venue, we
+        // don't second-guess it with overlapping nearby venue radii.
+        if (!folderVenue) {
+            const perPhotoVenues = await applyPhotoLevelVenueTags(ctx, photoId, latitude, longitude);
+            for (const id of perPhotoVenues) tagIds.add(id);
+        }
 
         // Fallback: if photo has no EXIF GPS and no folder-level venue/location tag,
         // parse an @tlau_ filename for its encoded city (e.g. "austin").
