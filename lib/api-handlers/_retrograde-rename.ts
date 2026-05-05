@@ -2,7 +2,7 @@
  * Serverless retrograde rename — renames existing Drive files to the @tlau
  * naming convention, updates Supabase photos (title + latitude/longitude +
  * location_name). Safe to invoke repeatedly; resumable because each call
- * filters out photos whose title already starts with `@tlau_`.
+ * filters out photos whose title is already in claptrop format.
  *
  * Requires OAuth2 Drive credentials (GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET /
  * GOOGLE_REFRESH_TOKEN) — the service account used for read-only sync does
@@ -11,7 +11,7 @@
 import { google } from 'googleapis';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import path from 'path';
-import { buildName, normalizeText, resetSeqs } from '../../scripts/claptrop-namer.js';
+import { buildName, isClaptropName, normalizeText, resetSeqs } from '../../scripts/claptrop-namer.js';
 
 export interface RetrogradeOptions {
     librarySlug?: string;
@@ -66,13 +66,13 @@ async function processLibrary(
         .order('created_at', { ascending: true });
     if (error || !photos) return;
 
-    const toRename = (photos as any[]).filter(p => !p.title?.startsWith('@tlau_'));
+    const toRename = (photos as any[]).filter(p => !isClaptropName(p.title));
     stats.remaining += toRename.length;
     if (toRename.length === 0) return;
 
     const existingNames = new Set(
         (photos as any[])
-            .filter(p => p.title?.startsWith('@tlau_'))
+            .filter(p => isClaptropName(p.title))
             .map(p => `${p.title}.jpg`.toLowerCase())
     );
     const librarySubject = normalizeText(library.slug.replace(/-/g, '_'));

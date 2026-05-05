@@ -262,8 +262,12 @@ async function upsertPhoto(ctx: SyncCtx, file: DriveFile): Promise<string | null
 
 function parseLocationFromClaptropTitle(title: string | null | undefined): string | null {
     if (!title) return null;
-    // @tlau_YYYY-MM-DD_{location}_{subject}_{###}
-    const m = title.match(/^@tlau_\d{4}-\d{2}-\d{2}_([a-z0-9_]+?)_[a-z0-9_]+_\d{3}$/);
+    // Accept both the new SEO prefix and the legacy short form:
+    //   @tlau.photos_thelostandunfounds_YYYY-MM-DD_{location}_{subject}_{###}
+    //   @tlau_YYYY-MM-DD_{location}_{subject}_{###}
+    const m = title.match(
+        /^@tlau(?:\.photos_thelostandunfounds)?_\d{4}-\d{2}-\d{2}_([a-z0-9_]+?)_[a-z0-9_]+_\d{3}$/
+    );
     if (!m) return null;
     const raw = m[1].replace(/_/g, ' ').trim();
     if (!raw) return null;

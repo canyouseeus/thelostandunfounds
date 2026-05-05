@@ -1,6 +1,11 @@
 /**
  * CLAPTROP Naming Engine
- * Builds @tlau_YYYY-MM-DD_location_subject_###.ext filenames for all TLAU assets.
+ * Builds @tlau.photos_thelostandunfounds_YYYY-MM-DD_location_subject_###.ext
+ * filenames for all TLAU assets. The leading IG handle + brand name are
+ * deliberate — they ride along on every uploaded file for SEO so reverse
+ * image search and Drive link captions surface the brand instead of opaque
+ * camera serial numbers.
+ *
  * No external dependencies — pure Node.js EXIF parsing + Nominatim geocoding.
  */
 
@@ -17,12 +22,26 @@ export interface ExifData {
 }
 
 export interface ClaptropMeta {
-  filename: string; // @tlau_2026-04-15_austin_barbershop_001.jpg
-  stem: string;     // @tlau_2026-04-15_austin_barbershop_001
+  filename: string; // @tlau.photos_thelostandunfounds_2026-04-15_austin_barbershop_001.jpg
+  stem: string;     // @tlau.photos_thelostandunfounds_2026-04-15_austin_barbershop_001
   dateStr: string;  // 2026-04-15
   location: string; // austin
   subject: string;  // barbershop
   seq: string;      // 001
+}
+
+// SEO-bearing prefix: Instagram handle + brand name baked into every filename.
+// Kept here as a constant so the rename + sync filters and the name builder
+// can't drift out of sync.
+export const NAME_PREFIX = '@tlau.photos_thelostandunfounds';
+
+// Recognizes both the new prefix and the legacy `@tlau_` prefix that
+// pre-dated the SEO update — used by retrograde rename to skip files that
+// are already in some claptrop format and by the sync layer's filename
+// location parser. Anything that matches this is considered "already named".
+export function isClaptropName(name: string | null | undefined): boolean {
+  if (!name) return false;
+  return /^@tlau(?:\.photos_thelostandunfounds)?_\d{4}-\d{2}-\d{2}_/.test(name);
 }
 
 export interface RenameLog {
@@ -278,13 +297,13 @@ export async function buildName(opts: BuildNameOpts): Promise<{ meta: ClaptropMe
 
   // Sequence + collision handling
   let seq      = nextSeq(dateStr, location, subject);
-  let stem     = `@tlau_${dateStr}_${location}_${subject}_${seq}`;
+  let stem     = `${NAME_PREFIX}_${dateStr}_${location}_${subject}_${seq}`;
   let filename = `${stem}${ext}`;
 
   if (existingNames) {
     while (existingNames.has(filename.toLowerCase())) {
       seq      = nextSeq(dateStr, location, subject);
-      stem     = `@tlau_${dateStr}_${location}_${subject}_${seq}`;
+      stem     = `${NAME_PREFIX}_${dateStr}_${location}_${subject}_${seq}`;
       filename = `${stem}${ext}`;
     }
     existingNames.add(filename.toLowerCase());

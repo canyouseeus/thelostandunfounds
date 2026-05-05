@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
-import { buildName, normalizeText, resetSeqs } from './claptrop-namer.js';
+import { buildName, isClaptropName, normalizeText, resetSeqs } from './claptrop-namer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -87,14 +87,14 @@ async function processLibrary(library: { id: string; slug: string; name: string 
         return;
     }
 
-    const toRename = photos.filter(p => !p.title?.startsWith('@tlau_'));
+    const toRename = photos.filter(p => !isClaptropName(p.title));
     console.log(`  ${photos.length} photos total, ${toRename.length} need renaming.`);
 
     if (!toRename.length) return;
 
-    // Build collision set from photos already using @tlau names in this library
+    // Build collision set from photos already in a claptrop name in this library
     const existingNames = new Set(
-        photos.filter(p => p.title?.startsWith('@tlau_')).map(p => `${p.title}.jpg`.toLowerCase())
+        photos.filter(p => isClaptropName(p.title)).map(p => `${p.title}.jpg`.toLowerCase())
     );
 
     // Derive subject from library slug (e.g. "kattitude-tattoo" → "kattitude_tattoo")
