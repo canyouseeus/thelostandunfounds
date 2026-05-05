@@ -36,12 +36,20 @@ export interface ClaptropMeta {
 export const NAME_PREFIX = '@tlau.photos_thelostandunfounds';
 
 // Recognizes both the new prefix and the legacy `@tlau_` prefix that
-// pre-dated the SEO update — used by retrograde rename to skip files that
-// are already in some claptrop format and by the sync layer's filename
-// location parser. Anything that matches this is considered "already named".
+// pre-dated the SEO update — used by the sync layer's filename location
+// parser. Anything that matches this is in some claptrop format, current
+// or legacy.
 export function isClaptropName(name: string | null | undefined): boolean {
   if (!name) return false;
   return /^@tlau(?:\.photos_thelostandunfounds)?_\d{4}-\d{2}-\d{2}_/.test(name);
+}
+
+// Strict check used by the retrograde rename: only the current SEO prefix
+// counts as "already done". Legacy `@tlau_` files match isClaptropName but
+// fail isCurrentName so they get upgraded on the next retrograde pass.
+export function isCurrentName(name: string | null | undefined): boolean {
+  if (!name) return false;
+  return /^@tlau\.photos_thelostandunfounds_\d{4}-\d{2}-\d{2}_/.test(name);
 }
 
 export interface RenameLog {

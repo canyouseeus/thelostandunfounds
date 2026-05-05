@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
-import { buildName, isClaptropName, normalizeText, resetSeqs } from './claptrop-namer.js';
+import { buildName, isCurrentName, normalizeText, resetSeqs } from './claptrop-namer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -87,14 +87,16 @@ async function processLibrary(library: { id: string; slug: string; name: string 
         return;
     }
 
-    const toRename = photos.filter(p => !isClaptropName(p.title));
+    // Legacy `@tlau_*` and raw camera filenames both need renaming up to the
+    // current SEO prefix. Files already in the current format are skipped.
+    const toRename = photos.filter(p => !isCurrentName(p.title));
     console.log(`  ${photos.length} photos total, ${toRename.length} need renaming.`);
 
     if (!toRename.length) return;
 
-    // Build collision set from photos already in a claptrop name in this library
+    // Build collision set from photos already in the current SEO format.
     const existingNames = new Set(
-        photos.filter(p => isClaptropName(p.title)).map(p => `${p.title}.jpg`.toLowerCase())
+        photos.filter(p => isCurrentName(p.title)).map(p => `${p.title}.jpg`.toLowerCase())
     );
 
     // Derive subject from library slug (e.g. "kattitude-tattoo" → "kattitude_tattoo")

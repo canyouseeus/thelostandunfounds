@@ -11,7 +11,7 @@
 import { google } from 'googleapis';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import path from 'path';
-import { buildName, isClaptropName, normalizeText, resetSeqs } from '../../scripts/claptrop-namer.js';
+import { buildName, isCurrentName, normalizeText, resetSeqs } from '../../scripts/claptrop-namer.js';
 
 export interface RetrogradeOptions {
     librarySlug?: string;
@@ -66,13 +66,16 @@ async function processLibrary(
         .order('created_at', { ascending: true });
     if (error || !photos) return;
 
-    const toRename = (photos as any[]).filter(p => !isClaptropName(p.title));
+    // Anything not already in the current SEO prefix gets renamed — that
+    // includes both raw camera filenames and legacy `@tlau_` files that
+    // pre-dated the brand+IG prefix.
+    const toRename = (photos as any[]).filter(p => !isCurrentName(p.title));
     stats.remaining += toRename.length;
     if (toRename.length === 0) return;
 
     const existingNames = new Set(
         (photos as any[])
-            .filter(p => isClaptropName(p.title))
+            .filter(p => isCurrentName(p.title))
             .map(p => `${p.title}.jpg`.toLowerCase())
     );
     const librarySubject = normalizeText(library.slug.replace(/-/g, '_'));
