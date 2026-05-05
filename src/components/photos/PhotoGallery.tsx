@@ -695,7 +695,14 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     });
 
     const displayedPhotos = filteredPhotos;
-    const singlePrice = library ? Number(library.price) || 0 : 0;
+    // Same precedence as the server checkout and the header price display:
+    // a 'photo_count = 1' pricing option (set in admin) wins over the legacy
+    // photo_libraries.price column. Keeps the lightbox + grid + tray in sync.
+    const singlePrice = (() => {
+        const single = pricingOptions.find(o => o.photo_count === 1);
+        if (single) return Number(single.price) || 0;
+        return library ? Number(library.price) || 0 : 0;
+    })();
 
     return (
         <div
