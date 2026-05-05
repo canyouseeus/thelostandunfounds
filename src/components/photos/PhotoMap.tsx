@@ -63,6 +63,13 @@ export function PhotoMap({ onPhotoClick, className = '' }: PhotoMapProps) {
   const [mapReady, setMapReady] = useState(false);
   const [showTagFilter, setShowTagFilter] = useState(false);
 
+  // photo_id -> { lat, lng } from the photo's venue tag, used to override the
+  // raw EXIF coords when plotting. Cameras without onboard GPS (e.g. Fujifilm
+  // bodies that rely on phone Bluetooth pairing) frequently stamp photos with
+  // stale or wrong coordinates; preferring the canonical venue pin keeps the
+  // map honest. The original EXIF lat/lng remains untouched in the DB.
+  const venueCoordRef = useRef<Map<string, { lat: number; lng: number }>>(new Map());
+
   photosRef.current = photos;
   onPhotoClickRef.current = onPhotoClick;
 
@@ -74,21 +81,71 @@ export function PhotoMap({ onPhotoClick, className = '' }: PhotoMapProps) {
 
   useEffect(() => {
     setLoading(true);
-    supabase
-      .from('photos')
-      .select('id, title, google_drive_file_id, thumbnail_url, latitude, longitude, location_name, library_id, metadata')
-      .not('latitude', 'is', null)
-      .not('longitude', 'is', null)
-      .then(({ data }) => { setPhotos((data || []) as MapPhoto[]); setLoading(false); });
+    (async () => {
+      const [{ data: photoRows }, { data: venueRows }] = await Promise.all([
+        supabase
+          .from('photos')
+          .select('id, title, google_drive_file_id, thumbnail_url, latitude, longitude, location_name, library_id, metadata')
+          .not('latitude', 'is', null)
+          .not('longitude', 'is', null),
+        supabase
+          .from('tags')
+          .select('id, metadata')
+          .eq('type', 'venue'),
+      ]);
+
+      // Build a venue id -> coords lookup (only for venues that actually have
+      // a pinned location)
+      const venueCoords = new Map<string, { lat: number; lng: number }>();
+      for (const v of (venueRows || []) as any[]) {
+        const lat = Number(v?.metadata?.latitude);
+        const lng = Number(v?.metadata?.longitude);
+        if (Number.isFinite(lat) && Number.isFinite(lng)) {
+          venueCoords.set(v.id, { lat, lng });
+        }
+      }
+
+      // Pull photo->venue mappings for just these venue tag ids and pick the
+      // first venue per photo.
+      const photoVenueMap = new Map<string, { lat: number; lng: number }>();
+      if (venueCoords.size > 0) {
+        const { data: ptRows } = await supabase
+          .from('photo_tags')
+          .select('photo_id, tag_id')
+          .in('tag_id', Array.from(venueCoords.keys()));
+        for (const row of (ptRows || []) as any[]) {
+          if (photoVenueMap.has(row.photo_id)) continue;
+          const c = venueCoords.get(row.tag_id);
+          if (c) photoVenueMap.set(row.photo_id, c);
+        }
+      }
+      venueCoordRef.current = photoVenueMap;
+
+      setPhotos((photoRows || []) as MapPhoto[]);
+      setLoading(false);
+    })();
   }, []);
+
+  // Effective plotting coords for a photo — venue pin if it has a venue tag,
+  // otherwise the EXIF GPS. Used by every map-coordinate consumer so popup
+  // tracking, marker placement, and fit-bounds all stay consistent.
+  const effectiveCoords = (p: MapPhoto): { lat: number; lng: number } => {
+    const venue = venueCoordRef.current.get(p.id);
+    return venue
+      ? { lat: venue.lat, lng: venue.lng }
+      : { lat: p.latitude, lng: p.longitude };
+  };
 
   const buildGeoJSON = (pts: MapPhoto[]): GeoJSON.FeatureCollection => ({
     type: 'FeatureCollection',
-    features: pts.map(p => ({
-      type: 'Feature',
-      geometry: { type: 'Point', coordinates: [p.longitude, p.latitude] },
-      properties: { id: p.id, title: p.title || 'Untitled', camera: p.metadata?.camera_model || '' },
-    })),
+    features: pts.map(p => {
+      const { lat, lng } = effectiveCoords(p);
+      return {
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [lng, lat] },
+        properties: { id: p.id, title: p.title || 'Untitled', camera: p.metadata?.camera_model || '' },
+      };
+    }),
   });
 
   const updateSource = useCallback(async (pts: MapPhoto[]) => {
@@ -201,7 +258,8 @@ export function PhotoMap({ onPhotoClick, className = '' }: PhotoMapProps) {
       map.on('move', () => {
         setPopup(prev => {
           if (!prev) return null;
-          const pt = map.project([prev.photo.longitude, prev.photo.latitude]);
+          const { lat, lng } = effectiveCoords(prev.photo);
+          const pt = map.project([lng, lat]);
           return { ...prev, x: pt.x, y: pt.y };
         });
       });
@@ -222,8 +280,9 @@ export function PhotoMap({ onPhotoClick, className = '' }: PhotoMapProps) {
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady || photos.length === 0) return;
-    const lngs = photos.map(p => p.longitude);
-    const lats = photos.map(p => p.latitude);
+    const coords = photos.map(p => effectiveCoords(p));
+    const lngs = coords.map(c => c.lng);
+    const lats = coords.map(c => c.lat);
     map.fitBounds(
       [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
       { padding: 60, maxZoom: 12, duration: 800 }

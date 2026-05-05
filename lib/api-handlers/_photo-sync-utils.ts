@@ -26,18 +26,30 @@ interface SyncStats {
     tagsCreated: number;
 }
 
+interface NeighborhoodTag {
+    id: string;
+    name: string;
+    metadata: { latitude: number; longitude: number };
+}
+
 interface SyncCtx {
     drive: drive_v3.Drive;
     supabase: SupabaseClient;
     library: { id: string };
     tagCache: Map<string, { id: string; type: string; metadata: any }>;
     venues: VenueTag[];
+    neighborhoods: NeighborhoodTag[];
     stats: SyncStats;
     seenFileIds: Set<string>;
     limit: number;
     deadline: number;
     timedOut: boolean;
 }
+
+// Photos whose GPS doesn't fall in any venue radius get tagged with the
+// closest 'location' tag within this distance. 5km comfortably covers
+// downtown Austin without crossing into a different neighborhood.
+const NEIGHBORHOOD_FALLBACK_MAX_M = 5000;
 
 function generateSlug(name: string, type: string): string {
     const base = name
@@ -297,6 +309,28 @@ function photoSupportsFolderVenue(
     return dist <= radius * 2;
 }
 
+/**
+ * Find the nearest neighborhood ('location' tag) to a photo's GPS, used as a
+ * fallback when no venue radius contains the photo. Returns null if every
+ * neighborhood is farther than NEIGHBORHOOD_FALLBACK_MAX_M.
+ */
+function findNearestNeighborhood(
+    latitude: number,
+    longitude: number,
+    neighborhoods: NeighborhoodTag[],
+): NeighborhoodTag | null {
+    let best: NeighborhoodTag | null = null;
+    let bestDist = Number.POSITIVE_INFINITY;
+    for (const n of neighborhoods) {
+        const dist = haversineMeters(latitude, longitude, n.metadata.latitude, n.metadata.longitude);
+        if (dist < bestDist) {
+            bestDist = dist;
+            best = n;
+        }
+    }
+    return bestDist <= NEIGHBORHOOD_FALLBACK_MAX_M ? best : null;
+}
+
 async function writePhotoTags(ctx: SyncCtx, photoId: string, tagIds: Set<string>): Promise<void> {
     if (tagIds.size === 0) return;
     const rows = [...tagIds].map(tagId => ({ photo_id: photoId, tag_id: tagId }));
@@ -416,6 +450,15 @@ async function processFolder(
         if (!folderVenue) {
             const perPhotoVenues = await applyPhotoLevelVenueTags(ctx, photoId, latitude, longitude);
             for (const id of perPhotoVenues) tagIds.add(id);
+
+            // Neighborhood fallback: if the photo has GPS but didn't land in
+            // any venue radius, attach the nearest 'location' (neighborhood)
+            // tag so the photo is still placed somewhere on the map filter
+            // chips instead of orphaned.
+            if (perPhotoVenues.length === 0 && latitude != null && longitude != null) {
+                const nearest = findNearestNeighborhood(latitude, longitude, ctx.neighborhoods);
+                if (nearest) tagIds.add(nearest.id);
+            }
         }
 
         // Fallback: if photo has no EXIF GPS and no folder-level venue/location tag,
@@ -492,12 +535,19 @@ async function buildCtx(
     });
     const drive = google.drive({ version: 'v3', auth });
 
-    const { data: venueTagsRaw } = await supabase
+    const { data: locationTagsRaw } = await supabase
         .from('tags')
-        .select('id, name, metadata')
-        .eq('type', 'venue');
-    const venues: VenueTag[] = (venueTagsRaw || [])
-        .filter(t => t.metadata?.latitude != null && t.metadata?.longitude != null)
+        .select('id, name, type, metadata')
+        .in('type', ['venue', 'location']);
+    const venues: VenueTag[] = (locationTagsRaw || [])
+        .filter(t => t.type === 'venue'
+            && t.metadata?.latitude != null
+            && t.metadata?.longitude != null)
+        .map(t => ({ id: t.id, name: t.name, metadata: t.metadata }));
+    const neighborhoods: NeighborhoodTag[] = (locationTagsRaw || [])
+        .filter(t => t.type === 'location'
+            && t.metadata?.latitude != null
+            && t.metadata?.longitude != null)
         .map(t => ({ id: t.id, name: t.name, metadata: t.metadata }));
 
     const tagCache = await loadTagCache(supabase);
@@ -508,6 +558,7 @@ async function buildCtx(
         library,
         tagCache,
         venues,
+        neighborhoods,
         stats: { synced: 0, foldersVisited: 0, tagsCreated: 0 },
         seenFileIds: new Set<string>(),
         limit: limit > 0 ? limit : Number.MAX_SAFE_INTEGER,
