@@ -160,11 +160,6 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                                 </div>
                             )}
                         </div>
-
-                        {/* Sub-header: Photo Title - Nested inside to stay close to image - Only show when loaded */}
-                        <div className={`text-zinc-500 text-[9px] font-bold tracking-[0.2em] uppercase mt-6 pointer-events-auto transition-opacity duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}>
-                            {photo.title || 'Untitled Archive'}
-                        </div>
                     </motion.div>
 
                     <button
