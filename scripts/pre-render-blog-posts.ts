@@ -297,10 +297,15 @@ async function preRenderBlogPosts() {
           );
         }
 
-        // Write the pre-rendered HTML file
-        const finalDir = join(distPath, folderPath);
-        await mkdir(finalDir, { recursive: true });
-        const filePath = join(finalDir, `${slug}.html`);
+        // Write the pre-rendered HTML file at {folderPath}/{slug}/index.html
+        // so Vercel serves it for the extensionless URL /{folderPath}/{slug}.
+        // (Writing {slug}.html instead would only resolve under cleanUrls,
+        // which this project does not enable — that drift caused every post
+        // to fall through to the catch-all rewrite and look like duplicate
+        // content to crawlers.)
+        const slugDir = join(distPath, folderPath, slug);
+        await mkdir(slugDir, { recursive: true });
+        const filePath = join(slugDir, 'index.html');
         await writeFile(filePath, html, 'utf-8');
       } catch (postErr) {
         console.error(`❌ Error rendering post ${post.slug}:`, postErr);

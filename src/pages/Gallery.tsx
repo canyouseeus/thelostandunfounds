@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -150,7 +150,17 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
     };
 
     const [activeGalleryTab, setActiveGalleryTab] = useState<'public' | 'private'>('public');
-    const [viewMode, setViewMode] = useState<'gallery' | 'shop' | 'booking'>('gallery');
+
+    // Read initial viewMode from `?view=shop|booking|gallery`. This is how the
+    // BOOK ME nav link deep-links into the booking tab on the homepage now
+    // that the standalone /booking route has been removed (it was producing
+    // duplicate-content hits at extensionless URLs).
+    const [searchParams] = useSearchParams();
+    const initialView = (() => {
+        const v = searchParams.get('view');
+        return v === 'shop' || v === 'booking' || v === 'gallery' ? v : 'gallery';
+    })();
+    const [viewMode, setViewMode] = useState<'gallery' | 'shop' | 'booking'>(initialView);
 
     // Scroll to top when returning from an inline gallery back to the grid
     const prevActiveGallery = useRef<string | null>(null);

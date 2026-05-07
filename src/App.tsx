@@ -63,7 +63,9 @@ import SubmitEvent from './pages/SubmitEvent'
 import Advertise from './pages/Advertise'
 import PreviewVisitorPage from './pages/PreviewVisitorPage'
 import PreviewAdminLoginPage from './pages/PreviewAdminLoginPage'
-import BookingPage from './pages/BookingPage'
+// BookingPage is rendered inline on the homepage (see src/pages/Gallery.tsx)
+// rather than as a standalone route — see the comment near the removed
+// /booking route below.
 import Marty from './pages/Marty'
 import Kattitude from './pages/Kattitude'
 import KattitudeWaiver from './pages/KattitudeWaiver'
@@ -298,9 +300,12 @@ function App() {
               </Route>
               <Route path="/reset-newsletter" element={<ResetNewsletter />} />
 
-              <Route path="/booking" element={<Layout />}>
-                <Route index element={<BookingPage />} />
-              </Route>
+              {/* /booking is intentionally NOT a standalone route. Booking
+                  lives as a tab on the homepage (Gallery viewMode='booking').
+                  The "BOOK ME" nav link uses /?view=booking to land users on
+                  the homepage with the booking panel pre-selected. Keeping a
+                  /booking route here would just serve a duplicate of the
+                  homepage shell to crawlers — the issue Ahrefs flagged. */}
 
               <Route path="/marty" element={<Marty />} />
 

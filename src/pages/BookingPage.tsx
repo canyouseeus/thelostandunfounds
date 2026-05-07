@@ -13,7 +13,8 @@ import {
     EnvelopeIcon,
     ChatBubbleLeftRightIcon,
 } from '@heroicons/react/24/outline';
-import SEOHead from '../components/SEOHead';
+// SEOHead removed: BookingPage is now rendered only as an embedded
+// homepage tab. See the comment near the return statement below.
 
 const EVENT_TYPES = [
     'Concert / Show',
@@ -331,11 +332,10 @@ const BookingPage: React.FC = () => {
 
     return (
         <>
-            <SEOHead
-                title="Booking"
-                description="Candid-style photography for events, portraits, and brands. Shot primarily on Fujifilm X-S20. Check availability and submit a booking request."
-                canonicalPath="/booking"
-            />
+            {/* SEOHead intentionally omitted: BookingPage is rendered as a tab
+                inside Gallery (the homepage) — there is no standalone /booking
+                route. Setting per-page SEO here would override the homepage's
+                title/canonical when the booking tab is active. */}
 
             <div className="min-h-screen bg-black text-white px-4 py-16 md:py-24">
                 <div className="max-w-5xl mx-auto">

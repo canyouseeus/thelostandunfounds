@@ -148,13 +148,9 @@ async function generateSitemap() {
     <priority>0.6</priority>
   </url>
 
-  <!-- Booking -->
-  <url>
-    <loc>${baseUrl}/booking</loc>
-    <lastmod>${currentDate}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
+  <!-- /booking is intentionally omitted: it is an admin-gated tool that
+       must not be exposed to search engines. It is also covered by the
+       noindex shell at /404.html via the catch-all rewrite. -->
 
   <!-- Book Club -->
   <url>
