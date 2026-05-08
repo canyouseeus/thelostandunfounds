@@ -30,7 +30,7 @@ export default async function handler(
     }
 
     const stripe = new Stripe(stripeSecretKey, {
-        apiVersion: '2024-12-18.acacia' as Stripe.LatestApiVersion,
+        apiVersion: '2024-12-18.acacia' as any,
         typescript: true,
     })
 

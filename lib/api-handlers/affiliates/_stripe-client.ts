@@ -9,7 +9,7 @@ export function getStripe(): Stripe {
     throw new Error('STRIPE_SECRET_KEY not configured');
   }
   cached = new Stripe(key, {
-    apiVersion: '2024-12-18.acacia' as Stripe.LatestApiVersion,
+    apiVersion: '2024-12-18.acacia' as any,
     typescript: true,
   });
   return cached;
