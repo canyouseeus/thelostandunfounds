@@ -22,7 +22,9 @@ export default function BecomeAffiliate() {
 
             {/* Hero Section */}
             <div className="relative overflow-hidden">
-                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1621600411688-4be93cd68504?q=80&w=2670&auto=format&fit=crop')] opacity-10 bg-cover bg-center" />
+                <div className="absolute inset-0 bg-[url('/affiliate/hero.jpg')] opacity-30 grayscale bg-cover bg-center" />
+                <div className="absolute inset-0 bg-gradient-to-r from-black via-black/60 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
 
                 <div className="container mx-auto px-4 py-24 relative z-10">
                     <div className="max-w-4xl mx-auto text-left">
