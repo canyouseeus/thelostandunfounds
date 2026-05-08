@@ -5,6 +5,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { sendAffiliateEmail } from './_emails.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -107,6 +108,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.error('Error creating payout settings:', settingsError);
         // Do not fail the request, just log it. User can set it up later.
       }
+    }
+
+    // Best-effort welcome email (deduped on affiliate id)
+    try {
+      const { data: userRow } = await supabase.auth.admin.getUserById(user_id);
+      const recipient = userRow?.user?.email;
+      if (recipient) {
+        await sendAffiliateEmail({
+          type: 'welcome',
+          affiliateId: affiliate.id,
+          referenceId: affiliate.id,
+          to: recipient,
+          data: { code },
+        });
+      }
+    } catch (emailErr: any) {
+      console.warn('[affiliate-setup] welcome email failed:', emailErr?.message);
     }
 
     return res.status(200).json({

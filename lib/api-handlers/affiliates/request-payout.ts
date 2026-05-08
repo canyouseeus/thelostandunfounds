@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { createPayoutBatch, isPayoutsEnabled } from '../admin/paypal-payouts.js';
-import { sendZohoEmail, getZohoAuthContext } from '../_zoho-email-utils.js';
+import { getStripe } from './_stripe-client.js';
+import { sendAffiliateEmail } from './_emails.js';
 
 const MIN_PAYOUT = 10;
 
@@ -13,192 +13,124 @@ const toMoney = (value: number) => {
 const normalizeCode = (code?: string | null) =>
   code?.trim().toUpperCase().replace(/[^A-Z0-9-]/g, '') || null;
 
-async function findAffiliate(supabase: SupabaseClient, userId?: string, affiliateCode?: string | null) {
+interface AffiliateRow {
+  id: string;
+  user_id: string;
+  code: string | null;
+  affiliate_code: string | null;
+  status: string | null;
+  total_earnings: number | null;
+  stripe_account_id: string | null;
+  stripe_payouts_enabled: boolean | null;
+  is_flagged: boolean | null;
+  fraud_score: number | null;
+}
+
+async function findAffiliate(
+  supabase: SupabaseClient,
+  userId?: string,
+  affiliateCode?: string | null
+): Promise<AffiliateRow | null> {
+  const fields =
+    'id, user_id, code, affiliate_code, status, total_earnings, stripe_account_id, stripe_payouts_enabled, is_flagged, fraud_score';
+
   if (userId) {
     const { data, error } = await supabase
       .from('affiliates')
-      .select('id, user_id, code, affiliate_code, status, total_earnings')
+      .select(fields)
       .eq('user_id', userId)
       .maybeSingle();
-
-    if (error) {
-      throw error;
-    }
-
-    if (data) {
-      return data;
-    }
+    if (error) throw error;
+    if (data) return data as AffiliateRow;
   }
 
   if (affiliateCode) {
     const normalizedCode = normalizeCode(affiliateCode);
     if (!normalizedCode) return null;
-
     const { data, error } = await supabase
       .from('affiliates')
-      .select('id, user_id, code, affiliate_code, status, total_earnings')
+      .select(fields)
       .or(`code.eq.${normalizedCode},affiliate_code.eq.${normalizedCode}`)
       .maybeSingle();
-
-    if (error) {
-      throw error;
-    }
-
-    return data;
+    if (error) throw error;
+    return (data as AffiliateRow) || null;
   }
 
   return null;
 }
 
-async function getPayoutSettings(supabase: SupabaseClient, affiliateId: string) {
-  const { data, error } = await supabase
-    .from('affiliate_payout_settings')
-    .select('paypal_email, payment_threshold')
-    .eq('affiliate_id', affiliateId)
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-
-  return data;
-}
-
-/**
- * Calculate available balance from commissions that have passed their holding period
- */
-async function getAvailableBalance(supabase: SupabaseClient, affiliateId: string): Promise<{
-  available: number;
-  pending: number;
-  nextAvailableDate: string | null;
-  nextAvailableAmount: number;
-}> {
+async function getAvailableBalance(supabase: SupabaseClient, affiliateId: string) {
   const now = new Date().toISOString();
 
-  // Get available commissions (approved and past holding period)
-  // If available_date is NULL, we treat it as available immediately (legacy) or pending?
-  // Let's assume NULL date = Available for 'approved' status to avoid locking old payouts.
-  // Actually, previous logic treated null as pending. Let's stick to safe:
-  // Approved + Date Passed = Available.
-  // Approved + Date Future = Pending.
-  // Approved + Date Null = Available (assume legacy data is fine).
-
-  const { data: availableCommissions, error: availableError } = await supabase
+  const { data: availableCommissions } = await supabase
     .from('affiliate_commissions')
     .select('amount, available_date')
     .eq('affiliate_id', affiliateId)
-    .eq('status', 'approved')
+    .in('status', ['approved', 'confirmed'])
     .or(`available_date.lte.${now},available_date.is.null`);
 
-  if (availableError) {
-    console.error('Error fetching available commissions:', availableError);
-    throw availableError;
-  }
-
-  // Get pending commissions (approved but in holding period)
-  const { data: pendingCommissions, error: pendingError } = await supabase
+  const { data: pendingCommissions } = await supabase
     .from('affiliate_commissions')
     .select('amount, available_date')
     .eq('affiliate_id', affiliateId)
-    .eq('status', 'approved')
+    .in('status', ['approved', 'confirmed', 'pending'])
     .gt('available_date', now)
     .order('available_date', { ascending: true });
-
-  if (pendingError) {
-    console.error('Error fetching pending commissions:', pendingError);
-    throw pendingError;
-  }
 
   const available = (availableCommissions || []).reduce(
     (sum, c) => sum + toMoney(Number(c.amount ?? 0)),
     0
   );
-
   const pending = (pendingCommissions || []).reduce(
     (sum, c) => sum + toMoney(Number(c.amount ?? 0)),
     0
   );
 
-  // Find next commission to become available
-  const nextPending = pendingCommissions?.find(c => c.available_date);
-
   return {
     available: toMoney(available),
     pending: toMoney(pending),
-    nextAvailableDate: nextPending?.available_date || null,
-    nextAvailableAmount: nextPending ? toMoney(Number(nextPending.amount ?? 0)) : 0
   };
 }
 
-/**
- * Get available commissions for payout (to mark as paid)
- */
-async function getAvailableCommissions(supabase: SupabaseClient, affiliateId: string, upToAmount: number) {
+async function getAvailableCommissions(
+  supabase: SupabaseClient,
+  affiliateId: string,
+  upToAmount: number
+) {
   const now = new Date().toISOString();
-
   const { data, error } = await supabase
     .from('affiliate_commissions')
     .select('id, amount')
     .eq('affiliate_id', affiliateId)
-    .eq('status', 'approved') // Only approve confirmed purchases
+    .in('status', ['approved', 'confirmed'])
     .or(`available_date.lte.${now},available_date.is.null`)
-    .order('available_date', { ascending: true }); // Prioritize oldest
+    .order('available_date', { ascending: true });
+  if (error) throw error;
 
-  if (error) {
-    throw error;
-  }
-
-  // Select commissions up to the requested amount
   const selected: { id: string; amount: number }[] = [];
   let total = 0;
-
-  for (const commission of (data || [])) {
+  for (const c of data || []) {
     if (total >= upToAmount) break;
-    selected.push({
-      id: commission.id,
-      amount: toMoney(Number(commission.amount ?? 0))
-    });
-    total += toMoney(Number(commission.amount ?? 0));
+    const amt = toMoney(Number(c.amount ?? 0));
+    selected.push({ id: c.id, amount: amt });
+    total += amt;
   }
-
   return selected;
 }
 
-/**
- * Mark commissions as paid
- */
 async function markCommissionsAsPaid(
   supabase: SupabaseClient,
   commissionIds: string[],
-  paypalBatchId: string,
-  paypalItemId?: string
+  transferId: string
 ) {
-  const { error } = await supabase
+  await supabase
     .from('affiliate_commissions')
     .update({
       status: 'paid',
       paid_at: new Date().toISOString(),
-      paypal_batch_id: paypalBatchId,
-      paypal_item_id: paypalItemId
+      stripe_transfer_id: transferId,
     })
     .in('id', commissionIds);
-
-  if (error) {
-    throw error;
-  }
-
-  // Log status changes
-  for (const id of commissionIds) {
-    await supabase
-      .from('commission_status_log')
-      .insert({
-        commission_id: id,
-        previous_status: 'approved',
-        new_status: 'paid',
-        reason: 'PayPal payout processed',
-        metadata: { paypal_batch_id: paypalBatchId, paypal_item_id: paypalItemId }
-      });
-  }
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -206,18 +138,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Check env vars at runtime, not module load time
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
   if (!supabaseUrl || !supabaseKey) {
-    console.error('Missing Supabase environment variables for request-payout');
     return res.status(500).json({ error: 'Server configuration error' });
   }
 
-  const supabase = createClient(supabaseUrl, supabaseKey, {
-    auth: { persistSession: false }
-  });
+  const supabase = createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } });
 
   try {
     const { userId, affiliateCode, amount, notes } = req.body || {};
@@ -236,18 +163,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const affiliate = await findAffiliate(supabase, userId, affiliateCode);
-
-    if (!affiliate) {
-      return res.status(404).json({ error: 'Affiliate not found' });
-    }
+    if (!affiliate) return res.status(404).json({ error: 'Affiliate not found' });
 
     if (affiliate.status && affiliate.status !== 'active') {
       return res.status(400).json({ error: 'Affiliate account must be active to request payouts' });
     }
 
-    // Get available balance (only commissions past holding period)
-    const balances = await getAvailableBalance(supabase, affiliate.id);
+    if (affiliate.is_flagged) {
+      return res.status(403).json({
+        error: 'Account flagged for review. Payouts are paused — please contact support.',
+        code: 'AFFILIATE_FLAGGED',
+      });
+    }
 
+    if (!affiliate.stripe_account_id) {
+      return res.status(400).json({
+        error: 'Connect a Stripe account before requesting payouts.',
+        code: 'STRIPE_NOT_CONNECTED',
+      });
+    }
+
+    if (!affiliate.stripe_payouts_enabled) {
+      return res.status(400).json({
+        error: 'Your Stripe account is not yet enabled for payouts. Finish onboarding first.',
+        code: 'STRIPE_PAYOUTS_DISABLED',
+      });
+    }
+
+    const balances = await getAvailableBalance(supabase, affiliate.id);
     if (balances.available < numericAmount) {
       return res.status(400).json({
         error: 'Requested amount exceeds available balance',
@@ -255,153 +198,130 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           requested: numericAmount,
           available: balances.available,
           pending: balances.pending,
-          message: `You have $${balances.available.toFixed(2)} available now. $${balances.pending.toFixed(2)} is still in the holding period.`
-        }
-      });
-    }
-
-    const payoutSettings = await getPayoutSettings(supabase, affiliate.id);
-
-    if (!payoutSettings || !payoutSettings.paypal_email) {
-      return res.status(400).json({ error: 'Set your PayPal email before requesting payouts' });
-    }
-
-    const threshold = toMoney(Number(payoutSettings.payment_threshold ?? MIN_PAYOUT));
-    if (numericAmount < Math.max(MIN_PAYOUT, threshold)) {
-      return res.status(400).json({
-        error: `Payout amount must be at least $${Math.max(MIN_PAYOUT, threshold).toFixed(2)}`
-      });
-    }
-
-    // Check if PayPal Payouts is enabled
-    if (!isPayoutsEnabled()) {
-      return res.status(503).json({
-        error: 'Automated payouts are temporarily unavailable. Please try again later.',
-        code: 'PAYOUTS_DISABLED'
+        },
       });
     }
 
     const affiliateCodeValue =
       normalizeCode(affiliate.code) || normalizeCode(affiliate.affiliate_code) || 'UNKNOWN';
 
-    // Get commissions to mark as paid
     const commissionsToMark = await getAvailableCommissions(supabase, affiliate.id, numericAmount);
     const actualAmount = commissionsToMark.reduce((sum, c) => sum + c.amount, 0);
-
     if (actualAmount < numericAmount) {
-      // Edge case: balance changed between check and fetch
       return res.status(400).json({
         error: 'Balance changed. Please try again.',
-        available: actualAmount
+        available: actualAmount,
       });
     }
 
-    // Call PayPal Payouts API immediately
-    console.log(`Processing instant payout: $${numericAmount} to ${payoutSettings.paypal_email} for affiliate ${affiliateCodeValue}`);
+    const stripe = getStripe();
 
-    let payoutResult;
+    let transfer;
     try {
-      payoutResult = await createPayoutBatch([
+      transfer = await stripe.transfers.create(
         {
-          requestId: `${affiliate.id}_${Date.now()}`,
-          affiliateCode: affiliateCodeValue,
-          amount: numericAmount,
-          currency: 'USD',
-          paypalEmail: payoutSettings.paypal_email,
-          note: notes || `Commission payout for affiliate ${affiliateCodeValue}`
+          amount: Math.round(numericAmount * 100),
+          currency: 'usd',
+          destination: affiliate.stripe_account_id,
+          description: notes
+            ? String(notes).slice(0, 200)
+            : `Affiliate commission payout — ${affiliateCodeValue}`,
+          metadata: {
+            affiliate_id: affiliate.id,
+            affiliate_code: affiliateCodeValue,
+            user_id: affiliate.user_id || '',
+          },
+        },
+        {
+          idempotencyKey: `payout_${affiliate.id}_${Date.now()}`,
         }
-      ]);
-    } catch (paypalError: any) {
-      console.error('PayPal payout failed:', paypalError);
+      );
+    } catch (stripeError: any) {
+      console.error('[request-payout] Stripe transfer failed:', stripeError?.message);
 
-      const errorMessage = paypalError?.message || 'Unknown PayPal error';
+      const errMsg = stripeError?.message || 'Stripe transfer failed';
 
-      // 1. Log failure to DB
       await supabase.from('payout_requests').insert({
         affiliate_id: affiliate.id,
         user_id: affiliate.user_id,
         affiliate_code: affiliateCodeValue,
         amount: numericAmount,
-        paypal_email: payoutSettings.paypal_email,
-        status: 'failed',
-        error_message: errorMessage,
-        notes: notes ? `FAILED: ${notes}` : 'FAILED Payout Attempt'
+        stripe_account_id: affiliate.stripe_account_id,
+        payout_method: 'stripe',
+        status: 'rejected',
+        error_message: errMsg,
+        notes: notes ? `FAILED: ${notes}` : 'FAILED Payout Attempt',
       });
 
-      // 2. Alert Admin via Email
+      // Email the affiliate
       try {
-        const auth = await getZohoAuthContext();
-        await sendZohoEmail({
-          auth,
-          to: auth.fromEmail, // Send to Admin
-          subject: '🚨 URGENT: Payout Failed (Insufficient Funds?)',
-          htmlContent: `
-            <h2>Payout Failure Alert</h2>
-            <p>An instant payout attempt failed. Please investigate immediately.</p>
-            <ul>
-              <li><strong>Affiliate:</strong> ${affiliateCodeValue}</li>
-              <li><strong>Amount:</strong> $${numericAmount}</li>
-              <li><strong>Error:</strong> ${errorMessage}</li>
-            </ul>
-            <p>The system did NOT mark commissions as paid. The user can try again, but if this was due to Insufficient Funds, you must top up your PayPal account.</p>
-          `
-        });
-      } catch (emailError) {
-        console.error('Failed to send admin alert email:', emailError);
-      }
+        const { data: userRow } = await supabase.auth.admin.getUserById(affiliate.user_id);
+        if (userRow?.user?.email) {
+          await sendAffiliateEmail({
+            type: 'payout_failed',
+            affiliateId: affiliate.id,
+            to: userRow.user.email,
+            data: { amount: numericAmount, reason: errMsg },
+          });
+        }
+      } catch (e) { /* non-fatal */ }
 
       return res.status(500).json({
-        error: 'Payment processing failed. Administrators have been notified.',
-        code: 'PAYPAL_ERROR',
-        message: errorMessage
+        error: 'Payment processing failed.',
+        code: 'STRIPE_ERROR',
+        message: errMsg,
       });
     }
 
-    // Mark commissions as paid
     const commissionIds = commissionsToMark.map(c => c.id);
-    const paypalBatchId = payoutResult.batch_header.payout_batch_id;
+    await markCommissionsAsPaid(supabase, commissionIds, transfer.id);
 
-    await markCommissionsAsPaid(supabase, commissionIds, paypalBatchId);
-
-    // Create payout request record for history (status: paid)
-    const { data: request, error: insertError } = await supabase
+    const { data: request } = await supabase
       .from('payout_requests')
       .insert({
         affiliate_id: affiliate.id,
         user_id: affiliate.user_id,
         affiliate_code: affiliateCodeValue,
         amount: numericAmount,
-        paypal_email: payoutSettings.paypal_email,
+        stripe_account_id: affiliate.stripe_account_id,
+        stripe_transfer_id: transfer.id,
+        payout_method: 'stripe',
         status: 'paid',
-        paypal_batch_id: paypalBatchId,
         paid_at: new Date().toISOString(),
-        notes: notes ? String(notes).slice(0, 500) : null
+        notes: notes ? String(notes).slice(0, 500) : null,
       })
       .select('id, amount, status, created_at, paid_at')
       .single();
 
-    if (insertError) {
-      console.error('Error creating payout record:', insertError);
-      // Don't fail - the payment already went through
-    }
-
-    console.log(`Payout completed: $${numericAmount} to ${payoutSettings.paypal_email}, PayPal batch: ${paypalBatchId}`);
+    // Email the affiliate
+    try {
+      const { data: userRow } = await supabase.auth.admin.getUserById(affiliate.user_id);
+      if (userRow?.user?.email) {
+        await sendAffiliateEmail({
+          type: 'payout_sent',
+          affiliateId: affiliate.id,
+          referenceId: transfer.id,
+          to: userRow.user.email,
+          data: { amount: numericAmount, transferId: transfer.id },
+        });
+      }
+    } catch (e) { /* non-fatal */ }
 
     return res.status(200).json({
       success: true,
       request,
       payout: {
-        batch_id: paypalBatchId,
-        status: payoutResult.batch_header.batch_status,
-        amount: numericAmount
+        transfer_id: transfer.id,
+        amount: numericAmount,
+        destination: affiliate.stripe_account_id,
       },
-      message: `$${numericAmount.toFixed(2)} has been sent to ${payoutSettings.paypal_email}`
+      message: `$${numericAmount.toFixed(2)} has been transferred to your Stripe account.`,
     });
   } catch (error: any) {
-    console.error('Affiliate payout request error:', error);
+    console.error('[request-payout] error:', error);
     return res.status(500).json({
       error: 'Failed to process payout request',
-      message: error?.message || 'Unknown error'
+      message: error?.message || 'Unknown error',
     });
   }
 }

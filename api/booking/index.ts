@@ -2,6 +2,7 @@ import { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import { getZohoAuthContext, sendZohoEmail } from '../../lib/api-handlers/_zoho-email-utils.js'
 import { generateTransactionalEmail } from '../../lib/email-template.js'
+import { triggerReferralCommission } from '../../lib/api-handlers/affiliates/_commission-trigger.js'
 
 const NOTIFY_TO = 'media@thelostandunfounds.com'
 
@@ -274,13 +275,18 @@ async function handleAdminUpdate(req: VercelRequest, res: VercelResponse) {
     if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' })
 
     const supabase = getSupabase(true)
-    const { id, status, admin_notes } = req.body
+    const { id, status, admin_notes, total_amount_cents, affiliate_code } = req.body
 
     if (!id) return res.status(400).json({ error: 'Booking id required' })
 
     const updates: Record<string, any> = {}
     if (status) updates.status = status
     if (admin_notes !== undefined) updates.admin_notes = admin_notes
+    if (typeof total_amount_cents === 'number') updates.total_amount_cents = total_amount_cents
+    if (affiliate_code !== undefined) updates.affiliate_code = affiliate_code
+    if (status === 'paid' || status === 'completed') {
+        updates.paid_at = new Date().toISOString()
+    }
 
     const { error } = await supabase
         .from('bookings')
@@ -288,6 +294,34 @@ async function handleAdminUpdate(req: VercelRequest, res: VercelResponse) {
         .eq('id', id)
 
     if (error) return res.status(500).json({ error: error.message })
+
+    // Fire affiliate commission when this transition lands the booking in
+    // a paid state. Idempotent — no-op if already triggered for this booking.
+    if (status === 'paid' || status === 'completed') {
+        try {
+            const { data: booking } = await supabase
+                .from('bookings')
+                .select('id, email, total_amount_cents, affiliate_code')
+                .eq('id', id)
+                .single()
+            if (booking?.email && booking.total_amount_cents) {
+                const result = await triggerReferralCommission(supabase, {
+                    email: booking.email,
+                    source: 'booking',
+                    sourceId: booking.id,
+                    grossAmount: Number(booking.total_amount_cents) / 100,
+                    fallbackAffiliateCode: booking.affiliate_code || null,
+                })
+                if (result.triggered) {
+                    console.log('[booking] commission triggered:', { id, amount: result.amount })
+                }
+            } else {
+                console.log('[booking] paid status reached but no amount set — skipping commission trigger')
+            }
+        } catch (commissionErr: any) {
+            console.error('[booking] commission trigger failed:', commissionErr?.message)
+        }
+    }
 
     return res.status(200).json({ success: true })
 }

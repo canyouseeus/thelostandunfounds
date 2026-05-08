@@ -1,121 +1,198 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { createHash } from 'crypto'
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
+const RATE_LIMIT_PER_HOUR = 5
+const FLAG_THRESHOLD = 10
+
+function hashDedup(affiliateId: string, ip: string | null, ua: string | null): string {
+  return createHash('sha256').update(`${affiliateId}|${ip || ''}|${ua || ''}`).digest('hex').slice(0, 32)
+}
+
+async function isRateLimited(
+  supabase: SupabaseClient,
+  affiliateId: string,
+  ip: string | null
+): Promise<boolean> {
+  if (!ip) return false
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+  const { count, error } = await supabase
+    .from('affiliate_click_events')
+    .select('id', { count: 'exact', head: true })
+    .eq('affiliate_id', affiliateId)
+    .eq('ip_address', ip)
+    .gte('created_at', oneHourAgo)
+
+  if (error) {
+    console.warn('[track-click] rate-limit query failed:', error.message)
+    return false
+  }
+  return (count ?? 0) >= RATE_LIMIT_PER_HOUR
+}
+
+async function findExistingDedup(
+  supabase: SupabaseClient,
+  dedupHash: string
+): Promise<boolean> {
+  // Treat clicks within the last 5 minutes from same (affiliate, ip, ua) as duplicates.
+  const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+  const { count } = await supabase
+    .from('affiliate_click_events')
+    .select('id', { count: 'exact', head: true })
+    .eq('dedup_hash', dedupHash)
+    .gte('created_at', fiveMinAgo)
+  return (count ?? 0) > 0
+}
+
+async function logFraudEvent(
+  supabase: SupabaseClient,
+  affiliateId: string,
+  eventType: string,
+  ip: string | null,
+  details: Record<string, any> = {},
+  severity = 1
 ) {
+  try {
+    await supabase.from('affiliate_fraud_events').insert({
+      affiliate_id: affiliateId,
+      event_type: eventType,
+      severity,
+      ip_address: ip,
+      details,
+    })
+
+    const { data: aff } = await supabase
+      .from('affiliates')
+      .select('fraud_score, is_flagged')
+      .eq('id', affiliateId)
+      .single()
+
+    const newScore = (aff?.fraud_score || 0) + severity
+    const updates: Record<string, any> = { fraud_score: newScore }
+    if (newScore >= FLAG_THRESHOLD && !aff?.is_flagged) {
+      updates.is_flagged = true
+      updates.flag_reason = `Fraud score reached ${newScore} (last event: ${eventType})`
+    }
+    await supabase.from('affiliates').update(updates).eq('id', affiliateId)
+  } catch (err: any) {
+    console.warn('[track-click] fraud-log failed:', err?.message)
+  }
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
   try {
     const { affiliateCode, metadata } = req.body
-    console.log('📥 Received affiliate click tracking request:', { affiliateCode, method: req.method })
-
     if (!affiliateCode || typeof affiliateCode !== 'string') {
-      console.warn('⚠️ Invalid affiliateCode:', affiliateCode)
       return res.status(400).json({ error: 'affiliateCode is required' })
     }
 
-    // Initialize Supabase client
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
+    const supabaseKey =
+      process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      process.env.SUPABASE_ANON_KEY ||
+      process.env.VITE_SUPABASE_ANON_KEY
 
     if (!supabaseUrl || !supabaseKey) {
-      console.error('❌ Missing Supabase credentials')
+      console.error('[track-click] missing supabase credentials')
       return res.status(500).json({ error: 'Database service not configured' })
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey)
-    console.log('✅ Supabase client initialized')
 
-    // Find affiliate by code (try both 'code' and 'affiliate_code' columns)
-    let affiliate = null
-    let affiliateError = null
+    // Resolve affiliate (try both code columns, case-insensitive)
+    let affiliate: { id: string; is_flagged?: boolean | null } | null = null
 
-    // Try 'code' column first (case-insensitive)
-    console.log(`🔍 Searching for affiliate with code: ${affiliateCode}`)
-    const { data: affiliateByCode, error: errorByCode } = await supabase
+    const { data: byCode } = await supabase
       .from('affiliates')
-      .select('id')
+      .select('id, is_flagged')
       .ilike('code', affiliateCode)
       .eq('status', 'active')
       .maybeSingle()
+    if (byCode) affiliate = byCode
 
-    if (affiliateByCode && !errorByCode) {
-      affiliate = affiliateByCode
-      console.log('✅ Found affiliate by "code" column:', affiliate.id)
-    } else {
-      console.log('⚠️ Not found by "code" column, trying "affiliate_code"...', errorByCode?.message)
-      // Try 'affiliate_code' column as fallback (case-insensitive)
-      const { data: affiliateByAffiliateCode, error: errorByAffiliateCode } = await supabase
+    if (!affiliate) {
+      const { data: byAffCode } = await supabase
         .from('affiliates')
-        .select('id')
+        .select('id, is_flagged')
         .ilike('affiliate_code', affiliateCode)
         .eq('status', 'active')
         .maybeSingle()
-
-      if (affiliateByAffiliateCode && !errorByAffiliateCode) {
-        affiliate = affiliateByAffiliateCode
-        console.log('✅ Found affiliate by "affiliate_code" column:', affiliate.id)
-      } else {
-        affiliateError = errorByAffiliateCode || errorByCode
-        console.warn('❌ Affiliate not found by either column:', {
-          codeError: errorByCode?.message,
-          affiliateCodeError: errorByAffiliateCode?.message
-        })
-      }
+      if (byAffCode) affiliate = byAffCode
     }
 
-    if (affiliateError || !affiliate) {
-      console.warn(`⚠️ Affiliate not found or inactive: ${affiliateCode}`, affiliateError)
-      // Don't return error - just log and return success to not break user flow
+    if (!affiliate) {
+      // Don't break user flow, but also don't 200 silently with a misleading body.
       return res.status(200).json({ success: true, message: 'Affiliate not found' })
     }
 
-    // Call SQL function to increment clicks
-    console.log(`📊 Calling increment_affiliate_clicks for affiliate: ${affiliate.id}`)
-    const { error: functionError } = await supabase.rpc('increment_affiliate_clicks', {
-      affiliate_id: affiliate.id
+    if (affiliate.is_flagged) {
+      // Stop counting clicks for flagged affiliates — admin needs to clear them first.
+      return res.status(200).json({ success: true, message: 'Affiliate flagged; clicks ignored' })
+    }
+
+    const userAgent = (req.headers['user-agent'] as string) || null
+    const forwarded = req.headers['x-forwarded-for'] as string | undefined
+    const ipAddress =
+      (forwarded?.split(',')[0]?.trim()) ||
+      (req as any).socket?.remoteAddress ||
+      null
+
+    const dedupHash = hashDedup(affiliate.id, ipAddress, userAgent)
+
+    // Rate limit (5 / IP / hour)
+    const rateLimited = await isRateLimited(supabase, affiliate.id, ipAddress)
+    // IP+UA dedup (5 minute window)
+    const isDup = await findExistingDedup(supabase, dedupHash)
+
+    const isSuspicious = rateLimited || isDup
+
+    // Always log the event (with the suspicious flag) — useful for analytics
+    await supabase.from('affiliate_click_events').insert({
+      affiliate_id: affiliate.id,
+      metadata: metadata || {},
+      user_agent: userAgent,
+      ip_address: ipAddress,
+      dedup_hash: dedupHash,
+      is_suspicious: isSuspicious,
+      rate_limited: rateLimited,
     })
 
-    if (functionError) {
-      console.error('❌ Error incrementing affiliate clicks:', functionError)
-      // Still return success to not break user flow
-      return res.status(200).json({ success: true, message: 'Click tracking failed' })
+    if (rateLimited) {
+      await logFraudEvent(
+        supabase,
+        affiliate.id,
+        'click_rate_limit',
+        ipAddress,
+        { hourly_count: RATE_LIMIT_PER_HOUR + 1 },
+        1
+      )
+      return res.status(429).json({
+        success: false,
+        message: 'Rate limit exceeded',
+        rateLimited: true,
+      })
     }
 
-    // Log detailed click event (for Sub-ID/Campaign tracking)
-    try {
-      const userAgent = req.headers['user-agent'] || null
-      const ipAddress = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || req.socket.remoteAddress || null
-
-      const { error: eventLogError } = await supabase
-        .from('affiliate_click_events')
-        .insert({
-          affiliate_id: affiliate.id,
-          metadata: metadata || {},
-          user_agent: userAgent,
-          ip_address: ipAddress
-        })
-
-      if (eventLogError) {
-        // Just warn, don't fail the request (table might not exist yet)
-        console.warn('⚠️ Failed to log affiliate click event (check if affiliate_click_events table exists):', eventLogError.message)
-      } else {
-        console.log('📝 Logged affiliate click event with metadata')
-      }
-    } catch (err) {
-      console.warn('⚠️ Error logging affiliate click event:', err)
+    if (isDup) {
+      // Don't increment counter for an exact duplicate within 5 minutes; not a hard fraud signal
+      return res.status(200).json({ success: true, deduped: true })
     }
 
-    console.log('✅ Successfully incremented clicks for affiliate:', affiliate.id)
+    const { error: incrErr } = await supabase.rpc('increment_affiliate_clicks', {
+      affiliate_id: affiliate.id,
+    })
+    if (incrErr) {
+      console.error('[track-click] increment failed:', incrErr.message)
+    }
+
     return res.status(200).json({ success: true })
-  } catch (error) {
-    console.error('Error tracking affiliate click:', error)
-    // Return success even on error to not break user experience
-    return res.status(200).json({ success: true, error: 'Tracking failed' })
+  } catch (error: any) {
+    console.error('[track-click] error:', error?.message)
+    // Soft-fail to avoid breaking the user's page load
+    return res.status(200).json({ success: true, error: 'tracking failed' })
   }
 }
-

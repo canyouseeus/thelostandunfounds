@@ -1,6 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
+import { triggerReferralCommission } from './affiliates/_commission-trigger.js'
 
 /**
  * Stripe Webhook Handler
@@ -131,10 +132,12 @@ async function finalizeCheckoutSession(session: Stripe.Checkout.Session) {
 
     if (session.metadata?.source === 'tlau-photos') {
         await finalizePhotoOrder(supabase, session)
+        await triggerPhotoOrderCommission(supabase, session)
     }
 
-    // Flip the pending affiliate commission to confirmed (works for both
-    // shop and photo orders since both write commissions keyed by session id).
+    // Flip any pre-existing pending affiliate commission to confirmed (legacy
+    // path — the new flow writes a 'photo_order' / 'booking' source row via
+    // triggerReferralCommission and skips this).
     const { data: updated, error } = await supabase
         .from('affiliate_commissions')
         .update({ status: 'confirmed' })
@@ -146,6 +149,43 @@ async function finalizeCheckoutSession(session: Stripe.Checkout.Session) {
         console.error('❌ Failed to confirm affiliate commission:', error)
     } else if (updated && updated.length > 0) {
         console.log('✅ Affiliate commission confirmed for session:', session.id)
+    }
+}
+
+/**
+ * Look up the photo order, then call the idempotent commission trigger.
+ * This is a no-op when the customer wasn't referred or when a commission
+ * already exists for this source+source_id.
+ */
+async function triggerPhotoOrderCommission(supabase: any, session: Stripe.Checkout.Session) {
+    const photoOrderId = session.metadata?.photoOrderId
+    if (!photoOrderId) return
+
+    const { data: order } = await supabase
+        .from('photo_orders')
+        .select('id, email, total_amount_cents, affiliate_code')
+        .eq('id', photoOrderId)
+        .single()
+
+    if (!order || !order.email) return
+
+    const grossAmount = (Number(order.total_amount_cents) || 0) / 100
+    if (grossAmount <= 0) return
+
+    const result = await triggerReferralCommission(supabase, {
+        email: order.email,
+        source: 'photo_order',
+        sourceId: order.id,
+        grossAmount,
+        fallbackAffiliateCode: order.affiliate_code || session.metadata?.affiliateRef || null,
+    })
+
+    if (result.triggered) {
+        console.log('✅ Photo order commission registered:', {
+            order: order.id,
+            amount: result.amount,
+            affiliate: result.affiliateId,
+        })
     }
 }
 
