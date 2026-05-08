@@ -124,14 +124,6 @@ async function generateSitemap() {
     <priority>0.6</priority>
   </url>
   
-  <!-- Pricing -->
-  <url>
-    <loc>${baseUrl}/pricing</loc>
-    <lastmod>${currentDate}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-
   <!-- Support -->
   <url>
     <loc>${baseUrl}/support</loc>
@@ -148,49 +140,9 @@ async function generateSitemap() {
     <priority>0.6</priority>
   </url>
 
-  <!-- /booking is intentionally omitted: it is an admin-gated tool that
-       must not be exposed to search engines. It is also covered by the
-       noindex shell at /404.html via the catch-all rewrite. -->
-
-  <!-- Book Club -->
-  <url>
-    <loc>${baseUrl}/book-club</loc>
-    <lastmod>${currentDate}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <!-- Gearheads -->
-  <url>
-    <loc>${baseUrl}/gearheads</loc>
-    <lastmod>${currentDate}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <!-- Borderlands -->
-  <url>
-    <loc>${baseUrl}/borderlands</loc>
-    <lastmod>${currentDate}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <!-- Science -->
-  <url>
-    <loc>${baseUrl}/science</loc>
-    <lastmod>${currentDate}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <!-- New Theory -->
-  <url>
-    <loc>${baseUrl}/newtheory</loc>
-    <lastmod>${currentDate}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
+  <!-- /pricing, /booking, /book-club, /gearheads, /borderlands, /science,
+       /newtheory are intentionally omitted: pricing is deleted, booking is
+       admin-gated, and the five column pages are admin-only. -->
   
   <!-- Privacy Policy -->
   <url>

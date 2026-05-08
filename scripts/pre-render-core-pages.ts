@@ -21,14 +21,8 @@ const CORE_PAGES = [
     { path: 'events', title: 'EVENTS | THE LOST+UNFOUNDS', description: 'Join THE LOST+UNFOUNDS for exclusive gatherings, workshops, and experiences pushing boundaries at the frontier. Book tickets for upcoming events.' },
     { path: 'gallery', title: 'THE GALLERY | THE LOST+UNFOUNDS', description: 'Explore exclusive high-resolution photography collections. Unique findings from the field, beautifully captured in high definition for your inspiration.' },
     { path: 'contact', title: 'CONTACT | THE LOST+UNFOUNDS', description: 'Get in touch with THE LOST+UNFOUNDS. We\'d love to hear from you and help with any questions, inquiries, or feedback you might have about our platform.' },
-    { path: 'pricing', title: 'PRICING | THE LOST+UNFOUNDS', description: 'Choose the plan that\'s right for you. Flexible pricing for creators, developers, and power users of THE LOST+UNFOUNDS.' },
     { path: 'support', title: 'SUPPORT CENTER | THE LOST+UNFOUNDS', description: 'Get help and support for THE LOST+UNFOUNDS. Find our FAQs, documentation, troubleshooting guides, and contact information to resolve any issues quickly.' },
     { path: 'thelostarchives', title: 'THE LOST ARCHIVES | THE LOST+UNFOUNDS', description: 'Revealing findings from the frontier and beyond. Intel from the field on development, AI, and building in the age of information.' },
-    { path: 'book-club', title: 'BOOK CLUB | THE LOST+UNFOUNDS', description: 'A collection of curated articles from contributors. Each article features four books with Amazon affiliate links, offering discoveries and insights.' },
-    { path: 'gearheads', title: 'GEARHEADS | THE LOST+UNFOUNDS', description: 'Technical deep dives, equipment reviews, developer intel, and findings from the digital frontier.' },
-    { path: 'borderlands', title: 'EDGE OF THE BORDERLANDS | THE LOST+UNFOUNDS', description: 'Exploring the boundaries of information, society, and technology. Share travel experiences and practical adventure insights from the field.' },
-    { path: 'science', title: 'MAD SCIENTISTS | THE LOST+UNFOUNDS', description: 'Experimental research and technical breakthroughs from the field. Deep dives into scientific concepts and applied innovation.' },
-    { path: 'newtheory', title: 'NEW THEORY | THE LOST+UNFOUNDS', description: 'Fresh perspectives and evolving theories on the digital age. Discover new insights and ideas from the information frontier.' },
     { path: 'advertise', title: 'ADVERTISE | THE LOST+UNFOUNDS', description: 'Partner with THE LOST+UNFOUNDS. Discover premium advertising opportunities across our ecosystem of tools, galleries, and editorial content.' }
 ];
 
@@ -135,16 +129,11 @@ async function preRenderCorePages() {
             }
 
             // Handle Blog/Category listing pre-rendering
-            const isBlogCategory = ['thelostarchives', 'book-club', 'gearheads', 'borderlands', 'science', 'newtheory'].includes(page.path);
+            const isBlogCategory = page.path === 'thelostarchives';
             if (isBlogCategory && supabase) {
                 try {
                     const blogColumnMap: Record<string, string> = {
                         'thelostarchives': 'main',
-                        'book-club': 'bookclub',
-                        'gearheads': 'gearheads',
-                        'borderlands': 'borderlands',
-                        'science': 'science',
-                        'newtheory': 'newtheory'
                     };
 
                     const column = blogColumnMap[page.path];

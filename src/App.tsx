@@ -20,7 +20,6 @@ import NotFound from './pages/NotFound'
 import Docs from './pages/Docs'
 import About from './pages/About'
 import Contact from './pages/Contact'
-import Pricing from './pages/Pricing'
 import Support from './pages/Support'
 import Shop from './pages/Shop'
 import QR from './pages/QR'
@@ -104,9 +103,6 @@ function App() {
               </Route>
               <Route path="/contact" element={<Layout />}>
                 <Route index element={<Contact />} />
-              </Route>
-              <Route path="/pricing" element={<Layout />}>
-                <Route index element={<Pricing />} />
               </Route>
               <Route path="/support" element={<Layout />}>
                 <Route index element={<Support />} />
@@ -230,19 +226,19 @@ function App() {
                 <Route index element={<Unsubscribe />} />
               </Route>
               <Route path="/book-club" element={<Layout />}>
-                <Route index element={<BookClub />} />
+                <Route index element={<AdminAuthGate><BookClub /></AdminAuthGate>} />
               </Route>
               <Route path="/gearheads" element={<Layout />}>
-                <Route index element={<GearHeads />} />
+                <Route index element={<AdminAuthGate><GearHeads /></AdminAuthGate>} />
               </Route>
               <Route path="/borderlands" element={<Layout />}>
-                <Route index element={<Borderlands />} />
+                <Route index element={<AdminAuthGate><Borderlands /></AdminAuthGate>} />
               </Route>
               <Route path="/science" element={<Layout />}>
-                <Route index element={<Science />} />
+                <Route index element={<AdminAuthGate><Science /></AdminAuthGate>} />
               </Route>
               <Route path="/newtheory" element={<Layout />}>
-                <Route index element={<NewTheory />} />
+                <Route index element={<AdminAuthGate><NewTheory /></AdminAuthGate>} />
               </Route>
               <Route path="/blog/getting-started" element={<Layout />}>
                 <Route index element={<BlogGettingStarted />} />

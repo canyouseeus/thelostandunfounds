@@ -61,6 +61,10 @@
   ],
   "rewrites": [
     {
+      "source": "/pricing",
+      "destination": "/api/_pricing-gone"
+    },
+    {
       "source": "/((?!api|_next|static|sql|\\.well-known|@vite|@react-refresh|.*\\..*).*)",
       "destination": "/404.html"
     }

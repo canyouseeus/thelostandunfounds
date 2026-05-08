@@ -33,6 +33,18 @@ export default function Footer() {
             >
               Contact
             </Link>
+            <Link
+              to="/support"
+              className="text-white/60 hover:!text-white transition-colors"
+            >
+              Support
+            </Link>
+            <Link
+              to="/advertise"
+              className="text-white/60 hover:!text-white transition-colors"
+            >
+              Advertise
+            </Link>
           </div>
         </div>
       </div>
