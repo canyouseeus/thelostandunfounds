@@ -45,6 +45,12 @@ export default function Footer() {
             >
               Advertise
             </Link>
+            <Link
+              to="/become-affiliate"
+              className="text-white/60 hover:!text-white transition-colors"
+            >
+              Affiliates
+            </Link>
           </div>
         </div>
       </div>

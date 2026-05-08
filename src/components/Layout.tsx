@@ -19,7 +19,7 @@ import { supabase } from '../lib/supabase'
 import Footer from './Footer'
 import NavLinks from './NavLinks'
 import { LoadingOverlay } from './Loading'
-import MarketplaceBanner from './events/MarketplaceBanner'
+import AffiliateBanner from './affiliate/AffiliateBanner'
 import { useGallery } from '../contexts/GalleryContext'
 
 export default function Layout({ children }: { children?: ReactNode }) {
@@ -227,8 +227,8 @@ export default function Layout({ children }: { children?: ReactNode }) {
 
       <SageModeOverlay />
       <div ref={fixedHeaderRef} className="fixed top-0 left-0 w-full bg-black z-[999]">
-        {/* Advertising banner — sits above the nav for homepage visitors */}
-        {showAdBanner && <MarketplaceBanner surface="gallery" noMargin />}
+        {/* Affiliate program banner — sits above the nav for homepage visitors */}
+        {showAdBanner && <AffiliateBanner noMargin />}
 
         <nav className="w-full backdrop-blur-md">
           <div className="w-full px-4 sm:px-6 lg:px-8">
