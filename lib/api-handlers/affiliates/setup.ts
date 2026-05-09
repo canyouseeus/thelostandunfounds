@@ -93,22 +93,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'Failed to create affiliate account' });
     }
 
-    // Initialize payout settings if PayPal email is provided
-    const paypal_email = req.body.paypal_email;
-    if (paypal_email) {
-      const { error: settingsError } = await supabase
-        .from('affiliate_payout_settings')
-        .insert({
-          affiliate_id: affiliate.id,
-          paypal_email: paypal_email,
-          payment_threshold: 10.00 // Default threshold
-        });
-
-      if (settingsError) {
-        console.error('Error creating payout settings:', settingsError);
-        // Do not fail the request, just log it. User can set it up later.
-      }
-    }
+    // Payout settings are now created/owned by the Stripe Connect onboarding
+    // flow (POST /api/affiliates/connect-onboarding), which writes the
+    // stripe_account_id once Stripe issues one. We deliberately do NOT
+    // create a payout_settings row here — there is nothing to put in it
+    // until the user completes Stripe Connect KYC.
 
     // Best-effort welcome email (deduped on affiliate id)
     try {
