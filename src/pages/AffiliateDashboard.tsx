@@ -147,14 +147,24 @@ export default function AffiliateDashboard() {
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [payoutSettings, setPayoutSettings] = useState<{
-    paypal_email: string;
     payment_threshold: number;
   } | null>(null)
   const [editingPayout, setEditingPayout] = useState(false)
-  const [paypalEmail, setPaypalEmail] = useState('')
   const [paymentThreshold, setPaymentThreshold] = useState(10)
   const [payoutError, setPayoutError] = useState<string | null>(null)
   const [payoutSuccess, setPayoutSuccess] = useState(false)
+  const [stripeStatus, setStripeStatus] = useState<{
+    onboarded: boolean;
+    status: 'pending' | 'restricted' | 'active' | 'rejected';
+    stripe_account_id: string | null;
+    charges_enabled?: boolean;
+    payouts_enabled?: boolean;
+    details_submitted?: boolean;
+    requirements?: string[];
+  } | null>(null)
+  const [stripeLoading, setStripeLoading] = useState(false)
+  const [stripeRedirecting, setStripeRedirecting] = useState(false)
+  const [stripeError, setStripeError] = useState<string | null>(null)
   const [showPayoutRequest, setShowPayoutRequest] = useState(false)
   const [payoutAmount, setPayoutAmount] = useState<number>(0)
   const [requestingPayout, setRequestingPayout] = useState(false)
@@ -210,6 +220,7 @@ export default function AffiliateDashboard() {
     if (affiliateCode && isAffiliate) {
       loadDashboard()
       loadPayoutSettings()
+      loadStripeStatus()
     } else if (isAffiliate === false) {
       setLoading(false)
     }
@@ -283,11 +294,55 @@ export default function AffiliateDashboard() {
 
       if (result.settings) {
         setPayoutSettings(result.settings);
-        setPaypalEmail(result.settings.paypal_email);
         setPaymentThreshold(result.settings.payment_threshold);
       }
     } catch (err) {
       console.error('Error loading payout settings:', err);
+    }
+  }
+
+  const loadStripeStatus = async () => {
+    if (!user?.id) return;
+    setStripeLoading(true);
+    setStripeError(null);
+    try {
+      const response = await fetch(`/api/affiliates/connect-onboarding?userId=${user.id}`);
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || result.message || 'Failed to load Stripe status');
+      }
+      setStripeStatus(result);
+    } catch (err: any) {
+      console.error('Error loading Stripe status:', err);
+      setStripeError(err.message || 'Failed to load Stripe status');
+    } finally {
+      setStripeLoading(false);
+    }
+  }
+
+  const handleConnectStripe = async () => {
+    if (!user?.id) return;
+    setStripeError(null);
+    setStripeRedirecting(true);
+    try {
+      const response = await fetch('/api/affiliates/connect-onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          returnPath: '/affiliate/dashboard?stripe=connected',
+          refreshPath: '/affiliate/dashboard?stripe=refresh',
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.onboarding_url) {
+        throw new Error(result.error || result.message || 'Failed to start Stripe onboarding');
+      }
+      window.location.href = result.onboarding_url;
+    } catch (err: any) {
+      console.error('Error starting Stripe onboarding:', err);
+      setStripeError(err.message || 'Failed to start Stripe onboarding');
+      setStripeRedirecting(false);
     }
   }
 
@@ -303,7 +358,6 @@ export default function AffiliateDashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user.id,
-          paypalEmail,
           paymentThreshold,
         }),
       });
@@ -326,12 +380,11 @@ export default function AffiliateDashboard() {
 
   const checkPayoutEligibility = () => {
     if (!data || !payoutSettings) return false
-    const hasPayPalEmail = payoutSettings.paypal_email && payoutSettings.paypal_email.trim() !== ''
-    // Use available_balance (commissions past holding period)
+    const stripeReady = !!stripeStatus?.payouts_enabled
     const availableBalance = data.balance?.available_balance || 0
     const hasEnoughEarnings = availableBalance >= payoutSettings.payment_threshold
     const hasAvailableCommissions = availableBalance > 0
-    return hasPayPalEmail && hasEnoughEarnings && hasAvailableCommissions
+    return stripeReady && hasEnoughEarnings && hasAvailableCommissions
   }
 
   const handleRequestPayout = async () => {
@@ -1033,6 +1086,75 @@ export default function AffiliateDashboard() {
               </ExpandableBentoCard>
             </div>
 
+            {/* Stripe Connect Status */}
+            <div className="bg-black border-0 rounded-none p-6 mb-8">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-black text-white uppercase tracking-widest">Stripe Connect</h3>
+                <button
+                  onClick={loadStripeStatus}
+                  disabled={stripeLoading}
+                  className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-widest transition-colors disabled:opacity-40"
+                >
+                  {stripeLoading ? 'Refreshing…' : 'Refresh'}
+                </button>
+              </div>
+
+              {stripeError && (
+                <div className="bg-white/10 px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider mb-6 text-white">
+                  {stripeError}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div className="flex justify-between items-center text-sm border-b border-white/10 pb-4">
+                  <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Account Status</span>
+                  <span className="text-white font-mono uppercase tracking-widest text-xs">
+                    {stripeStatus ? stripeStatus.status : (stripeLoading ? 'Loading…' : 'Not connected')}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-sm border-b border-white/10 pb-4">
+                  <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Payouts Enabled</span>
+                  <span className="text-white font-mono uppercase tracking-widest text-xs">
+                    {stripeStatus?.payouts_enabled ? 'Yes' : 'No'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-sm border-b border-white/10 pb-4">
+                  <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Charges Enabled</span>
+                  <span className="text-white font-mono uppercase tracking-widest text-xs">
+                    {stripeStatus?.charges_enabled ? 'Yes' : 'No'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-sm border-b border-white/10 pb-4">
+                  <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Details Submitted</span>
+                  <span className="text-white font-mono uppercase tracking-widest text-xs">
+                    {stripeStatus?.details_submitted ? 'Yes' : 'No'}
+                  </span>
+                </div>
+                {stripeStatus?.requirements && stripeStatus.requirements.length > 0 && (
+                  <div className="border-b border-white/10 pb-4">
+                    <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Outstanding Requirements</p>
+                    <ul className="text-xs text-white/70 font-mono space-y-1">
+                      {stripeStatus.requirements.map((r) => (
+                        <li key={r}>• {r}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <button
+                  onClick={handleConnectStripe}
+                  disabled={stripeRedirecting}
+                  className="w-full px-4 py-3 bg-white text-black font-bold uppercase tracking-widest hover:bg-white/90 transition-colors text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {stripeRedirecting
+                    ? 'Redirecting to Stripe…'
+                    : stripeStatus?.stripe_account_id
+                      ? (stripeStatus.payouts_enabled ? 'Update Stripe Account' : 'Continue Stripe Onboarding')
+                      : 'Connect Stripe'}
+                </button>
+              </div>
+            </div>
+
             {/* Payout Settings */}
             <div className="bg-black border-0 rounded-none p-6 mb-8">
               <div className="flex items-center justify-between mb-6">
@@ -1047,149 +1169,115 @@ export default function AffiliateDashboard() {
                 )}
               </div>
 
-              {
-                payoutSuccess && (
-                  <div className="bg-green-500/10 border border-green-500/20 text-green-500 px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider mb-6">
-                    Payout settings updated successfully!
-                  </div>
-                )
-              }
+              {payoutSuccess && (
+                <div className="bg-green-500/10 border border-green-500/20 text-green-500 px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider mb-6">
+                  Payout settings updated successfully!
+                </div>
+              )}
 
-              {
-                payoutError && (
-                  <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider mb-6">
-                    {payoutError}
-                  </div>
-                )
-              }
+              {payoutError && (
+                <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider mb-6">
+                  {payoutError}
+                </div>
+              )}
 
-              {
-                editingPayout ? (
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">PayPal Email</label>
-                      <input
-                        type="email"
-                        value={paypalEmail}
-                        onChange={(e) => setPaypalEmail(e.target.value)}
-                        className="w-full px-4 py-3 bg-black border border-white/20 rounded-none text-white focus:outline-none focus:border-white transition-colors font-mono text-sm"
-                      />
+              {editingPayout ? (
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">
+                      Payment Threshold (minimum $10)
+                    </label>
+                    <input
+                      type="number"
+                      min="10"
+                      step="0.01"
+                      value={paymentThreshold}
+                      onChange={(e) => setPaymentThreshold(parseFloat(e.target.value))}
+                      className="w-full px-4 py-3 bg-black border border-white/20 rounded-none text-white focus:outline-none focus:border-white transition-colors font-mono text-sm"
+                    />
+                    <p className="text-[10px] font-medium text-white/40 uppercase tracking-wider mt-2">
+                      Minimum balance needed to request a Stripe payout
+                    </p>
+                  </div>
+                  <div className="flex gap-4">
+                    <button
+                      onClick={handleSavePayoutSettings}
+                      className="px-6 py-2 bg-white text-black text-xs font-bold uppercase tracking-widest hover:bg-white/90 transition-colors"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingPayout(false);
+                        setPaymentThreshold(payoutSettings?.payment_threshold || 10);
+                        setPayoutError(null);
+                      }}
+                      className="px-6 py-2 bg-transparent border border-white/20 text-white text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center text-sm border-b border-white/10 pb-4">
+                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Payment Threshold</span>
+                    <span className="text-white font-mono">${payoutSettings?.payment_threshold || 10}</span>
+                  </div>
+                  {payoutRequestSuccess && (
+                    <div className="mt-4 bg-green-500/10 border border-green-500/20 text-green-500 px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider">
+                      Payout sent to your Stripe account.
                     </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">
-                        Payment Threshold (minimum $10)
-                      </label>
-                      <input
-                        type="number"
-                        min="10"
-                        step="0.01"
-                        value={paymentThreshold}
-                        onChange={(e) => setPaymentThreshold(parseFloat(e.target.value))}
-                        className="w-full px-4 py-3 bg-black border border-white/20 rounded-none text-white focus:outline-none focus:border-white transition-colors font-mono text-sm"
-                      />
-                      <p className="text-[10px] font-medium text-white/40 uppercase tracking-wider mt-2">
-                        You'll receive payouts when your earnings reach this amount
-                      </p>
+                  )}
+                  {payoutRequestError && (
+                    <div className="mt-4 bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider">
+                      {payoutRequestError}
                     </div>
-                    <div className="flex gap-4">
-                      <button
-                        onClick={handleSavePayoutSettings}
-                        className="px-6 py-2 bg-white text-black text-xs font-bold uppercase tracking-widest hover:bg-white/90 transition-colors"
-                      >
-                        Save
-                      </button>
+                  )}
+                  {payoutSettings && checkPayoutEligibility() && (
+                    <div className="mt-4 pt-4 border-t border-white/10">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <p className="text-sm text-white font-bold uppercase tracking-wider">Available for Payout</p>
+                          <p className="text-[10px] text-white/60 font-medium uppercase tracking-widest mt-1">
+                            ${(data?.balance?.available_balance || 0).toFixed(2)} available now
+                          </p>
+                          {(data?.balance?.pending_balance || 0) > 0 && (
+                            <p className="text-[10px] text-white/40 font-medium uppercase tracking-widest mt-1">
+                              +${(data?.balance?.pending_balance || 0).toFixed(2)} pending (holding period)
+                            </p>
+                          )}
+                        </div>
+                      </div>
                       <button
                         onClick={() => {
-                          setEditingPayout(false);
-                          setPaypalEmail(payoutSettings?.paypal_email || '');
-                          setPaymentThreshold(payoutSettings?.payment_threshold || 10);
-                          setPayoutError(null);
+                          setPayoutAmount(data?.balance?.available_balance || 0)
+                          setShowPayoutRequest(true)
+                          setPayoutRequestError(null)
                         }}
-                        className="px-6 py-2 bg-transparent border border-white/20 text-white text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-colors"
+                        className="w-full px-4 py-3 bg-white text-black font-bold uppercase tracking-widest hover:bg-white/90 transition-colors text-xs"
                       >
-                        Cancel
+                        Request Instant Payout
                       </button>
                     </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center text-sm border-b border-white/10 pb-4">
-                      <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">PayPal Email</span>
-                      <span className="text-white font-mono">{payoutSettings?.paypal_email || 'Not set'}</span>
+                  )}
+                  {payoutSettings && !checkPayoutEligibility() && data && (
+                    <div className="mt-4 pt-4 border-t border-white/10">
+                      <p className="text-xs text-white/40 font-medium uppercase tracking-wider">
+                        {!stripeStatus?.payouts_enabled
+                          ? 'Connect Stripe and finish onboarding to request payouts'
+                          : (data.balance?.available_balance || 0) < payoutSettings.payment_threshold
+                            ? (data.balance?.available_balance || 0) > 0
+                              ? `Need $${(payoutSettings.payment_threshold - (data.balance?.available_balance || 0)).toFixed(2)} more to reach threshold`
+                              : (data.balance?.pending_balance || 0) > 0
+                                ? `$${(data.balance?.pending_balance || 0).toFixed(2)} is in holding period`
+                                : 'No earnings yet'
+                            : 'No earnings available for payout'}
+                      </p>
                     </div>
-                    <div className="flex justify-between items-center text-sm border-b border-white/10 pb-4">
-                      <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Payment Threshold</span>
-                      <span className="text-white font-mono">${payoutSettings?.payment_threshold || 10}</span>
-                    </div>
-                    {payoutRequestSuccess && (
-                      <div className="mt-4 bg-green-500/10 border border-green-500/20 text-green-500 px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider">
-                        Payout request submitted successfully! We'll process it soon.
-                      </div>
-                    )}
-                    {payoutRequestError && (
-                      <div className="mt-4 bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider">
-                        {payoutRequestError}
-                      </div>
-                    )}
-                    {payoutSettings && checkPayoutEligibility() && (
-                      <div className="mt-4 pt-4 border-t border-white/10">
-                        <div className="flex items-center justify-between mb-4">
-                          <div>
-                            <p className="text-sm text-white font-bold uppercase tracking-wider">Available for Payout</p>
-                            <p className="text-[10px] text-white/60 font-medium uppercase tracking-widest mt-1">
-                              ${(data?.balance?.available_balance || 0).toFixed(2)} available now
-                            </p>
-                            {(data?.balance?.pending_balance || 0) > 0 && (
-                              <p className="text-[10px] text-white/40 font-medium uppercase tracking-widest mt-1">
-                                +${(data?.balance?.pending_balance || 0).toFixed(2)} pending (holding period)
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setPayoutAmount(data?.balance?.available_balance || 0)
-                            setShowPayoutRequest(true)
-                            setPayoutRequestError(null)
-                          }}
-                          className="w-full px-4 py-3 bg-white text-black font-bold uppercase tracking-widest hover:bg-white/90 transition-colors text-xs"
-                        >
-                          Request Instant Payout
-                        </button>
-                      </div>
-                    )}
-                    {payoutSettings && !checkPayoutEligibility() && data && (
-                      <div className="mt-4 pt-4 border-t border-white/10">
-                        <p className="text-xs text-white/40 font-medium uppercase tracking-wider">
-                          {!payoutSettings.paypal_email || payoutSettings.paypal_email.trim() === ''
-                            ? 'Set your PayPal email to request payouts'
-                            : (data.balance?.available_balance || 0) < payoutSettings.payment_threshold
-                              ? (data.balance?.available_balance || 0) > 0
-                                ? `Need $${(payoutSettings.payment_threshold - (data.balance?.available_balance || 0)).toFixed(2)} more to reach threshold`
-                                : (data.balance?.pending_balance || 0) > 0
-                                  ? `$${(data.balance?.pending_balance || 0).toFixed(2)} is in holding period`
-                                  : 'No earnings yet'
-                              : 'No earnings available for payout'}
-                        </p>
-                      </div>
-                    )}
-                    {!payoutSettings && (
-                      <div className="mt-4 pt-4 border-t border-white/10">
-                        <p className="text-xs text-white/40 font-medium uppercase tracking-wider mb-4">
-                          Set up your payout information to receive commissions
-                        </p>
-                        <button
-                          onClick={() => setEditingPayout(true)}
-                          className="px-6 py-3 bg-white text-black font-bold uppercase tracking-widest hover:bg-white/90 transition-colors text-xs"
-                        >
-                          Set Up Payouts
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                )
-              }
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Payout Request Modal */}
@@ -1257,15 +1345,17 @@ export default function AffiliateDashboard() {
 
                       <div>
                         <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">
-                          PayPal Email
+                          Destination
                         </label>
                         <div className="px-4 py-3 bg-white/5 border border-white/10 rounded-none text-white font-mono text-sm">
-                          {payoutSettings?.paypal_email || 'Not set'}
+                          {stripeStatus?.stripe_account_id
+                            ? `Stripe ${stripeStatus.stripe_account_id}`
+                            : 'Stripe account not connected'}
                         </div>
                       </div>
 
                       <div className="bg-white/5 border border-white/10 p-4 rounded-none text-[10px] text-white/60 font-medium uppercase tracking-wider leading-relaxed">
-                        <p className="mb-2"><strong>Instant payout:</strong> Funds are sent immediately to your PayPal account.</p>
+                        <p className="mb-2"><strong>Instant payout:</strong> Transferred to your Stripe Connect account.</p>
                         <p>Physical products: 30-day hold • Digital products: 7-day hold</p>
                       </div>
                     </div>
@@ -1276,7 +1366,7 @@ export default function AffiliateDashboard() {
                         disabled={requestingPayout || payoutAmount < (payoutSettings?.payment_threshold || 10) || payoutAmount > (data?.balance?.available_balance || 0)}
                         className="flex-1 px-4 py-3 bg-white text-black font-bold uppercase tracking-widest hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs"
                       >
-                        {requestingPayout ? 'Processing...' : `Send $${payoutAmount.toFixed(2)} to PayPal`}
+                        {requestingPayout ? 'Processing...' : `Send $${payoutAmount.toFixed(2)} to Stripe`}
                       </button>
                       <button
                         onClick={() => {

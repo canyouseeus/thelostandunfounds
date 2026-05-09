@@ -863,17 +863,15 @@ export default function Admin() {
 
 
 
-        // Get affiliate revenue with email and date filtering
+        // Get affiliate revenue (post-launch only)
         const { data: affiliates, error: affError } = await supabase
           .from('affiliates')
-          .select('total_earnings, paypal_email, created_at');
+          .select('total_earnings, created_at');
 
         console.log('Affiliate data:', affiliates, 'Error:', affError);
 
         if (affiliates) {
-          // Filter out test data
           const realAffiliates = affiliates.filter(a =>
-            !isTestEmail(a.paypal_email) &&
             new Date(a.created_at) >= new Date(PLATFORM_LAUNCH_DATE)
           );
 

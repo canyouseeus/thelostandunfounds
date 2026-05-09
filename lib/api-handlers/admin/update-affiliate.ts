@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
 /**
- * Admin update affiliate details (rate, threshold, PayPal email, status)
+ * Admin update affiliate details (rate, threshold, status)
  * POST /api/admin/update-affiliate
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -10,7 +10,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { affiliateId, commission_rate, payment_threshold, paypal_email, status } = req.body || {};
+  const { affiliateId, commission_rate, payment_threshold, status } = req.body || {};
 
   if (!affiliateId) {
     return res.status(400).json({ error: 'affiliateId is required' });
@@ -33,7 +33,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const update: Record<string, any> = {};
     if (commission_rate !== undefined) update.commission_rate = commission_rate;
     if (payment_threshold !== undefined) update.payment_threshold = payment_threshold;
-    if (paypal_email !== undefined) update.paypal_email = paypal_email;
     if (status !== undefined) update.status = status;
 
     if (Object.keys(update).length === 0) {

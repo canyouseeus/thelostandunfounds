@@ -3,14 +3,6 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const MIN_THRESHOLD = 10;
 
-const defaultSettings = {
-  paypal_email: '',
-  payment_threshold: MIN_THRESHOLD
-};
-
-const normalizeEmail = (email: string) => email.trim();
-const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
 const toMoney = (value: number) => {
   if (!Number.isFinite(value)) return MIN_THRESHOLD;
   return Math.max(MIN_THRESHOLD, Math.round(value * 100) / 100);
@@ -19,7 +11,7 @@ const toMoney = (value: number) => {
 async function findAffiliateByUserId(supabase: SupabaseClient, userId: string) {
   const { data, error } = await supabase
     .from('affiliates')
-    .select('id, code, affiliate_code')
+    .select('id, code, affiliate_code, stripe_account_id')
     .eq('user_id', userId)
     .maybeSingle();
 
@@ -33,7 +25,7 @@ async function findAffiliateByUserId(supabase: SupabaseClient, userId: string) {
 async function getSettings(supabase: SupabaseClient, affiliateId: string) {
   const { data, error } = await supabase
     .from('affiliate_payout_settings')
-    .select('paypal_email, payment_threshold')
+    .select('payment_threshold')
     .eq('affiliate_id', affiliateId)
     .maybeSingle();
 
@@ -41,29 +33,26 @@ async function getSettings(supabase: SupabaseClient, affiliateId: string) {
     throw error;
   }
 
-  if (!data) {
-    return defaultSettings;
-  }
-
   return {
-    paypal_email: data.paypal_email ?? '',
-    payment_threshold: toMoney(Number(data.payment_threshold ?? MIN_THRESHOLD))
+    payment_threshold: toMoney(Number(data?.payment_threshold ?? MIN_THRESHOLD))
   };
 }
 
-async function upsertSettings(supabase: SupabaseClient, affiliateId: string, email: string, threshold: number) {
+async function upsertThreshold(supabase: SupabaseClient, affiliateId: string, userId: string, stripeAccountId: string | null, threshold: number) {
   const { data, error } = await supabase
     .from('affiliate_payout_settings')
     .upsert(
       {
         affiliate_id: affiliateId,
-        paypal_email: email,
+        user_id: userId,
+        stripe_account_id: stripeAccountId,
+        payout_method: 'stripe',
         payment_threshold: threshold,
         updated_at: new Date().toISOString()
       },
       { onConflict: 'affiliate_id' }
     )
-    .select('paypal_email, payment_threshold')
+    .select('payment_threshold')
     .single();
 
   if (error) {
@@ -71,7 +60,6 @@ async function upsertSettings(supabase: SupabaseClient, affiliateId: string, ema
   }
 
   return {
-    paypal_email: data.paypal_email ?? '',
     payment_threshold: toMoney(Number(data.payment_threshold ?? MIN_THRESHOLD))
   };
 }
@@ -81,7 +69,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Check env vars at runtime, not module load time
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -114,16 +101,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ settings });
     }
 
-    const paypalEmail = normalizeEmail(req.body?.paypalEmail || req.body?.paypal_email || '');
     const rawThreshold = Number(req.body?.paymentThreshold ?? req.body?.payment_threshold ?? MIN_THRESHOLD);
-
-    if (!paypalEmail) {
-      return res.status(400).json({ error: 'PayPal email is required' });
-    }
-
-    if (!isValidEmail(paypalEmail)) {
-      return res.status(400).json({ error: 'Invalid PayPal email format' });
-    }
 
     if (!Number.isFinite(rawThreshold)) {
       return res.status(400).json({ error: 'paymentThreshold must be a number' });
@@ -131,7 +109,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const paymentThreshold = toMoney(rawThreshold);
 
-    const settings = await upsertSettings(supabase, affiliate.id, paypalEmail, paymentThreshold);
+    const settings = await upsertThreshold(
+      supabase,
+      affiliate.id,
+      userId,
+      affiliate.stripe_account_id ?? null,
+      paymentThreshold
+    );
 
     return res.status(200).json({
       success: true,

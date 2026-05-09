@@ -42,11 +42,16 @@ type Affiliate = {
   status: string;
   commission_rate: number;
   payment_threshold: number;
-  paypal_email: string | null;
+  stripe_account_id: string | null;
+  stripe_account_status: 'pending' | 'restricted' | 'active' | 'rejected' | null;
+  stripe_payouts_enabled: boolean | null;
+  stripe_charges_enabled: boolean | null;
+  stripe_details_submitted: boolean | null;
   total_earnings: number;
   total_clicks: number;
   total_conversions: number;
   total_mlm_earnings: number;
+  is_flagged: boolean | null;
   created_at: string;
 };
 
@@ -72,12 +77,14 @@ type PayoutRequest = {
   amount: number;
   currency: string;
   status: string;
-  paypal_email: string;
-  paypal_payout_batch_id: string | null;
-  paypal_payout_item_id: string | null;
+  stripe_account_id: string | null;
+  stripe_transfer_id: string | null;
+  payout_method: string | null;
   error_message: string | null;
+  notes: string | null;
   created_at: string;
   processed_at: string | null;
+  paid_at: string | null;
   affiliates?: { code: string };
 };
 
@@ -113,6 +120,39 @@ function StatTile({
       </div>
       <span className={cn('text-sm sm:text-lg font-semibold', toneClass)}>{value}</span>
     </div>
+  );
+}
+
+function StripeStatusBadge({
+  status,
+  payoutsEnabled,
+  accountId,
+}: {
+  status: Affiliate['stripe_account_status'];
+  payoutsEnabled: boolean | null;
+  accountId: string | null;
+}) {
+  if (!accountId) {
+    return (
+      <span className="px-2 py-1 text-xs rounded-none uppercase tracking-wide bg-white/10 text-white/60">
+        Stripe: not connected
+      </span>
+    );
+  }
+  const normalized = (status || 'pending').toLowerCase();
+  const map: Record<string, string> = {
+    active: 'bg-emerald-400/20 text-emerald-200',
+    pending: 'bg-amber-400/20 text-amber-300',
+    restricted: 'bg-blue-400/20 text-blue-200',
+    rejected: 'bg-red-400/20 text-red-200',
+  };
+  const label = payoutsEnabled
+    ? `Stripe: ${normalized} • payouts on`
+    : `Stripe: ${normalized}`;
+  return (
+    <span className={cn('px-2 py-1 text-xs rounded-none uppercase tracking-wide', map[normalized] || 'bg-white/10 text-white')}>
+      {label}
+    </span>
   );
 }
 
@@ -240,90 +280,12 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
     return res.json();
   };
 
-  const handleProcessAllPayouts = async () => {
-    try {
-      setActionMessage('Processing payouts...');
-      await postJson('/api/admin/process-payouts', { processAll: true });
-      await load();
-      setActionMessage('Payout processing requested (check PayPal dashboard for status).');
-    } catch (err: any) {
-      setActionMessage(err.message || 'Failed to process payouts');
-    }
-  };
-
-  const handleRetryPayout = async (payoutId: string) => {
-    try {
-      setActionMessage('Retrying payout...');
-      await postJson('/api/admin/process-payouts', { payoutRequestId: payoutId });
-      await load();
-      setActionMessage('Payout retry triggered.');
-    } catch (err: any) {
-      setActionMessage(err.message || 'Failed to retry payout');
-    }
-  };
-
-  const handleApprovePayout = async (payoutId: string) => {
-    try {
-      setActionMessage('Approving payout...');
-      await postJson('/api/admin/process-payouts', { requestIds: [payoutId], action: 'approve' });
-      await load();
-      setActionMessage('Payout approved. You can now pay via PayPal.');
-    } catch (err: any) {
-      setActionMessage(err.message || 'Failed to approve payout');
-    }
-  };
-
-  const handlePayViaPayPal = async (payoutIds: string[]) => {
-    if (!payoutIds.length) {
-      setActionMessage('No approved payouts selected');
-      return;
-    }
-    try {
-      setActionMessage('Sending payout via PayPal...');
-      const result = await postJson('/api/admin/process-payouts', { requestIds: payoutIds, action: 'pay-via-paypal' });
-      await load();
-      setActionMessage(`PayPal payout sent! Batch ID: ${result.batchId}, Total: $${result.totalAmount}`);
-    } catch (err: any) {
-      setActionMessage(err.message || 'Failed to send PayPal payout');
-    }
-  };
-
-  const handlePayAllApproved = async () => {
-    const approvedPayouts = data?.payoutRequests?.filter(p => p.status === 'approved') || [];
-    if (!approvedPayouts.length) {
-      setActionMessage('No approved payouts to pay');
-      return;
-    }
-    const confirmed = window.confirm(
-      `Send $${approvedPayouts.reduce((sum, p) => sum + (p.amount || 0), 0).toFixed(2)} to ${approvedPayouts.length} affiliate(s) via PayPal?`
-    );
-    if (!confirmed) return;
-    await handlePayViaPayPal(approvedPayouts.map(p => p.id));
-  };
-
-  const handleApproveAllPending = async () => {
-    const pendingPayouts = data?.payoutRequests?.filter(p => p.status === 'pending') || [];
-    if (!pendingPayouts.length) {
-      setActionMessage('No pending payouts to approve');
-      return;
-    }
-    try {
-      setActionMessage('Approving all pending payouts...');
-      await postJson('/api/admin/process-payouts', { requestIds: pendingPayouts.map(p => p.id), action: 'approve' });
-      await load();
-      setActionMessage(`${pendingPayouts.length} payout(s) approved. Ready to pay via PayPal.`);
-    } catch (err: any) {
-      setActionMessage(err.message || 'Failed to approve payouts');
-    }
-  };
-
-  const handleEditAffiliate = async (affiliate: Affiliate, field: 'commission_rate' | 'payment_threshold' | 'paypal_email') => {
+  const handleEditAffiliate = async (affiliate: Affiliate, field: 'commission_rate' | 'payment_threshold') => {
     const current = affiliate[field] ?? '';
-    const label = field === 'commission_rate' ? 'Commission rate (%)' : field === 'payment_threshold' ? 'Payout threshold ($)' : 'PayPal email';
+    const label = field === 'commission_rate' ? 'Commission rate (%)' : 'Payout threshold ($)';
     const input = window.prompt(`Update ${label} for ${affiliate.code || affiliate.id}`, String(current));
     if (input === null) return;
-    const payload: any = { affiliateId: affiliate.id };
-    payload[field] = field === 'paypal_email' ? input : Number(input);
+    const payload: any = { affiliateId: affiliate.id, [field]: Number(input) };
     try {
       setActionMessage(`Updating ${label}...`);
       await postJson('/api/admin/update-affiliate', payload);
@@ -455,20 +417,8 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
             </div>
           </SectionWrapper>
 
-          <SectionWrapper title="Payout Requests" description="Pending and recent payouts">
+          <SectionWrapper title="Payout Requests" description="Stripe Connect transfers (affiliate-initiated)">
             <div className="flex flex-wrap gap-2 mb-4">
-              <button
-                onClick={handleApproveAllPending}
-                className="px-3 py-2 text-sm bg-white/10 text-white rounded-none hover:bg-white/20"
-              >
-                Approve All Pending
-              </button>
-              <button
-                onClick={handlePayAllApproved}
-                className="px-3 py-2 text-sm bg-blue-600 text-white rounded-none hover:bg-blue-700"
-              >
-                Pay All Approved via PayPal
-              </button>
               <button
                 onClick={() => exportCsv(data?.payoutRequests || [], 'payout-requests')}
                 className="px-3 py-2 text-sm bg-white/10 text-white rounded-none hover:bg-white/20"
@@ -477,7 +427,7 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
               </button>
             </div>
             <div className="text-xs text-white/50 mb-3">
-              Workflow: Pending → Approve → Pay via PayPal → Paid
+              Affiliates request payouts directly from their dashboard; Stripe transfers are executed instantly when payouts are enabled.
             </div>
             <div className="space-y-3">
               {data?.payoutRequests?.length ? (
@@ -496,7 +446,7 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
                       </div>
                       <div className="text-xs text-white/50">
                         Created {new Date(payout.created_at).toLocaleString()}
-                        {payout.processed_at ? ` • Processed ${new Date(payout.processed_at).toLocaleString()}` : ''}
+                        {payout.paid_at ? ` • Paid ${new Date(payout.paid_at).toLocaleString()}` : payout.processed_at ? ` • Processed ${new Date(payout.processed_at).toLocaleString()}` : ''}
                       </div>
                       {payout.error_message ? (
                         <div className="text-xs text-amber-300 flex items-center gap-2">
@@ -506,35 +456,9 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
                       ) : null}
                     </div>
                     <div className="text-xs text-white/60 space-y-1 sm:text-right">
-                      {payout.paypal_payout_batch_id ? <div>Batch: {payout.paypal_payout_batch_id}</div> : null}
-                      {payout.paypal_payout_item_id ? <div>Item: {payout.paypal_payout_item_id}</div> : null}
-                      <div className="text-white/50">{payout.paypal_email}</div>
-                      <div className="flex flex-wrap gap-1 justify-start sm:justify-end mt-2">
-                        {payout.status === 'pending' && (
-                          <button
-                            onClick={() => handleApprovePayout(payout.id)}
-                            className="px-2 py-1 text-xs bg-emerald-600 text-white rounded-none hover:bg-emerald-700"
-                          >
-                            Approve
-                          </button>
-                        )}
-                        {payout.status === 'approved' && (
-                          <button
-                            onClick={() => handlePayViaPayPal([payout.id])}
-                            className="px-2 py-1 text-xs bg-blue-600 text-white rounded-none hover:bg-blue-700"
-                          >
-                            Pay via PayPal
-                          </button>
-                        )}
-                        {(payout.status === 'pending' || payout.status === 'approved') && (
-                          <button
-                            onClick={() => handleRetryPayout(payout.id)}
-                            className="px-2 py-1 text-xs bg-white/10 text-white rounded-none hover:bg-white/20"
-                          >
-                            Retry
-                          </button>
-                        )}
-                      </div>
+                      {payout.stripe_transfer_id ? <div>Transfer: {payout.stripe_transfer_id}</div> : null}
+                      {payout.stripe_account_id ? <div className="text-white/50">{payout.stripe_account_id}</div> : null}
+                      {payout.payout_method ? <div className="text-white/40">via {payout.payout_method}</div> : null}
                     </div>
                   </div>
                 ))
@@ -576,15 +500,20 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
                       </div>
                     </div>
                     <div className="text-xs text-white/60 sm:text-right space-y-1">
-                      <div>{affiliate.paypal_email || 'No PayPal email set'}</div>
+                      <div className="flex sm:justify-end">
+                        <StripeStatusBadge
+                          status={affiliate.stripe_account_status}
+                          payoutsEnabled={affiliate.stripe_payouts_enabled}
+                          accountId={affiliate.stripe_account_id}
+                        />
+                      </div>
+                      {affiliate.is_flagged ? (
+                        <div className="flex sm:justify-end">
+                          <span className="px-2 py-1 text-xs rounded-none uppercase tracking-wide bg-red-400/20 text-red-200">Flagged</span>
+                        </div>
+                      ) : null}
                       <div>Joined {new Date(affiliate.created_at).toLocaleDateString()}</div>
                       <div className="flex flex-wrap gap-1 justify-start sm:justify-end">
-                        <button
-                          onClick={() => handleEditAffiliate(affiliate, 'paypal_email')}
-                          className="px-2 py-1 text-xs bg-white/10 text-white rounded-none hover:bg-white/20"
-                        >
-                          Edit PayPal
-                        </button>
                         <button
                           onClick={() => handleEditAffiliate(affiliate, 'commission_rate')}
                           className="px-2 py-1 text-xs bg-white/10 text-white rounded-none hover:bg-white/20"
@@ -644,7 +573,7 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
                         {commission.product_cost?.toFixed(2) ?? '—'}
                       </div>
                       <div className="text-xs text-white/50">
-                        {commission.source || 'paypal'} • {commission.order_id || 'no-order-id'}
+                        {commission.source || 'unknown'} • {commission.order_id || 'no-order-id'}
                       </div>
                       {commission.status === 'cancelled' && commission.cancelled_reason && (
                         <div className="text-xs text-red-400 flex items-center gap-1">

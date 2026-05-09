@@ -29,7 +29,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { data: affiliates, error: affiliatesError } = await supabase
       .from('affiliates')
       .select(
-        'id, code, user_id, status, commission_rate, payment_threshold, paypal_email, total_earnings, total_clicks, total_conversions, total_mlm_earnings, created_at'
+        'id, code, user_id, status, commission_rate, payment_threshold, stripe_account_id, stripe_account_status, stripe_payouts_enabled, stripe_charges_enabled, stripe_details_submitted, total_earnings, total_clicks, total_conversions, total_mlm_earnings, is_flagged, created_at'
       )
       .order('created_at', { ascending: false });
 
@@ -91,11 +91,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       affiliates: { code: affiliateCodeMap.get(c.affiliate_id) || 'Unknown' }
     }));
 
-    // Payout requests (without relationship join to avoid schema errors)
+    // Payout requests (Stripe Connect transfers)
     const { data: payoutRequests, error: payoutError } = await supabase
       .from('payout_requests')
       .select(
-        'id, affiliate_id, amount, currency, status, paypal_email, paypal_payout_batch_id, paypal_payout_item_id, error_message, created_at, processed_at'
+        'id, affiliate_id, amount, currency, status, stripe_account_id, stripe_transfer_id, payout_method, error_message, created_at, processed_at, paid_at, notes'
       )
       .order('created_at', { ascending: false })
       .limit(40);

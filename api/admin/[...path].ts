@@ -117,8 +117,6 @@ export default async function handler(
         return await handleSecretSanta(req, res)
       case 'affiliates':
         return await handleAffiliates(req, res)
-      case 'process-payouts':
-        return await handleProcessPayouts(req, res)
       case 'new-subscription-notification':
         return await handleNewSubscriptionNotification(req, res)
       case 'new-blog-contributor-notification':
@@ -131,8 +129,6 @@ export default async function handler(
         return await handleUpdateAffiliate(req, res)
       case 'manual-commission':
         return await handleManualCommission(req, res)
-      case 'paypal-payouts':
-        return await handlePayPalPayouts(req, res)
       case 'paypal-test':
         return await handlePayPalTest(req, res)
       case 'env-vars':
@@ -203,14 +199,6 @@ async function handleAffiliates(req: VercelRequest, res: VercelResponse) {
 }
 
 /**
- * Process Payouts Handler
- */
-async function handleProcessPayouts(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/admin/process-payouts.js')
-  return handler.default(req, res)
-}
-
-/**
  * Affiliate Dashboard Handler
  */
 async function handleAffiliateDashboard(req: VercelRequest, res: VercelResponse) {
@@ -258,13 +246,6 @@ async function handleSendAffiliateEmail(req: VercelRequest, res: VercelResponse)
   return handler.default(req, res)
 }
 
-/**
- * PayPal Payouts Handler
- */
-async function handlePayPalPayouts(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/admin/paypal-payouts.js')
-  return handler.default(req, res)
-}
 /**
  * PayPal Test Handler
  */
