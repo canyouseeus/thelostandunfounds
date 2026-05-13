@@ -58,11 +58,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const affiliate = await findAffiliate(supabase, userId);
     if (!affiliate) return res.status(404).json({ error: 'Affiliate not found' });
 
-    const stripe = getStripe();
-
     // GET → just refresh status from Stripe
     if (req.method === 'GET') {
       if (!affiliate.stripe_account_id) {
+        // No Stripe account yet — don't even initialize the Stripe client.
+        // This lets the dashboard render for legacy affiliates even if the
+        // server hasn't been configured with STRIPE_SECRET_KEY yet.
         return res.status(200).json({
           onboarded: false,
           status: 'pending',
@@ -70,6 +71,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           message: 'No Stripe Connect account yet'
         });
       }
+      const stripe = getStripe();
       const account = await stripe.accounts.retrieve(affiliate.stripe_account_id);
       const status = computeStatus(account);
       await persistStatus(supabase, affiliate.id, account, status);

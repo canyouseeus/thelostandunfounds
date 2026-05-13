@@ -4,8 +4,9 @@
     {
       "name": "Vercel API Server",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vercel", "dev"],
-      "port": 3000
+      "runtimeArgs": ["-y", "--", "vercel", "dev", "--yes"],
+      "port": 3000,
+      "autoPort": true
     },
     {
       "name": "Vite Frontend",
