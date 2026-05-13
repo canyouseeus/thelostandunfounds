@@ -122,18 +122,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.error('[connect-onboarding] failed to persist account id:', updErr);
       }
 
-      // Mirror onto payout settings so payout requests can find the account
+      // Mirror onto payout settings so payout requests can find the account.
+      // affiliate_payout_settings has a UNIQUE constraint on affiliate_id (not user_id),
+      // and paypal_email is still NOT NULL on legacy schemas — supply '' so the
+      // row can be created for Stripe-only affiliates.
       await supabase
         .from('affiliate_payout_settings')
         .upsert(
           {
             affiliate_id: affiliate.id,
-            user_id: userId,
             stripe_account_id: account.id,
             payout_method: 'stripe',
             payment_threshold: 10,
+            paypal_email: '',
           },
-          { onConflict: 'user_id' }
+          { onConflict: 'affiliate_id' }
         );
     }
 

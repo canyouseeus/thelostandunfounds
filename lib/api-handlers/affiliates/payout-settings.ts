@@ -38,16 +38,18 @@ async function getSettings(supabase: SupabaseClient, affiliateId: string) {
   };
 }
 
-async function upsertThreshold(supabase: SupabaseClient, affiliateId: string, userId: string, stripeAccountId: string | null, threshold: number) {
+async function upsertThreshold(supabase: SupabaseClient, affiliateId: string, stripeAccountId: string | null, threshold: number) {
+  // affiliate_payout_settings legacy schema: no user_id column, paypal_email still NOT NULL.
+  // Stripe-only affiliates need paypal_email defaulted to '' until the migration runs.
   const { data, error } = await supabase
     .from('affiliate_payout_settings')
     .upsert(
       {
         affiliate_id: affiliateId,
-        user_id: userId,
         stripe_account_id: stripeAccountId,
         payout_method: 'stripe',
         payment_threshold: threshold,
+        paypal_email: '',
         updated_at: new Date().toISOString()
       },
       { onConflict: 'affiliate_id' }
@@ -112,7 +114,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const settings = await upsertThreshold(
       supabase,
       affiliate.id,
-      userId,
       affiliate.stripe_account_id ?? null,
       paymentThreshold
     );

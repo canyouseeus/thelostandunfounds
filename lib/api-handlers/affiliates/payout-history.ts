@@ -9,7 +9,7 @@ const toMoney = (value: number) => {
 async function getPayoutHistory(supabase: SupabaseClient, affiliateId: string) {
     const { data, error } = await supabase
         .from('payout_requests')
-        .select('id, amount, status, created_at, paid_at, paypal_batch_id, notes, error_message')
+        .select('id, amount, status, created_at, paid_at, stripe_transfer_id, payout_method, notes, error_message')
         .eq('affiliate_id', affiliateId)
         .order('created_at', { ascending: false });
 
@@ -23,8 +23,8 @@ async function getPayoutHistory(supabase: SupabaseClient, affiliateId: string) {
         date_paid: payout.paid_at,
         amount: toMoney(Number(payout.amount)),
         status: payout.status,
-        method: 'PayPal', // Currently only PayPal supported
-        transaction_id: payout.paypal_batch_id,
+        method: payout.payout_method === 'paypal' ? 'PayPal' : 'Stripe',
+        transaction_id: payout.stripe_transfer_id,
         notes: payout.notes,
         error: payout.error_message
     }));
