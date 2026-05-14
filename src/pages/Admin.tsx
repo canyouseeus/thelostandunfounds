@@ -434,44 +434,32 @@ export default function Admin() {
   const checkAdminAccess = async () => {
     if (authLoading) return;
 
+    // AdminAuthGate guarantees `user` exists and has admin access here.
+    // We still resolve adminStatus so the rest of this page can gate
+    // its data loading on it.
     if (!user) {
-      navigate('/');
+      setAdminStatus(false);
+      setLoading(false);
       return;
     }
 
-    // First check: email match (fastest, no database query)
     const email = user?.email || '';
     const isAdminEmail = email === 'thelostandunfounds@gmail.com' || email === 'admin@thelostandunfounds.com';
 
     if (isAdminEmail) {
-      // Email matches admin - allow access immediately
       setAdminStatus(true);
       setLoading(false);
       return;
     }
 
-    // Second check: try database check
     try {
       const admin = await isAdmin();
       setAdminStatus(admin);
       setLoading(false);
-
-      if (!admin) {
-        showError('Access denied. Admin privileges required.');
-        navigate('/');
-      }
     } catch (error: any) {
       console.error('Error checking admin access:', error);
-      // If database check fails, fall back to email check
-      if (isAdminEmail) {
-        setAdminStatus(true);
-        setLoading(false);
-      } else {
-        setAdminStatus(false);
-        setLoading(false);
-        showError('Access denied. Admin privileges required.');
-        navigate('/');
-      }
+      setAdminStatus(isAdminEmail);
+      setLoading(false);
     }
   };
 
