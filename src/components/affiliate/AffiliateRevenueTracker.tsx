@@ -133,42 +133,42 @@ export function AffiliateRevenueTracker({
   const revenuePerClick = totalClicks > 0 ? totalEarnings / totalClicks : 0;
 
   return (
-    <div className="bg-[#0a0a0a] p-5 md:p-8 space-y-8">
-      {/* Header row: hero number on the left, period selector on the right */}
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-        <div>
-          <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">
-            Lifetime Earnings
-          </div>
-          <div className="text-5xl md:text-7xl font-black text-white tracking-tighter tabular-nums">
-            $<AnimatedNumber value={totalEarnings} decimals={2} />
-          </div>
+    <div className="bg-[#0a0a0a] p-5 md:p-8 space-y-6 md:space-y-8">
+      {/* Period selector — full-width segmented row */}
+      <div className="grid grid-cols-4 bg-black">
+        {(['7d', '30d', '90d', 'all'] as const).map((p) => (
+          <button
+            key={p}
+            onClick={() => setPeriod(p)}
+            className={cn(
+              'py-2.5 text-[10px] font-bold uppercase tracking-widest transition-colors',
+              period === p ? 'bg-white text-black' : 'text-white/40 hover:text-white'
+            )}
+          >
+            {p === 'all' ? 'All' : p.toUpperCase()}
+          </button>
+        ))}
+      </div>
+
+      {/* Hero */}
+      <div className="text-center">
+        <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">
+          Lifetime Earnings
         </div>
-        <div className="flex bg-black w-fit">
-          {(['7d', '30d', '90d', 'all'] as const).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={cn(
-                'px-3 md:px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors',
-                period === p ? 'bg-white text-black' : 'text-white/40 hover:text-white'
-              )}
-            >
-              {p === 'all' ? 'All' : p.toUpperCase()}
-            </button>
-          ))}
+        <div className="text-5xl md:text-7xl font-black text-white tracking-tighter tabular-nums">
+          $<AnimatedNumber value={totalEarnings} decimals={2} />
         </div>
       </div>
 
       {/* Chart */}
       <div className="space-y-3">
-        <div className="flex flex-wrap gap-1">
+        <div className="grid grid-cols-4 gap-1">
           {(['earnings', 'clicks', 'conversions', 'rank'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setChartTab(tab)}
               className={cn(
-                'px-3 md:px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors flex-1 md:flex-none',
+                'py-2 text-[9px] md:text-[10px] font-bold uppercase tracking-widest transition-colors',
                 chartTab === tab ? 'bg-white text-black' : 'bg-black text-white/40 hover:text-white'
               )}
             >
@@ -329,7 +329,7 @@ function Chart({
         preserveAspectRatio="none"
         className="w-full h-32 md:h-40"
       >
-        {/* Gridlines — give the empty state structure so it still reads as "a chart" */}
+        {/* Gridlines */}
         {[0.25, 0.5, 0.75].map((frac) => (
           <line
             key={frac}
@@ -338,15 +338,27 @@ function Chart({
             x2={width}
             y2={height * frac}
             stroke="currentColor"
-            strokeOpacity={0.06}
+            strokeOpacity={0.15}
             strokeWidth={0.4}
             vectorEffect="non-scaling-stroke"
+            strokeDasharray="2 2"
           />
         ))}
+        {/* Baseline */}
+        <line
+          x1={0}
+          y1={height - 0.5}
+          x2={width}
+          y2={height - 0.5}
+          stroke="currentColor"
+          strokeOpacity={0.4}
+          strokeWidth={0.6}
+          vectorEffect="non-scaling-stroke"
+        />
 
-        {hasData && (
+        {hasData ? (
           <>
-            <path d={areaPath} fill="currentColor" className="text-white/10" />
+            <path d={areaPath} fill="currentColor" className="text-white/15" />
             <polyline
               fill="none"
               stroke="currentColor"
@@ -356,6 +368,19 @@ function Chart({
               points={polyline}
             />
           </>
+        ) : (
+          /* Empty-state: flat line at zero so the chart still looks like a chart */
+          <line
+            x1={0}
+            y1={height - 1}
+            x2={width}
+            y2={height - 1}
+            stroke="currentColor"
+            strokeOpacity={0.5}
+            strokeWidth={1.5}
+            vectorEffect="non-scaling-stroke"
+            className="text-white"
+          />
         )}
       </svg>
     </div>
