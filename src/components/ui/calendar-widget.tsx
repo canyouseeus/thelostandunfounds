@@ -71,18 +71,18 @@ export function CalendarWidget({
     };
 
     return (
-        <div className={cn("bg-black p-3 md:p-6 flex flex-col items-center justify-center min-h-[200px] md:min-h-[280px]", className)}>
-            <div className="w-full max-w-[180px] md:max-w-[240px]">
+        <div className={cn("bg-black p-6 flex flex-col items-center justify-center min-h-[280px]", className)}>
+            <div className="w-full max-w-[240px]">
                 {/* Header */}
-                <div className="flex items-baseline justify-between mb-3 md:mb-6 pb-2 relative">
+                <div className="flex items-baseline justify-between mb-6 pb-2 relative">
                     {interactive && (
                         <button onClick={handlePrev} className="p-1 hover:text-white text-white/40 transition-colors absolute -left-2">
                             <ChevronLeftIcon className="w-4 h-4" />
                         </button>
                     )}
                     <div className="flex-1 flex gap-2 items-baseline justify-center">
-                        <span className="text-sm md:text-xl font-bold text-white tracking-tight">{currentMonth}</span>
-                        <span className="text-[10px] md:text-sm text-white/40 font-mono">{currentYear}</span>
+                        <span className="text-xl font-bold text-white tracking-tight">{currentMonth}</span>
+                        <span className="text-sm text-white/40 font-mono">{currentYear}</span>
                     </div>
                     {interactive && (
                         <button onClick={handleNext} className="p-1 hover:text-white text-white/40 transition-colors absolute -right-2">
@@ -94,13 +94,13 @@ export function CalendarWidget({
                 {/* Grid */}
                 <div className="grid grid-cols-7 text-center">
                     {weekDays.map((d, i) => (
-                        <div key={`${d}-${i}`} className="text-[8px] md:text-[10px] text-white/30 font-medium h-6 md:h-8 flex items-center justify-center">
+                        <div key={`${d}-${i}`} className="text-[10px] text-white/30 font-medium h-8 flex items-center justify-center">
                             {d}
                         </div>
                     ))}
 
                     {blanks.map(i => (
-                        <div key={`blank-${i}`} className="h-7 md:h-10" />
+                        <div key={`blank-${i}`} className="h-10" />
                     ))}
 
                     {days.map(d => {
@@ -116,7 +116,7 @@ export function CalendarWidget({
                         const hasDots = dots && (dots.bookings > 0 || dots.events > 0 || dots.photos > 0 || dots.blocked);
 
                         return (
-                            <div key={d} className="relative h-7 md:h-10 flex flex-col items-center justify-start pt-[3px]">
+                            <div key={d} className="relative h-10 flex flex-col items-center justify-start pt-[3px]">
                                 {/* Range fill */}
                                 {hasRange && (dayIsStart || dayIsEnd || dayInRange) && (
                                     <div
@@ -138,7 +138,7 @@ export function CalendarWidget({
                                         }
                                     }}
                                     className={cn(
-                                        "relative z-10 w-5 h-5 md:w-7 md:h-7 flex items-center justify-center text-[10px] md:text-xs font-mono transition-all rounded-full",
+                                        "relative z-10 w-7 h-7 flex items-center justify-center text-xs font-mono transition-all rounded-full",
                                         !interactive && "cursor-default",
                                         selected
                                             ? "bg-white text-black font-bold"
