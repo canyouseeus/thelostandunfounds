@@ -246,7 +246,7 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
     return (
         <div className={cn(
             'bg-black relative overflow-hidden flex flex-col select-none',
-            'min-h-[200px]', // Ensure enough height
+            'min-h-[140px] md:min-h-[200px]', // proportionate floor at each breakpoint
             className
         )}>
             {/* Main Display Area */}
