@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import {
   ArrowTrendingUpIcon,
@@ -632,57 +633,46 @@ export default function AffiliateDashboard() {
       <KingMidasTicker />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
-        <div className="mb-12 border-b border-white/20 pb-6">
-          <h1 className="text-4xl font-black text-white mb-2 uppercase tracking-tighter">Affiliate Dashboard</h1>
-          <p className="text-white/60 font-medium uppercase tracking-widest text-xs">Performance Overview & Management</p>
+        <div className="mb-8 md:mb-12 pb-6">
+          <h1 className="text-3xl md:text-4xl font-black text-white mb-2 uppercase tracking-tighter">Affiliate Dashboard</h1>
+          <p className="text-white/60 font-medium uppercase tracking-widest text-[10px] md:text-xs">Performance Overview & Management</p>
         </div>
 
         {/* Dashboard Navigation Tabs */}
-        <div className="flex border-b border-white/20 mb-8 overflow-x-auto scrollbar-hide">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={cn(
-              "px-6 py-4 text-xs font-bold uppercase tracking-widest transition-colors whitespace-nowrap",
-              activeTab === 'overview'
-                ? "text-white border-b-2 border-white bg-white/5"
-                : "text-white/40 hover:text-white hover:bg-white/5"
-            )}
-          >
-            Overview
-          </button>
-          <button
-            onClick={() => setActiveTab('marketing')}
-            className={cn(
-              "px-6 py-4 text-xs font-bold uppercase tracking-widest transition-colors whitespace-nowrap",
-              activeTab === 'marketing'
-                ? "text-white border-b-2 border-white bg-white/5"
-                : "text-white/40 hover:text-white hover:bg-white/5"
-            )}
-          >
-            Marketing Assets
-          </button>
-          <button
-            onClick={() => setActiveTab('payouts')}
-            className={cn(
-              "px-6 py-4 text-xs font-bold uppercase tracking-widest transition-colors whitespace-nowrap",
-              activeTab === 'payouts'
-                ? "text-white border-b-2 border-white bg-white/5"
-                : "text-white/40 hover:text-white hover:bg-white/5"
-            )}
-          >
-            Payouts
-          </button>
-          <button
-            onClick={() => setActiveTab('guide')}
-            className={cn(
-              "px-6 py-4 text-xs font-bold uppercase tracking-widest transition-colors whitespace-nowrap",
-              activeTab === 'guide'
-                ? "text-white border-b-2 border-white bg-white/5"
-                : "text-white/40 hover:text-white hover:bg-white/5"
-            )}
-          >
-            Guide
-          </button>
+        <div className="flex justify-center gap-6 sm:gap-10 md:gap-12 mb-12 pb-2">
+          {([
+            { key: 'overview', label: 'Overview' },
+            { key: 'marketing', label: 'Marketing', mobileLabel: 'Assets' },
+            { key: 'payouts', label: 'Payouts' },
+            { key: 'guide', label: 'Guide' },
+          ] as const).map((tab) => {
+            const isActive = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key as typeof activeTab)}
+                className={cn(
+                  "text-[10px] font-black uppercase tracking-[0.3em] transition-all relative pb-2",
+                  isActive ? "text-white" : "text-white/30 hover:text-white/60"
+                )}
+              >
+                {'mobileLabel' in tab && tab.mobileLabel ? (
+                  <>
+                    <span className="sm:hidden">{tab.mobileLabel}</span>
+                    <span className="hidden sm:inline">{tab.label}</span>
+                  </>
+                ) : (
+                  tab.label
+                )}
+                {isActive && (
+                  <motion.div
+                    layoutId="affiliateTabUnderline"
+                    className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-white"
+                  />
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {/* TAB CONTENT: MARKETING */}
@@ -691,7 +681,7 @@ export default function AffiliateDashboard() {
             {/* Affiliate Code Setup */}
             <div className="mb-8">
               <h3 className="text-white text-lg font-bold uppercase tracking-widest mb-4">Your Identity</h3>
-              <div className="bg-black border border-white/20 p-6 rounded-none">
+              <div className="bg-[#0a0a0a] p-6 rounded-none">
                 <div className="text-[10px] items-center font-bold text-white/40 uppercase tracking-widest mb-2">Your Affiliate Code</div>
                 <div className="text-3xl font-black text-white font-mono tracking-tighter mb-2">
                   {data.affiliate.code}

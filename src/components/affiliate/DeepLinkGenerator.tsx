@@ -72,13 +72,13 @@ export default function DeepLinkGenerator({ affiliateCode }: DeepLinkGeneratorPr
                                 value={targetUrl}
                                 onChange={(e) => setTargetUrl(e.target.value)}
                                 placeholder="Paste any shop URL (e.g. /shop/poster-1)"
-                                className="w-full bg-black border border-white/20 pl-10 pr-4 py-3 text-white text-sm focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all placeholder:text-white/20 font-mono"
+                                className="w-full bg-white/5 pl-10 pr-4 py-3 text-white text-sm focus:outline-none focus:bg-white/10 transition-all placeholder:text-white/20 font-mono"
                                 onKeyDown={(e) => e.key === 'Enter' && generateLink()}
                             />
                         </div>
                         <button
                             onClick={generateLink}
-                            className="px-6 py-3 bg-white/10 border border-white/20 text-white font-bold uppercase tracking-wider text-xs hover:bg-white hover:text-black transition-all"
+                            className="px-6 py-3 bg-white/10 text-white font-bold uppercase tracking-wider text-xs hover:bg-white hover:text-black transition-all"
                         >
                             Generate
                         </button>
@@ -96,7 +96,7 @@ export default function DeepLinkGenerator({ affiliateCode }: DeepLinkGeneratorPr
                                 type="text"
                                 readOnly
                                 value={generatedLink}
-                                className="flex-1 bg-white/5 border border-white/10 px-4 py-3 text-white/80 text-sm font-mono focus:outline-none"
+                                className="flex-1 bg-white/5 px-4 py-3 text-white/80 text-sm font-mono focus:outline-none"
                             />
                             <div className="flex gap-2">
                                 <button
@@ -110,7 +110,7 @@ export default function DeepLinkGenerator({ affiliateCode }: DeepLinkGeneratorPr
                                     href={generatedLink}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="px-4 py-3 bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all flex items-center justify-center"
+                                    className="px-4 py-3 bg-white/5 text-white hover:bg-white/10 transition-all flex items-center justify-center"
                                     title="Test Link"
                                 >
                                     <ArrowTopRightOnSquareIcon className="w-4 h-4" />
@@ -120,8 +120,8 @@ export default function DeepLinkGenerator({ affiliateCode }: DeepLinkGeneratorPr
                     </div>
                 )}
 
-                <div className="bg-blue-500/5 border border-blue-500/20 p-4">
-                    <h4 className="text-blue-400 text-xs font-bold uppercase tracking-widest mb-1">PRO TIP</h4>
+                <div className="bg-white/[0.03] p-4">
+                    <h4 className="text-white text-xs font-bold uppercase tracking-widest mb-1">Pro Tip</h4>
                     <p className="text-white/60 text-xs leading-relaxed">
                         Linking directly to a specific product or collection increases conversion rates by up to 300% compared to linking to the homepage.
                     </p>
