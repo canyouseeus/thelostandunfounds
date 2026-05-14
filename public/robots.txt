@@ -24,7 +24,6 @@ Disallow: /preview/
 Disallow: /setup
 Disallow: /settings
 Disallow: /dashboard
-Disallow: /affiliate/dashboard
 Disallow: /download
 Disallow: /sql
 Disallow: /sql/

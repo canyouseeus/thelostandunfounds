@@ -44,7 +44,7 @@ export default function BecomeAffiliate() {
 
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                             <Link
-                                to="/affiliate/dashboard"
+                                to="/dashboard"
                                 className="px-8 py-4 bg-white text-black font-black text-lg uppercase tracking-widest hover:bg-white/90 transition-all flex items-center gap-2"
                             >
                                 Join Program Now <ArrowRightIcon className="w-5 h-5" />
@@ -110,7 +110,7 @@ export default function BecomeAffiliate() {
                                     We provide all the tools, tracking, and assets you need to maximize your earnings from day one.
                                 </p>
                                 <Link
-                                    to="/affiliate/dashboard"
+                                    to="/dashboard"
                                     className="inline-block text-white font-bold uppercase tracking-widest underline underline-offset-4 hover:text-white/60 transition-colors"
                                 >
                                     Start Earning Today →
@@ -147,7 +147,7 @@ export default function BecomeAffiliate() {
                         Join the ranks of top earners and start building your empire today.
                     </p>
                     <Link
-                        to="/affiliate/dashboard"
+                        to="/dashboard"
                         className="inline-block px-12 py-5 bg-white text-black font-black text-xl uppercase tracking-widest hover:bg-white/90 transition-colors"
                     >
                         Become an Affiliate

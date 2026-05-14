@@ -37,6 +37,7 @@ import AffiliateCodeSetup from '../components/affiliate/AffiliateCodeSetup'
 import DeepLinkGenerator from '../components/affiliate/DeepLinkGenerator'
 import AffiliateGuide from '../components/affiliate/AffiliateGuide'
 import PayoutHistoryTable from '../components/affiliate/PayoutHistoryTable'
+import LeaderboardView from '../components/affiliate/LeaderboardView'
 import { AdminBentoCard, AdminBentoRow } from '../components/ui/admin-bento-card'
 import { ExpandableBentoCard } from '../components/ui/expandable-bento-card'
 import { cn } from '../components/ui/utils'
@@ -139,7 +140,7 @@ interface DashboardData {
   }
 }
 
-export default function AffiliateDashboard() {
+export default function AffiliateDashboard({ embedded = false }: { embedded?: boolean } = {}) {
   const { user, loading: authLoading } = useAuth()
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [initialAuthMode, setInitialAuthMode] = useState<'signin' | 'signup'>('signin');
@@ -182,7 +183,7 @@ export default function AffiliateDashboard() {
   const [checkingAffiliate, setCheckingAffiliate] = useState(true)
 
   /* Tab State */
-  const [activeTab, setActiveTab] = useState<'overview' | 'marketing' | 'payouts' | 'guide'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'marketing' | 'payouts' | 'leaderboard' | 'guide'>('overview')
 
   // Check if user has an affiliate account
   useEffect(() => {
@@ -331,8 +332,8 @@ export default function AffiliateDashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user.id,
-          returnPath: '/affiliate/dashboard?stripe=connected',
-          refreshPath: '/affiliate/dashboard?stripe=refresh',
+          returnPath: '/dashboard?stripe=connected',
+          refreshPath: '/dashboard?stripe=refresh',
         }),
       });
       const result = await response.json();
@@ -623,20 +624,24 @@ export default function AffiliateDashboard() {
 
   return (
     <>
-      <SEOHead
-        title="Affiliate Dashboard"
-        description="Track your commissions, monitor your conversion funnel, and review payout history from THE LOST+UNFOUNDS affiliate program."
-        canonicalPath="/affiliate/dashboard"
-        noIndex={true}
-      />
-    <div className="min-h-screen bg-black text-white">
-      <KingMidasTicker />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-48">
+      {!embedded && (
+        <SEOHead
+          title="Affiliate Dashboard"
+          description="Track your commissions, monitor your conversion funnel, and review payout history from THE LOST+UNFOUNDS affiliate program."
+          canonicalPath="/dashboard"
+          noIndex={true}
+        />
+      )}
+    <div className={embedded ? '' : 'min-h-screen bg-black text-white'}>
+      {!embedded && <KingMidasTicker />}
+      <div className={embedded ? '' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-48'}>
         {/* Header */}
-        <div className="mb-8 md:mb-12 pb-6">
-          <h1 className="text-3xl md:text-4xl font-black text-white mb-2 uppercase tracking-tighter">Affiliate Dashboard</h1>
-          <p className="text-white/60 font-medium uppercase tracking-widest text-[10px] md:text-xs">Performance Overview & Management</p>
-        </div>
+        {!embedded && (
+          <div className="mb-8 md:mb-12 pb-6">
+            <h1 className="text-3xl md:text-4xl font-black text-white mb-2 uppercase tracking-tighter">Affiliate Dashboard</h1>
+            <p className="text-white/60 font-medium uppercase tracking-widest text-[10px] md:text-xs">Performance Overview & Management</p>
+          </div>
+        )}
 
         {/* Dashboard Navigation Tabs */}
         <div className="flex justify-center gap-6 sm:gap-10 md:gap-12 mb-12 pb-2">
@@ -644,6 +649,7 @@ export default function AffiliateDashboard() {
             { key: 'overview', label: 'Overview' },
             { key: 'marketing', label: 'Marketing', mobileLabel: 'Assets' },
             { key: 'payouts', label: 'Payouts' },
+            { key: 'leaderboard', label: 'Leaderboard', mobileLabel: 'Ranks' },
             { key: 'guide', label: 'Guide' },
           ] as const).map((tab) => {
             const isActive = activeTab === tab.key;
@@ -739,6 +745,13 @@ export default function AffiliateDashboard() {
 
             <h3 className="text-white text-lg font-bold uppercase tracking-widest mt-8 mb-4">Payout History</h3>
             <PayoutHistoryTable affiliateId={data.affiliate.id} />
+          </div>
+        )}
+
+        {/* TAB CONTENT: LEADERBOARD */}
+        {activeTab === 'leaderboard' && (
+          <div className="animate-in fade-in zoom-in-95 duration-300">
+            <LeaderboardView highlightAffiliateCode={data.affiliate.code} />
           </div>
         )}
 
@@ -1048,12 +1061,12 @@ export default function AffiliateDashboard() {
                 }
                 footer={
                   <div className="text-center">
-                    <Link
-                      to="/king-midas-leaderboard"
+                    <button
+                      onClick={() => setActiveTab('leaderboard')}
                       className="inline-block px-6 py-2 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-white/90 transition-colors"
                     >
                       View Full Leaderboard →
-                    </Link>
+                    </button>
                   </div>
                 }
               >
@@ -1488,45 +1501,6 @@ export default function AffiliateDashboard() {
           </div>
         )}
         {/* End Overview Tab Content */}
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Link
-            to="/king-midas-leaderboard"
-            className="bg-black border-0 rounded-none p-6 hover:bg-white hover:text-black transition-colors group"
-          >
-            <TrophyIcon className="w-8 h-8 text-white mb-4 group-hover:text-black transition-colors" />
-            <h3 className="text-sm font-bold uppercase tracking-widest mb-2">
-              View Leaderboard
-            </h3>
-            <p className="text-white/60 text-xs font-medium uppercase tracking-wider group-hover:text-black/60">
-              See how you rank against other affiliates
-            </p>
-          </Link>
-
-          <Link
-            to="/dashboard"
-            className="bg-black border-0 rounded-none p-6 hover:bg-white hover:text-black transition-colors group"
-          >
-            <CursorArrowRaysIcon className="w-8 h-8 text-white mb-4 group-hover:text-black transition-colors" />
-            <h3 className="text-sm font-bold uppercase tracking-widest mb-2">
-              My Profile
-            </h3>
-            <p className="text-white/60 text-xs font-medium uppercase tracking-wider group-hover:text-black/60">
-              View and edit your affiliate profile
-            </p>
-          </Link>
-
-          <div className="bg-black border-0 rounded-none p-6 opacity-50 cursor-not-allowed">
-            <CurrencyDollarIcon className="w-8 h-8 text-white mb-4" />
-            <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-2">
-              Marketing Tools
-            </h3>
-            <p className="text-white/60 text-xs font-medium uppercase tracking-wider">
-              Coming soon: Banners, email templates
-            </p>
-          </div>
-        </div>
       </div>
     </div >
     </>
