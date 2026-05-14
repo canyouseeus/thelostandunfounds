@@ -71,9 +71,9 @@ export function AffiliateRevenueTracker({
         .gte('created_at', sinceIso),
       supabase
         .from('affiliate_click_events')
-        .select('created_at')
+        .select('clicked_at')
         .eq('affiliate_id', affiliateId)
-        .gte('created_at', sinceIso),
+        .gte('clicked_at', sinceIso),
       supabase
         .from('king_midas_daily_stats')
         .select('rank, profit_generated, pool_share, date')
@@ -110,7 +110,7 @@ export function AffiliateRevenueTracker({
     const bucket = (rows: any[], valueFn: (r: any) => number) => {
       const map = new Map<string, number>();
       for (const r of rows) {
-        const key = (r.date || r.created_at || '').slice(0, 10);
+        const key = (r.date || r.created_at || r.clicked_at || '').slice(0, 10);
         if (!key) continue;
         map.set(key, (map.get(key) || 0) + valueFn(r));
       }
