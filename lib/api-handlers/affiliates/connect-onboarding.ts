@@ -87,6 +87,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // POST → ensure account, return onboarding link
+    const stripe = getStripe();
     let accountId = affiliate.stripe_account_id;
     let isNewAccount = false;
 
