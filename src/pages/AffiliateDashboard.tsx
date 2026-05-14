@@ -631,7 +631,7 @@ export default function AffiliateDashboard() {
       />
     <div className="min-h-screen bg-black text-white">
       <KingMidasTicker />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-48">
         {/* Header */}
         <div className="mb-8 md:mb-12 pb-6">
           <h1 className="text-3xl md:text-4xl font-black text-white mb-2 uppercase tracking-tighter">Affiliate Dashboard</h1>
