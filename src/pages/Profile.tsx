@@ -42,6 +42,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { cn } from '../components/ui/utils';
 import AdminGalleryView from '../components/admin/AdminGalleryView';
+import AffiliateDashboard from './AffiliateDashboard';
 import { LoadingSpinner, LoadingOverlay, SkeletonCard } from '../components/Loading';
 import { SubscriptionTier } from '../types/index';
 import { isAdmin } from '../utils/admin';
@@ -148,6 +149,20 @@ export default function Profile() {
       loadAllData();
     }
   }, [user]);
+
+  // Auto-expand a section based on URL query params.
+  // Examples: ?section=affiliate, ?stripe=connected (back from Stripe Connect)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const section = params.get('section');
+    if (section) {
+      setExpandedSections(prev => ({ ...prev, [section]: true }));
+      return;
+    }
+    if (params.has('stripe')) {
+      setExpandedSections(prev => ({ ...prev, affiliate: true }));
+    }
+  }, []);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -730,79 +745,7 @@ export default function Profile() {
                   </div>
                   <button onClick={() => handleSectionToggle('affiliate')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
                 </div>
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div className="bg-black p-4 flex flex-col justify-between h-24">
-                      <span className="text-[10px] uppercase text-white/30 font-bold tracking-widest">Description</span>
-                      <div className="flex items-end justify-between">
-                        <div>
-                          <span className="text-[10px] uppercase text-white/30 font-bold block mb-1">Clicks</span>
-                          <span className="text-xl font-mono text-white leading-none">{affiliateData?.total_clicks || 0}</span>
-                        </div>
-                        <ArrowTrendingUpIcon className="w-4 h-4 text-white/20 mb-1" />
-                      </div>
-                    </div>
-
-                    <div className="bg-black p-4 flex flex-col justify-between h-24">
-                      <div className="flex items-end justify-between h-full">
-                        <div>
-                          <span className="text-[10px] uppercase text-white/30 font-bold block mb-1">Earnings</span>
-                          <span className="text-xl font-mono text-green-400 leading-none">${parseFloat(String(affiliateData?.total_earnings || 0)).toFixed(2)}</span>
-                        </div>
-                        <CurrencyDollarIcon className="w-4 h-4 text-green-400/20 mb-1" />
-                      </div>
-                    </div>
-
-                    <div className="bg-black p-4 flex flex-col justify-between h-24">
-                      <div className="flex items-end justify-between h-full">
-                        <div>
-                          <span className="text-[10px] uppercase text-white/30 font-bold block mb-1">Network</span>
-                          <span className="text-xl font-mono text-purple-400 leading-none">{affiliateData?.network_size || 0}</span>
-                        </div>
-                        <UsersIcon className="w-4 h-4 text-purple-400/20 mb-1" />
-                      </div>
-                    </div>
-
-                    <div
-                      className="bg-black p-4 flex flex-col justify-between h-24 cursor-pointer hover:bg-white/5 transition-colors group"
-                      onClick={() => copyToClipboard(affiliateData?.code || '', 'Code')}
-                    >
-                      <div className="flex items-end justify-between h-full">
-                        <div className="w-full">
-                          <span className="text-[10px] uppercase text-white/30 font-bold block mb-1">Affiliate Code</span>
-                          <div className="flex items-center gap-2 w-full">
-                            <span className="text-xl font-mono text-white truncate leading-none">
-                              {affiliateData?.code || <span className="text-white/20 text-sm">NO CODE</span>}
-                            </span>
-                          </div>
-                        </div>
-                        <ClipboardIcon className="w-4 h-4 text-white/20 group-hover:text-white transition-colors mb-1" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 flex gap-4">
-                    <Link
-                      to="/affiliate/dashboard"
-                      className="flex-1 bg-white text-black py-3 px-4 font-black text-[10px] uppercase text-center hover:bg-white/80 transition"
-                    >
-                      View Dashboard
-                    </Link>
-                    <button
-                      onClick={() => {
-                        if (affiliateData?.code) {
-                          const inviteLink = `${window.location.origin}/join?ref=${affiliateData.code}`;
-                          copyToClipboard(inviteLink, 'Invite Link');
-                        } else {
-                          showError('No affiliate code available');
-                        }
-                      }}
-                      className="flex-1 bg-white/10 py-3 px-4 font-black text-[10px] uppercase text-center hover:bg-white/20 transition text-white"
-                    >
-                      Invite Affiliate
-                    </button>
-                  </div>
-                </div>
+                <AffiliateDashboard embedded />
               </div>
             )}
 

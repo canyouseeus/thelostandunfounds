@@ -46,7 +46,6 @@ import DesignSystem from './pages/DesignSystem'
 import DesignSystemPreview from './pages/DesignSystemPreview'
 import SageMode from './pages/SageMode'
 import SageModeReports from './pages/SageModeReports'
-import AffiliateDashboard from './pages/AffiliateDashboard'
 import BecomeAffiliate from './pages/BecomeAffiliate'
 import KingMidasLeaderboard from './pages/KingMidasLeaderboard'
 import AdminAffiliates from './pages/AdminAffiliates'
@@ -83,6 +82,11 @@ function AdminLayout() {
       <MusicPlayer />
     </Layout>
   )
+}
+
+function AffiliateDashboardRedirect() {
+  const { search } = useLocation()
+  return <Navigate to={`/dashboard${search}`} replace />
 }
 
 function App() {
@@ -157,9 +161,7 @@ function App() {
                   <Profile />
                 </Layout>
               } />
-              <Route path="/affiliate/dashboard" element={<Layout />}>
-                <Route index element={<AffiliateDashboard />} />
-              </Route>
+              <Route path="/affiliate/dashboard" element={<AffiliateDashboardRedirect />} />
               <Route path="/become-affiliate" element={<Layout />}>
                 <Route index element={<BecomeAffiliate />} />
               </Route>

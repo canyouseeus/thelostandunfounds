@@ -57,8 +57,8 @@ export default function AffiliateCodeSetup({ onSuccess }: AffiliateCodeSetupProp
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId,
-          returnPath: '/affiliate/dashboard?stripe=connected',
-          refreshPath: '/affiliate/dashboard?stripe=refresh',
+          returnPath: '/dashboard?stripe=connected',
+          refreshPath: '/dashboard?stripe=refresh',
         }),
       });
       const data = await response.json();
