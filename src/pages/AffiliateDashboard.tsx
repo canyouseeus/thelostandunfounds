@@ -632,19 +632,19 @@ export default function AffiliateDashboard() {
       <KingMidasTicker />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
-        <div className="mb-12 border-b border-white/20 pb-6">
-          <h1 className="text-4xl font-black text-white mb-2 uppercase tracking-tighter">Affiliate Dashboard</h1>
-          <p className="text-white/60 font-medium uppercase tracking-widest text-xs">Performance Overview & Management</p>
+        <div className="mb-8 md:mb-12 pb-6">
+          <h1 className="text-3xl md:text-4xl font-black text-white mb-2 uppercase tracking-tighter">Affiliate Dashboard</h1>
+          <p className="text-white/60 font-medium uppercase tracking-widest text-[10px] md:text-xs">Performance Overview & Management</p>
         </div>
 
         {/* Dashboard Navigation Tabs */}
-        <div className="flex border-b border-white/20 mb-8 overflow-x-auto scrollbar-hide">
+        <div className="grid grid-cols-4 mb-8 bg-[#0a0a0a]">
           <button
             onClick={() => setActiveTab('overview')}
             className={cn(
-              "px-6 py-4 text-xs font-bold uppercase tracking-widest transition-colors whitespace-nowrap",
+              "px-1 sm:px-3 md:px-6 py-3 md:py-4 text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-wider md:tracking-widest transition-colors text-center",
               activeTab === 'overview'
-                ? "text-white border-b-2 border-white bg-white/5"
+                ? "bg-white text-black"
                 : "text-white/40 hover:text-white hover:bg-white/5"
             )}
           >
@@ -653,20 +653,22 @@ export default function AffiliateDashboard() {
           <button
             onClick={() => setActiveTab('marketing')}
             className={cn(
-              "px-6 py-4 text-xs font-bold uppercase tracking-widest transition-colors whitespace-nowrap",
+              "px-1 sm:px-3 md:px-6 py-3 md:py-4 text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-wider md:tracking-widest transition-colors text-center",
               activeTab === 'marketing'
-                ? "text-white border-b-2 border-white bg-white/5"
+                ? "bg-white text-black"
                 : "text-white/40 hover:text-white hover:bg-white/5"
             )}
           >
-            Marketing Assets
+            <span className="sm:hidden">Assets</span>
+            <span className="hidden sm:inline">Marketing</span>
+            <span className="hidden md:inline">&nbsp;Assets</span>
           </button>
           <button
             onClick={() => setActiveTab('payouts')}
             className={cn(
-              "px-6 py-4 text-xs font-bold uppercase tracking-widest transition-colors whitespace-nowrap",
+              "px-1 sm:px-3 md:px-6 py-3 md:py-4 text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-wider md:tracking-widest transition-colors text-center",
               activeTab === 'payouts'
-                ? "text-white border-b-2 border-white bg-white/5"
+                ? "bg-white text-black"
                 : "text-white/40 hover:text-white hover:bg-white/5"
             )}
           >
@@ -675,9 +677,9 @@ export default function AffiliateDashboard() {
           <button
             onClick={() => setActiveTab('guide')}
             className={cn(
-              "px-6 py-4 text-xs font-bold uppercase tracking-widest transition-colors whitespace-nowrap",
+              "px-1 sm:px-3 md:px-6 py-3 md:py-4 text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-wider md:tracking-widest transition-colors text-center",
               activeTab === 'guide'
-                ? "text-white border-b-2 border-white bg-white/5"
+                ? "bg-white text-black"
                 : "text-white/40 hover:text-white hover:bg-white/5"
             )}
           >
