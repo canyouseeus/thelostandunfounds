@@ -163,16 +163,21 @@ export function AffiliateRevenueTracker({
       {/* Chart */}
       <div className="space-y-3">
         <div className="grid grid-cols-4 gap-1">
-          {(['earnings', 'clicks', 'conversions', 'rank'] as const).map((tab) => (
+          {([
+            { key: 'earnings', label: 'Earnings' },
+            { key: 'clicks', label: 'Clicks' },
+            { key: 'conversions', label: 'Sales' },
+            { key: 'rank', label: 'Rank' },
+          ] as const).map((tab) => (
             <button
-              key={tab}
-              onClick={() => setChartTab(tab)}
+              key={tab.key}
+              onClick={() => setChartTab(tab.key)}
               className={cn(
                 'py-2 text-[9px] md:text-[10px] font-bold uppercase tracking-widest transition-colors',
-                chartTab === tab ? 'bg-white text-black' : 'bg-black text-white/40 hover:text-white'
+                chartTab === tab.key ? 'bg-white text-black' : 'bg-black text-white/40 hover:text-white'
               )}
             >
-              {tab}
+              {tab.label}
             </button>
           ))}
         </div>
@@ -280,7 +285,11 @@ function Chart({
   const total = hasData ? values.reduce((sum, v) => sum + v, 0) : 0;
   const avg = hasData ? values.reduce((sum, v) => sum + v, 0) / values.length : null;
   const headline = (() => {
-    if (!hasData) return tab === 'earnings' ? '$0.00' : '0';
+    if (!hasData) {
+      if (tab === 'earnings') return '$0.00';
+      if (tab === 'rank') return '—';
+      return '0';
+    }
     if (tab === 'earnings') return `$${total.toFixed(2)}`;
     if (tab === 'rank') return avg != null ? `avg #${avg.toFixed(1)}` : '—';
     return total.toLocaleString();
@@ -329,8 +338,8 @@ function Chart({
         preserveAspectRatio="none"
         className="w-full h-32 md:h-40"
       >
-        {/* Gridlines */}
-        {[0.25, 0.5, 0.75].map((frac) => (
+        {/* Gridlines — soft dashed reference, no solid baseline (reads as a divider) */}
+        {[0.2, 0.4, 0.6, 0.8].map((frac) => (
           <line
             key={frac}
             x1={0}
@@ -338,25 +347,14 @@ function Chart({
             x2={width}
             y2={height * frac}
             stroke="currentColor"
-            strokeOpacity={0.15}
+            strokeOpacity={0.12}
             strokeWidth={0.4}
             vectorEffect="non-scaling-stroke"
-            strokeDasharray="2 2"
+            strokeDasharray="2 3"
           />
         ))}
-        {/* Baseline */}
-        <line
-          x1={0}
-          y1={height - 0.5}
-          x2={width}
-          y2={height - 0.5}
-          stroke="currentColor"
-          strokeOpacity={0.4}
-          strokeWidth={0.6}
-          vectorEffect="non-scaling-stroke"
-        />
 
-        {hasData ? (
+        {hasData && (
           <>
             <path d={areaPath} fill="currentColor" className="text-white/15" />
             <polyline
@@ -368,19 +366,6 @@ function Chart({
               points={polyline}
             />
           </>
-        ) : (
-          /* Empty-state: flat line at zero so the chart still looks like a chart */
-          <line
-            x1={0}
-            y1={height - 1}
-            x2={width}
-            y2={height - 1}
-            stroke="currentColor"
-            strokeOpacity={0.5}
-            strokeWidth={1.5}
-            vectorEffect="non-scaling-stroke"
-            className="text-white"
-          />
         )}
       </svg>
     </div>
