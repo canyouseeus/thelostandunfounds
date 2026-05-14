@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import {
   ArrowTrendingUpIcon,
@@ -638,53 +639,40 @@ export default function AffiliateDashboard() {
         </div>
 
         {/* Dashboard Navigation Tabs */}
-        <div className="grid grid-cols-4 mb-8 bg-[#0a0a0a]">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={cn(
-              "px-1 sm:px-3 md:px-6 py-3 md:py-4 text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-wider md:tracking-widest transition-colors text-center",
-              activeTab === 'overview'
-                ? "bg-white text-black"
-                : "text-white/40 hover:text-white hover:bg-white/5"
-            )}
-          >
-            Overview
-          </button>
-          <button
-            onClick={() => setActiveTab('marketing')}
-            className={cn(
-              "px-1 sm:px-3 md:px-6 py-3 md:py-4 text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-wider md:tracking-widest transition-colors text-center",
-              activeTab === 'marketing'
-                ? "bg-white text-black"
-                : "text-white/40 hover:text-white hover:bg-white/5"
-            )}
-          >
-            <span className="sm:hidden">Assets</span>
-            <span className="hidden sm:inline">Marketing</span>
-            <span className="hidden md:inline">&nbsp;Assets</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('payouts')}
-            className={cn(
-              "px-1 sm:px-3 md:px-6 py-3 md:py-4 text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-wider md:tracking-widest transition-colors text-center",
-              activeTab === 'payouts'
-                ? "bg-white text-black"
-                : "text-white/40 hover:text-white hover:bg-white/5"
-            )}
-          >
-            Payouts
-          </button>
-          <button
-            onClick={() => setActiveTab('guide')}
-            className={cn(
-              "px-1 sm:px-3 md:px-6 py-3 md:py-4 text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-wider md:tracking-widest transition-colors text-center",
-              activeTab === 'guide'
-                ? "bg-white text-black"
-                : "text-white/40 hover:text-white hover:bg-white/5"
-            )}
-          >
-            Guide
-          </button>
+        <div className="flex justify-center gap-6 sm:gap-10 md:gap-12 mb-12 pb-2">
+          {([
+            { key: 'overview', label: 'Overview' },
+            { key: 'marketing', label: 'Marketing', mobileLabel: 'Assets' },
+            { key: 'payouts', label: 'Payouts' },
+            { key: 'guide', label: 'Guide' },
+          ] as const).map((tab) => {
+            const isActive = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key as typeof activeTab)}
+                className={cn(
+                  "text-[10px] font-black uppercase tracking-[0.3em] transition-all relative pb-2",
+                  isActive ? "text-white" : "text-white/30 hover:text-white/60"
+                )}
+              >
+                {'mobileLabel' in tab && tab.mobileLabel ? (
+                  <>
+                    <span className="sm:hidden">{tab.mobileLabel}</span>
+                    <span className="hidden sm:inline">{tab.label}</span>
+                  </>
+                ) : (
+                  tab.label
+                )}
+                {isActive && (
+                  <motion.div
+                    layoutId="affiliateTabUnderline"
+                    className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-white"
+                  />
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {/* TAB CONTENT: MARKETING */}
