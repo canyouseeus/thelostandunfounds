@@ -6,16 +6,10 @@
  *   2. Is my funnel working? (clicks → conversions → revenue per click)
  *   3. Where do I rank in King Midas today?
  *   4. Is my network growing?
- *
- * No site-wide revenue, no newsletter signups, no booking totals — those are
- * admin-only metrics and live in <RevenueTracker /> instead.
  */
 
 import { useEffect, useState } from 'react';
 import {
-  ChevronDownIcon,
-  ChevronRightIcon,
-  CurrencyDollarIcon,
   CursorArrowRaysIcon,
   ShoppingCartIcon,
   TrophyIcon,
@@ -44,19 +38,8 @@ interface DailySeries {
   rank: { date: string; value: number }[];
 }
 
-interface PayoutSummary {
-  available: number;
-  pending: number;
-}
-
-interface RankSummary {
-  today: number | null;
-  best: number | null;
-}
-
 export function AffiliateRevenueTracker({
   affiliateId,
-  affiliateCode,
   totalEarnings,
   totalClicks,
   totalConversions,
@@ -64,10 +47,11 @@ export function AffiliateRevenueTracker({
 }: AffiliateRevenueTrackerProps) {
   const [period, setPeriod] = useState<TimePeriod>('30d');
   const [chartTab, setChartTab] = useState<ChartTab>('earnings');
-  const [isExpanded, setIsExpanded] = useState(true);
   const [series, setSeries] = useState<DailySeries | null>(null);
-  const [payout, setPayout] = useState<PayoutSummary>({ available: 0, pending: 0 });
-  const [rank, setRank] = useState<RankSummary>({ today: null, best: null });
+  const [available, setAvailable] = useState(0);
+  const [pending, setPending] = useState(0);
+  const [todayRank, setTodayRank] = useState<number | null>(null);
+  const [bestRank, setBestRank] = useState<number | null>(null);
 
   useEffect(() => {
     void loadData();
@@ -100,32 +84,30 @@ export function AffiliateRevenueTracker({
 
     const commissions = commissionsRes.data || [];
     const clicks = clicksRes.data || [];
-    // Conversions in this codebase = commission rows that aren't cancelled.
     const conversions = commissions.filter((c: any) => c.status !== 'cancelled');
     const midas = midasRes.data || [];
 
-    // Available / pending balances from commissions
-    let available = 0;
-    let pending = 0;
+    let avail = 0;
+    let pend = 0;
     for (const c of commissions) {
       const amt = parseFloat(String(c.amount || 0));
-      if (c.status === 'paid' || c.status === 'available') available += amt;
-      else if (c.status === 'pending') pending += amt;
+      if (c.status === 'paid' || c.status === 'available') avail += amt;
+      else if (c.status === 'pending') pend += amt;
     }
-    setPayout({ available, pending });
+    setAvailable(avail);
+    setPending(pend);
 
-    // Rank today / best in window
-    let todayRank: number | null = null;
-    let bestRank: number | null = null;
+    let today: number | null = null;
+    let best: number | null = null;
     const todayKey = new Date().toISOString().slice(0, 10);
     for (const m of midas) {
-      if (m.date === todayKey) todayRank = m.rank ?? null;
-      if (m.rank != null && (bestRank == null || m.rank < bestRank)) bestRank = m.rank;
+      if (m.date === todayKey) today = m.rank ?? null;
+      if (m.rank != null && (best == null || m.rank < best)) best = m.rank;
     }
-    setRank({ today: todayRank, best: bestRank });
+    setTodayRank(today);
+    setBestRank(best);
 
-    // Daily buckets
-    const bucket = (rows: { date?: string; created_at?: string }[], valueFn: (r: any) => number) => {
+    const bucket = (rows: any[], valueFn: (r: any) => number) => {
       const map = new Map<string, number>();
       for (const r of rows) {
         const key = (r.date || r.created_at || '').slice(0, 10);
@@ -151,35 +133,18 @@ export function AffiliateRevenueTracker({
   const revenuePerClick = totalClicks > 0 ? totalEarnings / totalClicks : 0;
 
   return (
-    <div className="bg-black overflow-hidden">
-      {/* Header */}
-      <div className="px-4 md:px-6 py-3 md:py-4 bg-[#0a0a0a] flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <CurrencyDollarIcon className="w-4 h-4 text-white/40" />
-          <span className="text-[10px] md:text-xs font-bold text-white/60 uppercase tracking-widest">
-            Affiliate Earnings · {affiliateCode}
-          </span>
+    <div className="bg-[#0a0a0a] p-5 md:p-8 space-y-8">
+      {/* Header row: hero number on the left, period selector on the right */}
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        <div>
+          <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">
+            Lifetime Earnings
+          </div>
+          <div className="text-5xl md:text-7xl font-black text-white tracking-tighter tabular-nums">
+            $<AnimatedNumber value={totalEarnings} decimals={2} />
+          </div>
         </div>
-        <button
-          onClick={() => setIsExpanded((v) => !v)}
-          className="text-white/40 hover:text-white transition-colors"
-          aria-label={isExpanded ? 'Collapse' : 'Expand'}
-        >
-          {isExpanded ? <ChevronDownIcon className="w-4 h-4" /> : <ChevronRightIcon className="w-4 h-4" />}
-        </button>
-      </div>
-
-      {/* Hero number */}
-      <div className="px-4 md:px-6 py-6 md:py-8 text-center">
-        <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">
-          Lifetime Earnings
-        </div>
-        <div className="text-5xl md:text-7xl font-black text-white tracking-tighter tabular-nums">
-          $<AnimatedNumber value={totalEarnings} decimals={2} />
-        </div>
-
-        {/* Period selector */}
-        <div className="mt-6 inline-flex bg-[#0a0a0a]">
+        <div className="flex bg-black w-fit">
           {(['7d', '30d', '90d', 'all'] as const).map((p) => (
             <button
               key={p}
@@ -195,68 +160,65 @@ export function AffiliateRevenueTracker({
         </div>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-px bg-white/5">
-        <StatCell
+      {/* Chart */}
+      <div className="space-y-3">
+        <div className="flex flex-wrap gap-1">
+          {(['earnings', 'clicks', 'conversions', 'rank'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setChartTab(tab)}
+              className={cn(
+                'px-3 md:px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors flex-1 md:flex-none',
+                chartTab === tab ? 'bg-white text-black' : 'bg-black text-white/40 hover:text-white'
+              )}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+        <Chart series={series?.[chartTab] ?? []} tab={chartTab} />
+      </div>
+
+      {/* Stats — spacing-only grid, no dividers */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+        <Stat
           label="Available"
-          value={`$${payout.available.toFixed(2)}`}
+          value={`$${available.toFixed(2)}`}
           sublabel="Ready to payout"
-          accent={payout.available > 0 ? 'green' : 'muted'}
+          accent={available > 0 ? 'green' : undefined}
         />
-        <StatCell
+        <Stat
           label="Pending"
-          value={`$${payout.pending.toFixed(2)}`}
-          sublabel="Clearing return window"
-          accent="muted"
+          value={`$${pending.toFixed(2)}`}
+          sublabel="Clearing window"
         />
-        <StatCell
+        <Stat
           label="Clicks"
           value={totalClicks.toLocaleString()}
           sublabel="Lifetime"
           icon={<CursorArrowRaysIcon className="w-3.5 h-3.5 text-white/30" />}
         />
-        <StatCell
+        <Stat
           label="Conversions"
           value={`${totalConversions} · ${conversionRate.toFixed(1)}%`}
           sublabel="CVR"
           icon={<ShoppingCartIcon className="w-3.5 h-3.5 text-white/30" />}
         />
-        <StatCell
+        <Stat
           label="Rev / Click"
           value={`$${revenuePerClick.toFixed(2)}`}
           sublabel="Earnings ÷ clicks"
         />
-        <StatCell
+        <Stat
           label="King Midas"
-          value={rank.today != null ? `#${rank.today}` : '—'}
-          sublabel={rank.best != null ? `Best #${rank.best}` : 'Not ranked today'}
+          value={todayRank != null ? `#${todayRank}` : '—'}
+          sublabel={bestRank != null ? `Best #${bestRank}` : 'Not ranked today'}
           icon={<TrophyIcon className="w-3.5 h-3.5 text-white/30" />}
         />
       </div>
 
-      {/* Chart */}
-      {isExpanded && (
-        <div className="bg-[#0a0a0a]">
-          <div className="flex flex-wrap gap-px bg-white/5 border-b border-transparent">
-            {(['earnings', 'clicks', 'conversions', 'rank'] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setChartTab(tab)}
-                className={cn(
-                  'px-3 md:px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors flex-1 md:flex-none',
-                  chartTab === tab ? 'bg-white text-black' : 'bg-black text-white/40 hover:text-white'
-                )}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-          <MiniChart series={series?.[chartTab] ?? []} tab={chartTab} />
-        </div>
-      )}
-
       {networkSize > 0 && (
-        <div className="px-4 md:px-6 py-3 bg-[#0a0a0a] flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-white/60">
+        <div className="flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-white/60">
           <UsersIcon className="w-3.5 h-3.5" />
           {networkSize} affiliate{networkSize === 1 ? '' : 's'} in your network
         </div>
@@ -265,7 +227,7 @@ export function AffiliateRevenueTracker({
   );
 }
 
-function StatCell({
+function Stat({
   label,
   value,
   sublabel,
@@ -276,10 +238,10 @@ function StatCell({
   value: string;
   sublabel: string;
   icon?: React.ReactNode;
-  accent?: 'green' | 'muted';
+  accent?: 'green';
 }) {
   return (
-    <div className="bg-black p-3 md:p-4 flex flex-col">
+    <div className="bg-black p-3 md:p-4">
       <div className="flex items-center justify-between mb-2">
         <span className="text-[9px] md:text-[10px] font-bold text-white/40 uppercase tracking-widest truncate">
           {label}
@@ -301,74 +263,100 @@ function StatCell({
   );
 }
 
-function MiniChart({
+function Chart({
   series,
   tab,
 }: {
   series: { date: string; value: number }[];
   tab: ChartTab;
 }) {
-  if (!series || series.length === 0) {
-    return (
-      <div className="px-4 md:px-6 py-12 text-center text-white/30 text-[10px] font-bold uppercase tracking-widest">
-        No data in this window yet
-      </div>
-    );
-  }
-
-  const isRank = tab === 'rank';
-  const values = series.map((p) => p.value);
-  const max = Math.max(...values, 1);
-  const min = isRank ? 1 : 0;
-  const range = Math.max(max - min, 1);
   const width = 100;
   const height = 40;
-  const step = series.length > 1 ? width / (series.length - 1) : 0;
-  const points = series
-    .map((p, i) => {
-      const x = i * step;
-      const normalized = isRank
-        ? (p.value - min) / range
-        : (p.value - min) / range;
-      const y = isRank ? normalized * height : height - normalized * height;
-      return `${x.toFixed(2)},${y.toFixed(2)}`;
-    })
-    .join(' ');
+  const isRank = tab === 'rank';
+  const hasData = series && series.length > 0;
+  const values = hasData ? series.map((p) => p.value) : [];
 
-  const total = isRank ? null : values.reduce((sum, v) => sum + v, 0);
-  const avg = isRank ? values.reduce((sum, v) => sum + v, 0) / values.length : null;
+  // Headline number above the chart
+  const total = hasData ? values.reduce((sum, v) => sum + v, 0) : 0;
+  const avg = hasData ? values.reduce((sum, v) => sum + v, 0) / values.length : null;
+  const headline = (() => {
+    if (!hasData) return tab === 'earnings' ? '$0.00' : '0';
+    if (tab === 'earnings') return `$${total.toFixed(2)}`;
+    if (tab === 'rank') return avg != null ? `avg #${avg.toFixed(1)}` : '—';
+    return total.toLocaleString();
+  })();
+
+  // Build polyline + area for the chart
+  let polyline = '';
+  let areaPath = '';
+  if (hasData) {
+    const max = Math.max(...values, 1);
+    const min = isRank ? 1 : 0;
+    const range = Math.max(max - min, 1);
+    const step = series.length > 1 ? width / (series.length - 1) : 0;
+
+    const points = series.map((p, i) => {
+      const x = i * step;
+      const normalized = (p.value - min) / range;
+      const y = isRank ? normalized * height : height - normalized * height;
+      return { x, y };
+    });
+
+    polyline = points.map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
+    areaPath = `M0,${height} L ${points
+      .map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`)
+      .join(' L ')} L ${width},${height} Z`;
+  }
 
   return (
-    <div className="px-4 md:px-6 py-4">
+    <div className="bg-black p-4 md:p-6">
       <div className="flex items-baseline justify-between mb-3">
         <div>
           <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
             {labelFor(tab)}
           </div>
-          <div className="text-lg md:text-xl font-black text-white tracking-tighter font-mono">
-            {tab === 'earnings' && `$${(total || 0).toFixed(2)}`}
-            {tab === 'clicks' && (total || 0).toLocaleString()}
-            {tab === 'conversions' && (total || 0).toLocaleString()}
-            {tab === 'rank' && (avg != null ? `avg #${avg.toFixed(1)}` : '—')}
+          <div className="text-xl md:text-2xl font-black text-white tracking-tighter font-mono">
+            {headline}
           </div>
         </div>
         <div className="text-[9px] text-white/30 uppercase tracking-widest font-bold">
-          {series.length} day{series.length === 1 ? '' : 's'}
+          {hasData ? `${series.length} day${series.length === 1 ? '' : 's'}` : 'No data yet'}
         </div>
       </div>
+
       <svg
         viewBox={`0 0 ${width} ${height}`}
         preserveAspectRatio="none"
-        className="w-full h-20 md:h-24"
+        className="w-full h-32 md:h-40"
       >
-        <polyline
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1"
-          vectorEffect="non-scaling-stroke"
-          className="text-white/80"
-          points={points}
-        />
+        {/* Gridlines — give the empty state structure so it still reads as "a chart" */}
+        {[0.25, 0.5, 0.75].map((frac) => (
+          <line
+            key={frac}
+            x1={0}
+            y1={height * frac}
+            x2={width}
+            y2={height * frac}
+            stroke="currentColor"
+            strokeOpacity={0.06}
+            strokeWidth={0.4}
+            vectorEffect="non-scaling-stroke"
+          />
+        ))}
+
+        {hasData && (
+          <>
+            <path d={areaPath} fill="currentColor" className="text-white/10" />
+            <polyline
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+              vectorEffect="non-scaling-stroke"
+              className="text-white"
+              points={polyline}
+            />
+          </>
+        )}
       </svg>
     </div>
   );
