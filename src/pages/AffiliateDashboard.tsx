@@ -644,11 +644,11 @@ export default function AffiliateDashboard({ embedded = false }: { embedded?: bo
         )}
 
         {/* Dashboard Navigation Tabs */}
-        <div className="flex justify-center gap-6 sm:gap-10 md:gap-12 mb-12 pb-2">
+        <div className="flex justify-around sm:justify-center gap-1 sm:gap-8 md:gap-12 mb-12 pb-2">
           {([
-            { key: 'overview', label: 'Overview' },
-            { key: 'marketing', label: 'Marketing', mobileLabel: 'Assets' },
-            { key: 'payouts', label: 'Payouts' },
+            { key: 'overview', label: 'Overview', mobileLabel: 'Stats' },
+            { key: 'marketing', label: 'Marketing', mobileLabel: 'Links' },
+            { key: 'payouts', label: 'Payouts', mobileLabel: 'Pay' },
             { key: 'leaderboard', label: 'Leaderboard', mobileLabel: 'Ranks' },
             { key: 'guide', label: 'Guide' },
           ] as const).map((tab) => {
@@ -658,7 +658,7 @@ export default function AffiliateDashboard({ embedded = false }: { embedded?: bo
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key as typeof activeTab)}
                 className={cn(
-                  "text-[10px] font-black uppercase tracking-[0.3em] transition-all relative pb-2",
+                  "text-[9px] sm:text-[10px] font-black uppercase tracking-widest sm:tracking-[0.3em] transition-all relative pb-2 px-1",
                   isActive ? "text-white" : "text-white/30 hover:text-white/60"
                 )}
               >
@@ -689,10 +689,46 @@ export default function AffiliateDashboard({ embedded = false }: { embedded?: bo
               <h3 className="text-white text-lg font-bold uppercase tracking-widest mb-4">Your Identity</h3>
               <div className="bg-[#0a0a0a] p-6 rounded-none">
                 <div className="text-[10px] items-center font-bold text-white/40 uppercase tracking-widest mb-2">Your Affiliate Code</div>
-                <div className="text-3xl font-black text-white font-mono tracking-tighter mb-2">
-                  {data.affiliate.code}
-                </div>
-                <div className="text-xs text-white/40 font-medium uppercase tracking-wider">
+                {editingCode ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={newCode}
+                        onChange={(e) => {
+                          const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '')
+                          setNewCode(value)
+                          setCodeError(null)
+                        }}
+                        maxLength={12}
+                        className="text-2xl md:text-3xl font-black text-white bg-black px-3 py-2 focus:outline-none font-mono rounded-none flex-1 min-w-0"
+                        placeholder="CODE"
+                        autoFocus
+                      />
+                      <button onClick={handleSaveCode} disabled={updatingCode} className="p-2 hover:bg-white/10 transition-colors flex-shrink-0">
+                        {updatingCode ? <LoadingSpinner size="sm" /> : <DocumentCheckIcon className="w-4 h-4" />}
+                      </button>
+                      <button onClick={handleCancelEdit} disabled={updatingCode} className="p-2 hover:bg-white/10 transition-colors flex-shrink-0">
+                        <XMarkIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                    {codeError && <div className="text-[10px] text-red-500 font-bold uppercase tracking-wider">{codeError}</div>}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between gap-3 group">
+                    <div className="text-2xl md:text-3xl font-black text-white font-mono tracking-tighter break-all">
+                      {data.affiliate.code}
+                    </div>
+                    <button
+                      onClick={handleEditCode}
+                      className="flex-shrink-0 p-2 hover:bg-white/10 transition-all"
+                      title="Edit affiliate code"
+                    >
+                      <PencilSquareIcon className="w-4 h-4 text-white/40 hover:text-white" />
+                    </button>
+                  </div>
+                )}
+                <div className="text-xs text-white/40 font-medium uppercase tracking-wider mt-3">
                   Share this code with your audience to earn {data.affiliate.commission_rate}% commission on every sale.
                 </div>
               </div>
@@ -765,152 +801,30 @@ export default function AffiliateDashboard({ embedded = false }: { embedded?: bo
         {/* TAB CONTENT: OVERVIEW (Default) */}
         {activeTab === 'overview' && (
           <div className="animate-in fade-in zoom-in-95 duration-300">
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-8">
-              <AdminBentoCard
-                title="Affiliate Identity"
-                colSpan={4}
-                icon={<TagIcon className="w-4 h-4" />}
-                className="min-h-[200px]"
-              >
-                <div className="space-y-6">
-                  <div>
-                    <div className="text-[10px] items-center font-bold text-white/40 uppercase tracking-widest mb-2">Your Code</div>
-                    {editingCode ? (
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="text"
-                            value={newCode}
-                            onChange={(e) => {
-                              const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '')
-                              setNewCode(value)
-                              setCodeError(null)
-                            }}
-                            maxLength={12}
-                            className="text-2xl font-black text-white bg-black border-b border-white px-0 py-1 focus:outline-none focus:border-white/40 font-mono rounded-none w-full"
-                            placeholder="CODE"
-                            autoFocus
-                          />
-                          <button onClick={handleSaveCode} disabled={updatingCode} className="p-2 hover:bg-white/10 transition-colors">
-                            {updatingCode ? <LoadingSpinner size="sm" /> : <DocumentCheckIcon className="w-4 h-4" />}
-                          </button>
-                          <button onClick={handleCancelEdit} disabled={updatingCode} className="p-2 hover:bg-white/10 transition-colors">
-                            <XMarkIcon className="w-4 h-4" />
-                          </button>
-                        </div>
-                        {codeError && <div className="text-[10px] text-red-500 font-bold uppercase tracking-wider">{codeError}</div>}
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-between group">
-                        <div className="text-xl sm:text-2xl md:text-3xl font-black text-white font-mono tracking-tighter break-all whitespace-pre-wrap">
-                          {data.affiliate.code}
-                        </div>
-                        <button onClick={handleEditCode} className="opacity-0 group-hover:opacity-100 p-2 hover:bg-white/10 transition-all">
-                          <PencilSquareIcon className="w-4 h-4 text-white/40 hover:text-white" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
+            <AdminBentoCard
+              title="Quick Actions"
+              icon={<ArrowTopRightOnSquareIcon className="w-4 h-4" />}
+              className="mb-8"
+            >
+              <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-center p-2">
+                <button
+                  onClick={copyReferralLink}
+                  className="flex items-center justify-center gap-3 px-6 py-3 bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-white/90 transition-all"
+                >
+                  {copied ? <CheckIcon className="w-4 h-4" /> : <ClipboardIcon className="w-4 h-4" />}
+                  {copied ? 'Copied' : 'Copy Affiliate Link'}
+                </button>
+                <Link
+                  to={`/?ref=${data.affiliate.code}`}
+                  target="_blank"
+                  className="flex items-center justify-center gap-3 px-6 py-3 bg-white/5 text-white font-black uppercase tracking-widest text-xs hover:bg-white/10 transition-all"
+                >
+                  <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                  Preview Shop
+                </Link>
+              </div>
+            </AdminBentoCard>
 
-                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
-                    <div>
-                      <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Commission</div>
-                      <div className="text-xl font-bold text-white">{data.affiliate.commission_rate}%</div>
-                    </div>
-                    <div>
-                      <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Status</div>
-                      <div className={`text-xl font-bold uppercase ${data.affiliate.status === 'active' ? 'text-green-500' : 'text-white'}`}>
-                        {data.affiliate.status}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </AdminBentoCard>
-
-              <AdminBentoCard
-                title="Quick Actions"
-                colSpan={8}
-                icon={<ArrowTopRightOnSquareIcon className="w-4 h-4" />}
-                className="min-h-[200px]"
-              >
-                <div className="flex flex-col md:flex-row gap-4 h-full items-center justify-center p-4">
-                  <button
-                    onClick={copyReferralLink}
-                    className="flex items-center justify-center gap-3 px-8 py-4 bg-white text-black font-black uppercase tracking-widest text-sm hover:bg-white/90 transition-all hover:scale-105 active:scale-95 w-full md:w-auto"
-                  >
-                    {copied ? <CheckIcon className="w-5 h-5" /> : <ClipboardIcon className="w-5 h-5" />}
-                    {copied ? 'COPIED TO CLIPBOARD' : 'COPY AFFILIATE LINK'}
-                  </button>
-                  <Link
-                    to={`/?ref=${data.affiliate.code}`}
-                    target="_blank"
-                    className="flex items-center justify-center gap-3 px-8 py-4 bg-transparent border border-white/20 text-white font-black uppercase tracking-widest text-sm hover:bg-white/10 transition-all hover:border-white w-full md:w-auto"
-                  >
-                    <ArrowTopRightOnSquareIcon className="w-5 h-5" />
-                    PREVIEW SHOP
-                  </Link>
-                </div>
-              </AdminBentoCard>
-            </div>
-
-
-            {/* Key Metrics Grid - Converted to Bento Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <AdminBentoCard title="Available Balance" icon={<CurrencyDollarIcon className="w-4 h-4" />}>
-                <div className="mt-2">
-                  <div className="text-4xl font-black text-white tracking-tighter">
-                    ${(data.balance?.available_balance || 0).toFixed(2)}
-                  </div>
-
-                  <div className="flex flex-col gap-1 mt-2">
-                    {(data.balance?.pending_balance || 0) > 0 && (
-                      <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
-                        +${(data.balance?.pending_balance || 0).toFixed(2)} PENDING (30-DAY HOLD)
-                      </div>
-                    )}
-                    <div className="text-[8px] text-white/30 uppercase tracking-widest mt-1">
-                      * Funds held 30 days for security. No returns on digital items.
-                    </div>
-                  </div>
-                </div>
-              </AdminBentoCard>
-
-              <AdminBentoCard title="Total Clicks" icon={<CursorArrowRaysIcon className="w-4 h-4" />}>
-                <div className="mt-2">
-                  <div className="text-4xl font-black text-white tracking-tighter">
-                    {data.affiliate.total_clicks.toLocaleString()}
-                  </div>
-                  <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-2">
-                    {data.overview.conversion_rate.toFixed(1)}% CONVERSION RATE
-                  </div>
-                </div>
-              </AdminBentoCard>
-
-              <AdminBentoCard title="Conversions" icon={<ShoppingCartIcon className="w-4 h-4" />}>
-                <div className="mt-2">
-                  <div className="text-4xl font-black text-white tracking-tighter">
-                    {data.affiliate.total_conversions}
-                  </div>
-                  <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-2">
-                    ${data.overview.average_commission.toFixed(2)} AVG COMM
-                  </div>
-                </div>
-              </AdminBentoCard>
-
-              <AdminBentoCard title="Current Rank" icon={<TrophyIcon className="w-4 h-4" />}>
-                <div className="mt-2">
-                  <div className="flex items-center gap-2">
-                    {getRankBadge(data.overview.current_rank)}
-                    <div className="text-4xl font-black text-white tracking-tighter">
-                      {data.overview.current_rank ? `#${data.overview.current_rank}` : 'N/A'}
-                    </div>
-                  </div>
-                  <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-2">
-                    {data.overview.top_3_finishes} TOP 3 FINISHES
-                  </div>
-                </div>
-              </AdminBentoCard>
-            </div>
 
             {/* MLM Quick Stats Row */}
             {
