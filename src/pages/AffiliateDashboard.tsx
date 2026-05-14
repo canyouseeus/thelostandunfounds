@@ -1380,61 +1380,110 @@ export default function AffiliateDashboard() {
               <div className="p-6">
                 <h2 className="text-lg font-black text-white uppercase tracking-widest">Recent Commissions</h2>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-black border-b border-white/20">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-[10px] font-bold text-white/40 uppercase tracking-widest">Order ID</th>
-                      <th className="px-6 py-4 text-left text-[10px] font-bold text-white/40 uppercase tracking-widest">Date</th>
-                      <th className="px-6 py-4 text-right text-[10px] font-bold text-white/40 uppercase tracking-widest">Commission</th>
-                      <th className="px-6 py-4 text-right text-[10px] font-bold text-white/40 uppercase tracking-widest">Profit</th>
-                      <th className="px-6 py-4 text-left text-[10px] font-bold text-white/40 uppercase tracking-widest">Source</th>
-                      <th className="px-6 py-4 text-center text-[10px] font-bold text-white/40 uppercase tracking-widest">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/10">
-                    {data.recent_commissions.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="px-6 py-12 text-center text-white/40 text-xs font-medium uppercase tracking-widest">
-                          No commissions yet. Share your referral link to start earning!
-                        </td>
-                      </tr>
-                    ) : (
-                      data.recent_commissions.map((commission) => (
-                        <tr key={commission.id} className={`hover:bg-white/5 transition-colors ${commission.status === 'cancelled' ? 'opacity-40' : ''}`}>
-                          <td className="px-6 py-4 text-white font-mono text-xs">
-                            {commission.order_id.substring(0, 16)}...
-                          </td>
-                          <td className="px-6 py-4 text-white/60 text-xs font-mono">
-                            {new Date(commission.created_at).toLocaleDateString()}
-                          </td>
-                          <td className={`px-6 py-4 text-right font-black text-xs font-mono tracking-tight ${commission.status === 'cancelled' ? 'text-red-500 line-through' : 'text-white'}`}>
-                            ${commission.amount.toFixed(2)}
-                          </td>
-                          <td className="px-6 py-4 text-right text-white font-mono text-xs font-bold">
-                            ${commission.profit_generated.toFixed(2)}
-                          </td>
-                          <td className="px-6 py-4 text-white/60 capitalize text-xs font-medium uppercase tracking-wider">
-                            {commission.source}
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <div className="flex flex-col items-center gap-1">
-                              <span className={`px-2 py-1 border text-[10px] font-bold uppercase tracking-widest ${commission.status === 'paid' ? 'border-green-500 text-green-500' :
-                                commission.status === 'cancelled' ? 'border-red-500 text-red-500' :
-                                  commission.status_label?.includes('Available') ? 'border-green-500 text-green-500' :
-                                    commission.status_label?.includes('Pending') ? 'border-white/40 text-white/60' :
-                                      'border-white/40 text-white/60'
-                                }`}>
-                                {commission.status_label || commission.status}
-                              </span>
+
+              {data.recent_commissions.length === 0 ? (
+                <div className="px-6 py-12 text-center text-white/40 text-xs font-medium uppercase tracking-widest">
+                  No commissions yet. Share your referral link to start earning!
+                </div>
+              ) : (
+                <>
+                  {/* Mobile: stacked cards */}
+                  <div className="md:hidden divide-y divide-white/10">
+                    {data.recent_commissions.map((commission) => (
+                      <div
+                        key={commission.id}
+                        className={`p-4 hover:bg-white/5 transition-colors ${commission.status === 'cancelled' ? 'opacity-40' : ''}`}
+                      >
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="min-w-0 flex-1">
+                            <div className="text-white font-mono text-xs truncate">
+                              {commission.order_id.substring(0, 16)}...
                             </div>
-                          </td>
+                            <div className="text-white/40 text-[10px] font-mono mt-1">
+                              {new Date(commission.created_at).toLocaleDateString()}
+                            </div>
+                          </div>
+                          <span className={`px-2 py-1 text-[9px] font-bold uppercase tracking-widest whitespace-nowrap flex-shrink-0 ${commission.status === 'paid' ? 'bg-green-500/20 text-green-400' :
+                            commission.status === 'cancelled' ? 'bg-red-500/20 text-red-400' :
+                              commission.status_label?.includes('Available') ? 'bg-green-500/20 text-green-400' :
+                                'bg-white/10 text-white/60'
+                            }`}>
+                            {commission.status_label || commission.status}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Commission</div>
+                            <div className={`font-black text-sm font-mono tracking-tight ${commission.status === 'cancelled' ? 'text-red-500 line-through' : 'text-white'}`}>
+                              ${commission.amount.toFixed(2)}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Profit</div>
+                            <div className="text-white font-mono text-sm font-bold">
+                              ${commission.profit_generated.toFixed(2)}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Source</div>
+                            <div className="text-white/60 capitalize text-xs font-medium uppercase tracking-wider truncate">
+                              {commission.source}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Desktop: table */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-black">
+                        <tr>
+                          <th className="px-6 py-4 text-left text-[10px] font-bold text-white/40 uppercase tracking-widest">Order ID</th>
+                          <th className="px-6 py-4 text-left text-[10px] font-bold text-white/40 uppercase tracking-widest">Date</th>
+                          <th className="px-6 py-4 text-right text-[10px] font-bold text-white/40 uppercase tracking-widest">Commission</th>
+                          <th className="px-6 py-4 text-right text-[10px] font-bold text-white/40 uppercase tracking-widest">Profit</th>
+                          <th className="px-6 py-4 text-left text-[10px] font-bold text-white/40 uppercase tracking-widest">Source</th>
+                          <th className="px-6 py-4 text-center text-[10px] font-bold text-white/40 uppercase tracking-widest">Status</th>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                      </thead>
+                      <tbody className="divide-y divide-white/10">
+                        {data.recent_commissions.map((commission) => (
+                          <tr key={commission.id} className={`hover:bg-white/5 transition-colors ${commission.status === 'cancelled' ? 'opacity-40' : ''}`}>
+                            <td className="px-6 py-4 text-white font-mono text-xs">
+                              {commission.order_id.substring(0, 16)}...
+                            </td>
+                            <td className="px-6 py-4 text-white/60 text-xs font-mono">
+                              {new Date(commission.created_at).toLocaleDateString()}
+                            </td>
+                            <td className={`px-6 py-4 text-right font-black text-xs font-mono tracking-tight ${commission.status === 'cancelled' ? 'text-red-500 line-through' : 'text-white'}`}>
+                              ${commission.amount.toFixed(2)}
+                            </td>
+                            <td className="px-6 py-4 text-right text-white font-mono text-xs font-bold">
+                              ${commission.profit_generated.toFixed(2)}
+                            </td>
+                            <td className="px-6 py-4 text-white/60 capitalize text-xs font-medium uppercase tracking-wider">
+                              {commission.source}
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <div className="flex flex-col items-center gap-1">
+                                <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-widest ${commission.status === 'paid' ? 'bg-green-500/20 text-green-400' :
+                                  commission.status === 'cancelled' ? 'bg-red-500/20 text-red-400' :
+                                    commission.status_label?.includes('Available') ? 'bg-green-500/20 text-green-400' :
+                                      'bg-white/10 text-white/60'
+                                  }`}>
+                                  {commission.status_label || commission.status}
+                                </span>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
