@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { CheckIcon, ClipboardIcon, ShareIcon } from '@heroicons/react/24/outline';
+import { CheckIcon, ClipboardIcon, ShareIcon, LinkIcon, LightBulbIcon } from '@heroicons/react/24/outline';
+import { AdminBentoCard } from '../ui/admin-bento-card';
 
 interface ReferralLinkProps {
   affiliateCode: string;
@@ -41,85 +42,111 @@ export default function ReferralLink({ affiliateCode }: ReferralLinkProps) {
   };
 
   return (
-    <div className="bg-black/50 border-2 border-white rounded-none p-6">
-      <h3 className="text-xl font-bold text-white mb-4">Your Referral Links</h3>
-
+    <AdminBentoCard
+      title="Referral Links"
+      icon={<LinkIcon className="w-4 h-4" />}
+      colSpan={12}
+      className="min-h-[200px]"
+    >
       <div className="space-y-6">
         {/* Customer Referral Link */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <h4 className="text-white font-medium">Customer Link</h4>
-            <span className="text-white/60 text-xs">For customers to shop</span>
+            <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
+              Customer Link
+            </label>
+            <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">
+              For Customers To Shop
+            </span>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-col md:flex-row gap-2">
             <input
               type="text"
               value={customerLink}
               readOnly
-              className="flex-1 bg-black/50 border border-white/20 rounded-none px-4 py-3 text-white text-sm focus:outline-none focus:border-white/40"
+              className="flex-1 bg-white/5 px-4 py-3 text-white/80 text-sm font-mono focus:outline-none"
             />
-            <button
-              onClick={() => copyToClipboard(customerLink, 'customer')}
-              className="bg-white text-black px-4 py-3 rounded-none hover:bg-white/90 transition-colors"
-              title="Copy link"
-            >
-              {copiedCustomer ? <CheckIcon className="w-5 h-5" /> : <ClipboardIcon className="w-5 h-5" />}
-            </button>
-            <button
-              onClick={() => shareLink(customerLink, 'Check out The Lost+Unfounds!')}
-              className="bg-white/10 text-white border border-white/20 px-4 py-3 rounded-none hover:bg-white/20 transition-colors"
-              title="Share link"
-            >
-              <ShareIcon className="w-5 h-5" />
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => copyToClipboard(customerLink, 'customer')}
+                className="px-6 py-3 bg-white text-black font-bold uppercase tracking-wider text-xs hover:bg-white/90 transition-all flex items-center gap-2 min-w-[120px] justify-center"
+                title="Copy link"
+              >
+                {copiedCustomer ? <CheckIcon className="w-4 h-4" /> : <ClipboardIcon className="w-4 h-4" />}
+                {copiedCustomer ? 'Copied' : 'Copy'}
+              </button>
+              <button
+                onClick={() => shareLink(customerLink, 'Check out The Lost+Unfounds!')}
+                className="px-4 py-3 bg-white/5 text-white hover:bg-white/10 transition-all flex items-center justify-center"
+                title="Share link"
+              >
+                <ShareIcon className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Affiliate Referral Link */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <h4 className="text-white font-medium">Affiliate Link</h4>
-            <span className="text-white/60 text-xs">For recruiting affiliates</span>
+            <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
+              Affiliate Link
+            </label>
+            <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">
+              For Recruiting Affiliates
+            </span>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-col md:flex-row gap-2">
             <input
               type="text"
               value={affiliateLink}
               readOnly
-              className="flex-1 bg-black/50 border border-white/20 rounded-none px-4 py-3 text-white text-sm focus:outline-none focus:border-white/40"
+              className="flex-1 bg-white/5 px-4 py-3 text-white/80 text-sm font-mono focus:outline-none"
             />
-            <button
-              onClick={() => copyToClipboard(affiliateLink, 'affiliate')}
-              className="bg-white text-black px-4 py-3 rounded-none hover:bg-white/90 transition-colors"
-              title="Copy link"
-            >
-              {copiedAffiliate ? <CheckIcon className="w-5 h-5" /> : <ClipboardIcon className="w-5 h-5" />}
-            </button>
-            <button
-              onClick={() => shareLink(affiliateLink, 'Join The Lost+Unfounds Affiliate Program!')}
-              className="bg-white/10 text-white border border-white/20 px-4 py-3 rounded-none hover:bg-white/20 transition-colors"
-              title="Share link"
-            >
-              <ShareIcon className="w-5 h-5" />
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => copyToClipboard(affiliateLink, 'affiliate')}
+                className="px-6 py-3 bg-white text-black font-bold uppercase tracking-wider text-xs hover:bg-white/90 transition-all flex items-center gap-2 min-w-[120px] justify-center"
+                title="Copy link"
+              >
+                {copiedAffiliate ? <CheckIcon className="w-4 h-4" /> : <ClipboardIcon className="w-4 h-4" />}
+                {copiedAffiliate ? 'Copied' : 'Copy'}
+              </button>
+              <button
+                onClick={() => shareLink(affiliateLink, 'Join The Lost+Unfounds Affiliate Program!')}
+                className="px-4 py-3 bg-white/5 text-white hover:bg-white/10 transition-all flex items-center justify-center"
+                title="Share link"
+              >
+                <ShareIcon className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Info Box */}
-        <div className="bg-blue-500/10 border border-blue-500/30 rounded-none p-4">
-          <h4 className="text-blue-400 font-medium mb-2">💡 Pro Tips</h4>
-          <ul className="text-white/80 text-sm space-y-1 list-disc list-inside">
-            <li>Share customer link for 42% commission on all their purchases (forever!)</li>
-            <li>Share affiliate link to earn MLM bonuses (2% Level 1, 1% Level 2)</li>
-            <li>Links work forever - customers and affiliates are tied to you permanently</li>
+        {/* Pro Tips */}
+        <div className="bg-white/[0.03] p-4">
+          <h4 className="text-white text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2">
+            <LightBulbIcon className="w-4 h-4 text-white/60" />
+            Pro Tips
+          </h4>
+          <ul className="space-y-2">
+            <li className="flex gap-3 text-white/60 text-xs leading-relaxed">
+              <span className="text-white/30 font-mono mt-0.5">01</span>
+              <span>Share customer link for 42% commission on all their purchases (forever).</span>
+            </li>
+            <li className="flex gap-3 text-white/60 text-xs leading-relaxed">
+              <span className="text-white/30 font-mono mt-0.5">02</span>
+              <span>Share affiliate link to earn MLM bonuses (2% Level 1, 1% Level 2).</span>
+            </li>
+            <li className="flex gap-3 text-white/60 text-xs leading-relaxed">
+              <span className="text-white/30 font-mono mt-0.5">03</span>
+              <span>Links work forever — customers and affiliates are tied to you permanently.</span>
+            </li>
           </ul>
         </div>
       </div>
-    </div>
+    </AdminBentoCard>
   );
 }
-
-
-

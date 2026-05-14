@@ -691,7 +691,7 @@ export default function AffiliateDashboard() {
             {/* Affiliate Code Setup */}
             <div className="mb-8">
               <h3 className="text-white text-lg font-bold uppercase tracking-widest mb-4">Your Identity</h3>
-              <div className="bg-black border border-white/20 p-6 rounded-none">
+              <div className="bg-[#0a0a0a] p-6 rounded-none">
                 <div className="text-[10px] items-center font-bold text-white/40 uppercase tracking-widest mb-2">Your Affiliate Code</div>
                 <div className="text-3xl font-black text-white font-mono tracking-tighter mb-2">
                   {data.affiliate.code}
