@@ -43,6 +43,7 @@ import {
 import { cn } from '../components/ui/utils';
 import AdminGalleryView from '../components/admin/AdminGalleryView';
 import AffiliateDashboard from './AffiliateDashboard';
+import { AffiliateRevenueTracker } from '../components/affiliate/AffiliateRevenueTracker';
 import { LoadingSpinner, LoadingOverlay, SkeletonCard } from '../components/Loading';
 import { SubscriptionTier } from '../types/index';
 import { isAdmin } from '../utils/admin';
@@ -91,6 +92,7 @@ export default function Profile() {
 
   // Core state
   const [userIsAdmin, setUserIsAdmin] = useState(false);
+  const [revenueView, setRevenueView] = useState<'admin' | 'affiliate'>('admin');
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -498,8 +500,28 @@ export default function Profile() {
 
           {/* Revenue & Widgets Row */}
           <div className="col-span-12 grid grid-cols-1 md:grid-cols-12 gap-6">
-            <div className="md:col-span-8 lg:col-span-9">
-              {(hasAffiliate || hasGallery) && (
+            <div className="md:col-span-8 lg:col-span-9 space-y-4">
+              {/* Admins can toggle between the site-wide owner view and the
+                  affiliate-focused view. Non-admin affiliates always see the
+                  affiliate view; non-affiliate non-admins see nothing here. */}
+              {userIsAdmin && hasAffiliate && (
+                <div className="flex bg-[#0a0a0a] w-fit">
+                  {(['admin', 'affiliate'] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      onClick={() => setRevenueView(mode)}
+                      className={cn(
+                        'px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors',
+                        revenueView === mode ? 'bg-white text-black' : 'text-white/40 hover:text-white'
+                      )}
+                    >
+                      {mode === 'admin' ? 'Site Revenue' : 'My Affiliate'}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {userIsAdmin && revenueView === 'admin' && (hasAffiliate || hasGallery) && (
                 <RevenueTracker
                   affiliateRevenue={parseFloat(String(affiliateData?.total_earnings || 0))}
                   galleryRevenue={galleryRevenueTotal}
@@ -512,6 +534,17 @@ export default function Profile() {
                     affiliates: (affiliateData?.total_conversions || 0)
                   }}
                   history={history}
+                />
+              )}
+
+              {(!userIsAdmin || revenueView === 'affiliate') && affiliateData && (
+                <AffiliateRevenueTracker
+                  affiliateId={affiliateData.id}
+                  affiliateCode={affiliateData.code}
+                  totalEarnings={parseFloat(String(affiliateData.total_earnings || 0))}
+                  totalClicks={affiliateData.total_clicks || 0}
+                  totalConversions={affiliateData.total_conversions || 0}
+                  networkSize={affiliateData.network_size || 0}
                 />
               )}
             </div>
