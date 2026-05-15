@@ -22,6 +22,7 @@ import About from './pages/About'
 import Contact from './pages/Contact'
 import Support from './pages/Support'
 import Shop from './pages/Shop'
+import ShopSuccess from './pages/ShopSuccess'
 import QR from './pages/QR'
 import ResetNewsletter from './pages/ResetNewsletter'
 import Privacy from './pages/Privacy'
@@ -128,6 +129,7 @@ function App() {
               </Route>
               <Route path="/shop" element={<Layout />}>
                 <Route index element={<Shop />} />
+                <Route path="success" element={<ShopSuccess />} />
               </Route>
               <Route path="/docs" element={<Layout />}>
                 <Route index element={<Docs />} />

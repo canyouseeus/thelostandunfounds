@@ -16,9 +16,10 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import MarketplaceBanner from '../components/events/MarketplaceBanner';
 import { initAffiliateTracking, getAffiliateRef } from '../utils/affiliate-tracking';
-import { getStrikeCheckoutInvoice, pollStrikeInvoiceStatus, getStripeCheckoutUrl } from '../utils/checkout-utils';
+import { getStrikeCheckoutInvoice, pollStrikeInvoiceStatus, getStripeCheckoutUrl, getStripeCheckoutUrlByPriceId } from '../utils/checkout-utils';
 import { LightningPaymentModal } from "../components/shop/LightningPaymentModal";
 import { TEST_PRODUCTS } from '../data/test-products';
+import { STRIPE_PRODUCTS } from '../data/stripe-products';
 import { transformProduct } from '../../lib/fourthwall/utils';
 import { Helmet } from 'react-helmet-async';
 
@@ -37,6 +38,8 @@ interface Product {
   url: string;
   category?: string;
   featured?: boolean;
+  stripePriceId?: string;
+  productKind?: 'physical' | 'digital';
 }
 
 export default function Shop({ hideBanner = false, embedded = false }: { hideBanner?: boolean; embedded?: boolean }) {
@@ -100,7 +103,7 @@ export default function Shop({ hideBanner = false, embedded = false }: { hideBan
     // In dev, bypass API and load local test products so the page
     // works even when API routes aren't running (e.g., `vite` without `vercel dev`).
     if (import.meta.env.DEV) {
-      setProducts(TEST_PRODUCTS);
+      setProducts([...STRIPE_PRODUCTS, ...TEST_PRODUCTS]);
       setLoading(false);
       return;
     }
@@ -113,7 +116,7 @@ export default function Shop({ hideBanner = false, embedded = false }: { hideBan
         // Try server API endpoints first (primary path + explicit Fourthwall path)
         const apiProducts = await fetchProductsFromApi();
         if (apiProducts.length > 0) {
-          setProducts(apiProducts);
+          setProducts([...STRIPE_PRODUCTS, ...apiProducts]);
           return;
         }
 
@@ -126,9 +129,15 @@ export default function Shop({ hideBanner = false, embedded = false }: { hideBan
         if (fallbackToken) {
           const fwProducts = await fetchFourthwallDirect(fallbackToken);
           if (fwProducts.length > 0) {
-            setProducts(fwProducts);
+            setProducts([...STRIPE_PRODUCTS, ...fwProducts]);
             return;
           }
+        }
+
+        // Even if external sources fail, surface the native Stripe products.
+        if (STRIPE_PRODUCTS.length > 0) {
+          setProducts([...STRIPE_PRODUCTS]);
+          return;
         }
 
         setError('Failed to load products. Please try again.');
@@ -618,15 +627,26 @@ function ProductModal({
         id: product.id,
         title: product.title,
         price: product.price,
+        stripePriceId: product.stripePriceId,
       });
 
-      const result = await getStripeCheckoutUrl({
-        amount: product.price,
-        currency: product.currency || 'USD',
-        description: product.title,
-        productId: product.id,
-        affiliateRef,
-      });
+      // Price-ID products (native Stripe catalog) use /api/checkout/create-session,
+      // which keys the session to a dashboard-configured Price object. Everything
+      // else falls back to the inline price_data flow on /api/shop/payments/stripe.
+      const result = product.stripePriceId
+        ? await getStripeCheckoutUrlByPriceId({
+            priceId: product.stripePriceId,
+            productKind: product.productKind || 'physical',
+            productId: product.id,
+            affiliateRef,
+          })
+        : await getStripeCheckoutUrl({
+            amount: product.price,
+            currency: product.currency || 'USD',
+            description: product.title,
+            productId: product.id,
+            affiliateRef,
+          });
 
       console.log('💳 Stripe session created, redirecting:', result.sessionId);
 

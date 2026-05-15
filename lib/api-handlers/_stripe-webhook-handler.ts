@@ -74,6 +74,10 @@ export default async function handler(
             case 'checkout.session.expired': {
                 const session = event.data.object as Stripe.Checkout.Session
                 await markCommissionFailed(session.id)
+                await markShopOrderTerminal(
+                    session.id,
+                    event.type === 'checkout.session.expired' ? 'expired' : 'failed'
+                )
                 break
             }
             case 'charge.refunded': {
@@ -133,6 +137,8 @@ async function finalizeCheckoutSession(session: Stripe.Checkout.Session) {
     if (session.metadata?.source === 'tlau-photos') {
         await finalizePhotoOrder(supabase, session)
         await triggerPhotoOrderCommission(supabase, session)
+    } else if (session.metadata?.source === 'tlau-shop-checkout') {
+        await finalizeShopOrder(supabase, session)
     }
 
     // Flip any pre-existing pending affiliate commission to confirmed (legacy
@@ -239,6 +245,108 @@ async function finalizePhotoOrder(
 }
 
 /**
+ * Mark a shop_orders row paid and stamp the Stripe customer_id +
+ * payment_intent + amount. Idempotent: a replayed webhook sees the row
+ * already paid and short-circuits.
+ *
+ * For digital products this also fires off the delivery email with a
+ * time-limited download token; the token itself lives in shop_orders.metadata
+ * so the download endpoint can verify expiry without a separate table.
+ */
+async function finalizeShopOrder(
+    supabase: any,
+    session: Stripe.Checkout.Session
+) {
+    const shopOrderId = session.metadata?.shopOrderId
+    if (!shopOrderId) {
+        console.error('❌ tlau-shop-checkout session missing shopOrderId metadata:', session.metadata)
+        return
+    }
+
+    // Idempotency guard: if already paid, do nothing.
+    const { data: existing } = await supabase
+        .from('shop_orders')
+        .select('id, status, product_kind, customer_email, metadata')
+        .eq('id', shopOrderId)
+        .single()
+
+    if (existing?.status === 'paid') {
+        console.log('ℹ️ shop_order already paid, skipping:', shopOrderId)
+        return
+    }
+
+    const customerEmail =
+        session.customer_details?.email ||
+        session.customer_email ||
+        existing?.customer_email ||
+        null
+
+    const productKind = session.metadata?.productKind || existing?.product_kind || 'physical'
+
+    // For digital products, mint a 72-hour download token and stash it in
+    // metadata so the email link and the download endpoint can both find it.
+    let downloadToken: string | null = null
+    let downloadExpiresAt: string | null = null
+    if (productKind === 'digital') {
+        downloadToken = `dl_${Date.now()}_${Math.random().toString(36).slice(2, 12)}${Math.random().toString(36).slice(2, 12)}`
+        downloadExpiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString()
+    }
+
+    const nextMetadata = {
+        ...(existing?.metadata || {}),
+        source: 'tlau-shop-checkout',
+        ...(downloadToken
+            ? { downloadToken, downloadExpiresAt }
+            : {}),
+        ...(session.shipping_details
+            ? { shippingDetails: session.shipping_details }
+            : {}),
+    }
+
+    const { error: updateError } = await supabase
+        .from('shop_orders')
+        .update({
+            status: 'paid',
+            stripe_customer_id: (session.customer as string) || null,
+            stripe_payment_intent: (session.payment_intent as string) || null,
+            amount_total_cents: session.amount_total ?? null,
+            currency: session.currency ?? null,
+            customer_email: customerEmail,
+            paid_at: new Date().toISOString(),
+            metadata: nextMetadata,
+        })
+        .eq('id', shopOrderId)
+
+    if (updateError) {
+        console.error('❌ Failed to mark shop_order paid:', updateError)
+        return
+    }
+
+    console.log('✅ Shop order finalized:', {
+        shopOrderId,
+        productKind,
+        amountTotal: session.amount_total,
+        customerId: session.customer,
+    })
+
+    if (productKind === 'digital' && customerEmail && downloadToken) {
+        try {
+            const { sendShopDigitalDeliveryEmail } = await import('./_shop-email-utils.js')
+            await sendShopDigitalDeliveryEmail({
+                email: customerEmail,
+                shopOrderId,
+                downloadToken,
+                downloadExpiresAt: downloadExpiresAt!,
+            })
+            console.log('📧 Digital delivery email sent for shop_order:', shopOrderId)
+        } catch (emailErr: any) {
+            console.error('⚠️ Failed to send digital delivery email:', emailErr?.message || emailErr)
+            // Don't throw — the order is paid; resend can be triggered manually.
+        }
+    }
+}
+
+/**
  * Mark a session's affiliate commission as failed (expired or async-failed).
  */
 async function markCommissionFailed(sessionId: string) {
@@ -256,6 +364,27 @@ async function markCommissionFailed(sessionId: string) {
         .update({ status: 'failed' })
         .eq('order_id', sessionId)
         .eq('source', 'stripe')
+        .eq('status', 'pending')
+}
+
+/**
+ * Mark a pending shop_order as expired or failed once Stripe says the
+ * underlying Checkout Session won't pay. Only flips rows still in 'pending'
+ * so we never overwrite a confirmed payment.
+ */
+async function markShopOrderTerminal(sessionId: string, status: 'expired' | 'failed') {
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+    const supabaseKey =
+        process.env.SUPABASE_SERVICE_ROLE_KEY ||
+        process.env.SUPABASE_ANON_KEY ||
+        process.env.VITE_SUPABASE_ANON_KEY
+    if (!supabaseUrl || !supabaseKey) return
+
+    const supabase = createClient(supabaseUrl, supabaseKey)
+    await supabase
+        .from('shop_orders')
+        .update({ status })
+        .eq('stripe_session_id', sessionId)
         .eq('status', 'pending')
 }
 
