@@ -224,12 +224,13 @@ async function getZohoAccountInfo(accessToken: string, fallbackEmail: string) {
           account.account_name;
 
         let accountEmail = fallbackEmail;
-        if (typeof account.emailAddress === 'string') {
+        if (Array.isArray(account.emailAddress)) {
+          const primary = account.emailAddress.find((e: any) => e?.isPrimary) || account.emailAddress[0];
+          if (primary?.mailId) accountEmail = primary.mailId;
+        } else if (typeof account.emailAddress === 'string' && account.emailAddress.includes('@')) {
           accountEmail = account.emailAddress;
-        } else if (typeof account.email === 'string') {
+        } else if (typeof account.email === 'string' && account.email.includes('@')) {
           accountEmail = account.email;
-        } else if (typeof account.accountName === 'string') {
-          accountEmail = account.accountName;
         }
 
         if (accountId) {
@@ -254,7 +255,7 @@ export async function getZohoAuthContext(): Promise<ZohoAuthContext> {
   return {
     accessToken,
     accountId: accountInfo.accountId,
-    fromEmail: accountInfo.email || fromEmail
+    fromEmail: fromEmail || accountInfo.email
   };
 }
 
