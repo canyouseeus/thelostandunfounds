@@ -4,12 +4,15 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 /**
  * Main commission calculator with employee discount adjustment
  * POST /api/affiliates/calculate-commission
- * Body: { 
+ * Body: {
  *   order_id: string,
  *   email: string,
  *   user_id?: string,
  *   profit: number,
- *   affiliate_code?: string (for first-time customers)
+ *   affiliate_code?: string (for first-time customers),
+ *   source?: 'fourthwall' | 'direct' (defaults to 'direct';
+ *     'fourthwall' skips the 42% employee discount because those products
+ *     carry their own margin from the fulfillment side)
  * }
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -29,11 +32,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
-    const { order_id, email, user_id, profit, affiliate_code } = req.body;
+    const { order_id, email, user_id, profit, affiliate_code, source } = req.body;
 
     if (!order_id || !email || !profit) {
       return res.status(400).json({ error: 'order_id, email, and profit required' });
     }
+
+    const isFourthwallOrder = source === 'fourthwall';
 
     let adjustedProfit = profit;
     const breakdown: any = {
@@ -65,7 +70,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // The discount code validation happens at checkout and sets a flag
       const usedDiscountCode = req.body.used_discount_code === true;
 
-      if (affiliate && usedDiscountCode) {
+      // Fourthwall products carry their own fulfillment-side margin, so the
+      // 42% employee discount must not stack on top of them.
+      if (affiliate && usedDiscountCode && !isFourthwallOrder) {
         // Check if they can use discount (once per 30 days)
         const canUseDiscount = !affiliate.last_discount_use_date ||
           (() => {
