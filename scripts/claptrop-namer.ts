@@ -30,10 +30,19 @@ export interface ClaptropMeta {
   seq: string;      // 001
 }
 
+// Naming convention version. Bump when the wire format changes — any structural
+// change MUST be accompanied by a one-shot migration over all files atomically.
+//   v1 = "@tlau_"                            (legacy, pre-SEO)
+//   v2 = "@tlau.photos_thelostandunfounds_"  (current)
+export const NAME_VERSION = 2;
+
 // SEO-bearing prefix: Instagram handle + brand name baked into every filename.
 // Kept here as a constant so the rename + sync filters and the name builder
 // can't drift out of sync.
 export const NAME_PREFIX = '@tlau.photos_thelostandunfounds';
+
+// Legacy v1 prefix. Retained for migration / upgrade-in-place logic only.
+export const LEGACY_NAME_PREFIX = '@tlau';
 
 // Recognizes both the new prefix and the legacy `@tlau_` prefix that
 // pre-dated the SEO update — used by the sync layer's filename location
@@ -50,6 +59,30 @@ export function isClaptropName(name: string | null | undefined): boolean {
 export function isCurrentName(name: string | null | undefined): boolean {
   if (!name) return false;
   return /^@tlau\.photos_thelostandunfounds_\d{4}-\d{2}-\d{2}_/.test(name);
+}
+
+// Pull the claptrop tail (everything after whichever prefix variant is present).
+// Returns null if not a claptrop name. Used by upload dedup to detect that two
+// files are versions of the same photo across prefix variants.
+//   "@tlau.photos_thelostandunfounds_2026-05-06_austin_lucys_001.jpg"
+//   "@tlau_2026-05-06_austin_lucys_001.jpg"
+//   → both return "2026-05-06_austin_lucys_001.jpg"
+export function claptropTail(name: string | null | undefined): string | null {
+  if (!name) return null;
+  let m = name.match(/^@tlau\.photos_thelostandunfounds_(.+)$/);
+  if (m) return m[1].toLowerCase();
+  m = name.match(/^@tlau_(.+)$/);
+  if (m) return m[1].toLowerCase();
+  return null;
+}
+
+// Pull a YYYY-MM-DD substring out of any filename position. Returns null if none.
+// For every claptrop-named file this returns the photo's capture date without
+// re-reading EXIF.
+export function dateFromName(name: string | null | undefined): string | null {
+  if (!name) return null;
+  const m = name.match(/(\d{4}-\d{2}-\d{2})/);
+  return m ? m[1] : null;
 }
 
 export interface RenameLog {
