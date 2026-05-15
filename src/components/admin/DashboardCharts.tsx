@@ -71,11 +71,20 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
       });
     }
 
-    // Process actual history data
-    // For revenue: each item has a date and amount, we sum amounts cumulatively
-    // For newsletter/affiliates: each item is a date string representing a registration,
-    // so we count them cumulatively (1, 2, 3...)
+    // Process actual history data.
+    //
+    // Two aggregation modes:
+    //   - Cumulative (newsletter, affiliates): running total of subscribers/affiliates
+    //     up to and including each bucket. The line should grow over time and
+    //     reflect items registered before the visible window as a "starting balance."
+    //   - Per-bucket (revenue, bookings): the amount generated WITHIN each bucket's
+    //     time slot. A $300 invoice paid before the window must NOT appear on
+    //     every day — it should only appear on the day it was actually paid.
+    //
+    // The previous implementation was cumulative for everything, which caused a
+    // single past invoice to render as a flat line at $300 across the entire range.
     const isCountMetric = metric === 'newsletter' || metric === 'affiliates';
+    const isCumulative = isCountMetric;
     void hasAnyHistory;
 
     const items = metricHistory.map(item => {
@@ -139,21 +148,44 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
       lastBucket.time = now;
     }
 
-    // Calculate cumulative values
-    return buckets.map(bucket => {
-      // For count metrics (newsletter, affiliates): count items created before bucket.time
-      // For revenue: sum amounts for items created before bucket.time
-      const value = items
-        .filter(item => item.time <= bucket.time)
-        .reduce((sum, item) => sum + item.amount, 0);
+    // Calculate values per bucket.
+    //
+    // Cumulative (newsletter / affiliates): running total of items with time <= bucket.time.
+    //   This intentionally includes items registered before the visible window so the
+    //   subscriber count line reflects the true running total.
+    //
+    // Per-bucket (revenue / bookings): only items whose time falls inside this bucket's
+    //   slot [bucket.time, nextBucket.time). Items outside the window contribute nothing,
+    //   so a single past invoice does not bleed across every day of the chart.
+    return buckets.map((bucket, idx) => {
+      let value: number;
+      if (isCumulative) {
+        value = items
+          .filter(item => item.time <= bucket.time)
+          .reduce((sum, item) => sum + item.amount, 0);
+      } else {
+        const nextTime = buckets[idx + 1]?.time ?? Infinity;
+        value = items
+          .filter(item => item.time >= bucket.time && item.time < nextTime)
+          .reduce((sum, item) => sum + item.amount, 0);
+      }
 
       return {
         name: bucket.label,
-        value: value
+        value: value,
       };
     });
 
   }, [timeRange, metric, stats, history]);
+
+  // For per-bucket $ metrics, the "current value" headline above the chart should be
+  // the total across all visible buckets (i.e. revenue/bookings generated in the
+  // selected window) — not just the last bucket, which is usually $0. For cumulative
+  // count metrics it's still the latest running total, which is the last bucket's value.
+  const isCumulativeMetric = metric === 'newsletter' || metric === 'affiliates';
+  const headlineValue = isCumulativeMetric
+    ? (data.length > 0 ? (data[data.length - 1]?.value ?? 0) : 0)
+    : data.reduce((sum, d) => sum + (d?.value ?? 0), 0);
 
   const config = {
     revenue: { color: '#4ade80', label: 'Revenue', prefix: '$' },
@@ -168,7 +200,7 @@ export function DashboardCharts({ stats, history }: DashboardChartsProps) {
       <div className="flex items-center justify-center gap-4 mb-4">
         <div className="text-center">
           <span className="text-2xl font-bold font-mono" style={{ color: config[metric].color }}>
-            {config[metric].prefix}{data.length > 0 ? data[data.length - 1]?.value.toFixed(0) : '0'}
+            {config[metric].prefix}{headlineValue.toFixed(0)}
           </span>
           <span className="text-xs text-white/40 ml-2 uppercase">{config[metric].label}</span>
         </div>

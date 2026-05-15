@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     CalendarIcon,
     ArrowPathIcon,
@@ -149,6 +149,24 @@ export default function AdminCalendarView() {
         }
     }
 
+    // Refresh whichever windows are currently in scope. Called by booking
+    // action buttons after they mutate state, so the cards re-render with
+    // the new status.
+    const refreshAll = useCallback(() => {
+        const { start, end } = monthWindow(monthCursor);
+        loadMonth(start, end);
+        if (viewMode === 'week') {
+            const ws = getWeekStart(focusDate);
+            const we = new Date(ws);
+            we.setDate(we.getDate() + 6);
+            loadDetail(toYMD(ws), toYMD(we));
+        } else if (viewMode === 'day') {
+            loadDetail(toYMD(focusDate), toYMD(focusDate));
+        } else if (startDate && endDate) {
+            loadDetail(toYMD(startDate), toYMD(endDate));
+        }
+    }, [monthCursor, viewMode, focusDate, startDate, endDate]);
+
     const activityByDate = useMemo(() => {
         const m = new Map<string, { bookings: number; events: number; photos: number; blocked: boolean }>();
         const ensure = (d: string) => {
@@ -298,6 +316,7 @@ export default function AdminCalendarView() {
                 <div className="space-y-4">
                     <div className="bg-white/[0.02] p-4 sm:p-6">
                         <CalendarWidget
+                            size="large"
                             startDate={startDate}
                             endDate={endDate}
                             interactive
@@ -344,6 +363,7 @@ export default function AdminCalendarView() {
                             )}
                             onAddNote={addNote}
                             onDeleteNote={deleteNote}
+                            onBookingChange={refreshAll}
                         />
                     )}
                 </div>
@@ -371,6 +391,7 @@ export default function AdminCalendarView() {
                     onNextDay={() => { const d = new Date(focusDate); d.setDate(d.getDate() + 1); setFocusDate(d); }}
                     onAddNote={addNote}
                     onDeleteNote={deleteNote}
+                    onBookingChange={refreshAll}
                 />
             )}
         </div>
@@ -505,6 +526,7 @@ function DayView({
     onNextDay,
     onAddNote,
     onDeleteNote,
+    onBookingChange,
 }: {
     focusDate: Date;
     data: CalendarRangeResponse | null;
@@ -513,6 +535,7 @@ function DayView({
     onNextDay: () => void;
     onAddNote: (date: string, note: string) => void;
     onDeleteNote: (id: string) => void;
+    onBookingChange?: () => void;
 }) {
     const ymd = toYMD(focusDate);
     const bookings = data?.bookings.filter(b => b.event_date === ymd) || [];
@@ -545,7 +568,7 @@ function DayView({
                         ) : (
                             <div className="space-y-px">
                                 {bookings.map(b => (
-                                    <ExpandableBookingCard key={b.id} booking={b} />
+                                    <ExpandableBookingCard key={b.id} booking={b} onChange={onBookingChange} />
                                 ))}
                             </div>
                         )}
@@ -587,7 +610,35 @@ function DayView({
 
 // ─── Expandable Cards ──────────────────────────────────────────────────────────
 
-function ExpandableBookingCard({ booking: b }: { booking: CalendarBooking }) {
+function ExpandableBookingCard({ booking: b, onChange }: { booking: CalendarBooking; onChange?: () => void }) {
+    const [busy, setBusy] = useState<null | 'confirm' | 'decline' | 'cancel'>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    async function setStatus(next: 'confirmed' | 'declined' | 'cancelled', notify: boolean) {
+        const labelMap = { confirmed: 'confirm', declined: 'decline', cancelled: 'cancel' } as const;
+        setBusy(labelMap[next]);
+        setError(null);
+        try {
+            const res = await fetch('/api/booking?action=admin', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: b.id, status: next, notify_customer: notify }),
+            });
+            if (!res.ok) {
+                const body = await res.json().catch(() => ({}));
+                throw new Error(body?.error || `HTTP ${res.status}`);
+            }
+            onChange?.();
+        } catch (e: any) {
+            setError(e?.message || 'Failed');
+        } finally {
+            setBusy(null);
+        }
+    }
+
+    const isPending = b.status === 'pending';
+    const isConfirmed = b.status === 'confirmed';
+
     return (
         <Expandable>
             {({ isExpanded }: { isExpanded: boolean }) => (
@@ -619,11 +670,90 @@ function ExpandableBookingCard({ booking: b }: { booking: CalendarBooking }) {
                             )}
                             <DetailRow label="Retainer" value={b.retainer ? 'Paid' : 'Not paid'} />
                             <DetailRow label="Date" value={b.event_date} />
+
+                            {/* Action bar */}
+                            <div className="flex flex-wrap items-center gap-2 pt-3 mt-2 border-t border-white/5">
+                                {isPending && (
+                                    <>
+                                        <ActionButton
+                                            tone="confirm"
+                                            disabled={busy !== null}
+                                            loading={busy === 'confirm'}
+                                            onClick={(e) => { e.stopPropagation(); setStatus('confirmed', true); }}
+                                        >
+                                            Approve
+                                        </ActionButton>
+                                        <ActionButton
+                                            tone="decline"
+                                            disabled={busy !== null}
+                                            loading={busy === 'decline'}
+                                            onClick={(e) => { e.stopPropagation(); setStatus('declined', true); }}
+                                        >
+                                            Reject
+                                        </ActionButton>
+                                    </>
+                                )}
+                                {isConfirmed && (
+                                    <ActionButton
+                                        tone="decline"
+                                        disabled={busy !== null}
+                                        loading={busy === 'cancel'}
+                                        onClick={(e) => { e.stopPropagation(); setStatus('cancelled', true); }}
+                                    >
+                                        Cancel booking
+                                    </ActionButton>
+                                )}
+                                <a
+                                    href={`/admin/invoices?booking_id=${encodeURIComponent(b.id)}&new=1`}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest border border-white/20 text-white/80 hover:bg-white/5 hover:text-white transition-colors"
+                                >
+                                    Create invoice
+                                </a>
+                                <a
+                                    href={`/admin/bookings?id=${encodeURIComponent(b.id)}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors"
+                                >
+                                    Open →
+                                </a>
+                                {error && (
+                                    <span className="text-[10px] text-red-400 font-mono">{error}</span>
+                                )}
+                            </div>
                         </div>
                     </ExpandableContent>
                 </div>
             )}
         </Expandable>
+    );
+}
+
+function ActionButton({
+    tone,
+    disabled,
+    loading,
+    onClick,
+    children,
+}: {
+    tone: 'confirm' | 'decline';
+    disabled?: boolean;
+    loading?: boolean;
+    onClick?: (e: React.MouseEvent) => void;
+    children: React.ReactNode;
+}) {
+    const toneClass =
+        tone === 'confirm'
+            ? 'bg-green-600 text-white hover:bg-green-500 border border-green-500/40'
+            : 'bg-red-600/90 text-white hover:bg-red-500 border border-red-500/40';
+    return (
+        <button
+            disabled={disabled}
+            onClick={onClick}
+            className={`px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${toneClass}`}
+        >
+            {loading ? '…' : children}
+        </button>
     );
 }
 
@@ -680,6 +810,7 @@ function TimeInReviewCard({
     onToggle,
     onAddNote,
     onDeleteNote,
+    onBookingChange,
 }: {
     range: { start: string; end: string };
     review: { bookings: CalendarBooking[]; events: CalendarEventRow[]; photos: CalendarPhoto[]; notes: CalendarNote[] };
@@ -687,6 +818,7 @@ function TimeInReviewCard({
     onToggle: () => void;
     onAddNote: (date: string, note: string) => void;
     onDeleteNote: (id: string) => void;
+    onBookingChange?: () => void;
 }) {
     const isCollapsed = expanded === 'collapsed';
     const isDeep = expanded === 'deep';
@@ -716,7 +848,7 @@ function TimeInReviewCard({
                         ) : (
                             <div className="space-y-px">
                                 {review.bookings.map(b => (
-                                    <ExpandableBookingCard key={b.id} booking={b} />
+                                    <ExpandableBookingCard key={b.id} booking={b} onChange={onBookingChange} />
                                 ))}
                             </div>
                         )}

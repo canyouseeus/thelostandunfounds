@@ -485,45 +485,53 @@ export default function BlogPost() {
   return (
     <>
       <Helmet>
-        <title>THE LOST+UNFOUNDS | The Lost Archives | {title}</title>
+        <title>{title.split(' | ')[0].trim()} | THE LOST+UNFOUNDS</title>
         <link rel="canonical" href={post.subdomain ? `https://www.thelostandunfounds.com/blog/${post.subdomain}/${post.slug}` : `https://www.thelostandunfounds.com/thelostarchives/${post.slug}`} />
         <meta name="description" content={description} />
         {post.seo_keywords && <meta name="keywords" content={post.seo_keywords} />}
-        <meta property="og:title" content={title} />
+        <meta property="og:title" content={title.split(' | ')[0].trim()} />
         <meta property="og:description" content={description} />
         <meta property="og:url" content={post.subdomain ? `https://www.thelostandunfounds.com/blog/${post.subdomain}/${post.slug}` : `https://www.thelostandunfounds.com/thelostarchives/${post.slug}`} />
         <meta property="og:type" content="article" />
         {ogImage && <meta property="og:image" content={ogImage} />}
         <meta name="twitter:card" content="summary" />
-        <meta name="twitter:title" content={title} />
+        <meta name="twitter:title" content={title.split(' | ')[0].trim()} />
         <meta name="twitter:description" content={description} />
         {ogImage && <meta name="twitter:image" content={ogImage} />}
         <script type="application/ld+json">
           {JSON.stringify((() => {
+            const canonicalUrl = post.subdomain
+              ? `https://www.thelostandunfounds.com/blog/${post.subdomain}/${post.slug}`
+              : `https://www.thelostandunfounds.com/thelostarchives/${post.slug}`;
+            const cleanTitle = title.split(' | ')[0].trim();
             const structuredData: any = {
               "@context": "https://schema.org",
               "@type": "BlogPosting",
-              "headline": title,
+              "headline": cleanTitle.substring(0, 110),
               "description": description,
-              "url": `https://www.thelostandunfounds.com/thelostarchives/${post.slug}`,
-              "datePublished": publishedDate,
-              "dateModified": post.created_at,
+              "url": canonicalUrl,
+              "datePublished": publishedDate ? new Date(publishedDate).toISOString() : undefined,
+              "dateModified": publishedDate ? new Date(publishedDate).toISOString() : undefined,
               "author": {
-                "@type": "Organization",
-                "name": "THE LOST+UNFOUNDS"
-              },
-              "publisher": {
                 "@type": "Organization",
                 "name": "THE LOST+UNFOUNDS",
                 "url": "https://www.thelostandunfounds.com"
               },
-              "mainEntityOfPage": {
-                "@type": "WebPage",
-                "@id": `https://www.thelostandunfounds.com/thelostarchives/${post.slug}`
-              }
+              "publisher": {
+                "@type": "Organization",
+                "name": "THE LOST+UNFOUNDS",
+                "url": "https://www.thelostandunfounds.com",
+                "logo": {
+                  "@type": "ImageObject",
+                  "url": "https://www.thelostandunfounds.com/logo.png",
+                  "width": 512,
+                  "height": 512
+                }
+              },
+              "mainEntityOfPage": { "@type": "WebPage", "@id": canonicalUrl }
             };
             if (ogImage) {
-              structuredData.image = ogImage;
+              structuredData.image = { "@type": "ImageObject", "url": ogImage };
             }
             return structuredData;
           })())}

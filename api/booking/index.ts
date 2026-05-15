@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { getZohoAuthContext, sendZohoEmail } from '../../lib/api-handlers/_zoho-email-utils.js'
 import { generateTransactionalEmail } from '../../lib/email-template.js'
 import { triggerReferralCommission } from '../../lib/api-handlers/affiliates/_commission-trigger.js'
+import { sendTransactionalEmail } from '../../lib/api-handlers/_resend-email-handler.js'
 
 const NOTIFY_TO = 'media@thelostandunfounds.com'
 
@@ -275,7 +276,7 @@ async function handleAdminUpdate(req: VercelRequest, res: VercelResponse) {
     if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' })
 
     const supabase = getSupabase(true)
-    const { id, status, admin_notes, total_amount_cents, affiliate_code } = req.body
+    const { id, status, admin_notes, total_amount_cents, affiliate_code, notify_customer } = req.body
 
     if (!id) return res.status(400).json({ error: 'Booking id required' })
 
@@ -295,16 +296,23 @@ async function handleAdminUpdate(req: VercelRequest, res: VercelResponse) {
 
     if (error) return res.status(500).json({ error: error.message })
 
+    const willTriggerCommission = status === 'paid' || status === 'completed'
+    const willNotifyCustomer = !!(status && notify_customer)
+    let booking: any = null
+    if (willTriggerCommission || willNotifyCustomer) {
+        const { data } = await supabase
+            .from('bookings')
+            .select('*')
+            .eq('id', id)
+            .single()
+        booking = data
+    }
+
     // Fire affiliate commission when this transition lands the booking in
     // a paid state. Idempotent — no-op if already triggered for this booking.
-    if (status === 'paid' || status === 'completed') {
+    if (booking && willTriggerCommission) {
         try {
-            const { data: booking } = await supabase
-                .from('bookings')
-                .select('id, email, total_amount_cents, affiliate_code')
-                .eq('id', id)
-                .single()
-            if (booking?.email && booking.total_amount_cents) {
+            if (booking.email && booking.total_amount_cents) {
                 const result = await triggerReferralCommission(supabase, {
                     email: booking.email,
                     source: 'booking',
@@ -323,7 +331,88 @@ async function handleAdminUpdate(req: VercelRequest, res: VercelResponse) {
         }
     }
 
-    return res.status(200).json({ success: true })
+    // Best-effort customer status email via Zoho-primary / Resend-fallback helper.
+    let notify: { sent: boolean; error?: string; provider?: 'zoho' | 'resend' } | undefined
+    if (booking && willNotifyCustomer) {
+        try {
+            if (booking.email) {
+                const subject = subjectForStatus(status, booking)
+                const body = buildClientStatusUpdateBody(booking, status)
+                if (subject && body) {
+                    const result = await sendTransactionalEmail({
+                        to: booking.email,
+                        subject,
+                        content: body,
+                    })
+                    notify = result.success
+                        ? { sent: true, provider: result.provider }
+                        : { sent: false, error: result.error || 'send failed', provider: result.provider }
+                }
+            }
+        } catch (notifyErr: any) {
+            console.warn('[BookingAdminUpdate] notify failed:', notifyErr?.message)
+            notify = { sent: false, error: notifyErr?.message || String(notifyErr) }
+        }
+    }
+
+    return res.status(200).json({ success: true, notify })
+}
+
+function subjectForStatus(status: string, booking: any): string | null {
+    const eventType = booking.event_type || 'shoot'
+    switch (status) {
+        case 'confirmed': return `Your ${eventType} is confirmed — TLAU`
+        case 'declined': return `About your booking request — TLAU`
+        case 'cancelled': return `Your ${eventType} booking has been cancelled — TLAU`
+        default: return null
+    }
+}
+
+function buildClientStatusUpdateBody(booking: any, status: string): string {
+    const firstName = (booking.name || '').split(' ')[0] || 'there'
+    const eventType = booking.event_type || 'shoot'
+    const dateLine = booking.event_date ? formatEventDate(booking.event_date) : 'the requested date'
+    const adminNote = booking.admin_notes
+        ? `<p style="color:#fff !important;font-size:14px;line-height:1.6;margin:16px 0 0 0;"><i>${escapeHtml(booking.admin_notes)}</i></p>`
+        : ''
+
+    if (status === 'confirmed') {
+        return `
+            <h1 style="color:#fff !important;font-size:24px;font-weight:bold;margin:0 0 16px 0;letter-spacing:0.05em;">YOU'RE BOOKED</h1>
+            <p style="color:#fff !important;font-size:16px;line-height:1.6;margin:0 0 12px 0;">
+                Hey ${escapeHtml(firstName)} — your ${escapeHtml(eventType)} on
+                <b>${escapeHtml(dateLine)}</b> is confirmed. An invoice with the
+                deposit and balance details is on its way separately.
+            </p>
+            ${adminNote}
+            <p style="color:#fff !important;font-size:14px;margin:32px 0 0 0;">— Joshua / TLAU</p>
+        `
+    }
+    if (status === 'declined') {
+        return `
+            <h1 style="color:#fff !important;font-size:24px;font-weight:bold;margin:0 0 16px 0;letter-spacing:0.05em;">ABOUT YOUR REQUEST</h1>
+            <p style="color:#fff !important;font-size:16px;line-height:1.6;margin:0 0 12px 0;">
+                Hey ${escapeHtml(firstName)} — thanks for reaching out about
+                ${escapeHtml(dateLine)}. Unfortunately I'm not able to take this
+                one on. If timing or scope shifts, please feel welcome to reach
+                back out.
+            </p>
+            ${adminNote}
+            <p style="color:#fff !important;font-size:14px;margin:32px 0 0 0;">— Joshua / TLAU</p>
+        `
+    }
+    if (status === 'cancelled') {
+        return `
+            <h1 style="color:#fff !important;font-size:24px;font-weight:bold;margin:0 0 16px 0;letter-spacing:0.05em;">BOOKING CANCELLED</h1>
+            <p style="color:#fff !important;font-size:16px;line-height:1.6;margin:0 0 12px 0;">
+                Hey ${escapeHtml(firstName)} — your ${escapeHtml(eventType)}
+                booking on ${escapeHtml(dateLine)} has been cancelled.
+            </p>
+            ${adminNote}
+            <p style="color:#fff !important;font-size:14px;margin:32px 0 0 0;">— Joshua / TLAU</p>
+        `
+    }
+    return ''
 }
 
 async function handleBlockDate(req: VercelRequest, res: VercelResponse) {

@@ -67,7 +67,10 @@ async function preRenderBlogPosts() {
     await Promise.all(posts.map(async (post) => {
       try {
         const slug = post.slug;
-        const title = post.seo_title || post.title;
+
+        // Strip any existing " | ..." brand/category suffixes that were baked
+        // into seo_title to prevent doubling them up in the page <title>.
+        const cleanTitle = (post.seo_title || post.title).split(' | ')[0].trim();
 
         // Determine path based on subdomain/column
         let folderPath = 'thelostarchives';
@@ -80,7 +83,8 @@ async function preRenderBlogPosts() {
           categoryName = post.subdomain.replace(/-/g, ' ').toUpperCase();
         }
 
-        const fullTitle = `${title} | ${categoryName} | THE LOST+UNFOUNDS`;
+        // Keep title under 60 chars: "Article Title | THE LOST+UNFOUNDS"
+        const fullTitle = `${cleanTitle} | THE LOST+UNFOUNDS`;
 
         let description = post.seo_description || post.excerpt ||
           post.content.substring(0, 300).replace(/<[^>]*>?/gm, ' ').replace(/\n/g, ' ').trim();
@@ -92,6 +96,7 @@ async function preRenderBlogPosts() {
 
         const ogImage = post.og_image_url || post.featured_image;
         const publishedDate = post.published_at || post.created_at;
+        const modifiedDate = post.updated_at || post.published_at || post.created_at;
         const postUrl = `https://www.thelostandunfounds.com${fullUrlPath}`;
 
         // Escape HTML for attributes
@@ -170,22 +175,29 @@ async function preRenderBlogPosts() {
         const structuredData = {
           "@context": "https://schema.org",
           "@type": "BlogPosting",
-          "headline": title,
+          "headline": cleanTitle.substring(0, 110),
           "description": description,
           "url": postUrl,
-          "datePublished": publishedDate,
-          "dateModified": post.created_at,
+          "datePublished": publishedDate ? new Date(publishedDate).toISOString() : undefined,
+          "dateModified": modifiedDate ? new Date(modifiedDate).toISOString() : undefined,
           "author": {
-            "@type": "Organization",
-            "name": "THE LOST+UNFOUNDS"
-          },
-          "publisher": {
             "@type": "Organization",
             "name": "THE LOST+UNFOUNDS",
             "url": "https://www.thelostandunfounds.com"
           },
-          ...(ogImage && { "image": ogImage }),
-          "articleBody": post.content.replace(/<[^>]*>?/gm, ' ').substring(0, 5000)
+          "publisher": {
+            "@type": "Organization",
+            "name": "THE LOST+UNFOUNDS",
+            "url": "https://www.thelostandunfounds.com",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://www.thelostandunfounds.com/logo.png",
+              "width": 512,
+              "height": 512
+            }
+          },
+          ...(ogImage && { "image": { "@type": "ImageObject", "url": ogImage } }),
+          "mainEntityOfPage": { "@type": "WebPage", "@id": postUrl }
         };
 
         // Breadcrumb Schema

@@ -4,7 +4,7 @@ import path from 'path';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
-import { buildName, getAvailableBytes, formatBytes, resetSeqs, claptropTail, dateFromName } from './claptrop-namer.js';
+import { buildName, isClaptropName, getAvailableBytes, formatBytes, resetSeqs, claptropTail, dateFromName } from './claptrop-namer.js';
 import { run as runRetrograde } from './claptrop-retrograde.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -257,35 +257,51 @@ async function uploadAndClean(
     deleteAfter = false,
     driveIndex?: DriveFingerprintIndex,
 ): Promise<boolean> {
-    const fileName = path.basename(filePath);
-    const fileSize = fs.statSync(filePath).size;
+    const originalName = path.basename(filePath);
+    const fileSize     = fs.statSync(filePath).size;
 
-    const historyHit = isInHistory(fileName);
+    // If this file hasn't been through Phase 1 rename (e.g. it was already
+    // sitting in staging as DSCF*.JPG), generate a proper claptrop name now.
+    let uploadName = originalName;
+    if (!isClaptropName(originalName)) {
+        const { meta } = await buildName({
+            originalName,
+            filePath,
+            subject: SUBJECT_OVERRIDE || 'photo',
+        });
+        uploadName = meta.filename;
+    }
+
+    // Check history for both the original name and the derived upload name
+    const historyHit = isInHistory(originalName) || isInHistory(uploadName);
     const driveAxis  = driveIndex ? findExistingInDrive(driveIndex, filePath) : null;
 
     if (historyHit || driveAxis) {
         const reason = historyHit ? 'in history' : `Drive match (axis=${driveAxis})`;
-        console.log(`  Skipping ${fileName} (${reason})`);
-        addToHistory(fileName);
+        console.log(`  Skipping ${originalName} (${reason})`);
+        addToHistory(originalName);
+        if (uploadName !== originalName) addToHistory(uploadName);
         if (deleteAfter && fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
-            console.log(`  🗑  Deleted local: ${fileName}`);
         }
         return true;
     }
 
-    console.log(`  Uploading ${fileName} (${formatBytes(fileSize)})…`);
+    if (uploadName !== originalName) {
+        console.log(`  Renaming for upload: ${originalName} → ${uploadName}`);
+    }
+    console.log(`  Uploading ${uploadName} (${formatBytes(fileSize)})…`);
 
     const success = await (async () => {
         for (let attempt = 0; attempt <= 5; attempt++) {
             try {
                 await drive.files.create({
-                    requestBody: { name: fileName, parents: [parentId] },
+                    requestBody: { name: uploadName, parents: [parentId] },
                     media: { body: fs.createReadStream(filePath) },
                 }, {
                     onUploadProgress: (evt) => {
                         const pct = ((evt.bytesRead / fileSize) * 100).toFixed(0);
-                        process.stdout.write(`\r  ${fileName}: ${pct}%`);
+                        process.stdout.write(`\r  ${uploadName}: ${pct}%`);
                     },
                 });
                 process.stdout.write('\n');
@@ -297,7 +313,7 @@ async function uploadAndClean(
                     console.log(`  Upload failed (${err.message}). Retry in ${delay / 1000}s…`);
                     await new Promise(r => setTimeout(r, delay));
                 } else {
-                    console.error(`  Failed after 5 retries: ${fileName}`);
+                    console.error(`  Failed after 5 retries: ${uploadName}`);
                     return false;
                 }
             }
@@ -306,13 +322,13 @@ async function uploadAndClean(
     })();
 
     if (success) {
-        addToHistory(fileName);
+        addToHistory(originalName);
+        if (uploadName !== originalName) addToHistory(uploadName);
         // Keep index current so later files in this same run don't re-upload
-        if (driveIndex) addFileToIndex(driveIndex, fileName, String(fileSize), undefined);
-        console.log(`  ✅ Uploaded: ${fileName}`);
+        if (driveIndex) addFileToIndex(driveIndex, uploadName, String(fileSize), undefined);
+        console.log(`  ✅ Uploaded: ${uploadName}`);
         if (deleteAfter && fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
-            console.log(`  🗑  Deleted local: ${fileName}`);
         }
     }
     return success;

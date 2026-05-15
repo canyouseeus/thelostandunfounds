@@ -11,6 +11,11 @@ interface CalendarWidgetProps {
     viewDate?: Date;
     onMonthChange?: (d: Date) => void;
     dotsByDate?: Map<string, { bookings: number; events: number; photos: number; blocked: boolean }>;
+    /**
+     * 'default' (≈240px column, used in date pickers and sidebars) or
+     * 'large' (scales up at md/lg breakpoints, for full-width admin master calendar).
+     */
+    size?: 'default' | 'large';
 }
 
 export function CalendarWidget({
@@ -22,7 +27,9 @@ export function CalendarWidget({
     viewDate: controlledViewDate,
     onMonthChange,
     dotsByDate,
+    size = 'default',
 }: CalendarWidgetProps) {
+    const isLarge = size === 'large';
     const today = new Date();
     const [internalViewDate, setInternalViewDate] = useState(startDate || today);
     const viewDate = controlledViewDate ?? internalViewDate;
@@ -71,22 +78,26 @@ export function CalendarWidget({
     };
 
     return (
-        <div className={cn("bg-black p-6 flex flex-col items-center justify-center min-h-[280px]", className)}>
-            <div className="w-full max-w-[240px]">
+        <div className={cn(
+            "bg-black p-6 flex flex-col items-center justify-center",
+            isLarge ? "min-h-[280px] md:min-h-[520px] lg:min-h-[640px]" : "min-h-[280px]",
+            className,
+        )}>
+            <div className={cn("w-full", isLarge ? "max-w-[240px] md:max-w-[680px] lg:max-w-[920px]" : "max-w-[240px]")}>
                 {/* Header */}
-                <div className="flex items-baseline justify-between mb-6 pb-2 relative">
+                <div className={cn("flex items-baseline justify-between pb-2 relative", isLarge ? "mb-6 md:mb-8" : "mb-6")}>
                     {interactive && (
                         <button onClick={handlePrev} className="p-1 hover:text-white text-white/40 transition-colors absolute -left-2">
-                            <ChevronLeftIcon className="w-4 h-4" />
+                            <ChevronLeftIcon className={cn(isLarge ? "w-4 h-4 md:w-6 md:h-6" : "w-4 h-4")} />
                         </button>
                     )}
-                    <div className="flex-1 flex gap-2 items-baseline justify-center">
-                        <span className="text-xl font-bold text-white tracking-tight">{currentMonth}</span>
-                        <span className="text-sm text-white/40 font-mono">{currentYear}</span>
+                    <div className={cn("flex-1 flex items-baseline justify-center", isLarge ? "gap-2 md:gap-3" : "gap-2")}>
+                        <span className={cn("font-bold text-white tracking-tight", isLarge ? "text-xl md:text-3xl lg:text-4xl" : "text-xl")}>{currentMonth}</span>
+                        <span className={cn("text-white/40 font-mono", isLarge ? "text-sm md:text-lg" : "text-sm")}>{currentYear}</span>
                     </div>
                     {interactive && (
                         <button onClick={handleNext} className="p-1 hover:text-white text-white/40 transition-colors absolute -right-2">
-                            <ChevronRightIcon className="w-4 h-4" />
+                            <ChevronRightIcon className={cn(isLarge ? "w-4 h-4 md:w-6 md:h-6" : "w-4 h-4")} />
                         </button>
                     )}
                 </div>
@@ -94,13 +105,13 @@ export function CalendarWidget({
                 {/* Grid */}
                 <div className="grid grid-cols-7 text-center">
                     {weekDays.map((d, i) => (
-                        <div key={`${d}-${i}`} className="text-[10px] text-white/30 font-medium h-8 flex items-center justify-center">
+                        <div key={`${d}-${i}`} className={cn("text-white/30 font-medium flex items-center justify-center", isLarge ? "text-[10px] md:text-xs lg:text-sm h-8 md:h-10" : "text-[10px] h-8")}>
                             {d}
                         </div>
                     ))}
 
                     {blanks.map(i => (
-                        <div key={`blank-${i}`} className="h-10" />
+                        <div key={`blank-${i}`} className={cn(isLarge ? "h-10 md:h-16 lg:h-20" : "h-10")} />
                     ))}
 
                     {days.map(d => {
@@ -116,12 +127,13 @@ export function CalendarWidget({
                         const hasDots = dots && (dots.bookings > 0 || dots.events > 0 || dots.photos > 0 || dots.blocked);
 
                         return (
-                            <div key={d} className="relative h-10 flex flex-col items-center justify-start pt-[3px]">
+                            <div key={d} className={cn("relative flex flex-col items-center justify-start", isLarge ? "h-10 md:h-16 lg:h-20 pt-[3px] md:pt-2" : "h-10 pt-[3px]")}>
                                 {/* Range fill */}
                                 {hasRange && (dayIsStart || dayIsEnd || dayInRange) && (
                                     <div
                                         className={cn(
-                                            "absolute top-[3px] bottom-[3px] bg-transparent border-y border-white/20",
+                                            "absolute bg-transparent border-y border-white/20",
+                                            isLarge ? "top-[3px] bottom-[3px] md:top-2 md:bottom-2" : "top-[3px] bottom-[3px]",
                                             dayInRange && "inset-x-0",
                                             dayIsStart && !dayIsEnd && "left-1/2 right-0",
                                             dayIsEnd && !dayIsStart && "left-0 right-1/2",
@@ -138,7 +150,8 @@ export function CalendarWidget({
                                         }
                                     }}
                                     className={cn(
-                                        "relative z-10 w-7 h-7 flex items-center justify-center text-xs font-mono transition-all rounded-full",
+                                        "relative z-10 flex items-center justify-center font-mono transition-all rounded-full",
+                                        isLarge ? "w-7 h-7 md:w-11 md:h-11 lg:w-14 lg:h-14 text-xs md:text-base lg:text-lg" : "w-7 h-7 text-xs",
                                         !interactive && "cursor-default",
                                         selected
                                             ? "bg-white text-black font-bold"
@@ -155,11 +168,11 @@ export function CalendarWidget({
 
                                 {/* Activity dots */}
                                 {hasDots && (
-                                    <div className="flex items-center gap-[2px] mt-[1px]">
-                                        {dots!.bookings > 0 && <span className="w-[3px] h-[3px] bg-yellow-400 rounded-full" />}
-                                        {dots!.events > 0 && <span className="w-[3px] h-[3px] bg-green-400 rounded-full" />}
-                                        {dots!.photos > 0 && <span className="w-[3px] h-[3px] bg-white/60 rounded-full" />}
-                                        {dots!.blocked && <span className="w-[3px] h-[3px] bg-red-400 rounded-full" />}
+                                    <div className={cn("flex items-center", isLarge ? "gap-[2px] md:gap-1 mt-[1px] md:mt-1" : "gap-[2px] mt-[1px]")}>
+                                        {dots!.bookings > 0 && <span className={cn("bg-yellow-400 rounded-full", isLarge ? "w-[3px] h-[3px] md:w-[5px] md:h-[5px]" : "w-[3px] h-[3px]")} />}
+                                        {dots!.events > 0 && <span className={cn("bg-green-400 rounded-full", isLarge ? "w-[3px] h-[3px] md:w-[5px] md:h-[5px]" : "w-[3px] h-[3px]")} />}
+                                        {dots!.photos > 0 && <span className={cn("bg-white/60 rounded-full", isLarge ? "w-[3px] h-[3px] md:w-[5px] md:h-[5px]" : "w-[3px] h-[3px]")} />}
+                                        {dots!.blocked && <span className={cn("bg-red-400 rounded-full", isLarge ? "w-[3px] h-[3px] md:w-[5px] md:h-[5px]" : "w-[3px] h-[3px]")} />}
                                     </div>
                                 )}
                             </div>

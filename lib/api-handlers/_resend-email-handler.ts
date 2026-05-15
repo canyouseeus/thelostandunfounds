@@ -1,9 +1,10 @@
 /**
- * Resend Email Handler
- * Handles sending emails via Resend API
- * 
- * Resend Free Tier: 10,000 emails/month, 100 emails/day
- * Much better than Zoho's ~50/day limit!
+ * Email delivery handler.
+ *
+ * Policy: Zoho is the primary transactional provider; Resend is the automatic
+ * fallback used when Zoho throws, is unconfigured, or returns a non-2xx. The
+ * filename predates the policy (originally Resend-only). Newsletter and batch
+ * paths intentionally remain Resend-only — Zoho can't handle the volume.
  */
 
 import {
@@ -12,6 +13,7 @@ import {
   generateTransactionalEmail,
   processEmailContent
 } from '../email-template.js';
+import { getZohoAuthContext, sendZohoEmail } from './_zoho-email-utils.js';
 
 interface ResendEmailParams {
   to: string | string[];
@@ -195,7 +197,10 @@ export async function sendNewsletterEmail(params: {
 
 /**
  * Send a transactional email with standardized template
- * (e.g., welcome emails, notifications - no unsubscribe link)
+ * (e.g., welcome emails, notifications - no unsubscribe link).
+ *
+ * Tries Zoho first; falls back to Resend on any Zoho failure. Multi-recipient
+ * or replyTo sends skip Zoho directly (sendZohoEmail doesn't support them).
  */
 export async function sendTransactionalEmail(params: {
   to: string | string[];
@@ -203,15 +208,34 @@ export async function sendTransactionalEmail(params: {
   content: string;
   from?: string;
   replyTo?: string;
-}): Promise<{ success: boolean; id?: string; error?: string }> {
+}): Promise<{ success: boolean; id?: string; error?: string; provider?: 'zoho' | 'resend' }> {
   const html = generateTransactionalEmail(params.content);
-  return sendEmail({
+
+  const zohoEligible = typeof params.to === 'string' && !params.replyTo;
+  if (zohoEligible) {
+    try {
+      const auth = await getZohoAuthContext();
+      const zoho = await sendZohoEmail({
+        auth,
+        to: params.to as string,
+        subject: params.subject,
+        htmlContent: html,
+      });
+      if (zoho.success) return { success: true, provider: 'zoho' };
+      console.warn('[email-delivery] Zoho returned failure, falling back to Resend:', zoho.error);
+    } catch (err: any) {
+      console.warn('[email-delivery] Zoho threw, falling back to Resend:', err?.message);
+    }
+  }
+
+  const resend = await sendEmail({
     to: params.to,
     subject: params.subject,
     html,
     from: params.from,
     replyTo: params.replyTo,
   });
+  return { ...resend, provider: 'resend' };
 }
 
 /**

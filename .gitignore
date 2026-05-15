@@ -40,8 +40,18 @@ lerna-debug.log*
 # TypeScript
 *.tsbuildinfo
 
+# Claude Code local state (worktrees are 10GB+ of nested checkouts — never commit)
+.claude/worktrees/
 
+# Supabase CLI cache
+supabase/.temp/
 
+# Local script logs (regenerate each run)
+scripts/upload-history.json
+scripts/claptrop-rename-log.json
+scripts/claptrop-retrograde-log.json
+claptrop-upload-monitor-status.md
+timing.log
 
 
 

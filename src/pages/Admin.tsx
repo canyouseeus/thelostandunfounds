@@ -682,7 +682,10 @@ export default function Admin() {
             .gte('created_at', PLATFORM_LAUNCH_DATE)
             .order('created_at', { ascending: true }),
           supabase.from('affiliate_commissions')
-            .select('created_at, amount')
+            .select('created_at, amount, status')
+            // Only count commissions that have been verified as paid.
+            // status enum: 'pending' | 'approved' | 'paid' | 'cancelled'
+            .eq('status', 'paid')
             .gte('created_at', PLATFORM_LAUNCH_DATE)
             .order('created_at', { ascending: true }),
           supabase.from('photo_orders')
@@ -1914,7 +1917,12 @@ export default function Admin() {
                   <CalendarIcon className="w-5 h-5 text-white/40" />
                   <h2 className="text-lg font-black text-white tracking-widest uppercase">Booking Management</h2>
                 </div>
-                <button onClick={() => handleSectionToggle('bookings')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
+                <div className="flex items-center gap-4 mt-1">
+                  <button onClick={() => handleSectionToggle('bookings')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
+                  <Link to="/admin/invoices" className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-tighter underline">
+                    Manage Invoices →
+                  </Link>
+                </div>
               </div>
               <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Bookings</div>}>
                 <AdminBookingView />

@@ -247,14 +247,36 @@ async function upsertPhoto(ctx: SyncCtx, file: DriveFile): Promise<string | null
     if (latitude != null) payload.latitude = latitude;
     if (longitude != null) payload.longitude = longitude;
 
+    // Check for existing row first — the DB unique constraint may not yet be in place,
+    // so we can't rely on onConflict alone. Manual check prevents duplicate insertions.
+    const { data: existing } = await ctx.supabase
+        .from('photos')
+        .select('id')
+        .eq('google_drive_file_id', file.id)
+        .maybeSingle();
+
+    if (existing) {
+        const { data, error } = await ctx.supabase
+            .from('photos')
+            .update(payload)
+            .eq('google_drive_file_id', file.id)
+            .select('id')
+            .single();
+        if (error) {
+            console.error(`[sync] update photo ${file.id} failed:`, error.message);
+            return null;
+        }
+        return data.id;
+    }
+
     const { data, error } = await ctx.supabase
         .from('photos')
-        .upsert(payload, { onConflict: 'google_drive_file_id' })
+        .insert(payload)
         .select('id')
         .single();
 
     if (error) {
-        console.error(`[sync] upsert photo ${file.id} failed:`, error.message);
+        console.error(`[sync] insert photo ${file.id} failed:`, error.message);
         return null;
     }
     return data.id;

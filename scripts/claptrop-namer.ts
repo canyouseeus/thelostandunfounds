@@ -273,7 +273,7 @@ export function resetSeqs() {
 
 // ─── Generic camera folder names that aren't meaningful subjects ──────────────
 
-const GENERIC_FOLDER = /^(\d{3}[a-z]+|jpg|raf|mov|raw|dcim|photos?|videos?|camera)$/i;
+const GENERIC_FOLDER = /^(\d{3}[_a-z][a-z0-9_]*|jpg|raf|mov|raw|dcim|photos?|videos?|camera)$/i;
 
 // ─── Name Builder ─────────────────────────────────────────────────────────────
 
