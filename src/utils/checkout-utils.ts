@@ -174,6 +174,60 @@ export async function getPayPalCheckoutUrl(params: {
 }
 
 /**
+ * Create a Stripe Checkout Session keyed by a pre-existing Stripe Price ID.
+ * Use this for native products configured in the Stripe dashboard (e.g., the
+ * Mystery Box). Returns the hosted-checkout URL — the caller should redirect
+ * the browser to `url`.
+ *
+ * Compared to `getStripeCheckoutUrl` below, this path delegates pricing and
+ * tax/shipping config to the Stripe Price object instead of inlining a
+ * one-shot price_data block.
+ */
+export async function getStripeCheckoutUrlByPriceId(params: {
+    priceId: string
+    quantity?: number
+    productKind?: 'physical' | 'digital'
+    customerEmail?: string
+    productId?: string
+    affiliateRef?: string | null
+}): Promise<{ sessionId: string; url: string; shopOrderId: string }> {
+    let affiliateRef = params.affiliateRef
+    if (!affiliateRef && typeof window !== 'undefined') {
+        const { getAffiliateRef } = await import('./affiliate-tracking')
+        affiliateRef = getAffiliateRef()
+    }
+
+    const response = await fetch('/api/checkout/create-session', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            ...(affiliateRef ? { 'X-Affiliate-Ref': affiliateRef } : {}),
+        },
+        body: JSON.stringify({
+            priceId: params.priceId,
+            quantity: params.quantity || 1,
+            productKind: params.productKind || 'physical',
+            customerEmail: params.customerEmail,
+            productId: params.productId,
+        }),
+    })
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Checkout creation failed' }))
+        throw new Error(error.error || 'Failed to create Stripe checkout session')
+    }
+
+    const data = await response.json()
+    if (!data.url || !data.sessionId) {
+        throw new Error('Invalid response from create-session API')
+    }
+    if (!/^https?:\/\//i.test(data.url)) {
+        throw new Error('Invalid checkout URL returned')
+    }
+    return { sessionId: data.sessionId, url: data.url, shopOrderId: data.shopOrderId }
+}
+
+/**
  * Create a Stripe Checkout Session and return the hosted-checkout URL.
  * The caller should redirect the browser to `url` (window.location = url).
  */
