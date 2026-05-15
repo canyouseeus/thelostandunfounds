@@ -5,7 +5,10 @@ Allow: /
 Sitemap: https://www.thelostandunfounds.com/sitemap.xml
 Sitemap: https://www.thelostandunfounds.com/image-sitemap.xml
 
-# Block API routes, admin surfaces, and internal-only pages from search indexes.
+# Allow the gallery image stream proxy so Googlebot can index published photos.
+Allow: /api/gallery/stream
+
+# Block all other API routes, admin surfaces, and internal-only pages from search indexes.
 Disallow: /api/
 Disallow: /admin
 Disallow: /admin/
@@ -32,12 +35,14 @@ Disallow: /sql/
 # Per-bot allowlist (kept for clarity; same rules above apply)
 User-agent: Googlebot
 Allow: /
+Allow: /api/gallery/stream
 Disallow: /api/
 Disallow: /admin
 Disallow: /admin/
 
 User-agent: Bingbot
 Allow: /
+Allow: /api/gallery/stream
 Disallow: /api/
 Disallow: /admin
 Disallow: /admin/
