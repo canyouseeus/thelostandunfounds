@@ -1,9 +1,10 @@
 import { google } from 'googleapis';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
-import { buildName, getAvailableBytes, formatBytes, resetSeqs } from './claptrop-namer.js';
+import { buildName, getAvailableBytes, formatBytes, resetSeqs, claptropTail, dateFromName } from './claptrop-namer.js';
 import { run as runRetrograde } from './claptrop-retrograde.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -127,16 +128,85 @@ async function getOrCreateFolder(name: string, parentId: string): Promise<string
     }, `getOrCreateFolder(${name})`);
 }
 
-// Build a Set of all filenames (lowercased) in a Drive folder tree.
-// Called once per type folder at startup so every subsequent lookup is O(1).
-async function buildDriveFileIndex(folderId: string): Promise<Set<string>> {
-    const names = new Set<string>();
+// ─── 4-axis fingerprint index ─────────────────────────────────────────────────
+//
+// Axis 1 — md5:HASH:size  → byte-identical proof (no EXIF needed)
+// Axis 2 — ns:lcname:size → exact claptrop filename match
+// Axis 3 — tail:tail:size → prefix-agnostic tail (catches @tlau_ vs @tlau.photos_)
+// Axis 4 — date:YYYY-MM-DD:size → DSCF/RAW files that have no claptrop name yet
+//
+// Any hit on ANY axis means the file is already in Drive — skip the upload.
+
+interface DriveFingerprintIndex {
+    md5:  Set<string>;   // "md5:HASH:size"
+    ns:   Set<string>;   // "ns:lcname:size"
+    tail: Set<string>;   // "tail:tail:size"
+    date: Set<string>;   // "date:YYYY-MM-DD:size"
+}
+
+function emptyIndex(): DriveFingerprintIndex {
+    return { md5: new Set(), ns: new Set(), tail: new Set(), date: new Set() };
+}
+
+function addFileToIndex(idx: DriveFingerprintIndex, name: string, size: string, md5: string | undefined) {
+    const lc   = name.toLowerCase();
+    const sz   = size || '0';
+    if (md5) idx.md5.add(`md5:${md5}:${sz}`);
+    idx.ns.add(`ns:${lc}:${sz}`);
+    const tail = claptropTail(lc);
+    if (tail) idx.tail.add(`tail:${tail}:${sz}`);
+    const date = dateFromName(lc);
+    if (date) idx.date.add(`date:${date}:${sz}`);
+}
+
+// Compute MD5 of a local file
+function md5OfFile(filePath: string): string {
+    const hash = crypto.createHash('md5');
+    hash.update(fs.readFileSync(filePath));
+    return hash.digest('hex');
+}
+
+// Check all 4 axes; returns the axis that matched ('md5'|'ns'|'tail'|'date'|null)
+function findExistingInDrive(
+    idx: DriveFingerprintIndex,
+    localPath: string,
+): string | null {
+    const name = path.basename(localPath);
+    const lc   = name.toLowerCase();
+    const size = String(fs.statSync(localPath).size);
+
+    // Axis 1: md5 (exact bytes) — only compute hash if md5 index is non-empty
+    if (idx.md5.size > 0) {
+        const hash = md5OfFile(localPath);
+        if (idx.md5.has(`md5:${hash}:${size}`)) return 'md5';
+    }
+
+    // Axis 2: name+size
+    if (idx.ns.has(`ns:${lc}:${size}`)) return 'ns';
+
+    // Axis 3: tail+size (catches prefix upgrades @tlau_ → @tlau.photos_…)
+    const tail = claptropTail(lc);
+    if (tail && idx.tail.has(`tail:${tail}:${size}`)) return 'tail';
+
+    // Axis 4: date+size for non-claptrop names (DSCF*.JPG, etc.)
+    if (!tail) {
+        const date = dateFromName(lc);
+        if (date && idx.date.has(`date:${date}:${size}`)) return 'date';
+    }
+
+    return null;
+}
+
+// Build a 4-axis fingerprint index for a Drive folder tree.
+// Fetches md5Checksum + size via Drive API v3 so the md5 axis is populated.
+async function buildDriveFileIndex(folderId: string): Promise<DriveFingerprintIndex> {
+    const idx = emptyIndex();
     let pageToken: string | undefined;
 
     do {
         const res = await retryApiCall(() => drive.files.list({
             q: `'${folderId}' in parents and trashed = false`,
-            fields: 'nextPageToken, files(id, name, mimeType)',
+            fields: 'nextPageToken, files(id, name, mimeType, size, md5Checksum)',
             pageSize: 1000,
             ...(pageToken ? { pageToken } : {}),
         }), `buildIndex(${folderId})`);
@@ -144,18 +214,20 @@ async function buildDriveFileIndex(folderId: string): Promise<Set<string>> {
         for (const f of res.data.files || []) {
             if (!f.id) continue;
             if (f.mimeType === 'application/vnd.google-apps.folder') {
-                // Recurse into subfolders (e.g. "NEW UPLOADS" sub-tree)
                 const sub = await buildDriveFileIndex(f.id);
-                for (const n of sub) names.add(n);
+                for (const k of sub.md5)  idx.md5.add(k);
+                for (const k of sub.ns)   idx.ns.add(k);
+                for (const k of sub.tail) idx.tail.add(k);
+                for (const k of sub.date) idx.date.add(k);
             } else if (f.name) {
-                names.add(f.name.toLowerCase());
+                addFileToIndex(idx, f.name, f.size ?? '0', f.md5Checksum ?? undefined);
             }
         }
 
         pageToken = res.data.nextPageToken ?? undefined;
     } while (pageToken);
 
-    return names;
+    return idx;
 }
 
 async function removeDuplicatesInFolder(parentId: string, label: string) {
@@ -183,15 +255,17 @@ async function uploadAndClean(
     filePath: string,
     parentId: string,
     deleteAfter = false,
-    driveIndex?: Set<string>,   // pre-built index for this type folder
+    driveIndex?: DriveFingerprintIndex,
 ): Promise<boolean> {
     const fileName = path.basename(filePath);
     const fileSize = fs.statSync(filePath).size;
 
-    const alreadyUploaded = isInHistory(fileName) || driveIndex?.has(fileName.toLowerCase());
+    const historyHit = isInHistory(fileName);
+    const driveAxis  = driveIndex ? findExistingInDrive(driveIndex, filePath) : null;
 
-    if (alreadyUploaded) {
-        console.log(`  Skipping ${fileName} (${isInHistory(fileName) ? 'in history' : 'found in Drive index'})`);
+    if (historyHit || driveAxis) {
+        const reason = historyHit ? 'in history' : `Drive match (axis=${driveAxis})`;
+        console.log(`  Skipping ${fileName} (${reason})`);
         addToHistory(fileName);
         if (deleteAfter && fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
@@ -233,7 +307,8 @@ async function uploadAndClean(
 
     if (success) {
         addToHistory(fileName);
-        driveIndex?.add(fileName.toLowerCase()); // keep index current within this run
+        // Keep index current so later files in this same run don't re-upload
+        if (driveIndex) addFileToIndex(driveIndex, fileName, String(fileSize), undefined);
         console.log(`  ✅ Uploaded: ${fileName}`);
         if (deleteAfter && fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
@@ -259,7 +334,7 @@ function getFilesRecursive(dir: string): string[] {
 
 // ─── Phase 0: Flush local staging → Drive (frees disk space) ─────────────────
 
-async function flushStagingToDrive(indexes: Record<string, Set<string>>) {
+async function flushStagingToDrive(indexes: Record<string, DriveFingerprintIndex>) {
     console.log('\n=== Phase 0: Flushing local staging to Drive (freeing disk space) ===');
     const failed: string[] = [];
 
@@ -289,6 +364,20 @@ async function flushStagingToDrive(indexes: Record<string, Set<string>>) {
 
 // ─── Phase 1: Import from SD card (with claptrop naming) ─────────────────────
 
+// Run up to `limit` async tasks concurrently
+async function pMap<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+    const results: R[] = [];
+    let idx = 0;
+    async function worker() {
+        while (idx < items.length) {
+            const i = idx++;
+            results[i] = await fn(items[i]);
+        }
+    }
+    await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+    return results;
+}
+
 async function importFromSDCard(sdPath: string) {
     console.log(`\n=== Phase 1: Importing from SD card (${sdPath}) ===`);
     resetSeqs();
@@ -303,7 +392,7 @@ async function importFromSDCard(sdPath: string) {
     ];
 
     for (const group of order) {
-        const config  = FOLDER_CONFIG[group.type];
+        const config   = FOLDER_CONFIG[group.type];
         const toImport = allFiles.filter(f => group.exts.includes(path.extname(f).toLowerCase()));
         if (!toImport.length) continue;
 
@@ -315,6 +404,8 @@ async function importFromSDCard(sdPath: string) {
             fs.readdirSync(config.local).map(f => f.toLowerCase())
         );
 
+        // Step 1: resolve all names sequentially (geocoding is rate-limited to 1 req/s)
+        const tasks: { srcPath: string; destPath: string; log: any }[] = [];
         for (const srcPath of toImport) {
             const srcFolder = path.basename(path.dirname(srcPath));
             const { meta, log } = await buildName({
@@ -324,19 +415,25 @@ async function importFromSDCard(sdPath: string) {
                 parentFolder:  srcFolder,
                 existingNames,
             });
-
             const destPath = path.join(config.local, meta.filename);
+            if (!fs.existsSync(destPath)) tasks.push({ srcPath, destPath, log });
+        }
 
-            if (fs.existsSync(destPath)) continue; // already imported under new name
-
+        // Step 2: copy + delete in parallel batches of 10
+        let done = 0;
+        await pMap(tasks, 10, async ({ srcPath, destPath, log }) => {
             try {
-                console.log(`  ${log.original} → ${meta.filename}`);
-                fs.copyFileSync(srcPath, destPath);
+                await fs.promises.copyFile(srcPath, destPath);
+                await fs.promises.unlink(srcPath);
                 renameLogs.push(log);
+                done++;
+                if (done % 10 === 0 || done === tasks.length) {
+                    console.log(`  ${done}/${tasks.length} ${group.type} files copied…`);
+                }
             } catch (err: any) {
                 console.error(`  Error copying ${log.original}: ${err.message}`);
             }
-        }
+        });
     }
 
     console.log('\n✅ SD card import complete.');
@@ -344,7 +441,7 @@ async function importFromSDCard(sdPath: string) {
 
 // ─── Phase 2: Upload Desktop staging → Drive ──────────────────────────────────
 
-async function uploadStagingToDrive(indexes: Record<string, Set<string>>) {
+async function uploadStagingToDrive(indexes: Record<string, DriveFingerprintIndex>) {
     if (SKIP_DRIVE) { console.log('\n⏭  --skip-drive set. Skipping Drive upload.'); return; }
 
     console.log('\n=== Phase 2: Uploading staging to Drive ===');
@@ -390,10 +487,10 @@ async function startSync() {
 
     // ── Build Drive file indexes (one API walk per folder, then O(1) lookups) ──
     console.log('\nBuilding Drive file indexes…');
-    const driveIndexes: Record<string, Set<string>> = {};
+    const driveIndexes: Record<string, DriveFingerprintIndex> = {};
     for (const [type, config] of Object.entries(FOLDER_CONFIG)) {
         driveIndexes[type] = await buildDriveFileIndex(config.parent);
-        console.log(`  ${type}: ${driveIndexes[type].size} files indexed`);
+        console.log(`  ${type}: ${driveIndexes[type].ns.size} files indexed (4-axis)`);
     }
 
     // ── Check disk space ───────────────────────────────────────────────────────
