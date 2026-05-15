@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Squares2X2Icon,
@@ -704,11 +705,120 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         return library ? Number(library.price) || 0 : 0;
     })();
 
+    // ── SEO ────────────────────────────────────────────────────────────────────
+    const seoMeta = useMemo(() => {
+        if (!library || library.slug === 'all-public' || inline) return null;
+
+        const libName  = library.name;
+        // Pull city from the first photo that has one
+        const city = photos.find(p => p.metadata?.city)?.metadata?.city || 'Austin, TX';
+        // Derive a clean city label (e.g. "Austin, TX" → "Austin")
+        const cityShort = city.split(',')[0].trim();
+
+        const coverPhoto  = photos[0];
+        const coverUrl    = coverPhoto?.google_drive_file_id
+            ? `https://www.thelostandunfounds.com/api/gallery/stream?fileId=${encodeURIComponent(coverPhoto.google_drive_file_id)}&size=1200`
+            : 'https://www.thelostandunfounds.com/og-image.png';
+
+        const pageTitle   = `${libName} — ${cityShort} Photography | The Lost+Unfounds`;
+        const pageDesc    = `${libName} — ${cityShort} photography by The Lost+Unfounds. `
+            + `High-resolution photos available for licensing and download. `
+            + `Available for event, nightlife, and portrait bookings in ${cityShort} and beyond.`;
+        const canonicalUrl = `https://www.thelostandunfounds.com/gallery/${library.slug}`;
+
+        // ImageObject JSON-LD for up to 10 photos
+        const imageObjects = photos.slice(0, 10).map(p => ({
+            '@type': 'ImageObject',
+            name: (p.title || libName).replace(/\.[^.]+$/, ''),
+            contentUrl: `https://www.thelostandunfounds.com/api/gallery/stream?fileId=${encodeURIComponent(p.google_drive_file_id || '')}&size=1200`,
+            thumbnailUrl: `https://www.thelostandunfounds.com/api/gallery/stream?fileId=${encodeURIComponent(p.google_drive_file_id || '')}&size=400`,
+            creator: {
+                '@type': 'Person',
+                name: 'Joshua Abram Greene',
+                url: 'https://www.thelostandunfounds.com',
+            },
+            copyrightHolder: {
+                '@type': 'Organization',
+                name: 'The Lost+Unfounds',
+                url: 'https://www.thelostandunfounds.com',
+            },
+            locationCreated: {
+                '@type': 'Place',
+                name: p.metadata?.city || city,
+            },
+            dateCreated: p.metadata?.date_taken
+                ? new Date(p.metadata.date_taken).toISOString().slice(0, 10)
+                : undefined,
+            ...(singlePrice > 0 && {
+                offers: {
+                    '@type': 'Offer',
+                    price: singlePrice.toFixed(2),
+                    priceCurrency: 'USD',
+                    availability: 'https://schema.org/InStock',
+                    url: canonicalUrl,
+                },
+            }),
+        }));
+
+        const structuredData = {
+            '@context': 'https://schema.org',
+            '@graph': [
+                {
+                    '@type': 'CollectionPage',
+                    name: pageTitle,
+                    description: pageDesc,
+                    url: canonicalUrl,
+                    image: coverUrl,
+                    author: {
+                        '@type': 'Person',
+                        name: 'Joshua Abram Greene',
+                        url: 'https://www.thelostandunfounds.com',
+                    },
+                    hasPart: imageObjects,
+                },
+                {
+                    '@type': 'BreadcrumbList',
+                    itemListElement: [
+                        { '@type': 'ListItem', position: 1, name: 'Home',    item: 'https://www.thelostandunfounds.com/' },
+                        { '@type': 'ListItem', position: 2, name: 'Gallery', item: 'https://www.thelostandunfounds.com/gallery' },
+                        { '@type': 'ListItem', position: 3, name: libName,   item: canonicalUrl },
+                    ],
+                },
+            ],
+        };
+
+        return { pageTitle, pageDesc, coverUrl, canonicalUrl, structuredData };
+    }, [library, photos, inline, singlePrice]);
+
     return (
         <div
             className={`min-h-screen bg-black ${inline ? 'pt-0' : 'pt-20'} pb-40 px-4 md:px-8`}
             onContextMenu={(e) => e.preventDefault()}
         >
+            {seoMeta && (
+                <Helmet>
+                    <title>{seoMeta.pageTitle}</title>
+                    <meta name="description" content={seoMeta.pageDesc} />
+                    <link rel="canonical" href={seoMeta.canonicalUrl} />
+                    {/* Open Graph */}
+                    <meta property="og:type"        content="website" />
+                    <meta property="og:title"       content={seoMeta.pageTitle} />
+                    <meta property="og:description" content={seoMeta.pageDesc} />
+                    <meta property="og:image"       content={seoMeta.coverUrl} />
+                    <meta property="og:url"         content={seoMeta.canonicalUrl} />
+                    <meta property="og:site_name"   content="The Lost+Unfounds" />
+                    {/* Twitter */}
+                    <meta name="twitter:card"        content="summary_large_image" />
+                    <meta name="twitter:title"       content={seoMeta.pageTitle} />
+                    <meta name="twitter:description" content={seoMeta.pageDesc} />
+                    <meta name="twitter:image"       content={seoMeta.coverUrl} />
+                    <meta name="twitter:site"        content="@tlau.photos" />
+                    {/* Structured data */}
+                    <script type="application/ld+json">
+                        {JSON.stringify(seoMeta.structuredData)}
+                    </script>
+                </Helmet>
+            )}
             {/* Header / Info Section */}
             <div className="max-w-7xl mx-auto mb-6">
                 {/* Title Section */}

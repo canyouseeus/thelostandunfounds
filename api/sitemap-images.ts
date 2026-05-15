@@ -57,7 +57,9 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
         const imageNodes = photos
             .map(p => {
                 const fileId = encodeURIComponent(p.google_drive_file_id as string);
-                const imgUrl = `${SITE_URL}/api/gallery/stream?fileId=${fileId}&size=1200`;
+                // Use size=400 so Google indexes a preview-quality image.
+                // Full-resolution stays behind the gallery purchase flow.
+                const imgUrl = `${SITE_URL}/api/gallery/stream?fileId=${fileId}&size=400`;
                 // Use the CLAPTROP title (e.g. @tlau.photos_thelostandunfounds_2026-05-02_austin_last-night_001)
                 // falling back to the library name. Strip the extension.
                 const rawTitle = (p.title as string | null)?.replace(/\.[^.]+$/, '') || lib.name;
