@@ -3,7 +3,7 @@ import { sendAffiliateEmail } from './_emails.js';
 
 export interface CommissionTriggerInput {
   email: string;
-  source: 'photo_order' | 'booking' | 'stripe';
+  source: 'photo_order' | 'booking' | 'stripe' | 'event_ticket';
   sourceId: string;
   grossAmount: number;
   userId?: string | null;

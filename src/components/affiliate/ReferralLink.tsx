@@ -77,7 +77,7 @@ export default function ReferralLink({ affiliateCode }: ReferralLinkProps) {
                 {copiedCustomer ? 'Copied' : 'Copy'}
               </button>
               <button
-                onClick={() => shareLink(customerLink, 'Check out The Lost+Unfounds!')}
+                onClick={() => shareLink(customerLink, 'Check out THE LOST+UNFOUNDS!')}
                 className="px-4 py-3 bg-white/5 text-white hover:bg-white/10 transition-all flex items-center justify-center"
                 title="Share link"
               >
@@ -115,7 +115,7 @@ export default function ReferralLink({ affiliateCode }: ReferralLinkProps) {
                 {copiedAffiliate ? 'Copied' : 'Copy'}
               </button>
               <button
-                onClick={() => shareLink(affiliateLink, 'Join The Lost+Unfounds Affiliate Program!')}
+                onClick={() => shareLink(affiliateLink, 'Join THE LOST+UNFOUNDS Affiliate Program!')}
                 className="px-4 py-3 bg-white/5 text-white hover:bg-white/10 transition-all flex items-center justify-center"
                 title="Share link"
               >
@@ -134,7 +134,7 @@ export default function ReferralLink({ affiliateCode }: ReferralLinkProps) {
           <ul className="space-y-2">
             <li className="flex gap-3 text-white/60 text-xs leading-relaxed">
               <span className="text-white/30 font-mono mt-0.5">01</span>
-              <span>Share customer link for 42% commission on all their purchases (forever).</span>
+              <span>Share customer link to earn 42% of the profit on all their purchases (forever).</span>
             </li>
             <li className="flex gap-3 text-white/60 text-xs leading-relaxed">
               <span className="text-white/30 font-mono mt-0.5">02</span>

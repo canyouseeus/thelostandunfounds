@@ -98,6 +98,13 @@ export default function Events() {
 
     useEffect(() => {
         loadEvents();
+        // Show success toast when returning from Stripe Checkout
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('payment') === 'success') {
+            success('Ticket purchased! Check your email for confirmation.');
+            // Clean up query string without a full page reload
+            window.history.replaceState({}, '', window.location.pathname);
+        }
     }, []);
 
     const loadEvents = async () => {
@@ -162,6 +169,7 @@ export default function Events() {
             setDonationAmount('');
             setShowRegistrationForm(true);
             return;
+
         }
 
         // If this event has a custom form and we haven't collected responses yet
@@ -175,26 +183,50 @@ export default function Events() {
         setIsProcessingDirectAction(event.id);
 
         try {
-            const { error } = await supabase.rpc('purchase_ticket', {
-                p_event_id: event.id,
-                p_form_responses: responses,
-                p_tier_id: options.tierId,
-                p_amount_cents: options.amountCents
+            // Determine final price in cents
+            let amountCents = options.amountCents || 0;
+            if (!amountCents) {
+                if (options.tierId && event.ticket_tiers) {
+                    const tier = event.ticket_tiers.find(t => t.id === options.tierId);
+                    amountCents = tier ? tier.price_cents : event.price_cents;
+                } else {
+                    amountCents = event.price_cents;
+                }
+            }
+
+            // Route through Stripe Checkout so the webhook can attribute
+            // affiliate commissions and track the sale properly.
+            const response = await fetch('/api/events/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    eventId: event.id,
+                    tierId: options.tierId || null,
+                    amountCents,
+                    quantity: 1,
+                    email: user.email,
+                    name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+                    userId: user.id,
+                    formResponses: Object.keys(responses).length > 0 ? responses : null,
+                    returnPath: '/events',
+                }),
             });
 
-            if (error) throw error;
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.error || 'Checkout failed');
+            }
 
-            success(`Ticket purchased for ${event.title}!`);
-            setShowRegistrationForm(false);
-            setDonationAmount('');
-            setSelectedTier(null);
-            loadEvents();
+            // Redirect to Stripe Checkout
+            if (result.url) {
+                window.location.href = result.url;
+            }
         } catch (err: any) {
             console.error('Error purchasing ticket:', err);
             showError(err.message || 'Failed to purchase ticket');
-        } finally {
             setIsProcessingDirectAction(null);
         }
+        // Note: don't clear isProcessingDirectAction on success — page will redirect
     };
 
     const handleFormSubmit = async (e: React.FormEvent) => {

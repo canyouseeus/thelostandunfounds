@@ -99,12 +99,12 @@ export default function RewardPointsBadge({ affiliateId, initialPoints = 0 }: Re
 
       {/* Points History */}
       {showHistory && pointsData && (
-        <div className="border-t border-white/10 pt-4">
+        <div className="pt-4">
           <h4 className="text-white font-medium mb-3">Recent Activity</h4>
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {pointsData.history.length > 0 ? (
               pointsData.history.map((entry) => (
-                <div key={entry.id} className="flex justify-between items-start text-sm border-b border-white/5 pb-2">
+                <div key={entry.id} className="flex justify-between items-start text-sm pb-2">
                   <div className="flex-1">
                     <p className="text-white">{entry.description}</p>
                     <p className="text-white/40 text-xs">{new Date(entry.created_at).toLocaleDateString()}</p>

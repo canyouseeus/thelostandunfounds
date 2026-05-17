@@ -139,7 +139,7 @@ export default function EmployeeDiscount({ affiliateId, affiliateCode, creditBal
           <li>Get 42% of profit as discount credit (not cash commission)</li>
           <li>Can be used <span className="font-bold text-white">once every 30 days</span></li>
           <li>Your upline still earns MLM bonuses on remaining profit</li>
-          <li>You continue earning cash commissions on all other sales</li>
+          <li>You continue earning 42% of profit as cash commission on all other referred sales</li>
         </ul>
       </div>
     </div>

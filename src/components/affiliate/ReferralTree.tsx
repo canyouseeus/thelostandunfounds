@@ -108,7 +108,7 @@ export default function ReferralTree({ affiliateId }: ReferralTreeProps) {
                   const isExpanded = expandedL1.has(affiliate.id);
 
                   return (
-                    <div key={affiliate.id} className="border border-white/10 rounded-none">
+                    <div key={affiliate.id} className="bg-white/5 rounded-none">
                       {/* L1 Affiliate */}
                       <div
                         className={`flex items-center justify-between p-4 cursor-pointer hover:bg-white/5 transition-colors ${hasL2 ? '' : 'cursor-default'}`}

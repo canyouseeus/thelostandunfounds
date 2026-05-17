@@ -76,15 +76,15 @@ export default function MLMEarningsTable({ affiliateId }: MLMEarningsTableProps)
         <div className="space-y-6">
           {/* Summary Cards */}
           <div className="grid grid-cols-3 gap-4">
-            <div className="bg-green-500/10 border border-green-500/30 rounded-none p-4 text-center">
+            <div className="bg-green-500/10 rounded-none p-4 text-center">
               <p className="text-green-400 text-sm mb-1">Total MLM</p>
               <p className="text-white text-2xl font-bold">${mlmData.totals.total_earnings.toFixed(2)}</p>
             </div>
-            <div className="bg-purple-500/10 border border-purple-500/30 rounded-none p-4 text-center">
+            <div className="bg-purple-500/10 rounded-none p-4 text-center">
               <p className="text-purple-400 text-sm mb-1">Level 1 (2%)</p>
               <p className="text-white text-2xl font-bold">${mlmData.totals.level1_earnings.toFixed(2)}</p>
             </div>
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-none p-4 text-center">
+            <div className="bg-blue-500/10 rounded-none p-4 text-center">
               <p className="text-blue-400 text-sm mb-1">Level 2 (1%)</p>
               <p className="text-white text-2xl font-bold">${mlmData.totals.level2_earnings.toFixed(2)}</p>
             </div>
@@ -120,7 +120,7 @@ export default function MLMEarningsTable({ affiliateId }: MLMEarningsTableProps)
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-white/10">
+                <tr>
                   <th className="text-left text-white/60 text-sm font-medium pb-2">Date</th>
                   <th className="text-left text-white/60 text-sm font-medium pb-2">From</th>
                   <th className="text-center text-white/60 text-sm font-medium pb-2">Level</th>
@@ -130,7 +130,7 @@ export default function MLMEarningsTable({ affiliateId }: MLMEarningsTableProps)
               </thead>
               <tbody>
                 {filteredEarnings.map((earning) => (
-                  <tr key={earning.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                  <tr key={earning.id} className="hover:bg-white/5 transition-colors">
                     <td className="py-3 text-white/80 text-sm">
                       {new Date(earning.created_at).toLocaleDateString()}
                     </td>

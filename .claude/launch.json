@@ -2,6 +2,14 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "Affiliate Dashboard Preview",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["-y", "--", "vercel", "dev", "--yes"],
+      "port": 3000,
+      "autoPort": true,
+      "url": "http://localhost:3000/preview/affiliate?section=affiliate"
+    },
+    {
       "name": "Vercel API Server",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["-y", "--", "vercel", "dev", "--yes"],

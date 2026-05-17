@@ -26,7 +26,7 @@ export function AdminBentoCard({
   className,
   action,
   collapsible = true,
-  defaultCollapsed = false
+  defaultCollapsed = true
 }: AdminBentoCardProps) {
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
 
@@ -60,17 +60,16 @@ export function AdminBentoCard({
         'group relative flex flex-col',
         'bg-black text-white',
         'rounded-none',
-        // Blog card-style hover effects - subtle lift
-        'transition-all duration-300 ease-out',
-        !isCollapsed && 'hover:-translate-y-0.5 hover:scale-[1.01]',
+        'transition-colors duration-300 ease-out',
         'hover:bg-[#0a0a0a]',
-        !isCollapsed && 'hover:shadow-[0_8px_30px_rgba(0,0,0,0.5)]',
         // Mobile: no overflow, allow natural height
         // Desktop: allow overflow for fixed-height grid
         'overflow-visible md:overflow-hidden',
         colSpanClasses[colSpan],
         rowSpanClasses[currentRowSpan],
-        className
+        className,
+        // When collapsed, kill any min-h the caller passed so no ghost gap appears
+        isCollapsed && '!min-h-0'
       )}
     >
       {/* Header - compact on mobile */}
@@ -113,7 +112,7 @@ export function AdminBentoCard({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="flex-col md:overflow-hidden"
+            className="flex flex-col md:overflow-hidden"
           >
             <div className="flex-1 p-4 md:p-5 flex flex-col">
               {children}

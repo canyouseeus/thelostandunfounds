@@ -139,6 +139,8 @@ async function finalizeCheckoutSession(session: Stripe.Checkout.Session) {
         await triggerPhotoOrderCommission(supabase, session)
     } else if (session.metadata?.source === 'tlau-shop-checkout') {
         await finalizeShopOrder(supabase, session)
+    } else if (session.metadata?.source === 'tlau-events') {
+        await finalizeEventOrder(supabase, session)
     }
 
     // Flip any pre-existing pending affiliate commission to confirmed (legacy
@@ -386,6 +388,108 @@ async function markShopOrderTerminal(sessionId: string, status: 'expired' | 'fai
         .update({ status })
         .eq('stripe_session_id', sessionId)
         .eq('status', 'pending')
+}
+
+/**
+ * Finalize a paid event ticket order:
+ *  1. Mark event_orders row as paid
+ *  2. Create event_tickets record (matches what the purchase_ticket RPC would do)
+ *  3. Trigger affiliate commission (source: 'event_ticket', profit = full ticket price)
+ */
+async function finalizeEventOrder(supabase: any, session: Stripe.Checkout.Session) {
+    const eventOrderId = session.metadata?.eventOrderId
+    if (!eventOrderId) {
+        console.error('❌ tlau-events session missing eventOrderId metadata:', session.metadata)
+        return
+    }
+
+    // Load the order row
+    const { data: order, error: orderError } = await supabase
+        .from('event_orders')
+        .select('*')
+        .eq('id', eventOrderId)
+        .single()
+
+    if (orderError || !order) {
+        console.error('❌ event_order not found:', eventOrderId, orderError)
+        return
+    }
+
+    // Idempotency: if already paid, skip
+    if (order.status === 'paid') {
+        console.log('ℹ️ event_order already paid, skipping:', eventOrderId)
+        return
+    }
+
+    const customerEmail =
+        session.customer_details?.email ||
+        session.customer_email ||
+        order.customer_email
+
+    // Mark the order paid
+    const { error: updateError } = await supabase
+        .from('event_orders')
+        .update({
+            status: 'paid',
+            stripe_session_id: session.id,
+        })
+        .eq('id', eventOrderId)
+
+    if (updateError) {
+        console.error('❌ Failed to mark event_order paid:', updateError)
+        return
+    }
+
+    // Create event_ticket record(s) — one per quantity
+    const qty = Number(order.quantity) || 1
+    const ticketRows = Array.from({ length: qty }, () => ({
+        event_id: order.event_id,
+        user_id: order.user_id || null,
+        customer_email: customerEmail?.toLowerCase() || order.customer_email,
+        customer_name: order.customer_name || null,
+        purchase_amount_cents: Math.round(order.amount_cents / qty),
+        tier_id: order.tier_id || null,
+        status: 'valid',
+        affiliate_ref: order.affiliate_ref || null,
+        event_order_id: eventOrderId,
+        ...(order.form_responses ? { form_responses: order.form_responses } : {}),
+    }))
+
+    const { error: ticketError } = await supabase
+        .from('event_tickets')
+        .insert(ticketRows)
+
+    if (ticketError) {
+        console.error('❌ Failed to create event_tickets:', ticketError)
+        // Don't return — commission should still fire; tickets can be created manually
+    } else {
+        console.log('✅ Event tickets created:', { eventOrderId, qty })
+    }
+
+    // Trigger affiliate commission — profit = full ticket price (no cost tracked for events)
+    if (customerEmail) {
+        const grossAmount = (Number(order.amount_cents) || 0) / 100
+        if (grossAmount > 0) {
+            const result = await triggerReferralCommission(supabase, {
+                email: customerEmail,
+                source: 'event_ticket',
+                sourceId: eventOrderId,
+                grossAmount,
+                userId: order.user_id || null,
+                fallbackAffiliateCode: order.affiliate_ref || session.metadata?.affiliateRef || null,
+            })
+
+            if (result.triggered) {
+                console.log('✅ Event ticket commission registered:', {
+                    order: eventOrderId,
+                    amount: result.amount,
+                    affiliate: result.affiliateId,
+                })
+            } else {
+                console.log('ℹ️ No affiliate commission for event order:', eventOrderId, result.reason)
+            }
+        }
+    }
 }
 
 /**
