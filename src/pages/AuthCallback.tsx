@@ -22,13 +22,27 @@ export default function AuthCallback() {
 
   const handleCallback = async () => {
     try {
-      // Handle the OAuth callback
-      const { session, error } = await authService.handleAuthCallback();
-
-      if (error) {
-        console.warn('Auth callback error:', error);
-        navigate('/?error=auth_failed');
-        return;
+      // Explicitly exchange the PKCE code for a session.
+      // getSession() only reads localStorage and returns null until the exchange
+      // completes — causing a race where getUser() also returns null and we
+      // navigate to '/'. By calling exchangeCodeForSession first we guarantee
+      // the session is established before we check who the user is.
+      const code = new URLSearchParams(window.location.search).get('code');
+      if (code) {
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        if (exchangeError) {
+          console.warn('Code exchange error:', exchangeError);
+          navigate('/?error=auth_failed');
+          return;
+        }
+      } else {
+        // No code in URL — fall back to reading whatever session is stored
+        const { error } = await authService.handleAuthCallback();
+        if (error) {
+          console.warn('Auth callback error:', error);
+          navigate('/?error=auth_failed');
+          return;
+        }
       }
 
       const { data: { user: currentUser } } = await supabase.auth.getUser();
