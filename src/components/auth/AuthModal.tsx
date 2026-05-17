@@ -149,6 +149,25 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
       return;
     }
 
+    // If the modal was opened on a protected page (or has a saved return URL),
+    // send the user back there after login instead of to a generic destination.
+    const returnUrl = localStorage.getItem('auth_return_url');
+    const protectedPaths = ['/dashboard', '/profile', '/settings'];
+    const currentPath = window.location.pathname;
+
+    if (returnUrl && returnUrl !== '/' && !returnUrl.startsWith('/auth')) {
+      localStorage.removeItem('auth_return_url');
+      navigate(returnUrl);
+      setJustSignedIn(false);
+      return;
+    }
+
+    if (protectedPaths.some(p => currentPath.startsWith(p))) {
+      // Already on the right page — just close the modal
+      setJustSignedIn(false);
+      return;
+    }
+
     try {
       // Check if user is admin
       let adminStatus = false;
@@ -156,7 +175,6 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
         adminStatus = await isAdmin();
       } catch (adminError) {
         console.warn('Error checking admin status:', adminError);
-        // Fallback to email check
         adminStatus = isAdminEmail(user?.email || '');
       }
 
@@ -165,19 +183,16 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
       if (isAdminUser) {
         navigate('/admin');
       } else {
-        // Regular users go to submit article page
-        navigate('/submit-article');
+        navigate('/dashboard');
       }
       setJustSignedIn(false);
     } catch (error: any) {
       console.error('Error in handleRedirect:', error);
-      // If admin check fails but email matches, redirect to admin
       const email = user?.email || '';
       if (email === 'thelostandunfounds@gmail.com' || email === 'admin@thelostandunfounds.com') {
         navigate('/admin');
       } else {
-        // Otherwise redirect to submit article
-        navigate('/submit-article');
+        navigate('/dashboard');
       }
       setJustSignedIn(false);
     }
@@ -187,6 +202,11 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Save current page so we can return after login
+    const currentPath = window.location.pathname;
+    if (currentPath !== '/' && !currentPath.startsWith('/auth')) {
+      localStorage.setItem('auth_return_url', currentPath + window.location.search);
+    }
     setError(null);
     setLoading(true);
 
