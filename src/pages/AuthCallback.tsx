@@ -22,46 +22,47 @@ export default function AuthCallback() {
 
   const handleCallback = async () => {
     try {
-      // Supabase's detectSessionInUrl automatically exchanges the PKCE code
-      // when getSession() is first called. We must NOT call exchangeCodeForSession()
-      // ourselves — both AuthContext.initializeAuth() and this handler call getSession(),
-      // and a simultaneous explicit exchangeCodeForSession() causes "code already used"
-      // errors that send the user to the homepage.
+      // PKCE OAuth sessions are exchanged asynchronously. The race condition:
+      //   - Supabase fires INITIAL_SESSION (with null) before the code exchange completes.
+      //   - Listening for onAuthStateChange and resolving on the first event would
+      //     immediately resolve with null, triggering the error redirect.
       //
-      // Strategy:
-      //   1. Call getSession() — in Supabase v2 this awaits the PKCE exchange.
-      //   2. If no session yet (race with AuthContext), wait for onAuthStateChange.
-      //   3. Then read the user and redirect.
-      console.log('[CB] handleCallback start, URL:', window.location.href);
-      console.log('[CB] auth_return_url:', localStorage.getItem('auth_return_url'));
+      // Fix: subscribe to onAuthStateChange FIRST (before getSession), and only
+      // resolve when we actually have a session. Also check getSession() in parallel
+      // as a fast-path for cases where the exchange already completed.
+      const session = await new Promise<any>((resolve) => {
+        let done = false;
+        const timer = setTimeout(() => {
+          if (!done) { done = true; resolve(null); }
+        }, 10000);
 
-      let { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      console.log('[CB] getSession result:', { hasSession: !!session, userId: session?.user?.id, error: sessionError?.message });
-
-      if (!session && !sessionError) {
-        console.log('[CB] no session yet, waiting for onAuthStateChange...');
-        // Exchange still in progress — wait for it via auth state change (8s timeout)
-        session = await new Promise<typeof session>((resolve) => {
-          let done = false;
-          const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
-            console.log('[CB] onAuthStateChange event:', event, 'hasSession:', !!s);
-            if (!done) { done = true; subscription.unsubscribe(); resolve(s); }
-          });
-          setTimeout(() => {
-            if (!done) { done = true; subscription.unsubscribe(); console.log('[CB] timeout waiting for session'); resolve(null); }
-          }, 8000);
+        // Subscribe first so we don't miss SIGNED_IN if exchange completes immediately
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
+          if (!done && s) {
+            done = true;
+            clearTimeout(timer);
+            subscription.unsubscribe();
+            resolve(s);
+          }
         });
-        console.log('[CB] after wait, session:', !!session);
-      }
 
-      if (sessionError || !session) {
-        console.warn('[CB] no session, navigating to error page. error:', sessionError?.message);
+        // Fast-path: session may already exist (exchange done by AuthContext)
+        supabase.auth.getSession().then(({ data: { session: s } }) => {
+          if (!done && s) {
+            done = true;
+            clearTimeout(timer);
+            subscription.unsubscribe();
+            resolve(s);
+          }
+        });
+      });
+
+      if (!session) {
         navigate('/?error=auth_failed');
         return;
       }
 
       const currentUser = session.user;
-      console.log('[CB] got user:', currentUser?.email, 'author_name:', currentUser?.user_metadata?.author_name);
 
       setUser(currentUser);
 
