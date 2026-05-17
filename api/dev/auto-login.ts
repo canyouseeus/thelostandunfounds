@@ -10,11 +10,11 @@ import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Vercel dev doesn't inject .env.local into serverless function processes
-if (process.env.NODE_ENV !== 'production') {
-  dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
-  dotenv.config({ path: path.resolve(process.cwd(), '.env') });
-}
+// Vercel dev doesn't inject .env.local into serverless function processes.
+// Use override:true so a freshly-written .env.local is always picked up
+// without needing to restart the whole Vercel dev process.
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local'), override: true });
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const ADMIN_EMAIL = 'thelostandunfounds@gmail.com';
 
@@ -34,6 +34,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!supabaseUrl || !serviceRoleKey) {
     return res.status(500).json({ error: 'Missing Supabase service role configuration' });
   }
+
 
   const adminClient = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
