@@ -57,9 +57,7 @@ export default function AuthCallback() {
       // Existing user — go to return URL if we have one
       if (validReturnUrl) {
         localStorage.removeItem('auth_return_url');
-        // Translate /become-affiliate back to /dashboard (it's a marketing page)
-        const dest = returnUrl!.startsWith('/become-affiliate') ? '/dashboard' : returnUrl!;
-        navigate(dest);
+        navigate(resolveReturnUrl(returnUrl));
         return;
       }
 
@@ -76,6 +74,14 @@ export default function AuthCallback() {
       console.error('Auth callback crash:', error);
       navigate('/?error=onboarding_error');
     }
+  };
+
+  /** Translate marketing/dead-end pages to the real post-login destination. */
+  const resolveReturnUrl = (url: string | null): string => {
+    if (!url || url === '/' || url.startsWith('/auth') || url.startsWith('/become-affiliate')) {
+      return '/dashboard';
+    }
+    return url;
   };
 
   const handleUserRegistrationSuccess = (username: string) => {
@@ -95,14 +101,9 @@ export default function AuthCallback() {
 
   const handleSubdomainSuccess = (subdomain: string) => {
     setShowSubdomainModal(false);
-    // Redirect to dashboard after subdomain registration
     const returnUrl = localStorage.getItem('auth_return_url');
-    if (returnUrl) {
-      localStorage.removeItem('auth_return_url');
-      navigate(returnUrl);
-    } else {
-      navigate('/dashboard');
-    }
+    localStorage.removeItem('auth_return_url');
+    navigate(resolveReturnUrl(returnUrl));
   };
 
   return (
