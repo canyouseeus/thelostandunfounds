@@ -66,9 +66,6 @@ export async function signInWithGoogle(redirectTo?: string) {
 
   console.log('SignInWithGoogle Redirect:', redirectUrl);
 
-  // Force clear previous session/state to avoid PKCE conflicts
-  await supabase.auth.signOut();
-
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {

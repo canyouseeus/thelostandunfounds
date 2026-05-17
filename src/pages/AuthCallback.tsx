@@ -22,6 +22,16 @@ export default function AuthCallback() {
 
   const handleCallback = async () => {
     try {
+      // If Supabase itself returned an error in the callback URL (e.g. server_error,
+      // unexpected_failure), bail out immediately rather than waiting for a session.
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlError = urlParams.get('error');
+      if (urlError) {
+        console.warn('[CB] Supabase returned error in callback URL:', urlError, urlParams.get('error_description'));
+        navigate('/?error=auth_failed');
+        return;
+      }
+
       // PKCE OAuth sessions are exchanged asynchronously. The race condition:
       //   - Supabase fires INITIAL_SESSION (with null) before the code exchange completes.
       //   - Listening for onAuthStateChange and resolving on the first event would
