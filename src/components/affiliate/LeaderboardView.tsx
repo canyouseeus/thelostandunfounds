@@ -249,21 +249,21 @@ function StatTile({
 }) {
   return (
     <div className="bg-[#0a0a0a] p-4 md:p-5 flex flex-col">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-[9px] md:text-[10px] font-bold text-white/40 uppercase tracking-widest truncate">
+      <div className="flex items-center justify-between mb-2 gap-1">
+        <span className="text-[9px] md:text-[10px] font-bold text-white/40 uppercase tracking-widest leading-tight">
           {label}
         </span>
         {icon}
       </div>
       <div
         className={cn(
-          'text-lg md:text-2xl font-black text-white tracking-tighter truncate',
+          'text-lg md:text-2xl font-black text-white tracking-tighter break-all',
           mono && 'font-mono text-base md:text-xl'
         )}
       >
         {value}
       </div>
-      <div className="text-[9px] text-white/40 uppercase tracking-widest font-bold mt-1 truncate">
+      <div className="text-[9px] text-white/40 uppercase tracking-widest font-bold mt-1 leading-tight">
         {sublabel}
       </div>
     </div>
@@ -291,13 +291,13 @@ function RankingsByDate({
     <div className="bg-[#0a0a0a] overflow-hidden">
       <div className="px-4 md:px-6 py-3 md:py-4 bg-black/50 flex items-center gap-2">
         <ChartBarIcon className="w-4 h-4 text-white/40" />
-        <h3 className="text-xs md:text-sm font-black text-white uppercase tracking-widest truncate">
+        <h3 className="text-xs md:text-sm font-black text-white uppercase tracking-widest">
           {formattedDate}
         </h3>
       </div>
 
       {/* Mobile: stacked cards */}
-      <div className="md:hidden divide-y divide-white/5">
+      <div className="md:hidden">
         {sorted.map((ranking) => {
           const isMe = highlightAffiliateCode === ranking.affiliate_code;
           return (
@@ -307,9 +307,8 @@ function RankingsByDate({
             >
               <div className="flex items-center justify-between mb-3">
                 <RankBadge rank={ranking.rank} />
-                <span className="font-mono text-xs font-black text-white truncate ml-3">
+                <span className={cn("font-mono text-xs font-black break-all ml-3", isMe ? "text-green-400" : "text-white")}>
                   {ranking.affiliate_code}
-                  {isMe && <span className="ml-2 text-[9px] text-white/50 font-bold uppercase tracking-widest">You</span>}
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-2">
@@ -334,7 +333,7 @@ function RankingsByDate({
               <th className="px-6 py-3 text-center text-[10px] font-bold text-white/40 uppercase tracking-widest">Payout</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
+          <tbody>
             {sorted.map((ranking) => {
               const isMe = highlightAffiliateCode === ranking.affiliate_code;
               return (
@@ -345,9 +344,8 @@ function RankingsByDate({
                   <td className="px-6 py-3">
                     <RankBadge rank={ranking.rank} />
                   </td>
-                  <td className="px-6 py-3 font-mono text-sm font-black text-white">
+                  <td className={cn("px-6 py-3 font-mono text-sm font-black", isMe ? "text-green-400" : "text-white")}>
                     {ranking.affiliate_code}
-                    {isMe && <span className="ml-2 text-[9px] text-white/50 font-bold uppercase tracking-widest">You</span>}
                   </td>
                   <td className="px-6 py-3 text-right text-white font-mono text-sm font-bold">
                     ${ranking.profit_generated.toFixed(2)}

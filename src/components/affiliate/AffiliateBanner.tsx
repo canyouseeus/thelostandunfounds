@@ -17,7 +17,7 @@ export default function AffiliateBanner({ noMargin }: AffiliateBannerProps) {
                     <div className="text-left">
                         <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30 leading-none mb-2" style={{ textAlign: 'left' }}>Affiliate Program</p>
                         <h3 className="text-lg md:text-xl font-black text-white uppercase tracking-tighter leading-none group-hover:tracking-tight transition-all duration-500" style={{ textAlign: 'left' }}>
-                            Earn 42% Commission <span className="text-white/40 font-light">— Join Our Affiliate Program</span>
+                            Earn 42% of Profits <span className="text-white/40 font-light">— Join Our Affiliate Program</span>
                         </h3>
                     </div>
                     <div className="flex items-center gap-4">

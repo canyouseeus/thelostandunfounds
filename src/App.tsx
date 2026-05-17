@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Analytics } from '@vercel/analytics/react'
 import { AuthProvider } from './contexts/AuthContext'
 import { SageModeProvider } from './contexts/SageModeContext'
@@ -12,7 +12,7 @@ import ToolsDashboard from './pages/ToolsDashboard'
 import TikTokDownloader from './pages/TikTokDownloader'
 import AuthCallback from './pages/AuthCallback'
 import ZohoCallback from './pages/ZohoCallback'
-import Profile from './pages/Profile'
+import Affiliate from './pages/Affiliate'
 import Settings from './pages/Settings'
 import PhotographerDashboard from './pages/PhotographerDashboard'
 import Admin from './pages/Admin'
@@ -62,6 +62,8 @@ import SubmitEvent from './pages/SubmitEvent'
 import Advertise from './pages/Advertise'
 import PreviewVisitorPage from './pages/PreviewVisitorPage'
 import PreviewAdminLoginPage from './pages/PreviewAdminLoginPage'
+import { lazy, Suspense } from 'react'
+const PreviewAffiliate = lazy(() => import('./pages/PreviewAffiliate'))
 // BookingPage is rendered inline on the homepage (see src/pages/Gallery.tsx)
 // rather than as a standalone route — see the comment near the removed
 // /booking route below.
@@ -90,9 +92,19 @@ function AffiliateDashboardRedirect() {
   return <Navigate to={`/dashboard${search}`} replace />
 }
 
+/** Dev-only: expose React Router's navigate globally so preview_eval can route without a full reload. */
+function NavigationExposer() {
+  const navigate = useNavigate()
+  if (import.meta.env.DEV) {
+    ;(window as any).__navigate = navigate
+  }
+  return null
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <NavigationExposer />
       <AuthProvider>
         <GalleryProvider>
         <SageModeProvider>
@@ -148,11 +160,11 @@ function App() {
                 <Route path="tiktok-downloader" element={<TikTokDownloader />} />
               </Route>
               <Route path="/:username/profile" element={<Layout />}>
-                <Route index element={<Profile />} />
+                <Route index element={<Affiliate />} />
               </Route>
               <Route path="/:username/bookclubprofile" element={
                 <Layout>
-                  <Profile />
+                  <Affiliate />
                 </Layout>
               } />
               <Route path="/settings" element={<Layout />}>
@@ -160,7 +172,7 @@ function App() {
               </Route>
               <Route path="/dashboard" element={
                 <Layout>
-                  <Profile />
+                  <Affiliate />
                 </Layout>
               } />
               <Route path="/affiliate/dashboard" element={<AffiliateDashboardRedirect />} />
@@ -312,6 +324,7 @@ function App() {
               {/* Temporary preview routes — remove after gallery-homepage branch ships */}
               <Route path="/preview/visitor" element={<PreviewVisitorPage />} />
               <Route path="/preview/admin-login" element={<PreviewAdminLoginPage />} />
+              <Route path="/preview/affiliate" element={<Suspense fallback={null}><PreviewAffiliate /></Suspense>} />
 
               {/* Kattitude Tattoo Studio */}
               <Route path="/kattitude" element={<Layout />}>

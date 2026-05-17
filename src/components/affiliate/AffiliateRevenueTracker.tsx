@@ -15,6 +15,15 @@ import {
   TrophyIcon,
   UsersIcon,
 } from '@heroicons/react/24/outline';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 import { AnimatedNumber } from '../ui/animated-number';
 import { cn } from '../ui/utils';
 import { supabase } from '../../lib/supabase';
@@ -29,6 +38,10 @@ interface AffiliateRevenueTrackerProps {
   totalClicks: number;
   totalConversions: number;
   networkSize: number;
+  /** Actual withdrawable wallet balance from the dashboard API — shown in the Available stat. */
+  availableBalance?: number;
+  /** Authoritative pending balance from the dashboard API — overrides the computed sum from time-filtered commissions. */
+  pendingBalance?: number;
 }
 
 interface DailySeries {
@@ -44,6 +57,8 @@ export function AffiliateRevenueTracker({
   totalClicks,
   totalConversions,
   networkSize,
+  availableBalance,
+  pendingBalance,
 }: AffiliateRevenueTrackerProps) {
   const [period, setPeriod] = useState<TimePeriod>('30d');
   const [chartTab, setChartTab] = useState<ChartTab>('earnings');
@@ -188,13 +203,13 @@ export function AffiliateRevenueTracker({
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
         <Stat
           label="Available"
-          value={`$${available.toFixed(2)}`}
+          value={`$${(availableBalance ?? available).toFixed(2)}`}
           sublabel="Ready to payout"
-          accent={available > 0 ? 'green' : undefined}
+          accent={(availableBalance ?? available) > 0 ? 'green' : undefined}
         />
         <Stat
           label="Pending"
-          value={`$${pending.toFixed(2)}`}
+          value={`$${(pendingBalance ?? pending).toFixed(2)}`}
           sublabel="Clearing window"
         />
         <Stat
@@ -247,26 +262,33 @@ function Stat({
 }) {
   return (
     <div className="bg-black p-3 md:p-4">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-[9px] md:text-[10px] font-bold text-white/40 uppercase tracking-widest truncate">
+      <div className="flex items-center justify-between mb-2 gap-1">
+        <span className="text-[9px] md:text-[10px] font-bold text-white/40 uppercase tracking-widest leading-tight">
           {label}
         </span>
         {icon}
       </div>
       <div
         className={cn(
-          'text-sm md:text-lg font-black tracking-tight truncate font-mono',
+          'text-sm md:text-lg font-black tracking-tight font-mono break-all',
           accent === 'green' ? 'text-green-400' : 'text-white'
         )}
       >
         {value}
       </div>
-      <div className="text-[9px] text-white/40 uppercase tracking-widest font-bold mt-1 truncate">
+      <div className="text-[9px] text-white/40 uppercase tracking-widest font-bold mt-1 leading-tight">
         {sublabel}
       </div>
     </div>
   );
 }
+
+const CHART_CONFIG: Record<ChartTab, { color: string; label: string; prefix: string }> = {
+  earnings:    { color: '#4ade80', label: 'Earnings · Period',    prefix: '$' },
+  clicks:      { color: '#60a5fa', label: 'Clicks · Period',      prefix: ''  },
+  conversions: { color: '#c084fc', label: 'Conversions · Period', prefix: ''  },
+  rank:        { color: '#f59e0b', label: 'Rank · Period',        prefix: '#' },
+};
 
 function Chart({
   series,
@@ -275,56 +297,36 @@ function Chart({
   series: { date: string; value: number }[];
   tab: ChartTab;
 }) {
-  const width = 100;
-  const height = 40;
-  const isRank = tab === 'rank';
-  const hasData = series && series.length > 0;
-  const values = hasData ? series.map((p) => p.value) : [];
+  const cfg = CHART_CONFIG[tab];
+  const hasData = series.length > 0;
+  const values = series.map((p) => p.value);
+  const total = values.reduce((s, v) => s + v, 0);
+  const avg = hasData ? total / values.length : null;
 
-  // Headline number above the chart
-  const total = hasData ? values.reduce((sum, v) => sum + v, 0) : 0;
-  const avg = hasData ? values.reduce((sum, v) => sum + v, 0) / values.length : null;
   const headline = (() => {
-    if (!hasData) {
-      if (tab === 'earnings') return '$0.00';
-      if (tab === 'rank') return '—';
-      return '0';
-    }
+    if (!hasData) return tab === 'rank' ? '—' : tab === 'earnings' ? '$0.00' : '0';
     if (tab === 'earnings') return `$${total.toFixed(2)}`;
     if (tab === 'rank') return avg != null ? `avg #${avg.toFixed(1)}` : '—';
     return total.toLocaleString();
   })();
 
-  // Build polyline + area for the chart
-  let polyline = '';
-  let areaPath = '';
-  if (hasData) {
-    const max = Math.max(...values, 1);
-    const min = isRank ? 1 : 0;
-    const range = Math.max(max - min, 1);
-    const step = series.length > 1 ? width / (series.length - 1) : 0;
-
-    const points = series.map((p, i) => {
-      const x = i * step;
-      const normalized = (p.value - min) / range;
-      const y = isRank ? normalized * height : height - normalized * height;
-      return { x, y };
-    });
-
-    polyline = points.map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
-    areaPath = `M0,${height} L ${points
-      .map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`)
-      .join(' L ')} L ${width},${height} Z`;
-  }
+  // Format date labels — shorter label for denser series
+  const data = series.map((p) => {
+    const d = new Date(p.date);
+    const label = series.length > 30
+      ? d.toLocaleDateString([], { month: 'short', day: 'numeric' })
+      : d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    return { name: label, value: p.value };
+  });
 
   return (
     <div className="bg-black p-4 md:p-6">
-      <div className="flex items-baseline justify-between mb-3">
+      <div className="flex items-baseline justify-between mb-4">
         <div>
           <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
-            {labelFor(tab)}
+            {cfg.label}
           </div>
-          <div className="text-xl md:text-2xl font-black text-white tracking-tighter font-mono">
+          <div className="text-xl md:text-2xl font-black tracking-tighter font-mono" style={{ color: cfg.color }}>
             {headline}
           </div>
         </div>
@@ -333,54 +335,49 @@ function Chart({
         </div>
       </div>
 
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        preserveAspectRatio="none"
-        className="w-full h-32 md:h-40"
-      >
-        {/* Gridlines — soft dashed reference, no solid baseline (reads as a divider) */}
-        {[0.2, 0.4, 0.6, 0.8].map((frac) => (
-          <line
-            key={frac}
-            x1={0}
-            y1={height * frac}
-            x2={width}
-            y2={height * frac}
-            stroke="currentColor"
-            strokeOpacity={0.12}
-            strokeWidth={0.4}
-            vectorEffect="non-scaling-stroke"
-            strokeDasharray="2 3"
-          />
-        ))}
-
-        {hasData && (
-          <>
-            <path d={areaPath} fill="currentColor" className="text-white/15" />
-            <polyline
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.5}
-              vectorEffect="non-scaling-stroke"
-              className="text-white"
-              points={polyline}
+      <div className="h-40 md:h-48">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+            <XAxis
+              dataKey="name"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 9 }}
+              interval="preserveStartEnd"
+              minTickGap={40}
             />
-          </>
-        )}
-      </svg>
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 9 }}
+              width={tab === 'earnings' ? 42 : 28}
+              tickFormatter={(v: number) =>
+                tab === 'earnings'
+                  ? `$${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v.toFixed(0)}`
+                  : tab === 'rank' ? `#${v}` : String(v)
+              }
+              reversed={tab === 'rank'}
+            />
+            <Tooltip
+              contentStyle={{ backgroundColor: '#000', border: 'none', borderRadius: 0, fontSize: 12, padding: '8px 12px' }}
+              itemStyle={{ color: cfg.color }}
+              formatter={(v: number) => [`${cfg.prefix}${tab === 'earnings' ? v.toFixed(2) : v}`, cfg.label.split(' ·')[0]]}
+              labelStyle={{ color: '#888', fontSize: 10, marginBottom: 4 }}
+            />
+            <Area
+              type="monotone"
+              dataKey="value"
+              stroke={cfg.color}
+              fill={`${cfg.color}20`}
+              strokeWidth={2}
+              dot={{ r: 2, fill: cfg.color, strokeWidth: 0 }}
+              activeDot={{ r: 4, fill: cfg.color, strokeWidth: 2, stroke: '#000' }}
+              isAnimationActive={false}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
-}
-
-function labelFor(tab: ChartTab) {
-  switch (tab) {
-    case 'earnings':
-      return 'Earnings · period';
-    case 'clicks':
-      return 'Clicks · period';
-    case 'conversions':
-      return 'Conversions · period';
-    case 'rank':
-      return 'Rank · period';
-  }
 }

@@ -8,13 +8,14 @@ import {
 } from '@heroicons/react/24/outline';
 import KingMidasTicker from '../components/KingMidasTicker';
 import SEOHead from '../components/SEOHead';
+import BrandName from '../components/ui/BrandName';
 
 export default function BecomeAffiliate() {
     return (
         <>
         <SEOHead
-            title="Become an Affiliate - Earn 42% Commission"
-            description="Join THE LOST+UNFOUNDS affiliate network. Earn 42% commission on every sale, compete for the King Midas 8% profit pool, and build your earning network."
+            title="Become an Affiliate - Earn 42% of Profits"
+            description="Join THE LOST+UNFOUNDS affiliate network. Earn 42% of the profit on every sale, compete for the King Midas 8% profit pool, and build your earning network."
             canonicalPath="/become-affiliate"
         />
         <div className="min-h-screen bg-black text-white">
@@ -34,12 +35,12 @@ export default function BecomeAffiliate() {
                         </div>
 
                         <h1 className="text-5xl md:text-7xl font-black text-white mb-8 tracking-tighter uppercase leading-none">
-                            Earn 42% Commission<br />
+                            Earn 42% of Profits<br />
                             On Every Sale
                         </h1>
 
                         <p className="text-xl text-white/60 mb-12 max-w-2xl leading-relaxed">
-                            Join "The Lost+Unfounds" affiliate network. Get lifetime commissions on referred customers, compete for the generic King Midas 8% profit pool, and build your own earning network.
+                            Join the <BrandName /> affiliate network. Get lifetime commissions on referred customers, compete for the King Midas 8% profit pool, and build your own earning network.
                         </p>
 
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -70,7 +71,7 @@ export default function BecomeAffiliate() {
                             </div>
                             <h3 className="text-xl font-bold text-white uppercase tracking-wider mb-4 text-left">High Commissions</h3>
                             <p className="text-white/60 leading-relaxed text-left">
-                                Earn an industry-leading 42% commission on every sale you refer. Plus, your referrals are locked to you for life.
+                                Earn an industry-leading 42% of the profit on every sale you refer. Your referrals are locked to you for life.
                             </p>
                         </div>
 
@@ -90,7 +91,7 @@ export default function BecomeAffiliate() {
                             </div>
                             <h3 className="text-xl font-bold text-white uppercase tracking-wider mb-4 text-left">2-Tier MLM</h3>
                             <p className="text-white/60 leading-relaxed text-left">
-                                Recruit other affiliates and earn 2% on their sales (Level 1) and 1% on their recruits' sales (Level 2).
+                                Recruit other affiliates and earn 2% of profits on their sales (Level 1) and 1% of profits on their recruits' sales (Level 2).
                             </p>
                         </div>
                     </div>

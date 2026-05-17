@@ -90,7 +90,7 @@ export default function ModeSwitcher({ currentMode, lastChangeDate, affiliateId,
   }, [canSwitchNow, lastChangeDate]);
 
   return (
-    <div className="bg-black/50 border-2 border-white rounded-none p-6">
+    <div className="bg-black/50 rounded-none p-6">
       <h3 className="text-xl font-bold text-white mb-4">Commission Mode</h3>
 
       <div className="space-y-4">
@@ -110,14 +110,14 @@ export default function ModeSwitcher({ currentMode, lastChangeDate, affiliateId,
 
         {/* Mode Descriptions */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className={`p-4 border rounded-none ${currentMode === 'cash' ? 'border-green-400 bg-green-400/10' : 'border-white/20 bg-black/30'}`}>
+          <div className={`p-4 rounded-none ${currentMode === 'cash' ? 'bg-green-400/10' : 'bg-white/5'}`}>
             <h4 className="font-bold text-white mb-2">💰 Cash Mode</h4>
             <p className="text-white/80 text-sm">
               Earn 42% of profit as cash commissions. Best for affiliates focused on sales.
             </p>
           </div>
 
-          <div className={`p-4 border rounded-none ${currentMode === 'discount' ? 'border-green-400 bg-green-400/10' : 'border-white/20 bg-black/30'}`}>
+          <div className={`p-4 rounded-none ${currentMode === 'discount' ? 'bg-green-400/10' : 'bg-white/5'}`}>
             <h4 className="font-bold text-white mb-2">🏷️ Discount Mode</h4>
             <p className="text-white/80 text-sm">
               Get 42% of profit as discount credit for personal purchases. Best for self-use.
@@ -126,7 +126,7 @@ export default function ModeSwitcher({ currentMode, lastChangeDate, affiliateId,
         </div>
 
         {/* Important Note */}
-        <div className="bg-yellow-400/10 border border-yellow-400/30 p-4 rounded-none">
+        <div className="bg-yellow-400/10 p-4 rounded-none">
           <p className="text-yellow-400 text-sm font-medium mb-2">⚠️ Important:</p>
           <ul className="text-white/80 text-sm space-y-1 list-disc list-inside">
             <li>When using employee discount, all downstream commissions are calculated on remaining profit</li>
@@ -145,7 +145,7 @@ export default function ModeSwitcher({ currentMode, lastChangeDate, affiliateId,
             {switching ? 'Switching...' : `Switch to ${currentMode === 'cash' ? 'Discount' : 'Cash'} Mode`}
           </button>
         ) : (
-          <div className="text-center p-4 bg-white/5 border border-white/20 rounded-none">
+          <div className="text-center p-4 bg-white/5 rounded-none">
             <p className="text-white/60 text-sm">
               Mode switching available in <span className="font-bold text-white">{daysRemaining}</span> days
             </p>
@@ -153,7 +153,7 @@ export default function ModeSwitcher({ currentMode, lastChangeDate, affiliateId,
         )}
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/30 p-3 rounded-none">
+          <div className="bg-red-500/10 p-3 rounded-none">
             <p className="text-red-400 text-sm">{error}</p>
           </div>
         )}

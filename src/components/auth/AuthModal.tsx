@@ -16,9 +16,10 @@ interface AuthModalProps {
   title?: string;
   initialMode?: 'signin' | 'signup';
   onLoginSuccess?: () => void;
+  required?: boolean; // when true, hides the close button and disables backdrop click
 }
 
-export default function AuthModal({ isOpen, onClose, message, title, initialMode = 'signin', onLoginSuccess }: AuthModalProps) {
+export default function AuthModal({ isOpen, onClose, message, title, initialMode = 'signin', onLoginSuccess, required = false }: AuthModalProps) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -305,7 +306,7 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
       />
       <div
         className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={required ? undefined : onClose}
       >
         <div
           className="bg-black/50 rounded-none p-6 w-full max-w-md mx-4"
@@ -315,13 +316,15 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
             <h2 className="text-2xl font-bold text-white">
               {title || (isSignUp ? 'Sign Up' : 'Sign In')}
             </h2>
-            <button
-              onClick={onClose}
-              className="text-white/60 hover:text-white transition"
-              aria-label="Close"
-            >
-              <XMarkIcon className="w-6 h-6" />
-            </button>
+            {!required && (
+              <button
+                onClick={onClose}
+                className="text-white/60 hover:text-white transition"
+                aria-label="Close"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            )}
           </div>
 
           {message && (

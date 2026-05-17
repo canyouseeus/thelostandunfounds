@@ -15,6 +15,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { LoadingSpinner } from '../components/Loading';
 import SEOHead from '../components/SEOHead';
+import AuthModal from '../components/auth/AuthModal';
 
 export default function SettingsPage() {
   const { user, signOut } = useAuth();
@@ -103,10 +104,8 @@ export default function SettingsPage() {
 
   if (!user) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center py-12">
-          <p className="text-white/70">Please sign in to access settings.</p>
-        </div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <AuthModal isOpen={true} onClose={() => {}} required />
       </div>
     );
   }

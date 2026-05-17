@@ -57,7 +57,7 @@ export default function SecretSantaTracker({ affiliateId, rewardPoints }: Secret
   const countdown = getChristmasCountdown();
 
   return (
-    <div className="bg-black/50 border-2 border-red-500 rounded-none p-6">
+    <div className="bg-black/50 rounded-none p-6">
       <div className="flex items-center gap-3 mb-6">
         <GiftIcon className="text-red-500 w-6 h-6" />
         <h3 className="text-xl font-bold text-white">🎄 Secret Santa Pot</h3>
@@ -68,7 +68,7 @@ export default function SecretSantaTracker({ affiliateId, rewardPoints }: Secret
       ) : potData ? (
         <div className="space-y-6">
           {/* Current Year Pot */}
-          <div className="bg-red-500/10 border border-red-500/30 rounded-none p-6 text-center">
+          <div className="bg-red-500/10 rounded-none p-6 text-center">
             <p className="text-red-400 text-sm mb-2">{potData.year} Pot Total</p>
             <p className="text-white text-4xl font-bold mb-1">${potData.total_amount.toFixed(2)}</p>
             {!potData.distributed && (
@@ -83,7 +83,7 @@ export default function SecretSantaTracker({ affiliateId, rewardPoints }: Secret
 
           {/* Your Estimated Share */}
           {!potData.distributed && rewardPoints > 0 && (
-            <div className="bg-green-500/10 border border-green-500/30 rounded-none p-6">
+            <div className="bg-green-500/10 rounded-none p-6">
               <h4 className="text-green-400 font-medium mb-4">Your Estimated Share</h4>
 
               <div className="space-y-3">
@@ -100,7 +100,7 @@ export default function SecretSantaTracker({ affiliateId, rewardPoints }: Secret
                   <span className="text-white font-bold">{potData.your_percentage.toFixed(2)}%</span>
                 </div>
 
-                <div className="border-t border-white/10 pt-3 mt-3">
+                <div className="pt-3 mt-3">
                   <div className="flex justify-between items-center">
                     <span className="text-white font-medium">Estimated Payout:</span>
                     <span className="text-green-400 text-2xl font-bold">
@@ -114,7 +114,7 @@ export default function SecretSantaTracker({ affiliateId, rewardPoints }: Secret
 
           {/* Countdown to Christmas */}
           {!potData.distributed && (
-            <div className="text-center bg-white/5 border border-white/10 rounded-none p-4">
+            <div className="text-center bg-white/5 rounded-none p-4">
               <p className="text-white/60 text-sm mb-2">Distribution in</p>
               <p className="text-white text-3xl font-bold mb-1">{countdown.days} days</p>
               <p className="text-white/40 text-xs">
@@ -124,7 +124,7 @@ export default function SecretSantaTracker({ affiliateId, rewardPoints }: Secret
           )}
 
           {/* How It Works */}
-          <div className="bg-blue-500/10 border border-blue-500/30 rounded-none p-4">
+          <div className="bg-blue-500/10 rounded-none p-4">
             <h4 className="text-blue-400 font-medium mb-2">💡 How Secret Santa Works</h4>
             <ul className="text-white/80 text-sm space-y-1 list-disc list-inside">
               <li>Pot accumulates unclaimed 3% MLM bonuses all year</li>
@@ -136,7 +136,7 @@ export default function SecretSantaTracker({ affiliateId, rewardPoints }: Secret
 
           {/* Warning if no points */}
           {rewardPoints === 0 && !potData.distributed && (
-            <div className="bg-yellow-400/10 border border-yellow-400/30 rounded-none p-4">
+            <div className="bg-yellow-400/10 rounded-none p-4">
               <p className="text-yellow-400 text-sm font-medium mb-2">⚠️ No Points Yet</p>
               <p className="text-white/80 text-sm">
                 Earn reward points from sales to qualify for Secret Santa distribution!

@@ -112,7 +112,7 @@ export default function CustomerList({ affiliateId }: CustomerListProps) {
         ) : customers.length > 0 ? (
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/10">
+              <tr>
                 <th className="text-left text-white/60 text-sm font-medium pb-2">Email</th>
                 <th className="text-center text-white/60 text-sm font-medium pb-2">First Purchase</th>
                 <th className="text-center text-white/60 text-sm font-medium pb-2">Purchases</th>

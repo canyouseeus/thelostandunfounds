@@ -95,7 +95,7 @@ export default function PayoutHistoryTable({ affiliateId }: PayoutHistoryTablePr
 
           <div class="footer">
             Thank you for being a partner.<br>
-            The Lost+Unfounds
+            THE LOST+UNFOUNDS
           </div>
           <script>
             window.onload = function() { window.print(); }
@@ -113,7 +113,7 @@ export default function PayoutHistoryTable({ affiliateId }: PayoutHistoryTablePr
             <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                     <thead>
-                        <tr className="border-b border-white/10 text-white/40 text-[10px] uppercase tracking-widest">
+                        <tr className="text-white/40 text-[10px] uppercase tracking-widest">
                             <th className="py-3 px-4">Date Requested</th>
                             <th className="py-3 px-4">Date Paid</th>
                             <th className="py-3 px-4">Amount</th>
@@ -129,7 +129,7 @@ export default function PayoutHistoryTable({ affiliateId }: PayoutHistoryTablePr
                             </tr>
                         ) : (
                             history.map((record) => (
-                                <tr key={record.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                                <tr key={record.id} className="hover:bg-white/5 transition-colors">
                                     <td className="py-4 px-4 text-white/80">{new Date(record.date_requested).toLocaleDateString()}</td>
                                     <td className="py-4 px-4 text-white/60">
                                         {record.date_paid ? new Date(record.date_paid).toLocaleDateString() : '-'}
