@@ -80,6 +80,10 @@ export async function signInWithGoogle(redirectTo?: string) {
     provider: 'google',
     options: {
       redirectTo: redirectUrl,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      },
     },
   });
 
