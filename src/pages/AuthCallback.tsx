@@ -32,28 +32,36 @@ export default function AuthCallback() {
       //   1. Call getSession() — in Supabase v2 this awaits the PKCE exchange.
       //   2. If no session yet (race with AuthContext), wait for onAuthStateChange.
       //   3. Then read the user and redirect.
+      console.log('[CB] handleCallback start, URL:', window.location.href);
+      console.log('[CB] auth_return_url:', localStorage.getItem('auth_return_url'));
+
       let { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      console.log('[CB] getSession result:', { hasSession: !!session, userId: session?.user?.id, error: sessionError?.message });
 
       if (!session && !sessionError) {
+        console.log('[CB] no session yet, waiting for onAuthStateChange...');
         // Exchange still in progress — wait for it via auth state change (8s timeout)
         session = await new Promise<typeof session>((resolve) => {
           let done = false;
-          const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+          const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
+            console.log('[CB] onAuthStateChange event:', event, 'hasSession:', !!s);
             if (!done) { done = true; subscription.unsubscribe(); resolve(s); }
           });
           setTimeout(() => {
-            if (!done) { done = true; subscription.unsubscribe(); resolve(null); }
+            if (!done) { done = true; subscription.unsubscribe(); console.log('[CB] timeout waiting for session'); resolve(null); }
           }, 8000);
         });
+        console.log('[CB] after wait, session:', !!session);
       }
 
       if (sessionError || !session) {
-        console.warn('Auth callback — no session:', sessionError?.message);
+        console.warn('[CB] no session, navigating to error page. error:', sessionError?.message);
         navigate('/?error=auth_failed');
         return;
       }
 
       const currentUser = session.user;
+      console.log('[CB] got user:', currentUser?.email, 'author_name:', currentUser?.user_metadata?.author_name);
 
       setUser(currentUser);
 
