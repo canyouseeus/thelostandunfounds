@@ -69,9 +69,9 @@ export async function signInWithGoogle(redirectTo?: string) {
   // Clear any existing session before starting OAuth. Without this, Supabase's
   // server gets confused trying to handle a new OAuth flow on top of an active
   // session and fails the Google code exchange with "Unable to exchange external code".
-  // scope:'local' clears only localStorage — no server-side revocation API call.
+  // Global scope (no arg) fully clears in-memory + localStorage state.
   try {
-    await supabase.auth.signOut({ scope: 'local' });
+    await supabase.auth.signOut();
   } catch {
     // Non-fatal — continue with OAuth regardless
   }
@@ -80,10 +80,6 @@ export async function signInWithGoogle(redirectTo?: string) {
     provider: 'google',
     options: {
       redirectTo: redirectUrl,
-      queryParams: {
-        access_type: 'offline',
-        prompt: 'consent',
-      },
     },
   });
 
