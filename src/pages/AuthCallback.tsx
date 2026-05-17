@@ -39,55 +39,38 @@ export default function AuthCallback() {
 
       setUser(currentUser);
 
-      // Check for return URL immediately
+      // Check for return URL — honour it above everything else except /auth paths
       const returnUrl = localStorage.getItem('auth_return_url');
+      const validReturnUrl = returnUrl && returnUrl !== '/' && !returnUrl.startsWith('/auth');
 
-      // 1. Check if returning to setup wizard - ALWAYS prioritize this
-      if (returnUrl?.startsWith('/setup')) {
-        localStorage.removeItem('auth_return_url');
-        navigate(returnUrl);
-        return;
-      }
-
-      // 2. Check for admin status
-      try {
-        const adminStatus = await isAdmin();
-        const isAdminUser = adminStatus || isAdminEmail(currentUser.email || '');
-
-        if (isAdminUser) {
-          navigate('/admin');
-          return;
-        }
-      } catch (err) {
-        console.warn('Admin check failed, falling back to basic checks', err);
-        // Fall back to direct email check
-        if (isAdminEmail(currentUser.email || '')) {
-          navigate('/admin');
-          return;
-        }
-      }
-
-      // 3. Registration completeness checks for regular users
+      // Registration completeness checks (run before redirect so new users
+      // complete onboarding regardless of where they came from)
       const userMetadata = currentUser.user_metadata || {};
       const hasAuthorName = userMetadata.author_name;
 
-      // Step A: Missing username
       if (!hasAuthorName) {
+        // New user — run through onboarding, then land on returnUrl or /dashboard
         setShowUserRegistrationModal(true);
         return;
       }
 
-      // Step B: Missing subdomain
-      // We no longer force subdomain registration on login.
-      // This should only happen if the user specifically goes to the blog setup flow.
-      // Proceed to dashboard or return URL.
-
-      // 4. All complete - redirect to dashboard or return URL
-      if (returnUrl) {
+      // Existing user — go to return URL if we have one
+      if (validReturnUrl) {
         localStorage.removeItem('auth_return_url');
-        navigate(returnUrl);
-      } else {
-        navigate('/dashboard');
+        // Translate /become-affiliate back to /dashboard (it's a marketing page)
+        const dest = returnUrl!.startsWith('/become-affiliate') ? '/dashboard' : returnUrl!;
+        navigate(dest);
+        return;
+      }
+
+      // No return URL — route by role
+      try {
+        const adminStatus = await isAdmin();
+        const isAdminUser = adminStatus || isAdminEmail(currentUser.email || '');
+        navigate(isAdminUser ? '/admin' : '/dashboard');
+      } catch (err) {
+        console.warn('Admin check failed, falling back to email check', err);
+        navigate(isAdminEmail(currentUser.email || '') ? '/admin' : '/dashboard');
       }
     } catch (error) {
       console.error('Auth callback crash:', error);
