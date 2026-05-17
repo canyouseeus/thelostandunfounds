@@ -22,34 +22,38 @@ export default function AuthCallback() {
 
   const handleCallback = async () => {
     try {
-      // Explicitly exchange the PKCE code for a session.
-      // getSession() only reads localStorage and returns null until the exchange
-      // completes — causing a race where getUser() also returns null and we
-      // navigate to '/'. By calling exchangeCodeForSession first we guarantee
-      // the session is established before we check who the user is.
-      const code = new URLSearchParams(window.location.search).get('code');
-      if (code) {
-        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-        if (exchangeError) {
-          console.warn('Code exchange error:', exchangeError);
-          navigate('/?error=auth_failed');
-          return;
-        }
-      } else {
-        // No code in URL — fall back to reading whatever session is stored
-        const { error } = await authService.handleAuthCallback();
-        if (error) {
-          console.warn('Auth callback error:', error);
-          navigate('/?error=auth_failed');
-          return;
-        }
+      // Supabase's detectSessionInUrl automatically exchanges the PKCE code
+      // when getSession() is first called. We must NOT call exchangeCodeForSession()
+      // ourselves — both AuthContext.initializeAuth() and this handler call getSession(),
+      // and a simultaneous explicit exchangeCodeForSession() causes "code already used"
+      // errors that send the user to the homepage.
+      //
+      // Strategy:
+      //   1. Call getSession() — in Supabase v2 this awaits the PKCE exchange.
+      //   2. If no session yet (race with AuthContext), wait for onAuthStateChange.
+      //   3. Then read the user and redirect.
+      let { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+      if (!session && !sessionError) {
+        // Exchange still in progress — wait for it via auth state change (8s timeout)
+        session = await new Promise<typeof session>((resolve) => {
+          let done = false;
+          const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+            if (!done) { done = true; subscription.unsubscribe(); resolve(s); }
+          });
+          setTimeout(() => {
+            if (!done) { done = true; subscription.unsubscribe(); resolve(null); }
+          }, 8000);
+        });
       }
 
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      if (!currentUser) {
-        navigate('/');
+      if (sessionError || !session) {
+        console.warn('Auth callback — no session:', sessionError?.message);
+        navigate('/?error=auth_failed');
         return;
       }
+
+      const currentUser = session.user;
 
       setUser(currentUser);
 
