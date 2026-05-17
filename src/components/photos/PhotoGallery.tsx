@@ -650,55 +650,8 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         });
     };
 
-    if (loading) {
-        // Inline mode: show a skeleton that doesn't cover the whole screen.
-        // Full-page mode: show the standard full-screen overlay.
-        if (inline) {
-            return (
-                <div className="min-h-screen bg-black pt-0 pb-40 px-4 md:px-8 animate-pulse">
-                    <div className="max-w-7xl mx-auto pt-12">
-                        <div className="h-12 w-64 bg-white/5 mb-4" />
-                        <div className="h-4 w-96 bg-white/5 mb-12" />
-                        <div className="grid grid-cols-3 gap-1 md:gap-2">
-                            {Array.from({ length: 9 }).map((_, i) => (
-                                <div key={i} className="aspect-square bg-white/5" />
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-        return <Loading />;
-    }
-
-    // Filter photos based on date range and/or tag selection
-    const filteredPhotos = (activeTab === 'storefront' ? photos : purchasedPhotos).filter(photo => {
-        // Date filter
-        if (startDate || endDate) {
-            const photoDateStr = photo.metadata?.date_taken || photo.metadata?.time || photo.created_at;
-            const photoDate = new Date(photoDateStr).getTime();
-            if (startDate && photoDate < new Date(startDate).getTime()) return false;
-            if (endDate) {
-                const end = new Date(endDate);
-                end.setHours(23, 59, 59, 999);
-                if (photoDate > end.getTime()) return false;
-            }
-        }
-
-        // Tag filter (union: photo must have at least one of the selected tags)
-        if (selectedTagIds.length > 0) {
-            const photoTags = photoTagsMap.get(photo.id);
-            if (!photoTags) return false;
-            if (!selectedTagIds.some(id => photoTags.has(id))) return false;
-        }
-
-        return true;
-    });
-
-    const displayedPhotos = filteredPhotos;
-    // Same precedence as the server checkout and the header price display:
-    // a 'photo_count = 1' pricing option (set in admin) wins over the legacy
-    // photo_libraries.price column. Keeps the lightbox + grid + tray in sync.
+    // singlePrice and seoMeta must be declared before any early return to satisfy
+    // the Rules of Hooks (useMemo must be called unconditionally every render).
     const singlePrice = (() => {
         const single = pricingOptions.find(o => o.photo_count === 1);
         if (single) return Number(single.price) || 0;
@@ -710,9 +663,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         if (!library || library.slug === 'all-public' || inline) return null;
 
         const libName  = library.name;
-        // Pull city from the first photo that has one
         const city = photos.find(p => p.metadata?.city)?.metadata?.city || 'Austin, TX';
-        // Derive a clean city label (e.g. "Austin, TX" → "Austin")
         const cityShort = city.split(',')[0].trim();
 
         const coverPhoto  = photos[0];
@@ -726,7 +677,6 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
             + `Available for event, nightlife, and portrait bookings in ${cityShort} and beyond.`;
         const canonicalUrl = `https://www.thelostandunfounds.com/gallery/${library.slug}`;
 
-        // ImageObject JSON-LD for up to 10 photos
         const imageObjects = photos.slice(0, 10).map(p => ({
             '@type': 'ImageObject',
             name: (p.title || libName).replace(/\.[^.]+$/, ''),
@@ -789,6 +739,53 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
 
         return { pageTitle, pageDesc, coverUrl, canonicalUrl, structuredData };
     }, [library, photos, inline, singlePrice]);
+
+    if (loading) {
+        // Inline mode: show a skeleton that doesn't cover the whole screen.
+        // Full-page mode: show the standard full-screen overlay.
+        if (inline) {
+            return (
+                <div className="min-h-screen bg-black pt-0 pb-40 px-4 md:px-8 animate-pulse">
+                    <div className="max-w-7xl mx-auto pt-12">
+                        <div className="h-12 w-64 bg-white/5 mb-4" />
+                        <div className="h-4 w-96 bg-white/5 mb-12" />
+                        <div className="grid grid-cols-3 gap-1 md:gap-2">
+                            {Array.from({ length: 9 }).map((_, i) => (
+                                <div key={i} className="aspect-square bg-white/5" />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        return <Loading />;
+    }
+
+    // Filter photos based on date range and/or tag selection
+    const filteredPhotos = (activeTab === 'storefront' ? photos : purchasedPhotos).filter(photo => {
+        // Date filter
+        if (startDate || endDate) {
+            const photoDateStr = photo.metadata?.date_taken || photo.metadata?.time || photo.created_at;
+            const photoDate = new Date(photoDateStr).getTime();
+            if (startDate && photoDate < new Date(startDate).getTime()) return false;
+            if (endDate) {
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999);
+                if (photoDate > end.getTime()) return false;
+            }
+        }
+
+        // Tag filter (union: photo must have at least one of the selected tags)
+        if (selectedTagIds.length > 0) {
+            const photoTags = photoTagsMap.get(photo.id);
+            if (!photoTags) return false;
+            if (!selectedTagIds.some(id => photoTags.has(id))) return false;
+        }
+
+        return true;
+    });
+
+    const displayedPhotos = filteredPhotos;
 
     return (
         <div
