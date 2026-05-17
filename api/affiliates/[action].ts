@@ -23,7 +23,8 @@ import {
   switchMode,
   trackCustomer,
   updateCode,
-  useDiscount
+  useDiscount,
+  products
 } from '../../lib/api-handlers/affiliates/index.js';
 
 type HandlerFn = (req: VercelRequest, res: VercelResponse) => Promise<any>;
@@ -51,6 +52,7 @@ const handlerMap: Record<string, HandlerFn> = {
   'track-customer': trackCustomer,
   'update-code': updateCode,
   'use-discount': useDiscount,
+  'products': products,
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

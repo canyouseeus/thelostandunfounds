@@ -650,8 +650,10 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         });
     };
 
-    // singlePrice and seoMeta must be declared before any early return to satisfy
-    // the Rules of Hooks (useMemo must be called unconditionally every render).
+    // ── Derived values — must be computed before any early returns (Rules of Hooks) ──
+    // Same precedence as the server checkout and the header price display:
+    // a 'photo_count = 1' pricing option (set in admin) wins over the legacy
+    // photo_libraries.price column. Keeps the lightbox + grid + tray in sync.
     const singlePrice = (() => {
         const single = pricingOptions.find(o => o.photo_count === 1);
         if (single) return Number(single.price) || 0;
@@ -659,6 +661,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     })();
 
     // ── SEO ────────────────────────────────────────────────────────────────────
+    // useMemo must be called unconditionally before any early returns.
     const seoMeta = useMemo(() => {
         if (!library || library.slug === 'all-public' || inline) return null;
 
@@ -740,6 +743,7 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         return { pageTitle, pageDesc, coverUrl, canonicalUrl, structuredData };
     }, [library, photos, inline, singlePrice]);
 
+    // ── Early returns (after all hooks) ────────────────────────────────────────
     if (loading) {
         // Inline mode: show a skeleton that doesn't cover the whole screen.
         // Full-page mode: show the standard full-screen overlay.

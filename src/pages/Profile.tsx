@@ -54,6 +54,7 @@ import { CalendarWidget } from '../components/ui/calendar-widget';
 import { RevenueTracker } from '../components/ui/revenue-tracker';
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
 import SEOHead from '../components/SEOHead';
+import AuthModal from '../components/auth/AuthModal';
 
 interface BlogPost {
   id: string;
@@ -417,7 +418,7 @@ export default function Profile() {
   if (!user) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <p className="text-white/60">Please sign in to view your profile.</p>
+        <AuthModal isOpen={true} onClose={() => {}} required />
       </div>
     );
   }

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Analytics } from '@vercel/analytics/react'
 import { AuthProvider } from './contexts/AuthContext'
 import { SageModeProvider } from './contexts/SageModeContext'
@@ -90,9 +90,19 @@ function AffiliateDashboardRedirect() {
   return <Navigate to={`/dashboard${search}`} replace />
 }
 
+/** Dev-only: expose React Router's navigate globally so preview_eval can route without a full reload. */
+function NavigationExposer() {
+  const navigate = useNavigate()
+  if (import.meta.env.DEV) {
+    ;(window as any).__navigate = navigate
+  }
+  return null
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <NavigationExposer />
       <AuthProvider>
         <GalleryProvider>
         <SageModeProvider>

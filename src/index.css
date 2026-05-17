@@ -41,6 +41,11 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background-color: #000000;
+  overflow-x: hidden;
+}
+
+html {
+  overflow-x: hidden;
 }
 
 #root {
