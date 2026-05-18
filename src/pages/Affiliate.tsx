@@ -1254,664 +1254,412 @@ export default function Affiliate() {
                     </div>
                   ) : (
                     <>
-                      {/* Dashboard Navigation Tabs */}
-                      <div className="flex justify-around sm:justify-center gap-1 sm:gap-8 md:gap-12 mb-12 pb-2">
-                        {([
-                          { key: 'overview', label: 'Overview', mobileLabel: 'Stats' },
-                          { key: 'marketing', label: 'Marketing', mobileLabel: 'Links' },
-                          { key: 'payouts', label: 'Payouts', mobileLabel: 'Pay' },
-                          { key: 'leaderboard', label: 'Leaderboard', mobileLabel: 'Ranks' },
-                          { key: 'guide', label: 'Guide' },
-                        ] as const).map((tab) => {
-                          const isActive = affiliateTab === tab.key;
-                          return (
-                            <button
-                              key={tab.key}
-                              onClick={() => setAffiliateTab(tab.key as typeof affiliateTab)}
-                              className={cn(
-                                "text-[9px] sm:text-[10px] font-black uppercase tracking-widest sm:tracking-[0.3em] transition-all relative pb-2 px-1",
-                                isActive ? "text-white" : "text-white/30 hover:text-white/60"
-                              )}
-                            >
-                              {'mobileLabel' in tab && tab.mobileLabel ? (
-                                <>
-                                  <span className="sm:hidden">{tab.mobileLabel}</span>
-                                  <span className="hidden sm:inline">{tab.label}</span>
-                                </>
-                              ) : (
-                                tab.label
-                              )}
-                              {isActive && (
-                                <motion.div
-                                  layoutId="affiliateTabUnderline"
-                                  className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-white"
-                                />
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {/* TAB CONTENT: MARKETING */}
-                      {affiliateTab === 'marketing' && (
-                        <div className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
-                          <div className="mb-8">
-                            <h3 className="text-white text-lg font-bold uppercase tracking-widest mb-4">Your Identity</h3>
-                            <div className="bg-[#0a0a0a] p-6 rounded-none">
-                              <div className="text-[10px] items-center font-bold text-white/40 uppercase tracking-widest mb-2">Your Affiliate Code</div>
-                              {editingCode ? (
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <input
-                                      type="text"
-                                      value={newCode}
-                                      onChange={(e) => {
-                                        const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                                        setNewCode(value);
-                                        setCodeError(null);
-                                      }}
-                                      maxLength={12}
-                                      className="text-2xl md:text-3xl font-black text-white bg-black px-3 py-2 focus:outline-none font-mono rounded-none flex-1 min-w-0"
-                                      placeholder="CODE"
-                                      autoFocus
-                                    />
-                                    <button onClick={handleSaveCode} disabled={updatingCode} className="p-2 hover:bg-white/10 transition-colors flex-shrink-0">
-                                      {updatingCode ? <LoadingSpinner size="sm" /> : <DocumentCheckIcon className="w-4 h-4" />}
-                                    </button>
-                                    <button onClick={handleCancelEdit} disabled={updatingCode} className="p-2 hover:bg-white/10 transition-colors flex-shrink-0">
-                                      <XMarkIcon className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                  {codeError && <div className="text-[10px] text-red-500 font-bold uppercase tracking-wider">{codeError}</div>}
-                                </div>
-                              ) : (
-                                <div className="flex items-center justify-between gap-3 group">
-                                  <div className="text-2xl md:text-3xl font-black text-white font-mono tracking-tighter break-all">
-                                    {dashData.affiliate.code}
-                                  </div>
-                                  <button
-                                    onClick={handleEditCode}
-                                    className="flex-shrink-0 p-2 hover:bg-white/10 transition-all"
-                                    title="Edit affiliate code"
-                                  >
-                                    <PencilSquareIcon className="w-4 h-4 text-white/40 hover:text-white" />
-                                  </button>
-                                </div>
-                              )}
-                              <div className="text-xs text-white/40 font-medium uppercase tracking-wider mt-3">
-                                Share this code with your audience to earn {dashData.affiliate.commission_rate}% of the profit on every sale.
-                              </div>
-                            </div>
-                          </div>
-
-                          <div>
-                            <h3 className="text-white text-lg font-bold uppercase tracking-widest mb-4">Link Generator</h3>
-                            <DeepLinkGenerator
-                              affiliateCode={dashData.affiliate.code}
-                              commissionRate={dashData.affiliate.commission_rate ?? 42}
-                            />
-                          </div>
-
-                          <div>
-                            <h3 className="text-white text-lg font-bold uppercase tracking-widest mb-4">Standard Links</h3>
-                            <ReferralLink affiliateCode={dashData.affiliate.code} />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* TAB CONTENT: PAYOUTS */}
-                      {affiliateTab === 'payouts' && (
-                        <div className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <AdminBentoCard title="Available to Payout" icon={<CurrencyDollarIcon className="w-4 h-4" />}>
-                              <div className="mt-2 text-center py-6">
-                                <div className="text-5xl font-black text-green-400 tracking-tighter mb-2">
-                                  ${(dashData.balance?.available_balance || 0).toFixed(2)}
-                                </div>
-                                <button
-                                  onClick={() => {
-                                    setPayoutAmount(dashData.balance?.available_balance || 0);
-                                    setPayoutRequestError(null);
-                                    setShowPayoutRequest(true);
-                                  }}
-                                  className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-white/90 transition-all mt-4"
-                                >
-                                  <CurrencyDollarIcon className="w-4 h-4" />
-                                  Request Payout
-                                </button>
-                              </div>
-                            </AdminBentoCard>
-
-                            <AdminBentoCard title="Pending Balance" icon={<CalendarIcon className="w-4 h-4" />}>
-                              <div className="mt-2 text-center py-6 opacity-60">
-                                <div className="text-4xl font-black text-white tracking-tighter mb-2">
-                                  ${(dashData.balance?.pending_balance || 0).toFixed(2)}
-                                </div>
-                                <div className="text-[10px] font-bold text-white uppercase tracking-widest">
-                                  Held for Security (30 Days)
-                                </div>
-                              </div>
-                            </AdminBentoCard>
-                          </div>
-
-                          <h3 className="text-white text-lg font-bold uppercase tracking-widest mt-8 mb-4">Payout History</h3>
-                          <PayoutHistoryTable affiliateId={dashData.affiliate.id} />
-                        </div>
-                      )}
-
-                      {/* TAB CONTENT: LEADERBOARD */}
-                      {affiliateTab === 'leaderboard' && (
-                        <div className="animate-in fade-in zoom-in-95 duration-300">
-                          <LeaderboardView highlightAffiliateCode={dashData.affiliate.code} />
-                        </div>
-                      )}
-
-                      {/* TAB CONTENT: GUIDE */}
-                      {affiliateTab === 'guide' && (
-                        <div className="animate-in fade-in zoom-in-95 duration-300">
-                          <AffiliateGuide />
-                        </div>
-                      )}
-
-                      {/* TAB CONTENT: OVERVIEW (Default) */}
-                      {affiliateTab === 'overview' && (
-                        <div className="animate-in fade-in zoom-in-95 duration-300">
-                          <AdminBentoCard
-                            title="Quick Actions"
-                            icon={<ArrowTopRightOnSquareIcon className="w-4 h-4" />}
-                            className="mb-8"
+                      {/* Compact Card Grid ↔ Expanded Card View */}
+                      {expandedCard ? (
+                        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                          <button
+                            onClick={() => setExpandedCard(null)}
+                            className="flex items-center gap-2 mb-8 text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-widest transition-colors group"
                           >
-                            <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-center p-2">
-                              <button
-                                onClick={copyReferralLink}
-                                className="flex items-center justify-center gap-3 px-6 py-3 bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-white/90 transition-all"
-                              >
-                                {copied ? <CheckIcon className="w-4 h-4" /> : <ClipboardIcon className="w-4 h-4" />}
-                                {copied ? 'Copied' : 'Copy Affiliate Link'}
-                              </button>
-                              <Link
-                                to={`/?ref=${dashData.affiliate.code}`}
-                                target="_blank"
-                                className="flex items-center justify-center gap-3 px-6 py-3 bg-white/5 text-white font-black uppercase tracking-widest text-xs hover:bg-white/10 transition-all"
-                              >
-                                <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-                                Preview Shop
-                              </Link>
-                            </div>
-                          </AdminBentoCard>
+                            <ArrowLeftIcon className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+                            All Sections
+                          </button>
 
-                          {/* MLM Quick Stats Row */}
-                          {dashData.mlm && (
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                              <AdminBentoCard title="Rewards" icon={<StarIcon className="w-4 h-4" />}>
-                                <div className="text-center py-2">
-                                  <p className="text-4xl font-black text-white tracking-tighter">{dashData.affiliate.reward_points}</p>
-                                  <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">POINTS AVAILABLE</p>
+                          {/* ── EARNINGS ─────────────────────────────────── */}
+                          {expandedCard === 'earnings' && (
+                            <div className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
+                              <AdminBentoCard title="Quick Actions" icon={<ArrowTopRightOnSquareIcon className="w-4 h-4" />}>
+                                <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-center p-2">
+                                  <button
+                                    onClick={copyReferralLink}
+                                    className="flex items-center justify-center gap-3 px-6 py-3 bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-white/90 transition-all"
+                                  >
+                                    {copied ? <CheckIcon className="w-4 h-4" /> : <ClipboardIcon className="w-4 h-4" />}
+                                    {copied ? 'Copied' : 'Copy Affiliate Link'}
+                                  </button>
+                                  <Link to={`/?ref=${dashData.affiliate.code}`} target="_blank" className="flex items-center justify-center gap-3 px-6 py-3 bg-white/5 text-white font-black uppercase tracking-widest text-xs hover:bg-white/10 transition-all">
+                                    <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                                    Preview Shop
+                                  </Link>
                                 </div>
                               </AdminBentoCard>
 
-                              <AdminBentoCard title="Customers" icon={<UsersIcon className="w-4 h-4" />}>
-                                <div className="text-center py-2">
-                                  <p className="text-4xl font-black text-white tracking-tighter">{dashData.mlm.network.total_customers}</p>
-                                  <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">ACTIVE CUSTOMERS</p>
-                                </div>
-                              </AdminBentoCard>
-
-                              <AdminBentoCard title="Network" icon={<ShareIcon className="w-4 h-4" />}>
-                                <div className="text-center py-2">
-                                  <p className="text-4xl font-black text-white tracking-tighter">{dashData.mlm.network.total_network}</p>
-                                  <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">TOTAL DOWNLINE</p>
-                                </div>
-                              </AdminBentoCard>
-
-                              <AdminBentoCard title="Credits" icon={<GiftIcon className="w-4 h-4" />}>
-                                <div className="text-center py-2">
-                                  <p className="text-4xl font-black text-white tracking-tighter">
-                                    ${dashData.affiliate.discount_credit_balance?.toFixed(2) || '0.00'}
-                                  </p>
-                                  <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">STORE CREDIT</p>
-                                </div>
-                              </AdminBentoCard>
-                            </div>
-                          )}
-
-                          {/* Employee Discount */}
-                          {dashData.mlm && (
-                            <div className="mb-8">
-                              <EmployeeDiscount
-                                affiliateId={dashData.affiliate.id}
-                                affiliateCode={dashData.affiliate.code}
-                                creditBalance={dashData.affiliate.discount_credit_balance}
-                              />
-                            </div>
-                          )}
-
-                          {/* Reward Points */}
-                          {dashData.mlm && (
-                            <div className="mb-8">
-                              <RewardPointsBadge
-                                affiliateId={dashData.affiliate.id}
-                                initialPoints={dashData.affiliate.reward_points}
-                              />
-                            </div>
-                          )}
-
-                          {/* MLM Referrals & Earnings */}
-                          {dashData.mlm && (
-                            <>
-                              <div className="mb-8">
-                                <ReferralLink affiliateCode={dashData.affiliate.code} />
-                              </div>
-
-                              <div className="mb-8">
-                                <MLMEarningsTable affiliateId={dashData.affiliate.id} />
-                              </div>
-
-                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                                <ReferralTree affiliateId={dashData.affiliate.id} />
-                                <CustomerList affiliateId={dashData.affiliate.id} />
-                              </div>
-                            </>
-                          )}
-
-                          {/* Performance Cards - Expandable */}
-                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                            <ExpandableBentoCard
-                              title="Last 30 Days"
-                              icon={<CalendarIcon className="w-4 h-4" />}
-                              details={
-                                <>
-                                  <AdminBentoRow
-                                    label="Total Orders"
-                                    value={dashData.overview.total_commissions}
-                                  />
-                                  <AdminBentoRow
-                                    label="7-Day Trend"
-                                    value={
+                              <ExpandableBentoCard
+                                title="Last 30 Days"
+                                icon={<CalendarIcon className="w-4 h-4" />}
+                                details={
+                                  <>
+                                    <AdminBentoRow label="Total Orders" value={dashData.overview.total_commissions} />
+                                    <AdminBentoRow label="7-Day Trend" value={
                                       <span className={`flex items-center gap-1 ${dashData.overview.profit_trend_7d >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                                         <ArrowTrendingUpIcon className={`w-3 h-3 ${dashData.overview.profit_trend_7d < 0 ? 'rotate-180' : ''}`} />
                                         {Math.abs(dashData.overview.profit_trend_7d).toFixed(1)}%
                                       </span>
-                                    }
-                                  />
-                                  {dashData.overview.best_day && (
-                                    <AdminBentoRow
-                                      label="Best Day"
-                                      value={
+                                    } />
+                                    {dashData.overview.best_day && (
+                                      <AdminBentoRow label="Best Day" value={
                                         <div className="flex justify-between w-full">
                                           <span>{new Date(dashData.overview.best_day.date).toLocaleDateString()}</span>
                                           <span className="text-white/60">${dashData.overview.best_day.profit.toFixed(2)}</span>
                                         </div>
-                                      }
-                                    />
-                                  )}
-                                </>
-                              }
-                            >
-                              <div className="space-y-4 pt-2">
-                                <AdminBentoRow
-                                  label="Commission Earned"
-                                  value={`$${dashData.overview.total_commission_amount.toFixed(2)}`}
-                                />
-                                <AdminBentoRow
-                                  label="Profit Generated"
-                                  value={`$${dashData.overview.total_profit_generated.toFixed(2)}`}
-                                />
-                              </div>
-                            </ExpandableBentoCard>
-                          </div>
-
-                          {/* King Midas Performance - Expandable */}
-                          <div className="grid grid-cols-1 mb-8">
-                            <ExpandableBentoCard
-                              title="King Midas Performance"
-                              icon={<TrophyIcon className="w-4 h-4" />}
-                              details={
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                  <div>
-                                    <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Top 3</div>
-                                    <div className="text-xl font-black text-white tracking-tighter">{dashData.overview.top_3_finishes}</div>
-                                  </div>
-                                  <div>
-                                    <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Paid Out</div>
-                                    <div className="text-xl font-black text-white tracking-tighter">{dashData.overview.paid_payouts}</div>
-                                  </div>
-                                </div>
-                              }
-                              footer={
-                                <div className="text-center">
-                                  <button
-                                    onClick={() => setAffiliateTab('leaderboard')}
-                                    className="inline-block px-6 py-2 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-white/90 transition-colors"
-                                  >
-                                    View Full Leaderboard →
-                                  </button>
-                                </div>
-                              }
-                            >
-                              <div className="p-2 space-y-4">
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                  <div>
-                                    <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Total Earned</div>
-                                    <div className="text-xl font-black text-white tracking-tighter">${dashData.overview.total_king_midas_earnings.toFixed(2)}</div>
-                                  </div>
-                                  <div>
-                                    <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">1st Place</div>
-                                    <div className="text-xl font-black text-white tracking-tighter">{dashData.overview.first_place_finishes}</div>
-                                  </div>
-                                  <div>
-                                    <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Current Pool</div>
-                                    <div className="text-xl font-black text-white tracking-tighter">${(dashData.overview.current_rank && dashData.overview.current_rank <= 3) ? (dashData.king_midas?.recent_stats?.[0]?.pool_share || 0).toFixed(2) : '0.00'}</div>
-                                  </div>
-                                </div>
-                              </div>
-                            </ExpandableBentoCard>
-                          </div>
-
-                          {/* Stripe Connect Status */}
-                          <div className="bg-black border-0 rounded-none p-6 mb-8">
-                            <div className="flex items-center justify-between mb-6">
-                              <h3 className="text-lg font-black text-white uppercase tracking-widest">Stripe Connect</h3>
-                              <button
-                                onClick={loadStripeStatus}
-                                disabled={stripeLoading}
-                                className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-widest transition-colors disabled:opacity-40"
+                                      } />
+                                    )}
+                                  </>
+                                }
                               >
-                                {stripeLoading ? 'Refreshing…' : 'Refresh'}
-                              </button>
-                            </div>
-
-                            {stripeError && (
-                              <div className="bg-white/10 px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider mb-6 text-white">
-                                {stripeError}
-                              </div>
-                            )}
-
-                            <div className="space-y-4">
-                              <div className="flex justify-between items-center text-sm pb-4">
-                                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Account Status</span>
-                                <span className="text-white font-mono uppercase tracking-widest text-xs">
-                                  {stripeStatus ? stripeStatus.status : (stripeLoading ? 'Loading…' : 'Not connected')}
-                                </span>
-                              </div>
-                              <div className="flex justify-between items-center text-sm pb-4">
-                                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Payouts Enabled</span>
-                                <span className="text-white font-mono uppercase tracking-widest text-xs">
-                                  {stripeStatus?.payouts_enabled ? 'Yes' : 'No'}
-                                </span>
-                              </div>
-                              <div className="flex justify-between items-center text-sm pb-4">
-                                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Charges Enabled</span>
-                                <span className="text-white font-mono uppercase tracking-widest text-xs">
-                                  {stripeStatus?.charges_enabled ? 'Yes' : 'No'}
-                                </span>
-                              </div>
-                              <div className="flex justify-between items-center text-sm pb-4">
-                                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Details Submitted</span>
-                                <span className="text-white font-mono uppercase tracking-widest text-xs">
-                                  {stripeStatus?.details_submitted ? 'Yes' : 'No'}
-                                </span>
-                              </div>
-                              {stripeStatus?.requirements && stripeStatus.requirements.length > 0 && (
-                                <div className="pb-4 bg-yellow-500/5 px-4 py-3">
-                                  <p className="text-[10px] font-bold text-yellow-400/80 uppercase tracking-widest">
-                                    Action Required — Complete your Stripe profile to unlock payouts
-                                  </p>
+                                <div className="space-y-4 pt-2">
+                                  <AdminBentoRow label="Commission Earned" value={`$${dashData.overview.total_commission_amount.toFixed(2)}`} />
+                                  <AdminBentoRow label="Profit Generated" value={`$${dashData.overview.total_profit_generated.toFixed(2)}`} />
                                 </div>
-                              )}
+                              </ExpandableBentoCard>
 
-                              <button
-                                onClick={handleConnectStripe}
-                                disabled={stripeRedirecting}
-                                className="w-full px-4 py-3 bg-white text-black font-bold uppercase tracking-widest hover:bg-white/90 transition-colors text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                {stripeRedirecting
-                                  ? 'Redirecting to Stripe…'
-                                  : stripeStatus?.stripe_account_id
-                                    ? (stripeStatus.payouts_enabled ? 'Update Stripe Account' : 'Continue Stripe Onboarding')
-                                    : 'Connect Stripe'}
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Payout Settings */}
-                          <div className="bg-black border-0 rounded-none p-6 mb-8">
-                            <div className="flex items-center justify-between mb-6">
-                              <h3 className="text-lg font-black text-white uppercase tracking-widest">Payout Settings</h3>
-                              {!editingPayout && (
-                                <button
-                                  onClick={() => setEditingPayout(true)}
-                                  className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-widest transition-colors"
-                                >
-                                  Edit
-                                </button>
-                              )}
-                            </div>
-
-                            {payoutSuccess && (
-                              <div className="bg-green-500/10 text-green-500 px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider mb-6">
-                                Payout settings updated successfully!
-                              </div>
-                            )}
-
-                            {payoutError && (
-                              <div className="bg-red-500/10 text-red-500 px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider mb-6">
-                                {payoutError}
-                              </div>
-                            )}
-
-                            {editingPayout ? (
-                              <div className="space-y-6">
-                                <div>
-                                  <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">
-                                    Payment Threshold (minimum $10)
-                                  </label>
-                                  <input
-                                    type="number"
-                                    min="10"
-                                    step="0.01"
-                                    value={paymentThreshold}
-                                    onChange={(e) => setPaymentThreshold(parseFloat(e.target.value))}
-                                    className="w-full px-4 py-3 bg-white/5 rounded-none text-white focus:outline-none transition-colors font-mono text-sm"
-                                  />
-                                  <p className="text-[10px] font-medium text-white/40 uppercase tracking-wider mt-2">
-                                    Minimum balance needed to request a Stripe payout
-                                  </p>
-                                </div>
-                                <div className="flex gap-4">
-                                  <button
-                                    onClick={handleSavePayoutSettings}
-                                    className="px-6 py-2 bg-white text-black text-xs font-bold uppercase tracking-widest hover:bg-white/90 transition-colors"
-                                  >
-                                    Save
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setEditingPayout(false);
-                                      setPaymentThreshold(payoutSettings?.payment_threshold || 10);
-                                      setPayoutError(null);
-                                    }}
-                                    className="px-6 py-2 bg-white/10 text-white text-xs font-bold uppercase tracking-widest hover:bg-white/20 transition-colors"
-                                  >
-                                    Cancel
-                                  </button>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="space-y-4">
-                                <div className="flex justify-between items-center text-sm pb-4">
-                                  <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Payment Threshold</span>
-                                  <span className="text-white font-mono">${payoutSettings?.payment_threshold || 10}</span>
-                                </div>
-                                {payoutRequestSuccess && (
-                                  <div className="mt-4 bg-green-500/10 text-green-500 px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider">
-                                    Payout sent to your Stripe account.
-                                  </div>
-                                )}
-                                {payoutRequestError && (
-                                  <div className="mt-4 bg-red-500/10 text-red-500 px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider">
-                                    {payoutRequestError}
-                                  </div>
-                                )}
-                                {payoutSettings && checkPayoutEligibility() && (
-                                  <div className="mt-4 pt-4">
-                                    <div className="flex items-center justify-between mb-4">
-                                      <div>
-                                        <p className="text-sm text-white font-bold uppercase tracking-wider">Available for Payout</p>
-                                        <p className="text-[10px] text-white/60 font-medium uppercase tracking-widest mt-1">
-                                          ${(dashData?.balance?.available_balance || 0).toFixed(2)} available now
-                                        </p>
-                                        {(dashData?.balance?.pending_balance || 0) > 0 && (
-                                          <p className="text-[10px] text-white/40 font-medium uppercase tracking-widest mt-1">
-                                            +${(dashData?.balance?.pending_balance || 0).toFixed(2)} pending (holding period)
-                                          </p>
-                                        )}
-                                      </div>
+                              <div className="bg-black border-0 rounded-none overflow-hidden">
+                                <div className="p-6"><h2 className="text-lg font-black text-white uppercase tracking-widest">Recent Commissions</h2></div>
+                                {dashData.recent_commissions.length === 0 ? (
+                                  <div className="px-6 py-12 text-center text-white/40 text-xs font-medium uppercase tracking-widest">No commissions yet. Share your referral link to start earning!</div>
+                                ) : (
+                                  <>
+                                    <div className="md:hidden">
+                                      {dashData.recent_commissions.map((commission) => (
+                                        <div key={commission.id} className={`p-4 hover:bg-white/5 transition-colors ${commission.status === 'cancelled' ? 'opacity-40' : ''}`}>
+                                          <div className="flex items-start justify-between gap-3 mb-3">
+                                            <div className="min-w-0 flex-1">
+                                              <div className="text-white font-mono text-xs truncate">{commission.order_id.substring(0, 16)}...</div>
+                                              <div className="text-white/40 text-[10px] font-mono mt-1">{new Date(commission.created_at).toLocaleDateString()}</div>
+                                            </div>
+                                            <span className={`px-2 py-1 text-[9px] font-bold uppercase tracking-widest whitespace-nowrap flex-shrink-0 ${commission.status === 'paid' ? 'bg-green-500/20 text-green-400' : commission.status === 'cancelled' ? 'bg-red-500/20 text-red-400' : commission.status_label?.includes('Available') ? 'bg-green-500/20 text-green-400' : 'bg-white/10 text-white/60'}`}>{commission.status_label || commission.status}</span>
+                                          </div>
+                                          <div className="grid grid-cols-3 gap-2">
+                                            <div><div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Commission</div><div className={`font-black text-sm font-mono tracking-tight ${commission.status === 'cancelled' ? 'text-red-500 line-through' : 'text-white'}`}>${commission.amount.toFixed(2)}</div></div>
+                                            <div><div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Profit</div><div className="text-white font-mono text-sm font-bold">${commission.profit_generated.toFixed(2)}</div></div>
+                                            <div><div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Source</div><div className="text-white/60 capitalize text-xs font-medium uppercase tracking-wider truncate">{commission.source}</div></div>
+                                          </div>
+                                        </div>
+                                      ))}
                                     </div>
+                                    <div className="hidden md:block overflow-x-auto">
+                                      <table className="w-full">
+                                        <thead className="bg-black">
+                                          <tr>
+                                            <th className="px-6 py-4 text-left text-[10px] font-bold text-white/40 uppercase tracking-widest">Order ID</th>
+                                            <th className="px-6 py-4 text-left text-[10px] font-bold text-white/40 uppercase tracking-widest">Date</th>
+                                            <th className="px-6 py-4 text-right text-[10px] font-bold text-white/40 uppercase tracking-widest">Commission</th>
+                                            <th className="px-6 py-4 text-right text-[10px] font-bold text-white/40 uppercase tracking-widest">Profit</th>
+                                            <th className="px-6 py-4 text-left text-[10px] font-bold text-white/40 uppercase tracking-widest">Source</th>
+                                            <th className="px-6 py-4 text-center text-[10px] font-bold text-white/40 uppercase tracking-widest">Status</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {dashData.recent_commissions.map((commission) => (
+                                            <tr key={commission.id} className={`hover:bg-white/5 transition-colors ${commission.status === 'cancelled' ? 'opacity-40' : ''}`}>
+                                              <td className="px-6 py-4 text-white font-mono text-xs">{commission.order_id.substring(0, 16)}...</td>
+                                              <td className="px-6 py-4 text-white/60 text-xs font-mono">{new Date(commission.created_at).toLocaleDateString()}</td>
+                                              <td className={`px-6 py-4 text-right font-black text-xs font-mono tracking-tight ${commission.status === 'cancelled' ? 'text-red-500 line-through' : 'text-white'}`}>${commission.amount.toFixed(2)}</td>
+                                              <td className="px-6 py-4 text-right text-white font-mono text-xs font-bold">${commission.profit_generated.toFixed(2)}</td>
+                                              <td className="px-6 py-4 text-white/60 capitalize text-xs font-medium uppercase tracking-wider">{commission.source}</td>
+                                              <td className="px-6 py-4 text-center">
+                                                <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-widest ${commission.status === 'paid' ? 'bg-green-500/20 text-green-400' : commission.status === 'cancelled' ? 'bg-red-500/20 text-red-400' : commission.status_label?.includes('Available') ? 'bg-green-500/20 text-green-400' : 'bg-white/10 text-white/60'}`}>{commission.status_label || commission.status}</span>
+                                              </td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* ── NETWORK ──────────────────────────────────── */}
+                          {expandedCard === 'network' && (
+                            <div className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
+                              {dashData.mlm && (
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                  <AdminBentoCard title="Customers" icon={<UsersIcon className="w-4 h-4" />}>
+                                    <div className="text-center py-2"><p className="text-4xl font-black text-white tracking-tighter">{dashData.mlm.network.total_customers}</p><p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">ACTIVE</p></div>
+                                  </AdminBentoCard>
+                                  <AdminBentoCard title="Level 1" icon={<UsersIcon className="w-4 h-4" />}>
+                                    <div className="text-center py-2"><p className="text-4xl font-black text-white tracking-tighter">{dashData.mlm.network.level1_affiliates}</p><p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">DIRECT</p></div>
+                                  </AdminBentoCard>
+                                  <AdminBentoCard title="Level 2" icon={<UsersIcon className="w-4 h-4" />}>
+                                    <div className="text-center py-2"><p className="text-4xl font-black text-white tracking-tighter">{dashData.mlm.network.level2_affiliates}</p><p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">INDIRECT</p></div>
+                                  </AdminBentoCard>
+                                  <AdminBentoCard title="MLM Earnings" icon={<CurrencyDollarIcon className="w-4 h-4" />}>
+                                    <div className="text-center py-2"><p className="text-4xl font-black text-white tracking-tighter">${dashData.mlm.earnings.total_mlm.toFixed(2)}</p><p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">TOTAL</p></div>
+                                  </AdminBentoCard>
+                                </div>
+                              )}
+                              <MLMEarningsTable affiliateId={dashData.affiliate.id} />
+                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <ReferralTree affiliateId={dashData.affiliate.id} />
+                                <CustomerList affiliateId={dashData.affiliate.id} />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* ── KING MIDAS ───────────────────────────────── */}
+                          {expandedCard === 'kingmidas' && (
+                            <div className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
+                              <ExpandableBentoCard
+                                title="King Midas Performance"
+                                icon={<TrophyIcon className="w-4 h-4" />}
+                                details={
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div><div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Top 3</div><div className="text-xl font-black text-white tracking-tighter">{dashData.overview.top_3_finishes}</div></div>
+                                    <div><div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Paid Out</div><div className="text-xl font-black text-white tracking-tighter">{dashData.overview.paid_payouts}</div></div>
+                                  </div>
+                                }
+                              >
+                                <div className="p-2 space-y-4">
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div><div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Total Earned</div><div className="text-xl font-black text-white tracking-tighter">${dashData.overview.total_king_midas_earnings.toFixed(2)}</div></div>
+                                    <div><div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">1st Place</div><div className="text-xl font-black text-white tracking-tighter">{dashData.overview.first_place_finishes}</div></div>
+                                    <div><div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Current Pool</div><div className="text-xl font-black text-white tracking-tighter">${(dashData.overview.current_rank && dashData.overview.current_rank <= 3) ? (dashData.king_midas?.recent_stats?.[0]?.pool_share || 0).toFixed(2) : '0.00'}</div></div>
+                                  </div>
+                                </div>
+                              </ExpandableBentoCard>
+                              <LeaderboardView highlightAffiliateCode={dashData.affiliate.code} />
+                            </div>
+                          )}
+
+                          {/* ── PAYOUTS ──────────────────────────────────── */}
+                          {expandedCard === 'payouts' && (
+                            <div className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <AdminBentoCard title="Available to Payout" icon={<CurrencyDollarIcon className="w-4 h-4" />}>
+                                  <div className="mt-2 text-center py-6">
+                                    <div className="text-5xl font-black text-green-400 tracking-tighter mb-2">${(dashData.balance?.available_balance || 0).toFixed(2)}</div>
                                     <button
-                                      onClick={() => {
-                                        setPayoutAmount(dashData?.balance?.available_balance || 0);
-                                        setShowPayoutRequest(true);
-                                        setPayoutRequestError(null);
-                                      }}
-                                      className="w-full px-4 py-3 bg-white text-black font-bold uppercase tracking-widest hover:bg-white/90 transition-colors text-xs"
+                                      onClick={() => { setPayoutAmount(dashData.balance?.available_balance || 0); setPayoutRequestError(null); setShowPayoutRequest(true); }}
+                                      className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-white/90 transition-all mt-4"
                                     >
-                                      Request Instant Payout
+                                      <CurrencyDollarIcon className="w-4 h-4" />
+                                      Request Payout
                                     </button>
                                   </div>
-                                )}
-                                {payoutSettings && !checkPayoutEligibility() && dashData && (
-                                  <div className="mt-4 pt-4">
-                                    <p className="text-xs text-white/40 font-medium uppercase tracking-wider">
-                                      {!stripeStatus?.payouts_enabled
-                                        ? 'Connect Stripe and finish onboarding to request payouts'
-                                        : (dashData.balance?.available_balance || 0) < payoutSettings.payment_threshold
-                                          ? (dashData.balance?.available_balance || 0) > 0
-                                            ? `Need $${(payoutSettings.payment_threshold - (dashData.balance?.available_balance || 0)).toFixed(2)} more to reach threshold`
-                                            : (dashData.balance?.pending_balance || 0) > 0
-                                              ? `$${(dashData.balance?.pending_balance || 0).toFixed(2)} is in holding period`
-                                              : 'No earnings yet'
-                                          : 'No earnings available for payout'}
-                                    </p>
+                                </AdminBentoCard>
+                                <AdminBentoCard title="Pending Balance" icon={<CalendarIcon className="w-4 h-4" />}>
+                                  <div className="mt-2 text-center py-6 opacity-60">
+                                    <div className="text-4xl font-black text-white tracking-tighter mb-2">${(dashData.balance?.pending_balance || 0).toFixed(2)}</div>
+                                    <div className="text-[10px] font-bold text-white uppercase tracking-widest">Held for Security (30 Days)</div>
                                   </div>
+                                </AdminBentoCard>
+                              </div>
+
+                              <div className="bg-black border-0 rounded-none p-6">
+                                <div className="flex items-center justify-between mb-6">
+                                  <h3 className="text-lg font-black text-white uppercase tracking-widest">Stripe Connect</h3>
+                                  <button onClick={loadStripeStatus} disabled={stripeLoading} className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-widest transition-colors disabled:opacity-40">{stripeLoading ? 'Refreshing…' : 'Refresh'}</button>
+                                </div>
+                                {stripeError && <div className="bg-white/10 px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider mb-6 text-white">{stripeError}</div>}
+                                <div className="space-y-4">
+                                  <div className="flex justify-between items-center pb-4"><span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Account Status</span><span className="text-white font-mono uppercase tracking-widest text-xs">{stripeStatus ? stripeStatus.status : (stripeLoading ? 'Loading…' : 'Not connected')}</span></div>
+                                  <div className="flex justify-between items-center pb-4"><span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Payouts Enabled</span><span className="text-white font-mono uppercase tracking-widest text-xs">{stripeStatus?.payouts_enabled ? 'Yes' : 'No'}</span></div>
+                                  <div className="flex justify-between items-center pb-4"><span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Charges Enabled</span><span className="text-white font-mono uppercase tracking-widest text-xs">{stripeStatus?.charges_enabled ? 'Yes' : 'No'}</span></div>
+                                  <div className="flex justify-between items-center pb-4"><span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Details Submitted</span><span className="text-white font-mono uppercase tracking-widest text-xs">{stripeStatus?.details_submitted ? 'Yes' : 'No'}</span></div>
+                                  {stripeStatus?.requirements && stripeStatus.requirements.length > 0 && (
+                                    <div className="pb-4 bg-yellow-500/5 px-4 py-3">
+                                      <p className="text-[10px] font-bold text-yellow-400/80 uppercase tracking-widest">Action Required — Complete your Stripe profile to unlock payouts</p>
+                                    </div>
+                                  )}
+                                  <button onClick={handleConnectStripe} disabled={stripeRedirecting} className="w-full px-4 py-3 bg-white text-black font-bold uppercase tracking-widest hover:bg-white/90 transition-colors text-xs disabled:opacity-50 disabled:cursor-not-allowed">
+                                    {stripeRedirecting ? 'Redirecting to Stripe…' : stripeStatus?.stripe_account_id ? (stripeStatus.payouts_enabled ? 'Update Stripe Account' : 'Continue Stripe Onboarding') : 'Connect Stripe'}
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div className="bg-black border-0 rounded-none p-6">
+                                <div className="flex items-center justify-between mb-6">
+                                  <h3 className="text-lg font-black text-white uppercase tracking-widest">Payout Settings</h3>
+                                  {!editingPayout && <button onClick={() => setEditingPayout(true)} className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-widest transition-colors">Edit</button>}
+                                </div>
+                                {payoutSuccess && <div className="bg-green-500/10 text-green-500 px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider mb-6">Payout settings updated successfully!</div>}
+                                {payoutError && <div className="bg-red-500/10 text-red-500 px-4 py-3 rounded-none text-xs font-bold uppercase tracking-wider mb-6">{payoutError}</div>}
+                                {editingPayout ? (
+                                  <div className="space-y-6">
+                                    <div>
+                                      <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Payment Threshold (minimum $10)</label>
+                                      <input type="number" min="10" step="0.01" value={paymentThreshold} onChange={(e) => setPaymentThreshold(parseFloat(e.target.value))} className="w-full px-4 py-3 bg-white/5 rounded-none text-white focus:outline-none transition-colors font-mono text-sm" />
+                                    </div>
+                                    <div className="flex gap-4">
+                                      <button onClick={handleSavePayoutSettings} className="px-6 py-2 bg-white text-black text-xs font-bold uppercase tracking-widest hover:bg-white/90 transition-colors">Save</button>
+                                      <button onClick={() => { setEditingPayout(false); setPaymentThreshold(payoutSettings?.payment_threshold || 10); setPayoutError(null); }} className="px-6 py-2 bg-white/10 text-white text-xs font-bold uppercase tracking-widest hover:bg-white/20 transition-colors">Cancel</button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex justify-between items-center pb-4"><span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Payment Threshold</span><span className="text-white font-mono">${payoutSettings?.payment_threshold || 10}</span></div>
                                 )}
                               </div>
-                            )}
-                          </div>
 
-                          {/* Recent Commissions */}
-                          <div className="bg-black border-0 rounded-none overflow-hidden mb-8">
-                            <div className="p-6">
-                              <h2 className="text-lg font-black text-white uppercase tracking-widest">Recent Commissions</h2>
+                              <PayoutHistoryTable affiliateId={dashData.affiliate.id} />
                             </div>
+                          )}
 
-                            {dashData.recent_commissions.length === 0 ? (
-                              <div className="px-6 py-12 text-center text-white/40 text-xs font-medium uppercase tracking-widest">
-                                No commissions yet. Share your referral link to start earning!
-                              </div>
-                            ) : (
-                              <>
-                                {/* Mobile: stacked cards */}
-                                <div className="md:hidden">
-                                  {dashData.recent_commissions.map((commission) => (
-                                    <div
-                                      key={commission.id}
-                                      className={`p-4 hover:bg-white/5 transition-colors ${commission.status === 'cancelled' ? 'opacity-40' : ''}`}
-                                    >
-                                      <div className="flex items-start justify-between gap-3 mb-3">
-                                        <div className="min-w-0 flex-1">
-                                          <div className="text-white font-mono text-xs truncate">
-                                            {commission.order_id.substring(0, 16)}...
-                                          </div>
-                                          <div className="text-white/40 text-[10px] font-mono mt-1">
-                                            {new Date(commission.created_at).toLocaleDateString()}
-                                          </div>
-                                        </div>
-                                        <span className={`px-2 py-1 text-[9px] font-bold uppercase tracking-widest whitespace-nowrap flex-shrink-0 ${commission.status === 'paid' ? 'bg-green-500/20 text-green-400' :
-                                          commission.status === 'cancelled' ? 'bg-red-500/20 text-red-400' :
-                                            commission.status_label?.includes('Available') ? 'bg-green-500/20 text-green-400' :
-                                              'bg-white/10 text-white/60'
-                                          }`}>
-                                          {commission.status_label || commission.status}
-                                        </span>
+                          {/* ── REWARDS ──────────────────────────────────── */}
+                          {expandedCard === 'rewards' && (
+                            <div className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
+                              <EmployeeDiscount affiliateId={dashData.affiliate.id} affiliateCode={dashData.affiliate.code} creditBalance={dashData.affiliate.discount_credit_balance} />
+                              <RewardPointsBadge affiliateId={dashData.affiliate.id} initialPoints={dashData.affiliate.reward_points} />
+                            </div>
+                          )}
+
+                          {/* ── LINKS & GUIDE ─────────────────────────────── */}
+                          {expandedCard === 'links' && (
+                            <div className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
+                              <div>
+                                <h3 className="text-white text-lg font-bold uppercase tracking-widest mb-4">Your Identity</h3>
+                                <div className="bg-[#0a0a0a] p-6 rounded-none">
+                                  <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Your Affiliate Code</div>
+                                  {editingCode ? (
+                                    <div className="space-y-2">
+                                      <div className="flex items-center gap-2">
+                                        <input type="text" value={newCode} onChange={(e) => { setNewCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '')); setCodeError(null); }} maxLength={12} className="text-2xl md:text-3xl font-black text-white bg-black px-3 py-2 focus:outline-none font-mono rounded-none flex-1 min-w-0" placeholder="CODE" autoFocus />
+                                        <button onClick={handleSaveCode} disabled={updatingCode} className="p-2 hover:bg-white/10 transition-colors">{updatingCode ? <LoadingSpinner size="sm" /> : <DocumentCheckIcon className="w-4 h-4" />}</button>
+                                        <button onClick={handleCancelEdit} disabled={updatingCode} className="p-2 hover:bg-white/10 transition-colors"><XMarkIcon className="w-4 h-4" /></button>
                                       </div>
-                                      <div className="grid grid-cols-3 gap-2">
-                                        <div>
-                                          <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Commission</div>
-                                          <div className={`font-black text-sm font-mono tracking-tight ${commission.status === 'cancelled' ? 'text-red-500 line-through' : 'text-white'}`}>
-                                            ${commission.amount.toFixed(2)}
-                                          </div>
-                                        </div>
-                                        <div>
-                                          <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Profit</div>
-                                          <div className="text-white font-mono text-sm font-bold">
-                                            ${commission.profit_generated.toFixed(2)}
-                                          </div>
-                                        </div>
-                                        <div>
-                                          <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Source</div>
-                                          <div className="text-white/60 capitalize text-xs font-medium uppercase tracking-wider truncate">
-                                            {commission.source}
-                                          </div>
-                                        </div>
-                                      </div>
+                                      {codeError && <div className="text-[10px] text-red-500 font-bold uppercase tracking-wider">{codeError}</div>}
                                     </div>
-                                  ))}
+                                  ) : (
+                                    <div className="flex items-center justify-between gap-3 group">
+                                      <div className="text-2xl md:text-3xl font-black text-white font-mono tracking-tighter break-all">{dashData.affiliate.code}</div>
+                                      <button onClick={handleEditCode} className="flex-shrink-0 p-2 hover:bg-white/10 transition-all"><PencilSquareIcon className="w-4 h-4 text-white/40 hover:text-white" /></button>
+                                    </div>
+                                  )}
+                                  <div className="text-xs text-white/40 font-medium uppercase tracking-wider mt-3">Share this code to earn {dashData.affiliate.commission_rate}% of the profit on every sale.</div>
                                 </div>
+                              </div>
+                              <div>
+                                <h3 className="text-white text-lg font-bold uppercase tracking-widest mb-4">Link Generator</h3>
+                                <DeepLinkGenerator affiliateCode={dashData.affiliate.code} commissionRate={dashData.affiliate.commission_rate ?? 42} />
+                              </div>
+                              <div>
+                                <h3 className="text-white text-lg font-bold uppercase tracking-widest mb-4">Standard Links</h3>
+                                <ReferralLink affiliateCode={dashData.affiliate.code} />
+                              </div>
+                              <div>
+                                <h3 className="text-white text-lg font-bold uppercase tracking-widest mb-4">Affiliate Guide</h3>
+                                <AffiliateGuide />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        /* ── COMPACT CARD GRID ─────────────────────────────── */
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+                          {/* EARNINGS */}
+                          <button
+                            onClick={() => setExpandedCard('earnings')}
+                            className="group bg-[#0a0a0a] p-5 text-left hover:bg-white/5 transition-all duration-200 border border-transparent hover:border-white/10"
+                          >
+                            <div className="flex items-start justify-between mb-5">
+                              <CurrencyDollarIcon className="w-5 h-5 text-white/30 group-hover:text-white/60 transition-colors" />
+                              <ChevronRightIcon className="w-3.5 h-3.5 text-white/20 group-hover:text-white/50 group-hover:translate-x-0.5 transition-all" />
+                            </div>
+                            <div className="text-2xl md:text-3xl font-black text-white tracking-tighter leading-none mb-1">
+                              ${(dashData.balance?.total_lifetime ?? dashData.affiliate.total_earnings ?? 0).toFixed(2)}
+                            </div>
+                            <div className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Lifetime Earnings</div>
+                            <div className="mt-3 text-[9px] font-bold text-green-400/70 uppercase tracking-widest">
+                              ${(dashData.balance?.available_balance ?? 0).toFixed(2)} available
+                            </div>
+                          </button>
 
-                                {/* Desktop: table */}
-                                <div className="hidden md:block overflow-x-auto">
-                                  <table className="w-full">
-                                    <thead className="bg-black">
-                                      <tr>
-                                        <th className="px-6 py-4 text-left text-[10px] font-bold text-white/40 uppercase tracking-widest">Order ID</th>
-                                        <th className="px-6 py-4 text-left text-[10px] font-bold text-white/40 uppercase tracking-widest">Date</th>
-                                        <th className="px-6 py-4 text-right text-[10px] font-bold text-white/40 uppercase tracking-widest">Commission</th>
-                                        <th className="px-6 py-4 text-right text-[10px] font-bold text-white/40 uppercase tracking-widest">Profit</th>
-                                        <th className="px-6 py-4 text-left text-[10px] font-bold text-white/40 uppercase tracking-widest">Source</th>
-                                        <th className="px-6 py-4 text-center text-[10px] font-bold text-white/40 uppercase tracking-widest">Status</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {dashData.recent_commissions.map((commission) => (
-                                        <tr key={commission.id} className={`hover:bg-white/5 transition-colors ${commission.status === 'cancelled' ? 'opacity-40' : ''}`}>
-                                          <td className="px-6 py-4 text-white font-mono text-xs">
-                                            {commission.order_id.substring(0, 16)}...
-                                          </td>
-                                          <td className="px-6 py-4 text-white/60 text-xs font-mono">
-                                            {new Date(commission.created_at).toLocaleDateString()}
-                                          </td>
-                                          <td className={`px-6 py-4 text-right font-black text-xs font-mono tracking-tight ${commission.status === 'cancelled' ? 'text-red-500 line-through' : 'text-white'}`}>
-                                            ${commission.amount.toFixed(2)}
-                                          </td>
-                                          <td className="px-6 py-4 text-right text-white font-mono text-xs font-bold">
-                                            ${commission.profit_generated.toFixed(2)}
-                                          </td>
-                                          <td className="px-6 py-4 text-white/60 capitalize text-xs font-medium uppercase tracking-wider">
-                                            {commission.source}
-                                          </td>
-                                          <td className="px-6 py-4 text-center">
-                                            <div className="flex flex-col items-center gap-1">
-                                              <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-widest ${commission.status === 'paid' ? 'bg-green-500/20 text-green-400' :
-                                                commission.status === 'cancelled' ? 'bg-red-500/20 text-red-400' :
-                                                  commission.status_label?.includes('Available') ? 'bg-green-500/20 text-green-400' :
-                                                    'bg-white/10 text-white/60'
-                                                }`}>
-                                                {commission.status_label || commission.status}
-                                              </span>
-                                            </div>
-                                          </td>
-                                        </tr>
-                                      ))}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              </>
-                            )}
-                          </div>
+                          {/* NETWORK */}
+                          {dashData.mlm && (
+                            <button
+                              onClick={() => setExpandedCard('network')}
+                              className="group bg-[#0a0a0a] p-5 text-left hover:bg-white/5 transition-all duration-200 border border-transparent hover:border-white/10"
+                            >
+                              <div className="flex items-start justify-between mb-5">
+                                <UsersIcon className="w-5 h-5 text-white/30 group-hover:text-white/60 transition-colors" />
+                                <ChevronRightIcon className="w-3.5 h-3.5 text-white/20 group-hover:text-white/50 group-hover:translate-x-0.5 transition-all" />
+                              </div>
+                              <div className="text-2xl md:text-3xl font-black text-white tracking-tighter leading-none mb-1">
+                                {dashData.mlm.network.total_network}
+                              </div>
+                              <div className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Downline</div>
+                              <div className="mt-3 text-[9px] font-bold text-white/30 uppercase tracking-widest">
+                                {dashData.mlm.network.total_customers} customers · ${dashData.mlm.earnings.total_mlm.toFixed(2)} MLM
+                              </div>
+                            </button>
+                          )}
+
+                          {/* KING MIDAS */}
+                          <button
+                            onClick={() => setExpandedCard('kingmidas')}
+                            className="group bg-[#0a0a0a] p-5 text-left hover:bg-white/5 transition-all duration-200 border border-transparent hover:border-white/10"
+                          >
+                            <div className="flex items-start justify-between mb-5">
+                              <TrophyIcon className="w-5 h-5 text-white/30 group-hover:text-white/60 transition-colors" />
+                              <ChevronRightIcon className="w-3.5 h-3.5 text-white/20 group-hover:text-white/50 group-hover:translate-x-0.5 transition-all" />
+                            </div>
+                            <div className="text-2xl md:text-3xl font-black text-white tracking-tighter leading-none mb-1">
+                              ${dashData.overview.total_king_midas_earnings.toFixed(2)}
+                            </div>
+                            <div className="text-[9px] font-bold text-white/40 uppercase tracking-widest">King Midas</div>
+                            <div className="mt-3 text-[9px] font-bold text-white/30 uppercase tracking-widest">
+                              {dashData.overview.top_3_finishes} top-3 finishes
+                            </div>
+                          </button>
+
+                          {/* PAYOUTS */}
+                          <button
+                            onClick={() => setExpandedCard('payouts')}
+                            className="group bg-[#0a0a0a] p-5 text-left hover:bg-white/5 transition-all duration-200 border border-transparent hover:border-white/10"
+                          >
+                            <div className="flex items-start justify-between mb-5">
+                              <WalletIcon className="w-5 h-5 text-white/30 group-hover:text-white/60 transition-colors" />
+                              <ChevronRightIcon className="w-3.5 h-3.5 text-white/20 group-hover:text-white/50 group-hover:translate-x-0.5 transition-all" />
+                            </div>
+                            <div className="text-2xl md:text-3xl font-black text-white tracking-tighter leading-none mb-1">
+                              ${(dashData.balance?.available_balance ?? 0).toFixed(2)}
+                            </div>
+                            <div className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Payouts</div>
+                            <div className="mt-3">
+                              <span className={`text-[9px] font-bold uppercase tracking-widest ${stripeStatus?.status === 'active' ? 'text-green-400/70' : stripeStatus?.status === 'pending' ? 'text-yellow-400/70' : 'text-white/30'}`}>
+                                Stripe {stripeStatus?.status || 'not connected'}
+                              </span>
+                            </div>
+                          </button>
+
+                          {/* REWARDS */}
+                          <button
+                            onClick={() => setExpandedCard('rewards')}
+                            className="group bg-[#0a0a0a] p-5 text-left hover:bg-white/5 transition-all duration-200 border border-transparent hover:border-white/10"
+                          >
+                            <div className="flex items-start justify-between mb-5">
+                              <StarIcon className="w-5 h-5 text-white/30 group-hover:text-white/60 transition-colors" />
+                              <ChevronRightIcon className="w-3.5 h-3.5 text-white/20 group-hover:text-white/50 group-hover:translate-x-0.5 transition-all" />
+                            </div>
+                            <div className="text-2xl md:text-3xl font-black text-white tracking-tighter leading-none mb-1">
+                              {dashData.affiliate.reward_points}
+                            </div>
+                            <div className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Rewards</div>
+                            <div className="mt-3 text-[9px] font-bold text-white/30 uppercase tracking-widest">
+                              ${dashData.affiliate.discount_credit_balance?.toFixed(2) || '0.00'} store credit
+                            </div>
+                          </button>
+
+                          {/* LINKS */}
+                          <button
+                            onClick={() => setExpandedCard('links')}
+                            className="group bg-[#0a0a0a] p-5 text-left hover:bg-white/5 transition-all duration-200 border border-transparent hover:border-white/10"
+                          >
+                            <div className="flex items-start justify-between mb-5">
+                              <ShareIcon className="w-5 h-5 text-white/30 group-hover:text-white/60 transition-colors" />
+                              <ChevronRightIcon className="w-3.5 h-3.5 text-white/20 group-hover:text-white/50 group-hover:translate-x-0.5 transition-all" />
+                            </div>
+                            <div className="text-xl md:text-2xl font-black text-white font-mono tracking-tighter leading-none mb-1">
+                              {dashData.affiliate.code}
+                            </div>
+                            <div className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Links & Guide</div>
+                            <div className="mt-3 text-[9px] font-bold text-white/30 uppercase tracking-widest">
+                              {dashData.affiliate.commission_rate}% commission rate
+                            </div>
+                          </button>
                         </div>
                       )}
-                      {/* End Overview Tab Content */}
 
                       {/* Payout Request Modal — lives outside all tab conditionals so it renders on any active tab */}
                       {showPayoutRequest && dashData && (
