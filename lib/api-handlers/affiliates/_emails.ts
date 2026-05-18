@@ -62,8 +62,8 @@ function buildContent(type: AffiliateEmailType, data: Record<string, any>): { su
       return {
         subject: `You're in — TLAU Affiliate Program`,
         content: `
-          <h1 style="color:#000;font-size:20px;font-weight:bold;letter-spacing:0.05em;margin:0 0 8px 0;text-transform:uppercase;white-space:nowrap;">W3 COM3 TO 3AT YOUR BRAIN!!!</h1>
-          <p style="color:#555;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 28px 0;">Affiliate Code: ${code}</p>
+          <h1 style="font-size:20px;font-weight:bold;letter-spacing:0.05em;margin:0 0 8px 0;text-transform:uppercase;white-space:nowrap;">W3 COM3 TO 3AT YOUR BRAIN!!!</h1>
+          <p style="color:#aaa;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 28px 0;">Affiliate Code: ${code}</p>
 
           <p style="color:#fff;font-size:15px;line-height:1.7;margin:0 0 20px 0;">
             You're officially part of THE LOST+UNFOUNDS affiliate program. Every time someone uses your link to buy — merch, photo galleries, anything — you keep <b>42% of the profit</b>. Plus MLM bonuses when people you recruit make sales.
