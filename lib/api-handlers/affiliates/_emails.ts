@@ -49,21 +49,48 @@ function buildContent(type: AffiliateEmailType, data: Record<string, any>): { su
   switch (type) {
     case 'welcome': {
       const code = escapeHtml(data.code || '');
-      const onboarding = data.onboardingUrl
-        ? `<p style="color:#fff;font-size:14px;line-height:1.6;margin:16px 0;">
-             To get paid, finish your Stripe onboarding here:
-             <br><a href="${escapeHtml(data.onboardingUrl)}" style="color:#fff;text-decoration:underline;">Complete Stripe setup →</a>
-           </p>`
+      const refUrl = `${SITE_URL}?ref=${code}`;
+      const onboardingBtn = data.onboardingUrl
+        ? `<p style="margin:24px 0 0 0;">
+             <a href="${escapeHtml(data.onboardingUrl)}"
+                style="display:inline-block;padding:14px 28px;background:#fff;color:#000;font-weight:bold;font-size:14px;letter-spacing:0.08em;text-decoration:none;text-transform:uppercase;">
+               Complete Stripe Setup →
+             </a>
+           </p>
+           <p style="color:#666;font-size:11px;margin:10px 0 0 0;">Required to receive payouts — takes about 5 minutes.</p>`
         : '';
       return {
-        subject: `You're in — TLAU Affiliate ${code}`,
+        subject: `You're in — TLAU Affiliate Program`,
         content: `
-          <h1 style="color:#fff;font-size:24px;font-weight:bold;letter-spacing:0.05em;margin:0 0 16px 0;">WELCOME, AFFILIATE</h1>
-          <p style="color:#fff;font-size:14px;line-height:1.6;margin:0 0 16px 0;">
-            Your affiliate code is <b>${code}</b>. Share <code style="color:#fff;">${SITE_URL}?ref=${code}</code> — you earn <b>42%</b> of every sale your referrals make, plus MLM bonuses on referrals you bring into the program.
+          <h1 style="color:#fff;font-size:28px;font-weight:bold;letter-spacing:0.1em;margin:0 0 8px 0;text-transform:uppercase;">Welcome to the program.</h1>
+          <p style="color:#999;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 28px 0;">Affiliate Code: ${code}</p>
+
+          <p style="color:#fff;font-size:15px;line-height:1.7;margin:0 0 20px 0;">
+            You're officially part of THE LOST+UNFOUNDS affiliate program. Every time someone uses your link to buy — merch, photo galleries, anything — you keep <b>42% of the profit</b>. Plus MLM bonuses when people you recruit make sales.
           </p>
-          ${onboarding}
-          <p style="color:#999;font-size:12px;margin:24px 0 0 0;">Track your stats: <a href="${SITE_URL}/affiliate-dashboard" style="color:#fff;text-decoration:underline;">${SITE_URL}/affiliate-dashboard</a></p>
+
+          <table style="width:100%;border-collapse:collapse;margin:0 0 28px 0;">
+            <tr>
+              <td style="padding:12px 0;border-top:1px solid #1a1a1a;">
+                <span style="color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;">Your link</span><br>
+                <a href="${refUrl}" style="color:#fff;font-size:13px;word-break:break-all;text-decoration:underline;">${refUrl}</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:12px 0;border-top:1px solid #1a1a1a;">
+                <span style="color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;">Commission rate</span><br>
+                <span style="color:#fff;font-size:13px;">42% of profit per sale</span>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:12px 0;border-top:1px solid #1a1a1a;border-bottom:1px solid #1a1a1a;">
+                <span style="color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;">Dashboard</span><br>
+                <a href="${SITE_URL}/affiliate-dashboard" style="color:#fff;font-size:13px;text-decoration:underline;">${SITE_URL}/affiliate-dashboard</a>
+              </td>
+            </tr>
+          </table>
+
+          ${onboardingBtn}
         `,
       };
     }
