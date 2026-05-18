@@ -107,6 +107,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         type: 'express',
         email: email || undefined,
         capabilities: {
+          card_payments: { requested: true },
           transfers: { requested: true },
         },
         business_type: 'individual',
