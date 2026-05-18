@@ -1024,7 +1024,7 @@ export default function Affiliate() {
 
             {/* Console / My Apps Tab Bar */}
             <div className="col-span-12 flex flex-col items-center pt-8">
-              <div className="relative group">
+              <div className="relative group flex flex-col items-center">
                 <h2 className="text-[10px] font-black text-white/40 tracking-[0.4em] uppercase mb-4 text-center">Platform Console</h2>
                 <div className="flex items-center gap-2 p-1.5 bg-white/5 backdrop-blur-xl rounded-full">
                   {[
