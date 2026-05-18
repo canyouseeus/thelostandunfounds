@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
 import {
@@ -207,11 +207,16 @@ export default function Affiliate() {
   const { user, tier, signOut, loading: authLoading } = useAuth();
   const { success, error: showError } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   // Core state
   const [userIsAdmin, setUserIsAdmin] = useState(false);
   const [revenueView, setRevenueView] = useState<'admin' | 'affiliate'>('admin');
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  // Pre-open a section if ?section= is in the URL (e.g. /dashboard?section=affiliate)
+  const initialSection = searchParams.get('section') || '';
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(
+    initialSection ? { [initialSection]: true } : {}
+  );
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const handleSectionToggle = (section: string) => {
@@ -662,8 +667,9 @@ export default function Affiliate() {
         }),
       });
       const result = await response.json();
+      console.log('[connect-onboarding] response:', result);
       if (!response.ok || !result.onboarding_url) {
-        throw new Error(result.error || result.message || 'Failed to start Stripe onboarding');
+        throw new Error(result.message || result.error || 'Failed to start Stripe onboarding');
       }
       window.location.href = result.onboarding_url;
     } catch (err: any) {
