@@ -8,8 +8,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import { fetchProductsDirect, fetchShopFeed } from '../../fourthwall/api-client.js';
-import { transformProduct, deduplicateProducts } from '../../fourthwall/utils.js';
+import { getFourthwallProducts } from '../../fourthwall/handler.js';
 
 export async function products(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
@@ -26,33 +25,16 @@ export async function products(req: VercelRequest, res: VercelResponse) {
   try {
     const token = process.env.FOURTHWALL_STOREFRONT_TOKEN;
     if (token) {
-      // Try direct products endpoint first, fall back to shop feed
-      let fwProducts: any[] = [];
-
-      const directRes = await fetchProductsDirect(token);
-      if (directRes.ok) {
-        const data = await directRes.json();
-        const offers = Array.isArray(data) ? data : (data.results || data.offers || data.products || []);
-        fwProducts = offers.map(transformProduct);
-      }
-
-      if (fwProducts.length === 0) {
-        const feedRes = await fetchShopFeed(token);
-        if (feedRes.ok) {
-          const data = await feedRes.json();
-          const offers = Array.isArray(data) ? data : (data.results || data.offers || data.products || data.items || []);
-          fwProducts = offers.map(transformProduct);
-        }
-      }
-
-      physicalProducts = deduplicateProducts(fwProducts).map((p: any) => ({
+      // Use the same multi-strategy fetcher the shop page uses (collections fallback etc.)
+      const fwProducts = await getFourthwallProducts(token);
+      physicalProducts = fwProducts.map((p: any) => ({
         id: p.id || p.handle,
         title: p.title,
         type: 'physical',
         price: p.price,
         profit: null, // commission % applied by platform
         url: p.url,
-        image: Array.isArray(p.images) ? p.images[0] : p.image || null,
+        image: Array.isArray(p.images) ? p.images[0] : (p.image || null),
         salesCount: 0,
         isNew: false,
         isHot: false,

@@ -325,6 +325,27 @@ async function handleCollections(
 }
 
 /**
+ * Fetch Fourthwall products and return them as an array.
+ * Uses the same multi-strategy logic as handleFourthwallProducts but
+ * returns the result directly instead of writing to a response.
+ */
+export async function getFourthwallProducts(token: string): Promise<TransformedProduct[]> {
+  // Strategy 1: direct products endpoint
+  try {
+    const directResult = await handleDirectProducts(token)
+    if (directResult && directResult.products.length > 0) {
+      return directResult.products
+    }
+  } catch (err) {
+    console.warn('[getFourthwallProducts] direct fetch error:', err)
+  }
+
+  // Strategy 2: collections / shop-feed / common handles
+  const collectionsResult = await handleCollections(token)
+  return collectionsResult.products || []
+}
+
+/**
  * Main handler function
  */
 export async function handleFourthwallProducts(
