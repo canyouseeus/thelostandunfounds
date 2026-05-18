@@ -27,19 +27,47 @@ export async function products(req: VercelRequest, res: VercelResponse) {
     if (token) {
       // Use the same multi-strategy fetcher the shop page uses (collections fallback etc.)
       const fwProducts = await getFourthwallProducts(token);
-      physicalProducts = fwProducts.map((p: any) => ({
-        id: p.id || p.handle,
-        title: p.title,
-        type: 'physical',
-        price: p.price,
-        profit: null, // commission % applied by platform
-        url: p.url,
-        image: Array.isArray(p.images) ? p.images[0] : (p.image || null),
-        salesCount: 0,
-        isNew: false,
-        isHot: false,
-        category: 'physical',
-      }));
+
+      // Look up production costs so we can calculate creator profit per product.
+      // Use the lowest (base) cost for each product to show the best-case profit.
+      const productIds = fwProducts.map((p: any) => p.id).filter(Boolean);
+      let costByProductId: Record<string, number> = {};
+      if (productIds.length > 0) {
+        const { data: costRows } = await supabase
+          .from('product_costs')
+          .select('product_id, cost')
+          .in('product_id', productIds)
+          .eq('source', 'fourthwall');
+        for (const row of costRows || []) {
+          const existing = costByProductId[row.product_id];
+          const cost = parseFloat(row.cost);
+          // Keep the lowest cost variant (most common/base size)
+          if (existing === undefined || cost < existing) {
+            costByProductId[row.product_id] = cost;
+          }
+        }
+      }
+
+      physicalProducts = fwProducts.map((p: any) => {
+        const productId = p.id || p.handle;
+        const price = p.price || 0;
+        const cost = costByProductId[productId];
+        // profit = retail price minus production cost; null if cost unknown
+        const profit = cost !== undefined ? Math.max(0, price - cost) : null;
+        return {
+          id: productId,
+          title: p.title,
+          type: 'physical',
+          price,
+          profit,
+          url: p.url,
+          image: Array.isArray(p.images) ? p.images[0] : (p.image || null),
+          salesCount: 0,
+          isNew: false,
+          isHot: false,
+          category: 'physical',
+        };
+      });
     }
   } catch (err: any) {
     console.warn('affiliates/products: Fourthwall fetch failed:', err?.message);
