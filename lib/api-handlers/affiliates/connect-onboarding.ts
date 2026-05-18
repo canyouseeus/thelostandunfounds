@@ -43,6 +43,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Diagnostic: log env var presence on every request (no secrets exposed)
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  console.log('[connect-onboarding] env check:', {
+    stripe: stripeKey ? `${stripeKey.slice(0, 7)}...` : 'MISSING',
+    supabaseUrl: supabaseUrl ? 'set' : 'MISSING',
+    supabaseKey: supabaseKey ? `${supabaseKey.slice(0, 10)}...` : 'MISSING',
+  });
+
   let supabase: SupabaseClient;
   try {
     supabase = getSupabase();
@@ -181,7 +191,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       is_new: isNewAccount,
     });
   } catch (err: any) {
-    console.error('[connect-onboarding] error:', err);
+    console.error('[connect-onboarding] error:', err?.message || err);
+    console.error('[connect-onboarding] error type:', err?.type, 'code:', err?.code, 'statusCode:', err?.statusCode);
     return res.status(500).json({
       error: 'Failed to create onboarding link',
       message: err?.message || 'Unknown error',
