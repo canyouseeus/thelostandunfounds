@@ -2,13 +2,14 @@
  * GET /api/affiliates/products
  *
  * Returns all promotable products for the affiliate deep-link generator:
- *   - Gallery collections (from photo_libraries + gallery_pricing_options)
- *
- * Future: add Fourthwall shop products, digital downloads, events.
+ *   - Fourthwall shop products (physical apparel/merch)
+ *   - Gallery collections (photo_libraries)
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { fetchProductsDirect, fetchShopFeed } from '../../fourthwall/api-client.js';
+import { transformProduct, deduplicateProducts } from '../../fourthwall/utils.js';
 
 export async function products(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
@@ -20,8 +21,49 @@ export async function products(req: VercelRequest, res: VercelResponse) {
     process.env.SUPABASE_SERVICE_ROLE_KEY || ''
   );
 
+  // ── Fourthwall (physical shop) ─────────────────────────────────────────────
+  let physicalProducts: any[] = [];
+  try {
+    const token = process.env.FOURTHWALL_STOREFRONT_TOKEN;
+    if (token) {
+      // Try direct products endpoint first, fall back to shop feed
+      let fwProducts: any[] = [];
+
+      const directRes = await fetchProductsDirect(token);
+      if (directRes.ok) {
+        const data = await directRes.json();
+        const offers = Array.isArray(data) ? data : (data.results || data.offers || data.products || []);
+        fwProducts = offers.map(transformProduct);
+      }
+
+      if (fwProducts.length === 0) {
+        const feedRes = await fetchShopFeed(token);
+        if (feedRes.ok) {
+          const data = await feedRes.json();
+          const offers = Array.isArray(data) ? data : (data.results || data.offers || data.products || data.items || []);
+          fwProducts = offers.map(transformProduct);
+        }
+      }
+
+      physicalProducts = deduplicateProducts(fwProducts).map((p: any) => ({
+        id: p.id || p.handle,
+        title: p.title,
+        type: 'physical',
+        price: p.price,
+        profit: null, // commission % applied by platform
+        url: p.url,
+        image: Array.isArray(p.images) ? p.images[0] : p.image || null,
+        salesCount: 0,
+        isNew: false,
+        isHot: false,
+        category: 'physical',
+      }));
+    }
+  } catch (err: any) {
+    console.warn('affiliates/products: Fourthwall fetch failed:', err?.message);
+  }
+
   // ── Galleries ──────────────────────────────────────────────────────────────
-  // Fetch public galleries with their cheapest active pricing option
   const { data: libraries, error: libError } = await supabase
     .from('photo_libraries')
     .select(`
@@ -39,10 +81,8 @@ export async function products(req: VercelRequest, res: VercelResponse) {
 
   if (libError) {
     console.error('products: gallery query error', libError);
-    return res.status(500).json({ error: libError.message });
   }
 
-  // Count all-time sales per gallery
   const { data: saleCounts } = await supabase
     .from('photo_orders')
     .select('library_id, id')
@@ -59,7 +99,6 @@ export async function products(req: VercelRequest, res: VercelResponse) {
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
   const galleryProducts = (libraries || []).map((lib: any) => {
-    // Use the gallery's base price; fall back to the cheapest active pricing option
     const pricingOptions: any[] = lib.gallery_pricing_options || [];
     const activePrices = pricingOptions
       .filter((o: any) => o.is_active && o.price > 0)
@@ -69,9 +108,6 @@ export async function products(req: VercelRequest, res: VercelResponse) {
       activePrices.length > 0 ? parseFloat(activePrices[0].price) : parseFloat(lib.price || 5);
 
     const salesCount = salesByLibrary[lib.id] || 0;
-    const isNew = new Date(lib.created_at) > thirtyDaysAgo;
-    const isHot = salesCount >= 50;
-
     const pricingTiers = activePrices.map((o: any) => ({
       quantity: o.photo_count,
       price: parseFloat(o.price),
@@ -82,16 +118,18 @@ export async function products(req: VercelRequest, res: VercelResponse) {
       title: lib.name,
       type: 'gallery',
       price: lowestPrice,
-      profit: lowestPrice, // gallery revenue flows directly to the site
+      profit: lowestPrice,
       url: `/gallery/${lib.slug}`,
       image: lib.cover_image_url || null,
       salesCount,
-      isNew,
-      isHot,
+      isNew: new Date(lib.created_at) > thirtyDaysAgo,
+      isHot: salesCount >= 50,
       category: 'gallery',
       pricingTiers: pricingTiers.length > 0 ? pricingTiers : undefined,
     };
   });
 
-  return res.status(200).json({ products: galleryProducts });
+  return res.status(200).json({
+    products: [...physicalProducts, ...galleryProducts],
+  });
 }
