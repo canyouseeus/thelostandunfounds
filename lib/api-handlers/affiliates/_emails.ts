@@ -62,7 +62,7 @@ function buildContent(type: AffiliateEmailType, data: Record<string, any>): { su
       return {
         subject: `You're in — TLAU Affiliate Program`,
         content: `
-          <h1 style="font-size:20px;font-weight:bold;letter-spacing:0.05em;margin:0 0 8px 0;text-transform:uppercase;white-space:nowrap;">W3 COM3 TO 3AT YOUR BRAIN!!!</h1>
+          <h1 style="color:#fff;font-size:22px;font-weight:bold;letter-spacing:0.05em;margin:0 0 8px 0;text-transform:uppercase;">W3 COM3 TO 3AT YOUR BRAIN!!!</h1>
           <p style="color:#aaa;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 28px 0;">Affiliate Code: ${code}</p>
 
           <p style="color:#fff;font-size:15px;line-height:1.7;margin:0 0 20px 0;">
