@@ -1,9 +1,15 @@
 # Newsletter Draft — Feature Update (May 2026)
 
 > Status: DRAFT for review. Not sent.
-> Suggested send: paste `subject` + body into a send script (see
-> `scripts/send-life-be-life-ing-newsletter.js`) or the Newsletter
-> Management admin panel once approved.
+> Branding: the official email banner
+> (`https://www.thelostandunfounds.com/brand/banner.png`) must appear
+> full-width at the top — it is injected automatically when the body is
+> sent through `generateNewsletterEmail` in `lib/email-template.ts`.
+> Suggested send: paste `subject` + body into the Newsletter Management
+> admin panel, or a send script (see
+> `scripts/send-life-be-life-ing-newsletter.js`) once approved.
+
+![THE LOST+UNFOUNDS](https://www.thelostandunfounds.com/brand/banner.png)
 
 ---
 
@@ -33,20 +39,14 @@ one to look at first is the Mystery Box: you don't know exactly what's
 coming, but you know it's us. It's the kind of thing that's more fun than
 it has any right to be.
 
-**The Affiliate Program & King Midas**
+**The Affiliate Program & KING MIDAS**
 
 You can now sign up as an affiliate, share your link, and earn commission
 on what comes through it. Payouts run through Stripe, so getting paid is
 straightforward — connect your account and you're set. On top of that
-there's King Midas, our leaderboard and gamification layer, so repping the
+there's KING MIDAS, our leaderboard and gamification layer, so repping the
 brand actually means something on the board. If you've ever wanted to be
 part of this beyond being a customer, this is the door.
-
-**The Tool Box**
-
-We've been quietly stacking up free tools you can just use — like the
-TikTok Downloader — all in one Tool Box on the site. No login wall, no
-catch. Go poke around.
 
 **An interactive map**
 
@@ -58,7 +58,7 @@ scrolling a feed.
 
 That's the current state of the site. None of this is "coming soon" — it's
 all live right now. Head over, click into a gallery, grab a Mystery Box, or
-just see what the Tool Box can do for you.
+just see what's new for yourself.
 
 Visit: https://www.thelostandunfounds.com
 
