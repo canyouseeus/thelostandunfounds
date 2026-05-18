@@ -60,14 +60,14 @@ export function wrapEmailContent(
   ` : '';
 
   return `<!DOCTYPE html>
-<html>
+<html bgcolor="${BRAND.colors.background}" style="background-color:${BRAND.colors.background};">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="color-scheme" content="light dark">
-  <meta name="supported-color-schemes" content="light dark">
-  <title>${BRAND.name}</title>
+  <meta name="color-scheme" content="dark">
+  <meta name="supported-color-schemes" content="dark">
+  <title> </title>
   <style>
     :root {
       color-scheme: light dark;
@@ -130,6 +130,8 @@ export function wrapEmailContent(
   </style>
 </head>
 <body bgcolor="${BRAND.colors.background}" style="margin: 0; padding: 0; background-color: ${BRAND.colors.background}; color: ${BRAND.colors.text}; font-family: Arial, Helvetica, sans-serif; -webkit-font-smoothing: antialiased; width: 100% !important; height: 100% !important;">
+  <!-- Hidden preheader — keeps email clients from showing title tag or injected text above the banner -->
+  <div style="display:none;max-height:0;max-width:0;overflow:hidden;mso-hide:all;font-size:1px;color:${BRAND.colors.background};line-height:1px;opacity:0;">&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
   <!-- Full wrapper table for background -->
   <table role="presentation" cellpadding="0" cellspacing="0" width="100%" height="100%" bgcolor="${BRAND.colors.background}" style="border-collapse: collapse; background-color: ${BRAND.colors.background}; background: ${BRAND.colors.background}; margin: 0; padding: 0; width: 100% !important; height: 100% !important;">
     <tr>
