@@ -304,6 +304,7 @@ export default function Affiliate() {
   const [codeError, setCodeError] = useState<string | null>(null);
   const [updatingCode, setUpdatingCode] = useState(false);
   const [affiliateTab, setAffiliateTab] = useState<'overview' | 'marketing' | 'payouts' | 'leaderboard' | 'guide'>('overview');
+  const [expandedCard, setExpandedCard] = useState<string | null>(null);
 
   // Load all profile data on mount
   useEffect(() => {
@@ -1652,13 +1653,10 @@ export default function Affiliate() {
                                 </span>
                               </div>
                               {stripeStatus?.requirements && stripeStatus.requirements.length > 0 && (
-                                <div className="pb-4">
-                                  <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Outstanding Requirements</p>
-                                  <ul className="text-xs text-white/70 font-mono space-y-1">
-                                    {stripeStatus.requirements.map((r) => (
-                                      <li key={r}>• {r}</li>
-                                    ))}
-                                  </ul>
+                                <div className="pb-4 bg-yellow-500/5 px-4 py-3">
+                                  <p className="text-[10px] font-bold text-yellow-400/80 uppercase tracking-widest">
+                                    Action Required — Complete your Stripe profile to unlock payouts
+                                  </p>
                                 </div>
                               )}
 
