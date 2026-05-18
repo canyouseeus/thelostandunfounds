@@ -68,6 +68,12 @@ These are **Resend-only by design**. Don't add Zoho fallback to them.
 
 If only one provider is configured, the helper still works — Zoho path throws early, Resend takes over.
 
+## Banner rules (enforced — never violate)
+
+- **Never use an SVG data URI as a banner.** Any `BANNER_URL = "data:image/svg+xml..."` in the codebase is a bug. Replace with `'https://www.thelostandunfounds.com/brand/banner.png'`. SVG data URIs render as white text above the real banner in most email clients.
+- **All email HTML must go through `generateTransactionalEmail` or `generateNewsletterEmail`** before being sent. These functions include the real banner `<img>` tag. Passing raw HTML directly to `sendZohoEmail` bypasses the template and risks the fallback injecting the wrong content.
+- See the `brand-email-manager` skill for the full list of email branding rules.
+
 ## Reviewing existing code
 
 If you're modifying an existing handler that calls `sendZohoEmail` or raw Resend `sendEmail` directly for transactional purposes:
