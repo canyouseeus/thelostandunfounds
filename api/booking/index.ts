@@ -1,7 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
-import { getZohoAuthContext, sendZohoEmail } from '../../lib/api-handlers/_zoho-email-utils.js'
-import { generateTransactionalEmail } from '../../lib/email-template.js'
 import { triggerReferralCommission } from '../../lib/api-handlers/affiliates/_commission-trigger.js'
 import { sendTransactionalEmail } from '../../lib/api-handlers/_resend-email-handler.js'
 
@@ -230,20 +228,16 @@ async function sendBookingNotification(bookingId: string, supabase: ReturnType<t
         .single()
     if (error || !booking) return
 
-    const auth = await getZohoAuthContext()
-
     // Admin notification — structured summary wrapped in brand template
     const adminSubject = `New Booking Inquiry — ${booking.event_type || 'Other'} — ${booking.name}`
-    const adminHtml = generateTransactionalEmail(buildAdminSummaryBody(booking))
-    await sendZohoEmail({ auth, to: NOTIFY_TO, subject: adminSubject, htmlContent: adminHtml })
+    await sendTransactionalEmail({ to: NOTIFY_TO, subject: adminSubject, content: buildAdminSummaryBody(booking) })
 
     // Client confirmation — warm recap of what they submitted, wrapped in
     // the same branded template so the header + logo match the site.
     if (booking.email) {
         const clientSubject = `We got your booking request — TLAU`
-        const clientHtml = generateTransactionalEmail(buildClientConfirmationBody(booking))
         try {
-            await sendZohoEmail({ auth, to: booking.email, subject: clientSubject, htmlContent: clientHtml })
+            await sendTransactionalEmail({ to: booking.email, subject: clientSubject, content: buildClientConfirmationBody(booking) })
         } catch (err) {
             // Don't let a client-send failure abort the admin flow
             console.warn('[BookingNotify] client confirmation failed:', (err as any)?.message)

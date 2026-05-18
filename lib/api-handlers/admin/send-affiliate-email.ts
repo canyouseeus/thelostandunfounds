@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import type { PostgrestError } from '@supabase/supabase-js'
 import { createServiceSupabaseClient } from '../_supabase-admin-client'
-import { getZohoAuthContext, sendZohoEmail } from '../_zoho-email-utils'
+import { sendTransactionalEmail } from '../_resend-email-handler.js'
 
 const isMissingTable = (error?: PostgrestError | null) =>
   Boolean(error?.message && error.message.toLowerCase().includes('does not exist'))
@@ -35,23 +35,6 @@ const toHtml = (text: string) => {
     })
     .join('')
 }
-
-const wrapInTemplate = (body: string) => `<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  </head>
-  <body style="margin:0;padding:32px;background-color:#000000;color:#ffffff;font-family:Arial,Helvetica,sans-serif;">
-    <div style="max-width:640px;margin:0 auto;">
-      ${body}
-      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:32px 0;" />
-      <p style="color:rgba(255,255,255,0.6);font-size:12px;margin:0;">
-        THE LOST+UNFOUNDS — Affiliate Program Update
-      </p>
-    </div>
-  </body>
-</html>`
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -133,16 +116,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
     }
 
-    const htmlBody = wrapInTemplate(contentHtml || toHtml(content || ''))
-    const zohoAuth = await getZohoAuthContext()
+    // Inner body content — sendTransactionalEmail wraps it in the brand template
+    const innerBody = contentHtml || toHtml(content || '')
 
     const sendResults = []
     for (const recipient of recipients) {
-      const result = await sendZohoEmail({
-        auth: zohoAuth,
+      const result = await sendTransactionalEmail({
         to: recipient.email,
         subject,
-        htmlContent: htmlBody
+        content: innerBody,
       })
       sendResults.push({
         affiliateId: recipient.affiliateId,
@@ -168,7 +150,3 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .json({ error: error?.message || 'Failed to send affiliate email campaign' })
   }
 }
-
-
-
-

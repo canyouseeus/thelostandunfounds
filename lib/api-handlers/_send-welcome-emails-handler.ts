@@ -1,49 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import * as dotenv from 'dotenv'
+import { sendTransactionalEmail } from './_resend-email-handler.js'
 
 dotenv.config({ path: '.env.local' })
-
-interface ZohoTokenResponse {
-  access_token: string
-  token_type: string
-  expires_in: number
-}
-
-const BANNER_URL = 'https://www.thelostandunfounds.com/brand/banner.png'
-
-function ensureBannerHtml(htmlContent: string): string {
-  const bannerBlock = `
-<div style="padding: 0 0 30px 0; background-color: #000000 !important; text-align: left;">
-  <a href="https://www.thelostandunfounds.com" style="text-decoration: none;">
-    <img src="${BANNER_URL}" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block; margin: 0;" />
-  </a>
-</div>`
-
-  const ensureShell = (html: string) => {
-    if (/<html[\s>]/i.test(html)) return html
-    return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="margin:0; padding:0; background-color:#000000; font-family: Arial, sans-serif;">${html}</body></html>`
-  }
-
-  const insertAfterBody = (html: string) => {
-    const match = /<body[^>]*>/i.exec(html)
-    if (!match) return null
-    const idx = (match.index ?? 0) + match[0].length
-    return html.slice(0, idx) + bannerBlock + html.slice(idx)
-  }
-
-  let html = htmlContent || ''
-  if (html.includes(BANNER_URL) || html.includes('nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/')) {
-    return ensureShell(html)
-  }
-
-  const withBodyInsert = insertAfterBody(html)
-  if (withBodyInsert) {
-    return ensureShell(withBodyInsert)
-  }
-
-  return ensureShell(bannerBlock + html)
-}
 
 interface UserSubdomain {
   user_id: string
@@ -59,193 +19,46 @@ interface UserWithEmail {
 }
 
 /**
- * Get Zoho access token
+ * Generate welcome email inner body HTML
  */
-async function getZohoAccessToken(): Promise<string> {
-  const clientId = process.env.ZOHO_CLIENT_ID
-  const clientSecret = process.env.ZOHO_CLIENT_SECRET
-  const refreshToken = process.env.ZOHO_REFRESH_TOKEN
-
-  if (!clientId || !clientSecret || !refreshToken) {
-    throw new Error('Zoho credentials not configured')
-  }
-
-  const tokenResponse = await fetch('https://accounts.zoho.com/oauth/v2/token', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      refresh_token: refreshToken,
-      client_id: clientId,
-      client_secret: clientSecret,
-      grant_type: 'refresh_token',
-    }),
-  })
-
-  if (!tokenResponse.ok) {
-    const errorText = await tokenResponse.text()
-    throw new Error(`Failed to refresh Zoho token: ${tokenResponse.status} ${errorText}`)
-  }
-
-  const tokenData: ZohoTokenResponse = await tokenResponse.json()
-  return tokenData.access_token
-}
-
-/**
- * Get Zoho account ID and email
- */
-async function getZohoAccountInfo(accessToken: string, fallbackEmail: string): Promise<{ accountId: string; email: string }> {
-  const accountInfoResponse = await fetch('https://mail.zoho.com/api/accounts', {
-    method: 'GET',
-    headers: {
-      'Authorization': `Zoho-oauthtoken ${accessToken}`,
-    },
-  })
-
-  if (accountInfoResponse.ok) {
-    const accounts = await accountInfoResponse.json()
-    if (accounts.data && accounts.data.length > 0) {
-      const account = accounts.data[0]
-      const accountId = account.accountId || account.account_id || account.accountId
-      let accountEmail = fallbackEmail
-      if (account.emailAddress && typeof account.emailAddress === 'string') {
-        accountEmail = account.emailAddress
-      } else if (account.email && typeof account.email === 'string') {
-        accountEmail = account.email
-      } else if (account.accountName && typeof account.accountName === 'string') {
-        accountEmail = account.accountName
-      }
-
-      if (accountId) {
-        return { accountId, email: accountEmail }
-      }
-    }
-  }
-
-  const emailParts = fallbackEmail.split('@')
-  const fallbackAccountId = emailParts[0]
-  return { accountId: fallbackAccountId, email: fallbackEmail }
-}
-
-/**
- * Send email via Zoho Mail API
- */
-async function sendZohoEmail(
-  accessToken: string,
-  accountId: string,
-  fromEmail: string,
-  toEmail: string,
-  subject: string,
-  htmlContent: string
-): Promise<{ success: boolean; error?: string }> {
-  const mailApiUrl = `https://mail.zoho.com/api/accounts/${accountId}/messages`
-
-  const finalHtml = ensureBannerHtml(htmlContent)
-
-  const emailResponse = await fetch(mailApiUrl, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Zoho-oauthtoken ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      fromAddress: fromEmail,
-      toAddress: toEmail,
-      subject: subject,
-      content: finalHtml,
-      mailFormat: 'html',
-    }),
-  })
-
-  if (!emailResponse.ok) {
-    const errorText = await emailResponse.text()
-    console.error('Zoho email API error:', {
-      status: emailResponse.status,
-      statusText: emailResponse.statusText,
-      error: errorText,
-    })
-    return { success: false, error: `Failed to send email: ${emailResponse.status}` }
-  }
-
-  return { success: true }
-}
-
-/**
- * Generate welcome email HTML
- */
-function generateWelcomeEmailHtml(userName: string, gettingStartedUrl: string, userEmail?: string): string {
-  const currentYear = new Date().getFullYear()
-
-  return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; background-color: #000000; font-family: Arial, sans-serif;">
-  <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #000000;">
-    <tr>
-      <td align="left" style="padding: 40px 20px;">
-        <table role="presentation" style="max-width: 600px; width: 100%; border-collapse: collapse; background-color: #000000; margin: 0;">
-          <!-- Branding Header -->
-          <tr>
-            <td align="left" style="padding: 0 0 30px 0;">
-              <a href="https://www.thelostandunfounds.com" target="_blank">
-                <img src="https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png" alt="THE LOST+UNFOUNDS" style="max-width: 100%; height: auto; display: block;">
-              </a>
-            </td>
-          </tr>
-          <!-- Main Content -->
-          <tr>
-            <td style="padding: 0; color: #ffffff;">
-              <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
-                Hello ${userName},
-              </p>
-              <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
-                Welcome to THE LOST ARCHIVES BOOK CLUB! We're excited to have you join our community of contributors.
-              </p>
-              <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
-                To help you get started, we've created a comprehensive Contributor Getting Started Guide that walks you through:
-              </p>
-              <ul style="color: #ffffff; font-size: 16px; line-height: 1.8; margin: 0 0 20px 0; padding-left: 20px; text-align: left; font-family: Arial, sans-serif;">
-                <li>Setting up your account and subdomain</li>
-                <li>Writing high-quality articles</li>
-                <li>Using AI responsibly with Human-In-The-Loop principles</li>
-                <li>Meeting Google's E‑E‑A‑T standards</li>
-                <li>Earning as an Amazon affiliate</li>
-              </ul>
-              <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0; text-align: left; font-family: Arial, sans-serif;">
-                The guide is your go-to resource to make sure your contributions are impactful, authentic, and set up to succeed.
-              </p>
-              <!-- Button -->
-              <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0 0 30px 0;">
-                <tr>
-                  <td align="left">
-                    <a href="${gettingStartedUrl}" style="display: inline-block; padding: 12px 24px; background-color: #000000; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 16px; font-family: Arial, sans-serif; border: 2px solid #ffffff;">
-                      View Getting Started Guide →
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
-                If you have any questions or need assistance, feel free to reach out. We're here to help you succeed!
-              </p>
-              <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0;">
-              <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 0 0 10px 0; text-align: left; font-family: Arial, sans-serif;">
-                © ${currentYear} THE LOST+UNFOUNDS. All rights reserved.
-              </p>
-              <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: left; font-family: Arial, sans-serif;">
-                <a href="https://www.thelostandunfounds.com/unsubscribe" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe from emails</a>
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`
+function generateWelcomeEmailBody(userName: string, gettingStartedUrl: string, userEmail?: string): string {
+  return `
+    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
+      Hello ${userName},
+    </p>
+    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
+      Welcome to THE LOST ARCHIVES BOOK CLUB! We're excited to have you join our community of contributors.
+    </p>
+    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
+      To help you get started, we've created a comprehensive Contributor Getting Started Guide that walks you through:
+    </p>
+    <ul style="color: #ffffff; font-size: 16px; line-height: 1.8; margin: 0 0 20px 0; padding-left: 20px; text-align: left; font-family: Arial, sans-serif;">
+      <li>Setting up your account and subdomain</li>
+      <li>Writing high-quality articles</li>
+      <li>Using AI responsibly with Human-In-The-Loop principles</li>
+      <li>Meeting Google's E&#8209;E&#8209;A&#8209;T standards</li>
+      <li>Earning as an Amazon affiliate</li>
+    </ul>
+    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0; text-align: left; font-family: Arial, sans-serif;">
+      The guide is your go-to resource to make sure your contributions are impactful, authentic, and set up to succeed.
+    </p>
+    <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0 0 30px 0;">
+      <tr>
+        <td align="left">
+          <a href="${gettingStartedUrl}" style="display: inline-block; padding: 12px 24px; background-color: #000000; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 16px; font-family: Arial, sans-serif; border: 2px solid #ffffff;">
+            View Getting Started Guide &rarr;
+          </a>
+        </td>
+      </tr>
+    </table>
+    <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; text-align: left; font-family: Arial, sans-serif;">
+      If you have any questions or need assistance, feel free to reach out. We're here to help you succeed!
+    </p>
+    <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 30px 0;">
+    <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.5; margin: 0 0 10px 0; text-align: left; font-family: Arial, sans-serif;">
+      <a href="https://www.thelostandunfounds.com/unsubscribe" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Unsubscribe from emails</a>
+    </p>
+  `
 }
 
 /**
@@ -312,30 +125,12 @@ export default async function handler(
 
     // Test mode: send to specific email
     if (testEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testEmail)) {
-      const fromEmail = process.env.ZOHO_FROM_EMAIL || process.env.ZOHO_EMAIL
-      if (!fromEmail) {
-        return res.status(500).json({ error: 'Zoho email not configured' })
-      }
-
-      const accessToken = await getZohoAccessToken()
-      const accountInfo = await getZohoAccountInfo(accessToken, fromEmail)
-      const actualFromEmail = (accountInfo.email && typeof accountInfo.email === 'string' && accountInfo.email.includes('@'))
-        ? accountInfo.email
-        : fromEmail
-
       const userName = testEmail.split('@')[0] || 'Contributor'
       const gettingStartedUrl = 'https://www.thelostandunfounds.com/blog/getting-started'
       const subject = 'Welcome to THE LOST ARCHIVES BOOK CLUB'
-      const htmlContent = generateWelcomeEmailHtml(userName, gettingStartedUrl, testEmail)
+      const content = generateWelcomeEmailBody(userName, gettingStartedUrl, testEmail)
 
-      const result = await sendZohoEmail(
-        accessToken,
-        accountInfo.accountId,
-        actualFromEmail,
-        testEmail,
-        subject,
-        htmlContent
-      )
+      const result = await sendTransactionalEmail({ to: testEmail, subject, content })
 
       console.log(`[Email] Test email attempt to ${testEmail}:`, result)
 
@@ -390,19 +185,6 @@ export default async function handler(
         },
       })
     }
-
-    // Check Zoho configuration
-    const fromEmail = process.env.ZOHO_FROM_EMAIL || process.env.ZOHO_EMAIL
-    if (!fromEmail) {
-      return res.status(500).json({ error: 'Zoho email not configured' })
-    }
-
-    // Get Zoho access token and account info
-    const accessToken = await getZohoAccessToken()
-    const accountInfo = await getZohoAccountInfo(accessToken, fromEmail)
-    const actualFromEmail = (accountInfo.email && typeof accountInfo.email === 'string' && accountInfo.email.includes('@'))
-      ? accountInfo.email
-      : fromEmail
 
     // Get user emails from multiple sources: user_roles, blog_submissions, blog_posts
     const usersWithEmails: UserWithEmail[] = []
@@ -631,17 +413,10 @@ export default async function handler(
         const userName = user.subdomain || user.email.split('@')[0] || 'Contributor'
 
         const subject = 'Welcome to THE LOST ARCHIVES BOOK CLUB'
-        const htmlContent = generateWelcomeEmailHtml(userName, gettingStartedUrl, user.email)
+        const content = generateWelcomeEmailBody(userName, gettingStartedUrl, user.email)
 
         // Send email
-        const result = await sendZohoEmail(
-          accessToken,
-          accountInfo.accountId,
-          actualFromEmail,
-          user.email,
-          subject,
-          htmlContent
-        )
+        const result = await sendTransactionalEmail({ to: user.email, subject, content })
 
         if (result.success) {
           // Mark email as sent

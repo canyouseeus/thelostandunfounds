@@ -1,23 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createServiceSupabaseClient } from './_supabase-admin-client'
-import { getZohoAuthContext, sendZohoEmail } from './_zoho-email-utils'
-
-const wrapHtml = (body: string) => `<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  </head>
-  <body style="margin:0;padding:32px;background-color:#000;color:#fff;font-family:Arial,Helvetica,sans-serif;">
-    <div style="max-width:640px;margin:0 auto;">
-      ${body}
-      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.15);margin:32px 0;" />
-      <p style="font-size:12px;color:rgba(255,255,255,0.6);margin:0;">
-        Blog contributor notification • THE LOST+UNFOUNDS
-      </p>
-    </div>
-  </body>
-</html>`
+import { sendTransactionalEmail } from './_resend-email-handler.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -86,53 +69,55 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const blogUrl = `https://www.thelostandunfounds.com/thelostarchives/${subdomain}`
     const dashboardUrl = `https://www.thelostandunfounds.com/admin?tab=blog&subdomain=${subdomain}`
 
-    const htmlBody = wrapHtml(`
-      <h2 style="margin:0 0 16px 0;font-size:24px;">New blog contributor detected</h2>
-      <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;">
+    const content = `
+      <h2 style="color: #ffffff; margin:0 0 16px 0;font-size:24px;">New blog contributor detected</h2>
+      <p style="color: #ffffff; margin:0 0 16px 0;font-size:16px;line-height:1.5;">
         ${contributorName} just configured a blog subdomain on THE LOST ARCHIVES.
       </p>
       <table style="width:100%;border-collapse:collapse;margin:0 0 24px 0;">
         <tbody>
           <tr>
-            <td style="padding:8px 0;color:rgba(255,255,255,0.6);">User</td>
-            <td style="padding:8px 0;color:#fff;">${contributorName} (${contributorEmail})</td>
+            <td style="padding:8px 0;color:#aaaaaa;">User</td>
+            <td style="padding:8px 0;color:#ffffff;">${contributorName} (${contributorEmail})</td>
           </tr>
           <tr>
-            <td style="padding:8px 0;color:rgba(255,255,255,0.6);">Subdomain</td>
-            <td style="padding:8px 0;color:#fff;">${subdomain}</td>
+            <td style="padding:8px 0;color:#aaaaaa;">Subdomain</td>
+            <td style="padding:8px 0;color:#ffffff;">${subdomain}</td>
           </tr>
           ${
             subdomainInfo
               ? `<tr>
-                  <td style="padding:8px 0;color:rgba(255,255,255,0.6);">Blog Title</td>
-                  <td style="padding:8px 0;color:#fff;">${
+                  <td style="padding:8px 0;color:#aaaaaa;">Blog Title</td>
+                  <td style="padding:8px 0;color:#ffffff;">${
                     subdomainInfo.blog_title_display || subdomainInfo.blog_title || 'N/A'
                   }</td>
                 </tr>
                 <tr>
-                  <td style="padding:8px 0;color:rgba(255,255,255,0.6);">Author Name</td>
-                  <td style="padding:8px 0;color:#fff;">${subdomainInfo.author_name || 'N/A'}</td>
+                  <td style="padding:8px 0;color:#aaaaaa;">Author Name</td>
+                  <td style="padding:8px 0;color:#ffffff;">${subdomainInfo.author_name || 'N/A'}</td>
                 </tr>`
               : ''
           }
         </tbody>
       </table>
       <p style="margin:0 0 8px 0;">
-        <a href="${blogUrl}" style="color:#fff;text-decoration:underline;">View draft blog →</a>
+        <a href="${blogUrl}" style="color:#ffffff;text-decoration:underline;">View draft blog &rarr;</a>
       </p>
       <p style="margin:0;">
-        <a href="${dashboardUrl}" style="color:#fff;text-decoration:underline;">Open Admin dashboard →</a>
+        <a href="${dashboardUrl}" style="color:#ffffff;text-decoration:underline;">Open Admin dashboard &rarr;</a>
       </p>
-    `)
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.15);margin:32px 0;" />
+      <p style="font-size:12px;color:#aaaaaa;margin:0;">
+        Blog contributor notification &bull; THE LOST+UNFOUNDS
+      </p>
+    `
 
-    const zohoAuth = await getZohoAuthContext()
-    const recipient = process.env.ZOHO_TO_EMAIL || zohoAuth.fromEmail
+    const recipient = process.env.ZOHO_TO_EMAIL || process.env.ZOHO_FROM_EMAIL || process.env.ZOHO_EMAIL || ''
 
-    const result = await sendZohoEmail({
-      auth: zohoAuth,
+    const result = await sendTransactionalEmail({
       to: recipient,
       subject: `New blog contributor: ${contributorName}`,
-      htmlContent: htmlBody
+      content,
     })
 
     if (!result.success) {
@@ -147,7 +132,3 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     })
   }
 }
-
-
-
-

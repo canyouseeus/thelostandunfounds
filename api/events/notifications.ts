@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import { getZohoAuthContext, sendZohoEmail } from '../../lib/api-handlers/_zoho-email-utils.js';
+import { sendTransactionalEmail } from '../../lib/api-handlers/_resend-email-handler.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -40,57 +40,49 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }
         }
 
-        const auth = await getZohoAuthContext();
         let subject = '';
-        let htmlContent = '';
+        let content = '';
         let to = '';
 
         if (action === 'submitted') {
             to = ADMIN_EMAIL;
             subject = `New Event Submission: ${event.title}`;
-            htmlContent = `
-                <div style="font-family: Arial, sans-serif; color: #fff; background-color: #000; padding: 20px;">
-                    <h2 style="color: #fff; text-transform: uppercase;">New Event Submission</h2>
-                    <p>A new event has been submitted for review.</p>
-                    <p><strong>Title:</strong> ${event.title}</p>
-                    <p><strong>Date:</strong> ${new Date(event.event_date).toLocaleString()}</p>
-                    <p><strong>Location:</strong> ${event.location}</p>
-                    <p><strong>Submitted by:</strong> ${userEmail || 'Unknown user'}</p>
-                    <hr style="border-color: #333;" />
-                    <a href="https://www.thelostandunfounds.com/admin" style="display: inline-block; padding: 10px 20px; background-color: #000; color: #fff; border: 2px solid #fff; text-decoration: none; font-weight: bold; text-transform: uppercase;">Review in Admin Panel</a>
-                </div>
+            content = `
+                <h2 style="color: #ffffff; text-transform: uppercase;">New Event Submission</h2>
+                <p style="color: #ffffff;">A new event has been submitted for review.</p>
+                <p style="color: #ffffff;"><strong>Title:</strong> ${event.title}</p>
+                <p style="color: #ffffff;"><strong>Date:</strong> ${new Date(event.event_date).toLocaleString()}</p>
+                <p style="color: #ffffff;"><strong>Location:</strong> ${event.location}</p>
+                <p style="color: #ffffff;"><strong>Submitted by:</strong> ${userEmail || 'Unknown user'}</p>
+                <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 20px 0;" />
+                <a href="https://www.thelostandunfounds.com/admin" style="display: inline-block; padding: 10px 20px; background-color: #000000; color: #ffffff; border: 2px solid #ffffff; text-decoration: none; font-weight: bold; text-transform: uppercase;">Review in Admin Panel</a>
             `;
         } else if (action === 'approved') {
             if (!userEmail) return res.status(400).json({ error: 'Owner email not found' });
             to = userEmail;
             subject = `Your Event Has Been Approved: ${event.title}`;
-            htmlContent = `
-                <div style="font-family: Arial, sans-serif; color: #fff; background-color: #000; padding: 20px;">
-                    <h2 style="color: #fff; text-transform: uppercase;">Event Approved!</h2>
-                    <p>Great news! Your event <strong>${event.title}</strong> has been approved and is now live on THE LOST+UNFOUNDS.</p>
-                    <p><strong>Date:</strong> ${new Date(event.event_date).toLocaleString()}</p>
-                    <p><strong>Location:</strong> ${event.location}</p>
-                    <hr style="border-color: #333;" />
-                    <a href="https://www.thelostandunfounds.com/events" style="display: inline-block; padding: 10px 20px; background-color: #000; color: #fff; border: 2px solid #fff; text-decoration: none; font-weight: bold; text-transform: uppercase;">View Events</a>
-                </div>
+            content = `
+                <h2 style="color: #ffffff; text-transform: uppercase;">Event Approved!</h2>
+                <p style="color: #ffffff;">Great news! Your event <strong>${event.title}</strong> has been approved and is now live on THE LOST+UNFOUNDS.</p>
+                <p style="color: #ffffff;"><strong>Date:</strong> ${new Date(event.event_date).toLocaleString()}</p>
+                <p style="color: #ffffff;"><strong>Location:</strong> ${event.location}</p>
+                <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 20px 0;" />
+                <a href="https://www.thelostandunfounds.com/events" style="display: inline-block; padding: 10px 20px; background-color: #000000; color: #ffffff; border: 2px solid #ffffff; text-decoration: none; font-weight: bold; text-transform: uppercase;">View Events</a>
             `;
         } else if (action === 'rejected') {
             if (!userEmail) return res.status(400).json({ error: 'Owner email not found' });
             to = userEmail;
             subject = `Update on Your Event Submission: ${event.title}`;
-            htmlContent = `
-                <div style="font-family: Arial, sans-serif; color: #fff; background-color: #000; padding: 20px;">
-                    <h2 style="color: #fff; text-transform: uppercase;">Event Submission Update</h2>
-                    <p>Thank you for submitting your event <strong>${event.title}</strong>.</p>
-                    <p>Unfortunately, we are unable to approve and publish this event at this time. If you have any questions, please reply to this email.</p>
-                    <hr style="border-color: #333;" />
-                </div>
+            content = `
+                <h2 style="color: #ffffff; text-transform: uppercase;">Event Submission Update</h2>
+                <p style="color: #ffffff;">Thank you for submitting your event <strong>${event.title}</strong>.</p>
+                <p style="color: #ffffff;">Unfortunately, we are unable to approve and publish this event at this time. If you have any questions, please reply to this email.</p>
             `;
         } else {
             return res.status(400).json({ error: 'Invalid action' });
         }
 
-        const sendResult = await sendZohoEmail({ auth, to, subject, htmlContent });
+        const sendResult = await sendTransactionalEmail({ to, subject, content });
 
         if (!sendResult.success) {
             throw new Error(sendResult.error || 'Failed to send email');
