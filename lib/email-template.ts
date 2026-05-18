@@ -67,7 +67,6 @@ export function wrapEmailContent(
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="color-scheme" content="dark">
   <meta name="supported-color-schemes" content="dark">
-  <title> </title>
   <style>
     :root {
       color-scheme: light dark;
