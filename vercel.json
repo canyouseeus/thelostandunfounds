@@ -69,6 +69,14 @@
       "destination": "/api/sitemap-images"
     },
     {
+      "source": "/roa",
+      "destination": "https://roa-mockup.vercel.app/"
+    },
+    {
+      "source": "/roa/(.*)",
+      "destination": "https://roa-mockup.vercel.app/$1"
+    },
+    {
       "source": "/((?!api|_next|static|sql|\\.well-known|@vite|@react-refresh|.*\\..*).*)",
       "destination": "/404.html"
     }
