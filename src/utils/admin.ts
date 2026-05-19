@@ -25,6 +25,52 @@ export function isAdminEmail(email: string): boolean {
 }
 
 /**
+ * Synchronous admin check against an already-loaded user object.
+ * Recognizes the admin via email (case-insensitive) or role metadata,
+ * so the result is consistent whether the user signed in via password
+ * or Google OAuth. Use this for UI gating where an async DB round-trip
+ * is unnecessary.
+ */
+export function isAdminUser(
+  user: { email?: string | null; user_metadata?: any; app_metadata?: any } | null | undefined
+): boolean {
+  if (!user) return false;
+  if (isAdminEmail(user.email || '')) return true;
+  const um = user.user_metadata || {};
+  if (um.role === 'admin' || um.role === 'Admin' || um.is_admin === true) return true;
+  const am = user.app_metadata || {};
+  if (am.role === 'admin' || am.is_admin === true) return true;
+  return false;
+}
+
+/**
+ * Switch the current browser session into the admin account.
+ *
+ * Uses the dev-only auto-login endpoint, which mints an admin session via
+ * the service role key. This powers the role switcher so the owner can hop
+ * from an affiliate test account back into admin without re-entering
+ * credentials. Returns an error in production, where the endpoint is blocked.
+ */
+export async function elevateToAdminSession(): Promise<{ error: Error | null }> {
+  try {
+    const res = await fetch('/api/dev/auto-login', { method: 'POST' });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({} as any));
+      return { error: new Error(body.error || 'Admin switch is only available in development') };
+    }
+    const data = await res.json();
+    const { error } = await supabase.auth.setSession({
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+    });
+    if (error) return { error: error as Error };
+    return { error: null };
+  } catch (error) {
+    return { error: error as Error };
+  }
+}
+
+/**
  * Check if current user is an admin
  */
 export async function isAdmin(): Promise<boolean> {

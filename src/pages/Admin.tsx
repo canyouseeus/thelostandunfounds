@@ -12,7 +12,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
 import AdminAffiliates from './AdminAffiliates';
 import SEOHead from '../components/SEOHead';
-import { isAdmin } from '../utils/admin';
+import { isAdmin, isAdminUser } from '../utils/admin';
 import { supabase } from '../lib/supabase';
 import {
   UsersIcon,
@@ -439,12 +439,13 @@ export default function Admin() {
       return;
     }
 
-    // First check: email match (fastest, no database query)
-    const email = user?.email || '';
-    const isAdminEmail = email === 'thelostandunfounds@gmail.com' || email === 'admin@thelostandunfounds.com';
+    // First check: email / role match (fastest, no database query).
+    // Case-insensitive and also honors admin role metadata, so the owner is
+    // recognized whether signed in via password or Google OAuth.
+    const isAdminEmail = isAdminUser(user);
 
     if (isAdminEmail) {
-      // Email matches admin - allow access immediately
+      // User is recognized as admin - allow access immediately
       setAdminStatus(true);
       setLoading(false);
       return;

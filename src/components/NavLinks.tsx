@@ -1,8 +1,9 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { UserIcon, ArrowRightStartOnRectangleIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { UserIcon, ArrowRightStartOnRectangleIcon, SparklesIcon, ArrowsRightLeftIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
 import { useSageMode } from '../contexts/SageModeContext';
 import { useState } from 'react';
+import { elevateToAdminSession } from '../utils/admin';
 
 type NavLinksProps = {
     user: any;
@@ -28,6 +29,21 @@ export default function NavLinks({
     const [archivesMenuOpen, setArchivesMenuOpen] = useState(false);
     const [moreMenuOpen, setMoreMenuOpen] = useState(false);
     const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+    const [switching, setSwitching] = useState(false);
+    const [switchError, setSwitchError] = useState<string | null>(null);
+
+    const handleSwitchToAdmin = async () => {
+        setSwitching(true);
+        setSwitchError(null);
+        const { error } = await elevateToAdminSession();
+        if (error) {
+            setSwitchError(error.message);
+            setSwitching(false);
+            return;
+        }
+        // Full reload so AuthContext re-initializes with the admin session
+        window.location.href = '/admin';
+    };
 
     // Only show HOME and SHOP in menu for now (MORE menu always visible)
     const showLimitedMenu = true;
@@ -135,6 +151,30 @@ export default function NavLinks({
                             {userIsAdmin ? 'ADMIN DASHBOARD' : 'PROFILE'}
                         </div>
                     </Link>
+                    {/* Role switcher — hop between admin and affiliate views */}
+                    {userIsAdmin ? (
+                        <Link to="/dashboard" className="menu-item" onClick={onLinkClick}>
+                            <div className="flex items-center gap-2">
+                                <ArrowsRightLeftIcon className="w-4 h-4" />
+                                AFFILIATE VIEW
+                            </div>
+                        </Link>
+                    ) : (
+                        <button
+                            type="button"
+                            className="menu-item w-full text-left"
+                            onClick={handleSwitchToAdmin}
+                            disabled={switching}
+                        >
+                            <div className="flex items-center gap-2">
+                                <ArrowsRightLeftIcon className="w-4 h-4" />
+                                {switching ? 'SWITCHING…' : 'SWITCH TO ADMIN'}
+                            </div>
+                            {switchError && (
+                                <div className="text-red-400 text-xs mt-1">{switchError}</div>
+                            )}
+                        </button>
+                    )}
                     {userIsAdmin && (
                         <button
                             type="button"

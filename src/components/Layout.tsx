@@ -11,7 +11,7 @@ import { useState, useEffect, useRef, useCallback, ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useSageMode } from '../contexts/SageModeContext'
-import { isAdminEmail } from '../utils/admin'
+import { isAdminUser } from '../utils/admin'
 import { initAffiliateTracking } from '../utils/affiliate-tracking'
 import AuthModal from './auth/AuthModal'
 import SageModeOverlay from './SageModeOverlay'
@@ -41,7 +41,10 @@ export default function Layout({ children }: { children?: ReactNode }) {
   const menuRef = useRef<HTMLDivElement>(null)
   const { user, tier, signOut, loading, clearAuthStorage } = useAuth()
   // Derived synchronously from auth state — no extra DB round-trip needed for UI gating
-  const userIsAdmin = !loading && !!user && isAdminEmail(user.email || '')
+  const userIsAdmin = !loading && !!user && isAdminUser(user)
+  // Any signed-in user gets the nav menu — it's the entry point for the role
+  // switcher, profile, and sign-out. Previously gated to admins only.
+  const showHeaderMenu = !loading && !!user
   // Show advertising banner above nav for visitors on the homepage
   const showAdBanner = location.pathname === '/' && !userIsAdmin && !loading
   const { activeGallery, closeGallery } = useGallery()
@@ -252,21 +255,21 @@ export default function Layout({ children }: { children?: ReactNode }) {
                 </button>
               )}
 
-              {/* Logo — centered for visitors, left-aligned for admins */}
+              {/* Logo — centered for visitors, left-aligned when the menu shows */}
               <Link
                 to="/"
                 className={`flex items-center hover:opacity-70 transition-opacity ${
-                  userIsAdmin ? 'flex-shrink-0' : 'absolute left-1/2 -translate-x-1/2 top-0'
+                  showHeaderMenu ? 'flex-shrink-0' : 'absolute left-1/2 -translate-x-1/2 top-0'
                 }`}
                 style={{ display: 'flex', alignItems: 'center' }}
               >
                 <img
                   src="/logo.png"
                   alt="THE LOST+UNFOUNDS"
-                  style={{ height: userIsAdmin ? '63px' : '84px', width: 'auto', display: 'block' }}
+                  style={{ height: showHeaderMenu ? '63px' : '84px', width: 'auto', display: 'block' }}
                 />
               </Link>
-              {userIsAdmin && (
+              {showHeaderMenu && (
                 <div className="flex items-center space-x-4 ml-auto flex-shrink-0 leading-none h-12">
                   <div className="header-nav" ref={menuRef}>
                     <button
