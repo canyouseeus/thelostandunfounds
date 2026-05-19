@@ -141,6 +141,11 @@ async function finalizeCheckoutSession(session: Stripe.Checkout.Session) {
         await finalizeShopOrder(supabase, session)
     } else if (session.metadata?.source === 'tlau-events') {
         await finalizeEventOrder(supabase, session)
+    } else if (session.payment_link) {
+        // Booking deposit / final-balance payments are made through Stripe
+        // Payment Links (not Checkout Sessions), so they carry no metadata.source.
+        // We match them back to an invoice via the payment link id.
+        await finalizeBookingPayment(supabase, session)
     }
 
     // Flip any pre-existing pending affiliate commission to confirmed (legacy
@@ -489,6 +494,116 @@ async function finalizeEventOrder(supabase: any, session: Stripe.Checkout.Sessio
                 console.log('ℹ️ No affiliate commission for event order:', eventOrderId, result.reason)
             }
         }
+    }
+}
+
+/**
+ * Finalize a booking quote-deposit or final-balance payment made via a
+ * Stripe Payment Link.
+ *
+ *  1. Match the invoice by the payment link id stored on it.
+ *  2. Record an invoice_payments row and mark the invoice paid.
+ *  3. Advance the booking: 'deposit_paid' after a quote, 'paid' after a final
+ *     invoice (the final payment also triggers the affiliate commission).
+ *
+ * Idempotent: a replayed webhook sees the invoice already paid and exits.
+ */
+async function finalizeBookingPayment(supabase: any, session: Stripe.Checkout.Session) {
+    const paymentLinkId =
+        typeof session.payment_link === 'string'
+            ? session.payment_link
+            : session.payment_link?.id || null
+    if (!paymentLinkId) return
+
+    const { data: invoice } = await supabase
+        .from('invoices')
+        .select('id, booking_id, invoice_type, status, total')
+        .eq('stripe_payment_link_id', paymentLinkId)
+        .maybeSingle()
+
+    // Not one of ours (some other payment link) — nothing to do.
+    if (!invoice) return
+
+    if (invoice.status === 'paid') {
+        console.log('ℹ️ Booking invoice already paid, skipping:', invoice.id)
+        return
+    }
+
+    const amountPaid = (session.amount_total || 0) / 100
+    const paidAt = new Date().toISOString()
+
+    const { error: payErr } = await supabase.from('invoice_payments').insert({
+        invoice_id: invoice.id,
+        amount: amountPaid,
+        method: 'Stripe',
+        paid_at: paidAt,
+        notes: `Stripe Checkout ${session.id}`,
+    })
+    if (payErr) {
+        console.error('❌ Failed to record invoice_payment:', payErr)
+        return
+    }
+
+    const { error: invErr } = await supabase
+        .from('invoices')
+        .update({ status: 'paid', paid_at: paidAt })
+        .eq('id', invoice.id)
+    if (invErr) {
+        console.error('❌ Failed to mark invoice paid:', invErr)
+        return
+    }
+
+    if (!invoice.booking_id) {
+        console.log('✅ Standalone invoice paid (no booking link):', invoice.id)
+        return
+    }
+
+    const { data: booking } = await supabase
+        .from('bookings')
+        .select('id, email, status, total_amount_cents, affiliate_code')
+        .eq('id', invoice.booking_id)
+        .single()
+
+    if (!booking) {
+        console.warn('⚠️ Booking invoice paid but booking not found:', invoice.booking_id)
+        return
+    }
+
+    if (invoice.invoice_type === 'final') {
+        await supabase
+            .from('bookings')
+            .update({ status: 'paid', paid_at: paidAt })
+            .eq('id', booking.id)
+        console.log('✅ Booking fully paid:', booking.id)
+
+        // Final payment triggers the affiliate commission on the full project
+        // total. Idempotent — no-op if no referral or already triggered.
+        try {
+            const grossAmount = (Number(booking.total_amount_cents) || 0) / 100
+            if (booking.email && grossAmount > 0) {
+                const result = await triggerReferralCommission(supabase, {
+                    email: booking.email,
+                    source: 'booking',
+                    sourceId: booking.id,
+                    grossAmount,
+                    fallbackAffiliateCode: booking.affiliate_code || null,
+                })
+                if (result.triggered) {
+                    console.log('✅ Booking commission registered:', { booking: booking.id, amount: result.amount })
+                }
+            }
+        } catch (commissionErr: any) {
+            console.error('⚠️ Booking commission trigger failed:', commissionErr?.message)
+        }
+    } else {
+        // Quote deposit paid. Don't downgrade a booking that's already 'paid'.
+        if (booking.status !== 'paid') {
+            await supabase
+                .from('bookings')
+                .update({ status: 'deposit_paid', deposit_paid_at: paidAt })
+                .eq('id', booking.id)
+        }
+        console.log('✅ Booking deposit paid:', booking.id)
     }
 }
 
