@@ -1,11 +1,4 @@
 import { Link } from 'react-router-dom';
-import {
-    CurrencyDollarIcon,
-    UsersIcon,
-    TrophyIcon,
-    ArrowRightIcon,
-    CheckIcon
-} from '@heroicons/react/24/outline';
 import KingMidasTicker from '../components/KingMidasTicker';
 import SEOHead from '../components/SEOHead';
 import BrandName from '../components/ui/BrandName';
@@ -29,8 +22,7 @@ export default function BecomeAffiliate() {
 
                 <div className="container mx-auto px-4 pt-12 pb-10 md:pt-20 md:pb-16 relative z-10">
                     <div className="max-w-4xl mx-auto text-left">
-                        <div className="inline-flex items-center gap-2 text-white text-[10px] font-black uppercase tracking-[0.4em] mb-6">
-                            <TrophyIcon className="w-4 h-4" />
+                        <div className="text-white text-[10px] font-black uppercase tracking-[0.4em] mb-6">
                             Join the #1 Creator Affiliate Program
                         </div>
 
@@ -46,9 +38,9 @@ export default function BecomeAffiliate() {
                         <div className="flex flex-row items-stretch gap-3 sm:gap-4">
                             <Link
                                 to="/dashboard"
-                                className="flex-1 sm:flex-none min-w-0 px-3 sm:px-8 py-4 bg-white text-black font-black text-xs sm:text-lg uppercase tracking-wider sm:tracking-widest hover:bg-white/90 transition-all flex items-center justify-center gap-2 text-center whitespace-nowrap"
+                                className="flex-1 sm:flex-none min-w-0 px-3 sm:px-8 py-4 bg-white text-black font-black text-xs sm:text-lg uppercase tracking-wider sm:tracking-widest hover:bg-white/90 transition-all flex items-center justify-center text-center whitespace-nowrap"
                             >
-                                Join Program Now <ArrowRightIcon className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+                                Join Program Now
                             </Link>
                             <Link
                                 to="/king-midas-leaderboard"
@@ -66,7 +58,6 @@ export default function BecomeAffiliate() {
                 <div className="container mx-auto px-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12 max-w-6xl mx-auto">
                         <div>
-                            <CurrencyDollarIcon className="w-8 h-8 text-white mb-4" />
                             <h3 className="text-xl font-bold text-white uppercase tracking-widest mb-3 text-left">High Commissions</h3>
                             <p className="text-white leading-relaxed text-left">
                                 Earn an industry-leading 42% of the profit on every sale you refer. Your referrals are locked to you for life.
@@ -74,7 +65,6 @@ export default function BecomeAffiliate() {
                         </div>
 
                         <div>
-                            <TrophyIcon className="w-8 h-8 text-white mb-4" />
                             <h3 className="text-xl font-bold text-white uppercase tracking-widest mb-3 text-left">King Midas Pool</h3>
                             <p className="text-white leading-relaxed text-left">
                                 Top affiliates compete daily for a share of 8% of the entire site's daily profits. Rankings reset every 24 hours.
@@ -82,7 +72,6 @@ export default function BecomeAffiliate() {
                         </div>
 
                         <div>
-                            <UsersIcon className="w-8 h-8 text-white mb-4" />
                             <h3 className="text-xl font-bold text-white uppercase tracking-widest mb-3 text-left">2-Tier MLM</h3>
                             <p className="text-white leading-relaxed text-left">
                                 Recruit other affiliates and earn 2% of profits on their sales (Level 1) and 1% of profits on their recruits' sales (Level 2).
@@ -108,11 +97,11 @@ export default function BecomeAffiliate() {
                                     to="/dashboard"
                                     className="inline-block text-white font-bold uppercase tracking-widest underline underline-offset-4 hover:no-underline"
                                 >
-                                    Start Earning Today →
+                                    Start Earning Today
                                 </Link>
                             </div>
 
-                            <div className="space-y-3">
+                            <ul className="space-y-3">
                                 {[
                                     'Real-time link tracking & analytics',
                                     'Instant payouts via Stripe Connect',
@@ -121,12 +110,9 @@ export default function BecomeAffiliate() {
                                     'Marketing assets & banners',
                                     'Dedicated affiliate support'
                                 ].map((feature, i) => (
-                                    <div key={i} className="flex items-center gap-3">
-                                        <CheckIcon className="w-5 h-5 text-white flex-shrink-0" />
-                                        <span className="text-white font-medium">{feature}</span>
-                                    </div>
+                                    <li key={i} className="text-white font-medium">{feature}</li>
                                 ))}
-                            </div>
+                            </ul>
                         </div>
                     </div>
                 </div>
