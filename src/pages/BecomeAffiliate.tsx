@@ -46,13 +46,13 @@ export default function BecomeAffiliate() {
                         <div className="flex flex-row items-stretch gap-3 sm:gap-4">
                             <Link
                                 to="/dashboard"
-                                className="flex-1 sm:flex-none min-w-0 px-3 sm:px-8 py-4 bg-white text-black font-black text-xs sm:text-lg uppercase tracking-wider sm:tracking-widest hover:bg-white/90 transition-all flex items-center justify-center gap-2 text-center"
+                                className="flex-1 sm:flex-none min-w-0 px-3 sm:px-8 py-4 bg-white text-black font-black text-xs sm:text-lg uppercase tracking-wider sm:tracking-widest hover:bg-white/90 transition-all flex items-center justify-center gap-2 text-center whitespace-nowrap"
                             >
                                 Join Program Now <ArrowRightIcon className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
                             </Link>
                             <Link
                                 to="/king-midas-leaderboard"
-                                className="flex-1 sm:flex-none min-w-0 px-3 sm:px-8 py-4 bg-white/5 text-white font-bold text-xs sm:text-lg uppercase tracking-wider sm:tracking-widest hover:bg-white/10 transition-colors flex items-center justify-center text-center"
+                                className="flex-1 sm:flex-none min-w-0 px-3 sm:px-8 py-4 bg-white/5 text-white font-bold text-xs sm:text-lg uppercase tracking-wider sm:tracking-widest hover:bg-white/10 transition-colors flex items-center justify-center text-center whitespace-nowrap"
                             >
                                 View Prize Pool
                             </Link>
@@ -149,7 +149,7 @@ export default function BecomeAffiliate() {
                     </p>
                     <Link
                         to="/dashboard"
-                        className="inline-block px-12 py-5 bg-white text-black font-black text-xl uppercase tracking-widest hover:bg-white/90 transition-colors"
+                        className="inline-block px-6 sm:px-12 py-4 sm:py-5 bg-white text-black font-black text-base sm:text-xl uppercase tracking-widest hover:bg-white/90 transition-colors whitespace-nowrap"
                     >
                         Become an Affiliate
                     </Link>
