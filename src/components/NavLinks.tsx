@@ -1,9 +1,6 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { UserIcon, ArrowRightStartOnRectangleIcon, SparklesIcon, ArrowsRightLeftIcon } from '@heroicons/react/24/outline';
-import { useAuth } from '../contexts/AuthContext';
-import { useSageMode } from '../contexts/SageModeContext';
+import { Link } from 'react-router-dom';
+import { UserIcon, ArrowRightStartOnRectangleIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
-import { elevateToAdminSession } from '../utils/admin';
 
 type NavLinksProps = {
     user: any;
@@ -19,7 +16,6 @@ type NavLinksProps = {
 export default function NavLinks({
     user,
     userIsAdmin,
-    userSubdomain,
     sageModeState,
     toggleSageMode,
     handleSignOut,
@@ -28,26 +24,60 @@ export default function NavLinks({
 }: NavLinksProps) {
     const [archivesMenuOpen, setArchivesMenuOpen] = useState(false);
     const [moreMenuOpen, setMoreMenuOpen] = useState(false);
-    const [accountMenuOpen, setAccountMenuOpen] = useState(false);
-    const [switching, setSwitching] = useState(false);
-    const [switchError, setSwitchError] = useState<string | null>(null);
 
-    const handleSwitchToAdmin = async () => {
-        setSwitching(true);
-        setSwitchError(null);
-        const { error } = await elevateToAdminSession();
-        if (error) {
-            setSwitchError(error.message);
-            setSwitching(false);
-            return;
-        }
-        // Full reload so AuthContext re-initializes with the admin session
-        window.location.href = '/admin';
-    };
+    const moreSection = (
+        <>
+            <div
+                className="menu-item menu-toggle-section flex items-center justify-start w-full gap-0 cursor-pointer"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    setMoreMenuOpen(!moreMenuOpen);
+                }}
+            >
+                <span className="flex-grow">MORE</span>
+                <div className="p-1 transition rounded-none flex items-center justify-center h-6 w-6 shrink-0">
+                    {moreMenuOpen ? '▼' : '▶'}
+                </div>
+            </div>
+            <div className={`menu-subsection ${moreMenuOpen ? 'open' : ''}`}>
+                <Link to="/about" className="menu-item menu-subitem" onClick={onLinkClick}>
+                    ABOUT
+                </Link>
+                <Link to="/privacy-policy" className="menu-item menu-subitem" onClick={onLinkClick}>
+                    PRIVACY POLICY
+                </Link>
+                <Link to="/terms-of-service" className="menu-item menu-subitem" onClick={onLinkClick}>
+                    TERMS OF SERVICE
+                </Link>
+            </div>
+        </>
+    );
 
-    // Only show HOME and SHOP in menu for now (MORE menu always visible)
-    const showLimitedMenu = true;
+    // Limited menu for signed-in affiliates — only HOME, MORE, dashboard, log out
+    if (user && !userIsAdmin) {
+        return (
+            <>
+                <Link to="/" className="menu-item" onClick={onLinkClick}>
+                    HOME
+                </Link>
+                {moreSection}
+                <Link to="/dashboard" className="menu-item" onClick={onLinkClick}>
+                    <div className="flex items-center gap-2">
+                        <UserIcon className="w-4 h-4" />
+                        AFFILIATE DASHBOARD
+                    </div>
+                </Link>
+                <button type="button" className="menu-item w-full text-left" onClick={handleSignOut}>
+                    <div className="flex items-center gap-2">
+                        <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
+                        LOG OUT
+                    </div>
+                </button>
+            </>
+        );
+    }
 
+    // Full menu — admins and signed-out visitors
     return (
         <>
             <Link to="/" className="menu-item" onClick={onLinkClick}>
@@ -96,104 +126,31 @@ export default function NavLinks({
                 </Link>
             </div>
 
-            {!showLimitedMenu && (
-                <Link to="/tools" className="menu-item" onClick={onLinkClick}>
-                    EXPLORE TOOLS
-                </Link>
-            )}
-
-            <div
-                className="menu-item menu-toggle-section flex items-center justify-start w-full gap-0 cursor-pointer"
-                onClick={(e) => {
-                    e.stopPropagation();
-                    setMoreMenuOpen(!moreMenuOpen);
-                }}
-            >
-                <span className="flex-grow">MORE</span>
-                <div className="p-1 transition rounded-none flex items-center justify-center h-6 w-6 shrink-0">
-                    {moreMenuOpen ? '▼' : '▶'}
-                </div>
-            </div>
-            <div className={`menu-subsection ${moreMenuOpen ? 'open' : ''}`}>
-                <Link to="/about" className="menu-item menu-subitem" onClick={onLinkClick}>
-                    ABOUT
-                </Link>
-                <Link to="/privacy-policy" className="menu-item menu-subitem" onClick={onLinkClick}>
-                    PRIVACY POLICY
-                </Link>
-                <Link to="/terms-of-service" className="menu-item menu-subitem" onClick={onLinkClick}>
-                    TERMS OF SERVICE
-                </Link>
-                {!showLimitedMenu && (
-                    <>
-                        <Link to="/docs" className="menu-item menu-subitem" onClick={onLinkClick}>
-                            DOCUMENTATION
-                        </Link>
-                        <Link to="/pricing" className="menu-item menu-subitem" onClick={onLinkClick}>
-                            PRICING
-                        </Link>
-                        <Link to="/support" className="menu-item menu-subitem" onClick={onLinkClick}>
-                            SUPPORT
-                        </Link>
-                    </>
-                )}
-            </div>
+            {moreSection}
 
             {user && (
                 <>
-                    <Link
-                        to={userIsAdmin ? '/admin' : userSubdomain ? `/${userSubdomain}/profile` : '/profile'}
-                        className="menu-item"
-                        onClick={onLinkClick}
-                    >
+                    <Link to="/admin" className="menu-item" onClick={onLinkClick}>
                         <div className="flex items-center gap-2">
                             <UserIcon className="w-4 h-4" />
-                            {userIsAdmin ? 'ADMIN DASHBOARD' : 'PROFILE'}
+                            ADMIN DASHBOARD
                         </div>
                     </Link>
-                    {/* Role switcher — hop between admin and affiliate views */}
-                    {userIsAdmin ? (
-                        <Link to="/dashboard" className="menu-item" onClick={onLinkClick}>
-                            <div className="flex items-center gap-2">
-                                <ArrowsRightLeftIcon className="w-4 h-4" />
-                                AFFILIATE VIEW
-                            </div>
-                        </Link>
-                    ) : (
-                        <button
-                            type="button"
-                            className="menu-item w-full text-left"
-                            onClick={handleSwitchToAdmin}
-                            disabled={switching}
-                        >
-                            <div className="flex items-center gap-2">
-                                <ArrowsRightLeftIcon className="w-4 h-4" />
-                                {switching ? 'SWITCHING…' : 'SWITCH TO ADMIN'}
-                            </div>
-                            {switchError && (
-                                <div className="text-red-400 text-xs mt-1">{switchError}</div>
-                            )}
-                        </button>
-                    )}
-                    {userIsAdmin && (
-                        <button
-                            type="button"
-                            className="menu-item w-full text-left flex items-center justify-between"
-                            onClick={() => {
-                                toggleSageMode();
-                                // Optionally close menu or keep it open for toggle? 
-                                // Usually toggles stay open, but nav links close. Let's keep it open or let user decide.
-                            }}
-                        >
-                            <div className="flex items-center gap-2">
-                                <SparklesIcon className="w-4 h-4" />
-                                SAGE MODE
-                            </div>
-                            <span className={`text-xs ${sageModeState.enabled ? 'text-yellow-400' : 'text-white/40'}`}>
-                                {sageModeState.enabled ? 'ON' : 'OFF'}
-                            </span>
-                        </button>
-                    )}
+                    <button
+                        type="button"
+                        className="menu-item w-full text-left flex items-center justify-between"
+                        onClick={() => {
+                            toggleSageMode();
+                        }}
+                    >
+                        <div className="flex items-center gap-2">
+                            <SparklesIcon className="w-4 h-4" />
+                            SAGE MODE
+                        </div>
+                        <span className={`text-xs ${sageModeState.enabled ? 'text-yellow-400' : 'text-white/40'}`}>
+                            {sageModeState.enabled ? 'ON' : 'OFF'}
+                        </span>
+                    </button>
                     <button type="button" className="menu-item w-full text-left" onClick={handleSignOut}>
                         <div className="flex items-center gap-2">
                             <ArrowRightStartOnRectangleIcon className="w-4 h-4" />

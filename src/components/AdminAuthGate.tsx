@@ -2,17 +2,26 @@ import { useState, useEffect, ReactNode } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { LoadingOverlay } from './Loading'
 import AuthModal from './auth/AuthModal'
+import { isAdminUser, elevateToAdminSession } from '../utils/admin'
 
 /**
  * Replaces ProtectedRoute on /admin routes.
  * Instead of redirecting unauthenticated users to /, it shows an inline
  * login prompt that slides up from the bottom — matching the newsletter
  * signup animation on the homepage.
+ *
+ * When someone is signed in but not an admin (e.g. an affiliate account),
+ * the same panel offers a "Switch to Admin" action that elevates the
+ * session into the admin account.
  */
 export default function AdminAuthGate({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth()
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [show, setShow] = useState(false)
+  const [switching, setSwitching] = useState(false)
+  const [switchError, setSwitchError] = useState<string | null>(null)
+
+  const isAdmin = isAdminUser(user)
 
   // Trigger the slide-up entrance after mount
   useEffect(() => {
@@ -27,9 +36,22 @@ export default function AdminAuthGate({ children }: { children: ReactNode }) {
     }
   }, [user, loading])
 
+  const handleSwitchToAdmin = async () => {
+    setSwitching(true)
+    setSwitchError(null)
+    const { error } = await elevateToAdminSession()
+    if (error) {
+      setSwitchError(error.message)
+      setSwitching(false)
+      return
+    }
+    // Full reload so AuthContext re-initializes with the admin session
+    window.location.href = '/admin'
+  }
+
   if (loading) return <LoadingOverlay />
 
-  if (!user) {
+  if (!user || !isAdmin) {
     return (
       <>
         <div
@@ -62,12 +84,32 @@ export default function AdminAuthGate({ children }: { children: ReactNode }) {
                 Admin Access
               </h1>
             </div>
-            <button
-              onClick={() => setAuthModalOpen(true)}
-              className="inline-flex items-center px-8 py-4 bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-zinc-200 transition-all active:scale-95"
-            >
-              Sign In
-            </button>
+            {!user ? (
+              <button
+                onClick={() => setAuthModalOpen(true)}
+                className="inline-flex items-center px-8 py-4 bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-zinc-200 transition-all active:scale-95"
+              >
+                Sign In
+              </button>
+            ) : (
+              <div className="flex flex-col items-center gap-3">
+                <p className="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em]">
+                  Signed in as {user.email}
+                </p>
+                <button
+                  onClick={handleSwitchToAdmin}
+                  disabled={switching}
+                  className="inline-flex items-center px-8 py-4 bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-zinc-200 transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {switching ? 'Switching…' : 'Switch to Admin'}
+                </button>
+                {switchError && (
+                  <p className="text-red-400 text-[10px] font-bold uppercase tracking-wider max-w-[280px]">
+                    {switchError}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
         <AuthModal
