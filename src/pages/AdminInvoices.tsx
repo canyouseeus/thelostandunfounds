@@ -12,6 +12,7 @@ import {
   ChevronRightIcon,
   PlusCircleIcon,
   PaperAirplaneIcon,
+  DocumentArrowDownIcon,
 } from '@heroicons/react/24/outline';
 import { supabase } from '../lib/supabase';
 import { cn } from '../components/ui/utils';
@@ -48,6 +49,10 @@ interface Invoice {
   paid_at: string | null;
   created_at: string;
   clients?: Client | null;
+  invoice_type?: 'standard' | 'quote' | 'final';
+  amount_due?: number | null;
+  stripe_payment_link_url?: string | null;
+  pdf_token?: string | null;
 }
 
 interface InvoicePayment {
@@ -270,6 +275,19 @@ export default function AdminInvoices() {
                         {inv.payment_method || '—'}
                       </p>
                     </div>
+                    {inv.pdf_token && (
+                      <a
+                        href={`/api/invoices/pdf?id=${inv.id}&token=${inv.pdf_token}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        title="View invoice PDF"
+                        className="flex items-center gap-1.5 px-3 py-2 text-[9px] font-bold uppercase tracking-widest bg-white/5 hover:bg-white text-white hover:text-black transition-colors"
+                      >
+                        <DocumentArrowDownIcon className="w-3 h-3" />
+                        PDF
+                      </a>
+                    )}
                     <button
                       onClick={(e) => { e.stopPropagation(); sendInvoice(inv); }}
                       disabled={sendingId === inv.id}

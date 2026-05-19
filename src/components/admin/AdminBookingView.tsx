@@ -6,6 +6,10 @@ import {
     ChevronLeftIcon,
     ChevronRightIcon,
     ChevronDownIcon,
+    DocumentTextIcon,
+    BanknotesIcon,
+    PlusIcon,
+    TrashIcon,
 } from '@heroicons/react/24/outline';
 import {
     Expandable,
@@ -19,6 +23,7 @@ import {
 interface Booking {
     id: string;
     name: string;
+    business_name: string | null;
     email: string;
     phone: string | null;
     event_type: string;
@@ -28,17 +33,30 @@ interface Booking {
     location: string | null;
     notes: string | null;
     retainer: boolean;
-    status: 'pending' | 'confirmed' | 'declined' | 'cancelled';
+    status: 'pending' | 'confirmed' | 'deposit_paid' | 'declined' | 'cancelled' | 'completed' | 'paid';
     admin_notes: string | null;
+    total_amount_cents: number | null;
+    deposit_amount_cents: number | null;
+    deposit_paid_at: string | null;
+    paid_at: string | null;
     created_at: string;
 }
 
 const STATUS_COLORS: Record<string, string> = {
     pending: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
     confirmed: 'text-green-400 bg-green-400/10 border-green-400/20',
+    deposit_paid: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
     declined: 'text-red-400 bg-red-400/10 border-red-400/20',
     cancelled: 'text-zinc-500 bg-zinc-500/10 border-zinc-500/20',
+    completed: 'text-green-400 bg-green-400/10 border-green-400/20',
+    paid: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
 };
+
+const fmtUSDc = (cents: number | null | undefined) =>
+    cents == null ? '—' : `$${(cents / 100).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+
+const fmtTimestamp = (iso: string | null | undefined) =>
+    !iso ? '—' : new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
 const MONTH_NAMES = [
     'January','February','March','April','May','June',
@@ -64,6 +82,16 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking: b, onStatusChange })
     const [saving, setSaving] = useState(false);
     const [expanded, setExpanded] = useState(false);
 
+    // Billing / quote state
+    const [quoteOpen, setQuoteOpen] = useState(false);
+    const [quotePrice, setQuotePrice] = useState('');
+    const [depositPct, setDepositPct] = useState('50');
+    const [quoteLines, setQuoteLines] = useState<{ description: string; amount: string }[]>([]);
+    const [billing, setBilling] = useState(false);
+    const [feedback, setFeedback] = useState<
+        { type: 'success' | 'error'; msg: string; pdfUrl?: string } | null
+    >(null);
+
     const updateStatus = async (status: string) => {
         setSaving(true);
         await fetch('/api/booking?action=admin', {
@@ -74,6 +102,84 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking: b, onStatusChange })
         setSaving(false);
         setExpanded(false);
         onStatusChange();
+    };
+
+    const submitQuote = async () => {
+        const price = parseFloat(quotePrice);
+        if (!(price > 0)) {
+            setFeedback({ type: 'error', msg: 'Enter a valid project total.' });
+            return;
+        }
+        const pct = parseFloat(depositPct);
+        if (!(pct > 0) || pct >= 100) {
+            setFeedback({ type: 'error', msg: 'Deposit % must be between 1 and 99.' });
+            return;
+        }
+        const lineItems = quoteLines
+            .map(l => ({ description: l.description.trim(), amount: parseFloat(l.amount) }))
+            .filter(l => l.description && l.amount > 0)
+            .map(l => ({ description: l.description, quantity: 1, unit_price: l.amount, amount: l.amount }));
+
+        setBilling(true);
+        setFeedback(null);
+        try {
+            const res = await fetch('/api/booking/create-quote', {
+                method: 'POST',
+                headers: getAdminHeaders(),
+                body: JSON.stringify({
+                    bookingId: b.id,
+                    totalPrice: price,
+                    depositPct: pct,
+                    lineItems: lineItems.length ? lineItems : undefined,
+                }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data.success) {
+                setFeedback({ type: 'error', msg: data.error || data.message || `Request failed (${res.status})` });
+            } else {
+                setFeedback({
+                    type: 'success',
+                    msg: `Quote ${data.invoiceNumber} created — ${data.emailed ? 'emailed to client' : 'email failed, share the PDF manually'}.`,
+                    pdfUrl: data.pdfUrl,
+                });
+                setQuoteOpen(false);
+                setQuotePrice('');
+                setQuoteLines([]);
+                onStatusChange();
+            }
+        } catch (e: any) {
+            setFeedback({ type: 'error', msg: e?.message || 'Network error' });
+        } finally {
+            setBilling(false);
+        }
+    };
+
+    const submitFinalInvoice = async () => {
+        if (!window.confirm('Generate the final invoice for the remaining balance and email it to the client?')) return;
+        setBilling(true);
+        setFeedback(null);
+        try {
+            const res = await fetch('/api/booking/create-final-invoice', {
+                method: 'POST',
+                headers: getAdminHeaders(),
+                body: JSON.stringify({ bookingId: b.id }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data.success) {
+                setFeedback({ type: 'error', msg: data.error || data.message || `Request failed (${res.status})` });
+            } else {
+                setFeedback({
+                    type: 'success',
+                    msg: `Invoice ${data.invoiceNumber} created — balance ${fmtUSDc(Math.round(Number(data.balanceDue) * 100))} — ${data.emailed ? 'emailed to client' : 'email failed, share the PDF manually'}.`,
+                    pdfUrl: data.pdfUrl,
+                });
+                onStatusChange();
+            }
+        } catch (e: any) {
+            setFeedback({ type: 'error', msg: e?.message || 'Network error' });
+        } finally {
+            setBilling(false);
+        }
     };
 
     const fmtDate = (d: string) => {
@@ -164,6 +270,142 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking: b, onStatusChange })
                                             placeholder="Internal notes..."
                                         />
                                     </div>
+
+                                    {/* Payment state */}
+                                    {(b.total_amount_cents != null || b.deposit_amount_cents != null || b.deposit_paid_at || b.paid_at) && (
+                                        <div className="grid grid-cols-2 gap-3 text-xs bg-white/5 p-3">
+                                            {b.total_amount_cents != null && (
+                                                <div><p className="text-white/30 uppercase tracking-widest mb-0.5 text-[9px]">Quoted Total</p><p className="font-bold font-mono">{fmtUSDc(b.total_amount_cents)}</p></div>
+                                            )}
+                                            {b.deposit_amount_cents != null && (
+                                                <div><p className="text-white/30 uppercase tracking-widest mb-0.5 text-[9px]">Deposit</p><p className="font-bold font-mono">{fmtUSDc(b.deposit_amount_cents)}</p></div>
+                                            )}
+                                            {b.deposit_paid_at && (
+                                                <div><p className="text-white/30 uppercase tracking-widest mb-0.5 text-[9px]">Deposit Paid</p><p className="font-bold text-blue-400">{fmtTimestamp(b.deposit_paid_at)}</p></div>
+                                            )}
+                                            {b.paid_at && (
+                                                <div><p className="text-white/30 uppercase tracking-widest mb-0.5 text-[9px]">Paid In Full</p><p className="font-bold text-emerald-400">{fmtTimestamp(b.paid_at)}</p></div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Billing feedback */}
+                                    {feedback && (
+                                        <div className={`text-xs p-3 ${feedback.type === 'success' ? 'bg-green-400/10 text-green-300' : 'bg-red-400/10 text-red-300'}`}>
+                                            {feedback.msg}
+                                            {feedback.pdfUrl && (
+                                                <>{' '}<a href={feedback.pdfUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-white">View PDF</a></>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Quote form */}
+                                    {quoteOpen && (
+                                        <div className="border border-white/15 p-3 space-y-3">
+                                            <p className="text-white/40 text-[9px] uppercase tracking-widest">New Quote</p>
+                                            <div className="flex gap-2">
+                                                <div className="flex-1">
+                                                    <label className="text-white/30 text-[9px] uppercase tracking-widest">Project Total (USD)</label>
+                                                    <input
+                                                        type="number" min="0" step="0.01"
+                                                        value={quotePrice}
+                                                        onChange={e => setQuotePrice(e.target.value)}
+                                                        placeholder="0.00"
+                                                        className="w-full bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none mt-1"
+                                                    />
+                                                </div>
+                                                <div className="w-24">
+                                                    <label className="text-white/30 text-[9px] uppercase tracking-widest">Deposit %</label>
+                                                    <input
+                                                        type="number" min="1" max="99"
+                                                        value={depositPct}
+                                                        onChange={e => setDepositPct(e.target.value)}
+                                                        className="w-full bg-white/5 border border-white/10 px-3 py-2 text-sm text-white focus:outline-none mt-1"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {quoteLines.length > 0 && (
+                                                <div className="space-y-2">
+                                                    {quoteLines.map((line, i) => (
+                                                        <div key={i} className="flex gap-2">
+                                                            <input
+                                                                type="text"
+                                                                value={line.description}
+                                                                placeholder="Line item description"
+                                                                onChange={e => setQuoteLines(ls => ls.map((l, idx) => idx === i ? { ...l, description: e.target.value } : l))}
+                                                                className="flex-1 bg-white/5 border border-white/10 px-3 py-1.5 text-xs text-white placeholder-white/20 focus:outline-none"
+                                                            />
+                                                            <input
+                                                                type="number" min="0" step="0.01"
+                                                                value={line.amount}
+                                                                placeholder="0.00"
+                                                                onChange={e => setQuoteLines(ls => ls.map((l, idx) => idx === i ? { ...l, amount: e.target.value } : l))}
+                                                                className="w-24 bg-white/5 border border-white/10 px-3 py-1.5 text-xs text-white placeholder-white/20 focus:outline-none"
+                                                            />
+                                                            <button
+                                                                onClick={() => setQuoteLines(ls => ls.filter((_, idx) => idx !== i))}
+                                                                className="px-2 text-white/30 hover:text-red-400 transition-colors"
+                                                            >
+                                                                <TrashIcon className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            <button
+                                                onClick={() => setQuoteLines(ls => [...ls, { description: '', amount: '' }])}
+                                                className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors"
+                                            >
+                                                <PlusIcon className="w-3 h-3" /> Add line item
+                                            </button>
+                                            <p className="text-white/20 text-[9px] leading-relaxed">
+                                                Line items are an optional breakdown shown on the quote; the deposit is calculated from the project total.
+                                            </p>
+
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={submitQuote}
+                                                    disabled={billing}
+                                                    className="flex-1 py-2 bg-white text-black text-[10px] font-black uppercase tracking-widest hover:bg-zinc-200 transition-colors disabled:opacity-50"
+                                                >
+                                                    {billing ? 'Generating…' : 'Generate & Send Quote'}
+                                                </button>
+                                                <button
+                                                    onClick={() => setQuoteOpen(false)}
+                                                    disabled={billing}
+                                                    className="px-4 py-2 border border-white/20 text-[10px] font-black uppercase tracking-widest text-white/50 hover:text-white transition-colors disabled:opacity-50"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Billing actions */}
+                                    {b.status !== 'declined' && b.status !== 'cancelled' && (
+                                        <div className="flex gap-2 flex-wrap">
+                                            <button
+                                                onClick={() => { setQuoteOpen(o => !o); setFeedback(null); }}
+                                                disabled={billing}
+                                                className="flex items-center gap-1.5 px-4 py-2 bg-white/5 border border-white/15 text-white text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-black transition-colors disabled:opacity-50"
+                                            >
+                                                <DocumentTextIcon className="w-3.5 h-3.5" />
+                                                {b.total_amount_cents != null ? 'New Quote' : 'Send Quote'}
+                                            </button>
+                                            {b.status === 'deposit_paid' && (
+                                                <button
+                                                    onClick={submitFinalInvoice}
+                                                    disabled={billing}
+                                                    className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition-colors disabled:opacity-50"
+                                                >
+                                                    <BanknotesIcon className="w-3.5 h-3.5" />
+                                                    {billing ? 'Working…' : 'Send Final Invoice'}
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
 
                                     <div className="flex gap-2 flex-wrap">
                                         <button
@@ -284,7 +526,7 @@ const AdminBookingView: React.FC = () => {
     };
 
     const bookedDates = bookings
-        .filter(b => b.status === 'confirmed' || b.status === 'pending')
+        .filter(b => ['pending', 'confirmed', 'deposit_paid', 'completed', 'paid'].includes(b.status))
         .map(b => b.event_date);
 
     return (
