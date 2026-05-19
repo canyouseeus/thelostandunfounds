@@ -43,16 +43,16 @@ export default function BecomeAffiliate() {
                             Join the <BrandName /> affiliate network. Get lifetime commissions on referred customers, compete for the King Midas 8% profit pool, and build your own earning network.
                         </p>
 
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                        <div className="flex flex-row items-stretch gap-3 sm:gap-4">
                             <Link
                                 to="/dashboard"
-                                className="px-8 py-4 bg-white text-black font-black text-lg uppercase tracking-widest hover:bg-white/90 transition-all flex items-center gap-2"
+                                className="flex-1 sm:flex-none min-w-0 px-3 sm:px-8 py-4 bg-white text-black font-black text-xs sm:text-lg uppercase tracking-wider sm:tracking-widest hover:bg-white/90 transition-all flex items-center justify-center gap-2 text-center"
                             >
-                                Join Program Now <ArrowRightIcon className="w-5 h-5" />
+                                Join Program Now <ArrowRightIcon className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
                             </Link>
                             <Link
                                 to="/king-midas-leaderboard"
-                                className="px-8 py-4 bg-white/5 text-white font-bold text-lg uppercase tracking-widest hover:bg-white/10 transition-colors"
+                                className="flex-1 sm:flex-none min-w-0 px-3 sm:px-8 py-4 bg-white/5 text-white font-bold text-xs sm:text-lg uppercase tracking-wider sm:tracking-widest hover:bg-white/10 transition-colors flex items-center justify-center text-center"
                             >
                                 View Prize Pool
                             </Link>
