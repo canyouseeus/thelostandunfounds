@@ -28,7 +28,7 @@ if (!ZOHO_CLIENT_ID || !ZOHO_CLIENT_SECRET || !ZOHO_REFRESH_TOKEN) {
 
 const RECIPIENT = 'thelostandunfounds@gmail.com';
 
-const SUBJECT = '[DRAFT] Re: Your headshot session — TLAU';
+const SUBJECT = '[DRAFT] Re: Your comedy headshots — TLAU';
 
 const FIRST_NAME = 'Andrew';
 const DATE_LINE = 'Sunday, May 24, 2026';
@@ -38,25 +38,33 @@ const LOCATION = 'Austin';
 const BODY = `
     <h1 style="color:#fff !important;font-size:24px;font-weight:bold;margin:0 0 16px 0;letter-spacing:0.05em;">THANKS FOR REACHING OUT</h1>
     <p style="color:#fff !important;font-size:16px;line-height:1.6;margin:0 0 16px 0;">
-        Hey ${FIRST_NAME} — got your request for headshots on
+        Hey ${FIRST_NAME} — got your request for comedy headshots on
         <b>${DATE_LINE}</b>, ${TIME_LINE} in ${LOCATION}. That window works on my end.
     </p>
     <p style="color:#fff !important;font-size:16px;line-height:1.6;margin:0 0 16px 0;">
-        Since you're open to suggestions, here's how I'd shape it. For headshots
-        I usually keep it tight: one clean backdrop look (neutral wall or a soft
-        outdoor seamless) plus an environmental option if you want a second
-        flavor. We don't need three hours unless you want multiple wardrobe
-        looks — typically 60 to 90 minutes is plenty to get you 5 to 10 strong
-        final selects. If we start around 6:30 PM we'll catch the soft light
-        right before sunset, which is the most flattering window for faces.
+        Since you're open to suggestions — here's the shape I'd pitch. Comedy
+        headshots have to do a different job than corporate ones. Bookers, club
+        managers, and festival programmers are scanning fast: the shot has to
+        read your point of view in a second. So we lean on <b>character and
+        expression</b>, not symmetry. Think Netflix special key art, club
+        posters, Instagram grid — that family.
+    </p>
+    <p style="color:#fff !important;font-size:16px;line-height:1.6;margin:0 0 16px 0;">
+        My usual play for comics is two looks in about 90 minutes:
+        a <b>clean signature shot</b> (something a venue can drop straight onto a
+        poster or marquee) plus a <b>character/attitude set</b> — bigger reactions,
+        a prop or location element if it fits the act, room for the punchline to
+        live in your face. Golden hour starts around 7:45 PM so I'd kick off
+        around 6:15 PM and ride the light down. You'll walk away with 8 to 12
+        final retouched selects.
     </p>
     <p style="color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;font-weight:bold;margin:28px 0 8px 0;">A few quick questions</p>
     <ul style="color:#fff !important;font-size:15px;line-height:1.7;margin:0 0 20px 0;padding-left:20px;">
-        <li>What are these for — LinkedIn / company site, acting, personal brand, something else?</li>
-        <li>How many final retouched images do you need? (Most clients land between 3 and 10.)</li>
-        <li>Preferred vibe — corporate clean, editorial, warm-and-approachable, moody?</li>
-        <li>Planning one wardrobe look or two? (I'd recommend two — one neutral, one with a bit of character.)</li>
-        <li>Indoor controlled light or natural outdoor — or a mix?</li>
+        <li>Where do these need to land first — club posters, festival submissions, IG/TikTok, agent/manager packet?</li>
+        <li>How would you describe your stand-up persona in three words? That's what we're shooting toward.</li>
+        <li>Anyone you'd point to as a reference look — a comic whose promo shots feel like the right neighborhood?</li>
+        <li>Any prop, jacket, hat, or wardrobe piece that's part of your stage identity? Bring it.</li>
+        <li>Got upcoming dates or specials we should pre-shoot graphics for? Happy to deliver a couple in poster-ready crops.</li>
     </ul>
     <p style="color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;font-weight:bold;margin:28px 0 8px 0;">The deposit</p>
     <p style="color:#fff !important;font-size:14px;line-height:1.6;margin:0 0 16px 0;">
