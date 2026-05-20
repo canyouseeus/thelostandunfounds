@@ -413,7 +413,8 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 const { data: pubLibs, error: pubLibsError } = await supabase
                     .from('photo_libraries')
                     .select('id, name, slug, description, is_private')
-                    .eq('is_private', false);
+                    .eq('is_private', false)
+                    .eq('published', true);
 
                 if (pubLibsError) {
                     if (pubLibsError.message === 'Fetch is aborted' || pubLibsError.code === '20') return;

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeftIcon, PhotoIcon, CurrencyDollarIcon, ArrowDownTrayIcon, ExclamationCircleIcon, CheckCircleIcon, ArrowPathIcon, ChartBarIcon, PlusIcon, LockClosedIcon, LockOpenIcon, TrashIcon, GlobeAltIcon, ArrowUpTrayIcon, XMarkIcon, CloudIcon, CircleStackIcon, PencilIcon, EnvelopeIcon, TagIcon } from '@heroicons/react/24/outline';
+import { Eye, EyeOff } from 'lucide-react';
 import AdminTagsPanel from './AdminTagsPanel';
 import AdminDownloadsPanel from './AdminDownloadsPanel';
 import AdminPhotosBrowse from './AdminPhotosBrowse';
@@ -30,6 +31,7 @@ interface PhotoLibrary {
     slug: string;
     description: string;
     is_private: boolean;
+    published?: boolean;
     google_drive_folder_id?: string;
     photo_count?: number;
     cover_image_url?: string;
@@ -272,6 +274,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 slug: modalData.slug || (modalData.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || ''),
                 description: modalData.description || '',
                 is_private: modalData.is_private || false,
+                published: modalData.published ?? true,
                 commercial_included: modalData.commercial_included || false,
                 google_drive_folder_id: uploadMode === 'drive' ? (modalData.google_drive_folder_id || null) : null,
                 cover_image_url: modalData.cover_image_url || null,
@@ -600,6 +603,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
             slug: '',
             description: '',
             is_private: false,
+            published: true,
             google_drive_folder_id: '',
             cover_image_url: '',
             price: 5.00,
@@ -923,10 +927,36 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                 <PlusIcon className="w-6 h-6 rotate-45" />
                             </button>
 
-                            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                                {editingId ? <PencilIcon className="w-5 h-5 text-white/60" /> : <PlusIcon className="w-5 h-5 text-white/60" />}
-                                {editingId ? 'Edit Gallery Settings' : 'Create New Gallery'}
-                            </h2>
+                            <div className="flex items-center justify-between mb-6 pr-10">
+                                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                    {editingId ? <PencilIcon className="w-5 h-5 text-white/60" /> : <PlusIcon className="w-5 h-5 text-white/60" />}
+                                    {editingId ? 'Edit Gallery Settings' : 'Create New Gallery'}
+                                </h2>
+                                {(() => {
+                                    const isPublished = modalData.published ?? true;
+                                    return (
+                                        <button
+                                            type="button"
+                                            onClick={() => setModalData({ ...modalData, published: !isPublished })}
+                                            className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 transition-colors"
+                                            title={isPublished ? 'Published — visible on site. Click to switch to draft.' : 'Draft — hidden from production. Click to publish.'}
+                                            aria-pressed={isPublished}
+                                            aria-label={isPublished ? 'Switch to draft' : 'Publish gallery'}
+                                        >
+                                            {isPublished ? (
+                                                <Eye className="w-4 h-4 text-white" />
+                                            ) : (
+                                                <EyeOff className="w-4 h-4 text-white/30" />
+                                            )}
+                                            <span
+                                                className={`text-[10px] font-black uppercase tracking-[0.2em] ${isPublished ? 'text-white' : 'text-white/30'}`}
+                                            >
+                                                {isPublished ? 'Published' : 'Draft'}
+                                            </span>
+                                        </button>
+                                    );
+                                })()}
+                            </div>
 
                             <form onSubmit={handleSaveGallery} className="space-y-6">
                                 {/* Gallery Name & Slug */}
@@ -1564,12 +1594,20 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                             onClick={() => openEditModal(lib)}
                                                         >
                                                             <div className="flex items-center gap-2 mb-1">
+                                                                {(lib.published ?? true) ? (
+                                                                    <Eye className="w-3 h-3 text-white flex-shrink-0" />
+                                                                ) : (
+                                                                    <EyeOff className="w-3 h-3 text-white/30 flex-shrink-0" />
+                                                                )}
                                                                 {lib.is_private ? (
                                                                     <LockClosedIcon className="w-3 h-3 text-yellow-400 flex-shrink-0" />
                                                                 ) : (
                                                                     <GlobeAltIcon className="w-3 h-3 text-green-400 flex-shrink-0" />
                                                                 )}
-                                                                <h4 className="font-bold text-white text-sm truncate">{lib.name}</h4>
+                                                                <h4 className={`font-bold text-sm truncate ${(lib.published ?? true) ? 'text-white' : 'text-white/40'}`}>{lib.name}</h4>
+                                                                {!(lib.published ?? true) && (
+                                                                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30">Draft</span>
+                                                                )}
                                                             </div>
                                                             <div className="flex items-center gap-2 text-xs text-white/40 font-mono">
                                                                 <span>/{lib.slug}</span>

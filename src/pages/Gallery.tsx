@@ -116,6 +116,7 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
             const { data: librariesData, error: librariesError } = await supabase
                 .from('photo_libraries')
                 .select('*')
+                .eq('published', true)
                 .order('created_at', { ascending: false });
 
             if (!isMounted.current) return;
