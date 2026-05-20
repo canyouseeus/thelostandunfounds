@@ -28,10 +28,9 @@ if (!ZOHO_CLIENT_ID || !ZOHO_CLIENT_SECRET || !ZOHO_REFRESH_TOKEN) {
 
 const RECIPIENT = 'thelostandunfounds@gmail.com';
 
-const SUBJECT = '[DRAFT] Re: Your portrait session — TLAU';
+const SUBJECT = '[DRAFT] Re: Your headshot session — TLAU';
 
 const FIRST_NAME = 'Andrew';
-const SHOOT_TYPE = 'portrait session';
 const DATE_LINE = 'Sunday, May 24, 2026';
 const TIME_LINE = '5:00 – 8:00 PM';
 const LOCATION = 'Austin';
@@ -39,23 +38,25 @@ const LOCATION = 'Austin';
 const BODY = `
     <h1 style="color:#fff !important;font-size:24px;font-weight:bold;margin:0 0 16px 0;letter-spacing:0.05em;">THANKS FOR REACHING OUT</h1>
     <p style="color:#fff !important;font-size:16px;line-height:1.6;margin:0 0 16px 0;">
-        Hey ${FIRST_NAME} — got your request for a ${SHOOT_TYPE} on
+        Hey ${FIRST_NAME} — got your request for headshots on
         <b>${DATE_LINE}</b>, ${TIME_LINE} in ${LOCATION}. That window works on my end.
     </p>
     <p style="color:#fff !important;font-size:16px;line-height:1.6;margin:0 0 16px 0;">
-        Since you mentioned you're open to suggestions, here's how I'd shape it:
-        golden hour in Austin starts around 7:45 PM that evening, so I'd suggest
-        we begin at 6:30 PM with some warm-up frames in the shade, work toward
-        the light as it softens, and finish into blue hour. Three hours gives us
-        room for a wardrobe change and two or three location moves within a
-        short drive.
+        Since you're open to suggestions, here's how I'd shape it. For headshots
+        I usually keep it tight: one clean backdrop look (neutral wall or a soft
+        outdoor seamless) plus an environmental option if you want a second
+        flavor. We don't need three hours unless you want multiple wardrobe
+        looks — typically 60 to 90 minutes is plenty to get you 5 to 10 strong
+        final selects. If we start around 6:30 PM we'll catch the soft light
+        right before sunset, which is the most flattering window for faces.
     </p>
     <p style="color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;font-weight:bold;margin:28px 0 8px 0;">A few quick questions</p>
     <ul style="color:#fff !important;font-size:15px;line-height:1.7;margin:0 0 20px 0;padding-left:20px;">
-        <li>Solo portraits, or are others joining the frame?</li>
-        <li>Any look or mood you're after — editorial, candid, lifestyle, something else?</li>
-        <li>Preferred neighborhood — downtown, East Austin, Zilker, somewhere with water?</li>
-        <li>How many final edited images do you need delivered?</li>
+        <li>What are these for — LinkedIn / company site, acting, personal brand, something else?</li>
+        <li>How many final retouched images do you need? (Most clients land between 3 and 10.)</li>
+        <li>Preferred vibe — corporate clean, editorial, warm-and-approachable, moody?</li>
+        <li>Planning one wardrobe look or two? (I'd recommend two — one neutral, one with a bit of character.)</li>
+        <li>Indoor controlled light or natural outdoor — or a mix?</li>
     </ul>
     <p style="color:#999;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;font-weight:bold;margin:28px 0 8px 0;">The deposit</p>
     <p style="color:#fff !important;font-size:14px;line-height:1.6;margin:0 0 16px 0;">
