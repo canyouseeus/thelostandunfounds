@@ -70,11 +70,7 @@
     },
     {
       "source": "/roa",
-      "destination": "https://roa-mockup.vercel.app/"
-    },
-    {
-      "source": "/roa/(.*)",
-      "destination": "https://roa-mockup.vercel.app/$1"
+      "destination": "/roa/index.html"
     },
     {
       "source": "/((?!api|_next|static|sql|\\.well-known|@vite|@react-refresh|.*\\..*).*)",
