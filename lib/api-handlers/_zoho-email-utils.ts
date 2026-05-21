@@ -222,33 +222,37 @@ export async function uploadZohoAttachment(
   auth: ZohoAuthContext,
   data: Buffer | Uint8Array,
   fileName: string,
-  // Reserved for callers — Zoho's raw-binary attachment endpoint derives the
-  // MIME from the `fileName` extension and rejects the file's actual MIME
-  // (e.g. application/pdf) with HTTP 415. We always send octet-stream.
-  _mimeType: string = 'application/octet-stream'
+  mimeType: string = 'application/octet-stream'
 ): Promise<ZohoUploadedAttachment> {
-  const url = `https://mail.zoho.com/api/accounts/${auth.accountId}/messages/attachments?fileName=${encodeURIComponent(
-    fileName
-  )}&isInline=false`
+  // Zoho's "Method 1" multipart upload — more permissive than the raw-binary
+  // variant (which can return HTTP 415 depending on the file/runtime). FormData
+  // sets the multipart Content-Type + boundary automatically.
+  const url = `https://mail.zoho.com/api/accounts/${auth.accountId}/messages/attachments?uploadType=multipart&isInline=false`
+
+  const form = new FormData()
+  // Always pass a Buffer-backed Blob so fetch can stream it correctly.
+  const blob = new Blob([data as any], { type: mimeType })
+  form.append('attach', blob, fileName)
 
   const response = await fetch(url, {
     method: 'POST',
     headers: {
       Authorization: `Zoho-oauthtoken ${auth.accessToken}`,
-      'Content-Type': 'application/octet-stream',
+      Accept: 'application/json',
     },
-    body: data as any,
+    body: form as any,
   })
 
   if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`Zoho attachment upload failed: ${response.status} ${errorText.slice(0, 300)}`)
+    const errorText = (await response.text()).slice(0, 300)
+    throw new Error(`Zoho attachment upload failed: ${response.status} ${errorText}`)
   }
 
   const json: any = await response.json()
+  // Multipart returns `data` as an array; raw-binary returns a single object.
   const entry = Array.isArray(json?.data) ? json.data[0] : json?.data
   if (!entry?.storeName || !entry?.attachmentPath || !entry?.attachmentName) {
-    throw new Error(`Zoho attachment upload returned unexpected payload: ${JSON.stringify(json)}`)
+    throw new Error(`Zoho attachment upload returned unexpected payload: ${JSON.stringify(json).slice(0, 300)}`)
   }
 
   return {
