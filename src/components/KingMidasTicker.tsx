@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { TrophyIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon, MinusIcon } from '@heroicons/react/24/outline';
+import { LightBoard } from './ui/lightboard';
 
 interface TickerRanking {
   rank: number;
@@ -16,13 +17,16 @@ interface TickerData {
   last_updated: string;
 }
 
-// Initial empty state
 const INITIAL_DATA: TickerData = {
   rankings: [],
   site_profit_today: 0,
   king_midas_pot: 0,
   last_updated: new Date().toISOString(),
 };
+
+const LED_GLOW = '0 0 6px rgba(251,191,36,0.8), 0 0 12px rgba(245,158,11,0.4)';
+const GREEN_GLOW = '0 0 6px rgba(74,222,128,0.8), 0 0 12px rgba(34,197,94,0.4)';
+const WHITE_GLOW = '0 0 4px rgba(255,255,255,0.6)';
 
 export default function KingMidasTicker() {
   const [tickerData, setTickerData] = useState<TickerData | null>(null);
@@ -33,11 +37,7 @@ export default function KingMidasTicker() {
       const response = await fetch('/api/king-midas/ticker');
       if (response.ok) {
         const data = await response.json();
-        // If no rankings returned, use dummy data
-        if (!data.rankings) {
-          console.log('No rankings found');
-          // Keep existing state or set to empty if needed
-        } else {
+        if (data.rankings) {
           setTickerData(data);
         }
       } else {
@@ -52,91 +52,144 @@ export default function KingMidasTicker() {
 
   useEffect(() => {
     fetchTickerData();
-    // Update every hour (3600000ms)
     const interval = setInterval(fetchTickerData, 3600000);
     return () => clearInterval(interval);
   }, []);
 
   if (loading || !tickerData) {
     return (
-      <div className="bg-black/95 border-b-2 border-yellow-400/50 h-12 flex items-center justify-center">
-        <div className="text-yellow-400 text-sm">Loading King Midas Rankings...</div>
-      </div>
+      <LightBoard
+        className="h-12"
+        label={
+          <div className="flex flex-col items-center px-2">
+            <span className="text-[7px] font-black tracking-[0.3em] uppercase leading-none" style={{ color: '#fbbf24', textShadow: LED_GLOW }}>KING</span>
+            <span className="text-[7px] font-black tracking-[0.3em] uppercase leading-none mt-0.5" style={{ color: '#fbbf24', textShadow: LED_GLOW }}>MIDAS</span>
+          </div>
+        }
+        labelWidth={68}
+      >
+        <div className="flex items-center h-full px-4">
+          <span
+            className="text-xs font-mono tracking-widest"
+            style={{ color: '#fbbf24', textShadow: LED_GLOW }}
+          >
+            LOADING RANKINGS...
+          </span>
+        </div>
+      </LightBoard>
     );
   }
 
   const getRankIcon = (change_direction: string, rank_change: number) => {
     if (change_direction === 'up') {
       return (
-        <span className="text-green-400 inline-flex items-center gap-1">
+        <span className="inline-flex items-center gap-0.5" style={{ color: '#4ade80', textShadow: GREEN_GLOW }}>
           <ArrowTrendingUpIcon className="w-3 h-3" />
           {Math.abs(rank_change)}
         </span>
       );
     } else if (change_direction === 'down') {
       return (
-        <span className="text-red-400 inline-flex items-center gap-1">
+        <span className="inline-flex items-center gap-0.5" style={{ color: '#f87171' }}>
           <ArrowTrendingDownIcon className="w-3 h-3" />
           {Math.abs(rank_change)}
         </span>
       );
     }
     return (
-      <span className="text-white/40 inline-flex items-center gap-1">
+      <span className="inline-flex items-center" style={{ color: 'rgba(255,255,255,0.3)' }}>
         <MinusIcon className="w-3 h-3" />
       </span>
     );
   };
 
-
-
-  // Create the ticker content
   const tickerContent = (
     <>
       {tickerData.rankings.length > 0 ? (
         tickerData.rankings.map((ranking) => (
           <span key={`${ranking.rank}-${ranking.affiliate_code}`} className="inline-flex items-center gap-2 mx-8">
             {ranking.rank <= 3 && (
-              <TrophyIcon className={`w-4 h-4 ${ranking.rank === 1 ? 'text-yellow-400' :
-                ranking.rank === 2 ? 'text-gray-300' :
-                  'text-amber-600'
-                }`} />
+              <TrophyIcon
+                className="w-3.5 h-3.5"
+                style={{
+                  color: ranking.rank === 1 ? '#fbbf24' : ranking.rank === 2 ? '#d1d5db' : '#d97706',
+                  filter: ranking.rank === 1 ? `drop-shadow(${LED_GLOW.split(',')[0].replace('0 0', '0 0')})` : undefined,
+                }}
+              />
             )}
-            <span className={`font-bold ${ranking.rank === 1 ? 'text-yellow-400' :
-              ranking.rank === 2 ? 'text-gray-300' :
-                ranking.rank === 3 ? 'text-amber-600' :
-                  'text-white/60'
-              }`}>#{ranking.rank}</span>
-            <span className="text-white font-semibold">{ranking.affiliate_code}</span>
-            <span className="text-green-400">${ranking.profit.toFixed(2)}</span>
+            <span
+              className="font-mono font-bold"
+              style={{
+                color: ranking.rank === 1 ? '#fbbf24' : ranking.rank === 2 ? '#e5e7eb' : ranking.rank === 3 ? '#d97706' : 'rgba(255,255,255,0.5)',
+                textShadow: ranking.rank === 1 ? LED_GLOW : undefined,
+              }}
+            >
+              #{ranking.rank}
+            </span>
+            <span className="font-mono font-semibold" style={{ color: '#fff', textShadow: WHITE_GLOW }}>
+              {ranking.affiliate_code}
+            </span>
+            <span className="font-mono font-bold" style={{ color: '#4ade80', textShadow: GREEN_GLOW }}>
+              ${ranking.profit.toFixed(2)}
+            </span>
             {getRankIcon(ranking.change_direction, ranking.rank_change)}
           </span>
         ))
       ) : (
-        <span className="inline-flex items-center gap-2 mx-8 text-white/60">
-          <TrophyIcon className="w-4 h-4" />
-          <span>No rankings available yet</span>
+        <span className="inline-flex items-center gap-2 mx-8 font-mono" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          <TrophyIcon className="w-3.5 h-3.5" />
+          <span>NO RANKINGS YET</span>
         </span>
       )}
-      <span className="inline-flex items-center gap-2 mx-8 text-white/80">
-        <span className="font-semibold">Site Profit Today:</span>
-        <span className="text-green-400 font-bold">${tickerData.site_profit_today.toFixed(2)}</span>
+      <span className="inline-flex items-center gap-2 mx-8">
+        <span className="font-mono text-[11px]" style={{ color: 'rgba(255,255,255,0.6)', letterSpacing: '0.08em' }}>SITE PROFIT TODAY:</span>
+        <span className="font-mono font-bold text-[11px]" style={{ color: '#4ade80', textShadow: GREEN_GLOW }}>
+          ${tickerData.site_profit_today.toFixed(2)}
+        </span>
       </span>
       <span className="inline-flex items-center gap-2 mx-8">
-        <TrophyIcon className="w-4 h-4 text-yellow-400" />
-        <span className="font-semibold text-white/80">King Midas Pot:</span>
-        <span className="text-yellow-400 font-bold">${tickerData.king_midas_pot.toFixed(2)}</span>
+        <TrophyIcon className="w-3.5 h-3.5" style={{ color: '#fbbf24' }} />
+        <span className="font-mono text-[11px]" style={{ color: 'rgba(255,255,255,0.6)', letterSpacing: '0.08em' }}>KING MIDAS POT:</span>
+        <span className="font-mono font-bold text-[11px]" style={{ color: '#fbbf24', textShadow: LED_GLOW }}>
+          ${tickerData.king_midas_pot.toFixed(2)}
+        </span>
       </span>
-
+      {/* Separator */}
+      <span className="mx-8 font-mono" style={{ color: 'rgba(251,191,36,0.3)' }}>◆◆◆</span>
     </>
   );
 
   return (
-    <div className="bg-black/95 border-b-2 border-yellow-400/50 h-12 overflow-hidden relative">
-      <div className="ticker-wrapper">
-        <div className="ticker-content">
+    <LightBoard
+      className="h-12 border-b border-yellow-400/20"
+      label={
+        <div className="flex flex-col items-center px-2">
+          <span
+            className="text-[7px] font-black tracking-[0.3em] uppercase leading-none"
+            style={{ color: '#fbbf24', textShadow: LED_GLOW, fontFamily: '"Courier New", monospace' }}
+          >
+            KING
+          </span>
+          <span
+            className="text-[7px] font-black tracking-[0.3em] uppercase leading-none mt-0.5"
+            style={{ color: '#fbbf24', textShadow: LED_GLOW, fontFamily: '"Courier New", monospace' }}
+          >
+            MIDAS
+          </span>
+        </div>
+      }
+      labelWidth={68}
+    >
+      <div className="ticker-wrapper h-full">
+        <div
+          className="ticker-content"
+          style={{
+            fontFamily: '"Courier New", "Lucida Console", monospace',
+            fontSize: '11px',
+            letterSpacing: '0.05em',
+          }}
+        >
           {tickerContent}
-          {/* Duplicate for seamless loop */}
           {tickerContent}
         </div>
       </div>
@@ -144,39 +197,34 @@ export default function KingMidasTicker() {
       <style>{`
         .ticker-wrapper {
           width: 100%;
-          height: 100%;
           display: flex;
           align-items: center;
           position: relative;
+          overflow: hidden;
         }
 
         .ticker-content {
           display: flex;
           align-items: center;
           white-space: nowrap;
-          animation: scroll-left 60s linear infinite;
+          animation: km-scroll-left 60s linear infinite;
         }
 
         .ticker-wrapper:hover .ticker-content {
           animation-play-state: paused;
         }
 
-        @keyframes scroll-left {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
+        @keyframes km-scroll-left {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
         }
 
         @media (max-width: 768px) {
           .ticker-content {
-            font-size: 0.875rem;
+            font-size: 0.75rem;
           }
         }
       `}</style>
-    </div>
+    </LightBoard>
   );
 }
-

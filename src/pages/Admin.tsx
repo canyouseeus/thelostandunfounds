@@ -77,8 +77,16 @@ import AffiliateAdminView from '../components/admin/AffiliateAdminView';
 import AffiliateEmailComposer from '../components/admin/AffiliateEmailComposer';
 import { AdminBentoCard, AdminBentoRow } from '../components/ui/admin-bento-card';
 import { SidePanel } from '../components/ui/side-panel';
-import { SortableList } from '../components/ui/sortable-list';
 import { ExpandableScreen, ExpandableScreenTrigger, ExpandableScreenContent } from '../components/ui/expandable-screen';
+import {
+  Expandable,
+  ExpandableCard,
+  ExpandableCardHeader,
+  ExpandableCardContent,
+  ExpandableCardFooter,
+  ExpandableContent,
+  ExpandableTrigger,
+} from '../components/ui/expandable';
 import { AnimatedNumber } from '../components/ui/animated-number';
 import { cn } from '../components/ui/utils';
 import AdminUsersView from '../components/admin/AdminUsersView';
@@ -94,7 +102,6 @@ import AdminCalendarView from '../components/admin/AdminCalendarView';
 import { RevenueTracker } from '../components/ui/revenue-tracker';
 import { ClockWidget } from '../components/ui/clock-widget';
 import { CalendarWidget } from '../components/ui/calendar-widget';
-import { CollapsibleSection } from '../components/ui/collapsible-section';
 
 interface DashboardStats {
   totalUsers: number;
@@ -229,109 +236,14 @@ export default function Admin() {
   const [allUsers, setAllUsers] = useState<RecentUser[]>([]);
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
-  // Refs for scroll navigation
+  // Ref for scroll-to-top only
   const pageTopRef = useRef<HTMLDivElement>(null);
-  const gallerySectionRef = useRef<HTMLDivElement>(null);
-  const blogSectionRef = useRef<HTMLDivElement>(null);
-  const newsletterSectionRef = useRef<HTMLDivElement>(null);
-  const mailSectionRef = useRef<HTMLDivElement>(null);
-  const usersSectionRef = useRef<HTMLDivElement>(null);
-  const affiliatesSectionRef = useRef<HTMLDivElement>(null);
-  const submissionsSectionRef = useRef<HTMLDivElement>(null);
-  const eventsSectionRef = useRef<HTMLDivElement>(null);
-  const bookingsSectionRef = useRef<HTMLDivElement>(null);
-  const calendarSectionRef = useRef<HTMLDivElement>(null);
-  const pricingSectionRef = useRef<HTMLDivElement>(null);
-  const settingsSectionRef = useRef<HTMLDivElement>(null);
 
-  // Expanded state for controlled CollapsibleSections
-  // All collapsed by default
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    gallery: false,
-    blog: false,
-    newsletter: false,
-    mail: false,
-    users: false,
-    affiliates: false,
-    submissions: false,
-    settings: false,
-    events: false,
-    bookings: false,
-    pricing: false,
-  });
+  // Which console panel is open (null = none)
+  const [activePanelSection, setActivePanelSection] = useState<string | null>(null);
 
-  const handleSectionToggle = (key: string) => {
-    setExpandedSections(prev => {
-      const willOpen = !prev[key];
-      if (!willOpen) {
-        // Only scroll to top if NO OTHER sections are open
-        const otherSectionsOpen = Object.entries(prev).some(([k, v]) => k !== key && v === true);
-        if (!otherSectionsOpen) {
-          scrollToTop();
-        }
-      }
-      return {
-        ...prev,
-        [key]: willOpen
-      };
-    });
-  };
-
-  const openAndScrollToSection = (key: string, ref: React.RefObject<HTMLDivElement>) => {
-    // 1. Toggle the section
-    setExpandedSections(prev => {
-      const willOpen = !prev[key];
-
-      // 2. If opening, scroll to it
-      // 2. If opening, scroll to it
-      if (willOpen) {
-        // Wait for render cycle to complete and ref to populate
-        setTimeout(() => {
-          if (ref.current) {
-            const yOffset = -100; // Offset for fixed header/dock
-            const y = ref.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
-            window.scrollTo({ top: y, behavior: 'smooth' });
-          }
-        }, 100);
-      } else if (!willOpen) {
-        // If closing, scroll to top ONLY if no other sections are open
-        const otherSectionsOpen = Object.entries(prev).some(([k, v]) => k !== key && v === true);
-        if (!otherSectionsOpen) {
-          scrollToTop();
-        }
-      }
-
-      return {
-        ...prev,
-        [key]: willOpen
-      };
-    });
-  };
-
-  const setActiveTab = (tab: string) => {
-    let key = tab;
-    let ref = null;
-
-    switch (tab) {
-      case 'gallery': ref = gallerySectionRef; break;
-      case 'blog': ref = blogSectionRef; break;
-      case 'newsletter': ref = newsletterSectionRef; break;
-      case 'mail': ref = mailSectionRef; break;
-      case 'users': ref = usersSectionRef; break;
-      case 'affiliates': ref = affiliatesSectionRef; break;
-      case 'submissions': ref = submissionsSectionRef; break;
-      case 'events': ref = eventsSectionRef; break;
-      case 'bookings': ref = bookingsSectionRef; break;
-      case 'calendar': ref = calendarSectionRef; break;
-      case 'pricing': ref = pricingSectionRef; break;
-      case 'settings':
-        key = 'settings';
-        ref = settingsSectionRef;
-        break;
-      default: return;
-    }
-
-    if (ref) openAndScrollToSection(key, ref);
+  const openPanel = (id: string) => {
+    setActivePanelSection(prev => (prev === id ? null : id));
   };
 
   const scrollToTop = () => {
@@ -1400,25 +1312,25 @@ export default function Admin() {
             label="Total Users"
             value={<AnimatedNumber value={stats?.totalUsers || 0} />}
             className="cursor-pointer hover:bg-white/5 p-1 transition-colors"
-            onClick={() => setActiveTab('users')}
+            onClick={() => openPanel('users')}
           />
           <AdminBentoRow
             label="Subscribers"
             value={<AnimatedNumber value={stats?.newsletterSubscribers || 0} />}
             className="cursor-pointer hover:bg-white/5 p-1 transition-colors"
-            onClick={() => setActiveTab('newsletter')}
+            onClick={() => openPanel('newsletter')}
           />
           <AdminBentoRow
             label="Affiliates"
             value={<AnimatedNumber value={affiliateStats?.totalAffiliates || 0} />}
             className="cursor-pointer hover:bg-white/5 p-1 transition-colors"
-            onClick={() => setActiveTab('affiliates')}
+            onClick={() => openPanel('affiliates')}
           />
           <AdminBentoRow
             label="Pending Reviews"
             value={<span className={pendingSubmissions > 0 ? "text-amber-400 font-bold" : ""}>{pendingSubmissions}</span>}
             className="cursor-pointer hover:bg-white/5 p-1 transition-colors"
-            onClick={() => setActiveTab('submissions')}
+            onClick={() => openPanel('submissions')}
           />
         </div>
       )
@@ -1718,15 +1630,56 @@ export default function Admin() {
                 )}
               </div>
 
-              {/* Desktop-only full card */}
+              {/* Desktop-only expandable card — BlogCard style */}
               <div className="hidden md:block">
-                <AdminBentoCard
-                  title={category.title}
-                  icon={category.icon}
-                  footer={category.footer}
+                <Expandable
+                  expandDirection="vertical"
+                  expandBehavior="replace"
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
                 >
-                  {category.content}
-                </AdminBentoCard>
+                  {({ isExpanded }) => (
+                    <ExpandableTrigger>
+                      <div
+                        style={{
+                          minHeight: isExpanded ? '320px' : '190px',
+                          transition: 'min-height 0.2s ease-out',
+                        }}
+                      >
+                        <ExpandableCard
+                          className="bg-black rounded-none h-full flex flex-col overflow-hidden transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.02] cursor-pointer"
+                          collapsedSize={{ height: 190 }}
+                          expandedSize={{ height: 320 }}
+                          hoverToExpand={false}
+                          expandDelay={0}
+                          collapseDelay={0}
+                        >
+                          <ExpandableCardHeader className="bg-[#0a0a0a] mb-1 pb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-white/50">{category.icon}</span>
+                              <h3 className="text-[10px] font-black uppercase tracking-widest text-white/80 truncate">
+                                {category.title}
+                              </h3>
+                            </div>
+                          </ExpandableCardHeader>
+
+                          <ExpandableCardContent className="flex-1 min-h-0">
+                            {category.content}
+                          </ExpandableCardContent>
+
+                          <ExpandableCardFooter className="mt-auto pt-2">
+                            {isExpanded ? (
+                              category.footer || <span className="text-white/20 text-[9px]">—</span>
+                            ) : (
+                              <span className="text-white/30 text-[9px] font-bold uppercase tracking-widest">
+                                Click to expand →
+                              </span>
+                            )}
+                          </ExpandableCardFooter>
+                        </ExpandableCard>
+                      </div>
+                    </ExpandableTrigger>
+                  )}
+                </Expandable>
               </div>
             </div>
           ))}
@@ -1751,10 +1704,10 @@ export default function Admin() {
               ].map((app) => (
                 <button
                   key={app.id}
-                  onClick={() => setActiveTab(app.id)}
+                  onClick={() => openPanel(app.id)}
                   className={cn(
                     "relative p-3 transition-all duration-300 rounded-full group/btn",
-                    expandedSections[app.id] ? "bg-white text-black scale-110 shadow-[0_0_20px_rgba(255,255,255,0.2)]" : "text-white/60 hover:text-white hover:bg-white/10"
+                    activePanelSection === app.id ? "bg-white text-black scale-110 shadow-[0_0_20px_rgba(255,255,255,0.2)]" : "text-white/60 hover:text-white hover:bg-white/10"
                   )}
                   title={app.title}
                 >
@@ -1775,208 +1728,112 @@ export default function Admin() {
           </div>
         </div>
 
-        {/* Expanded App Sections */}
-        <div className="space-y-12 pb-24">
-          {/* Gallery Section */}
-          {expandedSections['gallery'] && (
-            <div ref={gallerySectionRef} className="animate-in fade-in duration-500">
-              <div className="flex flex-col px-0 py-2 mb-8 items-start">
-                <div className="flex items-center gap-3">
-                  <PhotoIcon className="w-5 h-5 text-white/40" />
-                  <h2 className="text-lg font-black text-white tracking-widest uppercase">Gallery Management</h2>
-                </div>
-                <button onClick={() => handleSectionToggle('gallery')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
-              </div>
-              <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Gallery</div>}>
-                <AdminGalleryView onBack={scrollToTop} />
-              </ErrorBoundary>
-            </div>
-          )}
+        {/* Console ExpandableScreen — full-screen overlay for each section */}
+        <ExpandableScreen
+          isOpen={activePanelSection !== null}
+          onOpenChange={(open) => { if (!open) setActivePanelSection(null); }}
+        >
+          <ExpandableScreenContent>
+            <div className="max-w-7xl mx-auto pt-14 pb-24">
+              {/* Section header */}
+              {activePanelSection && (() => {
+                const sectionMeta: Record<string, { title: string; icon: React.ReactNode; extra?: React.ReactNode }> = {
+                  gallery:     { title: 'Gallery Management',       icon: <PhotoIcon className="w-5 h-5 text-white/40" /> },
+                  blog:        { title: 'Blog Management',          icon: <BookOpenIcon className="w-5 h-5 text-white/40" /> },
+                  newsletter:  { title: 'Newsletter Module',        icon: <EnvelopeIcon className="w-5 h-5 text-white/40" /> },
+                  mail:        { title: 'Platform Webmail',         icon: <PaperAirplaneIcon className="w-5 h-5 text-white/40" /> },
+                  users:       { title: 'User Management',          icon: <UsersIcon className="w-5 h-5 text-white/40" /> },
+                  affiliates:  { title: 'Affiliate Program',        icon: <LinkIcon className="w-5 h-5 text-white/40" /> },
+                  submissions: { title: 'Submission Queue',         icon: <DocumentTextIcon className="w-5 h-5 text-white/40" />, extra: pendingSubmissions > 0 ? <span className="px-2 py-0.5 bg-amber-400 text-black text-[10px] font-black">{pendingSubmissions} PENDING</span> : null },
+                  events:      { title: 'Event Management',         icon: <CalendarIcon className="w-5 h-5 text-white/40" /> },
+                  bookings:    { title: 'Booking Management',       icon: <CalendarIcon className="w-5 h-5 text-white/40" />, extra: <Link to="/admin/invoices" className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-tighter underline">Manage Invoices →</Link> },
+                  calendar:    { title: 'Master Calendar',          icon: <CalendarIcon className="w-5 h-5 text-white/40" /> },
+                  pricing:     { title: 'Product Cost Management',  icon: <CurrencyDollarIcon className="w-5 h-5 text-white/40" /> },
+                  settings:    { title: 'Platform Settings',        icon: <BoltIcon className="w-5 h-5 text-white/40" /> },
+                };
+                const meta = sectionMeta[activePanelSection];
+                if (!meta) return null;
+                return (
+                  <div className="flex flex-col mb-8 items-start">
+                    <div className="flex items-center gap-3">
+                      {meta.icon}
+                      <h2 className="text-lg font-black text-white tracking-widest uppercase">{meta.title}</h2>
+                      {meta.extra}
+                    </div>
+                  </div>
+                );
+              })()}
 
-          {/* Blog Section */}
-          {expandedSections['blog'] && (
-            <div ref={blogSectionRef} className="animate-in fade-in duration-500">
-              <div className="flex flex-col px-0 py-2 mb-8 items-start">
-                <div className="flex items-center gap-3">
-                  <BookOpenIcon className="w-5 h-5 text-white/40" />
-                  <h2 className="text-lg font-black text-white tracking-widest uppercase">Blog Management</h2>
-                </div>
-                <button onClick={() => handleSectionToggle('blog')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
-              </div>
-              <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Blog</div>}>
-                <BlogManagement />
-              </ErrorBoundary>
+              {/* Section content */}
+              {activePanelSection === 'gallery' && (
+                <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Gallery</div>}>
+                  <AdminGalleryView onBack={() => setActivePanelSection(null)} />
+                </ErrorBoundary>
+              )}
+              {activePanelSection === 'blog' && (
+                <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Blog</div>}>
+                  <BlogManagement />
+                </ErrorBoundary>
+              )}
+              {activePanelSection === 'newsletter' && (
+                <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Newsletter</div>}>
+                  <NewsletterManagement />
+                </ErrorBoundary>
+              )}
+              {activePanelSection === 'mail' && (
+                <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Mail</div>}>
+                  <AdminMailView onBack={() => setActivePanelSection(null)} />
+                </ErrorBoundary>
+              )}
+              {activePanelSection === 'users' && (
+                <AdminUsersView
+                  users={allUsers}
+                  stats={stats}
+                  onSelectUser={(u) => { setSelectedUser(u); setSidePanelOpen(true); }}
+                  onBack={() => setActivePanelSection(null)}
+                />
+              )}
+              {activePanelSection === 'affiliates' && (
+                /* @ts-ignore */
+                <AdminAffiliates onBack={() => setActivePanelSection(null)} />
+              )}
+              {activePanelSection === 'submissions' && (
+                pendingSubmissions > 0 ? (
+                  <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Submissions</div>}>
+                    <BlogSubmissionReview />
+                  </ErrorBoundary>
+                ) : (
+                  <div className="py-12 text-center">
+                    <p className="text-white/40 text-sm uppercase tracking-widest font-bold">No pending submissions</p>
+                  </div>
+                )
+              )}
+              {activePanelSection === 'events' && (
+                <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Events</div>}>
+                  <AdminEventsView onBack={() => setActivePanelSection(null)} />
+                </ErrorBoundary>
+              )}
+              {activePanelSection === 'bookings' && (
+                <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Bookings</div>}>
+                  <AdminBookingView />
+                </ErrorBoundary>
+              )}
+              {activePanelSection === 'calendar' && (
+                <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Calendar</div>}>
+                  <AdminCalendarView />
+                </ErrorBoundary>
+              )}
+              {activePanelSection === 'pricing' && (
+                <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Pricing</div>}>
+                  <ProductCostManagement />
+                </ErrorBoundary>
+              )}
+              {activePanelSection === 'settings' && (
+                <AdminSettingsView stats={stats} onBack={() => setActivePanelSection(null)} />
+              )}
             </div>
-          )}
-
-          {/* Newsletter Section */}
-          {expandedSections['newsletter'] && (
-            <div ref={newsletterSectionRef} className="animate-in fade-in duration-500">
-              <div className="flex flex-col px-0 py-2 mb-8 items-start">
-                <div className="flex items-center gap-3">
-                  <EnvelopeIcon className="w-5 h-5 text-white/40" />
-                  <h2 className="text-lg font-black text-white tracking-widest uppercase">Newsletter Module</h2>
-                </div>
-                <button onClick={() => handleSectionToggle('newsletter')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
-              </div>
-              <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Newsletter</div>}>
-                <NewsletterManagement />
-              </ErrorBoundary>
-            </div>
-          )}
-
-          {/* Mail Section */}
-          {expandedSections['mail'] && (
-            <div ref={mailSectionRef} className="animate-in fade-in duration-500">
-              <div className="flex flex-col px-0 py-2 mb-8 items-start">
-                <div className="flex items-center gap-3">
-                  <PaperAirplaneIcon className="w-5 h-5 text-white/40" />
-                  <h2 className="text-lg font-black text-white tracking-widest uppercase">Platform Webmail</h2>
-                </div>
-                <button onClick={() => handleSectionToggle('mail')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
-              </div>
-              <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Mail</div>}>
-                <AdminMailView onBack={scrollToTop} />
-              </ErrorBoundary>
-            </div>
-          )}
-
-          {/* Users Section */}
-          {expandedSections['users'] && (
-            <div ref={usersSectionRef} className="animate-in fade-in duration-500">
-              <div className="flex flex-col px-0 py-2 mb-8 items-start">
-                <div className="flex items-center gap-3">
-                  <UsersIcon className="w-5 h-5 text-white/40" />
-                  <h2 className="text-lg font-black text-white tracking-widest uppercase">User Management</h2>
-                </div>
-                <button onClick={() => handleSectionToggle('users')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
-              </div>
-              <AdminUsersView
-                users={allUsers}
-                stats={stats}
-                onSelectUser={(u) => { setSelectedUser(u); setSidePanelOpen(true); }}
-                onBack={scrollToTop}
-              />
-            </div>
-          )}
-
-          {/* Affiliates Section */}
-          {expandedSections['affiliates'] && (
-            <div ref={usersSectionRef} className="animate-in fade-in duration-500">
-              <div className="flex flex-col px-0 py-2 mb-8 items-start">
-                <div className="flex items-center gap-3">
-                  <UsersIcon className="w-5 h-5 text-white/40" />
-                  <h2 className="text-lg font-black text-white tracking-widest uppercase">Affiliate Program</h2>
-                </div>
-                <button onClick={() => handleSectionToggle('affiliates')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
-              </div>
-              {/* @ts-ignore */}
-              <AdminAffiliates onBack={scrollToTop} />
-            </div>
-          )}
-
-          {/* Submissions Section */}
-          {expandedSections['submissions'] && pendingSubmissions > 0 && (
-            <div ref={submissionsSectionRef} className="animate-in fade-in duration-500">
-              <div className="flex flex-col px-0 py-2 mb-8 items-start">
-                <div className="flex items-center gap-3">
-                  <DocumentTextIcon className="w-5 h-5 text-white/40" />
-                  <h2 className="text-lg font-black text-white tracking-widest uppercase">Submission Queue</h2>
-                  {pendingSubmissions > 0 && (
-                    <span className="px-2 py-0.5 bg-amber-400 text-black text-[10px] font-black">{pendingSubmissions} PENDING</span>
-                  )}
-                </div>
-                <button onClick={() => handleSectionToggle('submissions')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
-              </div>
-              <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Submissions</div>}>
-                <BlogSubmissionReview />
-              </ErrorBoundary>
-            </div>
-          )}
-
-          {/* Events Section */}
-          {expandedSections['events'] && (
-            <div ref={eventsSectionRef} className="animate-in fade-in duration-500">
-              <div className="flex flex-col px-0 py-2 mb-8 items-start">
-                <div className="flex items-center gap-3">
-                  <CalendarIcon className="w-5 h-5 text-white/40" />
-                  <h2 className="text-lg font-black text-white tracking-widest uppercase">Event Management</h2>
-                </div>
-                <button onClick={() => handleSectionToggle('events')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
-              </div>
-              <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Events</div>}>
-                <AdminEventsView onBack={scrollToTop} />
-              </ErrorBoundary>
-            </div>
-          )}
-
-          {/* Booking Management Section */}
-          {expandedSections['bookings'] && (
-            <div ref={bookingsSectionRef} className="animate-in fade-in duration-500">
-              <div className="flex flex-col px-0 py-2 mb-8 items-start">
-                <div className="flex items-center gap-3">
-                  <CalendarIcon className="w-5 h-5 text-white/40" />
-                  <h2 className="text-lg font-black text-white tracking-widest uppercase">Booking Management</h2>
-                </div>
-                <div className="flex items-center gap-4 mt-1">
-                  <button onClick={() => handleSectionToggle('bookings')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
-                  <Link to="/admin/invoices" className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-tighter underline">
-                    Manage Invoices →
-                  </Link>
-                </div>
-              </div>
-              <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Bookings</div>}>
-                <AdminBookingView />
-              </ErrorBoundary>
-            </div>
-          )}
-
-          {/* Master Calendar Section */}
-          {expandedSections['calendar'] && (
-            <div ref={calendarSectionRef} className="animate-in fade-in duration-500">
-              <div className="flex flex-col px-0 py-2 mb-8 items-start">
-                <div className="flex items-center gap-3">
-                  <CalendarIcon className="w-5 h-5 text-white/40" />
-                  <h2 className="text-lg font-black text-white tracking-widest uppercase">Master Calendar</h2>
-                </div>
-                <button onClick={() => handleSectionToggle('calendar')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
-              </div>
-              <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Calendar</div>}>
-                <AdminCalendarView />
-              </ErrorBoundary>
-            </div>
-          )}
-
-          {/* Pricing Section */}
-          {expandedSections['pricing'] && (
-            <div ref={pricingSectionRef} className="animate-in fade-in duration-500">
-              <div className="flex flex-col px-0 py-2 mb-8 items-start">
-                <div className="flex items-center gap-3">
-                  <CurrencyDollarIcon className="w-5 h-5 text-white/40" />
-                  <h2 className="text-lg font-black text-white tracking-widest uppercase">Product Cost Management</h2>
-                </div>
-                <button onClick={() => handleSectionToggle('pricing')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
-              </div>
-              <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Pricing</div>}>
-                <ProductCostManagement />
-              </ErrorBoundary>
-            </div>
-          )}
-
-          {/* Settings Section */}
-          {expandedSections['settings'] && (
-            <div ref={settingsSectionRef} className="animate-in fade-in duration-500">
-              <div className="flex items-center justify-between px-4 py-2 mb-6">
-                <div className="flex items-center gap-3">
-                  <BoltIcon className="w-5 h-5 text-white/40" />
-                  <h2 className="text-lg font-black text-white tracking-widest uppercase">Platform Settings</h2>
-                </div>
-                <button onClick={() => handleSectionToggle('settings')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
-              </div>
-              <AdminSettingsView stats={stats} onBack={scrollToTop} />
-            </div>
-          )}
-        </div>
+          </ExpandableScreenContent>
+        </ExpandableScreen>
 
         {/* Floating Back to Top Button */}
         <button

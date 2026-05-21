@@ -88,8 +88,11 @@ function AdminLayout() {
 }
 
 function AffiliateDashboardRedirect() {
+  // Preserve any existing search params and force-open the affiliate section
   const { search } = useLocation()
-  return <Navigate to={`/dashboard${search}`} replace />
+  const params = new URLSearchParams(search)
+  if (!params.get('section')) params.set('section', 'affiliate')
+  return <Navigate to={`/dashboard?${params.toString()}`} replace />
 }
 
 /** Dev-only: expose React Router's navigate globally so preview_eval can route without a full reload. */
@@ -176,6 +179,7 @@ function App() {
                 </Layout>
               } />
               <Route path="/affiliate/dashboard" element={<AffiliateDashboardRedirect />} />
+              <Route path="/affiliate-dashboard" element={<AffiliateDashboardRedirect />} />
               <Route path="/become-affiliate" element={<Layout />}>
                 <Route index element={<BecomeAffiliate />} />
               </Route>
