@@ -79,8 +79,10 @@ function buildInvoiceBody(args: {
   lineItems: LineItem[]
   subtotal: number
   total: number
+  amountDue: number
   status: string
   paymentMethod: string | null
+  stripePaymentLinkUrl: string | null
   clientName: string
   clientEmail: string | null
   clientBusiness: string | null
@@ -94,8 +96,10 @@ function buildInvoiceBody(args: {
     lineItems,
     subtotal,
     total,
+    amountDue,
     status,
     paymentMethod,
+    stripePaymentLinkUrl,
     clientName,
     clientEmail,
     clientBusiness,
@@ -212,6 +216,26 @@ function buildInvoiceBody(args: {
     </table>
 
     ${
+      stripePaymentLinkUrl && status !== 'paid'
+        ? `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:10px 0 30px 0;">
+            <tr>
+              <td align="center" style="padding:0;">
+                <a href="${escapeHtml(stripePaymentLinkUrl)}"
+                   style="display:block;width:100%;background-color:#ffffff;color:#000000 !important;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:bold;letter-spacing:0.18em;text-transform:uppercase;padding:22px 24px;text-align:center;border-radius:0;">
+                  Pay Deposit — ${fmtUSD(amountDue)}
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:10px 0 0 0;color:${muted} !important;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;">
+                Secure payment via Stripe
+              </td>
+            </tr>
+          </table>`
+        : ''
+    }
+
+    ${
       paymentMethod
         ? `<p style="color:${muted} !important;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;margin:0 0 24px 0;">
             Accepted Payment: ${escapeHtml(paymentMethod)}
@@ -285,8 +309,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       lineItems,
       subtotal: Number(invoice.subtotal || 0),
       total: Number(invoice.total || 0),
+      amountDue: Number(invoice.amount_due || 0),
       status: invoice.status,
       paymentMethod: invoice.payment_method,
+      stripePaymentLinkUrl: invoice.stripe_payment_link_url || null,
       clientName: client?.name || 'Client',
       clientEmail: client?.email || null,
       clientBusiness: client?.business || null,
