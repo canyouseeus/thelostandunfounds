@@ -350,6 +350,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const client = (invoice as any).clients || null
+
+    // Pull start/end time from the linked booking so the PDF can show
+    // "Sunday, May 24, 2026" + "5:00 PM – 8:00 PM".
+    let bookingStartTime: string | null = null
+    let bookingEndTime: string | null = null
+    const bookingId = (invoice as any).booking_id
+    if (bookingId) {
+      const { data: booking } = await supabase
+        .from('bookings')
+        .select('start_time, end_time')
+        .eq('id', bookingId)
+        .maybeSingle()
+      if (booking) {
+        bookingStartTime = (booking as any).start_time || null
+        bookingEndTime = (booking as any).end_time || null
+      }
+    }
     const recipient = (to_email && to_email.trim()) || client?.email || ''
     if (!recipient || !recipient.includes('@')) {
       return res.status(400).json({ error: 'No recipient email available (provide to_email or set client.email)' })
@@ -396,6 +413,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         invoiceNumber: invoice.invoice_number,
         date: invoice.date,
         eventDate: invoice.event_date,
+        startTime: bookingStartTime,
+        endTime: bookingEndTime,
         location: (invoice as any).location || null,
         description: invoice.description,
         lineItems: pdfLineItems,

@@ -21,6 +21,10 @@ export interface InvoicePdfData {
   invoiceNumber: string
   date: string | null
   eventDate: string | null
+  /** Optional 'HH:MM:SS' (or 'HH:MM') from bookings.start_time. */
+  startTime?: string | null
+  /** Optional 'HH:MM:SS' (or 'HH:MM') from bookings.end_time. */
+  endTime?: string | null
   location?: string | null
   description: string | null
   lineItems: InvoicePdfLineItem[]
@@ -72,6 +76,48 @@ function fmtDate(d: string | null): string {
   } catch {
     return d
   }
+}
+
+function fmtDateWithWeekday(d: string | null): string {
+  if (!d) return '—'
+  try {
+    return new Date(d).toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+      timeZone: 'UTC',
+    })
+  } catch {
+    return d
+  }
+}
+
+/** Format a 'HH:MM[:SS]' (or '5:00 PM' already-formatted) into '5:00 PM'. */
+function fmtTime(t: string | null | undefined): string | null {
+  if (!t) return null
+  const trimmed = String(t).trim()
+  if (!trimmed) return null
+  // If it already includes AM/PM, hand it back as-is.
+  if (/AM|PM/i.test(trimmed)) return trimmed.toUpperCase()
+  const m = trimmed.match(/^(\d{1,2}):(\d{2})/)
+  if (!m) return trimmed
+  const h24 = Number(m[1])
+  const mm = m[2]
+  if (Number.isNaN(h24)) return trimmed
+  const period = h24 >= 12 ? 'PM' : 'AM'
+  const h12 = h24 % 12 === 0 ? 12 : h24 % 12
+  return `${h12}:${mm} ${period}`
+}
+
+function fmtTimeRange(
+  start: string | null | undefined,
+  end: string | null | undefined
+): string | null {
+  const s = fmtTime(start)
+  const e = fmtTime(end)
+  if (s && e) return `${s} – ${e}`
+  return s || e || null
 }
 
 export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> {
@@ -137,11 +183,22 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
   const valueStyle = () => doc.font('Helvetica').fontSize(10.5).fillColor(INK)
 
   labelStyle().text('BILL TO', LEFT, y, { characterSpacing: 1.5 })
-  labelStyle().text('EVENT DATE', LEFT + 280, y, { characterSpacing: 1.5 })
+  labelStyle().text('EVENT', LEFT + 280, y, { characterSpacing: 1.5 })
   y += 14
   valueStyle().font('Helvetica-Bold').text(data.clientName, LEFT, y, { width: 260 })
-  valueStyle().text(fmtDate(data.eventDate), LEFT + 280, y, { width: 220 })
+  const eventLineY = y
+  valueStyle().text(fmtDateWithWeekday(data.eventDate), LEFT + 280, eventLineY, { width: 220 })
   y += 16
+  const timeRange = fmtTimeRange(data.startTime, data.endTime)
+  let eventY = eventLineY + 14
+  if (timeRange) {
+    doc
+      .font('Helvetica')
+      .fontSize(9)
+      .fillColor(MUTED)
+      .text(timeRange, LEFT + 280, eventY, { width: 220 })
+    eventY += 13
+  }
   if (data.clientBusiness) {
     doc.font('Helvetica').fontSize(9).fillColor(MUTED).text(data.clientBusiness, LEFT, y, { width: 260 })
     y += 13
@@ -150,7 +207,7 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
     doc.font('Helvetica').fontSize(9).fillColor(MUTED).text(data.clientEmail, LEFT, y, { width: 260 })
     y += 13
   }
-  y += 14
+  y = Math.max(y, eventY) + 14
 
   // ── Location ──────────────────────────────────────────────────────────────
   if (data.location) {
