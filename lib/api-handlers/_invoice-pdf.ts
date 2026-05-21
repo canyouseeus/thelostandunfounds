@@ -31,6 +31,8 @@ export interface InvoicePdfData {
   /** What the payment link actually charges. */
   amountDue: number
   paymentUrl: string | null
+  /** Optional second payment link that charges the full project total. */
+  fullPaymentUrl?: string | null
   clientName: string
   clientBusiness: string | null
   clientEmail: string | null
@@ -234,27 +236,82 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
     .text(fmtUSD(data.amountDue), totalsX + 14, boxY + 24, { width: totalsW - 28 })
   y = boxY + boxH + 24
 
-  // ── Pay button (clickable link annotation) ────────────────────────────────
-  if (data.paymentUrl) {
-    const btnH = 40
-    const btnY = y
-    doc.rect(LEFT, btnY, CONTENT_W, btnH).fill(INK)
+  // ── Pay buttons (clickable link annotations) ──────────────────────────────
+  // If a full-payment link is provided, show two buttons side-by-side:
+  // "PAY DEPOSIT — $X" and "PAY FULL AMOUNT — $Y". Otherwise fall back to
+  // the single "PAY {label}" button.
+  const drawPayButton = (
+    x: number,
+    btnY: number,
+    width: number,
+    height: number,
+    label: string,
+    url: string
+  ) => {
+    doc.rect(x, btnY, width, height).fill(INK)
     doc
       .font('Helvetica-Bold')
       .fontSize(11)
       .fillColor('#ffffff')
-      .text(`PAY ${data.amountDueLabel.toUpperCase()}  »`, LEFT, btnY + 14, {
-        width: CONTENT_W,
+      .text(label, x, btnY + 14, {
+        width,
         align: 'center',
         characterSpacing: 1,
       })
-    doc.link(LEFT, btnY, CONTENT_W, btnH, data.paymentUrl)
+    doc.link(x, btnY, width, height, url)
+  }
+
+  if (data.paymentUrl && data.fullPaymentUrl) {
+    const btnH = 40
+    const btnY = y
+    const gap = 12
+    const halfW = (CONTENT_W - gap) / 2
+    drawPayButton(
+      LEFT,
+      btnY,
+      halfW,
+      btnH,
+      `PAY DEPOSIT — ${fmtUSD(data.amountDue)}  »`,
+      data.paymentUrl
+    )
+    drawPayButton(
+      LEFT + halfW + gap,
+      btnY,
+      halfW,
+      btnH,
+      `PAY FULL AMOUNT — ${fmtUSD(data.total)}  »`,
+      data.fullPaymentUrl
+    )
     y = btnY + btnH + 10
     doc
       .font('Helvetica')
       .fontSize(7.5)
       .fillColor(MUTED)
-      .text('Secure payment via Stripe. Or open this link:', LEFT, y, { width: CONTENT_W, align: 'center' })
+      .text('Secure payment via Stripe. Choose deposit or pay in full.', LEFT, y, {
+        width: CONTENT_W,
+        align: 'center',
+      })
+    y += 22
+  } else if (data.paymentUrl) {
+    const btnH = 40
+    const btnY = y
+    drawPayButton(
+      LEFT,
+      btnY,
+      CONTENT_W,
+      btnH,
+      `PAY ${data.amountDueLabel.toUpperCase()}  »`,
+      data.paymentUrl
+    )
+    y = btnY + btnH + 10
+    doc
+      .font('Helvetica')
+      .fontSize(7.5)
+      .fillColor(MUTED)
+      .text('Secure payment via Stripe. Or open this link:', LEFT, y, {
+        width: CONTENT_W,
+        align: 'center',
+      })
     y += 11
     doc
       .font('Helvetica')

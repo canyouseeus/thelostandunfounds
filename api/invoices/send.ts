@@ -20,6 +20,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import { wrapEmailContent, BRAND } from '../email-template.js'
 import { getZohoAuthContext, sendZohoEmail } from '../../lib/api-handlers/_zoho-email-utils.js'
+import { generateInvoicePdf, InvoicePdfLineItem } from '../../lib/api-handlers/_invoice-pdf.js'
 
 const FROM_EMAIL = 'media@thelostandunfounds.com'
 const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com']
@@ -60,6 +61,34 @@ function escapeHtml(s: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
+}
+
+/**
+ * Render a plain-text personal message as branded HTML paragraphs.
+ * Blank lines become paragraph breaks; single line breaks become <br>.
+ */
+function buildPersonalMessageBody(message: string, invoiceNumber: string): string {
+  const text = BRAND.colors.text
+  const muted = BRAND.colors.textMuted
+  const paragraphs = message
+    .replace(/\r\n/g, '\n')
+    .split(/\n{2,}/)
+    .map(p => p.trim())
+    .filter(Boolean)
+
+  const html = paragraphs
+    .map(
+      (p) =>
+        `<p style="color:${text} !important;font-size:15px;line-height:1.7;margin:0 0 18px 0;font-family:Arial,Helvetica,sans-serif;">${escapeHtml(p).replace(/\n/g, '<br>')}</p>`
+    )
+    .join('')
+
+  return `
+    ${html}
+    <p style="color:${muted} !important;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;margin:30px 0 0 0;font-family:Arial,Helvetica,sans-serif;">
+      Invoice ${escapeHtml(invoiceNumber)} — attached as PDF
+    </p>
+  `
 }
 
 function statusBadge(status: string): string {
@@ -263,7 +292,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
   if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' })
 
-  const { invoice_id, to_email } = (req.body || {}) as { invoice_id?: string; to_email?: string }
+  const { invoice_id, to_email, message } = (req.body || {}) as {
+    invoice_id?: string
+    to_email?: string
+    message?: string
+  }
 
   if (!invoice_id || typeof invoice_id !== 'string') {
     return res.status(400).json({ error: 'invoice_id is required' })
@@ -300,23 +333,82 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ? (invoice as any).line_items
       : []
 
-    const bodyHtml = buildInvoiceBody({
-      invoiceNumber: invoice.invoice_number,
-      date: invoice.date,
-      eventDate: invoice.event_date,
-      location: invoice.location || null,
-      description: invoice.description,
-      lineItems,
-      subtotal: Number(invoice.subtotal || 0),
-      total: Number(invoice.total || 0),
-      amountDue: Number(invoice.amount_due || 0),
-      status: invoice.status,
-      paymentMethod: invoice.payment_method,
-      stripePaymentLinkUrl: invoice.stripe_payment_link_url || null,
-      clientName: client?.name || 'Client',
-      clientEmail: client?.email || null,
-      clientBusiness: client?.business || null,
-    })
+    const hasMessage = typeof message === 'string' && message.trim().length > 0
+
+    // Two modes:
+    //   1. Personal message + PDF attachment (when `message` is supplied)
+    //   2. Legacy inline invoice render (no attachment) — backwards-compat
+    let bodyHtml: string
+    let pdfAttachment:
+      | { data: Buffer; fileName: string; mimeType: string }
+      | null = null
+
+    if (hasMessage) {
+      bodyHtml = buildPersonalMessageBody(message!.trim(), invoice.invoice_number)
+
+      const total = Number(invoice.total || 0)
+      const amountDue = invoice.amount_due != null ? Number(invoice.amount_due) : total
+      let docType: 'QUOTE' | 'INVOICE' = 'INVOICE'
+      let amountDueLabel = 'Amount Due'
+      if (invoice.invoice_type === 'quote') {
+        docType = 'QUOTE'
+        const pct = total > 0 ? Math.round((amountDue / total) * 100) : 50
+        amountDueLabel = `Deposit Due (${pct}%)`
+      } else if (invoice.invoice_type === 'final') {
+        amountDueLabel = 'Balance Due'
+      }
+
+      const pdfLineItems: InvoicePdfLineItem[] = lineItems.map((li) => ({
+        description: li.description,
+        quantity: li.quantity,
+        unit_price: li.unit_price,
+        amount: li.amount,
+      }))
+
+      const pdfBuffer = await generateInvoicePdf({
+        docType,
+        invoiceNumber: invoice.invoice_number,
+        date: invoice.date,
+        eventDate: invoice.event_date,
+        location: (invoice as any).location || null,
+        description: invoice.description,
+        lineItems: pdfLineItems,
+        subtotal: Number(invoice.subtotal || 0),
+        total,
+        amountDueLabel,
+        amountDue,
+        paymentUrl: invoice.stripe_payment_link_url || null,
+        fullPaymentUrl: (invoice as any).stripe_full_payment_link_url || null,
+        clientName: client?.name || 'Client',
+        clientBusiness: client?.business || null,
+        clientEmail: client?.email || null,
+        notes: null,
+      })
+
+      pdfAttachment = {
+        data: pdfBuffer,
+        fileName: `${invoice.invoice_number}.pdf`,
+        mimeType: 'application/pdf',
+      }
+    } else {
+      bodyHtml = buildInvoiceBody({
+        invoiceNumber: invoice.invoice_number,
+        date: invoice.date,
+        eventDate: invoice.event_date,
+        location: invoice.location || null,
+        description: invoice.description,
+        lineItems,
+        subtotal: Number(invoice.subtotal || 0),
+        total: Number(invoice.total || 0),
+        amountDue: Number(invoice.amount_due || 0),
+        status: invoice.status,
+        paymentMethod: invoice.payment_method,
+        stripePaymentLinkUrl: invoice.stripe_payment_link_url || null,
+        clientName: client?.name || 'Client',
+        clientEmail: client?.email || null,
+        clientBusiness: client?.business || null,
+      })
+    }
 
     const htmlContent = wrapEmailContent(bodyHtml, {
       includeUnsubscribe: false,
@@ -333,6 +425,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       to: recipient,
       subject,
       htmlContent,
+      attachments: pdfAttachment ? [pdfAttachment] : undefined,
     })
 
     if (!result.success) {

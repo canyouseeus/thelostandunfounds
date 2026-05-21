@@ -12,11 +12,35 @@ export interface ZohoAuthContext {
   fromEmail: string
 }
 
+/**
+ * Attachment descriptor used by sendZohoEmail. Either supply a file already
+ * uploaded via Zoho's attachment store (storeName/attachmentPath/attachmentName
+ * from `uploadZohoAttachment`) — or supply raw bytes plus filename/mimeType
+ * and sendZohoEmail will upload it for you.
+ */
+export interface ZohoEmailAttachment {
+  /** Pre-uploaded attachment reference (preferred). */
+  storeName?: string
+  attachmentPath?: string
+  attachmentName?: string
+  /** Raw file data — used when storeName/attachmentPath are not provided. */
+  data?: Buffer | Uint8Array
+  fileName?: string
+  mimeType?: string
+}
+
+export interface ZohoUploadedAttachment {
+  storeName: string
+  attachmentName: string
+  attachmentPath: string
+}
+
 export interface ZohoSendEmailParams {
   auth: ZohoAuthContext
   to: string
   subject: string
   htmlContent: string
+  attachments?: ZohoEmailAttachment[]
 }
 
 /**
@@ -189,14 +213,96 @@ export async function getZohoAuthContext(): Promise<ZohoAuthContext> {
   }
 }
 
+/**
+ * Upload a single attachment to Zoho's mail attachment store, returning the
+ * storeName/attachmentPath/attachmentName triplet needed to reference it from
+ * a send-mail request. Uses the raw-binary upload variant (one file per call).
+ */
+export async function uploadZohoAttachment(
+  auth: ZohoAuthContext,
+  data: Buffer | Uint8Array,
+  fileName: string,
+  mimeType: string = 'application/octet-stream'
+): Promise<ZohoUploadedAttachment> {
+  const url = `https://mail.zoho.com/api/accounts/${auth.accountId}/messages/attachments?fileName=${encodeURIComponent(
+    fileName
+  )}&isInline=false`
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Zoho-oauthtoken ${auth.accessToken}`,
+      'Content-Type': mimeType,
+    },
+    body: data as any,
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    throw new Error(`Zoho attachment upload failed: ${response.status} ${errorText}`)
+  }
+
+  const json: any = await response.json()
+  const entry = Array.isArray(json?.data) ? json.data[0] : json?.data
+  if (!entry?.storeName || !entry?.attachmentPath || !entry?.attachmentName) {
+    throw new Error(`Zoho attachment upload returned unexpected payload: ${JSON.stringify(json)}`)
+  }
+
+  return {
+    storeName: String(entry.storeName),
+    attachmentName: String(entry.attachmentName),
+    attachmentPath: String(entry.attachmentPath),
+  }
+}
+
 export async function sendZohoEmail({
   auth,
   to,
   subject,
-  htmlContent
+  htmlContent,
+  attachments
 }: ZohoSendEmailParams): Promise<{ success: boolean; error?: string }> {
   const finalHtml = ensureBannerHtml(htmlContent)
   const mailApiUrl = `https://mail.zoho.com/api/accounts/${auth.accountId}/messages`
+
+  let resolvedAttachments: ZohoUploadedAttachment[] = []
+  if (attachments && attachments.length > 0) {
+    try {
+      for (const att of attachments) {
+        if (att.storeName && att.attachmentPath && att.attachmentName) {
+          resolvedAttachments.push({
+            storeName: att.storeName,
+            attachmentName: att.attachmentName,
+            attachmentPath: att.attachmentPath,
+          })
+        } else if (att.data && att.fileName) {
+          const uploaded = await uploadZohoAttachment(
+            auth,
+            att.data,
+            att.fileName,
+            att.mimeType || 'application/octet-stream'
+          )
+          resolvedAttachments.push(uploaded)
+        } else {
+          throw new Error('Attachment requires either {storeName,attachmentPath,attachmentName} or {data,fileName}')
+        }
+      }
+    } catch (err: any) {
+      console.error('[Zoho] Attachment upload error:', err)
+      return { success: false, error: `Failed to upload attachment: ${err?.message || String(err)}` }
+    }
+  }
+
+  const body: Record<string, any> = {
+    fromAddress: auth.fromEmail,
+    toAddress: to,
+    subject,
+    content: finalHtml,
+    mailFormat: 'html',
+  }
+  if (resolvedAttachments.length > 0) {
+    body.attachments = resolvedAttachments
+  }
 
   const response = await fetch(mailApiUrl, {
     method: 'POST',
@@ -204,13 +310,7 @@ export async function sendZohoEmail({
       Authorization: `Zoho-oauthtoken ${auth.accessToken}`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({
-      fromAddress: auth.fromEmail,
-      toAddress: to,
-      subject,
-      content: finalHtml,
-      mailFormat: 'html'
-    })
+    body: JSON.stringify(body)
   })
 
   if (!response.ok) {

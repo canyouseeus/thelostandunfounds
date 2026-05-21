@@ -77,6 +77,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       amountDueLabel,
       amountDue,
       paymentUrl: invoice.stripe_payment_link_url || null,
+      fullPaymentUrl: invoice.stripe_full_payment_link_url || null,
       clientName: client?.name || 'Client',
       clientBusiness: client?.business || null,
       clientEmail: client?.email || null,
