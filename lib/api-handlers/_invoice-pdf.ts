@@ -237,9 +237,10 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
   y = boxY + boxH + 24
 
   // ── Pay buttons (clickable link annotations) ──────────────────────────────
-  // If a full-payment link is provided, show two buttons side-by-side:
-  // "PAY DEPOSIT — $X" and "PAY FULL AMOUNT — $Y". Otherwise fall back to
-  // the single "PAY {label}" button.
+  // If a full-payment link is provided, render two full-width black buttons
+  // stacked vertically — guarantees both fit on the page and stay legible at
+  // any zoom, and matches the brand's noir aesthetic (pure #000000 fill).
+  // Otherwise fall back to the single "PAY {label}" button.
   const drawPayButton = (
     x: number,
     btnY: number,
@@ -248,41 +249,47 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
     label: string,
     url: string
   ) => {
-    doc.rect(x, btnY, width, height).fill(INK)
+    // Pure black fill, no stroke — avoids any antialias greys at fill edges.
+    doc.save()
+    doc.rect(x, btnY, width, height).fill('#000000')
+    doc.restore()
+    // Center the label vertically inside the button.
+    const fontPt = 12
+    const textY = btnY + (height - fontPt) / 2 - 1
     doc
       .font('Helvetica-Bold')
-      .fontSize(11)
+      .fontSize(fontPt)
       .fillColor('#ffffff')
-      .text(label, x, btnY + 14, {
+      .text(label, x, textY, {
         width,
         align: 'center',
         characterSpacing: 1,
+        lineBreak: false,
       })
     doc.link(x, btnY, width, height, url)
   }
 
   if (data.paymentUrl && data.fullPaymentUrl) {
-    const btnH = 40
-    const btnY = y
-    const gap = 12
-    const halfW = (CONTENT_W - gap) / 2
+    const btnH = 44
+    const gap = 10
     drawPayButton(
       LEFT,
-      btnY,
-      halfW,
+      y,
+      CONTENT_W,
       btnH,
       `PAY DEPOSIT — ${fmtUSD(data.amountDue)}  »`,
       data.paymentUrl
     )
+    y += btnH + gap
     drawPayButton(
-      LEFT + halfW + gap,
-      btnY,
-      halfW,
+      LEFT,
+      y,
+      CONTENT_W,
       btnH,
       `PAY FULL AMOUNT — ${fmtUSD(data.total)}  »`,
       data.fullPaymentUrl
     )
-    y = btnY + btnH + 10
+    y += btnH + 10
     doc
       .font('Helvetica')
       .fontSize(7.5)
@@ -293,7 +300,7 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
       })
     y += 22
   } else if (data.paymentUrl) {
-    const btnH = 40
+    const btnH = 44
     const btnY = y
     drawPayButton(
       LEFT,

@@ -112,6 +112,7 @@ function buildInvoiceBody(args: {
   status: string
   paymentMethod: string | null
   stripePaymentLinkUrl: string | null
+  stripeFullPaymentLinkUrl: string | null
   clientName: string
   clientEmail: string | null
   clientBusiness: string | null
@@ -129,6 +130,7 @@ function buildInvoiceBody(args: {
     status,
     paymentMethod,
     stripePaymentLinkUrl,
+    stripeFullPaymentLinkUrl,
     clientName,
     clientEmail,
     clientBusiness,
@@ -249,14 +251,38 @@ function buildInvoiceBody(args: {
         ? `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:10px 0 30px 0;">
             <tr>
               <td align="center" style="padding:0;">
+                <!--[if mso]>
+                <v:rect xmlns:v="urn:schemas-microsoft-com:vml" fillcolor="#000000" stroked="f" style="width:520px;height:60px;">
+                  <w:anchorlock xmlns:w="urn:schemas-microsoft-com:office:word"/>
+                  <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:18px;font-weight:bold;letter-spacing:0.18em;">PAY DEPOSIT — ${fmtUSD(amountDue)}</center>
+                </v:rect>
+                <![endif]-->
                 <a href="${escapeHtml(stripePaymentLinkUrl)}"
-                   style="display:block;width:100%;background-color:#ffffff;color:#000000 !important;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:bold;letter-spacing:0.18em;text-transform:uppercase;padding:22px 24px;text-align:center;border-radius:0;">
-                  Pay Deposit — ${fmtUSD(amountDue)}
+                   style="display:block;width:100%;background-color:#000000 !important;background:#000000 !important;color:#ffffff !important;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:bold;letter-spacing:0.18em;text-transform:uppercase;padding:22px 24px;text-align:center;border-radius:0;border:1px solid #000000;mso-hide:all;">
+                  <span style="color:#ffffff !important;">PAY DEPOSIT — ${fmtUSD(amountDue)}</span>
                 </a>
               </td>
             </tr>
+            ${
+              stripeFullPaymentLinkUrl
+                ? `<tr>
+                    <td align="center" style="padding:12px 0 0 0;">
+                      <!--[if mso]>
+                      <v:rect xmlns:v="urn:schemas-microsoft-com:vml" fillcolor="#000000" stroked="f" style="width:520px;height:60px;">
+                        <w:anchorlock xmlns:w="urn:schemas-microsoft-com:office:word"/>
+                        <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:18px;font-weight:bold;letter-spacing:0.18em;">PAY FULL AMOUNT — ${fmtUSD(total)}</center>
+                      </v:rect>
+                      <![endif]-->
+                      <a href="${escapeHtml(stripeFullPaymentLinkUrl)}"
+                         style="display:block;width:100%;background-color:#000000 !important;background:#000000 !important;color:#ffffff !important;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:bold;letter-spacing:0.18em;text-transform:uppercase;padding:22px 24px;text-align:center;border-radius:0;border:1px solid #000000;mso-hide:all;">
+                        <span style="color:#ffffff !important;">PAY FULL AMOUNT — ${fmtUSD(total)}</span>
+                      </a>
+                    </td>
+                  </tr>`
+                : ''
+            }
             <tr>
-              <td align="center" style="padding:10px 0 0 0;color:${muted} !important;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;">
+              <td align="center" style="padding:12px 0 0 0;color:${muted} !important;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;">
                 Secure payment via Stripe
               </td>
             </tr>
@@ -404,6 +430,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         status: invoice.status,
         paymentMethod: invoice.payment_method,
         stripePaymentLinkUrl: invoice.stripe_payment_link_url || null,
+        stripeFullPaymentLinkUrl: (invoice as any).stripe_full_payment_link_url || null,
         clientName: client?.name || 'Client',
         clientEmail: client?.email || null,
         clientBusiness: client?.business || null,
