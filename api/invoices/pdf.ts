@@ -69,6 +69,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       invoiceNumber: invoice.invoice_number,
       date: invoice.date,
       eventDate: invoice.event_date,
+      location: (invoice as any).location || null,
       description: invoice.description,
       lineItems,
       subtotal: Number(invoice.subtotal || 0),

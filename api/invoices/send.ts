@@ -74,6 +74,7 @@ function buildInvoiceBody(args: {
   invoiceNumber: string
   date: string
   eventDate: string | null
+  location: string | null
   description: string | null
   lineItems: LineItem[]
   subtotal: number
@@ -88,6 +89,7 @@ function buildInvoiceBody(args: {
     invoiceNumber,
     date,
     eventDate,
+    location,
     description,
     lineItems,
     subtotal,
@@ -165,6 +167,13 @@ function buildInvoiceBody(args: {
           <p style="${valueStyle}">${escapeHtml(fmtDate(eventDate))}</p>
         </td>
       </tr>
+      ${location ? `
+      <tr>
+        <td valign="top" style="padding:18px 15px 18px 0;width:50%;border-top:1px solid ${border};" colspan="2">
+          <p style="${labelStyle}">Location</p>
+          <p style="${valueStyle}">${escapeHtml(location)}</p>
+        </td>
+      </tr>` : ''}
     </table>
 
     ${
@@ -271,6 +280,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       invoiceNumber: invoice.invoice_number,
       date: invoice.date,
       eventDate: invoice.event_date,
+      location: invoice.location || null,
       description: invoice.description,
       lineItems,
       subtotal: Number(invoice.subtotal || 0),

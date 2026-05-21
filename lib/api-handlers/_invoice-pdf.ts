@@ -21,6 +21,7 @@ export interface InvoicePdfData {
   invoiceNumber: string
   date: string | null
   eventDate: string | null
+  location?: string | null
   description: string | null
   lineItems: InvoicePdfLineItem[]
   subtotal: number
@@ -132,6 +133,14 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
     y += 13
   }
   y += 14
+
+  // ── Location ──────────────────────────────────────────────────────────────
+  if (data.location) {
+    labelStyle().text('LOCATION', LEFT, y, { characterSpacing: 1.5 })
+    y += 13
+    valueStyle().fontSize(10).text(data.location, LEFT, y, { width: CONTENT_W })
+    y = doc.y + 16
+  }
 
   // ── Description ───────────────────────────────────────────────────────────
   if (data.description) {
