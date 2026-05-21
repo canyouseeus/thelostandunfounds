@@ -222,7 +222,10 @@ export async function uploadZohoAttachment(
   auth: ZohoAuthContext,
   data: Buffer | Uint8Array,
   fileName: string,
-  mimeType: string = 'application/octet-stream'
+  // Reserved for callers — Zoho's raw-binary attachment endpoint derives the
+  // MIME from the `fileName` extension and rejects the file's actual MIME
+  // (e.g. application/pdf) with HTTP 415. We always send octet-stream.
+  _mimeType: string = 'application/octet-stream'
 ): Promise<ZohoUploadedAttachment> {
   const url = `https://mail.zoho.com/api/accounts/${auth.accountId}/messages/attachments?fileName=${encodeURIComponent(
     fileName
@@ -232,14 +235,14 @@ export async function uploadZohoAttachment(
     method: 'POST',
     headers: {
       Authorization: `Zoho-oauthtoken ${auth.accessToken}`,
-      'Content-Type': mimeType,
+      'Content-Type': 'application/octet-stream',
     },
     body: data as any,
   })
 
   if (!response.ok) {
     const errorText = await response.text()
-    throw new Error(`Zoho attachment upload failed: ${response.status} ${errorText}`)
+    throw new Error(`Zoho attachment upload failed: ${response.status} ${errorText.slice(0, 300)}`)
   }
 
   const json: any = await response.json()
