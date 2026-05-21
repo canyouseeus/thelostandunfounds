@@ -84,39 +84,55 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
     doc.on('error', reject)
   })
 
+  // ── Brand banner ──────────────────────────────────────────────────────────
+  // Decorative; pushes the rest of the header down. Degrade gracefully if the
+  // image can't be fetched so PDF generation still works.
+  let topShift = 0
+  try {
+    const res = await fetch('https://www.thelostandunfounds.com/brand/banner.png')
+    if (res.ok) {
+      const bannerBuffer = Buffer.from(await res.arrayBuffer())
+      const bannerTop = 40
+      doc.image(bannerBuffer, LEFT, bannerTop, { width: CONTENT_W })
+      topShift = Math.max(0, doc.y + 16 - 56)
+    }
+  } catch {
+    // banner failed — render without it
+  }
+
   // ── Header ────────────────────────────────────────────────────────────────
   doc
     .fillColor(INK)
     .font('Helvetica-Bold')
     .fontSize(20)
-    .text(BRAND.name, LEFT, 56, { characterSpacing: 1 })
+    .text(BRAND.name, LEFT, 56 + topShift, { characterSpacing: 1 })
   doc
     .fillColor(MUTED)
     .font('Helvetica')
     .fontSize(7.5)
-    .text(BRAND.tagline, LEFT, 82, { characterSpacing: 1.5 })
-  doc.fillColor(MUTED).fontSize(8).text(BRAND.website, LEFT, 94)
+    .text(BRAND.tagline, LEFT, 82 + topShift, { characterSpacing: 1.5 })
+  doc.fillColor(MUTED).fontSize(8).text(BRAND.website, LEFT, 94 + topShift)
 
   // Document title (right-aligned, same top line as the wordmark)
   doc
     .fillColor(INK)
     .font('Helvetica-Bold')
     .fontSize(20)
-    .text(data.docType, LEFT, 56, { width: CONTENT_W, align: 'right', characterSpacing: 2 })
+    .text(data.docType, LEFT, 56 + topShift, { width: CONTENT_W, align: 'right', characterSpacing: 2 })
   doc
     .fillColor(MUTED)
     .font('Helvetica')
     .fontSize(9)
-    .text(data.invoiceNumber, LEFT, 82, { width: CONTENT_W, align: 'right' })
+    .text(data.invoiceNumber, LEFT, 82 + topShift, { width: CONTENT_W, align: 'right' })
   doc
     .fillColor(MUTED)
     .fontSize(8)
-    .text(`Issued ${fmtDate(data.date)}`, LEFT, 95, { width: CONTENT_W, align: 'right' })
+    .text(`Issued ${fmtDate(data.date)}`, LEFT, 95 + topShift, { width: CONTENT_W, align: 'right' })
 
-  doc.moveTo(LEFT, 120).lineTo(RIGHT, 120).lineWidth(1).strokeColor(INK).stroke()
+  doc.moveTo(LEFT, 120 + topShift).lineTo(RIGHT, 120 + topShift).lineWidth(1).strokeColor(INK).stroke()
 
   // ── Bill To / Event ───────────────────────────────────────────────────────
-  let y = 138
+  let y = 138 + topShift
   const labelStyle = () => doc.font('Helvetica-Bold').fontSize(7.5).fillColor(MUTED)
   const valueStyle = () => doc.font('Helvetica').fontSize(10.5).fillColor(INK)
 
