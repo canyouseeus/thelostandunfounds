@@ -305,8 +305,8 @@ async function finalizeShopOrder(
         ...(downloadToken
             ? { downloadToken, downloadExpiresAt }
             : {}),
-        ...(session.shipping_details
-            ? { shippingDetails: session.shipping_details }
+        ...((session as any).shipping_details
+            ? { shippingDetails: (session as any).shipping_details }
             : {}),
     }
 

@@ -154,7 +154,7 @@ async function preRenderBlogPosts() {
         );
 
         // Replace OG tags
-        html = html.replace(/<meta\s+property=["']og:title["'][^>]*>/i, `<meta property="og:title" content="${escapeAttr(title)}" />`);
+        html = html.replace(/<meta\s+property=["']og:title["'][^>]*>/i, `<meta property="og:title" content="${escapeAttr(cleanTitle)}" />`);
         html = html.replace(/<meta\s+property=["']og:description["'][^>]*>/i, `<meta property="og:description" content="${escapeAttr(description)}" />`);
         html = html.replace(/<meta\s+property=["']og:url["'][^>]*>/i, `<meta property="og:url" content="${escapeAttr(postUrl)}" />`);
         html = html.replace(/<meta\s+property=["']og:type["'][^>]*>/i, `<meta property="og:type" content="article" />`);
@@ -168,7 +168,7 @@ async function preRenderBlogPosts() {
         }
 
         // Replace Twitter tags
-        html = html.replace(/<meta\s+name=["']twitter:title["'][^>]*>/i, `<meta name="twitter:title" content="${escapeAttr(title)}" />`);
+        html = html.replace(/<meta\s+name=["']twitter:title["'][^>]*>/i, `<meta name="twitter:title" content="${escapeAttr(cleanTitle)}" />`);
         html = html.replace(/<meta\s+name=["']twitter:description["'][^>]*>/i, `<meta name="twitter:description" content="${escapeAttr(description)}" />`);
 
         // Add BlogPosting structured data
@@ -220,7 +220,7 @@ async function preRenderBlogPosts() {
             {
               "@type": "ListItem",
               "position": 3,
-              "name": title,
+              "name": cleanTitle,
               "item": postUrl
             }
           ]
@@ -265,7 +265,7 @@ async function preRenderBlogPosts() {
 
         // Add pre-rendered blog post content
         const excerptHtml = post.excerpt ? `<p style="font-size: 1.4rem; color: rgba(255, 255, 255, 0.7); margin-bottom: 3rem; line-height: 1.6; font-style: italic; border-left: 2px solid rgba(255,255,255,0.2); padding-left: 1.5rem;">${escapeAttr(post.excerpt)}</p>` : '';
-        const featuredImageHtml = ogImage ? `<img src="${escapeAttr(ogImage)}" alt="${escapeAttr(title)}" style="width: 100%; height: auto; margin-bottom: 3rem; border-radius: 4px;" />` : '';
+        const featuredImageHtml = ogImage ? `<img src="${escapeAttr(ogImage)}" alt="${escapeAttr(cleanTitle)}" style="width: 100%; height: auto; margin-bottom: 3rem; border-radius: 4px;" />` : '';
 
         const preRenderContent = `
           <article id="pre-render-blog" style="background: black; color: white; min-height: 100vh; padding: 4rem 2rem; max-width: 800px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;">
