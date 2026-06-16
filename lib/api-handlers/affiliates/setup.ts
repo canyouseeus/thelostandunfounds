@@ -23,7 +23,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  const { user_id, code } = req.body;
+  const { user_id, code, first_name, last_name, phone_number } = req.body;
 
   if (!user_id || !code) {
     return res.status(400).json({ error: 'User ID and code are required' });
@@ -84,6 +84,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         total_earnings: 0,
         total_clicks: 0,
         total_conversions: 0,
+        ...(first_name && { first_name }),
+        ...(last_name  && { last_name }),
+        ...(phone_number && { phone_number }),
       })
       .select()
       .single();

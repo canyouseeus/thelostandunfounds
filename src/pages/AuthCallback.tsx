@@ -3,17 +3,13 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authService } from '../services/auth';
 import { supabase } from '../lib/supabase';
 import { isAdminEmail, isAdmin } from '../utils/admin';
-import SubdomainRegistration from '../components/SubdomainRegistration';
-import UserRegistration from '../components/UserRegistration';
+import AffiliateSignupWizard from '../components/affiliate/AffiliateSignupWizard';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
-  const [showUserRegistrationModal, setShowUserRegistrationModal] = useState(false);
-  const [showSubdomainModal, setShowSubdomainModal] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [showAffiliateWizard, setShowAffiliateWizard] = useState(false);
 
   useEffect(() => {
     handleCallback();
@@ -22,8 +18,7 @@ export default function AuthCallback() {
 
   const handleCallback = async () => {
     try {
-      // If Supabase itself returned an error in the callback URL (e.g. server_error,
-      // unexpected_failure), bail out immediately rather than waiting for a session.
+      // If Supabase itself returned an error in the callback URL bail out immediately.
       const urlParams = new URLSearchParams(window.location.search);
       const urlError = urlParams.get('error');
       if (urlError) {
@@ -32,21 +27,15 @@ export default function AuthCallback() {
         return;
       }
 
-      // PKCE OAuth sessions are exchanged asynchronously. The race condition:
-      //   - Supabase fires INITIAL_SESSION (with null) before the code exchange completes.
-      //   - Listening for onAuthStateChange and resolving on the first event would
-      //     immediately resolve with null, triggering the error redirect.
-      //
-      // Fix: subscribe to onAuthStateChange FIRST (before getSession), and only
-      // resolve when we actually have a session. Also check getSession() in parallel
-      // as a fast-path for cases where the exchange already completed.
+      // PKCE OAuth sessions are exchanged asynchronously. Subscribe first so we
+      // don't miss SIGNED_IN if exchange completes immediately, then fast-path
+      // check getSession() in parallel.
       const session = await new Promise<any>((resolve) => {
         let done = false;
         const timer = setTimeout(() => {
           if (!done) { done = true; resolve(null); }
         }, 10000);
 
-        // Subscribe first so we don't miss SIGNED_IN if exchange completes immediately
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
           if (!done && s) {
             done = true;
@@ -56,7 +45,6 @@ export default function AuthCallback() {
           }
         });
 
-        // Fast-path: session may already exist (exchange done by AuthContext)
         supabase.auth.getSession().then(({ data: { session: s } }) => {
           if (!done && s) {
             done = true;
@@ -74,31 +62,39 @@ export default function AuthCallback() {
 
       const currentUser = session.user;
 
-      setUser(currentUser);
+      // Check if user arrived here with an affiliate signup intent
+      const signupIntent = localStorage.getItem('signup_intent');
+      if (signupIntent === 'affiliate') {
+        // Verify they don't already have an affiliate account
+        const { data: existingAffiliate } = await supabase
+          .from('affiliates')
+          .select('id, code')
+          .eq('user_id', currentUser.id)
+          .single();
 
-      // Check for return URL — honour it above everything else except /auth paths
-      const returnUrl = localStorage.getItem('auth_return_url');
-      const validReturnUrl = returnUrl && returnUrl !== '/' && !returnUrl.startsWith('/auth');
+        if (existingAffiliate) {
+          // Already an affiliate — skip wizard and go to dashboard
+          localStorage.removeItem('signup_intent');
+          localStorage.removeItem('auth_return_url');
+          navigate('/dashboard');
+          return;
+        }
 
-      // Registration completeness checks (run before redirect so new users
-      // complete onboarding regardless of where they came from)
-      const userMetadata = currentUser.user_metadata || {};
-      const hasAuthorName = userMetadata.author_name;
-
-      if (!hasAuthorName) {
-        // New user — run through onboarding, then land on returnUrl or /dashboard
-        setShowUserRegistrationModal(true);
+        // Show affiliate signup wizard
+        setShowAffiliateWizard(true);
         return;
       }
 
-      // Existing user — go to return URL if we have one
+      // No special intent — route by return URL or role
+      const returnUrl = localStorage.getItem('auth_return_url');
+      const validReturnUrl = returnUrl && returnUrl !== '/' && !returnUrl.startsWith('/auth');
+
       if (validReturnUrl) {
         localStorage.removeItem('auth_return_url');
         navigate(resolveReturnUrl(returnUrl));
         return;
       }
 
-      // No return URL — route by role
       try {
         const adminStatus = await isAdmin();
         const isAdminUser = adminStatus || isAdminEmail(currentUser.email || '');
@@ -121,63 +117,19 @@ export default function AuthCallback() {
     return url;
   };
 
-  const handleUserRegistrationSuccess = (username: string) => {
-    setShowUserRegistrationModal(false);
-
-    // Check if we should continue to subdomain or redirect to setup
-    const returnUrl = localStorage.getItem('auth_return_url');
-    if (returnUrl?.startsWith('/setup')) {
-      localStorage.removeItem('auth_return_url');
-      navigate(returnUrl);
-      return;
-    }
-
-    // Otherwise show subdomain registration modal (standard blog flow)
-    setShowSubdomainModal(true);
-  };
-
-  const handleSubdomainSuccess = (subdomain: string) => {
-    setShowSubdomainModal(false);
-    const returnUrl = localStorage.getItem('auth_return_url');
+  const handleAffiliateWizardSuccess = (_code: string) => {
+    localStorage.removeItem('signup_intent');
     localStorage.removeItem('auth_return_url');
-    navigate(resolveReturnUrl(returnUrl));
+    // Stripe onboarding redirect happens inside the wizard; this is a fallback
+    setShowAffiliateWizard(false);
+    navigate('/dashboard');
   };
 
   return (
     <>
-      <UserRegistration
-        isOpen={showUserRegistrationModal}
-        onClose={() => {
-          // Don't allow closing during required registration
-          return;
-        }}
-        onSuccess={handleUserRegistrationSuccess}
-        required={true}
-        totalSteps={2}
-        currentStep={1}
-      />
-      <SubdomainRegistration
-        isOpen={showSubdomainModal}
-        onClose={() => {
-          // Don't allow closing if user doesn't have a subdomain
-          if (user) {
-            const checkSubdomain = async () => {
-              const { data } = await supabase
-                .from('user_subdomains')
-                .select('subdomain')
-                .eq('user_id', user.id)
-                .single();
-              if (!data) {
-                return; // Don't allow closing
-              }
-            };
-            checkSubdomain();
-          }
-        }}
-        onSuccess={handleSubdomainSuccess}
-        required={true}
-        totalSteps={2}
-        currentStep={2}
+      <AffiliateSignupWizard
+        isOpen={showAffiliateWizard}
+        onSuccess={handleAffiliateWizardSuccess}
       />
 
       <div className="min-h-screen flex items-center justify-center">
@@ -189,4 +141,3 @@ export default function AuthCallback() {
     </>
   );
 }
-

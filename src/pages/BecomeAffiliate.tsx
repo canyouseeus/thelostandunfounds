@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
     Expandable,
     ExpandableContent,
@@ -85,6 +85,13 @@ function ExpandableFeatureList({ title, intro, features }: ExpandableFeatureList
 }
 
 export default function BecomeAffiliate() {
+    const navigate = useNavigate();
+
+    const handleJoin = () => {
+        localStorage.setItem('signup_intent', 'affiliate');
+        navigate('/dashboard');
+    };
+
     return (
         <>
         <SEOHead
@@ -117,12 +124,12 @@ export default function BecomeAffiliate() {
                         </p>
 
                         <div className="flex flex-row items-stretch justify-start gap-3 sm:gap-4">
-                            <Link
-                                to="/dashboard"
+                            <button
+                                onClick={handleJoin}
                                 className="flex-1 sm:flex-none min-w-0 px-3 sm:px-8 py-4 bg-white text-black font-black text-xs sm:text-lg uppercase tracking-wider sm:tracking-widest hover:bg-white/90 transition-all flex items-center justify-center text-center whitespace-nowrap"
                             >
                                 Join Program Now
-                            </Link>
+                            </button>
                             <Link
                                 to="/king-midas-leaderboard"
                                 className="flex-1 sm:flex-none min-w-0 px-3 sm:px-8 py-4 bg-black text-white font-bold text-xs sm:text-lg uppercase tracking-wider sm:tracking-widest outline outline-1 outline-white hover:bg-white hover:text-black transition-colors flex items-center justify-center text-center whitespace-nowrap"
@@ -168,12 +175,12 @@ export default function BecomeAffiliate() {
                         ]}
                     />
                     <div className="mt-6 text-left">
-                        <Link
-                            to="/dashboard"
-                            className="inline-block text-white font-bold uppercase tracking-widest underline underline-offset-4 hover:no-underline"
+                        <button
+                            onClick={handleJoin}
+                            className="text-white font-bold uppercase tracking-widest underline underline-offset-4 hover:no-underline"
                         >
                             Start Earning Today
-                        </Link>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -187,12 +194,12 @@ export default function BecomeAffiliate() {
                     <p className="text-xl text-white mb-8 max-w-2xl">
                         Join the ranks of top earners and start building your empire today.
                     </p>
-                    <Link
-                        to="/dashboard"
+                    <button
+                        onClick={handleJoin}
                         className="inline-block px-6 sm:px-12 py-4 sm:py-5 bg-white text-black font-black text-base sm:text-xl uppercase tracking-widest hover:bg-white/90 transition-colors whitespace-nowrap"
                     >
                         Become an Affiliate
-                    </Link>
+                    </button>
                 </div>
             </div>
         </div>
