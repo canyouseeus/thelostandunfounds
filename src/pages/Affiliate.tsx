@@ -75,6 +75,7 @@ import PayoutHistoryTable from '../components/affiliate/PayoutHistoryTable';
 import LeaderboardView from '../components/affiliate/LeaderboardView';
 import { ExpandableBentoCard } from '../components/ui/expandable-bento-card';
 import AuthModal from '../components/auth/AuthModal';
+import AffiliateSignupWizard from '../components/affiliate/AffiliateSignupWizard';
 
 interface BlogPost {
   id: string;
@@ -306,6 +307,9 @@ export default function Affiliate() {
   const [affiliateTab, setAffiliateTab] = useState<'overview' | 'marketing' | 'payouts' | 'leaderboard' | 'guide'>('overview');
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
 
+  // Affiliate signup wizard state (triggered by ?join=affiliate in URL)
+  const [showAffiliateWizard, setShowAffiliateWizard] = useState(false);
+
   // Load all profile data on mount
   useEffect(() => {
     if (user) {
@@ -335,6 +339,17 @@ export default function Affiliate() {
     };
     checkAdminStatus();
   }, [user]);
+
+  // Show affiliate signup wizard when ?join=affiliate is in URL and user has no affiliate account
+  useEffect(() => {
+    if (!authLoading && user && !loadingAffiliate) {
+      const join = searchParams.get('join');
+      if (join === 'affiliate' && !affiliateData) {
+        setShowAffiliateWizard(true);
+        navigate('/dashboard', { replace: true });
+      }
+    }
+  }, [loadingAffiliate, authLoading, user]);
 
   // Lazy-load affiliate dashboard when section opens
   useEffect(() => {
@@ -901,6 +916,14 @@ export default function Affiliate() {
 
   return (
     <>
+      <AffiliateSignupWizard
+        isOpen={showAffiliateWizard}
+        onSuccess={() => {
+          setShowAffiliateWizard(false);
+          // Stripe redirect happens inside the wizard
+        }}
+        onClose={() => setShowAffiliateWizard(false)}
+      />
       <SEOHead
         title="My Dashboard"
         description="User dashboard and profile."

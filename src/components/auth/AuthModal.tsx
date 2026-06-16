@@ -4,10 +4,6 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../Toast';
 import { isAdminEmail, isAdmin } from '../../utils/admin';
-import SubdomainRegistration from '../SubdomainRegistration';
-import UserRegistration from '../UserRegistration';
-import StorefrontRegistration from '../StorefrontRegistration';
-import { supabase } from '../../lib/supabase';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -16,132 +12,45 @@ interface AuthModalProps {
   title?: string;
   initialMode?: 'signin' | 'signup';
   onLoginSuccess?: () => void;
-  required?: boolean; // when true, hides the close button and disables backdrop click
+  required?: boolean;
+  intent?: string; // e.g. 'affiliate' — passed through auth so dashboard can act on it
 }
 
-export default function AuthModal({ isOpen, onClose, message, title, initialMode = 'signin', onLoginSuccess, required = false }: AuthModalProps) {
+export default function AuthModal({ isOpen, onClose, message, title, initialMode = 'signin', onLoginSuccess, required = false, intent }: AuthModalProps) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [justSignedIn, setJustSignedIn] = useState(false);
+  const [justSignedUp, setJustSignedUp] = useState(false);
 
   const { signUp, signIn, signInWithGoogle, user } = useAuth();
   const { success, error: showError } = useToast();
   const navigate = useNavigate();
-  const [justSignedIn, setJustSignedIn] = useState(false);
-  const [showUserRegistrationModal, setShowUserRegistrationModal] = useState(false);
-  const [showSubdomainModal, setShowSubdomainModal] = useState(false);
-  const [showStorefrontModal, setShowStorefrontModal] = useState(false);
-  const [justSignedUp, setJustSignedUp] = useState(false);
-  const [userSubdomain, setUserSubdomain] = useState<string | null>(null);
 
-  // Check for user registration, subdomain, and storefront after signup
+  // After email/password auth — redirect with intent if present, otherwise normal flow
   useEffect(() => {
     if (justSignedUp && user) {
-      const checkRegistration = async () => {
-        try {
-          // Step 1: Check if user has username
-          const userMetadata = user.user_metadata || {};
-          const hasAuthorName = userMetadata.author_name;
-
-          // If missing username, show user registration modal first
-          if (!hasAuthorName) {
-            setShowUserRegistrationModal(true);
-            return;
-          }
-
-          // Step 2: Check for subdomain
-          let subdomainData = null;
-          let subdomainError = null;
-          try {
-            const result = await supabase
-              .from('user_subdomains')
-              .select('subdomain')
-              .eq('user_id', user.id)
-              .single();
-            subdomainData = result.data;
-            subdomainError = result.error;
-          } catch (err: any) {
-            // Table might not exist
-            if (err?.message?.includes('does not exist') || err?.message?.includes('schema cache')) {
-              console.warn('user_subdomains table not found. Please run the SQL migration script.');
-              setShowSubdomainModal(true);
-              return;
-            }
-            subdomainError = err;
-          }
-
-          // Handle table not found error gracefully
-          if (subdomainError) {
-            if (subdomainError.code === 'PGRST116') {
-              // No rows returned - user doesn't have subdomain yet
-              setShowSubdomainModal(true);
-              return;
-            } else if (subdomainError.message?.includes('does not exist') || subdomainError.message?.includes('schema cache')) {
-              // Table doesn't exist yet - show subdomain modal anyway
-              console.warn('user_subdomains table not found. Please run the SQL migration script.');
-              setShowSubdomainModal(true);
-              return;
-            } else {
-              console.error('Error checking subdomain:', subdomainError);
-              // Continue anyway - don't block login
-            }
-          }
-
-          // If no subdomain exists, show subdomain registration modal
-          if (!subdomainData) {
-            setShowSubdomainModal(true);
-            return;
-          }
-
-          // Step 3: Check for storefront ID (after subdomain is set)
-          const hasStorefrontId = userMetadata.amazon_storefront_id;
-          if (!hasStorefrontId) {
-            setUserSubdomain(subdomainData.subdomain);
-            setShowStorefrontModal(true);
-            return;
-          }
-
-          // All registration complete, proceed with redirect
-          setJustSignedUp(false);
-          handleRedirect();
-        } catch (err: any) {
-          console.error('Error in registration check:', err);
-          // If table doesn't exist, show subdomain modal
-          if (err?.message?.includes('does not exist') || err?.message?.includes('schema cache')) {
-            setShowSubdomainModal(true);
-            return;
-          }
-          // On other errors, still proceed with redirect to avoid blocking login
-          setJustSignedUp(false);
-          try {
-            handleRedirect();
-          } catch (redirectError) {
-            console.error('Error in redirect after registration check error:', redirectError);
-            navigate('/');
-          }
-        }
-      };
-      checkRegistration();
-    } else if (justSignedIn && user && !justSignedUp) {
-      // Regular sign-in (not sign-up), just redirect immediately
-      // Don't check for registration - existing users should be able to log in
-      setJustSignedIn(false);
-      try {
+      setJustSignedUp(false);
+      if (intent) {
+        setJustSignedIn(false);
+        navigate(`/dashboard?join=${intent}`);
+        onClose();
+      } else {
         handleRedirect();
-      } catch (redirectError) {
-        console.error('Error in redirect after sign-in:', redirectError);
-        // Fallback redirect
-        const email = user?.email || '';
-        if (email === 'thelostandunfounds@gmail.com' || email === 'admin@thelostandunfounds.com') {
-          navigate('/admin');
-        } else {
-          navigate('/submit-article');
-        }
+      }
+    } else if (justSignedIn && user && !justSignedUp) {
+      setJustSignedIn(false);
+      if (intent) {
+        navigate(`/dashboard?join=${intent}`);
+        onClose();
+      } else {
+        handleRedirect();
       }
     }
-  }, [user, justSignedIn, justSignedUp, navigate]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, justSignedIn, justSignedUp]);
 
   const handleRedirect = async () => {
     if (!user) {
@@ -149,8 +58,6 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
       return;
     }
 
-    // If the modal was opened on a protected page (or has a saved return URL),
-    // send the user back there after login instead of to a generic destination.
     const returnUrl = localStorage.getItem('auth_return_url');
     const protectedPaths = ['/dashboard', '/profile', '/settings'];
     const currentPath = window.location.pathname;
@@ -158,43 +65,23 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
     if (returnUrl && returnUrl !== '/' && !returnUrl.startsWith('/auth')) {
       localStorage.removeItem('auth_return_url');
       navigate(returnUrl);
-      setJustSignedIn(false);
       return;
     }
 
     if (protectedPaths.some(p => currentPath.startsWith(p))) {
-      // Already on the right page — just close the modal
-      setJustSignedIn(false);
       return;
     }
 
     try {
-      // Check if user is admin
       let adminStatus = false;
       try {
         adminStatus = await isAdmin();
-      } catch (adminError) {
-        console.warn('Error checking admin status:', adminError);
+      } catch {
         adminStatus = isAdminEmail(user?.email || '');
       }
-
-      const isAdminUser = adminStatus || isAdminEmail(user?.email || '');
-
-      if (isAdminUser) {
-        navigate('/admin');
-      } else {
-        navigate('/dashboard');
-      }
-      setJustSignedIn(false);
-    } catch (error: any) {
-      console.error('Error in handleRedirect:', error);
-      const email = user?.email || '';
-      if (email === 'thelostandunfounds@gmail.com' || email === 'admin@thelostandunfounds.com') {
-        navigate('/admin');
-      } else {
-        navigate('/dashboard');
-      }
-      setJustSignedIn(false);
+      navigate(adminStatus || isAdminEmail(user?.email || '') ? '/admin' : '/dashboard');
+    } catch {
+      navigate(isAdminEmail(user?.email || '') ? '/admin' : '/dashboard');
     }
   };
 
@@ -202,14 +89,12 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Save current page so we can return after login
     const currentPath = window.location.pathname;
     if (currentPath !== '/' && !currentPath.startsWith('/auth')) {
       localStorage.setItem('auth_return_url', currentPath + window.location.search);
     }
     setError(null);
     setLoading(true);
-
     try {
       if (isSignUp) {
         const { error } = await signUp(email, password);
@@ -222,7 +107,6 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
           setPassword('');
           setJustSignedUp(true);
           setJustSignedIn(true);
-          // Don't close modal yet - wait for subdomain registration
         }
       } else {
         const { error } = await signIn(email, password);
@@ -231,7 +115,6 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
           showError(error.message);
         } else {
           success('Signed in successfully!');
-
           if (onLoginSuccess) {
             onLoginSuccess();
             onClose();
@@ -251,79 +134,23 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
   };
 
   const handleGoogleSignIn = async () => {
-    // Save current URL for redirect after callback
     localStorage.setItem('auth_return_url', window.location.pathname + window.location.search);
     setError(null);
     setLoading(true);
-    const { error } = await signInWithGoogle();
+    // If there's an intent, pass it in the redirect URL so AuthCallback can forward it
+    const redirectUrl = intent
+      ? `${window.location.origin}/auth/callback?intent=${intent}`
+      : undefined;
+    const { error } = await signInWithGoogle(redirectUrl);
     if (error) {
       setError(error.message);
       setLoading(false);
-    } else {
-      // For OAuth, we'll check subdomain in AuthCallback
-      // This will be handled by the OAuth callback flow
     }
-  };
-
-  const handleUserRegistrationSuccess = (username: string) => {
-    setShowUserRegistrationModal(false);
-    // Now show subdomain registration modal
-    setShowSubdomainModal(true);
-  };
-
-  const handleSubdomainSuccess = (subdomain: string) => {
-    setUserSubdomain(subdomain);
-    setShowSubdomainModal(false);
-    // Now show storefront registration modal
-    setShowStorefrontModal(true);
-  };
-
-  const handleStorefrontSuccess = (storefrontId: string) => {
-    setShowStorefrontModal(false);
-    setJustSignedUp(false);
-    onClose();
-    handleRedirect();
+    // OAuth redirects to AuthCallback which handles the rest
   };
 
   return (
     <>
-      <UserRegistration
-        isOpen={showUserRegistrationModal}
-        onClose={() => {
-          // If required (during signup), don't allow closing
-          if (justSignedUp) {
-            return;
-          }
-          setShowUserRegistrationModal(false);
-        }}
-        onSuccess={handleUserRegistrationSuccess}
-        required={justSignedUp}
-      />
-      <SubdomainRegistration
-        isOpen={showSubdomainModal}
-        onClose={() => {
-          // If required (during signup), don't allow closing
-          if (justSignedUp) {
-            return;
-          }
-          setShowSubdomainModal(false);
-        }}
-        onSuccess={handleSubdomainSuccess}
-        required={justSignedUp}
-      />
-      <StorefrontRegistration
-        isOpen={showStorefrontModal}
-        onClose={() => {
-          // If required (during signup), don't allow closing
-          if (justSignedUp) {
-            return;
-          }
-          setShowStorefrontModal(false);
-        }}
-        onSuccess={handleStorefrontSuccess}
-        subdomain={userSubdomain || ''}
-        required={justSignedUp}
-      />
       <div
         className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-sm"
         onClick={required ? undefined : onClose}
@@ -416,22 +243,10 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
               className="mt-4 w-full px-4 py-2 bg-white/5 text-white font-medium hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path
-                  fill="currentColor"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                />
+                <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
               </svg>
               Sign in with Google
             </button>
@@ -450,4 +265,3 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
     </>
   );
 }
-
