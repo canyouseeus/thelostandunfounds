@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
     Expandable,
@@ -7,6 +8,8 @@ import {
 import KingMidasTicker from '../components/KingMidasTicker';
 import SEOHead from '../components/SEOHead';
 import BrandName from '../components/ui/BrandName';
+import AuthModal from '../components/auth/AuthModal';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ExpandableInfoCardProps {
     title: string;
@@ -85,15 +88,26 @@ function ExpandableFeatureList({ title, intro, features }: ExpandableFeatureList
 }
 
 export default function BecomeAffiliate() {
+    const { user } = useAuth();
     const navigate = useNavigate();
+    const [showAuthModal, setShowAuthModal] = useState(false);
 
     const handleJoin = () => {
-        localStorage.setItem('signup_intent', 'affiliate');
-        navigate('/dashboard');
+        if (user) {
+            navigate('/dashboard?join=affiliate');
+        } else {
+            setShowAuthModal(true);
+        }
     };
 
     return (
         <>
+        <AuthModal
+            isOpen={showAuthModal}
+            onClose={() => setShowAuthModal(false)}
+            intent="affiliate"
+            title="Join the Affiliate Program"
+        />
         <SEOHead
             title="Become an Affiliate - Earn 42% of Profits"
             description="Join THE LOST+UNFOUNDS affiliate network. Earn 42% of the profit on every sale, compete for the King Midas 8% profit pool, and build your earning network."

@@ -1,15 +1,13 @@
 // OAuth Callback Page
 // Handles Google OAuth redirects
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { isAdminEmail, isAdmin } from '../utils/admin';
-import AffiliateSignupWizard from '../components/affiliate/AffiliateSignupWizard';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
-  const [showAffiliateWizard, setShowAffiliateWizard] = useState(false);
 
   useEffect(() => {
     handleCallback();
@@ -62,26 +60,10 @@ export default function AuthCallback() {
 
       const currentUser = session.user;
 
-      // Check if user arrived here with an affiliate signup intent
-      const signupIntent = localStorage.getItem('signup_intent');
-      if (signupIntent === 'affiliate') {
-        // Verify they don't already have an affiliate account
-        const { data: existingAffiliate } = await supabase
-          .from('affiliates')
-          .select('id, code')
-          .eq('user_id', currentUser.id)
-          .single();
-
-        if (existingAffiliate) {
-          // Already an affiliate — skip wizard and go to dashboard
-          localStorage.removeItem('signup_intent');
-          localStorage.removeItem('auth_return_url');
-          navigate('/dashboard');
-          return;
-        }
-
-        // Show affiliate signup wizard
-        setShowAffiliateWizard(true);
+      // Check for intent in the callback URL (e.g. ?intent=affiliate from Google OAuth)
+      const intent = urlParams.get('intent');
+      if (intent === 'affiliate') {
+        navigate('/dashboard?join=affiliate');
         return;
       }
 
@@ -117,27 +99,12 @@ export default function AuthCallback() {
     return url;
   };
 
-  const handleAffiliateWizardSuccess = (_code: string) => {
-    localStorage.removeItem('signup_intent');
-    localStorage.removeItem('auth_return_url');
-    // Stripe onboarding redirect happens inside the wizard; this is a fallback
-    setShowAffiliateWizard(false);
-    navigate('/dashboard');
-  };
-
   return (
-    <>
-      <AffiliateSignupWizard
-        isOpen={showAffiliateWizard}
-        onSuccess={handleAffiliateWizardSuccess}
-      />
-
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Completing sign in...</h1>
-          <p className="text-gray-600">Please wait while we sign you in.</p>
-        </div>
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold mb-4">Completing sign in...</h1>
+        <p className="text-gray-600">Please wait while we sign you in.</p>
       </div>
-    </>
+    </div>
   );
 }

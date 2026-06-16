@@ -4,7 +4,6 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../Toast';
 import { isAdminEmail, isAdmin } from '../../utils/admin';
-import AffiliateSignupWizard from '../affiliate/AffiliateSignupWizard';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -14,9 +13,10 @@ interface AuthModalProps {
   initialMode?: 'signin' | 'signup';
   onLoginSuccess?: () => void;
   required?: boolean;
+  intent?: string; // e.g. 'affiliate' — passed through auth so dashboard can act on it
 }
 
-export default function AuthModal({ isOpen, onClose, message, title, initialMode = 'signin', onLoginSuccess, required = false }: AuthModalProps) {
+export default function AuthModal({ isOpen, onClose, message, title, initialMode = 'signin', onLoginSuccess, required = false, intent }: AuthModalProps) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,25 +24,30 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
   const [loading, setLoading] = useState(false);
   const [justSignedIn, setJustSignedIn] = useState(false);
   const [justSignedUp, setJustSignedUp] = useState(false);
-  const [showAffiliateWizard, setShowAffiliateWizard] = useState(false);
 
   const { signUp, signIn, signInWithGoogle, user } = useAuth();
   const { success, error: showError } = useToast();
   const navigate = useNavigate();
 
-  // After email/password signup — check if this is an affiliate signup
+  // After email/password auth — redirect with intent if present, otherwise normal flow
   useEffect(() => {
     if (justSignedUp && user) {
       setJustSignedUp(false);
-      const intent = localStorage.getItem('signup_intent');
-      if (intent === 'affiliate') {
-        setShowAffiliateWizard(true);
+      if (intent) {
+        setJustSignedIn(false);
+        navigate(`/dashboard?join=${intent}`);
+        onClose();
       } else {
         handleRedirect();
       }
     } else if (justSignedIn && user && !justSignedUp) {
       setJustSignedIn(false);
-      handleRedirect();
+      if (intent) {
+        navigate(`/dashboard?join=${intent}`);
+        onClose();
+      } else {
+        handleRedirect();
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, justSignedIn, justSignedUp]);
@@ -132,7 +137,11 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
     localStorage.setItem('auth_return_url', window.location.pathname + window.location.search);
     setError(null);
     setLoading(true);
-    const { error } = await signInWithGoogle();
+    // If there's an intent, pass it in the redirect URL so AuthCallback can forward it
+    const redirectUrl = intent
+      ? `${window.location.origin}/auth/callback?intent=${intent}`
+      : undefined;
+    const { error } = await signInWithGoogle(redirectUrl);
     if (error) {
       setError(error.message);
       setLoading(false);
@@ -140,25 +149,8 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
     // OAuth redirects to AuthCallback which handles the rest
   };
 
-  const handleAffiliateWizardSuccess = (_code: string) => {
-    localStorage.removeItem('signup_intent');
-    localStorage.removeItem('auth_return_url');
-    setShowAffiliateWizard(false);
-    onClose();
-    navigate('/dashboard');
-  };
-
   return (
     <>
-      <AffiliateSignupWizard
-        isOpen={showAffiliateWizard}
-        onSuccess={handleAffiliateWizardSuccess}
-        onClose={() => {
-          setShowAffiliateWizard(false);
-          onClose();
-          navigate('/dashboard');
-        }}
-      />
       <div
         className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-sm"
         onClick={required ? undefined : onClose}
