@@ -1666,13 +1666,11 @@ export default function Admin() {
                             {category.content}
                           </ExpandableCardContent>
 
-                          <ExpandableCardFooter className="mt-auto pt-2">
+                          <ExpandableCardFooter className="mt-auto pt-2 flex items-center justify-center">
                             {isExpanded ? (
                               category.footer || <span className="text-white/20 text-[9px]">—</span>
                             ) : (
-                              <span className="text-white/30 text-[9px] font-bold uppercase tracking-widest">
-                                Click to expand →
-                              </span>
+                              <ChevronDownIcon className="w-3 h-3 text-white/25" />
                             )}
                           </ExpandableCardFooter>
                         </ExpandableCard>
@@ -1698,6 +1696,7 @@ export default function Admin() {
                 { id: 'users', icon: UsersIcon, title: 'Users' },
                 { id: 'affiliates', icon: LinkIcon, title: 'Affiliates' },
                 { id: 'submissions', icon: DocumentTextIcon, title: 'Submissions', badge: pendingSubmissions },
+                { id: 'bookings', icon: InboxIcon, title: 'Bookings' },
                 { id: 'calendar', icon: CalendarIcon, title: 'Calendar' },
                 { id: 'pricing', icon: CurrencyDollarIcon, title: 'Pricing' },
                 { id: 'settings', icon: BoltIcon, title: 'Settings' }
