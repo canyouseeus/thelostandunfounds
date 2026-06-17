@@ -525,36 +525,37 @@ function normalizePrivateKey(raw: string): string {
     // Convert literal \n sequences to real newlines
     key = key.replace(/\\n/g, '\n');
 
-    // If the key has no real newlines at all (single-line paste), insert them
-    // around the PEM markers so OpenSSL can parse the structure
-    if (!key.includes('\n')) {
-        key = key
-            .replace(/-----BEGIN ([A-Z ]+)-----/, '-----BEGIN $1-----\n')
-            .replace(/-----END ([A-Z ]+)-----/, '\n-----END $1-----');
+    // Detect key type from existing markers, defaulting to PKCS8
+    const headerMatch = key.match(/-----BEGIN ([A-Z ]+)-----/);
+    const keyType = headerMatch ? headerMatch[1] : 'PRIVATE KEY';
+
+    if (key.includes('-----BEGIN')) {
+        // Extract the base64 body, strip all whitespace, then re-wrap at 64 chars.
+        // OpenSSL 3.x (Node 18+) requires strict 64-char line wrapping in PEM bodies.
+        const body = key
+            .replace(/-----BEGIN [A-Z ]+-----/g, '')
+            .replace(/-----END [A-Z ]+-----/g, '')
+            .replace(/\s+/g, '');
+        const wrapped = (body.match(/.{1,64}/g) ?? []).join('\n');
+        key = `-----BEGIN ${keyType}-----\n${wrapped}\n-----END ${keyType}-----`;
+    } else {
+        // No markers at all — wrap the raw content as PKCS8
+        const body = key.replace(/\s+/g, '');
+        const wrapped = (body.match(/.{1,64}/g) ?? []).join('\n');
+        key = `-----BEGIN PRIVATE KEY-----\n${wrapped}\n-----END PRIVATE KEY-----`;
     }
 
-    // Ensure PEM markers exist
-    if (!key.includes('-----BEGIN')) {
-        key = `-----BEGIN PRIVATE KEY-----\n${key}\n-----END PRIVATE KEY-----`;
-    }
-
-    // Convert PKCS#1 (RSA PRIVATE KEY) to PKCS#8 header if needed
-    // Node 18+ / OpenSSL 3.0 can be strict about this
-    // Actually, googleapis handles both, but let's normalize
-    key = key.trim();
-
-    // Validate the key can be parsed by attempting a crypto import
+    // Validate the key can be parsed; log diagnostics on failure (don't throw)
     try {
-        const crypto = require('crypto');
-        crypto.createPrivateKey(key);
+        require('crypto').createPrivateKey(key);
+        console.log('[resolveCreds] Private key validated OK, total length:', key.length);
     } catch (e: any) {
-        // If standard parse fails, try with legacy OpenSSL provider hint
-        // Log the issue for debugging
         console.error('[resolveCreds] Private key validation warning:', e?.message);
-        console.error('[resolveCreds] Key starts with:', key.substring(0, 40));
         console.error('[resolveCreds] Key length:', key.length);
         console.error('[resolveCreds] Has newlines:', key.includes('\n'));
         console.error('[resolveCreds] First 5 lines:', key.split('\n').slice(0, 5).join(' | '));
+        const bodyChars = key.split('\n').filter(l => !l.startsWith('-----')).join('').length;
+        console.error('[resolveCreds] Base64 body chars:', bodyChars);
     }
 
     return key;
