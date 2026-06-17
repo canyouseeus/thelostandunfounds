@@ -898,7 +898,7 @@ export default function Affiliate() {
     return null;
   };
 
-  if (authLoading) {
+  if (authLoading && !user) {
     return <LoadingOverlay />;
   }
 
