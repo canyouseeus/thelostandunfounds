@@ -37,8 +37,8 @@ function isAdminRequest(req: VercelRequest): boolean {
   return false;
 }
 
-// Static import to ensure bundling
-import * as mailHandler from '../../lib/api-handlers/_zoho-mail-handler.js';
+// Static import to ensure bundling (no extension — esbuild resolves .ts reliably)
+import * as mailHandler from '../../lib/api-handlers/_zoho-mail-handler';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS headers
@@ -143,7 +143,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           const result = await mailHandler.getMessage(messageId, folderId);
           if (!result.success) {
             console.error('getMessage error:', result.error);
-            return res.status(500).json({ error: result.error });
+            const is404 = result.error?.includes('404');
+            const status = is404 ? 404 : 500;
+            return res.status(status).json({ error: is404 ? 'Message not found' : result.error });
           }
           return res.status(200).json({ message: result.message });
         }

@@ -239,7 +239,12 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
       }
     } catch (err: any) {
       console.error('Failed to load message:', err);
-      setError(err.message || 'Failed to load message');
+      const msg = err.message || '';
+      setError(
+        msg.includes('404') || msg.includes('not found') || msg.includes('Message not found')
+          ? 'Message not found — it may have been deleted or moved in Zoho.'
+          : msg || 'Failed to load message'
+      );
     } finally {
       setLoadingMessage(false);
     }
