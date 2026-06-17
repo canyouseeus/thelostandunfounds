@@ -111,11 +111,13 @@ type DashboardResponse = {
 function StatTile({
   label,
   value,
+  sub,
   icon: Icon,
   tone = 'neutral',
 }: {
   label: string;
   value: string;
+  sub?: string;
   icon?: any;
   tone?: 'neutral' | 'success' | 'warn';
 }) {
@@ -126,12 +128,13 @@ function StatTile({
         ? 'text-amber-300'
         : 'text-white';
   return (
-    <div className="flex items-center justify-between bg-black text-white rounded-none p-3 sm:p-4">
-      <div className="flex items-center gap-3">
-        {Icon ? <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white/70" /> : null}
-        <span className="text-sm sm:text-base text-white/70">{label}</span>
+    <div className="bg-black px-5 py-5 flex flex-col gap-3">
+      <div className="flex items-center gap-2">
+        {Icon ? <Icon className="w-3.5 h-3.5 text-white/30" /> : null}
+        <span className="text-[9px] text-white/30 uppercase tracking-widest">{label}</span>
       </div>
-      <span className={cn('text-sm sm:text-lg font-semibold', toneClass)}>{value}</span>
+      <span className={cn('text-2xl sm:text-3xl font-black font-mono leading-none', toneClass)}>{value}</span>
+      {sub ? <span className="text-[9px] text-white/20 uppercase tracking-wide">{sub}</span> : null}
     </div>
   );
 }
@@ -259,13 +262,12 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
     const conversions = data.summary.totalConversions || 0;
     const convRate = clicks > 0 ? ((conversions / clicks) * 100).toFixed(1) + '%' : '—';
     return [
-      { label: 'Affiliates', value: fmt(data.summary.total), icon: UsersIcon },
-      { label: 'Active', value: fmt(data.summary.active), icon: CheckCircleIcon, tone: 'success' as const },
-      { label: 'Revenue to Affiliates', value: `$${(data.summary.totalEarnings || 0).toFixed(2)}`, icon: CurrencyDollarIcon },
-      { label: 'Clicks', value: fmt(clicks), icon: CursorArrowRaysIcon },
-      { label: 'Conversions', value: fmt(conversions), icon: ChartBarIcon },
-      { label: 'Conv. Rate', value: convRate, icon: ChartBarIcon, tone: conversions > 0 ? 'success' as const : 'neutral' as const },
-      { label: 'Pending Payouts', value: `$${(data.summary.pendingPayoutTotal || 0).toFixed(2)}`, icon: WalletIcon, tone: 'warn' as const },
+      { label: 'Affiliates', value: fmt(data.summary.total), sub: `${fmt(data.summary.active)} active`, icon: UsersIcon },
+      { label: 'Revenue Paid Out', value: `$${(data.summary.totalEarnings || 0).toFixed(2)}`, sub: 'total affiliate earnings', icon: CurrencyDollarIcon },
+      { label: 'Clicks', value: fmt(clicks), sub: 'tracked link clicks', icon: CursorArrowRaysIcon },
+      { label: 'Conversions', value: fmt(conversions), sub: `${convRate} conv. rate`, icon: ChartBarIcon, tone: conversions > 0 ? 'success' as const : 'neutral' as const },
+      { label: 'Pending Payouts', value: `$${(data.summary.pendingPayoutTotal || 0).toFixed(2)}`, sub: 'awaiting transfer', icon: WalletIcon, tone: 'warn' as const },
+      { label: 'Inactive', value: fmt(data.summary.inactive), sub: 'not yet active', icon: UsersIcon },
     ];
   }, [data]);
 
@@ -411,9 +413,9 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
       ) : (
         <div className="space-y-4 sm:space-y-6">
           <SectionWrapper title="Summary" description="Top-line affiliate performance" defaultExpanded>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-px bg-white/5">
               {kpis.map((kpi) => (
-                <StatTile key={kpi.label} label={kpi.label} value={kpi.value} icon={kpi.icon} tone={kpi.tone as any} />
+                <StatTile key={kpi.label} label={kpi.label} value={kpi.value} sub={kpi.sub} icon={kpi.icon} tone={kpi.tone as any} />
               ))}
             </div>
           </SectionWrapper>
