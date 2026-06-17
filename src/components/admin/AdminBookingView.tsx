@@ -11,6 +11,7 @@ import {
     PlusIcon,
     TrashIcon,
 } from '@heroicons/react/24/outline';
+import BookingInvoicePanel from './BookingInvoicePanel';
 import {
     Expandable,
     ExpandableTrigger,
@@ -81,6 +82,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking: b, onStatusChange })
     const [adminNotes, setAdminNotes] = useState(b.admin_notes || '');
     const [saving, setSaving] = useState(false);
     const [expanded, setExpanded] = useState(false);
+    const [invoicePanelOpen, setInvoicePanelOpen] = useState(false);
 
     // Billing / quote state
     const [quoteOpen, setQuoteOpen] = useState(false);
@@ -190,6 +192,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking: b, onStatusChange })
     };
 
     return (
+        <>
         <Expandable
             expandDirection="vertical"
             expandBehavior="replace"
@@ -386,13 +389,21 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking: b, onStatusChange })
                                     {/* Billing actions */}
                                     {b.status !== 'declined' && b.status !== 'cancelled' && (
                                         <div className="flex gap-2 flex-wrap">
+                                            {/* ── New: full invoice panel ── */}
+                                            <button
+                                                onClick={() => setInvoicePanelOpen(true)}
+                                                className="flex items-center gap-1.5 px-4 py-2 bg-white text-black text-[10px] font-black uppercase tracking-widest hover:bg-zinc-200 transition-colors"
+                                            >
+                                                <DocumentTextIcon className="w-3.5 h-3.5" />
+                                                Generate Invoice
+                                            </button>
                                             <button
                                                 onClick={() => { setQuoteOpen(o => !o); setFeedback(null); }}
                                                 disabled={billing}
                                                 className="flex items-center gap-1.5 px-4 py-2 bg-white/5 border border-white/15 text-white text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-black transition-colors disabled:opacity-50"
                                             >
                                                 <DocumentTextIcon className="w-3.5 h-3.5" />
-                                                {b.total_amount_cents != null ? 'New Quote' : 'Send Quote'}
+                                                {b.total_amount_cents != null ? 'Quick Quote' : 'Quick Quote'}
                                             </button>
                                             {b.status === 'deposit_paid' && (
                                                 <button
@@ -437,6 +448,19 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking: b, onStatusChange })
                 </ExpandableTrigger>
             )}
         </Expandable>
+
+        {/* Invoice panel overlay */}
+        {invoicePanelOpen && (
+            <BookingInvoicePanel
+                booking={b}
+                onClose={() => setInvoicePanelOpen(false)}
+                onInvoiceCreated={() => {
+                    setInvoicePanelOpen(false);
+                    onStatusChange();
+                }}
+            />
+        )}
+        </>
     );
 };
 
