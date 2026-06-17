@@ -305,6 +305,7 @@ export default function AffiliateSignupWizard({ isOpen, onSuccess, onClose }: Af
                                                     placeholder="First name"
                                                     value={firstName}
                                                     onChange={(e) => setFirstName(e.target.value)}
+                                                    autoComplete="given-name"
                                                     className="w-full px-4 py-3 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors"
                                                     autoFocus
                                                 />
@@ -313,6 +314,7 @@ export default function AffiliateSignupWizard({ isOpen, onSuccess, onClose }: Af
                                                     placeholder="Last name"
                                                     value={lastName}
                                                     onChange={(e) => setLastName(e.target.value)}
+                                                    autoComplete="family-name"
                                                     className="w-full px-4 py-3 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors"
                                                 />
                                             </div>
@@ -336,6 +338,7 @@ export default function AffiliateSignupWizard({ isOpen, onSuccess, onClose }: Af
                                                 placeholder="+1 (555) 000-0000"
                                                 value={phone}
                                                 onChange={(e) => setPhone(e.target.value)}
+                                                autoComplete="tel"
                                                 className="w-full px-4 py-3 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors"
                                                 autoFocus
                                             />
