@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     XMarkIcon,
     CheckIcon,
@@ -18,9 +19,11 @@ interface AffiliateSignupWizardProps {
 
 export default function AffiliateSignupWizard({ isOpen, onSuccess, onClose }: AffiliateSignupWizardProps) {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [step, setStep] = useState(0);
     const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+    const [stripeLoading, setStripeLoading] = useState(false);
     const [error, setError] = useState('');
 
     const [firstName, setFirstName] = useState('');
@@ -122,8 +125,6 @@ export default function AffiliateSignupWizard({ isOpen, onSuccess, onClose }: Af
             }
             setSubmitted(true);
             onSuccess(code);
-            // Start Stripe Connect onboarding — redirects away if successful
-            await startStripeOnboarding(user.id);
         } catch (err: any) {
             setError(err.message || 'Failed to create affiliate account');
         } finally {
@@ -159,11 +160,24 @@ export default function AffiliateSignupWizard({ isOpen, onSuccess, onClose }: Af
         setCode('');
         setAvailable(null);
         setSubmitted(false);
+        setStripeLoading(false);
         setError('');
         setAlreadyEnrolled(false);
         setEnrolledCode('');
         setCheckingEnrollment(false);
         onClose?.();
+    };
+
+    const handleConnectStripe = async () => {
+        if (!user) return;
+        setStripeLoading(true);
+        await startStripeOnboarding(user.id);
+        setStripeLoading(false);
+    };
+
+    const handleConnectLater = () => {
+        handleClose();
+        navigate('/dashboard');
     };
 
     if (!isOpen) return null;
@@ -234,11 +248,27 @@ export default function AffiliateSignupWizard({ isOpen, onSuccess, onClose }: Af
                                         <CheckIcon className="w-8 h-8 text-black stroke-[3]" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-white mb-2">You're In!</h2>
-                                    <p className="text-white/60 text-sm">
+                                    <p className="text-white/60 text-sm mb-6">
                                         Affiliate code{' '}
                                         <span className="text-white font-mono font-bold">{code}</span>{' '}
-                                        created. Redirecting to Stripe to connect your payout method...
+                                        created. Connect Stripe to receive payouts.
                                     </p>
+                                    <div className="space-y-3">
+                                        <button
+                                            onClick={handleConnectStripe}
+                                            disabled={stripeLoading}
+                                            className="w-full px-4 py-3 bg-white text-black font-semibold hover:bg-white/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {stripeLoading ? 'Redirecting to Stripe...' : 'Connect Stripe Now'}
+                                        </button>
+                                        <button
+                                            onClick={handleConnectLater}
+                                            disabled={stripeLoading}
+                                            className="w-full px-4 py-3 bg-white/5 text-white/60 font-medium hover:bg-white/10 hover:text-white transition disabled:opacity-50"
+                                        >
+                                            I'll do this later
+                                        </button>
+                                    </div>
                                 </div>
                             ) : (
                                 <>
