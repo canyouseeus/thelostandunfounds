@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import {
   ArrowUpRightIcon,
   ArrowPathIcon,
@@ -12,17 +11,9 @@ import {
   ChartBarIcon,
   ListBulletIcon,
   EnvelopeIcon,
+  TagIcon,
 } from '@heroicons/react/24/outline';
 import AffiliateEmailComposer from '@/components/admin/AffiliateEmailComposer';
-import {
-  Expandable,
-  ExpandableTrigger,
-  ExpandableCard,
-  ExpandableCardHeader,
-  ExpandableCardContent,
-  ExpandableContent,
-} from '@/components/ui/expandable';
-import { useToast } from '../components/Toast';
 import { LoadingSpinner } from '../components/Loading';
 import { cn } from '@/components/ui/utils';
 
@@ -88,11 +79,33 @@ type PayoutRequest = {
   affiliates?: { code: string };
 };
 
+type ClickEvent = {
+  id: string;
+  affiliate_id: string;
+  ip_address: string | null;
+  user_agent: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  is_suspicious: boolean | null;
+  rate_limited: boolean | null;
+  affiliates?: { code: string };
+};
+
+type DiscountCode = {
+  id: string;
+  affiliate_id: string;
+  code: string;
+  discount_percent: number;
+  is_active: boolean;
+};
+
 type DashboardResponse = {
   summary: AffiliateSummary;
   affiliates: Affiliate[];
   commissions: Commission[];
   payoutRequests: PayoutRequest[];
+  clickEvents: ClickEvent[];
+  discountCodes: DiscountCode[];
 };
 
 function StatTile({
@@ -188,39 +201,24 @@ function SectionWrapper({
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   return (
-    <Expandable
-      expandDirection="vertical"
-      expandBehavior="replace"
-      initialDelay={0.05}
-      expanded={expanded}
-      onToggle={() => setExpanded((prev) => !prev)}
-    >
-      {({ isExpanded }) => (
-        <ExpandableTrigger>
-          <ExpandableCard
-            className="w-full bg-black text-white border-0"
-            collapsedSize={{ width: '100%', height: 'auto' }}
-            expandedSize={{ width: '100%', height: 'auto' }}
-            hoverToExpand={false}
-          >
-            <ExpandableCardHeader className="p-4 sm:p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-lg sm:text-xl font-semibold">{title}</h2>
-                  {description ? <p className="text-white/60 text-sm sm:text-base mt-1">{description}</p> : null}
-                </div>
-                <div className="text-white/50 text-xs sm:text-sm">{isExpanded ? 'Tap to collapse' : 'Tap to expand'}</div>
-              </div>
-            </ExpandableCardHeader>
-            <ExpandableCardContent className="pt-0">
-              <ExpandableContent preset="slide-down" keepMounted>
-                <div className="p-4 sm:p-5 space-y-4">{children}</div>
-              </ExpandableContent>
-            </ExpandableCardContent>
-          </ExpandableCard>
-        </ExpandableTrigger>
+    <div className="w-full bg-black text-white">
+      <button
+        type="button"
+        className="w-full text-left p-4 sm:p-5 cursor-pointer"
+        onClick={() => setExpanded((prev) => !prev)}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg sm:text-xl font-semibold uppercase tracking-wide">{title}</h2>
+            {description ? <p className="text-white/60 text-sm sm:text-base mt-1 normal-case">{description}</p> : null}
+          </div>
+          <div className="text-white/50 text-xs sm:text-sm shrink-0">{expanded ? 'Tap to collapse' : 'Tap to expand'}</div>
+        </div>
+      </button>
+      {expanded && (
+        <div className="px-4 pb-4 sm:px-5 sm:pb-5 space-y-4">{children}</div>
       )}
-    </Expandable>
+    </div>
   );
 }
 
@@ -257,12 +255,16 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
   const kpis = useMemo(() => {
     if (!data) return [];
     const fmt = (n: number) => (isNaN(n) ? '0' : n.toLocaleString());
+    const clicks = data.summary.totalClicks || 0;
+    const conversions = data.summary.totalConversions || 0;
+    const convRate = clicks > 0 ? ((conversions / clicks) * 100).toFixed(1) + '%' : '—';
     return [
       { label: 'Affiliates', value: fmt(data.summary.total), icon: UsersIcon },
       { label: 'Active', value: fmt(data.summary.active), icon: CheckCircleIcon, tone: 'success' as const },
       { label: 'Revenue to Affiliates', value: `$${(data.summary.totalEarnings || 0).toFixed(2)}`, icon: CurrencyDollarIcon },
-      { label: 'Clicks', value: fmt(data.summary.totalClicks), icon: CursorArrowRaysIcon },
-      { label: 'Conversions', value: fmt(data.summary.totalConversions), icon: ChartBarIcon },
+      { label: 'Clicks', value: fmt(clicks), icon: CursorArrowRaysIcon },
+      { label: 'Conversions', value: fmt(conversions), icon: ChartBarIcon },
+      { label: 'Conv. Rate', value: convRate, icon: ChartBarIcon, tone: conversions > 0 ? 'success' as const : 'neutral' as const },
       { label: 'Pending Payouts', value: `$${(data.summary.pendingPayoutTotal || 0).toFixed(2)}`, icon: WalletIcon, tone: 'warn' as const },
     ];
   }, [data]);
@@ -392,7 +394,6 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
           </button>
         )}
       </div>
-  /* rest of component ... */
 
       {error && (
         <div className="mb-4 p-4 text-red-200 bg-red-500/10 rounded-none">
@@ -414,6 +415,44 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
               {kpis.map((kpi) => (
                 <StatTile key={kpi.label} label={kpi.label} value={kpi.value} icon={kpi.icon} tone={kpi.tone as any} />
               ))}
+            </div>
+          </SectionWrapper>
+
+          <SectionWrapper title="Recent Clicks" description="Last 20 link clicks tracked by the affiliate system">
+            <div className="space-y-2">
+              {data?.clickEvents?.length ? (
+                data.clickEvents.map((click) => (
+                  <div
+                    key={click.id}
+                    className={cn(
+                      'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 p-3 bg-black text-white rounded-none',
+                      click.is_suspicious && 'border-l-2 border-amber-500/60',
+                      click.rate_limited && 'opacity-50'
+                    )}
+                  >
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold">{click.affiliates?.code || click.affiliate_id}</span>
+                        {click.is_suspicious && (
+                          <span className="px-1.5 py-0.5 text-xs bg-amber-400/20 text-amber-300 rounded-none uppercase">Suspicious</span>
+                        )}
+                        {click.rate_limited && (
+                          <span className="px-1.5 py-0.5 text-xs bg-red-400/20 text-red-300 rounded-none uppercase">Rate Limited</span>
+                        )}
+                      </div>
+                      <div className="text-xs text-white/50">
+                        IP: {click.ip_address ? click.ip_address.replace(/\.\d+$/, '.***') : 'unknown'}
+                        {click.metadata?.referrer ? ` • ref: ${click.metadata.referrer}` : ''}
+                      </div>
+                    </div>
+                    <div className="text-xs text-white/40 sm:text-right">
+                      {new Date(click.created_at).toLocaleString()}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-white/60 text-sm">No click events recorded yet.</div>
+              )}
             </div>
           </SectionWrapper>
 
@@ -498,6 +537,20 @@ export default function AdminAffiliates({ onBack }: { onBack?: () => void }) {
                       <div className="text-xs text-white/50">
                         Clicks: {affiliate.total_clicks || 0} • MLM: ${affiliate.total_mlm_earnings?.toFixed(2) || '0.00'}
                       </div>
+                      {(() => {
+                        const codes = data?.discountCodes?.filter(d => d.affiliate_id === affiliate.id) || [];
+                        return codes.length ? (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {codes.map(dc => (
+                              <span key={dc.id} className="flex items-center gap-1 px-2 py-0.5 bg-white/10 text-white/80 text-xs rounded-none uppercase tracking-wide">
+                                <TagIcon className="w-3 h-3" />
+                                {dc.code} {dc.discount_percent > 0 ? `(${dc.discount_percent}% off)` : ''}
+                                {!dc.is_active && <span className="text-white/40 ml-1">inactive</span>}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null;
+                      })()}
                     </div>
                     <div className="text-xs text-white/60 sm:text-right space-y-1">
                       <div className="flex sm:justify-end">

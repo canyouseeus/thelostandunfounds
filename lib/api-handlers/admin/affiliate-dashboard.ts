@@ -121,11 +121,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return p.status === 'pending' || p.status === 'processing' ? sum + (isNaN(amt) ? 0 : amt) : sum;
       }, 0) || 0;
 
+    // Recent click events (last 20)
+    const { data: clickEvents, error: clickError } = await supabase
+      .from('affiliate_click_events')
+      .select('id, affiliate_id, ip_address, user_agent, metadata, created_at, is_suspicious, rate_limited')
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+    if (clickError && (clickError as any).code !== '42P01') {
+      console.warn('Error fetching click events:', clickError);
+    }
+
+    const enrichedClickEvents = (clickEvents || []).map((c) => ({
+      ...c,
+      affiliates: { code: affiliateCodeMap.get(c.affiliate_id) || 'Unknown' },
+    }));
+
+    // Discount codes (active only)
+    const { data: discountCodes, error: discountError } = await supabase
+      .from('affiliate_discount_codes')
+      .select('id, affiliate_id, code, discount_percent, is_active');
+
+    if (discountError && (discountError as any).code !== '42P01') {
+      console.warn('Error fetching discount codes:', discountError);
+    }
+
     return res.status(200).json({
       summary: { ...baseSummary, pendingPayoutTotal },
       affiliates: affiliates || [],
       commissions: enrichedCommissions,
       payoutRequests: enrichedPayoutRequests,
+      clickEvents: enrichedClickEvents,
+      discountCodes: discountCodes || [],
     });
   } catch (error: any) {
     console.error('Admin Affiliate Dashboard API error:', error);
