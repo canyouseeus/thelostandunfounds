@@ -919,8 +919,9 @@ export default function Affiliate() {
       <AffiliateSignupWizard
         isOpen={showAffiliateWizard}
         onSuccess={() => {
-          setShowAffiliateWizard(false);
-          // Stripe redirect happens inside the wizard
+          checkAffiliateStatus().then(() => {
+            setExpandedSections(prev => ({ ...prev, affiliate: true }));
+          });
         }}
         onClose={() => setShowAffiliateWizard(false)}
       />
