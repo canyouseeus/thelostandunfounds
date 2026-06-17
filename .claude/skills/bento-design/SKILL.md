@@ -20,7 +20,7 @@ This skill provides the core design principles, component patterns, and implemen
     *   Large headings should be uppercase with wide tracking (e.g., `uppercase tracking-widest`).
     *   Small labels/metadata should use `text-[10px]` with wide tracking (`tracking-[0.2em]`).
 5.  **Subtle Accents**:
-    *   Border colors: `border-white/10` or `border-white/20`.
+    *   Background separation: use `bg-white/5` or `bg-white/10` — NO border classes.
     *   Text colors: `text-white/80` for labels, `text-white/60` or `text-white/40` for metadata.
     *   Primary Action: White background with black text for buttons, or subtle high-contrast accents.
 
@@ -71,7 +71,7 @@ This skill provides the core design principles, component patterns, and implemen
 ```
 
 ### 2. Form Implementation
-*   Inputs: `bg-black border border-white/20 text-white focus:border-white transition-colors outline-none`.
+*   Inputs: `bg-white/5 text-white focus:bg-white/10 transition-colors outline-none` — NO border classes.
 *   Buttons: `px-6 py-3 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-white/90 transition`.
 
 ## Best Practices

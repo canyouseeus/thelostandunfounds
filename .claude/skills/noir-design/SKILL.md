@@ -12,11 +12,10 @@ This skill ensures that all UI elements adhere to the project's signature "Noir"
 ### 1. Color Palette (Monochrome)
 - **Background**: ALWAYS `#000000` (Pure Black).
 - **Text**: `#ffffff` (Pure White) or `rgba(255, 255, 255, 0.87)` for secondary text.
-- **Borders**: `1px solid #ffffff` or semi-transparent white `rgba(255, 255, 255, 0.1)`.
 
-### 2. Geometry & Borders
+### 2. Geometry
 - **No Rounded Corners**: Set `border-radius: 0 !important` on all buttons, cards, and containers.
-- **Borders**: Use rigid, thin borders. Avoid heavy shadows; use thin white outlines instead.
+- **NO BORDERS**: Never use border classes or border CSS on any element. Use background contrast (`bg-white/5`, `bg-white/10`) for visual separation instead.
 
 ### 3. Typography
 - **Font**: Use `Inter` or system sans-serif.
@@ -24,11 +23,11 @@ This skill ensures that all UI elements adhere to the project's signature "Noir"
 - **Alignment (Critical)**: All body text MUST be `text-left`. Only the Amazon disclosure may be justified.
 
 ### 4. Interactive Elements
-- **Glassmorphism**: When using overlays, use `rgba(0, 0, 0, 0.95)` with a white border.
+- **Glassmorphism**: When using overlays, use `rgba(0, 0, 0, 0.95)` background — no border.
 - **Hover States**: Invert colors on hover (Black text on White background).
 - **Animations**: Use "mechanical" animations (blinking cursors, sliding toasts) rather than soft fades.
 
 ## Common CSS Classes
-- `.noir-card`: `border: 1px solid white; background: black; border-radius: 0;`
-- `.noir-button`: `background: transparent; color: white; border: 1px solid white; padding: 0.5rem 1rem;`
+- `.noir-card`: `background: black; border-radius: 0;` — NO border.
+- `.noir-button`: `background: transparent; color: white; padding: 0.5rem 1rem;` — NO border.
 - `.text-left`: Always prefer this for layout.

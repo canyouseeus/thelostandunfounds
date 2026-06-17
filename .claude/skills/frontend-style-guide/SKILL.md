@@ -6,10 +6,7 @@ description: Strict design rules and style preferences for the frontend. Use whe
 # Frontend Style Guide & Design Rules
 
 ## CRITICAL RULES
-1. **NO BORDERS**: 
-   - Never use visible borders on cards, containers, or images unless explicitly requested for a specific functional reason (e.g. debugging).
-   - Use padding, spacing, or background color differences to separate elements.
-   - **bento-cards**, **gallery items**, and **widgets** must be borderless.
+1. **NO BORDERS** — see `no-border-design` skill for the full authoritative rule. Short version: never use any `border-*` class or `border:` CSS on any element. Use `bg-white/5` or spacing for separation.
 
 2. **NO VIEWPORT CLIPPING**: Nothing may be positioned outside the visible screen at any viewport width (test down to 320px). This applies to every page, modal, and admin panel.
    - **Tab bars / nav rows / pill groups**: must `flex-wrap` OR `overflow-x-auto` with `flex-shrink-0` on items — never a fixed `flex` row that silently overflows.
