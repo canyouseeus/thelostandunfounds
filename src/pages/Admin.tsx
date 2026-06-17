@@ -515,8 +515,7 @@ export default function Admin() {
         // Get all affiliates
         const { data: affiliates, count: affiliateCount } = await supabase
           .from('affiliates')
-          .select('*', { count: 'exact' })
-          .gte('created_at', PLATFORM_LAUNCH_DATE);
+          .select('*', { count: 'exact' });
 
         if (affiliates) {
           affiliateStatsData.totalAffiliates = affiliateCount || affiliates.length;
@@ -592,7 +591,6 @@ export default function Admin() {
             .order('created_at', { ascending: true }),
           supabase.from('affiliates')
             .select('created_at')
-            .gte('created_at', PLATFORM_LAUNCH_DATE)
             .order('created_at', { ascending: true }),
           supabase.from('affiliate_commissions')
             .select('created_at, amount, status')
@@ -779,27 +777,19 @@ export default function Admin() {
 
 
 
-        // Get affiliate revenue (post-launch only)
-        const { data: affiliates, error: affError } = await supabase
-          .from('affiliates')
-          .select('total_earnings, created_at');
+        // Get affiliate revenue — sum actual sale amounts (profit_generated + product_cost)
+        // from non-cancelled commissions, not the commission payouts themselves
+        const { data: commissions } = await supabase
+          .from('affiliate_commissions')
+          .select('profit_generated, product_cost, status')
+          .neq('status', 'cancelled');
 
-        console.log('Affiliate data:', affiliates, 'Error:', affError);
-
-        if (affiliates) {
-          const realAffiliates = affiliates.filter(a =>
-            new Date(a.created_at) >= new Date(PLATFORM_LAUNCH_DATE)
-          );
-
-          console.log('Real affiliates (filtered):', realAffiliates);
-
-          affiliateRevenueTotal = realAffiliates.reduce((sum, a) => {
-            const earnings = typeof a.total_earnings === 'string'
-              ? parseFloat(a.total_earnings)
-              : (a.total_earnings || 0);
-            return sum + (isNaN(earnings) ? 0 : earnings);
+        if (commissions) {
+          affiliateRevenueTotal = commissions.reduce((sum, c) => {
+            const profit = parseFloat(c.profit_generated?.toString() || '0');
+            const cost = parseFloat(c.product_cost?.toString() || '0');
+            return sum + (isNaN(profit) ? 0 : profit) + (isNaN(cost) ? 0 : cost);
           }, 0);
-          console.log('Total affiliate revenue (real customers only):', affiliateRevenueTotal);
         }
 
         // Get gallery revenue with email and date filtering
@@ -1595,7 +1585,7 @@ export default function Admin() {
               bookingRevenue={stats?.bookingRevenue || 0}
               history={stats?.history}
               stats={{
-                revenue: (stats?.affiliateRevenue || 0) + (stats?.galleryRevenue || 0),
+                revenue: (stats?.affiliateRevenue || 0) + (stats?.galleryRevenue || 0) + (stats?.bookingRevenue || 0),
                 newsletter: stats?.newsletterSubscribers || 0,
                 affiliates: affiliateStats?.totalAffiliates || 0,
                 bookings: stats?.bookingRevenue || 0,
