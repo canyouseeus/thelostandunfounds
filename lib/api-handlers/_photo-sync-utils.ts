@@ -518,6 +518,48 @@ interface ResolvedCreds {
     GOOGLE_KEY: string;
 }
 
+function normalizePrivateKey(raw: string): string {
+    // Strip surrounding quotes (single or double) that may leak from JSON/env
+    let key = raw.trim().replace(/^["']|["']$/g, '');
+
+    // Convert literal \n sequences to real newlines
+    key = key.replace(/\\n/g, '\n');
+
+    // If the key has no real newlines at all (single-line paste), insert them
+    // around the PEM markers so OpenSSL can parse the structure
+    if (!key.includes('\n')) {
+        key = key
+            .replace(/-----BEGIN ([A-Z ]+)-----/, '-----BEGIN $1-----\n')
+            .replace(/-----END ([A-Z ]+)-----/, '\n-----END $1-----');
+    }
+
+    // Ensure PEM markers exist
+    if (!key.includes('-----BEGIN')) {
+        key = `-----BEGIN PRIVATE KEY-----\n${key}\n-----END PRIVATE KEY-----`;
+    }
+
+    // Convert PKCS#1 (RSA PRIVATE KEY) to PKCS#8 header if needed
+    // Node 18+ / OpenSSL 3.0 can be strict about this
+    // Actually, googleapis handles both, but let's normalize
+    key = key.trim();
+
+    // Validate the key can be parsed by attempting a crypto import
+    try {
+        const crypto = require('crypto');
+        crypto.createPrivateKey(key);
+    } catch (e: any) {
+        // If standard parse fails, try with legacy OpenSSL provider hint
+        // Log the issue for debugging
+        console.error('[resolveCreds] Private key validation warning:', e?.message);
+        console.error('[resolveCreds] Key starts with:', key.substring(0, 40));
+        console.error('[resolveCreds] Key length:', key.length);
+        console.error('[resolveCreds] Has newlines:', key.includes('\n'));
+        console.error('[resolveCreds] First 5 lines:', key.split('\n').slice(0, 5).join(' | '));
+    }
+
+    return key;
+}
+
 function resolveCreds(): ResolvedCreds {
     const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
     const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -525,10 +567,7 @@ function resolveCreds(): ResolvedCreds {
     const rawKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
 
     const GOOGLE_EMAIL = (rawEmail || '').replace(/[^a-zA-Z0-9@._-]/g, '');
-    const GOOGLE_KEY = (rawKey || '')
-        .replace(/\\n/g, '\n')
-        .replace(/"/g, '')
-        .trim();
+    const GOOGLE_KEY = normalizePrivateKey(rawKey || '');
 
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !GOOGLE_EMAIL || !GOOGLE_KEY) {
         throw new Error(`Missing credentials for sync. Email: ${!!GOOGLE_EMAIL}, Key: ${!!GOOGLE_KEY}`);
