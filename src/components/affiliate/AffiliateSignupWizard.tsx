@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     XMarkIcon,
@@ -37,12 +37,16 @@ export default function AffiliateSignupWizard({ isOpen, onSuccess, onClose }: Af
     const [alreadyEnrolled, setAlreadyEnrolled] = useState(false);
     const [enrolledCode, setEnrolledCode] = useState('');
     const [checkingEnrollment, setCheckingEnrollment] = useState(false);
+    const enrollmentChecked = useRef(false);
 
     const totalSteps = 3;
 
-    // Check if user is already enrolled when modal opens
+    // Check enrollment exactly once when the modal first opens — keyed on
+    // isOpen changing to true, NOT on the user object reference, which
+    // Supabase can swap on session refresh and would re-run this mid-flow.
     useEffect(() => {
-        if (!isOpen || !user) return;
+        if (!isOpen || !user || enrollmentChecked.current) return;
+        enrollmentChecked.current = true;
         setCheckingEnrollment(true);
         supabase
             .from('affiliates')
@@ -175,6 +179,7 @@ export default function AffiliateSignupWizard({ isOpen, onSuccess, onClose }: Af
         setAlreadyEnrolled(false);
         setEnrolledCode('');
         setCheckingEnrollment(false);
+        enrollmentChecked.current = false;
         onClose?.();
     };
 
