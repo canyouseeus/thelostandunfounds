@@ -24,7 +24,7 @@ export default async function handleAffiliates(req: VercelRequest, res: VercelRe
         if (req.method === 'GET') {
             // Fetch affiliates data
             const { data: affiliates, error } = await supabase
-                .from('affiliate_profiles')
+                .from('affiliates')
                 .select('*')
                 .order('created_at', { ascending: false });
 
