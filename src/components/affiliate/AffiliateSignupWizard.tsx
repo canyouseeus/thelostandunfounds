@@ -63,6 +63,16 @@ export default function AffiliateSignupWizard({ isOpen, onSuccess, onClose }: Af
         setAvailable(null);
     };
 
+    // Auto-check code availability after user stops typing
+    useEffect(() => {
+        if (!validateCode(code)) return;
+        const timer = setTimeout(() => {
+            checkAvailability();
+        }, 600);
+        return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [code]);
+
     const checkAvailability = async () => {
         if (!validateCode(code)) return;
         setChecking(true);
