@@ -242,7 +242,7 @@ export default function AffiliateSignupWizard({ isOpen, onSuccess, onClose }: Af
                     {!checkingEnrollment && !alreadyEnrolled && (
                         <>
                             {!submitted && (
-                                <div className="flex items-center gap-2 mb-6">
+                                <div className="flex items-center gap-2 mb-6 pr-8">
                                     {[0, 1, 2].map((s) => (
                                         <div
                                             key={s}
