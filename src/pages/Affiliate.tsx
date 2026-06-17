@@ -955,11 +955,6 @@ export default function Affiliate() {
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-white/40 text-xs sm:text-sm font-mono uppercase truncate max-w-full block">{user.email}</span>
-                      <div className="flex gap-1">
-                        <span className={`text-[10px] px-1.5 py-0.5 ${tier === 'pro' ? 'text-purple-400' : tier === 'premium' ? 'text-yellow-500' : 'text-white/40'} uppercase font-bold`}>
-                          {tier || 'Free'}
-                        </span>
-                      </div>
                     </div>
                   </div>
                 </div>
