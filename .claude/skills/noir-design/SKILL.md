@@ -1,6 +1,6 @@
 ---
 name: noir-design
-description: Enforces the Noir aesthetic standards - monochrome palette, sharp geometry, uppercase typography, glassmorphism effects. Use when creating or modifying any UI component, page, or design element. Primary design system for the site.
+description: Enforces the Noir aesthetic standards - monochrome palette, sharp geometry, uppercase typography, glassmorphism effects. Use ONLY for website and app UI components, pages, and admin panels. DO NOT apply to client-facing business documents such as proposals, contracts, or invoices — those follow the ROA proposal format (black ink on white, clean document layout).
 ---
 
 # Noir Design Skill
