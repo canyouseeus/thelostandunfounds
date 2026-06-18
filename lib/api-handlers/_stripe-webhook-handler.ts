@@ -80,6 +80,11 @@ export default async function handler(
                 )
                 break
             }
+            case 'invoice.paid': {
+                const invoice = event.data.object as Stripe.Invoice
+                await finalizeStripeInvoice(invoice)
+                break
+            }
             case 'charge.refunded': {
                 const charge = event.data.object as Stripe.Charge
                 console.log('↩️ Charge refunded:', charge.id, 'amount:', charge.amount_refunded)
@@ -604,6 +609,203 @@ async function finalizeBookingPayment(supabase: any, session: Stripe.Checkout.Se
                 .eq('id', booking.id)
         }
         console.log('✅ Booking deposit paid:', booking.id)
+    }
+}
+
+/**
+ * Finalize a booking payment recorded via a Stripe Invoice (created manually
+ * in the Stripe Dashboard or via the Stripe API, not through the platform's
+ * payment-link flow).
+ *
+ * Matching priority:
+ *  1. invoice.metadata.bookingId — most reliable; set this when creating the
+ *     Stripe invoice so the webhook always finds the right booking.
+ *  2. invoice.customer_email — fallback; picks the most recent pending/confirmed
+ *     booking for that email address.
+ *
+ * Idempotent: a replayed webhook sees the payment note already recorded and exits.
+ */
+async function finalizeStripeInvoice(stripeInvoice: Stripe.Invoice) {
+    const amountPaid = (stripeInvoice.amount_paid || 0) / 100
+    if (amountPaid <= 0) {
+        console.log('ℹ️ invoice.paid: zero amount, skipping', stripeInvoice.id)
+        return
+    }
+
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+    const supabaseKey =
+        process.env.SUPABASE_SERVICE_ROLE_KEY ||
+        process.env.SUPABASE_ANON_KEY ||
+        process.env.VITE_SUPABASE_ANON_KEY
+    if (!supabaseUrl || !supabaseKey) {
+        console.error('❌ invoice.paid: missing Supabase credentials')
+        return
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    const noteKey = `Stripe Invoice ${stripeInvoice.id}`
+
+    // Idempotency: don't record the same Stripe invoice twice.
+    const { data: existingPayment } = await supabase
+        .from('invoice_payments')
+        .select('id')
+        .eq('notes', noteKey)
+        .maybeSingle()
+
+    if (existingPayment) {
+        console.log('ℹ️ invoice.paid already recorded, skipping:', stripeInvoice.id)
+        return
+    }
+
+    const paidAt = stripeInvoice.status_transitions?.paid_at
+        ? new Date(stripeInvoice.status_transitions.paid_at * 1000).toISOString()
+        : new Date().toISOString()
+
+    // 1. Try bookingId from invoice metadata (most reliable).
+    const bookingIdFromMeta = stripeInvoice.metadata?.bookingId || null
+    const customerEmail =
+        stripeInvoice.customer_email ||
+        (stripeInvoice as any).customer_details?.email ||
+        null
+
+    let bookingId: string | null = bookingIdFromMeta
+
+    // 2. Fallback: match by customer email → most recent open booking.
+    if (!bookingId && customerEmail) {
+        const { data: matched } = await supabase
+            .from('bookings')
+            .select('id')
+            .ilike('email', customerEmail)
+            .in('status', ['pending', 'confirmed', 'deposit_paid'])
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+
+        if (matched) {
+            bookingId = matched.id
+            console.log('ℹ️ invoice.paid: matched booking by email:', customerEmail, '→', bookingId)
+        }
+    }
+
+    if (!bookingId) {
+        console.log('ℹ️ invoice.paid: no matching booking found', {
+            stripeInvoiceId: stripeInvoice.id,
+            customerEmail,
+        })
+        return
+    }
+
+    const { data: booking } = await supabase
+        .from('bookings')
+        .select('id, email, status, total_amount_cents, affiliate_code')
+        .eq('id', bookingId)
+        .single()
+
+    if (!booking) {
+        console.warn('⚠️ invoice.paid: booking not found:', bookingId)
+        return
+    }
+
+    // Find or create a DB invoice row to anchor the payment record.
+    let dbInvoiceId: string | null = null
+
+    const { data: existingInvoice } = await supabase
+        .from('invoices')
+        .select('id')
+        .eq('booking_id', bookingId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+    if (existingInvoice) {
+        dbInvoiceId = existingInvoice.id
+    } else {
+        const invoiceNum = stripeInvoice.number
+            ? `EXT-${stripeInvoice.number}`
+            : `EXT-${stripeInvoice.id.slice(-8).toUpperCase()}`
+
+        const { data: created } = await supabase
+            .from('invoices')
+            .insert({
+                booking_id: bookingId,
+                invoice_number: invoiceNum,
+                invoice_type: 'standard',
+                date: paidAt.slice(0, 10),
+                total: amountPaid,
+                amount_due: 0,
+                status: 'paid',
+                payment_method: 'Stripe',
+                paid_at: paidAt,
+            })
+            .select('id')
+            .single()
+
+        if (created) dbInvoiceId = created.id
+    }
+
+    if (dbInvoiceId) {
+        await supabase.from('invoice_payments').insert({
+            invoice_id: dbInvoiceId,
+            amount: amountPaid,
+            method: 'Stripe',
+            paid_at: paidAt,
+            notes: noteKey,
+        })
+        await supabase
+            .from('invoices')
+            .update({ status: 'paid', paid_at: paidAt })
+            .eq('id', dbInvoiceId)
+    }
+
+    // Determine whether this covers the full balance or just a deposit.
+    const totalCents = booking.total_amount_cents || Math.round(amountPaid * 100)
+    const paidCents = Math.round(amountPaid * 100)
+    const isFullPayment = paidCents >= totalCents
+
+    const bookingUpdate: Record<string, any> = {}
+
+    if (!booking.total_amount_cents) {
+        bookingUpdate.total_amount_cents = paidCents
+    }
+
+    if (isFullPayment && booking.status !== 'paid') {
+        bookingUpdate.status = 'paid'
+        bookingUpdate.paid_at = paidAt
+    } else if (!isFullPayment && booking.status !== 'paid' && booking.status !== 'deposit_paid') {
+        bookingUpdate.status = 'deposit_paid'
+        bookingUpdate.deposit_amount_cents = paidCents
+        bookingUpdate.deposit_paid_at = paidAt
+    }
+
+    if (Object.keys(bookingUpdate).length > 0) {
+        await supabase.from('bookings').update(bookingUpdate).eq('id', bookingId)
+    }
+
+    console.log('✅ invoice.paid finalized for booking:', bookingId, {
+        stripeInvoiceId: stripeInvoice.id,
+        amountPaid,
+        isFullPayment,
+        bookingUpdate,
+    })
+
+    // Trigger affiliate commission on full payment.
+    if (isFullPayment && booking.email && amountPaid > 0) {
+        try {
+            const grossAmount = (Number(booking.total_amount_cents) || paidCents) / 100
+            const result = await triggerReferralCommission(supabase, {
+                email: booking.email,
+                source: 'booking',
+                sourceId: bookingId,
+                grossAmount,
+                fallbackAffiliateCode: booking.affiliate_code || null,
+            })
+            if (result.triggered) {
+                console.log('✅ Booking commission from Stripe invoice:', { bookingId, amount: result.amount })
+            }
+        } catch (commissionErr: any) {
+            console.error('⚠️ Commission trigger failed:', commissionErr?.message)
+        }
     }
 }
 
