@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Kattitude Tattoo Studio — Dashboard &amp; Shop Proposal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #ffffff;
+  --ink: #000000;
+  --muted: #555555;
+  --line: #cccccc;
+  --pad: 0.72in;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #888;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* PRINT BUTTON */
+.print-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 999;
+  background: #000;
+  color: #fff;
+  border: none;
+  padding: 11px 22px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+}
+.print-btn:hover { background: #333; }
+
+/* PAGE */
+.page {
+  width: 8.5in;
+  min-height: 11in;
+  background: var(--bg);
+  margin: 0.5in auto;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 32px rgba(0,0,0,.4);
+}
+
+/* RUNNING HEADER */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.36in var(--pad) 0.16in;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.hdr-txt {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 8px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* PAGE BODY */
+.page-body {
+  flex: 1;
+  padding: 0.52in var(--pad);
+}
+
+/* RUNNING FOOTER */
+.page-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.16in var(--pad) 0.36in;
+  border-top: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.ftr-txt {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 8px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* ──────────── COVER ──────────── */
+.cover-logo {
+  display: block;
+  width: 120px;
+  margin: 0 auto 0.26in;
+  /* keep it black & white */
+  filter: grayscale(100%);
+}
+.cover-brand {
+  text-align: center;
+  margin-bottom: 0.44in;
+}
+.cover-brand .name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.cover-brand .sub {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 9px;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 500;
+  margin-top: 6px;
+}
+.cover-label {
+  text-align: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 9px;
+  letter-spacing: .26em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 500;
+  margin-bottom: 0.16in;
+}
+.cover-title {
+  text-align: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 62px;
+  font-weight: 800;
+  line-height: 1.0;
+  letter-spacing: -.02em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin-bottom: 0.2in;
+}
+.cover-subtitle {
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: var(--muted);
+  font-style: italic;
+  margin-bottom: 0.5in;
+}
+
+/* PARTIES */
+.parties {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--line);
+  padding: 0.26in 0;
+  margin-bottom: 0.26in;
+}
+.party-col { padding-right: 0.32in; }
+.party-col + .party-col {
+  padding-right: 0;
+  padding-left: 0.32in;
+  border-left: 1px solid var(--line);
+}
+.party-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 8px;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 9px;
+}
+.party-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 5px;
+}
+.party-detail { font-size: 12.5px; line-height: 1.65; color: var(--ink); }
+
+/* DATES */
+.dates-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding-top: 0.17in;
+  border-top: 1px solid var(--line);
+}
+.date-item { display: flex; align-items: baseline; gap: 13px; }
+.date-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 8px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.date-val { font-size: 13px; font-weight: 500; }
+
+/* ──────────── CONTENT PAGES ──────────── */
+.section-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 8px;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 0.14in;
+}
+.section-headline {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1.0;
+  letter-spacing: -.02em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin-bottom: 0.22in;
+}
+.body-copy {
+  font-size: 13.5px;
+  line-height: 1.78;
+  color: var(--ink);
+  max-width: 72ch;
+  margin-bottom: 0.17in;
+}
+
+.deliverables {
+  list-style: none;
+  margin-bottom: 0.26in;
+}
+.deliverables li {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+  line-height: 1.65;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+}
+.deliverables li:first-child { border-top: 1px solid var(--line); }
+.deliverables li .bull { flex-shrink: 0; font-weight: 700; margin-top: 1px; }
+.deliverables li strong { font-weight: 700; }
+
+.also-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 8px;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.also-list { list-style: none; }
+.also-list li {
+  display: flex;
+  gap: 11px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+/* ──────────── PRICING ──────────── */
+.price-intro { font-size: 13.5px; line-height: 1.78; margin-bottom: 0.05in; }
+.price-intro strong { font-weight: 700; }
+.price-intro em { font-style: italic; }
+
+.price-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.2in 0;
+}
+.price-table thead tr { border-bottom: 1px solid var(--ink); }
+.price-table thead th {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 8px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  padding-bottom: 9px;
+  text-align: left;
+}
+.price-table thead th:last-child { text-align: right; }
+.price-table tbody tr { border-bottom: 1px solid var(--line); }
+.price-table tbody tr:last-child { border-bottom: 1px solid var(--ink); }
+.price-table td { padding: 0.15in 0; vertical-align: top; font-size: 13px; color: var(--ink); }
+.item-name { font-weight: 700; display: block; margin-bottom: 3px; font-size: 13.5px; }
+.item-desc { color: var(--muted); font-size: 11.5px; line-height: 1.6; }
+.freq-cell { white-space: nowrap; padding-right: 0.24in; }
+.price-cell { text-align: right; white-space: nowrap; }
+.price-main {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  display: block;
+  color: var(--ink);
+}
+.price-sub { font-size: 10.5px; color: var(--muted); display: block; margin-top: 3px; }
+
+/* CALLOUT */
+.callout {
+  background: var(--ink);
+  color: var(--bg);
+  padding: 0.2in 0.28in;
+  margin: 0.18in 0;
+  text-align: center;
+}
+.callout-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 8px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  font-weight: 600;
+  opacity: .6;
+  margin-bottom: 8px;
+}
+.callout p { font-size: 13px; line-height: 1.74; max-width: 60ch; margin: 0 auto; }
+.callout em { font-style: italic; }
+
+/* TERMS */
+.terms-section {
+  border-top: 1px solid var(--line);
+  padding-top: 0.18in;
+  margin: 0.18in 0;
+  text-align: center;
+}
+.terms-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 8px;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.terms-text { font-size: 13px; line-height: 1.78; max-width: 58ch; margin: 0 auto; color: var(--ink); }
+.terms-text strong { font-weight: 700; }
+
+/* ACCEPTANCE */
+.acceptance {
+  border-top: 1px solid var(--line);
+  padding-top: 0.17in;
+  margin: 0.17in 0;
+  font-size: 13px;
+  line-height: 1.78;
+  color: var(--ink);
+}
+.acceptance strong { font-weight: 700; }
+.acceptance em { font-style: italic; }
+
+/* SIGNATURES */
+.signatures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--ink);
+  padding-top: 0.17in;
+  margin-top: 0.18in;
+}
+.sig-col {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 8px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+}
+.sig-col + .sig-col { text-align: right; }
+
+/* PRINT */
+@media print {
+  body { background: none; }
+  .print-btn { display: none; }
+  .page {
+    margin: 0;
+    box-shadow: none;
+    page-break-after: always;
+    width: 100%;
+    min-height: 100vh;
+  }
+  .page:last-child { page-break-after: auto; }
+  @page { size: letter; margin: 0; }
+}
+
+@media (max-width: 680px) {
+  .page { width: 100%; margin: 0; box-shadow: none; }
+  .cover-title { font-size: 38px; }
+  .section-headline { font-size: 30px; }
+  .parties, .dates-row, .signatures { grid-template-columns: 1fr; }
+  .party-col + .party-col { border-left: none; border-top: 1px solid var(--line); padding-left: 0; padding-top: 0.17in; margin-top: 0.17in; }
+  .sig-col + .sig-col { text-align: left; margin-top: 12px; }
+  .print-btn { display: none; }
+}
+</style>
+</head>
+<body>
+
+<button class="print-btn" onclick="window.print()">Save as PDF</button>
+
+<!-- ══════════════════════════ PAGE 1 · COVER ══════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span class="hdr-txt">The Lost+Unfounds &nbsp;·&nbsp; Kattitude Tattoo Studio Proposal</span>
+    <span class="hdr-txt">Page 1 / 3</span>
+  </div>
+
+  <div class="page-body" style="display:flex;flex-direction:column;justify-content:center">
+    <div style="text-align:center;margin-bottom:0.28in">
+      <img class="cover-logo" src="/logo.png" alt="The Lost+Unfounds" />
+    </div>
+
+    <div class="cover-brand">
+      <div class="name">The Lost+Unfounds</div>
+      <div class="sub">Can You See Us?</div>
+    </div>
+
+    <div class="cover-label">Proposal</div>
+
+    <div class="cover-title">Custom Dashboard<br>&amp; Shop Build</div>
+
+    <div class="cover-subtitle">Prepared for Kattitude Tattoo Studio</div>
+
+    <div class="parties">
+      <div class="party-col">
+        <div class="party-label">Prepared By</div>
+        <div class="party-name">Joshua Greene</div>
+        <div class="party-detail">
+          THE LOST AND UNFOUNDS LLC.<br>
+          business@thelostandunfounds.com
+        </div>
+      </div>
+      <div class="party-col">
+        <div class="party-label">Prepared For</div>
+        <div class="party-name">Owner &amp; Team</div>
+        <div class="party-detail">
+          Kattitude Tattoo Studio<br>
+          [email] &nbsp;·&nbsp; [phone]
+        </div>
+      </div>
+    </div>
+
+    <div class="dates-row">
+      <div class="date-item">
+        <span class="date-label">Proposal Date</span>
+        <span class="date-val">June 18, 2026</span>
+      </div>
+      <div class="date-item">
+        <span class="date-label">Valid Through</span>
+        <span class="date-val">July 31, 2026</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span class="ftr-txt">Your Studio. One Dashboard.</span>
+    <span class="ftr-txt">Page 1 / 3</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════ PAGE 2 · SCOPE ══════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span class="hdr-txt">The Lost+Unfounds &nbsp;·&nbsp; Kattitude Tattoo Studio Proposal</span>
+    <span class="hdr-txt">Page 2 / 3</span>
+  </div>
+
+  <div class="page-body">
+    <div class="section-label">01 · The Opportunity</div>
+    <div class="section-headline">One place to<br>run your studio.</div>
+
+    <p class="body-copy">Kattitude Tattoo Studio has built its reputation on the craft. But behind the scenes, client sessions are tracked on paper sheets, tips are totaled by hand, payments run through multiple processors with no single view, and a monthly Shopify subscription charges you to sell two products online.</p>
+
+    <p class="body-copy">This proposal lays out a custom command center dashboard and a clean exit from Shopify — one authenticated system where your daily operations, your revenue, and your shop all live together. Built on the same Vercel + Supabase stack we run for THE LOST+UNFOUNDS.</p>
+
+    <div class="section-label" style="margin-top:0.28in">02 · What You Get</div>
+
+    <ul class="deliverables">
+      <li>
+        <span class="bull">■</span>
+        <span><strong>Client Session Log</strong> — Digitizes the daily paper sheet. Each session captures client name, service, tattoo price, tip amount, and payment method. Stored permanently and searchable — you'll have historical records you've never had before.</span>
+      </li>
+      <li>
+        <span class="bull">■</span>
+        <span><strong>Revenue Dashboard</strong> — Daily, weekly, and monthly totals with breakdowns by payment processor and artist. Total take-in, total tips, average session value — at a glance, at the end of every day.</span>
+      </li>
+      <li>
+        <span class="bull">■</span>
+        <span><strong>Custom Shop (Shopify Exit)</strong> — Your products rebuilt into your own stack. Same checkout experience, zero monthly platform fee. You stop paying Shopify the day the dashboard goes live.</span>
+      </li>
+      <li>
+        <span class="bull">■</span>
+        <span><strong>Quick-Launch Panel</strong> — One-click access to your booking platform, email, social accounts, and supplier tools. Everything inside one authenticated, mobile-ready dashboard.</span>
+      </li>
+      <li>
+        <span class="bull">■</span>
+        <span><strong>Branded &amp; Secured</strong> — The entire dashboard is skinned to Kattitude's colors, fonts, and logo. Protected by secure login. You own the source code and all your data outright.</span>
+      </li>
+    </ul>
+
+    <div class="also-label">Also Included</div>
+    <ul class="also-list">
+      <li><span>■</span> Deployed to Vercel — live URL from day one, your own domain when you're ready to point it.</li>
+      <li><span>■</span> Mobile-responsive — fully usable from your phone at the end of a session.</li>
+      <li><span>■</span> 30 days of post-launch support included in the build fee.</li>
+      <li><span>■</span> Full data export available any time — your records, your format, no lock-in.</li>
+    </ul>
+  </div>
+
+  <div class="page-footer">
+    <span class="ftr-txt">Your Studio. One Dashboard.</span>
+    <span class="ftr-txt">Page 2 / 3</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════ PAGE 3 · INVESTMENT ══════════════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span class="hdr-txt">The Lost+Unfounds &nbsp;·&nbsp; Kattitude Tattoo Studio Proposal</span>
+    <span class="hdr-txt">Page 3 / 3</span>
+  </div>
+
+  <div class="page-body">
+    <div class="section-label">03 · Investment &amp; Next Steps</div>
+    <div class="section-headline">Your tools.<br>Your data.<br>Your terms.</div>
+
+    <p class="price-intro">The dashboard build is a flat one-time fee. The monthly retainer is optional after the initial term — keep it if you want an AI webmaster on call, <em>cancel any time after month three.</em></p>
+
+    <table class="price-table">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Frequency</th>
+          <th>Price</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <span class="item-name">Phase 1 · Dashboard Build</span>
+            <span class="item-desc">Client session log, revenue dashboard, quick-launch panel, custom shop, Shopify migration, 30-day post-launch support.</span>
+          </td>
+          <td class="freq-cell">One-time</td>
+          <td class="price-cell">
+            <span class="price-main">$2,000</span>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <span class="item-name">Shopify Savings (immediate)</span>
+            <span class="item-desc">Eliminate Shopify Basic subscription + per-transaction fees on online orders starting launch day.</span>
+          </td>
+          <td class="freq-cell">Monthly</td>
+          <td class="price-cell">
+            <span class="price-main">−$39+/mo</span>
+            <span class="price-sub">≈ $468/yr back in your pocket</span>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <span class="item-name">Phase 2 · Monthly Retainer (optional)</span>
+            <span class="item-desc">Integration maintenance, feature additions, AI webmaster support. 3-month minimum, then month-to-month.</span>
+          </td>
+          <td class="freq-cell">Monthly</td>
+          <td class="price-cell">
+            <span class="price-main">$200/mo</span>
+            <span class="price-sub">3-month min · cancel anytime after</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <div class="callout-label">The Math · Aligned Incentives</div>
+      <p>The $200/month retainer is essentially offset by the $39+ you stop paying Shopify. After month one, you're running a more powerful system than Shopify ever gave you — and paying less for it. <em>Walk-in cash, manual payments, and off-platform sales are never included in any revenue calculation.</em></p>
+    </div>
+
+    <div class="terms-section">
+      <div class="terms-label">Timeline &amp; Payment Terms</div>
+      <p class="terms-text"><strong>$1,000 deposit due to begin work.</strong> Balance of $1,000 due on launch day. Retainer billed monthly starting on launch date. Dashboard goes live within <strong>3 weeks</strong> of deposit clearing. Retainer covers all minor feature requests and one major module addition per quarter.</p>
+    </div>
+
+    <div class="acceptance">
+      <strong>Acceptance.</strong> Reply to this proposal by email or text with <em>"approved"</em> to move forward. A deposit invoice goes out the same day. Kattitude Tattoo Studio owns the dashboard, the source code, and all customer data — full export available any time.
+    </div>
+
+    <div class="signatures">
+      <div class="sig-col">For The Lost and Unfounds LLC.</div>
+      <div class="sig-col">For Kattitude Tattoo Studio</div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span class="ftr-txt">Your Studio. One Dashboard.</span>
+    <span class="ftr-txt">Page 3 / 3</span>
+  </div>
+</div>
+
+</body>
+</html>
