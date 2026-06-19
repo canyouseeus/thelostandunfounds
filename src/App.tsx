@@ -74,6 +74,9 @@ import AdminKattitude from './pages/AdminKattitude'
 import AdminKattitudeArtist from './pages/AdminKattitudeArtist'
 import AdminInvoices from './pages/AdminInvoices'
 import MusicPlayer from './components/admin/MusicPlayer'
+import SilvaStarLanding from './templates/silva-star/SilvaStarLanding'
+import SilvaStarDashboard from './templates/silva-star/SilvaStarDashboard'
+import SilvaStarProposal from './templates/silva-star/SilvaStarProposal'
 
 
 
@@ -220,6 +223,11 @@ function App() {
                   </ErrorBoundary>
                 } />
               </Route>
+              {/* Silva Star white-label template */}
+              <Route path="/silva-star" element={<SilvaStarLanding />} />
+              <Route path="/silva-star/dashboard" element={<SilvaStarDashboard />} />
+              <Route path="/silva-star/proposal" element={<SilvaStarProposal />} />
+
               <Route path="/designsystem" element={<Layout />}>
                 <Route index element={<DesignSystem />} />
                 <Route path="preview" element={<DesignSystemPreview />} />
