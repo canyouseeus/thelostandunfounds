@@ -262,6 +262,23 @@ function ModalShell({ title, onClose, children }: { title: string; onClose: () =
   );
 }
 
+function MobileDetailSheet({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+  return (
+    <div className="fixed inset-0 z-[60] sm:hidden">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-x-0 bottom-0 bg-[#0d1117] max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-[#0d1117]/95 backdrop-blur-sm flex items-center justify-between px-4 py-4">
+          <div className="text-[10px] tracking-[0.3em] uppercase text-white/40 font-bold">{title}</div>
+          <button onClick={onClose} className="text-white/30 hover:text-white transition-colors">
+            <XMarkIcon className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="px-4 pb-12">{children}</div>
+      </div>
+    </div>
+  );
+}
+
 function CreateJobModal({ onClose }: { onClose: () => void }) {
   const [form, setForm] = useState({ customer: '', location: '', type: 'Grey Water', date: '2025-06-19', time: '09:00', duration: '30', notes: '' });
   const upd = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
@@ -523,7 +540,23 @@ function OverviewPanel({ jobs, invoices, onCompleteJob, onMarkPaid }: {
           <div className="flex items-center justify-between mb-5">
             <SectionLabel eyebrow="Next 7 Days" title="Upcoming Jobs" />
           </div>
-          <table className="w-full text-sm">
+          {/* Mobile upcoming jobs */}
+          <div className="sm:hidden space-y-2">
+            {upcomingJobs.slice(0,6).map((job,i) => (
+              <div key={i} className="flex items-center gap-3 p-3 bg-white/5">
+                <div className="flex-shrink-0 w-14">
+                  <div className="text-white/50 text-[11px] font-mono font-bold">{job.date}</div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-white/80 text-sm truncate">{job.customer}</div>
+                  <div className="text-white/30 text-[11px]">{job.type} · {job.location}</div>
+                </div>
+                <StatusBadge status={job.status} />
+              </div>
+            ))}
+          </div>
+          {/* Desktop upcoming jobs table */}
+          <table className="hidden sm:table w-full text-sm">
             <thead><tr>{['Date','Customer','Location','Type','Status'].map(h => <th key={h} className="pb-3 text-left text-[9px] tracking-[0.25em] uppercase text-white/20 font-medium">{h}</th>)}</tr></thead>
             <tbody>
               {upcomingJobs.slice(0,6).map((job,i) => (
@@ -561,7 +594,29 @@ function OverviewPanel({ jobs, invoices, onCompleteJob, onMarkPaid }: {
             <span className="text-[9px] font-bold px-2 py-0.5" style={{ color: '#ffb74d', background: 'rgba(255,183,77,0.1)' }}>${outstandingInvoices.reduce((s,i)=>s+i.amount,0)} total</span>
           </div>
         </div>
-        <table className="w-full text-sm">
+        {/* Mobile outstanding invoices */}
+        <div className="sm:hidden space-y-2">
+          {outstandingInvoices.map(inv => (
+            <div key={inv.id} className="p-3 bg-white/5">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <div className="text-white/30 text-[10px] font-mono">{inv.id}</div>
+                  <div className="text-white/70 text-sm mt-0.5">{inv.customer}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-white font-bold text-sm">${inv.amount}</div>
+                  <AgingBadge days={inv.daysOut} />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => onMarkPaid(inv.id)} className="flex-1 py-2 text-[9px] tracking-widest uppercase font-bold text-[#81c784]/70 bg-[#81c784]/10">Mark Paid</button>
+                <button className="flex-1 py-2 text-[9px] tracking-widest uppercase font-bold text-white/30 bg-white/[0.07]">Resend</button>
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Desktop outstanding invoices table */}
+        <table className="hidden sm:table w-full text-sm">
           <thead><tr>{['Invoice','Customer','Job Date','Amount','Overdue','Action'].map(h => <th key={h} className="pb-3 text-left text-[9px] tracking-[0.25em] uppercase text-white/20 font-medium">{h}</th>)}</tr></thead>
           <tbody>
             {outstandingInvoices.map(inv => (
@@ -666,7 +721,24 @@ function OverviewPanel({ jobs, invoices, onCompleteJob, onMarkPaid }: {
         <div className="flex items-center justify-between mb-5">
           <SectionLabel eyebrow="Loyalty" title="Top Repeat Customers" />
         </div>
-        <table className="w-full text-sm">
+        {/* Mobile repeat customers */}
+        <div className="sm:hidden space-y-1">
+          {repeatCustomers.map(c => (
+            <div key={c.name} className="flex items-center gap-3 py-2.5 px-3 bg-white/[0.03]">
+              <div className="w-6 h-6 bg-white/8 flex items-center justify-center text-[10px] font-bold text-white/40 flex-shrink-0">{c.name.charAt(0)}</div>
+              <div className="flex-1 min-w-0">
+                <div className="text-white/70 text-xs truncate">{c.name}</div>
+                <div className="text-white/25 text-[10px]">{c.cadence} · Last: {c.lastJob}</div>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <div className="text-white font-bold text-xs">{c.jobs} jobs</div>
+                <div className="text-white/35 text-[10px] font-mono">${c.spend.toLocaleString()}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Desktop repeat customers table */}
+        <table className="hidden sm:table w-full text-sm">
           <thead><tr>{['Customer','Total Jobs','Last Service','Total Spend','Cadence'].map(h=><th key={h} className="pb-3 text-left text-[9px] tracking-[0.25em] uppercase text-white/20 font-medium">{h}</th>)}</tr></thead>
           <tbody>
             {repeatCustomers.map(c=>(
@@ -752,6 +824,7 @@ function SchedulePanel({ jobs }: { jobs: Job[] }) {
 function JobsPanel({ jobs, onCompleteJob }: { jobs: Job[]; onCompleteJob: (id: string) => void }) {
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const filters = ['all', 'in-progress', 'upcoming', 'confirmed', 'completed'];
   const filtered = jobs.filter(j => {
     const matchFilter = filter === 'all' || j.status === filter;
@@ -761,22 +834,46 @@ function JobsPanel({ jobs, onCompleteJob }: { jobs: Job[]; onCompleteJob: (id: s
   return (
     <div>
       <PanelHeader title="Jobs" sub={`${jobs.length} total jobs`} />
-      <div className="flex items-center gap-4 mb-6 flex-wrap">
-        <div className="flex gap-1 p-1 bg-white/5 rounded-full">
+      {/* Filter tabs — horizontally scrollable on mobile */}
+      <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 mb-3 sm:mb-0">
+        <div className="flex gap-1 p-1 bg-white/5 rounded-full w-max sm:w-fit">
           {filters.map(f => (
             <button key={f} onClick={() => setFilter(f)}
-              className={cn('px-3 py-1.5 text-[9px] font-black tracking-widest uppercase rounded-full transition-all', filter===f?'bg-white text-black':'text-white/40 hover:text-white hover:bg-white/10')}>
+              className={cn('px-3 py-1.5 text-[9px] font-black tracking-widest uppercase rounded-full transition-all whitespace-nowrap', filter===f?'bg-white text-black':'text-white/40 hover:text-white hover:bg-white/10')}>
               {f === 'all' ? `All (${jobs.length})` : f === 'in-progress' ? `Active (${jobs.filter(j=>j.status===f).length})` : `${f} (${jobs.filter(j=>j.status===f).length})`}
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2 flex-1 min-w-[160px] max-w-xs">
-          <MagnifyingGlassIcon className="w-4 h-4 text-white/20 flex-shrink-0" />
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search jobs…"
-            className="flex-1 bg-transparent text-white text-xs focus:outline-none placeholder:text-white/20" />
-        </div>
       </div>
-      <table className="w-full text-sm">
+      <div className="flex items-center gap-2 mt-3 mb-6 max-w-xs">
+        <MagnifyingGlassIcon className="w-4 h-4 text-white/20 flex-shrink-0" />
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search jobs…"
+          className="flex-1 bg-transparent text-white text-xs focus:outline-none placeholder:text-white/20" />
+      </div>
+
+      {/* Mobile cards */}
+      <div className="sm:hidden space-y-2">
+        {filtered.map(job => (
+          <button key={job.id} onClick={() => setSelectedJob(job)}
+            className="w-full text-left p-4 bg-white/5 active:bg-white/10 transition-colors">
+            <div className="flex items-start justify-between mb-2">
+              <div>
+                <div className="text-white/30 text-[10px] font-mono">{job.id}</div>
+                <div className="text-white/80 text-sm font-medium mt-0.5">{job.customer}</div>
+              </div>
+              <StatusBadge status={job.status} />
+            </div>
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="text-white/30">{job.date} · {job.time} · {job.type}</span>
+              <span className="text-white/60 font-mono">${job.amount}</span>
+            </div>
+          </button>
+        ))}
+        {filtered.length === 0 && <div className="text-center py-12 text-white/20 text-sm">No jobs match this filter</div>}
+      </div>
+
+      {/* Desktop table */}
+      <table className="hidden sm:table w-full text-sm">
         <thead><tr>{['Job ID','Date','Time','Customer','Location','Type','Status','Amount',''].map(h=><th key={h} className="pb-3 text-left text-[9px] tracking-[0.25em] uppercase text-white/20 font-medium pr-4">{h}</th>)}</tr></thead>
         <tbody>
           {filtered.map(job => (
@@ -801,14 +898,63 @@ function JobsPanel({ jobs, onCompleteJob }: { jobs: Job[]; onCompleteJob: (id: s
           ))}
         </tbody>
       </table>
-      {filtered.length === 0 && <div className="text-center py-12 text-white/20 text-sm">No jobs match this filter</div>}
+      {filtered.length === 0 && <div className="hidden sm:block text-center py-12 text-white/20 text-sm">No jobs match this filter</div>}
+
+      {/* Mobile detail sheet */}
+      {selectedJob && (
+        <MobileDetailSheet title="Job Details" onClose={() => setSelectedJob(null)}>
+          <div className="space-y-6 pt-2">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="text-white/30 text-[10px] font-mono">{selectedJob.id}</div>
+                <div className="text-white font-bold text-base mt-1">{selectedJob.customer}</div>
+              </div>
+              <StatusBadge status={selectedJob.status} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { l: 'Date', v: selectedJob.date },
+                { l: 'Time', v: selectedJob.time },
+                { l: 'Type', v: selectedJob.type },
+                { l: 'Amount', v: `$${selectedJob.amount}` },
+              ].map(({ l, v }) => (
+                <div key={l}>
+                  <div className="text-[9px] tracking-[0.25em] uppercase text-white/25 mb-1.5">{l}</div>
+                  <div className="text-white/70 text-sm font-medium">{v}</div>
+                </div>
+              ))}
+            </div>
+            <div>
+              <div className="text-[9px] tracking-[0.25em] uppercase text-white/25 mb-1.5">Location</div>
+              <div className="flex items-center gap-2 text-white/70 text-sm">
+                <MapPinIcon className="w-4 h-4 text-white/30 flex-shrink-0" />{selectedJob.location}
+              </div>
+            </div>
+            <div>
+              <div className="text-[9px] tracking-[0.25em] uppercase text-white/25 mb-1.5">Phone</div>
+              <a href={`tel:${selectedJob.phone}`} className="flex items-center gap-2 text-sm font-medium" style={{ color: ICY }}>
+                <PhoneIcon className="w-4 h-4" />{selectedJob.phone}
+              </a>
+            </div>
+            {(selectedJob.status === 'in-progress' || selectedJob.status === 'upcoming') && (
+              <button onClick={() => { onCompleteJob(selectedJob.id); setSelectedJob(null); }}
+                className="w-full py-3 text-[10px] font-bold tracking-widest uppercase text-[#0d1117]"
+                style={{ background: '#81c784' }}>
+                Mark Complete
+              </button>
+            )}
+          </div>
+        </MobileDetailSheet>
+      )}
     </div>
   );
 }
 
 function CustomersPanel() {
   const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState<typeof CUSTOMERS[0] | null>(null);
   const filtered = CUSTOMERS.filter(c => !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.contact.toLowerCase().includes(search.toLowerCase()));
+
   return (
     <div>
       <PanelHeader title="Customers" sub={`${CUSTOMERS.length} customers · Austin, TX`} />
@@ -817,7 +963,38 @@ function CustomersPanel() {
         <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search customers…"
           className="flex-1 bg-transparent text-white text-xs focus:outline-none placeholder:text-white/20" />
       </div>
-      <table className="w-full text-sm">
+
+      {/* Mobile cards */}
+      <div className="sm:hidden space-y-2">
+        {filtered.map(c => (
+          <button key={c.name} onClick={() => setSelected(c)}
+            className="w-full text-left p-4 bg-white/5 active:bg-white/10 transition-colors">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 bg-white/10 text-xs font-bold text-white/50">
+                {c.name.charAt(0)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-white/90 text-sm font-medium truncate">{c.name}</div>
+                <div className="text-white/35 text-[11px]">{c.contact}</div>
+              </div>
+              <ChevronDownIcon className="w-4 h-4 text-white/20 flex-shrink-0 -rotate-90" />
+            </div>
+            <div className="flex items-center justify-between text-[11px]">
+              <a href={`tel:${c.phone}`} onClick={e => e.stopPropagation()}
+                className="flex items-center gap-1 text-white/40 hover:text-white/70 transition-colors">
+                <PhoneIcon className="w-3 h-3" />{c.phone}
+              </a>
+              <div className="flex items-center gap-3 text-white/30">
+                <span><span className="text-white/60 font-bold">{c.jobs}</span> jobs</span>
+                <span className="font-mono">${c.spend.toLocaleString()}</span>
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Desktop table */}
+      <table className="hidden sm:table w-full text-sm">
         <thead><tr>{['Customer','Contact','Phone','Email','Jobs','Last Service','Total Spend','Cadence'].map(h=><th key={h} className="pb-3 text-left text-[9px] tracking-[0.25em] uppercase text-white/20 font-medium pr-4">{h}</th>)}</tr></thead>
         <tbody>
           {filtered.map(c => (
@@ -850,15 +1027,74 @@ function CustomersPanel() {
           ))}
         </tbody>
       </table>
+
+      {/* Mobile detail sheet */}
+      {selected && (
+        <MobileDetailSheet title="Customer" onClose={() => setSelected(null)}>
+          <div className="space-y-6 pt-2">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-white/10 flex items-center justify-center text-xl font-bold text-white/50 flex-shrink-0">
+                {selected.name.charAt(0)}
+              </div>
+              <div>
+                <div className="text-white font-bold text-base">{selected.name}</div>
+                <div className="text-white/30 text-xs mt-0.5">{selected.location}</div>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { l: 'Jobs', v: String(selected.jobs) },
+                { l: 'Spend', v: `$${selected.spend.toLocaleString()}` },
+                { l: 'Since', v: selected.since },
+              ].map(({ l, v }) => (
+                <div key={l}>
+                  <div className="text-[9px] tracking-[0.25em] uppercase text-white/25 mb-1">{l}</div>
+                  <div className="text-white font-bold text-sm">{v}</div>
+                </div>
+              ))}
+            </div>
+            <div className="space-y-4">
+              <div>
+                <div className="text-[9px] tracking-[0.25em] uppercase text-white/25 mb-1.5">Contact</div>
+                <div className="text-white/70 text-sm">{selected.contact}</div>
+              </div>
+              <div>
+                <div className="text-[9px] tracking-[0.25em] uppercase text-white/25 mb-1.5">Phone</div>
+                <a href={`tel:${selected.phone}`} className="flex items-center gap-2 text-sm font-medium" style={{ color: ICY }}>
+                  <PhoneIcon className="w-4 h-4" />{selected.phone}
+                </a>
+              </div>
+              <div>
+                <div className="text-[9px] tracking-[0.25em] uppercase text-white/25 mb-1.5">Email</div>
+                <a href={`mailto:${selected.email}`} className="flex items-center gap-2 text-sm break-all" style={{ color: ICY }}>
+                  <EnvelopeIcon className="w-4 h-4 flex-shrink-0" />{selected.email}
+                </a>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-[9px] tracking-[0.25em] uppercase text-white/25 mb-1.5">Last Service</div>
+                  <div className="text-white/70 text-sm">{selected.lastJob}</div>
+                </div>
+                <div>
+                  <div className="text-[9px] tracking-[0.25em] uppercase text-white/25 mb-1.5">Cadence</div>
+                  <div className="text-white/70 text-sm">{selected.cadence}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </MobileDetailSheet>
+      )}
     </div>
   );
 }
 
 function InvoicesPanel({ invoices, onMarkPaid }: { invoices: Invoice[]; onMarkPaid: (id: string) => void }) {
   const [filter, setFilter] = useState('all');
+  const [selected, setSelected] = useState<Invoice | null>(null);
   const outstanding = invoices.filter(i => i.status !== 'paid');
   const filtered = filter === 'all' ? invoices : invoices.filter(i => i.status === filter);
   const totalOwed = outstanding.reduce((s,i)=>s+i.amount,0);
+
   return (
     <div>
       <PanelHeader title="Invoices" sub={`$${totalOwed} outstanding across ${outstanding.length} invoices`} />
@@ -870,7 +1106,32 @@ function InvoicesPanel({ invoices, onMarkPaid }: { invoices: Invoice[]; onMarkPa
           </button>
         ))}
       </div>
-      <table className="w-full text-sm">
+
+      {/* Mobile cards */}
+      <div className="sm:hidden space-y-2">
+        {filtered.map(inv => (
+          <button key={inv.id} onClick={() => setSelected(inv)}
+            className="w-full text-left p-4 bg-white/5 active:bg-white/10 transition-colors">
+            <div className="flex items-start justify-between mb-2">
+              <div>
+                <div className="text-white/35 text-[10px] font-mono">{inv.id}</div>
+                <div className="text-white/80 text-sm font-medium mt-0.5">{inv.customer}</div>
+              </div>
+              <StatusBadge status={inv.status} />
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="text-white font-bold text-lg tabular-nums">${inv.amount}</div>
+              <div>{inv.status === 'paid'
+                ? <span className="text-[10px] text-white/25">{inv.paidDate}</span>
+                : <AgingBadge days={inv.daysOut} />}
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Desktop table */}
+      <table className="hidden sm:table w-full text-sm">
         <thead><tr>{['Invoice','Customer','Job Date','Amount','Status','Days Out','Action'].map(h=><th key={h} className="pb-3 text-left text-[9px] tracking-[0.25em] uppercase text-white/20 font-medium pr-4">{h}</th>)}</tr></thead>
         <tbody>
           {filtered.map(inv=>(
@@ -894,6 +1155,60 @@ function InvoicesPanel({ invoices, onMarkPaid }: { invoices: Invoice[]; onMarkPa
           ))}
         </tbody>
       </table>
+
+      {/* Mobile detail sheet */}
+      {selected && (
+        <MobileDetailSheet title="Invoice" onClose={() => setSelected(null)}>
+          <div className="space-y-6 pt-2">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="text-[10px] font-mono text-white/30">{selected.id}</div>
+                <div className="text-white font-black text-3xl tabular-nums mt-1">${selected.amount}</div>
+              </div>
+              <StatusBadge status={selected.status} />
+            </div>
+            <div className="space-y-4">
+              <div>
+                <div className="text-[9px] tracking-[0.25em] uppercase text-white/25 mb-1.5">Customer</div>
+                <div className="text-white/70 text-sm">{selected.customer}</div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-[9px] tracking-[0.25em] uppercase text-white/25 mb-1.5">Job Date</div>
+                  <div className="text-white/70 text-sm">{selected.jobDate}</div>
+                </div>
+                <div>
+                  <div className="text-[9px] tracking-[0.25em] uppercase text-white/25 mb-1.5">
+                    {selected.status === 'paid' ? 'Paid Date' : 'Days Out'}
+                  </div>
+                  <div className="text-sm">
+                    {selected.status === 'paid'
+                      ? <span className="text-white/50">{selected.paidDate}</span>
+                      : <AgingBadge days={selected.daysOut} />}
+                  </div>
+                </div>
+              </div>
+            </div>
+            {selected.status !== 'paid' && (
+              <div className="flex gap-3">
+                <button onClick={() => { onMarkPaid(selected.id); setSelected(null); }}
+                  className="flex-1 py-3 text-[10px] font-bold tracking-widest uppercase text-[#0d1117]"
+                  style={{ background: '#81c784' }}>
+                  Mark Paid
+                </button>
+                <button className="flex-1 py-3 text-[10px] font-bold tracking-widest uppercase text-white/30 bg-white/5">
+                  Resend
+                </button>
+              </div>
+            )}
+            {selected.status === 'paid' && (
+              <div className="flex items-center gap-2 text-sm text-[#81c784]/60">
+                <CheckIcon className="w-4 h-4" />Paid {selected.paidDate}
+              </div>
+            )}
+          </div>
+        </MobileDetailSheet>
+      )}
     </div>
   );
 }
@@ -960,10 +1275,12 @@ function FleetPanel() {
 }
 
 function AffiliatesPanel() {
+  const [selected, setSelected] = useState<typeof AFFILIATES[0] | null>(null);
   const totalEarned = AFFILIATES.reduce((s,a)=>s+a.earned,0);
   const totalOwed   = AFFILIATES.reduce((s,a)=>s+a.owed,0);
   const totalRefs   = AFFILIATES.reduce((s,a)=>s+a.referrals,0);
   const tierColor: Record<string,string> = { Gold: '#fbbf24', Silver: '#94a3b8', Bronze: '#c2855a' };
+
   return (
     <div>
       <PanelHeader title="Affiliates" sub="Referral program · $10 commission per referred job (first 3 months)" />
@@ -981,7 +1298,48 @@ function AffiliatesPanel() {
           </div>
         ))}
       </div>
-      <table className="w-full text-sm mb-12">
+
+      {/* Mobile affiliate cards */}
+      <div className="sm:hidden space-y-2 mb-12">
+        {AFFILIATES.map(a => (
+          <button key={a.id} onClick={() => setSelected(a)}
+            className="w-full text-left p-4 bg-white/5 active:bg-white/10 transition-colors">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-white/10 flex items-center justify-center text-xs font-bold text-white/50 flex-shrink-0">
+                  {a.name.charAt(0)}
+                </div>
+                <div>
+                  <div className="text-white/80 text-sm font-medium">{a.name}</div>
+                  <div className="text-white/30 text-[11px]">{a.company}</div>
+                </div>
+              </div>
+              <span className="text-[9px] font-bold tracking-widest uppercase flex-shrink-0" style={{ color: tierColor[a.tier] }}>
+                <StarIcon className="w-3 h-3 inline mr-0.5 -mt-0.5" />{a.tier}
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div>
+                <div className="text-white font-bold text-sm">{a.referrals}</div>
+                <div className="text-[9px] uppercase tracking-wide text-white/25">Refs</div>
+              </div>
+              <div>
+                <div className="text-white/60 font-mono text-sm">${a.earned}</div>
+                <div className="text-[9px] uppercase tracking-wide text-white/25">Earned</div>
+              </div>
+              <div>
+                <div className={cn('font-mono text-sm font-bold', a.owed > 0 ? 'text-[#ffb74d]' : 'text-white/20')}>
+                  {a.owed > 0 ? `$${a.owed}` : '—'}
+                </div>
+                <div className="text-[9px] uppercase tracking-wide text-white/25">Owed</div>
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Desktop affiliate table */}
+      <table className="hidden sm:table w-full text-sm mb-12">
         <thead><tr>{['Partner','Company','Tier','Referrals','Active Customers','Earned','Owed','Last Referral','Code'].map(h=><th key={h} className="pb-3 text-left text-[9px] tracking-[0.25em] uppercase text-white/20 font-medium pr-4">{h}</th>)}</tr></thead>
         <tbody>
           {AFFILIATES.map(a=>(
@@ -1009,15 +1367,16 @@ function AffiliatesPanel() {
           ))}
         </tbody>
       </table>
+
       <div>
         <SectionLabel eyebrow="Program" title="Tier Structure" />
-        <div className="grid sm:grid-cols-3 gap-8 mt-6">
+        <div className="grid sm:grid-cols-3 gap-6 mt-6">
           {[
             {tier:'Bronze',color:'#c2855a',req:'1–5 referrals',perk:'$10/job commission'},
             {tier:'Silver',color:'#94a3b8',req:'6–10 referrals',perk:'$12/job + priority listings'},
             {tier:'Gold',  color:'#fbbf24',req:'11+ referrals', perk:'$15/job + co-marketing'},
           ].map(t=>(
-            <div key={t.tier}>
+            <div key={t.tier} className="p-4 bg-white/5 sm:bg-transparent">
               <div className="text-sm font-bold mb-1" style={{color:t.color}}><StarIcon className="w-4 h-4 inline mr-1 -mt-0.5" />{t.tier}</div>
               <div className="text-white/40 text-xs mb-0.5">{t.req}</div>
               <div className="text-white/25 text-[11px]">{t.perk}</div>
@@ -1025,6 +1384,51 @@ function AffiliatesPanel() {
           ))}
         </div>
       </div>
+
+      {/* Mobile affiliate detail sheet */}
+      {selected && (
+        <MobileDetailSheet title="Affiliate" onClose={() => setSelected(null)}>
+          <div className="space-y-6 pt-2">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-white/10 flex items-center justify-center text-xl font-bold text-white/50 flex-shrink-0">
+                {selected.name.charAt(0)}
+              </div>
+              <div>
+                <div className="text-white font-bold text-base">{selected.name}</div>
+                <div className="text-white/30 text-xs mt-0.5">{selected.company}</div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { l: 'Tier', v: <span style={{ color: tierColor[selected.tier] }}><StarIcon className="w-3.5 h-3.5 inline mr-0.5 -mt-0.5" />{selected.tier}</span> },
+                { l: 'Member Since', v: <span className="text-white/70">{selected.since}</span> },
+                { l: 'Total Referrals', v: <span className="text-white font-bold">{selected.referrals}</span> },
+                { l: 'Active Customers', v: <span className="text-white/70">{selected.active}</span> },
+                { l: 'Total Earned', v: <span className="text-white/70 font-mono">${selected.earned}</span> },
+                { l: 'Commissions Owed', v: <span className={selected.owed > 0 ? 'text-[#ffb74d] font-bold' : 'text-white/25'}>{selected.owed > 0 ? `$${selected.owed}` : '—'}</span> },
+              ].map(({ l, v }) => (
+                <div key={l}>
+                  <div className="text-[9px] tracking-[0.25em] uppercase text-white/25 mb-1.5">{l}</div>
+                  <div className="text-sm font-medium">{v}</div>
+                </div>
+              ))}
+            </div>
+            <div>
+              <div className="text-[9px] tracking-[0.25em] uppercase text-white/25 mb-1.5">Last Referral</div>
+              <div className="text-white/70 text-sm">{selected.lastReferral}</div>
+            </div>
+            <div>
+              <div className="text-[9px] tracking-[0.25em] uppercase text-white/25 mb-1.5">Referral Code</div>
+              <div className="flex items-center gap-3">
+                <code className="text-white/60 font-mono text-base tracking-widest">{selected.code}</code>
+                <button className="text-white/25 hover:text-white/60 transition-colors">
+                  <LinkIcon className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </MobileDetailSheet>
+      )}
     </div>
   );
 }
@@ -1420,9 +1824,13 @@ export default function SilvaStarDashboard() {
   const handleNav = (s: Section) => {
     setActiveSection(s);
     mainRef.current?.scrollTo({ top: 0 });
+    window.scrollTo(0, 0);
   };
 
-  useEffect(() => { mainRef.current?.scrollTo({ top: 0 }); }, [activeSection]);
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0 });
+    window.scrollTo(0, 0);
+  }, [activeSection]);
 
   return (
     <div className="min-h-screen bg-[#0d1117] flex font-sans">
