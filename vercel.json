@@ -73,6 +73,10 @@
       "destination": "/roa/index.html"
     },
     {
+      "source": "/silva-star/proposal",
+      "destination": "/silva-star-proposal.html"
+    },
+    {
       "source": "/((?!api|_next|static|sql|\\.well-known|@vite|@react-refresh|.*\\..*).*)",
       "destination": "/404.html"
     }
