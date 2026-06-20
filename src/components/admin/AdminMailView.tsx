@@ -121,7 +121,6 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showMoveMenu, setShowMoveMenu] = useState(false);
-  const [mailConfigured, setMailConfigured] = useState<boolean | null>(null);
 
   const PAGE_SIZE = 25;
   const contentRef = useRef<HTMLDivElement>(null);
@@ -175,8 +174,6 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
       setError(null);
       const data = await mailApi('folders');
       const foldersList = data.folders || [];
-      const isConfigured = data.configured !== false;
-      setMailConfigured(isConfigured);
 
       // Update cache
       foldersCache = { data: foldersList, timestamp: Date.now() };
@@ -192,7 +189,6 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
       }
     } catch (err: any) {
       console.warn('[Mail] Failed to load folders:', err);
-      setMailConfigured(false);
       setError(err.message || 'Failed to load folders');
     } finally {
       setLoading(false);
@@ -539,21 +535,8 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
         </button>
       </div>
 
-      {/* Mail not configured banner */}
-      {mailConfigured === false && (
-        <div className="bg-white/5 border-none p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-white/40 mt-0.5 shrink-0" />
-          <div>
-            <p className="text-white/70 text-sm font-medium">MAIL SERVICE UNAVAILABLE</p>
-            <p className="text-white/40 text-xs mt-1">
-              Zoho Mail OAuth credentials are missing or expired. Configure <code className="text-white/60">ZOHO_CLIENT_ID</code>, <code className="text-white/60">ZOHO_CLIENT_SECRET</code>, and <code className="text-white/60">ZOHO_REFRESH_TOKEN</code> in Vercel environment variables, or visit <code className="text-white/60">/api/mail/auth-url</code> to re-authorize.
-            </p>
-          </div>
-        </div>
-      )}
-
       {/* Error display */}
-      {error && mailConfigured !== false && (
+      {error && (
         <div className="bg-red-500/10 border-none p-4 flex items-center gap-3">
           <AlertCircle className="w-5 h-5 text-red-400" />
           <span className="text-red-400">{error}</span>
