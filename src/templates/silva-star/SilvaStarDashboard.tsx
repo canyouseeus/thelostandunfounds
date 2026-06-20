@@ -447,18 +447,18 @@ function OverviewPanel({ jobs, invoices, onCompleteJob, onMarkPaid }: {
   return (
     <div className="space-y-12">
       {/* KPI row */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-8">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-8">
         {[
-          { icon: <ClipboardDocumentListIcon className="w-5 h-5" />, label: "Today's Jobs",      value: String(todayJobs.length),          sub: `${todayJobs.filter(j=>j.status==='in-progress').length} in progress · ${todayJobs.filter(j=>j.status==='upcoming').length} upcoming` },
-          { icon: <CurrencyDollarIcon className="w-5 h-5" />,        label: 'This Week Revenue', value: '$2,650', sub: '↑ $380 vs last week' },
-          { icon: <ExclamationTriangleIcon className="w-5 h-5" />,   label: 'Outstanding',       value: `$${outstandingInvoices.reduce((s,i)=>s+i.amount,0)}`, sub: `${outstandingInvoices.length} invoices · oldest ${Math.max(...outstandingInvoices.map(i=>i.daysOut))}d` },
-          { icon: <CheckCircleIcon className="w-5 h-5" />,           label: 'Completion Rate',   value: '96%',    sub: '87 of 91 jobs this month' },
+          { icon: <ClipboardDocumentListIcon className="w-5 h-5" />, label: "Today's Jobs",      value: String(todayJobs.length),          sub: `${todayJobs.filter(j=>j.status==='in-progress').length} in prog · ${todayJobs.filter(j=>j.status==='upcoming').length} upcoming` },
+          { icon: <CurrencyDollarIcon className="w-5 h-5" />,        label: 'This Week Rev',     value: '$2,650', sub: '↑ $380 vs last week' },
+          { icon: <ExclamationTriangleIcon className="w-5 h-5" />,   label: 'Outstanding',       value: `$${outstandingInvoices.reduce((s,i)=>s+i.amount,0)}`, sub: `${outstandingInvoices.length} inv · oldest ${Math.max(...outstandingInvoices.map(i=>i.daysOut))}d` },
+          { icon: <CheckCircleIcon className="w-5 h-5" />,           label: 'Completion',         value: '96%',    sub: '87 of 91 this month' },
         ].map(card => (
           <div key={card.label}>
-            <div className="text-white/25 mb-3">{card.icon}</div>
-            <div className="text-4xl font-black text-white tabular-nums mb-1">{card.value}</div>
-            <div className="text-[9px] tracking-[0.25em] uppercase text-white/30">{card.label}</div>
-            <div className="text-[11px] text-white/20 mt-1.5">{card.sub}</div>
+            <div className="text-white/25 mb-2 sm:mb-3">{card.icon}</div>
+            <div className="text-3xl sm:text-4xl font-black text-white tabular-nums mb-1">{card.value}</div>
+            <div className="text-[9px] tracking-[0.2em] uppercase text-white/30">{card.label}</div>
+            <div className="text-[10px] sm:text-[11px] text-white/20 mt-1 sm:mt-1.5">{card.sub}</div>
           </div>
         ))}
       </div>
@@ -640,16 +640,18 @@ function OverviewPanel({ jobs, invoices, onCompleteJob, onMarkPaid }: {
       <div>
         <div className="flex items-start justify-between mb-5 flex-wrap gap-3">
           <SectionLabel eyebrow="Analytics" title="Performance" />
-          <div className="flex gap-1 p-1 bg-white/5 backdrop-blur-xl rounded-full">
-            {[{id:'jobs',label:'Jobs/Wk'},{id:'revenue',label:'Revenue'},{id:'aging',label:'Aging'},{id:'demand',label:'Demand'},{id:'mix',label:'Job Mix'}].map(({id,label}) => (
-              <button key={id} onClick={() => setChartTab(id)}
-                className={cn('px-3 py-1.5 text-[9px] font-black tracking-widest uppercase rounded-full transition-all duration-200', chartTab===id ? 'bg-white text-black' : 'text-white/40 hover:text-white hover:bg-white/10')}>
-                {label}
-              </button>
-            ))}
+          <div className="overflow-x-auto max-w-full">
+            <div className="flex gap-1 p-1 bg-white/5 backdrop-blur-xl rounded-full w-max">
+              {[{id:'jobs',label:'Jobs/Wk'},{id:'revenue',label:'Revenue'},{id:'aging',label:'Aging'},{id:'demand',label:'Demand'},{id:'mix',label:'Mix'}].map(({id,label}) => (
+                <button key={id} onClick={() => setChartTab(id)}
+                  className={cn('px-3 py-1.5 text-[9px] font-black tracking-widest uppercase rounded-full transition-all duration-200 whitespace-nowrap', chartTab===id ? 'bg-white text-black' : 'text-white/40 hover:text-white hover:bg-white/10')}>
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-        <div className="h-56">
+        <div className="h-56 w-full max-w-full overflow-hidden">
           {chartTab === 'jobs' && (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={jobsPerWeek} margin={{top:4,right:16,left:-20,bottom:0}}>
@@ -697,13 +699,18 @@ function OverviewPanel({ jobs, invoices, onCompleteJob, onMarkPaid }: {
             </ResponsiveContainer>
           )}
           {chartTab === 'mix' && (
-            <div className="h-full flex items-center justify-center gap-16">
-              <PieChart width={200} height={200}>
+            <div className="h-full flex items-center justify-center gap-6 sm:gap-16 overflow-hidden">
+              <PieChart width={160} height={160} className="flex-shrink-0 sm:hidden">
+                <Pie data={jobsByType} cx={76} cy={76} innerRadius={40} outerRadius={68} dataKey="value" strokeWidth={0}>
+                  {jobsByType.map(e=><Cell key={e.name} fill={e.color} />)}
+                </Pie>
+              </PieChart>
+              <PieChart width={200} height={200} className="flex-shrink-0 hidden sm:block">
                 <Pie data={jobsByType} cx={96} cy={96} innerRadius={52} outerRadius={88} dataKey="value" strokeWidth={0}>
                   {jobsByType.map(e=><Cell key={e.name} fill={e.color} />)}
                 </Pie>
               </PieChart>
-              <div className="space-y-5">
+              <div className="space-y-4 sm:space-y-5">
                 {jobsByType.map(t=>(
                   <div key={t.name} className="flex items-center gap-3">
                     <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{background:t.color}} />
@@ -771,28 +778,27 @@ function SchedulePanel({ jobs }: { jobs: Job[] }) {
     <div>
       <PanelHeader title="Schedule" sub="Upcoming service calendar · Austin, TX" />
       <div className="grid xl:grid-cols-3 gap-12">
-        <div className="xl:col-span-2 space-y-10">
+        <div className="xl:col-span-2 space-y-8 sm:space-y-10">
           {Object.entries(byDate).map(([date, dayJobs]) => (
             <div key={date}>
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center gap-3 mb-3">
                 <div className="text-xs font-bold text-white/50 uppercase tracking-widest">{date}</div>
                 <div className="text-[10px] text-white/20 px-2 py-0.5" style={{background:'rgba(255,255,255,0.04)'}}>{dayJobs.length} job{dayJobs.length!==1?'s':''}</div>
               </div>
               <div className="space-y-1">
                 {dayJobs.map(job => (
-                  <div key={job.id} className={cn('flex items-start gap-4 py-3 px-2 -mx-2 hover:bg-white/[0.02] transition-colors', job.status==='in-progress'&&'bg-white/[0.02]')}>
-                    <div className="w-16 flex-shrink-0 pt-0.5">
-                      <div className={cn('text-xs font-mono font-bold tabular-nums', job.status==='in-progress'?'text-[#4fc3f7]':'text-white/35')}>{job.time}</div>
+                  <div key={job.id} className={cn('flex items-start gap-3 py-3 px-2 -mx-2 hover:bg-white/[0.02] transition-colors', job.status==='in-progress'&&'bg-white/[0.02]')}>
+                    <div className="w-14 flex-shrink-0 pt-0.5">
+                      <div className={cn('text-[11px] font-mono font-bold tabular-nums', job.status==='in-progress'?'text-[#4fc3f7]':'text-white/35')}>{job.time}</div>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-white text-sm font-medium">{job.customer}</span>
                         <StatusBadge status={job.status} />
                       </div>
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className="flex items-center gap-1 text-[11px] text-white/30"><MapPinIcon className="w-3 h-3 flex-shrink-0" />{job.location}</span>
-                        <span className="text-[11px] text-white/20">{job.type}</span>
-                        <span className="text-[11px] font-mono text-white/20">${job.amount}</span>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
+                        <span className="flex items-center gap-1 text-[11px] text-white/30"><MapPinIcon className="w-3 h-3 flex-shrink-0" /><span className="truncate max-w-[130px] sm:max-w-none">{job.location}</span></span>
+                        <span className="text-[11px] text-white/20">{job.type} · <span className="font-mono">${job.amount}</span></span>
                       </div>
                     </div>
                     <a href={`tel:${job.phone}`} className="text-white/20 hover:text-white/50 transition-colors flex-shrink-0 pt-1"><PhoneIcon className="w-4 h-4" /></a>
@@ -802,7 +808,8 @@ function SchedulePanel({ jobs }: { jobs: Job[] }) {
             </div>
           ))}
         </div>
-        <div>
+        {/* Calendar + clock — desktop only, hidden on mobile to keep schedule list front-and-center */}
+        <div className="hidden xl:block">
           <div className="mb-3"><SectionLabel eyebrow="Service Calendar" title="Monthly View" /></div>
           <CalendarWidget interactive className="bg-transparent"
             dotsByDate={new Map([
@@ -1098,13 +1105,15 @@ function InvoicesPanel({ invoices, onMarkPaid }: { invoices: Invoice[]; onMarkPa
   return (
     <div>
       <PanelHeader title="Invoices" sub={`$${totalOwed} outstanding across ${outstanding.length} invoices`} />
-      <div className="flex gap-1 p-1 bg-white/5 rounded-full mb-6 w-fit">
-        {['all','outstanding','overdue','paid'].map(f=>(
-          <button key={f} onClick={()=>setFilter(f)}
-            className={cn('px-3 py-1.5 text-[9px] font-black tracking-widest uppercase rounded-full transition-all', filter===f?'bg-white text-black':'text-white/40 hover:text-white hover:bg-white/10')}>
-            {f} ({invoices.filter(i=>f==='all'?true:i.status===f).length})
-          </button>
-        ))}
+      <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 mb-6">
+        <div className="flex gap-1 p-1 bg-white/5 rounded-full w-max sm:w-fit">
+          {['all','outstanding','overdue','paid'].map(f=>(
+            <button key={f} onClick={()=>setFilter(f)}
+              className={cn('px-3 py-1.5 text-[9px] font-black tracking-widest uppercase rounded-full transition-all whitespace-nowrap', filter===f?'bg-white text-black':'text-white/40 hover:text-white hover:bg-white/10')}>
+              {f} ({invoices.filter(i=>f==='all'?true:i.status===f).length})
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Mobile cards */}
@@ -1238,7 +1247,7 @@ function FleetPanel() {
                 </button>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4">
               {[{l:'Capacity',v:truck.capacity},{l:'Mileage',v:truck.mileage},{l:'Next Service',v:truck.nextService}].map(row=>(
                 <div key={row.l}>
                   <div className="text-[9px] tracking-[0.2em] uppercase text-white/20 mb-0.5">{row.l}</div>
@@ -1284,17 +1293,17 @@ function AffiliatesPanel() {
   return (
     <div>
       <PanelHeader title="Affiliates" sub="Referral program · $10 commission per referred job (first 3 months)" />
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-8 mb-12">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-8 mb-10 sm:mb-12">
         {[
           {icon:<UserGroupIcon className="w-5 h-5"/>,label:'Partners',value:String(AFFILIATES.length)},
-          {icon:<GiftIcon className="w-5 h-5"/>,label:'Total Referrals',value:String(totalRefs)},
+          {icon:<GiftIcon className="w-5 h-5"/>,label:'Referrals',value:String(totalRefs)},
           {icon:<BanknotesIcon className="w-5 h-5"/>,label:'Total Earned',value:`$${totalEarned}`},
-          {icon:<ArrowTrendingUpIcon className="w-5 h-5"/>,label:'Commissions Owed',value:`$${totalOwed}`},
+          {icon:<ArrowTrendingUpIcon className="w-5 h-5"/>,label:'Owed',value:`$${totalOwed}`},
         ].map(card=>(
           <div key={card.label}>
-            <div className="text-white/25 mb-3">{card.icon}</div>
-            <div className="text-3xl font-black text-white tabular-nums mb-1">{card.value}</div>
-            <div className="text-[9px] tracking-[0.25em] uppercase text-white/30">{card.label}</div>
+            <div className="text-white/25 mb-2 sm:mb-3">{card.icon}</div>
+            <div className="text-2xl sm:text-3xl font-black text-white tabular-nums mb-1">{card.value}</div>
+            <div className="text-[9px] tracking-[0.2em] uppercase text-white/30">{card.label}</div>
           </div>
         ))}
       </div>
@@ -1458,12 +1467,12 @@ function SettingsPanel() {
 
       <div>
         <SectionLabel eyebrow="Company" title="Business Information" />
-        <div className="mt-6 grid grid-cols-2 gap-5">
-          <div className="col-span-2">
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div className="sm:col-span-2">
             <label className="block text-[9px] tracking-[0.25em] uppercase text-white/30 mb-1.5">Business Name</label>
             <input value={biz.name} onChange={e=>updBiz('name',e.target.value)} className={inputCls} />
           </div>
-          <div className="col-span-2">
+          <div className="sm:col-span-2">
             <label className="block text-[9px] tracking-[0.25em] uppercase text-white/30 mb-1.5">Street Address</label>
             <input value={biz.address} onChange={e=>updBiz('address',e.target.value)} className={inputCls} />
           </div>
@@ -1498,7 +1507,7 @@ function SettingsPanel() {
 
       <div>
         <SectionLabel eyebrow="Pricing" title="Service Rates" />
-        <div className="mt-6 grid grid-cols-2 gap-5">
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
           {[
             {k:'greyWaterGal',l:'Grey Water Rate ($/gal)'},
             {k:'grease',l:'Grease Disposal (flat $)'},
@@ -1551,6 +1560,27 @@ function WebmailPanel() {
   const inbox = EMAILS;
   const selectedEmail = inbox.find(e => e.id === selected);
 
+  const EmailDetailContent = ({ email }: { email: typeof EMAILS[0] }) => (
+    <div>
+      <div className="mb-4">
+        <div className="text-white font-bold text-base mb-1">{email.subject}</div>
+        <div className="flex items-center gap-3 text-[11px] text-white/30">
+          <span>From: {email.from}</span>
+          <span>·</span>
+          <span>{email.date}</span>
+        </div>
+      </div>
+      <div className="text-white/55 text-sm leading-relaxed">
+        {email.preview} Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.
+      </div>
+      <div className="flex gap-3 mt-6">
+        <button className="px-4 py-2 text-[9px] font-black tracking-widest uppercase text-[#0d1117]" style={{ background: ICY }}>Reply</button>
+        <button className="px-4 py-2 text-[9px] font-black tracking-widest uppercase text-white/30 bg-white/5 hover:bg-white/10 transition-colors">Forward</button>
+        <button className="px-4 py-2 text-[9px] font-black tracking-widest uppercase text-white/30 bg-white/5 hover:bg-white/10 transition-colors">Archive</button>
+      </div>
+    </div>
+  );
+
   return (
     <div>
       <PanelHeader title="Webmail" sub="info@silvastarwater.com"
@@ -1576,7 +1606,7 @@ function WebmailPanel() {
           {tab === 'drafts' && <div className="text-white/20 text-sm py-8 text-center">No drafts</div>}
           {tab === 'inbox' && inbox.map(email => (
             <button key={email.id} onClick={() => setSelected(email.id)}
-              className={cn('w-full text-left px-3 py-3 transition-colors hover:bg-white/[0.03]', selected === email.id && 'bg-white/[0.05]')}>
+              className={cn('w-full text-left px-3 py-3 transition-colors hover:bg-white/[0.03] active:bg-white/[0.07]', selected === email.id && 'bg-white/[0.05]')}>
               <div className="flex items-start justify-between gap-2 mb-1">
                 <span className={cn('text-xs font-medium', email.read ? 'text-white/50' : 'text-white')}>{email.from}</span>
                 <span className="text-[10px] text-white/20 whitespace-nowrap flex-shrink-0">{email.date}</span>
@@ -1591,36 +1621,28 @@ function WebmailPanel() {
           ))}
         </div>
 
-        {/* Email detail */}
-        <div className="xl:col-span-3">
+        {/* Email detail — desktop inline */}
+        <div className="hidden xl:block xl:col-span-3">
           {!selectedEmail && (
             <div className="flex flex-col items-center justify-center h-48 text-white/15">
               <EnvelopeIcon className="w-10 h-10 mb-3" />
               <span className="text-sm">Select a message</span>
             </div>
           )}
-          {selectedEmail && (
-            <div>
-              <div className="mb-4">
-                <div className="text-white font-bold text-base mb-1">{selectedEmail.subject}</div>
-                <div className="flex items-center gap-3 text-[11px] text-white/30">
-                  <span>From: {selectedEmail.from}</span>
-                  <span>·</span>
-                  <span>{selectedEmail.date}</span>
-                </div>
-              </div>
-              <div className="text-white/55 text-sm leading-relaxed">
-                {selectedEmail.preview} Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.
-              </div>
-              <div className="flex gap-3 mt-6">
-                <button className="px-4 py-2 text-[9px] font-black tracking-widest uppercase text-[#0d1117]" style={{ background: ICY }}>Reply</button>
-                <button className="px-4 py-2 text-[9px] font-black tracking-widest uppercase text-white/30 bg-white/5 hover:bg-white/10 transition-colors">Forward</button>
-                <button className="px-4 py-2 text-[9px] font-black tracking-widest uppercase text-white/30 bg-white/5 hover:bg-white/10 transition-colors">Archive</button>
-              </div>
-            </div>
-          )}
+          {selectedEmail && <EmailDetailContent email={selectedEmail} />}
         </div>
       </div>
+
+      {/* Email detail — mobile/tablet slide-up sheet (hidden at xl where inline detail shows) */}
+      {selectedEmail && (
+        <div className="xl:hidden">
+          <MobileDetailSheet title="Message" onClose={() => setSelected(null)}>
+            <div className="pt-2">
+              <EmailDetailContent email={selectedEmail} />
+            </div>
+          </MobileDetailSheet>
+        </div>
+      )}
     </div>
   );
 }
@@ -1643,14 +1665,14 @@ function NewsletterPanel() {
       />
 
       {/* KPI row */}
-      <div className="grid grid-cols-3 gap-8 mb-12">
+      <div className="grid grid-cols-3 gap-4 sm:gap-8 mb-10 sm:mb-12">
         {[
           { label: 'Subscribers', value: String(totalSubs) },
           { label: 'Avg Open Rate', value: `${avgOpen}%` },
           { label: 'Campaigns Sent', value: String(sent.length) },
         ].map(k => (
           <div key={k.label}>
-            <div className="text-3xl font-black text-white tabular-nums mb-1">{k.value}</div>
+            <div className="text-2xl sm:text-3xl font-black text-white tabular-nums mb-1">{k.value}</div>
             <div className="text-[9px] tracking-[0.25em] uppercase text-white/30">{k.label}</div>
           </div>
         ))}
@@ -1673,7 +1695,7 @@ function NewsletterPanel() {
                 placeholder="Write your message to customers and partners..."
                 rows={5} className="w-full bg-white/5 text-white text-sm px-3 py-2.5 focus:outline-none placeholder:text-white/20 resize-none" />
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               <button onClick={() => setComposing(false)}
                 className="px-5 py-2 text-[9px] font-black tracking-widest uppercase text-[#0d1117]" style={{ background: ICY }}>
                 Send to {totalSubs} subscribers
@@ -1692,7 +1714,44 @@ function NewsletterPanel() {
 
       {/* Campaign list */}
       <SectionLabel eyebrow="History" title="Campaigns" />
-      <table className="w-full text-sm mt-5">
+
+      {/* Mobile campaign cards */}
+      <div className="sm:hidden space-y-2 mt-5">
+        {CAMPAIGNS.map(c => (
+          <div key={c.id} className="p-4 bg-white/5">
+            <div className="flex items-start justify-between gap-2 mb-3">
+              <div className="flex-1 min-w-0">
+                <div className="text-white/80 text-sm font-medium leading-snug">{c.subject}</div>
+                <div className="text-white/25 text-[10px] font-mono mt-1">{c.sentDate ?? 'Not sent'}</div>
+              </div>
+              <StatusBadge status={c.status} />
+            </div>
+            {c.openRate != null ? (
+              <div className="flex items-center gap-6 text-[11px]">
+                <div>
+                  <span className="text-white/25 mr-1">Sent to</span>
+                  <span className="text-white/60 tabular-nums">{c.recipients}</span>
+                </div>
+                <div>
+                  <span className="text-white/25 mr-1">Opens</span>
+                  <span className="text-white/60 tabular-nums">{c.opens}</span>
+                </div>
+                <div>
+                  <span className="font-bold tabular-nums" style={{ color: c.openRate >= 60 ? '#81c784' : c.openRate >= 50 ? '#fff176' : '#ffb74d' }}>
+                    {c.openRate}%
+                  </span>
+                  <span className="text-white/25 ml-1">open rate</span>
+                </div>
+              </div>
+            ) : (
+              <div className="text-white/20 text-[11px]">{c.recipients ? `${c.recipients} recipients` : 'Draft — not yet sent'}</div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop table */}
+      <table className="hidden sm:table w-full text-sm mt-5">
         <thead>
           <tr>{['Subject', 'Status', 'Date', 'Recipients', 'Opens', 'Open Rate'].map(h => (
             <th key={h} className="pb-3 text-left text-[9px] tracking-[0.25em] uppercase text-white/20 font-medium pr-4">{h}</th>
@@ -1833,7 +1892,7 @@ export default function SilvaStarDashboard() {
   }, [activeSection]);
 
   return (
-    <div className="min-h-screen bg-[#0d1117] flex font-sans">
+    <div className="min-h-screen bg-[#0d1117] flex font-sans overflow-x-hidden">
 
       {/* Sidebar – desktop */}
       <div className="hidden lg:block flex-shrink-0" style={{ width: 256 }}>
@@ -1858,7 +1917,7 @@ export default function SilvaStarDashboard() {
       {modal === 'complete'   && <CompleteJobsModal onClose={() => setModal(null)} jobs={jobs} onComplete={markJobsComplete} />}
 
       {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
         <header className="sticky top-0 z-20 bg-[#0d1117]/90 backdrop-blur-md h-14 flex items-center px-4 sm:px-6 gap-4 flex-shrink-0">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-white/40 hover:text-white">
             <Bars3Icon className="w-5 h-5" />
@@ -1884,7 +1943,7 @@ export default function SilvaStarDashboard() {
           </div>
         </header>
 
-        <main ref={mainRef} className="flex-1 px-4 sm:px-6 py-8 overflow-y-auto">
+        <main ref={mainRef} className="flex-1 px-4 sm:px-6 py-8 overflow-y-auto overflow-x-hidden">
           {activeSection === 'overview'   && <OverviewPanel jobs={jobs} invoices={invoices} onCompleteJob={id=>markJobsComplete([id])} onMarkPaid={markInvoicePaid} />}
           {activeSection === 'schedule'   && <SchedulePanel jobs={jobs} />}
           {activeSection === 'jobs'       && <JobsPanel jobs={jobs} onCompleteJob={id=>markJobsComplete([id])} />}
