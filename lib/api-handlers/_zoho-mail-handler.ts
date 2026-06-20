@@ -200,6 +200,13 @@ async function getZohoAccessToken(): Promise<string> {
 }
 
 async function getZohoAccountInfo(accessToken: string, fallbackEmail: string) {
+  // Use explicit account ID if configured (same as _zoho-email-utils.ts)
+  const envAccountId = process.env.ZOHO_ACCOUNT_ID;
+  if (envAccountId) {
+    console.log('[Zoho Auth] Using explicit ZOHO_ACCOUNT_ID:', envAccountId);
+    return { accountId: envAccountId, email: fallbackEmail };
+  }
+
   try {
     const response = await fetch(ZOHO_ACCOUNTS_URL, {
       method: 'GET',

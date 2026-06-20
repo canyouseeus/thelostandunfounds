@@ -91,22 +91,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (req.method !== 'GET') {
           return res.status(405).json({ error: 'Method not allowed' });
         }
-        const MOCK_FOLDERS = [
-          { folderId: '1', folderName: 'Inbox', folderPath: 'Inbox', unreadCount: 0, messageCount: 0, folderType: 'Inbox' },
-          { folderId: '2', folderName: 'Sent', folderPath: 'Sent', unreadCount: 0, messageCount: 0, folderType: 'Sent' },
-          { folderId: '3', folderName: 'Trash', folderPath: 'Trash', unreadCount: 0, messageCount: 0, folderType: 'Trash' }
-        ];
-        try {
-          const result = await mailHandler.getFolders();
-          if (!result.success) {
-            console.warn('[Mail] getFolders failed, returning mock data:', result.error);
-            return res.status(200).json({ folders: MOCK_FOLDERS, configured: false });
-          }
-          return res.status(200).json({ folders: result.folders, configured: true });
-        } catch (foldersErr: any) {
-          console.warn('[Mail] folders endpoint threw unexpectedly:', foldersErr?.message);
-          return res.status(200).json({ folders: MOCK_FOLDERS, configured: false });
+        const result = await mailHandler.getFolders();
+        if (!result.success) {
+          console.error('[Mail] getFolders failed:', result.error);
+          return res.status(500).json({ error: result.error || 'Failed to fetch folders' });
         }
+        return res.status(200).json({ folders: result.folders });
       }
 
 
@@ -123,8 +113,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const result = await mailHandler.getMessages(folderId, limit, start);
         if (!result.success) {
-          console.warn('[Mail] getMessages failed, returning empty list:', result.error);
-          return res.status(200).json({ messages: [], total: 0 });
+          console.error('[Mail] getMessages failed:', result.error);
+          return res.status(500).json({ error: result.error || 'Failed to fetch messages' });
         }
         return res.status(200).json({
           messages: result.messages,
