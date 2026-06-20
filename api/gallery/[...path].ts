@@ -959,7 +959,7 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
             return res.status(404).json({ error: 'Gallery not found' });
         }
 
-        const galleryUrl = `https://www.thelostandunfounds.com/photos/${library.slug}`;
+        const galleryUrl = `https://www.thelostandunfounds.com/gallery/${library.slug}`;
         const auth = await getZohoAuthContext();
 
         const results = {
