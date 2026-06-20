@@ -781,7 +781,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 w-full overflow-x-hidden">
             {!isPhotographerView && (
                 <>
                     {/* Stats Grid - Only for Admin */}
@@ -866,7 +866,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                         <div className="bg-white p-2">
                             <PhotoIcon className="w-5 h-5 text-black" />
                         </div>
-                        <h2 className="text-xl md:text-2xl font-black text-white uppercase tracking-wide whitespace-nowrap flex items-center gap-3">
+                        <h2 className="text-xl md:text-2xl font-black text-white uppercase tracking-wide flex items-center gap-3 min-w-0">
                             {isPhotographerView ? 'My Galleries' : 'Gallery Management'}
                             {!isPhotographerView && pendingAppsCount > 0 && (
                                 <span className="flex items-center justify-center bg-red-500 text-white text-[10px] font-black h-5 w-5 rounded-full animate-pulse">
@@ -938,8 +938,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
             {/* Create/Edit Gallery Modal */}
             {
                 isManaged && (
-                    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 overflow-y-auto">
-                        <div className="bg-black/50 w-full max-w-2xl p-6 relative my-8 max-h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar rounded-none">
+                    <div className="fixed inset-0 z-[10000] flex items-start justify-center bg-black/90 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto overflow-x-hidden">
+                        <div className="bg-black/50 w-full max-w-2xl p-4 sm:p-6 relative my-4 sm:my-8 overflow-x-hidden custom-scrollbar rounded-none">
                             <button
                                 onClick={() => setIsManaged(false)}
                                 className="absolute top-4 right-4 text-white/40 hover:text-white"
@@ -947,8 +947,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                 <PlusIcon className="w-6 h-6 rotate-45" />
                             </button>
 
-                            <div className="flex items-center justify-between mb-6 pr-10">
-                                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                            <div className="flex items-start justify-between mb-6 pr-10 gap-2">
+                                <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2 min-w-0">
                                     {editingId ? <PencilIcon className="w-5 h-5 text-white/60" /> : <PlusIcon className="w-5 h-5 text-white/60" />}
                                     {editingId ? 'Edit Gallery Settings' : 'Create New Gallery'}
                                 </h2>
@@ -1024,30 +1024,22 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                         {pricingOptions.map((option, idx) => {
                                             const isEditing = editingPricingIdx === idx;
                                             return (
-                                                <div
-                                                    key={idx}
-                                                    className="grid items-center gap-4 bg-white/5 p-4 rounded-none w-full"
-                                                    style={{ gridTemplateColumns: 'minmax(180px, 1fr) 100px 120px 80px' }}
-                                                >
+                                                <div key={idx} className="bg-white/5 p-3 rounded-none w-full">
                                                     {isEditing ? (
-                                                        <>
-                                                            {/* Name Input */}
-                                                            <div>
-                                                                <input
-                                                                    type="text"
-                                                                    value={option.name}
-                                                                    onChange={(e) => {
-                                                                        const newOptions = [...pricingOptions];
-                                                                        newOptions[idx].name = e.target.value;
-                                                                        setPricingOptions(newOptions);
-                                                                    }}
-                                                                    placeholder="Option Name"
-                                                                    className="w-full bg-transparent text-sm text-white focus:outline-none pb-1 rounded-none"
-                                                                    autoFocus
-                                                                />
-                                                            </div>
-                                                            {/* Count Input */}
-                                                            <div className="text-center">
+                                                        <div className="flex flex-col gap-2">
+                                                            <input
+                                                                type="text"
+                                                                value={option.name}
+                                                                onChange={(e) => {
+                                                                    const newOptions = [...pricingOptions];
+                                                                    newOptions[idx].name = e.target.value;
+                                                                    setPricingOptions(newOptions);
+                                                                }}
+                                                                placeholder="Option Name"
+                                                                className="w-full bg-transparent text-sm text-white focus:outline-none pb-1 border-b border-white/10 rounded-none"
+                                                                autoFocus
+                                                            />
+                                                            <div className="flex items-center gap-2">
                                                                 <input
                                                                     type="number"
                                                                     value={option.photo_count}
@@ -1059,59 +1051,49 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                                     }}
                                                                     placeholder="Count"
                                                                     title="Number of photos (-1 for All)"
-                                                                    className="w-full bg-white/5 rounded-none px-2 py-1 text-xs text-center text-white font-mono focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                    className="w-20 bg-white/5 rounded-none px-2 py-1 text-xs text-center text-white font-mono focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                                 />
-                                                            </div>
-                                                            {/* Price Input */}
-                                                            <div className="flex items-center justify-center gap-1">
-                                                                <span className="text-xs text-white/40">$</span>
-                                                                <input
-                                                                    type="number"
-                                                                    step="0.01"
-                                                                    value={option.price}
-                                                                    onChange={(e) => {
-                                                                        const newOptions = [...pricingOptions];
-                                                                        const val = parseFloat(e.target.value);
-                                                                        newOptions[idx].price = isNaN(val) ? 0 : val;
-                                                                        setPricingOptions(newOptions);
-                                                                    }}
-                                                                    className="w-full bg-white/5 rounded-none px-2 py-1 text-xs text-white font-bold font-mono focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                                />
-                                                            </div>
-                                                            {/* Done Button */}
-                                                            <div className="flex justify-end">
+                                                                <div className="flex items-center gap-1 flex-1">
+                                                                    <span className="text-xs text-white/40">$</span>
+                                                                    <input
+                                                                        type="number"
+                                                                        step="0.01"
+                                                                        value={option.price}
+                                                                        onChange={(e) => {
+                                                                            const newOptions = [...pricingOptions];
+                                                                            const val = parseFloat(e.target.value);
+                                                                            newOptions[idx].price = isNaN(val) ? 0 : val;
+                                                                            setPricingOptions(newOptions);
+                                                                        }}
+                                                                        className="flex-1 bg-white/5 rounded-none px-2 py-1 text-xs text-white font-bold font-mono focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                    />
+                                                                </div>
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => setEditingPricingIdx(null)}
-                                                                    className="p-1.5 hover:bg-green-500/20 text-green-400 rounded-none transition-colors"
+                                                                    className="p-1.5 hover:bg-green-500/20 text-green-400 rounded-none transition-colors flex-shrink-0"
                                                                     title="Done"
                                                                 >
                                                                     <CheckCircleIcon className="w-4 h-4" />
                                                                 </button>
                                                             </div>
-                                                        </>
+                                                        </div>
                                                     ) : (
-                                                        <>
-                                                            {/* Name Display */}
-                                                            <div className="text-sm font-bold text-white truncate pr-2">
-                                                                {option.name || <span className="text-white/20 italic">No Name</span>}
-                                                            </div>
-                                                            {/* Count Display */}
-                                                            <div className="text-center pl-2">
-                                                                <div className="flex items-center justify-center gap-1">
-                                                                    <span className="text-[10px] text-white/40">Count:</span>
-                                                                    <span className="text-xs font-mono text-white/80">{option.photo_count === -1 ? 'ALL' : option.photo_count}</span>
+                                                        <div className="flex items-center gap-2 w-full min-w-0">
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="text-sm font-bold text-white truncate">
+                                                                    {option.name || <span className="text-white/20 italic">No Name</span>}
+                                                                </div>
+                                                                <div className="flex items-center gap-3 mt-0.5">
+                                                                    <span className="text-[10px] text-white/40 font-mono">
+                                                                        {option.photo_count === -1 ? 'ALL' : option.photo_count} photos
+                                                                    </span>
+                                                                    <span className="text-sm font-bold font-mono text-green-400">
+                                                                        ${option.price.toFixed(2)}
+                                                                    </span>
                                                                 </div>
                                                             </div>
-                                                            {/* Price Display */}
-                                                            <div className="text-center pl-2">
-                                                                <div className="flex items-center justify-center gap-1">
-                                                                    <span className="text-xs text-white/40">$</span>
-                                                                    <span className="text-sm font-bold font-mono text-green-400">{option.price.toFixed(2)}</span>
-                                                                </div>
-                                                            </div>
-                                                            {/* Action Buttons */}
-                                                            <div className="flex gap-1 justify-end pl-2">
+                                                            <div className="flex gap-1 flex-shrink-0">
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => setEditingPricingIdx(idx)}
@@ -1136,7 +1118,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                                     <TrashIcon className="w-4 h-4" />
                                                                 </button>
                                                             </div>
-                                                        </>
+                                                        </div>
                                                     )}
                                                 </div>
                                             );
