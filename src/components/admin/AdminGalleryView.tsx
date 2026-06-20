@@ -131,7 +131,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
             // 1. Get libraries (filtered by owner if photographer mode)
             let query = supabase
                 .from('photo_libraries')
-                .select('*, photos(count)')
+                .select('*')
                 .order('created_at', { ascending: false });
 
             if (isPhotographerView && user && !isAdminEmail(user.email || '')) {
@@ -142,22 +142,27 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
 
             if (libError) throw libError;
 
-            console.log('[loadGalleryStats] Raw libs from Supabase:', libs?.map(l => ({
-                name: l.name,
-                photos: l.photos,
-                rawCount: l.photos?.[0]?.count
-            })));
+            // Count photos per library with explicit queries (reliable regardless of FK schema)
+            const countsByLib: Record<string, number> = {};
+            if (libs && libs.length > 0) {
+                const countResults = await Promise.all(
+                    libs.map((lib: any) =>
+                        supabase
+                            .from('photos')
+                            .select('*', { count: 'exact', head: true })
+                            .eq('library_id', lib.id)
+                            .then(({ count }) => ({ id: lib.id, count: count || 0 }))
+                    )
+                );
+                countResults.forEach(({ id, count }: { id: string; count: number }) => {
+                    countsByLib[id] = count;
+                });
+            }
 
-            // Process libraries to flatten photo_count
-            const processedLibs = libs?.map(lib => ({
+            const processedLibs = (libs || []).map((lib: any) => ({
                 ...lib,
-                photo_count: lib.photos?.[0]?.count || 0
-            })) || [];
-
-            console.log('[loadGalleryStats] Processed libs photo counts:', processedLibs.map(l => ({
-                name: l.name,
-                photo_count: l.photo_count
-            })));
+                photo_count: countsByLib[lib.id] || 0
+            }));
 
             setLibraries(processedLibs);
 
@@ -667,11 +672,13 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
         try {
             info('Starting asset health check...');
 
-            // First, try to get an actual photo from the database
+            // First, try to get an actual photo from the database — use most recent image to avoid stale IDs
             const { data: photos, error: photoError } = await supabase
                 .from('photos')
                 .select('google_drive_file_id')
                 .not('google_drive_file_id', 'is', null)
+                .like('mime_type', 'image/%')
+                .order('created_at', { ascending: false })
                 .limit(1);
 
             if (photoError) {
@@ -938,8 +945,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
             {/* Create/Edit Gallery Modal */}
             {
                 isManaged && (
-                    <div className="fixed inset-0 z-[10000] bg-[#0d1117] overflow-y-auto animate-in fade-in duration-200">
-                        <div className="w-full min-h-screen p-6 sm:p-10 relative max-w-5xl mx-auto animate-in slide-in-from-bottom-4 duration-300">
+                    <div className="fixed inset-0 z-[10000] bg-black overflow-hidden animate-in fade-in duration-200">
+                        <div className="w-full h-full overflow-y-auto p-6 sm:p-10 relative max-w-5xl mx-auto animate-in slide-in-from-bottom-4 duration-300">
                             <button
                                 onClick={() => setIsManaged(false)}
                                 className="absolute top-4 right-4 p-2 text-white/40 hover:text-white hover:bg-white/10 transition-colors"
