@@ -27,7 +27,7 @@ const bodyContent = `
   </div>
 
   <p style="${EMAIL_STYLES.paragraph}">
-    To accept, reply with <strong style="color: #ffffff;">"approved"</strong> and we will send the deposit invoice within the hour. The deposit is $1,000 — balance due on launch day. Site goes live within 3 weeks of deposit clearing.
+    To accept, reply with <strong style="color: #ffffff;">“approved”</strong> and we will send the deposit invoice within the hour. The deposit is $1,000 — balance due on launch day. Site goes live within 3 weeks of deposit clearing.
   </p>
 
   <p style="${EMAIL_STYLES.paragraph}">
@@ -44,7 +44,7 @@ const bodyContent = `
 `
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') {
+  if (req.method !== 'POST' && req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
