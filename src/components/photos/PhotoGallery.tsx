@@ -389,6 +389,15 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         fetchDrivePhotos(library.slug);
     }, [library, loading]);
 
+    // Auto-open login modal when landing on a private gallery without being logged in
+    useEffect(() => {
+        if (loading) return;
+        if (!library?.is_private) return;
+        if (user) return;
+        setAuthMessage('This is a private gallery. Please log in to view your photos.');
+        setAuthModalOpen(true);
+    }, [library, user, loading]);
+
     async function fetchPurchasedAssets(signal?: AbortSignal) {
         // Check for logged in user OR guest email
         const userEmail = user?.email || localStorage.getItem('credit_email');
