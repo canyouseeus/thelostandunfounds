@@ -1,5 +1,6 @@
 import { google, drive_v3 } from 'googleapis';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createPrivateKey } from 'crypto';
 import {
     DEFAULT_VENUE_RADIUS_M,
     findVenueForFolder,
@@ -547,7 +548,7 @@ function normalizePrivateKey(raw: string): string {
 
     // Validate the key can be parsed; log diagnostics on failure (don't throw)
     try {
-        require('crypto').createPrivateKey(key);
+        createPrivateKey(key);
         console.log('[resolveCreds] Private key validated OK, total length:', key.length);
     } catch (e: any) {
         console.error('[resolveCreds] Private key validation warning:', e?.message);
