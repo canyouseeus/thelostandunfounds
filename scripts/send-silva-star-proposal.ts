@@ -17,7 +17,7 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const PROPOSAL_URL = 'https://www.thelostandunfounds.com/silva-star/proposal';
-const TO_EMAIL = 'thelostandunfounds@gmail.com';
+const TO_EMAIL = 'danielsilvaatx@gmail.com';
 const SUBJECT = 'YOUR PROPOSAL IS READY | SILVA STAR WATER SOLUTIONS × THE LOST+UNFOUNDS';
 
 const bodyContent = `
