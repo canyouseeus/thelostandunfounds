@@ -2,7 +2,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { EMAIL_STYLES } from '../../email-template.js'
 import { sendTransactionalEmail } from '../_resend-email-handler.js'
 
-const TO_EMAIL = 'danielsilvaatx@gmail.com'
+const CLIENT_EMAIL = 'danielsilvaatx@gmail.com'
+const TEST_EMAIL = 'thelostandunfounds@gmail.com'
 const SUBJECT = 'YOUR PROPOSAL IS READY | SILVA STAR WATER SOLUTIONS × THE LOST+UNFOUNDS'
 const PROPOSAL_URL = 'https://www.thelostandunfounds.com/silva-star/proposal'
 
@@ -47,19 +48,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const result = await sendTransactionalEmail({
-    to: TO_EMAIL,
-    subject: SUBJECT,
-    content: bodyContent,
-  })
+  const recipients = [CLIENT_EMAIL, TEST_EMAIL]
+  const results: Array<{ to: string; success: boolean; provider?: string; error?: string }> = []
 
-  if (result.success) {
-    return res.status(200).json({
-      success: true,
-      message: `Proposal email sent to ${TO_EMAIL} via ${result.provider}`,
-      id: result.id,
-    })
+  for (const to of recipients) {
+    const result = await sendTransactionalEmail({ to, subject: SUBJECT, content: bodyContent })
+    results.push({ to, success: result.success, provider: result.provider, error: result.error })
   }
 
-  return res.status(500).json({ success: false, error: result.error })
+  const allSuccess = results.every(r => r.success)
+  const status = allSuccess ? 200 : 207
+
+  return res.status(status).json({ success: allSuccess, results })
 }
