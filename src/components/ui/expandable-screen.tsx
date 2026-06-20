@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { cn } from './utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -59,14 +60,19 @@ export function ExpandableScreen({
       }
     };
 
-    if (isOpen) {
+    if (!isOpen) {
       document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
+      return () => document.removeEventListener('keydown', handleEscape);
     }
+
+    // Save existing overflow so callers (e.g. Admin) can independently lock scroll
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', handleEscape);
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = '';
+      document.body.style.overflow = prevOverflow;
     };
   }, [isOpen]);
 
@@ -87,49 +93,42 @@ export function ExpandableScreen({
   return (
     <ExpandableScreenContext.Provider value={value}>
       {trigger}
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/80 backdrop-blur-md z-40"
-              onClick={() => setIsOpen(false)}
-            />
-
-            {/* Expanded Screen */}
-            <motion.div
-              ref={screenRef}
-              layoutId={layoutId}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ type: 'spring', bounce: 0.2, duration: 0.3 }}
-              className={cn(
-                'fixed inset-0 z-[100]',
-                'bg-black/95 backdrop-blur-xl',
-                'shadow-2xl'
-              )}
-              style={{
-                borderRadius: contentRadius,
-              }}
-            >
-              {/* Close Button */}
-              <button
-                onClick={() => setIsOpen(false)}
-                className="absolute top-20 right-8 z-[110] p-2 bg-black/50 hover:bg-white/10 transition-colors rounded-none"
+      {createPortal(
+        <AnimatePresence>
+          {isOpen && (
+            <>
+              {/* Expanded Screen — sits above nav (z-[999]) */}
+              <motion.div
+                ref={screenRef}
+                layoutId={layoutId}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className={cn(
+                  'fixed inset-0 z-[99999]',
+                  'bg-black',
+                  'flex flex-col'
+                )}
+                style={{ borderRadius: contentRadius }}
               >
-                <XMarkIcon className="w-6 h-6 text-white" />
-              </button>
+                {/* Close Button */}
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="absolute top-6 right-6 z-10 p-2 hover:bg-white/10 transition-all duration-300 ease-out rounded-none group"
+                  aria-label="Close"
+                >
+                  <XMarkIcon className="w-6 h-6 text-white group-hover:scale-110 transition-transform duration-300" />
+                </button>
 
-              {/* Content */}
-              {content}
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+                {/* Content */}
+                {content}
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </ExpandableScreenContext.Provider>
   );
 }

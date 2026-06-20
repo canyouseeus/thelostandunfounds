@@ -48,7 +48,6 @@ import {
   PaperAirplaneIcon,
   CalendarIcon,
   FolderOpenIcon,
-  ArrowUpIcon,
   ArrowsPointingOutIcon,
   InboxIcon,
   PhotoIcon,
@@ -236,8 +235,14 @@ export default function Admin() {
   const [allUsers, setAllUsers] = useState<RecentUser[]>([]);
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
-  // Ref for scroll-to-top only
+  // Ref for page top
   const pageTopRef = useRef<HTMLDivElement>(null);
+
+  // Lock body scroll while admin page is mounted (no page scrolling on admin)
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
 
   // Which console panel is open (null = none)
   const [activePanelSection, setActivePanelSection] = useState<string | null>(null);
@@ -245,12 +250,6 @@ export default function Admin() {
   const openPanel = (id: string) => {
     setActivePanelSection(prev => (prev === id ? null : id));
   };
-
-  const scrollToTop = () => {
-    // Scroll to absolute top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
 
   const unreadAlertsCount = alerts.filter(a => !a.read).length;
 
@@ -1511,7 +1510,7 @@ export default function Admin() {
         canonicalPath="/admin" 
         noIndex={true} 
       />
-      <div ref={pageTopRef} className="min-h-screen bg-black text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-x-hidden">
+      <div ref={pageTopRef} className="min-h-screen bg-black text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-hidden">
         {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between gap-4">
@@ -1727,6 +1726,7 @@ export default function Admin() {
               {/* Section header */}
               {activePanelSection && (() => {
                 const sectionMeta: Record<string, { title: string; icon: React.ReactNode; extra?: React.ReactNode }> = {
+                  gallery:     { title: 'Gallery Management',       icon: <PhotoIcon className="w-5 h-5 text-white/40" /> },
                   blog:        { title: 'Blog Management',          icon: <BookOpenIcon className="w-5 h-5 text-white/40" /> },
                   newsletter:  { title: 'Newsletter Module',        icon: <EnvelopeIcon className="w-5 h-5 text-white/40" /> },
                   mail:        { title: 'Platform Webmail',         icon: <PaperAirplaneIcon className="w-5 h-5 text-white/40" /> },
@@ -1742,7 +1742,14 @@ export default function Admin() {
                 const meta = sectionMeta[activePanelSection];
                 if (!meta) return null;
                 return (
-                  <div className="flex flex-col mb-8 items-start">
+                  <div className="flex flex-col mb-8 items-start gap-4">
+                    <button
+                      onClick={() => setActivePanelSection(null)}
+                      className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-white/40 hover:text-white transition-all duration-300 ease-out group"
+                    >
+                      <ArrowLeftIcon className="w-3 h-3 group-hover:-translate-x-1 transition-transform duration-300" />
+                      Dashboard
+                    </button>
                     <div className="flex items-center gap-3">
                       {meta.icon}
                       <h2 className="text-lg font-black text-white tracking-widest uppercase">{meta.title}</h2>
@@ -1822,15 +1829,6 @@ export default function Admin() {
             </div>
           </ExpandableScreenContent>
         </ExpandableScreen>
-
-        {/* Floating Back to Top Button */}
-        <button
-          onClick={scrollToTop}
-          className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-10 h-10 bg-white/10 backdrop-blur-md flex items-center justify-center active:bg-white active:text-black md:hover:bg-white md:hover:text-black transition-all rounded-full"
-          title="Back to Top"
-        >
-          <ArrowUpIcon className="w-5 h-5" />
-        </button>
 
         {/* Side Panel for User Details */}
         <SidePanel
