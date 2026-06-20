@@ -113,6 +113,8 @@ export default async function handler(
         return await handleSendExistingPublicationEmails(req, res)
       case 'send-welcome-emails':
         return await handleSendWelcomeEmails(req, res)
+      case 'send-silva-star-proposal':
+        return await handleSendSilvaStarProposal(req, res)
       case 'secret-santa':
         return await handleSecretSanta(req, res)
       case 'affiliates':
@@ -175,6 +177,14 @@ async function handleSendExistingPublicationEmails(req: VercelRequest, res: Verc
 async function handleSendWelcomeEmails(req: VercelRequest, res: VercelResponse) {
   const handler = await import(`../../lib/api-handlers/_send-welcome-emails-handler.js?v=${Date.now()}`)
   return await handler.default(req, res)
+}
+
+/**
+ * Send Silva Star Proposal Email Handler
+ */
+async function handleSendSilvaStarProposal(req: VercelRequest, res: VercelResponse) {
+  const handler = await import('../../lib/api-handlers/admin/send-silva-star-proposal.js')
+  return handler.default(req, res)
 }
 
 /**
