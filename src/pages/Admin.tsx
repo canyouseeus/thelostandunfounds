@@ -1688,7 +1688,7 @@ export default function Admin() {
                 { id: 'submissions', icon: DocumentTextIcon, title: 'Submissions', badge: pendingSubmissions },
                 { id: 'bookings', icon: InboxIcon, title: 'Bookings' },
                 { id: 'calendar', icon: CalendarIcon, title: 'Calendar' },
-                { id: 'pricing', icon: CurrencyDollarIcon, title: 'Pricing' },
+                { id: 'pricing', icon: CurrencyDollarIcon, title: 'Products' },
                 { id: 'settings', icon: BoltIcon, title: 'Settings' }
               ].map((app) => (
                 <button
@@ -1727,7 +1727,6 @@ export default function Admin() {
               {/* Section header */}
               {activePanelSection && (() => {
                 const sectionMeta: Record<string, { title: string; icon: React.ReactNode; extra?: React.ReactNode }> = {
-                  gallery:     { title: 'Gallery Management',       icon: <PhotoIcon className="w-5 h-5 text-white/40" /> },
                   blog:        { title: 'Blog Management',          icon: <BookOpenIcon className="w-5 h-5 text-white/40" /> },
                   newsletter:  { title: 'Newsletter Module',        icon: <EnvelopeIcon className="w-5 h-5 text-white/40" /> },
                   mail:        { title: 'Platform Webmail',         icon: <PaperAirplaneIcon className="w-5 h-5 text-white/40" /> },
@@ -1737,7 +1736,7 @@ export default function Admin() {
                   events:      { title: 'Event Management',         icon: <CalendarIcon className="w-5 h-5 text-white/40" /> },
                   bookings:    { title: 'Booking Management',       icon: <CalendarIcon className="w-5 h-5 text-white/40" />, extra: <Link to="/admin/invoices" className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-tighter underline">Manage Invoices →</Link> },
                   calendar:    { title: 'Master Calendar',          icon: <CalendarIcon className="w-5 h-5 text-white/40" /> },
-                  pricing:     { title: 'Product Cost Management',  icon: <CurrencyDollarIcon className="w-5 h-5 text-white/40" /> },
+                  pricing:     { title: 'Product Management',       icon: <CurrencyDollarIcon className="w-5 h-5 text-white/40" /> },
                   settings:    { title: 'Platform Settings',        icon: <BoltIcon className="w-5 h-5 text-white/40" /> },
                 };
                 const meta = sectionMeta[activePanelSection];

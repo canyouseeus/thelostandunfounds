@@ -149,7 +149,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                     libs.map((lib: any) =>
                         supabase
                             .from('photos')
-                            .select('*', { count: 'exact', head: true })
+                            .select('id', { count: 'exact' })
                             .eq('library_id', lib.id)
                             .then(({ count }) => ({ id: lib.id, count: count || 0 }))
                     )
@@ -635,8 +635,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
             commercial_included: false,
         });
         setFilesData([]);
-        setInvitedEmails([]);
-        setOriginalInvitedEmails([]);
+        setInvitedEmails(['media@thelostandunfounds.com']);
+        setOriginalInvitedEmails(['media@thelostandunfounds.com']);
         setNewEmailInput('');
         setIsManaged(true);
     };
@@ -716,56 +716,8 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
             setHealthStatus('issues');
             error('Failed to verify asset health. Check network connection and API endpoints.');
         } finally {
-            try {
-                info('Resyncing all libraries with Google Drive...');
-                const syncRes = await fetch('/api/gallery/sync');
-                if (syncRes.ok) {
-                    const syncData = await syncRes.json();
-                    console.log('[checkAssetHealth] Sync response data:', syncData);
-                    // Check if any individual syncs failed
-                    const failedSyncs = syncData.results?.filter((r: any) => r.error) || [];
-                    const successfulSyncs = syncData.results?.filter((r: any) => !r.error) || [];
-                    console.log('[checkAssetHealth] Successful syncs:', successfulSyncs);
-
-                    if (failedSyncs.length > 0 && successfulSyncs.length === 0) {
-                        error(`Sync failed for all libraries. ${failedSyncs[0]?.error || 'Check Google Drive credentials.'}`);
-                    } else if (failedSyncs.length > 0) {
-                        const failedNames = failedSyncs.map((f: any) => f.slug).join(', ');
-                        info(`Partially synced. ${successfulSyncs.length} succeeded. Failed: ${failedNames}`); // Show which ones failed
-                    } else {
-                        const totalAdded = successfulSyncs.reduce((sum: number, r: any) => sum + (r.added || 0), 0);
-                        const totalDeleted = successfulSyncs.reduce((sum: number, r: any) => sum + (r.deleted || 0), 0);
-                        const totalPhotos = successfulSyncs.reduce((sum: number, r: any) => sum + (r.total || 0), 0);
-
-                        let msg = `Sync complete: ${totalPhotos} photos total.`;
-                        if (totalAdded > 0) msg += ` (${totalAdded} new added)`;
-                        if (totalDeleted > 0) msg += ` (${totalDeleted} removed)`;
-                        if (totalAdded === 0 && totalDeleted === 0) msg = `Sync complete: Archive is up to date (${totalPhotos} photos).`;
-
-                        success(msg);
-                    }
-                    // Small delay to ensure database commits before refresh
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    await loadGalleryStats(); // Refresh the list to show any new photo counts
-                } else {
-                    const text = await syncRes.text();
-                    let errData;
-                    try {
-                        errData = JSON.parse(text);
-                    } catch {
-                        // Strip HTML tags and whitespace so the toast shows readable text
-                        const stripped = text.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-                        errData = { error: `HTTP ${syncRes.status}`, body: stripped };
-                    }
-                    const bodySnippet = (errData.body || '').substring(0, 160);
-                    error(`Sync failed (${syncRes.status}): ${errData.error || errData.details || 'see console'}${bodySnippet ? ` — ${bodySnippet}` : ''}`);
-                    console.error('Sync failed during connection test:', syncRes.status, text);
-                }
-            } catch (syncErr: any) {
-                error(`Sync error: ${syncErr.message || 'Network error. Check connection.'}`);
-                console.error('Connection test sync error:', JSON.stringify(syncErr, null, 2));
-            }
-            setVerifying(false);
+            // Show result for 3 seconds then reset the button
+            setTimeout(() => setVerifying(false), 3000);
         }
     };
 
@@ -1181,13 +1133,16 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                             {invitedEmails.map((email, idx) => (
                                                 <div
                                                     key={idx}
-                                                    className={`flex items-center gap-1 px-2 py-1 text-xs font-mono ${originalInvitedEmails.includes(email)
-                                                        ? 'bg-white/10 text-white/60'
-                                                        : 'bg-emerald-500/20 text-emerald-400'
-                                                        }`}
+                                                    className={`flex items-center gap-1 px-2 py-1 text-xs font-mono ${
+                                                        email === 'media@thelostandunfounds.com'
+                                                            ? 'bg-white/10 text-white font-bold'
+                                                            : originalInvitedEmails.includes(email)
+                                                                ? 'bg-white/10 text-white/60'
+                                                                : 'bg-emerald-500/20 text-emerald-400'
+                                                    }`}
                                                 >
                                                     <span>{email}</span>
-                                                    {!originalInvitedEmails.includes(email) && (
+                                                    {!originalInvitedEmails.includes(email) && email !== 'media@thelostandunfounds.com' && (
                                                         <span className="text-[9px] uppercase ml-1 opacity-60">new</span>
                                                     )}
                                                     <button

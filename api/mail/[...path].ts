@@ -91,19 +91,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (req.method !== 'GET') {
           return res.status(405).json({ error: 'Method not allowed' });
         }
-        const result = await mailHandler.getFolders();
-        if (!result.success) {
-          // Fallback for development/missing env vars
-          console.warn('getFolders failed, returning mock data:', result.error);
-          return res.status(200).json({
-            folders: [
-              { folderId: '1', folderName: 'Inbox', unreadCount: 0 },
-              { folderId: '2', folderName: 'Sent', unreadCount: 0 },
-              { folderId: '3', folderName: 'Trash', unreadCount: 0 }
-            ]
-          });
+        const MOCK_FOLDERS = [
+          { folderId: '1', folderName: 'Inbox', folderPath: 'Inbox', unreadCount: 0, messageCount: 0, folderType: 'Inbox' },
+          { folderId: '2', folderName: 'Sent', folderPath: 'Sent', unreadCount: 0, messageCount: 0, folderType: 'Sent' },
+          { folderId: '3', folderName: 'Trash', folderPath: 'Trash', unreadCount: 0, messageCount: 0, folderType: 'Trash' }
+        ];
+        try {
+          const result = await mailHandler.getFolders();
+          if (!result.success) {
+            console.warn('[Mail] getFolders failed, returning mock data:', result.error);
+            return res.status(200).json({ folders: MOCK_FOLDERS, configured: false });
+          }
+          return res.status(200).json({ folders: result.folders, configured: true });
+        } catch (foldersErr: any) {
+          console.warn('[Mail] folders endpoint threw unexpectedly:', foldersErr?.message);
+          return res.status(200).json({ folders: MOCK_FOLDERS, configured: false });
         }
-        return res.status(200).json({ folders: result.folders });
       }
 
 
@@ -120,8 +123,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const result = await mailHandler.getMessages(folderId, limit, start);
         if (!result.success) {
-          console.error('getMessages error:', result.error);
-          return res.status(500).json({ error: result.error });
+          console.warn('[Mail] getMessages failed, returning empty list:', result.error);
+          return res.status(200).json({ messages: [], total: 0 });
         }
         return res.status(200).json({
           messages: result.messages,
