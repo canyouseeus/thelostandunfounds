@@ -189,6 +189,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return await handleSync(req, res);
         }
 
+        if (route === 'drive-list') {
+            return await handleDriveList(req, res);
+        }
+
         return res.status(404).json({
             error: 'Gallery route not found',
             debug: {
@@ -955,7 +959,7 @@ async function handleInvite(req: VercelRequest, res: VercelResponse) {
             return res.status(404).json({ error: 'Gallery not found' });
         }
 
-        const galleryUrl = `https://www.thelostandunfounds.com/photos/${library.slug}`;
+        const galleryUrl = `https://www.thelostandunfounds.com/gallery/${library.slug}`;
         const auth = await getZohoAuthContext();
 
         const results = {
@@ -1126,5 +1130,141 @@ async function handleSync(req: VercelRequest, res: VercelResponse) {
     } catch (err: any) {
         console.error('Sync route error:', err);
         return res.status(500).json({ error: 'Sync operation failed', details: err.message });
+    }
+}
+
+async function handleDriveList(req: VercelRequest, res: VercelResponse) {
+    try {
+        const slug = typeof req.query.slug === 'string' ? req.query.slug : null;
+        if (!slug) {
+            return res.status(400).json({ error: 'slug is required' });
+        }
+
+        // Verify user JWT from Authorization header
+        const authHeader = req.headers.authorization;
+        const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+        const ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+        let userEmail: string | null = null;
+        let userId: string | null = null;
+
+        if (token && ANON_KEY) {
+            const anonClient = createClient(SUPABASE_URL!, ANON_KEY);
+            const { data: { user } } = await anonClient.auth.getUser(token);
+            userEmail = user?.email?.toLowerCase() || null;
+            userId = user?.id || null;
+        }
+
+        // Fetch the library using service role to bypass RLS
+        const svcKey = SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+        if (!svcKey) return res.status(500).json({ error: 'Server configuration error' });
+        const adminClient = createClient(SUPABASE_URL!, svcKey);
+
+        const { data: library, error: libError } = await adminClient
+            .from('photo_libraries')
+            .select('id, name, slug, google_drive_folder_id, gdrive_folder_id, is_private, user_id, invited_emails')
+            .eq('slug', slug)
+            .eq('published', true)
+            .single();
+
+        if (libError || !library) {
+            return res.status(404).json({ error: 'Gallery not found' });
+        }
+
+        // Enforce access for private galleries
+        if (library.is_private) {
+            const adminEmails = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com'];
+            const invitedList = (library.invited_emails || '')
+                .split(',')
+                .map((e: string) => e.trim().toLowerCase())
+                .filter(Boolean);
+
+            const isOwner = userId && userId === library.user_id;
+            const isAdmin = userEmail && adminEmails.includes(userEmail);
+            const isInvited = userEmail && invitedList.includes(userEmail);
+
+            if (!isOwner && !isAdmin && !isInvited) {
+                return res.status(403).json({ error: 'Access denied' });
+            }
+        }
+
+        const folderId = library.google_drive_folder_id || library.gdrive_folder_id;
+        if (!folderId) {
+            return res.status(404).json({ error: 'No Drive folder configured for this gallery' });
+        }
+
+        // List files from Google Drive using service account
+        const saEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+        const saKey = (process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+
+        if (!saEmail || !saKey) {
+            return res.status(500).json({ error: 'Drive credentials not configured' });
+        }
+
+        const { google } = await import('googleapis');
+        const driveAuth = new google.auth.JWT({
+            email: saEmail,
+            key: saKey,
+            scopes: ['https://www.googleapis.com/auth/drive.readonly'],
+        });
+        const drive = google.drive({ version: 'v3', auth: driveAuth });
+
+        const photos: any[] = [];
+        let pageToken: string | undefined;
+
+        do {
+            const listRes: any = await drive.files.list({
+                q: `'${folderId}' in parents and trashed = false`,
+                fields: 'nextPageToken, files(id, name, mimeType, thumbnailLink, createdTime, imageMediaMetadata)',
+                pageSize: 1000,
+                pageToken,
+            });
+
+            for (const f of (listRes.data.files || [])) {
+                if (!f.mimeType?.startsWith('image/') && f.mimeType !== 'video/quicktime') continue;
+                if (!f.id) continue;
+
+                const title = (f.name || '').replace(/\.[^.]+$/, '');
+                const meta: Record<string, any> = { ...(f.imageMediaMetadata || {}) };
+
+                // Parse EXIF capture time
+                let createdAt = f.createdTime || new Date().toISOString();
+                const rawTime = meta.time as string | undefined;
+                if (rawTime) {
+                    const std = new Date(rawTime);
+                    if (!isNaN(std.getTime())) {
+                        createdAt = std.toISOString();
+                    } else {
+                        const parts = rawTime.match(/(\d{4}):(\d{2}):(\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
+                        if (parts) {
+                            const parsed = new Date(Date.UTC(
+                                parseInt(parts[1]), parseInt(parts[2]) - 1, parseInt(parts[3]),
+                                parseInt(parts[4]), parseInt(parts[5]), parseInt(parts[6]),
+                            ));
+                            if (!isNaN(parsed.getTime())) createdAt = parsed.toISOString();
+                        }
+                    }
+                    meta.time = createdAt;
+                    meta.date_taken = createdAt;
+                }
+                if (!meta.date_taken) meta.date_taken = createdAt;
+
+                photos.push({
+                    id: `drive-${f.id}`,
+                    google_drive_file_id: f.id,
+                    title,
+                    thumbnail_url: f.thumbnailLink?.replace(/=s220$/, '=s1200') || null,
+                    created_at: createdAt,
+                    library_id: library.id,
+                    metadata: meta,
+                });
+            }
+            pageToken = listRes.data.nextPageToken;
+        } while (pageToken);
+
+        return res.status(200).json({ photos });
+    } catch (err: any) {
+        console.error('[drive-list] Error:', err);
+        return res.status(500).json({ error: err.message });
     }
 }

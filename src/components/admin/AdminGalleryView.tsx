@@ -446,6 +446,26 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
         }
     };
 
+    const handleResendAllInvites = async () => {
+        if (!editingId || invitedEmails.length === 0) return;
+        if (!confirm(`Resend access emails to all ${invitedEmails.length} invited client(s)?`)) return;
+        try {
+            const res = await fetch('/api/gallery/invite', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ libraryId: editingId, emails: invitedEmails })
+            });
+            const data = await res.json();
+            if (data.succeeded?.length > 0) {
+                success(`Access emails resent to ${data.succeeded.length} client(s)`);
+            } else {
+                error('Failed to resend access emails');
+            }
+        } catch (err: any) {
+            error('Failed to resend access emails');
+        }
+    };
+
     const generateVideoThumbnail = (file: File): Promise<Blob | null> => {
         return new Promise((resolve) => {
             const video = document.createElement('video');
@@ -1228,6 +1248,15 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                     <p className="text-[10px] text-white/30 mt-2">
                                         Press Enter or click Add. New clients will receive an access link when you save.
                                     </p>
+                                    {invitedEmails.length > 0 && editingId && (
+                                        <button
+                                            type="button"
+                                            onClick={handleResendAllInvites}
+                                            className="mt-2 text-[10px] uppercase font-bold text-white/40 hover:text-white/80 tracking-widest transition-colors"
+                                        >
+                                            ↩ Resend Access Emails to All
+                                        </button>
+                                    )}
                                 </div>
 
                                 <div>
