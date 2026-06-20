@@ -171,7 +171,7 @@ export function ExpandableScreenContent({
   className,
 }: ExpandableScreenContentProps) {
   return (
-    <div className={cn('overflow-y-auto h-full p-6', className)}>
+    <div className={cn('flex-1 flex flex-col overflow-hidden', className)}>
       {children}
     </div>
   );

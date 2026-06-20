@@ -1722,8 +1722,10 @@ export default function Admin() {
           onOpenChange={(open) => { if (!open) setActivePanelSection(null); }}
         >
           <ExpandableScreenContent>
-            <div className="max-w-7xl mx-auto pt-14 pb-24">
-              {/* Section header */}
+            {/* Nav-menu pattern: fixed header + flex-1 scrollable content = stays in viewport */}
+            <div className="flex flex-col h-full w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+              {/* Fixed header — back button + section title, pr-16 clears the X button */}
               {activePanelSection && (() => {
                 const sectionMeta: Record<string, { title: string; icon: React.ReactNode; extra?: React.ReactNode }> = {
                   gallery:     { title: 'Gallery Management',       icon: <PhotoIcon className="w-5 h-5 text-white/40" /> },
@@ -1742,10 +1744,10 @@ export default function Admin() {
                 const meta = sectionMeta[activePanelSection];
                 if (!meta) return null;
                 return (
-                  <div className="flex flex-col mb-8 items-start gap-4">
+                  <div className="shrink-0 flex flex-col gap-3 pt-6 pb-4 pr-16">
                     <button
                       onClick={() => setActivePanelSection(null)}
-                      className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-white/40 hover:text-white transition-all duration-300 ease-out group"
+                      className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-white/40 hover:text-white transition-all duration-300 ease-out group w-fit"
                     >
                       <ArrowLeftIcon className="w-3 h-3 group-hover:-translate-x-1 transition-transform duration-300" />
                       Dashboard
@@ -1759,73 +1761,75 @@ export default function Admin() {
                 );
               })()}
 
-              {/* Section content */}
-              {activePanelSection === 'gallery' && (
-                <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Gallery</div>}>
-                  <AdminGalleryView onBack={() => setActivePanelSection(null)} />
-                </ErrorBoundary>
-              )}
-              {activePanelSection === 'blog' && (
-                <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Blog</div>}>
-                  <BlogManagement />
-                </ErrorBoundary>
-              )}
-              {activePanelSection === 'newsletter' && (
-                <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Newsletter</div>}>
-                  <NewsletterManagement />
-                </ErrorBoundary>
-              )}
-              {activePanelSection === 'mail' && (
-                <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Mail</div>}>
-                  <AdminMailView onBack={() => setActivePanelSection(null)} />
-                </ErrorBoundary>
-              )}
-              {activePanelSection === 'users' && (
-                <AdminUsersView
-                  users={allUsers}
-                  stats={stats}
-                  onSelectUser={(u) => { setSelectedUser(u); setSidePanelOpen(true); }}
-                  onBack={() => setActivePanelSection(null)}
-                />
-              )}
-              {activePanelSection === 'affiliates' && (
-                /* @ts-ignore */
-                <AdminAffiliates onBack={() => setActivePanelSection(null)} />
-              )}
-              {activePanelSection === 'submissions' && (
-                pendingSubmissions > 0 ? (
-                  <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Submissions</div>}>
-                    <BlogSubmissionReview />
+              {/* Content — fills remaining height, scrolls within itself */}
+              <div className="flex-1 min-h-0 overflow-y-auto pb-6">
+                {activePanelSection === 'gallery' && (
+                  <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Gallery</div>}>
+                    <AdminGalleryView onBack={() => setActivePanelSection(null)} />
                   </ErrorBoundary>
-                ) : (
-                  <div className="py-12 text-center">
-                    <p className="text-white/40 text-sm uppercase tracking-widest font-bold">No pending submissions</p>
-                  </div>
-                )
-              )}
-              {activePanelSection === 'events' && (
-                <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Events</div>}>
-                  <AdminEventsView onBack={() => setActivePanelSection(null)} />
-                </ErrorBoundary>
-              )}
-              {activePanelSection === 'bookings' && (
-                <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Bookings</div>}>
-                  <AdminBookingView />
-                </ErrorBoundary>
-              )}
-              {activePanelSection === 'calendar' && (
-                <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Calendar</div>}>
-                  <AdminCalendarView />
-                </ErrorBoundary>
-              )}
-              {activePanelSection === 'pricing' && (
-                <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Pricing</div>}>
-                  <ProductCostManagement />
-                </ErrorBoundary>
-              )}
-              {activePanelSection === 'settings' && (
-                <AdminSettingsView stats={stats} onBack={() => setActivePanelSection(null)} />
-              )}
+                )}
+                {activePanelSection === 'blog' && (
+                  <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Blog</div>}>
+                    <BlogManagement />
+                  </ErrorBoundary>
+                )}
+                {activePanelSection === 'newsletter' && (
+                  <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Newsletter</div>}>
+                    <NewsletterManagement />
+                  </ErrorBoundary>
+                )}
+                {activePanelSection === 'mail' && (
+                  <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Mail</div>}>
+                    <AdminMailView onBack={() => setActivePanelSection(null)} />
+                  </ErrorBoundary>
+                )}
+                {activePanelSection === 'users' && (
+                  <AdminUsersView
+                    users={allUsers}
+                    stats={stats}
+                    onSelectUser={(u) => { setSelectedUser(u); setSidePanelOpen(true); }}
+                    onBack={() => setActivePanelSection(null)}
+                  />
+                )}
+                {activePanelSection === 'affiliates' && (
+                  /* @ts-ignore */
+                  <AdminAffiliates onBack={() => setActivePanelSection(null)} />
+                )}
+                {activePanelSection === 'submissions' && (
+                  pendingSubmissions > 0 ? (
+                    <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Submissions</div>}>
+                      <BlogSubmissionReview />
+                    </ErrorBoundary>
+                  ) : (
+                    <div className="py-12 text-center">
+                      <p className="text-white/40 text-sm uppercase tracking-widest font-bold">No pending submissions</p>
+                    </div>
+                  )
+                )}
+                {activePanelSection === 'events' && (
+                  <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Events</div>}>
+                    <AdminEventsView onBack={() => setActivePanelSection(null)} />
+                  </ErrorBoundary>
+                )}
+                {activePanelSection === 'bookings' && (
+                  <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Bookings</div>}>
+                    <AdminBookingView />
+                  </ErrorBoundary>
+                )}
+                {activePanelSection === 'calendar' && (
+                  <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Calendar</div>}>
+                    <AdminCalendarView />
+                  </ErrorBoundary>
+                )}
+                {activePanelSection === 'pricing' && (
+                  <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Pricing</div>}>
+                    <ProductCostManagement />
+                  </ErrorBoundary>
+                )}
+                {activePanelSection === 'settings' && (
+                  <AdminSettingsView stats={stats} onBack={() => setActivePanelSection(null)} />
+                )}
+              </div>
             </div>
           </ExpandableScreenContent>
         </ExpandableScreen>
@@ -1919,47 +1923,51 @@ export default function Admin() {
             if (!open) setExpandedPost(null);
           }}
         >
-          {expandedPost && (
-            <div className="max-w-4xl mx-auto py-12 px-6">
-              <div className="mb-8">
-                <div className="flex items-center gap-3 mb-4">
-                  {'subdomain' in expandedPost && expandedPost.subdomain && (
-                    <span className="px-3 py-1 bg-white/10 text-white/80 border-none rounded-full text-sm">
-                      {expandedPost.subdomain}
-                    </span>
-                  )}
-                  <span className="text-white/60 text-sm">
-                    {expandedPost.published_at
-                      ? new Date(expandedPost.published_at).toLocaleDateString()
-                      : new Date(expandedPost.created_at).toLocaleDateString()}
-                  </span>
-                </div>
-                <h1 className="text-4xl font-bold text-white mb-6">{expandedPost.title}</h1>
-                {expandedPost.excerpt && (
-                  <p className="text-xl text-white/70 leading-relaxed mb-8">{expandedPost.excerpt}</p>
-                )}
-              </div>
+          <ExpandableScreenContent>
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              {expandedPost && (
+                <div className="max-w-4xl mx-auto py-12 px-6">
+                  <div className="mb-8">
+                    <div className="flex items-center gap-3 mb-4">
+                      {'subdomain' in expandedPost && expandedPost.subdomain && (
+                        <span className="px-3 py-1 bg-white/10 text-white/80 border-none rounded-full text-sm">
+                          {expandedPost.subdomain}
+                        </span>
+                      )}
+                      <span className="text-white/60 text-sm">
+                        {expandedPost.published_at
+                          ? new Date(expandedPost.published_at).toLocaleDateString()
+                          : new Date(expandedPost.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <h1 className="text-4xl font-bold text-white mb-6">{expandedPost.title}</h1>
+                    {expandedPost.excerpt && (
+                      <p className="text-xl text-white/70 leading-relaxed mb-8">{expandedPost.excerpt}</p>
+                    )}
+                  </div>
 
-              <div className="prose prose-invert max-w-none">
-                <div className="p-6 bg-white/5 rounded-none">
-                  <p className="text-white/60 italic">
-                    Full content preview is not available in this quick view.
-                    <a
-                      href={'subdomain' in expandedPost
-                        ? `/blog/${expandedPost.subdomain}/${expandedPost.slug}`
-                        : `/thelostandunfounds/${expandedPost.slug}`
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-white underline ml-1"
-                    >
-                      Open full article
-                    </a>
-                  </p>
+                  <div className="prose prose-invert max-w-none">
+                    <div className="p-6 bg-white/5 rounded-none">
+                      <p className="text-white/60 italic">
+                        Full content preview is not available in this quick view.
+                        <a
+                          href={'subdomain' in expandedPost
+                            ? `/blog/${expandedPost.subdomain}/${expandedPost.slug}`
+                            : `/thelostandunfounds/${expandedPost.slug}`
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-white underline ml-1"
+                        >
+                          Open full article
+                        </a>
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
-          )}
+          </ExpandableScreenContent>
         </ExpandableScreen>
 
         {/* Expanded Card Overlay for Mobile */}
