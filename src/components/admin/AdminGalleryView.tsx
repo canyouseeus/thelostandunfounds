@@ -938,13 +938,14 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
             {/* Create/Edit Gallery Modal */}
             {
                 isManaged && (
-                    <div className="fixed inset-0 z-[10000] flex items-start justify-center bg-black/90 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto overflow-x-hidden">
-                        <div className="bg-black/50 w-full max-w-2xl p-4 sm:p-6 relative my-4 sm:my-8 overflow-x-hidden custom-scrollbar rounded-none">
+                    <div className="fixed inset-0 z-[10000] bg-[#0d1117] overflow-y-auto animate-in fade-in duration-200">
+                        <div className="w-full min-h-screen p-6 sm:p-10 relative max-w-5xl mx-auto animate-in slide-in-from-bottom-4 duration-300">
                             <button
                                 onClick={() => setIsManaged(false)}
-                                className="absolute top-4 right-4 text-white/40 hover:text-white"
+                                className="absolute top-4 right-4 p-2 text-white/40 hover:text-white hover:bg-white/10 transition-colors"
+                                aria-label="Close"
                             >
-                                <PlusIcon className="w-6 h-6 rotate-45" />
+                                <XMarkIcon className="w-6 h-6" />
                             </button>
 
                             <div className="flex items-start justify-between mb-6 pr-10 gap-2">
