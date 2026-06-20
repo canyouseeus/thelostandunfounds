@@ -57,6 +57,8 @@ interface PhotoLibrary {
     price: number;
     is_private?: boolean;
     owner_id?: string;
+    google_drive_folder_id?: string;
+    gdrive_folder_id?: string;
 }
 
 export interface PricingOption {
@@ -284,6 +286,9 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     // Buyer email (used for order receipts + entitlement lookup)
     const [buyerEmail, setBuyerEmail] = useState<string | null>(null);
 
+    // Drive-native gallery: true when the API returned 403 (not in invited_emails)
+    const [driveAccessDenied, setDriveAccessDenied] = useState(false);
+
     // Checkout modal state — picks BTC vs Fiat after email is collected
     const [paymentPickerOpen, setPaymentPickerOpen] = useState(false);
     const [checkoutPending, setCheckoutPending] = useState(false);
@@ -373,6 +378,17 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         return () => controller.abort();
     }, [user, library]);
 
+    // For private galleries with a Drive folder but no Supabase photos, load directly from Drive
+    useEffect(() => {
+        if (!library) return;
+        if (!library.is_private) return;
+        if (loading) return;
+        if (photos.length > 0) return;
+        const folderId = library.google_drive_folder_id || library.gdrive_folder_id;
+        if (!folderId) return;
+        fetchDrivePhotos(library.slug);
+    }, [library, loading]);
+
     async function fetchPurchasedAssets(signal?: AbortSignal) {
         // Check for logged in user OR guest email
         const userEmail = user?.email || localStorage.getItem('credit_email');
@@ -399,6 +415,31 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         } catch (err: any) {
             if (err.name === 'AbortError') return;
             console.error('Error fetching purchased assets:', err);
+        }
+    }
+
+    async function fetchDrivePhotos(slug: string) {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            if (!token) {
+                setDriveAccessDenied(true);
+                return;
+            }
+            const res = await fetch(`/api/gallery/drive-list?slug=${encodeURIComponent(slug)}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (res.status === 403) {
+                setDriveAccessDenied(true);
+                return;
+            }
+            if (!res.ok) return;
+            const data = await res.json();
+            if (Array.isArray(data.photos) && data.photos.length > 0) {
+                setPhotos(data.photos);
+            }
+        } catch (err) {
+            console.error('[drive-list] fetch error:', err);
         }
     }
 
@@ -1084,6 +1125,16 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                     >
                                         Log In
                                     </button>
+                                </>
+                            ) : driveAccessDenied ? (
+                                <>
+                                    <LockClosedIcon className="w-12 h-12 mx-auto text-white/20" />
+                                    <p className="text-zinc-500 uppercase tracking-widest font-bold">
+                                        Access denied.
+                                    </p>
+                                    <p className="text-white/40 text-sm max-w-md mx-auto">
+                                        You don't have permission to view this private gallery. Contact the photographer to request access.
+                                    </p>
                                 </>
                             ) : activeTab === 'assets' ? (
                                 <>
