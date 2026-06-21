@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kattitude Tattoo Studio — Fine Line. Bold Attitude.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #ffffff;
+      --bg-alt: #f5f5f5;
+      --bg-card: #f0f0f0;
+      --text: #0a0a0a;
+      --text-muted: #555555;
+      --pink: #E91E8C;
+      --pink-hover: #c8167a;
+      --gold: #B8860B;
+      --gold-hover: #9a7009;
+      --border: rgba(0,0,0,0.08);
+      --shadow: 0 4px 24px rgba(0,0,0,0.08);
+      --shadow-lg: 0 12px 48px rgba(0,0,0,0.14);
+      --nav-bg: rgba(255,255,255,0.92);
+    }
+    [data-theme="dark"] {
+      --bg: #0a0a0a;
+      --bg-alt: #111111;
+      --bg-card: #1a1a1a;
+      --text: #ffffff;
+      --text-muted: #999999;
+      --pink: #E91E8C;
+      --pink-hover: #ff2fa0;
+      --gold: #C9A227;
+      --gold-hover: #e0b830;
+      --border: rgba(255,255,255,0.08);
+      --shadow: 0 4px 24px rgba(0,0,0,0.4);
+      --shadow-lg: 0 12px 48px rgba(0,0,0,0.6);
+      --nav-bg: rgba(10,10,10,0.92);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      transition: background 0.3s ease, color 0.3s ease;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      height: 68px;
+      background: var(--nav-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      transition: background 0.3s;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+    }
+    .nav-logo img {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .nav-logo-text {
+      font-size: 0.9rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--pink); }
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .btn-nav {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.55rem 1.25rem;
+      background: var(--pink);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+    }
+    .btn-nav:hover { background: var(--pink-hover); transform: translateY(-1px); }
+    .theme-toggle {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      padding: 0.3rem;
+      transition: color 0.2s, transform 0.2s;
+      display: flex;
+      align-items: center;
+    }
+    .theme-toggle:hover { color: var(--pink); transform: rotate(15deg); }
+    .icon-sun, .icon-moon { pointer-events: none; }
+    [data-theme="light"] .icon-moon { display: none; }
+    [data-theme="dark"] .icon-sun { display: none; }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      nav { padding: 0 1.25rem; }
+    }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 8rem 1.5rem 6rem;
+      position: relative;
+      background: var(--bg);
+      overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .hero-bg-circle {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.12;
+    }
+    .hero-bg-circle:nth-child(1) {
+      width: 600px; height: 600px;
+      background: var(--pink);
+      top: -200px; left: -150px;
+    }
+    .hero-bg-circle:nth-child(2) {
+      width: 400px; height: 400px;
+      background: var(--gold);
+      bottom: -100px; right: -100px;
+    }
+    .hero-eyebrow {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--pink);
+      margin-bottom: 1.25rem;
+    }
+    .hero-logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 0 0 4px var(--pink), 0 0 0 8px var(--bg);
+    }
+    h1.hero-title {
+      font-size: clamp(2.8rem, 8vw, 6rem);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+    .hero-title span.pink { color: var(--pink); }
+    .hero-tagline {
+      font-size: clamp(0.9rem, 2vw, 1.15rem);
+      font-weight: 400;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 2.5rem;
+    }
+    .hero-cta-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .btn-primary {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 1rem 2.25rem;
+      background: var(--gold);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 20px rgba(184,134,11,0.3);
+    }
+    .btn-primary:hover {
+      background: var(--gold-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(184,134,11,0.45);
+    }
+    .btn-outline {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 1rem 2.25rem;
+      background: transparent;
+      color: var(--text);
+      border: 2px solid var(--text);
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, transform 0.15s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn-outline:hover {
+      background: var(--text);
+      color: var(--bg);
+      transform: translateY(-2px);
+    }
+    .hero-scroll-hint {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      color: var(--text-muted);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      animation: bounce 2s infinite;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(6px); }
+    }
+
+    /* ── SECTION SHARED ── */
+    section { padding: 6rem 1.5rem; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .section-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--pink);
+      margin-bottom: 0.75rem;
+    }
+    h2.section-title {
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.01em;
+      line-height: 1.05;
+      margin-bottom: 1.25rem;
+    }
+    .section-sub {
+      font-size: 1rem;
+      color: var(--text-muted);
+      max-width: 520px;
+      line-height: 1.65;
+    }
+
+    /* ── ARTISTS ── */
+    #artists { background: var(--bg-alt); }
+    .artists-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+    .artist-card {
+      background: var(--bg-card);
+      padding: 2rem;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .artist-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 4px; height: 100%;
+      background: var(--pink);
+    }
+    .artist-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+    }
+    .artist-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: var(--bg);
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+      box-shadow: 0 0 0 3px var(--pink);
+      overflow: hidden;
+    }
+    .artist-name {
+      font-size: 1.1rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.25rem;
+    }
+    .artist-specialty {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.75rem;
+    }
+    .artist-bio {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 1.25rem;
+    }
+    .artist-tag {
+      display: inline-block;
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.65rem;
+      background: var(--bg);
+      color: var(--text-muted);
+      margin: 0.2rem 0.2rem 0 0;
+    }
+    .artist-lead-badge {
+      position: absolute;
+      top: 1.25rem; right: 1.25rem;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 0.25rem 0.6rem;
+      background: var(--pink);
+      color: #fff;
+    }
+
+    /* ── SERVICES ── */
+    #services { background: var(--bg); }
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+    .service-card {
+      background: var(--bg-card);
+      padding: 2rem;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .service-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+    }
+    .service-icon {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+    .service-name {
+      font-size: 0.9rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+    .service-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+    .service-price {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    /* ── GALLERY ── */
+    #gallery { background: var(--bg-alt); }
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-top: 3rem;
+    }
+    @media (max-width: 600px) {
+      .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .gallery-item {
+      aspect-ratio: 1;
+      background: var(--bg-card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .gallery-item:hover { transform: scale(1.02); box-shadow: var(--shadow-lg); }
+    .gallery-item .gallery-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(233,30,140,0.7) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.25s;
+      display: flex;
+      align-items: flex-end;
+      padding: 1rem;
+    }
+    .gallery-item:hover .gallery-overlay { opacity: 1; }
+    .gallery-overlay-text {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #fff;
+    }
+    .gallery-placeholder-icon { font-size: 2rem; opacity: 0.3; }
+
+    /* ── BOOKING ── */
+    #booking { background: var(--bg); }
+    .booking-flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin: 3rem 0;
+    }
+    .flow-step {
+      background: var(--bg-card);
+      padding: 1.5rem 1.25rem;
+      text-align: center;
+      position: relative;
+      box-shadow: var(--shadow);
+    }
+    .flow-step-num {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--pink);
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 0.75rem;
+    }
+    .flow-step-icon { font-size: 1.4rem; margin-bottom: 0.5rem; display: block; }
+    .flow-step-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+    .flow-step-desc { font-size: 0.75rem; color: var(--text-muted); line-height: 1.5; }
+    .flow-step-ai {
+      position: absolute;
+      top: -8px; right: -8px;
+      background: var(--gold);
+      color: #fff;
+      font-size: 0.55rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.45rem;
+    }
+    .booking-cta-block {
+      background: var(--bg-card);
+      padding: 3rem;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+    .booking-cta-block h3 {
+      font-size: 1.5rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+    .booking-cta-block p { color: var(--text-muted); margin-bottom: 1.75rem; }
+
+    /* ── MERCH ── */
+    #merch { background: var(--bg-alt); }
+    .merch-inner {
+      display: flex;
+      align-items: center;
+      gap: 4rem;
+      flex-wrap: wrap;
+    }
+    .merch-text { flex: 1; min-width: 260px; }
+    .merch-preview {
+      flex: 1; min-width: 260px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+    }
+    .merch-item {
+      aspect-ratio: 1;
+      background: var(--bg-card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s;
+    }
+    .merch-item:hover { transform: scale(1.04); }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--bg-card);
+      padding: 4rem 1.5rem 2rem;
+      border-top: 1px solid var(--border);
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 3rem;
+      max-width: 1200px;
+      margin: 0 auto 3rem;
+    }
+    @media (max-width: 900px) {
+      .footer-grid { grid-template-columns: 1fr 1fr; gap: 2rem; }
+    }
+    @media (max-width: 560px) {
+      .footer-grid { grid-template-columns: 1fr; }
+    }
+    .footer-brand img { width: 52px; height: 52px; border-radius: 50%; margin-bottom: 1rem; }
+    .footer-brand-name {
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+    .footer-brand-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.65; }
+    .footer-col-title {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--pink);
+      margin-bottom: 1rem;
+    }
+    .footer-col ul { list-style: none; }
+    .footer-col ul li { margin-bottom: 0.6rem; }
+    .footer-col ul li a {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-col ul li a:hover { color: var(--text); }
+    .footer-hours-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 0.45rem;
+    }
+    .footer-hours-row .day { font-weight: 600; color: var(--text); }
+    .footer-bottom {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .footer-copy { font-size: 0.75rem; color: var(--text-muted); }
+    .footer-social {
+      display: flex;
+      gap: 0.75rem;
+    }
+    .social-btn {
+      width: 36px; height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: background 0.2s, color 0.2s;
+    }
+    .social-btn:hover { background: var(--pink); color: #fff; }
+
+    /* ── BANNER ── */
+    .preview-banner {
+      position: fixed;
+      bottom: 1.25rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 200;
+      background: var(--gold);
+      color: #fff;
+      padding: 0.65rem 1.5rem;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+      white-space: nowrap;
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 0 auto;
+      max-width: 1200px;
+    }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+  </style>
+</head>
+<body>
+
+<!-- PREVIEW BANNER -->
+<div class="preview-banner">⚡ Client Preview — Kattitude Tattoo Studio</div>
+
+<!-- NAV -->
+<nav>
+  <a href="#hero" class="nav-logo">
+    <img src="https://kattitudekollection.com/cdn/shop/files/Black_White_Circle_Bee_Icon_Food_Logo_-_1.png" alt="Kattitude Bee Logo" onerror="this.style.display='none'" />
+    <span class="nav-logo-text">Kattitude</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#artists">Artists</a></li>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#gallery">Gallery</a></li>
+    <li><a href="#merch">Merch</a></li>
+  </ul>
+  <div class="nav-right">
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+      <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a href="#booking" class="btn-nav">Book Now</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-bg">
+    <div class="hero-bg-circle"></div>
+    <div class="hero-bg-circle"></div>
+  </div>
+  <p class="hero-eyebrow reveal">Austin, Texas · Est. 2024</p>
+  <img class="hero-logo reveal" src="https://kattitudekollection.com/cdn/shop/files/Black_White_Circle_Bee_Icon_Food_Logo_-_1.png" alt="Kattitude Logo" onerror="this.style.display='none'" />
+  <h1 class="hero-title reveal">Kattitude<br><span class="pink">Tattoo</span><br>Studio</h1>
+  <p class="hero-tagline reveal">Fine Line. Bold Attitude.</p>
+  <div class="hero-cta-group reveal">
+    <a href="#booking" class="btn-primary">→ Book Your Session</a>
+    <a href="#gallery" class="btn-outline">View Portfolio</a>
+  </div>
+  <div class="hero-scroll-hint">
+    <span>Scroll</span>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+  </div>
+</section>
+
+<!-- ARTISTS -->
+<section id="artists">
+  <div class="container">
+    <p class="section-label reveal">Meet the Artists</p>
+    <h2 class="section-title reveal">The Team Behind<br>the Ink</h2>
+    <p class="section-sub reveal">Every piece is a collaboration. We take the time to understand your vision before we ever pick up a needle.</p>
+    <div class="artists-grid">
+      <div class="artist-card reveal">
+        <div class="artist-lead-badge">Lead Artist</div>
+        <div class="artist-avatar">
+          <img src="https://kattitudekollection.com/cdn/shop/files/Black_White_Circle_Bee_Icon_Food_Logo_-_1.png" alt="Kat" width="72" height="72" style="border-radius:50%;object-fit:cover;" onerror="this.innerHTML='🐝'" />
+        </div>
+        <div class="artist-name">Katherine "Kat" Herrera</div>
+        <div class="artist-specialty">Fine Line · Custom Design</div>
+        <p class="artist-bio">Founder & lead artist. Kat specializes in intricate fine-line work — botanicals, portraits, and abstract geometric designs that hold their crispness for life.</p>
+        <span class="artist-tag">Fine Line</span>
+        <span class="artist-tag">Botanicals</span>
+        <span class="artist-tag">Portraits</span>
+        <span class="artist-tag">Custom</span>
+      </div>
+      <div class="artist-card reveal">
+        <div class="artist-avatar" style="font-size:2rem;">💀</div>
+        <div class="artist-name">Alex Rivera</div>
+        <div class="artist-specialty">Neo-Traditional · Cover-Ups</div>
+        <p class="artist-bio">Alex brings a bold, illustrative style to the studio. Known for dramatic cover-up transformations and rich color work that pops on any skin tone.</p>
+        <span class="artist-tag">Neo-Trad</span>
+        <span class="artist-tag">Cover-Ups</span>
+        <span class="artist-tag">Color</span>
+      </div>
+      <div class="artist-card reveal">
+        <div class="artist-avatar" style="font-size:2rem;">🌙</div>
+        <div class="artist-name">Jordan Lee</div>
+        <div class="artist-specialty">Blackwork · Minimalist</div>
+        <p class="artist-bio">Precision minimalist tattoos with a graphic sensibility. Jordan's black-and-grey work is deeply influenced by architecture and sacred geometry.</p>
+        <span class="artist-tag">Blackwork</span>
+        <span class="artist-tag">Minimalist</span>
+        <span class="artist-tag">Geometric</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SERVICES -->
+<section id="services">
+  <div class="container">
+    <p class="section-label reveal">What We Do</p>
+    <h2 class="section-title reveal">Our Services</h2>
+    <p class="section-sub reveal">From your first tattoo to complex custom pieces — we handle it all under one roof.</p>
+    <div class="services-grid">
+      <div class="service-card reveal">
+        <span class="service-icon">✦</span>
+        <div class="service-name">Fine Line Tattoos</div>
+        <p class="service-desc">Delicate, precise linework for florals, script, portraits, and abstract compositions. Our specialty.</p>
+        <span class="service-price">From $150</span>
+      </div>
+      <div class="service-card reveal">
+        <span class="service-icon">🎨</span>
+        <div class="service-name">Custom Designs</div>
+        <p class="service-desc">Fully bespoke artwork created with you. Reference consultation, digital mockup, and final execution.</p>
+        <span class="service-price">From $250</span>
+      </div>
+      <div class="service-card reveal">
+        <span class="service-icon">🔄</span>
+        <div class="service-name">Cover-Ups</div>
+        <p class="service-desc">Transform old ink into something you love. Free consultation to assess feasibility and design options.</p>
+        <span class="service-price">From $300</span>
+      </div>
+      <div class="service-card reveal">
+        <span class="service-icon">💎</span>
+        <div class="service-name">Piercings</div>
+        <p class="service-desc">Professional ear, nose, and surface piercings using implant-grade titanium. Safe, sterile, stunning.</p>
+        <span class="service-price">From $60</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GALLERY -->
+<section id="gallery">
+  <div class="container">
+    <p class="section-label reveal">Portfolio</p>
+    <h2 class="section-title reveal">The Work</h2>
+    <p class="section-sub reveal">A glimpse at what we create every day. Follow <a href="https://instagram.com/kattitudetattoo" target="_blank" style="color:var(--pink);text-decoration:none;">@kattitudetattoo</a> for daily updates.</p>
+    <div class="gallery-grid">
+      <div class="gallery-item reveal" style="background:linear-gradient(135deg,#2a2a2a,#1a1a1a);">
+        <span class="gallery-placeholder-icon">🌿</span>
+        <div class="gallery-overlay"><span class="gallery-overlay-text">Fine Line Botanical</span></div>
+      </div>
+      <div class="gallery-item reveal" style="background:linear-gradient(135deg,#1e1e2e,#2e1e2e);">
+        <span class="gallery-placeholder-icon">🌙</span>
+        <div class="gallery-overlay"><span class="gallery-overlay-text">Moon & Stars Script</span></div>
+      </div>
+      <div class="gallery-item reveal" style="background:linear-gradient(135deg,#2e1a1a,#1a1a2e);">
+        <span class="gallery-placeholder-icon">🐝</span>
+        <div class="gallery-overlay"><span class="gallery-overlay-text">Bee Portrait</span></div>
+      </div>
+      <div class="gallery-item reveal" style="background:linear-gradient(135deg,#1a2e1a,#2e2a1a);">
+        <span class="gallery-placeholder-icon">🌸</span>
+        <div class="gallery-overlay"><span class="gallery-overlay-text">Cherry Blossom Sleeve</span></div>
+      </div>
+      <div class="gallery-item reveal" style="background:linear-gradient(135deg,#2a1a2e,#1e2e2a);">
+        <span class="gallery-placeholder-icon">⚡</span>
+        <div class="gallery-overlay"><span class="gallery-overlay-text">Geometric Lightning</span></div>
+      </div>
+      <div class="gallery-item reveal" style="background:linear-gradient(135deg,#2e2a1a,#1a2a2e);">
+        <span class="gallery-placeholder-icon">🦋</span>
+        <div class="gallery-overlay"><span class="gallery-overlay-text">Butterfly Cover-Up</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- BOOKING -->
+<section id="booking">
+  <div class="container">
+    <p class="section-label reveal">Book a Session</p>
+    <h2 class="section-title reveal">How It Works</h2>
+    <p class="section-sub reveal">Our AI-powered booking flow makes it easy to get an estimate, sign your waiver, and secure your spot — all before you walk in the door.</p>
+    <div class="booking-flow">
+      <div class="flow-step reveal">
+        <div class="flow-step-num">1</div>
+        <span class="flow-step-icon">🎨</span>
+        <div class="flow-step-label">Choose Artist</div>
+        <p class="flow-step-desc">Pick your preferred artist or let us match you by style.</p>
+      </div>
+      <div class="flow-step reveal">
+        <div class="flow-step-num">2</div>
+        <span class="flow-step-icon">✦</span>
+        <div class="flow-step-label">Select Style</div>
+        <p class="flow-step-desc">Fine line, blackwork, color, cover-up — or custom.</p>
+      </div>
+      <div class="flow-step reveal">
+        <div class="flow-step-num">3</div>
+        <span class="flow-step-icon">📸</span>
+        <div class="flow-step-label">Upload References</div>
+        <p class="flow-step-desc">Share inspiration photos, placement ideas, and size notes.</p>
+      </div>
+      <div class="flow-step reveal">
+        <div class="flow-step-num">4</div>
+        <span class="flow-step-icon">🤖</span>
+        <div class="flow-step-label">AI Estimate</div>
+        <p class="flow-step-desc">Get an instant price and time estimate from our AI.</p>
+        <div class="flow-step-ai">AI-Powered</div>
+      </div>
+      <div class="flow-step reveal">
+        <div class="flow-step-num">5</div>
+        <span class="flow-step-icon">📋</span>
+        <div class="flow-step-label">Sign Waiver</div>
+        <p class="flow-step-desc">Digital consent form — done in 60 seconds.</p>
+      </div>
+      <div class="flow-step reveal">
+        <div class="flow-step-num">6</div>
+        <span class="flow-step-icon">💳</span>
+        <div class="flow-step-label">Pay Deposit</div>
+        <p class="flow-step-desc">Secure your appointment with a small deposit. Applied to your total.</p>
+      </div>
+    </div>
+    <div class="booking-cta-block reveal">
+      <h3>Ready to Get Started?</h3>
+      <p>Book online in minutes. We'll confirm your appointment within 24 hours.</p>
+      <a href="#" class="btn-primary" onclick="return false;">→ Start Booking</a>
+    </div>
+  </div>
+</section>
+
+<!-- MERCH -->
+<section id="merch">
+  <div class="container">
+    <div class="merch-inner">
+      <div class="merch-text reveal">
+        <p class="section-label">Kattitude Kollection</p>
+        <h2 class="section-title">Wear the<br><span style="color:var(--pink)">Attitude</span></h2>
+        <p style="color:var(--text-muted);line-height:1.65;margin-bottom:2rem;">Our merch line is as bold as our ink. Tees, hoodies, accessories — all designed in-house by Kat and the crew.</p>
+        <a href="https://kattitudekollection.com" target="_blank" class="btn-primary">Shop Kattitude Kollection →</a>
+      </div>
+      <div class="merch-preview">
+        <div class="merch-item reveal">👕</div>
+        <div class="merch-item reveal">🧢</div>
+        <div class="merch-item reveal">🎒</div>
+        <div class="merch-item reveal">🐝</div>
+        <div class="merch-item reveal">💍</div>
+        <div class="merch-item reveal">🖤</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand reveal">
+      <img src="https://kattitudekollection.com/cdn/shop/files/Black_White_Circle_Bee_Icon_Food_Logo_-_1.png" alt="Kattitude" onerror="this.style.display='none'" />
+      <div class="footer-brand-name">Kattitude Tattoo Studio</div>
+      <p class="footer-brand-desc">Fine line. Bold attitude. Premium tattoo and piercing studio in Austin, Texas — owned and operated by Katherine "Kat" Herrera.</p>
+    </div>
+    <div class="footer-col reveal">
+      <div class="footer-col-title">Studio</div>
+      <ul>
+        <li><a href="#artists">Artists</a></li>
+        <li><a href="#services">Services</a></li>
+        <li><a href="#gallery">Portfolio</a></li>
+        <li><a href="#booking">Book Now</a></li>
+        <li><a href="https://kattitudekollection.com" target="_blank">Merch</a></li>
+      </ul>
+    </div>
+    <div class="footer-col reveal">
+      <div class="footer-col-title">Hours</div>
+      <div class="footer-hours-row"><span class="day">Mon–Wed</span><span>11am–7pm</span></div>
+      <div class="footer-hours-row"><span class="day">Thu–Fri</span><span>11am–8pm</span></div>
+      <div class="footer-hours-row"><span class="day">Saturday</span><span>10am–6pm</span></div>
+      <div class="footer-hours-row"><span class="day">Sunday</span><span>Closed</span></div>
+    </div>
+    <div class="footer-col reveal">
+      <div class="footer-col-title">Location</div>
+      <ul>
+        <li><a href="#">Austin, Texas</a></li>
+        <li><a href="https://instagram.com/kattitudetattoo" target="_blank">@kattitudetattoo</a></li>
+        <li><a href="#">studio@kattitude.com</a></li>
+        <li><a href="#">(512) 000-0000</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2024 Kattitude Tattoo Studio · Austin, TX · All rights reserved</span>
+    <div class="footer-social">
+      <a href="https://instagram.com/kattitudetattoo" target="_blank" class="social-btn" aria-label="Instagram">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/></svg>
+      </a>
+      <a href="https://kattitudekollection.com" target="_blank" class="social-btn" aria-label="Shop">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      </a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Dark mode toggle
+  const root = document.documentElement;
+  const toggle = document.getElementById('themeToggle');
+  const saved = localStorage.getItem('kattitude-theme') || 'light';
+  root.setAttribute('data-theme', saved);
+
+  toggle.addEventListener('click', () => {
+    const current = root.getAttribute('data-theme');
+    const next = current === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('kattitude-theme', next);
+  });
+
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => entry.target.classList.add('visible'), i * 60);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+  reveals.forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

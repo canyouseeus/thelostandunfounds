@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kattitude Studio — Admin Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f4f4f6;
+      --bg-panel: #ffffff;
+      --bg-card: #f9f9fb;
+      --bg-sidebar: #0a0a0a;
+      --sidebar-text: #cccccc;
+      --sidebar-active: #ffffff;
+      --text: #0a0a0a;
+      --text-muted: #666666;
+      --text-xmuted: #999999;
+      --pink: #E91E8C;
+      --pink-bg: rgba(233,30,140,0.08);
+      --gold: #B8860B;
+      --gold-bg: rgba(184,134,11,0.1);
+      --green: #16a34a;
+      --green-bg: rgba(22,163,74,0.1);
+      --blue: #2563eb;
+      --blue-bg: rgba(37,99,235,0.1);
+      --red: #dc2626;
+      --red-bg: rgba(220,38,38,0.1);
+      --border: rgba(0,0,0,0.07);
+      --shadow: 0 2px 12px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    [data-theme="dark"] {
+      --bg: #0a0a0a;
+      --bg-panel: #111111;
+      --bg-card: #1a1a1a;
+      --bg-sidebar: #070707;
+      --sidebar-text: #888888;
+      --sidebar-active: #ffffff;
+      --text: #ffffff;
+      --text-muted: #aaaaaa;
+      --text-xmuted: #666666;
+      --pink: #E91E8C;
+      --pink-bg: rgba(233,30,140,0.12);
+      --gold: #C9A227;
+      --gold-bg: rgba(201,162,39,0.12);
+      --green: #22c55e;
+      --green-bg: rgba(34,197,94,0.12);
+      --blue: #60a5fa;
+      --blue-bg: rgba(96,165,250,0.12);
+      --red: #f87171;
+      --red-bg: rgba(248,113,113,0.12);
+      --border: rgba(255,255,255,0.06);
+      --shadow: 0 2px 12px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      transition: background 0.3s, color 0.3s;
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 220px;
+      min-width: 220px;
+      background: var(--bg-sidebar);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 50;
+      transition: background 0.3s;
+    }
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 1.5rem 1.25rem 1.25rem;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .sidebar-logo img {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .sidebar-logo-text {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #ffffff;
+    }
+    .sidebar-section-label {
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.25);
+      padding: 1.25rem 1.25rem 0.5rem;
+    }
+    .sidebar-nav { flex: 1; padding: 0.5rem 0; }
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.65rem 1.25rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--sidebar-text);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      text-decoration: none;
+      letter-spacing: 0.02em;
+    }
+    .sidebar-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
+    .sidebar-item.active { background: rgba(233,30,140,0.15); color: #fff; }
+    .sidebar-item.active .sidebar-icon { color: var(--pink); }
+    .sidebar-icon { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
+    .sidebar-badge {
+      margin-left: auto;
+      background: var(--pink);
+      color: #fff;
+      font-size: 0.6rem;
+      font-weight: 700;
+      padding: 0.15rem 0.45rem;
+      border-radius: 20px;
+    }
+    .sidebar-footer {
+      padding: 1.25rem;
+      border-top: 1px solid rgba(255,255,255,0.07);
+    }
+    .sidebar-user {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+    .sidebar-user-avatar {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: var(--pink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      color: #fff;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .sidebar-user-name {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #fff;
+    }
+    .sidebar-user-role {
+      font-size: 0.62rem;
+      color: rgba(255,255,255,0.35);
+    }
+
+    /* ── MAIN ── */
+    .main {
+      margin-left: 220px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      background: var(--bg-panel);
+      padding: 0 1.75rem;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      transition: background 0.3s;
+    }
+    .topbar-left h1 {
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .topbar-left .topbar-sub {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.1rem;
+    }
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .topbar-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.55rem 1rem;
+      cursor: pointer;
+      border: none;
+      transition: background 0.2s, color 0.2s;
+      text-decoration: none;
+    }
+    .topbar-btn-primary { background: var(--pink); color: #fff; }
+    .topbar-btn-primary:hover { background: #c8167a; }
+    .topbar-btn-ghost { background: var(--bg-card); color: var(--text); }
+    .topbar-btn-ghost:hover { background: var(--border); }
+    .theme-toggle {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      padding: 0.35rem;
+      display: flex;
+      align-items: center;
+      transition: color 0.2s, transform 0.2s;
+    }
+    .theme-toggle:hover { color: var(--pink); transform: rotate(15deg); }
+    [data-theme="light"] .icon-moon { display: none; }
+    [data-theme="dark"] .icon-sun { display: none; }
+    .notif-btn {
+      position: relative;
+      background: var(--bg-card);
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      width: 36px; height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    .notif-btn:hover { background: var(--border); }
+    .notif-dot {
+      position: absolute;
+      top: 6px; right: 6px;
+      width: 8px; height: 8px;
+      background: var(--pink);
+      border-radius: 50%;
+      border: 2px solid var(--bg-panel);
+    }
+
+    /* ── CONTENT ── */
+    .content { padding: 1.75rem; display: flex; flex-direction: column; gap: 1.5rem; }
+
+    /* ── STATS CARDS ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+    @media (max-width: 1100px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px) { .stats-row { grid-template-columns: 1fr; } }
+    .stat-card {
+      background: var(--bg-panel);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .stat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+    .stat-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .stat-icon {
+      width: 34px; height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+    }
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 900;
+      line-height: 1;
+      margin-bottom: 0.4rem;
+    }
+    .stat-change {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .change-up { color: var(--green); }
+    .change-down { color: var(--red); }
+
+    .stat-card-pink .stat-icon { background: var(--pink-bg); color: var(--pink); }
+    .stat-card-gold .stat-icon { background: var(--gold-bg); color: var(--gold); }
+    .stat-card-green .stat-icon { background: var(--green-bg); color: var(--green); }
+    .stat-card-blue .stat-icon { background: var(--blue-bg); color: var(--blue); }
+
+    /* ── MAIN GRID ── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 1rem;
+    }
+    @media (max-width: 1000px) { .main-grid { grid-template-columns: 1fr; } }
+
+    /* ── PANEL ── */
+    .panel {
+      background: var(--bg-panel);
+      box-shadow: var(--shadow);
+    }
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-title {
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .panel-action {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--pink);
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+      transition: opacity 0.2s;
+    }
+    .panel-action:hover { opacity: 0.7; }
+    .panel-body { padding: 1.25rem 1.5rem; }
+
+    /* ── APPOINTMENTS ── */
+    .appt-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .appt-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      background: var(--bg-card);
+      transition: background 0.15s;
+      cursor: pointer;
+    }
+    .appt-row:hover { background: var(--border); }
+    .appt-time-block {
+      text-align: center;
+      min-width: 52px;
+    }
+    .appt-time {
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+    .appt-ampm {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .appt-divider {
+      width: 1px;
+      height: 36px;
+      background: var(--border);
+    }
+    .appt-client-name {
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 0.2rem;
+    }
+    .appt-details {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+    .appt-right { margin-left: auto; display: flex; align-items: center; gap: 0.75rem; }
+    .appt-artist-chip {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.25rem 0.6rem;
+      background: var(--pink-bg);
+      color: var(--pink);
+    }
+    .appt-status {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
+    .status-confirmed { background: var(--green); }
+    .status-pending { background: var(--gold); }
+    .status-new { background: var(--blue); }
+
+    /* ── QUICK ACTIONS ── */
+    .quick-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    .qa-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.9rem 1.1rem;
+      background: var(--bg-card);
+      border: none;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      transition: background 0.15s, transform 0.15s;
+      text-align: left;
+      width: 100%;
+    }
+    .qa-btn:hover { background: var(--border); transform: translateX(3px); }
+    .qa-icon {
+      width: 34px; height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      flex-shrink: 0;
+    }
+    .qa-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .qa-sub { font-size: 0.68rem; color: var(--text-muted); margin-top: 0.1rem; }
+    .qa-arrow { margin-left: auto; color: var(--text-xmuted); font-size: 0.9rem; }
+
+    /* ── SCHEDULE GRID ── */
+    .schedule-grid { margin-top: 0; }
+    .schedule-header-row {
+      display: grid;
+      grid-template-columns: 80px repeat(3, 1fr);
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .schedule-col-label {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 0.35rem 0;
+    }
+    .schedule-rows { display: flex; flex-direction: column; gap: 0.4rem; }
+    .schedule-row {
+      display: grid;
+      grid-template-columns: 80px repeat(3, 1fr);
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .schedule-time-label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-align: right;
+      padding-right: 0.5rem;
+    }
+    .schedule-slot {
+      padding: 0.5rem 0.6rem;
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-align: center;
+      letter-spacing: 0.04em;
+      line-height: 1.3;
+    }
+    .slot-booked-kat { background: var(--pink-bg); color: var(--pink); }
+    .slot-booked-alex { background: var(--blue-bg); color: var(--blue); }
+    .slot-booked-jordan { background: var(--gold-bg); color: var(--gold); }
+    .slot-free { background: var(--bg-card); color: var(--text-xmuted); }
+    .slot-break { background: var(--border); color: var(--text-xmuted); font-style: italic; }
+
+    /* ── ACTIVITY FEED ── */
+    .activity-feed { display: flex; flex-direction: column; }
+    .activity-item {
+      display: flex;
+      gap: 0.875rem;
+      padding: 0.875rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-dot-col { display: flex; flex-direction: column; align-items: center; gap: 0; }
+    .activity-dot {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+    }
+    .dot-pink { background: var(--pink-bg); color: var(--pink); }
+    .dot-green { background: var(--green-bg); color: var(--green); }
+    .dot-gold { background: var(--gold-bg); color: var(--gold); }
+    .dot-blue { background: var(--blue-bg); color: var(--blue); }
+    .activity-body { flex: 1; }
+    .activity-text { font-size: 0.8rem; line-height: 1.5; }
+    .activity-text strong { font-weight: 700; }
+    .activity-time {
+      font-size: 0.65rem;
+      color: var(--text-xmuted);
+      margin-top: 0.2rem;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── BOTTOM GRID ── */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 800px) { .bottom-grid { grid-template-columns: 1fr; } }
+
+    /* ── WAITLIST ── */
+    .waitlist-item {
+      display: flex;
+      align-items: center;
+      gap: 0.875rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .waitlist-item:last-child { border-bottom: none; }
+    .waitlist-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .waitlist-name { font-size: 0.82rem; font-weight: 700; }
+    .waitlist-detail { font-size: 0.7rem; color: var(--text-muted); }
+    .waitlist-right { margin-left: auto; text-align: right; }
+    .waitlist-days {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--gold);
+    }
+    .waitlist-date { font-size: 0.65rem; color: var(--text-xmuted); }
+
+    /* ── REVENUE CHART ── */
+    .revenue-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.5rem;
+      height: 120px;
+      padding-top: 0.5rem;
+    }
+    .rev-bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.35rem; }
+    .rev-bar-wrap {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      align-items: flex-end;
+    }
+    .rev-bar {
+      width: 100%;
+      background: var(--pink);
+      opacity: 0.85;
+      transition: opacity 0.2s;
+      min-height: 4px;
+    }
+    .rev-bar:hover { opacity: 1; }
+    .rev-bar.current { background: var(--gold); opacity: 1; }
+    .rev-day {
+      font-size: 0.6rem;
+      color: var(--text-xmuted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    /* ── PREVIEW BANNER ── */
+    .preview-banner {
+      position: fixed;
+      bottom: 1.25rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999;
+      background: var(--gold);
+      color: #fff;
+      padding: 0.6rem 1.4rem;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+      white-space: nowrap;
+    }
+
+    /* ── RESPONSIVE SIDEBAR ── */
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- PREVIEW BANNER -->
+<div class="preview-banner">⚡ Admin Preview — Kattitude Studio Dashboard</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <img src="https://kattitudekollection.com/cdn/shop/files/Black_White_Circle_Bee_Icon_Food_Logo_-_1.png" alt="Kattitude" onerror="this.style.display='none'" />
+    <span class="sidebar-logo-text">Kattitude</span>
+  </div>
+  <div class="sidebar-section-label">Main</div>
+  <nav class="sidebar-nav">
+    <a href="#" class="sidebar-item active">
+      <span class="sidebar-icon">◼</span> Dashboard
+    </a>
+    <a href="#" class="sidebar-item">
+      <span class="sidebar-icon">📅</span> Appointments
+      <span class="sidebar-badge">3</span>
+    </a>
+    <a href="#" class="sidebar-item">
+      <span class="sidebar-icon">👥</span> Clients
+    </a>
+    <a href="#" class="sidebar-item">
+      <span class="sidebar-icon">🎨</span> Artists
+    </a>
+    <div class="sidebar-section-label" style="margin-top:0.5rem;">Revenue</div>
+    <a href="#" class="sidebar-item">
+      <span class="sidebar-icon">💳</span> Invoices
+      <span class="sidebar-badge">2</span>
+    </a>
+    <a href="#" class="sidebar-item">
+      <span class="sidebar-icon">💰</span> Deposits
+    </a>
+    <a href="#" class="sidebar-item">
+      <span class="sidebar-icon">📊</span> Reports
+    </a>
+    <div class="sidebar-section-label" style="margin-top:0.5rem;">Studio</div>
+    <a href="#" class="sidebar-item">
+      <span class="sidebar-icon">⏳</span> Waitlist
+    </a>
+    <a href="#" class="sidebar-item">
+      <span class="sidebar-icon">🖼️</span> Portfolio
+    </a>
+    <a href="#" class="sidebar-item">
+      <span class="sidebar-icon">⚙️</span> Settings
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="sidebar-user-avatar">K</div>
+      <div>
+        <div class="sidebar-user-name">Kat Herrera</div>
+        <div class="sidebar-user-role">Studio Owner</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1>Dashboard</h1>
+      <div class="topbar-sub" id="topbarDate">Saturday, June 21, 2026</div>
+    </div>
+    <div class="topbar-right">
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+        <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <button class="notif-btn" aria-label="Notifications">
+        <div class="notif-dot"></div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </button>
+      <a href="#" class="topbar-btn topbar-btn-primary" onclick="return false;">+ New Booking</a>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat-card stat-card-pink">
+        <div class="stat-header">
+          <span class="stat-label">Today's Appts</span>
+          <div class="stat-icon">📅</div>
+        </div>
+        <div class="stat-value">3</div>
+        <div class="stat-change change-up">↑ 1 vs yesterday</div>
+      </div>
+      <div class="stat-card stat-card-gold">
+        <div class="stat-header">
+          <span class="stat-label">Revenue This Week</span>
+          <div class="stat-icon">💰</div>
+        </div>
+        <div class="stat-value">$2,450</div>
+        <div class="stat-change change-up">↑ 18% vs last week</div>
+      </div>
+      <div class="stat-card stat-card-green">
+        <div class="stat-header">
+          <span class="stat-label">Pending Deposits</span>
+          <div class="stat-icon">💳</div>
+        </div>
+        <div class="stat-value">$680</div>
+        <div class="stat-change" style="color:var(--text-muted);">4 bookings awaiting</div>
+      </div>
+      <div class="stat-card stat-card-blue">
+        <div class="stat-header">
+          <span class="stat-label">Active Clients</span>
+          <div class="stat-icon">👥</div>
+        </div>
+        <div class="stat-value">47</div>
+        <div class="stat-change change-up">↑ 6 this month</div>
+      </div>
+    </div>
+
+    <!-- MAIN GRID: APPOINTMENTS + SIDEBAR -->
+    <div class="main-grid">
+
+      <!-- LEFT: APPOINTMENTS -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Today's Appointments</span>
+          <button class="panel-action">View All →</button>
+        </div>
+        <div class="panel-body">
+          <div class="appt-list">
+            <div class="appt-row">
+              <div class="appt-time-block">
+                <div class="appt-time">11:00</div>
+                <div class="appt-ampm">AM</div>
+              </div>
+              <div class="appt-divider"></div>
+              <div>
+                <div class="appt-client-name">Mia Torres</div>
+                <div class="appt-details">Fine Line Floral · Left wrist · 2hr est.</div>
+              </div>
+              <div class="appt-right">
+                <span class="appt-artist-chip">Kat</span>
+                <div class="appt-status status-confirmed"></div>
+              </div>
+            </div>
+            <div class="appt-row">
+              <div class="appt-time-block">
+                <div class="appt-time">1:30</div>
+                <div class="appt-ampm">PM</div>
+              </div>
+              <div class="appt-divider"></div>
+              <div>
+                <div class="appt-client-name">Devon Park</div>
+                <div class="appt-details">Cover-Up Consultation · Upper arm · 1hr</div>
+              </div>
+              <div class="appt-right">
+                <span class="appt-artist-chip" style="background:var(--blue-bg);color:var(--blue);">Alex</span>
+                <div class="appt-status status-pending"></div>
+              </div>
+            </div>
+            <div class="appt-row">
+              <div class="appt-time-block">
+                <div class="appt-time">3:00</div>
+                <div class="appt-ampm">PM</div>
+              </div>
+              <div class="appt-divider"></div>
+              <div>
+                <div class="appt-client-name">Sarai Vega</div>
+                <div class="appt-details">Geometric Blackwork · Forearm · 3hr est.</div>
+              </div>
+              <div class="appt-right">
+                <span class="appt-artist-chip" style="background:var(--gold-bg);color:var(--gold);">Jordan</span>
+                <div class="appt-status status-new"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- STATUS LEGEND -->
+          <div style="display:flex;gap:1.25rem;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border);">
+            <div style="display:flex;align-items:center;gap:0.4rem;font-size:0.65rem;color:var(--text-muted);">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--green);"></div> Confirmed
+            </div>
+            <div style="display:flex;align-items:center;gap:0.4rem;font-size:0.65rem;color:var(--text-muted);">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--gold);"></div> Pending
+            </div>
+            <div style="display:flex;align-items:center;gap:0.4rem;font-size:0.65rem;color:var(--text-muted);">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--blue);"></div> New
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: QUICK ACTIONS + ACTIVITY -->
+      <div style="display:flex;flex-direction:column;gap:1rem;">
+        <!-- QUICK ACTIONS -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Quick Actions</span>
+          </div>
+          <div class="panel-body" style="padding-top:0.75rem;padding-bottom:0.75rem;">
+            <div class="quick-actions">
+              <button class="qa-btn" onclick="return false;">
+                <div class="qa-icon" style="background:var(--pink-bg);color:var(--pink);">📅</div>
+                <div>
+                  <div class="qa-label">New Booking</div>
+                  <div class="qa-sub">Schedule a client session</div>
+                </div>
+                <span class="qa-arrow">›</span>
+              </button>
+              <button class="qa-btn" onclick="return false;">
+                <div class="qa-icon" style="background:var(--gold-bg);color:var(--gold);">📄</div>
+                <div>
+                  <div class="qa-label">Send Invoice</div>
+                  <div class="qa-sub">2 drafts waiting</div>
+                </div>
+                <span class="qa-arrow">›</span>
+              </button>
+              <button class="qa-btn" onclick="return false;">
+                <div class="qa-icon" style="background:var(--blue-bg);color:var(--blue);">⏳</div>
+                <div>
+                  <div class="qa-label">View Waitlist</div>
+                  <div class="qa-sub">8 clients waiting</div>
+                </div>
+                <span class="qa-arrow">›</span>
+              </button>
+              <button class="qa-btn" onclick="return false;">
+                <div class="qa-icon" style="background:var(--green-bg);color:var(--green);">💬</div>
+                <div>
+                  <div class="qa-label">Send Reminder</div>
+                  <div class="qa-sub">3 appointments today</div>
+                </div>
+                <span class="qa-arrow">›</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- RECENT ACTIVITY -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Recent Activity</span>
+            <button class="panel-action">All →</button>
+          </div>
+          <div class="panel-body" style="padding-top:0;padding-bottom:0;">
+            <div class="activity-feed">
+              <div class="activity-item">
+                <div class="activity-dot dot-pink">📅</div>
+                <div class="activity-body">
+                  <div class="activity-text"><strong>Mia Torres</strong> booked Fine Line session with Kat</div>
+                  <div class="activity-time">2 hours ago</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-dot dot-green">💰</div>
+                <div class="activity-body">
+                  <div class="activity-text"><strong>$150 deposit</strong> received from Sarai Vega</div>
+                  <div class="activity-time">3 hours ago</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-dot dot-gold">✅</div>
+                <div class="activity-body">
+                  <div class="activity-text"><strong>Session complete</strong> — Cam Rodriguez · Blackwork sleeve</div>
+                  <div class="activity-time">Yesterday, 5:30pm</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-dot dot-blue">⭐</div>
+                <div class="activity-body">
+                  <div class="activity-text"><strong>5-star review</strong> from Priya Nair — "Kat is incredible"</div>
+                  <div class="activity-time">Yesterday, 4:15pm</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-dot dot-green">💰</div>
+                <div class="activity-body">
+                  <div class="activity-text"><strong>$320 payment</strong> received — Devon Park, cover-up session</div>
+                  <div class="activity-time">Yesterday, 2:00pm</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM GRID: SCHEDULE + WAITLIST -->
+    <div class="bottom-grid">
+
+      <!-- ARTIST SCHEDULE -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Artist Schedule — Today</span>
+          <button class="panel-action">Week View →</button>
+        </div>
+        <div class="panel-body schedule-grid">
+          <div class="schedule-header-row">
+            <div></div>
+            <div class="schedule-col-label" style="color:var(--pink);">Kat</div>
+            <div class="schedule-col-label" style="color:var(--blue);">Alex</div>
+            <div class="schedule-col-label" style="color:var(--gold);">Jordan</div>
+          </div>
+          <div class="schedule-rows">
+            <div class="schedule-row">
+              <div class="schedule-time-label">10am</div>
+              <div class="schedule-slot slot-free">—</div>
+              <div class="schedule-slot slot-free">—</div>
+              <div class="schedule-slot slot-free">—</div>
+            </div>
+            <div class="schedule-row">
+              <div class="schedule-time-label">11am</div>
+              <div class="schedule-slot slot-booked-kat">Mia T.<br>Fine Line</div>
+              <div class="schedule-slot slot-free">—</div>
+              <div class="schedule-slot slot-free">—</div>
+            </div>
+            <div class="schedule-row">
+              <div class="schedule-time-label">12pm</div>
+              <div class="schedule-slot slot-booked-kat">cont.</div>
+              <div class="schedule-slot slot-break">Lunch</div>
+              <div class="schedule-slot slot-break">Lunch</div>
+            </div>
+            <div class="schedule-row">
+              <div class="schedule-time-label">1pm</div>
+              <div class="schedule-slot slot-break">Lunch</div>
+              <div class="schedule-slot slot-booked-alex">Devon P.<br>Consult</div>
+              <div class="schedule-slot slot-free">—</div>
+            </div>
+            <div class="schedule-row">
+              <div class="schedule-time-label">2pm</div>
+              <div class="schedule-slot slot-free">—</div>
+              <div class="schedule-slot slot-free">—</div>
+              <div class="schedule-slot slot-free">—</div>
+            </div>
+            <div class="schedule-row">
+              <div class="schedule-time-label">3pm</div>
+              <div class="schedule-slot slot-free">—</div>
+              <div class="schedule-slot slot-free">—</div>
+              <div class="schedule-slot slot-booked-jordan">Sarai V.<br>Geometric</div>
+            </div>
+            <div class="schedule-row">
+              <div class="schedule-time-label">4pm</div>
+              <div class="schedule-slot slot-free">—</div>
+              <div class="schedule-slot slot-free">—</div>
+              <div class="schedule-slot slot-booked-jordan">cont.</div>
+            </div>
+            <div class="schedule-row">
+              <div class="schedule-time-label">5pm</div>
+              <div class="schedule-slot slot-free">—</div>
+              <div class="schedule-slot slot-free">—</div>
+              <div class="schedule-slot slot-booked-jordan">cont.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT PANEL: REVENUE + WAITLIST -->
+      <div style="display:flex;flex-direction:column;gap:1rem;">
+
+        <!-- WEEKLY REVENUE MINI CHART -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Revenue — This Week</span>
+            <span style="font-size:0.72rem;font-weight:700;color:var(--gold);">$2,450</span>
+          </div>
+          <div class="panel-body">
+            <div class="revenue-bars">
+              <div class="rev-bar-group">
+                <div class="rev-bar-wrap"><div class="rev-bar" style="height:45%;"></div></div>
+                <div class="rev-day">Mon</div>
+              </div>
+              <div class="rev-bar-group">
+                <div class="rev-bar-wrap"><div class="rev-bar" style="height:70%;"></div></div>
+                <div class="rev-day">Tue</div>
+              </div>
+              <div class="rev-bar-group">
+                <div class="rev-bar-wrap"><div class="rev-bar" style="height:55%;"></div></div>
+                <div class="rev-day">Wed</div>
+              </div>
+              <div class="rev-bar-group">
+                <div class="rev-bar-wrap"><div class="rev-bar" style="height:85%;"></div></div>
+                <div class="rev-day">Thu</div>
+              </div>
+              <div class="rev-bar-group">
+                <div class="rev-bar-wrap"><div class="rev-bar" style="height:60%;"></div></div>
+                <div class="rev-day">Fri</div>
+              </div>
+              <div class="rev-bar-group">
+                <div class="rev-bar-wrap"><div class="rev-bar current" style="height:30%;"></div></div>
+                <div class="rev-day" style="color:var(--gold);font-weight:700;">Sat</div>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:0.75rem;font-size:0.65rem;color:var(--text-xmuted);">
+              <span>Mon Jun 16</span>
+              <span style="color:var(--gold);font-weight:700;">Today</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- WAITLIST -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Waitlist</span>
+            <button class="panel-action">Manage →</button>
+          </div>
+          <div class="panel-body" style="padding-top:0;padding-bottom:0.5rem;">
+            <div class="waitlist-item">
+              <div class="waitlist-avatar">JK</div>
+              <div>
+                <div class="waitlist-name">Jamie Kim</div>
+                <div class="waitlist-detail">Fine line · Kat · Wrist</div>
+              </div>
+              <div class="waitlist-right">
+                <div class="waitlist-days">14 days</div>
+                <div class="waitlist-date">Since Jun 7</div>
+              </div>
+            </div>
+            <div class="waitlist-item">
+              <div class="waitlist-avatar">RL</div>
+              <div>
+                <div class="waitlist-name">Rosa Leon</div>
+                <div class="waitlist-detail">Cover-up · Alex · Shoulder</div>
+              </div>
+              <div class="waitlist-right">
+                <div class="waitlist-days">9 days</div>
+                <div class="waitlist-date">Since Jun 12</div>
+              </div>
+            </div>
+            <div class="waitlist-item">
+              <div class="waitlist-avatar">TC</div>
+              <div>
+                <div class="waitlist-name">Theo Cruz</div>
+                <div class="waitlist-detail">Geometric · Jordan · Back</div>
+              </div>
+              <div class="waitlist-right">
+                <div class="waitlist-days">5 days</div>
+                <div class="waitlist-date">Since Jun 16</div>
+              </div>
+            </div>
+            <div style="padding:0.75rem 0 0;font-size:0.68rem;color:var(--text-xmuted);">+5 more on waitlist</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+  // Dark mode
+  const root = document.documentElement;
+  const toggle = document.getElementById('themeToggle');
+  const saved = localStorage.getItem('kattitude-dash-theme') || 'light';
+  root.setAttribute('data-theme', saved);
+
+  toggle.addEventListener('click', () => {
+    const current = root.getAttribute('data-theme');
+    const next = current === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('kattitude-dash-theme', next);
+  });
+
+  // Live date
+  const dateEl = document.getElementById('topbarDate');
+  if (dateEl) {
+    const now = new Date();
+    dateEl.textContent = now.toLocaleDateString('en-US', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+  }
+</script>
+</body>
+</html>
