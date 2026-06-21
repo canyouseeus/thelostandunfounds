@@ -740,163 +740,10 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
     };
 
     return (
-        <div className="space-y-6 w-full overflow-x-hidden">
-            {!isPhotographerView && (
-                <>
-                    {/* Stats Grid - Only for Admin */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className="bg-white/5 p-4">
-                            <div className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] mb-1">Total Orders</div>
-                            <div className="text-2xl font-bold font-mono text-white">
-                                <AnimatedNumber value={stats?.totalOrders || 0} />
-                            </div>
-                        </div>
-                        <div className="bg-white/5 p-4">
-                            <div className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] mb-1">Gallery Revenue</div>
-                            <div className="text-2xl font-bold font-mono text-green-400">
-                                $<AnimatedNumber value={stats?.totalRevenue || 0} decimals={2} />
-                            </div>
-                        </div>
-                        <div className="bg-white/5 p-4">
-                            <div className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] mb-1">Recent Activity</div>
-                            <div className="text-xs text-white/60 space-y-1 mt-2">
-                                {stats?.recentOrders.length === 0 ? (
-                                    <div className="text-white/20 italic">No recent orders</div>
-                                ) : (
-                                    stats?.recentOrders.slice(0, 3).map((order: any) => (
-                                        <div key={order.id} className="flex justify-between">
-                                            <span>{new Date(order.created_at).toLocaleDateString()}</span>
-                                            <span className="text-green-400">${(order.total_amount_cents / 100).toFixed(2)}</span>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-                        <div className="bg-white/5 p-4">
-                            <div className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] mb-2">Latest New Uploads</div>
-                            <div className="grid grid-cols-3 gap-2">
-                                {stats?.recentPhotos && stats.recentPhotos.length > 0 ? (
-                                    stats.recentPhotos.map((photo: any) => {
-                                        // Use streaming proxy for reliable image loading
-                                        const imageUrl = photo.google_drive_file_id
-                                            ? `/api/gallery/stream?fileId=${photo.google_drive_file_id}&size=400`
-                                            : photo.thumbnail_url;
-                                        return (
-                                            <div key={photo.id} className="aspect-square bg-black/50 relative group overflow-hidden">
-                                                <img
-                                                    src={imageUrl}
-                                                    alt={photo.title}
-                                                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
-                                                    onError={(e) => {
-                                                        // Fallback: hide broken images
-                                                        (e.target as HTMLImageElement).style.display = 'none';
-                                                    }}
-                                                />
-                                            </div>
-                                        );
-                                    })
-                                ) : (
-                                    <div className="col-span-3 text-white/20 italic text-xs">No recent photos</div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Bookings revenue — surfaced separately from gallery sales */}
-                    {(stats?.bookingRevenue ?? 0) > 0 && (
-                        <div className="bg-white/5 p-4 border-l-2 border-blue-400/40">
-                            <div className="flex items-center gap-2 mb-1">
-                                <span className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em]">Bookings Revenue</span>
-                                <span className="text-[9px] text-white/30">CRM invoices · separate from gallery</span>
-                            </div>
-                            <div className="text-2xl font-bold font-mono text-blue-300">
-                                $<AnimatedNumber value={stats?.bookingRevenue || 0} decimals={2} />
-                            </div>
-                        </div>
-                    )}
-
-                </>
-            )
-            }
-
-            <div className="flex flex-col gap-4 mb-2">
-                <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="bg-white p-2">
-                            <PhotoIcon className="w-5 h-5 text-black" />
-                        </div>
-                        <h2 className="text-xl md:text-2xl font-black text-white uppercase tracking-wide flex items-center gap-3 min-w-0">
-                            {isPhotographerView ? 'My Galleries' : 'Gallery Management'}
-                            {!isPhotographerView && pendingAppsCount > 0 && (
-                                <span className="flex items-center justify-center bg-red-500 text-white text-[10px] font-black h-5 w-5 rounded-full animate-pulse">
-                                    {pendingAppsCount}
-                                </span>
-                            )}
-                        </h2>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        {/* Desktop Only: Back Button */}
-                        {!isPhotographerView && (
-                            <button
-                                onClick={onBack}
-                                className="hidden md:flex items-center gap-2 text-white/60 hover:text-white transition-colors mr-2 px-3 py-2 text-sm"
-                            >
-                                <ArrowLeftIcon className="w-4 h-4" />
-                                Back
-                            </button>
-                        )}
-                        <button
-                            onClick={openCreateModal}
-                            className="px-4 py-2 bg-white text-black text-xs uppercase tracking-wider font-bold flex items-center gap-2 hover:bg-white/90"
-                        >
-                            <PlusIcon className="w-4 h-4" />
-                            <span className="hidden sm:inline">New Gallery</span>
-                            <span className="sm:hidden">New</span>
-                        </button>
-                    </div>
-                </div>
-
-                {/* Mobile Only: Back to Dashboard */}
-                {!isPhotographerView && (
-                    <button
-                        onClick={onBack}
-                        className="md:hidden flex items-center gap-2 text-white/60 hover:text-white py-1 px-1 text-sm transition-colors self-start"
-                    >
-                        <ArrowLeftIcon className="w-4 h-4" />
-                        Back to Dashboard
-                    </button>
-                )}
-
-                {/* Secondary Actions (Invite, Test) */}
-                <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto mt-2 md:mt-0">
-                    {!isPhotographerView && (
-                        <button
-                            onClick={() => setIsInviteModalOpen(true)}
-                            className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white/60 text-xs uppercase tracking-wider font-bold flex items-center justify-center gap-2 w-full sm:w-auto"
-                        >
-                            <EnvelopeIcon className="w-3 h-3" />
-                            <span className="sm:inline">Invite Photographer</span>
-                        </button>
-                    )}
-                    <button
-                        onClick={checkAssetHealth}
-                        disabled={verifying}
-                        className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white/60 text-xs uppercase tracking-wider font-bold flex items-center justify-center gap-2 w-full sm:w-auto"
-                    >
-                        {verifying ? (
-                            <LoadingSpinner size="sm" />
-                        ) : (
-                            <ChartBarIcon className="w-3 h-3" />
-                        )}
-                        <span>{verifying ? 'Checking...' : 'Test Connection'}</span>
-                    </button>
-                </div>
-            </div>
+        <div className="flex flex-col h-full">
 
             {/* Create/Edit Gallery Modal */}
-            {
-                isManaged && (
+            {isManaged && (
                     <div className="fixed inset-0 z-[10000] bg-black overflow-hidden animate-in fade-in duration-200">
                         <div className="w-full h-full overflow-y-auto p-6 sm:p-10 relative max-w-5xl mx-auto animate-in slide-in-from-bottom-4 duration-300">
                             <button
@@ -1387,147 +1234,133 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 )
             }
 
-            <div className="bg-black/50 rounded-none p-6">
-                <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                    <PhotoIcon className="w-5 h-5" />
-                    GALLERY OPERATIONS
-                </h2>
-
-                {/* Health Check Status Banner */}
-                {healthStatus === 'issues' && (
-                    <div className="mb-6 p-4 bg-red-500/10 text-red-500 flex items-center gap-3">
-                        <ExclamationCircleIcon className="w-5 h-5 flex-shrink-0" />
-                        <div>
-                            <p className="font-bold uppercase text-sm">System Alert: Asset Delivery Issue Detected</p>
-                            <p className="text-xs opacity-80 mt-1">Image streaming is returning errors. Check that Drive files are shared "Anyone with the link can view", then run Test Connection again.</p>
-                        </div>
+            {/* Compact header — title + actions */}
+            <div className="shrink-0 flex items-center justify-between gap-3 pb-3">
+                <div className="flex items-center gap-2">
+                    <div className="bg-white p-1.5">
+                        <PhotoIcon className="w-4 h-4 text-black" />
                     </div>
-                )}
-
-                {healthStatus === 'healthy' && (
-                    <div className="mb-6 p-4 bg-green-500/10 text-green-500 flex items-center gap-3">
-                        <CheckCircleIcon className="w-5 h-5 flex-shrink-0" />
-                        <div>
-                            <p className="font-bold uppercase text-sm">System Healthy</p>
-                            <p className="text-xs opacity-80 mt-1">Asset delivery system is fully operational.</p>
-                        </div>
-                    </div>
-                )}
-
-                {/* Key Metrics */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                    <div className="bg-white/5 p-4 rounded-none">
-                        <div className="flex items-center gap-2 mb-2 text-white/60 text-xs uppercase tracking-wider">
-                            <ArrowDownTrayIcon className="w-3 h-3" /> Total Orders
-                        </div>
-                        <div className="text-3xl font-bold text-white">
-                            <AnimatedNumber value={stats?.totalOrders || 0} />
-                        </div>
-                    </div>
-
-                    <div className="bg-white/5 p-4 rounded-none">
-                        <div className="flex items-center gap-2 mb-2 text-white/60 text-xs uppercase tracking-wider">
-                            <CurrencyDollarIcon className="w-3 h-3" /> Gallery Sales
-                        </div>
-                        <div className="text-3xl font-bold text-green-400">
-                            $<AnimatedNumber value={stats?.totalRevenue || 0} />
-                        </div>
-                    </div>
+                    <h2 className="text-sm font-black text-white uppercase tracking-widest">
+                        {isPhotographerView ? 'My Galleries' : 'Gallery Management'}
+                    </h2>
+                    {!isPhotographerView && pendingAppsCount > 0 && (
+                        <span className="flex items-center justify-center bg-red-500 text-white text-[8px] font-black h-4 w-4 rounded-full animate-pulse">
+                            {pendingAppsCount}
+                        </span>
+                    )}
                 </div>
+                <div className="flex items-center gap-2">
+                    {!isPhotographerView && (
+                        <button
+                            onClick={() => setIsInviteModalOpen(true)}
+                            className="p-2 bg-white/5 hover:bg-white/10 text-white/60 text-[10px] uppercase tracking-wider font-bold flex items-center gap-1"
+                        >
+                            <EnvelopeIcon className="w-3 h-3" />
+                            <span className="hidden sm:inline">Invite</span>
+                        </button>
+                    )}
+                    <button
+                        onClick={checkAssetHealth}
+                        disabled={verifying}
+                        className="p-2 bg-white/5 hover:bg-white/10 text-white/60 text-[10px] uppercase tracking-wider font-bold flex items-center gap-1"
+                    >
+                        {verifying ? <LoadingSpinner size="sm" /> : <ChartBarIcon className="w-3 h-3" />}
+                        <span className="hidden sm:inline">{verifying ? 'Checking' : 'Health'}</span>
+                    </button>
+                    <button
+                        onClick={openCreateModal}
+                        className="px-3 py-2 bg-white text-black text-[10px] uppercase tracking-wider font-bold flex items-center gap-1 hover:bg-white/90"
+                    >
+                        <PlusIcon className="w-3 h-3" />
+                        New
+                    </button>
+                </div>
+            </div>
 
-                {/* Bookings revenue — shown separately so it is never conflated with gallery sales */}
-                {(stats?.bookingRevenue ?? 0) > 0 && (
-                    <div className="grid grid-cols-1 gap-4 mb-8">
-                        <div className="bg-white/5 p-4 rounded-none border-l-2 border-blue-400/40">
-                            <div className="flex items-center gap-2 mb-2 text-white/60 text-xs uppercase tracking-wider">
-                                <CurrencyDollarIcon className="w-3 h-3" /> Bookings Revenue
-                                <span className="text-[9px] text-white/30 normal-case tracking-normal ml-1">(CRM invoices, separate from gallery)</span>
-                            </div>
-                            <div className="text-3xl font-bold text-blue-300">
-                                $<AnimatedNumber value={stats?.bookingRevenue || 0} />
-                            </div>
+            {/* Inline metrics — admin only, single compact row */}
+            {!isPhotographerView && (
+                <div className="shrink-0 flex flex-wrap items-center gap-x-6 gap-y-1 py-2 px-3 mb-2 bg-white/5">
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-white/40 uppercase tracking-[0.2em]">Orders</span>
+                        <span className="text-sm font-bold font-mono text-white"><AnimatedNumber value={stats?.totalOrders || 0} /></span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-white/40 uppercase tracking-[0.2em]">Gallery</span>
+                        <span className="text-sm font-bold font-mono text-green-400">$<AnimatedNumber value={stats?.totalRevenue || 0} decimals={2} /></span>
+                    </div>
+                    {(stats?.bookingRevenue ?? 0) > 0 && (
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-white/40 uppercase tracking-[0.2em]">Bookings</span>
+                            <span className="text-sm font-bold font-mono text-blue-300">$<AnimatedNumber value={stats?.bookingRevenue || 0} decimals={2} /></span>
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
+            )}
 
-                {!isPhotographerView && (
-                    <div className="grid grid-cols-2 sm:flex mb-8">
+            {/* Health status banners */}
+            {healthStatus === 'issues' && (
+                <div className="shrink-0 flex items-center gap-2 py-2 px-3 mb-2 bg-red-500/10 text-red-400 text-xs">
+                    <ExclamationCircleIcon className="w-4 h-4 flex-shrink-0" />
+                    <span>Asset delivery issue. Verify Drive files are "Anyone with link can view", then run Health check.</span>
+                </div>
+            )}
+            {healthStatus === 'healthy' && (
+                <div className="shrink-0 flex items-center gap-2 py-2 px-3 mb-2 bg-green-500/10 text-green-400 text-xs">
+                    <CheckCircleIcon className="w-4 h-4 flex-shrink-0" />
+                    <span>Asset system healthy — delivery verified.</span>
+                </div>
+            )}
+
+            {/* Tab bar — admin only */}
+            {!isPhotographerView && (
+                <div className="shrink-0 flex border-b border-white/10">
+                    {[
+                        { id: 'galleries' as const, label: 'Active Galleries', icon: null, badge: 0 },
+                        { id: 'applications' as const, label: 'Applications', icon: null, badge: pendingAppsCount },
+                        { id: 'photos' as const, label: 'All Photos', icon: <PhotoIcon className="w-3 h-3" />, badge: 0 },
+                        { id: 'tags' as const, label: 'Tags', icon: <TagIcon className="w-3 h-3" />, badge: 0 },
+                        { id: 'downloads' as const, label: 'Downloads', icon: <ArrowDownTrayIcon className="w-3 h-3" />, badge: 0 },
+                    ].map(tab => (
                         <button
-                            onClick={() => setActiveTab('galleries')}
-                            className={`px-2 sm:px-6 py-3 text-[11px] sm:text-xs uppercase font-bold tracking-wider sm:tracking-widest transition-colors relative flex items-center justify-center gap-2 text-center leading-tight ${activeTab === 'galleries' ? 'text-white' : 'text-white/40 hover:text-white'}`}
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                            className={`px-3 py-2.5 text-[10px] sm:text-[11px] uppercase font-bold tracking-widest transition-colors relative flex items-center gap-1.5 whitespace-nowrap ${activeTab === tab.id ? 'text-white' : 'text-white/40 hover:text-white'}`}
                         >
-                            Active Galleries
-                            {activeTab === 'galleries' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />}
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('applications')}
-                            className={`px-2 sm:px-6 py-3 text-[11px] sm:text-xs uppercase font-bold tracking-wider sm:tracking-widest transition-colors relative flex items-center justify-center gap-2 text-center leading-tight ${activeTab === 'applications' ? 'text-white' : 'text-white/40 hover:text-white'}`}
-                        >
-                            <span className="sm:hidden">Applications</span>
-                            <span className="hidden sm:inline">Photographer Applications</span>
-                            {pendingAppsCount > 0 && (
-                                <span className="bg-red-500 text-white text-[9px] px-1 rounded-sm">
-                                    {pendingAppsCount}
-                                </span>
+                            {tab.icon}
+                            {tab.label}
+                            {tab.badge > 0 && (
+                                <span className="bg-red-500 text-white text-[8px] px-1 font-black">{tab.badge}</span>
                             )}
-                            {activeTab === 'applications' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />}
+                            {activeTab === tab.id && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />}
                         </button>
-                        <button
-                            onClick={() => setActiveTab('photos')}
-                            className={`px-2 sm:px-6 py-3 text-[11px] sm:text-xs uppercase font-bold tracking-wider sm:tracking-widest transition-colors relative flex items-center justify-center gap-2 text-center leading-tight ${activeTab === 'photos' ? 'text-white' : 'text-white/40 hover:text-white'}`}
-                        >
-                            <PhotoIcon className="w-3.5 h-3.5" />
-                            All Photos
-                            {activeTab === 'photos' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />}
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('tags')}
-                            className={`px-2 sm:px-6 py-3 text-[11px] sm:text-xs uppercase font-bold tracking-wider sm:tracking-widest transition-colors relative flex items-center justify-center gap-2 text-center leading-tight ${activeTab === 'tags' ? 'text-white' : 'text-white/40 hover:text-white'}`}
-                        >
-                            <TagIcon className="w-3.5 h-3.5" />
-                            Tags
-                            {activeTab === 'tags' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />}
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('downloads')}
-                            className={`px-2 sm:px-6 py-3 text-[11px] sm:text-xs uppercase font-bold tracking-wider sm:tracking-widest transition-colors relative flex items-center justify-center gap-2 text-center leading-tight ${activeTab === 'downloads' ? 'text-white' : 'text-white/40 hover:text-white'}`}
-                        >
-                            <ArrowDownTrayIcon className="w-3.5 h-3.5" />
-                            Downloads
-                            {activeTab === 'downloads' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />}
-                        </button>
-                    </div>
-                )}
+                    ))}
+                </div>
+            )}
 
+            {/* Tab content — fills remaining height, only this scrolls */}
+            <div className="flex-1 min-h-0 overflow-y-auto pt-4 custom-scrollbar">
                 {activeTab === 'downloads' ? (
-                    <div className="bg-white/[0.02] p-4 sm:p-6">
-                        <AdminDownloadsPanel />
-                    </div>
+                    <AdminDownloadsPanel />
                 ) : activeTab === 'tags' ? (
-                    <div className="bg-white/[0.02] p-4 sm:p-6">
-                        <AdminTagsPanel />
-                    </div>
+                    <AdminTagsPanel />
                 ) : activeTab === 'photos' ? (
-                    <div className="bg-white/[0.02] p-4 sm:p-6">
-                        <AdminPhotosBrowse />
-                    </div>
-                ) : activeTab === 'galleries' ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <AdminPhotosBrowse />
+                ) : activeTab === 'galleries' || isPhotographerView ? (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Active Galleries */}
-                        <div className="bg-white/[0.02] p-4 sm:p-6 rounded-none h-full">
-                            <div className="flex items-center justify-between mb-4 pb-2">
-                                <h3 className="text-sm font-bold text-white uppercase tracking-wide">
+                        <div className="bg-white/[0.02] p-4">
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className="text-xs font-bold text-white uppercase tracking-wide">
                                     Active Galleries ({libraries.length})
                                 </h3>
                                 <button onClick={loadGalleryStats} className="text-white/40 hover:text-white">
                                     {loading ? <LoadingSpinner size="sm" /> : <ArrowPathIcon className="w-3 h-3" />}
                                 </button>
                             </div>
-
                             {loading && libraries.length === 0 ? (
                                 <div className="text-white/40 text-sm py-4">Loading galleries...</div>
                             ) : (
-                                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                <div className="space-y-1">
                                     {libraries.length === 0 ? (
                                         <div className="text-white/40 text-sm py-4">No galleries found.</div>
                                     ) : (
@@ -1537,13 +1370,12 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
 
                                             const handleCountdownComplete = async () => {
                                                 setCountdownExpired(true);
-                                                // Trigger sync when countdown completes
                                                 try {
                                                     info('Gallery opening! Syncing photos...');
                                                     const syncRes = await fetch('/api/gallery/sync');
                                                     if (syncRes.ok) {
                                                         success('LAST NIGHT gallery is now live!');
-                                                        loadGalleryStats(); // Refresh to show updated photo count
+                                                        loadGalleryStats();
                                                     }
                                                 } catch (err) {
                                                     console.error('Sync error:', err);
@@ -1552,7 +1384,6 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
 
                                             return (
                                                 <div key={lib.id} className="relative group">
-                                                    {/* Countdown Overlay for LAST NIGHT */}
                                                     {showCountdown && (
                                                         <GalleryCountdownOverlay
                                                             coverImageUrl={lib.cover_image_url}
@@ -1561,7 +1392,6 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                             onCountdownComplete={handleCountdownComplete}
                                                         />
                                                     )}
-
                                                     <div className="flex items-start justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors">
                                                         <div
                                                             className="flex-1 min-w-0 mr-4 cursor-pointer"
@@ -1589,19 +1419,19 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                                                 <span>{lib.photo_count || 0} photos</span>
                                                             </div>
                                                         </div>
-                                                        <div className="flex gap-2 transition-opacity">
+                                                        <div className="flex gap-1">
                                                             <a
                                                                 href={`/gallery/${lib.slug}`}
                                                                 target="_blank"
                                                                 rel="noreferrer"
-                                                                className="p-2 hover:bg-white/20 text-white/60 hover:text-white rounded-sm"
+                                                                className="p-2 hover:bg-white/20 text-white/60 hover:text-white"
                                                                 title="View Gallery"
                                                             >
                                                                 <ArrowLeftIcon className="w-4 h-4 rotate-180" />
                                                             </a>
                                                             <button
                                                                 onClick={() => handleDeleteGallery(lib.id, lib.name)}
-                                                                className="p-2 hover:bg-red-500/20 text-white/60 hover:text-red-400 rounded-sm"
+                                                                className="p-2 hover:bg-red-500/20 text-white/60 hover:text-red-400"
                                                                 title="Delete Gallery"
                                                             >
                                                                 <TrashIcon className="w-4 h-4" />
@@ -1616,108 +1446,91 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                             )}
                         </div>
 
-                        {/* Recent Orders List */}
-                        <div className="bg-white/[0.02] p-6 rounded-none h-full">
-                            <h3 className="text-sm font-bold text-white uppercase mb-4 tracking-wide pb-2">
-                                Recent Sales
-                            </h3>
-
-                            {loading && !stats ? (
-                                <div className="text-white/40 text-sm py-4">Loading orders...</div>
-                            ) : (
-                                <div className="space-y-1 max-h-[400px] overflow-y-auto custom-scrollbar">
-                                    {stats?.recentOrders.length === 0 ? (
-                                        <div className="text-white/40 text-sm py-4">No orders found.</div>
-                                    ) : (
-                                        stats?.recentOrders.map((order) => (
-                                            <div key={order.id} className="flex flex-col md:flex-row md:items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors gap-3">
-                                                <div>
-                                                    <div className="text-white font-mono text-sm">{order.email}</div>
-                                                    <div className="text-white/40 text-xs flex items-center gap-2">
-                                                        <span>{(order.total_amount_cents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
-                                                        <span>•</span>
-                                                        <span>{new Date(order.created_at).toLocaleDateString()}</span>
+                        {/* Recent Sales — admin only */}
+                        {!isPhotographerView && (
+                            <div className="bg-white/[0.02] p-4">
+                                <h3 className="text-xs font-bold text-white uppercase mb-3 tracking-wide">
+                                    Recent Sales
+                                </h3>
+                                {loading && !stats ? (
+                                    <div className="text-white/40 text-sm py-4">Loading orders...</div>
+                                ) : (
+                                    <div className="space-y-1">
+                                        {stats?.recentOrders.length === 0 ? (
+                                            <div className="text-white/40 text-sm py-4">No orders found.</div>
+                                        ) : (
+                                            stats?.recentOrders.map((order) => (
+                                                <div key={order.id} className="flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors">
+                                                    <div>
+                                                        <div className="text-white font-mono text-xs">{order.email}</div>
+                                                        <div className="text-white/40 text-[10px]">
+                                                            {(order.total_amount_cents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' })} · {new Date(order.created_at).toLocaleDateString()}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <div className="flex items-center gap-2">
                                                     <button
                                                         onClick={() => triggerResend(order.id, order.email)}
-                                                        className="text-xs uppercase font-bold text-white/60 hover:text-white px-3 py-1 bg-white/5 hover:bg-white/10 transition"
+                                                        className="text-[10px] uppercase font-bold text-white/60 hover:text-white px-2 py-1 bg-white/5 hover:bg-white/10 transition"
                                                     >
-                                                        Resend Email
+                                                        Resend
                                                     </button>
                                                 </div>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            )}
-                        </div>
+                                            ))
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 ) : (
-                    <div className="bg-white/[0.02] p-4 sm:p-6 rounded-none h-full animate-in fade-in duration-300">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-sm font-bold text-white uppercase tracking-wide">
+                    /* Applications tab */
+                    <div className="animate-in fade-in duration-300">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-xs font-bold text-white uppercase tracking-wide">
                                 Pending Applications ({pendingAppsCount})
                             </h3>
                             <button onClick={loadApplications} className="text-white/40 hover:text-white">
                                 {appsLoading ? <LoadingSpinner size="sm" /> : <ArrowPathIcon className="w-3 h-3" />}
                             </button>
                         </div>
-
                         {appsLoading && applications.length === 0 ? (
                             <div className="text-white/40 text-sm py-8 text-center italic">Loading applications...</div>
                         ) : (
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                                 {applications.length === 0 ? (
                                     <div className="text-white/40 text-sm py-8 text-center italic">No applications received yet.</div>
                                 ) : (
                                     applications.map((app) => (
-                                        <div key={app.id} className="bg-white/5 p-5 rounded-none flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                        <div key={app.id} className="bg-white/5 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                             <div className="space-y-1">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-white font-bold">{app.name}</span>
-                                                    <span className={`text-[9px] px-1.5 py-0.5 uppercase font-bold tracking-tighter ${app.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' :
-                                                        app.status === 'approved' ? 'bg-green-500/20 text-green-500' :
-                                                            'bg-red-500/20 text-red-500'
-                                                        }`}>
+                                                    <span className="text-white font-bold text-sm">{app.name}</span>
+                                                    <span className={`text-[9px] px-1.5 py-0.5 uppercase font-bold ${app.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' : app.status === 'approved' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>
                                                         {app.status}
                                                     </span>
                                                 </div>
                                                 <div className="text-white/60 text-xs font-mono">{app.email}</div>
-                                                {app.location && <div className="text-white/40 text-[10px] uppercase font-bold tracking-wider">{app.location}</div>}
-                                                {app.cameras && app.cameras.length > 0 && (
-                                                    <div className="flex flex-wrap gap-1 mt-2">
-                                                        {app.cameras.map((cam: string, idx: number) => (
-                                                            <span key={idx} className="bg-white/10 text-white/50 text-[9px] px-1.5 py-0.5 rounded-none">
-                                                                {cam}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                )}
                                                 {app.portfolio_link && (
                                                     <a
                                                         href={app.portfolio_link.startsWith('http') ? app.portfolio_link : `https://${app.portfolio_link}`}
                                                         target="_blank"
                                                         rel="noreferrer"
-                                                        className="text-blue-400 hover:text-blue-300 text-[10px] block mt-2 underline transition-colors"
+                                                        className="text-blue-400 text-[10px] underline"
                                                     >
                                                         View Portfolio →
                                                     </a>
                                                 )}
                                             </div>
-
                                             {app.status === 'pending' && (
                                                 <div className="flex gap-2">
                                                     <button
                                                         onClick={() => handleApplicationStatus(app.id, 'approved')}
-                                                        className="px-4 py-2 bg-green-500/20 hover:bg-green-500 text-green-500 hover:text-black text-[10px] uppercase font-bold transition-all"
+                                                        className="px-3 py-1.5 bg-green-500/20 hover:bg-green-500 text-green-500 hover:text-black text-[10px] uppercase font-bold transition-all"
                                                     >
                                                         Approve
                                                     </button>
                                                     <button
                                                         onClick={() => handleApplicationStatus(app.id, 'rejected')}
-                                                        className="px-4 py-2 bg-red-500/20 hover:bg-red-500/40 text-red-500 text-[10px] uppercase font-bold transition-all"
+                                                        className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/40 text-red-500 text-[10px] uppercase font-bold transition-all"
                                                     >
                                                         Reject
                                                     </button>
@@ -1730,7 +1543,6 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                         )}
                     </div>
                 )}
-
             </div>
 
 
@@ -1810,6 +1622,6 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                     </div>
                 )
             }
-        </div >
+        </div>
     );
 }

@@ -502,33 +502,23 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
   // Render loading state
   if (loading) {
     return (
-      <div className="space-y-6">
-        <button onClick={onBack} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
-          <ArrowLeft className="w-4 h-4" />
-          Back to Dashboard
-        </button>
-        <div className="bg-black/50 border-none rounded-none p-12 flex items-center justify-center">
-          <Loader className="w-6 h-6 animate-spin text-white/60" />
-          <span className="ml-3 text-white/60">Loading mail...</span>
-        </div>
+      <div className="flex flex-col h-full items-center justify-center gap-3">
+        <Loader className="w-6 h-6 animate-spin text-white/60" />
+        <span className="text-white/60 text-sm">Loading mail...</span>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <button onClick={onBack} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
-          <ArrowLeft className="w-4 h-4" />
-          Back to Dashboard
-        </button>
+    <div className="flex flex-col h-full">
+      {/* Header — compose button only; back is in the overlay header */}
+      <div className="shrink-0 flex items-center justify-end pb-3">
         <button
           onClick={() => {
             setComposeData({ to: '', cc: '', bcc: '', subject: '', content: '' });
             setShowCompose(true);
           }}
-          className="flex items-center gap-2 px-4 py-2 bg-white text-black font-semibold hover:bg-white/90 transition rounded-none"
+          className="flex items-center gap-2 px-4 py-2 bg-white text-black font-semibold hover:bg-white/90 transition rounded-none text-sm"
         >
           <Plus className="w-4 h-4" />
           Compose
@@ -537,17 +527,17 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
 
       {/* Error display */}
       {error && (
-        <div className="bg-red-500/10 border-none p-4 flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-red-400" />
-          <span className="text-red-400">{error}</span>
+        <div className="shrink-0 bg-red-500/10 border-none p-3 mb-2 flex items-center gap-3">
+          <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+          <span className="text-red-400 text-sm">{error}</span>
           <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-300">
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      {/* Main layout */}
-      <div className="bg-black/50 border-none rounded-none min-h-[600px] flex">
+      {/* Main layout — fills remaining height */}
+      <div className="flex-1 min-h-0 bg-black/50 border-none flex overflow-hidden">
         {/* Folder sidebar */}
         <div className="w-48 border-none p-3 space-y-1">
           <div className="text-xs text-white/40 uppercase tracking-wider mb-3 px-2">Folders</div>
