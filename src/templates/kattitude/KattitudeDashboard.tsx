@@ -858,7 +858,7 @@ function ArtistsPanel({ onAddArtist }: { onAddArtist: () => void }) {
                 { label:'Sessions', value: String(a.sessionsMonth) },
                 { label:'Revenue', value:`$${a.revenueMonth.toLocaleString()}` },
                 { label:'Booking Rate', value:`${a.bookingRate}%` },
-                { label:'Rating', value:`${a.rating} ★` },
+                { label:'Rating', value:`${a.rating} / 5` },
               ].map(s => (
                 <div key={s.label}>
                   <div className="text-[8px] tracking-widest uppercase text-white/20">{s.label}</div>

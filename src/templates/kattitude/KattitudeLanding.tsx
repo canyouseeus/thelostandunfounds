@@ -15,6 +15,8 @@ import {
   CameraIcon,
   BoltIcon,
   PaintBrushIcon,
+  SunIcon,
+  MoonIcon,
 } from '@heroicons/react/24/outline';
 
 const PINK = '#E91E8C';
@@ -77,7 +79,7 @@ function Navbar({ dark, toggleDark }: { dark: boolean; toggleDark: () => void })
             className="w-8 h-8 flex items-center justify-center text-base rounded-full transition-all"
             style={{ color: dark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)', background: dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}
             aria-label="Toggle dark mode">
-            {dark ? '☀' : '◑'}
+            {dark ? <SunIcon className="w-4 h-4" /> : <MoonIcon className="w-4 h-4" />}
           </button>
           <a href="#book" className="px-5 py-2 text-xs font-black tracking-widest uppercase transition-opacity hover:opacity-90"
             style={{ background: GOLD, color: '#ffffff' }}>
@@ -103,7 +105,7 @@ function Navbar({ dark, toggleDark }: { dark: boolean; toggleDark: () => void })
           ))}
           <div className="flex items-center gap-2 pt-2">
             <button onClick={toggleDark} className="py-2.5 text-sm" style={{ color: dark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' }}>
-              {dark ? '☀ Light' : '◑ Dark'}
+              {dark ? <><SunIcon className="w-3.5 h-3.5 inline mr-1" />Light</> : <><MoonIcon className="w-3.5 h-3.5 inline mr-1" />Dark</>}
             </button>
           </div>
           <a href="#book" className="block w-full mt-2 py-3 text-sm font-black tracking-widest uppercase text-center"
@@ -158,7 +160,7 @@ function Hero({ dark }: { dark: boolean }) {
         <div className="grid grid-cols-3 gap-6 max-w-lg mx-auto">
           {[
             { value: '8+', label: 'Years of Experience' },
-            { value: '5★', label: 'Average Rating' },
+            { value: '5.0', label: 'Average Rating' },
             { value: '1K+', label: 'Tattoos Completed' },
           ].map(stat => (
             <div key={stat.label} className="text-center">
