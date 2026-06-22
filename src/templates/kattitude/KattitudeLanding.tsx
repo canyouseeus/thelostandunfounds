@@ -295,9 +295,8 @@ function HowItWorks({ dark }: { dark: boolean }) {
     },
     {
       step: '04', icon: <BoltIcon className="w-6 h-6" />,
-      title: 'AI Price Estimate',
-      body: 'Our AI engine analyzes your concept, size, placement, and style to provide an instant price range before you commit.',
-      phase2: true,
+      title: 'Get Your Estimate',
+      body: 'Your artist will review your reference photos and provide a personalized price and time estimate based on your concept.',
     },
     {
       step: '05', icon: <ShieldCheckIcon className="w-6 h-6" />,
@@ -337,9 +336,9 @@ function HowItWorks({ dark }: { dark: boolean }) {
           <div className="flex items-start gap-3">
             <SparklesIcon className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: PINK }} />
             <div>
-              <div className="text-sm font-bold uppercase tracking-wider mb-1" style={{ color: PINK }}>Phase 2 — AI Booking System Coming Soon</div>
+              <div className="text-sm font-bold uppercase tracking-wider mb-1" style={{ color: PINK }}>Step 5 — Digital Booking Coming Soon</div>
               <p className="text-xs leading-relaxed" style={{ color: textMuted }}>
-                Steps 4 and 5 are part of our upcoming AI-powered booking platform. Instant estimates, digital waivers, and deposit collection — all before you even walk in the door. Join the waitlist to be first access.
+                We're building a digital booking flow for waivers and deposit collection — sign and pay before you even walk in the door. Join the waitlist to be first access.
               </p>
             </div>
           </div>
