@@ -77,6 +77,8 @@ import MusicPlayer from './components/admin/MusicPlayer'
 import SilvaStarLanding from './templates/silva-star/SilvaStarLanding'
 import SilvaStarDashboard from './templates/silva-star/SilvaStarDashboard'
 import SilvaStarProposal from './templates/silva-star/SilvaStarProposal'
+import KattitudeLanding from './templates/kattitude/KattitudeLanding'
+import KattitudeDashboard from './templates/kattitude/KattitudeDashboard'
 
 
 
@@ -227,6 +229,10 @@ function App() {
               <Route path="/silva-star" element={<SilvaStarLanding />} />
               <Route path="/silva-star/dashboard" element={<SilvaStarDashboard />} />
               <Route path="/silva-star/proposal" element={<SilvaStarProposal />} />
+
+              {/* Kattitude Tattoo Studio — proposal preview (public, no auth) */}
+              <Route path="/kattitude-preview" element={<KattitudeLanding />} />
+              <Route path="/kattitude-preview/dashboard" element={<KattitudeDashboard />} />
 
               <Route path="/designsystem" element={<Layout />}>
                 <Route index element={<DesignSystem />} />
