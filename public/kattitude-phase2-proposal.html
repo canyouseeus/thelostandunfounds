@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>THE LOST+UNFOUNDS — Phase 2 Proposal for Kattitude Tattoo Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#ffffff;
+    --ink:#0a0a0a;
+    --soft:#3a3a3a;
+    --muted:#7a7a7a;
+    --pink:#E91E8C;
+    --gold:#B8860B;
+    --rule:#E91E8C;
+    --rule-soft:#f2d4e8;
+    --callout-bg:#fdf5fb;
+    --callout-gold-bg:#faf7ee;
+  }
+  @page { size: Letter; margin: 0; }
+  *{box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);
+    font-family:'Inter','Helvetica Neue',Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;}
+
+  .page{
+    width:100%; max-width:8.5in; min-height:11in;
+    padding:0.85in 0.95in;
+    background:var(--paper);
+    position:relative;
+    page-break-after:always;
+    display:flex; flex-direction:column;
+    overflow:hidden;
+    margin:0 auto;
+  }
+  @media print{
+    .page{width:8.5in; height:11in; margin:0;}
+  }
+  .page:last-child{page-break-after:auto;}
+
+  /* Cover — dark background */
+  .page.cover{
+    background:#0a0a0a;
+  }
+
+  .runhead{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:8.5px; letter-spacing:.28em; text-transform:uppercase;
+    color:var(--ink); font-weight:600;
+  }
+  .page.cover .runhead{ color:rgba(255,255,255,0.45); }
+  .runhead .sep{letter-spacing:.4em;}
+  .runhead .left{display:flex; gap:24px;}
+
+  .cover-body{
+    flex:1; display:flex; flex-direction:column; align-items:center;
+    text-align:center; padding-top:0.45in;
+  }
+  .cover-logo{
+    width:130px; height:130px; margin-bottom:18px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .cover-logo img{
+    width:100%; height:100%; object-fit:contain;
+  }
+  .cover-brand{
+    font-size:13px; letter-spacing:.42em; text-transform:uppercase;
+    font-weight:700; margin-bottom:4px; color:#ffffff;
+  }
+  .cover-tag{
+    font-size:10px; letter-spacing:.32em; text-transform:uppercase;
+    color:rgba(255,255,255,0.4); font-weight:500; margin-bottom:38px;
+  }
+  .cover-phase{
+    display:inline-block;
+    font-size:9px; letter-spacing:.38em; text-transform:uppercase;
+    font-weight:700; color:var(--pink); margin-bottom:10px;
+    border:1px solid var(--pink); padding:4px 14px;
+  }
+  .cover-h1{
+    font-size:32px; line-height:1.08; letter-spacing:.005em;
+    font-weight:800; text-transform:uppercase; margin:0 0 6px;
+    color:#ffffff;
+  }
+  .cover-h1-sub{
+    font-size:13px; color:rgba(255,255,255,0.5); margin:0 0 38px;
+    font-weight:400;
+  }
+  .cover-rule{
+    width:40px; height:2px; background:var(--pink); margin:0 auto 38px;
+  }
+
+  .cover-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:36px;
+    text-align:left; width:100%; max-width:520px; margin-bottom:30px;
+  }
+  .cover-grid .field .k{
+    font-size:9px; letter-spacing:.28em; text-transform:uppercase;
+    color:rgba(255,255,255,0.35); font-weight:600; margin-bottom:6px;
+  }
+  .cover-grid .field .v{
+    font-size:12px; line-height:1.65; font-weight:500; color:#ffffff;
+  }
+  .cover-grid .field .v .lite{color:rgba(255,255,255,0.5); font-weight:400;}
+
+  .cover-prereq{
+    width:100%; max-width:520px; text-align:left;
+    padding:12px 16px; border-left:3px solid var(--pink);
+    background:rgba(233,30,140,0.08); margin-bottom:28px;
+    font-size:11px; line-height:1.6; color:rgba(255,255,255,0.7);
+    font-weight:500; letter-spacing:.01em;
+  }
+  .cover-prereq strong{ color:var(--pink); }
+
+  .cover-dates{
+    display:flex; gap:48px; margin-top:auto; margin-bottom:8px;
+  }
+  .cover-dates .d{
+    font-size:9px; letter-spacing:.22em; text-transform:uppercase;
+    color:rgba(255,255,255,0.35); font-weight:600;
+  }
+  .cover-dates .d span{
+    display:block; font-size:12px; letter-spacing:.02em;
+    color:#ffffff; font-weight:600; margin-top:3px;
+    text-transform:none;
+  }
+
+  .runfoot{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:8px; letter-spacing:.3em; text-transform:uppercase;
+    color:var(--muted); font-weight:500;
+    margin-top:auto; padding-top:14px;
+  }
+  .page.cover .runfoot{ color:rgba(255,255,255,0.25); }
+
+  .pagehead{ margin-bottom:18px; }
+  .pagehead .sect{
+    font-size:10px; letter-spacing:.34em; text-transform:uppercase;
+    font-weight:700; margin-bottom:14px; color:var(--pink);
+  }
+  .pagehead h2{
+    font-size:30px; line-height:1.1; letter-spacing:.005em;
+    font-weight:700; text-transform:uppercase; margin:0;
+    max-width:24ch;
+  }
+
+  p.lede{
+    font-size:13px; line-height:1.7; color:var(--ink);
+    max-width:62ch; margin:0 0 22px;
+  }
+  p.body{
+    font-size:12.5px; line-height:1.7; color:var(--soft);
+    max-width:62ch; margin:0 0 16px;
+  }
+
+  .rule{height:2px; background:var(--pink); border:0; margin:14px 0 22px; opacity:.35;}
+  .rule-soft{height:1px; background:var(--rule-soft); border:0; margin:14px 0 22px;}
+
+  .subhead{
+    font-size:10px; letter-spacing:.32em; text-transform:uppercase;
+    font-weight:700; margin:6px 0 14px; color:var(--ink);
+  }
+
+  ul.list{list-style:none; padding:0; margin:0 0 18px;}
+  ul.list li{
+    position:relative; padding-left:18px; margin-bottom:9px;
+    font-size:12.5px; line-height:1.65; color:var(--ink);
+  }
+  ul.list li::before{
+    content:"■"; position:absolute; left:0; top:0;
+    font-size:8px; color:var(--pink); line-height:1.95;
+  }
+  ul.list li .lite{color:var(--soft);}
+
+  .callout{
+    background:var(--callout-bg); padding:16px 20px;
+    border-left:3px solid var(--pink);
+  }
+  .callout.gold{
+    background:var(--callout-gold-bg);
+    border-left-color:var(--gold);
+  }
+  .callout .k{
+    font-size:9.5px; letter-spacing:.26em; text-transform:uppercase;
+    font-weight:700; margin-bottom:8px; color:var(--pink);
+  }
+  .callout.gold .k{ color:var(--gold); }
+  .callout .v{
+    font-size:11.5px; line-height:1.7; color:var(--soft);
+  }
+
+  .flow{
+    display:grid; grid-template-columns:1fr; gap:0;
+    margin:0 0 22px;
+    border:1px solid var(--rule-soft);
+  }
+  .flow-step{
+    display:grid; grid-template-columns:44px 1fr;
+    border-bottom:1px solid var(--rule-soft);
+    min-height:42px;
+  }
+  .flow-step:last-child{ border-bottom:0; }
+  .flow-num{
+    display:flex; align-items:center; justify-content:center;
+    background:var(--pink); color:#ffffff;
+    font-size:11px; font-weight:800; letter-spacing:.05em;
+  }
+  .flow-content{
+    padding:10px 14px;
+    font-size:11.5px; line-height:1.6;
+  }
+  .flow-content strong{ font-weight:700; color:var(--ink); display:block; margin-bottom:1px; }
+  .flow-content span{ color:var(--soft); }
+
+  .invest{
+    width:100%; border-collapse:collapse;
+    margin-top:8px; margin-bottom:22px;
+  }
+  .invest th, .invest td{
+    text-align:left; padding:14px 0;
+    border-bottom:1px solid var(--rule-soft);
+    font-size:11.5px; vertical-align:top;
+  }
+  .invest thead th{
+    font-size:9px; letter-spacing:.28em; text-transform:uppercase;
+    font-weight:700; color:var(--muted); padding-bottom:10px;
+    border-bottom:1px solid var(--ink);
+  }
+  .invest .item{font-weight:600; line-height:1.5;}
+  .invest .item small{display:block; font-weight:400; color:var(--soft); margin-top:3px; font-size:11px; line-height:1.55;}
+  .invest .freq{color:var(--soft); font-size:11px;}
+  .invest .price{text-align:right; font-weight:700; font-size:13px; color:var(--gold);}
+  .invest .price small{display:block; font-weight:400; color:var(--muted); font-size:10px; margin-top:2px;}
+
+  .dep-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:16px;
+    margin:0 0 22px;
+  }
+  .dep-card{
+    border:1px solid var(--rule-soft);
+    padding:14px 16px;
+  }
+  .dep-card .dep-q{
+    font-size:10px; letter-spacing:.18em; text-transform:uppercase;
+    font-weight:700; color:var(--pink); margin-bottom:6px;
+  }
+  .dep-card .dep-a{
+    font-size:12px; line-height:1.6; color:var(--soft); font-weight:500;
+  }
+  .dep-card .dep-arrow{
+    font-size:9px; letter-spacing:.22em; text-transform:uppercase;
+    font-weight:700; color:var(--muted); margin-top:6px;
+  }
+
+  .sign{
+    display:grid; grid-template-columns:1fr 1fr; gap:40px;
+    margin-top:auto; padding-top:20px;
+  }
+  .sign .col .k{
+    font-size:9px; letter-spacing:.24em; text-transform:uppercase;
+    color:var(--muted); font-weight:600; margin-bottom:28px;
+  }
+  .sign .col .line{
+    height:1px; background:var(--ink); margin-bottom:8px;
+  }
+  .sign .col .who{ font-size:12px; font-weight:600; }
+  .sign .col .role{ font-size:10px; color:var(--muted); margin-top:2px; }
+</style>
+</head>
+<body>
+
+<!-- ====================== PAGE 1 — COVER ====================== -->
+<section class="page cover">
+  <div class="runhead">
+    <div class="left">
+      <span>THE LOST+UNFOUNDS</span>
+      <span class="sep">·</span>
+      <span>Kattitude Tattoo Studio — Phase 2 Proposal</span>
+    </div>
+    <div>Page 1 / 5</div>
+  </div>
+
+  <div class="cover-body">
+    <div class="cover-logo" aria-label="Kattitude Tattoo Studio">
+      <img src="https://kattitudekollection.com/cdn/shop/files/Black_White_Circle_Bee_Icon_Food_Logo_-_1.png"
+           alt="Kattitude" style="filter:invert(1);" />
+    </div>
+    <div class="cover-brand">Kattitude Tattoo Studio</div>
+    <div class="cover-tag">Austin, Texas</div>
+
+    <div class="cover-phase">Phase 2 Proposal</div>
+    <h1 class="cover-h1">AI-Powered<br>Booking System</h1>
+    <p class="cover-h1-sub">Prepared by THE LOST+UNFOUNDS · business@thelostandunfounds.com</p>
+    <div class="cover-rule"></div>
+
+    <div class="cover-prereq">
+      <strong>Prerequisite:</strong> This proposal assumes Phase 1 — the Studio Operations Platform — is complete and running. Phase 2 is built on top of the infrastructure Phase 1 establishes. The Phase 1 proposal is available at <span style="color:rgba(255,255,255,0.7);">thelostandunfounds.com/kattitude-proposal.html</span>
+    </div>
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:8px;">
+      <a href="https://www.thelostandunfounds.com/kattitude-preview.html"
+         target="_blank" rel="noopener noreferrer"
+         style="display:inline-flex;align-items:center;gap:8px;
+                padding:11px 20px;
+                background:#E91E8C;color:#ffffff;
+                font-family:'Inter','Helvetica Neue',Arial,sans-serif;
+                font-size:9.5px;font-weight:700;letter-spacing:.2em;
+                text-transform:uppercase;text-decoration:none;">
+        &#9654;&nbsp;&nbsp;WEBSITE PREVIEW
+      </a>
+      <a href="https://www.thelostandunfounds.com/kattitude-dashboard-preview.html"
+         target="_blank" rel="noopener noreferrer"
+         style="display:inline-flex;align-items:center;gap:8px;
+                padding:11px 20px;
+                background:transparent;color:#ffffff;
+                border:1px solid rgba(255,255,255,0.3);
+                font-family:'Inter','Helvetica Neue',Arial,sans-serif;
+                font-size:9.5px;font-weight:700;letter-spacing:.2em;
+                text-transform:uppercase;text-decoration:none;">
+        &#9632;&nbsp;&nbsp;DASHBOARD PREVIEW
+      </a>
+    </div>
+    <p style="font-size:9px;letter-spacing:.16em;text-transform:uppercase;
+              color:rgba(255,255,255,0.3);margin:0 0 32px;font-family:'Inter',sans-serif;">
+      Live previews of the Phase 1 platform already in progress
+    </p>
+
+    <div class="cover-grid">
+      <div class="field">
+        <div class="k">Prepared by</div>
+        <div class="v">
+          Joshua Greene<br>
+          <span class="lite">THE LOST AND UNFOUNDS LLC.</span>
+        </div>
+      </div>
+      <div class="field">
+        <div class="k">Prepared for</div>
+        <div class="v">
+          Kattitude Tattoo Studio<br>
+          <span class="lite">Austin, Texas</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cover-dates">
+      <div class="d">Proposal Date<span>June 21, 2026</span></div>
+      <div class="d">Phase 1 Target<span>3 weeks from acceptance</span></div>
+      <div class="d">Phase 2 Target<span>4–6 weeks after Phase 1</span></div>
+    </div>
+  </div>
+
+  <div class="runfoot">
+    <div>YOUR INK. YOUR SYSTEM.</div>
+    <div>Page 1 / 5</div>
+  </div>
+</section>
+
+<!-- ====================== PAGE 2 — WHY PHASE 1 FIRST ====================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="left">
+      <span>THE LOST+UNFOUNDS</span>
+      <span class="sep">·</span>
+      <span>Kattitude Tattoo Studio — Phase 2 Proposal</span>
+    </div>
+    <div>Page 2 / 5</div>
+  </div>
+
+  <div class="pagehead">
+    <div class="sect">01 · The Foundation</div>
+    <h2>Every booking needs somewhere to land.</h2>
+  </div>
+
+  <p class="lede">
+    The AI booking system is a client-facing flow. When a client submits a request, uploads reference photos, receives an estimate, signs a waiver, and pays a deposit — all of that data writes somewhere. That somewhere is the Phase 1 dashboard. This is a technical dependency — the sequencing is structural.
+  </p>
+  <p class="body">
+    Phase 2 connects to infrastructure that Phase 1 builds and runs. Every booking that flows through the system writes to four places simultaneously — the appointment calendar, the deposit ledger, the client record, and the artist's schedule. Phase 1 builds all four. Phase 2 uses all four.
+  </p>
+
+  <hr class="rule">
+
+  <div class="subhead">What Phase 2 writes to</div>
+
+  <div class="dep-grid">
+    <div class="dep-card">
+      <div class="dep-q">Where do bookings go?</div>
+      <div class="dep-a">The appointment system — tracking confirmed sessions, start times, and assigned artist.</div>
+      <div class="dep-arrow">&#8594; Dashboard · Appointments (Phase 1)</div>
+    </div>
+    <div class="dep-card">
+      <div class="dep-q">Where are deposits tracked?</div>
+      <div class="dep-a">The deposit ledger — showing paid, outstanding, and total revenue by artist and date.</div>
+      <div class="dep-arrow">&#8594; Dashboard · Deposits (Phase 1)</div>
+    </div>
+    <div class="dep-card">
+      <div class="dep-q">How does the artist see their schedule?</div>
+      <div class="dep-a">The artist portal — their upcoming sessions, client reference photos, and session notes.</div>
+      <div class="dep-arrow">&#8594; Dashboard · Artist Portal (Phase 1)</div>
+    </div>
+    <div class="dep-card">
+      <div class="dep-q">Where does client info live?</div>
+      <div class="dep-a">The client record — contact info, session history, signed waivers, and uploaded reference photos.</div>
+      <div class="dep-arrow">&#8594; Dashboard · Clients (Phase 1)</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <div class="k">What happens if Phase 2 comes first</div>
+    <div class="v">Building Phase 2 standalone means building appointment management, deposit tracking, client records, and artist scheduling inside the booking system itself — the same four systems Phase 1 already builds. The result is duplicate infrastructure, a longer timeline, and a higher cost. Phase 1 first means Phase 2 plugs into a foundation that already exists and already works. The build is faster, the cost is lower, and the result is a single connected system rather than two parallel ones.</div>
+  </div>
+
+  <div class="runfoot">
+    <div>YOUR INK. YOUR SYSTEM.</div>
+    <div>Page 2 / 5</div>
+  </div>
+</section>
+
+<!-- ====================== PAGE 3 — WHAT PHASE 2 BUILDS ====================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="left">
+      <span>THE LOST+UNFOUNDS</span>
+      <span class="sep">·</span>
+      <span>Kattitude Tattoo Studio — Phase 2 Proposal</span>
+    </div>
+    <div>Page 3 / 5</div>
+  </div>
+
+  <div class="pagehead">
+    <div class="sect">02 · What Phase 2 Builds</div>
+    <h2>A booking that runs before you lift a finger.</h2>
+  </div>
+
+  <p class="lede">
+    A client discovers Kattitude, picks up their phone, and books — reference photos uploaded, estimate received, waiver signed, deposit paid. By the time they walk through the door, their appointment is confirmed, their artist knows what they're getting, and everything is already in the dashboard.
+  </p>
+
+  <div class="subhead">The Full Booking Flow</div>
+
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-num">01</div>
+      <div class="flow-content">
+        <strong>Style &amp; Placement</strong>
+        <span>Client selects their tattoo style (traditional, realism, blackwork, watercolor, etc.) and body placement from a guided selection.</span>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">02</div>
+      <div class="flow-content">
+        <strong>Reference Photo Upload</strong>
+        <span>Client uploads 1–5 reference images. Photos attach to their client record in the dashboard and are visible to the assigned artist before the session.</span>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">03</div>
+      <div class="flow-content">
+        <strong>Estimate Generation</strong>
+        <span>The AI analyzes complexity, size, placement, and style and generates a time and cost range. The assigned artist reviews and confirms before it reaches the client.</span>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">04</div>
+      <div class="flow-content">
+        <strong>Artist Selection &amp; Scheduling</strong>
+        <span>Client picks a preferred artist or "first available." Real availability is drawn from each artist's schedule in the Phase 1 dashboard — only open slots are shown.</span>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">05</div>
+      <div class="flow-content">
+        <strong>Digital Waiver</strong>
+        <span>Client signs the studio waiver digitally before confirming. Stored in their Phase 1 client record with name, email, and timestamp.</span>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">06</div>
+      <div class="flow-content">
+        <strong>Deposit Payment</strong>
+        <span>Client pays a deposit via Stripe to confirm the appointment. Payment records directly in the Phase 1 deposit tracker.</span>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">07</div>
+      <div class="flow-content">
+        <strong>Confirmation &amp; Dashboard Update</strong>
+        <span>Booking confirmed. Appointment appears in the dashboard, artist schedule updates, client record is created or updated, deposit is logged — all simultaneously, all automatically.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="runfoot">
+    <div>YOUR INK. YOUR SYSTEM.</div>
+    <div>Page 3 / 5</div>
+  </div>
+</section>
+
+<!-- ====================== PAGE 4 — THE ESTIMATION ENGINE ====================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="left">
+      <span>THE LOST+UNFOUNDS</span>
+      <span class="sep">·</span>
+      <span>Kattitude Tattoo Studio — Phase 2 Proposal</span>
+    </div>
+    <div>Page 4 / 5</div>
+  </div>
+
+  <div class="pagehead">
+    <div class="sect">03 · The Estimation Engine</div>
+    <h2>How a reference photo becomes a quote.</h2>
+  </div>
+
+  <p class="lede">
+    The estimate step starts with the artist. Over time, as session data flows through the Phase 1 dashboard — actual time vs. estimated time, complexity scores, each artist's pace — the AI layer calibrates. Quotes get more accurate with every session that runs through the system.
+  </p>
+
+  <div class="subhead">AI Image Analysis</div>
+  <ul class="list">
+    <li><strong>Reference photo processing</strong> — <span class="lite">the AI analyzes each uploaded reference image for complexity (linework density, shading depth, color count), estimates surface area based on placement selection, and classifies the style (traditional, realism, blackwork, watercolor, etc.).</span></li>
+    <li><strong>Complexity scoring</strong> — <span class="lite">each piece receives a 1–10 complexity score that maps to a time estimate. Fine-line portrait realism scores higher than a simple flash piece. The score is visible to the client, making estimates transparent rather than opaque.</span></li>
+  </ul>
+
+  <div class="subhead">Artist Performance Profiles</div>
+  <ul class="list">
+    <li><strong>Speed profiles built from Phase 1 data</strong> — <span class="lite">the Phase 1 clock-in/clock-out system tracks actual session duration for every appointment. Each artist's average time per complexity point is derived from real sessions — grounded in actual data. Artist A might average 45 minutes per point, Artist B 30 minutes. Quotes adjust per artist accordingly.</span></li>
+    <li><strong>Precedent-based pricing</strong> — <span class="lite">as more sessions complete and log actual vs. estimated times, the AI calibrates to your studio's real history. A quote for a medium-complexity blackwork sleeve in six months is grounded in dozens of similar sessions your artists have already completed.</span></li>
+  </ul>
+
+  <div class="subhead">Availability Engine</div>
+  <ul class="list">
+    <li><strong>Real schedule integration</strong> — <span class="lite">the scheduler reads from the Phase 1 artist portal: existing bookings, working hours, estimated session duration based on complexity score and artist speed profile, and a configurable buffer between clients (default 30 minutes for cleanup and reset).</span></li>
+    <li><strong>Live slot generation</strong> — <span class="lite">clients see only genuinely available appointment slots. As bookings confirm and schedules fill, the available times update in real time. Every slot shown is confirmed open.</span></li>
+  </ul>
+
+  <div class="callout gold">
+    <div class="k">How the AI Gets Better Over Time</div>
+    <div class="v">Phase 2 launches with artist-reviewed estimates — the AI suggests, the artist confirms. Every confirmed session creates a data point: complexity score, estimated time, actual time, artist. After 30–50 sessions, the AI's estimates become reliable enough to send directly to clients for review, with the artist approving rather than generating. The system earns its autonomy through your studio's real data.</div>
+  </div>
+
+  <div class="runfoot">
+    <div>YOUR INK. YOUR SYSTEM.</div>
+    <div>Page 4 / 5</div>
+  </div>
+</section>
+
+<!-- ====================== PAGE 5 — INVESTMENT & TIMELINE ====================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="left">
+      <span>THE LOST+UNFOUNDS</span>
+      <span class="sep">·</span>
+      <span>Kattitude Tattoo Studio — Phase 2 Proposal</span>
+    </div>
+    <div>Page 5 / 5</div>
+  </div>
+
+  <div class="pagehead">
+    <div class="sect">04 · Investment &amp; Timeline</div>
+    <h2>Built on top of what you already have.</h2>
+  </div>
+
+  <p class="lede">
+    Phase 2 is scoped precisely once Phase 1 is live and we understand your real booking volume, artist roster, and usage patterns. The ranges below reflect typical Phase 2 builds at this scope.
+  </p>
+
+  <table class="invest">
+    <thead>
+      <tr>
+        <th style="width:52%">Item</th>
+        <th style="width:20%">Frequency</th>
+        <th style="width:28%; text-align:right;">Estimate</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="item">Phase 2 Build · AI Booking Engine
+          <small>Client-facing booking flow, reference photo upload, AI image analysis, complexity scoring, artist speed profiles, smart scheduling, digital waiver integration, deposit payment, and full dashboard write-through.</small>
+        </td>
+        <td class="freq">One-time</td>
+        <td class="price">$3,000 – $5,000<small>fixed price agreed before work starts</small></td>
+      </tr>
+      <tr>
+        <td class="item">AI API Credits — Development &amp; Testing
+          <small>Covers image analysis requests during the full build and testing phase. Included in the Phase 2 build cost.</small>
+        </td>
+        <td class="freq">One-time</td>
+        <td class="price" style="color:var(--soft); font-size:11px; font-weight:600;">$100<small>included</small></td>
+      </tr>
+      <tr>
+        <td class="item">Ongoing AI API Costs
+          <small>Each image analysis request draws a small amount from AI API credits. Covered by allocating a small percentage of each deposit processed — agreed on together before Phase 2 launches.</small>
+        </td>
+        <td class="freq">Per booking</td>
+        <td class="price" style="color:var(--soft); font-size:11px; font-weight:600;">% of deposit<small>self-sustaining</small></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <div class="k">Timeline</div>
+    <div class="v"><strong>Phase 2 launches 4–6 weeks after Phase 1 is delivered and running.</strong> The exact scope and fixed price are confirmed after Phase 1 is live and 2–4 weeks of real usage data is flowing through the system. That window gives us real booking volume, artist pace data from the clock-in system, and a clear picture of scheduling complexity — all of which inform the Phase 2 build scope directly.</div>
+  </div>
+
+  <div class="callout gold" style="margin-top:14px;">
+    <div class="k">Why a Range, and When It Becomes a Fixed Price</div>
+    <div class="v">The $3,000–$5,000 range reflects differences in studio size, artist roster complexity, and booking volume. A studio with 2 artists and a predictable weekly schedule lands closer to $3,000. A multi-artist studio with variable availability and high booking volume sits closer to $5,000. Once Phase 1 is live, we spend two weeks reviewing real patterns together and scope Phase 2 precisely — with a fixed price and fixed timeline agreed before any work begins.</div>
+  </div>
+
+  <div class="callout" style="margin-top:14px;">
+    <div class="k">Next Steps</div>
+    <div class="v">
+      <strong>Step 1 — Accept Phase 1.</strong> The foundation comes first. Reply "approved" to the Phase 1 proposal to receive the deposit invoice and start the clock.<br><br>
+      <strong>Step 2 — Run Phase 1.</strong> 2–4 weeks of live operation gives the dashboard real data: actual session times, deposit flows, booking patterns, and artist schedules.<br><br>
+      <strong>Step 3 — Scope Phase 2 precisely.</strong> A short working session together reviews real usage, finalizes scope, and produces a fixed-price Phase 2 agreement.<br><br>
+      <strong>Step 4 — Build Phase 2.</strong> 4–6 weeks. The booking system plugs into the Phase 1 dashboard and goes live.
+    </div>
+  </div>
+
+  <div class="sign">
+    <div class="col">
+      <div class="k">For THE LOST AND UNFOUNDS LLC.</div>
+      <div class="line"></div>
+      <div class="who">Joshua Greene</div>
+      <div class="role">Founder · June 21, 2026</div>
+    </div>
+    <div class="col">
+      <div class="k">For Kattitude Tattoo Studio</div>
+      <div class="line"></div>
+      <div class="who">&nbsp;</div>
+      <div class="role">Owner · Date: ___________</div>
+    </div>
+  </div>
+
+  <div class="runfoot">
+    <div>YOUR INK. YOUR SYSTEM.</div>
+    <div>Page 5 / 5</div>
+  </div>
+</section>
+
+</body>
+</html>
