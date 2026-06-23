@@ -55,24 +55,24 @@ interface Client {
 
 const ALL_APPTS_INIT: Appointment[] = [
   { id:'APT-0041', date:'Jun 22', time:'10:00 AM', client:'Camila Vega',    artist:'Kat',   style:'Fine Line',     placement:'Wrist',       size:'Small',  status:'in-progress', deposit:85,  total:280, phone:'(512) 555-0181' },
-  { id:'APT-0042', date:'Jun 22', time:'12:30 PM', client:'Jordan Torres',  artist:'Marco', style:'Blackwork',     placement:'Shoulder',    size:'Medium', status:'upcoming',    deposit:130, total:420, phone:'(512) 555-0143' },
+  { id:'APT-0042', date:'Jun 22', time:'12:30 PM', client:'Jordan Torres',  artist:'Miranda', style:'Gothic',       placement:'Shoulder',    size:'Medium', status:'upcoming',    deposit:130, total:420, phone:'(512) 555-0143' },
   { id:'APT-0043', date:'Jun 22', time:'3:00 PM',  client:'Priya Mehta',    artist:'Kat',   style:'Color Realism', placement:'Calf',        size:'Large',  status:'upcoming',    deposit:195, total:650, phone:'(512) 555-0209' },
   { id:'APT-0044', date:'Jun 23', time:'11:00 AM', client:'Devon Santos',   artist:'Kat',   style:'Traditional',   placement:'Upper Arm',   size:'Medium', status:'confirmed',   deposit:115, total:380, phone:'(512) 555-0167' },
-  { id:'APT-0045', date:'Jun 23', time:'2:00 PM',  client:'Alex Rivera',    artist:'Sofia', style:'Fine Line',     placement:'Ankle',       size:'Small',  status:'confirmed',   deposit:60,  total:200, phone:'(512) 555-0334' },
+  { id:'APT-0045', date:'Jun 23', time:'2:00 PM',  client:'Alex Rivera',    artist:'Barbie', style:'Single Needle', placement:'Ankle',       size:'Small',  status:'confirmed',   deposit:60,  total:200, phone:'(512) 555-0334' },
   { id:'APT-0046', date:'Jun 24', time:'10:00 AM', client:'Maya Kim',       artist:'Kat',   style:'Illustrative',  placement:'Ribcage',     size:'Large',  status:'confirmed',   deposit:165, total:550, phone:'(512) 555-0278' },
-  { id:'APT-0047', date:'Jun 24', time:'1:00 PM',  client:'Tyler Brooks',   artist:'Marco', style:'Blackwork',     placement:'Back',        size:'XL',     status:'confirmed',   deposit:250, total:800, phone:'(512) 555-0391' },
-  { id:'APT-0048', date:'Jun 25', time:'11:00 AM', client:'Sofia Garza',    artist:'Sofia', style:'Fine Line',     placement:'Behind Ear',  size:'Small',  status:'pending',     deposit:0,   total:150, phone:'(512) 555-0422' },
+  { id:'APT-0047', date:'Jun 24', time:'1:00 PM',  client:'Tyler Brooks',   artist:'Alena', style:'Large Scale Fine Line', placement:'Back', size:'XL',     status:'confirmed',   deposit:250, total:800, phone:'(512) 555-0391' },
+  { id:'APT-0048', date:'Jun 25', time:'11:00 AM', client:'Sofia Garza',    artist:'Jen', style:'Single Needle',   placement:'Behind Ear',  size:'Small',  status:'pending',     deposit:0,   total:150, phone:'(512) 555-0422' },
   { id:'APT-0049', date:'Jun 26', time:'12:00 PM', client:'Marcus Bell',    artist:'Kat',   style:'Cover-Up',      placement:'Forearm',     size:'Medium', status:'confirmed',   deposit:150, total:500, phone:'(512) 555-0115' },
-  { id:'APT-0050', date:'Jun 27', time:'10:00 AM', client:'Lucas Torres',   artist:'Marco', style:'Traditional',   placement:'Chest',       size:'Large',  status:'confirmed',   deposit:210, total:700, phone:'(512) 555-0251' },
+  { id:'APT-0050', date:'Jun 27', time:'10:00 AM', client:'Lucas Torres',   artist:'Naomi', style:'Large Scale Flowers', placement:'Chest', size:'Large',  status:'confirmed',   deposit:210, total:700, phone:'(512) 555-0251' },
   // completed
   { id:'APT-0040', date:'Jun 21', time:'2:00 PM',  client:'Rina Park',      artist:'Kat',   style:'Color Realism', placement:'Shoulder',    size:'Medium', status:'completed',   deposit:185, total:620, phone:'(512) 555-0362' },
-  { id:'APT-0039', date:'Jun 21', time:'10:00 AM', client:'Camila Vega',    artist:'Sofia', style:'Fine Line',     placement:'Collarbone',  size:'Small',  status:'completed',   deposit:75,  total:250, phone:'(512) 555-0181' },
-  { id:'APT-0038', date:'Jun 20', time:'1:00 PM',  client:'Tyler Brooks',   artist:'Marco', style:'Blackwork',     placement:'Forearm',     size:'Medium', status:'completed',   deposit:115, total:380, phone:'(512) 555-0391' },
+  { id:'APT-0039', date:'Jun 21', time:'10:00 AM', client:'Camila Vega',    artist:'Barbie', style:'Micro Realism', placement:'Collarbone',  size:'Small',  status:'completed',   deposit:75,  total:250, phone:'(512) 555-0181' },
+  { id:'APT-0038', date:'Jun 20', time:'1:00 PM',  client:'Tyler Brooks',   artist:'Alena', style:'Large Scale Fine Line', placement:'Forearm', size:'Medium', status:'completed',   deposit:115, total:380, phone:'(512) 555-0391' },
   { id:'APT-0037', date:'Jun 19', time:'11:00 AM', client:'Devon Santos',   artist:'Kat',   style:'Traditional',   placement:'Bicep',       size:'Medium', status:'completed',   deposit:100, total:320, phone:'(512) 555-0167' },
-  { id:'APT-0036', date:'Jun 18', time:'10:30 AM', client:'Mia Chen',       artist:'Sofia', style:'Fine Line',     placement:'Wrist',       size:'Small',  status:'completed',   deposit:65,  total:220, phone:'(512) 555-0488' },
-  { id:'APT-0035', date:'Jun 17', time:'12:00 PM', client:'Alex Rivera',    artist:'Sofia', style:'Fine Line',     placement:'Spine',       size:'Medium', status:'completed',   deposit:90,  total:300, phone:'(512) 555-0334' },
+  { id:'APT-0036', date:'Jun 18', time:'10:30 AM', client:'Mia Chen',       artist:'Jen', style:'Single Needle',   placement:'Wrist',       size:'Small',  status:'completed',   deposit:65,  total:220, phone:'(512) 555-0488' },
+  { id:'APT-0035', date:'Jun 17', time:'12:00 PM', client:'Alex Rivera',    artist:'Barbie', style:'Single Needle', placement:'Spine',      size:'Medium', status:'completed',   deposit:90,  total:300, phone:'(512) 555-0334' },
   { id:'APT-0034', date:'Jun 16', time:'1:30 PM',  client:'Priya Mehta',    artist:'Kat',   style:'Color Realism', placement:'Upper Arm',   size:'Large',  status:'completed',   deposit:180, total:600, phone:'(512) 555-0209' },
-  { id:'APT-0033', date:'Jun 15', time:'10:00 AM', client:'Jordan Torres',  artist:'Marco', style:'Blackwork',     placement:'Chest',       size:'Large',  status:'completed',   deposit:165, total:550, phone:'(512) 555-0143' },
+  { id:'APT-0033', date:'Jun 15', time:'10:00 AM', client:'Jordan Torres',  artist:'Miranda', style:'Gothic',      placement:'Chest',       size:'Large',  status:'completed',   deposit:165, total:550, phone:'(512) 555-0143' },
 ];
 
 const ALL_DEPOSITS_INIT: Deposit[] = [
@@ -89,13 +89,13 @@ const ALL_DEPOSITS_INIT: Deposit[] = [
 ];
 
 const CLIENTS: Client[] = [
-  { name:'Alex Rivera',    phone:'(512) 555-0334', email:'alex@rivera.io',          instagram:'@alex.ink.atx',    sessions:6, lastVisit:'Jun 21', spend:1470, favStyle:'Fine Line',     preferredArtist:'Sofia', since:'Oct 2023', note:'Wants full sleeve eventually — fine line botanicals. Very loyal.' },
+  { name:'Alex Rivera',    phone:'(512) 555-0334', email:'alex@rivera.io',          instagram:'@alex.ink.atx',    sessions:6, lastVisit:'Jun 21', spend:1470, favStyle:'Single Needle', preferredArtist:'Barbie', since:'Oct 2023', note:'Wants full sleeve eventually — fine line botanicals. Very loyal.' },
   { name:'Camila Vega',    phone:'(512) 555-0181', email:'camilav@outlook.com',     instagram:'@camila.tatted',   sessions:5, lastVisit:'Jun 21', spend:1240, favStyle:'Fine Line',     preferredArtist:'Kat',   since:'Nov 2023', note:'Fine line only. Loves delicate botanical work. Refers friends often.' },
-  { name:'Tyler Brooks',   phone:'(512) 555-0391', email:'tyler@brooksco.com',      instagram:'@tbrooks_ink',     sessions:4, lastVisit:'Jun 20', spend:1750, favStyle:'Blackwork',     preferredArtist:'Marco', since:'Jan 2024', note:'Building a Japanese-inspired blackwork sleeve with Marco.' },
+  { name:'Tyler Brooks',   phone:'(512) 555-0391', email:'tyler@brooksco.com',      instagram:'@tbrooks_ink',     sessions:4, lastVisit:'Jun 20', spend:1750, favStyle:'Large Scale Fine Line', preferredArtist:'Alena', since:'Jan 2024', note:'Building a Japanese-inspired sleeve with Alena. Large scale fine line work.' },
   { name:'Devon Santos',   phone:'(512) 555-0167', email:'devon.santos@gmail.com',  instagram:'@devonsantos_atx', sessions:4, lastVisit:'Jun 19', spend:1020, favStyle:'Traditional',   preferredArtist:'Kat',   since:'Feb 2024', note:'Classic American traditional. Interested in chest panel next.' },
   { name:'Priya Mehta',    phone:'(512) 555-0209', email:'priya.mehta@pm.me',       instagram:'@priyaink',        sessions:3, lastVisit:'Jun 16', spend:1450, favStyle:'Color Realism',  preferredArtist:'Kat',   since:'Mar 2024', note:'Portrait work. Very detail-oriented about references.' },
-  { name:'Jordan Torres',  phone:'(512) 555-0143', email:'j.torres@live.com',       instagram:'@jordantats',      sessions:3, lastVisit:'Jun 15', spend:1170, favStyle:'Blackwork',     preferredArtist:'Marco', since:'Mar 2024', note:'Cover-up completed in Jun. Now wants ornamental sleeve pieces.' },
-  { name:'Mia Chen',       phone:'(512) 555-0488', email:'mia.chen@gmail.com',      instagram:'@mia_fineline',    sessions:2, lastVisit:'Jun 18', spend:470,  favStyle:'Fine Line',     preferredArtist:'Sofia', since:'Apr 2024', note:'Minimalist fine line. Wants matching pieces with her sister.' },
+  { name:'Jordan Torres',  phone:'(512) 555-0143', email:'j.torres@live.com',       instagram:'@jordantats',      sessions:3, lastVisit:'Jun 15', spend:1170, favStyle:'Gothic',        preferredArtist:'Miranda', since:'Mar 2024', note:'Cover-up completed in Jun. Now wants ornamental sleeve pieces with Miranda.' },
+  { name:'Mia Chen',       phone:'(512) 555-0488', email:'mia.chen@gmail.com',      instagram:'@mia_fineline',    sessions:2, lastVisit:'Jun 18', spend:470,  favStyle:'Single Needle', preferredArtist:'Jen', since:'Apr 2024', note:'Minimalist single needle. Wants matching pieces with her sister.' },
   { name:'Maya Kim',       phone:'(512) 555-0278', email:'maya@mayakim.art',        instagram:'@mayakim.art',     sessions:2, lastVisit:'Jun 14', spend:600,  favStyle:'Illustrative',  preferredArtist:'Kat',   since:'May 2024', note:'Illustrative character work. Shows up with very detailed briefs.' },
   { name:'Marcus Bell',    phone:'(512) 555-0115', email:'marcusbell@icloud.com',   instagram:'@bellinkd',        sessions:2, lastVisit:'Jun 10', spend:620,  favStyle:'Cover-Up',      preferredArtist:'Kat',   since:'May 2024', note:'Has 2 cover-up areas. First done. Second (back piece) scheduled Jun 26.' },
   { name:'Rina Park',      phone:'(512) 555-0362', email:'rinapark@gmail.com',      instagram:'@rinapark_tats',   sessions:1, lastVisit:'Jun 21', spend:620,  favStyle:'Color Realism',  preferredArtist:'Kat',   since:'Jun 2024', note:'First session was a portrait — very happy. Wants second session.' },
@@ -103,22 +103,40 @@ const CLIENTS: Client[] = [
 
 const ARTISTS_DATA: ArtistRecord[] = [
   {
-    id:'KH', initials:'KH', name:'Katherine "Kat" Herrera', role:'Owner & Lead Artist',
-    instagram:'@kattitudetattoo', specialties:['Fine Line','Color Realism','Illustrative','Cover-Ups'],
+    id:'KT', initials:'KT', name:'Kat', role:'Owner & Lead Artist',
+    instagram:'@Kattitudetattoo', specialties:['Fine Line','Color Realism','Illustrative','Cover-Ups'],
     bookingRate:94, rating:4.9, sessionsMonth:22, revenueMonth:8840, nextAvail:'Jun 29',
     status:'booked', bio:'Self-taught with 8+ years experience. Known for delicate fine line and vibrant realism.',
   },
   {
-    id:'MR', initials:'MR', name:'Marco Reyes', role:'Guest Artist',
-    instagram:'@marcoreyes.ink', specialties:['Blackwork','Traditional','Tribal','Geometric'],
-    bookingRate:78, rating:4.8, sessionsMonth:14, revenueMonth:5720, nextAvail:'Jun 25',
-    status:'available', bio:'Specialist in bold, graphic blackwork and classic American traditional.',
+    id:'BB', initials:'BB', name:'Barbie', role:'Senior Artist',
+    instagram:'@delicatelyscripted', specialties:['Single Needle','Micro Realism','Color','Florals'],
+    bookingRate:88, rating:4.9, sessionsMonth:16, revenueMonth:5980, nextAvail:'Jun 28',
+    status:'available', bio:'Impossibly delicate single needle work and micro realism. Her florals are among the most requested pieces in the studio.',
   },
   {
-    id:'SL', initials:'SL', name:'Sofia Lee', role:'Guest Artist',
-    instagram:'@sofialee.tats', specialties:['Fine Line','Botanical','Minimalist','Script'],
-    bookingRate:85, rating:4.9, sessionsMonth:10, revenueMonth:3100, nextAvail:'Jun 26',
-    status:'available', bio:'Soft, feminine fine line. Botanical and script work with a loyal following.',
+    id:'AL', initials:'AL', name:'Alena', role:'Senior Artist',
+    instagram:'@Alenanobodytattoo', specialties:['Large Scale Fine Line','Florals','Ornamentals'],
+    bookingRate:82, rating:4.8, sessionsMonth:12, revenueMonth:5200, nextAvail:'Jun 29',
+    status:'available', bio:'Known for large scale fine line compositions. Her ornamental and floral work transforms entire limbs into seamless, flowing pieces.',
+  },
+  {
+    id:'MI', initials:'MI', name:'Miranda', role:'Junior Artist',
+    instagram:'@mirandaink', specialties:['Large Scale Fine Line','Gothic','Abstract','Realism'],
+    bookingRate:72, rating:4.7, sessionsMonth:9, revenueMonth:3100, nextAvail:'Jun 25',
+    status:'available', bio:'Dark, moody edge with gothic influence. Excels at large scale fine line, abstract compositions, and realism work.',
+  },
+  {
+    id:'JN', initials:'JN', name:'Jen', role:'Junior Artist',
+    instagram:'@inkedByjennin', specialties:['3 Needle','Single Needle'],
+    bookingRate:68, rating:4.7, sessionsMonth:8, revenueMonth:2400, nextAvail:'Jun 25',
+    status:'available', bio:'Precision needle work specialist. Clean, consistent execution across both 3 needle and single needle styles.',
+  },
+  {
+    id:'NM', initials:'NM', name:'Naomi', role:'Junior Artist',
+    instagram:'@Paratinta_26', specialties:['Single Needle','3 Needle','Large Scale Flowers'],
+    bookingRate:70, rating:4.7, sessionsMonth:7, revenueMonth:2180, nextAvail:'Jun 26',
+    status:'available', bio:'Single and 3 needle techniques with a love for large scale floral pieces that make a statement.',
   },
 ];
 
@@ -140,11 +158,12 @@ const apptsByWeek = [
   { week:'Jun W2', sessions:22 },
 ];
 const styleBreakdown = [
-  { name:'Fine Line',     value:42, color:PINK },
-  { name:'Blackwork',     value:22, color:'rgba(255,255,255,0.5)' },
-  { name:'Traditional',   value:18, color:GOLD },
-  { name:'Color Realism', value:12, color:'#e879f9' },
-  { name:'Illustrative',  value:6,  color:'rgba(255,255,255,0.2)' },
+  { name:'Single Needle', value:28, color:PINK },
+  { name:'Fine Line',     value:24, color:'rgba(255,255,255,0.5)' },
+  { name:'Florals',       value:18, color:GOLD },
+  { name:'Micro Realism', value:12, color:'#e879f9' },
+  { name:'Gothic',        value:10, color:'rgba(255,255,255,0.3)' },
+  { name:'Color Realism', value:8,  color:'rgba(255,255,255,0.15)' },
 ];
 const busyDays = [
   { day:'Tue', appts:8 }, { day:'Wed', appts:6 }, { day:'Thu', appts:9 },
@@ -300,9 +319,13 @@ function CreateAppointmentModal({ onClose }: { onClose: () => void }) {
           <div>
             <label className="block text-[9px] tracking-[0.25em] uppercase text-white/30 mb-1.5">Artist</label>
             <select value={form.artist} onChange={e => upd('artist', e.target.value)} className={cls} style={{ ...inputStyle, appearance: 'none' as const }}>
-              <option value="Kat">Kat Herrera</option>
-              <option value="Marco">Marco Reyes</option>
-              <option value="Sofia">Sofia Lee</option>
+              <option value="Kat">Kat (Owner)</option>
+              <option value="Barbie">Barbie (Senior)</option>
+              <option value="Alena">Alena (Senior)</option>
+              <option value="Miranda">Miranda (Junior)</option>
+              <option value="Jen">Jen (Junior)</option>
+              <option value="Naomi">Naomi (Junior)</option>
+              <option value="Any">Any Artist — Best Fit</option>
             </select>
           </div>
           <div>
@@ -822,7 +845,7 @@ function ArtistsPanel({ onAddArtist }: { onAddArtist: () => void }) {
 
       <div className="grid sm:grid-cols-3 gap-6 mb-8">
         {[
-          { label:'Total Artists', value: String(ARTISTS_DATA.length), sub:'1 owner · 2 guest' },
+          { label:'Total Artists', value: String(ARTISTS_DATA.length), sub:'1 owner · 2 senior · 3 junior' },
           { label:'Sessions This Month', value: String(ARTISTS_DATA.reduce((s,a)=>s+a.sessionsMonth,0)), sub:'across all artists' },
           { label:'Monthly Revenue', value:`$${ARTISTS_DATA.reduce((s,a)=>s+a.revenueMonth,0).toLocaleString()}`, sub:'combined billings' },
         ].map(c => (
@@ -1119,7 +1142,7 @@ function PortfolioPanel() {
   const pieces = Array.from({ length: 18 }).map((_, i) => ({
     id: i,
     style: styles.slice(1)[i % 6],
-    artist: ['Kat', 'Marco', 'Sofia'][i % 3],
+    artist: ['Kat', 'Barbie', 'Alena', 'Miranda', 'Jen', 'Naomi'][i % 6],
     date: `Jun ${1 + (i % 20)}, 2026`,
     featured: i < 3,
   }));
@@ -1220,7 +1243,7 @@ function SettingsPanel() {
           </div>
           {[
             { label:'Business Name', value:'Kattitude Tattoo Studio', type:'text' },
-            { label:'Owner / Lead Artist', value:'Katherine "Kat" Herrera', type:'text' },
+            { label:'Owner / Lead Artist', value:'Kat', type:'text' },
             { label:'Instagram Handle', value:'@kattitudetattoo', type:'text' },
             { label:'Email', value:'kat@kattitudestudio.com', type:'email' },
             { label:'Phone', value:'(512) 555-0420', type:'tel' },
@@ -1362,7 +1385,7 @@ function Sidebar({ section, onNav, onNewAppt, mobile, onClose }: {
         <div className="flex items-center gap-3">
           <div className="w-7 h-7 flex items-center justify-center text-[10px] font-black" style={{ background: `${PINK}18`, color: PINK }}>KH</div>
           <div>
-            <div className="text-xs font-bold text-white/70">Kat Herrera</div>
+            <div className="text-xs font-bold text-white/70">Kat</div>
             <div className="text-[9px] text-white/25">Owner · Active</div>
           </div>
           <div className="ml-auto w-2 h-2 rounded-full" style={{ background: '#81c784' }} />

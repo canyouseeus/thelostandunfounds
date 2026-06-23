@@ -148,7 +148,7 @@ function Hero({ dark }: { dark: boolean }) {
         </h1>
 
         <p className="max-w-xl mx-auto text-base sm:text-lg leading-relaxed mb-10" style={{ color: textMuted }}>
-          Custom tattoo artistry in Austin, TX. Traditional, fine line, blackwork, and color realism — every piece designed for you, every time.
+          Custom tattoo artistry in Austin, TX. Fine line, single needle, micro realism, ornamentals, and color — every piece designed for you, every time.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-16">
@@ -365,33 +365,63 @@ function Artists({ dark }: { dark: boolean }) {
 
   const team = [
     {
-      initials: 'KH',
-      name: 'Katherine "Kat" Herrera',
-      role: 'Owner & Lead Artist',
-      instagram: '@kattitudetattoo',
-      specialties: ['Fine Line', 'Color Realism', 'Illustrative', 'Cover-Ups'],
-      bio: 'Kat is a self-taught artist with 8+ years of experience. Known for her delicate fine line work and vibrant realism, she brings your concept to life with precision and flair.',
-      availability: 'Booking 6–8 weeks out',
+      initials: 'KT',
+      name: 'Kat',
+      role: 'Artist / Studio Owner',
+      instagram: '@Kattitudetattoo',
+      specialties: ['Fine Line', 'Color Realism', 'Cover-Ups', 'Traditional'],
+      bio: 'Studio owner and lead artist. Kat accepts return clients only — if you have sat with her before, you know why her books fill before they open.',
+      availability: 'Return clients only · Weekdays',
       rating: 5,
     },
     {
-      initials: 'MR',
-      name: 'Marco Reyes',
-      role: 'Guest Artist',
-      instagram: '@marcoreyes.ink',
-      specialties: ['Blackwork', 'Traditional', 'Tribal', 'Geometric'],
-      bio: 'Marco specializes in bold, graphic blackwork and classic American traditional. If you want something that pops, Marco is your artist.',
+      initials: 'BB',
+      name: 'Barbie',
+      role: 'Senior Artist',
+      instagram: '@delicatelyscripted',
+      specialties: ['Single Needle', 'Micro Realism', 'Color', 'Florals'],
+      bio: 'Senior artist with impossibly delicate single needle work and micro realism. Her florals are some of the most requested pieces in the studio.',
       availability: 'Booking 4–5 weeks out',
       rating: 5,
     },
     {
-      initials: 'SL',
-      name: 'Sofia Lee',
-      role: 'Guest Artist',
-      instagram: '@sofialee.tats',
-      specialties: ['Fine Line', 'Botanical', 'Minimalist', 'Script'],
-      bio: 'Sofia brings a soft, feminine touch to fine line tattooing. Her botanical and script work has earned her a loyal following across Austin.',
-      availability: 'Booking 3–4 weeks out',
+      initials: 'AL',
+      name: 'Alena',
+      role: 'Senior Artist',
+      instagram: '@Alenanobodytattoo',
+      specialties: ['Large Scale Fine Line', 'Florals', 'Ornamentals'],
+      bio: 'Senior artist known for large scale fine line compositions. Her ornamental and floral work transforms entire limbs into seamless, flowing pieces.',
+      availability: 'Booking 4–6 weeks out',
+      rating: 5,
+    },
+    {
+      initials: 'MI',
+      name: 'Miranda',
+      role: 'Junior Artist',
+      instagram: '@mirandaink',
+      specialties: ['Large Scale Fine Line', 'Gothic', 'Abstract', 'Realism'],
+      bio: 'Junior artist with a dark, moody edge. Miranda excels at large scale fine line with gothic influence, abstract compositions, and realism work.',
+      availability: 'Booking 2–3 weeks out',
+      rating: 5,
+    },
+    {
+      initials: 'JN',
+      name: 'Jen',
+      role: 'Junior Artist',
+      instagram: '@inkedByjennin',
+      specialties: ['3 Needle', 'Single Needle'],
+      bio: 'Junior artist focused on precision needle work. Jen brings clean, consistent execution to both 3 needle and single needle styles.',
+      availability: 'Booking 2–3 weeks out',
+      rating: 5,
+    },
+    {
+      initials: 'NM',
+      name: 'Naomi',
+      role: 'Junior Artist',
+      instagram: '@Paratinta_26',
+      specialties: ['Single Needle', '3 Needle', 'Large Scale Flowers'],
+      bio: 'Junior artist specializing in single and 3 needle techniques with a love for large scale floral pieces that make a statement.',
+      availability: 'Booking 2–3 weeks out',
       rating: 5,
     },
   ];
@@ -404,7 +434,7 @@ function Artists({ dark }: { dark: boolean }) {
           <h2 className="text-4xl font-black uppercase tracking-tight" style={{ color: PINK }}>Artists</h2>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {team.map(artist => (
             <div key={artist.name} className="p-6 flex flex-col" style={{ background: cardBg }}>
               <div className="flex items-start gap-4 mb-5">
@@ -556,6 +586,19 @@ function BookingCTA({ dark }: { dark: boolean }) {
                 <option>XL (multi-session)</option>
               </select>
             </div>
+            <div className="sm:col-span-2">
+              <label className="block text-[10px] tracking-[0.2em] uppercase mb-2" style={{ color: textFaint }}>Artist Preference</label>
+              <select style={{ background: inputBg, color: textMuted, appearance: 'none' }}
+                className="w-full px-4 py-3 text-sm focus:outline-none">
+                <option>Any Artist Best Fit</option>
+                <option>Kat (@Kattitudetattoo) — Return Clients Only</option>
+                <option>Barbie (@delicatelyscripted) — Senior · Single Needle, Micro Realism, Florals</option>
+                <option>Alena (@Alenanobodytattoo) — Senior · Large Scale Fine Line, Florals, Ornamentals</option>
+                <option>Miranda (@mirandaink) — Junior · Large Scale Fine Line, Gothic, Abstract, Realism</option>
+                <option>Jen (@inkedByjennin) — Junior · 3 Needle, Single Needle</option>
+                <option>Naomi (@Paratinta_26) — Junior · Single Needle, 3 Needle, Large Scale Flowers</option>
+              </select>
+            </div>
           </div>
           <div className="mb-4">
             <label className="block text-[10px] tracking-[0.2em] uppercase mb-2" style={{ color: textFaint }}>Describe Your Concept</label>
@@ -600,7 +643,7 @@ function Footer({ dark }: { dark: boolean }) {
               </div>
             </div>
             <p className="text-xs leading-relaxed" style={{ color: textFaint }}>
-              Custom tattoo artistry in East Austin, TX. Owner and lead artist: Katherine "Kat" Herrera.
+              Custom tattoo artistry in East Austin, TX. Owner and lead artist: Kat (@Kattitudetattoo).
             </p>
           </div>
 
