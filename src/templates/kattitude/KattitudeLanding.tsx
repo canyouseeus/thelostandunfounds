@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CalendarDaysIcon,
   CheckCircleIcon,
@@ -21,6 +21,12 @@ import {
 
 const PINK = '#E91E8C';
 const GOLD = '#B8860B';
+const LEOPARD_BTN: React.CSSProperties = {
+  backgroundImage: 'linear-gradient(rgba(0,0,0,0.38), rgba(0,0,0,0.38)), url(/leopard-texture.jpg)',
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  color: '#ffffff',
+};
 const BEE = 'https://kattitudekollection.com/cdn/shop/files/Black_White_Circle_Bee_Icon_Food_Logo_-_1.png';
 
 function useLocalDark() {
@@ -82,7 +88,7 @@ function Navbar({ dark, toggleDark }: { dark: boolean; toggleDark: () => void })
             {dark ? <SunIcon className="w-4 h-4" /> : <MoonIcon className="w-4 h-4" />}
           </button>
           <a href="#book" className="px-5 py-2 text-xs font-black tracking-widest uppercase transition-opacity hover:opacity-90"
-            style={{ background: GOLD, color: '#ffffff' }}>
+            style={LEOPARD_BTN}>
             Book Now
           </a>
         </div>
@@ -109,7 +115,7 @@ function Navbar({ dark, toggleDark }: { dark: boolean; toggleDark: () => void })
             </button>
           </div>
           <a href="#book" className="block w-full mt-2 py-3 text-sm font-black tracking-widest uppercase text-center"
-            style={{ background: GOLD, color: '#ffffff' }}>
+            style={LEOPARD_BTN}>
             Book Now
           </a>
         </div>
@@ -147,7 +153,7 @@ function Hero({ dark }: { dark: boolean }) {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-16">
           <a href="#book" className="flex items-center gap-2 px-8 py-4 text-sm font-black tracking-widest uppercase transition-opacity hover:opacity-90 w-full sm:w-auto justify-center"
-            style={{ background: GOLD, color: '#ffffff' }}>
+            style={LEOPARD_BTN}>
             Book Your Session <ArrowRightIcon className="w-4 h-4" />
           </a>
           <a href="https://www.instagram.com/kattitudetattoo" target="_blank" rel="noopener noreferrer"
@@ -558,7 +564,7 @@ function BookingCTA({ dark }: { dark: boolean }) {
               className="w-full px-4 py-3 text-sm focus:outline-none resize-none" />
           </div>
           <button className="w-full py-4 text-sm font-black tracking-widest uppercase flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
-            style={{ background: GOLD, color: '#ffffff' }}>
+            style={LEOPARD_BTN}>
             Submit Consultation Request <ArrowRightIcon className="w-4 h-4" />
           </button>
         </div>
