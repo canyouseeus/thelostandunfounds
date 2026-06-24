@@ -10,6 +10,7 @@ export default async function handler(
         res.status(200).json(folders);
     } catch (error) {
         console.error('Failed to load folders', error);
-        res.status(500).json({ error: 'API error: 500' });
+        const message = error instanceof Error ? error.message : 'Failed to load folders';
+        res.status(500).json({ error: message });
     }
 }

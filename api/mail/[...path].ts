@@ -37,8 +37,7 @@ function isAdminRequest(req: VercelRequest): boolean {
   return false;
 }
 
-// Static import to ensure bundling (no extension — esbuild resolves .ts reliably)
-import * as mailHandler from '../../lib/api-handlers/_zoho-mail-handler';
+import * as mailHandler from '../../lib/api-handlers/_zoho-mail-handler.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS headers
