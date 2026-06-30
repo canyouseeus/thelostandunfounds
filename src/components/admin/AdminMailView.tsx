@@ -217,12 +217,13 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
   }, [mailApi]);
 
   // Load single message
-  const loadMessage = useCallback(async (messageId: string) => {
+  const loadMessage = useCallback(async (messageId: string, folderId?: string) => {
     try {
       setLoadingMessage(true);
       setError(null);
 
-      const data = await mailApi(`message/${messageId}`);
+      const qs = folderId ? `?folderId=${encodeURIComponent(folderId)}` : '';
+      const data = await mailApi(`message/${messageId}${qs}`);
       setSelectedMessage(data.message);
 
       // Mark as read
@@ -603,7 +604,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                 {messages.map(msg => (
                   <button
                     key={msg.messageId}
-                    onClick={() => loadMessage(msg.messageId)}
+                    onClick={() => loadMessage(msg.messageId, msg.folderId)}
                     className={`w-full p-3 text-left border-none transition ${selectedMessage?.messageId === msg.messageId
                       ? 'bg-white/10'
                       : 'hover:bg-white/5'
