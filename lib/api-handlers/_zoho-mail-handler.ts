@@ -1,116 +1,14 @@
 /**
  * Zoho Mail API Handler
  * Full webmail functionality: folders, messages, send, search, attachments
- * 
- * NOTE: Auth helpers are inlined to avoid Vercel bundler issues with cross-file imports
  */
 
-// Branding and template helpers (inlined to avoid Vercel bundler issues)
-import * as dotenv from 'dotenv';
-import * as path from 'path';
+import { getZohoAuthContext, ensureBannerHtml } from './_zoho-email-utils.js';
 
-// Explicitly load .env.local
-try {
-  dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
-} catch (e) { }
-
-const BRAND = {
-  name: 'THE LOST+UNFOUNDS',
-  logo: 'https://nonaqhllakrckbtbawrb.supabase.co/storage/v1/object/public/brand-assets/1764772922060_IMG_1244.png',
-  website: 'https://www.thelostandunfounds.com',
-  colors: {
-    background: '#000000',
-    text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.6)',
-    border: 'rgba(255, 255, 255, 0.1)',
-    link: 'rgba(255, 255, 255, 0.9)',
-  },
-};
-
-function getUnsubscribeUrl(email: string): string {
-  return `${BRAND.website}/api/newsletter/unsubscribe?email=${encodeURIComponent(email)}`;
-}
-
-function wrapEmailContent(
-  bodyContent: string,
-  options: {
-    subscriberEmail?: string;
-    includeUnsubscribe?: boolean;
-    includeFooter?: boolean;
-  } = {}
-): string {
-  const {
-    subscriberEmail = '',
-    includeUnsubscribe = true,
-    includeFooter = true,
-  } = options;
-
-  const currentYear = new Date().getFullYear();
-  const unsubscribeUrl = subscriberEmail ? getUnsubscribeUrl(subscriberEmail) : '#';
-
-  const footerHtml = includeFooter ? `
-              <hr style="border: none; border-top: 1px solid ${BRAND.colors.border}; margin: 30px 0;">
-              <p style="color: ${BRAND.colors.textMuted}; font-size: 12px; line-height: 1.5; margin: 0 0 10px 0; text-align: left;">
-                © ${currentYear} ${BRAND.name}. All rights reserved.
-              </p>
-              ${includeUnsubscribe && subscriberEmail ? `
-              <p style="color: ${BRAND.colors.textMuted}; font-size: 12px; line-height: 1.5; margin: 10px 0 0 0; text-align: left;">
-                <a href="${unsubscribeUrl}" style="color: ${BRAND.colors.textMuted}; text-decoration: underline;">Unsubscribe from this newsletter</a>
-              </p>
-              ` : ''}
-  ` : '';
-
-  return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>${BRAND.name}</title>
-  <style>
-    body, table, td, p, a, li, blockquote { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-    img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
-    body { background-color: ${BRAND.colors.background} !important; margin: 0 !important; padding: 0 !important; font-family: Arial, Helvetica, sans-serif; color: ${BRAND.colors.text}; }
-    table { background-color: ${BRAND.colors.background} !important; border-collapse: collapse !important; }
-    td { background-color: ${BRAND.colors.background} !important; }
-    a { color: ${BRAND.colors.link}; }
-    h1, h2, h3, h4, h5, h6 { color: ${BRAND.colors.text} !important; font-family: Arial, Helvetica, sans-serif; margin: 0 0 20px 0; }
-    p { color: ${BRAND.colors.text} !important; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; }
-  </style>
-</head>
-<body style="margin: 0 !important; padding: 0 !important; background-color: ${BRAND.colors.background} !important; font-family: Arial, Helvetica, sans-serif;">
-  <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100% !important; border-collapse: collapse !important; background-color: ${BRAND.colors.background} !important; margin: 0 !important; padding: 0 !important;">
-    <tr>
-      <td align="left" style="padding: 40px 20px !important; background-color: ${BRAND.colors.background} !important;">
-        <table role="presentation" cellpadding="0" cellspacing="0" style="max-width: 600px !important; width: 100% !important; background-color: ${BRAND.colors.background} !important; margin: 0 !important;">
-          <tr>
-            <td align="left" style="padding: 0 0 30px 0 !important;">
-              <a href="${BRAND.website}" target="_blank">
-                <img src="${BRAND.logo}" alt="${BRAND.name}" style="max-width: 100%; height: auto; display: block;">
-              </a>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 0 !important; color: ${BRAND.colors.text} !important;">
-              ${bodyContent}
-              ${footerHtml}
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
-}
-
+export type { ZohoAuthContext } from './_zoho-email-utils.js';
+export { getZohoAuthContext } from './_zoho-email-utils.js';
 
 const ZOHO_MAIL_API = 'https://mail.zoho.com/api/accounts';
-const ZOHO_TOKEN_URL = 'https://accounts.zoho.com/oauth/v2/token';
-const ZOHO_ACCOUNTS_URL = 'https://mail.zoho.com/api/accounts';
-
-const BANNER_URL = 'https://www.thelostandunfounds.com/brand/banner.png';
 
 // Rate limit helper - 200ms delay between calls
 let lastApiCall = 0;
@@ -122,146 +20,6 @@ async function rateLimitedFetch(url: string, options: RequestInit): Promise<Resp
   }
   lastApiCall = Date.now();
   return fetch(url, options);
-}
-
-// ============================================================================
-// INLINED AUTH HELPERS (from _zoho-email-utils.ts to avoid bundler issues)
-// ============================================================================
-
-export interface ZohoAuthContext {
-  accessToken: string;
-  accountId: string;
-  fromEmail: string;
-}
-
-interface ZohoTokenResponse {
-  access_token: string;
-  token_type: string;
-  expires_in: number;
-}
-
-function getZohoEnv() {
-
-  const clientId = process.env.ZOHO_CLIENT_ID;
-  const clientSecret = process.env.ZOHO_CLIENT_SECRET;
-  const refreshToken = process.env.ZOHO_REFRESH_TOKEN;
-  const fromEmail = process.env.ZOHO_FROM_EMAIL || process.env.ZOHO_EMAIL;
-
-  if (!clientId || !clientSecret || !refreshToken || !fromEmail) {
-    throw new Error('Zoho Mail environment variables are not configured');
-  }
-
-  return { clientId, clientSecret, refreshToken, fromEmail };
-}
-
-export function ensureBannerHtml(htmlContent: string): string {
-  // Use centralized email template for consistency
-  return wrapEmailContent(htmlContent, {
-    includeUnsubscribe: false,
-    includeFooter: false,
-  });
-}
-
-// Cache token in memory to avoid hitting rate limits
-let cachedAccessToken: string | null = null;
-let tokenExpiryTime: number = 0;
-
-async function getZohoAccessToken(): Promise<string> {
-  // Return cached token if still valid (with 60s buffer)
-  if (cachedAccessToken && Date.now() < tokenExpiryTime) {
-    return cachedAccessToken;
-  }
-
-  const { clientId, clientSecret, refreshToken } = getZohoEnv();
-
-  const response = await fetch(ZOHO_TOKEN_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      refresh_token: refreshToken,
-      client_id: clientId,
-      client_secret: clientSecret,
-      grant_type: 'refresh_token'
-    })
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Failed to refresh Zoho token: ${response.status} ${errorText}`);
-  }
-
-  const data: ZohoTokenResponse = await response.json();
-
-  cachedAccessToken = data.access_token;
-  // expires_in is in seconds. Convert to ms and subtract 60s buffer
-  tokenExpiryTime = Date.now() + ((data.expires_in - 60) * 1000);
-
-  return data.access_token;
-}
-
-async function getZohoAccountInfo(accessToken: string, fallbackEmail: string) {
-  // Use explicit account ID if configured (same as _zoho-email-utils.ts)
-  const envAccountId = process.env.ZOHO_ACCOUNT_ID;
-  if (envAccountId) {
-    console.log('[Zoho Auth] Using explicit ZOHO_ACCOUNT_ID:', envAccountId);
-    return { accountId: envAccountId, email: fallbackEmail };
-  }
-
-  try {
-    const response = await fetch(ZOHO_ACCOUNTS_URL, {
-      method: 'GET',
-      headers: { Authorization: `Zoho-oauthtoken ${accessToken}` }
-    });
-
-    if (response.ok) {
-      const json = await response.json();
-      const account = json?.data?.[0] || json?.accounts?.[0];
-
-      if (account) {
-        console.log('[Zoho Auth] Found Account:', account);
-        const accountId =
-          account.accountId ||
-          account.account_id ||
-          account.accountID ||
-          account.accountid ||
-          account.accountid_zuid ||
-          account.accountName ||
-          account.account_name;
-
-        let accountEmail = fallbackEmail;
-        if (Array.isArray(account.emailAddress)) {
-          const primary = account.emailAddress.find((e: any) => e?.isPrimary) || account.emailAddress[0];
-          if (primary?.mailId) accountEmail = primary.mailId;
-        } else if (typeof account.emailAddress === 'string' && account.emailAddress.includes('@')) {
-          accountEmail = account.emailAddress;
-        } else if (typeof account.email === 'string' && account.email.includes('@')) {
-          accountEmail = account.email;
-        }
-
-        if (accountId) {
-          return { accountId: String(accountId), email: accountEmail };
-        }
-      }
-    }
-  } catch (error) {
-    console.warn('Zoho account lookup failed, falling back to derived account id', error);
-  }
-
-  const fallbackAccountId = fallbackEmail.split('@')[0];
-  console.log(`[Zoho Auth] Using fallback Account ID: ${fallbackAccountId}`);
-  return { accountId: fallbackAccountId, email: fallbackEmail };
-}
-
-export async function getZohoAuthContext(): Promise<ZohoAuthContext> {
-  const { fromEmail } = getZohoEnv();
-  const accessToken = await getZohoAccessToken();
-  const accountInfo = await getZohoAccountInfo(accessToken, fromEmail);
-
-  return {
-    accessToken,
-    accountId: accountInfo.accountId,
-    fromEmail: fromEmail || accountInfo.email
-  };
 }
 
 // ============================================================================
@@ -355,7 +113,7 @@ export async function getFolders(): Promise<{ success: boolean; folders?: MailFo
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Zoho folders API error:', response.status, errorText);
-      return { success: false, error: `Failed to fetch folders: ${response.status}` };
+      return { success: false, error: `Failed to fetch folders: ${response.status} - ${errorText.slice(0, 200)}` };
     }
 
     const data = await response.json();
@@ -442,19 +200,10 @@ export async function getMessage(
   try {
     const auth = await getZohoAuthContext();
 
-    // Use folder-specific endpoint if available (more reliable for some accounts)
     let url = `${ZOHO_MAIL_API}/${auth.accountId}/messages/${encodeURIComponent(messageId)}/content`;
     if (folderId) {
       url = `${ZOHO_MAIL_API}/${auth.accountId}/folders/${encodeURIComponent(folderId)}/messages/${encodeURIComponent(messageId)}/content`;
     }
-
-    const logMsg = `[${new Date().toISOString()}] Fetching message content from: ${url} (AccountID: ${auth.accountId})\n`;
-    console.log(logMsg);
-    try {
-      const fs = await import('fs');
-      const logPath = path.join(process.cwd(), 'public', 'mail-debug.log');
-      fs.appendFileSync(logPath, logMsg);
-    } catch (e) { console.error('Failed to write log', e); }
 
     const response = await rateLimitedFetch(url, {
       method: 'GET',
