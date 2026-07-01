@@ -52,9 +52,9 @@ Clients come for the creative. They stay for the operations. The intelligence la
 
 ## Operational Tooling Standard
 
-Every admin dashboard we build must include:
+Every admin dashboard we build must include — **these are non-negotiable checklist items, not suggestions**:
 
-- **Debug Report Button** (`CopyDebugReport`) — one tap to copy a markdown-formatted report with client errors, API call history, and server logs. Enables mobile debugging without dev tools.
+- **Debug Report Button** (`CopyDebugReport`) — one tap to copy a markdown-formatted report with client errors, API call history, and server logs. Enables mobile debugging without dev tools. **No admin page ships without this.**
 - **Live Data** — no placeholders, no static percentages. If it's not wired to a real data source, it doesn't ship.
 - **Auto-refresh** — dashboards should stay current without manual reload (default 30s cadence).
 - **Verbose Errors** — errors must be human-readable on mobile. Full HTTP status, endpoint, and raw response. No "something went wrong."

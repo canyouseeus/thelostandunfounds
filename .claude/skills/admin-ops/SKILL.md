@@ -43,6 +43,8 @@ The dashboard uses a 4-column Bento grid:
 
 ## Global Debug Report Button
 
+> **NON-NEGOTIABLE**: Every admin dashboard — without exception — must mount the Debug Report button. This is a brand standard, not an optional enhancement. No admin page ships without it.
+
 Every admin page mounts a **"DEBUG REPORT"** button (`src/components/admin/CopyDebugReport.tsx`) in the header, next to the profile icon. It is wired up in `src/pages/Admin.tsx`.
 
 When tapped it copies a markdown-formatted report containing:
@@ -78,4 +80,6 @@ logError(err.message);
 - [ ] All headers are uppercase.
 - [ ] All data is fetched from Supabase.
 - [ ] Desktop and mobile layouts are aligned correctly.
-- [ ] `CopyDebugReport` is present in the admin header and imports `installGlobalListeners` from `adminErrorLog`.
+- [ ] **`CopyDebugReport` is present in the admin header** — this is a hard requirement, not optional. No dashboard ships without it.
+- [ ] `installGlobalListeners` called in the page's root `useEffect` (captures JS errors + unhandled rejections).
+- [ ] All API calls inside the view use `logApiCall()` so they appear in the debug report.
