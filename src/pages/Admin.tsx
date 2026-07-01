@@ -101,6 +101,8 @@ import AdminCalendarView from '../components/admin/AdminCalendarView';
 import { RevenueTracker } from '../components/ui/revenue-tracker';
 import { ClockWidget } from '../components/ui/clock-widget';
 import { CalendarWidget } from '../components/ui/calendar-widget';
+import CopyDebugReport from '../components/admin/CopyDebugReport';
+import { installGlobalListeners } from '../lib/adminErrorLog';
 
 interface DashboardStats {
   totalUsers: number;
@@ -237,6 +239,9 @@ export default function Admin() {
 
   // Ref for page top
   const pageTopRef = useRef<HTMLDivElement>(null);
+
+  // Install global error/API listeners for debug report
+  useEffect(() => { installGlobalListeners(); }, []);
 
   // Lock body scroll while admin page is mounted (no page scrolling on admin)
   useEffect(() => {
@@ -1560,13 +1565,16 @@ export default function Admin() {
               )}
             </AnimatePresence>
           </div>
-          <Link
-            to={userSubdomain ? `/${userSubdomain}/profile` : "/profile"}
-            className="p-2 bg-white text-black hover:bg-white/90 transition"
-            title="Profile"
-          >
-            <UserIcon className="w-5 h-5" />
-          </Link>
+          <div className="flex items-center gap-2">
+            <CopyDebugReport />
+            <Link
+              to={userSubdomain ? `/${userSubdomain}/profile` : "/profile"}
+              className="p-2 bg-white text-black hover:bg-white/90 transition"
+              title="Profile"
+            >
+              <UserIcon className="w-5 h-5" />
+            </Link>
+          </div>
         </div>
         <p className="text-white/70 text-sm hidden sm:block mt-1">Manage your platform and users</p>
       </div>

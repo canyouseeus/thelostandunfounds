@@ -32,6 +32,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../Toast';
 import DOMPurify from 'dompurify';
+import { logApiCall, logError } from '../../lib/adminErrorLog';
 
 // Types
 interface MailFolder {
@@ -145,8 +146,11 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
       let parsed: any = {};
       try { parsed = JSON.parse(rawText); } catch {}
       const detail = parsed.error || parsed.message || rawText.slice(0, 500) || '(no body)';
-      throw new Error(`HTTP ${response.status} — /api/mail/${endpoint}\n${detail}`);
+      const msg = `HTTP ${response.status} — /api/mail/${endpoint}\n${detail}`;
+      logApiCall(options.method || 'GET', `/api/mail/${endpoint}`, response.status, detail);
+      throw new Error(msg);
     }
+    logApiCall(options.method || 'GET', `/api/mail/${endpoint}`, response.status, 'ok');
 
     // Check if response is JSON
     const contentType = response.headers.get('content-type');
@@ -243,6 +247,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
       }
     } catch (err: any) {
       console.error('Failed to load message:', err);
+      logError(err.message || 'Failed to load message');
       setError(err.message || 'Failed to load message');
     } finally {
       setLoadingMessage(false);
