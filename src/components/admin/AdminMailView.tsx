@@ -602,10 +602,13 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
             ) : (
               <>
                 {messages.map(msg => (
-                  <button
+                  <div
                     key={msg.messageId}
                     onClick={() => loadMessage(msg.messageId, msg.folderId)}
-                    className={`w-full p-3 text-left border-none transition ${selectedMessage?.messageId === msg.messageId
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && loadMessage(msg.messageId, msg.folderId)}
+                    className={`w-full p-3 text-left cursor-pointer transition ${selectedMessage?.messageId === msg.messageId
                       ? 'bg-white/10'
                       : 'hover:bg-white/5'
                       } ${!msg.isRead ? 'bg-white/[0.02]' : ''}`}
@@ -648,7 +651,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                         </div>
                       </div>
                     </div>
-                  </button>
+                  </div>
                 ))}
 
                 {/* Pagination */}
