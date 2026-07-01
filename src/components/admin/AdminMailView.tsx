@@ -141,8 +141,11 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
     });
 
     if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.error || `API error: ${response.status}`);
+      const rawText = await response.text().catch(() => '');
+      let parsed: any = {};
+      try { parsed = JSON.parse(rawText); } catch {}
+      const detail = parsed.error || parsed.message || rawText.slice(0, 500) || '(no body)';
+      throw new Error(`HTTP ${response.status} — /api/mail/${endpoint}\n${detail}`);
     }
 
     // Check if response is JSON
@@ -240,12 +243,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
       }
     } catch (err: any) {
       console.error('Failed to load message:', err);
-      const msg = err.message || '';
-      setError(
-        msg.includes('404') || msg.includes('not found') || msg.includes('Message not found')
-          ? 'Message not found — it may have been deleted or moved in Zoho.'
-          : msg || 'Failed to load message'
-      );
+      setError(err.message || 'Failed to load message');
     } finally {
       setLoadingMessage(false);
     }
@@ -528,12 +526,15 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
 
       {/* Error display */}
       {error && (
-        <div className="shrink-0 bg-red-500/10 border-none p-3 mb-2 flex items-center gap-3">
-          <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
-          <span className="text-red-400 text-sm">{error}</span>
-          <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-300">
-            <X className="w-4 h-4" />
-          </button>
+        <div className="shrink-0 bg-red-500/10 border-l-2 border-red-500 p-3 mb-2">
+          <div className="flex items-start gap-2 mb-1">
+            <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+            <span className="text-red-400 text-xs font-semibold uppercase tracking-wider">Error</span>
+            <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-300 flex-shrink-0">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <pre className="text-red-300 text-xs font-mono whitespace-pre-wrap break-all leading-relaxed pl-6">{error}</pre>
         </div>
       )}
 
