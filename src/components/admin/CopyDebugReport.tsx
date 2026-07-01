@@ -95,12 +95,13 @@ ${serverSection}
       onClick={handleCopy}
       disabled={state === 'loading'}
       title="Copy debug report as markdown"
-      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/10 transition"
+      className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-widest bg-black text-white border border-white hover:bg-white hover:text-black transition-colors disabled:opacity-50"
+      style={{ borderRadius: 0 }}
     >
       {state === 'loading' && <Loader className="w-3 h-3 animate-spin" />}
-      {state === 'copied' && <Check className="w-3 h-3 text-green-400" />}
+      {state === 'copied' && <Check className="w-3 h-3" />}
       {state === 'idle' && <ClipboardCopy className="w-3 h-3" />}
-      {state === 'copied' ? 'Copied!' : 'Copy Debug Report'}
+      {state === 'copied' ? 'COPIED' : 'DEBUG REPORT'}
     </button>
   );
 }
