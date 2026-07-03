@@ -279,49 +279,120 @@
       line-height: 1.65;
     }
 
-    /* ── PORTFOLIO ── */
+    /* ── PORTFOLIO / GALLERY (matches thelostandunfounds.com gallery grid) ── */
     #gallery { background: var(--bg-alt); }
+    .gallery-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 3rem;
+      margin: 2.5rem 0 0.5rem;
+      padding-bottom: 0.5rem;
+    }
+    .gallery-tab {
+      position: relative;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      padding-bottom: 0.5rem;
+      transition: color 0.2s;
+    }
+    .gallery-tab:hover { color: var(--text); }
+    .gallery-tab.active { color: var(--text); }
+    .gallery-tab.active::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0; bottom: -1px;
+      height: 2px;
+      background: var(--text);
+    }
+    .gallery-panel { display: none; margin-top: 2.5rem; }
+    .gallery-panel.active { display: block; }
     .gallery-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 0.75rem;
-      margin-top: 3rem;
+      gap: 1.5rem;
     }
-    @media (max-width: 700px) {
-      .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+    @media (max-width: 900px) {
+      .gallery-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
     }
-    .gallery-item {
-      aspect-ratio: 3/4;
-      background: var(--bg-card);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: background 0.2s;
+    @media (max-width: 560px) {
+      .gallery-grid { grid-template-columns: 1fr; }
+    }
+    .gallery-card {
       position: relative;
+      aspect-ratio: 1 / 1;
+      background: #000;
+      background-size: cover;
+      background-position: center;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 1.75rem;
+      cursor: pointer;
+      transition: background-color 0.5s ease;
     }
-    .gallery-item:hover { background: var(--bg-card-hover); }
-    .gallery-item .icon-piece { width: 32px; height: 32px; opacity: 0.35; }
-    .gallery-item .gallery-overlay {
+    .gallery-card:hover { background-color: #0a0a0a; }
+    .gallery-card-gradient {
       position: absolute;
       inset: 0;
-      background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 55%);
-      opacity: 0;
-      transition: opacity 0.25s;
-      display: flex;
-      align-items: flex-end;
-      padding: 1.1rem;
+      background: linear-gradient(to top, #000 0%, rgba(0,0,0,0.5) 55%, transparent 100%);
+      opacity: 0.85;
+      transition: opacity 0.5s ease;
     }
-    .gallery-item:hover .gallery-overlay { opacity: 1; }
-    .gallery-overlay-text {
-      font-size: 0.72rem;
+    .gallery-card:hover .gallery-card-gradient { opacity: 0.5; }
+    .gallery-card-content { position: relative; z-index: 1; }
+    .gallery-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.25rem 0.6rem;
+      margin-bottom: 0.85rem;
+      font-size: 0.62rem;
       font-weight: 700;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .gallery-badge.public { background: #fff; color: #000; }
+    .gallery-badge.private { background: rgba(255,255,255,0.12); backdrop-filter: blur(6px); color: #fff; }
+    .gallery-card-title {
+      font-size: 1.15rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.01em;
+      line-height: 1.15;
+      color: #fff;
+      transition: transform 0.5s ease;
+    }
+    .gallery-card:hover .gallery-card-title { transform: translateX(6px); }
+    .gallery-card-desc {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.6);
+      margin-top: 0.65rem;
+      line-height: 1.55;
+      transition: color 0.5s ease;
+    }
+    .gallery-card:hover .gallery-card-desc { color: rgba(255,255,255,0.85); }
+    .gallery-card-link {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 0.85rem;
+      font-size: 0.64rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
       color: #fff;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
     }
+    .gallery-card:hover .gallery-card-link { opacity: 1; transform: translateY(0); }
 
     /* ── SERVICES ── */
     #services { background: var(--bg-alt); }
@@ -534,13 +605,13 @@
         <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       </button>
-      <a href="#booking" class="btn-nav">Book Now</a>
+      <a href="#" class="btn-nav tab-link" data-tab="booking">Book Now</a>
     </div>
   </div>
   <div class="nav-tabs" id="navTabs">
-    <a href="#booking" class="nav-tab active">Booking</a>
-    <a href="#gallery" class="nav-tab">Gallery</a>
-    <a href="#about" class="nav-tab">About</a>
+    <a href="#" class="nav-tab tab-link active" data-tab="booking">Booking</a>
+    <a href="#" class="nav-tab tab-link" data-tab="gallery">Gallery</a>
+    <a href="#" class="nav-tab tab-link" data-tab="about">About</a>
   </div>
 </nav>
 
@@ -550,8 +621,8 @@
   <h1 class="hero-title reveal">Artist Name</h1>
   <p class="hero-tagline reveal">Your Art. Their Skin.</p>
   <div class="hero-cta-group reveal">
-    <a href="#booking" class="btn-primary">Book a Session</a>
-    <a href="#gallery" class="btn-outline">View Portfolio</a>
+    <a href="#" class="btn-primary tab-link" data-tab="booking">Book a Session</a>
+    <a href="#" class="btn-outline tab-link" data-tab="gallery">View Portfolio</a>
   </div>
   <div class="hero-scroll-hint">
     <span>Scroll</span>
@@ -560,7 +631,7 @@
 </section>
 
 <!-- SERVICES -->
-<section id="services">
+<section id="services" data-panel="booking">
   <div class="container">
     <p class="section-label reveal">What I Offer</p>
     <h2 class="section-title reveal">Services</h2>
@@ -595,7 +666,7 @@
 </section>
 
 <!-- BOOKING -->
-<section id="booking">
+<section id="booking" data-panel="booking">
   <div class="container">
     <p class="section-label reveal">Book a Session</p>
     <h2 class="section-title reveal">How It Works</h2>
@@ -634,47 +705,113 @@
   </div>
 </section>
 
-<div class="divider"></div>
-
 <!-- GALLERY / PORTFOLIO -->
-<section id="gallery">
+<section id="gallery" data-panel="gallery" style="display:none;">
   <div class="container">
     <p class="section-label reveal">Portfolio</p>
-    <h2 class="section-title reveal">Recent Work</h2>
-    <p class="section-sub reveal">A selection of pieces that show range, precision, and style.</p>
-    <div class="gallery-grid">
-      <div class="gallery-item reveal">
-        <svg class="icon-piece" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M7 12h10"/></svg>
-        <div class="gallery-overlay"><span class="gallery-overlay-text">Fine Line Botanical</span></div>
+    <h2 class="section-title reveal">The Gallery</h2>
+    <p class="section-sub reveal">Recent work, plus a private archive of healed photos reserved for booked clients.</p>
+
+    <div class="gallery-tabs reveal">
+      <button type="button" class="gallery-tab active" data-gallery-tab="public">Public Albums</button>
+      <button type="button" class="gallery-tab" data-gallery-tab="private">Private Archives</button>
+    </div>
+
+    <div class="gallery-panel active" data-gallery-panel="public">
+      <div class="gallery-grid">
+        <div class="gallery-card reveal" style="background-image:linear-gradient(135deg,#2b2b2b,#0a0a0a);">
+          <div class="gallery-card-gradient"></div>
+          <div class="gallery-card-content">
+            <span class="gallery-badge public">Public</span>
+            <h3 class="gallery-card-title">Fine Line Botanical</h3>
+            <p class="gallery-card-desc">Delicate florals wrapped along the forearm.</p>
+            <span class="gallery-card-link">View Gallery <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+          </div>
+        </div>
+        <div class="gallery-card reveal" style="background-image:linear-gradient(135deg,#242424,#050505);">
+          <div class="gallery-card-gradient"></div>
+          <div class="gallery-card-content">
+            <span class="gallery-badge public">Public</span>
+            <h3 class="gallery-card-title">Blackwork Sleeve</h3>
+            <p class="gallery-card-desc">Full-arm coverage built from bold negative space.</p>
+            <span class="gallery-card-link">View Gallery <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+          </div>
+        </div>
+        <div class="gallery-card reveal" style="background-image:linear-gradient(135deg,#333,#0a0a0a);">
+          <div class="gallery-card-gradient"></div>
+          <div class="gallery-card-content">
+            <span class="gallery-badge public">Public</span>
+            <h3 class="gallery-card-title">Geometric Piece</h3>
+            <p class="gallery-card-desc">Precision linework built around sacred geometry.</p>
+            <span class="gallery-card-link">View Gallery <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+          </div>
+        </div>
+        <div class="gallery-card reveal" style="background-image:linear-gradient(135deg,#282828,#060606);">
+          <div class="gallery-card-gradient"></div>
+          <div class="gallery-card-content">
+            <span class="gallery-badge public">Public</span>
+            <h3 class="gallery-card-title">Script Lettering</h3>
+            <p class="gallery-card-desc">Custom typography sized for ribs and forearms.</p>
+            <span class="gallery-card-link">View Gallery <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+          </div>
+        </div>
+        <div class="gallery-card reveal" style="background-image:linear-gradient(135deg,#2f2f2f,#080808);">
+          <div class="gallery-card-gradient"></div>
+          <div class="gallery-card-content">
+            <span class="gallery-badge public">Public</span>
+            <h3 class="gallery-card-title">Portrait Realism</h3>
+            <p class="gallery-card-desc">High-contrast black &amp; grey portrait work.</p>
+            <span class="gallery-card-link">View Gallery <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+          </div>
+        </div>
+        <div class="gallery-card reveal" style="background-image:linear-gradient(135deg,#262626,#050505);">
+          <div class="gallery-card-gradient"></div>
+          <div class="gallery-card-content">
+            <span class="gallery-badge public">Public</span>
+            <h3 class="gallery-card-title">Cover-Up Transformation</h3>
+            <p class="gallery-card-desc">Old ink rebuilt into a full custom piece.</p>
+            <span class="gallery-card-link">View Gallery <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+          </div>
+        </div>
       </div>
-      <div class="gallery-item reveal">
-        <svg class="icon-piece" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18.37 2.63L14 7l-1.59-1.59a2 2 0 0 0-2.82 0L8 7l9 9 1.59-1.59a2 2 0 0 0 0-2.82L17 10l4.37-4.37a2.12 2.12 0 1 0-3-3z"/></svg>
-        <div class="gallery-overlay"><span class="gallery-overlay-text">Blackwork Sleeve</span></div>
-      </div>
-      <div class="gallery-item reveal">
-        <svg class="icon-piece" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/></svg>
-        <div class="gallery-overlay"><span class="gallery-overlay-text">Geometric Piece</span></div>
-      </div>
-      <div class="gallery-item reveal">
-        <svg class="icon-piece" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 4L9 15l-5-5"/></svg>
-        <div class="gallery-overlay"><span class="gallery-overlay-text">Script Lettering</span></div>
-      </div>
-      <div class="gallery-item reveal">
-        <svg class="icon-piece" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>
-        <div class="gallery-overlay"><span class="gallery-overlay-text">Portrait Realism</span></div>
-      </div>
-      <div class="gallery-item reveal">
-        <svg class="icon-piece" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12c3-3 6-3 9 0s6 3 9 0"/></svg>
-        <div class="gallery-overlay"><span class="gallery-overlay-text">Cover-Up Transformation</span></div>
+    </div>
+
+    <div class="gallery-panel" data-gallery-panel="private">
+      <div class="gallery-grid">
+        <div class="gallery-card reveal" style="background-image:linear-gradient(135deg,#1c1c1c,#050505);">
+          <div class="gallery-card-gradient"></div>
+          <div class="gallery-card-content">
+            <span class="gallery-badge private"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Private</span>
+            <h3 class="gallery-card-title">Healed Session Archive</h3>
+            <p class="gallery-card-desc">High-res healed photos, available to booked clients only.</p>
+            <span class="gallery-card-link">Log In To View <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+          </div>
+        </div>
+        <div class="gallery-card reveal" style="background-image:linear-gradient(135deg,#202020,#060606);">
+          <div class="gallery-card-gradient"></div>
+          <div class="gallery-card-content">
+            <span class="gallery-badge private"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Private</span>
+            <h3 class="gallery-card-title">Client Reference Library</h3>
+            <p class="gallery-card-desc">Design references and stencils tied to your session.</p>
+            <span class="gallery-card-link">Log In To View <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+          </div>
+        </div>
+        <div class="gallery-card reveal" style="background-image:linear-gradient(135deg,#242424,#080808);">
+          <div class="gallery-card-gradient"></div>
+          <div class="gallery-card-content">
+            <span class="gallery-badge private"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Private</span>
+            <h3 class="gallery-card-title">Convention Pieces (2026)</h3>
+            <p class="gallery-card-desc">Guest-spot and convention work, shared with clients first.</p>
+            <span class="gallery-card-link">Log In To View <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-<div class="divider"></div>
-
 <!-- ABOUT / CONTACT -->
-<section id="about">
+<section id="about" data-panel="about" style="display:none;">
   <div class="container">
     <p class="section-label reveal">The Artist</p>
     <h2 class="section-title reveal">About &amp; Contact</h2>
@@ -727,9 +864,9 @@
   <div class="footer-inner">
     <span class="footer-brand-name">Artist Name</span>
     <ul class="footer-links">
-      <li><a href="#booking">Booking</a></li>
-      <li><a href="#gallery">Gallery</a></li>
-      <li><a href="#about">About</a></li>
+      <li><a href="#" class="tab-link" data-tab="booking">Booking</a></li>
+      <li><a href="#" class="tab-link" data-tab="gallery">Gallery</a></li>
+      <li><a href="#" class="tab-link" data-tab="about">About</a></li>
     </ul>
     <span class="footer-copy">© 2026 Artist Name · All rights reserved</span>
   </div>
@@ -761,19 +898,53 @@
   }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
   reveals.forEach(el => observer.observe(el));
 
-  // Nav tab scroll-spy — Booking covers the services + booking sections
-  const tabMap = { services: 'booking', booking: 'booking', gallery: 'gallery', about: 'about' };
-  const navTabs = document.querySelectorAll('.nav-tab');
-  const setActiveTab = (hash) => {
-    navTabs.forEach(tab => tab.classList.toggle('active', tab.getAttribute('href') === '#' + hash));
-  };
-  const spySections = document.querySelectorAll('#services, #booking, #gallery, #about');
-  const spyObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) setActiveTab(tabMap[entry.target.id]);
+  // Tab navigation — Booking / Gallery / About each show their own panel,
+  // no scrolling to anchors. Services + Booking share the "booking" panel.
+  const panels = document.querySelectorAll('[data-panel]');
+  const navTabButtons = document.querySelectorAll('.nav-tab');
+  const panelsTop = document.getElementById('services');
+
+  function showTab(name, opts) {
+    opts = opts || {};
+    panels.forEach(el => { el.style.display = el.dataset.panel === name ? '' : 'none'; });
+    navTabButtons.forEach(tab => tab.classList.toggle('active', tab.dataset.tab === name));
+
+    // Re-run the reveal animation for the panel that just became visible
+    document.querySelectorAll('[data-panel="' + name + '"] .reveal').forEach((el, i) => {
+      el.classList.remove('visible');
+      void el.offsetWidth;
+      setTimeout(() => el.classList.add('visible'), i * 50);
     });
-  }, { rootMargin: '-45% 0px -50% 0px' });
-  spySections.forEach(el => spyObserver.observe(el));
+
+    if (!opts.skipScroll && panelsTop) {
+      panelsTop.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  document.querySelectorAll('.tab-link').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      showTab(el.dataset.tab);
+    });
+  });
+
+  showTab('booking', { skipScroll: true });
+
+  // Gallery sub-tabs — Public Albums / Private Archives
+  document.querySelectorAll('.gallery-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.galleryTab;
+      document.querySelectorAll('.gallery-tab').forEach(t => t.classList.toggle('active', t === btn));
+      document.querySelectorAll('.gallery-panel').forEach(p => {
+        p.classList.toggle('active', p.dataset.galleryPanel === target);
+      });
+      document.querySelectorAll('.gallery-panel[data-gallery-panel="' + target + '"] .reveal').forEach((el, i) => {
+        el.classList.remove('visible');
+        void el.offsetWidth;
+        setTimeout(() => el.classList.add('visible'), i * 50);
+      });
+    });
+  });
 </script>
 </body>
 </html>
