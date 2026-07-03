@@ -32,6 +32,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../Toast';
 import DOMPurify from 'dompurify';
+import { logApiCall, logError } from '../../lib/adminErrorLog';
 
 // Types
 interface MailFolder {
@@ -141,9 +142,15 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
     });
 
     if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.error || `API error: ${response.status}`);
+      const rawText = await response.text().catch(() => '');
+      let parsed: any = {};
+      try { parsed = JSON.parse(rawText); } catch {}
+      const detail = parsed.error || parsed.message || rawText.slice(0, 500) || '(no body)';
+      const msg = `HTTP ${response.status} — /api/mail/${endpoint}\n${detail}`;
+      logApiCall(options.method || 'GET', `/api/mail/${endpoint}`, response.status, detail);
+      throw new Error(msg);
     }
+    logApiCall(options.method || 'GET', `/api/mail/${endpoint}`, response.status, 'ok');
 
     // Check if response is JSON
     const contentType = response.headers.get('content-type');
@@ -217,12 +224,13 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
   }, [mailApi]);
 
   // Load single message
-  const loadMessage = useCallback(async (messageId: string) => {
+  const loadMessage = useCallback(async (messageId: string, folderId?: string) => {
     try {
       setLoadingMessage(true);
       setError(null);
 
-      const data = await mailApi(`message/${messageId}`);
+      const qs = folderId ? `?folderId=${encodeURIComponent(folderId)}` : '';
+      const data = await mailApi(`message/${messageId}${qs}`);
       setSelectedMessage(data.message);
 
       // Mark as read
@@ -239,12 +247,8 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
       }
     } catch (err: any) {
       console.error('Failed to load message:', err);
-      const msg = err.message || '';
-      setError(
-        msg.includes('404') || msg.includes('not found') || msg.includes('Message not found')
-          ? 'Message not found — it may have been deleted or moved in Zoho.'
-          : msg || 'Failed to load message'
-      );
+      logError(err.message || 'Failed to load message');
+      setError(err.message || 'Failed to load message');
     } finally {
       setLoadingMessage(false);
     }
@@ -527,12 +531,15 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
 
       {/* Error display */}
       {error && (
-        <div className="shrink-0 bg-red-500/10 border-none p-3 mb-2 flex items-center gap-3">
-          <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
-          <span className="text-red-400 text-sm">{error}</span>
-          <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-300">
-            <X className="w-4 h-4" />
-          </button>
+        <div className="shrink-0 bg-red-500/10 border-l-2 border-red-500 p-3 mb-2">
+          <div className="flex items-start gap-2 mb-1">
+            <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+            <span className="text-red-400 text-xs font-semibold uppercase tracking-wider">Error</span>
+            <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-300 flex-shrink-0">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <pre className="text-red-300 text-xs font-mono whitespace-pre-wrap break-all leading-relaxed pl-6">{error}</pre>
         </div>
       )}
 
@@ -601,10 +608,13 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
             ) : (
               <>
                 {messages.map(msg => (
-                  <button
+                  <div
                     key={msg.messageId}
-                    onClick={() => loadMessage(msg.messageId)}
-                    className={`w-full p-3 text-left border-none transition ${selectedMessage?.messageId === msg.messageId
+                    onClick={() => loadMessage(msg.messageId, msg.folderId)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && loadMessage(msg.messageId, msg.folderId)}
+                    className={`w-full p-3 text-left cursor-pointer transition ${selectedMessage?.messageId === msg.messageId
                       ? 'bg-white/10'
                       : 'hover:bg-white/5'
                       } ${!msg.isRead ? 'bg-white/[0.02]' : ''}`}
@@ -647,7 +657,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                         </div>
                       </div>
                     </div>
-                  </button>
+                  </div>
                 ))}
 
                 {/* Pagination */}

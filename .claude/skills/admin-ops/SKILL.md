@@ -41,9 +41,45 @@ The dashboard uses a 4-column Bento grid:
 - Buttons: White background with black text for primary actions; transparent with white border for secondary.
 - Stats: Use `AnimatedNumber` for all numeric values.
 
+## Global Debug Report Button
+
+> **NON-NEGOTIABLE**: Every admin dashboard — without exception — must mount the Debug Report button. This is a brand standard, not an optional enhancement. No admin page ships without it.
+
+Every admin page mounts a **"DEBUG REPORT"** button (`src/components/admin/CopyDebugReport.tsx`) in the header, next to the profile icon. It is wired up in `src/pages/Admin.tsx`.
+
+When tapped it copies a markdown-formatted report containing:
+- Timestamp, URL, user email, device/UA string
+- Client-side errors (JS errors + unhandled rejections, captured by `src/lib/adminErrorLog.ts`)
+- Recent API calls logged via `logApiCall()` (method, status, endpoint, detail)
+- Vercel server logs for the last 30 min via `/api/admin/logs` (requires `VERCEL_ACCESS_TOKEN` in Vercel env vars)
+
+**Adding API call logging to a new admin view:**
+```ts
+import { logApiCall, logError } from '../../lib/adminErrorLog';
+
+// After a fetch:
+logApiCall('GET', '/api/some/endpoint', response.status, detail);
+// On error:
+logError(err.message);
+```
+
+**Styling (Noir-compliant):**
+```tsx
+<button
+  className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-widest bg-black text-white border border-white hover:bg-white hover:text-black transition-colors"
+  style={{ borderRadius: 0 }}
+>
+  <ClipboardCopy className="w-3 h-3" />
+  DEBUG REPORT
+</button>
+```
+
 ## Verification Checklist
 - [ ] No "coming soon" or static "--%" placeholders.
 - [ ] No `rounded` or `rounded-*` classes (except for profile avatars if absolutely necessary).
 - [ ] All headers are uppercase.
 - [ ] All data is fetched from Supabase.
 - [ ] Desktop and mobile layouts are aligned correctly.
+- [ ] **`CopyDebugReport` is present in the admin header** — this is a hard requirement, not optional. No dashboard ships without it.
+- [ ] `installGlobalListeners` called in the page's root `useEffect` (captures JS errors + unhandled rejections).
+- [ ] All API calls inside the view use `logApiCall()` so they appear in the debug report.
