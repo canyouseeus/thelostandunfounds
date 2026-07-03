@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Artist Name — Your Art. Their Skin.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #000000;
+      --bg-alt: #0a0a0a;
+      --bg-card: rgba(255,255,255,0.04);
+      --bg-card-hover: rgba(255,255,255,0.07);
+      --text: #ffffff;
+      --text-muted: rgba(255,255,255,0.55);
+      --accent: #f0ece4;
+      --nav-bg: rgba(0,0,0,0.85);
+    }
+    [data-theme="light"] {
+      --bg: #ffffff;
+      --bg-alt: #f5f5f3;
+      --bg-card: rgba(0,0,0,0.04);
+      --bg-card-hover: rgba(0,0,0,0.07);
+      --text: #0a0a0a;
+      --text-muted: rgba(0,0,0,0.55);
+      --accent: #7a7264;
+      --nav-bg: rgba(255,255,255,0.85);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      height: 68px;
+      background: var(--nav-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+    }
+    .nav-logo-circle {
+      width: 38px;
+      height: 38px;
+      background: var(--text);
+      color: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .nav-logo-text {
+      font-size: 0.85rem;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2.25rem;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+    .btn-nav {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 0.6rem 1.4rem;
+      background: var(--text);
+      color: #000;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+    }
+    .btn-nav:hover { opacity: 0.8; }
+    .theme-toggle {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      padding: 0.3rem;
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+    }
+    .theme-toggle:hover { color: var(--text); }
+
+    @media (max-width: 800px) {
+      .nav-links { display: none; }
+      nav { padding: 0 1.25rem; }
+    }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 8rem 1.5rem 6rem;
+      position: relative;
+      background: var(--bg);
+    }
+    .hero-eyebrow {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+    }
+    h1.hero-title {
+      font-size: clamp(2.8rem, 9vw, 6.5rem);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      line-height: 0.98;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+    }
+    .hero-tagline {
+      font-size: clamp(0.9rem, 2vw, 1.15rem);
+      font-weight: 400;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 2.75rem;
+    }
+    .hero-cta-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .btn-primary {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      padding: 1rem 2.25rem;
+      background: var(--text);
+      color: #000;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn-primary:hover { opacity: 0.85; transform: translateY(-2px); }
+    .btn-outline {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      padding: 1rem 2.25rem;
+      background: transparent;
+      color: var(--text);
+      border: 1.5px solid rgba(255,255,255,0.35);
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s, transform 0.15s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn-outline:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: var(--text);
+      transform: translateY(-2px);
+    }
+    .hero-scroll-hint {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      color: var(--text-muted);
+      font-size: 0.65rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      animation: bounce 2s infinite;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(6px); }
+    }
+
+    /* ── SECTION SHARED ── */
+    section { padding: 6rem 1.5rem; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .section-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+    h2.section-title {
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.01em;
+      line-height: 1.05;
+      margin-bottom: 1.25rem;
+    }
+    .section-sub {
+      font-size: 1rem;
+      color: var(--text-muted);
+      max-width: 540px;
+      line-height: 1.65;
+    }
+
+    /* ── PORTFOLIO ── */
+    #portfolio { background: var(--bg-alt); }
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-top: 3rem;
+    }
+    @media (max-width: 700px) {
+      .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .gallery-item {
+      aspect-ratio: 3/4;
+      background: var(--bg-card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: background 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .gallery-item:hover { background: var(--bg-card-hover); }
+    .gallery-item .icon-piece { width: 32px; height: 32px; opacity: 0.35; }
+    .gallery-item .gallery-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 55%);
+      opacity: 0;
+      transition: opacity 0.25s;
+      display: flex;
+      align-items: flex-end;
+      padding: 1.1rem;
+    }
+    .gallery-item:hover .gallery-overlay { opacity: 1; }
+    .gallery-overlay-text {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #fff;
+    }
+
+    /* ── SERVICES ── */
+    #services { background: var(--bg); }
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1px;
+      margin-top: 3rem;
+      background: rgba(255,255,255,0.06);
+    }
+    .service-card {
+      background: var(--bg);
+      padding: 2.25rem 2rem;
+      transition: background 0.2s;
+    }
+    .service-card:hover { background: var(--bg-card); }
+    .service-icon {
+      margin-bottom: 1.25rem;
+      display: block;
+      color: var(--text);
+    }
+    .service-name {
+      font-size: 0.92rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.6rem;
+    }
+    .service-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+      margin-bottom: 1.1rem;
+    }
+    .service-price {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    /* ── BOOKING ── */
+    #booking { background: var(--bg-alt); }
+    .booking-flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1px;
+      margin: 3rem 0;
+      background: rgba(255,255,255,0.06);
+    }
+    .flow-step {
+      background: var(--bg-alt);
+      padding: 2rem 1.5rem;
+      text-align: center;
+    }
+    .flow-step-num {
+      width: 34px; height: 34px;
+      background: var(--text);
+      color: #000;
+      font-size: 0.78rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+    }
+    .flow-step-icon { margin-bottom: 0.6rem; display: flex; justify-content: center; color: var(--text-muted); }
+    .flow-step-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+    .flow-step-desc { font-size: 0.78rem; color: var(--text-muted); line-height: 1.55; }
+    .booking-cta-block {
+      background: var(--bg-card);
+      padding: 3.5rem;
+      text-align: center;
+    }
+    .booking-cta-block h3 {
+      font-size: 1.5rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+      letter-spacing: -0.01em;
+    }
+    .booking-cta-block p { color: var(--text-muted); margin-bottom: 1.85rem; }
+
+    /* ── CONTACT ── */
+    #contact { background: var(--bg); }
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 3rem;
+      margin-top: 3rem;
+    }
+    @media (max-width: 800px) {
+      .contact-grid { grid-template-columns: 1fr; }
+    }
+    .contact-block { background: var(--bg-card); padding: 2.25rem; }
+    .contact-row {
+      display: flex; align-items: flex-start; gap: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+    .contact-row:last-child { margin-bottom: 0; }
+    .contact-row .icon { color: var(--text-muted); flex-shrink: 0; margin-top: 0.1rem; }
+    .contact-row-label {
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 0.25rem;
+    }
+    .contact-row-value { font-size: 0.92rem; color: var(--text); line-height: 1.5; }
+    .hours-row {
+      display: flex; justify-content: space-between;
+      font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.6rem;
+    }
+    .hours-row .day { font-weight: 600; color: var(--text); }
+    .social-row { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+    .social-btn {
+      width: 38px; height: 38px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.06);
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: background 0.2s, color 0.2s;
+    }
+    .social-btn:hover { background: rgba(255,255,255,0.14); color: var(--text); }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--bg-alt);
+      padding: 3rem 1.5rem 6rem;
+    }
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+    .footer-brand-name {
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+    .footer-links { display: flex; gap: 1.75rem; list-style: none; }
+    .footer-links a {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--text); }
+    .footer-copy { font-size: 0.72rem; color: var(--text-muted); width: 100%; text-align: center; margin-top: 1.5rem; }
+
+    /* ── BANNER ── */
+    .preview-banner {
+      position: fixed;
+      bottom: 1.25rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 200;
+      background: var(--text);
+      color: #000;
+      padding: 0.65rem 1.5rem;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      white-space: nowrap;
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      height: 1px;
+      background: rgba(255,255,255,0.08);
+      margin: 0 auto;
+      max-width: 1200px;
+    }
+    [data-theme="light"] .divider { background: rgba(0,0,0,0.08); }
+
+    .icon-sun, .icon-moon { pointer-events: none; }
+    [data-theme="dark"] .icon-moon { display: none; }
+    [data-theme="light"] .icon-sun { display: none; }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+  </style>
+</head>
+<body>
+
+<!-- PREVIEW BANNER -->
+<div class="preview-banner">Client Preview — Artist Website Template</div>
+
+<!-- NAV -->
+<nav>
+  <a href="#hero" class="nav-logo">
+    <div class="nav-logo-circle">AT</div>
+    <span class="nav-logo-text">Artist Name</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#portfolio">Portfolio</a></li>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#booking">Book</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <div class="nav-right">
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+      <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a href="#booking" class="btn-nav">Book Now</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <p class="hero-eyebrow reveal">City, State · Independent Artist</p>
+  <h1 class="hero-title reveal">Artist Name</h1>
+  <p class="hero-tagline reveal">Your Art. Their Skin.</p>
+  <div class="hero-cta-group reveal">
+    <a href="#booking" class="btn-primary">Book a Session</a>
+    <a href="#portfolio" class="btn-outline">View Portfolio</a>
+  </div>
+  <div class="hero-scroll-hint">
+    <span>Scroll</span>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+  </div>
+</section>
+
+<!-- PORTFOLIO -->
+<section id="portfolio">
+  <div class="container">
+    <p class="section-label reveal">Portfolio</p>
+    <h2 class="section-title reveal">Recent Work</h2>
+    <p class="section-sub reveal">A selection of pieces that show range, precision, and style.</p>
+    <div class="gallery-grid">
+      <div class="gallery-item reveal">
+        <svg class="icon-piece" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M7 12h10"/></svg>
+        <div class="gallery-overlay"><span class="gallery-overlay-text">Fine Line Botanical</span></div>
+      </div>
+      <div class="gallery-item reveal">
+        <svg class="icon-piece" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18.37 2.63L14 7l-1.59-1.59a2 2 0 0 0-2.82 0L8 7l9 9 1.59-1.59a2 2 0 0 0 0-2.82L17 10l4.37-4.37a2.12 2.12 0 1 0-3-3z"/></svg>
+        <div class="gallery-overlay"><span class="gallery-overlay-text">Blackwork Sleeve</span></div>
+      </div>
+      <div class="gallery-item reveal">
+        <svg class="icon-piece" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/></svg>
+        <div class="gallery-overlay"><span class="gallery-overlay-text">Geometric Piece</span></div>
+      </div>
+      <div class="gallery-item reveal">
+        <svg class="icon-piece" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 4L9 15l-5-5"/></svg>
+        <div class="gallery-overlay"><span class="gallery-overlay-text">Script Lettering</span></div>
+      </div>
+      <div class="gallery-item reveal">
+        <svg class="icon-piece" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>
+        <div class="gallery-overlay"><span class="gallery-overlay-text">Portrait Realism</span></div>
+      </div>
+      <div class="gallery-item reveal">
+        <svg class="icon-piece" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12c3-3 6-3 9 0s6 3 9 0"/></svg>
+        <div class="gallery-overlay"><span class="gallery-overlay-text">Cover-Up Transformation</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SERVICES -->
+<section id="services">
+  <div class="container">
+    <p class="section-label reveal">What I Offer</p>
+    <h2 class="section-title reveal">Services</h2>
+    <p class="section-sub reveal">From your first tattoo to a full custom piece — every session starts with a conversation.</p>
+    <div class="services-grid">
+      <div class="service-card reveal">
+        <span class="service-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18.37 2.63L14 7l-1.59-1.59a2 2 0 0 0-2.82 0L8 7l9 9 1.59-1.59a2 2 0 0 0 0-2.82L17 10l4.37-4.37a2.12 2.12 0 1 0-3-3z"/><path d="M9 8c-2 3-4 3.5-7 4l8 10c2-1 6-5 6-7"/></svg></span>
+        <div class="service-name">Custom Tattoos</div>
+        <p class="service-desc">Fully bespoke artwork created around your vision — consultation, design, and execution.</p>
+        <span class="service-price">From $200</span>
+      </div>
+      <div class="service-card reveal">
+        <span class="service-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg></span>
+        <div class="service-name">Cover-Ups</div>
+        <p class="service-desc">Transform old ink into something new. Free consultation to assess feasibility and design options.</p>
+        <span class="service-price">From $300</span>
+      </div>
+      <div class="service-card reveal">
+        <span class="service-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span>
+        <div class="service-name">Touch-Ups</div>
+        <p class="service-desc">Refresh and restore existing work, including pieces originally done elsewhere.</p>
+        <span class="service-price">From $80</span>
+      </div>
+      <div class="service-card reveal">
+        <span class="service-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>
+        <div class="service-name">Consultations</div>
+        <p class="service-desc">Sit down and talk through placement, sizing, and style before committing to a design.</p>
+        <span class="service-price">Free</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BOOKING -->
+<section id="booking">
+  <div class="container">
+    <p class="section-label reveal">Book a Session</p>
+    <h2 class="section-title reveal">How It Works</h2>
+    <p class="section-sub reveal">A simple flow that gets you from idea to appointment in four steps.</p>
+    <div class="booking-flow">
+      <div class="flow-step reveal">
+        <div class="flow-step-num">1</div>
+        <span class="flow-step-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v1m0 16v1M4.22 4.22l.7.7m12.16 12.16.7.7M3 12h1m16 0h1M4.22 19.78l.7-.7M18.36 5.64l.7-.7"/><circle cx="12" cy="12" r="3"/></svg></span>
+        <div class="flow-step-label">Choose Style</div>
+        <p class="flow-step-desc">Fine line, blackwork, color, cover-up, or custom.</p>
+      </div>
+      <div class="flow-step reveal">
+        <div class="flow-step-num">2</div>
+        <span class="flow-step-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
+        <div class="flow-step-label">Upload References</div>
+        <p class="flow-step-desc">Share inspiration photos, placement, and size notes.</p>
+      </div>
+      <div class="flow-step reveal">
+        <div class="flow-step-num">3</div>
+        <span class="flow-step-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+        <div class="flow-step-label">Get Estimate</div>
+        <p class="flow-step-desc">Reviewed personally and returned with a clear price.</p>
+      </div>
+      <div class="flow-step reveal">
+        <div class="flow-step-num">4</div>
+        <span class="flow-step-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
+        <div class="flow-step-label">Pay Deposit &amp; Book</div>
+        <p class="flow-step-desc">Secure your appointment with a deposit, applied to your total.</p>
+      </div>
+    </div>
+    <div class="booking-cta-block reveal">
+      <h3>Ready to Get Started?</h3>
+      <p>Book online in minutes. Confirmation within 24 hours.</p>
+      <a href="#" class="btn-primary" onclick="return false;">Start Booking</a>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CONTACT / LOCATION -->
+<section id="contact">
+  <div class="container">
+    <p class="section-label reveal">Get In Touch</p>
+    <h2 class="section-title reveal">Studio &amp; Contact</h2>
+    <div class="contact-grid">
+      <div class="contact-block reveal">
+        <div class="contact-row">
+          <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
+          <div>
+            <div class="contact-row-label">Location</div>
+            <div class="contact-row-value">City, State</div>
+          </div>
+        </div>
+        <div class="contact-row">
+          <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16v16H4z"/><path d="M22 6l-10 7L2 6"/></svg></span>
+          <div>
+            <div class="contact-row-label">Email</div>
+            <div class="contact-row-value">artist@example.com</div>
+          </div>
+        </div>
+        <div class="contact-row">
+          <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.8 19.79 19.79 0 01.22 2.18 2 2 0 012.22 0H5.18a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></span>
+          <div>
+            <div class="contact-row-label">Phone</div>
+            <div class="contact-row-value">(555) 000-0000</div>
+          </div>
+        </div>
+        <div class="social-row">
+          <a href="#" class="social-btn" aria-label="Instagram">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/></svg>
+          </a>
+          <a href="#" class="social-btn" aria-label="Facebook">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+          </a>
+        </div>
+      </div>
+      <div class="contact-block reveal">
+        <div class="contact-row-label" style="margin-bottom:1rem;">Hours</div>
+        <div class="hours-row"><span class="day">Mon–Wed</span><span>By Appointment</span></div>
+        <div class="hours-row"><span class="day">Thu–Fri</span><span>11am–7pm</span></div>
+        <div class="hours-row"><span class="day">Saturday</span><span>10am–5pm</span></div>
+        <div class="hours-row"><span class="day">Sunday</span><span>Closed</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <span class="footer-brand-name">Artist Name</span>
+    <ul class="footer-links">
+      <li><a href="#portfolio">Portfolio</a></li>
+      <li><a href="#services">Services</a></li>
+      <li><a href="#booking">Book Now</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <span class="footer-copy">© 2026 Artist Name · All rights reserved</span>
+  </div>
+</footer>
+
+<script>
+  // Dark mode toggle
+  const root = document.documentElement;
+  const toggle = document.getElementById('themeToggle');
+  const saved = localStorage.getItem('artist-theme') || 'dark';
+  root.setAttribute('data-theme', saved);
+
+  toggle.addEventListener('click', () => {
+    const current = root.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('artist-theme', next);
+  });
+
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => entry.target.classList.add('visible'), i * 60);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+  reveals.forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

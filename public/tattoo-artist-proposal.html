@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>THE LOST+UNFOUNDS — Artist Website Proposal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#ffffff;
+    --ink:#0a0a0a;
+    --soft:#3a3a3a;
+    --muted:#7a7a7a;
+    --rule:#1a1a1a;
+    --rule-soft:#d8d8d8;
+  }
+  @page { size: Letter; margin: 0; }
+  *{box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);
+    font-family:'Inter','Helvetica Neue',Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;}
+
+  .page{
+    width:100%; max-width:8.5in; min-height:11in;
+    padding:0.85in 0.95in;
+    background:var(--paper);
+    position:relative;
+    page-break-after:always;
+    display:flex; flex-direction:column;
+    overflow:hidden;
+    margin:0 auto;
+  }
+  @media print{
+    .page{width:8.5in; height:11in; margin:0;}
+  }
+  .page:last-child{page-break-after:auto;}
+
+  .runhead{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:8.5px; letter-spacing:.28em; text-transform:uppercase;
+    color:var(--ink); font-weight:600;
+  }
+  .runhead .sep{letter-spacing:.4em;}
+  .runhead .left{display:flex; gap:24px;}
+
+  .cover-body{
+    flex:1; display:flex; flex-direction:column; align-items:center;
+    text-align:center; padding-top:0.55in;
+  }
+  .cover-logo{
+    width:160px; height:160px; margin-bottom:24px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .cover-logo img{
+    width:100%; height:100%; object-fit:contain;
+    filter:invert(1);
+  }
+  .cover-brand{
+    font-size:13px; letter-spacing:.42em; text-transform:uppercase;
+    font-weight:700; margin-bottom:4px;
+  }
+  .cover-tag{
+    font-size:10px; letter-spacing:.32em; text-transform:uppercase;
+    color:var(--muted); font-weight:500; margin-bottom:52px;
+  }
+  .cover-label{
+    font-size:9px; letter-spacing:.36em; text-transform:uppercase;
+    color:var(--muted); font-weight:600; margin-bottom:8px;
+  }
+  .cover-h1{
+    font-size:34px; line-height:1.08; letter-spacing:.005em;
+    font-weight:800; text-transform:uppercase; margin:0 0 6px;
+  }
+  .cover-h1-sub{
+    font-size:13px; color:var(--soft); margin:0 0 48px;
+    font-weight:400;
+  }
+
+  .cover-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:36px;
+    text-align:left; width:100%; max-width:520px; margin-bottom:36px;
+  }
+  .cover-grid .field .k{
+    font-size:9px; letter-spacing:.28em; text-transform:uppercase;
+    color:var(--muted); font-weight:600; margin-bottom:6px;
+  }
+  .cover-grid .field .v{
+    font-size:12px; line-height:1.65; font-weight:500;
+  }
+  .cover-grid .field .v .lite{color:var(--soft); font-weight:400;}
+
+  .cover-dates{
+    display:flex; gap:48px; margin-top:auto; margin-bottom:8px;
+  }
+  .cover-dates .d{
+    font-size:9px; letter-spacing:.22em; text-transform:uppercase;
+    color:var(--muted); font-weight:600;
+  }
+  .cover-dates .d span{
+    display:block; font-size:12px; letter-spacing:.02em;
+    color:var(--ink); font-weight:600; margin-top:3px;
+    text-transform:none;
+  }
+
+  .runfoot{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:8px; letter-spacing:.3em; text-transform:uppercase;
+    color:var(--muted); font-weight:500;
+    margin-top:auto; padding-top:14px;
+  }
+
+  .pagehead{
+    margin-bottom:18px;
+  }
+  .pagehead .sect{
+    font-size:10px; letter-spacing:.34em; text-transform:uppercase;
+    font-weight:700; margin-bottom:14px;
+  }
+  .pagehead h2{
+    font-size:30px; line-height:1.1; letter-spacing:.005em;
+    font-weight:700; text-transform:uppercase; margin:0;
+    max-width:22ch;
+  }
+
+  p.lede{
+    font-size:13px; line-height:1.7; color:var(--ink);
+    max-width:62ch; margin:0 0 22px;
+  }
+  p.body{
+    font-size:12.5px; line-height:1.7; color:var(--soft);
+    max-width:62ch; margin:0 0 16px;
+  }
+
+  .rule{height:1px; background:var(--rule); border:0; margin:14px 0 22px;}
+  .rule-soft{height:1px; background:var(--rule-soft); border:0; margin:14px 0 22px;}
+
+  .subhead{
+    font-size:10px; letter-spacing:.32em; text-transform:uppercase;
+    font-weight:700; margin:6px 0 14px;
+  }
+
+  ul.list{list-style:none; padding:0; margin:0 0 18px;}
+  ul.list li{
+    position:relative; padding-left:18px; margin-bottom:9px;
+    font-size:12.5px; line-height:1.65; color:var(--ink);
+  }
+  ul.list li::before{
+    content:""; position:absolute; left:1px; top:8px;
+    width:5px; height:5px; background:var(--ink);
+  }
+  ul.list li .lite{color:var(--soft);}
+
+  .invest{
+    width:100%; border-collapse:collapse;
+    margin-top:8px; margin-bottom:22px;
+  }
+  .invest th, .invest td{
+    text-align:left; padding:14px 0;
+    border-bottom:1px solid var(--rule-soft);
+    font-size:11.5px; vertical-align:top;
+  }
+  .invest thead th{
+    font-size:9px; letter-spacing:.28em; text-transform:uppercase;
+    font-weight:700; color:var(--muted); padding-bottom:10px;
+    border-bottom:1px solid var(--rule);
+  }
+  .invest .item{font-weight:600; line-height:1.5;}
+  .invest .item small{display:block; font-weight:400; color:var(--soft); margin-top:3px; font-size:11px; line-height:1.55;}
+  .invest .freq{color:var(--soft); font-size:11px;}
+  .invest .price{text-align:right; font-weight:700; font-size:13px;}
+  .invest .price small{display:block; font-weight:400; color:var(--muted); font-size:10px; margin-top:2px;}
+
+  .callout{
+    background:#f5f5f5; padding:16px 20px;
+  }
+  .callout .k{
+    font-size:9.5px; letter-spacing:.26em; text-transform:uppercase;
+    font-weight:700; margin-bottom:8px;
+  }
+  .callout .v{
+    font-size:11.5px; line-height:1.7; color:var(--soft);
+  }
+
+  .compare{
+    width:100%; border-collapse:collapse;
+    margin-top:8px; margin-bottom:22px;
+  }
+  .compare th, .compare td{
+    text-align:left; padding:10px 0;
+    border-bottom:1px solid var(--rule-soft);
+    font-size:11.5px; vertical-align:top;
+  }
+  .compare thead th{
+    font-size:9px; letter-spacing:.28em; text-transform:uppercase;
+    font-weight:700; color:var(--muted); padding-bottom:10px;
+    border-bottom:1px solid var(--rule);
+  }
+  .compare .label{font-weight:600; color:var(--ink);}
+  .compare .market{text-align:right; color:var(--muted); font-size:11px;}
+  .compare .ours{text-align:right; font-weight:700; color:var(--ink); font-size:13px;}
+
+  .sign{
+    display:grid; grid-template-columns:1fr 1fr; gap:40px;
+    margin-top:auto; padding-top:20px;
+  }
+  .sign .col .k{
+    font-size:9px; letter-spacing:.24em; text-transform:uppercase;
+    color:var(--muted); font-weight:600; margin-bottom:28px;
+  }
+  .sign .col .line{
+    height:1px; background:var(--rule); margin-bottom:8px;
+  }
+  .sign .col .who{
+    font-size:12px; font-weight:600;
+  }
+  .sign .col .role{
+    font-size:10px; color:var(--muted); margin-top:2px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ====================== PAGE 1 — COVER ====================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="left">
+      <span>THE LOST+UNFOUNDS</span>
+      <span class="sep">·</span>
+      <span>Artist Website Proposal</span>
+    </div>
+    <div>Page 1 / 6</div>
+  </div>
+
+  <div class="cover-body">
+    <div class="cover-logo" aria-label="THE LOST+UNFOUNDS"><img src="https://www.thelostandunfounds.com/logo.png" alt="THE LOST+UNFOUNDS" /></div>
+    <div class="cover-brand">THE LOST+UNFOUNDS</div>
+    <div class="cover-tag">Can you see us?</div>
+
+    <div class="cover-label">Proposal · Artist Website</div>
+    <h1 class="cover-h1">Your Ink. Your Platform.</h1>
+    <p class="cover-h1-sub">A custom website for independent tattoo artists</p>
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:8px;">
+      <a href="https://www.thelostandunfounds.com/tattoo-artist-preview.html"
+         target="_blank" rel="noopener noreferrer"
+         style="display:inline-flex;align-items:center;gap:10px;
+                padding:13px 24px;
+                background:#0a0a0a;color:#ffffff;
+                font-family:'Inter','Helvetica Neue',Arial,sans-serif;
+                font-size:10.5px;font-weight:700;letter-spacing:.2em;
+                text-transform:uppercase;text-decoration:none;">
+        VIEW WEBSITE PREVIEW
+      </a>
+      <a href="https://www.thelostandunfounds.com/tattoo-artist-dashboard-preview.html"
+         target="_blank" rel="noopener noreferrer"
+         style="display:inline-flex;align-items:center;gap:10px;
+                padding:13px 24px;
+                background:#ffffff;color:#0a0a0a;
+                border:1.5px solid #0a0a0a;
+                font-family:'Inter','Helvetica Neue',Arial,sans-serif;
+                font-size:10.5px;font-weight:700;letter-spacing:.2em;
+                text-transform:uppercase;text-decoration:none;">
+        VIEW DASHBOARD PREVIEW
+      </a>
+    </div>
+    <p style="font-size:9px;letter-spacing:.18em;text-transform:uppercase;
+              color:#7a7a7a;margin:0 0 40px;font-family:'Inter',sans-serif;">
+      Live preview — watch features appear in real time as we build
+    </p>
+
+    <div class="cover-grid">
+      <div class="field">
+        <div class="k">Prepared by</div>
+        <div class="v">
+          Joshua Greene<br>
+          <span class="lite">THE LOST AND UNFOUNDS LLC.</span><br>
+          <span class="lite">business@thelostandunfounds.com</span>
+        </div>
+      </div>
+      <div class="field">
+        <div class="k">Prepared for</div>
+        <div class="v">
+          [Your Studio Name]<br>
+          <span class="lite">[City, State]</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cover-dates">
+      <div class="d">Proposal Date<span>July 3, 2026</span></div>
+      <div class="d">Valid Through<span>August 31, 2026</span></div>
+    </div>
+  </div>
+
+  <div class="runfoot">
+    <div>YOUR ART. YOUR PLATFORM.</div>
+    <div>Page 1 / 6</div>
+  </div>
+</section>
+
+<!-- ====================== PAGE 2 — THE OPPORTUNITY ====================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="left">
+      <span>THE LOST+UNFOUNDS</span>
+      <span class="sep">·</span>
+      <span>Artist Website Proposal</span>
+    </div>
+    <div>Page 2 / 6</div>
+  </div>
+
+  <div class="pagehead">
+    <div class="sect">01 · The Opportunity</div>
+    <h2>You create the art. Your website brings them in.</h2>
+  </div>
+
+  <p class="lede">
+    Independent tattoo artists build their reputation one piece at a time — but the booking process often lives scattered across Instagram DMs, phone tag, and word of mouth. A dedicated website changes that. It puts your portfolio, your booking flow, and your deposit collection in one place that works for you around the clock, not just when you're online to answer a message.
+  </p>
+  <p class="body">
+    This is a website built specifically for how independent artists work: a clean portfolio that shows off your best pieces, a booking system that turns interest into scheduled sessions, and a dashboard where you manage it all from your phone or a laptop.
+  </p>
+  <p class="body">
+    I built this platform for my own business and it's been running in production. You get a custom version of that same system, shaped around your style and your studio.
+  </p>
+
+  <hr class="rule">
+
+  <div class="subhead">What changes for you</div>
+
+  <ul class="list">
+    <li><strong>Bookings come through the system</strong> — <span class="lite">Clients submit requests with references and style details directly through your site. No more losing track of a DM from three weeks ago.</span></li>
+    <li><strong>Deposits are handled automatically</strong> — <span class="lite">Payment collection is built into the booking flow. Your spot is secured before it hits your calendar.</span></li>
+    <li><strong>Your portfolio speaks for itself online</strong> — <span class="lite">A gallery built to show your work at its best, available any time someone wants to see what you do — not just when they catch your latest post.</span></li>
+  </ul>
+
+  <div class="runfoot">
+    <div>YOUR ART. YOUR PLATFORM.</div>
+    <div>Page 2 / 6</div>
+  </div>
+</section>
+
+<!-- ====================== PAGE 3 — WHAT YOU GET ====================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="left">
+      <span>THE LOST+UNFOUNDS</span>
+      <span class="sep">·</span>
+      <span>Artist Website Proposal</span>
+    </div>
+    <div>Page 3 / 6</div>
+  </div>
+
+  <div class="pagehead">
+    <div class="sect">02 · What You Get</div>
+    <h2>Everything an independent artist needs — built and ready.</h2>
+  </div>
+
+  <div class="subhead">The Website</div>
+
+  <ul class="list">
+    <li><strong>Custom landing page</strong> — <span class="lite">built around your name, your style, and your visual identity. Not a template you're squeezed into.</span></li>
+    <li><strong>Artist bio</strong> — <span class="lite">your story, your specialties, and what makes your work distinct, presented the way you want it told.</span></li>
+    <li><strong>Portfolio gallery</strong> — <span class="lite">a dedicated space to showcase your best pieces, organized however makes sense for your work.</span></li>
+    <li><strong>Style showcase</strong> — <span class="lite">highlight the specific styles you specialize in, so the right clients find you.</span></li>
+    <li><strong>Location, hours &amp; contact</strong> — <span class="lite">everything a prospective client needs to know before they reach out.</span></li>
+    <li><strong>Mobile-first &amp; SEO-optimized</strong> — <span class="lite">built to look sharp on a phone and to surface in searches for your style and city.</span></li>
+  </ul>
+
+  <hr class="rule-soft">
+
+  <div class="subhead">Bookings &amp; Payments</div>
+
+  <ul class="list">
+    <li><strong>Online booking request flow</strong> — <span class="lite">clients select a style, upload reference photos, and submit a request directly through the site.</span></li>
+    <li><strong>Deposit collection</strong> — <span class="lite">secure payment processing built into the booking flow, so appointments are confirmed with a deposit in hand.</span></li>
+    <li><strong>Appointment tracking</strong> — <span class="lite">every request and confirmed session is logged and organized, no more relying on memory.</span></li>
+    <li><strong>Payment processing</strong> — <span class="lite">accept deposits and full payments from any device.</span></li>
+  </ul>
+
+  <hr class="rule-soft">
+
+  <div class="subhead">The Dashboard</div>
+
+  <ul class="list">
+    <li><strong>Admin console</strong> — <span class="lite">manage bookings, view client info, update your gallery, and track revenue from one screen.</span></li>
+    <li><strong>Booking management</strong> — <span class="lite">review incoming requests, confirm sessions, and keep your schedule current.</span></li>
+    <li><strong>Client information</strong> — <span class="lite">contact details, reference photos, and session history, all in one searchable place.</span></li>
+    <li><strong>Revenue tracking</strong> — <span class="lite">see what's coming in and what's outstanding at a glance.</span></li>
+  </ul>
+
+  <div class="runfoot">
+    <div>YOUR ART. YOUR PLATFORM.</div>
+    <div>Page 3 / 6</div>
+  </div>
+</section>
+
+<!-- ====================== PAGE 4 — HOW IT WORKS DAY TO DAY ====================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="left">
+      <span>THE LOST+UNFOUNDS</span>
+      <span class="sep">·</span>
+      <span>Artist Website Proposal</span>
+    </div>
+    <div>Page 4 / 6</div>
+  </div>
+
+  <div class="pagehead">
+    <div class="sect">03 · How It Works Day to Day</div>
+    <h2>From first click to final session.</h2>
+  </div>
+
+  <p class="lede">
+    The platform is built to guide a client from discovering your work to sitting in your chair — with every step tracked along the way.
+  </p>
+
+  <div class="subhead">The Client Journey</div>
+  <ul class="list">
+    <li><span class="lite">A client finds your website — through search, a shared link, or your social profile.</span></li>
+    <li><span class="lite">They browse your gallery and get a feel for your style and past work.</span></li>
+    <li><span class="lite">They submit a booking request with reference photos and style details.</span></li>
+    <li><span class="lite">They pay a deposit to secure the appointment.</span></li>
+  </ul>
+
+  <div class="subhead">Your Side</div>
+  <ul class="list">
+    <li><span class="lite">You review the request in your dashboard, with the deposit already confirmed.</span></li>
+    <li><span class="lite">You approve, schedule, and prepare for the session with everything you need already on file.</span></li>
+    <li><span class="lite">The session happens.</span></li>
+    <li><span class="lite">The client's record stays in your system, ready for the next time they book.</span></li>
+  </ul>
+
+  <div class="callout" style="margin-top:auto;">
+    <div class="k">Add-On Features</div>
+    <div class="v">Once your core site is live, additional features are available whenever you want them — flash sale pages, a merch storefront, email marketing, AI-powered booking estimates, digital waivers, or multi-artist support for a shared studio. Each add-on is scoped and quoted before any work begins, starting at $300 per feature.</div>
+  </div>
+
+  <div class="runfoot">
+    <div>YOUR ART. YOUR PLATFORM.</div>
+    <div>Page 4 / 6</div>
+  </div>
+</section>
+
+<!-- ====================== PAGE 5 — VALUE & MARKET COMPARISON ====================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="left">
+      <span>THE LOST+UNFOUNDS</span>
+      <span class="sep">·</span>
+      <span>Artist Website Proposal</span>
+    </div>
+    <div>Page 5 / 6</div>
+  </div>
+
+  <div class="pagehead">
+    <div class="sect">04 · Value &amp; Market Comparison</div>
+    <h2>What this would cost anywhere else.</h2>
+  </div>
+
+  <p class="lede">
+    The price reflects a white-label deployment of existing, production-grade systems — built on infrastructure already running in production. Here is what you would pay at standard freelance and agency rates for the same scope of work.
+  </p>
+
+  <table class="compare">
+    <thead>
+      <tr>
+        <th style="width:48%">Component</th>
+        <th style="width:26%; text-align:right;">Market Rate</th>
+        <th style="width:26%; text-align:right;">Your Price</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="label">Custom website design &amp; development</td>
+        <td class="market">$3,000 – $8,000</td>
+        <td class="ours">Included</td>
+      </tr>
+      <tr>
+        <td class="label">Online booking system</td>
+        <td class="market">$2,000 – $5,000</td>
+        <td class="ours">Included</td>
+      </tr>
+      <tr>
+        <td class="label">Payment processing integration</td>
+        <td class="market">$1,500 – $3,000</td>
+        <td class="ours">Included</td>
+      </tr>
+      <tr>
+        <td class="label">Portfolio/gallery system</td>
+        <td class="market">$1,000 – $3,000</td>
+        <td class="ours">Included</td>
+      </tr>
+      <tr>
+        <td class="label">Admin dashboard</td>
+        <td class="market">$3,000 – $8,000</td>
+        <td class="ours">Included</td>
+      </tr>
+      <tr>
+        <td class="label">SEO optimization</td>
+        <td class="market">$500 – $2,000</td>
+        <td class="ours">Included</td>
+      </tr>
+      <tr>
+        <td class="label" style="font-weight:800;">Total market range</td>
+        <td class="market" style="font-weight:700; font-size:13px; color:var(--ink);">$11,000 – $29,000</td>
+        <td class="ours" style="font-size:15px;">$2,000</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <div class="k">Why the difference</div>
+    <div class="v">A traditional developer builds every component from zero. I am deploying established systems that already exist, are already tested, and are already running in production. The core infrastructure — authentication, payment processing, email delivery, admin dashboards, API architecture, database design — represents over 2,000 hours of development. All of that work comes with the platform. The $2,000 covers the time to configure, customize, and deploy these systems for your specific site.</div>
+  </div>
+
+  <div class="callout" style="margin-top:14px;">
+    <div class="k">AI Coaching &amp; Guidance</div>
+    <div class="v">You are also getting a partner who knows these tools well and can help you get the most out of them. I will show you how to use AI to streamline your day-to-day — from generating social media content to managing client communication. This is practical, hands-on guidance tailored to how you actually work.</div>
+  </div>
+
+  <div class="runfoot">
+    <div>YOUR ART. YOUR PLATFORM.</div>
+    <div>Page 5 / 6</div>
+  </div>
+</section>
+
+<!-- ====================== PAGE 6 — INVESTMENT & ACCEPTANCE ====================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="left">
+      <span>THE LOST+UNFOUNDS</span>
+      <span class="sep">·</span>
+      <span>Artist Website Proposal</span>
+    </div>
+    <div>Page 6 / 6</div>
+  </div>
+
+  <div class="pagehead">
+    <div class="sect">05 · Investment &amp; Next Steps</div>
+    <h2>Flat rates. Full transparency. Full support.</h2>
+  </div>
+
+  <table class="invest">
+    <thead>
+      <tr>
+        <th style="width:52%">Item</th>
+        <th style="width:20%">Frequency</th>
+        <th style="width:28%; text-align:right;">Price</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="item">Artist Website Platform
+          <small>Custom landing page, portfolio gallery, booking request flow, deposit collection, payment processing, and admin dashboard.</small>
+        </td>
+        <td class="freq">One-time</td>
+        <td class="price">$2,000</td>
+      </tr>
+      <tr>
+        <td class="item">Maintenance &amp; Support
+          <small>Keeps integrations alive, fixes anything that breaks, minor tweaks and updates. New feature modules are scoped and priced separately.</small>
+        </td>
+        <td class="freq">Monthly</td>
+        <td class="price">$150/mo<small>3-mo min · cancel anytime after</small></td>
+      </tr>
+      <tr>
+        <td class="item">Add-On Features
+          <small>Each new module is scoped and quoted flat-rate before any work begins. Every invoice is agreed upon before work starts.</small>
+        </td>
+        <td class="freq">Per scope</td>
+        <td class="price">From $300<small>quoted before work starts</small></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <div class="k">What comes with every engagement</div>
+    <div class="v">
+      <strong>30 days of post-launch support</strong> — after delivery, I am available to troubleshoot and fix any issues that come up. Direct access, direct response.<br><br>
+      <strong>Weekly or daily check-ins</strong> — your choice. We can do a quick daily update or a weekly review. Whatever keeps you informed and confident.<br><br>
+      <strong>Live preview link</strong> — from the moment work begins, you have a live link to the preview deployment. Watch features appear in real time. Click around, test things, give feedback as it grows. Full visibility into every feature as it ships.<br><br>
+      <strong>AI coaching</strong> — practical guidance on using AI tools to streamline your day-to-day. Tailored to how you work.
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:14px;">
+    <div class="k">Timeline &amp; Payment Terms</div>
+    <div class="v"><strong>$1,000 deposit due to begin work. Balance of $1,000 due on launch day.</strong> Delivers within 3 weeks. Maintenance billed monthly starting on final launch date. Development tools (Claude Max plan, hosting infrastructure, domain management) are my overhead, covered in the build cost.</div>
+  </div>
+
+  <p class="body" style="margin-top:18px;">
+    <strong>Acceptance.</strong> Reply by email or text with <em>"approved"</em> to receive the deposit invoice. You own the website, the source code, and all your data — full export available any time.
+  </p>
+
+  <div class="sign">
+    <div class="col">
+      <div class="k">For THE LOST AND UNFOUNDS LLC.</div>
+      <div class="line"></div>
+      <div class="who">Joshua Greene</div>
+      <div class="role">Founder · July 3, 2026</div>
+    </div>
+    <div class="col">
+      <div class="k">For [Your Studio Name]</div>
+      <div class="line"></div>
+      <div class="who">&nbsp;</div>
+      <div class="role">Owner · Date: ___________</div>
+    </div>
+  </div>
+
+  <div class="runfoot">
+    <div>YOUR ART. YOUR PLATFORM.</div>
+    <div>Page 6 / 6</div>
+  </div>
+</section>
+
+</body>
+</html>

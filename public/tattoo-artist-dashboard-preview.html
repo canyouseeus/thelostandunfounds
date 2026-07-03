@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Artist Name — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0a0a0a;
+  --bg-card: rgba(255,255,255,0.03);
+  --bg-hover: rgba(255,255,255,0.05);
+  --accent: #ffffff;
+  --text: #ffffff;
+  --text-70: rgba(255,255,255,0.7);
+  --text-30: rgba(255,255,255,0.3);
+  --text-20: rgba(255,255,255,0.2);
+  --green: #81c784;
+  --yellow: #ffb74d;
+  --red: #ef9a9a;
+}
+
+html { font-size: 14px; }
+body {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  position: fixed;
+  left: 0; top: 0;
+  width: 256px;
+  height: 100vh;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  overflow-y: auto;
+  border-right: 1px solid rgba(255,255,255,0.04);
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 20px 20px;
+}
+
+.logo-circle {
+  width: 36px; height: 36px;
+  background: var(--text);
+  color: #0a0a0a;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 12px; font-weight: 800; letter-spacing: 0.02em;
+}
+
+.logo-text-group { display: flex; flex-direction: column; }
+.logo-name {
+  font-size: 13px; font-weight: 800;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text);
+}
+.logo-sub {
+  font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-30); margin-top: 1px;
+}
+
+.sidebar-actions {
+  padding: 4px 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.btn-primary-action {
+  background: var(--text);
+  color: #0a0a0a;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  padding: 10px 16px;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.2s;
+  width: 100%;
+  text-align: center;
+}
+.btn-primary-action:hover { opacity: 0.85; }
+
+.sidebar-small-btns {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+}
+
+.btn-small {
+  background: rgba(255,255,255,0.05);
+  color: var(--text-70);
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 8px 10px;
+  cursor: pointer; border: none;
+  transition: background 0.2s, color 0.2s;
+  text-align: center;
+}
+.btn-small:hover { background: rgba(255,255,255,0.09); color: var(--text); }
+
+.sidebar-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.05);
+  margin: 4px 20px 8px;
+}
+
+.sidebar-nav { flex: 1; padding: 0 12px; }
+.nav-label {
+  font-size: 8px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--text-30); padding: 8px 8px 4px; font-weight: 600;
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px;
+  cursor: pointer;
+  color: var(--text-70);
+  font-size: 12px; font-weight: 500; letter-spacing: 0.02em;
+  transition: background 0.15s, color 0.15s;
+  user-select: none;
+}
+.nav-item:hover { background: var(--bg-hover); color: var(--text); }
+.nav-item.active {
+  background: rgba(255,255,255,0.06);
+  color: var(--text);
+}
+.nav-item .icon {
+  width: 16px; height: 16px; flex-shrink: 0; opacity: 0.7;
+}
+.nav-item.active .icon { opacity: 1; }
+
+.sidebar-user {
+  padding: 16px 20px;
+  display: flex; align-items: center; gap: 10px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+.user-avatar {
+  width: 32px; height: 32px;
+  background: var(--text);
+  color: #0a0a0a;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+  flex-shrink: 0;
+}
+.user-name { font-size: 12px; font-weight: 600; color: var(--text); }
+.user-role { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-30); margin-top: 1px; }
+
+/* ── MAIN ── */
+.main {
+  flex: 1;
+  margin-left: 256px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.header {
+  position: sticky; top: 0; z-index: 50;
+  height: 56px;
+  background: rgba(10,10,10,0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px;
+}
+
+.header-left { display: flex; align-items: center; gap: 12px; }
+.hamburger {
+  display: none; background: none; border: none; cursor: pointer;
+  color: var(--text-70); padding: 4px;
+}
+.header-title {
+  font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.header-divider {
+  width: 1px; height: 16px; background: rgba(255,255,255,0.1);
+}
+.header-sub {
+  font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-30);
+}
+.header-right { display: flex; align-items: center; gap: 10px; }
+.icon-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-70); padding: 6px;
+  display: flex; align-items: center; justify-content: center;
+  transition: color 0.15s;
+}
+.icon-btn:hover { color: var(--text); }
+
+.content { padding: 24px 24px 100px; }
+
+/* ── SECTIONS ── */
+.section { display: none; }
+
+/* ── PANEL HEADER ── */
+.panel-header { margin-bottom: 24px; }
+.panel-eyebrow {
+  font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--text-30); font-weight: 600; margin-bottom: 4px;
+}
+.panel-title {
+  font-size: 22px; font-weight: 800; letter-spacing: -0.01em;
+}
+.panel-sub {
+  font-size: 11px; color: var(--text-30); margin-top: 4px; letter-spacing: 0.04em;
+}
+
+/* ── KPI GRID ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.kpi-card {
+  background: var(--bg-card);
+  padding: 20px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+
+.kpi-icon {
+  width: 32px; height: 32px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text);
+}
+.kpi-icon .icon { width: 16px; height: 16px; }
+
+.kpi-value {
+  font-size: 28px; font-weight: 800; letter-spacing: -0.02em;
+}
+.kpi-label {
+  font-size: 8px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--text-30); font-weight: 600;
+}
+.kpi-sub {
+  font-size: 10px; color: var(--text-30); margin-top: 2px;
+}
+
+/* ── TWO COLUMN LAYOUT ── */
+.two-col { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; margin-bottom: 24px; }
+
+/* ── SECTION LABEL ── */
+.section-label { margin-bottom: 12px; }
+.section-eyebrow {
+  font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--text-30); font-weight: 600; margin-bottom: 2px;
+}
+.section-title {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-70);
+}
+
+/* ── CARD ── */
+.card {
+  background: var(--bg-card);
+  padding: 20px;
+}
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+/* ── TABLE ── */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  font-size: 8px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--text-20); font-weight: 600;
+  padding: 8px 12px; text-align: left;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.data-table td {
+  padding: 10px 12px;
+  font-size: 11px; color: var(--text-70);
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--bg-hover); }
+.td-primary { font-weight: 600; color: var(--text); }
+.td-amount { font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+
+/* ── STATUS BADGES ── */
+.badge {
+  font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+  font-weight: 500; padding: 4px 8px; white-space: nowrap;
+}
+.badge-confirmed { color: #81c784; background: rgba(129,199,132,0.1); }
+.badge-completed { color: #81c784; background: rgba(129,199,132,0.1); }
+.badge-pending { color: #ffb74d; background: rgba(255,183,77,0.1); }
+.badge-new { color: #ffffff; background: rgba(255,255,255,0.1); }
+.badge-upcoming { color: #90a4ae; background: rgba(144,164,174,0.07); }
+
+/* ── REQUEST ROWS ── */
+.request-row {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.request-row:last-child { border-bottom: none; }
+.request-top { display: flex; align-items: center; justify-content: space-between; }
+.request-name { font-size: 12px; font-weight: 600; }
+.request-style { font-size: 10px; color: var(--text-30); }
+
+/* ── PORTFOLIO ── */
+.portfolio-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.portfolio-item {
+  aspect-ratio: 3/4;
+  background: var(--bg-card);
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 16px; position: relative; overflow: hidden;
+}
+.portfolio-label {
+  font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+  font-weight: 700; color: white; position: relative; z-index: 1;
+}
+
+/* ── SEARCH BAR ── */
+.search-bar {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(255,255,255,0.04);
+  padding: 8px 14px; margin-bottom: 16px;
+}
+.search-bar input {
+  background: none; border: none; outline: none;
+  color: var(--text); font-size: 12px; font-family: inherit;
+  width: 100%;
+}
+.search-bar input::placeholder { color: var(--text-20); }
+.search-bar .icon { width: 14px; height: 14px; color: var(--text-20); flex-shrink: 0; }
+
+/* ── SETTINGS FORM ── */
+.settings-form { max-width: 560px; }
+.form-group { margin-bottom: 20px; }
+.form-label {
+  font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--text-30); font-weight: 600; display: block; margin-bottom: 6px;
+}
+.form-input {
+  width: 100%; background: rgba(255,255,255,0.04); border: none; outline: none;
+  color: var(--text); font-size: 12px; font-family: inherit;
+  padding: 10px 14px;
+}
+.form-input:focus { background: rgba(255,255,255,0.07); }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-save { margin-top: 24px; }
+
+/* ── BANNER ── */
+.preview-banner {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  background: var(--text);
+  color: #0a0a0a;
+  padding: 10px 20px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  white-space: nowrap;
+}
+
+/* ── MOBILE ── */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6); z-index: 90;
+}
+.sidebar-overlay.show { display: block; }
+
+@media (max-width: 1024px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; }
+  .hamburger { display: flex; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .two-col { grid-template-columns: 1fr; }
+  .portfolio-grid { grid-template-columns: repeat(2, 1fr); }
+  .header-sub { display: none; }
+  .header-divider { display: none; }
+}
+
+@media (max-width: 600px) {
+  .kpi-grid { grid-template-columns: 1fr; }
+  .content { padding: 16px 16px 100px; }
+  .portfolio-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- PREVIEW BANNER -->
+<div class="preview-banner">Client Preview — Admin Dashboard Template</div>
+
+<!-- Sidebar overlay for mobile -->
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<!-- ── SIDEBAR ── -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-circle">AT</div>
+    <div class="logo-text-group">
+      <span class="logo-name">Artist Name</span>
+      <span class="logo-sub">Dashboard</span>
+    </div>
+  </div>
+
+  <div class="sidebar-actions">
+    <button class="btn-primary-action" onclick="showSection('bookings')">New Booking</button>
+    <div class="sidebar-small-btns">
+      <button class="btn-small" onclick="showSection('clients')">New Client</button>
+      <button class="btn-small" onclick="showSection('payments')">Payment</button>
+    </div>
+  </div>
+
+  <div class="sidebar-divider"></div>
+
+  <div class="sidebar-nav">
+    <div class="nav-label">Navigation</div>
+
+    <div class="nav-item active" data-section="overview" onclick="showSection('overview')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      Overview
+    </div>
+
+    <div class="nav-item" data-section="bookings" onclick="showSection('bookings')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+        <rect x="9" y="3" width="6" height="4" rx="1"/>
+        <path d="M9 12h6M9 16h4"/>
+      </svg>
+      Bookings
+    </div>
+
+    <div class="nav-item" data-section="gallery" onclick="showSection('gallery')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <path d="M21 15l-5-5L5 21"/>
+      </svg>
+      Gallery
+    </div>
+
+    <div class="nav-item" data-section="clients" onclick="showSection('clients')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+      </svg>
+      Clients
+    </div>
+
+    <div class="nav-item" data-section="payments" onclick="showSection('payments')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M12 7v1m0 8v1M9.5 10.5c0-1 1.1-1.5 2.5-1.5s2.5.7 2.5 1.8c0 2.2-5 1.7-5 4.2 0 1.1 1.1 2 2.5 2s2.5-.5 2.5-1.5"/>
+      </svg>
+      Payments
+    </div>
+
+    <div class="nav-item" data-section="settings" onclick="showSection('settings')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+      </svg>
+      Settings
+    </div>
+  </div>
+
+  <div class="sidebar-user">
+    <div class="user-avatar">A</div>
+    <div>
+      <div class="user-name">Artist</div>
+      <div class="user-role">Owner</div>
+    </div>
+  </div>
+</nav>
+
+<!-- ── MAIN ── -->
+<div class="main">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <button class="hamburger icon-btn" onclick="toggleSidebar()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 6h18M3 12h18M3 18h18"/>
+        </svg>
+      </button>
+      <span class="header-title" id="header-title">Overview</span>
+      <div class="header-divider"></div>
+      <span class="header-sub">Artist Website Platform</span>
+    </div>
+    <div class="header-right">
+      <button class="icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-4.28-5.768A2 2 0 0012 4a2 2 0 00-1.72.94A6 6 0 006 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+      </button>
+      <button class="btn-primary-action" style="width:auto;padding:8px 14px;" onclick="showSection('bookings')">+ New Booking</button>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- ════════════════════════════ OVERVIEW ═══ -->
+    <div class="section" id="section-overview" style="display:block;">
+
+      <div class="panel-header">
+        <div class="panel-eyebrow">Good Morning, Artist</div>
+        <div class="panel-title">Overview</div>
+        <div class="panel-sub">Monday, July 6, 2026</div>
+      </div>
+
+      <!-- KPI Row -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-icon">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18"/>
+              <path d="M9 14l2 2 4-4"/>
+            </svg>
+          </div>
+          <div class="kpi-value">3</div>
+          <div class="kpi-label">Today's Appointments</div>
+          <div class="kpi-sub">2 confirmed, 1 pending</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:rgba(255,183,77,0.1);">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="1.5">
+              <circle cx="12" cy="12" r="9"/>
+              <path d="M12 8v4M12 16h.01"/>
+            </svg>
+          </div>
+          <div class="kpi-value" style="color:var(--yellow);">5</div>
+          <div class="kpi-label">Pending Requests</div>
+          <div class="kpi-sub">Awaiting review</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="9"/>
+              <path d="M12 7v1m0 8v1M9.5 10.5c0-1 1.1-1.5 2.5-1.5s2.5.7 2.5 1.8c0 2.2-5 1.7-5 4.2 0 1.1 1.1 2 2.5 2s2.5-.5 2.5-1.5"/>
+            </svg>
+          </div>
+          <div class="kpi-value">$4,200</div>
+          <div class="kpi-label">Monthly Revenue</div>
+          <div class="kpi-sub">Up 12% vs last month</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="8" r="4"/>
+              <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+            </svg>
+          </div>
+          <div class="kpi-value">127</div>
+          <div class="kpi-label">Total Clients</div>
+          <div class="kpi-sub">8 new this month</div>
+        </div>
+      </div>
+
+      <!-- Upcoming + Requests -->
+      <div class="two-col">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="section-eyebrow">Coming Up</div>
+              <div class="section-title">Upcoming Appointments</div>
+            </div>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr><th>Client</th><th>Service</th><th>Date &amp; Time</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="td-primary">Jordan Reyes</td>
+                <td>Full sleeve session</td>
+                <td>Jul 6 · 10:00 AM</td>
+                <td><span class="badge badge-confirmed">Confirmed</span></td>
+              </tr>
+              <tr>
+                <td class="td-primary">Priya Shah</td>
+                <td>Consultation</td>
+                <td>Jul 6 · 1:00 PM</td>
+                <td><span class="badge badge-pending">Pending</span></td>
+              </tr>
+              <tr>
+                <td class="td-primary">Marcus Lee</td>
+                <td>Small script</td>
+                <td>Jul 6 · 3:30 PM</td>
+                <td><span class="badge badge-confirmed">Confirmed</span></td>
+              </tr>
+              <tr>
+                <td class="td-primary">Ana Delgado</td>
+                <td>Touch-up</td>
+                <td>Jul 7 · 11:00 AM</td>
+                <td><span class="badge badge-confirmed">Confirmed</span></td>
+              </tr>
+              <tr>
+                <td class="td-primary">Sam Whitfield</td>
+                <td>Cover-up</td>
+                <td>Jul 8 · 2:00 PM</td>
+                <td><span class="badge badge-pending">Pending</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="section-eyebrow">Inbox</div>
+              <div class="section-title">Recent Booking Requests</div>
+            </div>
+          </div>
+          <div class="request-row">
+            <div class="request-top">
+              <span class="request-name">Devon Park</span>
+              <span class="badge badge-new">New</span>
+            </div>
+            <span class="request-style">Fine line florals — forearm</span>
+          </div>
+          <div class="request-row">
+            <div class="request-top">
+              <span class="request-name">Kelsey Brand</span>
+              <span class="badge badge-pending">Pending</span>
+            </div>
+            <span class="request-style">Blackwork sleeve — full arm</span>
+          </div>
+          <div class="request-row">
+            <div class="request-top">
+              <span class="request-name">Omar Castillo</span>
+              <span class="badge badge-pending">Pending</span>
+            </div>
+            <span class="request-style">Cover-up — shoulder piece</span>
+          </div>
+          <div class="request-row">
+            <div class="request-top">
+              <span class="request-name">Lily Nakamura</span>
+              <span class="badge badge-new">New</span>
+            </div>
+            <span class="request-style">Script lettering — ribs</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /section-overview -->
+
+    <!-- ════════════════════════════ BOOKINGS ═══ -->
+    <div class="section" id="section-bookings">
+      <div class="panel-header">
+        <div class="panel-eyebrow">Manage</div>
+        <div class="panel-title">Bookings</div>
+        <div class="panel-sub">Every request and confirmed session</div>
+      </div>
+      <div class="card">
+        <table class="data-table">
+          <thead>
+            <tr><th>Client</th><th>Service</th><th>Date &amp; Time</th><th>Deposit</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="td-primary">Jordan Reyes</td><td>Full sleeve session</td><td>Jul 6 · 10:00 AM</td><td class="td-amount">$150</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+            <tr><td class="td-primary">Priya Shah</td><td>Consultation</td><td>Jul 6 · 1:00 PM</td><td class="td-amount">$0</td><td><span class="badge badge-pending">Pending</span></td></tr>
+            <tr><td class="td-primary">Marcus Lee</td><td>Small script</td><td>Jul 6 · 3:30 PM</td><td class="td-amount">$50</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+            <tr><td class="td-primary">Ana Delgado</td><td>Touch-up</td><td>Jul 7 · 11:00 AM</td><td class="td-amount">$0</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+            <tr><td class="td-primary">Sam Whitfield</td><td>Cover-up</td><td>Jul 8 · 2:00 PM</td><td class="td-amount">$100</td><td><span class="badge badge-pending">Pending</span></td></tr>
+            <tr><td class="td-primary">Devon Park</td><td>Fine line florals</td><td>Jul 10 · 12:00 PM</td><td class="td-amount">$0</td><td><span class="badge badge-new">New Request</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════ GALLERY ═══ -->
+    <div class="section" id="section-gallery">
+      <div class="panel-header">
+        <div class="panel-eyebrow">Portfolio</div>
+        <div class="panel-title">Gallery</div>
+        <div class="panel-sub">Manage what shows on your public portfolio</div>
+      </div>
+      <div class="portfolio-grid">
+        <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Fine Line Botanical</span></div>
+        <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Blackwork Sleeve</span></div>
+        <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Geometric Piece</span></div>
+        <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Script Lettering</span></div>
+        <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Portrait Realism</span></div>
+        <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Cover-Up Piece</span></div>
+        <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Micro Realism</span></div>
+        <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Ornamental Florals</span></div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════ CLIENTS ═══ -->
+    <div class="section" id="section-clients">
+      <div class="panel-header">
+        <div class="panel-eyebrow">Records</div>
+        <div class="panel-title">Clients</div>
+        <div class="panel-sub">Full client history, searchable and up to date</div>
+      </div>
+      <div class="card">
+        <div class="search-bar">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" placeholder="Search clients..." />
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Name</th><th>Email</th><th>Last Session</th><th>Total Sessions</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="td-primary">Jordan Reyes</td><td>jordan@example.com</td><td>Jun 12, 2026</td><td class="td-amount">4</td></tr>
+            <tr><td class="td-primary">Priya Shah</td><td>priya@example.com</td><td>—</td><td class="td-amount">0</td></tr>
+            <tr><td class="td-primary">Marcus Lee</td><td>marcus@example.com</td><td>May 28, 2026</td><td class="td-amount">2</td></tr>
+            <tr><td class="td-primary">Ana Delgado</td><td>ana@example.com</td><td>Apr 2, 2026</td><td class="td-amount">6</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════ PAYMENTS ═══ -->
+    <div class="section" id="section-payments">
+      <div class="panel-header">
+        <div class="panel-eyebrow">Revenue</div>
+        <div class="panel-title">Payments</div>
+        <div class="panel-sub">Deposits and full payments across all bookings</div>
+      </div>
+      <div class="card">
+        <table class="data-table">
+          <thead>
+            <tr><th>Client</th><th>Type</th><th>Date</th><th>Amount</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="td-primary">Jordan Reyes</td><td>Deposit</td><td>Jun 28, 2026</td><td class="td-amount">$150</td><td><span class="badge badge-completed">Paid</span></td></tr>
+            <tr><td class="td-primary">Marcus Lee</td><td>Deposit</td><td>Jun 30, 2026</td><td class="td-amount">$50</td><td><span class="badge badge-completed">Paid</span></td></tr>
+            <tr><td class="td-primary">Sam Whitfield</td><td>Deposit</td><td>Jul 1, 2026</td><td class="td-amount">$100</td><td><span class="badge badge-pending">Pending</span></td></tr>
+            <tr><td class="td-primary">Ana Delgado</td><td>Full Payment</td><td>Apr 2, 2026</td><td class="td-amount">$320</td><td><span class="badge badge-completed">Paid</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════ SETTINGS ═══ -->
+    <div class="section" id="section-settings">
+      <div class="panel-header">
+        <div class="panel-eyebrow">Configure</div>
+        <div class="panel-title">Settings</div>
+        <div class="panel-sub">Studio info and site preferences</div>
+      </div>
+      <div class="card settings-form">
+        <div class="form-group">
+          <label class="form-label">Artist / Studio Name</label>
+          <input class="form-input" type="text" value="Artist Name">
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">City</label>
+            <input class="form-input" type="text" value="City, State">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contact Email</label>
+            <input class="form-input" type="text" value="artist@example.com">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Booking Deposit (Default)</label>
+          <input class="form-input" type="text" value="$100">
+        </div>
+        <button class="btn-primary-action form-save" style="width:auto;padding:10px 20px;">Save Changes</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function showSection(name) {
+    document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+    document.getElementById('section-' + name).style.display = 'block';
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const navItem = document.querySelector('.nav-item[data-section="' + name + '"]');
+    if (navItem) navItem.classList.add('active');
+    const titles = { overview: 'Overview', bookings: 'Bookings', gallery: 'Gallery', clients: 'Clients', payments: 'Payments', settings: 'Settings' };
+    document.getElementById('header-title').textContent = titles[name] || name;
+    document.getElementById('sidebar').classList.remove('open');
+    document.querySelector('.sidebar-overlay').classList.remove('show');
+  }
+
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('show');
+  }
+</script>
+</body>
+</html>
