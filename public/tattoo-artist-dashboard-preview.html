@@ -3,413 +3,302 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Artist Name — Dashboard</title>
+<title>Artist Name — Admin Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg: #0a0a0a;
-  --bg-card: rgba(255,255,255,0.03);
-  --bg-hover: rgba(255,255,255,0.05);
-  --accent: #ffffff;
-  --text: #ffffff;
-  --text-70: rgba(255,255,255,0.7);
-  --text-30: rgba(255,255,255,0.3);
-  --text-20: rgba(255,255,255,0.2);
-  --green: #81c784;
-  --yellow: #ffb74d;
-  --red: #ef9a9a;
+  --bg: #000000;
+  --card-head: #0a0a0a;
+  --w05: rgba(255,255,255,0.05);
+  --w08: rgba(255,255,255,0.08);
+  --w10: rgba(255,255,255,0.1);
+  --w20: rgba(255,255,255,0.2);
+  --w30: rgba(255,255,255,0.3);
+  --w40: rgba(255,255,255,0.4);
+  --w50: rgba(255,255,255,0.5);
+  --w60: rgba(255,255,255,0.6);
+  --w70: rgba(255,255,255,0.7);
+  --w80: rgba(255,255,255,0.8);
+  --w90: rgba(255,255,255,0.9);
+  --green: #4ade80;
+  --amber: #fbbf24;
+  --red: #f87171;
+  --blue: #60a5fa;
 }
 
-html { font-size: 14px; }
+html { font-size: 15px; }
 body {
-  display: flex;
   min-height: 100vh;
   background: var(--bg);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  color: var(--text);
+  color: #fff;
   overflow-x: hidden;
 }
 
-/* ── SIDEBAR ── */
-.sidebar {
-  position: fixed;
-  left: 0; top: 0;
-  width: 256px;
-  height: 100vh;
-  background: rgba(0,0,0,0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  display: flex;
-  flex-direction: column;
-  z-index: 100;
-  overflow-y: auto;
-  border-right: 1px solid rgba(255,255,255,0.04);
-}
+/* ── SHELL ── */
+.shell { max-width: 1280px; margin: 0 auto; padding: 2rem 1.5rem 8rem; }
 
-.sidebar-logo {
+/* ── HEADER ── */
+.dash-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.dash-title-btn {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 24px 20px 20px;
-}
-
-.logo-circle {
-  width: 36px; height: 36px;
-  background: var(--text);
-  color: #0a0a0a;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-  font-size: 12px; font-weight: 800; letter-spacing: 0.02em;
-}
-
-.logo-text-group { display: flex; flex-direction: column; }
-.logo-name {
-  font-size: 13px; font-weight: 800;
-  letter-spacing: 0.12em; text-transform: uppercase;
-  color: var(--text);
-}
-.logo-sub {
-  font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--text-30); margin-top: 1px;
-}
-
-.sidebar-actions {
-  padding: 4px 20px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.btn-primary-action {
-  background: var(--text);
-  color: #0a0a0a;
-  font-size: 10px; font-weight: 700;
-  letter-spacing: 0.15em; text-transform: uppercase;
-  padding: 10px 16px;
-  cursor: pointer;
+  gap: 0.5rem;
+  background: none;
   border: none;
-  transition: opacity 0.2s;
-  width: 100%;
-  text-align: center;
+  cursor: default;
+  color: #fff;
 }
-.btn-primary-action:hover { opacity: 0.85; }
-
-.sidebar-small-btns {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+.dash-title {
+  font-size: clamp(1.4rem, 3.6vw, 2.1rem);
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
 }
-
-.btn-small {
-  background: rgba(255,255,255,0.05);
-  color: var(--text-70);
-  font-size: 9px; font-weight: 600;
-  letter-spacing: 0.12em; text-transform: uppercase;
-  padding: 8px 10px;
-  cursor: pointer; border: none;
-  transition: background 0.2s, color 0.2s;
-  text-align: center;
-}
-.btn-small:hover { background: rgba(255,255,255,0.09); color: var(--text); }
-
-.sidebar-divider {
-  height: 1px;
-  background: rgba(255,255,255,0.05);
-  margin: 4px 20px 8px;
-}
-
-.sidebar-nav { flex: 1; padding: 0 12px; }
-.nav-label {
-  font-size: 8px; letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--text-30); padding: 8px 8px 4px; font-weight: 600;
-}
-
-.nav-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 9px 10px;
-  cursor: pointer;
-  color: var(--text-70);
-  font-size: 12px; font-weight: 500; letter-spacing: 0.02em;
-  transition: background 0.15s, color 0.15s;
-  user-select: none;
-}
-.nav-item:hover { background: var(--bg-hover); color: var(--text); }
-.nav-item.active {
-  background: rgba(255,255,255,0.06);
-  color: var(--text);
-}
-.nav-item .icon {
-  width: 16px; height: 16px; flex-shrink: 0; opacity: 0.7;
-}
-.nav-item.active .icon { opacity: 1; }
-
-.sidebar-user {
-  padding: 16px 20px;
-  display: flex; align-items: center; gap: 10px;
-  border-top: 1px solid rgba(255,255,255,0.05);
-}
-.user-avatar {
-  width: 32px; height: 32px;
-  background: var(--text);
-  color: #0a0a0a;
-  border-radius: 50%;
+.dash-title-chevron { width: 16px; height: 16px; color: var(--w40); margin-top: 3px; }
+.dash-sub { font-size: 0.82rem; color: var(--w70); margin-top: 0.35rem; }
+.header-actions { display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0; }
+.icon-btn {
+  width: 40px; height: 40px;
+  background: var(--w08);
+  color: var(--w70);
+  border: none; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 700;
+  transition: background 0.15s, color 0.15s;
   flex-shrink: 0;
 }
-.user-name { font-size: 12px; font-weight: 600; color: var(--text); }
-.user-role { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-30); margin-top: 1px; }
+.icon-btn:hover { background: var(--w10); color: #fff; }
+.profile-btn { background: #fff; color: #000; }
+.profile-btn:hover { background: rgba(255,255,255,0.85); }
 
-/* ── MAIN ── */
-.main {
-  flex: 1;
-  margin-left: 256px;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+/* ── ROW 1: REVENUE + CLOCK/CALENDAR ── */
+.row1 { display: grid; grid-template-columns: 1fr 300px; gap: 1.25rem; margin-bottom: 1.25rem; }
+
+.revenue-card { background: var(--bg); }
+.period-pills {
+  display: flex; justify-content: center; gap: 0.25rem;
+  padding: 1rem 0.5rem; flex-wrap: wrap;
 }
+.period-pill {
+  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 0.5rem 0.9rem; background: none; border: none; cursor: pointer;
+  color: var(--w40); transition: all 0.15s; white-space: nowrap;
+}
+.period-pill:hover { color: #fff; background: var(--w05); }
+.period-pill.active { color: #000; background: #fff; }
 
-.header {
-  position: sticky; top: 0; z-index: 50;
-  height: 56px;
-  background: rgba(10,10,10,0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+.revenue-main { display: flex; flex-direction: column; align-items: center; padding: 1.25rem 1rem 1.75rem; text-align: center; }
+.revenue-label {
+  display: flex; align-items: center; gap: 0.4rem;
+  font-size: 0.68rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--w40);
+  margin-bottom: 0.75rem; font-weight: 600;
+}
+.revenue-number { display: flex; align-items: baseline; gap: 0.35rem; }
+.revenue-number .cur { font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 500; color: var(--w40); }
+.revenue-number .val {
+  font-size: clamp(2.6rem, 8vw, 4.6rem); font-weight: 800; color: #fff;
+  font-family: 'JetBrains Mono', monospace; letter-spacing: -0.03em;
+}
+.revenue-trend { display: flex; align-items: center; gap: 0.25rem; color: var(--green); margin-left: 0.4rem; font-weight: 700; font-size: 0.85rem; }
+
+.revenue-breakdown {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem;
+  padding: 1rem; background: var(--w05);
+}
+.rb-item { text-align: center; }
+.rb-label { font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--w40); margin-bottom: 0.3rem; }
+.rb-label.amber { color: rgba(251,191,36,0.7); }
+.rb-value { font-size: 1.05rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: #fff; }
+.rb-value.amber { color: var(--amber); }
+
+.revenue-chart { display: flex; align-items: flex-end; gap: 3px; height: 44px; padding: 1rem; }
+.revenue-chart .bar { flex: 1; background: var(--w10); transition: background 0.15s; }
+.revenue-chart .bar:hover { background: var(--w30); }
+
+/* ── CLOCK + CALENDAR ── */
+.side-col { display: flex; flex-direction: column; gap: 1.25rem; }
+.clock-card {
+  background: var(--card-head);
+  padding: 1.5rem; flex: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 140px;
+}
+.clock-time {
+  font-family: 'JetBrains Mono', monospace; font-weight: 700;
+  font-size: 1.9rem; letter-spacing: -0.02em; color: #fff;
+}
+.clock-date { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--w40); margin-top: 0.4rem; }
+
+.calendar-card { background: var(--card-head); padding: 1.25rem; flex: 1; }
+.cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+.cal-month { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--w80); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.cal-dow { font-size: 0.55rem; color: var(--w30); padding: 0.2rem 0; font-weight: 700; }
+.cal-day { font-size: 0.68rem; color: var(--w60); padding: 0.35rem 0; }
+.cal-day.other-month { color: var(--w10); }
+.cal-day.today { background: #fff; color: #000; font-weight: 800; }
+.cal-day.has-booking { position: relative; }
+.cal-day.has-booking::after {
+  content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);
+  width: 3px; height: 3px; background: var(--amber); border-radius: 50%;
+}
+.cal-day.today.has-booking::after { background: #000; }
+
+/* ── BENTO GRID ── */
+.bento-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1rem; }
+
+.bento-card { background: var(--bg); transition: background 0.2s; }
+.bento-card:hover { background: #050505; }
+.bento-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 0 24px;
+  padding: 0.9rem 1.1rem; background: var(--card-head); cursor: pointer; user-select: none;
+  min-height: 52px;
+}
+.bento-header-left { display: flex; align-items: center; gap: 0.65rem; min-width: 0; }
+.bento-icon { width: 16px; height: 16px; color: var(--w50); flex-shrink: 0; }
+.bento-title { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--w80); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bento-chevron { width: 15px; height: 15px; color: var(--w40); transition: transform 0.25s; flex-shrink: 0; }
+.bento-card.collapsed .bento-chevron { transform: rotate(-90deg); }
+.bento-card.collapsed .bento-body,
+.bento-card.collapsed .bento-footer { display: none; }
+
+.bento-body { padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.8rem; }
+.bento-row { display: flex; flex-direction: column; gap: 0.15rem; cursor: default; }
+.bento-row.clickable { cursor: pointer; padding: 0.2rem; margin: -0.2rem; transition: background 0.15s; }
+.bento-row.clickable:hover { background: var(--w05); }
+.bento-row-label { font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--w40); }
+.bento-row-value { font-size: 0.85rem; font-weight: 600; color: var(--w90); }
+.bento-row-value.green { color: var(--green); }
+.bento-row-value.amber { color: var(--amber); }
+
+.bento-status-row { display: flex; align-items: center; justify-content: space-between; }
+.bento-status-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--w40); }
+.bento-status-value { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+.bento-status-value.online { color: var(--green); }
+.bento-status-value.degraded { color: var(--amber); }
+.bento-status-value.offline { color: var(--red); }
+.bento-latency { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.4rem; padding-top: 0.6rem; }
+.dot-pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+.bento-latency-text { font-size: 0.6rem; color: var(--w60); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+
+.env-badge {
+  display: inline-block; font-size: 0.55rem; font-weight: 800; letter-spacing: 0.08em;
+  padding: 0.2rem 0.5rem; background: rgba(96,165,250,0.15); color: var(--blue);
 }
 
-.header-left { display: flex; align-items: center; gap: 12px; }
-.hamburger {
-  display: none; background: none; border: none; cursor: pointer;
-  color: var(--text-70); padding: 4px;
-}
-.header-title {
-  font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-}
-.header-divider {
-  width: 1px; height: 16px; background: rgba(255,255,255,0.1);
-}
-.header-sub {
-  font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--text-30);
-}
-.header-right { display: flex; align-items: center; gap: 10px; }
-.icon-btn {
-  background: none; border: none; cursor: pointer;
-  color: var(--text-70); padding: 6px;
-  display: flex; align-items: center; justify-content: center;
-  transition: color 0.15s;
-}
-.icon-btn:hover { color: var(--text); }
+.alert-item { display: flex; flex-direction: column; gap: 0.3rem; padding: 0.5rem 0; }
+.alert-top { display: flex; align-items: center; justify-content: space-between; }
+.alert-badge { font-size: 0.55rem; font-weight: 800; text-transform: uppercase; padding: 0.15rem 0.4rem; letter-spacing: 0.06em; }
+.alert-badge.new { background: rgba(255,255,255,0.1); color: #fff; }
+.alert-badge.pending { background: rgba(251,191,36,0.12); color: var(--amber); }
+.alert-time { font-size: 0.58rem; color: var(--w30); }
+.alert-text { font-size: 0.72rem; color: var(--w70); line-height: 1.4; }
 
-.content { padding: 24px 24px 100px; }
-
-/* ── SECTIONS ── */
-.section { display: none; }
-
-/* ── PANEL HEADER ── */
-.panel-header { margin-bottom: 24px; }
-.panel-eyebrow {
-  font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
-  color: var(--text-30); font-weight: 600; margin-bottom: 4px;
+.bento-footer {
+  padding: 0.65rem 1.1rem; background: rgba(255,255,255,0.02);
+  font-size: 0.62rem; color: var(--w40); letter-spacing: 0.04em;
 }
-.panel-title {
-  font-size: 22px; font-weight: 800; letter-spacing: -0.01em;
-}
-.panel-sub {
-  font-size: 11px; color: var(--text-30); margin-top: 4px; letter-spacing: 0.04em;
-}
-
-/* ── KPI GRID ── */
-.kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
-.kpi-card {
-  background: var(--bg-card);
-  padding: 20px;
-  display: flex; flex-direction: column; gap: 8px;
-}
-
-.kpi-icon {
-  width: 32px; height: 32px;
-  background: rgba(255,255,255,0.08);
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--text);
-}
-.kpi-icon .icon { width: 16px; height: 16px; }
-
-.kpi-value {
-  font-size: 28px; font-weight: 800; letter-spacing: -0.02em;
-}
-.kpi-label {
-  font-size: 8px; letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--text-30); font-weight: 600;
-}
-.kpi-sub {
-  font-size: 10px; color: var(--text-30); margin-top: 2px;
-}
-
-/* ── TWO COLUMN LAYOUT ── */
-.two-col { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; margin-bottom: 24px; }
-
-/* ── SECTION LABEL ── */
-.section-label { margin-bottom: 12px; }
-.section-eyebrow {
-  font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase;
-  color: var(--text-30); font-weight: 600; margin-bottom: 2px;
-}
-.section-title {
-  font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
-  color: var(--text-70);
-}
-
-/* ── CARD ── */
-.card {
-  background: var(--bg-card);
-  padding: 20px;
-}
-.card-header {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-/* ── TABLE ── */
-.data-table { width: 100%; border-collapse: collapse; }
-.data-table th {
-  font-size: 8px; letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--text-20); font-weight: 600;
-  padding: 8px 12px; text-align: left;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
-}
-.data-table td {
-  padding: 10px 12px;
-  font-size: 11px; color: var(--text-70);
-  border-bottom: 1px solid rgba(255,255,255,0.03);
-}
-.data-table tr:last-child td { border-bottom: none; }
-.data-table tr:hover td { background: var(--bg-hover); }
-.td-primary { font-weight: 600; color: var(--text); }
-.td-amount { font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
-
-/* ── STATUS BADGES ── */
-.badge {
-  font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
-  font-weight: 500; padding: 4px 8px; white-space: nowrap;
-}
-.badge-confirmed { color: #81c784; background: rgba(129,199,132,0.1); }
-.badge-completed { color: #81c784; background: rgba(129,199,132,0.1); }
-.badge-pending { color: #ffb74d; background: rgba(255,183,77,0.1); }
-.badge-new { color: #ffffff; background: rgba(255,255,255,0.1); }
-.badge-upcoming { color: #90a4ae; background: rgba(144,164,174,0.07); }
-
-/* ── REQUEST ROWS ── */
-.request-row {
-  display: flex; flex-direction: column; gap: 4px;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.03);
-}
-.request-row:last-child { border-bottom: none; }
-.request-top { display: flex; align-items: center; justify-content: space-between; }
-.request-name { font-size: 12px; font-weight: 600; }
-.request-style { font-size: 10px; color: var(--text-30); }
-
-/* ── PORTFOLIO ── */
-.portfolio-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-.portfolio-item {
-  aspect-ratio: 3/4;
-  background: var(--bg-card);
-  display: flex; flex-direction: column; justify-content: flex-end;
-  padding: 16px; position: relative; overflow: hidden;
-}
-.portfolio-label {
-  font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
-  font-weight: 700; color: white; position: relative; z-index: 1;
-}
-
-/* ── SEARCH BAR ── */
-.search-bar {
-  display: flex; align-items: center; gap: 10px;
-  background: rgba(255,255,255,0.04);
-  padding: 8px 14px; margin-bottom: 16px;
-}
-.search-bar input {
-  background: none; border: none; outline: none;
-  color: var(--text); font-size: 12px; font-family: inherit;
-  width: 100%;
-}
-.search-bar input::placeholder { color: var(--text-20); }
-.search-bar .icon { width: 14px; height: 14px; color: var(--text-20); flex-shrink: 0; }
-
-/* ── SETTINGS FORM ── */
-.settings-form { max-width: 560px; }
-.form-group { margin-bottom: 20px; }
-.form-label {
-  font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase;
-  color: var(--text-30); font-weight: 600; display: block; margin-bottom: 6px;
-}
-.form-input {
-  width: 100%; background: rgba(255,255,255,0.04); border: none; outline: none;
-  color: var(--text); font-size: 12px; font-family: inherit;
-  padding: 10px 14px;
-}
-.form-input:focus { background: rgba(255,255,255,0.07); }
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.form-save { margin-top: 24px; }
-
-/* ── BANNER ── */
-.preview-banner {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 200;
-  background: var(--text);
-  color: #0a0a0a;
-  padding: 10px 20px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-  white-space: nowrap;
-}
-
-/* ── MOBILE ── */
-.sidebar-overlay {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,0.6); z-index: 90;
-}
-.sidebar-overlay.show { display: block; }
+.bento-footer a { color: var(--w60); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; transition: color 0.15s; }
+.bento-footer a:hover { color: #fff; }
 
 @media (max-width: 1024px) {
-  .sidebar {
-    transform: translateX(-100%);
-    transition: transform 0.25s ease;
-  }
-  .sidebar.open { transform: translateX(0); }
-  .main { margin-left: 0; }
-  .hamburger { display: flex; }
-  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-  .two-col { grid-template-columns: 1fr; }
-  .portfolio-grid { grid-template-columns: repeat(2, 1fr); }
-  .header-sub { display: none; }
-  .header-divider { display: none; }
+  .row1 { grid-template-columns: 1fr; }
+  .bento-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .bento-grid { grid-template-columns: 1fr; }
+  .revenue-breakdown { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+  .shell { padding: 1.25rem 1rem 8rem; }
 }
 
-@media (max-width: 600px) {
-  .kpi-grid { grid-template-columns: 1fr; }
-  .content { padding: 16px 16px 100px; }
-  .portfolio-grid { grid-template-columns: 1fr 1fr; }
+/* ── CONSOLE OVERLAY (full-screen detail views) ── */
+.console-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: var(--bg);
+  display: none; flex-direction: column;
+  overflow-y: auto;
+}
+.console-overlay.open { display: flex; }
+.console-header {
+  position: sticky; top: 0; z-index: 2;
+  background: var(--bg);
+  border-bottom: 1px solid var(--w08);
+  padding: 1.25rem 1.5rem;
+  display: flex; align-items: center; gap: 1rem;
+}
+.console-back {
+  display: flex; align-items: center; gap: 0.4rem;
+  background: none; border: none; cursor: pointer;
+  color: var(--w60); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+  transition: color 0.15s;
+}
+.console-back:hover { color: #fff; }
+.console-back svg { width: 16px; height: 16px; }
+.console-title { font-size: 0.95rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; }
+.console-body { padding: 1.5rem; max-width: 1280px; margin: 0 auto; width: 100%; }
+
+/* ── DATA CARD / TABLE (used inside console panels) ── */
+.dc-card { background: var(--card-head); padding: 1.25rem; margin-bottom: 1rem; }
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  font-size: 0.58rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--w30); font-weight: 700; padding: 0.6rem 0.75rem; text-align: left;
+  border-bottom: 1px solid var(--w08);
+}
+.data-table td { padding: 0.7rem 0.75rem; font-size: 0.78rem; color: var(--w70); border-bottom: 1px solid var(--w05); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--w05); }
+.td-primary { font-weight: 700; color: #fff; }
+.td-amount { font-weight: 700; color: #fff; font-family: 'JetBrains Mono', monospace; }
+
+.badge { font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; padding: 0.25rem 0.55rem; white-space: nowrap; }
+.badge-confirmed, .badge-completed { color: var(--green); background: rgba(74,222,128,0.1); }
+.badge-pending { color: var(--amber); background: rgba(251,191,36,0.1); }
+.badge-new { color: #fff; background: var(--w10); }
+
+.portfolio-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.9rem; }
+.portfolio-item {
+  aspect-ratio: 3/4; background: var(--card-head);
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 1rem; position: relative; overflow: hidden;
+}
+.portfolio-label { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 800; color: #fff; }
+@media (max-width: 700px) { .portfolio-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.search-bar { display: flex; align-items: center; gap: 0.6rem; background: var(--w05); padding: 0.6rem 0.9rem; margin-bottom: 1rem; }
+.search-bar input { background: none; border: none; outline: none; color: #fff; font-size: 0.8rem; font-family: inherit; width: 100%; }
+.search-bar input::placeholder { color: var(--w20); }
+.search-bar svg { width: 14px; height: 14px; color: var(--w20); flex-shrink: 0; }
+
+.settings-form { max-width: 520px; }
+.form-group { margin-bottom: 1.25rem; }
+.form-label { font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--w40); font-weight: 700; display: block; margin-bottom: 0.4rem; }
+.form-input { width: 100%; background: var(--w05); border: none; outline: none; color: #fff; font-size: 0.8rem; font-family: inherit; padding: 0.65rem 0.9rem; }
+.form-input:focus { background: var(--w10); }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
+.form-save {
+  margin-top: 0.5rem; background: #fff; color: #000; font-size: 0.65rem; font-weight: 800;
+  letter-spacing: 0.1em; text-transform: uppercase; padding: 0.7rem 1.4rem; border: none; cursor: pointer;
+}
+.form-save:hover { opacity: 0.85; }
+
+/* ── PREVIEW BANNER ── */
+.preview-banner {
+  position: fixed; bottom: 1.25rem; left: 50%; transform: translateX(-50%); z-index: 600;
+  background: #fff; color: #000;
+  padding: 0.6rem 1.4rem; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6); white-space: nowrap;
 }
 </style>
 </head>
@@ -418,406 +307,475 @@ body {
 <!-- PREVIEW BANNER -->
 <div class="preview-banner">Client Preview — Admin Dashboard Template</div>
 
-<!-- Sidebar overlay for mobile -->
-<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+<div class="shell">
 
-<!-- ── SIDEBAR ── -->
-<nav class="sidebar" id="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-circle">AT</div>
-    <div class="logo-text-group">
-      <span class="logo-name">Artist Name</span>
-      <span class="logo-sub">Dashboard</span>
-    </div>
-  </div>
-
-  <div class="sidebar-actions">
-    <button class="btn-primary-action" onclick="showSection('bookings')">New Booking</button>
-    <div class="sidebar-small-btns">
-      <button class="btn-small" onclick="showSection('clients')">New Client</button>
-      <button class="btn-small" onclick="showSection('payments')">Payment</button>
-    </div>
-  </div>
-
-  <div class="sidebar-divider"></div>
-
-  <div class="sidebar-nav">
-    <div class="nav-label">Navigation</div>
-
-    <div class="nav-item active" data-section="overview" onclick="showSection('overview')">
-      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
-        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
-      </svg>
-      Overview
-    </div>
-
-    <div class="nav-item" data-section="bookings" onclick="showSection('bookings')">
-      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
-        <rect x="9" y="3" width="6" height="4" rx="1"/>
-        <path d="M9 12h6M9 16h4"/>
-      </svg>
-      Bookings
-    </div>
-
-    <div class="nav-item" data-section="gallery" onclick="showSection('gallery')">
-      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <rect x="3" y="3" width="18" height="18" rx="2"/>
-        <circle cx="8.5" cy="8.5" r="1.5"/>
-        <path d="M21 15l-5-5L5 21"/>
-      </svg>
-      Gallery
-    </div>
-
-    <div class="nav-item" data-section="clients" onclick="showSection('clients')">
-      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <circle cx="12" cy="8" r="4"/>
-        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-      </svg>
-      Clients
-    </div>
-
-    <div class="nav-item" data-section="payments" onclick="showSection('payments')">
-      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <circle cx="12" cy="12" r="9"/>
-        <path d="M12 7v1m0 8v1M9.5 10.5c0-1 1.1-1.5 2.5-1.5s2.5.7 2.5 1.8c0 2.2-5 1.7-5 4.2 0 1.1 1.1 2 2.5 2s2.5-.5 2.5-1.5"/>
-      </svg>
-      Payments
-    </div>
-
-    <div class="nav-item" data-section="settings" onclick="showSection('settings')">
-      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <circle cx="12" cy="12" r="3"/>
-        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
-      </svg>
-      Settings
-    </div>
-  </div>
-
-  <div class="sidebar-user">
-    <div class="user-avatar">A</div>
+  <!-- HEADER -->
+  <div class="dash-header">
     <div>
-      <div class="user-name">Artist</div>
-      <div class="user-role">Owner</div>
+      <button class="dash-title-btn" type="button">
+        <span class="dash-title">Artist Name Studio</span>
+        <svg class="dash-title-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <p class="dash-sub">Manage your studio and bookings</p>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" aria-label="Notifications">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-4.28-5.768A2 2 0 0012 4a2 2 0 00-1.72.94A6 6 0 006 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+      </button>
+      <button class="icon-btn profile-btn" aria-label="Profile">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      </button>
     </div>
   </div>
-</nav>
 
-<!-- ── MAIN ── -->
-<div class="main">
-
-  <!-- Header -->
-  <header class="header">
-    <div class="header-left">
-      <button class="hamburger icon-btn" onclick="toggleSidebar()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M3 6h18M3 12h18M3 18h18"/>
-        </svg>
-      </button>
-      <span class="header-title" id="header-title">Overview</span>
-      <div class="header-divider"></div>
-      <span class="header-sub">Artist Website Platform</span>
-    </div>
-    <div class="header-right">
-      <button class="icon-btn">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-4.28-5.768A2 2 0 0012 4a2 2 0 00-1.72.94A6 6 0 006 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-        </svg>
-      </button>
-      <button class="btn-primary-action" style="width:auto;padding:8px 14px;" onclick="showSection('bookings')">+ New Booking</button>
-    </div>
-  </header>
-
-  <!-- Content -->
-  <div class="content">
-
-    <!-- ════════════════════════════ OVERVIEW ═══ -->
-    <div class="section" id="section-overview" style="display:block;">
-
-      <div class="panel-header">
-        <div class="panel-eyebrow">Good Morning, Artist</div>
-        <div class="panel-title">Overview</div>
-        <div class="panel-sub">Monday, July 6, 2026</div>
+  <!-- ROW 1: REVENUE + CLOCK/CALENDAR -->
+  <div class="row1">
+    <div class="revenue-card">
+      <div class="period-pills" id="periodPills">
+        <button class="period-pill active" data-value="48600">All Time</button>
+        <button class="period-pill" data-value="31200">YTD</button>
+        <button class="period-pill" data-value="4200">MTD</button>
+        <button class="period-pill" data-value="1050">7D</button>
+        <button class="period-pill" data-value="150">24H</button>
       </div>
-
-      <!-- KPI Row -->
-      <div class="kpi-grid">
-        <div class="kpi-card">
-          <div class="kpi-icon">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18"/>
-              <path d="M9 14l2 2 4-4"/>
-            </svg>
-          </div>
-          <div class="kpi-value">3</div>
-          <div class="kpi-label">Today's Appointments</div>
-          <div class="kpi-sub">2 confirmed, 1 pending</div>
+      <div class="revenue-main">
+        <div class="revenue-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v1m0 8v1M9.5 10.5c0-1 1.1-1.5 2.5-1.5s2.5.7 2.5 1.8c0 2.2-5 1.7-5 4.2 0 1.1 1.1 2 2.5 2s2.5-.5 2.5-1.5"/></svg>
+          Total Revenue
         </div>
-        <div class="kpi-card">
-          <div class="kpi-icon" style="background:rgba(255,183,77,0.1);">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="1.5">
-              <circle cx="12" cy="12" r="9"/>
-              <path d="M12 8v4M12 16h.01"/>
-            </svg>
-          </div>
-          <div class="kpi-value" style="color:var(--yellow);">5</div>
-          <div class="kpi-label">Pending Requests</div>
-          <div class="kpi-sub">Awaiting review</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-icon">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <circle cx="12" cy="12" r="9"/>
-              <path d="M12 7v1m0 8v1M9.5 10.5c0-1 1.1-1.5 2.5-1.5s2.5.7 2.5 1.8c0 2.2-5 1.7-5 4.2 0 1.1 1.1 2 2.5 2s2.5-.5 2.5-1.5"/>
-            </svg>
-          </div>
-          <div class="kpi-value">$4,200</div>
-          <div class="kpi-label">Monthly Revenue</div>
-          <div class="kpi-sub">Up 12% vs last month</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-icon">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <circle cx="12" cy="8" r="4"/>
-              <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-            </svg>
-          </div>
-          <div class="kpi-value">127</div>
-          <div class="kpi-label">Total Clients</div>
-          <div class="kpi-sub">8 new this month</div>
+        <div class="revenue-number">
+          <span class="cur">$</span>
+          <span class="val" id="revenueValue">48,600</span>
+          <span class="revenue-trend">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            +100%
+          </span>
         </div>
       </div>
-
-      <!-- Upcoming + Requests -->
-      <div class="two-col">
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="section-eyebrow">Coming Up</div>
-              <div class="section-title">Upcoming Appointments</div>
-            </div>
-          </div>
-          <table class="data-table">
-            <thead>
-              <tr><th>Client</th><th>Service</th><th>Date &amp; Time</th><th>Status</th></tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class="td-primary">Jordan Reyes</td>
-                <td>Full sleeve session</td>
-                <td>Jul 6 · 10:00 AM</td>
-                <td><span class="badge badge-confirmed">Confirmed</span></td>
-              </tr>
-              <tr>
-                <td class="td-primary">Priya Shah</td>
-                <td>Consultation</td>
-                <td>Jul 6 · 1:00 PM</td>
-                <td><span class="badge badge-pending">Pending</span></td>
-              </tr>
-              <tr>
-                <td class="td-primary">Marcus Lee</td>
-                <td>Small script</td>
-                <td>Jul 6 · 3:30 PM</td>
-                <td><span class="badge badge-confirmed">Confirmed</span></td>
-              </tr>
-              <tr>
-                <td class="td-primary">Ana Delgado</td>
-                <td>Touch-up</td>
-                <td>Jul 7 · 11:00 AM</td>
-                <td><span class="badge badge-confirmed">Confirmed</span></td>
-              </tr>
-              <tr>
-                <td class="td-primary">Sam Whitfield</td>
-                <td>Cover-up</td>
-                <td>Jul 8 · 2:00 PM</td>
-                <td><span class="badge badge-pending">Pending</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="section-eyebrow">Inbox</div>
-              <div class="section-title">Recent Booking Requests</div>
-            </div>
-          </div>
-          <div class="request-row">
-            <div class="request-top">
-              <span class="request-name">Devon Park</span>
-              <span class="badge badge-new">New</span>
-            </div>
-            <span class="request-style">Fine line florals — forearm</span>
-          </div>
-          <div class="request-row">
-            <div class="request-top">
-              <span class="request-name">Kelsey Brand</span>
-              <span class="badge badge-pending">Pending</span>
-            </div>
-            <span class="request-style">Blackwork sleeve — full arm</span>
-          </div>
-          <div class="request-row">
-            <div class="request-top">
-              <span class="request-name">Omar Castillo</span>
-              <span class="badge badge-pending">Pending</span>
-            </div>
-            <span class="request-style">Cover-up — shoulder piece</span>
-          </div>
-          <div class="request-row">
-            <div class="request-top">
-              <span class="request-name">Lily Nakamura</span>
-              <span class="badge badge-new">New</span>
-            </div>
-            <span class="request-style">Script lettering — ribs</span>
-          </div>
-        </div>
+      <div class="revenue-breakdown">
+        <div class="rb-item"><div class="rb-label">Deposits</div><div class="rb-value">$840</div></div>
+        <div class="rb-item"><div class="rb-label">Sessions</div><div class="rb-value">$2,960</div></div>
+        <div class="rb-item"><div class="rb-label">Tips</div><div class="rb-value">$400</div></div>
+        <div class="rb-item"><div class="rb-label amber">Bookings</div><div class="rb-value amber">$4,200</div></div>
       </div>
-
-    </div><!-- /section-overview -->
-
-    <!-- ════════════════════════════ BOOKINGS ═══ -->
-    <div class="section" id="section-bookings">
-      <div class="panel-header">
-        <div class="panel-eyebrow">Manage</div>
-        <div class="panel-title">Bookings</div>
-        <div class="panel-sub">Every request and confirmed session</div>
-      </div>
-      <div class="card">
-        <table class="data-table">
-          <thead>
-            <tr><th>Client</th><th>Service</th><th>Date &amp; Time</th><th>Deposit</th><th>Status</th></tr>
-          </thead>
-          <tbody>
-            <tr><td class="td-primary">Jordan Reyes</td><td>Full sleeve session</td><td>Jul 6 · 10:00 AM</td><td class="td-amount">$150</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-            <tr><td class="td-primary">Priya Shah</td><td>Consultation</td><td>Jul 6 · 1:00 PM</td><td class="td-amount">$0</td><td><span class="badge badge-pending">Pending</span></td></tr>
-            <tr><td class="td-primary">Marcus Lee</td><td>Small script</td><td>Jul 6 · 3:30 PM</td><td class="td-amount">$50</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-            <tr><td class="td-primary">Ana Delgado</td><td>Touch-up</td><td>Jul 7 · 11:00 AM</td><td class="td-amount">$0</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-            <tr><td class="td-primary">Sam Whitfield</td><td>Cover-up</td><td>Jul 8 · 2:00 PM</td><td class="td-amount">$100</td><td><span class="badge badge-pending">Pending</span></td></tr>
-            <tr><td class="td-primary">Devon Park</td><td>Fine line florals</td><td>Jul 10 · 12:00 PM</td><td class="td-amount">$0</td><td><span class="badge badge-new">New Request</span></td></tr>
-          </tbody>
-        </table>
+      <div class="revenue-chart">
+        <div class="bar" style="height:35%"></div>
+        <div class="bar" style="height:55%"></div>
+        <div class="bar" style="height:40%"></div>
+        <div class="bar" style="height:78%"></div>
+        <div class="bar" style="height:60%"></div>
+        <div class="bar" style="height:90%"></div>
+        <div class="bar" style="height:70%"></div>
+        <div class="bar" style="height:100%"></div>
+        <div class="bar" style="height:65%"></div>
+        <div class="bar" style="height:82%"></div>
+        <div class="bar" style="height:48%"></div>
+        <div class="bar" style="height:74%"></div>
       </div>
     </div>
 
-    <!-- ════════════════════════════ GALLERY ═══ -->
-    <div class="section" id="section-gallery">
-      <div class="panel-header">
-        <div class="panel-eyebrow">Portfolio</div>
-        <div class="panel-title">Gallery</div>
-        <div class="panel-sub">Manage what shows on your public portfolio</div>
+    <div class="side-col">
+      <div class="clock-card">
+        <div class="clock-time" id="clockTime">--:--:--</div>
+        <div class="clock-date" id="clockDate">Loading…</div>
       </div>
-      <div class="portfolio-grid">
-        <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Fine Line Botanical</span></div>
-        <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Blackwork Sleeve</span></div>
-        <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Geometric Piece</span></div>
-        <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Script Lettering</span></div>
-        <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Portrait Realism</span></div>
-        <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Cover-Up Piece</span></div>
-        <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Micro Realism</span></div>
-        <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Ornamental Florals</span></div>
+      <div class="calendar-card">
+        <div class="cal-header">
+          <span class="cal-month" id="calMonth">Month Year</span>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
       </div>
     </div>
+  </div>
 
-    <!-- ════════════════════════════ CLIENTS ═══ -->
-    <div class="section" id="section-clients">
-      <div class="panel-header">
-        <div class="panel-eyebrow">Records</div>
-        <div class="panel-title">Clients</div>
-        <div class="panel-sub">Full client history, searchable and up to date</div>
-      </div>
-      <div class="card">
-        <div class="search-bar">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-          <input type="text" placeholder="Search clients..." />
+  <!-- ROW 2: BENTO GRID -->
+  <div class="bento-grid">
+
+    <!-- Today's Load -->
+    <div class="bento-card">
+      <div class="bento-header" onclick="toggleCard(this)">
+        <div class="bento-header-left">
+          <svg class="bento-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="17" rx="1"/><path d="M8 2v4M16 2v4M3 9h18"/><path d="M9 14l2 2 4-4"/></svg>
+          <span class="bento-title">Today's Load</span>
         </div>
-        <table class="data-table">
-          <thead>
-            <tr><th>Name</th><th>Email</th><th>Last Session</th><th>Total Sessions</th></tr>
-          </thead>
-          <tbody>
-            <tr><td class="td-primary">Jordan Reyes</td><td>jordan@example.com</td><td>Jun 12, 2026</td><td class="td-amount">4</td></tr>
-            <tr><td class="td-primary">Priya Shah</td><td>priya@example.com</td><td>—</td><td class="td-amount">0</td></tr>
-            <tr><td class="td-primary">Marcus Lee</td><td>marcus@example.com</td><td>May 28, 2026</td><td class="td-amount">2</td></tr>
-            <tr><td class="td-primary">Ana Delgado</td><td>ana@example.com</td><td>Apr 2, 2026</td><td class="td-amount">6</td></tr>
-          </tbody>
-        </table>
+        <svg class="bento-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
+      <div class="bento-body">
+        <div class="bento-row clickable" onclick="openConsole('bookings')">
+          <span class="bento-row-label">Today's Appointments</span>
+          <span class="bento-row-value">3</span>
+        </div>
+        <div class="bento-row clickable" onclick="openConsole('bookings')">
+          <span class="bento-row-label">Pending Requests</span>
+          <span class="bento-row-value amber">5</span>
+        </div>
+        <div class="bento-row clickable" onclick="openConsole('bookings')">
+          <span class="bento-row-label">New Client Inquiries</span>
+          <span class="bento-row-value">4</span>
+        </div>
+        <div class="bento-row clickable" onclick="openConsole('clients')">
+          <span class="bento-row-label">Total Clients</span>
+          <span class="bento-row-value">127</span>
+        </div>
+      </div>
+      <div class="bento-footer">Real-time sync</div>
     </div>
 
-    <!-- ════════════════════════════ PAYMENTS ═══ -->
-    <div class="section" id="section-payments">
-      <div class="panel-header">
-        <div class="panel-eyebrow">Revenue</div>
-        <div class="panel-title">Payments</div>
-        <div class="panel-sub">Deposits and full payments across all bookings</div>
+    <!-- Revenue Performance -->
+    <div class="bento-card">
+      <div class="bento-header" onclick="toggleCard(this)">
+        <div class="bento-header-left">
+          <svg class="bento-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          <span class="bento-title">Revenue Performance</span>
+        </div>
+        <svg class="bento-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div class="card">
-        <table class="data-table">
-          <thead>
-            <tr><th>Client</th><th>Type</th><th>Date</th><th>Amount</th><th>Status</th></tr>
-          </thead>
-          <tbody>
-            <tr><td class="td-primary">Jordan Reyes</td><td>Deposit</td><td>Jun 28, 2026</td><td class="td-amount">$150</td><td><span class="badge badge-completed">Paid</span></td></tr>
-            <tr><td class="td-primary">Marcus Lee</td><td>Deposit</td><td>Jun 30, 2026</td><td class="td-amount">$50</td><td><span class="badge badge-completed">Paid</span></td></tr>
-            <tr><td class="td-primary">Sam Whitfield</td><td>Deposit</td><td>Jul 1, 2026</td><td class="td-amount">$100</td><td><span class="badge badge-pending">Pending</span></td></tr>
-            <tr><td class="td-primary">Ana Delgado</td><td>Full Payment</td><td>Apr 2, 2026</td><td class="td-amount">$320</td><td><span class="badge badge-completed">Paid</span></td></tr>
-          </tbody>
-        </table>
+      <div class="bento-body">
+        <div class="bento-row clickable" onclick="openConsole('payments')">
+          <span class="bento-row-label">Deposits</span>
+          <span class="bento-row-value">$840</span>
+        </div>
+        <div class="bento-row clickable" onclick="openConsole('payments')">
+          <span class="bento-row-label">Full Sessions</span>
+          <span class="bento-row-value">$2,960</span>
+        </div>
+        <div class="bento-row clickable" onclick="openConsole('payments')">
+          <span class="bento-row-label">Tips</span>
+          <span class="bento-row-value">$400</span>
+        </div>
+        <div class="bento-row">
+          <span class="bento-row-label">Total (MTD)</span>
+          <span class="bento-row-value green">$4,200</span>
+        </div>
       </div>
+      <div class="bento-footer">Gross revenue estimate</div>
     </div>
 
-    <!-- ════════════════════════════ SETTINGS ═══ -->
-    <div class="section" id="section-settings">
-      <div class="panel-header">
-        <div class="panel-eyebrow">Configure</div>
-        <div class="panel-title">Settings</div>
-        <div class="panel-sub">Studio info and site preferences</div>
+    <!-- Studio Status -->
+    <div class="bento-card">
+      <div class="bento-header" onclick="toggleCard(this)">
+        <div class="bento-header-left">
+          <svg class="bento-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg>
+          <span class="bento-title">Studio Status</span>
+        </div>
+        <svg class="bento-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div class="card settings-form">
-        <div class="form-group">
-          <label class="form-label">Artist / Studio Name</label>
-          <input class="form-input" type="text" value="Artist Name">
+      <div class="bento-body">
+        <div class="bento-status-row"><span class="bento-status-label">Booking System</span><span class="bento-status-value online">Online</span></div>
+        <div class="bento-status-row"><span class="bento-status-label">Payment Processor</span><span class="bento-status-value online">Online</span></div>
+        <div class="bento-status-row"><span class="bento-status-label">Calendar Sync</span><span class="bento-status-value online">Online</span></div>
+        <div class="bento-status-row"><span class="bento-status-label">Gallery Sync</span><span class="bento-status-value degraded">Degraded</span></div>
+        <div class="bento-latency">
+          <div class="dot-pulse"></div>
+          <span class="bento-latency-text">Latency: 38ms</span>
         </div>
-        <div class="form-grid">
-          <div class="form-group">
-            <label class="form-label">City</label>
-            <input class="form-input" type="text" value="City, State">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Contact Email</label>
-            <input class="form-input" type="text" value="artist@example.com">
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Booking Deposit (Default)</label>
-          <input class="form-input" type="text" value="$100">
-        </div>
-        <button class="btn-primary-action form-save" style="width:auto;padding:10px 20px;">Save Changes</button>
       </div>
+      <div class="bento-footer">System health</div>
+    </div>
+
+    <!-- Client Registry -->
+    <div class="bento-card">
+      <div class="bento-header" onclick="toggleCard(this)">
+        <div class="bento-header-left">
+          <svg class="bento-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4.5 8-11V5l-8-3-8 3v6c0 6.5 8 11 8 11z"/></svg>
+          <span class="bento-title">Client Registry</span>
+        </div>
+        <svg class="bento-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="bento-body">
+        <div class="bento-row clickable" onclick="openConsole('clients')">
+          <span class="bento-row-label">Total Clients</span>
+          <span class="bento-row-value">127</span>
+        </div>
+        <div class="bento-row">
+          <span class="bento-row-label">Sessions This Month</span>
+          <span class="bento-row-value">18</span>
+        </div>
+        <div class="bento-row">
+          <span class="bento-row-label">VIP Repeat Clients</span>
+          <span class="bento-row-value">34</span>
+        </div>
+        <div class="bento-row">
+          <span class="bento-row-label">Environment</span>
+          <span class="bento-row-value"><span class="env-badge">LIVE</span></span>
+        </div>
+      </div>
+      <div class="bento-footer"><a onclick="openConsole('clients')">Manage Clients</a></div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="bento-card">
+      <div class="bento-header" onclick="toggleCard(this)">
+        <div class="bento-header-left">
+          <svg class="bento-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-4.28-5.768A2 2 0 0012 4a2 2 0 00-1.72.94A6 6 0 006 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+          <span class="bento-title">Notifications</span>
+        </div>
+        <svg class="bento-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="bento-body">
+        <div class="alert-item">
+          <div class="alert-top"><span class="alert-badge new">New</span><span class="alert-time">12m ago</span></div>
+          <p class="alert-text">Devon Park requested fine line florals — forearm</p>
+        </div>
+        <div class="alert-item">
+          <div class="alert-top"><span class="alert-badge pending">Pending</span><span class="alert-time">1h ago</span></div>
+          <p class="alert-text">Kelsey Brand awaiting consult confirmation</p>
+        </div>
+        <div class="alert-item">
+          <div class="alert-top"><span class="alert-badge new">New</span><span class="alert-time">3h ago</span></div>
+          <p class="alert-text">Lily Nakamura requested script lettering — ribs</p>
+        </div>
+      </div>
+      <div class="bento-footer">System alerts</div>
+    </div>
+
+    <!-- Gallery -->
+    <div class="bento-card">
+      <div class="bento-header" onclick="toggleCard(this)">
+        <div class="bento-header-left">
+          <svg class="bento-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          <span class="bento-title">Gallery</span>
+        </div>
+        <svg class="bento-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="bento-body">
+        <div class="bento-row clickable" onclick="openConsole('gallery')">
+          <span class="bento-row-label">Portfolio Pieces</span>
+          <span class="bento-row-value">42</span>
+        </div>
+        <div class="bento-row">
+          <span class="bento-row-label">Latest Upload</span>
+          <span class="bento-row-value">2 days ago</span>
+        </div>
+        <div class="bento-row">
+          <span class="bento-row-label">Public Views (30d)</span>
+          <span class="bento-row-value">3,104</span>
+        </div>
+      </div>
+      <div class="bento-footer"><a onclick="openConsole('gallery')">Manage Gallery</a></div>
     </div>
 
   </div>
 </div>
 
+<!-- ════════════════════════ CONSOLE OVERLAYS ════════════════════════ -->
+
+<!-- BOOKINGS -->
+<div class="console-overlay" id="console-bookings">
+  <div class="console-header">
+    <button class="console-back" onclick="closeConsole()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Back
+    </button>
+    <span class="console-title">Bookings</span>
+  </div>
+  <div class="console-body">
+    <div class="dc-card">
+      <table class="data-table">
+        <thead><tr><th>Client</th><th>Service</th><th>Date &amp; Time</th><th>Deposit</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td class="td-primary">Jordan Reyes</td><td>Full sleeve session</td><td>Jul 6 · 10:00 AM</td><td class="td-amount">$150</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+          <tr><td class="td-primary">Priya Shah</td><td>Consultation</td><td>Jul 6 · 1:00 PM</td><td class="td-amount">$0</td><td><span class="badge badge-pending">Pending</span></td></tr>
+          <tr><td class="td-primary">Marcus Lee</td><td>Small script</td><td>Jul 6 · 3:30 PM</td><td class="td-amount">$50</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+          <tr><td class="td-primary">Ana Delgado</td><td>Touch-up</td><td>Jul 7 · 11:00 AM</td><td class="td-amount">$0</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+          <tr><td class="td-primary">Sam Whitfield</td><td>Cover-up</td><td>Jul 8 · 2:00 PM</td><td class="td-amount">$100</td><td><span class="badge badge-pending">Pending</span></td></tr>
+          <tr><td class="td-primary">Devon Park</td><td>Fine line florals</td><td>Jul 10 · 12:00 PM</td><td class="td-amount">$0</td><td><span class="badge badge-new">New Request</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- GALLERY -->
+<div class="console-overlay" id="console-gallery">
+  <div class="console-header">
+    <button class="console-back" onclick="closeConsole()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Back
+    </button>
+    <span class="console-title">Gallery</span>
+  </div>
+  <div class="console-body">
+    <div class="portfolio-grid">
+      <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Fine Line Botanical</span></div>
+      <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Blackwork Sleeve</span></div>
+      <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Geometric Piece</span></div>
+      <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Script Lettering</span></div>
+      <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Portrait Realism</span></div>
+      <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Cover-Up Piece</span></div>
+      <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Micro Realism</span></div>
+      <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Ornamental Florals</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- CLIENTS -->
+<div class="console-overlay" id="console-clients">
+  <div class="console-header">
+    <button class="console-back" onclick="closeConsole()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Back
+    </button>
+    <span class="console-title">Clients</span>
+  </div>
+  <div class="console-body">
+    <div class="dc-card">
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" placeholder="Search clients...">
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Name</th><th>Email</th><th>Last Session</th><th>Total Sessions</th></tr></thead>
+        <tbody>
+          <tr><td class="td-primary">Jordan Reyes</td><td>jordan@example.com</td><td>Jun 12, 2026</td><td class="td-amount">4</td></tr>
+          <tr><td class="td-primary">Priya Shah</td><td>priya@example.com</td><td>—</td><td class="td-amount">0</td></tr>
+          <tr><td class="td-primary">Marcus Lee</td><td>marcus@example.com</td><td>May 28, 2026</td><td class="td-amount">2</td></tr>
+          <tr><td class="td-primary">Ana Delgado</td><td>ana@example.com</td><td>Apr 2, 2026</td><td class="td-amount">6</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PAYMENTS -->
+<div class="console-overlay" id="console-payments">
+  <div class="console-header">
+    <button class="console-back" onclick="closeConsole()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Back
+    </button>
+    <span class="console-title">Payments</span>
+  </div>
+  <div class="console-body">
+    <div class="dc-card">
+      <table class="data-table">
+        <thead><tr><th>Client</th><th>Type</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td class="td-primary">Jordan Reyes</td><td>Deposit</td><td>Jun 28, 2026</td><td class="td-amount">$150</td><td><span class="badge badge-completed">Paid</span></td></tr>
+          <tr><td class="td-primary">Marcus Lee</td><td>Deposit</td><td>Jun 30, 2026</td><td class="td-amount">$50</td><td><span class="badge badge-completed">Paid</span></td></tr>
+          <tr><td class="td-primary">Sam Whitfield</td><td>Deposit</td><td>Jul 1, 2026</td><td class="td-amount">$100</td><td><span class="badge badge-pending">Pending</span></td></tr>
+          <tr><td class="td-primary">Ana Delgado</td><td>Full Payment</td><td>Apr 2, 2026</td><td class="td-amount">$320</td><td><span class="badge badge-completed">Paid</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="console-overlay" id="console-settings">
+  <div class="console-header">
+    <button class="console-back" onclick="closeConsole()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Back
+    </button>
+    <span class="console-title">Settings</span>
+  </div>
+  <div class="console-body">
+    <div class="dc-card settings-form">
+      <div class="form-group">
+        <label class="form-label">Artist / Studio Name</label>
+        <input class="form-input" type="text" value="Artist Name Studio">
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <input class="form-input" type="text" value="City, State">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contact Email</label>
+          <input class="form-input" type="text" value="artist@example.com">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Booking Deposit (Default)</label>
+        <input class="form-input" type="text" value="$100">
+      </div>
+      <button class="form-save">Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <script>
-  function showSection(name) {
-    document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
-    document.getElementById('section-' + name).style.display = 'block';
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    const navItem = document.querySelector('.nav-item[data-section="' + name + '"]');
-    if (navItem) navItem.classList.add('active');
-    const titles = { overview: 'Overview', bookings: 'Bookings', gallery: 'Gallery', clients: 'Clients', payments: 'Payments', settings: 'Settings' };
-    document.getElementById('header-title').textContent = titles[name] || name;
-    document.getElementById('sidebar').classList.remove('open');
-    document.querySelector('.sidebar-overlay').classList.remove('show');
+  // Bento card collapse/expand
+  function toggleCard(header) {
+    header.closest('.bento-card').classList.toggle('collapsed');
   }
 
-  function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('open');
-    document.querySelector('.sidebar-overlay').classList.toggle('show');
+  // Console overlay open/close
+  function openConsole(name) {
+    document.querySelectorAll('.console-overlay').forEach(el => el.classList.remove('open'));
+    const el = document.getElementById('console-' + name);
+    if (el) { el.classList.add('open'); el.scrollTop = 0; }
+    document.body.style.overflow = 'hidden';
   }
+  function closeConsole() {
+    document.querySelectorAll('.console-overlay').forEach(el => el.classList.remove('open'));
+    document.body.style.overflow = '';
+  }
+
+  // Revenue period pills
+  document.getElementById('periodPills').addEventListener('click', (e) => {
+    const btn = e.target.closest('.period-pill');
+    if (!btn) return;
+    document.querySelectorAll('.period-pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('revenueValue').textContent = Number(btn.dataset.value).toLocaleString();
+  });
+
+  // Live clock
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('clockTime').textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    document.getElementById('clockDate').textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // Mini calendar for current month
+  function renderCalendar() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const today = now.getDate();
+    const bookingDays = [6, 7, 8, 10];
+
+    document.getElementById('calMonth').textContent = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    const grid = document.getElementById('calGrid');
+    grid.innerHTML = '';
+    ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(d => {
+      const el = document.createElement('div');
+      el.className = 'cal-dow';
+      el.textContent = d;
+      grid.appendChild(el);
+    });
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+    for (let i = firstDay - 1; i >= 0; i--) {
+      const el = document.createElement('div');
+      el.className = 'cal-day other-month';
+      el.textContent = daysInPrevMonth - i;
+      grid.appendChild(el);
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      const el = document.createElement('div');
+      el.className = 'cal-day' + (d === today ? ' today' : '') + (bookingDays.includes(d) ? ' has-booking' : '');
+      el.textContent = d;
+      grid.appendChild(el);
+    }
+    const totalCells = firstDay + daysInMonth;
+    const trailing = (7 - (totalCells % 7)) % 7;
+    for (let d = 1; d <= trailing; d++) {
+      const el = document.createElement('div');
+      el.className = 'cal-day other-month';
+      el.textContent = d;
+      grid.appendChild(el);
+    }
+  }
+  renderCalendar();
 </script>
 </body>
 </html>
