@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>THE LOST+UNFOUNDS — Interactive Kiosk Proposal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#ffffff;
+    --ink:#0a0a0a;
+    --soft:#3a3a3a;
+    --muted:#7a7a7a;
+    --rule:#1a1a1a;
+    --rule-soft:#d8d8d8;
+  }
+  @page { size: Letter; margin: 0; }
+  *{box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);
+    font-family:'Inter','Helvetica Neue',Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;}
+
+  .page{
+    width:100%; max-width:8.5in; min-height:11in;
+    padding:0.85in 0.95in;
+    background:var(--paper);
+    position:relative;
+    page-break-after:always;
+    display:flex; flex-direction:column;
+    overflow:hidden;
+    margin:0 auto;
+  }
+  @media print{
+    .page{width:8.5in; height:11in; margin:0;}
+  }
+  .page:last-child{page-break-after:auto;}
+
+  .runhead{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:8.5px; letter-spacing:.28em; text-transform:uppercase;
+    color:var(--ink); font-weight:600;
+  }
+  .runhead .sep{letter-spacing:.4em;}
+  .runhead .left{display:flex; gap:24px;}
+
+  .cover-body{
+    flex:1; display:flex; flex-direction:column; align-items:center;
+    text-align:center; padding-top:0.55in;
+  }
+  .cover-logo{
+    width:160px; height:160px; margin-bottom:24px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .cover-logo img{
+    width:100%; height:100%; object-fit:contain;
+    filter:invert(1);
+  }
+  .cover-brand{
+    font-size:13px; letter-spacing:.42em; text-transform:uppercase;
+    font-weight:700; margin-bottom:4px;
+  }
+  .cover-tag{
+    font-size:10px; letter-spacing:.32em; text-transform:uppercase;
+    color:var(--muted); font-weight:500; margin-bottom:52px;
+  }
+  .cover-label{
+    font-size:9px; letter-spacing:.36em; text-transform:uppercase;
+    color:var(--muted); font-weight:600; margin-bottom:8px;
+  }
+  .cover-h1{
+    font-size:34px; line-height:1.08; letter-spacing:.005em;
+    font-weight:800; text-transform:uppercase; margin:0 0 6px;
+  }
+  .cover-h1-sub{
+    font-size:13px; color:var(--soft); margin:0 0 48px;
+    font-weight:400;
+  }
+
+  .cover-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:36px;
+    text-align:left; width:100%; max-width:520px; margin-bottom:36px;
+  }
+  .cover-grid .field .k{
+    font-size:9px; letter-spacing:.28em; text-transform:uppercase;
+    color:var(--muted); font-weight:600; margin-bottom:6px;
+  }
+  .cover-grid .field .v{
+    font-size:12px; line-height:1.65; font-weight:500;
+  }
+  .cover-grid .field .v .lite{color:var(--soft); font-weight:400;}
+
+  .cover-dates{
+    display:flex; gap:48px; margin-top:auto; margin-bottom:8px;
+  }
+  .cover-dates .d{
+    font-size:9px; letter-spacing:.22em; text-transform:uppercase;
+    color:var(--muted); font-weight:600;
+  }
+  .cover-dates .d span{
+    display:block; font-size:12px; letter-spacing:.02em;
+    color:var(--ink); font-weight:600; margin-top:3px;
+    text-transform:none;
+  }
+
+  .runfoot{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:8px; letter-spacing:.3em; text-transform:uppercase;
+    color:var(--muted); font-weight:500;
+    margin-top:auto; padding-top:14px;
+  }
+
+  .pagehead{
+    margin-bottom:18px;
+  }
+  .pagehead .sect{
+    font-size:10px; letter-spacing:.34em; text-transform:uppercase;
+    font-weight:700; margin-bottom:14px;
+  }
+  .pagehead h2{
+    font-size:30px; line-height:1.1; letter-spacing:.005em;
+    font-weight:700; text-transform:uppercase; margin:0;
+    max-width:22ch;
+  }
+
+  p.lede{
+    font-size:13px; line-height:1.7; color:var(--ink);
+    max-width:62ch; margin:0 0 22px;
+  }
+  p.body{
+    font-size:12.5px; line-height:1.7; color:var(--soft);
+    max-width:62ch; margin:0 0 16px;
+  }
+
+  .rule{height:1px; background:var(--rule); border:0; margin:14px 0 22px;}
+  .rule-soft{height:1px; background:var(--rule-soft); border:0; margin:14px 0 22px;}
+
+  .subhead{
+    font-size:10px; letter-spacing:.32em; text-transform:uppercase;
+    font-weight:700; margin:6px 0 14px;
+  }
+
+  ul.list{list-style:none; padding:0; margin:0 0 18px;}
+  ul.list li{
+    position:relative; padding-left:18px; margin-bottom:9px;
+    font-size:12.5px; line-height:1.65; color:var(--ink);
+  }
+  ul.list li::before{
+    content:""; position:absolute; left:1px; top:8px;
+    width:5px; height:5px; background:var(--ink);
+  }
+  ul.list li .lite{color:var(--soft);}
+
+  .invest{
+    width:100%; border-collapse:collapse;
+    margin-top:8px; margin-bottom:22px;
+  }
+  .invest th, .invest td{
+    text-align:left; padding:14px 0;
+    border-bottom:1px solid var(--rule-soft);
+    font-size:11.5px; vertical-align:top;
+  }
+  .invest thead th{
+    font-size:9px; letter-spacing:.28em; text-transform:uppercase;
+    font-weight:700; color:var(--muted); padding-bottom:10px;
+    border-bottom:1px solid var(--rule);
+  }
+  .invest .item{font-weight:600; line-height:1.5;}
+  .invest .item small{display:block; font-weight:400; color:var(--soft); margin-top:3px; font-size:11px; line-height:1.55;}
+  .invest .freq{color:var(--soft); font-size:11px;}
+  .invest .price{text-align:right; font-weight:700; font-size:13px;}
+  .invest .price small{display:block; font-weight:400; color:var(--muted); font-size:10px; margin-top:2px;}
+
+  .callout{
+    background:#f5f5f5; padding:16px 20px;
+  }
+  .callout .k{
+    font-size:9.5px; letter-spacing:.26em; text-transform:uppercase;
+    font-weight:700; margin-bottom:8px;
+  }
+  .callout .v{
+    font-size:11.5px; line-height:1.7; color:var(--soft);
+  }
+
+  .compare{
+    width:100%; border-collapse:collapse;
+    margin-top:8px; margin-bottom:22px;
+  }
+  .compare th, .compare td{
+    text-align:left; padding:10px 0;
+    border-bottom:1px solid var(--rule-soft);
+    font-size:11.5px; vertical-align:top;
+  }
+  .compare thead th{
+    font-size:9px; letter-spacing:.28em; text-transform:uppercase;
+    font-weight:700; color:var(--muted); padding-bottom:10px;
+    border-bottom:1px solid var(--rule);
+  }
+  .compare .label{font-weight:600; color:var(--ink);}
+  .compare .market{text-align:right; color:var(--muted); font-size:11px;}
+  .compare .ours{text-align:right; font-weight:700; color:var(--ink); font-size:13px;}
+
+  .sign{
+    display:grid; grid-template-columns:1fr 1fr; gap:40px;
+    margin-top:auto; padding-top:20px;
+  }
+  .sign .col .k{
+    font-size:9px; letter-spacing:.24em; text-transform:uppercase;
+    color:var(--muted); font-weight:600; margin-bottom:28px;
+  }
+  .sign .col .line{
+    height:1px; background:var(--rule); margin-bottom:8px;
+  }
+  .sign .col .who{
+    font-size:12px; font-weight:600;
+  }
+  .sign .col .role{
+    font-size:10px; color:var(--muted); margin-top:2px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ====================== PAGE 1 — COVER ====================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="left">
+      <span>THE LOST+UNFOUNDS</span>
+      <span class="sep">·</span>
+      <span>Interactive Kiosk Proposal</span>
+    </div>
+    <div>Page 1 / 6</div>
+  </div>
+
+  <div class="cover-body">
+    <div class="cover-logo" aria-label="THE LOST+UNFOUNDS"><img src="https://www.thelostandunfounds.com/logo.png" alt="THE LOST+UNFOUNDS" /></div>
+    <div class="cover-brand">THE LOST+UNFOUNDS</div>
+    <div class="cover-tag">Can you see us?</div>
+
+    <div class="cover-label">Proposal · Interactive Kiosk</div>
+    <h1 class="cover-h1">Your Space. Your Screen.</h1>
+    <p class="cover-h1-sub">A custom interactive kiosk for [Your Business Name]</p>
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:8px;">
+      <a href="https://flash-gallery.vercel.app"
+         target="_blank" rel="noopener noreferrer"
+         style="display:inline-flex;align-items:center;gap:10px;
+                padding:13px 24px;
+                background:#0a0a0a;color:#ffffff;
+                font-family:'Inter','Helvetica Neue',Arial,sans-serif;
+                font-size:10.5px;font-weight:700;letter-spacing:.2em;
+                text-transform:uppercase;text-decoration:none;">
+        VIEW LIVE KIOSK PREVIEW
+      </a>
+    </div>
+    <p style="font-size:9px;letter-spacing:.18em;text-transform:uppercase;
+              color:#7a7a7a;margin:0 0 40px;font-family:'Inter',sans-serif;">
+      A live installation, running today — the same platform this proposal is built on
+    </p>
+
+    <div class="cover-grid">
+      <div class="field">
+        <div class="k">Prepared by</div>
+        <div class="v">
+          Joshua Greene<br>
+          <span class="lite">THE LOST AND UNFOUNDS LLC.</span><br>
+          <span class="lite">business@thelostandunfounds.com</span>
+        </div>
+      </div>
+      <div class="field">
+        <div class="k">Prepared for</div>
+        <div class="v">
+          [Your Business Name]<br>
+          <span class="lite">[City, State]</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cover-dates">
+      <div class="d">Proposal Date<span>July 3, 2026</span></div>
+      <div class="d">Valid Through<span>August 31, 2026</span></div>
+    </div>
+  </div>
+
+  <div class="runfoot">
+    <div>YOUR SPACE. YOUR SCREEN.</div>
+    <div>Page 1 / 6</div>
+  </div>
+</section>
+
+<!-- ====================== PAGE 2 — THE OPPORTUNITY ====================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="left">
+      <span>THE LOST+UNFOUNDS</span>
+      <span class="sep">·</span>
+      <span>Interactive Kiosk Proposal</span>
+    </div>
+    <div>Page 2 / 6</div>
+  </div>
+
+  <div class="pagehead">
+    <div class="sect">01 · The Opportunity</div>
+    <h2>Your art on display. Your brand in their hands.</h2>
+  </div>
+
+  <p class="lede">
+    An interactive kiosk turns a waiting room, lobby, or retail floor into an always-on showcase. Clients browse a full portfolio, explore flash sheets, scan a QR code to book, and check pricing — hands-free for your staff, running the whole time the doors are open.
+  </p>
+  <p class="body">
+    It gives every visitor a professional, branded experience the moment they walk in — a polished display that stands in for a printed binder, a phone handed across the counter, or a question sent to the front desk. The kiosk is always there, always current, and always on-brand.
+  </p>
+  <p class="body">
+    Once it is installed, it runs itself. Content updates happen remotely, and the display keeps working around the clock without anyone tending to it.
+  </p>
+
+  <hr class="rule">
+
+  <div class="subhead">What changes for you</div>
+
+  <ul class="list">
+    <li><strong>Your portfolio is always visible</strong> — <span class="lite">clients see your full body of work the moment they arrive, with no phones to pull up and no binders to hand over.</span></li>
+    <li><strong>Clients engage while they wait</strong> — <span class="lite">browsing the gallery and flash sheets fills the wait with something worth looking at, and time at the counter becomes time well spent.</span></li>
+    <li><strong>Every visitor gets a strong first impression</strong> — <span class="lite">a professional, always-on display builds confidence before the first conversation even starts.</span></li>
+  </ul>
+
+  <div class="runfoot">
+    <div>YOUR SPACE. YOUR SCREEN.</div>
+    <div>Page 2 / 6</div>
+  </div>
+</section>
+
+<!-- ====================== PAGE 3 — WHAT YOU GET ====================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="left">
+      <span>THE LOST+UNFOUNDS</span>
+      <span class="sep">·</span>
+      <span>Interactive Kiosk Proposal</span>
+    </div>
+    <div>Page 3 / 6</div>
+  </div>
+
+  <div class="pagehead">
+    <div class="sect">02 · What You Get</div>
+    <h2>Hardware, software, and installation — all handled.</h2>
+  </div>
+
+  <div class="subhead">The Hardware</div>
+
+  <ul class="list">
+    <li><strong>32" commercial-grade touchscreen</strong> — <span class="lite">a capacitive display built for continuous public use.</span></li>
+    <li><strong>Dedicated PC</strong> — <span class="lite">runs the kiosk independently, always on, with no need for a connected laptop or staff computer.</span></li>
+    <li><strong>Professional mounting</strong> — <span class="lite">a floor stand or wall mount, sized and positioned for your space.</span></li>
+    <li><strong>All cables and connections included</strong> — <span class="lite">everything needed to power and run the display is part of the package.</span></li>
+  </ul>
+
+  <hr class="rule-soft">
+
+  <div class="subhead">The Software</div>
+
+  <ul class="list">
+    <li><strong>Custom-built kiosk application</strong> — <span class="lite">designed around your brand, your gallery, and your content.</span></li>
+    <li><strong>Touch-optimized gallery</strong> — <span class="lite">swipe navigation built for a public touchscreen, not a repurposed website.</span></li>
+    <li><strong>Automatic screensaver mode</strong> — <span class="lite">cycles through your content when idle and wakes instantly on touch.</span></li>
+    <li><strong>Fullscreen kiosk mode</strong> — <span class="lite">a clean display with no browser interface, just your content.</span></li>
+    <li><strong>Responsive design</strong> — <span class="lite">the same content adapts cleanly to any screen size, now or if the hardware changes later.</span></li>
+    <li><strong>QR code integration</strong> — <span class="lite">links straight to your booking page or social profiles.</span></li>
+  </ul>
+
+  <hr class="rule-soft">
+
+  <div class="subhead">Installation &amp; Training</div>
+
+  <ul class="list">
+    <li><strong>On-site hardware assembly</strong> — <span class="lite">the full setup is installed and tested in your space.</span></li>
+    <li><strong>Display calibration and touch configuration</strong> — <span class="lite">every screen is tuned for accurate, responsive touch before we leave.</span></li>
+    <li><strong>Content loaded and tested</strong> — <span class="lite">your artwork, photos, branding, and QR codes are in place and verified before launch.</span></li>
+    <li><strong>Hands-on training</strong> — <span class="lite">you and your team learn exactly how to update content going forward.</span></li>
+  </ul>
+
+  <div class="runfoot">
+    <div>YOUR SPACE. YOUR SCREEN.</div>
+    <div>Page 3 / 6</div>
+  </div>
+</section>
+
+<!-- ====================== PAGE 4 — HOW IT WORKS ====================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="left">
+      <span>THE LOST+UNFOUNDS</span>
+      <span class="sep">·</span>
+      <span>Interactive Kiosk Proposal</span>
+    </div>
+    <div>Page 4 / 6</div>
+  </div>
+
+  <div class="pagehead">
+    <div class="sect">03 · How It Works</div>
+    <h2>Plug in. Power on. It runs itself.</h2>
+  </div>
+
+  <p class="lede">
+    From power-on to closing time, the kiosk manages itself — here is what a day with it actually looks like.
+  </p>
+
+  <ul class="list">
+    <li><span class="lite">The kiosk powers on with the PC and boots directly into fullscreen mode — no login, no setup, no staff involvement.</span></li>
+    <li><span class="lite">A branded splash screen greets every visitor as the display comes to life.</span></li>
+    <li><span class="lite">Clients tap to browse, swiping through the gallery at their own pace.</span></li>
+    <li><span class="lite">A tap zooms into any piece for a closer look at detail and line work.</span></li>
+    <li><span class="lite">A QR code on screen links straight to your booking page.</span></li>
+    <li><span class="lite">After two minutes idle, the screensaver takes over and auto-cycles through your content.</span></li>
+    <li><span class="lite">A tap anywhere wakes the display and picks right back up.</span></li>
+  </ul>
+
+  <div class="callout" style="margin-top:auto;">
+    <div class="k">Built for the real world</div>
+    <div class="v">The system is designed to keep running without anyone watching it: it auto-restarts after a power outage, uses Wake Lock to keep the display from sleeping, has pinch-zoom disabled to prevent accidental gestures, and activates the screensaver automatically during idle periods. It is built for environments where nobody is standing by to babysit the screen.</div>
+  </div>
+
+  <div class="runfoot">
+    <div>YOUR SPACE. YOUR SCREEN.</div>
+    <div>Page 4 / 6</div>
+  </div>
+</section>
+
+<!-- ====================== PAGE 5 — VALUE & MARKET COMPARISON ====================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="left">
+      <span>THE LOST+UNFOUNDS</span>
+      <span class="sep">·</span>
+      <span>Interactive Kiosk Proposal</span>
+    </div>
+    <div>Page 5 / 6</div>
+  </div>
+
+  <div class="pagehead">
+    <div class="sect">04 · Value &amp; Market Comparison</div>
+    <h2>What this would cost anywhere else.</h2>
+  </div>
+
+  <p class="lede">
+    The price reflects a production-grade kiosk platform already running live installations, paired with hardware sourced and passed through at cost. Here is what the same package runs at standard market rates.
+  </p>
+
+  <table class="compare">
+    <thead>
+      <tr>
+        <th style="width:48%">Component</th>
+        <th style="width:26%; text-align:right;">Market Rate</th>
+        <th style="width:26%; text-align:right;">Your Price</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="label">Commercial kiosk hardware package</td>
+        <td class="market">$2,000 – $5,000</td>
+        <td class="ours">$1,200</td>
+      </tr>
+      <tr>
+        <td class="label">Custom kiosk software development</td>
+        <td class="market">$3,000 – $10,000</td>
+        <td class="ours">$1,500</td>
+      </tr>
+      <tr>
+        <td class="label">Content setup and configuration</td>
+        <td class="market">$500 – $1,500</td>
+        <td class="ours">$300</td>
+      </tr>
+      <tr>
+        <td class="label">Professional installation</td>
+        <td class="market">$500 – $2,000</td>
+        <td class="ours">$500</td>
+      </tr>
+      <tr>
+        <td class="label">Touch calibration and training</td>
+        <td class="market">$300 – $800</td>
+        <td class="ours">$200</td>
+      </tr>
+      <tr>
+        <td class="label" style="font-weight:800;">Total market range</td>
+        <td class="market" style="font-weight:700; font-size:13px; color:var(--ink);">$6,300 – $19,300</td>
+        <td class="ours" style="font-size:15px;">$3,700</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <div class="k">Why the difference</div>
+    <div class="v">The kiosk software is built on the same production-grade platform already running live installations — not built from scratch for each client. The hardware is sourced at cost and passed through transparently, with every component itemized. The $3,700 covers the complete package: equipment, software development, on-site installation, and hands-on training.</div>
+  </div>
+
+  <div class="callout" style="margin-top:14px;">
+    <div class="k">Equipment transparency</div>
+    <div class="v">Every piece of hardware is itemized at actual cost, with receipts provided on request. The equipment budget is fully open — the value in this proposal comes from the software, the installation expertise, and the ongoing support behind it.</div>
+  </div>
+
+  <div class="runfoot">
+    <div>YOUR SPACE. YOUR SCREEN.</div>
+    <div>Page 5 / 6</div>
+  </div>
+</section>
+
+<!-- ====================== PAGE 6 — INVESTMENT & ACCEPTANCE ====================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="left">
+      <span>THE LOST+UNFOUNDS</span>
+      <span class="sep">·</span>
+      <span>Interactive Kiosk Proposal</span>
+    </div>
+    <div>Page 6 / 6</div>
+  </div>
+
+  <div class="pagehead">
+    <div class="sect">05 · Investment &amp; Next Steps</div>
+    <h2>Flat rates. Full transparency. Full support.</h2>
+  </div>
+
+  <table class="invest">
+    <thead>
+      <tr>
+        <th style="width:52%">Item</th>
+        <th style="width:20%">Frequency</th>
+        <th style="width:28%; text-align:right;">Price</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="item">Interactive Kiosk Package
+          <small>Touchscreen, dedicated PC, mounting, custom kiosk software, content setup, on-site installation, and training — every component itemized above.</small>
+        </td>
+        <td class="freq">One-time</td>
+        <td class="price">$3,700</td>
+      </tr>
+      <tr>
+        <td class="item">Maintenance &amp; Support
+          <small>Hosting, remote troubleshooting, software updates, and content change requests.</small>
+        </td>
+        <td class="freq">Monthly</td>
+        <td class="price">$100/mo<small>3-mo min · cancel anytime after</small></td>
+      </tr>
+      <tr>
+        <td class="item">Add-On Features
+          <small>Additional screens, analytics dashboards, remote content management, custom interactions, QR tracking, and event-mode rentals.</small>
+        </td>
+        <td class="freq">Per scope</td>
+        <td class="price">From $300<small>quoted before work starts</small></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <div class="k">What comes with every kiosk</div>
+    <div class="v">
+      <strong>30 days of post-installation support</strong> — direct access to troubleshoot and fix anything that comes up after launch.<br><br>
+      <strong>Content updates during the first month</strong> — included as part of getting the kiosk fully dialed in.<br><br>
+      <strong>Remote troubleshooting</strong> — most issues are resolved without a site visit.<br><br>
+      <strong>Replacement coordination</strong> — if any hardware component needs attention, it is coordinated and handled.
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:14px;">
+    <div class="k">Timeline &amp; Payment Terms</div>
+    <div class="v"><strong>$1,850 deposit to begin. Balance of $1,850 due on installation day.</strong> Hardware ships within 1 week of deposit, with software development running in parallel. Installation is scheduled within 2 weeks of hardware arrival. Total timeline: 3 weeks from deposit to a live kiosk.</div>
+  </div>
+
+  <p class="body" style="margin-top:18px;">
+    <strong>Acceptance.</strong> Reply by email or text with <em>"approved"</em> to receive the deposit invoice.
+  </p>
+
+  <div class="sign">
+    <div class="col">
+      <div class="k">For THE LOST AND UNFOUNDS LLC.</div>
+      <div class="line"></div>
+      <div class="who">Joshua Greene</div>
+      <div class="role">Founder · July 3, 2026</div>
+    </div>
+    <div class="col">
+      <div class="k">For [Your Business Name]</div>
+      <div class="line"></div>
+      <div class="who">&nbsp;</div>
+      <div class="role">Owner · Date: ___________</div>
+    </div>
+  </div>
+
+  <div class="runfoot">
+    <div>YOUR SPACE. YOUR SCREEN.</div>
+    <div>Page 6 / 6</div>
+  </div>
+</section>
+
+</body>
+</html>
