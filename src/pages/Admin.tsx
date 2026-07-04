@@ -1518,9 +1518,9 @@ export default function Admin() {
       <div ref={pageTopRef} className="min-h-screen bg-black text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-hidden">
         {/* Header */}
       <div className="mb-8">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-2 sm:gap-4">
           {/* Business Switcher */}
-          <div className="relative">
+          <div className="relative min-w-0">
             <button
               onClick={() => setBusinessSwitcherOpen(o => !o)}
               className="flex items-center gap-2 group"
