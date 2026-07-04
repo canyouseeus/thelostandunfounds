@@ -107,6 +107,7 @@ export default function BecomeAffiliate() {
             onClose={() => setShowAuthModal(false)}
             intent="affiliate"
             title="Join the Affiliate Program"
+            initialMode="signup"
         />
         <SEOHead
             title="Become an Affiliate - Earn 42% of Profits"

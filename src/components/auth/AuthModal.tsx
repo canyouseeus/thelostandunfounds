@@ -17,7 +17,7 @@ interface AuthModalProps {
 }
 
 export default function AuthModal({ isOpen, onClose, message, title, initialMode = 'signin', onLoginSuccess, required = false, intent }: AuthModalProps) {
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(initialMode === 'signup');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
