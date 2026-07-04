@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CubeIcon } from '@heroicons/react/24/outline';
 import { LoadingSpinner } from './Loading';
+import { SERVICE_PRODUCTS } from '../data/stripe-products';
 
 interface Product {
   id: string;
@@ -10,6 +11,8 @@ interface Product {
   cost: number;
   updated_at: string;
 }
+
+const SERVICE_BY_ID = Object.fromEntries(SERVICE_PRODUCTS.map((s) => [s.id, s]));
 
 export function ProductCostManagement() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -42,22 +45,30 @@ export function ProductCostManagement() {
 
   return (
     <div className="space-y-2">
-      {products.map((p) => (
-        <div key={p.id} className="flex items-center justify-between bg-white/5 px-4 py-3">
-          <div>
-            <div className="text-white font-mono text-sm">{p.product_id}</div>
-            {p.variant_id && (
-              <div className="text-white/40 font-mono text-xs mt-0.5">{p.variant_id}</div>
-            )}
+      {products.map((p) => {
+        const service = SERVICE_BY_ID[p.product_id];
+        const cost = parseFloat(p.cost.toString());
+        const profit = service ? Math.max(0, service.price - cost) : null;
+        return (
+          <div key={p.id} className="flex items-center justify-between bg-white/5 px-4 py-3">
+            <div>
+              <div className="text-white font-mono text-sm">{service ? service.name : p.product_id}</div>
+              <div className="text-white/40 font-mono text-xs mt-0.5">
+                {service ? service.category : p.variant_id || ''}
+              </div>
+            </div>
+            <div className="flex items-center gap-6">
+              <span className={`text-[10px] px-2 py-0.5 uppercase font-bold ${p.source === 'paypal' ? 'bg-blue-400/20 text-blue-400' : 'bg-white/10 text-white/60'}`}>
+                {p.source}
+              </span>
+              <span className="text-white/60 font-mono text-xs">cost ${cost.toFixed(2)}</span>
+              {profit !== null && (
+                <span className="text-emerald-400 font-bold font-mono text-xs">profit ${profit.toFixed(2)}</span>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-6">
-            <span className={`text-[10px] px-2 py-0.5 uppercase font-bold ${p.source === 'paypal' ? 'bg-blue-400/20 text-blue-400' : 'bg-white/10 text-white/60'}`}>
-              {p.source}
-            </span>
-            <span className="text-white font-bold font-mono">${parseFloat(p.cost.toString()).toFixed(2)}</span>
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

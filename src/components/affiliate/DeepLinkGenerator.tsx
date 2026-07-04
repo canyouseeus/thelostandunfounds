@@ -8,7 +8,7 @@ import { cn } from '../ui/utils';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type ProductType = 'physical' | 'digital' | 'gallery' | 'event';
+type ProductType = 'physical' | 'digital' | 'gallery' | 'event' | 'service';
 type SortKey = 'popular' | 'hot' | 'new' | 'price_asc' | 'price_desc' | 'earnings_desc';
 type FilterType = 'all' | ProductType;
 
@@ -45,6 +45,7 @@ const TYPE_LABELS: Record<ProductType, string> = {
   digital: 'Digital',
   gallery: 'Gallery',
   event: 'Event',
+  service: 'Service',
 };
 
 const TYPE_COLORS: Record<ProductType, string> = {
@@ -52,6 +53,7 @@ const TYPE_COLORS: Record<ProductType, string> = {
   digital: 'text-purple-400',
   gallery: 'text-amber-400',
   event: 'text-green-400',
+  service: 'text-pink-400',
 };
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
@@ -286,6 +288,7 @@ export default function DeepLinkGenerator({
     { key: 'digital',  label: 'Digital' },
     { key: 'gallery',  label: 'Gallery' },
     { key: 'event',    label: 'Events' },
+    { key: 'service',  label: 'Services' },
   ];
 
   return (

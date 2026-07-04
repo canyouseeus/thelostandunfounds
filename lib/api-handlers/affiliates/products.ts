@@ -9,6 +9,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { getFourthwallProducts } from '../../fourthwall/handler.js';
+import { SERVICE_PRODUCTS } from '../../../src/data/stripe-products.js';
 
 export async function products(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
@@ -139,7 +140,37 @@ export async function products(req: VercelRequest, res: VercelResponse) {
     };
   });
 
+  // ── Booked services (photography, web dev, bundles, kiosk) ────────────────
+  const { data: serviceCostRows } = await supabase
+    .from('product_costs')
+    .select('product_id, cost')
+    .in('product_id', SERVICE_PRODUCTS.map((s) => s.id))
+    .eq('source', 'local');
+
+  const costByServiceId: Record<string, number> = {};
+  for (const row of serviceCostRows || []) {
+    costByServiceId[row.product_id] = parseFloat(row.cost);
+  }
+
+  const serviceProducts = SERVICE_PRODUCTS.map((svc) => {
+    const cost = costByServiceId[svc.id];
+    const profit = cost !== undefined ? Math.max(0, svc.price - cost) : svc.price;
+    return {
+      id: svc.id,
+      title: svc.name,
+      type: 'service',
+      price: svc.price,
+      profit,
+      url: '/book',
+      image: null,
+      salesCount: 0,
+      isNew: false,
+      isHot: false,
+      category: svc.category,
+    };
+  });
+
   return res.status(200).json({
-    products: [...physicalProducts, ...galleryProducts],
+    products: [...physicalProducts, ...galleryProducts, ...serviceProducts],
   });
 }
