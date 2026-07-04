@@ -666,7 +666,7 @@ const BookingPage: React.FC = () => {
                             All packages require a{' '}
                             <span className="text-white font-bold">50% deposit</span>{' '}
                             to hold the date. Balance due before the session.
-                            Payment via Bitcoin (Strike), Apple Pay, Cashapp, or Venmo.
+                            Payment via Stripe or Bitcoin.
                         </p>
                     </div>
                 </div>
@@ -988,8 +988,8 @@ const BookingPage: React.FC = () => {
                                                     <span className="text-white font-bold">50% deposit</span>{' '}
                                                     finalizes the booking — contract and payment link follow after we scope it out.
                                                     Payment via{' '}
-                                                    <span className="text-white font-bold">Bitcoin (Strike)</span>,
-                                                    Apple Pay, Cashapp, or Venmo.
+                                                    <span className="text-white font-bold">Stripe</span> or{' '}
+                                                    <span className="text-white font-bold">Bitcoin</span>.
                                                 </p>
                                             </div>
                                         </div>
