@@ -57,6 +57,8 @@ const CATEGORY_ICON: Record<ServiceProduct['category'], typeof CameraIcon> = {
 
 const CATEGORY_OPTIONS: ServiceProduct['category'][] = ['photography', 'web-dev', 'bundle', 'kiosk'];
 
+const STATUS_LABEL: Record<ProductStatus, string> = { active: 'Publish', draft: 'Drafts' };
+
 const ADMIN_HEADERS = { 'Content-Type': 'application/json', 'X-Admin-Email': 'thelostandunfounds@gmail.com' };
 
 function mergeProduct(product: ServiceProduct, row: ProductCost | undefined): MergedProduct {
@@ -169,7 +171,7 @@ export function ProductCostManagement() {
                   className={`ml-auto flex items-center gap-1 text-[9px] font-black uppercase tracking-widest ${isDraft ? 'text-white/30' : 'text-emerald-400'}`}
                 >
                   {isDraft ? <PauseCircleIcon className="w-3.5 h-3.5" /> : <CheckCircleIcon className="w-3.5 h-3.5" />}
-                  {merged.status}
+                  {STATUS_LABEL[merged.status]}
                 </span>
               </div>
             </ExpandableScreenTrigger>
@@ -362,7 +364,7 @@ function ProductDetail({
               }`}
             >
               {s === 'active' ? <CheckCircleIcon className="w-3.5 h-3.5" /> : <PauseCircleIcon className="w-3.5 h-3.5" />}
-              {s}
+              {STATUS_LABEL[s]}
             </button>
           ))}
         </div>
