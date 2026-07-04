@@ -17,6 +17,38 @@
       "autoPort": true
     },
     {
+      "name": "Tattoo Artist Proposal Preview",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["-y", "--", "vercel", "dev", "--yes"],
+      "port": 3000,
+      "autoPort": true,
+      "url": "http://localhost:3000/tattoo-artist-proposal.html"
+    },
+    {
+      "name": "Tattoo Artist Website Preview",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["-y", "--", "vercel", "dev", "--yes"],
+      "port": 3000,
+      "autoPort": true,
+      "url": "http://localhost:3000/tattoo-artist-preview.html"
+    },
+    {
+      "name": "Tattoo Artist Dashboard Preview",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["-y", "--", "vercel", "dev", "--yes"],
+      "port": 3000,
+      "autoPort": true,
+      "url": "http://localhost:3000/tattoo-artist-dashboard-preview.html"
+    },
+    {
+      "name": "Kiosk Proposal Preview",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["-y", "--", "vercel", "dev", "--yes"],
+      "port": 3000,
+      "autoPort": true,
+      "url": "http://localhost:3000/kiosk-proposal.html"
+    },
+    {
       "name": "Vite Frontend",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite"],
