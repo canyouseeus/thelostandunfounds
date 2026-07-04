@@ -152,16 +152,17 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
 
     const [activeGalleryTab, setActiveGalleryTab] = useState<'public' | 'private'>('public');
 
-    // Read initial viewMode from `?view=shop|booking|gallery`. This is how the
-    // BOOK ME nav link deep-links into the booking tab on the homepage now
-    // that the standalone /booking route has been removed (it was producing
-    // duplicate-content hits at extensionless URLs).
+    // Read initial viewMode from `?view=shop|services|gallery`. This is how the
+    // SERVICES nav link deep-links into the services tab on the homepage.
     const [searchParams] = useSearchParams();
     const initialView = (() => {
         const v = searchParams.get('view');
-        return v === 'shop' || v === 'booking' || v === 'gallery' ? v : 'gallery';
+        // support legacy ?view=booking so old links still work
+        if (v === 'shop' || v === 'gallery') return v;
+        if (v === 'services' || v === 'booking') return 'services';
+        return 'gallery';
     })();
-    const [viewMode, setViewMode] = useState<'gallery' | 'shop' | 'booking'>(initialView);
+    const [viewMode, setViewMode] = useState<'gallery' | 'shop' | 'services'>(initialView);
 
     // Scroll to top when returning from an inline gallery back to the grid
     const prevActiveGallery = useRef<string | null>(null);
@@ -248,14 +249,14 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                                 )}
                             </button>
                             <button
-                                onClick={() => setViewMode('booking')}
+                                onClick={() => setViewMode('services')}
                                 className={cn(
                                     "text-[10px] font-black uppercase tracking-[0.3em] transition-all relative pb-2",
-                                    viewMode === 'booking' ? "text-white" : "text-white/30 hover:text-white/60"
+                                    viewMode === 'services' ? "text-white" : "text-white/30 hover:text-white/60"
                                 )}
                             >
-                                Booking
-                                {viewMode === 'booking' && (
+                                Services
+                                {viewMode === 'services' && (
                                     <motion.div
                                         layoutId="viewModeUnderline"
                                         className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-white"
@@ -274,8 +275,8 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                 </div>
             )}
 
-            {/* Booking view — shown only when the booking tab is active */}
-            {isHomepage && viewMode === 'booking' && (
+            {/* Services view — shown only when the services tab is active */}
+            {isHomepage && viewMode === 'services' && (
                 <BookingPage />
             )}
 

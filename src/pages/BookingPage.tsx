@@ -1,36 +1,170 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    CalendarIcon,
-    ClockIcon,
+    CameraIcon,
+    ComputerDesktopIcon,
+    RocketLaunchIcon,
     MapPinIcon,
-    CheckCircleIcon,
-    XMarkIcon,
+    ClockIcon,
+    CalendarIcon,
+    UserIcon,
+    EnvelopeIcon,
     ChevronLeftIcon,
     ChevronRightIcon,
     ArrowLongRightIcon,
-    UserIcon,
-    EnvelopeIcon,
-    ChatBubbleLeftRightIcon,
+    CheckCircleIcon,
+    BoltIcon,
 } from '@heroicons/react/24/outline';
-// SEOHead removed: BookingPage is now rendered only as an embedded
-// homepage tab. See the comment near the return statement below.
+
+// ── Service data ──────────────────────────────────────────────────────────────
+
+const PHOTO_SERVICES = [
+    {
+        id: 'portrait',
+        label: 'LIFESTYLE PORTRAIT',
+        price: '$250',
+        meta: '30–45 min · Downtown Austin',
+        features: [
+            '10–15 curated photos',
+            'Same-day delivery',
+            'Candid, lifestyle direction',
+        ],
+    },
+    {
+        id: 'event',
+        label: 'EVENT COVERAGE',
+        price: '$600',
+        meta: '3 hours · Your venue',
+        features: [
+            '20–30 curated photos, next-day',
+            'Event highlight reel within 48 hrs',
+            '+$175/hr for additional hours',
+        ],
+    },
+    {
+        id: 'halfday',
+        label: 'HALF-DAY CONTENT',
+        price: '$800',
+        meta: '4 hours · On location',
+        features: [
+            '30–50 curated photos',
+            '2–3 short-form reels',
+            'Lifestyle + product coverage',
+        ],
+    },
+    {
+        id: 'fullday',
+        label: 'FULL-DAY CONTENT',
+        price: '$1,400',
+        meta: '8 hours · On location',
+        features: [
+            '50+ curated photos',
+            '2–3 short-form reels',
+            'Everything a brand needs in a single day',
+        ],
+        featured: true,
+    },
+];
+
+const WEB_SERVICES = [
+    {
+        id: 'starter',
+        label: 'STARTER',
+        price: '$1,500',
+        features: [
+            'Template-based site',
+            '5–8 pages',
+            'Mobile responsive',
+            'Vercel deployment',
+        ],
+    },
+    {
+        id: 'professional',
+        label: 'PROFESSIONAL',
+        price: '$3,500',
+        features: [
+            'Custom branding',
+            'Dashboard / admin panel',
+            'Booking system',
+            'SEO optimization',
+        ],
+        featured: true,
+    },
+    {
+        id: 'agency',
+        label: 'AGENCY',
+        price: '$6,000+',
+        features: [
+            'Full custom build',
+            'CRM integration',
+            'Email automation',
+            'Payment processing',
+        ],
+    },
+    {
+        id: 'maintenance',
+        label: 'MONTHLY MAINTENANCE',
+        price: '$150–300/mo',
+        features: [
+            'Content updates',
+            'Performance monitoring',
+            'Priority support',
+            'Security patches',
+        ],
+    },
+];
+
+const BUNDLES = [
+    {
+        id: 'launch',
+        label: 'LAUNCH PACKAGE',
+        price: '$2,500',
+        tagline: 'Launch online, fully equipped.',
+        features: [
+            'Starter website (5–8 pages)',
+            'Lifestyle portrait session',
+            'Product & space photography for the site',
+            'Same-day photo delivery',
+        ],
+    },
+    {
+        id: 'brand',
+        label: 'BRAND PACKAGE',
+        price: '$5,000',
+        tagline: 'A complete brand presence, built and shot in one engagement.',
+        features: [
+            'Professional website with custom branding',
+            'Half-day content shoot (4 hrs)',
+            'Brand photography + social assets',
+            'Short-form reel content',
+        ],
+        featured: true,
+    },
+];
+
+const TRAVEL_TIERS = [
+    { range: 'Downtown Austin', rate: 'Included' },
+    { range: '15–50 mi', rate: '+$50' },
+    { range: '50+ mi', rate: '+$100 + mileage' },
+    { range: 'Overnight', rate: 'Lodging at cost' },
+];
+
+// ── Booking calendar/wizard ───────────────────────────────────────────────────
 
 const EVENT_TYPES = [
-    'Concert / Show',
-    'Club / Nightlife',
-    'Lifestyle Shoot',
     'Portrait Session',
+    'Lifestyle Shoot',
+    'Event Coverage',
+    'Half-Day Content',
+    'Full-Day Content',
     'Brand / Editorial',
-    'Wedding / Event',
+    'Web Development',
     'Retainer (Monthly)',
     'Other',
 ];
 
 interface TimeSlot { label: string; start: string; end: string; display: string }
 
-// Canonical time windows the photographer offers. Start/end are 24h so they
-// round-trip to Postgres TIME cleanly; display is what the client sees.
 const TIME_SLOTS: TimeSlot[] = [
     { label: 'Morning',   start: '09:00', end: '12:00', display: '9AM – 12PM' },
     { label: 'Afternoon', start: '12:00', end: '17:00', display: '12PM – 5PM' },
@@ -38,7 +172,6 @@ const TIME_SLOTS: TimeSlot[] = [
     { label: 'Night',     start: '20:00', end: '23:00', display: '8PM – 11PM' },
 ];
 
-// Compare two HH:MM strings. Returns true when the ranges overlap at all.
 function rangesOverlap(aStart: string, aEnd: string, bStart: string, bEnd: string): boolean {
     return aStart < bEnd && bStart < aEnd;
 }
@@ -84,10 +217,8 @@ const MONTH_NAMES = [
     'January','February','March','April','May','June',
     'July','August','September','October','November','December',
 ];
-
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-/* ─── Inline Calendar ─────────────────────────────────────── */
 const BookingCalendar: React.FC<{
     selected: string;
     blockedDates: string[];
@@ -118,24 +249,19 @@ const BookingCalendar: React.FC<{
         return dt < t;
     };
 
-    const prev = () => {
-        setCursor(c => {
-            const m = c.month === 0 ? 11 : c.month - 1;
-            const y = c.month === 0 ? c.year - 1 : c.year;
-            return { year: y, month: m };
-        });
-    };
-    const next = () => {
-        setCursor(c => {
-            const m = c.month === 11 ? 0 : c.month + 1;
-            const y = c.month === 11 ? c.year + 1 : c.year;
-            return { year: y, month: m };
-        });
-    };
+    const prev = () => setCursor(c => {
+        const m = c.month === 0 ? 11 : c.month - 1;
+        const y = c.month === 0 ? c.year - 1 : c.year;
+        return { year: y, month: m };
+    });
+    const next = () => setCursor(c => {
+        const m = c.month === 11 ? 0 : c.month + 1;
+        const y = c.month === 11 ? c.year + 1 : c.year;
+        return { year: y, month: m };
+    });
 
     return (
         <div className="w-full">
-            {/* Month nav */}
             <div className="flex items-center justify-between mb-4">
                 <button onClick={prev} className="p-1 text-white/40 hover:text-white transition-colors">
                     <ChevronLeftIcon className="w-4 h-4" />
@@ -148,7 +274,6 @@ const BookingCalendar: React.FC<{
                 </button>
             </div>
 
-            {/* Day headers */}
             <div className="grid grid-cols-7 mb-1">
                 {DAY_NAMES.map(d => (
                     <div key={d} className="text-center text-[9px] font-black uppercase tracking-widest text-white/20 py-1">
@@ -157,17 +282,14 @@ const BookingCalendar: React.FC<{
                 ))}
             </div>
 
-            {/* Calendar grid */}
             <div className="grid grid-cols-7 gap-0.5">
                 {days.map((d, i) => {
                     if (!d) return <div key={`empty-${i}`} />;
-
                     const dateStr = fmt(d);
                     const past = isPast(d);
                     const blocked = blockedDates.includes(dateStr);
                     const isSel = dateStr === selected;
                     const disabled = past || blocked;
-
                     return (
                         <button
                             key={dateStr}
@@ -183,9 +305,6 @@ const BookingCalendar: React.FC<{
                             `}
                         >
                             {d}
-                            {blocked && !past && (
-                                <span className="absolute w-1 h-1 rounded-full bg-red-500 bottom-0.5 left-1/2 -translate-x-1/2" />
-                            )}
                         </button>
                     );
                 })}
@@ -205,8 +324,46 @@ const BookingCalendar: React.FC<{
     );
 };
 
-/* ─── Main Page ─────────────────────────────────────────────── */
+// ── Service card components ───────────────────────────────────────────────────
+
+const ServiceCard: React.FC<{
+    label: string;
+    price: string;
+    meta?: string;
+    features: string[];
+    featured?: boolean;
+}> = ({ label, price, meta, features, featured }) => {
+    const base = featured
+        ? 'bg-white text-black'
+        : 'bg-white/[0.04] text-white';
+    const priceColor = featured ? 'text-black' : 'text-white';
+    const metaColor = featured ? 'text-black/50' : 'text-white/40';
+    const featureColor = featured ? 'text-black/60' : 'text-white/50';
+    const dotColor = featured ? 'bg-black/20' : 'bg-white/20';
+
+    return (
+        <div className={`${base} p-6 flex flex-col`}>
+            <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-3 opacity-60">{label}</p>
+            <p className={`text-3xl font-black ${priceColor} mb-1`}>{price}</p>
+            {meta && <p className={`text-[10px] font-bold uppercase tracking-wider ${metaColor} mb-5`}>{meta}</p>}
+            <ul className="space-y-2 mt-auto">
+                {features.map(f => (
+                    <li key={f} className="flex items-start gap-2">
+                        <span className={`w-1 h-1 rounded-full ${dotColor} mt-1.5 flex-shrink-0`} />
+                        <span className={`text-xs leading-relaxed ${featureColor}`}>{f}</span>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+};
+
+// ── Main component ────────────────────────────────────────────────────────────
+
 const BookingPage: React.FC = () => {
+    const scheduleRef = useRef<HTMLDivElement>(null);
+
+    // Booking wizard state
     const [form, setForm] = useState<FormData>(EMPTY_FORM);
     const [blockedDates, setBlockedDates] = useState<string[]>([]);
     const [step, setStep] = useState<'calendar' | 'details' | 'success'>('calendar');
@@ -220,7 +377,6 @@ const BookingPage: React.FC = () => {
     const [conflictingEvents, setConflictingEvents] = useState<Array<{ id: string; title: string; location: string | null }>>([]);
     const wizardRef = useRef<HTMLDivElement>(null);
 
-    // Fetch time-slot conflicts + events on the selected date.
     useEffect(() => {
         if (!form.event_date) { setBookedSlots([]); setConflictingEvents([]); return; }
         fetch(`/api/booking?action=slots&date=${form.event_date}`)
@@ -232,20 +388,15 @@ const BookingPage: React.FC = () => {
             .catch(() => { setBookedSlots([]); setConflictingEvents([]); });
     }, [form.event_date]);
 
-    // Scroll the wizard (or the full page on success) to the top whenever the
-    // active step changes. Offsets the scroll by the sticky nav + tab bar
-    // height so the wizard header isn't hidden under them.
     useEffect(() => {
         requestAnimationFrame(() => {
             if (step === 'details' && wizardRef.current) {
                 const navVar = getComputedStyle(document.documentElement).getPropertyValue('--nav-height').trim();
                 const navH = navVar ? parseInt(navVar) : 64;
-                const tabsH = 56; // Gallery/Shop/Booking sticky toggle row
+                const tabsH = 56;
                 const rect = wizardRef.current.getBoundingClientRect();
                 const top = window.pageYOffset + rect.top - navH - tabsH - 8;
                 window.scrollTo({ top, behavior: 'smooth' });
-            } else {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         });
     }, [detailsStep, step]);
@@ -255,13 +406,12 @@ const BookingPage: React.FC = () => {
             case 0: return form.name.trim().length > 0;
             case 1: return form.email.trim().length > 0 && form.email.includes('@');
             case 2: return form.event_type.trim().length > 0;
-            case 3: return true; // times are optional
-            case 4: return true; // venue + notes optional
+            case 3: return true;
+            case 4: return true;
             default: return false;
         }
     };
 
-    // Fetch blocked dates
     useEffect(() => {
         fetch('/api/booking?action=availability')
             .then(r => r.json())
@@ -281,7 +431,6 @@ const BookingPage: React.FC = () => {
         e.preventDefault();
         setError('');
         setSubmitting(true);
-
         try {
             const res = await fetch('/api/booking?action=request', {
                 method: 'POST',
@@ -291,11 +440,6 @@ const BookingPage: React.FC = () => {
                     retainer: form.event_type === 'Retainer (Monthly)',
                 }),
             });
-
-            // Read as text first so we can surface a useful error when the
-            // endpoint returns HTML (Vercel timeout, 500 page, etc.) instead of
-            // the generic Safari "The string did not match the expected pattern"
-            // that comes from JSON.parse on HTML.
             const rawText = await res.text();
             let data: any = null;
             try {
@@ -303,13 +447,8 @@ const BookingPage: React.FC = () => {
             } catch {
                 data = { error: `Server returned non-JSON (${res.status}): ${rawText.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 180)}` };
             }
-
-            if (!res.ok) {
-                throw new Error(data?.error || `Submission failed (${res.status})`);
-            }
-
+            if (!res.ok) throw new Error(data?.error || `Submission failed (${res.status})`);
             if (data?.notify && data.notify.sent === false && data.notify.error) {
-                console.warn('[booking] notify did not send:', data.notify.error);
                 setNotifyDebug(data.notify.error);
             } else {
                 setNotifyDebug(null);
@@ -326,41 +465,194 @@ const BookingPage: React.FC = () => {
         if (!d) return '';
         const [y, m, day] = d.split('-').map(Number);
         return new Date(y, m - 1, day).toLocaleDateString('en-US', {
-            weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+            weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
         });
     };
 
+    const scrollToSchedule = () => {
+        scheduleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
     return (
-        <>
-            {/* SEOHead intentionally omitted: BookingPage is rendered as a tab
-                inside Gallery (the homepage) — there is no standalone /booking
-                route. Setting per-page SEO here would override the homepage's
-                title/canonical when the booking tab is active. */}
+        <div className="min-h-screen bg-black text-white">
 
-            <div className="min-h-screen bg-black text-white px-4 py-16 md:py-24">
+            {/* ── Hero ──────────────────────────────────────────────── */}
+            <div className="px-4 md:px-8 pt-16 md:pt-24 pb-20 md:pb-28">
                 <div className="max-w-5xl mx-auto">
+                    <p className="text-[9px] font-black uppercase tracking-[0.5em] text-white/30 mb-4">
+                        THE LOST+UNFOUNDS
+                    </p>
+                    <h1 className="text-5xl md:text-8xl font-black uppercase tracking-tight leading-none text-white mb-6">
+                        CREATIVE<br />AGENCY
+                    </h1>
+                    <p className="text-white/50 text-base md:text-lg max-w-xl leading-relaxed mb-10">
+                        Photography and web development for brands, artists, and businesses in Austin.
+                        Authentic moments, fast delivery, real results.
+                    </p>
+                    <button
+                        onClick={scrollToSchedule}
+                        className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 text-[11px] font-black uppercase tracking-widest hover:bg-white/90 transition-colors"
+                    >
+                        Schedule a Session
+                        <ArrowLongRightIcon className="w-4 h-4" />
+                    </button>
+                </div>
+            </div>
 
-                    {/* Header — hidden on success so the confirmation gets full focus */}
-                    {step !== 'success' && (
-                        <div className="mb-12 md:mb-16">
-                            <p className="text-[9px] font-black uppercase tracking-[0.4em] text-white/30 mb-3">
-                                @tlau.photos
+            {/* ── Photography Services ──────────────────────────────── */}
+            <div className="px-4 md:px-8 py-16 md:py-20">
+                <div className="max-w-5xl mx-auto">
+                    <div className="flex items-center gap-4 mb-10">
+                        <CameraIcon className="w-5 h-5 text-white/30 flex-shrink-0" />
+                        <div>
+                            <p className="text-[9px] font-black uppercase tracking-[0.4em] text-white/30 mb-1">01</p>
+                            <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-white">
+                                PHOTOGRAPHY
+                            </h2>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {PHOTO_SERVICES.map(s => (
+                            <ServiceCard key={s.id} {...s} />
+                        ))}
+                    </div>
+
+                    {/* Travel pricing */}
+                    <div className="mt-6 bg-white/[0.03] px-6 py-5">
+                        <div className="flex items-center gap-2 mb-4">
+                            <MapPinIcon className="w-4 h-4 text-white/30" />
+                            <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40">Travel</p>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {TRAVEL_TIERS.map(t => (
+                                <div key={t.range}>
+                                    <p className="text-[10px] font-black uppercase tracking-wider text-white/30 mb-1">{t.range}</p>
+                                    <p className="text-sm font-black text-white">{t.rate}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Photography philosophy */}
+                    <div className="mt-6 bg-white/[0.03] px-6 py-5 flex items-start gap-4">
+                        <BoltIcon className="w-5 h-5 text-white/30 flex-shrink-0 mt-0.5" />
+                        <div>
+                            <p className="text-sm font-black uppercase tracking-wider text-white mb-1">
+                                Authentic Moments, Delivered Fast
                             </p>
-                            <h1 className="text-4xl md:text-7xl font-black uppercase tracking-tight leading-none mb-4">
-                                Booking
-                            </h1>
-                            <p className="text-white/50 text-sm md:text-base max-w-lg leading-relaxed">
-                                Candid-style photography for events, lifestyle shoots, portraits, and brand work.
-                                I shoot primarily on a <span className="text-white font-bold">Fujifilm X-S20</span>,
-                                and I'm happy to mix in other cameras when the project calls for a different feel.
-                                Pick a date and I'll get back to you within 24 hours.
+                            <p className="text-white/40 text-xs leading-relaxed max-w-2xl">
+                                Shot on a{' '}
+                                <span className="text-white font-bold">Fujifilm X-S20</span>{' '}
+                                straight out of camera — no filters, no presets, no editing queue.
+                                What you get is the real thing, preserved exactly as it happened,
+                                and in your hands the same day.
                             </p>
                         </div>
-                    )}
+                    </div>
+                </div>
+            </div>
+
+            {/* ── Web Development ───────────────────────────────────── */}
+            <div className="px-4 md:px-8 py-16 md:py-20">
+                <div className="max-w-5xl mx-auto">
+                    <div className="flex items-center gap-4 mb-10">
+                        <ComputerDesktopIcon className="w-5 h-5 text-white/30 flex-shrink-0" />
+                        <div>
+                            <p className="text-[9px] font-black uppercase tracking-[0.4em] text-white/30 mb-1">02</p>
+                            <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-white">
+                                WEB DEVELOPMENT
+                            </h2>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {WEB_SERVICES.map(s => (
+                            <ServiceCard key={s.id} {...s} />
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* ── Bundled Packages ──────────────────────────────────── */}
+            <div className="px-4 md:px-8 py-16 md:py-20">
+                <div className="max-w-5xl mx-auto">
+                    <div className="flex items-center gap-4 mb-10">
+                        <RocketLaunchIcon className="w-5 h-5 text-white/30 flex-shrink-0" />
+                        <div>
+                            <p className="text-[9px] font-black uppercase tracking-[0.4em] text-white/30 mb-1">03</p>
+                            <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-white">
+                                BUNDLED PACKAGES
+                            </h2>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {BUNDLES.map(b => (
+                            <div
+                                key={b.id}
+                                className={b.featured ? 'bg-white text-black p-6 flex flex-col' : 'bg-white/[0.04] text-white p-6 flex flex-col'}
+                            >
+                                <p className={`text-[9px] font-black uppercase tracking-[0.3em] mb-3 ${b.featured ? 'text-black/50' : 'text-white/40'}`}>
+                                    {b.label}
+                                </p>
+                                <p className={`text-3xl font-black mb-1 ${b.featured ? 'text-black' : 'text-white'}`}>{b.price}</p>
+                                <p className={`text-xs leading-relaxed mb-5 ${b.featured ? 'text-black/50' : 'text-white/40'}`}>
+                                    {b.tagline}
+                                </p>
+                                <ul className="space-y-2 mt-auto">
+                                    {b.features.map(f => (
+                                        <li key={f} className="flex items-start gap-2">
+                                            <span className={`w-1 h-1 rounded-full mt-1.5 flex-shrink-0 ${b.featured ? 'bg-black/20' : 'bg-white/20'}`} />
+                                            <span className={`text-xs leading-relaxed ${b.featured ? 'text-black/60' : 'text-white/50'}`}>{f}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                                <button
+                                    onClick={scrollToSchedule}
+                                    className={`mt-6 w-full py-3 text-[11px] font-black uppercase tracking-widest transition-colors ${
+                                        b.featured
+                                            ? 'bg-black text-white hover:bg-black/80'
+                                            : 'bg-white text-black hover:bg-white/90'
+                                    }`}
+                                >
+                                    Book This Package
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="mt-6 bg-white/[0.03] px-6 py-4 flex items-center gap-3">
+                        <ClockIcon className="w-4 h-4 text-white/30 flex-shrink-0" />
+                        <p className="text-white/40 text-xs">
+                            All packages require a{' '}
+                            <span className="text-white font-bold">50% deposit</span>{' '}
+                            to hold the date. Balance due before the session.
+                            Payment via Bitcoin (Strike), Apple Pay, Cashapp, or Venmo.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* ── Schedule a Session ────────────────────────────────── */}
+            <div ref={scheduleRef} className="px-4 md:px-8 pt-16 md:pt-20 pb-32">
+                <div className="max-w-5xl mx-auto">
+
+                    <div className="mb-12">
+                        <p className="text-[9px] font-black uppercase tracking-[0.5em] text-white/30 mb-3">
+                            READY TO START
+                        </p>
+                        <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight text-white mb-3">
+                            SCHEDULE A SESSION
+                        </h2>
+                        <p className="text-white/40 text-sm max-w-md">
+                            Pick a date and we'll reach out within 24 hours to confirm scope and send a contract.
+                        </p>
+                    </div>
 
                     <AnimatePresence mode="wait">
 
-                        {/* ── Step 1: Calendar ── */}
+                        {/* Calendar step */}
                         {step === 'calendar' && (
                             <motion.div
                                 key="calendar"
@@ -382,47 +674,41 @@ const BookingPage: React.FC = () => {
 
                                 <div className="space-y-4 md:pt-10">
                                     <p className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">
-                                        What to Expect
+                                        Good to Know
                                     </p>
-
                                     <div className="bg-white/[0.03] p-5">
-                                        <p className="text-sm font-black uppercase tracking-wider text-white mb-1">The Approach</p>
+                                        <p className="text-sm font-black uppercase tracking-wider text-white mb-1">Response Time</p>
                                         <p className="text-white/50 text-xs leading-relaxed">
-                                            Candid-first. Minimal direction, real moments — whether it's a
-                                            show, a lifestyle shoot, or a portrait, I photograph the way it
-                                            actually feels, not the way a pose-me brief would want it. Primary
-                                            body is a Fujifilm X-S20; I'll bring a different camera when the
-                                            project calls for a different grain or feel.
+                                            All requests receive a reply within 24 hours. Selecting a date here
+                                            holds a soft reservation while we confirm scope together.
                                         </p>
                                     </div>
-
-                                    {[
-                                        { label: 'Single Event', desc: 'Concert, show, portrait session, or any one-time gig.' },
-                                        { label: 'Monthly Retainer', desc: 'Consistent coverage — locked-in rate, priority access to my schedule.' },
-                                    ].map(item => (
-                                        <div key={item.label} className="bg-white/[0.03] p-5">
-                                            <p className="text-sm font-black uppercase tracking-wider text-white mb-1">{item.label}</p>
-                                            <p className="text-white/40 text-xs leading-relaxed">{item.desc}</p>
-                                        </div>
-                                    ))}
-
+                                    <div className="bg-white/[0.03] p-5">
+                                        <p className="text-sm font-black uppercase tracking-wider text-white mb-1">Photography</p>
+                                        <p className="text-white/40 text-xs leading-relaxed">
+                                            Candid-first, lifestyle direction. Real moments, not posed briefs.
+                                            Fujifilm X-S20, straight out of camera.
+                                        </p>
+                                    </div>
+                                    <div className="bg-white/[0.03] p-5">
+                                        <p className="text-sm font-black uppercase tracking-wider text-white mb-1">Web Projects</p>
+                                        <p className="text-white/40 text-xs leading-relaxed">
+                                            Initial call to scope the build, then a fixed-price proposal.
+                                            Select "Web Development" in the service step.
+                                        </p>
+                                    </div>
                                     <div className="bg-white text-black p-5">
-                                        <p className="text-sm font-black uppercase tracking-wider mb-1">50% Booking Fee</p>
-                                        <p className="text-black/70 text-xs leading-relaxed">
-                                            A 50% non-refundable booking fee is required to hold the date.
-                                            Balance is due on or before the shoot. I'll send a contract + payment
-                                            link after we confirm scope.
+                                        <p className="text-sm font-black uppercase tracking-wider mb-1">50% Deposit Required</p>
+                                        <p className="text-black/60 text-xs leading-relaxed">
+                                            A 50% deposit holds your date. Balance is due before the session.
+                                            Contract and payment link arrive after we confirm scope.
                                         </p>
                                     </div>
-
-                                    <p className="text-white/20 text-[10px] leading-relaxed">
-                                        Rates are custom based on scope — we'll discuss after your booking request comes in.
-                                    </p>
                                 </div>
                             </motion.div>
                         )}
 
-                        {/* ── Step 2: Details (stepped wizard, one question per screen) ── */}
+                        {/* Details wizard */}
                         {step === 'details' && (
                             <motion.div
                                 key="details"
@@ -430,14 +716,12 @@ const BookingPage: React.FC = () => {
                                 initial={{ opacity: 0, y: 16 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -16 }}
-                                className="max-w-md mx-auto scroll-mt-4"
+                                className="max-w-md scroll-mt-4"
                             >
-                                {/* Context chip (collapsed by default, tap to expand) + progress */}
                                 <div className="flex items-center gap-3 mb-6">
                                     <button
                                         onClick={() => setContextOpen(v => !v)}
                                         className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 transition-colors px-2.5 py-1.5"
-                                        title="Selected date"
                                     >
                                         <CalendarIcon className="w-3.5 h-3.5 text-white/60" />
                                         <span className="text-[10px] font-black uppercase tracking-widest text-white/60">
@@ -450,6 +734,7 @@ const BookingPage: React.FC = () => {
                                         ))}
                                     </div>
                                 </div>
+
                                 {contextOpen && (
                                     <div className="bg-white/5 p-3 mb-6 flex items-center justify-between gap-3">
                                         <div>
@@ -465,7 +750,6 @@ const BookingPage: React.FC = () => {
                                     </div>
                                 )}
 
-                                {/* Step 0: Name */}
                                 {detailsStep === 0 && (
                                     <div>
                                         <div className="flex items-center gap-3 mb-4">
@@ -473,8 +757,8 @@ const BookingPage: React.FC = () => {
                                                 <UserIcon className="w-5 h-5 text-white/60" />
                                             </div>
                                             <div>
-                                                <h2 className="text-xl font-bold text-white">What's your name?</h2>
-                                                <p className="text-white/40 text-sm">So I know who's booking</p>
+                                                <h3 className="text-xl font-bold text-white">What's your name?</h3>
+                                                <p className="text-white/40 text-sm">So I know who's reaching out</p>
                                             </div>
                                         </div>
                                         <input
@@ -495,7 +779,6 @@ const BookingPage: React.FC = () => {
                                     </div>
                                 )}
 
-                                {/* Step 1: Email */}
                                 {detailsStep === 1 && (
                                     <div>
                                         <div className="flex items-center gap-3 mb-4">
@@ -503,7 +786,7 @@ const BookingPage: React.FC = () => {
                                                 <EnvelopeIcon className="w-5 h-5 text-white/60" />
                                             </div>
                                             <div>
-                                                <h2 className="text-xl font-bold text-white">Your email</h2>
+                                                <h3 className="text-xl font-bold text-white">Your email</h3>
                                                 <p className="text-white/40 text-sm">I'll reach out here</p>
                                             </div>
                                         </div>
@@ -525,7 +808,6 @@ const BookingPage: React.FC = () => {
                                     </div>
                                 )}
 
-                                {/* Step 2: Event Type */}
                                 {detailsStep === 2 && (
                                     <div>
                                         <div className="flex items-center gap-3 mb-4">
@@ -533,8 +815,8 @@ const BookingPage: React.FC = () => {
                                                 <CalendarIcon className="w-5 h-5 text-white/60" />
                                             </div>
                                             <div>
-                                                <h2 className="text-xl font-bold text-white">What kind of shoot?</h2>
-                                                <p className="text-white/40 text-sm">Candid-style, your vibe</p>
+                                                <h3 className="text-xl font-bold text-white">What service?</h3>
+                                                <p className="text-white/40 text-sm">Select the closest match</p>
                                             </div>
                                         </div>
                                         <div className="grid grid-cols-2 gap-2">
@@ -552,7 +834,6 @@ const BookingPage: React.FC = () => {
                                     </div>
                                 )}
 
-                                {/* Step 3: Time slots (preset ranges, blocked slots greyed out) */}
                                 {detailsStep === 3 && (
                                     <div>
                                         <div className="flex items-center gap-3 mb-4">
@@ -560,20 +841,18 @@ const BookingPage: React.FC = () => {
                                                 <ClockIcon className="w-5 h-5 text-white/60" />
                                             </div>
                                             <div>
-                                                <h2 className="text-xl font-bold text-white">When does it run?</h2>
+                                                <h3 className="text-xl font-bold text-white">What time works?</h3>
                                                 <p className="text-white/40 text-sm">Pick a window — we'll refine when we talk</p>
                                             </div>
                                         </div>
                                         {conflictingEvents.length > 0 && (
                                             <div className="bg-yellow-500/10 text-yellow-300 p-3 mb-3 text-[11px] leading-relaxed">
-                                                <p className="font-black uppercase tracking-widest mb-1 text-[9px]">Heads up — already scheduled that day</p>
+                                                <p className="font-black uppercase tracking-widest mb-1 text-[9px]">Already scheduled that day</p>
                                                 {conflictingEvents.map(e => (
-                                                    <p key={e.id}>
-                                                        {e.title}{e.location ? ` · ${e.location}` : ''}
-                                                    </p>
+                                                    <p key={e.id}>{e.title}{e.location ? ` · ${e.location}` : ''}</p>
                                                 ))}
                                                 <p className="mt-2 text-yellow-300/70">
-                                                    Pick a non-overlapping window, or choose Flexible and we'll work it out.
+                                                    Pick a non-overlapping window, or select Flexible and we'll work it out.
                                                 </p>
                                             </div>
                                         )}
@@ -585,38 +864,25 @@ const BookingPage: React.FC = () => {
                                                         key={slot.label}
                                                         type="button"
                                                         onClick={() => { set('start_time', slot.start); set('end_time', slot.end); }}
-                                                        className={`w-full px-4 py-3 text-left transition-colors rounded-none flex items-center justify-between ${
-                                                            selected
-                                                                ? 'bg-white text-black'
-                                                                : 'bg-white/5 text-white hover:bg-white/10'
-                                                        }`}
+                                                        className={`w-full px-4 py-3 text-left transition-colors rounded-none flex items-center justify-between ${selected ? 'bg-white text-black' : 'bg-white/5 text-white hover:bg-white/10'}`}
                                                     >
                                                         <span className="font-black uppercase tracking-wider text-sm">{slot.label}</span>
-                                                        <span className={`text-[10px] font-mono ${selected ? 'text-black/60' : 'text-white/40'}`}>
-                                                            {slot.display}
-                                                        </span>
+                                                        <span className={`text-[10px] font-mono ${selected ? 'text-black/60' : 'text-white/40'}`}>{slot.display}</span>
                                                     </button>
                                                 );
                                             })}
                                             <button
                                                 type="button"
                                                 onClick={() => { set('start_time', ''); set('end_time', ''); }}
-                                                className={`w-full px-4 py-3 text-left transition-colors rounded-none flex items-center justify-between ${
-                                                    !form.start_time && !form.end_time
-                                                        ? 'bg-white text-black'
-                                                        : 'bg-white/5 text-white hover:bg-white/10'
-                                                }`}
+                                                className={`w-full px-4 py-3 text-left transition-colors rounded-none flex items-center justify-between ${!form.start_time && !form.end_time ? 'bg-white text-black' : 'bg-white/5 text-white hover:bg-white/10'}`}
                                             >
                                                 <span className="font-black uppercase tracking-wider text-sm">Flexible</span>
-                                                <span className={`text-[10px] font-mono ${!form.start_time && !form.end_time ? 'text-black/60' : 'text-white/40'}`}>
-                                                    LET'S TALK
-                                                </span>
+                                                <span className={`text-[10px] font-mono ${!form.start_time && !form.end_time ? 'text-black/60' : 'text-white/40'}`}>LET'S TALK</span>
                                             </button>
                                         </div>
                                     </div>
                                 )}
 
-                                {/* Step 4: Venue + Notes */}
                                 {detailsStep === 4 && (
                                     <div>
                                         <div className="flex items-center gap-3 mb-4">
@@ -624,7 +890,7 @@ const BookingPage: React.FC = () => {
                                                 <MapPinIcon className="w-5 h-5 text-white/60" />
                                             </div>
                                             <div>
-                                                <h2 className="text-xl font-bold text-white">Where & anything else?</h2>
+                                                <h3 className="text-xl font-bold text-white">Where & anything else?</h3>
                                                 <p className="text-white/40 text-sm">Venue + any details I should know</p>
                                             </div>
                                         </div>
@@ -638,31 +904,28 @@ const BookingPage: React.FC = () => {
                                         />
                                         <textarea
                                             rows={3}
-                                            placeholder="Anything else — vibe, references, guests, crew…"
+                                            placeholder="Anything else — vibe, references, budget, timeline…"
                                             value={form.notes}
                                             onChange={e => set('notes', e.target.value)}
                                             className="w-full bg-white/5 rounded-none px-4 py-3 text-base sm:text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors resize-none"
                                         />
-
                                         <div className="bg-white/[0.04] p-3 mt-4">
-                                            <p className="text-white/70 text-[11px] leading-relaxed">
-                                                Submitting holds the date for you while we talk. Booking requires a{' '}
-                                                <span className="text-white font-bold">50% non-refundable deposit</span>{' '}
-                                                to finalize — I'll send a contract + payment link after we scope the shoot.
-                                                We accept <span className="text-white font-bold">Bitcoin (Strike)</span>,
-                                                Apple Pay, Cashapp, and Venmo.
+                                            <p className="text-white/60 text-[11px] leading-relaxed">
+                                                Submitting holds the date while we talk. A{' '}
+                                                <span className="text-white font-bold">50% deposit</span>{' '}
+                                                finalizes the booking — contract and payment link follow after we scope it out.
+                                                Payment via{' '}
+                                                <span className="text-white font-bold">Bitcoin (Strike)</span>,
+                                                Apple Pay, Cashapp, or Venmo.
                                             </p>
                                         </div>
                                     </div>
                                 )}
 
                                 {error && (
-                                    <p className="text-red-400 text-[10px] font-bold uppercase tracking-widest mt-4">
-                                        {error}
-                                    </p>
+                                    <p className="text-red-400 text-[10px] font-bold uppercase tracking-widest mt-4">{error}</p>
                                 )}
 
-                                {/* Navigation */}
                                 <div className="flex gap-3 mt-6">
                                     {detailsStep > 0 && (
                                         <button
@@ -693,43 +956,36 @@ const BookingPage: React.FC = () => {
                                         </button>
                                     )}
                                 </div>
-
                                 <p className="text-white/20 text-[9px] text-center uppercase tracking-widest mt-4">
-                                    I'll respond within 24 hours to confirm availability.
+                                    Response within 24 hours.
                                 </p>
                             </motion.div>
                         )}
 
-                        {/* ── Step 3: Success ── */}
+                        {/* Success */}
                         {step === 'success' && (
                             <motion.div
                                 key="success"
                                 initial={{ opacity: 0, scale: 0.97 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                className="max-w-md mx-auto text-center py-16 space-y-6"
+                                className="max-w-md text-center py-16 space-y-6"
                             >
                                 <CheckCircleIcon className="w-12 h-12 text-green-400 mx-auto" />
-                                <h2 className="text-2xl font-black uppercase tracking-tight">Request Sent!</h2>
+                                <h3 className="text-2xl font-black uppercase tracking-tight">Request Sent</h3>
                                 <p className="text-white/50 text-sm leading-relaxed">
                                     <span className="text-white font-bold">{formatDate(form.event_date)}</span>{' '}
-                                    is on hold for you while we talk. I'll reach out within 24 hours to sort
-                                    out logistics — nothing is finalized until we've scoped the shoot and
-                                    the 50% deposit is received.
+                                    is on hold while we talk. I'll reach out within 24 hours to confirm
+                                    scope — nothing is finalized until the deposit is received.
                                 </p>
                                 {notifyDebug && (
                                     <div className="bg-yellow-500/10 text-yellow-300 text-[10px] leading-relaxed p-3 text-left">
-                                        <p className="font-black uppercase tracking-widest mb-1">Admin notice (debug)</p>
-                                        <p className="break-all">Notify: {notifyDebug}</p>
+                                        <p className="font-black uppercase tracking-widest mb-1">Admin notice</p>
+                                        <p className="break-all">{notifyDebug}</p>
                                     </div>
                                 )}
                                 <p className="text-white/30 text-xs">
-                                    In the meantime, follow{' '}
-                                    <a
-                                        href="https://instagram.com/tlau.photos"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-white underline"
-                                    >
+                                    Follow{' '}
+                                    <a href="https://instagram.com/tlau.photos" target="_blank" rel="noopener noreferrer" className="text-white underline">
                                         @tlau.photos
                                     </a>{' '}
                                     for the latest work.
@@ -746,7 +1002,8 @@ const BookingPage: React.FC = () => {
                     </AnimatePresence>
                 </div>
             </div>
-        </>
+
+        </div>
     );
 };
 

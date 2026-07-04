@@ -92,8 +92,8 @@ export default function NavLinks({
             <Link to="/events" className="menu-item" onClick={onLinkClick}>
                 EVENTS
             </Link>
-            <Link to="/?view=booking" className="menu-item" onClick={onLinkClick}>
-                BOOK ME
+            <Link to="/?view=services" className="menu-item" onClick={onLinkClick}>
+                SERVICES
             </Link>
 
             <div
