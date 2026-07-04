@@ -6,7 +6,7 @@
 <title>Artist Name — Admin Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -16,7 +16,9 @@
   --w05: rgba(255,255,255,0.05);
   --w08: rgba(255,255,255,0.08);
   --w10: rgba(255,255,255,0.1);
+  --w15: rgba(255,255,255,0.15);
   --w20: rgba(255,255,255,0.2);
+  --w25: rgba(255,255,255,0.25);
   --w30: rgba(255,255,255,0.3);
   --w40: rgba(255,255,255,0.4);
   --w50: rgba(255,255,255,0.5);
@@ -25,9 +27,11 @@
   --w80: rgba(255,255,255,0.8);
   --w90: rgba(255,255,255,0.9);
   --green: #4ade80;
-  --amber: #fbbf24;
-  --red: #f87171;
+  --amber: #f59e0b;
+  --amber-soft: rgba(251,191,36,0.7);
   --blue: #60a5fa;
+  --purple: #c084fc;
+  --red: #f87171;
 }
 
 html { font-size: 15px; }
@@ -43,219 +47,216 @@ body {
 .shell { max-width: 1280px; margin: 0 auto; padding: 2rem 1.5rem 8rem; }
 
 /* ── HEADER ── */
-.dash-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-.dash-title-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: none;
-  border: none;
-  cursor: default;
-  color: #fff;
-}
-.dash-title {
-  font-size: clamp(1.4rem, 3.6vw, 2.1rem);
-  font-weight: 900;
-  letter-spacing: -0.01em;
-  text-transform: uppercase;
-}
+.dash-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 2rem; }
+.dash-title-btn { display: flex; align-items: center; gap: 0.5rem; background: none; border: none; cursor: default; color: #fff; }
+.dash-title { font-size: clamp(1.4rem, 3.6vw, 2.1rem); font-weight: 900; letter-spacing: -0.01em; text-transform: uppercase; }
 .dash-title-chevron { width: 16px; height: 16px; color: var(--w40); margin-top: 3px; }
 .dash-sub { font-size: 0.82rem; color: var(--w70); margin-top: 0.35rem; }
 .header-actions { display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0; }
-.icon-btn {
-  width: 40px; height: 40px;
-  background: var(--w08);
-  color: var(--w70);
-  border: none; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: background 0.15s, color 0.15s;
-  flex-shrink: 0;
-}
+.icon-btn { width: 40px; height: 40px; background: var(--w08); color: var(--w70); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s, color 0.15s; flex-shrink: 0; }
 .icon-btn:hover { background: var(--w10); color: #fff; }
 .profile-btn { background: #fff; color: #000; }
 .profile-btn:hover { background: rgba(255,255,255,0.85); }
 
-/* ── ROW 1: REVENUE + CLOCK/CALENDAR ── */
+/* ── ROW 1 ── */
 .row1 { display: grid; grid-template-columns: 1fr 300px; gap: 1.25rem; margin-bottom: 1.25rem; }
 
+/* ── REVENUE TRACKER (matches RevenueTracker.tsx) ── */
 .revenue-card { background: var(--bg); }
-.period-pills {
-  display: flex; justify-content: center; gap: 0.25rem;
-  padding: 1rem 0.5rem; flex-wrap: wrap;
-}
-.period-pill {
-  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
-  padding: 0.5rem 0.9rem; background: none; border: none; cursor: pointer;
-  color: var(--w40); transition: all 0.15s; white-space: nowrap;
-}
-.period-pill:hover { color: #fff; background: var(--w05); }
+.period-pills { display: flex; align-items: center; justify-content: center; gap: 0.25rem; padding: 1rem; flex-wrap: wrap; }
+.period-pill { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.5rem 1rem; background: none; border: none; cursor: pointer; color: var(--w40); transition: all 0.15s; white-space: nowrap; }
+.period-pill:hover { color: #fff; background: var(--w10); }
 .period-pill.active { color: #000; background: #fff; }
 
-.revenue-main { display: flex; flex-direction: column; align-items: center; padding: 1.25rem 1rem 1.75rem; text-align: center; }
-.revenue-label {
-  display: flex; align-items: center; gap: 0.4rem;
-  font-size: 0.68rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--w40);
-  margin-bottom: 0.75rem; font-weight: 600;
-}
-.revenue-number { display: flex; align-items: baseline; gap: 0.35rem; }
-.revenue-number .cur { font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 500; color: var(--w40); }
-.revenue-number .val {
-  font-size: clamp(2.6rem, 8vw, 4.6rem); font-weight: 800; color: #fff;
-  font-family: 'JetBrains Mono', monospace; letter-spacing: -0.03em;
-}
-.revenue-trend { display: flex; align-items: center; gap: 0.25rem; color: var(--green); margin-left: 0.4rem; font-weight: 700; font-size: 0.85rem; }
+.revenue-main { display: flex; flex-direction: column; align-items: center; padding: 0.5rem 1rem 2rem; text-align: center; }
+.revenue-label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--w40); margin-bottom: 1rem; font-weight: 500; }
+.revenue-number { display: flex; align-items: baseline; justify-content: center; gap: 0.4rem; }
+.revenue-number .cur { font-size: clamp(1.6rem, 4vw, 2.6rem); font-weight: 500; color: var(--w40); }
+.revenue-number .val { font-size: clamp(2.8rem, 8vw, 5.2rem); font-weight: 800; color: #fff; font-family: 'JetBrains Mono', monospace; letter-spacing: -0.03em; }
+.revenue-trend { display: flex; align-items: center; gap: 0.25rem; color: var(--green); margin-left: 0.5rem; font-weight: 700; font-size: clamp(0.85rem, 2vw, 1.1rem); font-family: 'JetBrains Mono', monospace; }
 
-.revenue-breakdown {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem;
-  padding: 1rem; background: var(--w05);
-}
+.revenue-breakdown { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; padding: 1rem; background: rgba(255,255,255,0.02); }
 .rb-item { text-align: center; }
-.rb-label { font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--w40); margin-bottom: 0.3rem; }
-.rb-label.amber { color: rgba(251,191,36,0.7); }
-.rb-value { font-size: 1.05rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: #fff; }
+.rb-label { font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--w40); margin-bottom: 0.35rem; }
+.rb-label.amber { color: var(--amber-soft); }
+.rb-value { font-size: 1.1rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: #fff; }
 .rb-value.amber { color: var(--amber); }
+@media (max-width: 640px) { .revenue-breakdown { grid-template-columns: repeat(2, 1fr); gap: 1rem; } }
 
-.revenue-chart { display: flex; align-items: flex-end; gap: 3px; height: 44px; padding: 1rem; }
-.revenue-chart .bar { flex: 1; background: var(--w10); transition: background 0.15s; }
-.revenue-chart .bar:hover { background: var(--w30); }
+/* Charts section (matches DashboardCharts.tsx) */
+.chart-section { padding: 1.5rem 0.5rem 1.25rem; }
+.chart-headline { display: flex; align-items: center; justify-content: center; gap: 0.6rem; margin-bottom: 1rem; }
+.chart-headline .val { font-size: 1.4rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+.chart-headline .lbl { font-size: 0.68rem; color: var(--w40); text-transform: uppercase; letter-spacing: 0.04em; }
+.chart-box { position: relative; height: 220px; margin-bottom: 1rem; }
+.chart-box svg { width: 100%; height: 100%; overflow: visible; }
+.chart-axis-x { display: flex; justify-content: space-between; padding: 0.3rem 0.5rem 0; }
+.chart-axis-x span { font-size: 0.6rem; color: var(--w40); }
+.chart-toggle-row { display: flex; width: 100%; background: var(--w05); margin-top: 0.75rem; }
+.chart-toggle-row button { flex: 1; padding: 0.7rem 0.4rem; font-size: 0.6rem; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 700; background: none; border: none; cursor: pointer; color: var(--w40); transition: all 0.15s; }
+.chart-toggle-row button:hover { color: #fff; background: var(--w10); }
+.chart-toggle-row button.active { background: #fff; color: #000; }
 
-/* ── CLOCK + CALENDAR ── */
-.side-col { display: flex; flex-direction: column; gap: 1.25rem; }
-.clock-card {
-  background: var(--card-head);
-  padding: 1.5rem; flex: 1;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  min-height: 140px;
+/* ── CLOCK WIDGET (matches clock-widget.tsx) ── */
+.clock-card { background: var(--bg); position: relative; overflow: hidden; display: flex; flex-direction: column; min-height: 210px; flex: 1; user-select: none; }
+.clock-mode-label { position: absolute; top: 0; left: 0; right: 0; height: 48px; z-index: 20; cursor: pointer; display: flex; align-items: flex-start; justify-content: center; padding-top: 1rem; }
+.clock-mode-label span { font-size: 0.62rem; letter-spacing: 0.2em; font-weight: 500; color: var(--w30); text-transform: uppercase; transition: color 0.15s; }
+.clock-mode-label:hover span { color: #fff; }
+.clock-main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
+
+.clock-view { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; transition: opacity 0.3s; }
+.clock-view.hidden { opacity: 0; pointer-events: none; }
+
+.analog-face { position: relative; width: 130px; height: 130px; cursor: pointer; }
+.analog-center { position: absolute; top: 50%; left: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: #fff; z-index: 10; }
+.analog-hand { position: absolute; left: 50%; bottom: 50%; transform-origin: bottom center; }
+.hand-hour { width: 3px; height: 28%; background: #fff; }
+.hand-minute { width: 2px; height: 38%; background: #fff; }
+.hand-second { width: 1px; height: 42%; background: var(--w40); }
+
+.digital-face { cursor: pointer; }
+.digital-digits { position: relative; display: flex; align-items: center; justify-content: center; gap: 0.25rem; }
+.digital-digits .digit { font-size: 2.6rem; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #fff; letter-spacing: -0.02em; }
+.digital-extra { position: relative; display: flex; align-items: baseline; }
+.digital-extra-inner { display: flex; flex-direction: column; align-items: flex-start; line-height: 1; margin-left: 0.35rem; }
+.digital-ampm { font-size: 0.6rem; font-weight: 700; color: var(--w30); margin-bottom: 2px; }
+.digital-ampm.hidden24 { opacity: 0; }
+.digital-seconds { font-size: 1rem; font-family: 'JetBrains Mono', monospace; color: var(--w40); }
+
+.sw-controls, .timer-controls { position: absolute; bottom: 1.25rem; display: flex; align-items: center; gap: 1rem; }
+.round-btn { width: 42px; height: 42px; border-radius: 50%; background: var(--w10); border: none; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+.round-btn:hover { background: var(--w20); }
+.round-btn.ghost { background: var(--w05); color: var(--w60); }
+.round-btn.ghost:hover { background: var(--w10); color: #fff; }
+.round-btn svg { width: 18px; height: 18px; }
+
+.timer-set-form { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; position: relative; width: 100%; }
+.timer-input-row { display: flex; align-items: center; position: relative; }
+.timer-input { width: 100px; background: transparent; border: none; outline: none; text-align: center; font-size: 2.6rem; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #fff; }
+.timer-input::placeholder { color: var(--w20); }
+.timer-min-label { position: absolute; left: 100%; top: 50%; transform: translateY(-50%); color: var(--w40); font-size: 0.85rem; margin-left: 0.5rem; }
+.timer-start-btn { position: absolute; bottom: 1.5rem; font-size: 0.62rem; color: var(--w40); text-transform: uppercase; letter-spacing: 0.14em; background: var(--w10); border: none; padding: 0.4rem 0.9rem; border-radius: 999px; cursor: pointer; }
+.timer-start-btn:hover { background: var(--w20); color: #fff; }
+.timer-countdown { font-size: 2.6rem; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #fff; animation: pulse-scale 1s infinite; }
+.timer-alarm { position: absolute; top: 65%; color: var(--red); font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; animation: pulse-op 1s infinite; }
+@keyframes pulse-scale { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes pulse-op { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+/* ── CALENDAR WIDGET (matches calendar-widget.tsx) ── */
+.calendar-card { background: var(--bg); padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; min-height: 280px; }
+.calendar-inner { width: 100%; max-width: 240px; }
+.cal-header { display: flex; align-items: baseline; justify-content: center; gap: 0.5rem; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+.cal-month { font-size: 1.25rem; font-weight: 700; color: #fff; letter-spacing: -0.01em; }
+.cal-year { font-size: 0.85rem; color: var(--w40); font-family: 'JetBrains Mono', monospace; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; }
+.cal-dow { font-size: 0.62rem; color: var(--w30); font-weight: 500; height: 32px; display: flex; align-items: center; justify-content: center; }
+.cal-cell { height: 40px; padding-top: 3px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
+.cal-daynum { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--w60); }
+.cal-cell.today .cal-daynum { color: #fff; font-weight: 600; }
+.cal-dots { display: flex; align-items: center; gap: 2px; margin-top: 1px; }
+.cal-dot { width: 3px; height: 3px; border-radius: 50%; }
+.cal-dot.booking { background: #facc15; }
+.cal-dot.event { background: #4ade80; }
+.cal-dot.photo { background: var(--w60); }
+.cal-dot.blocked { background: var(--red); }
+
+/* ── ROW 2: EXPANDABLE BENTO GRID (matches Admin.tsx dashboardCategories) ── */
+.bento-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+@media (max-width: 900px) { .bento-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; } }
+@media (max-width: 560px) { .bento-grid { grid-template-columns: 1fr; } }
+
+.exp-card-wrap { min-height: 190px; transition: min-height 0.2s ease-out; }
+.exp-card-wrap.expanded { min-height: 320px; }
+.exp-card {
+  background: #000;
+  height: 100%;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-.clock-time {
-  font-family: 'JetBrains Mono', monospace; font-weight: 700;
-  font-size: 1.9rem; letter-spacing: -0.02em; color: #fff;
-}
-.clock-date { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--w40); margin-top: 0.4rem; }
+.exp-card:hover { transform: translateY(-4px) scale(1.02); }
+.exp-card-header { background: var(--card-head); padding: 1rem 1rem 0.5rem; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem; }
+.exp-card-header .exp-icon { width: 15px; height: 15px; color: var(--w50); flex-shrink: 0; }
+.exp-card-header .exp-title { font-size: 0.66rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--w80); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.exp-card-content { flex: 1; min-height: 0; padding: 0 1rem; display: none; flex-direction: column; gap: 0.55rem; overflow-y: auto; }
+.exp-card-wrap.expanded .exp-card-content { display: flex; }
+.exp-card-footer { margin-top: auto; padding: 0.6rem 1rem; display: flex; align-items: center; justify-content: center; }
+.exp-card-footer .exp-chevron { width: 13px; height: 13px; color: var(--w25); }
+.exp-card-footer .exp-footer-text { font-size: 0.62rem; color: var(--w40); display: none; }
+.exp-card-wrap.expanded .exp-card-footer .exp-footer-text { display: inline; }
+.exp-card-wrap.expanded .exp-card-footer .exp-chevron { display: none; }
 
-.calendar-card { background: var(--card-head); padding: 1.25rem; flex: 1; }
-.cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
-.cal-month { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--w80); }
-.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
-.cal-dow { font-size: 0.55rem; color: var(--w30); padding: 0.2rem 0; font-weight: 700; }
-.cal-day { font-size: 0.68rem; color: var(--w60); padding: 0.35rem 0; }
-.cal-day.other-month { color: var(--w10); }
-.cal-day.today { background: #fff; color: #000; font-weight: 800; }
-.cal-day.has-booking { position: relative; }
-.cal-day.has-booking::after {
-  content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);
-  width: 3px; height: 3px; background: var(--amber); border-radius: 50%;
-}
-.cal-day.today.has-booking::after { background: #000; }
-
-/* ── BENTO GRID ── */
-.bento-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1rem; }
-
-.bento-card { background: var(--bg); transition: background 0.2s; }
-.bento-card:hover { background: #050505; }
-.bento-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0.9rem 1.1rem; background: var(--card-head); cursor: pointer; user-select: none;
-  min-height: 52px;
-}
-.bento-header-left { display: flex; align-items: center; gap: 0.65rem; min-width: 0; }
-.bento-icon { width: 16px; height: 16px; color: var(--w50); flex-shrink: 0; }
-.bento-title { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--w80); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bento-chevron { width: 15px; height: 15px; color: var(--w40); transition: transform 0.25s; flex-shrink: 0; }
-.bento-card.collapsed .bento-chevron { transform: rotate(-90deg); }
-.bento-card.collapsed .bento-body,
-.bento-card.collapsed .bento-footer { display: none; }
-
-.bento-body { padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.8rem; }
-.bento-row { display: flex; flex-direction: column; gap: 0.15rem; cursor: default; }
-.bento-row.clickable { cursor: pointer; padding: 0.2rem; margin: -0.2rem; transition: background 0.15s; }
+.bento-row { display: flex; flex-direction: column; padding: 0.3rem 0; cursor: default; }
+.bento-row.clickable { cursor: pointer; margin: 0 -0.3rem; padding: 0.3rem; transition: background 0.15s; }
 .bento-row.clickable:hover { background: var(--w05); }
-.bento-row-label { font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--w40); }
-.bento-row-value { font-size: 0.85rem; font-weight: 600; color: var(--w90); }
+.bento-row-label { font-size: 0.6rem; color: var(--w40); text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 0.25rem; }
+.bento-row-value { font-size: 0.85rem; font-weight: 500; color: var(--w90); }
 .bento-row-value.green { color: var(--green); }
 .bento-row-value.amber { color: var(--amber); }
 
-.bento-status-row { display: flex; align-items: center; justify-content: space-between; }
-.bento-status-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--w40); }
-.bento-status-value { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+.bento-status-row { display: flex; align-items: center; justify-content: space-between; padding: 0.15rem 0; }
+.bento-status-label { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--w40); }
+.bento-status-value { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
 .bento-status-value.online { color: var(--green); }
-.bento-status-value.degraded { color: var(--amber); }
-.bento-status-value.offline { color: var(--red); }
-.bento-latency { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.4rem; padding-top: 0.6rem; }
-.dot-pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
-@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-.bento-latency-text { font-size: 0.6rem; color: var(--w60); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+.bento-status-value.degraded { color: var(--amber-soft); }
+.bento-latency { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.3rem; padding-top: 0.5rem; }
+.dot-pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse-op 2s infinite; }
+.bento-latency-text { font-size: 0.6rem; color: var(--w60); font-weight: 700; text-transform: uppercase; }
 
-.env-badge {
-  display: inline-block; font-size: 0.55rem; font-weight: 800; letter-spacing: 0.08em;
-  padding: 0.2rem 0.5rem; background: rgba(96,165,250,0.15); color: var(--blue);
-}
+.env-badge { display: inline-block; font-size: 0.55rem; font-weight: 800; letter-spacing: 0.06em; padding: 0.2rem 0.5rem; background: rgba(96,165,250,0.15); color: var(--blue); }
 
-.alert-item { display: flex; flex-direction: column; gap: 0.3rem; padding: 0.5rem 0; }
+.alert-item { display: flex; flex-direction: column; gap: 0.2rem; padding: 0.35rem 0; }
 .alert-top { display: flex; align-items: center; justify-content: space-between; }
-.alert-badge { font-size: 0.55rem; font-weight: 800; text-transform: uppercase; padding: 0.15rem 0.4rem; letter-spacing: 0.06em; }
-.alert-badge.new { background: rgba(255,255,255,0.1); color: #fff; }
-.alert-badge.pending { background: rgba(251,191,36,0.12); color: var(--amber); }
-.alert-time { font-size: 0.58rem; color: var(--w30); }
-.alert-text { font-size: 0.72rem; color: var(--w70); line-height: 1.4; }
+.alert-badge { font-size: 0.54rem; font-weight: 800; text-transform: uppercase; padding: 0.12rem 0.4rem; letter-spacing: 0.05em; }
+.alert-badge.new { background: var(--w10); color: #fff; }
+.alert-badge.pending { background: rgba(251,191,36,0.12); color: var(--amber-soft); }
+.alert-time { font-size: 0.56rem; color: var(--w30); }
+.alert-text { font-size: 0.7rem; color: var(--w70); line-height: 1.35; }
 
-.bento-footer {
-  padding: 0.65rem 1.1rem; background: rgba(255,255,255,0.02);
-  font-size: 0.62rem; color: var(--w40); letter-spacing: 0.04em;
+/* ── PLATFORM CONSOLE DOCK ── */
+.console-dock-wrap { display: flex; flex-direction: column; align-items: center; padding-top: 2.5rem; }
+.console-dock-label { font-size: 0.62rem; font-weight: 800; color: var(--w40); letter-spacing: 0.4em; text-transform: uppercase; margin-bottom: 1rem; text-align: center; }
+.console-dock { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; padding: 0.4rem; background: var(--w05); backdrop-filter: blur(20px); border-radius: 999px; }
+.console-dock-btn {
+  position: relative; padding: 0.75rem; border-radius: 50%; background: none; border: none; cursor: pointer;
+  color: var(--w60); transition: all 0.25s;
 }
-.bento-footer a { color: var(--w60); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; transition: color 0.15s; }
-.bento-footer a:hover { color: #fff; }
+.console-dock-btn:hover { color: #fff; background: var(--w10); }
+.console-dock-btn.active { background: #fff; color: #000; transform: scale(1.1); box-shadow: 0 0 20px rgba(255,255,255,0.2); }
+.console-dock-btn svg { width: 20px; height: 20px; display: block; }
+.console-dock-tooltip {
+  position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%);
+  padding: 0.3rem 0.55rem; background: #fff; color: #000; font-size: 0.58rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.15s;
+}
+.console-dock-btn:hover .console-dock-tooltip { opacity: 1; }
 
-@media (max-width: 1024px) {
-  .row1 { grid-template-columns: 1fr; }
-  .bento-grid { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 640px) {
-  .bento-grid { grid-template-columns: 1fr; }
-  .revenue-breakdown { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
-  .shell { padding: 1.25rem 1rem 8rem; }
-}
-
-/* ── CONSOLE OVERLAY (full-screen detail views) ── */
-.console-overlay {
-  position: fixed; inset: 0; z-index: 500;
-  background: var(--bg);
-  display: none; flex-direction: column;
-  overflow-y: auto;
-}
+/* ── CONSOLE OVERLAY (ExpandableScreen replica) ── */
+.console-overlay { position: fixed; inset: 0; z-index: 500; background: var(--bg); display: none; flex-direction: column; }
 .console-overlay.open { display: flex; }
-.console-header {
-  position: sticky; top: 0; z-index: 2;
-  background: var(--bg);
-  border-bottom: 1px solid var(--w08);
-  padding: 1.25rem 1.5rem;
-  display: flex; align-items: center; gap: 1rem;
-}
+.console-close { position: absolute; top: 1.5rem; right: 1.5rem; z-index: 10; padding: 0.5rem; background: none; border: none; cursor: pointer; color: #fff; transition: background 0.15s; }
+.console-close:hover { background: var(--w10); }
+.console-close svg { width: 22px; height: 22px; }
+.console-scroll { flex: 1; min-height: 0; overflow-y: auto; }
+.console-inner { max-width: 1280px; margin: 0 auto; padding: 0 1.5rem 3rem; display: flex; flex-direction: column; height: 100%; }
+.console-back-row { flex-shrink: 0; display: flex; flex-direction: column; gap: 0.7rem; padding: 1.75rem 4rem 1rem 0; }
 .console-back {
-  display: flex; align-items: center; gap: 0.4rem;
+  display: flex; align-items: center; gap: 0.4rem; width: fit-content;
   background: none; border: none; cursor: pointer;
-  color: var(--w60); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--w40); font-size: 0.62rem; font-weight: 800; letter-spacing: 0.28em; text-transform: uppercase;
   transition: color 0.15s;
 }
 .console-back:hover { color: #fff; }
-.console-back svg { width: 16px; height: 16px; }
-.console-title { font-size: 0.95rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; }
-.console-body { padding: 1.5rem; max-width: 1280px; margin: 0 auto; width: 100%; }
+.console-back svg { width: 13px; height: 13px; }
+.console-title-row { display: flex; align-items: center; gap: 0.75rem; }
+.console-title-row svg { width: 20px; height: 20px; color: var(--w40); }
+.console-title { font-size: 1.05rem; font-weight: 800; color: #fff; letter-spacing: 0.06em; text-transform: uppercase; }
 
-/* ── DATA CARD / TABLE (used inside console panels) ── */
+/* ── DATA CARD / TABLE (console panels) ── */
 .dc-card { background: var(--card-head); padding: 1.25rem; margin-bottom: 1rem; }
 .data-table { width: 100%; border-collapse: collapse; }
-.data-table th {
-  font-size: 0.58rem; letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--w30); font-weight: 700; padding: 0.6rem 0.75rem; text-align: left;
-  border-bottom: 1px solid var(--w08);
-}
+.data-table th { font-size: 0.58rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--w30); font-weight: 700; padding: 0.6rem 0.75rem; text-align: left; border-bottom: 1px solid var(--w08); }
 .data-table td { padding: 0.7rem 0.75rem; font-size: 0.78rem; color: var(--w70); border-bottom: 1px solid var(--w05); }
 .data-table tr:last-child td { border-bottom: none; }
 .data-table tr:hover td { background: var(--w05); }
@@ -264,15 +265,11 @@ body {
 
 .badge { font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; padding: 0.25rem 0.55rem; white-space: nowrap; }
 .badge-confirmed, .badge-completed { color: var(--green); background: rgba(74,222,128,0.1); }
-.badge-pending { color: var(--amber); background: rgba(251,191,36,0.1); }
+.badge-pending { color: var(--amber-soft); background: rgba(251,191,36,0.1); }
 .badge-new { color: #fff; background: var(--w10); }
 
 .portfolio-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.9rem; }
-.portfolio-item {
-  aspect-ratio: 3/4; background: var(--card-head);
-  display: flex; flex-direction: column; justify-content: flex-end;
-  padding: 1rem; position: relative; overflow: hidden;
-}
+.portfolio-item { aspect-ratio: 3/4; background: var(--card-head); display: flex; flex-direction: column; justify-content: flex-end; padding: 1rem; position: relative; overflow: hidden; }
 .portfolio-label { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 800; color: #fff; }
 @media (max-width: 700px) { .portfolio-grid { grid-template-columns: repeat(2, 1fr); } }
 
@@ -287,10 +284,7 @@ body {
 .form-input { width: 100%; background: var(--w05); border: none; outline: none; color: #fff; font-size: 0.8rem; font-family: inherit; padding: 0.65rem 0.9rem; }
 .form-input:focus { background: var(--w10); }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
-.form-save {
-  margin-top: 0.5rem; background: #fff; color: #000; font-size: 0.65rem; font-weight: 800;
-  letter-spacing: 0.1em; text-transform: uppercase; padding: 0.7rem 1.4rem; border: none; cursor: pointer;
-}
+.form-save { margin-top: 0.5rem; background: #fff; color: #000; font-size: 0.65rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.7rem 1.4rem; border: none; cursor: pointer; }
 .form-save:hover { opacity: 0.85; }
 
 /* ── PREVIEW BANNER ── */
@@ -328,8 +322,10 @@ body {
     </div>
   </div>
 
-  <!-- ROW 1: REVENUE + CLOCK/CALENDAR -->
+  <!-- ROW 1: REVENUE TRACKER + CLOCK/CALENDAR -->
   <div class="row1">
+
+    <!-- REVENUE TRACKER -->
     <div class="revenue-card">
       <div class="period-pills" id="periodPills">
         <button class="period-pill active" data-value="48600">All Time</button>
@@ -346,7 +342,7 @@ body {
         <div class="revenue-number">
           <span class="cur">$</span>
           <span class="val" id="revenueValue">48,600</span>
-          <span class="revenue-trend">
+          <span class="revenue-trend" id="revenueTrend">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
             +100%
           </span>
@@ -358,218 +354,340 @@ body {
         <div class="rb-item"><div class="rb-label">Tips</div><div class="rb-value">$400</div></div>
         <div class="rb-item"><div class="rb-label amber">Bookings</div><div class="rb-value amber">$4,200</div></div>
       </div>
-      <div class="revenue-chart">
-        <div class="bar" style="height:35%"></div>
-        <div class="bar" style="height:55%"></div>
-        <div class="bar" style="height:40%"></div>
-        <div class="bar" style="height:78%"></div>
-        <div class="bar" style="height:60%"></div>
-        <div class="bar" style="height:90%"></div>
-        <div class="bar" style="height:70%"></div>
-        <div class="bar" style="height:100%"></div>
-        <div class="bar" style="height:65%"></div>
-        <div class="bar" style="height:82%"></div>
-        <div class="bar" style="height:48%"></div>
-        <div class="bar" style="height:74%"></div>
+
+      <!-- DASHBOARD CHARTS (matches DashboardCharts.tsx) -->
+      <div class="chart-section">
+        <div class="chart-headline">
+          <span class="val" id="chartHeadlineVal">$4,200</span>
+          <span class="lbl" id="chartHeadlineLbl">Revenue</span>
+        </div>
+        <div class="chart-box">
+          <svg id="chartSvg" viewBox="0 0 600 220" preserveAspectRatio="none"></svg>
+        </div>
+        <div class="chart-axis-x" id="chartAxisX"></div>
+
+        <div class="chart-toggle-row" id="timeRangeToggle">
+          <button class="active" data-range="1H">1H</button>
+          <button data-range="24H">24H</button>
+          <button class="active2" data-range="7D">7D</button>
+          <button data-range="30D">30D</button>
+          <button data-range="1Y">1Y</button>
+        </div>
+        <div class="chart-toggle-row" id="metricToggle">
+          <button class="active" data-metric="revenue">Revenue</button>
+          <button data-metric="inquiries">Inquiries</button>
+          <button data-metric="referrals">Referrals</button>
+          <button data-metric="bookings">Bookings</button>
+        </div>
       </div>
     </div>
 
-    <div class="side-col">
-      <div class="clock-card">
-        <div class="clock-time" id="clockTime">--:--:--</div>
-        <div class="clock-date" id="clockDate">Loading…</div>
-      </div>
-      <div class="calendar-card">
-        <div class="cal-header">
-          <span class="cal-month" id="calMonth">Month Year</span>
+    <!-- CLOCK + CALENDAR -->
+    <div class="side-col" style="display:flex;flex-direction:column;gap:1.25rem;">
+
+      <!-- CLOCK WIDGET (matches clock-widget.tsx) -->
+      <div class="clock-card" id="clockCard">
+        <div class="clock-mode-label" id="clockModeLabel"><span id="clockModeText">CLOCK</span></div>
+        <div class="clock-main">
+
+          <!-- Analog -->
+          <div class="clock-view" id="viewAnalog">
+            <div class="analog-face" id="analogFace">
+              <div class="analog-center"></div>
+              <div class="analog-hand hand-hour" id="handHour"></div>
+              <div class="analog-hand hand-minute" id="handMinute"></div>
+              <div class="analog-hand hand-second" id="handSecond"></div>
+            </div>
+          </div>
+
+          <!-- Digital -->
+          <div class="clock-view hidden" id="viewDigital">
+            <div class="digital-face" id="digitalFace">
+              <div class="digital-digits">
+                <span class="digit" id="digitH">12</span>
+                <span class="digit">:</span>
+                <span class="digit" id="digitM">00</span>
+                <div class="digital-extra">
+                  <div class="digital-extra-inner">
+                    <span class="digital-ampm" id="digitAmpm">AM</span>
+                    <span class="digital-seconds" id="digitS">:00</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stopwatch -->
+          <div class="clock-view hidden" id="viewStopwatch">
+            <div class="digital-digits">
+              <span class="digit" id="swMin">0</span>
+              <span class="digit">:</span>
+              <span class="digit" id="swSec">00.00</span>
+            </div>
+            <div class="sw-controls">
+              <button class="round-btn" id="swToggleBtn" aria-label="Start/Pause">
+                <svg id="swToggleIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3" style="transform:translateX(2px)"/></svg>
+              </button>
+              <button class="round-btn ghost" id="swResetBtn" aria-label="Reset">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Timer -->
+          <div class="clock-view hidden" id="viewTimer">
+            <form class="timer-set-form" id="timerSetForm">
+              <div class="timer-input-row">
+                <input class="timer-input" id="timerInput" type="text" inputmode="numeric" placeholder="0" maxlength="3" autocomplete="off" />
+                <span class="timer-min-label">MIN</span>
+              </div>
+              <button type="submit" class="timer-start-btn">START</button>
+            </form>
+            <div class="timer-countdown" id="timerCountdown" style="display:none;"></div>
+            <div class="digital-digits" id="timerRunningDigits" style="display:none;">
+              <span class="digit" id="timerMin">0</span>
+              <span class="digit">:</span>
+              <span class="digit" id="timerSec">00</span>
+            </div>
+            <div class="timer-alarm" id="timerAlarm" style="display:none;">Time Is Up</div>
+            <div class="timer-controls" id="timerControls" style="display:none;">
+              <button class="round-btn" id="timerToggleBtn" aria-label="Pause/Resume">
+                <svg id="timerToggleIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="4" x2="6" y2="20"/><line x1="18" y1="4" x2="18" y2="20"/></svg>
+              </button>
+              <button class="round-btn ghost" id="timerResetBtn" aria-label="Reset">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+              </button>
+            </div>
+          </div>
+
         </div>
-        <div class="cal-grid" id="calGrid"></div>
       </div>
+
+      <!-- CALENDAR WIDGET (matches calendar-widget.tsx) -->
+      <div class="calendar-card">
+        <div class="calendar-inner">
+          <div class="cal-header">
+            <span class="cal-month" id="calMonth">Month</span>
+            <span class="cal-year" id="calYear">2026</span>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+        </div>
+      </div>
+
     </div>
   </div>
 
-  <!-- ROW 2: BENTO GRID -->
+  <!-- ROW 2: EXPANDABLE BENTO GRID -->
   <div class="bento-grid">
 
     <!-- Today's Load -->
-    <div class="bento-card">
-      <div class="bento-header" onclick="toggleCard(this)">
-        <div class="bento-header-left">
-          <svg class="bento-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="17" rx="1"/><path d="M8 2v4M16 2v4M3 9h18"/><path d="M9 14l2 2 4-4"/></svg>
-          <span class="bento-title">Today's Load</span>
+    <div class="exp-card-wrap">
+      <div class="exp-card" onclick="toggleExpCard(this.parentElement)">
+        <div class="exp-card-header">
+          <svg class="exp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="17" rx="1"/><path d="M8 2v4M16 2v4M3 9h18"/><path d="M9 14l2 2 4-4"/></svg>
+          <span class="exp-title">Today's Load</span>
         </div>
-        <svg class="bento-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        <div class="exp-card-content">
+          <div class="bento-row clickable" onclick="event.stopPropagation(); openConsole('bookings')">
+            <span class="bento-row-label">Today's Appointments</span>
+            <span class="bento-row-value">3</span>
+          </div>
+          <div class="bento-row clickable" onclick="event.stopPropagation(); openConsole('bookings')">
+            <span class="bento-row-label">Pending Requests</span>
+            <span class="bento-row-value amber">5</span>
+          </div>
+          <div class="bento-row clickable" onclick="event.stopPropagation(); openConsole('clients')">
+            <span class="bento-row-label">Total Clients</span>
+            <span class="bento-row-value">127</span>
+          </div>
+        </div>
+        <div class="exp-card-footer">
+          <svg class="exp-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          <span class="exp-footer-text">Real-time sync</span>
+        </div>
       </div>
-      <div class="bento-body">
-        <div class="bento-row clickable" onclick="openConsole('bookings')">
-          <span class="bento-row-label">Today's Appointments</span>
-          <span class="bento-row-value">3</span>
-        </div>
-        <div class="bento-row clickable" onclick="openConsole('bookings')">
-          <span class="bento-row-label">Pending Requests</span>
-          <span class="bento-row-value amber">5</span>
-        </div>
-        <div class="bento-row clickable" onclick="openConsole('bookings')">
-          <span class="bento-row-label">New Client Inquiries</span>
-          <span class="bento-row-value">4</span>
-        </div>
-        <div class="bento-row clickable" onclick="openConsole('clients')">
-          <span class="bento-row-label">Total Clients</span>
-          <span class="bento-row-value">127</span>
-        </div>
-      </div>
-      <div class="bento-footer">Real-time sync</div>
     </div>
 
     <!-- Revenue Performance -->
-    <div class="bento-card">
-      <div class="bento-header" onclick="toggleCard(this)">
-        <div class="bento-header-left">
-          <svg class="bento-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-          <span class="bento-title">Revenue Performance</span>
+    <div class="exp-card-wrap">
+      <div class="exp-card" onclick="toggleExpCard(this.parentElement)">
+        <div class="exp-card-header">
+          <svg class="exp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          <span class="exp-title">Revenue Performance</span>
         </div>
-        <svg class="bento-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        <div class="exp-card-content">
+          <div class="bento-row clickable" onclick="event.stopPropagation(); openConsole('payments')">
+            <span class="bento-row-label">Deposits</span>
+            <span class="bento-row-value">$840</span>
+          </div>
+          <div class="bento-row clickable" onclick="event.stopPropagation(); openConsole('payments')">
+            <span class="bento-row-label">Full Sessions</span>
+            <span class="bento-row-value">$2,960</span>
+          </div>
+          <div class="bento-row">
+            <span class="bento-row-label">Total (MTD)</span>
+            <span class="bento-row-value green">$4,200</span>
+          </div>
+        </div>
+        <div class="exp-card-footer">
+          <svg class="exp-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          <span class="exp-footer-text">Gross revenue estimate</span>
+        </div>
       </div>
-      <div class="bento-body">
-        <div class="bento-row clickable" onclick="openConsole('payments')">
-          <span class="bento-row-label">Deposits</span>
-          <span class="bento-row-value">$840</span>
-        </div>
-        <div class="bento-row clickable" onclick="openConsole('payments')">
-          <span class="bento-row-label">Full Sessions</span>
-          <span class="bento-row-value">$2,960</span>
-        </div>
-        <div class="bento-row clickable" onclick="openConsole('payments')">
-          <span class="bento-row-label">Tips</span>
-          <span class="bento-row-value">$400</span>
-        </div>
-        <div class="bento-row">
-          <span class="bento-row-label">Total (MTD)</span>
-          <span class="bento-row-value green">$4,200</span>
-        </div>
-      </div>
-      <div class="bento-footer">Gross revenue estimate</div>
     </div>
 
     <!-- Studio Status -->
-    <div class="bento-card">
-      <div class="bento-header" onclick="toggleCard(this)">
-        <div class="bento-header-left">
-          <svg class="bento-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg>
-          <span class="bento-title">Studio Status</span>
+    <div class="exp-card-wrap">
+      <div class="exp-card" onclick="toggleExpCard(this.parentElement)">
+        <div class="exp-card-header">
+          <svg class="exp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg>
+          <span class="exp-title">Studio Status</span>
         </div>
-        <svg class="bento-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-      </div>
-      <div class="bento-body">
-        <div class="bento-status-row"><span class="bento-status-label">Booking System</span><span class="bento-status-value online">Online</span></div>
-        <div class="bento-status-row"><span class="bento-status-label">Payment Processor</span><span class="bento-status-value online">Online</span></div>
-        <div class="bento-status-row"><span class="bento-status-label">Calendar Sync</span><span class="bento-status-value online">Online</span></div>
-        <div class="bento-status-row"><span class="bento-status-label">Gallery Sync</span><span class="bento-status-value degraded">Degraded</span></div>
-        <div class="bento-latency">
-          <div class="dot-pulse"></div>
-          <span class="bento-latency-text">Latency: 38ms</span>
+        <div class="exp-card-content">
+          <div class="bento-status-row"><span class="bento-status-label">Booking System</span><span class="bento-status-value online">Online</span></div>
+          <div class="bento-status-row"><span class="bento-status-label">Payment Processor</span><span class="bento-status-value online">Online</span></div>
+          <div class="bento-status-row"><span class="bento-status-label">Gallery Sync</span><span class="bento-status-value degraded">Degraded</span></div>
+          <div class="bento-latency">
+            <div class="dot-pulse"></div>
+            <span class="bento-latency-text">Latency: 38ms</span>
+          </div>
+        </div>
+        <div class="exp-card-footer">
+          <svg class="exp-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          <span class="exp-footer-text">System health</span>
         </div>
       </div>
-      <div class="bento-footer">System health</div>
     </div>
 
     <!-- Client Registry -->
-    <div class="bento-card">
-      <div class="bento-header" onclick="toggleCard(this)">
-        <div class="bento-header-left">
-          <svg class="bento-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4.5 8-11V5l-8-3-8 3v6c0 6.5 8 11 8 11z"/></svg>
-          <span class="bento-title">Client Registry</span>
+    <div class="exp-card-wrap">
+      <div class="exp-card" onclick="toggleExpCard(this.parentElement)">
+        <div class="exp-card-header">
+          <svg class="exp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4.5 8-11V5l-8-3-8 3v6c0 6.5 8 11 8 11z"/></svg>
+          <span class="exp-title">Client Registry</span>
         </div>
-        <svg class="bento-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        <div class="exp-card-content">
+          <div class="bento-row clickable" onclick="event.stopPropagation(); openConsole('clients')">
+            <span class="bento-row-label">Total Clients</span>
+            <span class="bento-row-value">127</span>
+          </div>
+          <div class="bento-row">
+            <span class="bento-row-label">Sessions This Month</span>
+            <span class="bento-row-value">18</span>
+          </div>
+          <div class="bento-row">
+            <span class="bento-row-label">Environment</span>
+            <span class="bento-row-value"><span class="env-badge">LIVE</span></span>
+          </div>
+        </div>
+        <div class="exp-card-footer">
+          <svg class="exp-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          <span class="exp-footer-text">Manage Clients</span>
+        </div>
       </div>
-      <div class="bento-body">
-        <div class="bento-row clickable" onclick="openConsole('clients')">
-          <span class="bento-row-label">Total Clients</span>
-          <span class="bento-row-value">127</span>
-        </div>
-        <div class="bento-row">
-          <span class="bento-row-label">Sessions This Month</span>
-          <span class="bento-row-value">18</span>
-        </div>
-        <div class="bento-row">
-          <span class="bento-row-label">VIP Repeat Clients</span>
-          <span class="bento-row-value">34</span>
-        </div>
-        <div class="bento-row">
-          <span class="bento-row-label">Environment</span>
-          <span class="bento-row-value"><span class="env-badge">LIVE</span></span>
-        </div>
-      </div>
-      <div class="bento-footer"><a onclick="openConsole('clients')">Manage Clients</a></div>
     </div>
 
     <!-- Notifications -->
-    <div class="bento-card">
-      <div class="bento-header" onclick="toggleCard(this)">
-        <div class="bento-header-left">
-          <svg class="bento-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-4.28-5.768A2 2 0 0012 4a2 2 0 00-1.72.94A6 6 0 006 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-          <span class="bento-title">Notifications</span>
+    <div class="exp-card-wrap">
+      <div class="exp-card" onclick="toggleExpCard(this.parentElement)">
+        <div class="exp-card-header">
+          <svg class="exp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-4.28-5.768A2 2 0 0012 4a2 2 0 00-1.72.94A6 6 0 006 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+          <span class="exp-title">Notifications</span>
         </div>
-        <svg class="bento-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        <div class="exp-card-content">
+          <div class="alert-item">
+            <div class="alert-top"><span class="alert-badge new">New</span><span class="alert-time">12m ago</span></div>
+            <p class="alert-text">Devon Park requested fine line florals — forearm</p>
+          </div>
+          <div class="alert-item">
+            <div class="alert-top"><span class="alert-badge pending">Pending</span><span class="alert-time">1h ago</span></div>
+            <p class="alert-text">Kelsey Brand awaiting consult confirmation</p>
+          </div>
+        </div>
+        <div class="exp-card-footer">
+          <svg class="exp-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          <span class="exp-footer-text">System alerts</span>
+        </div>
       </div>
-      <div class="bento-body">
-        <div class="alert-item">
-          <div class="alert-top"><span class="alert-badge new">New</span><span class="alert-time">12m ago</span></div>
-          <p class="alert-text">Devon Park requested fine line florals — forearm</p>
-        </div>
-        <div class="alert-item">
-          <div class="alert-top"><span class="alert-badge pending">Pending</span><span class="alert-time">1h ago</span></div>
-          <p class="alert-text">Kelsey Brand awaiting consult confirmation</p>
-        </div>
-        <div class="alert-item">
-          <div class="alert-top"><span class="alert-badge new">New</span><span class="alert-time">3h ago</span></div>
-          <p class="alert-text">Lily Nakamura requested script lettering — ribs</p>
-        </div>
-      </div>
-      <div class="bento-footer">System alerts</div>
     </div>
 
     <!-- Gallery -->
-    <div class="bento-card">
-      <div class="bento-header" onclick="toggleCard(this)">
-        <div class="bento-header-left">
-          <svg class="bento-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-          <span class="bento-title">Gallery</span>
+    <div class="exp-card-wrap">
+      <div class="exp-card" onclick="toggleExpCard(this.parentElement)">
+        <div class="exp-card-header">
+          <svg class="exp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          <span class="exp-title">Gallery</span>
         </div>
-        <svg class="bento-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        <div class="exp-card-content">
+          <div class="bento-row clickable" onclick="event.stopPropagation(); openConsole('gallery')">
+            <span class="bento-row-label">Portfolio Pieces</span>
+            <span class="bento-row-value">42</span>
+          </div>
+          <div class="bento-row">
+            <span class="bento-row-label">Public Views (30d)</span>
+            <span class="bento-row-value">3,104</span>
+          </div>
+        </div>
+        <div class="exp-card-footer">
+          <svg class="exp-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          <span class="exp-footer-text">Manage Gallery</span>
+        </div>
       </div>
-      <div class="bento-body">
-        <div class="bento-row clickable" onclick="openConsole('gallery')">
-          <span class="bento-row-label">Portfolio Pieces</span>
-          <span class="bento-row-value">42</span>
-        </div>
-        <div class="bento-row">
-          <span class="bento-row-label">Latest Upload</span>
-          <span class="bento-row-value">2 days ago</span>
-        </div>
-        <div class="bento-row">
-          <span class="bento-row-label">Public Views (30d)</span>
-          <span class="bento-row-value">3,104</span>
-        </div>
-      </div>
-      <div class="bento-footer"><a onclick="openConsole('gallery')">Manage Gallery</a></div>
     </div>
 
   </div>
+
+  <!-- PLATFORM CONSOLE DOCK -->
+  <div class="console-dock-wrap">
+    <h2 class="console-dock-label">Platform Console</h2>
+    <div class="console-dock">
+      <button class="console-dock-btn" onclick="openConsole('gallery')" data-app="gallery">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        <span class="console-dock-tooltip">Gallery</span>
+      </button>
+      <button class="console-dock-btn" onclick="openConsole('bookings')" data-app="bookings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+        <span class="console-dock-tooltip">Bookings</span>
+      </button>
+      <button class="console-dock-btn" onclick="openConsole('clients')" data-app="clients">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        <span class="console-dock-tooltip">Clients</span>
+      </button>
+      <button class="console-dock-btn" onclick="openConsole('calendar')" data-app="calendar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18"/></svg>
+        <span class="console-dock-tooltip">Calendar</span>
+      </button>
+      <button class="console-dock-btn" onclick="openConsole('payments')" data-app="payments">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v1m0 8v1M9.5 10.5c0-1 1.1-1.5 2.5-1.5s2.5.7 2.5 1.8c0 2.2-5 1.7-5 4.2 0 1.1 1.1 2 2.5 2s2.5-.5 2.5-1.5"/></svg>
+        <span class="console-dock-tooltip">Payments</span>
+      </button>
+      <button class="console-dock-btn" onclick="openConsole('settings')" data-app="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        <span class="console-dock-tooltip">Settings</span>
+      </button>
+    </div>
+  </div>
+
 </div>
 
-<!-- ════════════════════════ CONSOLE OVERLAYS ════════════════════════ -->
+<!-- ════════════════════════ CONSOLE OVERLAYS (ExpandableScreen replica) ════════════════════════ -->
 
 <!-- BOOKINGS -->
 <div class="console-overlay" id="console-bookings">
-  <div class="console-header">
-    <button class="console-back" onclick="closeConsole()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-      Back
-    </button>
-    <span class="console-title">Bookings</span>
-  </div>
-  <div class="console-body">
+  <button class="console-close" onclick="closeConsole()" aria-label="Close">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <div class="console-scroll"><div class="console-inner">
+    <div class="console-back-row">
+      <button class="console-back" onclick="closeConsole()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Dashboard
+      </button>
+      <div class="console-title-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+        <span class="console-title">Booking Management</span>
+      </div>
+    </div>
     <div class="dc-card">
       <table class="data-table">
         <thead><tr><th>Client</th><th>Service</th><th>Date &amp; Time</th><th>Deposit</th><th>Status</th></tr></thead>
@@ -583,19 +701,25 @@ body {
         </tbody>
       </table>
     </div>
-  </div>
+  </div></div>
 </div>
 
 <!-- GALLERY -->
 <div class="console-overlay" id="console-gallery">
-  <div class="console-header">
-    <button class="console-back" onclick="closeConsole()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-      Back
-    </button>
-    <span class="console-title">Gallery</span>
-  </div>
-  <div class="console-body">
+  <button class="console-close" onclick="closeConsole()" aria-label="Close">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <div class="console-scroll"><div class="console-inner">
+    <div class="console-back-row">
+      <button class="console-back" onclick="closeConsole()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Dashboard
+      </button>
+      <div class="console-title-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        <span class="console-title">Gallery Management</span>
+      </div>
+    </div>
     <div class="portfolio-grid">
       <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Fine Line Botanical</span></div>
       <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Blackwork Sleeve</span></div>
@@ -606,19 +730,25 @@ body {
       <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Micro Realism</span></div>
       <div class="portfolio-item" style="background:linear-gradient(135deg,#1a1a1a,#0a0a0a);"><span class="portfolio-label">Ornamental Florals</span></div>
     </div>
-  </div>
+  </div></div>
 </div>
 
 <!-- CLIENTS -->
 <div class="console-overlay" id="console-clients">
-  <div class="console-header">
-    <button class="console-back" onclick="closeConsole()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-      Back
-    </button>
-    <span class="console-title">Clients</span>
-  </div>
-  <div class="console-body">
+  <button class="console-close" onclick="closeConsole()" aria-label="Close">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <div class="console-scroll"><div class="console-inner">
+    <div class="console-back-row">
+      <button class="console-back" onclick="closeConsole()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Dashboard
+      </button>
+      <div class="console-title-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        <span class="console-title">Client Management</span>
+      </div>
+    </div>
     <div class="dc-card">
       <div class="search-bar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -634,19 +764,53 @@ body {
         </tbody>
       </table>
     </div>
-  </div>
+  </div></div>
+</div>
+
+<!-- CALENDAR -->
+<div class="console-overlay" id="console-calendar">
+  <button class="console-close" onclick="closeConsole()" aria-label="Close">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <div class="console-scroll"><div class="console-inner">
+    <div class="console-back-row">
+      <button class="console-back" onclick="closeConsole()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Dashboard
+      </button>
+      <div class="console-title-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18"/></svg>
+        <span class="console-title">Master Calendar</span>
+      </div>
+    </div>
+    <div class="calendar-card" style="min-height:420px;">
+      <div class="calendar-inner" style="max-width:360px;">
+        <div class="cal-header">
+          <span class="cal-month" id="calMonthLarge">Month</span>
+          <span class="cal-year" id="calYearLarge">2026</span>
+        </div>
+        <div class="cal-grid" id="calGridLarge" style="font-size:1.1em;"></div>
+      </div>
+    </div>
+  </div></div>
 </div>
 
 <!-- PAYMENTS -->
 <div class="console-overlay" id="console-payments">
-  <div class="console-header">
-    <button class="console-back" onclick="closeConsole()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-      Back
-    </button>
-    <span class="console-title">Payments</span>
-  </div>
-  <div class="console-body">
+  <button class="console-close" onclick="closeConsole()" aria-label="Close">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <div class="console-scroll"><div class="console-inner">
+    <div class="console-back-row">
+      <button class="console-back" onclick="closeConsole()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Dashboard
+      </button>
+      <div class="console-title-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v1m0 8v1M9.5 10.5c0-1 1.1-1.5 2.5-1.5s2.5.7 2.5 1.8c0 2.2-5 1.7-5 4.2 0 1.1 1.1 2 2.5 2s2.5-.5 2.5-1.5"/></svg>
+        <span class="console-title">Payments</span>
+      </div>
+    </div>
     <div class="dc-card">
       <table class="data-table">
         <thead><tr><th>Client</th><th>Type</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead>
@@ -658,19 +822,25 @@ body {
         </tbody>
       </table>
     </div>
-  </div>
+  </div></div>
 </div>
 
 <!-- SETTINGS -->
 <div class="console-overlay" id="console-settings">
-  <div class="console-header">
-    <button class="console-back" onclick="closeConsole()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-      Back
-    </button>
-    <span class="console-title">Settings</span>
-  </div>
-  <div class="console-body">
+  <button class="console-close" onclick="closeConsole()" aria-label="Close">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <div class="console-scroll"><div class="console-inner">
+    <div class="console-back-row">
+      <button class="console-back" onclick="closeConsole()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Dashboard
+      </button>
+      <div class="console-title-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        <span class="console-title">Platform Settings</span>
+      </div>
+    </div>
     <div class="dc-card settings-form">
       <div class="form-group">
         <label class="form-label">Artist / Studio Name</label>
@@ -692,28 +862,31 @@ body {
       </div>
       <button class="form-save">Save Changes</button>
     </div>
-  </div>
+  </div></div>
 </div>
 
 <script>
-  // Bento card collapse/expand
-  function toggleCard(header) {
-    header.closest('.bento-card').classList.toggle('collapsed');
+  /* ═══════════ EXPANDABLE BENTO CARDS ═══════════ */
+  function toggleExpCard(wrap) {
+    wrap.classList.toggle('expanded');
   }
 
-  // Console overlay open/close
+  /* ═══════════ CONSOLE OVERLAYS ═══════════ */
   function openConsole(name) {
     document.querySelectorAll('.console-overlay').forEach(el => el.classList.remove('open'));
+    document.querySelectorAll('.console-dock-btn').forEach(b => b.classList.toggle('active', b.dataset.app === name));
     const el = document.getElementById('console-' + name);
-    if (el) { el.classList.add('open'); el.scrollTop = 0; }
+    if (el) { el.classList.add('open'); el.querySelector('.console-scroll').scrollTop = 0; }
     document.body.style.overflow = 'hidden';
   }
   function closeConsole() {
     document.querySelectorAll('.console-overlay').forEach(el => el.classList.remove('open'));
+    document.querySelectorAll('.console-dock-btn').forEach(b => b.classList.remove('active'));
     document.body.style.overflow = '';
   }
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeConsole(); });
 
-  // Revenue period pills
+  /* ═══════════ REVENUE PERIOD PILLS ═══════════ */
   document.getElementById('periodPills').addEventListener('click', (e) => {
     const btn = e.target.closest('.period-pill');
     if (!btn) return;
@@ -722,60 +895,345 @@ body {
     document.getElementById('revenueValue').textContent = Number(btn.dataset.value).toLocaleString();
   });
 
-  // Live clock
-  function updateClock() {
-    const now = new Date();
-    document.getElementById('clockTime').textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    document.getElementById('clockDate').textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-  }
-  updateClock();
-  setInterval(updateClock, 1000);
+  /* ═══════════ DASHBOARD CHARTS (matches DashboardCharts.tsx) ═══════════ */
+  const chartConfig = {
+    revenue:   { color: '#4ade80', label: 'Revenue',   prefix: '$', base: 4200 },
+    inquiries: { color: '#60a5fa', label: 'Inquiries',  prefix: '',  base: 18 },
+    referrals: { color: '#c084fc', label: 'Referrals',  prefix: '',  base: 6 },
+    bookings:  { color: '#f59e0b', label: 'Bookings',   prefix: '$', base: 4200 },
+  };
+  const rangePoints = { '1H': 12, '24H': 24, '7D': 7, '30D': 12, '1Y': 12 };
+  const rangeLabels = {
+    '1H': ['-60m','-50m','-40m','-30m','-20m','-10m','now'],
+    '24H': ['12am','4am','8am','12pm','4pm','8pm','now'],
+    '7D': ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+    '30D': ['Wk 1','Wk 2','Wk 3','Wk 4'],
+    '1Y': ['Jan','Mar','May','Jul','Sep','Nov'],
+  };
+  let currentRange = '7D';
+  let currentMetric = 'revenue';
 
-  // Mini calendar for current month
-  function renderCalendar() {
+  function seededRandom(seed) {
+    const x = Math.sin(seed) * 10000;
+    return x - Math.floor(x);
+  }
+
+  function genChartData(metric, range) {
+    const points = rangePoints[range] || 7;
+    const base = chartConfig[metric].base;
+    const seed = metric.length * 7 + range.length * 3;
+    return Array.from({ length: points }).map((_, i) => {
+      const progress = i / (points - 1 || 1);
+      const variation = (seededRandom(seed + i * 1.7) - 0.5) * 0.35;
+      const trend = base * (0.55 + progress * 0.45);
+      return Math.max(0, trend * (1 + variation));
+    });
+  }
+
+  function renderChart() {
+    const cfg = chartConfig[currentMetric];
+    const data = genChartData(currentMetric, currentRange);
+    const total = data.reduce((s, v) => s + v, 0);
+    const headlineVal = ['inquiries', 'referrals'].includes(currentMetric)
+      ? Math.round(data[data.length - 1])
+      : Math.round(total);
+
+    document.getElementById('chartHeadlineVal').textContent = cfg.prefix + headlineVal.toLocaleString();
+    document.getElementById('chartHeadlineVal').style.color = cfg.color;
+    document.getElementById('chartHeadlineLbl').textContent = cfg.label;
+
+    const W = 600, H = 220, PAD = 20;
+    const max = Math.max(...data, 1) * 1.15;
+    const stepX = (W - PAD * 2) / (data.length - 1 || 1);
+    const points = data.map((v, i) => {
+      const x = PAD + i * stepX;
+      const y = H - PAD - (v / max) * (H - PAD * 2);
+      return [x, y];
+    });
+
+    const linePath = points.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+    const areaPath = linePath + ` L${points[points.length - 1][0].toFixed(1)},${H - PAD} L${points[0][0].toFixed(1)},${H - PAD} Z`;
+
+    const gridLines = [0.25, 0.5, 0.75].map(f => {
+      const y = PAD + f * (H - PAD * 2);
+      return `<line x1="${PAD}" y1="${y}" x2="${W - PAD}" y2="${y}" stroke="rgba(255,255,255,0.08)" stroke-dasharray="3 3" />`;
+    }).join('');
+
+    const dots = points.map(p => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.5" fill="${cfg.color}" />`).join('');
+
+    const svg = document.getElementById('chartSvg');
+    svg.innerHTML = `
+      ${gridLines}
+      <path d="${areaPath}" fill="${cfg.color}" fill-opacity="0.12" stroke="none" />
+      <path d="${linePath}" fill="none" stroke="${cfg.color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+      ${dots}
+    `;
+
+    const labels = rangeLabels[currentRange] || [];
+    document.getElementById('chartAxisX').innerHTML = labels.map(l => `<span>${l}</span>`).join('');
+  }
+
+  document.getElementById('timeRangeToggle').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    currentRange = btn.dataset.range;
+    document.querySelectorAll('#timeRangeToggle button').forEach(b => b.classList.toggle('active', b === btn));
+    renderChart();
+  });
+  document.getElementById('metricToggle').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    currentMetric = btn.dataset.metric;
+    document.querySelectorAll('#metricToggle button').forEach(b => b.classList.toggle('active', b === btn));
+    renderChart();
+  });
+  renderChart();
+
+  /* ═══════════ CLOCK WIDGET (matches clock-widget.tsx) ═══════════ */
+  const clockState = {
+    mode: 'clock',
+    isDigital: false,
+    is24Hour: false,
+    swElapsed: 0,
+    swRunning: false,
+    swStartRef: 0,
+    timerState: 'set',
+    timerDuration: 0,
+    timerRemaining: 0,
+    timerRunning: false,
+    timerEndTime: 0,
+    countdownVal: 0,
+    alarmTriggered: false,
+  };
+  let swInterval = null;
+  let countdownTimeout = null;
+  let timerInterval = null;
+
+  function renderClockViews() {
+    document.getElementById('viewAnalog').classList.toggle('hidden', !(clockState.mode === 'clock' && !clockState.isDigital));
+    document.getElementById('viewDigital').classList.toggle('hidden', !(clockState.mode === 'clock' && clockState.isDigital));
+    document.getElementById('viewStopwatch').classList.toggle('hidden', clockState.mode !== 'stopwatch');
+    document.getElementById('viewTimer').classList.toggle('hidden', clockState.mode !== 'timer');
+    document.getElementById('clockModeText').textContent = clockState.mode.toUpperCase();
+  }
+
+  function tickClock() {
+    const now = new Date();
+    const hours = now.getHours(), minutes = now.getMinutes(), seconds = now.getSeconds();
+
+    // Analog hands
+    const secondDeg = (seconds / 60) * 360;
+    const minuteDeg = ((minutes + seconds / 60) / 60) * 360;
+    const hourDeg = ((hours % 12 + minutes / 60) / 12) * 360;
+    document.getElementById('handHour').style.transform = `translateX(-50%) rotate(${hourDeg}deg)`;
+    document.getElementById('handMinute').style.transform = `translateX(-50%) rotate(${minuteDeg}deg)`;
+    document.getElementById('handSecond').style.transform = `translateX(-50%) rotate(${secondDeg}deg)`;
+
+    // Digital
+    const dh = clockState.is24Hour ? String(hours).padStart(2, '0') : String(hours % 12 || 12);
+    document.getElementById('digitH').textContent = dh;
+    document.getElementById('digitM').textContent = String(minutes).padStart(2, '0');
+    document.getElementById('digitS').textContent = ':' + String(seconds).padStart(2, '0');
+    const ampmEl = document.getElementById('digitAmpm');
+    ampmEl.textContent = clockState.is24Hour ? '' : (hours >= 12 ? 'PM' : 'AM');
+    ampmEl.classList.toggle('hidden24', clockState.is24Hour);
+  }
+  tickClock();
+  setInterval(tickClock, 1000);
+
+  function toggleClockType(e) {
+    e.stopPropagation();
+    if (!clockState.isDigital) { clockState.isDigital = true; clockState.is24Hour = false; }
+    else if (!clockState.is24Hour) { clockState.is24Hour = true; }
+    else { clockState.isDigital = false; clockState.is24Hour = false; }
+    renderClockViews();
+    tickClock();
+  }
+  document.getElementById('analogFace').addEventListener('click', toggleClockType);
+  document.getElementById('digitalFace').addEventListener('click', toggleClockType);
+
+  document.getElementById('clockModeLabel').addEventListener('click', () => {
+    clockState.mode = clockState.mode === 'clock' ? 'stopwatch' : clockState.mode === 'stopwatch' ? 'timer' : 'clock';
+    renderClockViews();
+  });
+
+  // Stopwatch
+  function formatStopwatch(ms) {
+    const totalSec = Math.floor(ms / 1000);
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    const cs = Math.floor((ms % 1000) / 10);
+    return { m, s: String(s).padStart(2, '0') + '.' + String(cs).padStart(2, '0') };
+  }
+  function renderStopwatch() {
+    const { m, s } = formatStopwatch(clockState.swElapsed);
+    document.getElementById('swMin').textContent = m;
+    document.getElementById('swSec').textContent = s;
+    const icon = document.getElementById('swToggleIcon');
+    icon.innerHTML = clockState.swRunning
+      ? '<line x1="6" y1="4" x2="6" y2="20"/><line x1="18" y1="4" x2="18" y2="20"/>'
+      : '<polygon points="6 3 20 12 6 21 6 3" style="transform:translateX(2px)"/>';
+  }
+  document.getElementById('swToggleBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    clockState.swRunning = !clockState.swRunning;
+    if (clockState.swRunning) {
+      clockState.swStartRef = Date.now() - clockState.swElapsed;
+      swInterval = setInterval(() => {
+        clockState.swElapsed = Date.now() - clockState.swStartRef;
+        renderStopwatch();
+      }, 30);
+    } else {
+      clearInterval(swInterval);
+    }
+    renderStopwatch();
+  });
+  document.getElementById('swResetBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    clockState.swRunning = false;
+    clockState.swElapsed = 0;
+    clearInterval(swInterval);
+    renderStopwatch();
+  });
+  renderStopwatch();
+
+  // Timer
+  const timerInputEl = document.getElementById('timerInput');
+  timerInputEl.addEventListener('input', () => {
+    timerInputEl.value = timerInputEl.value.replace(/\D/g, '').slice(0, 3);
+  });
+  function renderTimer() {
+    document.getElementById('timerSetForm').style.display = clockState.timerState === 'set' ? 'flex' : 'none';
+    document.getElementById('timerCountdown').style.display = clockState.timerState === 'countdown' ? 'block' : 'none';
+    document.getElementById('timerRunningDigits').style.display = clockState.timerState === 'running' ? 'flex' : 'none';
+    document.getElementById('timerControls').style.display = clockState.timerState === 'running' ? 'flex' : 'none';
+    document.getElementById('timerAlarm').style.display = clockState.alarmTriggered ? 'block' : 'none';
+    if (clockState.timerState === 'countdown') document.getElementById('timerCountdown').textContent = clockState.countdownVal;
+  }
+  document.getElementById('timerSetForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const mins = parseInt(timerInputEl.value, 10);
+    if (!isNaN(mins) && mins > 0) {
+      clockState.timerDuration = mins * 60 * 1000;
+      clockState.countdownVal = 3;
+      clockState.timerState = 'countdown';
+      renderTimer();
+      const countdownStep = () => {
+        countdownTimeout = setTimeout(() => {
+          clockState.countdownVal -= 1;
+          if (clockState.countdownVal > 0) {
+            renderTimer();
+            countdownStep();
+          } else {
+            clockState.timerState = 'running';
+            clockState.timerRunning = true;
+            clockState.timerRemaining = clockState.timerDuration;
+            clockState.timerEndTime = Date.now() + clockState.timerRemaining;
+            renderTimer();
+            runTimerTick();
+          }
+        }, 1000);
+      };
+      countdownStep();
+    }
+  });
+  function runTimerTick() {
+    timerInterval = setInterval(() => {
+      if (!clockState.timerRunning) return;
+      const left = clockState.timerEndTime - Date.now();
+      if (left <= 0) {
+        clockState.timerRemaining = 0;
+        clockState.timerRunning = false;
+        clockState.alarmTriggered = true;
+        clearInterval(timerInterval);
+        renderTimer();
+      } else {
+        clockState.timerRemaining = left;
+        const totalSec = Math.ceil(left / 1000);
+        document.getElementById('timerMin').textContent = Math.floor(totalSec / 60);
+        document.getElementById('timerSec').textContent = String(totalSec % 60).padStart(2, '0');
+      }
+    }, 100);
+  }
+  document.getElementById('timerToggleBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    clockState.timerRunning = !clockState.timerRunning;
+    if (clockState.timerRunning) clockState.timerEndTime = Date.now() + clockState.timerRemaining;
+    const icon = document.getElementById('timerToggleIcon');
+    icon.innerHTML = clockState.timerRunning
+      ? '<line x1="6" y1="4" x2="6" y2="20"/><line x1="18" y1="4" x2="18" y2="20"/>'
+      : '<polygon points="6 3 20 12 6 21 6 3" style="transform:translateX(2px)"/>';
+  });
+  document.getElementById('timerResetBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    clockState.timerRunning = false;
+    clockState.alarmTriggered = false;
+    clockState.timerState = 'set';
+    clockState.timerRemaining = 0;
+    timerInputEl.value = '';
+    clearInterval(timerInterval);
+    clearTimeout(countdownTimeout);
+    renderTimer();
+  });
+  renderTimer();
+  renderClockViews();
+
+  /* ═══════════ CALENDAR WIDGET (matches calendar-widget.tsx) ═══════════ */
+  function buildCalendar(monthEl, yearEl, gridEl) {
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth();
     const today = now.getDate();
-    const bookingDays = [6, 7, 8, 10];
+    // dots: bookings(yellow) / events(green) / photos(gray) / blocked(red)
+    const dotsByDay = {
+      6: { booking: true }, 7: { booking: true }, 8: { booking: true },
+      10: { booking: true }, 12: { event: true }, 18: { photo: true },
+      22: { booking: true, event: true }, 27: { blocked: true },
+    };
 
-    document.getElementById('calMonth').textContent = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    monthEl.textContent = now.toLocaleDateString('en-US', { month: 'long' }).toUpperCase();
+    yearEl.textContent = year;
 
-    const grid = document.getElementById('calGrid');
-    grid.innerHTML = '';
+    gridEl.innerHTML = '';
     ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(d => {
       const el = document.createElement('div');
       el.className = 'cal-dow';
       el.textContent = d;
-      grid.appendChild(el);
+      gridEl.appendChild(el);
     });
 
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const daysInPrevMonth = new Date(year, month, 0).getDate();
 
-    for (let i = firstDay - 1; i >= 0; i--) {
+    for (let i = 0; i < firstDay; i++) {
       const el = document.createElement('div');
-      el.className = 'cal-day other-month';
-      el.textContent = daysInPrevMonth - i;
-      grid.appendChild(el);
+      el.className = 'cal-cell';
+      gridEl.appendChild(el);
     }
     for (let d = 1; d <= daysInMonth; d++) {
-      const el = document.createElement('div');
-      el.className = 'cal-day' + (d === today ? ' today' : '') + (bookingDays.includes(d) ? ' has-booking' : '');
-      el.textContent = d;
-      grid.appendChild(el);
-    }
-    const totalCells = firstDay + daysInMonth;
-    const trailing = (7 - (totalCells % 7)) % 7;
-    for (let d = 1; d <= trailing; d++) {
-      const el = document.createElement('div');
-      el.className = 'cal-day other-month';
-      el.textContent = d;
-      grid.appendChild(el);
+      const cell = document.createElement('div');
+      cell.className = 'cal-cell' + (d === today ? ' today' : '');
+      const num = document.createElement('div');
+      num.className = 'cal-daynum';
+      num.textContent = d;
+      cell.appendChild(num);
+
+      const dots = dotsByDay[d];
+      if (dots) {
+        const dotsRow = document.createElement('div');
+        dotsRow.className = 'cal-dots';
+        if (dots.booking) dotsRow.innerHTML += '<span class="cal-dot booking"></span>';
+        if (dots.event) dotsRow.innerHTML += '<span class="cal-dot event"></span>';
+        if (dots.photo) dotsRow.innerHTML += '<span class="cal-dot photo"></span>';
+        if (dots.blocked) dotsRow.innerHTML += '<span class="cal-dot blocked"></span>';
+        cell.appendChild(dotsRow);
+      }
+      gridEl.appendChild(cell);
     }
   }
-  renderCalendar();
+  buildCalendar(document.getElementById('calMonth'), document.getElementById('calYear'), document.getElementById('calGrid'));
+  buildCalendar(document.getElementById('calMonthLarge'), document.getElementById('calYearLarge'), document.getElementById('calGridLarge'));
 </script>
 </body>
 </html>
