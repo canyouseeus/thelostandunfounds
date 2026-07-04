@@ -24,6 +24,7 @@ const PHOTO_SERVICES = [
         label: 'LIFESTYLE PORTRAIT',
         price: '$250',
         meta: '30–45 min · Downtown Austin',
+        eventType: 'Lifestyle Shoot',
         features: [
             '10–15 curated photos',
             'Same-day delivery',
@@ -35,6 +36,7 @@ const PHOTO_SERVICES = [
         label: 'EVENT COVERAGE',
         price: '$600',
         meta: '3 hours · Your venue',
+        eventType: 'Event Coverage',
         features: [
             '20–30 curated photos, next-day',
             'Event highlight reel within 48 hrs',
@@ -46,6 +48,7 @@ const PHOTO_SERVICES = [
         label: 'HALF-DAY CONTENT',
         price: '$800',
         meta: '4 hours · On location',
+        eventType: 'Half-Day Content',
         features: [
             '30–50 curated photos',
             '2–3 short-form reels',
@@ -57,6 +60,7 @@ const PHOTO_SERVICES = [
         label: 'FULL-DAY CONTENT',
         price: '$1,400',
         meta: '8 hours · On location',
+        eventType: 'Full-Day Content',
         features: [
             '50+ curated photos',
             '2–3 short-form reels',
@@ -71,6 +75,8 @@ const WEB_SERVICES = [
         id: 'starter',
         label: 'STARTER',
         price: '$1,500',
+        eventType: 'Web Development',
+        isConsultation: true,
         features: [
             'Template-based site',
             '5–8 pages',
@@ -82,6 +88,8 @@ const WEB_SERVICES = [
         id: 'professional',
         label: 'PROFESSIONAL',
         price: '$3,500',
+        eventType: 'Web Development',
+        isConsultation: true,
         features: [
             'Custom branding',
             'Dashboard / admin panel',
@@ -94,6 +102,8 @@ const WEB_SERVICES = [
         id: 'agency',
         label: 'AGENCY',
         price: '$6,000+',
+        eventType: 'Web Development',
+        isConsultation: true,
         features: [
             'Full custom build',
             'CRM integration',
@@ -105,6 +115,8 @@ const WEB_SERVICES = [
         id: 'maintenance',
         label: 'MONTHLY MAINTENANCE',
         price: '$150–300/mo',
+        eventType: 'Retainer (Monthly)',
+        isConsultation: true,
         features: [
             'Content updates',
             'Performance monitoring',
@@ -120,6 +132,8 @@ const BUNDLES = [
         label: 'LAUNCH PACKAGE',
         price: '$2,500',
         tagline: 'Launch online, fully equipped.',
+        eventType: 'Web Development',
+        isConsultation: true,
         features: [
             'Starter website (5–8 pages)',
             'Lifestyle portrait session',
@@ -132,6 +146,8 @@ const BUNDLES = [
         label: 'BRAND PACKAGE',
         price: '$5,000',
         tagline: 'A complete brand presence, built and shot in one engagement.',
+        eventType: 'Brand / Editorial',
+        isConsultation: true,
         features: [
             'Professional website with custom branding',
             'Half-day content shoot (4 hrs)',
@@ -150,6 +166,9 @@ const TRAVEL_TIERS = [
 ];
 
 // ── Booking calendar/wizard ───────────────────────────────────────────────────
+
+const WEBDEV_EVENT_TYPES = ['Web Development', 'Retainer (Monthly)'];
+const isWebDevEventType = (eventType: string) => WEBDEV_EVENT_TYPES.includes(eventType);
 
 const EVENT_TYPES = [
     'Portrait Session',
@@ -332,7 +351,9 @@ const ServiceCard: React.FC<{
     meta?: string;
     features: string[];
     featured?: boolean;
-}> = ({ label, price, meta, features, featured }) => {
+    isConsultation?: boolean;
+    onBook?: () => void;
+}> = ({ label, price, meta, features, featured, isConsultation, onBook }) => {
     const base = featured
         ? 'bg-white text-black'
         : 'bg-white/[0.04] text-white';
@@ -354,6 +375,18 @@ const ServiceCard: React.FC<{
                     </li>
                 ))}
             </ul>
+            {onBook && (
+                <button
+                    onClick={onBook}
+                    className={`mt-6 w-full py-3 text-[11px] font-black uppercase tracking-widest transition-colors ${
+                        featured
+                            ? 'bg-black text-white hover:bg-black/80'
+                            : 'bg-white text-black hover:bg-white/90'
+                    }`}
+                >
+                    {isConsultation ? 'Book a Free Consultation' : 'Book'}
+                </button>
+            )}
         </div>
     );
 };
@@ -473,6 +506,11 @@ const BookingPage: React.FC = () => {
         scheduleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
+    const handleBookService = (eventType: string) => {
+        set('event_type', eventType);
+        scrollToSchedule();
+    };
+
     return (
         <div className="min-h-screen bg-black text-white">
 
@@ -514,7 +552,7 @@ const BookingPage: React.FC = () => {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {PHOTO_SERVICES.map(s => (
-                            <ServiceCard key={s.id} {...s} />
+                            <ServiceCard key={s.id} {...s} onBook={() => handleBookService(s.eventType)} />
                         ))}
                     </div>
 
@@ -568,7 +606,7 @@ const BookingPage: React.FC = () => {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {WEB_SERVICES.map(s => (
-                            <ServiceCard key={s.id} {...s} />
+                            <ServiceCard key={s.id} {...s} onBook={() => handleBookService(s.eventType)} />
                         ))}
                     </div>
                 </div>
@@ -609,14 +647,14 @@ const BookingPage: React.FC = () => {
                                     ))}
                                 </ul>
                                 <button
-                                    onClick={scrollToSchedule}
+                                    onClick={() => handleBookService(b.eventType)}
                                     className={`mt-6 w-full py-3 text-[11px] font-black uppercase tracking-widest transition-colors ${
                                         b.featured
                                             ? 'bg-black text-white hover:bg-black/80'
                                             : 'bg-white text-black hover:bg-white/90'
                                     }`}
                                 >
-                                    Book This Package
+                                    {b.isConsultation ? 'Book a Free Consultation' : 'Book This Package'}
                                 </button>
                             </div>
                         ))}
@@ -884,42 +922,78 @@ const BookingPage: React.FC = () => {
                                 )}
 
                                 {detailsStep === 4 && (
-                                    <div>
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <div className="w-10 h-10 bg-white/10 flex items-center justify-center">
-                                                <MapPinIcon className="w-5 h-5 text-white/60" />
+                                    isWebDevEventType(form.event_type) ? (
+                                        <div>
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <div className="w-10 h-10 bg-white/10 flex items-center justify-center">
+                                                    <ComputerDesktopIcon className="w-5 h-5 text-white/60" />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-xl font-bold text-white">Tell me about the project</h3>
+                                                    <p className="text-white/40 text-sm">Website goals, and any current problems</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h3 className="text-xl font-bold text-white">Where & anything else?</h3>
-                                                <p className="text-white/40 text-sm">Venue + any details I should know</p>
+                                            <input
+                                                type="text"
+                                                autoFocus
+                                                placeholder="Current website (if any) — or 'Don't have one yet'"
+                                                value={form.location}
+                                                onChange={e => set('location', e.target.value)}
+                                                className="w-full bg-white/5 rounded-none px-4 py-3 text-base sm:text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors mb-3"
+                                            />
+                                            <textarea
+                                                rows={3}
+                                                placeholder="What are you trying to build? Any problems with your current site? Goals, must-have features, timeline…"
+                                                value={form.notes}
+                                                onChange={e => set('notes', e.target.value)}
+                                                className="w-full bg-white/5 rounded-none px-4 py-3 text-base sm:text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors resize-none"
+                                            />
+                                            <div className="bg-white/[0.04] p-3 mt-4">
+                                                <p className="text-white/60 text-[11px] leading-relaxed">
+                                                    Submitting holds this time for a{' '}
+                                                    <span className="text-white font-bold">free consultation call</span>{' '}
+                                                    — no payment required. We'll scope the project together and follow up with a fixed-price proposal.
+                                                </p>
                                             </div>
                                         </div>
-                                        <input
-                                            type="text"
-                                            autoFocus
-                                            placeholder="Venue name or city"
-                                            value={form.location}
-                                            onChange={e => set('location', e.target.value)}
-                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-base sm:text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors mb-3"
-                                        />
-                                        <textarea
-                                            rows={3}
-                                            placeholder="Anything else — vibe, references, budget, timeline…"
-                                            value={form.notes}
-                                            onChange={e => set('notes', e.target.value)}
-                                            className="w-full bg-white/5 rounded-none px-4 py-3 text-base sm:text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors resize-none"
-                                        />
-                                        <div className="bg-white/[0.04] p-3 mt-4">
-                                            <p className="text-white/60 text-[11px] leading-relaxed">
-                                                Submitting holds the date while we talk. A{' '}
-                                                <span className="text-white font-bold">50% deposit</span>{' '}
-                                                finalizes the booking — contract and payment link follow after we scope it out.
-                                                Payment via{' '}
-                                                <span className="text-white font-bold">Bitcoin (Strike)</span>,
-                                                Apple Pay, Cashapp, or Venmo.
-                                            </p>
+                                    ) : (
+                                        <div>
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <div className="w-10 h-10 bg-white/10 flex items-center justify-center">
+                                                    <MapPinIcon className="w-5 h-5 text-white/60" />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-xl font-bold text-white">Where & anything else?</h3>
+                                                    <p className="text-white/40 text-sm">Venue + any details I should know</p>
+                                                </div>
+                                            </div>
+                                            <input
+                                                type="text"
+                                                autoFocus
+                                                placeholder="Venue name or city"
+                                                value={form.location}
+                                                onChange={e => set('location', e.target.value)}
+                                                className="w-full bg-white/5 rounded-none px-4 py-3 text-base sm:text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors mb-3"
+                                            />
+                                            <textarea
+                                                rows={3}
+                                                placeholder="Anything else — vibe, references, budget, timeline…"
+                                                value={form.notes}
+                                                onChange={e => set('notes', e.target.value)}
+                                                className="w-full bg-white/5 rounded-none px-4 py-3 text-base sm:text-sm text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors resize-none"
+                                            />
+                                            <div className="bg-white/[0.04] p-3 mt-4">
+                                                <p className="text-white/60 text-[11px] leading-relaxed">
+                                                    Submitting holds the date while we talk. A{' '}
+                                                    <span className="text-white font-bold">50% deposit</span>{' '}
+                                                    finalizes the booking — contract and payment link follow after we scope it out.
+                                                    Payment via{' '}
+                                                    <span className="text-white font-bold">Bitcoin (Strike)</span>,
+                                                    Apple Pay, Cashapp, or Venmo.
+                                                </p>
+                                            </div>
                                         </div>
-                                    </div>
+                                    )
                                 )}
 
                                 {error && (
