@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { isAdminEmail, isAdmin } from '../utils/admin';
+import { logSignupEvent } from '../utils/signupTelemetry';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -21,6 +22,13 @@ export default function AuthCallback() {
       const urlError = urlParams.get('error');
       if (urlError) {
         console.warn('[CB] Supabase returned error in callback URL:', urlError, urlParams.get('error_description'));
+        logSignupEvent({
+          stage: 'google_oauth_callback',
+          success: false,
+          method: 'google',
+          intent: urlParams.get('intent') || undefined,
+          error_message: `${urlError}: ${urlParams.get('error_description') || ''}`,
+        });
         navigate('/?error=auth_failed');
         return;
       }
@@ -54,6 +62,13 @@ export default function AuthCallback() {
       });
 
       if (!session) {
+        logSignupEvent({
+          stage: 'google_oauth_callback',
+          success: false,
+          method: 'google',
+          intent: urlParams.get('intent') || undefined,
+          error_message: 'No session established within 10s of OAuth redirect (likely failed code exchange)',
+        });
         navigate('/?error=auth_failed');
         return;
       }
@@ -62,6 +77,7 @@ export default function AuthCallback() {
 
       // Check for intent in the callback URL (e.g. ?intent=affiliate from Google OAuth)
       const intent = urlParams.get('intent');
+      logSignupEvent({ stage: 'google_oauth_callback', success: true, method: 'google', email: currentUser.email, intent: intent || undefined });
       if (intent === 'affiliate') {
         navigate('/dashboard?join=affiliate');
         return;

@@ -4,6 +4,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../Toast';
 import { isAdminEmail, isAdmin } from '../../utils/admin';
+import { logSignupEvent } from '../../utils/signupTelemetry';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -101,7 +102,9 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
         if (error) {
           setError(error.message);
           showError(error.message);
+          logSignupEvent({ stage: 'email_signup', success: false, method: 'email', email, intent, error_message: error.message });
         } else {
+          logSignupEvent({ stage: 'email_signup', success: true, method: 'email', email, intent });
           success('Account created successfully!');
           setEmail('');
           setPassword('');
@@ -145,6 +148,7 @@ export default function AuthModal({ isOpen, onClose, message, title, initialMode
     if (error) {
       setError(error.message);
       setLoading(false);
+      logSignupEvent({ stage: 'google_oauth_start', success: false, method: 'google', intent, error_message: error.message });
     }
     // OAuth redirects to AuthCallback which handles the rest
   };

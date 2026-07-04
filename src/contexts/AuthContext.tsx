@@ -6,6 +6,7 @@ import { authService, User, AuthSession } from '../services/auth';
 import { subscriptionService, SubscriptionTier } from '../services/subscription';
 import { autoPromoteToAdmin, isAdminEmail } from '../utils/admin';
 import { supabase } from '../lib/supabase';
+import { logSignupEvent } from '../utils/signupTelemetry';
 
 interface AuthContextType {
   user: User | null;
@@ -248,6 +249,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const { session: newSession, error: signInError } = await authService.signIn(email, password);
           if (signInError) {
             console.warn('Auto sign-in failed after signup:', signInError);
+            logSignupEvent({ stage: 'email_autosignin', success: false, method: 'email', email, error_message: signInError.message });
             return { error: null }; // Still return success since signup worked
           }
           if (newSession) {

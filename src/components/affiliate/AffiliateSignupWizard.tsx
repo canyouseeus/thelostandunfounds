@@ -10,6 +10,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
+import { logSignupEvent } from '../../utils/signupTelemetry';
 
 interface AffiliateSignupWizardProps {
     isOpen: boolean;
@@ -135,12 +136,14 @@ export default function AffiliateSignupWizard({ isOpen, onSuccess, onClose }: Af
             const data = await response.json();
             if (data.error) {
                 setError(data.error);
+                logSignupEvent({ stage: 'affiliate_setup', success: false, email: user.email, intent: 'affiliate', error_message: data.error });
                 return;
             }
             setSubmitted(true);
             onSuccess(code);
         } catch (err: any) {
             setError(err.message || 'Failed to create affiliate account');
+            logSignupEvent({ stage: 'affiliate_setup', success: false, email: user.email, intent: 'affiliate', error_message: err?.message || 'unknown error' });
         } finally {
             setLoading(false);
         }
