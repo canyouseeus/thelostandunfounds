@@ -9,7 +9,6 @@ import {
   CalendarIcon,
   PencilSquareIcon,
   NoSymbolIcon,
-  ArrowLeftIcon,
   BookOpenIcon,
   PhotoIcon as ImageIcon
 } from '@heroicons/react/24/outline';
@@ -44,11 +43,10 @@ interface DashboardStats {
 interface AdminUsersViewProps {
   users: RecentUser[];
   stats: DashboardStats | null;
-  onBack: () => void;
   onNavigateToSection?: (section: string) => void;
 }
 
-export default function AdminUsersView({ users: allUsers, stats, onBack, onNavigateToSection }: AdminUsersViewProps) {
+export default function AdminUsersView({ users: allUsers, stats, onNavigateToSection }: AdminUsersViewProps) {
   const { success } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTier, setFilterTier] = useState<'all' | 'free' | 'premium' | 'pro'>('all');
@@ -75,125 +73,118 @@ export default function AdminUsersView({ users: allUsers, stats, onBack, onNavig
   });
 
   return (
-    <div className="space-y-6">
-      <button onClick={onBack} className="flex items-center gap-2 text-white/60 hover:text-white mb-2 transition-colors">
-        <ArrowLeftIcon className="w-4 h-4" />
-        Back to Dashboard
-      </button>
+    <div className="bg-black/50 rounded-none p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-lg sm:text-xl font-bold text-white uppercase">
+          CONTRIBUTOR MANAGEMENT
+        </h2>
+        <button className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-none text-white text-xs sm:text-sm transition">
+          Export Users
+        </button>
+      </div>
 
-      <div className="bg-black/50 rounded-none p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-white uppercase">
-            CONTRIBUTOR MANAGEMENT
-          </h2>
-          <button className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-none text-white text-sm transition">
-            Export Users
-          </button>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white/5 rounded-none p-4">
-            <div className="text-white/60 text-sm mb-1">Total Contributors</div>
-            <div className="text-2xl font-bold text-white">
-              {allUsers.length > 0 ? allUsers.length : (stats?.totalUsers || 0)}
-            </div>
-          </div>
-          <div className="bg-white/5 rounded-none p-4">
-            <div className="text-white/60 text-sm mb-1">Active Users</div>
-            <div className="text-2xl font-bold text-green-400">
-              {allUsers.length > 0 ? allUsers.filter(u => u.tier !== 'inactive').length : (stats?.activeSubscriptions || 0)}
-            </div>
-          </div>
-          <div className="bg-white/5 rounded-none p-4">
-            <div className="text-white/60 text-sm mb-1">Premium Users</div>
-            <div className="text-2xl font-bold text-yellow-400">
-              {allUsers.length > 0
-                ? allUsers.filter(u => u.tier === 'premium' || u.tier === 'pro').length
-                : ((stats?.premiumUsers || 0) + (stats?.proUsers || 0))}
-            </div>
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4">
+        <div className="bg-white/5 rounded-none p-2.5 sm:p-4">
+          <div className="text-white/60 text-[10px] sm:text-sm mb-1 truncate">Total Contributors</div>
+          <div className="text-lg sm:text-2xl font-bold text-white">
+            {allUsers.length > 0 ? allUsers.length : (stats?.totalUsers || 0)}
           </div>
         </div>
+        <div className="bg-white/5 rounded-none p-2.5 sm:p-4">
+          <div className="text-white/60 text-[10px] sm:text-sm mb-1 truncate">Active Users</div>
+          <div className="text-lg sm:text-2xl font-bold text-green-400">
+            {allUsers.length > 0 ? allUsers.filter(u => u.tier !== 'inactive').length : (stats?.activeSubscriptions || 0)}
+          </div>
+        </div>
+        <div className="bg-white/5 rounded-none p-2.5 sm:p-4">
+          <div className="text-white/60 text-[10px] sm:text-sm mb-1 truncate">Premium Users</div>
+          <div className="text-lg sm:text-2xl font-bold text-yellow-400">
+            {allUsers.length > 0
+              ? allUsers.filter(u => u.tier === 'premium' || u.tier === 'pro').length
+              : ((stats?.premiumUsers || 0) + (stats?.proUsers || 0))}
+          </div>
+        </div>
+      </div>
 
-        {/* Search and Filters */}
-        <div className="space-y-4 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/40" />
-              <input
-                type="text"
-                placeholder="Search by email, username, or resources..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-black/50 rounded-none text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors"
-              />
+      {/* Search and Filters */}
+      <div className="space-y-3 mb-4">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+          <div className="flex-1 relative">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/40" />
+            <input
+              type="text"
+              placeholder="Search by email, username, or resources..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-black/50 rounded-none text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-colors"
+            />
+          </div>
+          <div className="flex gap-2">
+            <select
+              value={filterTier}
+              onChange={(e) => setFilterTier(e.target.value as any)}
+              className="px-4 py-2 bg-black/50 rounded-none text-white focus:outline-none focus:bg-white/10 transition-colors"
+            >
+              <option value="all">All Tiers</option>
+              <option value="free">Free</option>
+              <option value="premium">Premium</option>
+              <option value="pro">Pro</option>
+            </select>
+            <select
+              value={filterAdmin}
+              onChange={(e) => setFilterAdmin(e.target.value as any)}
+              className="px-4 py-2 bg-black/50 rounded-none text-white focus:outline-none focus:bg-white/10 transition-colors"
+            >
+              <option value="all">All Users</option>
+              <option value="admin">Admins</option>
+              <option value="user">Regular Users</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Bulk Actions Bar */}
+        {selectedUsers.size > 0 && (
+          <div className="bg-white/5 rounded-none p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-white/80 text-sm">
+                {selectedUsers.size} user{selectedUsers.size > 1 ? 's' : ''} selected
+              </span>
+              <button
+                onClick={() => setSelectedUsers(new Set())}
+                className="text-white/60 hover:text-white text-sm"
+              >
+                Clear Selection
+              </button>
             </div>
             <div className="flex gap-2">
-              <select
-                value={filterTier}
-                onChange={(e) => setFilterTier(e.target.value as any)}
-                className="px-4 py-2 bg-black/50 rounded-none text-white focus:outline-none focus:bg-white/10 transition-colors"
+              <button
+                onClick={() => {
+                  success(`Bulk action performed on ${selectedUsers.size} users`);
+                  setSelectedUsers(new Set());
+                }}
+                className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-none text-white text-sm transition"
               >
-                <option value="all">All Tiers</option>
-                <option value="free">Free</option>
-                <option value="premium">Premium</option>
-                <option value="pro">Pro</option>
-              </select>
-              <select
-                value={filterAdmin}
-                onChange={(e) => setFilterAdmin(e.target.value as any)}
-                className="px-4 py-2 bg-black/50 rounded-none text-white focus:outline-none focus:bg-white/10 transition-colors"
+                Export Selected
+              </button>
+              <button
+                onClick={() => {
+                  if (confirm(`Ban ${selectedUsers.size} selected users?`)) {
+                    success(`Banned ${selectedUsers.size} users`);
+                    setSelectedUsers(new Set());
+                  }
+                }}
+                className="px-4 py-2 bg-red-500/20 hover:bg-red-500/40 rounded-none text-red-500 text-sm transition"
               >
-                <option value="all">All Users</option>
-                <option value="admin">Admins</option>
-                <option value="user">Regular Users</option>
-              </select>
+                Ban Selected
+              </button>
             </div>
           </div>
+        )}
+      </div>
 
-          {/* Bulk Actions Bar */}
-          {selectedUsers.size > 0 && (
-            <div className="bg-white/5 rounded-none p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-white/80 text-sm">
-                  {selectedUsers.size} user{selectedUsers.size > 1 ? 's' : ''} selected
-                </span>
-                <button
-                  onClick={() => setSelectedUsers(new Set())}
-                  className="text-white/60 hover:text-white text-sm"
-                >
-                  Clear Selection
-                </button>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    success(`Bulk action performed on ${selectedUsers.size} users`);
-                    setSelectedUsers(new Set());
-                  }}
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-none text-white text-sm transition"
-                >
-                  Export Selected
-                </button>
-                <button
-                  onClick={() => {
-                    if (confirm(`Ban ${selectedUsers.size} selected users?`)) {
-                      success(`Banned ${selectedUsers.size} users`);
-                      setSelectedUsers(new Set());
-                    }
-                  }}
-                  className="px-4 py-2 bg-red-500/20 hover:bg-red-500/40 rounded-none text-red-500 text-sm transition"
-                >
-                  Ban Selected
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Users List */}
-        <div className="pt-4">
-          <div className="space-y-2">
+      {/* Users List */}
+      <div className="space-y-2">
             {filteredUsers.length > 0 ? (
               filteredUsers.map((user) => {
                 const hasResources = user.resources?.hasBlog || (user.resources?.galleries && user.resources.galleries.length > 0);
@@ -201,7 +192,7 @@ export default function AdminUsersView({ users: allUsers, stats, onBack, onNavig
                 return (
                   <div
                     key={user.id}
-                    className="flex items-stretch gap-1 bg-black/30 hover:bg-white/5 transition group"
+                    className="flex items-stretch gap-1 bg-black/30"
                   >
                     <button
                       onClick={() => {
@@ -369,7 +360,7 @@ export default function AdminUsersView({ users: allUsers, stats, onBack, onNavig
                           success(`User ${user.email} banned`);
                         }
                       }}
-                      className="flex-shrink-0 flex items-center px-3 text-red-500/40 hover:text-red-400 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
+                      className="flex-shrink-0 flex items-center px-3 text-red-500/40 hover:text-red-400 hover:bg-red-500/10 transition-all"
                       title="Ban User"
                     >
                       <NoSymbolIcon className="w-4 h-4" />
@@ -395,8 +386,6 @@ export default function AdminUsersView({ users: allUsers, stats, onBack, onNavig
                 ) : null}
               </div>
             )}
-          </div>
-        </div>
       </div>
     </div>
   );

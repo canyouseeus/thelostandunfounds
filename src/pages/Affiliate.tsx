@@ -4,7 +4,7 @@
  * with the full affiliate dashboard inlined for the affiliate section.
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -74,6 +74,7 @@ import AffiliateGuide from '../components/affiliate/AffiliateGuide';
 import PayoutHistoryTable from '../components/affiliate/PayoutHistoryTable';
 import LeaderboardView from '../components/affiliate/LeaderboardView';
 import { ExpandableBentoCard } from '../components/ui/expandable-bento-card';
+import { ExpandableScreen, ExpandableScreenContent } from '../components/ui/expandable-screen';
 import AuthModal from '../components/auth/AuthModal';
 import AffiliateSignupWizard from '../components/affiliate/AffiliateSignupWizard';
 
@@ -215,31 +216,7 @@ export default function Affiliate() {
   const [revenueView, setRevenueView] = useState<'admin' | 'affiliate'>('admin');
   // Pre-open a section if ?section= is in the URL (e.g. /dashboard?section=affiliate)
   const initialSection = searchParams.get('section') || '';
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(
-    initialSection ? { [initialSection]: true } : {}
-  );
-  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
-
-  const handleSectionToggle = (section: string) => {
-    setExpandedSections(prev => {
-      const isOpening = !prev[section];
-      const newState = { ...prev, [section]: isOpening };
-
-      // If opening, scroll to section
-      if (isOpening) {
-        setTimeout(() => {
-          sectionRefs.current[section]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
-      } else {
-        // Only scroll to top if NO sections are open
-        const hasOpenSections = Object.values(newState).some(isOpen => isOpen);
-        if (!hasOpenSections) {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-      }
-      return newState;
-    });
-  };
+  const [activeApp, setActiveApp] = useState<string | null>(initialSection || null);
 
   const [loading, setLoading] = useState(false);
 
@@ -353,12 +330,12 @@ export default function Affiliate() {
 
   // Lazy-load affiliate dashboard when section opens
   useEffect(() => {
-    if (expandedSections['affiliate'] && affiliateData?.code && !dashData && !dashLoading) {
+    if (activeApp === 'affiliate' && affiliateData?.code && !dashData && !dashLoading) {
       loadDashboard(affiliateData.code);
       loadPayoutSettings();
       loadStripeStatus();
     }
-  }, [expandedSections['affiliate'], affiliateData?.code]);
+  }, [activeApp, affiliateData?.code]);
 
   const loadAllData = async () => {
     if (!user) return;
@@ -1055,10 +1032,10 @@ export default function Affiliate() {
                   ].filter(app => app.show).map((app) => (
                     <button
                       key={app.id}
-                      onClick={() => handleSectionToggle(app.id)}
+                      onClick={() => setActiveApp(app.id)}
                       className={cn(
                         "relative p-3 transition-all duration-300 rounded-full group/btn",
-                        expandedSections[app.id] ? "bg-white text-black scale-110 shadow-[0_0_20px_rgba(255,255,255,0.2)]" : "text-white/60 hover:text-white hover:bg-white/10"
+                        activeApp === app.id ? "bg-white text-black scale-110 shadow-[0_0_20px_rgba(255,255,255,0.2)]" : "text-white/60 hover:text-white hover:bg-white/10"
                       )}
                       title={app.title}
                     >
@@ -1072,37 +1049,51 @@ export default function Affiliate() {
               </div>
             </div>
 
-            {/* Expanded App Sections */}
-            <div className="col-span-12 space-y-12 pb-24">
+            {/* Console — full-screen overlay for each app, mirrors Admin.tsx's console pattern */}
+            <ExpandableScreen
+              isOpen={activeApp !== null}
+              onOpenChange={(open) => { if (!open) setActiveApp(null); }}
+            >
+              <ExpandableScreenContent>
+                <div className="flex flex-col h-full w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                  {activeApp && (() => {
+                    const meta: Record<string, { title: string; icon: JSX.Element }> = {
+                      gallery: { title: 'The Gallery', icon: <CameraIcon className="w-5 h-5 text-white/40" /> },
+                      writer: { title: 'Writer Dashboard', icon: <BookOpenIcon className="w-5 h-5 text-white/40" /> },
+                      affiliate: { title: 'Affiliate App', icon: <ArrowTrendingUpIcon className="w-5 h-5 text-white/40" /> },
+                      settings: { title: 'Account Settings', icon: <Cog6ToothIcon className="w-5 h-5 text-white/40" /> },
+                    };
+                    const m = meta[activeApp];
+                    if (!m) return null;
+                    return (
+                      <div className="shrink-0 flex flex-col gap-3 pt-6 pb-4 pr-16">
+                        <button
+                          onClick={() => setActiveApp(null)}
+                          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-white/40 hover:text-white transition-all duration-300 ease-out group w-fit"
+                        >
+                          <ArrowLeftIcon className="w-3 h-3 group-hover:-translate-x-1 transition-transform duration-300" />
+                          Dashboard
+                        </button>
+                        <div className="flex items-center gap-3">
+                          {m.icon}
+                          <h2 className="text-lg font-black text-white tracking-widest uppercase">{m.title}</h2>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-6">
               {/* Gallery Section */}
-              {hasGallery && expandedSections['gallery'] && (
-                <div ref={el => sectionRefs.current['gallery'] = el} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <div className="flex flex-col px-0 py-2 mb-8 items-start">
-                    <div className="flex items-center gap-3">
-                      <CameraIcon className="w-5 h-5 text-white/40" />
-                      <h2 className="text-lg font-black text-white tracking-widest uppercase">The Gallery</h2>
-                    </div>
-                    <button onClick={() => handleSectionToggle('gallery')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
-                  </div>
-                  <div className="p-1 bg-black overflow-hidden max-h-[800px] overflow-y-auto custom-scrollbar">
-                    <AdminGalleryView
-                      onBack={() => { }}
-                      isPhotographerView={true}
-                    />
-                  </div>
-                </div>
+              {hasGallery && activeApp === 'gallery' && (
+                  <AdminGalleryView
+                    onBack={() => setActiveApp(null)}
+                    isPhotographerView={true}
+                  />
               )}
 
               {/* Writer Section */}
-              {hasBookClub && expandedSections['writer'] && (
-                <div ref={el => sectionRefs.current['writer'] = el} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <div className="flex flex-col px-0 py-2 mb-8 items-start">
-                    <div className="flex items-center gap-3">
-                      <BookOpenIcon className="w-5 h-5 text-white/40" />
-                      <h2 className="text-lg font-black text-white tracking-widest uppercase">Writer Dashboard</h2>
-                    </div>
-                    <button onClick={() => handleSectionToggle('writer')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
-                  </div>
+              {hasBookClub && activeApp === 'writer' && (
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="bg-black p-4">
@@ -1255,16 +1246,8 @@ export default function Affiliate() {
               )}
 
               {/* Affiliate Section */}
-              {hasAffiliate && expandedSections['affiliate'] && (
-                <div ref={el => sectionRefs.current['affiliate'] = el} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <div className="flex flex-col px-0 py-2 mb-8 items-start">
-                    <div className="flex items-center gap-3">
-                      <ArrowTrendingUpIcon className="w-5 h-5 text-white/40" />
-                      <h2 className="text-lg font-black text-white tracking-widest uppercase">Affiliate App</h2>
-                    </div>
-                    <button onClick={() => handleSectionToggle('affiliate')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
-                  </div>
-
+              {hasAffiliate && activeApp === 'affiliate' && (
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                   {dashLoading ? (
                     <div className="text-white/40 text-xs uppercase tracking-widest py-12 text-center animate-pulse">Loading dashboard...</div>
                   ) : dashError || !dashData ? (
@@ -1814,15 +1797,8 @@ export default function Affiliate() {
               )}
 
               {/* Settings Section */}
-              {expandedSections['settings'] && (
-                <div ref={el => sectionRefs.current['settings'] = el} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <div className="flex flex-col px-0 py-2 mb-8 items-start">
-                    <div className="flex items-center gap-3">
-                      <Cog6ToothIcon className="w-5 h-5 text-white/40" />
-                      <h2 className="text-lg font-black text-white tracking-widest uppercase">Account Settings</h2>
-                    </div>
-                    <button onClick={() => handleSectionToggle('settings')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
-                  </div>
+              {activeApp === 'settings' && (
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="bg-[#0a0a0a] p-6">
                     <div className="space-y-4 max-w-2xl">
                       <AdminBentoRow label="Tier" value={tier || 'Free'} />
@@ -1840,7 +1816,10 @@ export default function Affiliate() {
                   </div>
                 </div>
               )}
-            </div>
+                  </div>
+                </div>
+              </ExpandableScreenContent>
+            </ExpandableScreen>
 
           </div>
 

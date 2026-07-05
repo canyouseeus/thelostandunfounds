@@ -740,7 +740,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
     };
 
     return (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full overflow-x-hidden">
 
             {/* Create/Edit Gallery Modal */}
             {isManaged && (
@@ -1313,7 +1313,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
 
             {/* Tab bar — admin only */}
             {!isPhotographerView && (
-                <div className="shrink-0 flex border-b border-white/10">
+                <div className="shrink-0 flex overflow-x-auto border-b border-white/10">
                     {[
                         { id: 'galleries' as const, label: 'Active Galleries', icon: null, badge: 0 },
                         { id: 'applications' as const, label: 'Applications', icon: null, badge: pendingAppsCount },

@@ -4,7 +4,7 @@
  * Styled to match the admin dashboard
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
@@ -41,6 +41,7 @@ import {
   CalendarIcon
 } from '@heroicons/react/24/outline';
 import { cn } from '../components/ui/utils';
+import { ExpandableScreen, ExpandableScreenContent } from '../components/ui/expandable-screen';
 import AdminGalleryView from '../components/admin/AdminGalleryView';
 import AffiliateDashboard from './AffiliateDashboard';
 import { AffiliateRevenueTracker } from '../components/affiliate/AffiliateRevenueTracker';
@@ -94,29 +95,7 @@ export default function Profile() {
   // Core state
   const [userIsAdmin, setUserIsAdmin] = useState(false);
   const [revenueView, setRevenueView] = useState<'admin' | 'affiliate'>('admin');
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
-  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
-
-  const handleSectionToggle = (section: string) => {
-    setExpandedSections(prev => {
-      const isOpening = !prev[section];
-      const newState = { ...prev, [section]: isOpening };
-
-      // If opening, scroll to section
-      if (isOpening) {
-        setTimeout(() => {
-          sectionRefs.current[section]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
-      } else {
-        // Only scroll to top if NO sections are open
-        const hasOpenSections = Object.values(newState).some(isOpen => isOpen);
-        if (!hasOpenSections) {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-      }
-      return newState;
-    });
-  };
+  const [activeApp, setActiveApp] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   // App-specific data
@@ -568,10 +547,10 @@ export default function Profile() {
                 ].filter(app => app.show).map((app) => (
                   <button
                     key={app.id}
-                    onClick={() => handleSectionToggle(app.id)}
+                    onClick={() => setActiveApp(app.id)}
                     className={cn(
                       "relative p-3 transition-all duration-300 rounded-full group/btn",
-                      expandedSections[app.id] ? "bg-white text-black scale-110 shadow-[0_0_20px_rgba(255,255,255,0.2)]" : "text-white/60 hover:text-white hover:bg-white/10"
+                      activeApp === app.id ? "bg-white text-black scale-110 shadow-[0_0_20px_rgba(255,255,255,0.2)]" : "text-white/60 hover:text-white hover:bg-white/10"
                     )}
                     title={app.title}
                   >
@@ -586,231 +565,224 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Expanded App Sections */}
-          <div className="col-span-12 space-y-12 pb-24">
-            {/* Gallery Section */}
-            {hasGallery && expandedSections['gallery'] && (
-              <div ref={el => sectionRefs.current['gallery'] = el} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="flex flex-col px-0 py-2 mb-8 items-start">
-                  <div className="flex items-center gap-3">
-                    <CameraIcon className="w-5 h-5 text-white/40" />
-                    <h2 className="text-lg font-black text-white tracking-widest uppercase">The Gallery</h2>
-                  </div>
-                  <button onClick={() => handleSectionToggle('gallery')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
-                </div>
-                <div className="p-1 bg-black overflow-hidden max-h-[800px] overflow-y-auto custom-scrollbar">
-                  <AdminGalleryView
-                    onBack={() => { }}
-                    isPhotographerView={true}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Writer Section */}
-            {hasBookClub && expandedSections['writer'] && (
-              <div ref={el => sectionRefs.current['writer'] = el} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="flex flex-col px-0 py-2 mb-8 items-start">
-                  <div className="flex items-center gap-3">
-                    <BookOpenIcon className="w-5 h-5 text-white/40" />
-                    <h2 className="text-lg font-black text-white tracking-widest uppercase">Writer Dashboard</h2>
-                  </div>
-                  <button onClick={() => handleSectionToggle('writer')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
-                </div>
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-black p-4">
-                      <AdminBentoRow
-                        label="Author Profile"
-                        value={blogTitle || user.user_metadata?.author_name || 'Not Set'}
-                      />
+          {/* Console — full-screen overlay for each app, mirrors Admin.tsx's console pattern */}
+          <ExpandableScreen
+            isOpen={activeApp !== null}
+            onOpenChange={(open) => { if (!open) setActiveApp(null); }}
+          >
+            <ExpandableScreenContent>
+              <div className="flex flex-col h-full w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                {activeApp && (() => {
+                  const meta: Record<string, { title: string; icon: JSX.Element }> = {
+                    gallery: { title: 'The Gallery', icon: <CameraIcon className="w-5 h-5 text-white/40" /> },
+                    writer: { title: 'Writer Dashboard', icon: <BookOpenIcon className="w-5 h-5 text-white/40" /> },
+                    affiliate: { title: 'Affiliate App', icon: <ArrowTrendingUpIcon className="w-5 h-5 text-white/40" /> },
+                    settings: { title: 'Account Settings', icon: <Cog6ToothIcon className="w-5 h-5 text-white/40" /> },
+                  };
+                  const m = meta[activeApp];
+                  if (!m) return null;
+                  return (
+                    <div className="shrink-0 flex flex-col gap-3 pt-6 pb-4 pr-16">
+                      <button
+                        onClick={() => setActiveApp(null)}
+                        className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-white/40 hover:text-white transition-all duration-300 ease-out group w-fit"
+                      >
+                        <ArrowLeftIcon className="w-3 h-3 group-hover:-translate-x-1 transition-transform duration-300" />
+                        Dashboard
+                      </button>
+                      <div className="flex items-center gap-3">
+                        {m.icon}
+                        <h2 className="text-lg font-black text-white tracking-widest uppercase">{m.title}</h2>
+                      </div>
                     </div>
-                    <div className="bg-black p-4">
-                      <AdminBentoRow
-                        label="Domain"
-                        value={<span className="text-green-400 font-mono text-[10px]">{userSubdomain}.thelostandunfounds.com</span>}
-                      />
-                    </div>
-                    <div className="bg-black p-4">
-                      <AdminBentoRow
-                        label="Total Articles"
-                        value={userPosts.length}
-                      />
-                    </div>
-                  </div>
+                  );
+                })()}
 
-                  <div className="pt-4 flex gap-4">
-                    <Link
-                      to="/submit-article"
-                      className="flex-1 bg-white text-black py-3 px-4 font-black text-[10px] uppercase text-center hover:bg-white/80 transition"
-                    >
-                      Create New Article
-                    </Link>
-                    <Link
-                      to={`/blog/${userSubdomain}`}
-                      className="flex-1 bg-white/10 py-3 px-4 font-black text-[10px] uppercase text-center hover:bg-white/20 transition"
-                    >
-                      View Public Blog
-                    </Link>
-                  </div>
+                <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-6">
+                  {hasGallery && activeApp === 'gallery' && (
+                    <AdminGalleryView
+                      onBack={() => setActiveApp(null)}
+                      isPhotographerView={true}
+                    />
+                  )}
 
-                  {/* My Book Club Posts */}
-                  <div className="mt-8">
-                    <AdminBentoCard
-                      title="MY BOOK CLUB POSTS"
-                      className="bg-black/20 border border-white/5"
-                    >
-                      <div className="space-y-0 divide-y divide-white/5">
-                        {userPosts.filter(p => p.subdomain).length === 0 ? (
-                          <p className="text-white/40 text-xs py-8 text-center uppercase tracking-widest">No articles found</p>
-                        ) : (
-                          userPosts
-                            .filter(p => p.subdomain)
-                            .map((post) => (
-                              <div
-                                key={post.id}
-                                className="group/item py-4 flex items-start justify-between gap-4 transition-colors"
-                              >
-                                <div className="flex-1 min-w-0 text-left">
-                                  <div className="flex items-center gap-3 mb-1">
-                                    <h4 className="text-white font-medium text-sm md:text-base leading-tight truncate">
-                                      {post.title}
-                                    </h4>
-                                    <span className={cn(
-                                      "flex-shrink-0 px-1.5 py-0.5 text-[8px] uppercase tracking-widest font-bold border",
-                                      post.published
-                                        ? "text-green-400 border-green-400/30 bg-green-400/5"
-                                        : "text-amber-400 border-amber-400/30 bg-amber-400/5"
-                                    )}>
-                                      {post.published ? 'Published' : 'Draft'}
-                                    </span>
-                                  </div>
+                  {hasBookClub && activeApp === 'writer' && (
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="bg-black p-4">
+                          <AdminBentoRow
+                            label="Author Profile"
+                            value={blogTitle || user.user_metadata?.author_name || 'Not Set'}
+                          />
+                        </div>
+                        <div className="bg-black p-4">
+                          <AdminBentoRow
+                            label="Domain"
+                            value={<span className="text-green-400 font-mono text-[10px]">{userSubdomain}.thelostandunfounds.com</span>}
+                          />
+                        </div>
+                        <div className="bg-black p-4">
+                          <AdminBentoRow
+                            label="Total Articles"
+                            value={userPosts.length}
+                          />
+                        </div>
+                      </div>
 
-                                  <div className="flex items-center gap-4 text-[10px] text-white/40 uppercase tracking-wider mb-2">
-                                    <span className="flex items-center gap-1">
-                                      <CalendarIcon className="w-3 h-3" />
-                                      {formatDate(post.published_at || post.created_at)}
-                                    </span>
-                                    <span className="border-l border-white/10 pl-4">
-                                      {blogTitle || user.user_metadata?.author_name || 'Anonymous'}
-                                    </span>
-                                    {post.subdomain && (
-                                      <span className="text-blue-400/60 border-l border-white/10 pl-4">
-                                        {post.subdomain}
-                                      </span>
-                                    )}
-                                  </div>
+                      <div className="pt-4 flex gap-4">
+                        <Link
+                          to="/submit-article"
+                          className="flex-1 bg-white text-black py-3 px-4 font-black text-[10px] uppercase text-center hover:bg-white/80 transition"
+                        >
+                          Create New Article
+                        </Link>
+                        <Link
+                          to={`/blog/${userSubdomain}`}
+                          className="flex-1 bg-white/10 py-3 px-4 font-black text-[10px] uppercase text-center hover:bg-white/20 transition"
+                        >
+                          View Public Blog
+                        </Link>
+                      </div>
 
-                                  {post.excerpt && (
-                                    <p className="text-white/60 text-xs line-clamp-2 leading-relaxed">
-                                      {post.excerpt}
-                                    </p>
-                                  )}
-                                </div>
+                      {/* My Book Club Posts */}
+                      <div className="mt-8">
+                        <AdminBentoCard
+                          title="MY BOOK CLUB POSTS"
+                          className="bg-black/20 border border-white/5"
+                        >
+                          <div className="space-y-0 divide-y divide-white/5">
+                            {userPosts.filter(p => p.subdomain).length === 0 ? (
+                              <p className="text-white/40 text-xs py-8 text-center uppercase tracking-widest">No articles found</p>
+                            ) : (
+                              userPosts
+                                .filter(p => p.subdomain)
+                                .map((post) => (
+                                  <div
+                                    key={post.id}
+                                    className="group/item py-4 flex items-start justify-between gap-4 transition-colors"
+                                  >
+                                    <div className="flex-1 min-w-0 text-left">
+                                      <div className="flex items-center gap-3 mb-1">
+                                        <h4 className="text-white font-medium text-sm md:text-base leading-tight truncate">
+                                          {post.title}
+                                        </h4>
+                                        <span className={cn(
+                                          "flex-shrink-0 px-1.5 py-0.5 text-[8px] uppercase tracking-widest font-bold border",
+                                          post.published
+                                            ? "text-green-400 border-green-400/30 bg-green-400/5"
+                                            : "text-amber-400 border-amber-400/30 bg-amber-400/5"
+                                        )}>
+                                          {post.published ? 'Published' : 'Draft'}
+                                        </span>
+                                      </div>
 
-                                <div className="flex items-center gap-1">
-                                  {post.published && (
-                                    <>
-                                      <a
-                                        href={`/blog/${post.subdomain}/${post.slug}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                                      <div className="flex items-center gap-4 text-[10px] text-white/40 uppercase tracking-wider mb-2">
+                                        <span className="flex items-center gap-1">
+                                          <CalendarIcon className="w-3 h-3" />
+                                          {formatDate(post.published_at || post.created_at)}
+                                        </span>
+                                        <span className="border-l border-white/10 pl-4">
+                                          {blogTitle || user.user_metadata?.author_name || 'Anonymous'}
+                                        </span>
+                                        {post.subdomain && (
+                                          <span className="text-blue-400/60 border-l border-white/10 pl-4">
+                                            {post.subdomain}
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      {post.excerpt && (
+                                        <p className="text-white/60 text-xs line-clamp-2 leading-relaxed">
+                                          {post.excerpt}
+                                        </p>
+                                      )}
+                                    </div>
+
+                                    <div className="flex items-center gap-1">
+                                      {post.published && (
+                                        <>
+                                          <a
+                                            href={`/blog/${post.subdomain}/${post.slug}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="p-2 text-white/30 hover:text-white hover:bg-white/5 transition-all outline-none"
+                                            title="View post"
+                                          >
+                                            <EyeIcon className="w-4 h-4" />
+                                          </a>
+                                          <button
+                                            onClick={() => {
+                                              if (confirm('To unpublish this post and return it to review, please use the Admin Dashboard Blog Management section.')) {
+                                                navigate('/admin?section=blog');
+                                              }
+                                            }}
+                                            className="p-2 text-amber-500/40 hover:text-amber-400 hover:bg-amber-400/10 transition-all outline-none"
+                                            title="Unpublish"
+                                          >
+                                            <EyeSlashIcon className="w-4 h-4" />
+                                          </button>
+                                        </>
+                                      )}
+                                      <button
+                                        onClick={() => navigate(`/admin?section=blog&edit=${post.id}`)}
                                         className="p-2 text-white/30 hover:text-white hover:bg-white/5 transition-all outline-none"
-                                        title="View post"
+                                        title="Edit post"
                                       >
-                                        <EyeIcon className="w-4 h-4" />
-                                      </a>
+                                        <PencilSquareIcon className="w-4 h-4" />
+                                      </button>
                                       <button
                                         onClick={() => {
-                                          if (confirm('To unpublish this post and return it to review, please use the Admin Dashboard Blog Management section.')) {
-                                            navigate('/admin?section=blog');
+                                          if (confirm('Are you sure you want to delete this post? This cannot be undone.')) {
+                                            // Simple delete implementation
+                                            supabase.from('blog_posts').delete().eq('id', post.id).then(({ error }) => {
+                                              if (error) showError(error.message);
+                                              else {
+                                                success('Post deleted');
+                                                loadUserPosts();
+                                              }
+                                            });
                                           }
                                         }}
-                                        className="p-2 text-amber-500/40 hover:text-amber-400 hover:bg-amber-400/10 transition-all outline-none"
-                                        title="Unpublish"
+                                        className="p-2 text-red-500/40 hover:text-red-400 hover:bg-red-400/10 transition-all outline-none"
+                                        title="Delete post"
                                       >
-                                        <EyeSlashIcon className="w-4 h-4" />
+                                        <TrashIcon className="w-4 h-4" />
                                       </button>
-                                    </>
-                                  )}
-                                  <button
-                                    onClick={() => navigate(`/admin?section=blog&edit=${post.id}`)}
-                                    className="p-2 text-white/30 hover:text-white hover:bg-white/5 transition-all outline-none"
-                                    title="Edit post"
-                                  >
-                                    <PencilSquareIcon className="w-4 h-4" />
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      if (confirm('Are you sure you want to delete this post? This cannot be undone.')) {
-                                        // Simple delete implementation
-                                        supabase.from('blog_posts').delete().eq('id', post.id).then(({ error }) => {
-                                          if (error) showError(error.message);
-                                          else {
-                                            success('Post deleted');
-                                            loadUserPosts();
-                                          }
-                                        });
-                                      }
-                                    }}
-                                    className="p-2 text-red-500/40 hover:text-red-400 hover:bg-red-400/10 transition-all outline-none"
-                                    title="Delete post"
-                                  >
-                                    <TrashIcon className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              </div>
-                            ))
-                        )}
+                                    </div>
+                                  </div>
+                                ))
+                            )}
+                          </div>
+                        </AdminBentoCard>
                       </div>
-                    </AdminBentoCard>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Affiliate Section */}
-            {hasAffiliate && expandedSections['affiliate'] && (
-              <div ref={el => sectionRefs.current['affiliate'] = el} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="flex flex-col px-0 py-2 mb-8 items-start">
-                  <div className="flex items-center gap-3">
-                    <ArrowTrendingUpIcon className="w-5 h-5 text-white/40" />
-                    <h2 className="text-lg font-black text-white tracking-widest uppercase">Affiliate App</h2>
-                  </div>
-                  <button onClick={() => handleSectionToggle('affiliate')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
-                </div>
-                <AffiliateDashboard embedded />
-              </div>
-            )}
-
-            {/* Settings Section */}
-            {expandedSections['settings'] && (
-              <div ref={el => sectionRefs.current['settings'] = el} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="flex flex-col px-0 py-2 mb-8 items-start">
-                  <div className="flex items-center gap-3">
-                    <Cog6ToothIcon className="w-5 h-5 text-white/40" />
-                    <h2 className="text-lg font-black text-white tracking-widest uppercase">Account Settings</h2>
-                  </div>
-                  <button onClick={() => handleSectionToggle('settings')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter">Close Console</button>
-                </div>
-                <div className="bg-[#0a0a0a] p-6">
-                  <div className="space-y-4 max-w-2xl">
-                    <AdminBentoRow label="Tier" value={tier || 'Free'} />
-                    <AdminBentoRow label="Status" value={<span className="text-green-500">Active</span>} />
-                    <AdminBentoRow label="Invites" value="0 Available" />
-                    <div className="pt-4">
-                      <Link
-                        to="/settings"
-                        className="flex items-center justify-between text-xs uppercase font-bold text-white/50 hover:text-white transition bg-black p-4"
-                      >
-                        Manage Details <ChevronRightIcon className="w-4 h-4" />
-                      </Link>
                     </div>
-                  </div>
+                  )}
+
+                  {hasAffiliate && activeApp === 'affiliate' && (
+                    <AffiliateDashboard embedded />
+                  )}
+
+                  {activeApp === 'settings' && (
+                    <div className="bg-[#0a0a0a] p-6">
+                      <div className="space-y-4 max-w-2xl">
+                        <AdminBentoRow label="Tier" value={tier || 'Free'} />
+                        <AdminBentoRow label="Status" value={<span className="text-green-500">Active</span>} />
+                        <AdminBentoRow label="Invites" value="0 Available" />
+                        <div className="pt-4">
+                          <Link
+                            to="/settings"
+                            className="flex items-center justify-between text-xs uppercase font-bold text-white/50 hover:text-white transition bg-black p-4"
+                          >
+                            Manage Details <ChevronRightIcon className="w-4 h-4" />
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
-          </div>
+            </ExpandableScreenContent>
+          </ExpandableScreen>
 
         </div>
 
