@@ -878,25 +878,19 @@ export default function BlogSubmissionReview() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          <DocumentTextIcon className="w-5 h-5" />
-          Blog Submissions Review
-        </h2>
-        <div className="flex gap-2">
-          {(['all', 'pending', 'approved', 'rejected', 'published'] as const).map((status) => (
-            <button
-              key={status}
-              onClick={() => setFilterStatus(status)}
-              className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all ${filterStatus === status
-                ? 'bg-white text-black'
-                : 'bg-white/5 text-white/40 hover:bg-white/10'
-                }`}
-            >
-              {status.charAt(0).toUpperCase() + status.slice(1)}
-            </button>
-          ))}
-        </div>
+      <div className="flex flex-wrap gap-2">
+        {(['all', 'pending', 'approved', 'rejected', 'published'] as const).map((status) => (
+          <button
+            key={status}
+            onClick={() => setFilterStatus(status)}
+            className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all ${filterStatus === status
+              ? 'bg-white text-black'
+              : 'bg-white/5 text-white/40 hover:bg-white/10'
+              }`}
+          >
+            {status.charAt(0).toUpperCase() + status.slice(1)}
+          </button>
+        ))}
       </div>
 
       {/* Submissions List */}
