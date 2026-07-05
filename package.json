@@ -12,7 +12,7 @@
     "restart-dev": "./scripts/restart-dev.sh",
     "build": "vite build",
     "prebuild": "npx tsx scripts/seo-check.ts --strict",
-    "postbuild": "concurrently -n prerender-blog,prerender-pages,prerender-galleries,sitemap,image-sitemap,404 \"npx tsx scripts/pre-render-blog-posts.ts\" \"npx tsx scripts/pre-render-core-pages.ts\" \"npx tsx scripts/pre-render-galleries.ts\" \"npx tsx scripts/generate-sitemap.ts\" \"npx tsx scripts/generate-image-sitemap.ts\" \"npx tsx scripts/generate-404-html.ts\"",
+    "postbuild": "npx tsx scripts/pre-render-blog-posts.ts && npx tsx scripts/pre-render-core-pages.ts && npx tsx scripts/pre-render-galleries.ts && npx tsx scripts/generate-sitemap.ts && npx tsx scripts/generate-image-sitemap.ts && npx tsx scripts/generate-404-html.ts",
     "seo-check": "npx tsx scripts/seo-check.ts",
     "seo-check:strict": "npx tsx scripts/seo-check.ts --strict",
     "preview": "vite preview",
