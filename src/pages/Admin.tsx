@@ -1805,7 +1805,6 @@ export default function Admin() {
                     users={allUsers}
                     stats={stats}
                     onNavigateToSection={(section) => setActivePanelSection(section)}
-                    onBack={() => setActivePanelSection(null)}
                   />
                 )}
                 {activePanelSection === 'affiliates' && (
