@@ -14,18 +14,23 @@ import {
   TrashIcon,
   CheckCircleIcon,
   PauseCircleIcon,
+  ShoppingBagIcon,
+  ArrowTopRightOnSquareIcon,
 } from '@heroicons/react/24/outline';
+import { motion } from 'framer-motion';
+import { cn } from './ui/utils';
 import { LoadingSpinner } from './Loading';
 import { ExpandableScreen, ExpandableScreenTrigger, ExpandableScreenContent } from './ui/expandable-screen';
 import { SERVICE_PRODUCTS, ServiceProduct } from '../data/stripe-products';
 
 type ProductStatus = 'active' | 'draft';
+type ProductSource = 'local' | 'fourthwall';
 
 interface ProductCost {
   id: string;
   product_id: string;
   variant_id: string | null;
-  source: 'local' | 'paypal';
+  source: ProductSource;
   cost: number;
   name: string | null;
   description: string | null;
@@ -46,6 +51,18 @@ interface MergedProduct {
   interval?: ServiceProduct['interval'];
   imageUrl: string | null;
   status: ProductStatus;
+}
+
+interface ShopProduct {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  currency: string;
+  images: string[];
+  handle: string;
+  available: boolean;
+  url: string;
 }
 
 const CATEGORY_ICON: Record<ServiceProduct['category'], typeof CameraIcon> = {
@@ -80,10 +97,45 @@ function formatPrice(m: MergedProduct) {
   return m.priceType === 'recurring' ? `${amount}/${m.interval || 'mo'}` : amount;
 }
 
+function GalleryTab({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        'text-[10px] font-black uppercase tracking-[0.3em] transition-all relative pb-2',
+        active ? 'text-white' : 'text-white/30 hover:text-white/60'
+      )}
+    >
+      {label}
+      {active && (
+        <motion.div
+          layoutId="productTabUnderline"
+          className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-white"
+        />
+      )}
+    </button>
+  );
+}
+
 export function ProductCostManagement() {
+  const [activeTab, setActiveTab] = useState<'services' | 'shop'>('services');
   const [costs, setCosts] = useState<Record<string, ProductCost>>({});
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const [shopProducts, setShopProducts] = useState<ShopProduct[]>([]);
+  const [shopCosts, setShopCosts] = useState<Record<string, ProductCost>>({});
+  const [shopLoading, setShopLoading] = useState(false);
+  const [shopError, setShopError] = useState<string | null>(null);
+  const [shopLoaded, setShopLoaded] = useState(false);
 
   useEffect(() => {
     fetch('/api/admin/product-costs?source=local')
@@ -99,8 +151,37 @@ export function ProductCostManagement() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Lazy-load Fourthwall shop products the first time the Shop tab is opened
+  useEffect(() => {
+    if (activeTab !== 'shop' || shopLoaded) return;
+    setShopLoading(true);
+    setShopError(null);
+
+    Promise.all([
+      fetch('/api/shop/products', { cache: 'no-store' }).then((r) => r.json()),
+      fetch('/api/admin/product-costs?source=fourthwall')
+        .then((r) => r.json())
+        .catch(() => ({ data: [] })),
+    ])
+      .then(([productsData, costsData]) => {
+        setShopProducts(productsData.products || []);
+        const map: Record<string, ProductCost> = {};
+        for (const row of (costsData.data || []) as ProductCost[]) {
+          if (!row.variant_id) map[row.product_id] = row;
+        }
+        setShopCosts(map);
+        setShopLoaded(true);
+      })
+      .catch((e) => setShopError(e.message || 'Failed to load shop products'))
+      .finally(() => setShopLoading(false));
+  }, [activeTab, shopLoaded]);
+
   const handleSaved = (productId: string, row: ProductCost) => {
     setCosts((prev) => ({ ...prev, [productId]: row }));
+  };
+
+  const handleShopSaved = (productId: string, row: ProductCost) => {
+    setShopCosts((prev) => ({ ...prev, [productId]: row }));
   };
 
   if (loading) {
@@ -112,84 +193,176 @@ export function ProductCostManagement() {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-      {SERVICE_PRODUCTS.map((product) => {
-        const costRow = costs[product.id];
-        const merged = mergeProduct(product, costRow);
-        const Icon = CATEGORY_ICON[merged.category];
-        const cost = costRow ? parseFloat(costRow.cost.toString()) : null;
-        const profit = cost !== null ? Math.max(0, merged.price - cost) : null;
-        const isDraft = merged.status === 'draft';
+    <div>
+      <div className="flex justify-center gap-12 mb-6 pb-2">
+        <GalleryTab label="Services" active={activeTab === 'services'} onClick={() => setActiveTab('services')} />
+        <GalleryTab label="Shop" active={activeTab === 'shop'} onClick={() => setActiveTab('shop')} />
+      </div>
 
-        return (
-          <ExpandableScreen
-            key={product.id}
-            isOpen={expandedId === product.id}
-            onOpenChange={(open) => setExpandedId(open ? product.id : null)}
-          >
-            <ExpandableScreenTrigger
-              className={`w-full text-left transition-colors duration-300 p-5 flex flex-col gap-4 ${isDraft ? 'bg-white/[0.02] hover:bg-white/5' : 'bg-white/5 hover:bg-white/10'}`}
-            >
-              <div className="flex items-start gap-3">
-                {merged.imageUrl ? (
-                  <img src={merged.imageUrl} alt="" className="w-12 h-12 object-cover shrink-0 bg-white/10" />
-                ) : (
-                  <div className="w-12 h-12 shrink-0 bg-white/10 flex items-center justify-center">
-                    <PhotoIcon className="w-5 h-5 text-white/30" />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Icon className="w-4 h-4 text-white/40 shrink-0" />
-                      <span className="text-[9px] font-black uppercase tracking-widest text-white/40 truncate">
-                        {merged.category.replace('-', ' ')}
-                      </span>
+      {activeTab === 'services' ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          {SERVICE_PRODUCTS.map((product) => {
+            const costRow = costs[product.id];
+            const merged = mergeProduct(product, costRow);
+            const Icon = CATEGORY_ICON[merged.category];
+            const cost = costRow ? parseFloat(costRow.cost.toString()) : null;
+            const profit = cost !== null ? Math.max(0, merged.price - cost) : null;
+            const isDraft = merged.status === 'draft';
+
+            return (
+              <ExpandableScreen
+                key={product.id}
+                isOpen={expandedId === product.id}
+                onOpenChange={(open) => setExpandedId(open ? product.id : null)}
+              >
+                <ExpandableScreenTrigger
+                  className={`w-full text-left transition-colors duration-300 p-5 flex flex-col gap-4 ${isDraft ? 'bg-white/[0.02] hover:bg-white/5' : 'bg-white/5 hover:bg-white/10'}`}
+                >
+                  <div className="flex items-start gap-3">
+                    {merged.imageUrl ? (
+                      <img src={merged.imageUrl} alt="" className="w-12 h-12 object-cover shrink-0 bg-white/10" />
+                    ) : (
+                      <div className="w-12 h-12 shrink-0 bg-white/10 flex items-center justify-center">
+                        <PhotoIcon className="w-5 h-5 text-white/30" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Icon className="w-4 h-4 text-white/40 shrink-0" />
+                          <span className="text-[9px] font-black uppercase tracking-widest text-white/40 truncate">
+                            {merged.category.replace('-', ' ')}
+                          </span>
+                        </div>
+                        <span className="text-white font-mono text-sm font-bold whitespace-nowrap">
+                          {formatPrice(merged)}
+                        </span>
+                      </div>
+                      <h3 className="text-white font-black uppercase tracking-wide text-sm mt-1 truncate">{merged.name}</h3>
                     </div>
-                    <span className="text-white font-mono text-sm font-bold whitespace-nowrap">
-                      {formatPrice(merged)}
+                  </div>
+
+                  <p className="text-white/40 text-xs line-clamp-2">{merged.description}</p>
+
+                  <div className="flex items-center gap-4 pt-1">
+                    {cost !== null ? (
+                      <>
+                        <span className="text-white/60 font-mono text-xs">cost ${cost.toFixed(2)}</span>
+                        {profit !== null && (
+                          <span className="text-emerald-400 font-bold font-mono text-xs">profit ${profit.toFixed(2)}</span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-white/30 font-mono text-xs uppercase tracking-widest">No cost set</span>
+                    )}
+                    <span
+                      className={`ml-auto flex items-center gap-1 text-[9px] font-black uppercase tracking-widest ${isDraft ? 'text-white/30' : 'text-emerald-400'}`}
+                    >
+                      {isDraft ? <PauseCircleIcon className="w-3.5 h-3.5" /> : <CheckCircleIcon className="w-3.5 h-3.5" />}
+                      {STATUS_LABEL[merged.status]}
                     </span>
                   </div>
-                  <h3 className="text-white font-black uppercase tracking-wide text-sm mt-1 truncate">{merged.name}</h3>
-                </div>
-              </div>
+                </ExpandableScreenTrigger>
 
-              <p className="text-white/40 text-xs line-clamp-2">{merged.description}</p>
+                <ExpandableScreenContent className="overflow-hidden">
+                  <div className="flex-1 overflow-hidden">
+                    <div className="max-w-2xl mx-auto h-full px-4 sm:px-6 pt-14 pb-3 flex flex-col justify-center">
+                      <ProductDetail
+                        product={product}
+                        costRow={costRow || null}
+                        onSaved={(row) => handleSaved(product.id, row)}
+                      />
+                    </div>
+                  </div>
+                </ExpandableScreenContent>
+              </ExpandableScreen>
+            );
+          })}
+        </div>
+      ) : shopLoading ? (
+        <div className="flex items-center justify-center min-h-[300px]">
+          <LoadingSpinner size="lg" className="text-white" />
+        </div>
+      ) : shopError ? (
+        <p className="text-red-400 text-xs font-mono text-center py-12">{shopError}</p>
+      ) : shopProducts.length === 0 ? (
+        <p className="text-white/30 text-xs uppercase tracking-widest text-center py-12">No shop products found</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          {shopProducts.map((product) => {
+            const costRow = shopCosts[product.id];
+            const cost = costRow ? parseFloat(costRow.cost.toString()) : null;
+            const profit = cost !== null ? Math.max(0, product.price - cost) : null;
 
-              <div className="flex items-center gap-4 pt-1">
-                {cost !== null ? (
-                  <>
-                    <span className="text-white/60 font-mono text-xs">cost ${cost.toFixed(2)}</span>
-                    {profit !== null && (
-                      <span className="text-emerald-400 font-bold font-mono text-xs">profit ${profit.toFixed(2)}</span>
+            return (
+              <ExpandableScreen
+                key={product.id}
+                isOpen={expandedId === product.id}
+                onOpenChange={(open) => setExpandedId(open ? product.id : null)}
+              >
+                <ExpandableScreenTrigger className="w-full text-left transition-colors duration-300 p-5 flex flex-col gap-4 bg-white/5 hover:bg-white/10">
+                  <div className="flex items-start gap-3">
+                    {product.images?.[0] ? (
+                      <img src={product.images[0]} alt="" className="w-12 h-12 object-cover shrink-0 bg-white/10" />
+                    ) : (
+                      <div className="w-12 h-12 shrink-0 bg-white/10 flex items-center justify-center">
+                        <ShoppingBagIcon className="w-5 h-5 text-white/30" />
+                      </div>
                     )}
-                  </>
-                ) : (
-                  <span className="text-white/30 font-mono text-xs uppercase tracking-widest">No cost set</span>
-                )}
-                <span
-                  className={`ml-auto flex items-center gap-1 text-[9px] font-black uppercase tracking-widest ${isDraft ? 'text-white/30' : 'text-emerald-400'}`}
-                >
-                  {isDraft ? <PauseCircleIcon className="w-3.5 h-3.5" /> : <CheckCircleIcon className="w-3.5 h-3.5" />}
-                  {STATUS_LABEL[merged.status]}
-                </span>
-              </div>
-            </ExpandableScreenTrigger>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <ShoppingBagIcon className="w-4 h-4 text-white/40 shrink-0" />
+                          <span className="text-[9px] font-black uppercase tracking-widest text-white/40 truncate">
+                            Shop
+                          </span>
+                        </div>
+                        <span className="text-white font-mono text-sm font-bold whitespace-nowrap">
+                          ${product.price.toFixed(2)}
+                        </span>
+                      </div>
+                      <h3 className="text-white font-black uppercase tracking-wide text-sm mt-1 truncate">{product.title}</h3>
+                    </div>
+                  </div>
 
-            <ExpandableScreenContent className="overflow-hidden">
-              <div className="flex-1 overflow-hidden">
-                <div className="max-w-2xl mx-auto h-full px-4 sm:px-6 pt-14 pb-3 flex flex-col justify-center">
-                  <ProductDetail
-                    product={product}
-                    costRow={costRow || null}
-                    onSaved={(row) => handleSaved(product.id, row)}
-                  />
-                </div>
-              </div>
-            </ExpandableScreenContent>
-          </ExpandableScreen>
-        );
-      })}
+                  <p className="text-white/40 text-xs line-clamp-2">{product.description}</p>
+
+                  <div className="flex items-center gap-4 pt-1">
+                    {cost !== null ? (
+                      <>
+                        <span className="text-white/60 font-mono text-xs">cost ${cost.toFixed(2)}</span>
+                        {profit !== null && (
+                          <span className="text-emerald-400 font-bold font-mono text-xs">profit ${profit.toFixed(2)}</span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-white/30 font-mono text-xs uppercase tracking-widest">No cost set</span>
+                    )}
+                    <span
+                      className={`ml-auto flex items-center gap-1 text-[9px] font-black uppercase tracking-widest ${product.available ? 'text-emerald-400' : 'text-white/30'}`}
+                    >
+                      {product.available ? <CheckCircleIcon className="w-3.5 h-3.5" /> : <PauseCircleIcon className="w-3.5 h-3.5" />}
+                      {product.available ? 'Available' : 'Unavailable'}
+                    </span>
+                  </div>
+                </ExpandableScreenTrigger>
+
+                <ExpandableScreenContent className="overflow-hidden">
+                  <div className="flex-1 overflow-hidden">
+                    <div className="max-w-2xl mx-auto h-full px-4 sm:px-6 pt-14 pb-3 flex flex-col justify-center">
+                      <ShopProductDetail
+                        product={product}
+                        costRow={costRow || null}
+                        onSaved={(row) => handleShopSaved(product.id, row)}
+                      />
+                    </div>
+                  </div>
+                </ExpandableScreenContent>
+              </ExpandableScreen>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -505,6 +678,145 @@ function ProductDetail({
             <CheckIcon className="w-3.5 h-3.5" />
           ) : null}
           {saving ? 'Saving' : saved ? 'Saved' : 'Save Changes'}
+        </button>
+        {profit !== null && (
+          <span className="text-emerald-400 font-bold font-mono text-xs">profit ${profit.toFixed(2)}</span>
+        )}
+        {error && <p className="text-red-400 text-xs font-mono w-full">{error}</p>}
+      </div>
+    </div>
+  );
+}
+
+// Fourthwall shop products are managed on Fourthwall — this editor only tracks
+// the cost basis locally for profit-margin / affiliate-commission calculations.
+function ShopProductDetail({
+  product,
+  costRow,
+  onSaved,
+}: {
+  product: ShopProduct;
+  costRow: ProductCost | null;
+  onSaved: (row: ProductCost) => void;
+}) {
+  const [costInput, setCostInput] = useState(costRow ? costRow.cost.toString() : '');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setCostInput(costRow ? costRow.cost.toString() : '');
+  }, [costRow]);
+
+  const cost = costInput === '' ? null : parseFloat(costInput);
+  const profit = cost !== null && !Number.isNaN(cost) ? Math.max(0, product.price - cost) : null;
+
+  const handleSave = async () => {
+    if (cost === null || Number.isNaN(cost) || cost < 0) {
+      setError('Enter a valid cost');
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    setSaved(false);
+
+    try {
+      const res = costRow
+        ? await fetch(`/api/admin/product-costs?id=${costRow.id}`, {
+            method: 'PUT',
+            headers: ADMIN_HEADERS,
+            body: JSON.stringify({ cost }),
+          })
+        : await fetch('/api/admin/product-costs', {
+            method: 'POST',
+            headers: ADMIN_HEADERS,
+            body: JSON.stringify({ productId: product.id, source: 'fourthwall', cost }),
+          });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to save');
+
+      onSaved(data.data as ProductCost);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (e: any) {
+      setError(e.message || 'Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <ShoppingBagIcon className="w-4 h-4 text-white/40" />
+          <span className="text-[9px] font-black uppercase tracking-[0.25em] text-white/40">Shop</span>
+        </div>
+        <a
+          href={product.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors duration-300"
+        >
+          View on Fourthwall
+          <ArrowTopRightOnSquareIcon className="w-3 h-3" />
+        </a>
+      </div>
+
+      {product.images?.[0] ? (
+        <img src={product.images[0]} alt={product.title} className="w-full h-[120px] object-cover bg-white/5" />
+      ) : (
+        <div className="w-full h-[120px] bg-white/5 flex items-center justify-center">
+          <ShoppingBagIcon className="w-6 h-6 text-white/20" />
+        </div>
+      )}
+
+      <h3 className="text-white font-black uppercase tracking-wide text-sm">{product.title}</h3>
+      <p className="text-white/40 text-xs leading-snug">{product.description}</p>
+
+      <div className="grid grid-cols-2 gap-2">
+        <div className="bg-white/5 p-2">
+          <label className="flex items-center gap-2 text-white/40 text-[9px] font-black uppercase tracking-widest mb-1">
+            <CurrencyDollarIcon className="w-3 h-3" />
+            Price
+          </label>
+          <div className="flex items-center">
+            <span className="text-white/40 font-mono text-xs mr-1">$</span>
+            <span className="text-white font-mono font-bold text-sm">{product.price.toFixed(2)}</span>
+          </div>
+        </div>
+        <div className="bg-white/5 p-2">
+          <label className="flex items-center gap-2 text-white/40 text-[9px] font-black uppercase tracking-widest mb-1">
+            Cost
+          </label>
+          <div className="flex items-center">
+            <span className="text-white/40 font-mono text-xs mr-1">$</span>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={costInput}
+              onChange={(e) => setCostInput(e.target.value)}
+              className="bg-transparent text-white font-mono font-bold text-sm outline-none w-full"
+              placeholder="0.00"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 flex-wrap">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="flex items-center gap-2 bg-white text-black px-4 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-white/80 transition-colors duration-300 disabled:opacity-50"
+        >
+          {saving ? (
+            <ArrowPathIcon className="w-3.5 h-3.5 animate-spin" />
+          ) : saved ? (
+            <CheckIcon className="w-3.5 h-3.5" />
+          ) : null}
+          {saving ? 'Saving' : saved ? 'Saved' : 'Save Cost'}
         </button>
         {profit !== null && (
           <span className="text-emerald-400 font-bold font-mono text-xs">profit ${profit.toFixed(2)}</span>
