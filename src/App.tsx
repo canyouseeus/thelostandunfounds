@@ -72,7 +72,6 @@ import Kattitude from './pages/Kattitude'
 import KattitudeWaiver from './pages/KattitudeWaiver'
 import AdminKattitude from './pages/AdminKattitude'
 import AdminKattitudeArtist from './pages/AdminKattitudeArtist'
-import AdminInvoices from './pages/AdminInvoices'
 import MusicPlayer from './components/admin/MusicPlayer'
 import SilvaStarLanding from './templates/silva-star/SilvaStarLanding'
 import SilvaStarDashboard from './templates/silva-star/SilvaStarDashboard'
@@ -98,6 +97,16 @@ function AffiliateDashboardRedirect() {
   const params = new URLSearchParams(search)
   if (!params.get('section')) params.set('section', 'affiliate')
   return <Navigate to={`/dashboard?${params.toString()}`} replace />
+}
+
+function AdminInvoicesRedirect() {
+  // /admin/invoices used to be its own route; invoices now live in the
+  // Admin console like every other section. Preserve any existing search
+  // params (e.g. booking_id, new) and force-open the invoices panel.
+  const { search } = useLocation()
+  const params = new URLSearchParams(search)
+  params.set('section', 'invoices')
+  return <Navigate to={`/admin?${params.toString()}`} replace />
 }
 
 /** Dev-only: expose React Router's navigate globally so preview_eval can route without a full reload. */
@@ -217,13 +226,7 @@ function App() {
                     </AdminAuthGate>
                   </ErrorBoundary>
                 } />
-                <Route path="invoices" element={
-                  <ErrorBoundary>
-                    <AdminAuthGate>
-                      <AdminInvoices />
-                    </AdminAuthGate>
-                  </ErrorBoundary>
-                } />
+                <Route path="invoices" element={<AdminInvoicesRedirect />} />
               </Route>
               {/* Silva Star white-label template */}
               <Route path="/silva-star" element={<SilvaStarLanding />} />

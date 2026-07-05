@@ -704,7 +704,7 @@ function ExpandableBookingCard({ booking: b, onChange }: { booking: CalendarBook
                                     </ActionButton>
                                 )}
                                 <a
-                                    href={`/admin/invoices?booking_id=${encodeURIComponent(b.id)}&new=1`}
+                                    href={`/admin?section=invoices&booking_id=${encodeURIComponent(b.id)}&new=1`}
                                     onClick={(e) => e.stopPropagation()}
                                     className="px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest border border-white/20 text-white/80 hover:bg-white/5 hover:text-white transition-colors"
                                 >

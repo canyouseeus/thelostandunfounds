@@ -7,7 +7,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
 import AdminAffiliates from './AdminAffiliates';
@@ -59,6 +59,7 @@ import {
   Bars3Icon,
   BuildingStorefrontIcon,
   ChevronDownIcon,
+  BanknotesIcon,
 } from '@heroicons/react/24/outline';
 
 import ErrorBoundary from '../components/ErrorBoundary';
@@ -97,6 +98,7 @@ import AdminGalleryView from '../components/admin/AdminGalleryView';
 import AdminEventsView from '../components/admin/AdminEventsView';
 import AdminBookingView from '../components/admin/AdminBookingView';
 import AdminCalendarView from '../components/admin/AdminCalendarView';
+import AdminInvoices from './AdminInvoices';
 import { RevenueTracker } from '../components/ui/revenue-tracker';
 import { ClockWidget } from '../components/ui/clock-widget';
 import { CalendarWidget } from '../components/ui/calendar-widget';
@@ -248,10 +250,18 @@ export default function Admin() {
 
   // Which console panel is open (null = none)
   const [activePanelSection, setActivePanelSection] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
 
   const openPanel = (id: string) => {
     setActivePanelSection(prev => (prev === id ? null : id));
   };
+
+  // Deep-link support (e.g. /admin?section=invoices&booking_id=...) — opens a console
+  // panel directly instead of requiring a separate route for each section.
+  useEffect(() => {
+    const section = searchParams.get('section');
+    if (section) setActivePanelSection(section);
+  }, [searchParams]);
 
   const unreadAlertsCount = alerts.filter(a => !a.read).length;
 
@@ -1692,6 +1702,7 @@ export default function Admin() {
                 { id: 'submissions', icon: DocumentTextIcon, title: 'Submissions', badge: pendingSubmissions },
                 { id: 'bookings', icon: InboxIcon, title: 'Bookings' },
                 { id: 'calendar', icon: CalendarIcon, title: 'Calendar' },
+                { id: 'invoices', icon: BanknotesIcon, title: 'Invoices' },
                 { id: 'pricing', icon: CurrencyDollarIcon, title: 'Products' },
                 { id: 'settings', icon: BoltIcon, title: 'Settings' }
               ].map((app) => (
@@ -1741,8 +1752,9 @@ export default function Admin() {
                   affiliates:  { title: 'Affiliate Program',        icon: <LinkIcon className="w-5 h-5 text-white/40" /> },
                   submissions: { title: 'Submission Queue',         icon: <DocumentTextIcon className="w-5 h-5 text-white/40" />, extra: pendingSubmissions > 0 ? <span className="px-2 py-0.5 bg-amber-400 text-black text-[10px] font-black">{pendingSubmissions} PENDING</span> : null },
                   events:      { title: 'Event Management',         icon: <CalendarIcon className="w-5 h-5 text-white/40" /> },
-                  bookings:    { title: 'Booking Management',       icon: <CalendarIcon className="w-5 h-5 text-white/40" />, extra: <Link to="/admin/invoices" className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-tighter underline">Manage Invoices →</Link> },
+                  bookings:    { title: 'Booking Management',       icon: <CalendarIcon className="w-5 h-5 text-white/40" />, extra: <button onClick={() => setActivePanelSection('invoices')} className="text-[10px] font-bold text-white/60 hover:text-white uppercase tracking-tighter underline">Manage Invoices →</button> },
                   calendar:    { title: 'Master Calendar',          icon: <CalendarIcon className="w-5 h-5 text-white/40" /> },
+                  invoices:    { title: 'Invoices & CRM',           icon: <BanknotesIcon className="w-5 h-5 text-white/40" /> },
                   pricing:     { title: 'Product Management',       icon: <CurrencyDollarIcon className="w-5 h-5 text-white/40" /> },
                   settings:    { title: 'Platform Settings',        icon: <BoltIcon className="w-5 h-5 text-white/40" /> },
                 };
@@ -1824,6 +1836,11 @@ export default function Admin() {
                 {activePanelSection === 'calendar' && (
                   <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Calendar</div>}>
                     <AdminCalendarView />
+                  </ErrorBoundary>
+                )}
+                {activePanelSection === 'invoices' && (
+                  <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Invoices</div>}>
+                    <AdminInvoices />
                   </ErrorBoundary>
                 )}
                 {activePanelSection === 'pricing' && (
