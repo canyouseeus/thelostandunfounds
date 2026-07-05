@@ -23,36 +23,10 @@ const PhotoSuccessPage: React.FC = () => {
     const [librarySlug, setLibrarySlug] = useState<string>('');
 
     useEffect(() => {
-        if (orderId) {
-            captureAndFetchEntitlements();
-        }
+        // This page only handled PayPal order capture, which is no longer created.
+        // Any visitor here is following a stale link, so there's nothing left to fetch.
+        setLoading(false);
     }, [orderId]);
-
-    async function captureAndFetchEntitlements() {
-        try {
-            setLoading(true);
-            const response = await fetch('/api/gallery/capture', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ orderId })
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                setEntitlements(data.entitlements || []);
-                if (data.libraryTitle) {
-                    setLibraryTitle(data.libraryTitle);
-                }
-                if (data.librarySlug) {
-                    setLibrarySlug(data.librarySlug);
-                }
-            }
-        } catch (err) {
-            console.error('Error capturing payment:', err);
-        } finally {
-            setLoading(false);
-        }
-    }
 
     const handleDownloadAll = async () => {
         if (entitlements.length === 0) return;

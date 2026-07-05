@@ -5,8 +5,6 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import productsHandler from '../../lib/api-handlers/_products-handler.js'
 import affiliatesTrackClickHandler from '../../lib/api-handlers/_affiliates-track-click-handler.js'
 import kingMidasDistributeHandler from '../../lib/api-handlers/_king-midas-distribute-handler.js'
-import paymentsPaypalHandler from '../../lib/api-handlers/_payments-paypal-handler.js'
-import paymentsPaypalCaptureHandler from '../../lib/api-handlers/_payments-paypal-capture-handler.js'
 import paymentsStrikeHandler from '../../lib/api-handlers/_payments-strike-handler.js'
 import paymentsStrikeStatusHandler from '../../lib/api-handlers/_payments-strike-status-handler.js'
 
@@ -88,14 +86,6 @@ export default async function handler(
       case 'affiliates/track-click':
         console.log('👉 Routing to: affiliatesTrackClickHandler')
         return await affiliatesTrackClickHandler(req, res)
-
-      case 'payments/paypal':
-        console.log('👉 Routing to: paymentsPaypalHandler')
-        return await paymentsPaypalHandler(req, res)
-
-      case 'payments/paypal/capture':
-        console.log('👉 Routing to: paymentsPaypalCaptureHandler')
-        return await paymentsPaypalCaptureHandler(req, res)
 
       case 'payments/strike':
         console.log('👉 Routing to: paymentsStrikeHandler')

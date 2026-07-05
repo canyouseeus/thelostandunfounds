@@ -6,7 +6,6 @@ export default function SubscriptionStatus() {
   const { user, tier } = useAuth();
   const [subscription, setSubscription] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -89,64 +88,6 @@ export default function SubscriptionStatus() {
           </div>
         )}
       </div>
-      {tier === 'free' && (
-        <>
-          <button
-            onClick={() => setUpgradeModalOpen(true)}
-            className="mt-3 w-full px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition text-sm"
-          >
-            Upgrade to Premium
-          </button>
-
-          {/* Upgrade Modal */}
-          {upgradeModalOpen && (
-            <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-sm">
-              <div className="bg-black/50 rounded-none p-6 w-full max-w-md mx-4">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-white">Upgrade Your Account</h2>
-                  <button
-                    onClick={() => setUpgradeModalOpen(false)}
-                    className="text-white/60 hover:text-white transition"
-                    aria-label="Close"
-                  >
-                    ✕
-                  </button>
-                </div>
-                <div className="space-y-4">
-                  <div className="bg-black/50 border border-white rounded-none p-4">
-                    <h3 className="text-lg font-semibold text-white mb-2">Premium Tier</h3>
-                    <p className="text-white/70 text-sm mb-3">Unlimited access to all tools</p>
-                    <div className="text-2xl font-bold text-white mb-4">$9.99<span className="text-sm text-white/60">/month</span></div>
-                    <button
-                      onClick={() => {
-                        window.open('https://paypal.com', '_blank');
-                        setUpgradeModalOpen(false);
-                      }}
-                      className="w-full px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
-                    >
-                      Upgrade to Premium
-                    </button>
-                  </div>
-                  <div className="bg-black/50 border border-white rounded-none p-4">
-                    <h3 className="text-lg font-semibold text-white mb-2">Pro Tier</h3>
-                    <p className="text-white/70 text-sm mb-3">Everything + API access</p>
-                    <div className="text-2xl font-bold text-white mb-4">$19.99<span className="text-sm text-white/60">/month</span></div>
-                    <button
-                      onClick={() => {
-                        window.open('https://paypal.com', '_blank');
-                        setUpgradeModalOpen(false);
-                      }}
-                      className="w-full px-4 py-2 bg-white text-black font-semibold rounded-none hover:bg-white/90 transition"
-                    >
-                      Upgrade to Pro
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </>
-      )}
     </div>
   );
 }

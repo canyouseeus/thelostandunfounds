@@ -40,10 +40,6 @@
       "schedule": "*/2 * * * *"
     },
     {
-      "path": "/api/cron/retry-pricing-refund",
-      "schedule": "0 12 * * *"
-    },
-    {
       "path": "/api/cron/send-scheduled-newsletters",
       "schedule": "0 * * * *"
     },

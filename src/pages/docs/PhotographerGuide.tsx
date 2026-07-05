@@ -89,7 +89,7 @@ const faqs = [
     },
     {
         question: 'When do I get paid?',
-        answer: 'Payments are processed through PayPal. You\'ll receive your commission within 24-48 hours of a sale.'
+        answer: 'Payments are processed through Stripe. You\'ll receive your commission within 24-48 hours of a sale.'
     },
     {
         question: 'Can I have multiple galleries?',

@@ -354,7 +354,6 @@ export async function trackUsage(
 export async function createSubscription(
   userId: string,
   tier: SubscriptionTier,
-  paypalSubscriptionId?: string,
   expiresAt?: string
 ) {
   try {
@@ -372,7 +371,6 @@ export async function createSubscription(
         user_id: userId,
         tier,
         status: 'active',
-        paypal_subscription_id: paypalSubscriptionId,
         expires_at: expiresAt,
       })
       .select()
@@ -459,7 +457,6 @@ export type PlatformSubscription = {
   user_id: string;
   tier: SubscriptionTier;
   status: SubscriptionStatus;
-  paypal_subscription_id?: string;
   started_at: string;
   expires_at?: string;
   created_at: string;

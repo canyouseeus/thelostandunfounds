@@ -29,7 +29,6 @@ export interface Subscription {
   user_id: string;
   tier: SubscriptionTier;
   status: 'active' | 'cancelled' | 'expired';
-  paypal_subscription_id?: string;
   started_at: string;
   expires_at?: string;
   created_at: string;

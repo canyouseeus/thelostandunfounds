@@ -47,7 +47,7 @@ export default function PhotographerDashboard() {
                         </div>
                         <div>
                             <h3 className="font-semibold text-white">Your Revenue & Payments</h3>
-                            <p className="text-sm text-green-300/80">You keep 100% of your sales (minus PayPal fees)</p>
+                            <p className="text-sm text-green-300/80">You keep 100% of your sales (minus Stripe fees)</p>
                         </div>
                     </div>
                     {showRevenueInfo ? (
@@ -75,7 +75,7 @@ export default function PhotographerDashboard() {
                                     <span className="text-zinc-400">$0.00</span>
                                 </li>
                                 <li className="flex justify-between border-t border-white/10 pt-2 mt-2">
-                                    <span>PayPal Fee:</span>
+                                    <span>Stripe Fee:</span>
                                     <span className="text-yellow-400">~2.9% + $0.30</span>
                                 </li>
                             </ul>
@@ -95,14 +95,14 @@ export default function PhotographerDashboard() {
                                     <CreditCardIcon className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
                                     <div>
                                         <span className="text-white">Digital Products:</span>
-                                        <p className="text-zinc-400">Funds available <span className="text-green-400">instantly</span> in PayPal</p>
+                                        <p className="text-zinc-400">Funds settle to your connected Stripe account</p>
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-2 mt-3">
                                     <WalletIcon className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
                                     <div>
                                         <span className="text-white">Bank Transfer:</span>
-                                        <p className="text-zinc-400">1-3 business days from PayPal</p>
+                                        <p className="text-zinc-400">Standard Stripe payout schedule to your bank</p>
                                     </div>
                                 </li>
                             </ul>
@@ -140,8 +140,8 @@ export default function PhotographerDashboard() {
             <div className="mb-6 flex items-center gap-2 p-3 bg-blue-900/20 border border-blue-500/20 rounded-lg">
                 <InformationCircleIcon className="w-4 h-4 text-blue-400 flex-shrink-0" />
                 <p className="text-sm text-blue-200">
-                    <span className="font-medium">Tip:</span> Payments are sent directly to your PayPal account.
-                    Make sure your PayPal email matches your account settings.
+                    <span className="font-medium">Tip:</span> Payments are sent directly to your connected Stripe account.
+                    Make sure your Stripe account details are up to date.
                 </p>
             </div>
 

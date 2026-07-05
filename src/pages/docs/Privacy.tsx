@@ -122,7 +122,7 @@ export default function Privacy() {
           <ul className="list-disc list-inside ml-4 mt-2 space-y-1">
             <li><strong>Supabase:</strong> Authentication, database services, and user management</li>
             <li><strong>Google OAuth:</strong> Authentication and account creation</li>
-            <li><strong>PayPal:</strong> Payment processing for subscriptions and shop purchases</li>
+            <li><strong>Stripe:</strong> Payment processing for shop purchases</li>
             <li><strong>Vercel:</strong> Hosting and deployment services</li>
             <li><strong>Zoho Mail:</strong> Email delivery and newsletter services</li>
             <li><strong>Fourthwall:</strong> Shop and product management</li>
