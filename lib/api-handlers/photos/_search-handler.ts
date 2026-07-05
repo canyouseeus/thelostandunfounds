@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createServiceSupabaseClient } from '../../lib/api-handlers/_supabase-admin-client';
+import { createServiceSupabaseClient } from '../_supabase-admin-client';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {

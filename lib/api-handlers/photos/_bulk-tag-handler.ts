@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createServiceSupabaseClient } from '../../../../lib/api-handlers/_supabase-admin-client';
-import { removeTagFromPhoto } from '../../../../src/lib/tags';
+import { createServiceSupabaseClient } from '../_supabase-admin-client';
+import { bulkTagPhotos } from '../../../src/lib/tags';
 
 const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com'];
 
@@ -13,26 +13,30 @@ async function requireAdmin(req: VercelRequest) {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    if (req.method !== 'DELETE') {
+    if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
-    }
-
-    const { id, tagId } = req.query;
-
-    if (!id || typeof id !== 'string') {
-        return res.status(400).json({ error: 'Photo ID is required' });
-    }
-    if (!tagId || typeof tagId !== 'string') {
-        return res.status(400).json({ error: 'Tag ID is required' });
     }
 
     const admin = await requireAdmin(req);
     if (!admin) return res.status(403).json({ error: 'Forbidden' });
 
     try {
+        const { photoIds, tagIds } = req.body;
+
+        if (!photoIds || !Array.isArray(photoIds) || photoIds.length === 0) {
+            return res.status(400).json({ error: 'photoIds array is required' });
+        }
+        if (!tagIds || !Array.isArray(tagIds) || tagIds.length === 0) {
+            return res.status(400).json({ error: 'tagIds array is required' });
+        }
+
         const supabase = createServiceSupabaseClient();
-        await removeTagFromPhoto(supabase, id, tagId);
-        return res.status(204).end();
+        await bulkTagPhotos(supabase, photoIds, tagIds);
+
+        return res.status(200).json({
+            success: true,
+            message: `Tagged ${photoIds.length} photos with ${tagIds.length} tags`,
+        });
     } catch (err: any) {
         return res.status(500).json({ error: err.message });
     }
