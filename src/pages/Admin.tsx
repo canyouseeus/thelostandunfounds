@@ -76,6 +76,7 @@ import SecretSantaAdmin from '../components/admin/SecretSantaAdmin';
 import AffiliateAdminView from '../components/admin/AffiliateAdminView';
 import AffiliateEmailComposer from '../components/admin/AffiliateEmailComposer';
 import { AdminBentoCard, AdminBentoRow } from '../components/ui/admin-bento-card';
+import { SiteAnalyticsCard } from '../components/admin/SiteAnalyticsCard';
 import { ExpandableScreen, ExpandableScreenTrigger, ExpandableScreenContent } from '../components/ui/expandable-screen';
 import {
   Expandable,
@@ -1427,24 +1428,6 @@ export default function Admin() {
       )
     },
     {
-      id: 'site-analytics',
-      title: 'Site Analytics',
-      icon: <ChartBarIcon className="w-4 h-4" />,
-      footer: <span className="text-[10px] text-white/40">Last 24 hours</span>,
-      content: (
-        <div className="space-y-4 pt-2">
-          <AdminBentoRow label="Total Views" value="12,842" />
-          <AdminBentoRow label="Unique Visitors" value="3,104" />
-          <AdminBentoRow label="Bounce Rate" value="24.2%" />
-          <div className="flex gap-1 h-8 items-end justify-between mt-2">
-            {[40, 70, 45, 90, 65, 80, 50, 60, 85, 45].map((h, i) => (
-              <div key={i} className="bg-white/10 w-full hover:bg-white/30 transition-colors" style={{ height: `${h}%` }} />
-            ))}
-          </div>
-        </div>
-      )
-    },
-    {
       id: 'suggestion-box',
       title: 'Suggestion Box',
       icon: <InboxIcon className="w-4 h-4" />,
@@ -1685,6 +1668,9 @@ export default function Admin() {
               </div>
             </div>
           ))}
+
+          {/* Site Analytics — fullscreen ExpandableScreen pattern */}
+          <SiteAnalyticsCard />
         </div>
 
         {/* Console / My Apps Tab Bar (Premium Dock) */}

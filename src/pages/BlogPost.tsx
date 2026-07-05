@@ -65,6 +65,13 @@ export default function BlogPost() {
       // Track Page View Start
       const startTime = Date.now();
 
+      // Anonymous visitor id, persisted locally, used to compute unique visitors + bounce rate
+      let visitorId = localStorage.getItem('tlau_visitor_id');
+      if (!visitorId) {
+        visitorId = crypto.randomUUID();
+        localStorage.setItem('tlau_visitor_id', visitorId);
+      }
+
       // Track Read on Scroll
       let hasRead = false;
       const handleScroll = () => {
@@ -79,7 +86,7 @@ export default function BlogPost() {
             body: JSON.stringify({
               event_type: 'read_article',
               resource_id: slug,
-              metadata: { title: post?.title, subdomain },
+              metadata: { title: post?.title, subdomain, visitor_id: visitorId, referrer: document.referrer },
               duration: Math.round((Date.now() - startTime) / 1000)
             })
           }).catch(err => console.error('Analytics error:', err));
@@ -98,7 +105,7 @@ export default function BlogPost() {
             body: JSON.stringify({
               event_type: 'page_view',
               resource_id: slug,
-              metadata: { title: post?.title, subdomain },
+              metadata: { title: post?.title, subdomain, visitor_id: visitorId, referrer: document.referrer },
               duration
             })
           }).catch(err => console.error('Analytics error:', err));
