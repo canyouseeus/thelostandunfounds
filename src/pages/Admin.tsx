@@ -75,7 +75,6 @@ import SecretSantaAdmin from '../components/admin/SecretSantaAdmin';
 import AffiliateAdminView from '../components/admin/AffiliateAdminView';
 import AffiliateEmailComposer from '../components/admin/AffiliateEmailComposer';
 import { AdminBentoCard, AdminBentoRow } from '../components/ui/admin-bento-card';
-import { SidePanel } from '../components/ui/side-panel';
 import { ExpandableScreen, ExpandableScreenTrigger, ExpandableScreenContent } from '../components/ui/expandable-screen';
 import {
   Expandable,
@@ -199,8 +198,6 @@ export default function Admin() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [selectedUser, setSelectedUser] = useState<RecentUser | null>(null);
-  const [sidePanelOpen, setSidePanelOpen] = useState(false);
   const [expandedPost, setExpandedPost] = useState<BookClubPost | LostArchivesPost | null>(null);
   const [bookClubPosts, setBookClubPosts] = useState<BookClubPost[]>([]);
   const [loadingBookClubPosts, setLoadingBookClubPosts] = useState(false);
@@ -1795,7 +1792,7 @@ export default function Admin() {
                   <AdminUsersView
                     users={allUsers}
                     stats={stats}
-                    onSelectUser={(u) => { setSelectedUser(u); setSidePanelOpen(true); }}
+                    onNavigateToSection={(section) => setActivePanelSection(section)}
                     onBack={() => setActivePanelSection(null)}
                   />
                 )}
@@ -1841,88 +1838,6 @@ export default function Admin() {
             </div>
           </ExpandableScreenContent>
         </ExpandableScreen>
-
-        {/* Side Panel for User Details */}
-        <SidePanel
-          isOpen={sidePanelOpen}
-          onClose={() => setSidePanelOpen(false)}
-          title="User Details"
-        >
-          {selectedUser && (
-            <div className="space-y-6">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-white/10 flex items-center justify-center rounded-full">
-                  <UserIcon className="w-8 h-8 text-white/60" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">{selectedUser.username || 'No Username'}</h3>
-                  <p className="text-white/60">{selectedUser.email}</p>
-                </div>
-              </div>
-
-              <div className="space-y-4 pt-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-white/5 rounded-none">
-                    <div className="text-xs text-white/40 mb-1 uppercase tracking-tighter">Tier</div>
-                    <div className="text-lg font-semibold text-white capitalize">{selectedUser.tier}</div>
-                  </div>
-                  <div className="p-4 bg-white/5 rounded-none">
-                    <div className="text-xs text-white/40 mb-1 uppercase tracking-tighter">Status</div>
-                    <div className="text-lg font-semibold text-green-400">ACTIVE</div>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-white/5 rounded-none">
-                  <div className="text-xs text-white/40 mb-1 uppercase tracking-tighter">Admin Status</div>
-                  <div className="text-lg font-semibold text-white">
-                    {selectedUser.isAdmin ? 'ADMIN' : 'USER'}
-                  </div>
-                </div>
-
-                <div className="p-4 bg-white/5 rounded-none">
-                  <div className="text-xs text-white/40 mb-1 uppercase tracking-tighter">Subdomain</div>
-                  <div className="font-mono text-sm text-white/80">
-                    {selectedUser.username || 'NONE'}
-                  </div>
-                </div>
-
-                <div className="p-4 bg-white/5 rounded-none">
-                  <div className="text-xs text-white/40 mb-1 uppercase tracking-tighter">User ID</div>
-                  <div className="font-mono text-xs text-white/80 break-all">{selectedUser.id}</div>
-                </div>
-
-                <div className="p-4 bg-white/5 rounded-none">
-                  <div className="text-xs text-white/40 mb-1 uppercase tracking-tighter">Joined Date</div>
-                  <div className="text-white/80 text-sm">
-                    {selectedUser.created_at ? new Date(selectedUser.created_at).toLocaleString() : 'N/A'}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-4 pt-4">
-                <button
-                  onClick={() => {
-                    success('User edit feature coming soon');
-                  }}
-                  className="flex-1 px-4 py-3 bg-white text-black font-bold hover:bg-white/90 transition rounded-none uppercase text-xs"
-                >
-                  Edit User
-                </button>
-                <button
-                  onClick={() => {
-                    if (confirm(`Ban user ${selectedUser.email}?`)) {
-                      success(`User ${selectedUser.email} banned`);
-                      setSidePanelOpen(false);
-                    }
-                  }}
-                  className="flex-1 px-4 py-3 bg-red-500/20 text-red-500 hover:bg-red-500/30 transition uppercase text-xs font-bold"
-                >
-                  Ban User
-                </button>
-              </div>
-            </div>
-          )}
-        </SidePanel>
 
         {/* Expandable Screen for Post Details */}
         <ExpandableScreen
