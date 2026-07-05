@@ -1589,9 +1589,9 @@ export default function Admin() {
               }}
             />
           </div>
-          <div className="md:col-span-4 lg:col-span-3 flex flex-col gap-6">
-            <ClockWidget size="lg" className="flex-1" />
-            <CalendarWidget className="flex-1 min-h-[300px]" />
+          <div className="md:col-span-4 lg:col-span-3 grid grid-cols-2 gap-3 md:flex md:flex-col md:gap-6">
+            <ClockWidget size="lg" className="[zoom:0.6] md:[zoom:1] md:flex-1" />
+            <CalendarWidget className="[zoom:0.6] md:[zoom:1] md:flex-1 md:min-h-[300px]" />
           </div>
         </div>
 
