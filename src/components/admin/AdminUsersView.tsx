@@ -7,15 +7,14 @@ import {
   StopIcon,
   UserIcon,
   CalendarIcon,
-  EyeIcon,
   PencilSquareIcon,
   NoSymbolIcon,
-  ChartBarIcon,
   ArrowLeftIcon,
   BookOpenIcon,
   PhotoIcon as ImageIcon
 } from '@heroicons/react/24/outline';
 import { useToast } from '@/components/Toast';
+import { ExpandableScreen, ExpandableScreenTrigger, ExpandableScreenContent } from '../ui/expandable-screen';
 
 interface RecentUser {
   id: string;
@@ -45,17 +44,17 @@ interface DashboardStats {
 interface AdminUsersViewProps {
   users: RecentUser[];
   stats: DashboardStats | null;
-  onSelectUser: (user: RecentUser) => void;
   onBack: () => void;
   onNavigateToSection?: (section: string) => void;
 }
 
-export default function AdminUsersView({ users: allUsers, stats, onSelectUser, onBack, onNavigateToSection }: AdminUsersViewProps) {
+export default function AdminUsersView({ users: allUsers, stats, onBack, onNavigateToSection }: AdminUsersViewProps) {
   const { success } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTier, setFilterTier] = useState<'all' | 'free' | 'premium' | 'pro'>('all');
   const [filterAdmin, setFilterAdmin] = useState<'all' | 'admin' | 'user'>('all');
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
 
   // Filter users
   const filteredUsers = allUsers.filter(user => {
@@ -192,110 +191,192 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
           )}
         </div>
 
-        {/* Users Table */}
+        {/* Users List */}
         <div className="pt-4">
           <div className="space-y-2">
             {filteredUsers.length > 0 ? (
-              filteredUsers.map((user) => (
-                <div
-                  key={user.id}
-                  className="flex items-center gap-4 p-4 bg-black/30 rounded-none hover:bg-white/5 transition group"
-                >
-                  <button
-                    onClick={() => {
-                      const newSelected = new Set(selectedUsers);
-                      if (newSelected.has(user.id)) {
-                        newSelected.delete(user.id);
-                      } else {
-                        newSelected.add(user.id);
-                      }
-                      setSelectedUsers(newSelected);
-                    }}
-                    className="flex-shrink-0"
-                  >
-                    {selectedUsers.has(user.id) ? (
-                      <CheckCircleIcon className="w-5 h-5 text-white" />
-                    ) : (
-                      <StopIcon className="w-5 h-5 text-white/40" />
-                    )}
-                  </button>
-                  <div className="w-10 h-10 bg-white/10 flex items-center justify-center flex-shrink-0">
-                    <UserIcon className="w-5 h-5 text-white/60" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className="text-white font-medium truncate">{user.username || user.email}</span>
-                      {user.isAdmin && (
-                        <span className="px-2 py-0.5 text-[10px] bg-purple-500/20 text-purple-400 font-black tracking-tighter">
-                          ADMIN
-                        </span>
-                      )}
-                      <span className={`px-2 py-0.5 text-[10px] font-black tracking-tighter ${user.tier === 'free' ? 'bg-white/5 text-white/60' :
-                        user.tier === 'premium' ? 'bg-yellow-400/10 text-yellow-400' :
-                          'bg-purple-400/10 text-purple-400'
-                        }`}>
-                        {user.tier.toUpperCase()}
-                      </span>
+              filteredUsers.map((user) => {
+                const hasResources = user.resources?.hasBlog || (user.resources?.galleries && user.resources.galleries.length > 0);
 
-                      {/* Resource Badges */}
-                      {user.resources?.hasBlog && (
-                        <button
-                          onClick={() => onNavigateToSection?.('blog')}
-                          className="flex items-center gap-1 px-2 py-0.5 bg-blue-500/10 text-blue-400 text-[10px] font-black hover:bg-blue-500/20 transition-colors tracking-tighter"
-                        >
-                          <BookOpenIcon className="w-2.5 h-2.5" />
-                          BLOG
-                        </button>
-                      )}
-                      {user.resources?.galleries && user.resources.galleries.length > 0 && (
-                        <button
-                          onClick={() => onNavigateToSection?.('gallery')}
-                          className="flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black hover:bg-emerald-500/20 transition-colors tracking-tighter"
-                        >
-                          <ImageIcon className="w-2.5 h-2.5" />
-                          {user.resources.galleries.length === 1 ? '1 GALLERY' : `${user.resources.galleries.length} GALLERIES`}
-                        </button>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-4 text-xs text-white/40">
-                      <span className="font-mono truncate">{user.email}</span>
-                      {user.created_at && (
-                        <span className="flex items-center gap-1 flex-shrink-0">
-                          <CalendarIcon className="w-3 h-3" />
-                          {new Date(user.created_at).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
+                return (
+                  <div
+                    key={user.id}
+                    className="flex items-stretch gap-1 bg-black/30 hover:bg-white/5 transition group"
+                  >
                     <button
-                      onClick={() => onSelectUser(user)}
-                      className="p-2 hover:bg-white/10 transition rounded-none"
-                      title="View Details"
+                      onClick={() => {
+                        const newSelected = new Set(selectedUsers);
+                        if (newSelected.has(user.id)) {
+                          newSelected.delete(user.id);
+                        } else {
+                          newSelected.add(user.id);
+                        }
+                        setSelectedUsers(newSelected);
+                      }}
+                      className="flex-shrink-0 flex items-center px-3"
                     >
-                      <EyeIcon className="w-4 h-4 text-white/60" />
+                      {selectedUsers.has(user.id) ? (
+                        <CheckCircleIcon className="w-5 h-5 text-white" />
+                      ) : (
+                        <StopIcon className="w-5 h-5 text-white/40" />
+                      )}
                     </button>
-                    <button
-                      onClick={() => onSelectUser(user)}
-                      className="p-2 hover:bg-white/10 transition rounded-none"
-                      title="Edit User"
+
+                    <ExpandableScreen
+                      isOpen={expandedUserId === user.id}
+                      onOpenChange={(open) => setExpandedUserId(open ? user.id : null)}
                     >
-                      <PencilSquareIcon className="w-4 h-4 text-white/60" />
-                    </button>
+                      <ExpandableScreenTrigger className="flex-1 flex items-center gap-4 py-4 pr-4 text-left min-w-0">
+                        <div className="w-10 h-10 bg-white/10 flex items-center justify-center flex-shrink-0">
+                          <UserIcon className="w-5 h-5 text-white/60" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className="text-white font-medium truncate">{user.username || user.email}</span>
+                            {user.isAdmin && (
+                              <span className="px-2 py-0.5 text-[10px] bg-purple-500/20 text-purple-400 font-black tracking-tighter">
+                                ADMIN
+                              </span>
+                            )}
+                            <span className={`px-2 py-0.5 text-[10px] font-black tracking-tighter ${user.tier === 'free' ? 'bg-white/5 text-white/60' :
+                              user.tier === 'premium' ? 'bg-yellow-400/10 text-yellow-400' :
+                                'bg-purple-400/10 text-purple-400'
+                              }`}>
+                              {user.tier.toUpperCase()}
+                            </span>
+
+                            {/* Resource Badges (informational — open the card for actions) */}
+                            {user.resources?.hasBlog && (
+                              <span className="flex items-center gap-1 px-2 py-0.5 bg-blue-500/10 text-blue-400 text-[10px] font-black tracking-tighter">
+                                <BookOpenIcon className="w-2.5 h-2.5" />
+                                BLOG
+                              </span>
+                            )}
+                            {user.resources?.galleries && user.resources.galleries.length > 0 && (
+                              <span className="flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black tracking-tighter">
+                                <ImageIcon className="w-2.5 h-2.5" />
+                                {user.resources.galleries.length === 1 ? '1 GALLERY' : `${user.resources.galleries.length} GALLERIES`}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-4 text-xs text-white/40">
+                            <span className="font-mono truncate">{user.email}</span>
+                            {user.created_at && (
+                              <span className="flex items-center gap-1 flex-shrink-0">
+                                <CalendarIcon className="w-3 h-3" />
+                                {new Date(user.created_at).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </ExpandableScreenTrigger>
+
+                      <ExpandableScreenContent>
+                        <div className="flex-1 min-h-0 overflow-y-auto">
+                          <div className="max-w-2xl mx-auto w-full px-4 sm:px-6 pt-16 pb-10 flex flex-col gap-4">
+                            <div className="flex items-center gap-4">
+                              <div className="w-16 h-16 bg-white/10 flex items-center justify-center flex-shrink-0">
+                                <UserIcon className="w-8 h-8 text-white/60" />
+                              </div>
+                              <div className="min-w-0">
+                                <h3 className="text-xl font-black uppercase tracking-wide text-white truncate">
+                                  {user.username || 'No Username'}
+                                </h3>
+                                <p className="text-white/60 font-mono text-sm truncate">{user.email}</p>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="bg-white/5 p-4">
+                                <div className="text-[9px] text-white/40 mb-1 uppercase tracking-widest font-black">Tier</div>
+                                <div className="text-lg font-bold text-white capitalize">{user.tier}</div>
+                              </div>
+                              <div className="bg-white/5 p-4">
+                                <div className="text-[9px] text-white/40 mb-1 uppercase tracking-widest font-black">Status</div>
+                                <div className="text-lg font-bold text-green-400">ACTIVE</div>
+                              </div>
+                            </div>
+
+                            <div className="bg-white/5 p-4">
+                              <div className="text-[9px] text-white/40 mb-1 uppercase tracking-widest font-black">Admin Status</div>
+                              <div className="text-lg font-bold text-white">{user.isAdmin ? 'ADMIN' : 'USER'}</div>
+                            </div>
+
+                            <div className="bg-white/5 p-4">
+                              <div className="text-[9px] text-white/40 mb-1 uppercase tracking-widest font-black">User ID</div>
+                              <div className="font-mono text-xs text-white/80 break-all">{user.id}</div>
+                            </div>
+
+                            <div className="bg-white/5 p-4">
+                              <div className="text-[9px] text-white/40 mb-1 uppercase tracking-widest font-black">Joined Date</div>
+                              <div className="text-white/80 text-sm">
+                                {user.created_at ? new Date(user.created_at).toLocaleString() : 'N/A'}
+                              </div>
+                            </div>
+
+                            {hasResources && (
+                              <div className="flex gap-3 flex-wrap">
+                                {user.resources?.hasBlog && (
+                                  <button
+                                    onClick={() => onNavigateToSection?.('blog')}
+                                    className="flex items-center gap-2 px-4 py-2 bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase tracking-widest hover:bg-blue-500/20 transition-colors"
+                                  >
+                                    <BookOpenIcon className="w-3.5 h-3.5" />
+                                    View Blog
+                                  </button>
+                                )}
+                                {user.resources?.galleries && user.resources.galleries.length > 0 && (
+                                  <button
+                                    onClick={() => onNavigateToSection?.('gallery')}
+                                    className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500/20 transition-colors"
+                                  >
+                                    <ImageIcon className="w-3.5 h-3.5" />
+                                    {user.resources.galleries.length === 1 ? '1 Gallery' : `${user.resources.galleries.length} Galleries`}
+                                  </button>
+                                )}
+                              </div>
+                            )}
+
+                            <div className="flex gap-3 pt-2">
+                              <button
+                                onClick={() => success('User edit feature coming soon')}
+                                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-white/90 transition-colors"
+                              >
+                                <PencilSquareIcon className="w-4 h-4" />
+                                Edit User
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (confirm(`Ban user ${user.email}?`)) {
+                                    success(`User ${user.email} banned`);
+                                    setExpandedUserId(null);
+                                  }
+                                }}
+                                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-red-500/20 text-red-500 font-black uppercase tracking-widest text-xs hover:bg-red-500/30 transition-colors"
+                              >
+                                <NoSymbolIcon className="w-4 h-4" />
+                                Ban User
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </ExpandableScreenContent>
+                    </ExpandableScreen>
+
                     <button
                       onClick={() => {
                         if (confirm(`Ban user ${user.email}?`)) {
                           success(`User ${user.email} banned`);
                         }
                       }}
-                      className="p-2 hover:bg-red-500/20 transition rounded-none opacity-0 group-hover:opacity-100"
+                      className="flex-shrink-0 flex items-center px-3 text-red-500/40 hover:text-red-400 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
                       title="Ban User"
                     >
-                      <NoSymbolIcon className="w-4 h-4 text-red-400" />
+                      <NoSymbolIcon className="w-4 h-4" />
                     </button>
                   </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="text-center py-12 text-white/60">
                 <UsersIcon className="w-12 h-12 mx-auto mb-4 opacity-20" />
@@ -320,7 +401,3 @@ export default function AdminUsersView({ users: allUsers, stats, onSelectUser, o
     </div>
   );
 }
-
-
-
-
