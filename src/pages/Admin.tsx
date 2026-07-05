@@ -1767,7 +1767,7 @@ export default function Admin() {
               })()}
 
               {/* Content — fills remaining height, scrolls within itself */}
-              <div className="flex-1 min-h-0 overflow-y-auto pb-6">
+              <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-6">
                 {activePanelSection === 'gallery' && (
                   <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Gallery</div>}>
                     <AdminGalleryView onBack={() => setActivePanelSection(null)} />
