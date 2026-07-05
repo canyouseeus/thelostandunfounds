@@ -28,10 +28,6 @@ const faqs: FAQItem[] = [
     answer: 'Free accounts have a limit of 5 downloads per day. Premium and Pro accounts have unlimited downloads.',
   },
   {
-    question: 'How do I upgrade my account?',
-    answer: 'Go to your Profile page and click "Upgrade" or visit the Pricing page. You can upgrade using PayPal.',
-  },
-  {
     question: 'Can I cancel my subscription?',
     answer: 'Yes, you can cancel your subscription at any time from your Settings page. Your access will continue until the end of your billing period.',
   },

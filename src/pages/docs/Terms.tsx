@@ -83,7 +83,7 @@ export default function Terms() {
             <p>We offer free and paid subscription tiers with varying levels of access:</p>
             <ul className="list-disc list-inside ml-4 space-y-1">
               <li>Subscriptions are billed monthly or annually as specified</li>
-              <li>Payments are processed through PayPal or other authorized payment processors</li>
+              <li>Payments are processed through Stripe or other authorized payment processors</li>
               <li>You can cancel your subscription at any time</li>
               <li>Refunds are handled on a case-by-case basis in accordance with our refund policy</li>
               <li>We reserve the right to change pricing with 30 days notice</li>

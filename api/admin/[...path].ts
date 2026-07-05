@@ -131,8 +131,6 @@ export default async function handler(
         return await handleUpdateAffiliate(req, res)
       case 'manual-commission':
         return await handleManualCommission(req, res)
-      case 'paypal-test':
-        return await handlePayPalTest(req, res)
       case 'env-vars':
         return await handleEnvVars(req, res)
       case 'post-to-nostr':
@@ -253,14 +251,6 @@ async function handleNewBlogContributorNotification(req: VercelRequest, res: Ver
  */
 async function handleSendAffiliateEmail(req: VercelRequest, res: VercelResponse) {
   const handler = await import('../../lib/api-handlers/admin/send-affiliate-email.js')
-  return handler.default(req, res)
-}
-
-/**
- * PayPal Test Handler
- */
-async function handlePayPalTest(req: VercelRequest, res: VercelResponse) {
-  const handler = await import('../../lib/api-handlers/_paypal-test-handler.js')
   return handler.default(req, res)
 }
 

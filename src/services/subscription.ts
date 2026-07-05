@@ -78,11 +78,10 @@ export class UnifiedSubscriptionService {
   async createSubscription(
     userId: string,
     tier: SubscriptionTier,
-    paypalSubscriptionId?: string,
     expiresAt?: string
   ): Promise<{ subscription: PlatformSubscription | null; error: Error | null }> {
     try {
-      const result = await subscriptionTools.createSubscription(userId, tier, paypalSubscriptionId, expiresAt);
+      const result = await subscriptionTools.createSubscription(userId, tier, expiresAt);
       return { subscription: result.subscription as PlatformSubscription, error: null };
     } catch (error) {
       return { subscription: null, error: error as Error };
