@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import {
-  ArrowLeftIcon,
   UserIcon,
   DocumentTextIcon,
   CurrencyDollarIcon,
@@ -195,32 +193,20 @@ export default function AdminInvoices() {
   const clientInvoices = (clientId: string) => invoices.filter(i => i.client_id === clientId);
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Header */}
-      <div className="sticky top-0 z-20 bg-black border-b border-white/5 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link to="/admin" className="text-white/40 hover:text-white transition-colors">
-            <ArrowLeftIcon className="w-5 h-5" />
-          </Link>
-          <div>
-            <h1 className="text-sm font-bold uppercase tracking-[0.2em]">Invoices & CRM</h1>
-            <p className="text-[10px] text-white/30 uppercase tracking-widest">THE LOST+UNFOUNDS</p>
-          </div>
+    <div className="max-w-6xl mx-auto px-4 md:px-6 pb-8 space-y-10">
+
+      {/* ── Revenue Summary ────────────────────────────────────────────── */}
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-[10px] text-white/30 uppercase tracking-[0.2em]">Revenue Summary</p>
+          <button
+            className="flex items-center gap-2 px-3 py-1.5 bg-white text-black text-[10px] font-bold uppercase tracking-widest hover:bg-white/90 transition-colors"
+            onClick={() => alert('Invoice creation coming soon.')}
+          >
+            <PlusCircleIcon className="w-3.5 h-3.5" />
+            New Invoice
+          </button>
         </div>
-        <button
-          className="flex items-center gap-2 px-4 py-2 bg-white text-black text-[10px] font-bold uppercase tracking-widest hover:bg-white/90 transition-colors"
-          onClick={() => alert('Invoice creation coming soon.')}
-        >
-          <PlusCircleIcon className="w-4 h-4" />
-          New Invoice
-        </button>
-      </div>
-
-      <div className="max-w-6xl mx-auto px-4 md:px-6 py-8 space-y-10">
-
-        {/* ── Revenue Summary ────────────────────────────────────────────── */}
-        <section>
-          <p className="text-[10px] text-white/30 uppercase tracking-[0.2em] mb-4">Revenue Summary</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-white/5">
             {[
               { label: 'Total Collected',  value: fmtUSD(totalRevenue),   sub: `${paidInvoices.length} paid` },
@@ -453,7 +439,6 @@ export default function AdminInvoices() {
           )}
         </section>
 
-      </div>
     </div>
   );
 }

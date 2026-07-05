@@ -294,16 +294,12 @@ export default function Affiliate() {
     }
   }, [user]);
 
-  // Auto-expand a section based on URL query params.
+  // Auto-open a panel based on URL query params (?section=... is already handled
+  // by the activeApp initial state; ?stripe=... fires after a Stripe Connect redirect).
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const section = params.get('section');
-    if (section) {
-      setExpandedSections(prev => ({ ...prev, [section]: true }));
-      return;
-    }
     if (params.has('stripe')) {
-      setExpandedSections(prev => ({ ...prev, affiliate: true }));
+      setActiveApp('affiliate');
     }
   }, []);
 
@@ -897,7 +893,7 @@ export default function Affiliate() {
         isOpen={showAffiliateWizard}
         onSuccess={() => {
           checkAffiliateStatus().then(() => {
-            setExpandedSections(prev => ({ ...prev, affiliate: true }));
+            setActiveApp('affiliate');
           });
         }}
         onClose={() => setShowAffiliateWizard(false)}
@@ -1646,13 +1642,13 @@ export default function Affiliate() {
                           {/* LINKS */}
                           <button
                             onClick={() => setExpandedCard('links')}
-                            className="group bg-[#0a0a0a] p-5 text-left hover:bg-white/5 transition-all duration-200 border border-transparent hover:border-white/10"
+                            className="group bg-[#0a0a0a] p-5 text-left hover:bg-white/5 transition-all duration-200 border border-transparent hover:border-white/10 min-w-0"
                           >
                             <div className="flex items-start justify-between mb-5">
                               <ShareIcon className="w-5 h-5 text-white/30 group-hover:text-white/60 transition-colors" />
                               <ChevronRightIcon className="w-3.5 h-3.5 text-white/20 group-hover:text-white/50 group-hover:translate-x-0.5 transition-all" />
                             </div>
-                            <div className="text-xl md:text-2xl font-black text-white font-mono tracking-tighter leading-none mb-1">
+                            <div className="text-xl md:text-2xl font-black text-white font-mono tracking-tighter leading-none mb-1 truncate">
                               {dashData.affiliate.code}
                             </div>
                             <div className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Links & Guide</div>

@@ -27,12 +27,14 @@ import {
   AlertCircle,
   CheckCircle,
   FolderOpen,
-  Archive
+  Archive,
+  Menu
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../Toast';
 import DOMPurify from 'dompurify';
 import { logApiCall, logError } from '../../lib/adminErrorLog';
+import { SidePanel } from '../ui/side-panel';
 
 // Types
 interface MailFolder {
@@ -122,6 +124,8 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showMoveMenu, setShowMoveMenu] = useState(false);
+  const [showFolderDrawer, setShowFolderDrawer] = useState(false);
+  const [mobileView, setMobileView] = useState<'list' | 'detail'>('list');
 
   const PAGE_SIZE = 25;
   const contentRef = useRef<HTMLDivElement>(null);
@@ -467,6 +471,8 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
     if (selectedFolder) {
       setSelectedMessage(null);
       setSearchQuery('');
+      setMobileView('list');
+      setShowFolderDrawer(false);
       loadMessages(selectedFolder.folderId);
     }
   }, [selectedFolder, loadMessages]);
@@ -503,6 +509,40 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
     return <FolderOpen className="w-4 h-4" />;
   };
 
+  // Folder list — shared between the desktop sidebar and the mobile drawer
+  const renderFolderList = () => (
+    <>
+      {folders.map(folder => (
+        <button
+          key={folder.folderId}
+          onClick={() => setSelectedFolder(folder)}
+          className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition ${selectedFolder?.folderId === folder.folderId
+            ? 'bg-white/10 text-white'
+            : 'text-white/60 hover:text-white hover:bg-white/5'
+            }`}
+        >
+          {getFolderIcon(folder)}
+          <span className="flex-1 truncate">{folder.folderName}</span>
+          {folder.unreadCount > 0 && (
+            <span className="text-xs bg-white/20 px-1.5 py-0.5 rounded-full">
+              {folder.unreadCount}
+            </span>
+          )}
+        </button>
+      ))}
+
+      <div className="pt-4 border-none mt-4">
+        <button
+          onClick={() => loadFolders(true)}
+          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-white/40 hover:text-white transition"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Refresh
+        </button>
+      </div>
+    </>
+  );
+
   // Render loading state
   if (loading) {
     return (
@@ -515,17 +555,35 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header — compose button only; back is in the overlay header */}
-      <div className="shrink-0 flex items-center justify-end pb-3">
+      {/* Top bar — folder menu (mobile), search, compose */}
+      <div className="shrink-0 flex items-center gap-2 pb-3">
+        <button
+          onClick={() => setShowFolderDrawer(true)}
+          className="md:hidden p-2 text-white/60 hover:text-white hover:bg-white/10 transition shrink-0"
+          aria-label="Folders"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            placeholder="Search messages..."
+            className="w-full bg-white/5 border-none pl-9 pr-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none"
+          />
+        </div>
         <button
           onClick={() => {
             setComposeData({ to: '', cc: '', bcc: '', subject: '', content: '' });
             setShowCompose(true);
           }}
-          className="flex items-center gap-2 px-4 py-2 bg-white text-black font-semibold hover:bg-white/90 transition rounded-none text-sm"
+          className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white text-black font-semibold hover:bg-white/90 transition rounded-none text-sm shrink-0"
         >
           <Plus className="w-4 h-4" />
-          Compose
+          <span className="hidden sm:inline">Compose</span>
         </button>
       </div>
 
@@ -545,56 +603,14 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
 
       {/* Main layout — fills remaining height */}
       <div className="flex-1 min-h-0 bg-black/50 border-none flex overflow-hidden">
-        {/* Folder sidebar */}
-        <div className="w-48 border-none p-3 space-y-1">
+        {/* Folder sidebar — desktop only; mobile uses the drawer opened from the top bar */}
+        <div className="hidden md:block w-48 border-none p-3 space-y-1 shrink-0">
           <div className="text-xs text-white/40 uppercase tracking-wider mb-3 px-2">Folders</div>
-          {folders.map(folder => (
-            <button
-              key={folder.folderId}
-              onClick={() => setSelectedFolder(folder)}
-              className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition ${selectedFolder?.folderId === folder.folderId
-                ? 'bg-white/10 text-white'
-                : 'text-white/60 hover:text-white hover:bg-white/5'
-                }`}
-            >
-              {getFolderIcon(folder)}
-              <span className="flex-1 truncate">{folder.folderName}</span>
-              {folder.unreadCount > 0 && (
-                <span className="text-xs bg-white/20 px-1.5 py-0.5 rounded-full">
-                  {folder.unreadCount}
-                </span>
-              )}
-            </button>
-          ))}
-
-          <div className="pt-4 border-none mt-4">
-            <button
-              onClick={() => loadFolders(true)}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-white/40 hover:text-white transition"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Refresh
-            </button>
-          </div>
+          {renderFolderList()}
         </div>
 
-        {/* Message list */}
-        <div className="w-80 border-none flex flex-col">
-          {/* Search bar */}
-          <div className="p-3 border-none">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                placeholder="Search messages..."
-                className="w-full bg-white/5 border-none pl-9 pr-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none"
-              />
-            </div>
-          </div>
-
+        {/* Message list — full width on mobile until a message is opened */}
+        <div className={`w-full md:w-80 border-none flex-col shrink-0 ${mobileView === 'detail' ? 'hidden md:flex' : 'flex'}`}>
           {/* Messages */}
           <div className="flex-1 overflow-auto">
             {loadingMessages ? (
@@ -610,10 +626,10 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
                 {messages.map(msg => (
                   <div
                     key={msg.messageId}
-                    onClick={() => loadMessage(msg.messageId, msg.folderId)}
+                    onClick={() => { loadMessage(msg.messageId, msg.folderId); setMobileView('detail'); }}
                     role="button"
                     tabIndex={0}
-                    onKeyDown={(e) => e.key === 'Enter' && loadMessage(msg.messageId, msg.folderId)}
+                    onKeyDown={(e) => e.key === 'Enter' && (loadMessage(msg.messageId, msg.folderId), setMobileView('detail'))}
                     className={`w-full p-3 text-left cursor-pointer transition ${selectedMessage?.messageId === msg.messageId
                       ? 'bg-white/10'
                       : 'hover:bg-white/5'
@@ -685,8 +701,8 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
           </div>
         </div>
 
-        {/* Message content */}
-        <div className="flex-1 flex flex-col">
+        {/* Message content — full width on mobile once a message is opened */}
+        <div className={`flex-1 flex-col min-w-0 ${mobileView === 'list' ? 'hidden md:flex' : 'flex'}`}>
           {loadingMessage ? (
             <div className="flex-1 flex items-center justify-center">
               <Loader className="w-6 h-6 animate-spin text-white/40" />
@@ -695,6 +711,13 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
             <>
               {/* Message header */}
               <div className="p-4 border-none">
+                <button
+                  onClick={() => setMobileView('list')}
+                  className="md:hidden flex items-center gap-1 text-white/60 hover:text-white text-xs uppercase tracking-wider font-bold mb-3 transition"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  {selectedFolder?.folderName || 'Inbox'}
+                </button>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <h2 className="text-lg font-semibold text-white truncate">
@@ -843,6 +866,13 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
           )}
         </div>
       </div>
+
+      {/* Folder drawer — mobile only */}
+      <SidePanel isOpen={showFolderDrawer} onClose={() => setShowFolderDrawer(false)} title="Folders">
+        <div className="space-y-1">
+          {renderFolderList()}
+        </div>
+      </SidePanel>
 
       {/* Compose Modal */}
       {showCompose && (
