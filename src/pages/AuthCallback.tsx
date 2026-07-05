@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { isAdminEmail, isAdmin } from '../utils/admin';
 import { logSignupEvent } from '../utils/signupTelemetry';
+import { LoadingOverlay } from '../components/Loading';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -83,24 +84,31 @@ export default function AuthCallback() {
         return;
       }
 
-      // No special intent — route by return URL or role
       const returnUrl = localStorage.getItem('auth_return_url');
-      const validReturnUrl = returnUrl && returnUrl !== '/' && !returnUrl.startsWith('/auth');
+      localStorage.removeItem('auth_return_url');
 
-      if (validReturnUrl) {
-        localStorage.removeItem('auth_return_url');
-        navigate(resolveReturnUrl(returnUrl));
-        return;
-      }
-
+      // Admins always land on the admin dashboard, regardless of whatever page
+      // triggered the login prompt (e.g. a private-gallery "please log in" modal
+      // stores that gallery's URL as the return URL — an admin shouldn't get
+      // bounced back there instead of into the console).
       try {
         const adminStatus = await isAdmin();
         const isAdminUser = adminStatus || isAdminEmail(currentUser.email || '');
-        navigate(isAdminUser ? '/admin' : '/dashboard');
+        if (isAdminUser) {
+          navigate('/admin');
+          return;
+        }
       } catch (err) {
         console.warn('Admin check failed, falling back to email check', err);
-        navigate(isAdminEmail(currentUser.email || '') ? '/admin' : '/dashboard');
+        if (isAdminEmail(currentUser.email || '')) {
+          navigate('/admin');
+          return;
+        }
       }
+
+      // Not an admin — route by return URL or default dashboard
+      const validReturnUrl = returnUrl && returnUrl !== '/' && !returnUrl.startsWith('/auth');
+      navigate(validReturnUrl ? resolveReturnUrl(returnUrl) : '/dashboard');
     } catch (error) {
       console.error('Auth callback crash:', error);
       navigate('/?error=onboarding_error');
@@ -115,12 +123,5 @@ export default function AuthCallback() {
     return url;
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold mb-4">Completing sign in...</h1>
-        <p className="text-gray-600">Please wait while we sign you in.</p>
-      </div>
-    </div>
-  );
+  return <LoadingOverlay message="Completing sign in" />;
 }
