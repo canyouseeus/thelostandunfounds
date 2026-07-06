@@ -22,7 +22,6 @@ import {
   ArrowTrendingUpIcon,
   ExclamationCircleIcon,
   CheckCircleIcon,
-  XCircleIcon,
   BellIcon,
   ClockIcon,
   CurrencyDollarIcon,
@@ -56,7 +55,6 @@ import {
   ChatBubbleLeftRightIcon,
   SparklesIcon,
   MegaphoneIcon,
-  Bars3Icon,
   BuildingStorefrontIcon,
   ChevronDownIcon,
   BanknotesIcon,
@@ -77,16 +75,8 @@ import AffiliateAdminView from '../components/admin/AffiliateAdminView';
 import AffiliateEmailComposer from '../components/admin/AffiliateEmailComposer';
 import { AdminBentoCard, AdminBentoRow } from '../components/ui/admin-bento-card';
 import { SiteAnalyticsCard } from '../components/admin/SiteAnalyticsCard';
+import { DashboardCategoryCard } from '../components/admin/DashboardCategoryCard';
 import { ExpandableScreen, ExpandableScreenTrigger, ExpandableScreenContent } from '../components/ui/expandable-screen';
-import {
-  Expandable,
-  ExpandableCard,
-  ExpandableCardHeader,
-  ExpandableCardContent,
-  ExpandableCardFooter,
-  ExpandableContent,
-  ExpandableTrigger,
-} from '../components/ui/expandable';
 import { AnimatedNumber } from '../components/ui/animated-number';
 import { cn } from '../components/ui/utils';
 import AdminUsersView from '../components/admin/AdminUsersView';
@@ -235,7 +225,6 @@ export default function Admin() {
   });
 
   const [allUsers, setAllUsers] = useState<RecentUser[]>([]);
-  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
   // Ref for page top
   const pageTopRef = useRef<HTMLDivElement>(null);
@@ -1598,75 +1587,13 @@ export default function Admin() {
         {/* Row 2: Category Grid (3x3 on Mobile, 4-col on Desktop) */}
         <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-6">
           {dashboardCategories.map((category) => (
-            <div key={category.id} className="contents">
-              {/* Mobile-only compact card */}
-              <div
-                className="flex md:hidden flex-col items-center justify-center p-2.5 bg-white/5 rounded-none aspect-square active:scale-95 transition-all duration-200"
-                onClick={() => setExpandedCardId(category.id)}
-              >
-                <div className="p-2 bg-white/10 rounded-full mb-1 group-active:bg-white group-active:text-black transition-colors">
-                  {React.cloneElement(category.icon as React.ReactElement, { className: "w-4 h-4 text-white/40" })}
-                </div>
-                <span className="text-[8px] font-black uppercase tracking-[0.05em] text-center leading-tight text-white/60 px-1">
-                  {category.title.split(' ')[0]}
-                </span>
-                {category.title.split(' ').length > 1 && (
-                  <span className="text-[6px] font-bold uppercase tracking-[0.05em] text-center leading-none text-white/30">
-                    {category.title.split(' ').slice(1).join(' ')}
-                  </span>
-                )}
-              </div>
-
-              {/* Desktop-only expandable card — BlogCard style */}
-              <div className="hidden md:block">
-                <Expandable
-                  expandDirection="vertical"
-                  expandBehavior="replace"
-                  transition={{ duration: 0.2, ease: 'easeOut' }}
-                >
-                  {({ isExpanded }) => (
-                    <ExpandableTrigger>
-                      <div
-                        style={{
-                          minHeight: isExpanded ? '320px' : '190px',
-                          transition: 'min-height 0.2s ease-out',
-                        }}
-                      >
-                        <ExpandableCard
-                          className="bg-black rounded-none h-full flex flex-col overflow-hidden transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.02] cursor-pointer"
-                          collapsedSize={{ height: 190 }}
-                          expandedSize={{ height: 320 }}
-                          hoverToExpand={false}
-                          expandDelay={0}
-                          collapseDelay={0}
-                        >
-                          <ExpandableCardHeader className="bg-[#0a0a0a] mb-1 pb-2">
-                            <div className="flex items-center gap-2">
-                              <span className="text-white/50">{category.icon}</span>
-                              <h3 className="text-[10px] font-black uppercase tracking-widest text-white/80 truncate">
-                                {category.title}
-                              </h3>
-                            </div>
-                          </ExpandableCardHeader>
-
-                          <ExpandableCardContent className="flex-1 min-h-0">
-                            {category.content}
-                          </ExpandableCardContent>
-
-                          <ExpandableCardFooter className="mt-auto pt-2 flex items-center justify-center">
-                            {isExpanded ? (
-                              category.footer || <span className="text-white/20 text-[9px]">—</span>
-                            ) : (
-                              <ChevronDownIcon className="w-3 h-3 text-white/25" />
-                            )}
-                          </ExpandableCardFooter>
-                        </ExpandableCard>
-                      </div>
-                    </ExpandableTrigger>
-                  )}
-                </Expandable>
-              </div>
-            </div>
+            <DashboardCategoryCard
+              key={category.id}
+              icon={category.icon}
+              title={category.title}
+              footer={category.footer}
+              content={category.content}
+            />
           ))}
 
           {/* Site Analytics — fullscreen ExpandableScreen pattern */}
@@ -1895,69 +1822,6 @@ export default function Admin() {
           </ExpandableScreenContent>
         </ExpandableScreen>
 
-        {/* Expanded Card Overlay for Mobile */}
-        <AnimatePresence>
-          {expandedCardId && (
-            <motion.div
-              initial={{ opacity: 0, scale: 1.05 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.05 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="fixed inset-0 z-[9999] bg-black md:hidden flex flex-col overflow-y-auto overscroll-none"
-              style={{
-                paddingTop: 'env(safe-area-inset-top, 0px)',
-                paddingBottom: 'env(safe-area-inset-bottom, 0px)'
-              }}
-            >
-              {/* Fake Global Header to cover real one and fix clipping */}
-              <div className="flex items-center justify-between px-6 py-4 bg-black sticky top-0 z-10">
-                <h1 className="font-bold text-white uppercase tracking-tighter text-sm">
-                  THE LOST+UNFOUNDS
-                </h1>
-                <button
-                  onClick={() => setExpandedCardId(null)}
-                  className="p-1 hover:bg-white/10 transition-colors"
-                >
-                  <Bars3Icon className="w-6 h-6 text-white" />
-                </button>
-              </div>
-
-              <div className="flex flex-col p-6">
-                <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-white/10 rounded-full">
-                      {dashboardCategories.find(c => c.id === expandedCardId)?.icon}
-                    </div>
-                    <h2 className="text-sm font-black uppercase tracking-[0.2em] text-white">
-                      {dashboardCategories.find(c => c.id === expandedCardId)?.title}
-                    </h2>
-                  </div>
-                  <button
-                    onClick={() => setExpandedCardId(null)}
-                    className="p-2 bg-white/10 rounded-full active:bg-white active:text-black transition-colors"
-                  >
-                    <XCircleIcon className="w-5 h-5 text-white" />
-                  </button>
-                </div>
-
-                <div className="flex-1 bg-white/5 p-6 rounded-none shadow-2xl">
-                  {dashboardCategories.find(c => c.id === expandedCardId)?.content}
-                </div>
-
-                <div className="mt-8 pt-6">
-                  {dashboardCategories.find(c => c.id === expandedCardId)?.footer}
-                </div>
-
-                <button
-                  onClick={() => setExpandedCardId(null)}
-                  className="mt-12 w-full py-4 bg-white text-black font-black uppercase tracking-widest active:bg-white/80 transition-colors"
-                >
-                  CLOSE DASHBOARD CARD
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     </div>
     </>

@@ -93,6 +93,27 @@ export default function Layout({ children }: { children?: ReactNode }) {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
   }, [location.pathname])
 
+  // Site-wide page view tracking for the admin Site Analytics dashboard.
+  // Fires once per route change; visitor_id matches the pattern used by BlogPost.tsx
+  // so unique-visitor counting is consistent across the whole site.
+  useEffect(() => {
+    let visitorId = localStorage.getItem('tlau_visitor_id')
+    if (!visitorId) {
+      visitorId = crypto.randomUUID()
+      localStorage.setItem('tlau_visitor_id', visitorId)
+    }
+
+    fetch('/api/admin/analytics/record', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event_type: 'page_view',
+        resource_id: location.pathname,
+        metadata: { title: document.title, visitor_id: visitorId, referrer: document.referrer },
+      }),
+    }).catch(() => {})
+  }, [location.pathname])
+
   // Route change loading animation (skip for homepage)
   useEffect(() => {
     const isNavigatingFromHome = previousPathRef.current === '/' && location.pathname !== '/'
