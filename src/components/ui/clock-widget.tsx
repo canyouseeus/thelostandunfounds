@@ -253,115 +253,114 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
             <div className="flex-1 relative flex items-center justify-center">
 
                 {/* 1. CLOCK VIEW (Analog or Digital) */}
-                <div className={cn(
-                    "absolute inset-0 transition-opacity duration-300",
-                    mode === 'clock' ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-                )}>
-                    {/* Analog Face */}
-                    <div
-                        className={cn("absolute inset-0 w-full h-full transition-opacity duration-500", !isDigital ? "opacity-100" : "opacity-0")}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            toggleClockType();
-                        }}
-                    >
-                        {/* Clock Face Border */}
-                        <div className="absolute inset-2 rounded-full" />
+                {mode === 'clock' && (
+                    <div className="absolute inset-0 animate-in fade-in duration-300">
+                        {!isDigital ? (
+                            /* Analog Face */
+                            <div
+                                className="absolute inset-0 w-full h-full"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleClockType();
+                                }}
+                            >
+                                {/* Clock Face Border */}
+                                <div className="absolute inset-2 rounded-full" />
 
-                        {/* Hands - Flat Design, No Shadows */}
-                        <div className="relative w-full h-full">
-                            <div className="absolute top-1/2 left-1/2 w-2 h-2 -mt-1 -ml-1 rounded-full bg-white z-10" />
-                            <div className="absolute left-1/2 bottom-1/2 origin-bottom w-[3px] h-[28%] bg-white transition-transform duration-500" style={{ transform: `translateX(-50%) rotate(${hourDeg}deg)` }} />
-                            <div className="absolute left-1/2 bottom-1/2 origin-bottom w-[2px] h-[38%] bg-white transition-transform duration-500" style={{ transform: `translateX(-50%) rotate(${minuteDeg}deg)` }} />
-                            <div className="absolute left-1/2 bottom-1/2 origin-bottom w-[1px] h-[42%] bg-white/40" style={{ transform: `translateX(-50%) rotate(${secondDeg}deg)` }} />
-                        </div>
+                                {/* Hands - Flat Design, No Shadows */}
+                                <div className="relative w-full h-full">
+                                    <div className="absolute top-1/2 left-1/2 w-2 h-2 -mt-1 -ml-1 rounded-full bg-white z-10" />
+                                    <div className="absolute left-1/2 bottom-1/2 origin-bottom w-[3px] h-[28%] bg-white transition-transform duration-500" style={{ transform: `translateX(-50%) rotate(${hourDeg}deg)` }} />
+                                    <div className="absolute left-1/2 bottom-1/2 origin-bottom w-[2px] h-[38%] bg-white transition-transform duration-500" style={{ transform: `translateX(-50%) rotate(${minuteDeg}deg)` }} />
+                                    <div className="absolute left-1/2 bottom-1/2 origin-bottom w-[1px] h-[42%] bg-white/40" style={{ transform: `translateX(-50%) rotate(${secondDeg}deg)` }} />
+                                </div>
+                            </div>
+                        ) : (
+                            <div
+                                className="absolute inset-0 flex flex-col items-center justify-center"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleClockType();
+                                }}
+                            >
+                                <div className="cursor-pointer hover:opacity-80 transition-opacity">
+                                    <UnifiedDigits />
+                                </div>
+                            </div>
+                        )}
                     </div>
-
-                    <div
-                        className={cn("absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-300", isDigital ? "opacity-100" : "opacity-0")}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            toggleClockType();
-                        }}
-                    >
-                        <div className="cursor-pointer hover:opacity-80 transition-opacity">
-                            <UnifiedDigits />
-                        </div>
-                    </div>
-                </div>
+                )}
 
                 {/* 2. STOPWATCH VIEW */}
-                <div className={cn(
-                    "absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-300",
-                    mode === 'stopwatch' ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-                )}>
-                    {/* Stopwatch Digits */}
-                    <UnifiedDigits />
+                {mode === 'stopwatch' && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center animate-in fade-in duration-300">
+                        {/* Stopwatch Digits */}
+                        <UnifiedDigits />
 
-                    {/* Controls */}
-                    <div className="absolute bottom-6 flex items-center gap-4">
-                        <button onClick={handleSwToggle} className="p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all">
-                            {swRunning ? <PauseIcon className="w-5 h-5" /> : <PlayIcon className="w-5 h-5 ml-1" />}
-                        </button>
-                        <button onClick={handleSwReset} className="p-3 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all">
-                            <ArrowPathIcon className="w-4 h-4" />
-                        </button>
+                        {/* Controls */}
+                        <div className="absolute bottom-6 flex items-center gap-4">
+                            <button onClick={handleSwToggle} className="p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all">
+                                {swRunning ? <PauseIcon className="w-5 h-5" /> : <PlayIcon className="w-5 h-5 ml-1" />}
+                            </button>
+                            <button onClick={handleSwReset} className="p-3 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all">
+                                <ArrowPathIcon className="w-4 h-4" />
+                            </button>
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* 3. TIMER VIEW */}
-                <div className={cn(
-                    "absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-300",
-                    mode === 'timer' ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-                )}>
-                    {timerState === 'set' && (
-                        <form onSubmit={handleTimerSubmit} className="flex flex-col items-center h-full justify-center relative">
-                            <div className="flex items-center relative">
-                                <input
-                                    ref={inputRef}
-                                    type="text"
-                                    value={timerInput}
-                                    onChange={(e) => setTimerInput(e.target.value.replace(/\D/g, '').slice(0, 3))}
-                                    placeholder="0"
-                                    className="w-24 bg-transparent text-center text-5xl font-mono font-bold text-white focus:outline-none placeholder:text-white/20"
-                                    autoFocus={mode === 'timer' && timerState === 'set'}
-                                />
-                                {/* Absolute positioned label so it doesn't shift input */}
-                                <span className="absolute left-full top-1/2 -translate-y-1/2 text-white/40 text-sm ml-2">MIN</span>
-                            </div>
-                            {/* Absolute positioned button at bottom so it doesn't shift numbers */}
-                            <button type="submit" className="absolute bottom-6 text-xs text-white/40 hover:text-white uppercase tracking-widest bg-white/10 px-3 py-1 rounded-full hover:cursor-pointer hover:bg-white/20">
-                                START
-                            </button>
-                        </form>
-                    )}
-
-                    {timerState === 'countdown' && (
-                        <div className="text-5xl font-mono font-bold text-white animate-pulse">{countdownVal}</div>
-                    )}
-
-                    {timerState === 'running' && (
-                        <>
-                            <div className={cn("transition-colors", alarmTriggered ? "text-red-500" : "text-white")}>
-                                <UnifiedDigits />
-                            </div>
-
-                            {/* Alarm Indicator - Absolute at bottom or top, not flowing */}
-                            {alarmTriggered && <div className="absolute top-[65%] text-red-500 text-xs font-bold uppercase tracking-widest animate-pulse">TIME IS UP</div>}
-
-                            <div className="absolute bottom-6 flex items-center gap-4">
-                                {!alarmTriggered && (
-                                    <button onClick={() => setTimerRunning(!timerRunning)} className="p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all">
-                                        {timerRunning ? <PauseIcon className="w-5 h-5" /> : <PlayIcon className="w-5 h-5 ml-1" />}
-                                    </button>
-                                )}
-                                <button onClick={handleTimerReset} className="p-3 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all">
-                                    <ArrowPathIcon className="w-4 h-4" />
+                {mode === 'timer' && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center animate-in fade-in duration-300">
+                        {timerState === 'set' && (
+                            <form onSubmit={handleTimerSubmit} className="flex flex-col items-center h-full justify-center relative">
+                                <div className="flex items-center relative">
+                                    <input
+                                        ref={inputRef}
+                                        type="text"
+                                        value={timerInput}
+                                        onChange={(e) => setTimerInput(e.target.value.replace(/\D/g, '').slice(0, 3))}
+                                        placeholder="0"
+                                        className="w-24 bg-transparent text-center text-5xl font-mono font-bold text-white focus:outline-none placeholder:text-white/20"
+                                        autoFocus={mode === 'timer' && timerState === 'set'}
+                                    />
+                                    {/* Absolute positioned label so it doesn't shift input */}
+                                    <span className="absolute left-full top-1/2 -translate-y-1/2 text-white/40 text-sm ml-2">MIN</span>
+                                </div>
+                                {/* Absolute positioned button at bottom so it doesn't shift numbers */}
+                                <button type="submit" className="absolute bottom-6 text-xs text-white/40 hover:text-white uppercase tracking-widest bg-white/10 px-3 py-1 rounded-full hover:cursor-pointer hover:bg-white/20">
+                                    START
                                 </button>
-                            </div>
-                        </>
-                    )}
-                </div>
+                            </form>
+                        )}
+
+                        {timerState === 'countdown' && (
+                            <div className="text-5xl font-mono font-bold text-white animate-pulse">{countdownVal}</div>
+                        )}
+
+                        {timerState === 'running' && (
+                            <>
+                                <div className={cn("transition-colors", alarmTriggered ? "text-red-500" : "text-white")}>
+                                    <UnifiedDigits />
+                                </div>
+
+                                {/* Alarm Indicator - Absolute at bottom or top, not flowing */}
+                                {alarmTriggered && <div className="absolute top-[65%] text-red-500 text-xs font-bold uppercase tracking-widest animate-pulse">TIME IS UP</div>}
+
+                                <div className="absolute bottom-6 flex items-center gap-4">
+                                    {!alarmTriggered && (
+                                        <button onClick={() => setTimerRunning(!timerRunning)} className="p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all">
+                                            {timerRunning ? <PauseIcon className="w-5 h-5" /> : <PlayIcon className="w-5 h-5 ml-1" />}
+                                        </button>
+                                    )}
+                                    <button onClick={handleTimerReset} className="p-3 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all">
+                                        <ArrowPathIcon className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                )}
 
             </div>
 
