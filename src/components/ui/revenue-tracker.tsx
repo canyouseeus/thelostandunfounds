@@ -106,7 +106,7 @@ export function RevenueTracker({
     ];
 
     return (
-        <div className="w-full mb-6 relative z-10">
+        <div className="w-full mb-0 md:mb-6 relative z-10">
             {/* Hero Revenue Section */}
             <div
                 className={cn(

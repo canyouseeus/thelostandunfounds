@@ -1562,7 +1562,7 @@ export default function Admin() {
       {/* Dashboard Content - Single Scrollable Page */}
       <div className="space-y-6">
         {/* Row 1: Revenue & Time */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-6">
           <div className="md:col-span-8 lg:col-span-9">
             <RevenueTracker
               affiliateRevenue={stats?.affiliateRevenue || 0}

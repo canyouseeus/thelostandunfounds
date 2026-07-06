@@ -961,7 +961,7 @@ export default function Affiliate() {
             </div>
 
             {/* Revenue & Widgets Row */}
-            <div className="col-span-12 grid grid-cols-1 md:grid-cols-12 gap-6">
+            <div className="col-span-12 grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-6">
               <div className="md:col-span-8 lg:col-span-9 space-y-4">
                 {userIsAdmin && hasAffiliate && (
                   <div className="flex bg-[#0a0a0a] w-fit">
