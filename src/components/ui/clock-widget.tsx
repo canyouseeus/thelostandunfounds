@@ -12,6 +12,9 @@ interface ClockWidgetProps {
 }
 
 export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
+    // "lg" renders compact on mobile and full-size at md+, so it fits narrow
+    // dashboard columns; other sizes keep the original fixed full-size layout.
+    const responsive = size === 'lg';
     const [mode, setMode] = useState<ClockMode>('clock');
 
     // --- Clock State ---
@@ -199,10 +202,11 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
         extraRight = (
             <div className="absolute left-full bottom-0 ml-1 flex flex-col items-start leading-none">
                 <span className={cn(
-                    "text-[10px] font-bold text-white/30 mb-[2px]",
+                    "font-bold text-white/30 mb-[2px]",
+                    responsive ? "text-[8px] md:text-[10px]" : "text-[10px]",
                     is24Hour ? "opacity-0" : "opacity-100"
                 )}>{ampm}</span>
-                <span className="text-xl font-mono text-white/40 tabular-nums">:{ds}</span>
+                <span className={cn("font-mono text-white/40 tabular-nums", responsive ? "text-sm md:text-xl" : "text-xl")}>:{ds}</span>
             </div>
         );
     } else if (mode === 'stopwatch') {
@@ -223,18 +227,20 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
 
 
     // Unified render component for digits
+    const digitSize = responsive ? "text-2xl md:text-5xl" : "text-5xl";
+
     const UnifiedDigits = () => (
         <div className="relative flex items-center justify-center gap-1 tabular-nums select-none">
             {/* Left Pane */}
-            <span className="text-5xl font-mono font-bold text-white tracking-tight tabular-nums">
+            <span className={cn(digitSize, "font-mono font-bold text-white tracking-tight tabular-nums")}>
                 {leftDisplay}
             </span>
 
             {/* Colon */}
-            {showColon && <span className="text-5xl font-mono font-bold text-white tracking-tight">:</span>}
+            {showColon && <span className={cn(digitSize, "font-mono font-bold text-white tracking-tight")}>:</span>}
 
             {/* Right Pane */}
-            <div className="relative text-5xl font-mono font-bold text-white tracking-tight tabular-nums flex items-baseline">
+            <div className={cn(digitSize, "relative font-mono font-bold text-white tracking-tight tabular-nums flex items-baseline")}>
                 {rightDisplay}
                 {/* Absolute Indicators */}
                 {extraRight}
@@ -246,7 +252,7 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
     return (
         <div className={cn(
             'bg-black relative overflow-hidden flex flex-col select-none',
-            'min-h-[200px]', // Ensure enough height
+            responsive ? 'min-h-[120px] md:min-h-[200px]' : 'min-h-[200px]', // Ensure enough height
             className
         )}>
             {/* Main Display Area */}
@@ -298,12 +304,12 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
                         <UnifiedDigits />
 
                         {/* Controls */}
-                        <div className="absolute bottom-6 flex items-center gap-4">
-                            <button onClick={handleSwToggle} className="p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all">
-                                {swRunning ? <PauseIcon className="w-5 h-5" /> : <PlayIcon className="w-5 h-5 ml-1" />}
+                        <div className={cn("absolute flex items-center", responsive ? "bottom-2 md:bottom-6 gap-2 md:gap-4" : "bottom-6 gap-4")}>
+                            <button onClick={handleSwToggle} className={cn("rounded-full bg-white/10 hover:bg-white/20 text-white transition-all", responsive ? "p-1.5 md:p-3" : "p-3")}>
+                                {swRunning ? <PauseIcon className={responsive ? "w-3 h-3 md:w-5 md:h-5" : "w-5 h-5"} /> : <PlayIcon className={cn("ml-1", responsive ? "w-3 h-3 md:w-5 md:h-5" : "w-5 h-5")} />}
                             </button>
-                            <button onClick={handleSwReset} className="p-3 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all">
-                                <ArrowPathIcon className="w-4 h-4" />
+                            <button onClick={handleSwReset} className={cn("rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all", responsive ? "p-1.5 md:p-3" : "p-3")}>
+                                <ArrowPathIcon className={responsive ? "w-2.5 h-2.5 md:w-4 md:h-4" : "w-4 h-4"} />
                             </button>
                         </div>
                     </div>
@@ -321,21 +327,27 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
                                         value={timerInput}
                                         onChange={(e) => setTimerInput(e.target.value.replace(/\D/g, '').slice(0, 3))}
                                         placeholder="0"
-                                        className="w-24 bg-transparent text-center text-5xl font-mono font-bold text-white focus:outline-none placeholder:text-white/20"
+                                        className={cn(
+                                            "bg-transparent text-center font-mono font-bold text-white focus:outline-none placeholder:text-white/20",
+                                            responsive ? "w-12 md:w-24 text-2xl md:text-5xl" : "w-24 text-5xl"
+                                        )}
                                         autoFocus={mode === 'timer' && timerState === 'set'}
                                     />
                                     {/* Absolute positioned label so it doesn't shift input */}
-                                    <span className="absolute left-full top-1/2 -translate-y-1/2 text-white/40 text-sm ml-2">MIN</span>
+                                    <span className={cn("absolute left-full top-1/2 -translate-y-1/2 text-white/40", responsive ? "text-[10px] md:text-sm ml-1 md:ml-2" : "text-sm ml-2")}>MIN</span>
                                 </div>
                                 {/* Absolute positioned button at bottom so it doesn't shift numbers */}
-                                <button type="submit" className="absolute bottom-6 text-xs text-white/40 hover:text-white uppercase tracking-widest bg-white/10 px-3 py-1 rounded-full hover:cursor-pointer hover:bg-white/20">
+                                <button type="submit" className={cn(
+                                    "absolute text-white/40 hover:text-white uppercase tracking-widest bg-white/10 rounded-full hover:cursor-pointer hover:bg-white/20",
+                                    responsive ? "bottom-2 md:bottom-6 text-[9px] md:text-xs px-2 py-0.5 md:px-3 md:py-1" : "bottom-6 text-xs px-3 py-1"
+                                )}>
                                     START
                                 </button>
                             </form>
                         )}
 
                         {timerState === 'countdown' && (
-                            <div className="text-5xl font-mono font-bold text-white animate-pulse">{countdownVal}</div>
+                            <div className={cn("font-mono font-bold text-white animate-pulse", responsive ? "text-2xl md:text-5xl" : "text-5xl")}>{countdownVal}</div>
                         )}
 
                         {timerState === 'running' && (
@@ -345,16 +357,16 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
                                 </div>
 
                                 {/* Alarm Indicator - Absolute at bottom or top, not flowing */}
-                                {alarmTriggered && <div className="absolute top-[65%] text-red-500 text-xs font-bold uppercase tracking-widest animate-pulse">TIME IS UP</div>}
+                                {alarmTriggered && <div className={cn("absolute top-[65%] text-red-500 font-bold uppercase tracking-widest animate-pulse", responsive ? "text-[9px] md:text-xs" : "text-xs")}>TIME IS UP</div>}
 
-                                <div className="absolute bottom-6 flex items-center gap-4">
+                                <div className={cn("absolute flex items-center", responsive ? "bottom-2 md:bottom-6 gap-2 md:gap-4" : "bottom-6 gap-4")}>
                                     {!alarmTriggered && (
-                                        <button onClick={() => setTimerRunning(!timerRunning)} className="p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all">
-                                            {timerRunning ? <PauseIcon className="w-5 h-5" /> : <PlayIcon className="w-5 h-5 ml-1" />}
+                                        <button onClick={() => setTimerRunning(!timerRunning)} className={cn("rounded-full bg-white/10 hover:bg-white/20 text-white transition-all", responsive ? "p-1.5 md:p-3" : "p-3")}>
+                                            {timerRunning ? <PauseIcon className={responsive ? "w-3 h-3 md:w-5 md:h-5" : "w-5 h-5"} /> : <PlayIcon className={cn("ml-1", responsive ? "w-3 h-3 md:w-5 md:h-5" : "w-5 h-5")} />}
                                         </button>
                                     )}
-                                    <button onClick={handleTimerReset} className="p-3 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all">
-                                        <ArrowPathIcon className="w-4 h-4" />
+                                    <button onClick={handleTimerReset} className={cn("rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all", responsive ? "p-1.5 md:p-3" : "p-3")}>
+                                        <ArrowPathIcon className={responsive ? "w-2.5 h-2.5 md:w-4 md:h-4" : "w-4 h-4"} />
                                     </button>
                                 </div>
                             </>
@@ -366,11 +378,11 @@ export function ClockWidget({ className, size = 'md' }: ClockWidgetProps) {
 
             {/* Top Label - Mode Switcher - Large Tap Area */}
             <div
-                className="absolute top-0 left-0 right-0 h-12 z-20 cursor-pointer flex items-start justify-center pt-4 select-none"
+                className={cn("absolute top-0 left-0 right-0 z-20 cursor-pointer flex items-start justify-center select-none", responsive ? "h-6 md:h-12 pt-1.5 md:pt-4" : "h-12 pt-4")}
                 onClick={cycleMode}
             >
-                <div className="px-8 py-4 bg-transparent">
-                    <span className="text-[10px] tracking-[0.2em] font-medium text-white/30 uppercase hover:text-white transition-colors">
+                <div className={cn("bg-transparent", responsive ? "px-4 py-1 md:px-8 md:py-4" : "px-8 py-4")}>
+                    <span className={cn("tracking-[0.2em] font-medium text-white/30 uppercase hover:text-white transition-colors", responsive ? "text-[8px] md:text-[10px]" : "text-[10px]")}>
                         {mode === 'clock' ? 'CLOCK' : mode === 'stopwatch' ? 'STOPWATCH' : 'TIMER'}
                     </span>
                 </div>
