@@ -185,6 +185,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return await handleDriveList(req, res);
         }
 
+        if (route === 'downloads') {
+            return await handleDownloads(req, res);
+        }
+
+        if (route === 'batch-tags') {
+            return await handleBatchTags(req, res);
+        }
+
+        if (route === 'batch-location') {
+            return await handleBatchLocation(req, res);
+        }
+
+        if (route === 'batch-move') {
+            return await handleBatchMove(req, res);
+        }
+
+        if (route === 'batch-delete') {
+            return await handleBatchDelete(req, res);
+        }
+
         return res.status(404).json({
             error: 'Gallery route not found',
             debug: {
@@ -784,6 +804,113 @@ async function handleDriveList(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ photos });
     } catch (err: any) {
         console.error('[drive-list] Error:', err);
+        return res.status(500).json({ error: err.message });
+    }
+}
+
+// --- Admin batch-editing routes (used by the fullscreen Gallery Management grid) ---
+
+async function handleDownloads(req: VercelRequest, res: VercelResponse) {
+    try {
+        const { requireAdminUser, getDownloadsData } = await import('../../lib/api-handlers/_gallery-admin-ops.js');
+        const admin = await requireAdminUser(req);
+        if (!admin) return res.status(403).json({ error: 'Forbidden' });
+
+        const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+        const data = await getDownloadsData(supabase as any);
+        return res.status(200).json(data);
+    } catch (err: any) {
+        console.error('[downloads] Error:', err);
+        return res.status(500).json({ error: err.message });
+    }
+}
+
+async function handleBatchTags(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    try {
+        const { requireAdminUser, batchAddTags, batchRemoveTags } = await import('../../lib/api-handlers/_gallery-admin-ops.js');
+        const admin = await requireAdminUser(req);
+        if (!admin) return res.status(403).json({ error: 'Forbidden' });
+
+        const { photoIds, tagIds, mode } = req.body || {};
+        if (!Array.isArray(photoIds) || !photoIds.length || !Array.isArray(tagIds) || !tagIds.length) {
+            return res.status(400).json({ error: 'photoIds and tagIds are required' });
+        }
+
+        const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+        const result = mode === 'remove'
+            ? await batchRemoveTags(supabase as any, photoIds, tagIds)
+            : await batchAddTags(supabase as any, photoIds, tagIds);
+        return res.status(200).json({ success: true, ...result });
+    } catch (err: any) {
+        console.error('[batch-tags] Error:', err);
+        return res.status(500).json({ error: err.message });
+    }
+}
+
+async function handleBatchLocation(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    try {
+        const { requireAdminUser, batchSetLocation } = await import('../../lib/api-handlers/_gallery-admin-ops.js');
+        const admin = await requireAdminUser(req);
+        if (!admin) return res.status(403).json({ error: 'Forbidden' });
+
+        const { photoIds, latitude, longitude, location_name } = req.body || {};
+        if (!Array.isArray(photoIds) || !photoIds.length) {
+            return res.status(400).json({ error: 'photoIds is required' });
+        }
+
+        const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+        const result = await batchSetLocation(supabase as any, photoIds, {
+            latitude: latitude ?? null,
+            longitude: longitude ?? null,
+            location_name: location_name ?? null,
+        });
+        return res.status(200).json({ success: true, ...result });
+    } catch (err: any) {
+        console.error('[batch-location] Error:', err);
+        return res.status(500).json({ error: err.message });
+    }
+}
+
+async function handleBatchMove(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    try {
+        const { requireAdminUser, batchMovePhotos } = await import('../../lib/api-handlers/_gallery-admin-ops.js');
+        const admin = await requireAdminUser(req);
+        if (!admin) return res.status(403).json({ error: 'Forbidden' });
+
+        const { photoIds, targetLibraryId } = req.body || {};
+        if (!Array.isArray(photoIds) || !photoIds.length || !targetLibraryId) {
+            return res.status(400).json({ error: 'photoIds and targetLibraryId are required' });
+        }
+
+        const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+        const result = await batchMovePhotos(supabase as any, photoIds, targetLibraryId);
+        return res.status(200).json({ success: true, ...result });
+    } catch (err: any) {
+        console.error('[batch-move] Error:', err);
+        return res.status(500).json({ error: err.message });
+    }
+}
+
+async function handleBatchDelete(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    try {
+        const { requireAdminUser, batchDeletePhotos } = await import('../../lib/api-handlers/_gallery-admin-ops.js');
+        const admin = await requireAdminUser(req);
+        if (!admin) return res.status(403).json({ error: 'Forbidden' });
+
+        const { photoIds } = req.body || {};
+        if (!Array.isArray(photoIds) || !photoIds.length) {
+            return res.status(400).json({ error: 'photoIds is required' });
+        }
+
+        const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+        const result = await batchDeletePhotos(supabase as any, photoIds);
+        return res.status(200).json({ success: true, ...result });
+    } catch (err: any) {
+        console.error('[batch-delete] Error:', err);
         return res.status(500).json({ error: err.message });
     }
 }

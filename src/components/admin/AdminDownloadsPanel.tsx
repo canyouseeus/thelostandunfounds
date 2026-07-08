@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { ArrowDownTrayIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { ArrowDownTrayIcon, ArrowPathIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 
 interface DownloadEvent {
     id: string;
@@ -39,54 +39,28 @@ export default function AdminDownloadsPanel() {
     const [aggregates, setAggregates] = useState<PhotoAggregate[]>([]);
     const [totals, setTotals] = useState({ all: 0, last7: 0, last30: 0 });
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => { load(); }, []);
 
     async function load() {
         setLoading(true);
+        setError(null);
         try {
-            const { data: recent } = await supabase
-                .from('photo_download_events')
-                .select('id, photo_id, google_drive_file_id, email, ip_address, user_agent, source, created_at, photos(title, thumbnail_url)')
-                .order('created_at', { ascending: false })
-                .limit(50);
-            setEvents((recent || []) as unknown as DownloadEvent[]);
-
-            const now = Date.now();
-            const d7 = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();
-            const d30 = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString();
-
-            const [{ count: all }, { count: last7 }, { count: last30 }] = await Promise.all([
-                supabase.from('photo_download_events').select('*', { count: 'exact', head: true }),
-                supabase.from('photo_download_events').select('*', { count: 'exact', head: true }).gte('created_at', d7),
-                supabase.from('photo_download_events').select('*', { count: 'exact', head: true }).gte('created_at', d30),
-            ]);
-            setTotals({ all: all ?? 0, last7: last7 ?? 0, last30: last30 ?? 0 });
-
-            // Per-photo aggregate (top 50 most-downloaded)
-            const { data: agg } = await supabase
-                .from('photo_download_events')
-                .select('photo_id, created_at, photos(title, thumbnail_url)')
-                .not('photo_id', 'is', null)
-                .order('created_at', { ascending: false })
-                .limit(2000);
-            const map = new Map<string, PhotoAggregate>();
-            for (const row of (agg || []) as any[]) {
-                if (!row.photo_id) continue;
-                const existing = map.get(row.photo_id);
-                if (existing) {
-                    existing.download_count++;
-                } else {
-                    map.set(row.photo_id, {
-                        photo_id: row.photo_id,
-                        title: row.photos?.title || 'Untitled',
-                        thumbnail_url: row.photos?.thumbnail_url || null,
-                        download_count: 1,
-                        last_download_at: row.created_at,
-                    });
-                }
+            const { data: { session } } = await supabase.auth.getSession();
+            const res = await fetch('/api/gallery/downloads', {
+                headers: { Authorization: `Bearer ${session?.access_token || ''}` },
+            });
+            if (!res.ok) {
+                const body = await res.json().catch(() => ({}));
+                throw new Error(body?.error || 'Failed to load downloads');
             }
-            setAggregates([...map.values()].sort((a, b) => b.download_count - a.download_count).slice(0, 50));
+            const data = await res.json();
+            setEvents(data.events || []);
+            setAggregates(data.aggregates || []);
+            setTotals(data.totals || { all: 0, last7: 0, last30: 0 });
+        } catch (err: any) {
+            setError(err.message || 'Failed to load downloads');
         } finally {
             setLoading(false);
         }
@@ -113,6 +87,13 @@ export default function AdminDownloadsPanel() {
                     <ArrowPathIcon className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                 </button>
             </div>
+
+            {error && (
+                <div className="flex items-center gap-2 py-2 px-3 bg-red-500/10 text-red-400 text-xs">
+                    <ExclamationCircleIcon className="w-4 h-4 flex-shrink-0" />
+                    <span>{error}</span>
+                </div>
+            )}
 
             {/* Summary */}
             <div className="grid grid-cols-3 gap-2 sm:gap-4">

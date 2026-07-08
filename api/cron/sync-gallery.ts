@@ -50,14 +50,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const listingReport: Array<{ slug: string; error?: string; count: number }> = [];
         for (const slug of librarySlugs) {
             try {
-                const { subfolders } = await listLibrarySubfolders(slug);
+                const { subfolders, rootPhotoCount } = await listLibrarySubfolders(slug);
                 listingReport.push({ slug, count: subfolders.length });
-                if (subfolders.length === 0) continue;
-                const rows = subfolders.map(s => ({
-                    library_slug: slug,
-                    subfolder_id: s.id,
-                    subfolder_name: s.name,
-                }));
+
+                const rows: Array<{ library_slug: string; subfolder_id: string; subfolder_name: string | null }> = [];
+
+                if (subfolders.length > 0) {
+                    for (const s of subfolders) {
+                        rows.push({ library_slug: slug, subfolder_id: s.id, subfolder_name: s.name });
+                    }
+                }
+
+                // When photos live at the root with no subfolders, enqueue a sentinel
+                // '__root__' row so they get picked up by the next sync tick.
+                if (rootPhotoCount > 0) {
+                    rows.push({ library_slug: slug, subfolder_id: '__root__', subfolder_name: null });
+                }
+
+                if (rows.length === 0) continue;
+
                 const { error: upsertErr } = await supabase
                     .from('sync_progress')
                     .upsert(rows, {
@@ -113,10 +124,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             .eq('id', next.id);
 
         try {
+            const isRootSync = next.subfolder_id === '__root__';
             const result = await syncSingleSubfolder({
                 librarySlug: next.library_slug,
-                subfolderId: next.subfolder_id,
-                subfolderName: next.subfolder_name ?? undefined,
+                subfolderId: isRootSync ? undefined : next.subfolder_id,
+                subfolderName: isRootSync ? undefined : (next.subfolder_name ?? undefined),
                 timeBudgetSeconds: SUBFOLDER_TIME_BUDGET_SECONDS,
             });
 

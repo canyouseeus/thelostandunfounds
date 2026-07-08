@@ -8,6 +8,7 @@ import AdminPhotosBrowse from './AdminPhotosBrowse';
 import { AnimatedNumber } from '@/components/ui/animated-number';
 import { useToast } from '@/components/Toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { ExpandableScreen, ExpandableScreenContent } from '@/components/ui/expandable-screen';
 import { GalleryCountdownOverlay, shouldShowCountdown } from '@/components/ui/gallery-countdown-overlay';
 import { LoadingSpinner } from '@/components/Loading';
 import { isAdminEmail } from '@/utils/admin';
@@ -63,11 +64,14 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
     // Create/Edit Gallery State
     const [isManaged, setIsManaged] = useState(false); // Modal open state
     const [editingId, setEditingId] = useState<string | null>(null); // If set, we are editing
+    // Photo IDs staged from the batch-editing grid, waiting to land in whatever
+    // gallery the admin creates next — see openCreateModalForPhotos / handleSaveGallery.
+    const [pendingGalleryPhotoIds, setPendingGalleryPhotoIds] = useState<string[]>([]);
     const [uploadMode, setUploadMode] = useState<'drive' | 'upload'>('drive');
     const [filesData, setFilesData] = useState<{ file: File; thumbnail?: Blob; previewUrl: string }[]>([]);
     const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
     const [uploadProgress, setUploadProgress] = useState(0);
-    const [activeTab, setActiveTab] = useState<'galleries' | 'applications' | 'photos' | 'tags' | 'downloads'>('galleries');
+    const [activeTab, setActiveTab] = useState<'galleries' | 'applications' | 'photos' | 'tags' | 'downloads'>('photos');
     const [applications, setApplications] = useState<any[]>([]);
     const [appsLoading, setAppsLoading] = useState(false);
     const [pendingAppsCount, setPendingAppsCount] = useState(0);
@@ -439,6 +443,29 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                     error('Gallery saved, but failed to send invitation emails');
                 }
             }
+            // 7. If photos were staged from the batch-editing grid (Save → Create Gallery),
+            // move them into the gallery that was just created.
+            if (!editingId && finalLibrary && pendingGalleryPhotoIds.length > 0) {
+                try {
+                    const { data: { session: authSession } } = await supabase.auth.getSession();
+                    const res = await fetch('/api/gallery/batch-move', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authSession?.access_token || ''}` },
+                        body: JSON.stringify({ photoIds: pendingGalleryPhotoIds, targetLibraryId: finalLibrary.id }),
+                    });
+                    if (res.ok) {
+                        success(`${pendingGalleryPhotoIds.length} photo(s) moved into "${finalLibrary.name}"`);
+                    } else {
+                        error('Gallery created, but photos could not be moved into it');
+                    }
+                } catch (moveErr) {
+                    console.error('Failed to move staged photos into new gallery:', moveErr);
+                    error('Gallery created, but photos could not be moved into it');
+                } finally {
+                    setPendingGalleryPhotoIds([]);
+                }
+            }
+
             setInvitedEmails([]);
             setOriginalInvitedEmails([]);
             setNewEmailInput('');
@@ -641,6 +668,13 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
         setIsManaged(true);
     };
 
+    // Called from the photo grid's "Save" action once edits are made — stages
+    // the edited photos so the next successfully-created gallery adopts them.
+    const openCreateModalForPhotos = (photoIds: string[]) => {
+        setPendingGalleryPhotoIds(photoIds);
+        openCreateModal();
+    };
+
     const handleCoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
         const file = e.target.files[0];
@@ -742,18 +776,10 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
     return (
         <div className="flex flex-col h-full overflow-x-hidden">
 
-            {/* Create/Edit Gallery Modal */}
-            {isManaged && (
-                    <div className="fixed inset-0 z-[10000] bg-black overflow-hidden animate-in fade-in duration-200">
-                        <div className="w-full h-full overflow-y-auto p-6 sm:p-10 relative max-w-5xl mx-auto animate-in slide-in-from-bottom-4 duration-300">
-                            <button
-                                onClick={() => setIsManaged(false)}
-                                className="absolute top-4 right-4 p-2 text-white/40 hover:text-white hover:bg-white/10 transition-colors"
-                                aria-label="Close"
-                            >
-                                <XMarkIcon className="w-6 h-6" />
-                            </button>
-
+            {/* Create/Edit Gallery Modal — fullscreen ExpandableScreen, same pattern as Affiliates/ProductCostManagement */}
+            <ExpandableScreen isOpen={isManaged} onOpenChange={setIsManaged}>
+                <ExpandableScreenContent className="overflow-y-auto">
+                    <div className="w-full max-w-5xl mx-auto px-6 sm:px-10 pt-20 pb-16">
                             <div className="flex items-start justify-between mb-6 pr-10 gap-2">
                                 <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2 min-w-0">
                                     {editingId ? <PencilIcon className="w-5 h-5 text-white/60" /> : <PlusIcon className="w-5 h-5 text-white/60" />}
@@ -1229,10 +1255,9 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                                     </button>
                                 </div>
                             </form>
-                        </div>
                     </div>
-                )
-            }
+                </ExpandableScreenContent>
+            </ExpandableScreen>
 
             {/* Compact header — title + actions */}
             <div className="shrink-0 flex items-center justify-between gap-3 pb-3">
@@ -1344,7 +1369,7 @@ export default function AdminGalleryView({ onBack, isPhotographerView = false }:
                 ) : activeTab === 'tags' ? (
                     <AdminTagsPanel />
                 ) : activeTab === 'photos' ? (
-                    <AdminPhotosBrowse />
+                    <AdminPhotosBrowse onRequestCreateGallery={openCreateModalForPhotos} />
                 ) : activeTab === 'galleries' || isPhotographerView ? (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Active Galleries */}

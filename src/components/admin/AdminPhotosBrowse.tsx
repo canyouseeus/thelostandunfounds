@@ -16,14 +16,24 @@ import {
   ChevronRightIcon,
   FunnelIcon,
   ShareIcon,
+  FolderArrowDownIcon,
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+  MinusIcon,
+  PlusIcon,
+  PencilSquareIcon,
 } from '@heroicons/react/24/outline';
 import { LoadingSpinner } from '@/components/Loading';
-import { removeTagFromPhoto } from '@/lib/tags';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Library {
   id: string;
   name: string;
   slug: string;
+}
+
+interface AdminPhotosBrowseProps {
+  onRequestCreateGallery?: (photoIds: string[]) => void;
 }
 
 interface Photo {
@@ -74,7 +84,12 @@ const TYPE_COLORS: Record<string, string> = {
   custom: 'bg-white/5 text-white/60 border border-white/10',
 };
 
-export default function AdminPhotosBrowse() {
+export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhotosBrowseProps) {
+  const { session } = useAuth();
+  const authHeaders = useCallback(
+    () => ({ 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token || ''}` }),
+    [session]
+  );
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [libraries, setLibraries] = useState<Library[]>([]);
   const [allTags, setAllTags] = useState<Tag[]>([]);
@@ -100,9 +115,29 @@ export default function AdminPhotosBrowse() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [showTagPanel, setShowTagPanel] = useState(false);
+  const [tagPanelMode, setTagPanelMode] = useState<'add' | 'remove'>('add');
   const [selectedTagsToApply, setSelectedTagsToApply] = useState<Set<string>>(new Set());
   const [applyingTags, setApplyingTags] = useState(false);
   const [applySuccess, setApplySuccess] = useState(false);
+
+  // Batch location editing
+  const [showLocationPanel, setShowLocationPanel] = useState(false);
+  const [locationForm, setLocationForm] = useState({ latitude: '', longitude: '', location_name: '' });
+  const [applyingLocation, setApplyingLocation] = useState(false);
+
+  // Batch move-to-folder
+  const [showMovePanel, setShowMovePanel] = useState(false);
+  const [moveTargetLibraryId, setMoveTargetLibraryId] = useState('');
+  const [movingPhotos, setMovingPhotos] = useState(false);
+
+  // Batch delete (website + Google Drive)
+  const [deletingBatch, setDeletingBatch] = useState(false);
+  const [batchActionError, setBatchActionError] = useState<string | null>(null);
+
+  // Save → offer to create a gallery from the photos just edited
+  const [hasEdited, setHasEdited] = useState(false);
+  const [editedPhotoIds, setEditedPhotoIds] = useState<Set<string>>(new Set());
+  const [showCreateGalleryPrompt, setShowCreateGalleryPrompt] = useState(false);
 
   // Post to Social
   const [showSocialPanel, setShowSocialPanel] = useState(false);
@@ -117,6 +152,9 @@ export default function AdminPhotosBrowse() {
   const [drawerAddingTagId, setDrawerAddingTagId] = useState<string | null>(null);
   const [drawerTagSearch, setDrawerTagSearch] = useState('');
   const [deletingPhoto, setDeletingPhoto] = useState(false);
+  const [editingDrawerLocation, setEditingDrawerLocation] = useState(false);
+  const [drawerLocationForm, setDrawerLocationForm] = useState({ latitude: '', longitude: '', location_name: '' });
+  const [savingDrawerLocation, setSavingDrawerLocation] = useState(false);
 
   const gridRef = useRef<HTMLDivElement>(null);
   const photoRefs = useRef<Map<string, HTMLElement>>(new Map());
@@ -257,9 +295,21 @@ export default function AdminPhotosBrowse() {
     setSelectedIds(new Set());
     setShowTagPanel(false);
     setSelectedTagsToApply(new Set());
+    setShowLocationPanel(false);
+    setShowMovePanel(false);
+    setBatchActionError(null);
     setShowSocialPanel(false);
     setSocialCaption('');
     setPostResult(null);
+  };
+
+  const markEdited = (photoIds: string[]) => {
+    setHasEdited(true);
+    setEditedPhotoIds(prev => {
+      const next = new Set(prev);
+      photoIds.forEach(id => next.add(id));
+      return next;
+    });
   };
 
   const exitSelectionMode = () => {
@@ -317,26 +367,154 @@ export default function AdminPhotosBrowse() {
   const applyTagsToSelection = async () => {
     if (selectedIds.size === 0 || selectedTagsToApply.size === 0) return;
     setApplyingTags(true);
-    const rows: { photo_id: string; tag_id: string }[] = [];
-    selectedIds.forEach(photoId => {
-      selectedTagsToApply.forEach(tagId => rows.push({ photo_id: photoId, tag_id: tagId }));
-    });
-    const { error } = await supabase
-      .from('photo_tags')
-      .upsert(rows, { onConflict: 'photo_id,tag_id', ignoreDuplicates: true });
-    setApplyingTags(false);
-    if (!error) {
+    setBatchActionError(null);
+    try {
+      const res = await fetch('/api/gallery/batch-tags', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ photoIds: [...selectedIds], tagIds: [...selectedTagsToApply], mode: tagPanelMode }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.error || 'Failed to update tags');
+      markEdited([...selectedIds]);
       setApplySuccess(true);
       setSelectedTagsToApply(new Set());
       setShowTagPanel(false);
       setTimeout(() => setApplySuccess(false), 2000);
+    } catch (err: any) {
+      setBatchActionError(err.message || 'Failed to update tags');
+    } finally {
+      setApplyingTags(false);
     }
+  };
+
+  const applyLocationToSelection = async () => {
+    if (selectedIds.size === 0) return;
+    setApplyingLocation(true);
+    setBatchActionError(null);
+    try {
+      const res = await fetch('/api/gallery/batch-location', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          photoIds: [...selectedIds],
+          latitude: locationForm.latitude ? parseFloat(locationForm.latitude) : null,
+          longitude: locationForm.longitude ? parseFloat(locationForm.longitude) : null,
+          location_name: locationForm.location_name || null,
+        }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.error || 'Failed to update location');
+      markEdited([...selectedIds]);
+      setPhotos(prev => prev.map(p => selectedIds.has(p.id)
+        ? { ...p, latitude: locationForm.latitude ? parseFloat(locationForm.latitude) : null, longitude: locationForm.longitude ? parseFloat(locationForm.longitude) : null, location_name: locationForm.location_name || null }
+        : p));
+      setApplySuccess(true);
+      setShowLocationPanel(false);
+      setLocationForm({ latitude: '', longitude: '', location_name: '' });
+      setTimeout(() => setApplySuccess(false), 2000);
+    } catch (err: any) {
+      setBatchActionError(err.message || 'Failed to update location');
+    } finally {
+      setApplyingLocation(false);
+    }
+  };
+
+  const moveSelectionToLibrary = async () => {
+    if (selectedIds.size === 0 || !moveTargetLibraryId) return;
+    setMovingPhotos(true);
+    setBatchActionError(null);
+    try {
+      const res = await fetch('/api/gallery/batch-move', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ photoIds: [...selectedIds], targetLibraryId: moveTargetLibraryId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Failed to move photos');
+      markEdited([...selectedIds]);
+      if (selectedLibraryId && selectedLibraryId !== moveTargetLibraryId) {
+        setPhotos(prev => prev.filter(p => !selectedIds.has(p.id)));
+        setTotalCount(prev => Math.max(0, prev - selectedIds.size));
+      } else {
+        setPhotos(prev => prev.map(p => selectedIds.has(p.id) ? { ...p, library_id: moveTargetLibraryId } : p));
+      }
+      if (data.driveErrors?.length) {
+        setBatchActionError(`Moved in database, but ${data.driveErrors.length} file(s) could not be moved in Google Drive.`);
+      }
+      setApplySuccess(true);
+      setShowMovePanel(false);
+      setMoveTargetLibraryId('');
+      setTimeout(() => setApplySuccess(false), 2000);
+    } catch (err: any) {
+      setBatchActionError(err.message || 'Failed to move photos');
+    } finally {
+      setMovingPhotos(false);
+    }
+  };
+
+  const deleteSelection = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`Delete ${selectedIds.size} photo${selectedIds.size !== 1 ? 's' : ''} from the website AND Google Drive? This cannot be undone.`)) return;
+    setDeletingBatch(true);
+    setBatchActionError(null);
+    try {
+      const idsToDelete = [...selectedIds];
+      const res = await fetch('/api/gallery/batch-delete', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ photoIds: idsToDelete }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Failed to delete photos');
+      setPhotos(prev => prev.filter(p => !idsToDelete.includes(p.id)));
+      setTotalCount(prev => Math.max(0, prev - idsToDelete.length));
+      if (data.driveErrors?.length) {
+        setBatchActionError(`Deleted from the website, but ${data.driveErrors.length} file(s) could not be removed from Google Drive.`);
+      }
+      clearSelection();
+    } catch (err: any) {
+      setBatchActionError(err.message || 'Failed to delete photos');
+    } finally {
+      setDeletingBatch(false);
+    }
+  };
+
+  const handleSaveAndClose = () => {
+    const idsForGallery = [...editedPhotoIds];
+    if (hasEdited && idsForGallery.length > 0 && onRequestCreateGallery) {
+      setShowCreateGalleryPrompt(true);
+      return;
+    }
+    exitSelectionMode();
+    setHasEdited(false);
+    setEditedPhotoIds(new Set());
+  };
+
+  const confirmCreateGallery = () => {
+    const idsForGallery = [...editedPhotoIds];
+    setShowCreateGalleryPrompt(false);
+    exitSelectionMode();
+    setHasEdited(false);
+    setEditedPhotoIds(new Set());
+    onRequestCreateGallery?.(idsForGallery);
+  };
+
+  const dismissCreateGalleryPrompt = () => {
+    setShowCreateGalleryPrompt(false);
+    exitSelectionMode();
+    setHasEdited(false);
+    setEditedPhotoIds(new Set());
   };
 
   const openDrawer = async (photo: Photo) => {
     setDrawerPhoto(photo);
     setDrawerTags([]);
     setDrawerTagSearch('');
+    setEditingDrawerLocation(false);
+    setDrawerLocationForm({
+      latitude: photo.latitude != null ? String(photo.latitude) : '',
+      longitude: photo.longitude != null ? String(photo.longitude) : '',
+      location_name: photo.location_name || '',
+    });
     setDrawerLoading(true);
     const { data } = await supabase
       .from('photo_tags')
@@ -349,34 +527,71 @@ export default function AdminPhotosBrowse() {
   const addTagToDrawerPhoto = async (tagId: string) => {
     if (!drawerPhoto) return;
     setDrawerAddingTagId(tagId);
-    await supabase
-      .from('photo_tags')
-      .upsert({ photo_id: drawerPhoto.id, tag_id: tagId }, { onConflict: 'photo_id,tag_id', ignoreDuplicates: true });
+    await fetch('/api/gallery/batch-tags', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ photoIds: [drawerPhoto.id], tagIds: [tagId], mode: 'add' }),
+    });
     const tag = allTags.find(t => t.id === tagId);
     if (tag && !drawerTags.find(t => t.id === tagId)) {
       setDrawerTags(prev => [...prev, tag]);
     }
+    markEdited([drawerPhoto.id]);
     setDrawerAddingTagId(null);
     setDrawerTagSearch('');
   };
 
   const removeTagFromDrawerPhoto = async (tagId: string) => {
     if (!drawerPhoto) return;
-    await removeTagFromPhoto(supabase, drawerPhoto.id, tagId);
+    await fetch('/api/gallery/batch-tags', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ photoIds: [drawerPhoto.id], tagIds: [tagId], mode: 'remove' }),
+    });
+    markEdited([drawerPhoto.id]);
     setDrawerTags(prev => prev.filter(t => t.id !== tagId));
+  };
+
+  const saveDrawerLocation = async () => {
+    if (!drawerPhoto) return;
+    setSavingDrawerLocation(true);
+    try {
+      const latitude = drawerLocationForm.latitude ? parseFloat(drawerLocationForm.latitude) : null;
+      const longitude = drawerLocationForm.longitude ? parseFloat(drawerLocationForm.longitude) : null;
+      const location_name = drawerLocationForm.location_name || null;
+      const res = await fetch('/api/gallery/batch-location', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ photoIds: [drawerPhoto.id], latitude, longitude, location_name }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.error || 'Failed to update location');
+      markEdited([drawerPhoto.id]);
+      setDrawerPhoto(prev => prev ? { ...prev, latitude, longitude, location_name } : prev);
+      setPhotos(prev => prev.map(p => p.id === drawerPhoto.id ? { ...p, latitude, longitude, location_name } : p));
+      setEditingDrawerLocation(false);
+    } finally {
+      setSavingDrawerLocation(false);
+    }
   };
 
   const deleteDrawerPhoto = async () => {
     if (!drawerPhoto) return;
-    if (!confirm(`Delete "${drawerPhoto.title}"? This cannot be undone.`)) return;
+    if (!confirm(`Delete "${drawerPhoto.title}" from the website AND Google Drive? This cannot be undone.`)) return;
     setDeletingPhoto(true);
-    await supabase.from('photo_tags').delete().eq('photo_id', drawerPhoto.id);
-    const { error } = await supabase.from('photos').delete().eq('id', drawerPhoto.id);
-    setDeletingPhoto(false);
-    if (!error) {
+    try {
+      const res = await fetch('/api/gallery/batch-delete', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ photoIds: [drawerPhoto.id] }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.error || 'Failed to delete photo');
       setPhotos(prev => prev.filter(p => p.id !== drawerPhoto.id));
-      setTotalCount(prev => prev - 1);
+      setTotalCount(prev => Math.max(0, prev - 1));
       setDrawerPhoto(null);
+    } catch (err: any) {
+      setBatchActionError(err.message || 'Failed to delete photo');
+    } finally {
+      setDeletingPhoto(false);
     }
   };
 
@@ -664,12 +879,31 @@ export default function AdminPhotosBrowse() {
       {/* Bulk batch bar */}
       {selectionMode && selectedIds.size > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[15000] shadow-2xl">
+          {batchActionError && (
+            <div className="mb-2 flex items-start gap-2 bg-black border border-red-500/30 text-red-400 text-[10px] px-3 py-2 w-[calc(100vw-2rem)] max-w-[360px]">
+              <ExclamationCircleIcon className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+              <span>{batchActionError}</span>
+            </div>
+          )}
+
           {/* Tag panel */}
           {showTagPanel && (
             <div className="mb-2 bg-black border border-white/20 p-4 w-[calc(100vw-2rem)] max-w-[360px] max-h-[50vh] flex flex-col">
-              <p className="text-[10px] uppercase font-bold text-white/40 tracking-wider mb-3 flex-shrink-0">
-                Apply Tags to {selectedIds.size} photo{selectedIds.size !== 1 ? 's' : ''}
-              </p>
+              <div className="flex items-center justify-between mb-3 flex-shrink-0">
+                <p className="text-[10px] uppercase font-bold text-white/40 tracking-wider">
+                  {tagPanelMode === 'add' ? 'Add Tags to' : 'Remove Tags from'} {selectedIds.size} photo{selectedIds.size !== 1 ? 's' : ''}
+                </p>
+                <div className="flex bg-white/5">
+                  <button
+                    onClick={() => setTagPanelMode('add')}
+                    className={`px-2 py-1 text-[9px] uppercase font-bold tracking-wider flex items-center gap-1 ${tagPanelMode === 'add' ? 'bg-white text-black' : 'text-white/50 hover:text-white'}`}
+                  ><PlusIcon className="w-2.5 h-2.5" />Add</button>
+                  <button
+                    onClick={() => setTagPanelMode('remove')}
+                    className={`px-2 py-1 text-[9px] uppercase font-bold tracking-wider flex items-center gap-1 ${tagPanelMode === 'remove' ? 'bg-white text-black' : 'text-white/50 hover:text-white'}`}
+                  ><MinusIcon className="w-2.5 h-2.5" />Remove</button>
+                </div>
+              </div>
               <div className="overflow-y-auto flex-1 space-y-3 mb-3 pr-1">
                 {Object.entries(tagsByType).map(([type, typeTags]) => (
                   <div key={type}>
@@ -699,7 +933,76 @@ export default function AdminPhotosBrowse() {
                 disabled={applyingTags || selectedTagsToApply.size === 0}
                 className="w-full py-2 bg-white text-black text-[10px] uppercase font-bold tracking-wider hover:bg-white/90 transition-colors disabled:opacity-40 flex-shrink-0"
               >
-                {applyingTags ? 'Applying…' : selectedTagsToApply.size === 0 ? 'Pick tags above' : `Apply ${selectedTagsToApply.size} tag${selectedTagsToApply.size !== 1 ? 's' : ''}`}
+                {applyingTags
+                  ? 'Applying…'
+                  : selectedTagsToApply.size === 0
+                    ? 'Pick tags above'
+                    : `${tagPanelMode === 'add' ? 'Apply' : 'Remove'} ${selectedTagsToApply.size} tag${selectedTagsToApply.size !== 1 ? 's' : ''}`}
+              </button>
+            </div>
+          )}
+
+          {/* Location panel */}
+          {showLocationPanel && (
+            <div className="mb-2 bg-black border border-white/20 p-4 w-[calc(100vw-2rem)] max-w-[360px] flex flex-col gap-2">
+              <p className="text-[10px] uppercase font-bold text-white/40 tracking-wider">
+                Set Location for {selectedIds.size} photo{selectedIds.size !== 1 ? 's' : ''}
+              </p>
+              <input
+                type="text"
+                value={locationForm.location_name}
+                onChange={e => setLocationForm(f => ({ ...f, location_name: e.target.value }))}
+                placeholder="Location name (e.g. Austin, TX)"
+                className="w-full bg-white/5 border border-white/10 text-white text-[11px] px-3 py-2 placeholder-white/20 focus:outline-none focus:border-white/30"
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="number" step="any"
+                  value={locationForm.latitude}
+                  onChange={e => setLocationForm(f => ({ ...f, latitude: e.target.value }))}
+                  placeholder="Latitude"
+                  className="bg-white/5 border border-white/10 text-white text-[11px] px-3 py-2 placeholder-white/20 focus:outline-none focus:border-white/30 font-mono"
+                />
+                <input
+                  type="number" step="any"
+                  value={locationForm.longitude}
+                  onChange={e => setLocationForm(f => ({ ...f, longitude: e.target.value }))}
+                  placeholder="Longitude"
+                  className="bg-white/5 border border-white/10 text-white text-[11px] px-3 py-2 placeholder-white/20 focus:outline-none focus:border-white/30 font-mono"
+                />
+              </div>
+              <button
+                onClick={applyLocationToSelection}
+                disabled={applyingLocation}
+                className="w-full py-2 bg-white text-black text-[10px] uppercase font-bold tracking-wider hover:bg-white/90 transition-colors disabled:opacity-40"
+              >
+                {applyingLocation ? 'Saving…' : 'Save Location'}
+              </button>
+            </div>
+          )}
+
+          {/* Move to folder panel */}
+          {showMovePanel && (
+            <div className="mb-2 bg-black border border-white/20 p-4 w-[calc(100vw-2rem)] max-w-[360px] flex flex-col gap-2">
+              <p className="text-[10px] uppercase font-bold text-white/40 tracking-wider">
+                Move {selectedIds.size} photo{selectedIds.size !== 1 ? 's' : ''} to Gallery
+              </p>
+              <select
+                value={moveTargetLibraryId}
+                onChange={e => setMoveTargetLibraryId(e.target.value)}
+                className="w-full bg-black border border-white/20 text-white text-[11px] px-3 py-2 focus:outline-none focus:border-white/40"
+              >
+                <option value="">Choose a gallery…</option>
+                {libraries.map(lib => (
+                  <option key={lib.id} value={lib.id}>{lib.name}</option>
+                ))}
+              </select>
+              <button
+                onClick={moveSelectionToLibrary}
+                disabled={movingPhotos || !moveTargetLibraryId}
+                className="w-full py-2 bg-white text-black text-[10px] uppercase font-bold tracking-wider hover:bg-white/90 transition-colors disabled:opacity-40"
+              >
+                {movingPhotos ? 'Moving…' : 'Move Photos'}
               </button>
             </div>
           )}
@@ -754,14 +1057,14 @@ export default function AdminPhotosBrowse() {
           )}
 
           {/* Action bar */}
-          <div className="flex items-center gap-3 bg-black border border-white/20 px-4 py-3">
-            <span className="text-xs font-mono text-white/60">
-              {applySuccess ? '✓ Tags applied' : postResult?.success ? '✓ Posted' : `${selectedIds.size} selected`}
+          <div className="flex items-center gap-3 bg-black border border-white/20 px-4 py-3 overflow-x-auto max-w-[calc(100vw-2rem)]">
+            <span className="text-xs font-mono text-white/60 whitespace-nowrap">
+              {applySuccess ? '✓ Saved' : postResult?.success ? '✓ Posted' : `${selectedIds.size} selected`}
             </span>
-            <div className="w-px h-4 bg-white/20" />
+            <div className="w-px h-4 bg-white/20 flex-shrink-0" />
             <button
-              onClick={() => { setShowTagPanel(v => !v); setShowSocialPanel(false); setPostResult(null); }}
-              className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider transition-colors ${showTagPanel ? 'text-white' : 'text-white/60 hover:text-white'}`}
+              onClick={() => { setShowTagPanel(v => !v); setShowLocationPanel(false); setShowMovePanel(false); setShowSocialPanel(false); setPostResult(null); }}
+              className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider transition-colors whitespace-nowrap ${showTagPanel ? 'text-white' : 'text-white/60 hover:text-white'}`}
             >
               <TagIcon className="w-3.5 h-3.5" />
               Tag
@@ -769,21 +1072,87 @@ export default function AdminPhotosBrowse() {
                 <span className="ml-0.5 bg-white text-black text-[8px] font-black px-1 py-0.5 rounded-sm">{selectedTagsToApply.size}</span>
               )}
             </button>
-            <div className="w-px h-4 bg-white/20" />
+            <div className="w-px h-4 bg-white/20 flex-shrink-0" />
             <button
-              onClick={() => { setShowSocialPanel(v => !v); setShowTagPanel(false); setPostResult(null); }}
-              className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider transition-colors ${showSocialPanel ? 'text-white' : 'text-white/60 hover:text-white'}`}
+              onClick={() => { setShowLocationPanel(v => !v); setShowTagPanel(false); setShowMovePanel(false); setShowSocialPanel(false); setPostResult(null); }}
+              className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider transition-colors whitespace-nowrap ${showLocationPanel ? 'text-white' : 'text-white/60 hover:text-white'}`}
+            >
+              <MapPinIcon className="w-3.5 h-3.5" />
+              Location
+            </button>
+            <div className="w-px h-4 bg-white/20 flex-shrink-0" />
+            <button
+              onClick={() => { setShowMovePanel(v => !v); setShowTagPanel(false); setShowLocationPanel(false); setShowSocialPanel(false); setPostResult(null); }}
+              className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider transition-colors whitespace-nowrap ${showMovePanel ? 'text-white' : 'text-white/60 hover:text-white'}`}
+            >
+              <FolderArrowDownIcon className="w-3.5 h-3.5" />
+              Move
+            </button>
+            <div className="w-px h-4 bg-white/20 flex-shrink-0" />
+            <button
+              onClick={() => { setShowSocialPanel(v => !v); setShowTagPanel(false); setShowLocationPanel(false); setShowMovePanel(false); setPostResult(null); }}
+              className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider transition-colors whitespace-nowrap ${showSocialPanel ? 'text-white' : 'text-white/60 hover:text-white'}`}
             >
               <ShareIcon className="w-3.5 h-3.5" />
               Share
             </button>
-            <div className="w-px h-4 bg-white/20" />
-            <button onClick={clearSelection} className="text-white/30 hover:text-white transition-colors">
+            <div className="w-px h-4 bg-white/20 flex-shrink-0" />
+            <button
+              onClick={deleteSelection}
+              disabled={deletingBatch}
+              className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-white/60 hover:text-red-400 transition-colors disabled:opacity-40 whitespace-nowrap"
+            >
+              <TrashIcon className="w-3.5 h-3.5" />
+              {deletingBatch ? 'Deleting…' : 'Delete'}
+            </button>
+            <div className="w-px h-4 bg-white/20 flex-shrink-0" />
+            <button
+              onClick={handleSaveAndClose}
+              className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-white hover:text-white/80 transition-colors whitespace-nowrap"
+            >
+              <CheckCircleIcon className="w-3.5 h-3.5" />
+              Save
+            </button>
+            <div className="w-px h-4 bg-white/20 flex-shrink-0" />
+            <button onClick={clearSelection} className="text-white/30 hover:text-white transition-colors flex-shrink-0">
               <XMarkIcon className="w-4 h-4" />
             </button>
           </div>
         </div>
       )}
+
+      {/* Save → Create Gallery prompt */}
+      <AnimatePresence>
+        {showCreateGalleryPrompt && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[25000] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+          >
+            <div className="bg-black border border-white/20 w-full max-w-sm p-6">
+              <p className="text-sm font-bold uppercase tracking-wider text-white mb-2">Changes Saved</p>
+              <p className="text-white/50 text-xs mb-6">
+                Create a new gallery with {editedPhotoIds.size} edited photo{editedPhotoIds.size !== 1 ? 's' : ''}?
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={dismissCreateGalleryPrompt}
+                  className="flex-1 py-2.5 text-white/60 hover:text-white hover:bg-white/5 transition-colors text-xs uppercase font-bold tracking-wider"
+                >
+                  Skip
+                </button>
+                <button
+                  onClick={confirmCreateGallery}
+                  className="flex-1 py-2.5 bg-white text-black hover:bg-white/90 transition-colors text-xs uppercase font-bold tracking-wider"
+                >
+                  Create Gallery
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Detail Drawer */}
       <AnimatePresence>
@@ -864,17 +1233,71 @@ export default function AdminPhotosBrowse() {
                     </div>
                   )}
 
-                  {(drawerPhoto.location_name || drawerPhoto.latitude) && (
-                    <div>
+                  <div>
+                    <div className="flex items-center justify-between">
                       <SectionLabel icon={<MapPinIcon className="w-3 h-3" />} label="Location" />
+                      {!editingDrawerLocation && (
+                        <button
+                          onClick={() => setEditingDrawerLocation(true)}
+                          className="text-white/30 hover:text-white transition-colors"
+                          title="Edit location"
+                        >
+                          <PencilSquareIcon className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    {editingDrawerLocation ? (
+                      <div className="mt-2 space-y-2">
+                        <input
+                          type="text"
+                          value={drawerLocationForm.location_name}
+                          onChange={e => setDrawerLocationForm(f => ({ ...f, location_name: e.target.value }))}
+                          placeholder="Location name (e.g. Austin, TX)"
+                          className="w-full bg-white/5 border border-white/10 text-white text-[11px] px-2.5 py-1.5 placeholder-white/20 focus:outline-none focus:border-white/30"
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="number" step="any"
+                            value={drawerLocationForm.latitude}
+                            onChange={e => setDrawerLocationForm(f => ({ ...f, latitude: e.target.value }))}
+                            placeholder="Latitude"
+                            className="bg-white/5 border border-white/10 text-white text-[11px] px-2.5 py-1.5 placeholder-white/20 focus:outline-none focus:border-white/30 font-mono"
+                          />
+                          <input
+                            type="number" step="any"
+                            value={drawerLocationForm.longitude}
+                            onChange={e => setDrawerLocationForm(f => ({ ...f, longitude: e.target.value }))}
+                            placeholder="Longitude"
+                            className="bg-white/5 border border-white/10 text-white text-[11px] px-2.5 py-1.5 placeholder-white/20 focus:outline-none focus:border-white/30 font-mono"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={saveDrawerLocation}
+                            disabled={savingDrawerLocation}
+                            className="flex-1 py-1.5 bg-white text-black text-[10px] uppercase font-bold tracking-wider hover:bg-white/90 transition-colors disabled:opacity-40"
+                          >
+                            {savingDrawerLocation ? 'Saving…' : 'Save'}
+                          </button>
+                          <button
+                            onClick={() => setEditingDrawerLocation(false)}
+                            className="px-3 py-1.5 text-white/40 text-[10px] uppercase font-bold tracking-wider hover:text-white transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : drawerPhoto.location_name || drawerPhoto.latitude ? (
                       <div className="space-y-1 mt-2">
                         {drawerPhoto.location_name && <MetaRow label="Name" value={drawerPhoto.location_name} />}
                         {drawerPhoto.latitude && (
                           <MetaRow label="GPS" value={`${drawerPhoto.latitude?.toFixed(5)}, ${drawerPhoto.longitude?.toFixed(5)}`} />
                         )}
                       </div>
-                    </div>
-                  )}
+                    ) : (
+                      <p className="text-white/20 text-[10px] italic mt-2">No location set</p>
+                    )}
+                  </div>
 
                   <div>
                     <SectionLabel icon={<TagIcon className="w-3 h-3" />} label="Tags" />
