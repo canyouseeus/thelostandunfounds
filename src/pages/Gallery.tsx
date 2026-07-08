@@ -209,9 +209,20 @@ export default function Gallery({ isHomepage = false }: { isHomepage?: boolean }
                 ) : (
                     <title>THE LOST+UNFOUNDS | The Gallery</title>
                 )}
-                <meta name="description" content="Explore exclusive high-resolution photography collections. Unique findings from the field, beautifully captured in high definition for your inspiration." />
+                <meta
+                    name="description"
+                    content={isHomepage
+                        ? "THE LOST+UNFOUNDS is an Austin, TX based editorial and nightlife photography brand. Explore our galleries, shop, and booking services."
+                        : "Explore exclusive high-resolution photography collections. Unique findings from the field, beautifully captured in high definition for your inspiration."}
+                />
                 <link rel="canonical" href={isHomepage ? 'https://www.thelostandunfounds.com/' : 'https://www.thelostandunfounds.com/gallery'} />
             </Helmet>
+
+            {/* Homepage H1 — visually hidden so it doesn't duplicate the Gallery/Shop/Services
+                tab toggle below, but gives the page (and bots) a real top-level heading. */}
+            {isHomepage && (
+                <h1 className="sr-only">THE LOST+UNFOUNDS — Austin, TX Editorial &amp; Nightlife Photography</h1>
+            )}
 
             {/* Gallery / Shop / Booking toggle — homepage visitor mode only */}
             {isHomepage && (

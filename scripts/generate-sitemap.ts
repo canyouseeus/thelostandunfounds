@@ -140,10 +140,26 @@ async function generateSitemap() {
     <priority>0.6</priority>
   </url>
 
+  <!-- Become an Affiliate -->
+  <url>
+    <loc>${baseUrl}/become-affiliate</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- King Midas Leaderboard -->
+  <url>
+    <loc>${baseUrl}/king-midas-leaderboard</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.5</priority>
+  </url>
+
   <!-- /pricing, /booking, /book-club, /gearheads, /borderlands, /science,
        /newtheory are intentionally omitted: pricing is deleted, booking is
        admin-gated, and the five column pages are admin-only. -->
-  
+
   <!-- Privacy Policy -->
   <url>
     <loc>${baseUrl}/privacy</loc>
@@ -221,10 +237,10 @@ async function generateSitemap() {
     const sitemapPath = join(distPath, 'sitemap.xml');
 
     writeFileSync(sitemapPath, sitemap, 'utf-8');
-    // Count: Homepage + Shop + Blog listing + About + Privacy + Terms + blog posts
-    const totalUrls = (posts?.length || 0) + 6;
+    const totalUrls = (sitemap.match(/<loc>/g) || []).length;
+    const navPageCount = totalUrls - (posts?.length || 0) - (libraries?.length || 0);
     console.log(`✅ Sitemap generated successfully: ${sitemapPath}`);
-    console.log(`   Total URLs: ${totalUrls} (${posts?.length || 0} blog posts + 6 navigation pages)`);
+    console.log(`   Total URLs: ${totalUrls} (${posts?.length || 0} blog posts + ${libraries?.length || 0} galleries + ${navPageCount} navigation pages)`);
   } catch (err) {
     console.error('❌ Error generating sitemap:', err);
     process.exit(1);
