@@ -961,7 +961,7 @@ export default function Affiliate() {
             </div>
 
             {/* Revenue & Widgets Row */}
-            <div className="col-span-12 grid grid-cols-1 md:grid-cols-12 gap-6">
+            <div className="col-span-12 grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-6">
               <div className="md:col-span-8 lg:col-span-9 space-y-4">
                 {userIsAdmin && hasAffiliate && (
                   <div className="flex bg-[#0a0a0a] w-fit">
@@ -1010,7 +1010,7 @@ export default function Affiliate() {
                 )}
               </div>
               <div className="md:col-span-4 lg:col-span-3 grid grid-cols-2 gap-3 md:flex md:flex-col md:gap-6">
-                <ClockWidget size="lg" className="[zoom:0.6] md:[zoom:1] md:flex-1" />
+                <ClockWidget size="lg" className="md:flex-1" />
                 <CalendarWidget className="[zoom:0.6] md:[zoom:1] md:flex-1 md:min-h-[300px]" />
               </div>
             </div>
