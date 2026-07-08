@@ -22,6 +22,12 @@ export default function Footer() {
               Terms of Use
             </Link>
             <Link
+              to="/thelostarchives"
+              className="text-white/60 hover:!text-white transition-colors"
+            >
+              The Lost Archives
+            </Link>
+            <Link
               to="/about"
               className="text-white/60 hover:!text-white transition-colors"
             >
