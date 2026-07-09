@@ -12,14 +12,7 @@ import {
     TrashIcon,
 } from '@heroicons/react/24/outline';
 import BookingInvoicePanel from './BookingInvoicePanel';
-import {
-    Expandable,
-    ExpandableTrigger,
-    ExpandableCard,
-    ExpandableCardHeader,
-    ExpandableCardContent,
-    ExpandableContent,
-} from '../ui/expandable';
+import { ExpandableScreen, ExpandableScreenContent } from '../ui/expandable-screen';
 
 interface Booking {
     id: string;
@@ -193,61 +186,57 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking: b, onStatusChange })
 
     return (
         <>
-        <Expandable
-            expandDirection="vertical"
-            expandBehavior="replace"
-            expanded={expanded}
-            onToggle={() => setExpanded(prev => !prev)}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
+        <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            className="w-full bg-zinc-950 hover:bg-zinc-900 transition-colors text-left p-4"
         >
-            {({ isExpanded }) => (
-                <ExpandableTrigger>
-                    <ExpandableCard
-                        className="w-full bg-zinc-950 border border-white/10 cursor-pointer hover:border-white/20 transition-colors"
-                        collapsedSize={{ width: '100%', height: 'auto' }}
-                        expandedSize={{ width: '100%', height: 'auto' }}
-                        hoverToExpand={false}
-                    >
-                        <ExpandableCardHeader className="p-4">
-                            <div className="flex items-start justify-between gap-4">
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-sm font-black text-white truncate">{b.name}</span>
-                                        <span className={`px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest border ${STATUS_COLORS[b.status]}`}>
-                                            {b.status}
-                                        </span>
-                                        {b.retainer && (
-                                            <span className="px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest border border-purple-400/20 bg-purple-400/10 text-purple-400">
-                                                Retainer
-                                            </span>
-                                        )}
-                                    </div>
-                                    <p className="text-white/50 text-xs">{b.email}</p>
-                                    {(b.location || b.start_time) && (
-                                        <div className="flex gap-4 mt-1 text-[10px] text-white/30">
-                                            {b.location && <span>📍 {b.location}</span>}
-                                            {b.start_time && <span>🕐 {b.start_time}{b.end_time ? ` – ${b.end_time}` : ''}</span>}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="flex items-center gap-3 shrink-0">
-                                    <div className="text-right">
-                                        <p className="text-xs font-bold text-white">{fmtDate(b.event_date)}</p>
-                                        <p className="text-white/40 text-[10px]">{b.event_type}</p>
-                                    </div>
-                                    <ChevronDownIcon
-                                        className={`w-4 h-4 text-white/30 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-                                    />
-                                </div>
-                            </div>
-                        </ExpandableCardHeader>
+            <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm font-black text-white truncate">{b.name}</span>
+                        <span className={`px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest ${STATUS_COLORS[b.status]}`}>
+                            {b.status}
+                        </span>
+                        {b.retainer && (
+                            <span className="px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest bg-purple-400/10 text-purple-400">
+                                Retainer
+                            </span>
+                        )}
+                    </div>
+                    <p className="text-white/50 text-xs">{b.email}</p>
+                    {(b.location || b.start_time) && (
+                        <div className="flex gap-4 mt-1 text-[10px] text-white/30">
+                            {b.location && <span>{b.location}</span>}
+                            {b.start_time && <span>{b.start_time}{b.end_time ? ` – ${b.end_time}` : ''}</span>}
+                        </div>
+                    )}
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                    <div className="text-right">
+                        <p className="text-xs font-bold text-white">{fmtDate(b.event_date)}</p>
+                        <p className="text-white/40 text-[10px]">{b.event_type}</p>
+                    </div>
+                    <ChevronDownIcon className="w-4 h-4 text-white/30 -rotate-90" />
+                </div>
+            </div>
+        </button>
 
-                        <ExpandableCardContent className="pt-0 px-4 pb-0">
-                            <ExpandableContent preset="fade" keepMounted={false}>
-                                <div
-                                    className="border-t border-white/10 pt-4 pb-4 space-y-4"
-                                    onClick={e => e.stopPropagation()}
-                                >
+        {/* Booking Detail — fullscreen ExpandableScreen pattern */}
+        <ExpandableScreen isOpen={expanded} onOpenChange={setExpanded}>
+            <ExpandableScreenContent className="overflow-x-hidden">
+                <div className="flex-1 overflow-y-auto overflow-x-hidden">
+                    <div className="max-w-3xl mx-auto w-full px-4 sm:px-8 pt-20 pb-16">
+                        <div className="flex items-center gap-3 mb-1">
+                            <span className="text-lg font-black text-white truncate">{b.name}</span>
+                            <span className={`px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest ${STATUS_COLORS[b.status]}`}>
+                                {b.status}
+                            </span>
+                        </div>
+                        <p className="text-white/50 text-sm normal-case mb-8">{b.email}</p>
+                        <div
+                            className="space-y-4"
+                        >
                                     <div className="grid grid-cols-2 gap-3 text-xs">
                                         <div><p className="text-white/30 uppercase tracking-widest mb-0.5">Date</p><p className="font-bold">{fmtDate(b.event_date)}</p></div>
                                         <div><p className="text-white/30 uppercase tracking-widest mb-0.5">Type</p><p className="font-bold">{b.event_type}</p></div>
@@ -441,13 +430,11 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking: b, onStatusChange })
                                             Cancel
                                         </button>
                                     </div>
-                                </div>
-                            </ExpandableContent>
-                        </ExpandableCardContent>
-                    </ExpandableCard>
-                </ExpandableTrigger>
-            )}
-        </Expandable>
+                        </div>
+                    </div>
+                </div>
+            </ExpandableScreenContent>
+        </ExpandableScreen>
 
         {/* Invoice panel overlay */}
         {invoicePanelOpen && (

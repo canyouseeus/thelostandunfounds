@@ -35,6 +35,7 @@ import { useToast } from '../Toast';
 import DOMPurify from 'dompurify';
 import { logApiCall, logError } from '../../lib/adminErrorLog';
 import { SidePanel } from '../ui/side-panel';
+import { ExpandableScreen, ExpandableScreenContent } from '../ui/expandable-screen';
 
 // Types
 interface MailFolder {
@@ -874,110 +875,106 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
         </div>
       </SidePanel>
 
-      {/* Compose Modal */}
-      {showCompose && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4">
-          <div className="bg-black border-none w-full max-w-2xl max-h-[90vh] flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-none">
-              <h3 className="font-semibold text-white">
-                {composeData.isReply ? 'Reply' : composeData.isForward ? 'Forward' : 'New Message'}
-              </h3>
-              <button
-                onClick={() => setShowCompose(false)}
-                className="p-1 text-white/60 hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Form */}
-            <div className="flex-1 overflow-auto p-4 space-y-3">
-              <div>
-                <label className="text-xs text-white/40 mb-1 block">To *</label>
-                <input
-                  type="text"
-                  value={composeData.to}
-                  onChange={(e) => setComposeData(prev => ({ ...prev, to: e.target.value }))}
-                  className="w-full bg-white/5 border-none px-3 py-2 text-sm text-white focus:outline-none"
-                  placeholder="recipient@example.com"
-                />
+      {/* Compose — fullscreen ExpandableScreen pattern */}
+      <ExpandableScreen isOpen={showCompose} onOpenChange={setShowCompose}>
+        <ExpandableScreenContent className="overflow-x-hidden">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden">
+            <div className="max-w-2xl mx-auto w-full px-4 sm:px-8 pt-20 pb-16">
+              <div className="flex items-center gap-3 mb-8">
+                <Send className="w-5 h-5 text-white/40" />
+                <h2 className="text-xl font-black uppercase tracking-wide text-white">
+                  {composeData.isReply ? 'Reply' : composeData.isForward ? 'Forward' : 'New Message'}
+                </h2>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* Form */}
+              <div className="space-y-3">
                 <div>
-                  <label className="text-xs text-white/40 mb-1 block">CC</label>
+                  <label className="text-xs text-white/40 mb-1 block">To *</label>
                   <input
                     type="text"
-                    value={composeData.cc}
-                    onChange={(e) => setComposeData(prev => ({ ...prev, cc: e.target.value }))}
-                    className="w-full bg-white/5 border-none px-3 py-2 text-sm text-white focus:outline-none"
+                    value={composeData.to}
+                    onChange={(e) => setComposeData(prev => ({ ...prev, to: e.target.value }))}
+                    className="w-full bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:bg-white/10"
+                    placeholder="recipient@example.com"
                   />
                 </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-white/40 mb-1 block">CC</label>
+                    <input
+                      type="text"
+                      value={composeData.cc}
+                      onChange={(e) => setComposeData(prev => ({ ...prev, cc: e.target.value }))}
+                      className="w-full bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:bg-white/10"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-white/40 mb-1 block">BCC</label>
+                    <input
+                      type="text"
+                      value={composeData.bcc}
+                      onChange={(e) => setComposeData(prev => ({ ...prev, bcc: e.target.value }))}
+                      className="w-full bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:bg-white/10"
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <label className="text-xs text-white/40 mb-1 block">BCC</label>
+                  <label className="text-xs text-white/40 mb-1 block">Subject *</label>
                   <input
                     type="text"
-                    value={composeData.bcc}
-                    onChange={(e) => setComposeData(prev => ({ ...prev, bcc: e.target.value }))}
-                    className="w-full bg-white/5 border-none px-3 py-2 text-sm text-white focus:outline-none"
+                    value={composeData.subject}
+                    onChange={(e) => setComposeData(prev => ({ ...prev, subject: e.target.value }))}
+                    className="w-full bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:bg-white/10"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs text-white/40 mb-1 block">Message</label>
+                  <textarea
+                    value={composeData.content}
+                    onChange={(e) => setComposeData(prev => ({ ...prev, content: e.target.value }))}
+                    rows={12}
+                    className="w-full bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:bg-white/10 resize-none"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="text-xs text-white/40 mb-1 block">Subject *</label>
-                <input
-                  type="text"
-                  value={composeData.subject}
-                  onChange={(e) => setComposeData(prev => ({ ...prev, subject: e.target.value }))}
-                  className="w-full bg-white/5 border-none px-3 py-2 text-sm text-white focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs text-white/40 mb-1 block">Message</label>
-                <textarea
-                  value={composeData.content}
-                  onChange={(e) => setComposeData(prev => ({ ...prev, content: e.target.value }))}
-                  rows={12}
-                  className="w-full bg-white/5 border-none px-3 py-2 text-sm text-white focus:outline-none focus:bg-white/10 resize-none"
-                />
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="flex items-center justify-between px-4 py-3 border-none">
-              <button
-                onClick={handleSaveDraft}
-                className="px-4 py-2 text-sm text-white/60 hover:text-white transition"
-              >
-                Save Draft
-              </button>
-              <div className="flex items-center gap-3">
+              {/* Footer */}
+              <div className="flex items-center justify-between mt-6 pt-6 bg-white/[0.02] px-4 py-3">
                 <button
-                  onClick={() => setShowCompose(false)}
+                  onClick={handleSaveDraft}
                   className="px-4 py-2 text-sm text-white/60 hover:text-white transition"
                 >
-                  Cancel
+                  Save Draft
                 </button>
-                <button
-                  onClick={handleSend}
-                  disabled={sending}
-                  className="flex items-center gap-2 px-4 py-2 bg-white text-black font-semibold hover:bg-white/90 transition disabled:opacity-50"
-                >
-                  {sending ? (
-                    <Loader className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Send className="w-4 h-4" />
-                  )}
-                  Send
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setShowCompose(false)}
+                    className="px-4 py-2 text-sm text-white/60 hover:text-white transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSend}
+                    disabled={sending}
+                    className="flex items-center gap-2 px-4 py-2 bg-white text-black font-semibold hover:bg-white/90 transition disabled:opacity-50"
+                  >
+                    {sending ? (
+                      <Loader className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Send className="w-4 h-4" />
+                    )}
+                    Send
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        </ExpandableScreenContent>
+      </ExpandableScreen>
     </div>
   );
 }

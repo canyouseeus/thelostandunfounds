@@ -9,6 +9,7 @@ import { supabase } from '../lib/supabase';
 import { useToast } from './Toast';
 import { LoadingSpinner } from './Loading';
 import RichTextEditor from './RichTextEditor';
+import { ExpandableScreen, ExpandableScreenContent } from './ui/expandable-screen';
 import {
   DocumentTextIcon,
   CheckCircleIcon,
@@ -19,7 +20,6 @@ import {
   BookOpenIcon,
   ChatBubbleLeftRightIcon,
   UserIcon,
-  XMarkIcon,
   ExclamationTriangleIcon,
   CheckIcon
 } from '@heroicons/react/24/outline';
@@ -980,25 +980,28 @@ export default function BlogSubmissionReview() {
         )}
       </div>
 
-      {/* Review Modal */}
-      {selectedSubmission && (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-xl p-4 overflow-hidden">
-          <div className="bg-[#0A0A0A] border border-white/5 w-full max-w-5xl h-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300">
-            <div className="flex items-center justify-between p-6 border-b border-white/5 bg-white/[0.02]">
-              <h3 className="text-xl font-bold text-white tracking-widest uppercase">Review Submission</h3>
-              <button
-                onClick={() => {
-                  setSelectedSubmission(null);
-                  setReviewNotes('');
-                  setRejectionReason('');
-                }}
-                className="p-2 hover:bg-white/10 text-white/40 hover:text-white transition-all ring-offset-black focus:outline-none"
-              >
-                <XMarkIcon className="w-6 h-6" />
-              </button>
-            </div>
+      {/* Review — fullscreen ExpandableScreen pattern */}
+      <ExpandableScreen
+        isOpen={!!selectedSubmission}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedSubmission(null);
+            setReviewNotes('');
+            setRejectionReason('');
+            setSelectedColumn('main');
+          }
+        }}
+      >
+        <ExpandableScreenContent className="overflow-x-hidden">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden">
+            <div className="max-w-5xl mx-auto w-full px-4 sm:px-8 pt-20 pb-16 space-y-10">
+              <div className="flex items-center gap-3">
+                <DocumentTextIcon className="w-5 h-5 text-white/40" />
+                <h2 className="text-xl font-black uppercase tracking-wide text-white">Review Submission</h2>
+              </div>
 
-            <div className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar">
+              {selectedSubmission && (
+              <>
               {/* Submission Details */}
               <section>
                 <h4 className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-4 flex items-center gap-2">
@@ -1222,10 +1225,12 @@ export default function BlogSubmissionReview() {
                   CLOSE
                 </button>
               </div>
+              </>
+              )}
             </div>
           </div>
-        </div>
-      )}
+        </ExpandableScreenContent>
+      </ExpandableScreen>
     </div>
   );
 }

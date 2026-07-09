@@ -14,6 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { supabase } from '../lib/supabase';
 import { cn } from '../components/ui/utils';
+import { ExpandableScreen, ExpandableScreenContent } from '../components/ui/expandable-screen';
 
 interface Client {
   id: string;
@@ -295,78 +296,86 @@ export default function AdminInvoices() {
           )}
         </section>
 
-        {/* ── Invoice Detail ─────────────────────────────────────────────── */}
-        {selectedInvoice && (
-          <section className="bg-white/[0.02] p-6 space-y-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <h2 className="text-xl font-black font-mono tracking-tighter">
-                  {selectedInvoice.invoice_number}
-                </h2>
-                <p className="text-[10px] text-white/30 mt-1 uppercase tracking-widest">
-                  {selectedInvoice.description}
-                </p>
-              </div>
-              <StatusBadge status={selectedInvoice.status} />
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px]">
-              {[
-                { label: 'Invoice Date', value: fmt(selectedInvoice.date) },
-                { label: 'Event Date',   value: selectedInvoice.event_date ? fmt(selectedInvoice.event_date) : '—' },
-                { label: 'Client',       value: (selectedInvoice.clients as any)?.name || '—' },
-                { label: 'Paid On',      value: selectedInvoice.paid_at ? fmt(selectedInvoice.paid_at) : '—' },
-              ].map(({ label, value }) => (
-                <div key={label}>
-                  <p className="text-[9px] text-white/20 uppercase tracking-widest mb-0.5">{label}</p>
-                  <p className="text-white/80">{value}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Line Items */}
-            <div>
-              <p className="text-[9px] text-white/20 uppercase tracking-widest mb-2">Line Items</p>
-              <div className="divide-y divide-white/5">
-                {selectedInvoice.line_items.map((item, i) => (
-                  <div key={i} className="flex justify-between py-3 text-sm">
-                    <span className="text-white/70">{item.description}</span>
-                    <span className="font-mono font-bold text-white">{fmtUSD(item.amount)}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-between pt-4 mt-2 border-t border-white/10">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Total</span>
-                <span className="text-xl font-black font-mono text-green-400">{fmtUSD(selectedInvoice.total)}</span>
-              </div>
-            </div>
-
-            {/* Payments */}
-            {payments[selectedInvoice.id]?.length > 0 && (
-              <div>
-                <p className="text-[9px] text-white/20 uppercase tracking-widest mb-2">Payments Received</p>
-                <div className="divide-y divide-white/5">
-                  {payments[selectedInvoice.id].map(p => (
-                    <div key={p.id} className="flex justify-between py-3 text-sm">
+        {/* ── Invoice Detail — fullscreen ExpandableScreen pattern ─────────── */}
+        <ExpandableScreen isOpen={!!selectedInvoice} onOpenChange={(open) => { if (!open) setSelectedInvoice(null); }}>
+          <ExpandableScreenContent className="overflow-x-hidden">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden">
+              <div className="max-w-3xl mx-auto w-full px-4 sm:px-8 pt-20 pb-16">
+                {selectedInvoice && (
+                  <div className="space-y-6">
+                    <div className="flex items-start justify-between">
                       <div>
-                        <p className="text-white/70">{p.method || 'Payment'}</p>
-                        <p className="text-[9px] text-white/30">{fmt(p.paid_at)}{p.notes && ` · ${p.notes}`}</p>
+                        <h2 className="text-xl font-black font-mono tracking-tighter">
+                          {selectedInvoice.invoice_number}
+                        </h2>
+                        <p className="text-[10px] text-white/30 mt-1 uppercase tracking-widest">
+                          {selectedInvoice.description}
+                        </p>
                       </div>
-                      <span className="font-mono font-bold text-green-400">{fmtUSD(p.amount)}</span>
+                      <StatusBadge status={selectedInvoice.status} />
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
-            {/* Payment methods note */}
-            {selectedInvoice.payment_method && (
-              <p className="text-[10px] text-white/30 uppercase tracking-widest">
-                Accepted: {selectedInvoice.payment_method}
-              </p>
-            )}
-          </section>
-        )}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px]">
+                      {[
+                        { label: 'Invoice Date', value: fmt(selectedInvoice.date) },
+                        { label: 'Event Date',   value: selectedInvoice.event_date ? fmt(selectedInvoice.event_date) : '—' },
+                        { label: 'Client',       value: (selectedInvoice.clients as any)?.name || '—' },
+                        { label: 'Paid On',      value: selectedInvoice.paid_at ? fmt(selectedInvoice.paid_at) : '—' },
+                      ].map(({ label, value }) => (
+                        <div key={label} className="bg-white/5 p-3">
+                          <p className="text-[9px] text-white/20 uppercase tracking-widest mb-0.5">{label}</p>
+                          <p className="text-white/80">{value}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Line Items */}
+                    <div>
+                      <p className="text-[9px] text-white/20 uppercase tracking-widest mb-2">Line Items</p>
+                      <div className="divide-y divide-white/5 bg-white/[0.02] px-4">
+                        {selectedInvoice.line_items.map((item, i) => (
+                          <div key={i} className="flex justify-between py-3 text-sm">
+                            <span className="text-white/70">{item.description}</span>
+                            <span className="font-mono font-bold text-white">{fmtUSD(item.amount)}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex justify-between pt-4 mt-2">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Total</span>
+                        <span className="text-xl font-black font-mono text-green-400">{fmtUSD(selectedInvoice.total)}</span>
+                      </div>
+                    </div>
+
+                    {/* Payments */}
+                    {payments[selectedInvoice.id]?.length > 0 && (
+                      <div>
+                        <p className="text-[9px] text-white/20 uppercase tracking-widest mb-2">Payments Received</p>
+                        <div className="divide-y divide-white/5 bg-white/[0.02] px-4">
+                          {payments[selectedInvoice.id].map(p => (
+                            <div key={p.id} className="flex justify-between py-3 text-sm">
+                              <div>
+                                <p className="text-white/70">{p.method || 'Payment'}</p>
+                                <p className="text-[9px] text-white/30">{fmt(p.paid_at)}{p.notes && ` · ${p.notes}`}</p>
+                              </div>
+                              <span className="font-mono font-bold text-green-400">{fmtUSD(p.amount)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Payment methods note */}
+                    {selectedInvoice.payment_method && (
+                      <p className="text-[10px] text-white/30 uppercase tracking-widest">
+                        Accepted: {selectedInvoice.payment_method}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </ExpandableScreenContent>
+        </ExpandableScreen>
 
         {/* ── Clients ───────────────────────────────────────────────────── */}
         <section>

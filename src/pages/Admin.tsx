@@ -51,9 +51,7 @@ import {
   InboxIcon,
   PhotoIcon,
   LinkIcon,
-  NewspaperIcon,
   ChatBubbleLeftRightIcon,
-  SparklesIcon,
   MegaphoneIcon,
   BuildingStorefrontIcon,
   ChevronDownIcon,
@@ -75,6 +73,8 @@ import AffiliateAdminView from '../components/admin/AffiliateAdminView';
 import AffiliateEmailComposer from '../components/admin/AffiliateEmailComposer';
 import { AdminBentoCard, AdminBentoRow } from '../components/ui/admin-bento-card';
 import { SiteAnalyticsCard } from '../components/admin/SiteAnalyticsCard';
+import { ProfitTrendCard } from '../components/admin/ProfitTrendCard';
+import { RefundsCard } from '../components/admin/RefundsCard';
 import { DashboardCategoryCard } from '../components/admin/DashboardCategoryCard';
 import { ExpandableScreen, ExpandableScreenTrigger, ExpandableScreenContent } from '../components/ui/expandable-screen';
 import { AnimatedNumber } from '../components/ui/animated-number';
@@ -1335,8 +1335,8 @@ export default function Admin() {
         <div className="space-y-4 pt-2">
           <AdminBentoRow label="Affiliate" value={`$${(stats?.affiliateRevenue || 0).toLocaleString()}`} />
           <AdminBentoRow label="Gallery" value={`$${(stats?.galleryRevenue || 0).toLocaleString()}`} />
-          <AdminBentoRow label="Subs" value={`$${(0).toLocaleString()}`} />
-          <AdminBentoRow label="Total" valueClassName="text-green-400 font-bold" value={`$${((stats?.affiliateRevenue || 0) + (stats?.galleryRevenue || 0)).toLocaleString()}`} />
+          <AdminBentoRow label="Bookings" value={`$${(stats?.bookingRevenue || 0).toLocaleString()}`} />
+          <AdminBentoRow label="Total" valueClassName="text-green-400 font-bold" value={`$${((stats?.affiliateRevenue || 0) + (stats?.galleryRevenue || 0) + (stats?.bookingRevenue || 0)).toLocaleString()}`} />
         </div>
       )
     },
@@ -1416,67 +1416,6 @@ export default function Admin() {
         </div>
       )
     },
-    {
-      id: 'suggestion-box',
-      title: 'Suggestion Box',
-      icon: <InboxIcon className="w-4 h-4" />,
-      footer: <span className="text-[10px] text-white/40">User feedback</span>,
-      content: (
-        <div className="space-y-4 pt-2">
-          <AdminBentoRow label="New Feedback" value="5" />
-          <AdminBentoRow label="Resolved" value="128" />
-          <div className="relative p-2 bg-white/5 border-l-2 border-transparent">
-            <p className="text-[9px] text-white/60 italic line-clamp-2">"Would be great to see a dark mode toggle in the..."</p>
-            <span className="text-[8px] text-white/30 block mt-1">- user@example.com</span>
-          </div>
-        </div>
-      )
-    },
-    {
-      id: 'ai-news',
-      title: 'A.I. News',
-      icon: <NewspaperIcon className="w-4 h-4" />,
-      footer: <span className="text-[10px] text-white/40">Curated intelligence</span>,
-      content: (
-        <div className="space-y-3 pt-2">
-          <div className="flex flex-col gap-1 py-1">
-            <div className="text-[8px] text-white/30 uppercase font-black tracking-widest">OpenAI</div>
-            <p className="text-[10px] text-white/80 font-bold leading-tight">GPT-5 details leaked in developer documentation...</p>
-          </div>
-          <div className="flex flex-col gap-1 py-1 mt-2 border-t border-transparent pt-2">
-            <div className="text-[8px] text-white/30 uppercase font-black tracking-widest">Anthropic</div>
-            <p className="text-[10px] text-white/80 font-bold leading-tight">Claude 4 sets new benchmarks for coding tasks...</p>
-          </div>
-        </div>
-      )
-    },
-    {
-      id: 'art3mis',
-      title: 'ART3MIS - A.I. Site Concierge',
-      icon: <SparklesIcon className="w-4 h-4" />,
-      footer: <span className="text-[10px] text-white/40">Status: Online</span>,
-      content: (
-        <div className="space-y-4 pt-2">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center animate-pulse">
-              <SparklesIcon className="w-4 h-4 text-white/60" />
-            </div>
-            <div>
-              <div className="text-[8px] text-white/30 uppercase font-black tracking-widest">Current Status</div>
-              <div className="text-[10px] text-green-400 font-black uppercase">Deep Think: ENGAGED</div>
-            </div>
-          </div>
-          <div className="p-2 bg-white/5 border-none rounded-none mt-2">
-            <div className="text-[8px] text-white/40 uppercase mb-1">Last Analysis Result</div>
-            <p className="text-[10px] text-white/70">Optimized asset caching for mobile users in EU-west-1 region.</p>
-          </div>
-          <div className="flex items-center justify-between text-[8px] font-black uppercase tracking-widest text-white/40">
-            <span>Inference Load</span>
-            <span>12%</span>
-          </div>
-        </div>
-      )
-    }
   ];
 
   // Default to overview tab if admin status is confirmed
@@ -1598,6 +1537,16 @@ export default function Admin() {
 
           {/* Site Analytics — fullscreen ExpandableScreen pattern */}
           <SiteAnalyticsCard />
+
+          {/* Profit Trend — wires ProfitGraph into the dashboard */}
+          <ProfitTrendCard
+            affiliateRevenue={stats?.affiliateRevenue || 0}
+            galleryRevenue={stats?.galleryRevenue || 0}
+            bookingRevenue={stats?.bookingRevenue || 0}
+          />
+
+          {/* Refunds — previously invisible, now a real ledger */}
+          <RefundsCard />
         </div>
 
         {/* Console / My Apps Tab Bar (Premium Dock) */}

@@ -29,6 +29,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { LoadingSpinner } from './Loading';
 import { AdminBentoCard } from './ui/admin-bento-card';
+import { ExpandableScreen, ExpandableScreenContent } from './ui/expandable-screen';
 import { cn } from './ui/utils';
 
 interface NewsletterCampaign {
@@ -1088,105 +1089,6 @@ export default function NewsletterManagement() {
                       </div>
                     </div>
                   </div>
-
-                  {/* Expanded Content */}
-                  {expandedCampaignId === campaign.id && (
-                    <div className="mt-8 mx-4 p-6 bg-black animate-in fade-in duration-300" onClick={(e) => e.stopPropagation()}>
-                      {/* Campaign Deep Stats */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                        <div className="p-4 bg-white/[0.04] relative group/stat">
-                          <div className="text-white/20 text-[8px] uppercase tracking-widest mb-1 font-bold">Delivery Status</div>
-                          <div className={cn(
-                            "text-base font-bold uppercase tracking-tight",
-                            campaign.status === 'sent' ? "text-green-400" :
-                              campaign.status === 'failed' ? "text-red-400" : "text-white/60"
-                          )}>
-                            {campaign.status}
-                          </div>
-                        </div>
-                        <div className="p-4 bg-white/[0.04] relative group/stat">
-                          <div className="text-white/20 text-[8px] uppercase tracking-widest mb-1 font-bold">Successful Sends</div>
-                          <div className="text-base font-bold text-white tracking-tight">
-                            {Math.round((campaign.emails_sent / (campaign.total_subscribers || 1)) * 100)}%
-                          </div>
-                        </div>
-                        <div className="p-4 bg-white/[0.04] relative group/stat">
-                          <div className="text-white/20 text-[8px] uppercase tracking-widest mb-1 font-bold">Failed Count</div>
-                          <div className="text-base font-bold text-red-400/80 tracking-tight">
-                            {campaign.emails_failed}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Delivery Details Table-like List */}
-                      <div>
-                        <div className="bg-white/[0.03] px-4 py-3 flex items-center justify-between">
-                          <h4 className="text-white text-[10px] uppercase tracking-[0.2em] font-bold flex items-center gap-2">
-                            <EnvelopeIcon className="w-3.5 h-3.5" />
-                            Delivery Details
-                          </h4>
-                          <div className="flex items-center gap-3">
-                            {campaign.emails_failed > 0 && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  retryFailedEmails(campaign.id);
-                                }}
-                                disabled={retrying === campaign.id}
-                                className="px-3 py-1 bg-white text-black text-[8px] font-bold uppercase tracking-widest hover:bg-white/90 transition disabled:opacity-50"
-                              >
-                                {retrying === campaign.id ? 'RETRYING...' : `RETRY FAILED (${campaign.emails_failed})`}
-                              </button>
-                            )}
-                            <button
-                              onClick={(e) => { e.stopPropagation(); loadCampaignLogs(campaign.id); }}
-                              className="text-white/40 hover:text-white transition"
-                            >
-                              {loadingLogs === campaign.id ? <LoadingSpinner size="sm" /> : <ArrowPathIcon className="w-3.5 h-3.5" />}
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="max-h-80 overflow-y-auto custom-scrollbar">
-                          {loadingLogs === campaign.id ? (
-                            <div className="py-12 flex justify-center">
-                              <LoadingSpinner size="sm" />
-                            </div>
-                          ) : campaignLogs[campaign.id] ? (
-                            <div className="space-y-1">
-                              {campaignLogs[campaign.id].map((log) => (
-                                <div key={log.id} className="px-4 py-3 flex items-center justify-between group/log">
-                                  <div className="flex-1 min-w-0">
-                                    <div className="text-white text-sm font-medium">{log.subscriber_email}</div>
-                                    {log.error_message && (
-                                      <div className="text-red-400/60 text-[10px] uppercase font-bold mt-1 tracking-tight truncate">
-                                        {log.error_message}
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div className="flex items-center gap-4">
-                                    <span className={cn(
-                                      "text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5",
-                                      log.status === 'sent' ? "text-green-400/80 bg-green-400/5" : "text-red-400/80 bg-red-400/5"
-                                    )}>
-                                      {log.status}
-                                    </span>
-                                    <span className="text-white/20 text-[10px] font-bold w-32 text-right">
-                                      {log.sent_at ? formatDate(log.sent_at) : ''}
-                                    </span>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="py-12 text-center text-white/20 text-[10px] uppercase tracking-widest">
-                              No logs locally available. Click refresh.
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
@@ -1194,36 +1096,135 @@ export default function NewsletterManagement() {
         </div>
       </AdminBentoCard>
 
-      {/* Recipient Selection Modal */}
-      {showRecipientSelection && (
-        <div
-          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-sm"
-          onClick={() => setShowRecipientSelection(false)}
-        >
-          <div
-            className="bg-black/50 rounded-none w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden flex flex-col relative shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between p-8 bg-[#0a0a0a]">
-              <div>
-                <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
-                  <UsersIcon className="w-6 h-6" />
-                  RECIPIENT SELECTION
-                </h2>
-                <div className="text-white/40 text-[10px] uppercase tracking-[0.2em] mt-1">
-                  {selectedSubscriberEmails.size} SELECTED / {subscriberCount} ACTIVE
-                </div>
-              </div>
-              <button
-                onClick={() => setShowRecipientSelection(false)}
-                className="text-white/30 hover:text-white transition-all p-2 hover:bg-white/5"
-              >
-                <XMarkIcon className="w-6 h-6" />
-              </button>
-            </div>
+      {/* Campaign Detail — fullscreen ExpandableScreen pattern */}
+      <ExpandableScreen
+        isOpen={!!expandedCampaignId}
+        onOpenChange={(open) => { if (!open) setExpandedCampaignId(null); }}
+      >
+        <ExpandableScreenContent className="overflow-x-hidden">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden">
+            {(() => {
+              const campaign = campaigns.find(c => c.id === expandedCampaignId);
+              if (!campaign) return null;
+              return (
+                <div className="max-w-4xl mx-auto w-full px-4 sm:px-8 pt-20 pb-16">
+                  <div className="flex items-center gap-3 mb-1">
+                    <EnvelopeIcon className="w-5 h-5 text-white/40" />
+                    <h2 className="text-xl font-black uppercase tracking-wide text-white truncate">{campaign.subject}</h2>
+                  </div>
+                  <p className="text-white/50 text-sm normal-case mb-8">
+                    {campaign.sent_at ? formatDate(campaign.sent_at) : formatDate(campaign.created_at)}
+                  </p>
 
-            <div className="p-8 space-y-6 overflow-hidden flex flex-col flex-1">
-              <div className="flex gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div className="bg-white/5 p-4">
+                      <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Delivery Status</div>
+                      <div className={cn(
+                        "text-xl font-black uppercase tracking-tight",
+                        campaign.status === 'sent' ? "text-green-400" :
+                          campaign.status === 'failed' ? "text-red-400" : "text-white/60"
+                      )}>
+                        {campaign.status}
+                      </div>
+                    </div>
+                    <div className="bg-white/5 p-4">
+                      <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Successful Sends</div>
+                      <div className="text-xl font-black font-mono text-white">
+                        {Math.round((campaign.emails_sent / (campaign.total_subscribers || 1)) * 100)}%
+                      </div>
+                    </div>
+                    <div className="bg-white/5 p-4">
+                      <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Failed Count</div>
+                      <div className="text-xl font-black font-mono text-red-400/80">
+                        {campaign.emails_failed}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="bg-white/5 px-4 py-3 flex items-center justify-between">
+                      <h4 className="text-white text-[10px] uppercase tracking-[0.2em] font-bold flex items-center gap-2">
+                        <EnvelopeIcon className="w-3.5 h-3.5" />
+                        Delivery Details
+                      </h4>
+                      <div className="flex items-center gap-3">
+                        {campaign.emails_failed > 0 && (
+                          <button
+                            onClick={() => retryFailedEmails(campaign.id)}
+                            disabled={retrying === campaign.id}
+                            className="px-3 py-1 bg-white text-black text-[8px] font-bold uppercase tracking-widest hover:bg-white/90 transition disabled:opacity-50"
+                          >
+                            {retrying === campaign.id ? 'RETRYING...' : `RETRY FAILED (${campaign.emails_failed})`}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => loadCampaignLogs(campaign.id)}
+                          className="text-white/40 hover:text-white transition"
+                        >
+                          {loadingLogs === campaign.id ? <LoadingSpinner size="sm" /> : <ArrowPathIcon className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="max-h-96 overflow-y-auto custom-scrollbar">
+                      {loadingLogs === campaign.id ? (
+                        <div className="py-12 flex justify-center">
+                          <LoadingSpinner size="sm" />
+                        </div>
+                      ) : campaignLogs[campaign.id] ? (
+                        <div className="space-y-1 mt-1">
+                          {campaignLogs[campaign.id].map((log) => (
+                            <div key={log.id} className="px-4 py-3 flex items-center justify-between bg-white/[0.03]">
+                              <div className="flex-1 min-w-0">
+                                <div className="text-white text-sm font-medium">{log.subscriber_email}</div>
+                                {log.error_message && (
+                                  <div className="text-red-400/60 text-[10px] uppercase font-bold mt-1 tracking-tight truncate">
+                                    {log.error_message}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-4">
+                                <span className={cn(
+                                  "text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5",
+                                  log.status === 'sent' ? "text-green-400/80 bg-green-400/5" : "text-red-400/80 bg-red-400/5"
+                                )}>
+                                  {log.status}
+                                </span>
+                                <span className="text-white/20 text-[10px] font-bold w-32 text-right">
+                                  {log.sent_at ? formatDate(log.sent_at) : ''}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="py-12 text-center text-white/20 text-[10px] uppercase tracking-widest">
+                          No logs locally available. Click refresh.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </ExpandableScreenContent>
+      </ExpandableScreen>
+
+      {/* Recipient Selection — fullscreen ExpandableScreen pattern */}
+      <ExpandableScreen isOpen={showRecipientSelection} onOpenChange={setShowRecipientSelection}>
+        <ExpandableScreenContent className="overflow-x-hidden">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden">
+            <div className="max-w-2xl mx-auto w-full px-4 sm:px-8 pt-20 pb-16">
+              <div className="flex items-center gap-3 mb-1">
+                <UsersIcon className="w-5 h-5 text-white/40" />
+                <h2 className="text-xl font-black uppercase tracking-wide text-white">Recipient Selection</h2>
+              </div>
+              <p className="text-white/50 text-sm normal-case mb-8">
+                {selectedSubscriberEmails.size} selected / {subscriberCount} active
+              </p>
+
+              <div className="flex gap-4 mb-6">
                 <div className="relative flex-1">
                   <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
                   <input
@@ -1231,7 +1232,7 @@ export default function NewsletterManagement() {
                     placeholder="QUERY EMAIL INDEX..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 bg-black text-white placeholder-white/20 focus:bg-white/5 transition-colors outline-none text-xs uppercase tracking-widest"
+                    className="w-full pl-12 pr-4 py-3 bg-white/5 text-white placeholder-white/20 focus:bg-white/10 transition-colors outline-none text-xs uppercase tracking-widest"
                   />
                 </div>
                 <button
@@ -1249,7 +1250,7 @@ export default function NewsletterManagement() {
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto custom-scrollbar space-y-1">
+              <div className="space-y-1 mb-6">
                 {loadingSubscribers ? (
                   <div className="flex items-center justify-center py-24">
                     <LoadingSpinner size="lg" />
@@ -1270,7 +1271,7 @@ export default function NewsletterManagement() {
                           }}
                           className={cn(
                             "flex items-center justify-between p-4 cursor-pointer transition-all",
-                            isSelected ? "bg-white/10" : "hover:bg-white/[0.02]"
+                            isSelected ? "bg-white/10" : "bg-white/[0.02] hover:bg-white/[0.05]"
                           )}
                         >
                           <div className="flex items-center gap-4">
@@ -1293,7 +1294,7 @@ export default function NewsletterManagement() {
                 )}
               </div>
 
-              <div className="pt-6 border-t border-white/5 flex justify-end">
+              <div className="flex justify-end">
                 <button
                   onClick={() => setShowRecipientSelection(false)}
                   className="px-8 py-3 bg-white text-black font-bold uppercase tracking-[0.2em] text-xs hover:bg-white/90 transition-all"
@@ -1303,39 +1304,22 @@ export default function NewsletterManagement() {
               </div>
             </div>
           </div>
-        </div>
-      )}
+        </ExpandableScreenContent>
+      </ExpandableScreen>
 
-      {/* Subscriber List Modal */}
-      {showSubscriberModal && (
-        <div
-          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-sm"
-          onClick={() => setShowSubscriberModal(false)}
-        >
-          <div
-            className="bg-black/50 rounded-none w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden flex flex-col relative shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between p-8 bg-[#0a0a0a]">
-              <div>
-                <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
-                  <UsersIcon className="w-6 h-6" />
-                  SUBSCRIBER INDEX
-                </h2>
-                <div className="text-white/40 text-[10px] uppercase tracking-[0.2em] mt-1">Management Console</div>
+      {/* Subscriber Index — fullscreen ExpandableScreen pattern */}
+      <ExpandableScreen isOpen={showSubscriberModal} onOpenChange={setShowSubscriberModal}>
+        <ExpandableScreenContent className="overflow-x-hidden">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden">
+            <div className="max-w-2xl mx-auto w-full px-4 sm:px-8 pt-20 pb-16">
+              <div className="flex items-center gap-3 mb-1">
+                <UsersIcon className="w-5 h-5 text-white/40" />
+                <h2 className="text-xl font-black uppercase tracking-wide text-white">Subscriber Index</h2>
               </div>
-              <button
-                onClick={() => setShowSubscriberModal(false)}
-                className="text-white/30 hover:text-white transition-all p-2 hover:bg-white/5"
-              >
-                <XMarkIcon className="w-6 h-6" />
-              </button>
-            </div>
+              <p className="text-white/50 text-sm normal-case mb-8">Management console</p>
 
-            <div className="p-8 space-y-6 overflow-hidden flex flex-col flex-1">
               {/* Tabs and Search */}
-              <div className="space-y-4">
+              <div className="space-y-4 mb-6">
                 <div className="flex gap-1 bg-white/[0.02] p-1">
                   <button
                     onClick={() => setSubscriberTab('subscribed')}
@@ -1364,7 +1348,7 @@ export default function NewsletterManagement() {
                     placeholder="QUERY EMAIL INDEX..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 bg-black text-white placeholder-white/20 focus:bg-white/5 transition-colors outline-none text-xs uppercase tracking-widest"
+                    className="w-full pl-12 pr-4 py-3 bg-white/5 text-white placeholder-white/20 focus:bg-white/10 transition-colors outline-none text-xs uppercase tracking-widest"
                   />
                 </div>
               </div>
@@ -1380,7 +1364,7 @@ export default function NewsletterManagement() {
                 return filteredSubscribers.length > 0 && (
                   <button
                     onClick={() => copyEmailsToClipboard(filteredSubscribers.map((s: Subscriber) => s.email))}
-                    className="w-full py-4 bg-white/5 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all"
+                    className="w-full py-4 mb-6 bg-white/5 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all"
                   >
                     <ClipboardIcon className="w-4 h-4" />
                     EXPORT {filteredSubscribers.length} ENTITIES TO CLIPBOARD
@@ -1389,7 +1373,7 @@ export default function NewsletterManagement() {
               })()}
 
               {/* List Container */}
-              <div className="flex-1 overflow-y-auto custom-scrollbar space-y-1">
+              <div className="space-y-1">
                 {loadingSubscribers ? (
                   <div className="flex flex-col items-center justify-center py-24 gap-4">
                     <div className="flex justify-center">
@@ -1407,7 +1391,7 @@ export default function NewsletterManagement() {
                     .map((subscriber: Subscriber) => (
                       <div
                         key={subscriber.id}
-                        className="flex items-center justify-between p-4 group transition-colors hover:bg-white/[0.01]"
+                        className="flex items-center justify-between p-4 group transition-colors bg-white/[0.02] hover:bg-white/[0.05]"
                       >
                         <div className="flex items-center gap-4">
                           <div className={cn(
@@ -1449,8 +1433,8 @@ export default function NewsletterManagement() {
               </div>
             </div>
           </div>
-        </div>
-      )}
+        </ExpandableScreenContent>
+      </ExpandableScreen>
     </div>
   );
 }

@@ -13,6 +13,8 @@ import { DocumentTextIcon, PlusIcon, PencilSquareIcon, TrashIcon, EyeIcon, EyeSl
 import RichTextEditor from './RichTextEditor';
 import { unescapeContent } from '../utils/blogUtils';
 import { AdminBentoCard } from './ui/admin-bento-card';
+import { ExpandableScreen, ExpandableScreenContent } from './ui/expandable-screen';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { cn } from './ui/utils';
 
 interface BlogPost {
@@ -152,6 +154,24 @@ export default function BlogManagement() {
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
       .trim();
+  };
+
+  const closeEditor = () => {
+    setIsCreating(false);
+    setIsBookClubPost(false);
+    setEditingPost(null);
+    setFormData({
+      title: '',
+      slug: '',
+      content: '',
+      excerpt: '',
+      published: false,
+      seo_title: '',
+      seo_description: '',
+      seo_keywords: '',
+      og_image_url: '',
+      blog_column: 'main',
+    });
   };
 
   const handleTitleChange = (title: string) => {
@@ -445,14 +465,24 @@ export default function BlogManagement() {
         </h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <ExpandableScreen isOpen={isCreating} onOpenChange={(open) => { if (!open) closeEditor(); }}>
+        <ExpandableScreenContent className="overflow-x-hidden">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden">
+            <div className="max-w-3xl mx-auto w-full px-4 sm:px-8 pt-20 pb-16">
+              <button
+                onClick={closeEditor}
+                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-white/40 hover:text-white transition-all duration-300 ease-out group w-fit mb-6"
+              >
+                <ArrowLeftIcon className="w-3 h-3 group-hover:-translate-x-1 transition-transform duration-300" />
+                Blog Management
+              </button>
+              <div className="flex items-center gap-3 mb-8">
+                <DocumentTextIcon className="w-5 h-5 text-white/40" />
+                <h2 className="text-xl font-black uppercase tracking-wide text-white">
+                  {editingPost ? 'Edit Post' : isBookClubPost ? 'Create New Book Club Post' : 'Create New Post'}
+                </h2>
+              </div>
 
-        {/* Create/Edit Form */}
-        {isCreating && (
-          <AdminBentoCard
-            title={editingPost ? 'Edit Post' : isBookClubPost ? 'Create New Book Club Post' : 'Create New Post'}
-            className="md:col-span-2"
-          >
             {isBookClubPost && !editingPost && userSubdomain && (
               <div className="mb-8 p-4 bg-white/10">
                 <p className="text-white text-[10px] font-bold uppercase tracking-widest">
@@ -590,32 +620,19 @@ export default function BlogManagement() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setIsCreating(false);
-                    setIsBookClubPost(false);
-                    setEditingPost(null);
-                    setFormData({
-                      title: '',
-                      slug: '',
-                      content: '',
-                      excerpt: '',
-                      published: false,
-                      seo_title: '',
-                      seo_description: '',
-                      seo_keywords: '',
-                      og_image_url: '',
-                      blog_column: 'main',
-                    });
-                  }}
+                  onClick={closeEditor}
                   className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-bold uppercase tracking-widest text-xs transition"
                 >
                   Cancel
                 </button>
               </div>
             </form>
-          </AdminBentoCard>
-        )}
+            </div>
+          </div>
+        </ExpandableScreenContent>
+      </ExpandableScreen>
 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* THE LOST ARCHIVES Section (Admin's regular posts - no subdomain) */}
         <AdminBentoCard
           title="THE LOST ARCHIVES"

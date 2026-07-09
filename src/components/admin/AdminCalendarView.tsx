@@ -13,11 +13,7 @@ import {
     ChevronRightIcon,
 } from '@heroicons/react/24/outline';
 import { CalendarWidget } from '../ui/calendar-widget';
-import {
-    Expandable,
-    ExpandableContent,
-    ExpandableTrigger,
-} from '../ui/expandable';
+import { ExpandableScreen, ExpandableScreenContent } from '../ui/expandable-screen';
 
 interface CalendarBooking {
     id: string;
@@ -638,94 +634,104 @@ function ExpandableBookingCard({ booking: b, onChange }: { booking: CalendarBook
 
     const isPending = b.status === 'pending';
     const isConfirmed = b.status === 'confirmed';
+    const [isOpen, setIsOpen] = useState(false);
 
     return (
-        <Expandable>
-            {({ isExpanded }: { isExpanded: boolean }) => (
-                <div className="bg-white/[0.03] border-b border-white/5">
-                    <ExpandableTrigger>
-                        <div className="flex items-center gap-3 p-3 cursor-pointer hover:bg-white/[0.04] transition-colors select-none">
-                            <div className="flex-1 min-w-0">
-                                <p className="text-white text-sm font-bold truncate">
-                                    {b.name}{b.business_name ? ` · ${b.business_name}` : ''}
-                                </p>
-                                <p className="text-white/40 text-[10px] font-mono truncate">
-                                    {b.event_type}
-                                    {b.start_time ? ` · ${b.start_time.slice(0, 5)}–${b.end_time?.slice(0, 5) || '?'}` : ''}
-                                    {b.location ? ` · ${b.location}` : ''}
-                                </p>
-                            </div>
-                            <StatusPill status={b.status} />
-                            {isExpanded
-                                ? <ChevronUpIcon className="w-3.5 h-3.5 text-white/30 flex-shrink-0" />
-                                : <ChevronDownIcon className="w-3.5 h-3.5 text-white/30 flex-shrink-0" />}
-                        </div>
-                    </ExpandableTrigger>
-                    <ExpandableContent preset="slide-up">
-                        <div className="px-3 pb-3 space-y-1.5 border-t border-white/5">
-                            <DetailRow label="Email" value={b.email} />
-                            {b.location && <DetailRow label="Location" value={b.location} />}
-                            {b.start_time && (
-                                <DetailRow label="Time" value={`${b.start_time.slice(0, 5)} – ${b.end_time?.slice(0, 5) || 'TBD'}`} />
-                            )}
-                            <DetailRow label="Retainer" value={b.retainer ? 'Paid' : 'Not paid'} />
-                            <DetailRow label="Date" value={b.event_date} />
+        <div className="contents">
+            <button
+                type="button"
+                onClick={() => setIsOpen(true)}
+                className="w-full flex items-center gap-3 p-3 bg-white/[0.03] hover:bg-white/[0.06] transition-colors select-none text-left"
+            >
+                <div className="flex-1 min-w-0">
+                    <p className="text-white text-sm font-bold truncate">
+                        {b.name}{b.business_name ? ` · ${b.business_name}` : ''}
+                    </p>
+                    <p className="text-white/40 text-[10px] font-mono truncate">
+                        {b.event_type}
+                        {b.start_time ? ` · ${b.start_time.slice(0, 5)}–${b.end_time?.slice(0, 5) || '?'}` : ''}
+                        {b.location ? ` · ${b.location}` : ''}
+                    </p>
+                </div>
+                <StatusPill status={b.status} />
+                <ChevronDownIcon className="w-3.5 h-3.5 text-white/30 flex-shrink-0 -rotate-90" />
+            </button>
 
-                            {/* Action bar */}
-                            <div className="flex flex-wrap items-center gap-2 pt-3 mt-2 border-t border-white/5">
-                                {isPending && (
-                                    <>
-                                        <ActionButton
-                                            tone="confirm"
-                                            disabled={busy !== null}
-                                            loading={busy === 'confirm'}
-                                            onClick={(e) => { e.stopPropagation(); setStatus('confirmed', true); }}
-                                        >
-                                            Approve
-                                        </ActionButton>
+            <ExpandableScreen isOpen={isOpen} onOpenChange={setIsOpen}>
+                <ExpandableScreenContent className="overflow-x-hidden">
+                    <div className="flex-1 overflow-y-auto overflow-x-hidden">
+                        <div className="max-w-2xl mx-auto w-full px-4 sm:px-8 pt-20 pb-16">
+                            <div className="flex items-center gap-3 mb-1">
+                                <h2 className="text-lg font-black text-white truncate">
+                                    {b.name}{b.business_name ? ` · ${b.business_name}` : ''}
+                                </h2>
+                                <StatusPill status={b.status} />
+                            </div>
+                            <p className="text-white/40 text-xs font-mono mb-8">{b.event_type}</p>
+
+                            <div className="space-y-1.5">
+                                <DetailRow label="Email" value={b.email} />
+                                {b.location && <DetailRow label="Location" value={b.location} />}
+                                {b.start_time && (
+                                    <DetailRow label="Time" value={`${b.start_time.slice(0, 5)} – ${b.end_time?.slice(0, 5) || 'TBD'}`} />
+                                )}
+                                <DetailRow label="Retainer" value={b.retainer ? 'Paid' : 'Not paid'} />
+                                <DetailRow label="Date" value={b.event_date} />
+
+                                {/* Action bar */}
+                                <div className="flex flex-wrap items-center gap-2 pt-6 mt-4 bg-white/5 p-3">
+                                    {isPending && (
+                                        <>
+                                            <ActionButton
+                                                tone="confirm"
+                                                disabled={busy !== null}
+                                                loading={busy === 'confirm'}
+                                                onClick={() => setStatus('confirmed', true)}
+                                            >
+                                                Approve
+                                            </ActionButton>
+                                            <ActionButton
+                                                tone="decline"
+                                                disabled={busy !== null}
+                                                loading={busy === 'decline'}
+                                                onClick={() => setStatus('declined', true)}
+                                            >
+                                                Reject
+                                            </ActionButton>
+                                        </>
+                                    )}
+                                    {isConfirmed && (
                                         <ActionButton
                                             tone="decline"
                                             disabled={busy !== null}
-                                            loading={busy === 'decline'}
-                                            onClick={(e) => { e.stopPropagation(); setStatus('declined', true); }}
+                                            loading={busy === 'cancel'}
+                                            onClick={() => setStatus('cancelled', true)}
                                         >
-                                            Reject
+                                            Cancel booking
                                         </ActionButton>
-                                    </>
-                                )}
-                                {isConfirmed && (
-                                    <ActionButton
-                                        tone="decline"
-                                        disabled={busy !== null}
-                                        loading={busy === 'cancel'}
-                                        onClick={(e) => { e.stopPropagation(); setStatus('cancelled', true); }}
+                                    )}
+                                    <a
+                                        href={`/admin?section=invoices&booking_id=${encodeURIComponent(b.id)}&new=1`}
+                                        className="px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest bg-white/5 text-white/80 hover:bg-white hover:text-black transition-colors"
                                     >
-                                        Cancel booking
-                                    </ActionButton>
-                                )}
-                                <a
-                                    href={`/admin?section=invoices&booking_id=${encodeURIComponent(b.id)}&new=1`}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest border border-white/20 text-white/80 hover:bg-white/5 hover:text-white transition-colors"
-                                >
-                                    Create invoice
-                                </a>
-                                <a
-                                    href={`/admin/bookings?id=${encodeURIComponent(b.id)}`}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors"
-                                >
-                                    Open →
-                                </a>
-                                {error && (
-                                    <span className="text-[10px] text-red-400 font-mono">{error}</span>
-                                )}
+                                        Create invoice
+                                    </a>
+                                    <a
+                                        href={`/admin/bookings?id=${encodeURIComponent(b.id)}`}
+                                        className="px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors"
+                                    >
+                                        Open →
+                                    </a>
+                                    {error && (
+                                        <span className="text-[10px] text-red-400 font-mono">{error}</span>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </ExpandableContent>
-                </div>
-            )}
-        </Expandable>
+                    </div>
+                </ExpandableScreenContent>
+            </ExpandableScreen>
+        </div>
     );
 }
 
@@ -758,37 +764,47 @@ function ActionButton({
 }
 
 function ExpandableEventCard({ event: e }: { event: CalendarEventRow }) {
+    const [isOpen, setIsOpen] = useState(false);
+
     return (
-        <Expandable>
-            {({ isExpanded }: { isExpanded: boolean }) => (
-                <div className="bg-white/[0.03] border-b border-white/5">
-                    <ExpandableTrigger>
-                        <div className="flex items-center gap-3 p-3 cursor-pointer hover:bg-white/[0.04] transition-colors select-none">
-                            <TicketIcon className="w-3.5 h-3.5 text-white/30 flex-shrink-0" />
-                            <div className="flex-1 min-w-0">
-                                <p className="text-white text-sm font-bold truncate">{e.title}</p>
-                                {e.location && (
-                                    <p className="text-white/40 text-[10px] font-mono truncate">{e.location}</p>
-                                )}
-                            </div>
-                            <StatusPill status={e.status} />
-                            {isExpanded
-                                ? <ChevronUpIcon className="w-3.5 h-3.5 text-white/30 flex-shrink-0" />
-                                : <ChevronDownIcon className="w-3.5 h-3.5 text-white/30 flex-shrink-0" />}
-                        </div>
-                    </ExpandableTrigger>
-                    <ExpandableContent preset="fade">
-                        <div className="px-3 pb-3 border-t border-white/5 space-y-1.5">
-                            {e.image_url && (
-                                <img src={e.image_url} alt={e.title} className="w-full h-28 object-cover mt-2" />
-                            )}
-                            {e.location && <DetailRow label="Location" value={e.location} />}
-                            <DetailRow label="Date" value={e.event_date} />
-                        </div>
-                    </ExpandableContent>
+        <div className="contents">
+            <button
+                type="button"
+                onClick={() => setIsOpen(true)}
+                className="w-full flex items-center gap-3 p-3 bg-white/[0.03] hover:bg-white/[0.06] transition-colors select-none text-left"
+            >
+                <TicketIcon className="w-3.5 h-3.5 text-white/30 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                    <p className="text-white text-sm font-bold truncate">{e.title}</p>
+                    {e.location && (
+                        <p className="text-white/40 text-[10px] font-mono truncate">{e.location}</p>
+                    )}
                 </div>
-            )}
-        </Expandable>
+                <StatusPill status={e.status} />
+                <ChevronDownIcon className="w-3.5 h-3.5 text-white/30 flex-shrink-0 -rotate-90" />
+            </button>
+
+            <ExpandableScreen isOpen={isOpen} onOpenChange={setIsOpen}>
+                <ExpandableScreenContent className="overflow-x-hidden">
+                    <div className="flex-1 overflow-y-auto overflow-x-hidden">
+                        <div className="max-w-2xl mx-auto w-full px-4 sm:px-8 pt-20 pb-16">
+                            <div className="flex items-center gap-3 mb-8">
+                                <TicketIcon className="w-5 h-5 text-white/40" />
+                                <h2 className="text-lg font-black text-white truncate">{e.title}</h2>
+                                <StatusPill status={e.status} />
+                            </div>
+                            {e.image_url && (
+                                <img src={e.image_url} alt={e.title} className="w-full h-48 object-cover mb-6" />
+                            )}
+                            <div className="space-y-1.5">
+                                {e.location && <DetailRow label="Location" value={e.location} />}
+                                <DetailRow label="Date" value={e.event_date} />
+                            </div>
+                        </div>
+                    </div>
+                </ExpandableScreenContent>
+            </ExpandableScreen>
+        </div>
     );
 }
 

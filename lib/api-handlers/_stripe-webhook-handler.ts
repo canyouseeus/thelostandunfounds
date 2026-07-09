@@ -82,7 +82,8 @@ export default async function handler(
             }
             case 'charge.refunded': {
                 const charge = event.data.object as Stripe.Charge
-                console.log('↩️ Charge refunded:', charge.id, 'amount:', charge.amount_refunded)
+                console.log('Charge refunded:', charge.id, 'amount:', charge.amount_refunded)
+                await recordRefund(stripe, charge)
                 // We don't currently auto-reverse affiliate commissions on refund,
                 // but logging here makes it easy to add later.
                 break
@@ -162,6 +163,95 @@ async function finalizeCheckoutSession(session: Stripe.Checkout.Session) {
         console.error('❌ Failed to confirm affiliate commission:', error)
     } else if (updated && updated.length > 0) {
         console.log('✅ Affiliate commission confirmed for session:', session.id)
+    }
+}
+
+/**
+ * Persist a refund into the `refunds` ledger table and, when we can match it
+ * back to a shop_orders row, flip that row's status to 'refunded'.
+ *
+ * Matching is best-effort: we resolve the originating Checkout Session from
+ * the charge's payment_intent, then use its metadata/payment_link to figure
+ * out which order type it belongs to. Gallery and booking rows aren't
+ * mutated here (their status columns weren't designed for a 'refunded'
+ * value) — the ledger row is the source of truth for those.
+ */
+async function recordRefund(stripe: Stripe, charge: Stripe.Charge) {
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+    const supabaseKey =
+        process.env.SUPABASE_SERVICE_ROLE_KEY ||
+        process.env.SUPABASE_ANON_KEY ||
+        process.env.VITE_SUPABASE_ANON_KEY
+
+    if (!supabaseUrl || !supabaseKey) {
+        console.error('Missing Supabase credentials in refund handler')
+        return
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    let source: 'shop' | 'gallery' | 'booking' | 'event' | 'unknown' = 'unknown'
+    let sourceId: string | null = null
+
+    try {
+        const paymentIntentId =
+            typeof charge.payment_intent === 'string' ? charge.payment_intent : charge.payment_intent?.id
+
+        if (paymentIntentId) {
+            const sessions = await stripe.checkout.sessions.list({ payment_intent: paymentIntentId, limit: 1 })
+            const session = sessions.data[0]
+
+            if (session?.metadata?.source === 'tlau-shop-checkout' && session.metadata?.shopOrderId) {
+                source = 'shop'
+                sourceId = session.metadata.shopOrderId
+                await supabase
+                    .from('shop_orders')
+                    .update({ status: 'refunded' })
+                    .eq('id', sourceId)
+                    .eq('status', 'paid')
+            } else if (session?.metadata?.source === 'tlau-photos' && session.metadata?.photoOrderId) {
+                source = 'gallery'
+                sourceId = session.metadata.photoOrderId
+            } else if (session?.metadata?.source === 'tlau-events' && session.metadata?.eventOrderId) {
+                source = 'event'
+                sourceId = session.metadata.eventOrderId
+            } else if (session?.payment_link) {
+                const paymentLinkId =
+                    typeof session.payment_link === 'string' ? session.payment_link : session.payment_link.id
+                const { data: invoice } = await supabase
+                    .from('invoices')
+                    .select('id')
+                    .eq('stripe_payment_link_id', paymentLinkId)
+                    .maybeSingle()
+                if (invoice) {
+                    source = 'booking'
+                    sourceId = invoice.id
+                }
+            }
+        }
+    } catch (matchErr: any) {
+        console.error('Refund order matching failed (logging refund unmatched):', matchErr?.message)
+    }
+
+    const { error: insertError } = await supabase.from('refunds').upsert(
+        {
+            stripe_charge_id: charge.id,
+            stripe_payment_intent:
+                typeof charge.payment_intent === 'string' ? charge.payment_intent : charge.payment_intent?.id ?? null,
+            source,
+            source_id: sourceId,
+            amount_cents: charge.amount_refunded,
+            currency: charge.currency || 'usd',
+            reason: charge.refunds?.data?.[0]?.reason ?? null,
+            customer_email: charge.billing_details?.email ?? charge.receipt_email ?? null,
+        },
+        { onConflict: 'stripe_charge_id' }
+    )
+
+    if (insertError) {
+        console.error('Failed to record refund:', insertError)
+    } else {
+        console.log('Refund recorded:', { charge: charge.id, source, sourceId, amount: charge.amount_refunded })
     }
 }
 

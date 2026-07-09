@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { ArrowTrendingUpIcon, CurrencyDollarIcon, CalendarIcon } from '@heroicons/react/24/outline';
-import { safeJsonParse } from '../../utils/helpers';
+import { supabase } from '../../lib/supabase';
 
 interface ProfitDataPoint {
   date: string;
@@ -19,6 +19,14 @@ interface ProfitSummary {
   todayProfit: number;
   days: number;
 }
+
+const PLATFORM_LAUNCH_DATE = '2026-01-15';
+
+const isTestEmail = (email: string | null | undefined) => {
+  if (!email) return false;
+  const testPatterns = ['test', 'demo', 'admin', 'dev', 'staging', 'dummy'];
+  return testPatterns.some(pattern => email.toLowerCase().includes(pattern));
+};
 
 export default function ProfitGraph() {
   const [profitData, setProfitData] = useState<ProfitDataPoint[]>([]);
@@ -39,21 +47,71 @@ export default function ProfitGraph() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`/api/admin/profit-stats?days=${days}`);
+      const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+      const cutoffIso = cutoff >= new Date(PLATFORM_LAUNCH_DATE) ? cutoff.toISOString() : PLATFORM_LAUNCH_DATE;
 
-      const contentType = response.headers.get('content-type') || '';
-      if (contentType.includes('text/html')) {
-        throw new Error('API routes are not available. Please restart with "npm run dev:api"');
-      }
+      const [commissionsRes, ordersRes, invoicesRes, refundsRes] = await Promise.all([
+        supabase
+          .from('affiliate_commissions')
+          .select('created_at, profit_generated, product_cost, status')
+          .eq('status', 'paid')
+          .gte('created_at', cutoffIso),
+        supabase
+          .from('photo_orders')
+          .select('created_at, total_amount_cents, email, payment_status, metadata')
+          .gte('created_at', cutoffIso),
+        supabase
+          .from('invoices')
+          .select('paid_at, total')
+          .eq('status', 'paid')
+          .not('paid_at', 'is', null)
+          .gte('paid_at', cutoffIso),
+        supabase
+          .from('refunds')
+          .select('created_at, amount_cents')
+          .gte('created_at', cutoffIso),
+      ]);
 
-      if (!response.ok) {
-        const errorData = await safeJsonParse(response).catch(() => ({ error: `HTTP ${response.status}` }));
-        throw new Error(errorData.error || 'Failed to load profit data');
-      }
+      const byDay = new Map<string, number>();
+      const addToDay = (dateStr: string, amount: number) => {
+        const day = dateStr.slice(0, 10);
+        byDay.set(day, (byDay.get(day) || 0) + amount);
+      };
 
-      const result = await safeJsonParse(response);
-      setProfitData(result.dailyData || []);
-      setSummary(result.summary || null);
+      (commissionsRes.data || []).forEach(c => {
+        const profit = parseFloat(c.profit_generated?.toString() || '0') + parseFloat(c.product_cost?.toString() || '0');
+        if (!isNaN(profit)) addToDay(c.created_at, profit);
+      });
+
+      (ordersRes.data || []).forEach(o => {
+        if (isTestEmail(o.email) || o.payment_status !== 'completed' || (o.metadata as any)?.environment === 'sandbox') return;
+        addToDay(o.created_at, (o.total_amount_cents || 0) / 100);
+      });
+
+      (invoicesRes.data || []).forEach(inv => {
+        addToDay(inv.paid_at, Number(inv.total || 0));
+      });
+
+      // refunds table may not exist yet if the migration hasn't been applied — ignore silently
+      (refundsRes.data || []).forEach(r => {
+        addToDay(r.created_at, -(r.amount_cents || 0) / 100);
+      });
+
+      const sortedDays = Array.from(byDay.keys()).sort();
+      const dailyData: ProfitDataPoint[] = sortedDays.map(day => ({ date: day, profit: byDay.get(day) || 0 }));
+
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const totalProfit = dailyData.reduce((sum, d) => sum + d.profit, 0);
+      const summaryData: ProfitSummary = {
+        totalProfit,
+        averageDailyProfit: dailyData.length > 0 ? totalProfit / dailyData.length : 0,
+        maxDailyProfit: dailyData.length > 0 ? Math.max(...dailyData.map(d => d.profit)) : 0,
+        todayProfit: byDay.get(todayStr) || 0,
+        days,
+      };
+
+      setProfitData(dailyData);
+      setSummary(summaryData);
     } catch (err) {
       console.error('Error loading profit data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load profit data');
