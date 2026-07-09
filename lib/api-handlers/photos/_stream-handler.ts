@@ -1,5 +1,8 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { google } from 'googleapis';
+// googleapis is ~195MB and statically importing it bloats every route bundled
+// into this consolidated function (search/checkout/etc), which previously
+// caused FUNCTION_INVOCATION_FAILED cold-start crashes for the gallery API
+// (see commit bdf72cc). Load it lazily so only stream requests pay for it.
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { fileId } = req.query;
@@ -9,6 +12,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
+        const { google } = await import('googleapis');
         const auth = new google.auth.GoogleAuth({
             credentials: {
                 client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,

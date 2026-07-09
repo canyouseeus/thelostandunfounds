@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createServiceSupabaseClient } from '../_supabase-admin-client';
-import { bulkTagPhotos } from '../../../src/lib/tags';
+import { createServiceSupabaseClient } from '../_supabase-admin-client.js';
+import { bulkTagPhotos } from '../../../src/lib/tags.js';
 
 const ADMIN_EMAILS = ['thelostandunfounds@gmail.com', 'admin@thelostandunfounds.com'];
 
