@@ -15,6 +15,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const pathParam = req.query.path
   const segments = Array.isArray(pathParam) ? pathParam : pathParam ? [pathParam] : []
   const route = segments.join('/')
+  console.log('[Photos Router DEBUG]', { url: req.url, query: req.query, pathParam, segments, route })
 
   switch (route) {
     case 'search':
