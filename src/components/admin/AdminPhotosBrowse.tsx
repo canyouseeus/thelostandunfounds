@@ -633,17 +633,19 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="text-sm font-bold text-white uppercase tracking-wide flex items-center gap-2 flex-wrap">
-            <PhotoIcon className="w-4 h-4 flex-shrink-0" />
-            <span>All Photos</span>
-            <span className="text-white/40 font-mono text-xs">({totalCount.toLocaleString()})</span>
-          </h3>
-          <p className="text-[10px] text-white/30 mt-0.5 hidden sm:block">Browse all synced photos across every library</p>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+      {/* Title */}
+      <div className="min-w-0">
+        <h3 className="text-sm font-bold text-white uppercase tracking-wide flex items-center gap-2 flex-wrap">
+          <PhotoIcon className="w-4 h-4 flex-shrink-0" />
+          <span>All Photos</span>
+          <span className="text-white/40 font-mono text-xs">({totalCount.toLocaleString()})</span>
+        </h3>
+        <p className="text-[10px] text-white/30 mt-0.5 hidden sm:block">Browse all synced photos across every library</p>
+      </div>
+
+      {/* Sticky console tray — Select/Filter/search/library chips stay reachable while the grid scrolls */}
+      <div className="sticky top-0 z-20 bg-black/95 backdrop-blur-sm py-2 space-y-2">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setShowFilters(v => !v)}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors ${
@@ -671,6 +673,44 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
             <ArrowPathIcon className="w-4 h-4" />
           </button>
         </div>
+
+        {selectionMode && (
+          <p className="text-[10px] text-white/30">
+            <span className="sm:hidden">Tap photos to select.</span>
+            <span className="hidden sm:inline">Click photos to select · Drag on background to rubber-band · Click <strong className="text-white/50">Select</strong> again to exit</span>
+          </p>
+        )}
+
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <MagnifyingGlassIcon className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-white/30" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search by filename..."
+              className="w-full bg-white/5 pl-8 pr-8 py-2 text-xs text-white placeholder-white/20 focus:outline-none focus:bg-white/10 transition-colors"
+            />
+            {search && (
+              <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white">
+                <XMarkIcon className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+          <div className="flex gap-1 overflow-x-auto flex-nowrap scrollbar-hide sm:flex-wrap">
+            <button
+              onClick={() => setSelectedLibraryId(null)}
+              className={`flex-shrink-0 px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors ${selectedLibraryId === null ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'}`}
+            >All</button>
+            {libraries.map(lib => (
+              <button
+                key={lib.id}
+                onClick={() => setSelectedLibraryId(lib.id === selectedLibraryId ? null : lib.id)}
+                className={`flex-shrink-0 px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors ${selectedLibraryId === lib.id ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'}`}
+              >{lib.name}</button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Filter panel */}
@@ -682,7 +722,7 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <div className="bg-white/[0.03] border border-white/10 p-4 space-y-4">
+            <div className="bg-white/[0.03] p-4 space-y-4">
               <div>
                 <p className="text-[9px] uppercase font-black tracking-widest text-white/30 mb-2">Filter by Tag</p>
                 <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
@@ -711,7 +751,7 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
                   <select
                     value={filterCameraModel}
                     onChange={e => setFilterCameraModel(e.target.value)}
-                    className="w-full bg-black border border-white/20 text-white text-[10px] px-2 py-1.5 focus:outline-none focus:border-white/40"
+                    className="w-full bg-black text-white text-[10px] px-2 py-1.5 focus:outline-none"
                   >
                     <option value="">All cameras</option>
                     {cameraModels.map(m => <option key={m} value={m}>{m}</option>)}
@@ -723,7 +763,7 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
                     type="date"
                     value={filterDateFrom}
                     onChange={e => setFilterDateFrom(e.target.value)}
-                    className="w-full bg-black border border-white/20 text-white text-[10px] px-2 py-1.5 focus:outline-none focus:border-white/40"
+                    className="w-full bg-black text-white text-[10px] px-2 py-1.5 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -732,7 +772,7 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
                     type="date"
                     value={filterDateTo}
                     onChange={e => setFilterDateTo(e.target.value)}
-                    className="w-full bg-black border border-white/20 text-white text-[10px] px-2 py-1.5 focus:outline-none focus:border-white/40"
+                    className="w-full bg-black text-white text-[10px] px-2 py-1.5 focus:outline-none"
                   />
                 </div>
               </div>
@@ -749,45 +789,6 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
           </motion.div>
         )}
       </AnimatePresence>
-
-      {selectionMode && (
-        <p className="text-[10px] text-white/30">
-          <span className="sm:hidden">Tap photos to select.</span>
-          <span className="hidden sm:inline">Click photos to select · Drag on background to rubber-band · Click <strong className="text-white/50">Select</strong> again to exit</span>
-        </p>
-      )}
-
-      {/* Search + library filter */}
-      <div className="flex flex-col sm:flex-row gap-2">
-        <div className="relative flex-1">
-          <MagnifyingGlassIcon className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-white/30" />
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search by filename..."
-            className="w-full bg-white/5 pl-8 pr-8 py-2 text-xs text-white placeholder-white/20 focus:outline-none focus:bg-white/10 transition-colors"
-          />
-          {search && (
-            <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white">
-              <XMarkIcon className="w-3 h-3" />
-            </button>
-          )}
-        </div>
-        <div className="flex gap-1 flex-wrap">
-          <button
-            onClick={() => setSelectedLibraryId(null)}
-            className={`px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors ${selectedLibraryId === null ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'}`}
-          >All</button>
-          {libraries.map(lib => (
-            <button
-              key={lib.id}
-              onClick={() => setSelectedLibraryId(lib.id === selectedLibraryId ? null : lib.id)}
-              className={`px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors ${selectedLibraryId === lib.id ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'}`}
-            >{lib.name}</button>
-          ))}
-        </div>
-      </div>
 
       {/* Grid */}
       {loading ? (
