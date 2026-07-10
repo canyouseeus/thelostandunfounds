@@ -65,14 +65,21 @@ export function ExpandableScreen({
       return () => document.removeEventListener('keydown', handleEscape);
     }
 
-    // Save existing overflow so callers (e.g. Admin) can independently lock scroll
-    const prevOverflow = document.body.style.overflow;
+    // Save existing overflow so callers (e.g. Admin) can independently lock scroll.
+    // documentElement (<html>) is the actual scrolling root in standards mode —
+    // locking body alone leaves it scrollable, which on mobile Safari lets touches
+    // land on background content behind this fixed-position overlay (taps appear
+    // to do nothing because they hit whatever scrolled into that screen position).
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
     document.addEventListener('keydown', handleEscape);
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = prevOverflow;
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
     };
   }, [isOpen]);
 
