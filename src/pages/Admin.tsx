@@ -94,6 +94,7 @@ import { RevenueTracker } from '../components/ui/revenue-tracker';
 import { ClockWidget } from '../components/ui/clock-widget';
 import { CalendarWidget } from '../components/ui/calendar-widget';
 import CopyDebugReport from '../components/admin/CopyDebugReport';
+import AdminDeploymentNotifications from '../components/admin/AdminDeploymentNotifications';
 import { installGlobalListeners } from '../lib/adminErrorLog';
 
 interface DashboardStats {
@@ -1485,6 +1486,7 @@ export default function Admin() {
           </div>
           <div className="flex items-center gap-2">
             <CopyDebugReport />
+            <AdminDeploymentNotifications />
             <Link
               to={userSubdomain ? `/${userSubdomain}/profile` : "/profile"}
               className="p-2 bg-white text-black hover:bg-white/90 transition"
