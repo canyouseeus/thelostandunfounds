@@ -1167,7 +1167,7 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
             />
             <motion.div
               initial={{ x: '100%' }}
-              animate={{ x: 0 }}
+              animate={{ x: '0%' }}
               exit={{ x: '100%' }}
               transition={{ type: 'tween', duration: 0.25, ease: 'easeInOut' }}
               className="fixed right-0 top-0 bottom-0 z-[20001] w-full max-w-md bg-black border-l border-white/10 flex flex-col overflow-hidden"
