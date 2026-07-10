@@ -12,10 +12,17 @@ import bulkTagHandler from '../../lib/api-handlers/photos/_bulk-tag-handler.js'
 import { photoTagsHandler, removePhotoTagHandler } from '../../lib/api-handlers/photos/_photo-tags-handler.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const pathParam = req.query.path
-  const segments = Array.isArray(pathParam) ? pathParam : pathParam ? [pathParam] : []
+  // Vercel's routing layer sometimes exposes the catch-all segment under the
+  // literal key '...path' instead of 'path' (see api/gallery/[...path].ts,
+  // which has the same fallback) — and in that case as a single slash-joined
+  // string rather than an array, so split it back into segments.
+  const pathParam = req.query.path || req.query['...path']
+  const segments = Array.isArray(pathParam)
+    ? pathParam
+    : typeof pathParam === 'string' && pathParam.length > 0
+      ? pathParam.split('/')
+      : []
   const route = segments.join('/')
-  console.log('[Photos Router DEBUG]', { url: req.url, query: req.query, pathParam, segments, route })
 
   switch (route) {
     case 'search':
