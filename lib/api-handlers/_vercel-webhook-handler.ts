@@ -138,7 +138,7 @@ function verifySignature(rawBody: Buffer, signature: string, secret: string): bo
 }
 
 async function recordDeployment(
-    supabase: ReturnType<typeof createClient>,
+    supabase: any,
     row: {
         vercelDeploymentId: string
         status: 'succeeded' | 'error' | 'canceled'
@@ -166,7 +166,7 @@ async function recordDeployment(
 }
 
 async function createNotification(
-    supabase: ReturnType<typeof createClient>,
+    supabase: any,
     row: { type: string; title: string; message: string; severity: 'info' | 'warning' | 'error' }
 ) {
     const { error } = await supabase.from('admin_notifications').insert({
