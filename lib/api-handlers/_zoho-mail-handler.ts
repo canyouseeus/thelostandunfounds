@@ -223,8 +223,12 @@ export async function getMessage(
     const m = data.data || data;
 
     const message: MailMessageFull = {
-      messageId: m.messageId || m.message_id || messageId,
-      folderId: m.folderId || m.folder_id || '',
+      // Prefer the requested IDs (exact strings) over Zoho's response fields —
+      // Zoho returns these as unquoted JSON numbers, and IDs this large
+      // (e.g. 1783136480784158500) exceed Number.MAX_SAFE_INTEGER and get
+      // silently rounded by JSON.parse.
+      messageId: messageId || m.messageId || m.message_id,
+      folderId: folderId || m.folderId || m.folder_id || '',
       from: m.fromAddress || m.from_address || m.sender || '',
       fromAddress: m.fromAddress || m.from_address || '',
       to: m.toAddress || m.to_address || '',
