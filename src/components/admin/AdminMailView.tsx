@@ -151,8 +151,14 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
       let parsed: any = {};
       try { parsed = JSON.parse(rawText); } catch {}
       const detail = parsed.error || parsed.message || rawText.slice(0, 500) || '(no body)';
-      const msg = `HTTP ${response.status} — /api/mail/${endpoint}\n${detail}`;
       logApiCall(options.method || 'GET', `/api/mail/${endpoint}`, response.status, detail);
+
+      // A response with no JSON body (Vercel's own routing error page, a gateway
+      // timeout, etc.) never reached our handler — show a short, friendly message
+      // instead of dumping the raw HTML/text error page in the UI.
+      const msg = parsed.error || parsed.message
+        ? `HTTP ${response.status} — /api/mail/${endpoint}\n${detail}`
+        : `Couldn't reach the mail server (HTTP ${response.status}). Please try again.`;
       throw new Error(msg);
     }
     logApiCall(options.method || 'GET', `/api/mail/${endpoint}`, response.status, 'ok');
@@ -234,8 +240,8 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
       setLoadingMessage(true);
       setError(null);
 
-      const qs = folderId ? `?folderId=${encodeURIComponent(folderId)}` : '';
-      const data = await mailApi(`message/${messageId}${qs}`);
+      const qs = folderId ? `&folderId=${encodeURIComponent(folderId)}` : '';
+      const data = await mailApi(`message?id=${encodeURIComponent(messageId)}${qs}`);
       setSelectedMessage(data.message);
 
       // Mark as read
@@ -355,7 +361,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
   // Delete message
   const handleDelete = useCallback(async (messageId: string) => {
     try {
-      await mailApi(`message/${messageId}`, { method: 'DELETE' });
+      await mailApi(`message?id=${encodeURIComponent(messageId)}`, { method: 'DELETE' });
       success('Message deleted');
 
       // Remove from list
@@ -444,7 +450,7 @@ export default function AdminMailView({ onBack }: AdminMailViewProps) {
   // Download attachment
   const handleDownloadAttachment = useCallback(async (messageId: string, attachment: MailAttachment) => {
     try {
-      const response = await fetch(`/api/mail/attachment/${messageId}/${attachment.attachmentId}`, {
+      const response = await fetch(`/api/mail/attachment?messageId=${encodeURIComponent(messageId)}&attachmentId=${encodeURIComponent(attachment.attachmentId)}`, {
         headers: { 'X-Admin-Email': user?.email || '' }
       });
 
