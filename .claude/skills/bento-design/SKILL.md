@@ -1,6 +1,6 @@
 ---
 name: bento-design
-description: Guidelines and patterns for implementing premium Bento-style UI. Use when building dashboard layouts, card grids, or premium sections. Use when user mentions "bento", "dashboard cards", or "grid layout".
+description: Guidelines and patterns for implementing premium Bento-style UI. Use when building dashboard layouts, card grids, or premium sections. Use when user mentions "bento", "dashboard cards", "grid layout", "console tray", or "icon dock".
 ---
 
 # Bento Design Skill
@@ -30,6 +30,90 @@ This skill provides the core design principles, component patterns, and implemen
 *   `AdminBentoRow`: For key-value pairs or compact lines of information.
 *   `CollapsibleSection`: For major page areas that need to be organized.
 *   `LoadingSpinner`: Use the custom square-style loading spinner.
+
+## Platform Console Tray
+
+A named pattern for icon-only tool docks. Two live examples: the dashboard's app switcher in
+`src/pages/Admin.tsx` (search "Premium Dock" / "Platform Console") and the sticky in-page toolbar
+in `src/components/admin/AdminPhotosBrowse.tsx` (All Photos tab).
+
+**Rule: a console tray is icon-only, never a row of always-visible controls.** Each icon expands
+its own focused card below the tray on tap — a search icon opens a search card, a filter icon
+opens a filter card, and so on. Never lay out inline search bars, chip rows, or labeled text
+buttons side-by-side in the tray itself — that reads as clutter, not a console.
+
+### Dock shell
+```tsx
+<div className="flex items-center gap-1 p-1.5 bg-white/5 backdrop-blur-xl rounded-full">
+  {/* icon buttons */}
+</div>
+```
+Use `rounded-[32px] sm:rounded-full` instead of a plain `rounded-full` only if the dock wraps to
+multiple rows on narrow screens (many icons); a dock that always fits a single row stays a full
+pill.
+
+### Icon button
+```tsx
+<button
+  onClick={...}
+  title={label}
+  className={`relative p-2.5 sm:p-3 transition-all duration-300 rounded-full group/btn ${
+    active
+      ? 'bg-white text-black scale-110 shadow-[0_0_20px_rgba(255,255,255,0.2)]'
+      : 'text-white/60 hover:text-white hover:bg-white/10'
+  }`}
+>
+  <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+  {badge ? (
+    <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-red-500 text-white text-[8px] font-black flex items-center justify-center rounded-full">
+      {badge}
+    </span>
+  ) : null}
+  <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-white text-black text-[9px] font-black uppercase tracking-widest opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+    {label}
+  </span>
+</button>
+```
+- Active state inverts to solid white + scales up 110% — never a border, underline, or ring.
+- Badge is a small red circle top-right with a count, matching the notification-count treatment
+  used elsewhere (submission counts, selection counts).
+- No borders anywhere in the dock or its buttons.
+
+### Expandable card per icon
+Tapping an icon toggles a single `openCard: string | null` piece of state (only one card open at
+a time) and reveals that tool's content directly below the dock with the standard collapsible
+pattern:
+```tsx
+<AnimatePresence>
+  {openCard === 'search' && (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 'auto' }}
+      exit={{ opacity: 0, height: 0 }}
+      className="overflow-hidden"
+    >
+      <div className="bg-white/[0.03] p-4">{/* the one tool this icon is for */}</div>
+    </motion.div>
+  )}
+</AnimatePresence>
+```
+
+### Sticky variant (in-page toolbar, not the dashboard dock)
+When a console tray is pinned above scrolling content (e.g. above a photo grid), it MUST sit on a
+fully solid backdrop — no `bg-white/5`-only tray floating over content, no `backdrop-blur`
+standing in for opacity. Wrap the dock in a solid `bg-black` (not `bg-black/95`) sticky container
+so nothing ever shows through or peeks above it while scrolling:
+```tsx
+<div className="sticky z-20 -mt-4 bg-black pt-4 pb-3" style={{ top: '-1rem' }}>
+  {/* title/count row, then the dock pill — bg-white/5 is fine on the dock itself since it now
+      sits on solid black, not directly over scrolling content */}
+</div>
+```
+The `-mt-4` / `top: -1rem` offset matters whenever the scrolling pane has its own top padding:
+Chrome measures a sticky element's "stuck" offset from the padding edge, so a plain `top-0` can
+leave that padding's worth of gap unpainted once the tray is stuck — scrolling content peeks
+through it. Pull the tray up by that same amount and restore the visual spacing with the tray's
+own padding instead, so the solid background covers the gap too.
 
 ## Implementation Patterns
 

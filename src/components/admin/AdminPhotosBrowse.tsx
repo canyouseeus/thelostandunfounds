@@ -22,6 +22,7 @@ import {
   MinusIcon,
   PlusIcon,
   PencilSquareIcon,
+  RectangleStackIcon,
 } from '@heroicons/react/24/outline';
 import { LoadingSpinner } from '@/components/Loading';
 import { useAuth } from '@/contexts/AuthContext';
@@ -107,8 +108,10 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
   const [filterCameraModel, setFilterCameraModel] = useState('');
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
   const [cameraModels, setCameraModels] = useState<string[]>([]);
+
+  // Console tray — which expandable card (if any) is open below the icon dock
+  const [openCard, setOpenCard] = useState<'search' | 'filter' | 'library' | null>(null);
 
   // Batch selection
   const [selectionMode, setSelectionMode] = useState(false);
@@ -633,92 +636,121 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
 
   return (
     <div className="space-y-4">
-      {/* Sticky console tray — solid black, Title + Select/Filter/search/library chips stay reachable
-          while the grid scrolls. The tab pane wrapping this component has pt-4; Chrome's sticky
-          "stuck" offset is measured from the padding edge, so a plain top-0 still leaves that 16px
-          gap unpainted once stuck. top:-1rem shifts the stuck position up to cover it, and the
-          negative margin does the same for the pre-scroll resting position. */}
-      <div className="sticky z-20 -mt-4 bg-black pt-4 pb-2 space-y-2" style={{ top: '-1rem' }}>
-        <div className="min-w-0">
-          <h3 className="text-sm font-bold text-white uppercase tracking-wide flex items-center gap-2 flex-wrap">
+      {/* Sticky console tray — Platform Console dock pattern (see .claude/skills/bento-design):
+          rounded translucent icon dock on a solid black backing. The tab pane wrapping this
+          component has pt-4; Chrome's sticky "stuck" offset is measured from the padding edge, so
+          a plain top-0 still leaves that 16px gap unpainted once stuck. top:-1rem shifts the stuck
+          position up to cover it, and the negative margin does the same pre-scroll. */}
+      <div className="sticky z-20 -mt-4 bg-black pt-4 pb-3 space-y-2" style={{ top: '-1rem' }}>
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-sm font-bold text-white uppercase tracking-wide flex items-center gap-2 flex-wrap min-w-0">
             <PhotoIcon className="w-4 h-4 flex-shrink-0" />
             <span>All Photos</span>
             <span className="text-white/40 font-mono text-xs">({totalCount.toLocaleString()})</span>
           </h3>
-          <p className="text-[10px] text-white/30 mt-0.5 hidden sm:block">Browse all synced photos across every library</p>
-        </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowFilters(v => !v)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors ${
-              showFilters || activeFilters > 0 ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <FunnelIcon className="w-3.5 h-3.5" />
-            Filter
-            {activeFilters > 0 && <span className="ml-0.5 bg-black text-white text-[8px] font-black px-1 py-0.5">{activeFilters}</span>}
-          </button>
-          <button
-            onClick={() => selectionMode ? exitSelectionMode() : setSelectionMode(true)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors ${
-              selectionMode ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <CursorArrowRaysIcon className="w-3.5 h-3.5" />
-            {selectionMode ? (selectedIds.size > 0 ? `${selectedIds.size} selected` : 'Selecting…') : 'Select'}
-          </button>
-          <button
-            onClick={() => loadPhotos(true)}
-            className="text-white/40 hover:text-white transition-colors"
-            title="Refresh"
-          >
-            <ArrowPathIcon className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1 p-1.5 bg-white/5 backdrop-blur-xl rounded-full flex-shrink-0">
+            {([
+              { id: 'search', icon: MagnifyingGlassIcon, label: 'Search', active: openCard === 'search' || !!search, onClick: () => setOpenCard(c => c === 'search' ? null : 'search') },
+              { id: 'filter', icon: FunnelIcon, label: 'Filter', active: openCard === 'filter' || activeFilters > 0, badge: activeFilters || undefined, onClick: () => setOpenCard(c => c === 'filter' ? null : 'filter') },
+              { id: 'library', icon: RectangleStackIcon, label: 'Library', active: openCard === 'library' || !!selectedLibraryId, onClick: () => setOpenCard(c => c === 'library' ? null : 'library') },
+              { id: 'select', icon: CursorArrowRaysIcon, label: 'Select', active: selectionMode, badge: (selectionMode && selectedIds.size > 0) ? selectedIds.size : undefined, onClick: () => selectionMode ? exitSelectionMode() : setSelectionMode(true) },
+              { id: 'refresh', icon: ArrowPathIcon, label: 'Refresh', active: false, onClick: () => loadPhotos(true) },
+            ] as const).map(btn => (
+              <button
+                key={btn.id}
+                onClick={btn.onClick}
+                className={`relative p-2.5 transition-all duration-300 rounded-full group/btn ${
+                  btn.active ? 'bg-white text-black scale-110 shadow-[0_0_20px_rgba(255,255,255,0.2)]' : 'text-white/60 hover:text-white hover:bg-white/10'
+                }`}
+                title={btn.label}
+              >
+                <btn.icon className="w-4 h-4" />
+                {'badge' in btn && btn.badge ? (
+                  <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-red-500 text-white text-[8px] font-black flex items-center justify-center rounded-full">
+                    {btn.badge}
+                  </span>
+                ) : null}
+                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-white text-black text-[9px] font-black uppercase tracking-widest opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-30">
+                  {btn.label}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {selectionMode && (
           <p className="text-[10px] text-white/30">
             <span className="sm:hidden">Tap photos to select.</span>
-            <span className="hidden sm:inline">Click photos to select · Drag on background to rubber-band · Click <strong className="text-white/50">Select</strong> again to exit</span>
+            <span className="hidden sm:inline">Click photos to select · Drag on background to rubber-band · Tap <strong className="text-white/50">Select</strong> again to exit</span>
           </p>
         )}
-
-        <div className="flex flex-col sm:flex-row gap-2">
-          <div className="relative flex-1">
-            <MagnifyingGlassIcon className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-white/30" />
-            <input
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search by filename..."
-              className="w-full bg-white/5 pl-8 pr-8 py-2 text-xs text-white placeholder-white/20 focus:outline-none focus:bg-white/10 transition-colors"
-            />
-            {search && (
-              <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white">
-                <XMarkIcon className="w-3 h-3" />
-              </button>
-            )}
-          </div>
-          <div className="flex gap-1 overflow-x-auto flex-nowrap scrollbar-hide sm:flex-wrap">
-            <button
-              onClick={() => setSelectedLibraryId(null)}
-              className={`flex-shrink-0 px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors ${selectedLibraryId === null ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'}`}
-            >All</button>
-            {libraries.map(lib => (
-              <button
-                key={lib.id}
-                onClick={() => setSelectedLibraryId(lib.id === selectedLibraryId ? null : lib.id)}
-                className={`flex-shrink-0 px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors ${selectedLibraryId === lib.id ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'}`}
-              >{lib.name}</button>
-            ))}
-          </div>
-        </div>
       </div>
 
-      {/* Filter panel */}
+      {/* Search card */}
       <AnimatePresence>
-        {showFilters && (
+        {openCard === 'search' && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="bg-white/[0.03] p-4">
+              <p className="text-[9px] uppercase font-black tracking-widest text-white/30 mb-2">Search by Filename</p>
+              <div className="relative">
+                <MagnifyingGlassIcon className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-white/30" />
+                <input
+                  type="text"
+                  autoFocus
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Search by filename..."
+                  className="w-full bg-white/5 pl-8 pr-8 py-2 text-xs text-white placeholder-white/20 focus:outline-none focus:bg-white/10 transition-colors"
+                />
+                {search && (
+                  <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white">
+                    <XMarkIcon className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Library card */}
+      <AnimatePresence>
+        {openCard === 'library' && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="bg-white/[0.03] p-4">
+              <p className="text-[9px] uppercase font-black tracking-widest text-white/30 mb-2">Filter by Library</p>
+              <div className="flex flex-wrap gap-1">
+                <button
+                  onClick={() => setSelectedLibraryId(null)}
+                  className={`px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors ${selectedLibraryId === null ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'}`}
+                >All</button>
+                {libraries.map(lib => (
+                  <button
+                    key={lib.id}
+                    onClick={() => setSelectedLibraryId(lib.id === selectedLibraryId ? null : lib.id)}
+                    className={`px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors ${selectedLibraryId === lib.id ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'}`}
+                  >{lib.name}</button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Filter card */}
+      <AnimatePresence>
+        {openCard === 'filter' && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
