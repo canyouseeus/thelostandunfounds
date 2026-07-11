@@ -633,18 +633,21 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
 
   return (
     <div className="space-y-4">
-      {/* Title */}
-      <div className="min-w-0">
-        <h3 className="text-sm font-bold text-white uppercase tracking-wide flex items-center gap-2 flex-wrap">
-          <PhotoIcon className="w-4 h-4 flex-shrink-0" />
-          <span>All Photos</span>
-          <span className="text-white/40 font-mono text-xs">({totalCount.toLocaleString()})</span>
-        </h3>
-        <p className="text-[10px] text-white/30 mt-0.5 hidden sm:block">Browse all synced photos across every library</p>
-      </div>
+      {/* Sticky console tray — solid black, Title + Select/Filter/search/library chips stay reachable
+          while the grid scrolls. The tab pane wrapping this component has pt-4; Chrome's sticky
+          "stuck" offset is measured from the padding edge, so a plain top-0 still leaves that 16px
+          gap unpainted once stuck. top:-1rem shifts the stuck position up to cover it, and the
+          negative margin does the same for the pre-scroll resting position. */}
+      <div className="sticky z-20 -mt-4 bg-black pt-4 pb-2 space-y-2" style={{ top: '-1rem' }}>
+        <div className="min-w-0">
+          <h3 className="text-sm font-bold text-white uppercase tracking-wide flex items-center gap-2 flex-wrap">
+            <PhotoIcon className="w-4 h-4 flex-shrink-0" />
+            <span>All Photos</span>
+            <span className="text-white/40 font-mono text-xs">({totalCount.toLocaleString()})</span>
+          </h3>
+          <p className="text-[10px] text-white/30 mt-0.5 hidden sm:block">Browse all synced photos across every library</p>
+        </div>
 
-      {/* Sticky console tray — Select/Filter/search/library chips stay reachable while the grid scrolls */}
-      <div className="sticky top-0 z-20 bg-black/95 backdrop-blur-sm py-2 space-y-2">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowFilters(v => !v)}
