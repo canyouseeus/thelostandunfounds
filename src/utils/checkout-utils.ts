@@ -167,6 +167,110 @@ export async function getStripeCheckoutUrlByPriceId(params: {
 }
 
 /**
+ * Create a Stripe Checkout Session for a Prodigi print-on-demand product.
+ * Stripe collects the shipping address on its hosted page, so no address
+ * form is needed client-side for this path.
+ */
+export async function getProdigiCheckoutUrl(params: {
+  productId: string
+  quantity?: number
+  customerEmail?: string
+  affiliateRef?: string | null
+}): Promise<{ sessionId: string; url: string; shopOrderId: string }> {
+  let affiliateRef = params.affiliateRef
+  if (!affiliateRef && typeof window !== 'undefined') {
+    const { getAffiliateRef } = await import('./affiliate-tracking')
+    affiliateRef = getAffiliateRef()
+  }
+
+  const response = await fetch('/api/prodigi/checkout', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(affiliateRef ? { 'X-Affiliate-Ref': affiliateRef } : {}),
+    },
+    body: JSON.stringify({
+      productId: params.productId,
+      quantity: params.quantity || 1,
+      customerEmail: params.customerEmail,
+    }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Checkout creation failed' }))
+    throw new Error(error.error || 'Failed to create Prodigi checkout session')
+  }
+
+  const data = await response.json()
+  if (!data.url || !data.sessionId) {
+    throw new Error('Invalid response from Prodigi checkout API')
+  }
+  return { sessionId: data.sessionId, url: data.url, shopOrderId: data.shopOrderId }
+}
+
+export interface ProdigiShippingRecipient {
+  name: string
+  email: string
+  address: {
+    line1: string
+    line2?: string
+    postalOrZipCode: string
+    countryCode: string
+    townOrCity: string
+    stateOrCounty?: string
+  }
+}
+
+/**
+ * Create a Strike (Bitcoin Lightning) invoice for a Prodigi print product.
+ * Unlike getStrikeCheckoutInvoice, this requires a shipping recipient since
+ * Strike's hosted invoice has no address-collection step.
+ */
+export async function getProdigiStrikeInvoice(params: {
+  productId: string
+  recipient: ProdigiShippingRecipient
+  affiliateRef?: string | null
+}): Promise<{
+  invoiceId: string
+  lnInvoice: string
+  expirationInSec: number
+  amount: { amount: string; currency: string }
+  description: string
+}> {
+  let affiliateRef = params.affiliateRef
+  if (!affiliateRef && typeof window !== 'undefined') {
+    const { getAffiliateRef } = await import('./affiliate-tracking')
+    affiliateRef = getAffiliateRef()
+  }
+
+  const response = await fetch('/api/prodigi/checkout-strike', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(affiliateRef ? { 'X-Affiliate-Ref': affiliateRef } : {}),
+    },
+    body: JSON.stringify({ productId: params.productId, recipient: params.recipient }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Payment creation failed' }))
+    throw new Error(error.error || 'Failed to create Strike invoice')
+  }
+
+  const data = await response.json()
+  if (!data.success || !data.lnInvoice) {
+    throw new Error('Invalid response from Strike API')
+  }
+  return {
+    invoiceId: data.invoiceId,
+    lnInvoice: data.lnInvoice,
+    expirationInSec: data.expirationInSec,
+    amount: data.amount,
+    description: data.description,
+  }
+}
+
+/**
  * Create a Stripe Checkout Session and return the hosted-checkout URL.
  * The caller should redirect the browser to `url` (window.location = url).
  */

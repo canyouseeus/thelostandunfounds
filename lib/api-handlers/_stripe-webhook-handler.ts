@@ -2,6 +2,7 @@ import { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
 import { triggerReferralCommission } from './affiliates/_commission-trigger.js'
+import { createProdigiOrder } from './_prodigi-client.js'
 
 /**
  * Stripe Webhook Handler
@@ -140,6 +141,9 @@ async function finalizeCheckoutSession(session: Stripe.Checkout.Session) {
         await triggerPhotoOrderCommission(supabase, session)
     } else if (session.metadata?.source === 'tlau-shop-checkout') {
         await finalizeShopOrder(supabase, session)
+    } else if (session.metadata?.source === 'tlau-prodigi-checkout') {
+        await finalizeShopOrder(supabase, session)
+        await finalizeProdigiOrder(supabase, session)
     } else if (session.metadata?.source === 'tlau-events') {
         await finalizeEventOrder(supabase, session)
     } else if (session.payment_link) {
@@ -439,6 +443,118 @@ async function finalizeShopOrder(
         } catch (emailErr: any) {
             console.error('⚠️ Failed to send digital delivery email:', emailErr?.message || emailErr)
             // Don't throw — the order is paid; resend can be triggered manually.
+        }
+    }
+}
+
+/**
+ * Submit a paid Prodigi print order to the Prodigi fulfillment API and
+ * trigger the affiliate commission (42% of unit_price - unit_cost profit).
+ *
+ * Idempotent: skips submission if the prodigi_orders row is already past
+ * 'paid' (submitted/in_production/shipped/complete), and Prodigi's own
+ * idempotencyKey (keyed to the row id) protects against a duplicate
+ * createOrder call even if this function somehow runs twice concurrently.
+ */
+async function finalizeProdigiOrder(supabase: any, session: Stripe.Checkout.Session) {
+    const { data: order, error: orderError } = await supabase
+        .from('prodigi_orders')
+        .select('*')
+        .eq('payment_ref', session.id)
+        .single()
+
+    if (orderError || !order) {
+        console.error('❌ prodigi_orders row not found for session:', session.id, orderError)
+        return
+    }
+
+    if (order.status !== 'pending_payment') {
+        console.log('ℹ️ prodigi_order already processed, skipping:', order.id, order.status)
+        return
+    }
+
+    const shipping = (session as any).shipping_details
+    const customerEmail = session.customer_details?.email || session.customer_email || order.customer_email
+
+    if (!shipping?.address?.line1 || !shipping?.name) {
+        console.error('❌ Stripe session missing shipping_details for Prodigi order:', session.id)
+        await supabase
+            .from('prodigi_orders')
+            .update({ status: 'error', error_message: 'Missing shipping address from Stripe session', paid_at: new Date().toISOString() })
+            .eq('id', order.id)
+        return
+    }
+
+    const recipient = {
+        name: shipping.name,
+        email: customerEmail || undefined,
+        address: {
+            line1: shipping.address.line1,
+            line2: shipping.address.line2 || undefined,
+            postalOrZipCode: shipping.address.postal_code,
+            countryCode: shipping.address.country,
+            townOrCity: shipping.address.city,
+            stateOrCounty: shipping.address.state || undefined,
+        },
+    }
+
+    await supabase
+        .from('prodigi_orders')
+        .update({ status: 'paid', paid_at: new Date().toISOString(), customer_email: customerEmail, recipient })
+        .eq('id', order.id)
+
+    try {
+        const origin = process.env.SITE_URL || 'https://www.thelostandunfounds.com'
+        const result = await createProdigiOrder({
+            merchantReference: order.id,
+            idempotencyKey: order.id,
+            recipient,
+            items: [
+                {
+                    sku: order.sku,
+                    copies: order.copies || 1,
+                    assets: [{ printArea: 'default', url: order.asset_url }],
+                },
+            ],
+            callbackUrl: `${origin.replace(/\/$/, '')}/api/prodigi/webhook`,
+            metadata: { prodigiOrderRowId: order.id, shopOrderId: order.shop_order_id },
+        })
+
+        await supabase
+            .from('prodigi_orders')
+            .update({
+                status: 'submitted',
+                prodigi_order_id: result?.order?.id || null,
+                prodigi_status: result?.order?.status || null,
+                submitted_at: new Date().toISOString(),
+            })
+            .eq('id', order.id)
+
+        console.log('✅ Prodigi order submitted:', { rowId: order.id, prodigiOrderId: result?.order?.id })
+    } catch (prodigiErr: any) {
+        console.error('❌ Failed to submit Prodigi order:', prodigiErr?.message || prodigiErr)
+        await supabase
+            .from('prodigi_orders')
+            .update({ status: 'error', error_message: prodigiErr?.message || 'Prodigi submission failed' })
+            .eq('id', order.id)
+        // Don't throw — the customer paid, so this needs to surface to admins
+        // for manual retry rather than failing the whole webhook (which would
+        // make Stripe retry indefinitely on our end while charging succeeded).
+    }
+
+    if (customerEmail) {
+        const profit = Math.max(0, Number(order.unit_price) - Number(order.unit_cost)) * (order.copies || 1)
+        if (profit > 0) {
+            const result = await triggerReferralCommission(supabase, {
+                email: customerEmail,
+                source: 'prodigi_order',
+                sourceId: order.id,
+                grossAmount: profit,
+                fallbackAffiliateCode: order.affiliate_ref || session.metadata?.affiliateRef || null,
+            })
+            if (result.triggered) {
+                console.log('✅ Prodigi order commission registered:', { order: order.id, amount: result.amount })
+            }
         }
     }
 }

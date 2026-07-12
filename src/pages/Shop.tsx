@@ -16,8 +16,9 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import MarketplaceBanner from '../components/events/MarketplaceBanner';
 import { initAffiliateTracking, getAffiliateRef } from '../utils/affiliate-tracking';
-import { getStrikeCheckoutInvoice, pollStrikeInvoiceStatus, getStripeCheckoutUrl, getStripeCheckoutUrlByPriceId } from '../utils/checkout-utils';
+import { getStrikeCheckoutInvoice, pollStrikeInvoiceStatus, getStripeCheckoutUrl, getStripeCheckoutUrlByPriceId, getProdigiCheckoutUrl, getProdigiStrikeInvoice, ProdigiShippingRecipient } from '../utils/checkout-utils';
 import { LightningPaymentModal } from "../components/shop/LightningPaymentModal";
+import { PrintMockupPreview, MockupBounds } from '../components/shop/PrintMockupPreview';
 import { TEST_PRODUCTS } from '../data/test-products';
 import { STRIPE_PRODUCTS } from '../data/stripe-products';
 import { transformProduct } from '../../lib/fourthwall/utils';
@@ -40,6 +41,11 @@ interface Product {
   featured?: boolean;
   stripePriceId?: string;
   productKind?: 'physical' | 'digital';
+  fulfillment?: 'prodigi';
+  prodigiProductId?: string;
+  prodigiSku?: string;
+  mockupTemplateUrl?: string | null;
+  mockupBounds?: MockupBounds | null;
 }
 
 export default function Shop({ hideBanner = false, embedded = false }: { hideBanner?: boolean; embedded?: boolean }) {
@@ -560,14 +566,27 @@ function ProductModal({
   const displayPrice = product.price;
   const displayComparePrice = product.compareAtPrice || null;
   const isFourthwallProduct = product.url?.includes('fourthwall.com');
+  const isProdigiProduct = product.fulfillment === 'prodigi';
 
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [stripeLoading, setStripeLoading] = useState(false);
+  const [showShippingForm, setShowShippingForm] = useState(false);
+  const [shipping, setShipping] = useState({
+    name: '', email: '', line1: '', line2: '', townOrCity: '', stateOrCounty: '', postalOrZipCode: '', countryCode: 'US',
+  });
+  const [shippingError, setShippingError] = useState<string | null>(null);
 
   const handleCheckoutClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     if (isFourthwallProduct && product.url) {
       window.location.href = product.url;
+      return;
+    }
+    if (isProdigiProduct) {
+      // Strike has no hosted address-collection step, so physical Prodigi
+      // prints need the shipping address up front before we create the
+      // Lightning invoice.
+      setShowShippingForm(true);
       return;
     }
     if (affiliateRef) {
@@ -610,6 +629,62 @@ function ProductModal({
     }
   };
 
+  const handleProdigiShippingSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setShippingError(null);
+
+    if (!shipping.name || !shipping.email || !shipping.line1 || !shipping.townOrCity || !shipping.postalOrZipCode || !shipping.countryCode) {
+      setShippingError('Please fill in all required fields.');
+      return;
+    }
+    if (!product.prodigiProductId) {
+      setShippingError('This product is missing its Prodigi catalog reference.');
+      return;
+    }
+
+    if (affiliateRef) {
+      import('../utils/affiliate-tracking').then(({ trackAffiliateClick }) => {
+        trackAffiliateClick(affiliateRef);
+      });
+    }
+
+    try {
+      setCheckoutLoading(true);
+      const recipient: ProdigiShippingRecipient = {
+        name: shipping.name,
+        email: shipping.email,
+        address: {
+          line1: shipping.line1,
+          line2: shipping.line2 || undefined,
+          townOrCity: shipping.townOrCity,
+          stateOrCounty: shipping.stateOrCounty || undefined,
+          postalOrZipCode: shipping.postalOrZipCode,
+          countryCode: shipping.countryCode,
+        },
+      };
+
+      const result = await getProdigiStrikeInvoice({
+        productId: product.prodigiProductId,
+        recipient,
+        affiliateRef,
+      });
+
+      onClose();
+      onStrikeCheckout({
+        invoiceId: result.invoiceId,
+        lnInvoice: result.lnInvoice,
+        expirationInSec: result.expirationInSec,
+        amount: product.price,
+        description: product.title,
+      });
+    } catch (error: any) {
+      console.error('❌ Error creating Prodigi Strike checkout:', error);
+      setShippingError(error.message || 'Failed to start checkout. Please try again.');
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
   const handleStripeCheckoutClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     if (isFourthwallProduct && product.url) {
@@ -630,10 +705,17 @@ function ProductModal({
         stripePriceId: product.stripePriceId,
       });
 
-      // Price-ID products (native Stripe catalog) use /api/checkout/create-session,
-      // which keys the session to a dashboard-configured Price object. Everything
-      // else falls back to the inline price_data flow on /api/shop/payments/stripe.
-      const result = product.stripePriceId
+      // Prodigi prints go through their own checkout route (pre-creates the
+      // linked prodigi_orders row); Stripe collects shipping on its hosted
+      // page. Price-ID products (native Stripe catalog) use
+      // /api/checkout/create-session. Everything else falls back to the
+      // inline price_data flow on /api/shop/payments/stripe.
+      const result = isProdigiProduct && product.prodigiProductId
+        ? await getProdigiCheckoutUrl({
+            productId: product.prodigiProductId,
+            affiliateRef,
+          })
+        : product.stripePriceId
         ? await getStripeCheckoutUrlByPriceId({
             priceId: product.stripePriceId,
             productKind: product.productKind || 'physical',
@@ -685,12 +767,22 @@ function ProductModal({
 
         <div className="grid md:grid-cols-2 gap-0 md:h-auto">
           {imageUrl && (
-            <div className="relative bg-white/5 max-h-[40vh] md:max-h-full flex items-center justify-center overflow-hidden">
-              <img
-                src={imageUrl}
-                alt={product.title}
-                className="w-full h-full object-contain"
-              />
+            <div className="relative bg-white/5 max-h-[40vh] md:max-h-full aspect-square md:aspect-auto flex items-center justify-center overflow-hidden">
+              {isProdigiProduct ? (
+                <PrintMockupPreview
+                  artworkUrl={imageUrl}
+                  templateUrl={product.mockupTemplateUrl}
+                  bounds={product.mockupBounds}
+                  alt={product.title}
+                  className="relative w-full h-full"
+                />
+              ) : (
+                <img
+                  src={imageUrl}
+                  alt={product.title}
+                  className="w-full h-full object-contain"
+                />
+              )}
             </div>
           )}
           <div className="p-5 sm:p-6 space-y-3 md:space-y-4 overflow-hidden">
@@ -730,42 +822,72 @@ function ProductModal({
               {product.description}
             </p>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-              <a
-                href="#"
-                onClick={handleCheckoutClick}
-                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white text-black px-4 py-3 sm:py-2 rounded-none hover:bg-white/90 transition-colors font-semibold text-sm sm:text-base min-h-[44px] touch-action: manipulation cursor-pointer ${checkoutLoading ? 'opacity-50 pointer-events-none' : ''}`}
-              >
-                {checkoutLoading ? (
-                  <span className="animate-pulse">Creating invoice...</span>
-                ) : (
-                  <>
-                    <ShoppingCartIcon className="w-4 h-4" />
-                    {isFourthwallProduct ? 'View on Fourthwall' : displayPrice === 0 ? 'View' : 'Pay with Bitcoin ⚡'}
-                  </>
-                )}
-              </a>
-              {!isFourthwallProduct && displayPrice > 0 && (
+            {showShippingForm ? (
+              <form onSubmit={handleProdigiShippingSubmit} className="space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Shipping Address</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <input required placeholder="Full name" value={shipping.name} onChange={(e) => setShipping((s) => ({ ...s, name: e.target.value }))} className="col-span-2 bg-black/60 border border-white px-3 py-2 text-white text-sm placeholder-white/40 rounded-none focus:outline-none focus:ring-1 focus:ring-white/40" />
+                  <input required type="email" placeholder="Email" value={shipping.email} onChange={(e) => setShipping((s) => ({ ...s, email: e.target.value }))} className="col-span-2 bg-black/60 border border-white px-3 py-2 text-white text-sm placeholder-white/40 rounded-none focus:outline-none focus:ring-1 focus:ring-white/40" />
+                  <input required placeholder="Address line 1" value={shipping.line1} onChange={(e) => setShipping((s) => ({ ...s, line1: e.target.value }))} className="col-span-2 bg-black/60 border border-white px-3 py-2 text-white text-sm placeholder-white/40 rounded-none focus:outline-none focus:ring-1 focus:ring-white/40" />
+                  <input placeholder="Address line 2 (optional)" value={shipping.line2} onChange={(e) => setShipping((s) => ({ ...s, line2: e.target.value }))} className="col-span-2 bg-black/60 border border-white px-3 py-2 text-white text-sm placeholder-white/40 rounded-none focus:outline-none focus:ring-1 focus:ring-white/40" />
+                  <input required placeholder="City" value={shipping.townOrCity} onChange={(e) => setShipping((s) => ({ ...s, townOrCity: e.target.value }))} className="bg-black/60 border border-white px-3 py-2 text-white text-sm placeholder-white/40 rounded-none focus:outline-none focus:ring-1 focus:ring-white/40" />
+                  <input placeholder="State / county" value={shipping.stateOrCounty} onChange={(e) => setShipping((s) => ({ ...s, stateOrCounty: e.target.value }))} className="bg-black/60 border border-white px-3 py-2 text-white text-sm placeholder-white/40 rounded-none focus:outline-none focus:ring-1 focus:ring-white/40" />
+                  <input required placeholder="Postal code" value={shipping.postalOrZipCode} onChange={(e) => setShipping((s) => ({ ...s, postalOrZipCode: e.target.value }))} className="bg-black/60 border border-white px-3 py-2 text-white text-sm placeholder-white/40 rounded-none focus:outline-none focus:ring-1 focus:ring-white/40" />
+                  <select required value={shipping.countryCode} onChange={(e) => setShipping((s) => ({ ...s, countryCode: e.target.value }))} className="bg-black/60 border border-white px-3 py-2 text-white text-sm rounded-none focus:outline-none focus:ring-1 focus:ring-white/40">
+                    <option value="US">United States</option>
+                    <option value="CA">Canada</option>
+                    <option value="GB">United Kingdom</option>
+                    <option value="AU">Australia</option>
+                  </select>
+                </div>
+                {shippingError && <p className="text-xs text-red-400">{shippingError}</p>}
+                <div className="flex gap-3 pt-1">
+                  <button type="button" onClick={() => setShowShippingForm(false)} className="flex-1 sm:flex-none px-4 py-3 sm:py-2 text-white/60 border border-white/30 rounded-none hover:text-white hover:border-white transition-colors font-semibold text-sm">
+                    Back
+                  </button>
+                  <button type="submit" disabled={checkoutLoading} className={`flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white text-black px-4 py-3 sm:py-2 rounded-none hover:bg-white/90 transition-colors font-semibold text-sm ${checkoutLoading ? 'opacity-50 pointer-events-none' : ''}`}>
+                    {checkoutLoading ? <span className="animate-pulse">Creating invoice...</span> : <>Pay with Bitcoin ⚡</>}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
                 <a
                   href="#"
-                  onClick={handleStripeCheckoutClick}
-                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 bg-transparent text-white border border-white px-4 py-3 sm:py-2 rounded-none hover:bg-white hover:text-black transition-colors font-semibold text-sm sm:text-base min-h-[44px] touch-action: manipulation cursor-pointer ${stripeLoading ? 'opacity-50 pointer-events-none' : ''}`}
-                  aria-label="Pay with card"
+                  onClick={handleCheckoutClick}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white text-black px-4 py-3 sm:py-2 rounded-none hover:bg-white/90 transition-colors font-semibold text-sm sm:text-base min-h-[44px] touch-action: manipulation cursor-pointer ${checkoutLoading ? 'opacity-50 pointer-events-none' : ''}`}
                 >
-                  {stripeLoading ? (
-                    <span className="animate-pulse">Redirecting…</span>
+                  {checkoutLoading ? (
+                    <span className="animate-pulse">Creating invoice...</span>
                   ) : (
                     <>
-                      <CreditCardIcon className="w-4 h-4" />
-                      Pay with Card
+                      <ShoppingCartIcon className="w-4 h-4" />
+                      {isFourthwallProduct ? 'View on Fourthwall' : displayPrice === 0 ? 'View' : 'Pay with Bitcoin ⚡'}
                     </>
                   )}
                 </a>
-              )}
-              {!product.available && (
-                <div className="text-xs text-red-400">Out of Stock</div>
-              )}
-            </div>
+                {!isFourthwallProduct && displayPrice > 0 && (
+                  <a
+                    href="#"
+                    onClick={handleStripeCheckoutClick}
+                    className={`flex-1 sm:flex-none flex items-center justify-center gap-2 bg-transparent text-white border border-white px-4 py-3 sm:py-2 rounded-none hover:bg-white hover:text-black transition-colors font-semibold text-sm sm:text-base min-h-[44px] touch-action: manipulation cursor-pointer ${stripeLoading ? 'opacity-50 pointer-events-none' : ''}`}
+                    aria-label="Pay with card"
+                  >
+                    {stripeLoading ? (
+                      <span className="animate-pulse">Redirecting…</span>
+                    ) : (
+                      <>
+                        <CreditCardIcon className="w-4 h-4" />
+                        Pay with Card
+                      </>
+                    )}
+                  </a>
+                )}
+                {!product.available && (
+                  <div className="text-xs text-red-400">Out of Stock</div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

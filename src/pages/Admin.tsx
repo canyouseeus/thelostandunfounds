@@ -56,6 +56,7 @@ import {
   BuildingStorefrontIcon,
   ChevronDownIcon,
   BanknotesIcon,
+  PrinterIcon,
 } from '@heroicons/react/24/outline';
 
 import ErrorBoundary from '../components/ErrorBoundary';
@@ -87,6 +88,7 @@ import AdminOverviewView from '../components/admin/AdminOverviewView';
 import { DashboardCharts } from '../components/admin/DashboardCharts';
 import AdminGalleryView from '../components/admin/AdminGalleryView';
 import AdminEventsView from '../components/admin/AdminEventsView';
+import AdminPrintShopView from '../components/admin/AdminPrintShopView';
 import AdminBookingView from '../components/admin/AdminBookingView';
 import AdminCalendarView from '../components/admin/AdminCalendarView';
 import AdminInvoices from './AdminInvoices';
@@ -1568,6 +1570,7 @@ export default function Admin() {
                 { id: 'calendar', icon: CalendarIcon, title: 'Calendar' },
                 { id: 'invoices', icon: BanknotesIcon, title: 'Invoices' },
                 { id: 'pricing', icon: CurrencyDollarIcon, title: 'Products' },
+                { id: 'printshop', icon: PrinterIcon, title: 'Print Shop' },
                 { id: 'settings', icon: BoltIcon, title: 'Settings' }
               ].map((app) => (
                 <button
@@ -1620,6 +1623,7 @@ export default function Admin() {
                   calendar:    { title: 'Master Calendar',          icon: <CalendarIcon className="w-5 h-5 text-white/40" /> },
                   invoices:    { title: 'Invoices & CRM',           icon: <BanknotesIcon className="w-5 h-5 text-white/40" /> },
                   pricing:     { title: 'Product Management',       icon: <CurrencyDollarIcon className="w-5 h-5 text-white/40" /> },
+                  printshop:   { title: 'Print Shop',               icon: <PrinterIcon className="w-5 h-5 text-white/40" /> },
                   settings:    { title: 'Platform Settings',        icon: <BoltIcon className="w-5 h-5 text-white/40" /> },
                 };
                 const meta = sectionMeta[activePanelSection];
@@ -1709,6 +1713,11 @@ export default function Admin() {
                 {activePanelSection === 'pricing' && (
                   <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Pricing</div>}>
                     <ProductCostManagement />
+                  </ErrorBoundary>
+                )}
+                {activePanelSection === 'printshop' && (
+                  <ErrorBoundary fallback={<div className="p-4 text-red-400">Error loading Print Shop</div>}>
+                    <AdminPrintShopView />
                   </ErrorBoundary>
                 )}
                 {activePanelSection === 'settings' && (

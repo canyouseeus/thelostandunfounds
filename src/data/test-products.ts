@@ -71,6 +71,26 @@ export const TEST_PRODUCTS = [
     category: 'prints',
     featured: false,
   },
+  {
+    id: 'prodigi-test-fine-art-print',
+    title: 'Fine Art Print — Dev Mockup',
+    description: 'Prodigi print-on-demand test product with a mockup template preview.',
+    price: 65,
+    compareAtPrice: undefined,
+    currency: 'USD',
+    images: ['https://dummyimage.com/1000x1000/222/ffffff.png&text=Artwork'],
+    handle: 'dev-prodigi-print',
+    available: true,
+    url: '#',
+    category: 'prints',
+    featured: true,
+    productKind: 'physical',
+    fulfillment: 'prodigi',
+    prodigiProductId: 'dev-prodigi-product-id',
+    prodigiSku: 'GLOBAL-CFPM-16X20',
+    mockupTemplateUrl: 'https://dummyimage.com/1200x900/000/333333.png&text=Wall+Mockup',
+    mockupBounds: { x: 32, y: 20, width: 36, height: 46 },
+  },
 ]
 
 
