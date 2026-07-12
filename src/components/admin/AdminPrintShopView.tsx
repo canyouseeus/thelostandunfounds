@@ -16,6 +16,8 @@ import {
   CloudArrowUpIcon,
   ExclamationTriangleIcon,
   SwatchIcon,
+  ShieldCheckIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import { cn } from '../ui/utils';
@@ -67,6 +69,17 @@ interface FrameTemplate {
   has_mat: boolean;
   template_url: string | null;
   bounds: { x: number; y: number; width: number; height: number } | null;
+}
+
+interface SkuCheckResult {
+  sku: string;
+  sources: string[];
+  exists: boolean;
+  error?: string;
+  baseCost?: number;
+  currency?: string;
+  shippingCost?: number;
+  quoteError?: string;
 }
 
 interface ProdigiOrder {
@@ -140,6 +153,11 @@ export default function AdminPrintShopView() {
   const [frameTemplates, setFrameTemplates] = useState<FrameTemplate[]>([]);
   const [framesLoading, setFramesLoading] = useState(false);
   const [framesLoaded, setFramesLoaded] = useState(false);
+
+  const [verifying, setVerifying] = useState(false);
+  const [verifyResults, setVerifyResults] = useState<SkuCheckResult[] | null>(null);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
+  const [verifyCheckedAt, setVerifyCheckedAt] = useState<string | null>(null);
 
   const loadProducts = () => {
     setLoading(true);
@@ -240,6 +258,24 @@ export default function AdminPrintShopView() {
     }
   };
 
+  const handleVerifyCatalog = async () => {
+    setVerifying(true);
+    setVerifyError(null);
+    try {
+      const res = await fetch('/api/prodigi/verify-catalog', { method: 'POST', headers: ADMIN_HEADERS });
+      logApiCall('POST', '/api/prodigi/verify-catalog', res.status, '');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Catalog verification failed');
+      setVerifyResults(data.results || []);
+      setVerifyCheckedAt(data.checkedAt || null);
+    } catch (e: any) {
+      setVerifyError(e.message || 'Catalog verification failed');
+      logError(e.message || 'Prodigi catalog verification failed');
+    } finally {
+      setVerifying(false);
+    }
+  };
+
   const handleSaved = (id: string, row: ProdigiProduct) => {
     setProducts((prev) => prev.map((p) => (p.id === id ? row : p)));
   };
@@ -266,30 +302,83 @@ export default function AdminPrintShopView() {
           <Tab label="Frames" active={activeTab === 'frames'} onClick={() => setActiveTab('frames')} />
           <Tab label="Orders" active={activeTab === 'orders'} onClick={() => setActiveTab('orders')} />
         </div>
-        {activeTab === 'catalog' && (
-          <div className="flex items-center gap-2">
-            {syncMessage && <span className="text-[10px] font-mono text-white/50">{syncMessage}</span>}
-            <button
-              onClick={handleSyncStripe}
-              disabled={syncing}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-widest bg-black text-white border border-white hover:bg-white hover:text-black transition-colors disabled:opacity-50"
-              style={{ borderRadius: 0 }}
-            >
-              {syncing ? <ArrowPathIcon className="w-3 h-3 animate-spin" /> : <CloudArrowUpIcon className="w-3 h-3" />}
-              Sync to Stripe
-            </button>
-            <button
-              onClick={handleCreate}
-              disabled={creating}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-widest bg-white text-black border border-white hover:bg-black hover:text-white transition-colors disabled:opacity-50"
-              style={{ borderRadius: 0 }}
-            >
-              <PlusIcon className="w-3 h-3" />
-              New Print
-            </button>
-          </div>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={handleVerifyCatalog}
+            disabled={verifying}
+            title="Check every catalog SKU against Prodigi's live API and get real costs"
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-widest bg-black text-white border border-white hover:bg-white hover:text-black transition-colors disabled:opacity-50"
+            style={{ borderRadius: 0 }}
+          >
+            {verifying ? <ArrowPathIcon className="w-3 h-3 animate-spin" /> : <ShieldCheckIcon className="w-3 h-3" />}
+            Verify Catalog
+          </button>
+          {activeTab === 'catalog' && (
+            <>
+              {syncMessage && <span className="text-[10px] font-mono text-white/50">{syncMessage}</span>}
+              <button
+                onClick={handleSyncStripe}
+                disabled={syncing}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-widest bg-black text-white border border-white hover:bg-white hover:text-black transition-colors disabled:opacity-50"
+                style={{ borderRadius: 0 }}
+              >
+                {syncing ? <ArrowPathIcon className="w-3 h-3 animate-spin" /> : <CloudArrowUpIcon className="w-3 h-3" />}
+                Sync to Stripe
+              </button>
+              <button
+                onClick={handleCreate}
+                disabled={creating}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-widest bg-white text-black border border-white hover:bg-black hover:text-white transition-colors disabled:opacity-50"
+                style={{ borderRadius: 0 }}
+              >
+                <PlusIcon className="w-3 h-3" />
+                New Print
+              </button>
+            </>
+          )}
+        </div>
       </div>
+
+      {verifyError && (
+        <div className="bg-red-500/10 border border-red-500/30 p-3 mb-4 flex items-center justify-between gap-3">
+          <p className="text-red-400 text-xs font-mono">{verifyError}</p>
+          <button onClick={() => setVerifyError(null)} className="text-red-400 hover:text-white shrink-0"><XMarkIcon className="w-4 h-4" /></button>
+        </div>
+      )}
+
+      {verifyResults && (
+        <div className="bg-white/5 p-4 mb-6 flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[10px] font-black uppercase tracking-widest text-white/40">
+              Catalog Verification {verifyCheckedAt ? `— ${new Date(verifyCheckedAt).toLocaleString()}` : ''}
+            </p>
+            <button onClick={() => setVerifyResults(null)} className="text-white/40 hover:text-white"><XMarkIcon className="w-4 h-4" /></button>
+          </div>
+          <div className="flex flex-col gap-1.5 overflow-x-auto">
+            {verifyResults.map((r) => (
+              <div key={r.sku} className="flex items-start gap-3 py-2 border-b border-white/5 last:border-b-0">
+                <span className={cn('mt-0.5 shrink-0', r.exists ? 'text-emerald-400' : 'text-red-400')}>
+                  {r.exists ? <CheckCircleIcon className="w-4 h-4" /> : <ExclamationTriangleIcon className="w-4 h-4" />}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-white font-mono text-xs font-bold">{r.sku}</span>
+                    {r.exists && r.baseCost !== undefined && (
+                      <span className="text-emerald-400 font-mono text-xs">
+                        cost {r.currency || 'USD'} ${r.baseCost.toFixed(2)}
+                        {r.shippingCost !== undefined ? ` + $${r.shippingCost.toFixed(2)} shipping` : ''}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-white/30 text-[10px] mt-0.5">{r.sources.join(' · ')}</p>
+                  {r.error && <p className="text-red-400 text-[10px] font-mono mt-1">{r.error}</p>}
+                  {r.quoteError && <p className="text-amber-400 text-[10px] font-mono mt-1">Quote issue: {r.quoteError}</p>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {activeTab === 'catalog' ? (
         products.length === 0 ? (
