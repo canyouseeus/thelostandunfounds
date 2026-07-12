@@ -45,18 +45,25 @@ export interface CreateProdigiOrderInput {
     metadata?: Record<string, unknown>
 }
 
-function getConfig() {
+function getConfig(forceLive?: boolean) {
     const apiKey = process.env.PRODIGI_API_KEY
     if (!apiKey) {
         throw new Error('PRODIGI_API_KEY not configured')
     }
-    const isLive = (process.env.PRODIGI_ENVIRONMENT || 'sandbox').toLowerCase() === 'live'
+    const isLive = forceLive || (process.env.PRODIGI_ENVIRONMENT || 'sandbox').toLowerCase() === 'live'
     const baseUrl = isLive ? 'https://api.prodigi.com/v4.0' : 'https://api.sandbox.prodigi.com/v4.0'
     return { apiKey, baseUrl }
 }
 
-async function prodigiFetch(path: string, init: RequestInit = {}) {
-    const { apiKey, baseUrl } = getConfig()
+/**
+ * `forceLive` is only ever passed by read-only lookups (getProdigiProduct /
+ * getProdigiQuote) for the admin catalog-verification tool — it does NOT
+ * affect createProdigiOrder, which stays governed purely by
+ * PRODIGI_ENVIRONMENT so real checkouts can never be flipped to live
+ * fulfillment as a side effect of verifying the catalog.
+ */
+async function prodigiFetch(path: string, init: RequestInit = {}, forceLive?: boolean) {
+    const { apiKey, baseUrl } = getConfig(forceLive)
     const response = await fetch(`${baseUrl}${path}`, {
         ...init,
         headers: {
@@ -105,8 +112,8 @@ export async function getProdigiOrder(prodigiOrderId: string) {
     return prodigiFetch(`/orders/${encodeURIComponent(prodigiOrderId)}`, { method: 'GET' })
 }
 
-export async function getProdigiProduct(sku: string) {
-    return prodigiFetch(`/products/${encodeURIComponent(sku)}`, { method: 'GET' })
+export async function getProdigiProduct(sku: string, opts?: { forceLive?: boolean }) {
+    return prodigiFetch(`/products/${encodeURIComponent(sku)}`, { method: 'GET' }, opts?.forceLive)
 }
 
 export interface ProdigiQuoteInput {
@@ -116,19 +123,23 @@ export interface ProdigiQuoteInput {
     items: { sku: string; copies: number; attributes?: Record<string, string> }[]
 }
 
-export async function getProdigiQuote(input: ProdigiQuoteInput) {
-    return prodigiFetch('/quotes', {
-        method: 'POST',
-        body: JSON.stringify({
-            shippingMethod: input.shippingMethod || 'Standard',
-            destinationCountryCode: input.destinationCountryCode,
-            currencyCode: input.currencyCode || 'USD',
-            items: input.items.map((item) => ({
-                sku: item.sku,
-                copies: item.copies,
-                ...(item.attributes ? { attributes: item.attributes } : {}),
-                assets: [{ printArea: 'default' }],
-            })),
-        }),
-    })
+export async function getProdigiQuote(input: ProdigiQuoteInput, opts?: { forceLive?: boolean }) {
+    return prodigiFetch(
+        '/quotes',
+        {
+            method: 'POST',
+            body: JSON.stringify({
+                shippingMethod: input.shippingMethod || 'Standard',
+                destinationCountryCode: input.destinationCountryCode,
+                currencyCode: input.currencyCode || 'USD',
+                items: input.items.map((item) => ({
+                    sku: item.sku,
+                    copies: item.copies,
+                    ...(item.attributes ? { attributes: item.attributes } : {}),
+                    assets: [{ printArea: 'default' }],
+                })),
+            }),
+        },
+        opts?.forceLive
+    )
 }

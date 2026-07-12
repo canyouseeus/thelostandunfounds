@@ -44,6 +44,14 @@ function addSku(map: Map<string, string[]>, sku: string | null | undefined, sour
  * flow, so it's kept as permanent tooling (not a one-off script) for
  * whenever the catalog changes.
  *
+ * Forces `forceLive: true` on both lookup calls: Prodigi's sandbox
+ * dashboard/credentials are defunct (only a live key exists), and the two
+ * calls made here (GET /products, POST /quotes) are read-only regardless
+ * of environment — no order is ever created. This does NOT affect
+ * createProdigiOrder, which stays on PRODIGI_ENVIRONMENT (sandbox by
+ * default) so real checkouts can't be flipped to live fulfillment as a
+ * side effect of running this.
+ *
  * Does not write to the database — returns a report for a human (or the
  * admin UI's "Verify Catalog" button) to act on.
  */
@@ -94,7 +102,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const result: SkuCheckResult = { sku, sources, exists: false }
 
             try {
-                await getProdigiProduct(sku)
+                await getProdigiProduct(sku, { forceLive: true })
                 result.exists = true
             } catch (err: any) {
                 result.exists = false
@@ -104,11 +112,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }
 
             try {
-                const quote = await getProdigiQuote({
-                    destinationCountryCode: 'US',
-                    currencyCode: 'USD',
-                    items: [{ sku, copies: 1, attributes: skuAttributes.get(sku) }],
-                })
+                const quote = await getProdigiQuote(
+                    {
+                        destinationCountryCode: 'US',
+                        currencyCode: 'USD',
+                        items: [{ sku, copies: 1, attributes: skuAttributes.get(sku) }],
+                    },
+                    { forceLive: true }
+                )
                 const q = quote?.quotes?.[0]
                 const item = q?.items?.[0]
                 if (item?.unitCost) {
