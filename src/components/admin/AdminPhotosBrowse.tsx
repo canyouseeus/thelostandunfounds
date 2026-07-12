@@ -636,194 +636,20 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
 
   return (
     <div className="space-y-4">
-      {/* Sticky console tray — Platform Console dock pattern (see .claude/skills/bento-design):
-          rounded translucent icon dock on a solid black backing. The tab pane wrapping this
-          component has pt-4; Chrome's sticky "stuck" offset is measured from the padding edge, so
-          a plain top-0 still leaves that 16px gap unpainted once stuck. top:-1rem shifts the stuck
-          position up to cover it, and the negative margin does the same pre-scroll. */}
-      <div className="sticky z-20 -mt-4 bg-black pt-4 pb-3 space-y-2" style={{ top: '-1rem' }}>
-        <div className="flex items-center justify-between gap-3">
-          <h3 className="text-sm font-bold text-white uppercase tracking-wide flex items-center gap-2 flex-wrap min-w-0">
-            <PhotoIcon className="w-4 h-4 flex-shrink-0" />
-            <span>All Photos</span>
-            <span className="text-white/40 font-mono text-xs">({totalCount.toLocaleString()})</span>
-          </h3>
-
-          <div className="flex items-center gap-1 p-1.5 bg-white/5 backdrop-blur-xl rounded-full flex-shrink-0">
-            {([
-              { id: 'search', icon: MagnifyingGlassIcon, label: 'Search', active: openCard === 'search' || !!search, onClick: () => setOpenCard(c => c === 'search' ? null : 'search') },
-              { id: 'filter', icon: FunnelIcon, label: 'Filter', active: openCard === 'filter' || activeFilters > 0, badge: activeFilters || undefined, onClick: () => setOpenCard(c => c === 'filter' ? null : 'filter') },
-              { id: 'library', icon: RectangleStackIcon, label: 'Library', active: openCard === 'library' || !!selectedLibraryId, onClick: () => setOpenCard(c => c === 'library' ? null : 'library') },
-              { id: 'select', icon: CursorArrowRaysIcon, label: 'Select', active: selectionMode, badge: (selectionMode && selectedIds.size > 0) ? selectedIds.size : undefined, onClick: () => selectionMode ? exitSelectionMode() : setSelectionMode(true) },
-              { id: 'refresh', icon: ArrowPathIcon, label: 'Refresh', active: false, onClick: () => loadPhotos(true) },
-            ] as const).map(btn => (
-              <button
-                key={btn.id}
-                onClick={btn.onClick}
-                className={`relative p-2.5 transition-all duration-300 rounded-full group/btn ${
-                  btn.active ? 'bg-white text-black scale-110 shadow-[0_0_20px_rgba(255,255,255,0.2)]' : 'text-white/60 hover:text-white hover:bg-white/10'
-                }`}
-                title={btn.label}
-              >
-                <btn.icon className="w-4 h-4" />
-                {'badge' in btn && btn.badge ? (
-                  <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-red-500 text-white text-[8px] font-black flex items-center justify-center rounded-full">
-                    {btn.badge}
-                  </span>
-                ) : null}
-                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-white text-black text-[9px] font-black uppercase tracking-widest opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-30">
-                  {btn.label}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-
+      {/* Title */}
+      <div className="min-w-0">
+        <h3 className="text-sm font-bold text-white uppercase tracking-wide flex items-center gap-2 flex-wrap">
+          <PhotoIcon className="w-4 h-4 flex-shrink-0" />
+          <span>All Photos</span>
+          <span className="text-white/40 font-mono text-xs">({totalCount.toLocaleString()})</span>
+        </h3>
         {selectionMode && (
-          <p className="text-[10px] text-white/30">
+          <p className="text-[10px] text-white/30 mt-0.5">
             <span className="sm:hidden">Tap photos to select.</span>
             <span className="hidden sm:inline">Click photos to select · Drag on background to rubber-band · Tap <strong className="text-white/50">Select</strong> again to exit</span>
           </p>
         )}
       </div>
-
-      {/* Search card */}
-      <AnimatePresence>
-        {openCard === 'search' && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
-          >
-            <div className="bg-white/[0.03] p-4">
-              <p className="text-[9px] uppercase font-black tracking-widest text-white/30 mb-2">Search by Filename</p>
-              <div className="relative">
-                <MagnifyingGlassIcon className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-white/30" />
-                <input
-                  type="text"
-                  autoFocus
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  placeholder="Search by filename..."
-                  className="w-full bg-white/5 pl-8 pr-8 py-2 text-xs text-white placeholder-white/20 focus:outline-none focus:bg-white/10 transition-colors"
-                />
-                {search && (
-                  <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white">
-                    <XMarkIcon className="w-3 h-3" />
-                  </button>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Library card */}
-      <AnimatePresence>
-        {openCard === 'library' && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
-          >
-            <div className="bg-white/[0.03] p-4">
-              <p className="text-[9px] uppercase font-black tracking-widest text-white/30 mb-2">Filter by Library</p>
-              <div className="flex flex-wrap gap-1">
-                <button
-                  onClick={() => setSelectedLibraryId(null)}
-                  className={`px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors ${selectedLibraryId === null ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'}`}
-                >All</button>
-                {libraries.map(lib => (
-                  <button
-                    key={lib.id}
-                    onClick={() => setSelectedLibraryId(lib.id === selectedLibraryId ? null : lib.id)}
-                    className={`px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors ${selectedLibraryId === lib.id ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'}`}
-                  >{lib.name}</button>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Filter card */}
-      <AnimatePresence>
-        {openCard === 'filter' && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
-          >
-            <div className="bg-white/[0.03] p-4 space-y-4">
-              <div>
-                <p className="text-[9px] uppercase font-black tracking-widest text-white/30 mb-2">Filter by Tag</p>
-                <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
-                  {allTags.map(tag => (
-                    <button
-                      key={tag.id}
-                      onClick={() => setFilterTagIds(prev => {
-                        const next = new Set(prev);
-                        if (next.has(tag.id)) next.delete(tag.id);
-                        else next.add(tag.id);
-                        return next;
-                      })}
-                      className={`px-2 py-1 text-[9px] uppercase font-bold tracking-wider transition-colors ${
-                        filterTagIds.has(tag.id) ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'
-                      }`}
-                    >
-                      {tag.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <p className="text-[9px] uppercase font-black tracking-widest text-white/30 mb-1.5">Camera Model</p>
-                  <select
-                    value={filterCameraModel}
-                    onChange={e => setFilterCameraModel(e.target.value)}
-                    className="w-full bg-black text-white text-[10px] px-2 py-1.5 focus:outline-none"
-                  >
-                    <option value="">All cameras</option>
-                    {cameraModels.map(m => <option key={m} value={m}>{m}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <p className="text-[9px] uppercase font-black tracking-widest text-white/30 mb-1.5">From Date</p>
-                  <input
-                    type="date"
-                    value={filterDateFrom}
-                    onChange={e => setFilterDateFrom(e.target.value)}
-                    className="w-full bg-black text-white text-[10px] px-2 py-1.5 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <p className="text-[9px] uppercase font-black tracking-widest text-white/30 mb-1.5">To Date</p>
-                  <input
-                    type="date"
-                    value={filterDateTo}
-                    onChange={e => setFilterDateTo(e.target.value)}
-                    className="w-full bg-black text-white text-[10px] px-2 py-1.5 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              {activeFilters > 0 && (
-                <button
-                  onClick={() => { setFilterTagIds(new Set()); setFilterCameraModel(''); setFilterDateFrom(''); setFilterDateTo(''); }}
-                  className="text-[9px] uppercase font-bold tracking-widest text-white/30 hover:text-white transition-colors"
-                >
-                  Clear all filters
-                </button>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Grid */}
       {loading ? (
@@ -911,6 +737,162 @@ export default function AdminPhotosBrowse({ onRequestCreateGallery }: AdminPhoto
       )}
 
       {dragRectStyle && <div style={dragRectStyle} />}
+
+      {/* Floating console tray — frosted glass like the public gallery's back-to-top button
+          (bg-white/10 backdrop-blur-md rounded-full), not a solid plate. Fixed at the bottom so
+          it's reachable regardless of scroll position; bottom-24 clears the batch action bar
+          below (bottom-6) when both are visible. See "Platform Console Tray" in the bento-design
+          skill for the pattern this follows. */}
+      <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2">
+        <AnimatePresence>
+          {openCard && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              transition={{ duration: 0.15 }}
+              className="bg-black/80 backdrop-blur-2xl shadow-2xl w-[calc(100vw-2rem)] max-w-sm p-4 max-h-[50vh] overflow-y-auto"
+            >
+              {openCard === 'search' && (
+                <>
+                  <p className="text-[9px] uppercase font-black tracking-widest text-white/30 mb-2">Search by Filename</p>
+                  <div className="relative">
+                    <MagnifyingGlassIcon className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-white/30" />
+                    <input
+                      type="text"
+                      autoFocus
+                      value={search}
+                      onChange={e => setSearch(e.target.value)}
+                      placeholder="Search by filename..."
+                      className="w-full bg-white/5 pl-8 pr-8 py-2 text-xs text-white placeholder-white/20 focus:outline-none focus:bg-white/10 transition-colors"
+                    />
+                    {search && (
+                      <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white">
+                        <XMarkIcon className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {openCard === 'library' && (
+                <>
+                  <p className="text-[9px] uppercase font-black tracking-widest text-white/30 mb-2">Filter by Library</p>
+                  <div className="flex flex-wrap gap-1">
+                    <button
+                      onClick={() => setSelectedLibraryId(null)}
+                      className={`px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors ${selectedLibraryId === null ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'}`}
+                    >All</button>
+                    {libraries.map(lib => (
+                      <button
+                        key={lib.id}
+                        onClick={() => setSelectedLibraryId(lib.id === selectedLibraryId ? null : lib.id)}
+                        className={`px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors ${selectedLibraryId === lib.id ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'}`}
+                      >{lib.name}</button>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {openCard === 'filter' && (
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-[9px] uppercase font-black tracking-widest text-white/30 mb-2">Filter by Tag</p>
+                    <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
+                      {allTags.map(tag => (
+                        <button
+                          key={tag.id}
+                          onClick={() => setFilterTagIds(prev => {
+                            const next = new Set(prev);
+                            if (next.has(tag.id)) next.delete(tag.id);
+                            else next.add(tag.id);
+                            return next;
+                          })}
+                          className={`px-2 py-1 text-[9px] uppercase font-bold tracking-wider transition-colors ${
+                            filterTagIds.has(tag.id) ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'
+                          }`}
+                        >
+                          {tag.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <p className="text-[9px] uppercase font-black tracking-widest text-white/30 mb-1.5">Camera Model</p>
+                      <select
+                        value={filterCameraModel}
+                        onChange={e => setFilterCameraModel(e.target.value)}
+                        className="w-full bg-black text-white text-[10px] px-2 py-1.5 focus:outline-none"
+                      >
+                        <option value="">All cameras</option>
+                        {cameraModels.map(m => <option key={m} value={m}>{m}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <p className="text-[9px] uppercase font-black tracking-widest text-white/30 mb-1.5">From Date</p>
+                      <input
+                        type="date"
+                        value={filterDateFrom}
+                        onChange={e => setFilterDateFrom(e.target.value)}
+                        className="w-full bg-black text-white text-[10px] px-2 py-1.5 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-[9px] uppercase font-black tracking-widest text-white/30 mb-1.5">To Date</p>
+                      <input
+                        type="date"
+                        value={filterDateTo}
+                        onChange={e => setFilterDateTo(e.target.value)}
+                        className="w-full bg-black text-white text-[10px] px-2 py-1.5 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {activeFilters > 0 && (
+                    <button
+                      onClick={() => { setFilterTagIds(new Set()); setFilterCameraModel(''); setFilterDateFrom(''); setFilterDateTo(''); }}
+                      className="text-[9px] uppercase font-bold tracking-widest text-white/30 hover:text-white transition-colors"
+                    >
+                      Clear all filters
+                    </button>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div className="flex items-center gap-1 p-1.5 bg-white/10 backdrop-blur-md rounded-full shadow-2xl">
+          {([
+            { id: 'search', icon: MagnifyingGlassIcon, label: 'Search', active: openCard === 'search' || !!search, onClick: () => setOpenCard(c => c === 'search' ? null : 'search') },
+            { id: 'filter', icon: FunnelIcon, label: 'Filter', active: openCard === 'filter' || activeFilters > 0, badge: activeFilters || undefined, onClick: () => setOpenCard(c => c === 'filter' ? null : 'filter') },
+            { id: 'library', icon: RectangleStackIcon, label: 'Library', active: openCard === 'library' || !!selectedLibraryId, onClick: () => setOpenCard(c => c === 'library' ? null : 'library') },
+            { id: 'select', icon: CursorArrowRaysIcon, label: 'Select', active: selectionMode, badge: (selectionMode && selectedIds.size > 0) ? selectedIds.size : undefined, onClick: () => selectionMode ? exitSelectionMode() : setSelectionMode(true) },
+            { id: 'refresh', icon: ArrowPathIcon, label: 'Refresh', active: false, onClick: () => loadPhotos(true) },
+          ] as const).map(btn => (
+            <button
+              key={btn.id}
+              onClick={btn.onClick}
+              className={`relative p-2.5 transition-all duration-300 rounded-full group/btn ${
+                btn.active ? 'bg-white text-black scale-110 shadow-[0_0_20px_rgba(255,255,255,0.2)]' : 'text-white/60 hover:text-white hover:bg-white/10'
+              }`}
+              title={btn.label}
+            >
+              <btn.icon className="w-4 h-4" />
+              {'badge' in btn && btn.badge ? (
+                <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-red-500 text-white text-[8px] font-black flex items-center justify-center rounded-full">
+                  {btn.badge}
+                </span>
+              ) : null}
+              <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-white text-black text-[9px] font-black uppercase tracking-widest opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-30">
+                {btn.label}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Bulk batch bar */}
       {selectionMode && selectedIds.size > 0 && (

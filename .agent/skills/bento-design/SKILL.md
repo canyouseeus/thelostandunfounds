@@ -33,16 +33,24 @@ This skill provides the core design principles, component patterns, and implemen
 
 ## Platform Console Tray
 
-A named pattern for icon-only tool docks. Two live examples: the dashboard's app switcher in
-`src/pages/Admin.tsx` (search "Premium Dock" / "Platform Console") and the sticky in-page toolbar
-in `src/components/admin/AdminPhotosBrowse.tsx` (All Photos tab).
+A named pattern for icon-only tool docks. There are two variants — pick based on whether the dock
+sits on static page chrome or floats over scrolling content.
 
 **Rule: a console tray is icon-only, never a row of always-visible controls.** Each icon expands
-its own focused card below the tray on tap — a search icon opens a search card, a filter icon
-opens a filter card, and so on. Never lay out inline search bars, chip rows, or labeled text
-buttons side-by-side in the tray itself — that reads as clutter, not a console.
+its own focused card on tap — a search icon opens a search card, a filter icon opens a filter
+card, and so on. Never lay out inline search bars, chip rows, or labeled text buttons
+side-by-side in the tray itself — that reads as clutter, not a console.
 
-### Dock shell
+**Rule: the tray's surface is frosted glass, never a solid plate.** Content underneath should
+blur and show through the tray, the same way it shows through the back-to-top button. Don't wrap
+a console tray in an opaque `bg-black` band to solve a "content peeking through" problem — that
+defeats the pattern. If content showing through is a problem, the tray is in the wrong spot or
+needs a stronger blur, not a solid backing.
+
+### Variant A — static dock (page chrome, nothing scrolls under it)
+Reference: `src/pages/Admin.tsx` (search "Premium Dock" / "Platform Console") — the dashboard's
+app switcher. It sits on the dashboard's own static black background, so a lighter, more diffuse
+glass treatment reads fine:
 ```tsx
 <div className="flex items-center gap-1 p-1.5 bg-white/5 backdrop-blur-xl rounded-full">
   {/* icon buttons */}
@@ -50,9 +58,36 @@ buttons side-by-side in the tray itself — that reads as clutter, not a console
 ```
 Use `rounded-[32px] sm:rounded-full` instead of a plain `rounded-full` only if the dock wraps to
 multiple rows on narrow screens (many icons); a dock that always fits a single row stays a full
-pill.
+pill. Its expandable-card content can use the ordinary inline collapsible (height-animated,
+pushes content below it) since nothing needs to stay reachable while scrolling.
 
-### Icon button
+### Variant B — floating tray (in-page toolbar over scrolling content)
+Reference: `src/components/photos/PhotoGallery.tsx`, the "Back to Top Button" (search that
+comment) — `fixed bottom-24 left-1/2 -translate-x-1/2 z-40 ... bg-white/10 backdrop-blur-md ...
+rounded-full`. And `src/components/admin/AdminPhotosBrowse.tsx` (All Photos tab), which applies
+the same treatment to a multi-icon dock.
+
+Use this variant whenever the tray needs to stay reachable while the user scrolls a grid or list
+underneath it (photo grids, long tables). It is `fixed`, not `sticky`, and floats at the bottom
+of the viewport — matching where the back-to-top button already lives — rather than pinning to
+the top of the scroll area:
+```tsx
+<div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2">
+  {/* expandable card, if one is open, floats directly above the dock — see below */}
+  <div className="flex items-center gap-1 p-1.5 bg-white/10 backdrop-blur-md rounded-full shadow-2xl">
+    {/* icon buttons */}
+  </div>
+</div>
+```
+- `bg-white/10 backdrop-blur-md` — reuse these exact values; they're what makes it read as glass
+  rather than a bar. This is intentionally more transparent than Variant A's dock, because it's
+  meant to be seen through content, not sit on a flat background.
+- `fixed` + `bottom-24` reuses the back-to-top button's own screen position verbatim. If the view
+  also has another `fixed bottom-*` bar (e.g. a batch-selection action bar at `bottom-6`),
+  `bottom-24` keeps the two from colliding — don't invent a new offset, match the existing one.
+- `shadow-2xl` gives the glass some separation from busy content behind it.
+
+### Icon button (both variants)
 ```tsx
 <button
   onClick={...}
@@ -81,8 +116,10 @@ pill.
 
 ### Expandable card per icon
 Tapping an icon toggles a single `openCard: string | null` piece of state (only one card open at
-a time) and reveals that tool's content directly below the dock with the standard collapsible
-pattern:
+a time).
+
+For **Variant A** (static dock), the card can push inline content below the dock with the
+standard collapsible:
 ```tsx
 <AnimatePresence>
   {openCard === 'search' && (
@@ -98,22 +135,27 @@ pattern:
 </AnimatePresence>
 ```
 
-### Sticky variant (in-page toolbar, not the dashboard dock)
-When a console tray is pinned above scrolling content (e.g. above a photo grid), it MUST sit on a
-fully solid backdrop — no `bg-white/5`-only tray floating over content, no `backdrop-blur`
-standing in for opacity. Wrap the dock in a solid `bg-black` (not `bg-black/95`) sticky container
-so nothing ever shows through or peeks above it while scrolling:
+For **Variant B** (floating tray), the dock isn't anchored in document flow, so its card can't
+push content below it — it floats as its own panel directly above the dock instead, inside the
+same `fixed` wrapper:
 ```tsx
-<div className="sticky z-20 -mt-4 bg-black pt-4 pb-3" style={{ top: '-1rem' }}>
-  {/* title/count row, then the dock pill — bg-white/5 is fine on the dock itself since it now
-      sits on solid black, not directly over scrolling content */}
-</div>
+<AnimatePresence>
+  {openCard && (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 8 }}
+      transition={{ duration: 0.15 }}
+      className="bg-black/80 backdrop-blur-2xl shadow-2xl w-[calc(100vw-2rem)] max-w-sm p-4"
+    >
+      {openCard === 'search' && (/* the one tool this icon is for */)}
+    </motion.div>
+  )}
+</AnimatePresence>
 ```
-The `-mt-4` / `top: -1rem` offset matters whenever the scrolling pane has its own top padding:
-Chrome measures a sticky element's "stuck" offset from the padding edge, so a plain `top-0` can
-leave that padding's worth of gap unpainted once the tray is stuck — scrolling content peeks
-through it. Pull the tray up by that same amount and restore the visual spacing with the tray's
-own padding instead, so the solid background covers the gap too.
+The card's own surface can be more opaque (`bg-black/80`) than the dock pill (`bg-white/10`) —
+the frosted-glass requirement is about the dock itself being seen through, not every panel it
+opens. Text-heavy content (search inputs, filter chips, tag pickers) needs to stay legible.
 
 ## Implementation Patterns
 
