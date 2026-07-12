@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon, CheckIcon, ArrowDownTrayIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon, CheckIcon, ArrowDownTrayIcon, CheckCircleIcon, PrinterIcon } from '@heroicons/react/24/outline';
 import DownloadEmailModal from '../DownloadEmailModal';
+import PrintOrderModal from './PrintOrderModal';
 
 interface Photo {
     id: string;
     title: string;
     thumbnail_url: string;
     google_drive_file_id: string;
+    metadata?: { width?: number; height?: number } | null;
 }
 
 interface PhotoLightboxProps {
@@ -35,6 +37,7 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
 }) => {
     const [isImageLoading, setIsImageLoading] = useState(true);
     const [downloadEmailOpen, setDownloadEmailOpen] = useState(false);
+    const [printModalOpen, setPrintModalOpen] = useState(false);
 
     const triggerDownload = (email: string) => {
         const fileId = photo.google_drive_file_id || photo.id;
@@ -179,9 +182,9 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                     <motion.div
                         initial={{ y: 0, opacity: 0 }}
                         animate={{ y: 0, opacity: isImageLoading ? 0 : 1 }}
-                        className="mt-2 flex flex-col items-center gap-4 transition-opacity duration-300"
+                        className="mt-2 flex flex-col items-center gap-3 transition-opacity duration-300"
                     >
-
+                        <div className="flex flex-wrap items-center justify-center gap-3">
                         {isPurchased ? (
                             <button
                                 onClick={handleDownloadClick}
@@ -211,9 +214,28 @@ const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                                 )}
                             </button>
                         )}
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setPrintModalOpen(true); }}
+                            className="flex items-center gap-2 px-6 py-3 md:px-10 md:py-4 rounded-none font-black text-xs uppercase tracking-widest transition-all bg-transparent text-white border border-white hover:bg-white hover:text-black"
+                        >
+                            <PrinterIcon className="w-4 h-4" />
+                            <span>Order Print</span>
+                        </button>
+                        </div>
                     </motion.div>
                 </div>
             </motion.div>
+            {printModalOpen && (
+                <PrintOrderModal
+                    photo={{
+                        id: photo.id,
+                        title: photo.title,
+                        googleDriveFileId: photo.google_drive_file_id,
+                        metadata: photo.metadata,
+                    }}
+                    onClose={() => setPrintModalOpen(false)}
+                />
+            )}
             <DownloadEmailModal
                 isOpen={downloadEmailOpen}
                 onClose={() => setDownloadEmailOpen(false)}

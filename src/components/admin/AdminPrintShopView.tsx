@@ -15,6 +15,7 @@ import {
   PlusIcon,
   CloudArrowUpIcon,
   ExclamationTriangleIcon,
+  SwatchIcon,
 } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import { cn } from '../ui/utils';
@@ -41,6 +42,31 @@ interface ProdigiProduct {
   status: ProductStatus;
   stripe_product_id: string | null;
   stripe_price_id: string | null;
+}
+
+interface PrintOption {
+  id: string;
+  size_label: string;
+  width_in: number;
+  height_in: number;
+  framed: boolean;
+  frame_color: string | null;
+  mat_available: boolean;
+  sku_landscape: string;
+  sku_portrait: string;
+  base_cost: number;
+  price: number;
+  currency: string;
+  status: ProductStatus;
+}
+
+interface FrameTemplate {
+  id: string;
+  frame_color: string;
+  orientation: 'landscape' | 'portrait';
+  has_mat: boolean;
+  template_url: string | null;
+  bounds: { x: number; y: number; width: number; height: number } | null;
 }
 
 interface ProdigiOrder {
@@ -95,7 +121,7 @@ function Tab({ label, active, onClick }: { label: string; active: boolean; onCli
 }
 
 export default function AdminPrintShopView() {
-  const [activeTab, setActiveTab] = useState<'catalog' | 'orders'>('catalog');
+  const [activeTab, setActiveTab] = useState<'catalog' | 'sizes' | 'frames' | 'orders'>('catalog');
   const [products, setProducts] = useState<ProdigiProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -106,6 +132,14 @@ export default function AdminPrintShopView() {
   const [orders, setOrders] = useState<ProdigiOrder[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersLoaded, setOrdersLoaded] = useState(false);
+
+  const [sizeOptions, setSizeOptions] = useState<PrintOption[]>([]);
+  const [sizesLoading, setSizesLoading] = useState(false);
+  const [sizesLoaded, setSizesLoaded] = useState(false);
+
+  const [frameTemplates, setFrameTemplates] = useState<FrameTemplate[]>([]);
+  const [framesLoading, setFramesLoading] = useState(false);
+  const [framesLoaded, setFramesLoaded] = useState(false);
 
   const loadProducts = () => {
     setLoading(true);
@@ -138,6 +172,26 @@ export default function AdminPrintShopView() {
       .catch((e) => logError(e.message || 'Failed to load print orders'))
       .finally(() => setOrdersLoading(false));
   }, [activeTab, ordersLoaded]);
+
+  useEffect(() => {
+    if (activeTab !== 'sizes' || sizesLoaded) return;
+    setSizesLoading(true);
+    fetch('/api/admin/print-catalog', { headers: ADMIN_HEADERS })
+      .then((r) => { logApiCall('GET', '/api/admin/print-catalog', r.status, ''); return r.json(); })
+      .then((data) => { setSizeOptions(data.data || []); setSizesLoaded(true); })
+      .catch((e) => logError(e.message || 'Failed to load print sizes'))
+      .finally(() => setSizesLoading(false));
+  }, [activeTab, sizesLoaded]);
+
+  useEffect(() => {
+    if (activeTab !== 'frames' || framesLoaded) return;
+    setFramesLoading(true);
+    fetch('/api/admin/frame-templates', { headers: ADMIN_HEADERS })
+      .then((r) => { logApiCall('GET', '/api/admin/frame-templates', r.status, ''); return r.json(); })
+      .then((data) => { setFrameTemplates(data.data || []); setFramesLoaded(true); })
+      .catch((e) => logError(e.message || 'Failed to load frame templates'))
+      .finally(() => setFramesLoading(false));
+  }, [activeTab, framesLoaded]);
 
   const handleCreate = async () => {
     setCreating(true);
@@ -208,6 +262,8 @@ export default function AdminPrintShopView() {
       <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
         <div className="flex gap-12 pb-2">
           <Tab label="Catalog" active={activeTab === 'catalog'} onClick={() => setActiveTab('catalog')} />
+          <Tab label="Sizes" active={activeTab === 'sizes'} onClick={() => setActiveTab('sizes')} />
+          <Tab label="Frames" active={activeTab === 'frames'} onClick={() => setActiveTab('frames')} />
           <Tab label="Orders" active={activeTab === 'orders'} onClick={() => setActiveTab('orders')} />
         </div>
         {activeTab === 'catalog' && (
@@ -297,6 +353,30 @@ export default function AdminPrintShopView() {
                 </ExpandableScreen>
               );
             })}
+          </div>
+        )
+      ) : activeTab === 'sizes' ? (
+        sizesLoading ? (
+          <div className="flex items-center justify-center min-h-[300px]">
+            <LoadingSpinner size="lg" className="text-white" />
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {sizeOptions.map((opt) => (
+              <SizeOptionRow key={opt.id} option={opt} onSaved={(row) => setSizeOptions((prev) => prev.map((o) => (o.id === row.id ? row : o)))} />
+            ))}
+          </div>
+        )
+      ) : activeTab === 'frames' ? (
+        framesLoading ? (
+          <div className="flex items-center justify-center min-h-[300px]">
+            <LoadingSpinner size="lg" className="text-white" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {frameTemplates.map((tpl) => (
+              <FrameTemplateCard key={tpl.id} template={tpl} onSaved={(row) => setFrameTemplates((prev) => prev.map((t) => (t.id === row.id ? row : t)))} />
+            ))}
           </div>
         )
       ) : ordersLoading ? (
@@ -599,6 +679,234 @@ function ProductDetail({
           Delete
         </button>
         {profit !== null && <span className="text-emerald-400 font-bold font-mono text-xs">profit ${profit.toFixed(2)}</span>}
+        {error && <p className="text-red-400 text-xs font-mono w-full">{error}</p>}
+      </div>
+    </div>
+  );
+}
+
+function SizeOptionRow({ option, onSaved }: { option: PrintOption; onSaved: (row: PrintOption) => void }) {
+  const [skuLandscape, setSkuLandscape] = useState(option.sku_landscape);
+  const [skuPortrait, setSkuPortrait] = useState(option.sku_portrait);
+  const [costInput, setCostInput] = useState(option.base_cost.toString());
+  const [priceInput, setPriceInput] = useState(option.price.toString());
+  const [status, setStatus] = useState<ProductStatus>(option.status);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const cost = parseFloat(costInput);
+  const price = parseFloat(priceInput);
+  const profit = !Number.isNaN(cost) && !Number.isNaN(price) ? Math.max(0, price - cost) : null;
+  const margin = profit !== null && cost > 0 ? profit / cost : null;
+
+  const handleSave = async () => {
+    if (Number.isNaN(cost) || cost < 0 || Number.isNaN(price) || price < 0) {
+      setError('Enter valid cost and price');
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    setSaved(false);
+    try {
+      const res = await fetch(`/api/admin/print-catalog?id=${option.id}`, {
+        method: 'PUT',
+        headers: ADMIN_HEADERS,
+        body: JSON.stringify({ skuLandscape, skuPortrait, baseCost: cost, price, status }),
+      });
+      logApiCall('PUT', '/api/admin/print-catalog', res.status, option.id);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to save');
+      onSaved(data.data);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (e: any) {
+      setError(e.message || 'Failed to save');
+      logError(e.message || 'Failed to save print option');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="bg-white/5 p-4 flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <span className="text-white font-black uppercase tracking-wide text-sm">{option.width_in}×{option.height_in}"</span>
+          <span className="text-[9px] font-black uppercase tracking-widest text-white/40">{option.framed ? `Framed (${option.frame_color || 'black'})` : 'Unframed'}</span>
+          {option.mat_available && <span className="text-[9px] font-black uppercase tracking-widest text-white/30">Mat Optional</span>}
+        </div>
+        <div className="flex bg-white/5 p-0.5">
+          {(['active', 'draft'] as ProductStatus[]).map((s) => (
+            <button
+              key={s}
+              onClick={() => setStatus(s)}
+              className={`flex items-center gap-1 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest transition-colors duration-300 ${status === s ? 'bg-white text-black' : 'text-white/40 hover:text-white/70'}`}
+            >
+              {s === 'active' ? <CheckCircleIcon className="w-3 h-3" /> : <PauseCircleIcon className="w-3 h-3" />}
+              {STATUS_LABEL[s]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="flex items-center gap-2 text-white/40 text-[9px] font-black uppercase tracking-widest mb-1"><TagIcon className="w-3 h-3" />SKU — Landscape</label>
+          <input type="text" value={skuLandscape} onChange={(e) => setSkuLandscape(e.target.value)} className="w-full bg-white/5 px-2.5 py-1.5 text-white font-mono text-xs outline-none focus:bg-white/10 transition-colors duration-300" />
+        </div>
+        <div>
+          <label className="flex items-center gap-2 text-white/40 text-[9px] font-black uppercase tracking-widest mb-1"><TagIcon className="w-3 h-3" />SKU — Portrait</label>
+          <input type="text" value={skuPortrait} onChange={(e) => setSkuPortrait(e.target.value)} className="w-full bg-white/5 px-2.5 py-1.5 text-white font-mono text-xs outline-none focus:bg-white/10 transition-colors duration-300" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <div className="bg-white/5 p-2">
+          <label className="flex items-center gap-2 text-white/40 text-[9px] font-black uppercase tracking-widest mb-1"><CurrencyDollarIcon className="w-3 h-3" />Price</label>
+          <div className="flex items-center"><span className="text-white/40 font-mono text-xs mr-1">$</span><input type="number" min="0" step="0.01" value={priceInput} onChange={(e) => setPriceInput(e.target.value)} className="bg-transparent text-white font-mono font-bold text-sm outline-none w-full" /></div>
+        </div>
+        <div className="bg-white/5 p-2">
+          <label className="flex items-center gap-2 text-white/40 text-[9px] font-black uppercase tracking-widest mb-1">Prodigi Cost</label>
+          <div className="flex items-center"><span className="text-white/40 font-mono text-xs mr-1">$</span><input type="number" min="0" step="0.01" value={costInput} onChange={(e) => setCostInput(e.target.value)} className="bg-transparent text-white font-mono font-bold text-sm outline-none w-full" /></div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 flex-wrap">
+        <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 bg-white text-black px-4 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-white/80 transition-colors duration-300 disabled:opacity-50">
+          {saving ? <ArrowPathIcon className="w-3.5 h-3.5 animate-spin" /> : saved ? <CheckIcon className="w-3.5 h-3.5" /> : null}
+          {saving ? 'Saving' : saved ? 'Saved' : 'Save Changes'}
+        </button>
+        {profit !== null && (
+          <span className="text-emerald-400 font-bold font-mono text-xs">
+            profit ${profit.toFixed(2)}{margin !== null ? ` (${margin.toFixed(1)}x)` : ''}
+          </span>
+        )}
+        {error && <p className="text-red-400 text-xs font-mono w-full">{error}</p>}
+      </div>
+    </div>
+  );
+}
+
+function FrameTemplateCard({ template, onSaved }: { template: FrameTemplate; onSaved: (row: FrameTemplate) => void }) {
+  const [templateUrl, setTemplateUrl] = useState<string | null>(template.template_url);
+  const [bounds, setBounds] = useState(template.bounds || { x: 20, y: 15, width: 60, height: 65 });
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleUpload = async (file: File) => {
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setError('Use a JPEG, PNG, or WebP image');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image must be under 5MB');
+      return;
+    }
+    const localPreview = URL.createObjectURL(file);
+    setTemplateUrl(localPreview);
+    setUploading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/admin/upload-product-image', {
+        method: 'POST',
+        headers: { 'Content-Type': file.type, 'X-Admin-Email': 'thelostandunfounds@gmail.com', 'X-Product-Id': `frame-${template.id}` },
+        body: file,
+      });
+      logApiCall('POST', '/api/admin/upload-product-image', res.status, template.id);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      setTemplateUrl(data.url);
+    } catch (e: any) {
+      setError(e.message || 'Upload failed');
+      setTemplateUrl(template.template_url);
+      logError(e.message || 'Frame template upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError(null);
+    setSaved(false);
+    try {
+      const res = await fetch(`/api/admin/frame-templates?id=${template.id}`, {
+        method: 'PUT',
+        headers: ADMIN_HEADERS,
+        body: JSON.stringify({ templateUrl, bounds }),
+      });
+      logApiCall('PUT', '/api/admin/frame-templates', res.status, template.id);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to save');
+      onSaved(data.data);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (e: any) {
+      setError(e.message || 'Failed to save');
+      logError(e.message || 'Failed to save frame template');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="bg-white/5 p-4 flex flex-col gap-3">
+      <div className="flex items-center gap-2">
+        <SwatchIcon className="w-4 h-4 text-white/40" />
+        <span className="text-white font-black uppercase tracking-wide text-sm capitalize">{template.frame_color} — {template.orientation}</span>
+        {template.has_mat && <span className="text-[9px] font-black uppercase tracking-widest text-white/30">With Mat</span>}
+      </div>
+
+      <input
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])}
+        className="hidden"
+        id={`frame-template-${template.id}`}
+      />
+      <div className="relative w-full h-[160px] group">
+        {templateUrl ? (
+          <img src={templateUrl} alt="" className="w-full h-[160px] object-cover bg-white/5" />
+        ) : (
+          <div className="w-full h-[160px] bg-white/5 flex items-center justify-center">
+            <PhotoIcon className="w-8 h-8 text-white/20" />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2">
+          {uploading ? (
+            <LoadingSpinner size="sm" className="text-white" />
+          ) : (
+            <label htmlFor={`frame-template-${template.id}`} className="p-2 bg-white text-black cursor-pointer hover:bg-white/80 transition-colors duration-300" title="Upload">
+              <ArrowUpTrayIcon className="w-4 h-4" />
+            </label>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-4 gap-2">
+        {(['x', 'y', 'width', 'height'] as const).map((key) => (
+          <div key={key}>
+            <label className="flex items-center gap-2 text-white/40 text-[9px] font-black uppercase tracking-widest mb-1">{key} %</label>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              value={bounds[key]}
+              onChange={(e) => setBounds((prev) => ({ ...prev, [key]: parseFloat(e.target.value) || 0 }))}
+              className="w-full bg-white/5 px-2 py-1.5 text-white font-mono text-xs outline-none focus:bg-white/10 transition-colors duration-300"
+            />
+          </div>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-3 flex-wrap">
+        <button onClick={handleSave} disabled={saving || uploading} className="flex items-center gap-2 bg-white text-black px-4 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-white/80 transition-colors duration-300 disabled:opacity-50">
+          {saving ? <ArrowPathIcon className="w-3.5 h-3.5 animate-spin" /> : saved ? <CheckIcon className="w-3.5 h-3.5" /> : null}
+          {saving ? 'Saving' : saved ? 'Saved' : 'Save Changes'}
+        </button>
         {error && <p className="text-red-400 text-xs font-mono w-full">{error}</p>}
       </div>
     </div>

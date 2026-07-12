@@ -19,6 +19,7 @@ import { initAffiliateTracking, getAffiliateRef } from '../utils/affiliate-track
 import { getStrikeCheckoutInvoice, pollStrikeInvoiceStatus, getStripeCheckoutUrl, getStripeCheckoutUrlByPriceId, getProdigiCheckoutUrl, getProdigiStrikeInvoice, ProdigiShippingRecipient } from '../utils/checkout-utils';
 import { LightningPaymentModal } from "../components/shop/LightningPaymentModal";
 import { PrintMockupPreview, MockupBounds } from '../components/shop/PrintMockupPreview';
+import { ShippingAddressForm, EMPTY_SHIPPING_FORM, isShippingFormComplete } from '../components/shop/ShippingAddressForm';
 import { TEST_PRODUCTS } from '../data/test-products';
 import { STRIPE_PRODUCTS } from '../data/stripe-products';
 import { transformProduct } from '../../lib/fourthwall/utils';
@@ -571,9 +572,7 @@ function ProductModal({
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [stripeLoading, setStripeLoading] = useState(false);
   const [showShippingForm, setShowShippingForm] = useState(false);
-  const [shipping, setShipping] = useState({
-    name: '', email: '', line1: '', line2: '', townOrCity: '', stateOrCounty: '', postalOrZipCode: '', countryCode: 'US',
-  });
+  const [shipping, setShipping] = useState(EMPTY_SHIPPING_FORM);
   const [shippingError, setShippingError] = useState<string | null>(null);
 
   const handleCheckoutClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -633,7 +632,7 @@ function ProductModal({
     e.preventDefault();
     setShippingError(null);
 
-    if (!shipping.name || !shipping.email || !shipping.line1 || !shipping.townOrCity || !shipping.postalOrZipCode || !shipping.countryCode) {
+    if (!isShippingFormComplete(shipping)) {
       setShippingError('Please fill in all required fields.');
       return;
     }
@@ -824,22 +823,7 @@ function ProductModal({
 
             {showShippingForm ? (
               <form onSubmit={handleProdigiShippingSubmit} className="space-y-2">
-                <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Shipping Address</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <input required placeholder="Full name" value={shipping.name} onChange={(e) => setShipping((s) => ({ ...s, name: e.target.value }))} className="col-span-2 bg-black/60 border border-white px-3 py-2 text-white text-sm placeholder-white/40 rounded-none focus:outline-none focus:ring-1 focus:ring-white/40" />
-                  <input required type="email" placeholder="Email" value={shipping.email} onChange={(e) => setShipping((s) => ({ ...s, email: e.target.value }))} className="col-span-2 bg-black/60 border border-white px-3 py-2 text-white text-sm placeholder-white/40 rounded-none focus:outline-none focus:ring-1 focus:ring-white/40" />
-                  <input required placeholder="Address line 1" value={shipping.line1} onChange={(e) => setShipping((s) => ({ ...s, line1: e.target.value }))} className="col-span-2 bg-black/60 border border-white px-3 py-2 text-white text-sm placeholder-white/40 rounded-none focus:outline-none focus:ring-1 focus:ring-white/40" />
-                  <input placeholder="Address line 2 (optional)" value={shipping.line2} onChange={(e) => setShipping((s) => ({ ...s, line2: e.target.value }))} className="col-span-2 bg-black/60 border border-white px-3 py-2 text-white text-sm placeholder-white/40 rounded-none focus:outline-none focus:ring-1 focus:ring-white/40" />
-                  <input required placeholder="City" value={shipping.townOrCity} onChange={(e) => setShipping((s) => ({ ...s, townOrCity: e.target.value }))} className="bg-black/60 border border-white px-3 py-2 text-white text-sm placeholder-white/40 rounded-none focus:outline-none focus:ring-1 focus:ring-white/40" />
-                  <input placeholder="State / county" value={shipping.stateOrCounty} onChange={(e) => setShipping((s) => ({ ...s, stateOrCounty: e.target.value }))} className="bg-black/60 border border-white px-3 py-2 text-white text-sm placeholder-white/40 rounded-none focus:outline-none focus:ring-1 focus:ring-white/40" />
-                  <input required placeholder="Postal code" value={shipping.postalOrZipCode} onChange={(e) => setShipping((s) => ({ ...s, postalOrZipCode: e.target.value }))} className="bg-black/60 border border-white px-3 py-2 text-white text-sm placeholder-white/40 rounded-none focus:outline-none focus:ring-1 focus:ring-white/40" />
-                  <select required value={shipping.countryCode} onChange={(e) => setShipping((s) => ({ ...s, countryCode: e.target.value }))} className="bg-black/60 border border-white px-3 py-2 text-white text-sm rounded-none focus:outline-none focus:ring-1 focus:ring-white/40">
-                    <option value="US">United States</option>
-                    <option value="CA">Canada</option>
-                    <option value="GB">United Kingdom</option>
-                    <option value="AU">Australia</option>
-                  </select>
-                </div>
+                <ShippingAddressForm value={shipping} onChange={setShipping} />
                 {shippingError && <p className="text-xs text-red-400">{shippingError}</p>}
                 <div className="flex gap-3 pt-1">
                   <button type="button" onClick={() => setShowShippingForm(false)} className="flex-1 sm:flex-none px-4 py-3 sm:py-2 text-white/60 border border-white/30 rounded-none hover:text-white hover:border-white transition-colors font-semibold text-sm">
