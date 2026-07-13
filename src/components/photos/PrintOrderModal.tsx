@@ -1,18 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { XMarkIcon, ShoppingCartIcon, CreditCardIcon, SwatchIcon } from '@heroicons/react/24/outline';
-import { PrintMockupPreview } from '../shop/PrintMockupPreview';
+import { XMarkIcon, ShoppingCartIcon, CreditCardIcon } from '@heroicons/react/24/outline';
 import { ShippingAddressForm, EMPTY_SHIPPING_FORM, isShippingFormComplete, ShippingFormValue } from '../shop/ShippingAddressForm';
 import { LightningPaymentModal } from '../shop/LightningPaymentModal';
 import { getPhotoPrintCheckoutUrl, getPhotoPrintStrikeInvoice } from '../../utils/checkout-utils';
 import { getAffiliateRef } from '../../utils/affiliate-tracking';
 
 type Orientation = 'landscape' | 'portrait';
-
-// Must match the actual viewBox ratio of the deployed frame template SVGs
-// (public/frame-mockups/classic-black-{landscape,portrait}-mat.svg) — see
-// the aspectRatio comment below for why this has to be exact.
-const FRAME_RATIO_LANDSCAPE = 220 / 180;
-const FRAME_RATIO_PORTRAIT = 180 / 220;
 
 interface PrintOption {
   id: string;
@@ -25,21 +18,11 @@ interface PrintOption {
   currency: string;
 }
 
-interface FrameTemplate {
-  id: string;
-  frame_color: string;
-  orientation: Orientation;
-  has_mat: boolean;
-  template_url: string | null;
-  bounds: { x: number; y: number; width: number; height: number } | null;
-}
-
 interface SizeGroup {
   key: string;
   widthIn: number;
   heightIn: number;
   unframed?: PrintOption;
-  framed?: PrintOption;
 }
 
 export interface PrintablePhoto {
@@ -50,11 +33,9 @@ export interface PrintablePhoto {
 }
 
 /**
- * Universal "order a print" flow for any gallery photo: pick a size, decide
- * whether to frame it, and see a live preview of the customer's own photo
- * composited into the matching frame mockup before paying. Framed prints
- * always ship with Prodigi's fixed white mount — there's no unmatted
- * variant of this product, so it isn't offered as a toggle. Orientation
+ * Universal "order a print" flow for any gallery photo: pick a size and see
+ * a live preview of the photo before paying. Framing is temporarily
+ * unavailable while a proper frame mockup source is sourced. Orientation
  * (landscape/portrait) is detected from the photo's own pixel dimensions
  * so the preview and the Prodigi order sent to fulfillment always match
  * how the photo was actually shot.
@@ -63,7 +44,6 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [options, setOptions] = useState<PrintOption[]>([]);
-  const [frameTemplates, setFrameTemplates] = useState<FrameTemplate[]>([]);
 
   const [orientation, setOrientation] = useState<Orientation | null>(
     photo.metadata?.width && photo.metadata?.height
@@ -72,7 +52,6 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
   );
 
   const [selectedSizeKey, setSelectedSizeKey] = useState<string | null>(null);
-  const [framed, setFramed] = useState(false);
 
   const [showShippingForm, setShowShippingForm] = useState(false);
   const [shipping, setShipping] = useState<ShippingFormValue>(EMPTY_SHIPPING_FORM);
@@ -100,7 +79,6 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
       .then((r) => r.json())
       .then((data) => {
         setOptions(data.options || []);
-        setFrameTemplates(data.frameTemplates || []);
       })
       .catch(() => setLoadError('Could not load print options. Please try again.'))
       .finally(() => setLoading(false));
@@ -109,10 +87,9 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
   const sizeGroups = useMemo<SizeGroup[]>(() => {
     const map = new Map<string, SizeGroup>();
     for (const opt of options) {
+      if (opt.framed) continue;
       const key = `${opt.width_in}x${opt.height_in}`;
-      const g = map.get(key) || { key, widthIn: opt.width_in, heightIn: opt.height_in };
-      if (opt.framed) g.framed = opt; else g.unframed = opt;
-      map.set(key, g);
+      map.set(key, { key, widthIn: opt.width_in, heightIn: opt.height_in, unframed: opt });
     }
     return [...map.values()].sort((a, b) => a.widthIn * a.heightIn - b.widthIn * b.heightIn);
   }, [options]);
@@ -125,14 +102,7 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
   }, [sizeGroups, selectedSizeKey]);
 
   const selectedGroup = sizeGroups.find((g) => g.key === selectedSizeKey) || null;
-  const selectedOption = selectedGroup ? (framed ? selectedGroup.framed : selectedGroup.unframed) : null;
-  const canFrame = !!selectedGroup?.framed;
-
-  // Framed prints always ship with the mount, so the preview always uses
-  // the has_mat template — there's no unmatted physical variant to show.
-  const activeTemplate = framed && orientation
-    ? frameTemplates.find((t) => t.orientation === orientation && t.has_mat === true && t.frame_color === (selectedOption?.frame_color || 'black'))
-    : null;
+  const selectedOption = selectedGroup?.unframed || null;
 
   const handleCardCheckout = async () => {
     if (!selectedOption || !orientation) return;
@@ -232,28 +202,8 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
         </button>
 
         <div className="grid md:grid-cols-2 gap-0">
-          {/* Live preview — when framed, the container's aspect ratio must
-              match the template SVG's own natural ratio exactly. The
-              template <img> uses object-fit: cover, and bounds% are
-              computed relative to the template's uncropped source — a
-              mismatched container ratio would crop the template
-              differently than the bounds math assumes, desyncing the
-              customer's photo from the frame opening. */}
-          <div
-            className="relative bg-white/5 flex items-center justify-center overflow-hidden"
-            style={{ aspectRatio: framed ? (orientation === 'landscape' ? FRAME_RATIO_LANDSCAPE : FRAME_RATIO_PORTRAIT) : 1 }}
-          >
-            {framed ? (
-              <PrintMockupPreview
-                artworkUrl={previewUrl}
-                templateUrl={activeTemplate?.template_url}
-                bounds={activeTemplate?.bounds}
-                alt={photo.title}
-                className="relative w-full h-full"
-              />
-            ) : (
-              <img src={previewUrl} alt={photo.title} className="w-full h-full object-contain" />
-            )}
+          <div className="relative bg-white/5 flex items-center justify-center overflow-hidden aspect-square">
+            <img src={previewUrl} alt={photo.title} className="w-full h-full object-contain" />
           </div>
 
           <div className="p-5 sm:p-6 space-y-4">
@@ -289,7 +239,7 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
                   <div className="grid grid-cols-3 gap-2">
                     {sizeGroups.map((g) => {
                       const active = g.key === selectedSizeKey;
-                      const displayPrice = framed ? g.framed?.price : g.unframed?.price;
+                      const displayPrice = g.unframed?.price;
                       return (
                         <button
                           key={g.key}
@@ -304,34 +254,6 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
                     })}
                   </div>
                 </div>
-
-                {/* Framed toggle */}
-                {canFrame && (
-                  <div className="space-y-2">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Would You Like It Framed?</p>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setFramed(false)}
-                        className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 border transition-colors text-sm font-semibold ${!framed ? 'bg-white text-black border-white' : 'bg-transparent text-white border-white/30 hover:border-white'}`}
-                        style={{ borderRadius: 0 }}
-                      >
-                        Print Only
-                      </button>
-                      <button
-                        onClick={() => setFramed(true)}
-                        className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 border transition-colors text-sm font-semibold ${framed ? 'bg-white text-black border-white' : 'bg-transparent text-white border-white/30 hover:border-white'}`}
-                        style={{ borderRadius: 0 }}
-                      >
-                        <SwatchIcon className="w-4 h-4" />
-                        Frame It
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {framed && (
-                  <p className="text-white/40 text-xs">Includes a white mount, ready to hang.</p>
-                )}
 
                 {selectedOption && (
                   <div className="flex items-center gap-3 pt-1">
