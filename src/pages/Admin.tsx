@@ -201,6 +201,7 @@ export default function Admin() {
   const [loadingLostArchivesPosts, setLoadingLostArchivesPosts] = useState(false);
   const [registeredWriters, setRegisteredWriters] = useState<number>(0);
   const [pendingSubmissions, setPendingSubmissions] = useState<number>(0);
+  const [prodigiErrorCount, setProdigiErrorCount] = useState<number>(0);
   const [recentPosts, setRecentPosts] = useState<Array<{ title: string; author: string; date: string }>>([]);
   const [newestSubscribers, setNewestSubscribers] = useState<Array<{ email: string; created_at: string }>>([]);
   const [affiliateStats, setAffiliateStats] = useState<{
@@ -916,6 +917,31 @@ export default function Admin() {
         console.error('Error checking pending submissions:', err);
       }
 
+      // Check for Prodigi print orders that failed at fulfillment — the
+      // customer was charged but the physical order was never submitted,
+      // so this needs to surface loudly (real money, no dry-run test order
+      // was ever run against this flow).
+      try {
+        const { count } = await supabase
+          .from('prodigi_orders')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'error');
+
+        if (count && count > 0) {
+          newAlerts.push({
+            id: 5,
+            type: 'error',
+            message: `${count} print order${count > 1 ? 's' : ''} failed to submit to Prodigi — customer was charged`,
+            time: 'Just now',
+            read: false
+          });
+        }
+
+        setProdigiErrorCount(count || 0);
+      } catch (err) {
+        console.error('Error checking Prodigi order failures:', err);
+      }
+
       setAlerts(newAlerts);
 
       // Load recent users
@@ -1570,7 +1596,7 @@ export default function Admin() {
                 { id: 'calendar', icon: CalendarIcon, title: 'Calendar' },
                 { id: 'invoices', icon: BanknotesIcon, title: 'Invoices' },
                 { id: 'pricing', icon: CurrencyDollarIcon, title: 'Products' },
-                { id: 'printshop', icon: PrinterIcon, title: 'Print Shop' },
+                { id: 'printshop', icon: PrinterIcon, title: 'Print Shop', badge: prodigiErrorCount },
                 { id: 'settings', icon: BoltIcon, title: 'Settings' }
               ].map((app) => (
                 <button
@@ -1623,7 +1649,7 @@ export default function Admin() {
                   calendar:    { title: 'Master Calendar',          icon: <CalendarIcon className="w-5 h-5 text-white/40" /> },
                   invoices:    { title: 'Invoices & CRM',           icon: <BanknotesIcon className="w-5 h-5 text-white/40" /> },
                   pricing:     { title: 'Product Management',       icon: <CurrencyDollarIcon className="w-5 h-5 text-white/40" /> },
-                  printshop:   { title: 'Print Shop',               icon: <PrinterIcon className="w-5 h-5 text-white/40" /> },
+                  printshop:   { title: 'Print Shop',               icon: <PrinterIcon className="w-5 h-5 text-white/40" />, extra: prodigiErrorCount > 0 ? <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-black">{prodigiErrorCount} FAILED</span> : null },
                   settings:    { title: 'Platform Settings',        icon: <BoltIcon className="w-5 h-5 text-white/40" /> },
                 };
                 const meta = sectionMeta[activePanelSection];

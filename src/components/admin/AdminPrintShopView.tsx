@@ -177,8 +177,7 @@ export default function AdminPrintShopView() {
     loadProducts();
   }, []);
 
-  useEffect(() => {
-    if (activeTab !== 'orders' || ordersLoaded) return;
+  const loadOrders = () => {
     setOrdersLoading(true);
     fetch('/api/admin/prodigi-orders', { headers: ADMIN_HEADERS })
       .then((r) => {
@@ -186,11 +185,20 @@ export default function AdminPrintShopView() {
         return r.json();
       })
       .then((data) => {
-        setOrders(data.data || []);
+        // Failed orders (customer charged, Prodigi submission never
+        // happened) need eyes on them first — always float to the top.
+        const rows: ProdigiOrder[] = data.data || [];
+        rows.sort((a, b) => (a.status === 'error' ? -1 : 0) - (b.status === 'error' ? -1 : 0));
+        setOrders(rows);
         setOrdersLoaded(true);
       })
       .catch((e) => logError(e.message || 'Failed to load print orders'))
       .finally(() => setOrdersLoading(false));
+  };
+
+  useEffect(() => {
+    if (activeTab !== 'orders' || ordersLoaded) return;
+    loadOrders();
   }, [activeTab, ordersLoaded]);
 
   useEffect(() => {
@@ -337,6 +345,17 @@ export default function AdminPrintShopView() {
                 New Print
               </button>
             </>
+          )}
+          {activeTab === 'orders' && (
+            <button
+              onClick={loadOrders}
+              disabled={ordersLoading}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-widest bg-black text-white border border-white hover:bg-white hover:text-black transition-colors disabled:opacity-50"
+              style={{ borderRadius: 0 }}
+            >
+              <ArrowPathIcon className={cn('w-3 h-3', ordersLoading && 'animate-spin')} />
+              Refresh
+            </button>
           )}
         </div>
       </div>
@@ -488,15 +507,24 @@ export default function AdminPrintShopView() {
         <p className="text-white/30 text-xs uppercase tracking-widest text-center py-12">No print orders yet</p>
       ) : (
         <div className="flex flex-col gap-2">
-          {orders.map((order) => (
-            <div key={order.id} className="bg-white/5 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+          {orders.map((order) => {
+            const isError = order.status === 'error';
+            return (
+            <div
+              key={order.id}
+              className={cn(
+                'p-4 flex flex-col sm:flex-row sm:items-center gap-3 border-l-4',
+                isError ? 'bg-red-500/10 border-l-red-500' : 'bg-white/5 border-l-transparent'
+              )}
+            >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
+                  {isError && <ExclamationTriangleIcon className="w-4 h-4 text-red-400 shrink-0" />}
                   <span className="text-white font-black uppercase tracking-wide text-xs">
                     {order.prodigi_products?.title || order.sku}
                   </span>
                   <span className="text-white/30 text-[10px] font-mono">×{order.copies}</span>
-                  <span className={cn('text-[9px] font-black uppercase tracking-widest', ORDER_STATUS_COLOR[order.status] || 'text-white/40')}>
+                  <span className={cn('text-[9px] font-black uppercase tracking-widest', isError ? 'text-red-400' : ORDER_STATUS_COLOR[order.status] || 'text-white/40')}>
                     {order.status.replace('_', ' ')}
                   </span>
                   <span className="text-[9px] font-black uppercase tracking-widest text-white/30">
@@ -508,7 +536,7 @@ export default function AdminPrintShopView() {
                   {order.recipient?.address?.townOrCity ? ` · ${order.recipient.address.townOrCity}, ${order.recipient.address.countryCode}` : ''}
                 </p>
                 {order.error_message && (
-                  <p className="text-red-400 text-[10px] font-mono mt-1">{order.error_message}</p>
+                  <p className="text-red-400 text-xs font-mono font-bold mt-1">{order.error_message}</p>
                 )}
               </div>
               <div className="flex items-center gap-4 shrink-0">
@@ -528,7 +556,8 @@ export default function AdminPrintShopView() {
                 )}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
