@@ -513,6 +513,15 @@ async function finalizeProdigiOrder(supabase: any, session: Stripe.Checkout.Sess
                 {
                     sku: order.sku,
                     copies: order.copies || 1,
+                    // fillPrintArea crops to the print area's aspect ratio;
+                    // Prodigi auto-rotates the asset to whichever orientation
+                    // needs the least cropping, so a landscape photo prints
+                    // correctly on a portrait-shaped SKU (and vice versa)
+                    // without us pre-rotating pixels ourselves.
+                    sizing: 'fillPrintArea',
+                    ...(order.order_attributes && Object.keys(order.order_attributes).length > 0
+                        ? { attributes: order.order_attributes }
+                        : {}),
                     assets: [{ printArea: 'default', url: order.asset_url }],
                 },
             ],

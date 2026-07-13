@@ -154,6 +154,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             asset_url: product.image_url,
             affiliate_ref: affiliateRef,
             status: 'pending_payment',
+            order_attributes: product.attributes || {},
         })
 
         if (prodigiInsertError) {

@@ -835,7 +835,7 @@ function SizeOptionRow({ option, onSaved }: { option: PrintOption; onSaved: (row
         <div className="flex items-center gap-2">
           <span className="text-white font-black uppercase tracking-wide text-sm">{option.width_in}×{option.height_in}"</span>
           <span className="text-[9px] font-black uppercase tracking-widest text-white/40">{option.framed ? `Framed (${option.frame_color || 'black'})` : 'Unframed'}</span>
-          {option.mat_available && <span className="text-[9px] font-black uppercase tracking-widest text-white/30">Mat Optional</span>}
+          {option.framed && <span className="text-[9px] font-black uppercase tracking-widest text-white/30">Includes Mount</span>}
         </div>
         <div className="flex bg-white/5 p-0.5">
           {(['active', 'draft'] as ProductStatus[]).map((s) => (

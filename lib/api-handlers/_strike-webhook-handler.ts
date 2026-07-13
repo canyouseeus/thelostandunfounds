@@ -150,7 +150,18 @@ async function finalizeProdigiStrikeOrder(supabase: any, invoiceId: string) {
             idempotencyKey: order.id,
             recipient: order.recipient,
             items: [
-                { sku: order.sku, copies: order.copies || 1, assets: [{ printArea: 'default', url: order.asset_url }] },
+                {
+                    sku: order.sku,
+                    copies: order.copies || 1,
+                    // See _stripe-webhook-handler.ts's finalizeProdigiOrder for
+                    // why fillPrintArea (Prodigi auto-rotates to the
+                    // best-fit orientation) rather than pre-rotating pixels.
+                    sizing: 'fillPrintArea',
+                    ...(order.order_attributes && Object.keys(order.order_attributes).length > 0
+                        ? { attributes: order.order_attributes }
+                        : {}),
+                    assets: [{ printArea: 'default', url: order.asset_url }],
+                },
             ],
             callbackUrl: `${origin.replace(/\/$/, '')}/api/prodigi/webhook`,
             metadata: { prodigiOrderRowId: order.id },

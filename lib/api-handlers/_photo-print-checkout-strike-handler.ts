@@ -11,7 +11,7 @@ const STRIKE_API_URL = 'https://api.strike.me'
  * requirement (Strike has no hosted address step) but resolves SKU/pricing
  * dynamically from print_catalog_options instead of a pre-seeded product.
  *
- * Body: { photoId, printOptionId, orientation, matSelected?, recipient: {...} }
+ * Body: { photoId, printOptionId, orientation, recipient: {...} }
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.setHeader('Access-Control-Allow-Origin', '*')
@@ -38,11 +38,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        const { photoId, printOptionId, orientation, matSelected = false, recipient } = (req.body || {}) as {
+        const { photoId, printOptionId, orientation, recipient } = (req.body || {}) as {
             photoId?: string
             printOptionId?: string
             orientation?: 'landscape' | 'portrait'
-            matSelected?: boolean
             recipient?: {
                 name?: string
                 email?: string
@@ -77,7 +76,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (optionError || !option) return res.status(404).json({ error: 'Print option not found' })
 
         const sku = orientation === 'landscape' ? option.sku_landscape : option.sku_portrait
-        const useMat = option.framed && option.mat_available && !!matSelected
+
+        // See _photo-print-checkout-handler.ts for why there's no mat
+        // toggle — Prodigi's mount/mountColor attributes have exactly one
+        // valid value each, so it was never a real customer choice.
+        const orderAttributes: Record<string, string> = option.framed ? { color: option.frame_color || 'black' } : {}
 
         const affiliateRef = getAffiliateRefFromRequest(req)
         const correlationId = `photo-print-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
@@ -119,7 +122,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             photo_id: photoId,
             print_option_id: printOptionId,
             orientation,
-            mat_selected: useMat,
             sku,
             copies: 1,
             unit_cost: option.base_cost,
@@ -130,6 +132,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             asset_url: assetUrl,
             affiliate_ref: affiliateRef,
             status: 'pending_payment',
+            order_attributes: orderAttributes,
         })
 
         if (prodigiInsertError) {

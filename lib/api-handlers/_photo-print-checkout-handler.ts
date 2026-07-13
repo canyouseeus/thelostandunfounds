@@ -21,10 +21,9 @@ import Stripe from 'stripe'
  *   printOptionId string  required — print_catalog_options.id
  *   orientation   'landscape' | 'portrait'  required — resolved client-side
  *                 from the photo's actual pixel dimensions, since that's
- *                 already loaded in the lightbox and determines which SKU
- *                 (landscape vs portrait) to order.
- *   matSelected?  boolean — only meaningful when the option is framed +
- *                 mat_available
+ *                 already loaded in the lightbox and used to fit the
+ *                 artwork correctly on order submission (see order_attributes
+ *                 / sizing in the webhook finalizer).
  *   customerEmail? string
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -52,11 +51,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        const { photoId, printOptionId, orientation, matSelected = false, customerEmail } = (req.body || {}) as {
+        const { photoId, printOptionId, orientation, customerEmail } = (req.body || {}) as {
             photoId?: string
             printOptionId?: string
             orientation?: 'landscape' | 'portrait'
-            matSelected?: boolean
             customerEmail?: string
         }
 
@@ -78,8 +76,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (photoError || !photo) return res.status(404).json({ error: 'Photo not found' })
         if (optionError || !option) return res.status(404).json({ error: 'Print option not found' })
 
+        // Orientation picks which of the (now-identical) sku_landscape/
+        // sku_portrait columns we read — kept as two columns since Prodigi
+        // does offer real orientation-swapped SKUs for some product lines,
+        // even though the ones in the current catalog turned out to be a
+        // single physical shape (see order_attributes/sizing comment below).
         const sku = orientation === 'landscape' ? option.sku_landscape : option.sku_portrait
-        const useMat = option.framed && option.mat_available && !!matSelected
+
+        // Real Prodigi product data (GET /v4.0/products/{sku}) showed the
+        // classic frame's mount/mountColor attributes have exactly one valid
+        // value each — there's no "no mount" choice, so a mat toggle was
+        // never real and isn't offered. "color" is the one real per-order
+        // choice; hardcoded to black (lowercase — Prodigi's enum is
+        // lowercase) since the brand only offers black frames.
+        const orderAttributes: Record<string, string> = option.framed ? { color: option.frame_color || 'black' } : {}
 
         const affiliateRef = getAffiliateRefFromRequest(req)
 
@@ -91,7 +101,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ).replace(/\/$/, '')
 
         const assetUrl = `${origin}/api/gallery/stream?fileId=${photo.google_drive_file_id}&size=4096`
-        const productName = `${photo.title} — ${option.size_label}${useMat ? ' (Matted)' : ''}`
+        const productName = `${photo.title} — ${option.size_label}`
 
         const successUrl = `${origin}/shop/success?session_id={CHECKOUT_SESSION_ID}`
         const cancelUrl = `${origin}/gallery`
@@ -163,7 +173,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             photo_id: photoId,
             print_option_id: printOptionId,
             orientation,
-            mat_selected: useMat,
             sku,
             copies: 1,
             unit_cost: option.base_cost,
@@ -173,6 +182,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             asset_url: assetUrl,
             affiliate_ref: affiliateRef,
             status: 'pending_payment',
+            order_attributes: orderAttributes,
         })
 
         if (prodigiInsertError) {

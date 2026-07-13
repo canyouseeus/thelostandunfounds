@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { XMarkIcon, ShoppingCartIcon, CreditCardIcon, CheckIcon, SwatchIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, ShoppingCartIcon, CreditCardIcon, SwatchIcon } from '@heroicons/react/24/outline';
 import { PrintMockupPreview } from '../shop/PrintMockupPreview';
 import { ShippingAddressForm, EMPTY_SHIPPING_FORM, isShippingFormComplete, ShippingFormValue } from '../shop/ShippingAddressForm';
 import { LightningPaymentModal } from '../shop/LightningPaymentModal';
@@ -15,7 +15,6 @@ interface PrintOption {
   height_in: number;
   framed: boolean;
   frame_color: string | null;
-  mat_available: boolean;
   price: number;
   currency: string;
 }
@@ -46,11 +45,13 @@ export interface PrintablePhoto {
 
 /**
  * Universal "order a print" flow for any gallery photo: pick a size, decide
- * whether to frame it, optionally add a mat, and see a live preview of the
- * customer's own photo composited into the matching frame mockup before
- * paying. Orientation (landscape/portrait) is detected from the photo's
- * own pixel dimensions so the preview and the Prodigi SKU sent to
- * fulfillment always match how the photo was actually shot.
+ * whether to frame it, and see a live preview of the customer's own photo
+ * composited into the matching frame mockup before paying. Framed prints
+ * always ship with Prodigi's fixed white mount — there's no unmatted
+ * variant of this product, so it isn't offered as a toggle. Orientation
+ * (landscape/portrait) is detected from the photo's own pixel dimensions
+ * so the preview and the Prodigi order sent to fulfillment always match
+ * how the photo was actually shot.
  */
 export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePhoto; onClose: () => void }) {
   const [loading, setLoading] = useState(true);
@@ -66,7 +67,6 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
 
   const [selectedSizeKey, setSelectedSizeKey] = useState<string | null>(null);
   const [framed, setFramed] = useState(false);
-  const [matSelected, setMatSelected] = useState(false);
 
   const [showShippingForm, setShowShippingForm] = useState(false);
   const [shipping, setShipping] = useState<ShippingFormValue>(EMPTY_SHIPPING_FORM);
@@ -121,10 +121,11 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
   const selectedGroup = sizeGroups.find((g) => g.key === selectedSizeKey) || null;
   const selectedOption = selectedGroup ? (framed ? selectedGroup.framed : selectedGroup.unframed) : null;
   const canFrame = !!selectedGroup?.framed;
-  const canMat = !!selectedOption?.mat_available && framed;
 
+  // Framed prints always ship with the mount, so the preview always uses
+  // the has_mat template — there's no unmatted physical variant to show.
   const activeTemplate = framed && orientation
-    ? frameTemplates.find((t) => t.orientation === orientation && t.has_mat === matSelected && t.frame_color === (selectedOption?.frame_color || 'black'))
+    ? frameTemplates.find((t) => t.orientation === orientation && t.has_mat === true && t.frame_color === (selectedOption?.frame_color || 'black'))
     : null;
 
   const handleCardCheckout = async () => {
@@ -136,7 +137,6 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
         photoId: photo.id,
         printOptionId: selectedOption.id,
         orientation,
-        matSelected: canMat && matSelected,
         affiliateRef: getAffiliateRef(),
       });
       window.location.href = result.url;
@@ -167,7 +167,6 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
         photoId: photo.id,
         printOptionId: selectedOption.id,
         orientation,
-        matSelected: canMat && matSelected,
         recipient: {
           name: shipping.name,
           email: shipping.email,
@@ -315,18 +314,8 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
                   </div>
                 )}
 
-                {/* Mat toggle */}
-                {canMat && (
-                  <label className="flex items-center gap-2 cursor-pointer text-sm text-white/80">
-                    <span
-                      onClick={() => setMatSelected((v) => !v)}
-                      className={`flex items-center justify-center w-5 h-5 border transition-colors ${matSelected ? 'bg-white border-white text-black' : 'bg-transparent border-white/40'}`}
-                      style={{ borderRadius: 0 }}
-                    >
-                      {matSelected && <CheckIcon className="w-3.5 h-3.5" />}
-                    </span>
-                    <span onClick={() => setMatSelected((v) => !v)}>Add a white mat</span>
-                  </label>
+                {framed && (
+                  <p className="text-white/40 text-xs">Includes a white mount, ready to hang.</p>
                 )}
 
                 {selectedOption && (

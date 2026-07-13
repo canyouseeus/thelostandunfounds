@@ -272,14 +272,13 @@ export async function getProdigiStrikeInvoice(params: {
 
 /**
  * Create a Stripe Checkout Session to print a gallery photo (any photo, not
- * just the curated Shop catalog) — size/frame/mat resolved dynamically
- * against print_catalog_options, priced with inline price_data server-side.
+ * just the curated Shop catalog) — size/frame resolved dynamically against
+ * print_catalog_options, priced with inline price_data server-side.
  */
 export async function getPhotoPrintCheckoutUrl(params: {
   photoId: string
   printOptionId: string
   orientation: 'landscape' | 'portrait'
-  matSelected?: boolean
   customerEmail?: string
   affiliateRef?: string | null
 }): Promise<{ sessionId: string; url: string; shopOrderId: string }> {
@@ -299,7 +298,6 @@ export async function getPhotoPrintCheckoutUrl(params: {
       photoId: params.photoId,
       printOptionId: params.printOptionId,
       orientation: params.orientation,
-      matSelected: !!params.matSelected,
       customerEmail: params.customerEmail,
     }),
   })
@@ -324,7 +322,6 @@ export async function getPhotoPrintStrikeInvoice(params: {
   photoId: string
   printOptionId: string
   orientation: 'landscape' | 'portrait'
-  matSelected?: boolean
   recipient: ProdigiShippingRecipient
   affiliateRef?: string | null
 }): Promise<{
@@ -350,7 +347,6 @@ export async function getPhotoPrintStrikeInvoice(params: {
       photoId: params.photoId,
       printOptionId: params.printOptionId,
       orientation: params.orientation,
-      matSelected: !!params.matSelected,
       recipient: params.recipient,
     }),
   })
