@@ -20,6 +20,8 @@ interface SkuCheckResult {
     currency?: string
     shippingCost?: number
     quoteError?: string
+    productDimensions?: { width: number; height: number; units: string }
+    attributes?: Record<string, string[]>
 }
 
 function addSku(map: Map<string, string[]>, sku: string | null | undefined, source: string) {
@@ -102,8 +104,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const result: SkuCheckResult = { sku, sources, exists: false }
 
             try {
-                await getProdigiProduct(sku, { forceLive: true })
+                const productResp = await getProdigiProduct(sku, { forceLive: true })
                 result.exists = true
+                const product = productResp?.product
+                if (product?.productDimensions) result.productDimensions = product.productDimensions
+                if (product?.attributes) result.attributes = product.attributes
             } catch (err: any) {
                 result.exists = false
                 result.error = err?.message || 'Product lookup failed'

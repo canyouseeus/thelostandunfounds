@@ -80,6 +80,8 @@ interface SkuCheckResult {
   currency?: string;
   shippingCost?: number;
   quoteError?: string;
+  productDimensions?: { width: number; height: number; units: string };
+  attributes?: Record<string, string[]>;
 }
 
 interface ProdigiOrder {
@@ -373,6 +375,16 @@ export default function AdminPrintShopView() {
                   <p className="text-white/30 text-[10px] mt-0.5">{r.sources.join(' · ')}</p>
                   {r.error && <p className="text-red-400 text-[10px] font-mono mt-1">{r.error}</p>}
                   {r.quoteError && <p className="text-amber-400 text-[10px] font-mono mt-1">Quote issue: {r.quoteError}</p>}
+                  {r.productDimensions && (
+                    <p className="text-white/40 text-[10px] font-mono mt-1">
+                      {r.productDimensions.width}×{r.productDimensions.height}{r.productDimensions.units}
+                    </p>
+                  )}
+                  {r.attributes && Object.keys(r.attributes).length > 0 && (
+                    <p className="text-white/40 text-[10px] font-mono mt-1">
+                      {Object.entries(r.attributes).map(([k, v]) => `${k}: ${v.join('/')}`).join('  ·  ')}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
