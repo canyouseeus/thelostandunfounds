@@ -8,6 +8,12 @@ import { getAffiliateRef } from '../../utils/affiliate-tracking';
 
 type Orientation = 'landscape' | 'portrait';
 
+// Must match the actual viewBox ratio of the deployed frame template SVGs
+// (public/frame-mockups/classic-black-{landscape,portrait}-mat.svg) — see
+// the aspectRatio comment below for why this has to be exact.
+const FRAME_RATIO_LANDSCAPE = 220 / 180;
+const FRAME_RATIO_PORTRAIT = 180 / 220;
+
 interface PrintOption {
   id: string;
   size_label: string;
@@ -226,8 +232,17 @@ export default function PrintOrderModal({ photo, onClose }: { photo: PrintablePh
         </button>
 
         <div className="grid md:grid-cols-2 gap-0">
-          {/* Live preview */}
-          <div className="relative bg-white/5 aspect-square flex items-center justify-center overflow-hidden">
+          {/* Live preview — when framed, the container's aspect ratio must
+              match the template SVG's own natural ratio exactly. The
+              template <img> uses object-fit: cover, and bounds% are
+              computed relative to the template's uncropped source — a
+              mismatched container ratio would crop the template
+              differently than the bounds math assumes, desyncing the
+              customer's photo from the frame opening. */}
+          <div
+            className="relative bg-white/5 flex items-center justify-center overflow-hidden"
+            style={{ aspectRatio: framed ? (orientation === 'landscape' ? FRAME_RATIO_LANDSCAPE : FRAME_RATIO_PORTRAIT) : 1 }}
+          >
             {framed ? (
               <PrintMockupPreview
                 artworkUrl={previewUrl}
