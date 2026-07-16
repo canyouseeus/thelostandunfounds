@@ -19,8 +19,12 @@ import {
 type Status = 'New' | 'Contacted' | 'Quoted' | 'Won' | 'Pass';
 const STATUSES: Status[] = ['New', 'Contacted', 'Quoted', 'Won', 'Pass'];
 
+type Category = 'Machine Shop' | 'Dental Lab' | 'Repair Shop';
+const CATEGORIES: Category[] = ['Machine Shop', 'Dental Lab', 'Repair Shop'];
+
 type Lead = {
   id: string;
+  category: Category;
   name: string;
   type: string;
   phone?: string;
@@ -35,76 +39,150 @@ type Lead = {
 const OVERRIDES_KEY = 'lau_leads_overrides_v1';
 const CUSTOM_KEY = 'lau_leads_custom_v1';
 
+const PITCH: Record<Category, JSX.Element> = {
+  'Machine Shop': (
+    <>
+      "I make custom <b className="text-white font-normal">jigs, fixtures, and tooling</b> in-house — nylon and
+      carbon-fiber, <b className="text-white font-normal">no minimum order</b>, usually within a few days. When you
+      need a one-off and don't want to tie up a machinist, call me." Walk in with a printed sample. Lead with{' '}
+      <b className="text-white font-normal">saved labor hours</b>, not the printer.
+    </>
+  ),
+  'Dental Lab': (
+    <>
+      "I run a <b className="text-white font-normal">9K resin printer with biocompatible and castable resin</b> — I can
+      turn around <b className="text-white font-normal">models, dies, and aligner molds</b> fast when you're backed up.
+      Think of me as overflow capacity." Lead with <b className="text-white font-normal">accuracy + same-day
+      turnaround</b> during their busy weeks.
+    </>
+  ),
+  'Repair Shop': (
+    <>
+      "When a part's <b className="text-white font-normal">discontinued or backordered</b>, I reverse-engineer and
+      reprint it in <b className="text-white font-normal">nylon or PC</b> — days, not 'never.' Send me the broken
+      piece." Lead with <b className="text-white font-normal">unblocking a repair</b> they otherwise can't finish.
+    </>
+  ),
+};
+
+const MAPS: Record<Category, string> = {
+  'Machine Shop': 'https://www.google.com/maps/search/machine+shop+OR+fabrication/@30.2617,-97.7141,12z',
+  'Dental Lab': 'https://www.google.com/maps/search/dental+laboratory/@30.2617,-97.7141,12z',
+  'Repair Shop': 'https://www.google.com/maps/search/appliance+OR+RV+repair/@30.2617,-97.7141,12z',
+};
+
 // Researched from public listings, July 2026. Contact details flagged
 // `verify` need confirming before outreach — do not treat as authoritative.
 const SEED: Lead[] = [
+  // ---------- Machine Shops ----------
   {
-    id: 'precise-machining',
-    name: 'Precise Machining Company',
-    type: 'CNC Machining',
-    phone: '512-528-8771',
-    email: 'info@precisemachiningco.com',
-    website: 'https://www.precisemachiningco.com',
-    area: 'Central TX — verify distance',
-    note: 'Overflow jigs/fixtures + one-off prototype parts. Lead with saved machinist hours.',
+    id: 'precise-machining', category: 'Machine Shop',
+    name: 'Precise Machining Company', type: 'CNC Machining',
+    phone: '512-528-8771', email: 'info@precisemachiningco.com', website: 'https://www.precisemachiningco.com',
+    area: 'Central TX — address unconfirmed', verify: true,
+    note: 'Overflow jigs/fixtures + one-off prototypes. Confirm they are local before visiting.',
   },
   {
-    id: 'austin-precision-mm',
-    name: 'Austin Precision Machining & Mfg',
-    type: 'CNC for OEMs',
-    website: 'https://austinprecisionmachining.com',
-    area: 'Austin — verify address',
-    verify: true,
-    note: 'OEM shop — pitch printed fixtures/soft-jaws and rapid prototypes between runs.',
+    id: 'austin-precision-mm', category: 'Machine Shop',
+    name: 'Austin Precision Machining & Mfg', type: 'CNC for OEMs',
+    website: 'https://austinprecisionmachining.com', area: 'Austin — verify address', verify: true,
+    note: 'OEM shop — pitch printed soft-jaws / fixtures and rapid prototypes between runs.',
   },
   {
-    id: 'jj-machine',
-    name: 'J&J Machine',
-    type: 'CNC Machine Shop',
-    website: 'https://jjmachine99.com',
-    area: 'Austin — verify address',
-    verify: true,
-    note: 'General machine shop. Offer same-week custom jigs, no minimum order.',
+    id: 'jj-machine', category: 'Machine Shop',
+    name: 'J&J Machine (Austin page)', type: 'CNC Machine Shop',
+    website: 'https://jjmachine99.com', area: 'Austin? — verify', verify: true,
+    note: '⚠ Listed number uses a non-local area code; site may be SEO, not a local shop. Verify on Maps first.',
   },
   {
-    id: 'forge-metal-works',
-    name: 'Forge Metal Works',
-    type: 'Welding / Metal Fab',
-    website: 'https://www.forgemw.com',
-    area: 'Austin — verify address',
-    verify: true,
-    note: 'Fab shop — printed weld fixtures, alignment jigs, and pattern/templates.',
-  },
-  {
-    id: 'twisted-metals',
-    name: 'Twisted Metals Welding & Fabrication',
-    type: 'Welding / Metal Fab',
-    website: 'https://twistedmetalswelding.com',
-    area: 'Austin — verify address',
-    verify: true,
+    id: 'twisted-metals', category: 'Machine Shop',
+    name: 'Twisted Metals Welding & Fabrication', type: 'Welding / Metal Fab',
+    website: 'https://twistedmetalswelding.com', area: 'Austin — verify address', verify: true,
     note: 'Custom fab — printed jigs/templates and one-off plastic parts they can’t weld.',
   },
   {
-    id: 'techni-center-weld',
-    name: 'Welding / Fab Shop (Techni Center Dr)',
-    type: 'Welding / Metal Fab',
-    phone: '(512) 358-6330',
-    area: '5800 Techni Center Dr, 78721 — ~4 mi',
-    verify: true,
-    note: 'Close to you (78721). Verify business name on call. Fixtures + templates.',
+    id: 'techni-center-weld', category: 'Machine Shop',
+    name: 'Welding / Fab Shop (Techni Center Dr)', type: 'Welding / Metal Fab',
+    phone: '(512) 358-6330', area: '5800 Techni Center Dr, 78721 — ~4 mi', verify: true,
+    note: 'Closest to you. Confirm the business name when you call. Fixtures + templates.',
   },
   {
-    id: 'fathom-austin',
-    name: 'Fathom Manufacturing (Austin)',
-    type: 'Digital Mfg / 3D Print',
-    website: 'https://fathommfg.com/locations/austin-tx',
-    area: 'Austin',
-    note: 'NOT a cold client — large competitor. Approach as overflow/subcontract partner for small resin/FDM jobs.',
+    id: 'forge-metal-works', category: 'Machine Shop',
+    name: 'Forge Metal Works', type: 'Welding / Metal Fab',
+    website: 'https://www.forgemw.com', area: 'Jarrell, TX — ~40 mi N',
+    note: 'Out of range (checked) — deprioritize unless they have an Austin drop-off.',
+  },
+  {
+    id: 'fathom-austin', category: 'Machine Shop',
+    name: 'Fathom Manufacturing (Austin)', type: 'Digital Mfg / 3D Print',
+    website: 'https://fathommfg.com/locations/austin-tx', area: 'Austin',
+    note: 'NOT a cold client — large competitor. Approach as overflow / subcontract partner.',
+  },
+
+  // ---------- Dental Labs ----------
+  {
+    id: 'electric-arts', category: 'Dental Lab',
+    name: 'Electric Arts Dental Lab', type: 'Full-Service Dental Lab',
+    website: 'https://www.electricartsdentallab.com', area: 'Austin — verify address', verify: true,
+    note: 'Strongest dental target — a real full lab. Pitch overflow models, dies, aligner molds, same-day turnaround.',
+  },
+  {
+    id: 'great-state-dental', category: 'Dental Lab',
+    name: 'Great State Dental Lab', type: 'Digital Implant Lab',
+    website: 'https://www.greatstatedental.com', area: 'Austin — verify address', verify: true,
+    note: 'Digital implant lab — offer overflow model & surgical-guide printing.',
+  },
+  {
+    id: 'implanttx', category: 'Dental Lab',
+    name: 'ImplantTx Dental Lab', type: 'Implant Lab',
+    website: 'https://www.implanttx.com', area: 'Austin — verify address', verify: true,
+    note: 'Implant lab — surgical guides and models are the resin sweet spot.',
+  },
+  {
+    id: 'shoal-creek-prostho', category: 'Dental Lab',
+    name: 'Shoal Creek Prosthodontic Group', type: 'In-House Prostho Lab',
+    phone: '(512) 451-7491', area: '1500 W 38th St Ste 34, 78731 — ~5 mi', verify: true,
+    note: 'Runs an in-house lab; may not outsource — but worth a call for overflow capacity.',
+  },
+  {
+    id: 'lucent-dentistry', category: 'Dental Lab',
+    name: 'Lucent Dentistry', type: 'Dentist (same-day crowns)',
+    phone: '512-458-5600', area: '3909 N IH-35 Suite A1, 78722 — ~2 mi',
+    note: 'Very close, but likely mills crowns in-house — low priority. Good for a warm intro / referral.',
+  },
+
+  // ---------- Repair Shops ----------
+  {
+    id: 'express-appliance', category: 'Repair Shop',
+    name: 'Express Appliance Repair of Austin', type: 'Appliance Repair',
+    phone: '(512) 548-0025', area: 'Serves 78702 / 78721 — verify shop address', verify: true,
+    note: 'May be mobile. Best fit = shops that bench-repair units with obsolete plastic parts.',
+  },
+  {
+    id: 'austin-appliance', category: 'Repair Shop',
+    name: 'Austin Appliance Repair', type: 'Appliance Repair',
+    phone: '(512) 399-4425', area: 'Serves 78702 / 78721 — verify', verify: true,
+    note: 'Confirm it is a real local bench shop, not a dispatch/lead-gen line.',
+  },
+  {
+    id: 'tony-appliance', category: 'Repair Shop',
+    name: 'Tony Appliance Repair', type: 'Appliance Repair',
+    area: 'Near 78721 (Yelp) — find contact', verify: true,
+    note: 'Yelp-listed near you. Look up on Yelp/Maps for phone + address before contacting.',
+  },
+  {
+    id: 'artifix-appliance', category: 'Repair Shop',
+    name: 'ArtiFix Appliance Repair', type: 'Appliance Repair',
+    area: 'Austin (Yelp) — find contact', verify: true,
+    note: 'Yelp-listed; verify contact. Ask what parts they most often can’t source.',
+  },
+  {
+    id: 'yarrow-appliance', category: 'Repair Shop',
+    name: 'Yarrow Appliance Repair', type: 'Appliance Repair',
+    area: 'Austin (Yelp) — find contact', verify: true,
+    note: 'Yelp-listed; verify contact. Vintage/discontinued parts = your best pitch.',
   },
 ];
-
-const MAPS_SEARCH =
-  'https://www.google.com/maps/search/machine+shop+OR+fabrication/@30.2617,-97.7141,13z';
 
 function loadJSON<T>(key: string, fallback: T): T {
   try {
@@ -128,8 +206,11 @@ export default function Leads() {
     () => loadJSON(OVERRIDES_KEY, {})
   );
   const [custom, setCustom] = useState<Lead[]>(() => loadJSON(CUSTOM_KEY, []));
+  const [filter, setFilter] = useState<Category | 'All'>('Machine Shop');
   const [showForm, setShowForm] = useState(false);
-  const [draft, setDraft] = useState({ name: '', type: '', phone: '', email: '', website: '', area: '' });
+  const [draft, setDraft] = useState<{ name: string; type: string; phone: string; email: string; website: string; area: string; category: Category }>(
+    { name: '', type: '', phone: '', email: '', website: '', area: '', category: 'Machine Shop' }
+  );
 
   useEffect(() => {
     try { localStorage.setItem(OVERRIDES_KEY, JSON.stringify(overrides)); } catch { /* ignore */ }
@@ -138,7 +219,11 @@ export default function Leads() {
     try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(custom)); } catch { /* ignore */ }
   }, [custom]);
 
-  const leads = useMemo(() => [...SEED, ...custom], [custom]);
+  const allLeads = useMemo(() => [...SEED, ...custom], [custom]);
+  const leads = useMemo(
+    () => (filter === 'All' ? allLeads : allLeads.filter((l) => l.category === filter)),
+    [allLeads, filter]
+  );
 
   const statusOf = (id: string): Status => overrides[id]?.status ?? 'New';
   const notesOf = (id: string): string => overrides[id]?.notes ?? '';
@@ -163,6 +248,7 @@ export default function Leads() {
       ...c,
       {
         id,
+        category: draft.category,
         name: draft.name.trim(),
         type: draft.type.trim() || 'Prospect',
         phone: draft.phone.trim() || undefined,
@@ -172,7 +258,7 @@ export default function Leads() {
         custom: true,
       },
     ]);
-    setDraft({ name: '', type: '', phone: '', email: '', website: '', area: '' });
+    setDraft({ name: '', type: '', phone: '', email: '', website: '', area: '', category: draft.category });
     setShowForm(false);
   };
 
@@ -183,11 +269,13 @@ export default function Leads() {
 
   const inputClass =
     'w-full px-3 py-2 bg-black border border-white/20 text-white placeholder-white/25 focus:outline-none focus:border-white transition-colors text-sm font-mono';
+  const mapsHref = filter === 'All' ? MAPS['Machine Shop'] : MAPS[filter];
 
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden">
       <Helmet>
         <title>THE LOST+UNFOUNDS | Sales Pipeline</title>
+        <meta name="description" content="Internal sales pipeline tracker for the fabrication service — prospects, status, and notes." />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
@@ -196,24 +284,40 @@ export default function Leads() {
         <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/30 mb-4">
           Fabrication · Sales Pipeline
         </p>
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-4">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-6">
           <h1 className="text-[clamp(2rem,6vw,3.5rem)] font-black uppercase tracking-tighter leading-none">
-            Machine Shops
+            Pipeline
           </h1>
           <p className="font-mono text-xs text-white/40">Downtown Austin · 78702 · ~3–5 mi</p>
         </div>
 
-        {/* Pitch reminder */}
-        <div className="border border-white/10 p-5 mb-8">
-          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30 mb-2">The Pitch</p>
-          <p className="text-sm text-white/70 font-light leading-relaxed">
-            "I make custom <b className="text-white font-normal">jigs, fixtures, and tooling</b> in-house —
-            nylon and carbon-fiber, <b className="text-white font-normal">no minimum order</b>, usually within
-            a few days. When you need a one-off and don't want to tie up a machinist, call me."
-            Walk in with a printed sample. Lead with <b className="text-white font-normal">saved labor hours</b>,
-            not the printer.
-          </p>
+        {/* Category filter */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          {(['All', ...CATEGORIES] as const).map((c) => (
+            <button
+              key={c}
+              onClick={() => setFilter(c)}
+              className={`text-[11px] font-black uppercase tracking-widest px-4 py-2 transition-colors ${
+                filter === c ? 'bg-white text-black' : 'border border-white/15 text-white/50 hover:border-white/40'
+              }`}
+            >
+              {c}
+              {c !== 'All' && (
+                <span className="ml-2 text-white/40 font-mono">{allLeads.filter((l) => l.category === c).length}</span>
+              )}
+            </button>
+          ))}
         </div>
+
+        {/* Pitch reminder (category-aware) */}
+        {filter !== 'All' && (
+          <div className="border border-white/10 p-5 mb-8">
+            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30 mb-2">
+              The Pitch — {filter}
+            </p>
+            <p className="text-sm text-white/70 font-light leading-relaxed">{PITCH[filter]}</p>
+          </div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-px bg-white/10 border border-white/10 mb-8">
@@ -228,13 +332,13 @@ export default function Leads() {
         {/* Actions */}
         <div className="flex flex-wrap gap-3 mb-8">
           <button
-            onClick={() => setShowForm((s) => !s)}
+            onClick={() => { setShowForm((s) => !s); setDraft((d) => ({ ...d, category: filter === 'All' ? 'Machine Shop' : filter })); }}
             className="px-5 py-3 bg-white text-black font-black uppercase tracking-widest text-[11px] hover:bg-zinc-200 transition-colors flex items-center gap-2"
           >
             <PlusIcon className="w-4 h-4" /> Add Prospect
           </button>
           <a
-            href={MAPS_SEARCH}
+            href={mapsHref}
             target="_blank"
             rel="noopener noreferrer"
             className="px-5 py-3 border border-white/20 text-white font-black uppercase tracking-widest text-[11px] hover:border-white transition-colors flex items-center gap-2"
@@ -247,11 +351,14 @@ export default function Leads() {
         {showForm && (
           <form onSubmit={addLead} className="border border-white/20 p-5 mb-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
             <input className={inputClass} placeholder="Company name *" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+            <select className={inputClass} value={draft.category} onChange={(e) => setDraft({ ...draft, category: e.target.value as Category })}>
+              {CATEGORIES.map((c) => <option key={c} value={c} className="bg-black">{c}</option>)}
+            </select>
             <input className={inputClass} placeholder="Type (e.g. CNC shop)" value={draft.type} onChange={(e) => setDraft({ ...draft, type: e.target.value })} />
+            <input className={inputClass} placeholder="Area / address" value={draft.area} onChange={(e) => setDraft({ ...draft, area: e.target.value })} />
             <input className={inputClass} placeholder="Phone" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
             <input className={inputClass} placeholder="Email" value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} />
-            <input className={inputClass} placeholder="Website" value={draft.website} onChange={(e) => setDraft({ ...draft, website: e.target.value })} />
-            <input className={inputClass} placeholder="Area / address" value={draft.area} onChange={(e) => setDraft({ ...draft, area: e.target.value })} />
+            <input className={`${inputClass} sm:col-span-2`} placeholder="Website" value={draft.website} onChange={(e) => setDraft({ ...draft, website: e.target.value })} />
             <div className="sm:col-span-2 flex gap-3">
               <button type="submit" className="px-5 py-2.5 bg-white text-black font-black uppercase tracking-widest text-[11px] hover:bg-zinc-200 transition-colors">Save</button>
               <button type="button" onClick={() => setShowForm(false)} className="px-5 py-2.5 border border-white/20 font-black uppercase tracking-widest text-[11px] hover:border-white transition-colors">Cancel</button>
@@ -334,12 +441,12 @@ export default function Leads() {
 
         {/* Disclaimer */}
         <p className="text-[11px] text-white/30 font-light mt-10 leading-relaxed border-t border-white/10 pt-6">
-          <b className="text-white/60">About this list.</b> Seed prospects were researched from public
-          listings (July 2026) and are starting points, not verified records — <b className="text-white/60">confirm
-          the company name, address, and phone before contacting</b>, especially rows marked "Verify." A strict
-          3-mile radius of 78702 has few general machine shops, so some entries are slightly wider; use
-          "Find More on Maps" to expand. Status and notes are saved in <b className="text-white/60">this browser
-          only</b> — they won't sync across devices.
+          <b className="text-white/60">About this list.</b> Seed prospects were researched from public listings
+          (July 2026) and are starting points, not verified records — <b className="text-white/60">confirm the company
+          name, address, and phone before contacting</b>, especially rows marked "Verify." A strict 3-mile radius of
+          78702 is sparse for these trades, so some entries sit wider (a few are out of range and flagged). Many
+          "appliance repair" web results are lead-gen dispatch numbers, not real shops — prefer bench-repair shops
+          you confirm on Yelp/Maps. Status and notes are saved in <b className="text-white/60">this browser only</b>.
         </p>
       </div>
     </div>
