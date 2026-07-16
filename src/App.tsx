@@ -60,6 +60,7 @@ import PhotographerGuide from './pages/docs/PhotographerGuide'
 import Events from './pages/Events'
 import SubmitEvent from './pages/SubmitEvent'
 import Advertise from './pages/Advertise'
+import Capabilities from './pages/Capabilities'
 import PreviewVisitorPage from './pages/PreviewVisitorPage'
 import PreviewAdminLoginPage from './pages/PreviewAdminLoginPage'
 import { lazy, Suspense } from 'react'
@@ -330,6 +331,9 @@ function App() {
               </Route>
               <Route path="/advertise" element={<Layout />}>
                 <Route index element={<Advertise />} />
+              </Route>
+              <Route path="/capabilities" element={<Layout />}>
+                <Route index element={<Capabilities />} />
               </Route>
               <Route path="/reset-newsletter" element={<ResetNewsletter />} />
 
