@@ -61,6 +61,7 @@ import Events from './pages/Events'
 import SubmitEvent from './pages/SubmitEvent'
 import Advertise from './pages/Advertise'
 import Capabilities from './pages/Capabilities'
+import Leads from './pages/Leads'
 import PreviewVisitorPage from './pages/PreviewVisitorPage'
 import PreviewAdminLoginPage from './pages/PreviewAdminLoginPage'
 import { lazy, Suspense } from 'react'
@@ -334,6 +335,9 @@ function App() {
               </Route>
               <Route path="/capabilities" element={<Layout />}>
                 <Route index element={<Capabilities />} />
+              </Route>
+              <Route path="/leads" element={<Layout />}>
+                <Route index element={<AdminAuthGate><Leads /></AdminAuthGate>} />
               </Route>
               <Route path="/reset-newsletter" element={<ResetNewsletter />} />
 
