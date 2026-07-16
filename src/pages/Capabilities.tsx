@@ -5,6 +5,7 @@ import {
   CubeIcon,
   BeakerIcon,
   ArrowRightIcon,
+  ArrowTopRightOnSquareIcon,
   WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
 
@@ -106,6 +107,20 @@ const MATRIX = [
   { need: 'Ultra-fine detail', machine: 'Resin · Mars 5', mat: 'Standard / Tough', best: 'Miniatures, figurines, cosmetic parts' },
   { need: 'Casting master', machine: 'Resin · Mars 5', mat: 'Castable', best: 'Jewelry, dental crowns' },
   { need: 'Skin / oral contact', machine: 'Resin · Mars 5', mat: 'Biocompatible', best: 'Dental guides, medical models' },
+];
+
+const IMG_SEARCH = 'https://www.google.com/search?tbm=isch&q=';
+const EXAMPLES: { name: string; machine: 'FDM' | 'Resin'; query: string }[] = [
+  { name: 'Dental Model / Mold', machine: 'Resin', query: '3D printed dental model resin' },
+  { name: 'Jewelry Casting Master', machine: 'Resin', query: 'castable resin ring 3D print jewelry' },
+  { name: 'Tabletop Miniature (28mm)', machine: 'Resin', query: 'resin 3D printed miniature 28mm' },
+  { name: 'Anatomical Model', machine: 'Resin', query: '3D printed anatomical heart model' },
+  { name: 'Custom Figurine / Bust', machine: 'Resin', query: 'custom 3D printed bust portrait figurine' },
+  { name: 'Custom Jig / Fixture', machine: 'FDM', query: '3D printed jig fixture manufacturing' },
+  { name: 'Replacement Part', machine: 'FDM', query: '3D printed replacement gear part' },
+  { name: 'Drone / Carbon-Fiber Part', machine: 'FDM', query: 'carbon fiber 3D printed drone frame' },
+  { name: 'Enclosure / Housing', machine: 'FDM', query: '3D printed electronics enclosure ASA' },
+  { name: 'Flexible Gasket / Seal', machine: 'FDM', query: 'TPU 3D printed gasket seal' },
 ];
 
 function MachineBlock({ machine, index, invert }: { machine: Machine; index: number; invert: boolean }) {
@@ -304,6 +319,46 @@ export default function Capabilities() {
               </tbody>
             </table>
           </div>
+        </div>
+      </section>
+
+      {/* See examples */}
+      <section className="py-16 md:py-24 border-t border-white/10">
+        <div className="max-w-6xl mx-auto px-6 md:px-8">
+          <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/20 mb-3 text-center">
+            Examples
+          </p>
+          <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter text-center mb-4">
+            See what we make
+          </h2>
+          <p className="text-white/40 text-sm font-light text-center max-w-xl mx-auto mb-12">
+            Real-world examples of each product. Opens image results in a new tab.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {EXAMPLES.map((ex) => (
+              <a
+                key={ex.name}
+                href={`${IMG_SEARCH}${encodeURIComponent(ex.query)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex items-center gap-4 p-5 border border-white/10 hover:border-white/40 transition-colors"
+              >
+                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/30 w-14 shrink-0">
+                  {ex.machine}
+                </span>
+                <span className="flex-1 min-w-0">
+                  <span className="block font-black uppercase tracking-tight text-sm md:text-base">
+                    {ex.name}
+                  </span>
+                  <span className="block font-mono text-[11px] text-white/30 truncate">{ex.query}</span>
+                </span>
+                <ArrowTopRightOnSquareIcon className="w-4 h-4 shrink-0 text-white/30 group-hover:text-white transition-colors" />
+              </a>
+            ))}
+          </div>
+          <p className="text-white/30 text-xs font-light text-center mt-8">
+            Tip — add "for sale" or check Etsy / eBay with these terms to see live market pricing.
+          </p>
         </div>
       </section>
 
