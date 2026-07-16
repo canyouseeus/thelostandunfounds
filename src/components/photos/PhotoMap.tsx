@@ -19,7 +19,10 @@ interface MapPhoto {
   longitude: number;
   location_name: string | null;
   library_id: string;
-  metadata?: { camera_model?: string; date_taken?: string };
+  // Only the two EXIF fields the map popup needs — pulled as flat aliases
+  // (metadata->>…) instead of the whole metadata JSONB to keep egress low.
+  camera_model?: string | null;
+  date_taken?: string | null;
 }
 
 interface Tag { id: string; name: string; type: string; }
@@ -85,7 +88,7 @@ export function PhotoMap({ onPhotoClick, className = '' }: PhotoMapProps) {
       const [{ data: photoRows }, { data: venueRows }] = await Promise.all([
         supabase
           .from('photos')
-          .select('id, title, google_drive_file_id, thumbnail_url, latitude, longitude, location_name, library_id, metadata')
+          .select('id, title, google_drive_file_id, thumbnail_url, latitude, longitude, location_name, library_id, camera_model:metadata->>camera_model, date_taken:metadata->>date_taken')
           .not('latitude', 'is', null)
           .not('longitude', 'is', null),
         supabase
@@ -143,7 +146,7 @@ export function PhotoMap({ onPhotoClick, className = '' }: PhotoMapProps) {
       return {
         type: 'Feature',
         geometry: { type: 'Point', coordinates: [lng, lat] },
-        properties: { id: p.id, title: p.title || 'Untitled', camera: p.metadata?.camera_model || '' },
+        properties: { id: p.id, title: p.title || 'Untitled', camera: p.camera_model || '' },
       };
     }),
   });
@@ -428,13 +431,13 @@ export function PhotoMap({ onPhotoClick, className = '' }: PhotoMapProps) {
               </button>
             </div>
             <div className="p-2.5 space-y-1">
-              {(popup.photo.location_name || popup.photo.metadata?.date_taken) && (
+              {(popup.photo.location_name || popup.photo.date_taken) && (
                 <p className="text-white text-[10px] font-bold uppercase tracking-wide truncate">
-                  {popup.photo.location_name || popup.photo.metadata?.date_taken}
+                  {popup.photo.location_name || popup.photo.date_taken}
                 </p>
               )}
-              {popup.photo.metadata?.camera_model && (
-                <p className="text-white/30 text-[9px] font-mono">{popup.photo.metadata.camera_model}</p>
+              {popup.photo.camera_model && (
+                <p className="text-white/30 text-[9px] font-mono">{popup.photo.camera_model}</p>
               )}
             </div>
             <div className="flex border-t border-white/10">
