@@ -27,6 +27,11 @@ import { PhotoMap } from './PhotoMap';
 import { cn } from '../ui/utils';
 import { NoirDateRangePicker } from '../ui/NoirDateRangePicker';
 
+// Gallery photos are loaded a page at a time to keep database egress low —
+// pulling the entire library on every (often bot-driven) page view was the
+// cause of a large Supabase egress overage. Users load more on demand.
+const GALLERY_PAGE_SIZE = 150;
+
 interface Photo {
     id: string;
     title: string;
@@ -309,6 +314,12 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
     // Map of photo_id → set of tag_ids it belongs to
     const [photoTagsMap, setPhotoTagsMap] = useState<Map<string, Set<string>>>(new Map());
     const photosRef = useRef<HTMLDivElement>(null);
+    // Pagination: track the library ids and how many rows we've pulled so
+    // "Load More" can request the next page via .range().
+    const libraryIdsRef = useRef<string[]>([]);
+    const offsetRef = useRef(0);
+    const [hasMore, setHasMore] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
 
     const storageKey = `gallery_selection_${librarySlug}`;
 
@@ -512,13 +523,14 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 return;
             }
 
+            libraryIdsRef.current = libraryIds;
             const { data: photoData, error: photoError } = await supabase
                 .from('photos')
                 .select('*')
                 .in('library_id', libraryIds)
                 .order('created_at', { ascending: false })
                 .order('title', { ascending: false })
-                .limit(5000);
+                .range(0, GALLERY_PAGE_SIZE - 1);
 
             if (photoError) {
                 if (photoError.message === 'Fetch is aborted' || photoError.code === '20') return;
@@ -533,6 +545,8 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                 return true;
             });
             setPhotos(fetchedPhotos);
+            offsetRef.current = (photoData || []).length;
+            setHasMore((photoData || []).length === GALLERY_PAGE_SIZE);
 
             // Fetch tags for photos in this gallery (chunk by 200 to stay under URL length limits)
             if (fetchedPhotos.length > 0) {
@@ -566,6 +580,65 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
         } finally {
             // Only set loading false if not aborted (or just always set it, if we're unmounting it doesn't matter)
             setLoading(false);
+        }
+    }
+
+    async function loadMorePhotos() {
+        if (loadingMore || !hasMore) return;
+        const ids = libraryIdsRef.current;
+        if (!ids || ids.length === 0) return;
+        setLoadingMore(true);
+        try {
+            const from = offsetRef.current;
+            const to = from + GALLERY_PAGE_SIZE - 1;
+            const { data, error } = await supabase
+                .from('photos')
+                .select('*')
+                .in('library_id', ids)
+                .order('created_at', { ascending: false })
+                .order('title', { ascending: false })
+                .range(from, to);
+            if (error) throw error;
+
+            const rows = (data || []) as any as Photo[];
+            offsetRef.current = from + rows.length;
+            setHasMore(rows.length === GALLERY_PAGE_SIZE);
+
+            // Skip any rows already present (mirrors the initial dedupe)
+            const existing = new Set(photos.map(p => p.google_drive_file_id || p.id));
+            const newOnes = rows.filter(p => {
+                const key = p.google_drive_file_id || p.id;
+                if (existing.has(key)) return false;
+                existing.add(key);
+                return true;
+            });
+            if (newOnes.length === 0) return;
+            setPhotos(prev => [...prev, ...newOnes]);
+
+            // Load tags for just the newly fetched photos (keeps egress bounded)
+            const newIds = newOnes.map(p => p.id);
+            const nextTagMap = new Map(photoTagsMap);
+            const tagIndex = new Map(availableTags.map(t => [t.id, t] as const));
+            const chunkSize = 200;
+            for (let i = 0; i < newIds.length; i += chunkSize) {
+                const chunk = newIds.slice(i, i + chunkSize);
+                const { data: ptData } = await supabase
+                    .from('photo_tags')
+                    .select('photo_id, tag_id, tags(id, name, type)')
+                    .in('photo_id', chunk);
+                for (const row of (ptData || []) as any[]) {
+                    if (!nextTagMap.has(row.photo_id)) nextTagMap.set(row.photo_id, new Set());
+                    nextTagMap.get(row.photo_id)!.add(row.tag_id);
+                    if (row.tags) tagIndex.set(row.tags.id, row.tags);
+                }
+            }
+            setPhotoTagsMap(nextTagMap);
+            setAvailableTags(Array.from(tagIndex.values()).sort((a, b) => a.name.localeCompare(b.name)));
+        } catch (err: any) {
+            if (err.name === 'AbortError') return;
+            console.error('Error loading more photos:', err);
+        } finally {
+            setLoadingMore(false);
         }
     }
 
@@ -1267,6 +1340,17 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                                 </div>
                             );
                         })
+                    )}
+                    {hasMore && activeTab === 'storefront' && displayedPhotos.length > 0 && (
+                        <div className="flex justify-center pt-4">
+                            <button
+                                onClick={loadMorePhotos}
+                                disabled={loadingMore}
+                                className="px-8 py-3 bg-transparent border border-white/30 text-white font-bold uppercase tracking-widest text-xs hover:bg-white hover:text-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {loadingMore ? 'Loading…' : 'Load More'}
+                            </button>
+                        </div>
                     )}
                 </div>
             </div >
