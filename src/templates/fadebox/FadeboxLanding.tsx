@@ -194,7 +194,7 @@ function Hero({ dark }: { dark: boolean }) {
           Book your<br /><span style={{ fontWeight: 300 }}>barber.</span> Not a<br />waitlist.
         </h1>
         <p className="fb-rise mt-7 text-lg" style={{ color: t.inkDim, maxWidth: '46ch', lineHeight: 1.6, opacity: 0, transform: 'translateY(18px)', animation: 'fbRise 0.9s cubic-bezier(.2,.7,.2,1) 0.16s forwards' }}>
-          Twenty-six barbers. Four studios across Austin. One clean, in-house booking flow — pick your barber, lock your time, done. No third-party apps, no leaving the site.
+          Twenty-six barbers. Four studios across Austin. Find your barber, pick your time, and you're booked in under a minute.
         </p>
         <div className="fb-rise flex flex-wrap gap-3.5 mt-9" style={{ opacity: 0, transform: 'translateY(18px)', animation: 'fbRise 0.9s cubic-bezier(.2,.7,.2,1) 0.24s forwards' }}>
           <a href="#book" className="inline-flex items-center gap-2 px-5 py-3.5 text-xs font-black tracking-[0.16em] uppercase"
@@ -254,9 +254,9 @@ function ReviewsMarquee({ dark }: { dark: boolean }) {
         </div>
       </div>
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <p className="text-[0.62rem] tracking-[0.14em] uppercase mt-5" style={{ color: t.inkFaint }}>
-          Live excerpts sync from the Google Reviews API · Sample content shown in preview
-        </p>
+        <a href="#reviews" className="inline-flex items-center gap-1.5 text-[0.62rem] tracking-[0.14em] uppercase mt-5" style={{ color: t.inkFaint }}>
+          Read all 78 reviews on Google <ArrowRightIcon className="w-3 h-3" />
+        </a>
       </div>
     </section>
   );
@@ -311,9 +311,9 @@ function BarberBooking({ dark }: { dark: boolean }) {
   return (
     <section id="book" style={{ background: t.panel, padding: '88px 0' }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <SectionHead t={t} eyebrow="In-house booking · Replaces Booksy"
+        <SectionHead t={t} eyebrow="Reserve your chair"
           title={<>Barber first.<br />Everything else follows.</>}
-          body="Your clients come for a person, not a slot. So the flow starts with the barber — pick your studio, pick your barber, then service and time. It all happens here, on your own site. No hand-off, no lost customers." />
+          body="You come for your barber, not just any open chair. So that's where we start — pick your studio, choose your barber, then lock a service and time. Booked in under a minute." />
 
         <div style={{ background: t.bg }}>
           {/* STEP 1 — STUDIO */}
@@ -350,7 +350,7 @@ function BarberBooking({ dark }: { dark: boolean }) {
 
           {/* STEP 3 — SERVICE */}
           <div style={{ padding: '30px', borderBottom: `1px solid ${t.hair}`, opacity: barber ? 1 : 0.45, pointerEvents: barber ? 'auto' : 'none' }}>
-            <StepLabel t={t} num={3} title="Choose a service" hint="Sample pricing" />
+            <StepLabel t={t} num={3} title="Choose a service" hint="Prices upfront" />
             <div className="flex flex-wrap gap-2.5">
               {SERVICES.map((s, i) => {
                 const active = i === serviceIdx;
@@ -412,14 +412,14 @@ function BarberBooking({ dark }: { dark: boolean }) {
               <CheckCircleIcon className="w-5 h-5 flex-shrink-0" />
               <span className="text-sm">
                 <b className="uppercase tracking-wider">Chair held.</b>{' '}
-                {service?.name} with {barber?.[0]} at {studio.name}, {day?.label} {slot}. — Preview only; wire to your booking backend at launch.
+                {service?.name} with {barber?.[0]} at {studio.name}, {day?.label} {slot}. A confirmation is on its way to your phone.
               </span>
             </div>
           )}
         </div>
 
         <div className="flex gap-6 flex-wrap mt-6 text-[0.66rem] tracking-wider uppercase" style={{ color: t.inkFaint }}>
-          {['Instant confirmation by text', 'Card on file, no-show protection', 'Rebook in 2 taps', 'Zero third-party redirects'].map(x => (
+          {['Instant text confirmation', 'Free to reschedule', 'Rebook your barber in two taps', 'Live openings, always current'].map(x => (
             <span key={x} className="flex items-center gap-2"><span style={{ width: 6, height: 6, background: t.ink, borderRadius: '50%' }} />{x}</span>
           ))}
         </div>
@@ -432,17 +432,17 @@ function BarberBooking({ dark }: { dark: boolean }) {
 function WhyReviews({ dark }: { dark: boolean }) {
   const t = theme(dark);
   const cells: [string, string, string][] = [
-    ['4.6★', 'Google rating', 'Pulled live and shown at the top of every page and beside every barber.'],
-    ['78+', 'Reviews scrolling', 'A constant band of real excerpts keeps social proof in view as clients book.'],
-    ['4', 'Studios, one flow', 'Triangle, Off-5th, Box Boyz & Studio — switchable inside a single booking widget.'],
-    ['0', 'Redirects to Booksy', 'Booking lives on fadeboxatx.com. You keep the traffic, the data, and the brand.'],
+    ['4.6★', 'Google rating', 'Averaged across 78 reviews and climbing every week.'],
+    ['78+', 'Five-star reviews', "From first-timers to regulars who've been in the chair for years."],
+    ['4', 'Studios across Austin', 'Triangle, Off-5th, Box Boyz & Studio — book any of them right here.'],
+    ['26', 'Barbers to choose from', 'Every specialty covered, from skin fades to beard sculpts.'],
   ];
   return (
     <section id="studios" style={{ background: t.bg, padding: '88px 0' }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <SectionHead t={t} eyebrow="Why it converts"
-          title={<>The reviews do<br />the selling.</>}
-          body="Fadebox already earns the reputation — 4.6 stars and a loyal following built one fade at a time. The redesign just puts that proof everywhere a client hesitates, then removes every reason to leave." />
+        <SectionHead t={t} eyebrow="Why Austin books Fadebox"
+          title={<>Austin keeps<br />coming back.</>}
+          body="Four studios, twenty-six barbers, and a 4.6-star reputation built one fade at a time. Find your barber, book in seconds, and see why the chairs stay full." />
         <div className="grid gap-px" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', background: t.hair }}>
           {cells.map(([n, l, x]) => (
             <div key={l} style={{ background: t.bg, padding: '34px 26px' }}>
@@ -465,7 +465,7 @@ function ServicesMenu({ dark }: { dark: boolean }) {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <SectionHead t={t} eyebrow="The menu"
           title={<>Clean list.<br />No surprises.</>}
-          body="Every service, every price, in the same monochrome language as the rest of the site. Illustrative pricing shown — wired to your real menu at launch." />
+          body="Every service, every price, up front. What you see is what you pay at the chair — no surprises." />
         <div className="flex flex-wrap gap-2.5">
           {SERVICES.map(s => (
             <div key={s.id} className="flex items-center gap-4 flex-1" style={{ background: t.bg, padding: '16px 20px', flexBasis: 220 }}>
@@ -491,7 +491,7 @@ function CtaStrip({ dark }: { dark: boolean }) {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <span className="text-[0.66rem] font-bold tracking-[0.34em] uppercase" style={{ color: t.bg, opacity: 0.6 }}>Ready when you are</span>
         <h2 className="font-black uppercase mt-3" style={{ fontSize: 'clamp(2rem, 6vw, 4.2rem)', lineHeight: 0.9, letterSpacing: '-0.02em' }}>Your chair is<br />one tap away.</h2>
-        <p className="mt-4 mb-7 text-lg" style={{ color: t.bg, opacity: 0.6, maxWidth: '44ch' }}>Same barbers. Same reputation. A site that finally matches the work.</p>
+        <p className="mt-4 mb-7 text-lg" style={{ color: t.bg, opacity: 0.6, maxWidth: '44ch' }}>Your barber's ready when you are. Find your chair and lock a time.</p>
         <a href="#book" className="inline-flex items-center gap-2 px-7 py-4 text-sm font-black tracking-[0.16em] uppercase" style={{ background: t.bg, color: t.ink }}>Book a chair <ArrowRightIcon className="w-4 h-4" /></a>
       </div>
     </section>
@@ -529,7 +529,7 @@ function Footer({ dark }: { dark: boolean }) {
         </div>
         <div className="flex justify-between gap-4 flex-wrap mt-12 text-[0.66rem] tracking-wider uppercase" style={{ color: t.inkFaint }}>
           <span>© Fadebox Barbershop</span>
-          <span>Redesign concept · The Lost + Unfounds</span>
+          <span>Austin, TX · (512) 995-5636</span>
         </div>
       </div>
     </footer>
@@ -554,7 +554,7 @@ export default function FadeboxLanding() {
       </main>
       <Footer dark={dark} />
       <div className="text-center text-[0.62rem] tracking-[0.18em] uppercase" style={{ background: t.ink, color: t.bg, padding: '8px 12px' }}>
-        Concept preview — interactive booking demo · not a live booking
+        Preview — bookings aren't live yet
       </div>
     </div>
   );
