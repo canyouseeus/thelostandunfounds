@@ -51,7 +51,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 }
 
-async function handleGet(supabase: ReturnType<typeof createClient>, req: VercelRequest, res: VercelResponse) {
+async function handleGet(supabase: any, req: VercelRequest, res: VercelResponse) {
     const { data, error } = await supabase
         .from('prodigi_products')
         .select('*')
@@ -60,7 +60,7 @@ async function handleGet(supabase: ReturnType<typeof createClient>, req: VercelR
     return res.status(200).json({ data: data || [] })
 }
 
-async function handleCreate(supabase: ReturnType<typeof createClient>, req: VercelRequest, res: VercelResponse) {
+async function handleCreate(supabase: any, req: VercelRequest, res: VercelResponse) {
     const { sku, slug, title, description, category, imageUrl, mockupTemplateUrl, mockupBounds, baseCost, price, currency, attributes, shippingMethod, featured, status } = req.body || {}
 
     if (!sku || !slug || !title || price === undefined || price === null) {
@@ -99,7 +99,7 @@ async function handleCreate(supabase: ReturnType<typeof createClient>, req: Verc
     return res.status(201).json({ data })
 }
 
-async function handleUpdate(supabase: ReturnType<typeof createClient>, req: VercelRequest, res: VercelResponse) {
+async function handleUpdate(supabase: any, req: VercelRequest, res: VercelResponse) {
     const { id } = req.query
     if (!id) return res.status(400).json({ error: 'id is required' })
 
@@ -138,7 +138,7 @@ async function handleUpdate(supabase: ReturnType<typeof createClient>, req: Verc
     return res.status(200).json({ data })
 }
 
-async function handleDelete(supabase: ReturnType<typeof createClient>, req: VercelRequest, res: VercelResponse) {
+async function handleDelete(supabase: any, req: VercelRequest, res: VercelResponse) {
     const { id } = req.query
     if (!id) return res.status(400).json({ error: 'id is required' })
     const { error } = await supabase.from('prodigi_products').delete().eq('id', id)
