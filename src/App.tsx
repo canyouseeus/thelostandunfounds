@@ -80,6 +80,7 @@ import SilvaStarDashboard from './templates/silva-star/SilvaStarDashboard'
 import SilvaStarProposal from './templates/silva-star/SilvaStarProposal'
 import KattitudeLanding from './templates/kattitude/KattitudeLanding'
 import KattitudeDashboard from './templates/kattitude/KattitudeDashboard'
+import FadeboxLanding from './templates/fadebox/FadeboxLanding'
 
 
 
@@ -238,6 +239,9 @@ function App() {
               {/* Kattitude Tattoo Studio — proposal preview (public, no auth) */}
               <Route path="/kattitude-preview" element={<KattitudeLanding />} />
               <Route path="/kattitude-preview/dashboard" element={<KattitudeDashboard />} />
+
+              {/* Fadebox Barbershop — redesign proposal preview (public, no auth) */}
+              <Route path="/fadebox-preview" element={<FadeboxLanding />} />
 
               <Route path="/designsystem" element={<Layout />}>
                 <Route index element={<DesignSystem />} />
