@@ -205,7 +205,7 @@ export default function FadeboxProposal() {
           <ul className="list">
             <li><strong>A custom black-and-white redesign</strong> — <span className="lite">your brand colors, done right: sharp, premium, mobile-first. A site that finally matches the work.</span></li>
             <li><strong>In-house barber-first booking</strong> — <span className="lite">pick studio → barber → service → time, all on your own site. Replaces Booksy — no redirect, no lost customers.</span></li>
-            <li><strong>Google reviews, front and center</strong> — <span className="lite">a live-syncing marquee of your best reviews scrolling across the page, plus your 4.6★ badge everywhere a customer hesitates.</span></li>
+            <li><strong>Google reviews — front and center, and growing</strong> — <span className="lite">a live marquee of your best reviews across the page, plus an automatic review request after every visit so each barber's Google presence keeps building — including the ones starting from zero today.</span></li>
             <li><strong>All four studios, one flow</strong> — <span className="lite">Triangle, Off-5th, Box Boyz &amp; Studio in a single switcher — with San Antonio ready to flip on the day it opens.</span></li>
             <li><strong>Owner dashboard</strong> — <span className="lite">today's chairs, revenue, barber leaderboard, chair utilization, and your review feed — one screen, no spreadsheets.</span></li>
             <li><strong>Instant confirmations &amp; no-show protection</strong> — <span className="lite">text confirmations, card-on-file, easy rebooking. You keep the traffic, the data, and the brand.</span></li>
