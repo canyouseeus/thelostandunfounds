@@ -257,7 +257,7 @@
 <header class="hero" id="top">
   <div class="hero-grid-lines"></div>
   <div class="wrap hero-inner">
-    <p class="eyebrow reveal">Austin, TX · 4 studios · Since day one</p>
+    <p class="eyebrow reveal">Austin, TX · 4 studios · San Antonio coming soon</p>
     <h1 class="display reveal d1">Book your<br><span class="thin">barber.</span> Not a<br>waitlist.</h1>
     <p class="hero-sub reveal d2">Twenty-six barbers. Four studios across Austin. Find your barber, pick your time, and you're booked in under a minute.</p>
     <div class="hero-cta reveal d3">
@@ -351,7 +351,7 @@
     <div class="why-grid">
       <div class="why-cell"><div class="n">4.6★</div><div class="l">Google rating</div><div class="x">Averaged across 78 reviews and climbing every week.</div></div>
       <div class="why-cell"><div class="n">78+</div><div class="l">Five-star reviews</div><div class="x">From first-timers to regulars who've been in the chair for years.</div></div>
-      <div class="why-cell"><div class="n">4</div><div class="l">Studios across Austin</div><div class="x">Triangle, Off-5th, Box Boyz & Studio — book any of them right here.</div></div>
+      <div class="why-cell"><div class="n">4</div><div class="l">Studios across Austin</div><div class="x">Triangle, Off-5th, Box Boyz & Studio — with San Antonio coming soon.</div></div>
       <div class="why-cell"><div class="n">26</div><div class="l">Barbers to choose from</div><div class="x">Every specialty covered, from skin fades to beard sculpts.</div></div>
     </div>
   </div>
@@ -393,6 +393,7 @@
         <a href="#book">Off-5th · E 5th St</a>
         <a href="#book">Box Boyz · E 11th St</a>
         <a href="#book">Studio · Poquito St</a>
+        <a href="#book" style="opacity:.6">San Antonio · Coming soon</a>
       </div>
       <div>
         <h4>Visit</h4>
@@ -492,7 +493,11 @@
   studioTabs.innerHTML = STUDIOS.map(function(s,i){
     return '<button class="studio-tab" role="tab" data-i="'+i+'" aria-selected="false">'+
       '<span class="sn">'+s.name+'</span><span class="sa">'+s.addr+'</span></button>';
-  }).join("");
+  }).join("") +
+    '<div class="studio-tab" aria-disabled="true" title="San Antonio — coming soon" style="cursor:not-allowed;background:transparent;box-shadow:inset 0 0 0 1px var(--hair)">'+
+      '<span class="sn" style="color:var(--ink-faint);display:flex;align-items:center;gap:8px">San Antonio '+
+      '<span style="background:var(--ink);color:var(--bg);font-size:.55rem;letter-spacing:.16em;padding:2px 6px">SOON</span></span>'+
+      '<span class="sa">Coming soon</span></div>';
 
   function selectStudio(i){
     state.studio=i; state.barber=null; state.service=null; state.day=null; state.slot=null;

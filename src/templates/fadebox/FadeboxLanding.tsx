@@ -65,6 +65,9 @@ const STUDIOS: Studio[] = [
     ['Raquel', 'Style & cut'], ['JD', 'Fades'], ['Erod', 'Beards'], ['Mathieu', 'Scissor work'], ['ATX', 'Guest chair'] ] },
 ];
 
+// Not bookable yet — shown as a "coming soon" tile in the studio switcher and footer.
+const COMING_SOON = { name: 'San Antonio', addr: 'Coming soon' };
+
 interface Service { id: string; name: string; desc: string; price: number; mins: number; }
 const SERVICES: Service[] = [
   { id: 'fade', name: 'Signature Fade', desc: 'Skin to taper, your call', price: 45, mins: 45 },
@@ -187,7 +190,7 @@ function Hero({ dark }: { dark: boolean }) {
       }} />
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
         <p className="fb-rise text-[0.66rem] font-bold tracking-[0.34em] uppercase" style={{ color: t.inkDim, opacity: 0, transform: 'translateY(18px)', animation: 'fbRise 0.9s cubic-bezier(.2,.7,.2,1) forwards' }}>
-          Austin, TX · 4 studios · Since day one
+          Austin, TX · 4 studios · San Antonio coming soon
         </p>
         <h1 className="fb-rise font-black uppercase mt-4"
           style={{ color: t.ink, fontSize: 'clamp(3rem, 10vw, 8rem)', lineHeight: 0.9, letterSpacing: '-0.03em', textWrap: 'balance', opacity: 0, transform: 'translateY(18px)', animation: 'fbRise 0.9s cubic-bezier(.2,.7,.2,1) 0.08s forwards' }}>
@@ -318,7 +321,7 @@ function BarberBooking({ dark }: { dark: boolean }) {
         <div style={{ background: t.bg }}>
           {/* STEP 1 — STUDIO */}
           <div style={{ padding: '30px', borderBottom: `1px solid ${t.hair}` }}>
-            <StepLabel t={t} num={1} title="Choose your studio" hint="4 across Austin" />
+            <StepLabel t={t} num={1} title="Choose your studio" hint="4 open · 1 coming" />
             <div className="flex flex-wrap gap-2.5">
               {STUDIOS.map((s, i) => (
                 <button key={s.id} onClick={() => pickStudio(i)}
@@ -327,6 +330,15 @@ function BarberBooking({ dark }: { dark: boolean }) {
                   <span className="text-[0.66rem]" style={{ color: i === studioIdx ? t.bg : t.inkFaint, opacity: i === studioIdx ? 0.6 : 1 }}>{s.addr}</span>
                 </button>
               ))}
+              {/* Coming soon — San Antonio (not bookable) */}
+              <div aria-disabled="true" title="San Antonio — coming soon"
+                className="flex flex-col gap-0.5 flex-1" style={{ padding: '14px 18px', minWidth: 150, background: 'transparent', boxShadow: `inset 0 0 0 1px ${t.hair}`, cursor: 'not-allowed' }}>
+                <span className="flex items-center gap-2 text-sm font-black tracking-wider uppercase" style={{ color: t.inkFaint }}>
+                  {COMING_SOON.name}
+                  <span className="text-[0.55rem] tracking-[0.16em] px-1.5 py-0.5" style={{ background: t.ink, color: t.bg }}>SOON</span>
+                </span>
+                <span className="text-[0.66rem]" style={{ color: t.inkFaint }}>{COMING_SOON.addr}</span>
+              </div>
             </div>
           </div>
 
@@ -434,7 +446,7 @@ function WhyReviews({ dark }: { dark: boolean }) {
   const cells: [string, string, string][] = [
     ['4.6★', 'Google rating', 'Averaged across 78 reviews and climbing every week.'],
     ['78+', 'Five-star reviews', "From first-timers to regulars who've been in the chair for years."],
-    ['4', 'Studios across Austin', 'Triangle, Off-5th, Box Boyz & Studio — book any of them right here.'],
+    ['4', 'Studios across Austin', 'Triangle, Off-5th, Box Boyz & Studio — with San Antonio coming soon.'],
     ['26', 'Barbers to choose from', 'Every specialty covered, from skin fades to beard sculpts.'],
   ];
   return (
@@ -518,6 +530,9 @@ function Footer({ dark }: { dark: boolean }) {
                 <MapPinIcon className="w-3.5 h-3.5" /> {s.name} · {s.addr}
               </a>
             ))}
+            <span className="flex items-center gap-1.5 text-sm mb-2.5" style={{ color: t.inkFaint }}>
+              <MapPinIcon className="w-3.5 h-3.5" /> {COMING_SOON.name} · {COMING_SOON.addr}
+            </span>
           </div>
           <div>
             <h4 className="text-[0.68rem] tracking-[0.2em] uppercase mb-4" style={{ color: t.inkFaint }}>Visit</h4>
