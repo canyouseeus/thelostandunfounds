@@ -196,19 +196,19 @@ export default function FadeboxProposal() {
             You're opening a fifth studio in San Antonio — so the last thing you need is a website project pulling at your attention. That's the whole idea here: this fixes the one thing quietly costing you bookings, and it's built to run without you. In fact, it already does — a working version is live today.
           </p>
           <p className="body">
-            Fadebox has earned what most shops never will — a 4.9-star average across 3,500+ reviews, a loyal following, and twenty-six barbers across four studios. But the site is plain, and every booking still hands your customer to Booksy: lost traffic, lost data, and a brand experience that ends the second someone tries to book. Opening a fifth location makes that leak bigger, not smaller.
+            The reputation is there — 4.9 stars across 3,500+ reviews. But underneath, booking is a patchwork: some barbers on Booksy, some on Squire, some on links that break — no single place to book, no single place to see sales and schedules. A fifth studio only multiplies that. Unify it now and every location you open runs on one system: one front door for customers, one dashboard of real numbers for you.
           </p>
 
           <hr className="rule" />
 
           <div className="subhead">02 · What you get</div>
           <ul className="list">
-            <li><strong>A custom black-and-white redesign</strong> — <span className="lite">your brand colors, done right: sharp, premium, mobile-first. A site that finally matches the work.</span></li>
+            <li><strong>A custom black-and-white redesign</strong> — <span className="lite">your brand colors, done right: sharp, premium, mobile-first.</span></li>
             <li><strong>One booking system for every barber</strong> — <span className="lite">right now your barbers are split across Booksy, Squire, and links that break. This puts all 4 studios and every barber behind one flow on your own site — no redirects, no dead links, no lost customers.</span></li>
             <li><strong>Google reviews — front and center, and growing</strong> — <span className="lite">a live marquee of your best reviews across the page, plus an automatic review request after every visit so each barber's Google presence keeps building — including the ones starting from zero today.</span></li>
             <li><strong>All four studios, one flow</strong> — <span className="lite">Triangle, Off-5th, Box Boyz &amp; Studio in a single switcher — with San Antonio ready to flip on the day it opens.</span></li>
-            <li><strong>Owner dashboard</strong> — <span className="lite">today's chairs, revenue, barber leaderboard, chair utilization, and your review feed — one screen, no spreadsheets.</span></li>
-            <li><strong>Instant confirmations &amp; no-show protection</strong> — <span className="lite">text confirmations, card-on-file, easy rebooking. You keep the traffic, the data, and the brand.</span></li>
+            <li><strong>Owner dashboard &amp; real analytics</strong> — <span className="lite">sales, bookings, barber leaderboard and chair utilization across every studio in one screen — the numbers you can't get while barbers are scattered across apps. Open another shop and it just appears.</span></li>
+            <li><strong>Instant confirmations &amp; no-show protection</strong> — <span className="lite">text confirmations, card-on-file, easy rebooking — you keep the traffic, data, and brand.</span></li>
           </ul>
 
           <div className="callout soft">
