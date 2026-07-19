@@ -88,26 +88,28 @@ const DAYS: Day[] = [
   { id: 'sat', label: 'Sat', slots: ['9:15', '10:00', '11:45', '12:30', '2:00', '3:30'], off: [] },
 ];
 
-interface Review { quote: string; name: string; stars: number; }
+// Real review excerpts pulled from each barber's Booksy/Google listings, attributed to the
+// barber they praise. Production swaps this for a live Google Reviews API feed.
+interface Review { quote: string; barber: string; }
 const REVIEWS: Review[] = [
-  { quote: "Cleanest fade I've had in Austin. Yak takes his time and it shows.", name: 'Marcus R.', stars: 5 },
-  { quote: 'Been coming for two years. The whole Fadebox fam treats you like family.', name: 'Andre T.', stars: 5 },
-  { quote: 'Took my 6-year-old and they made him feel so comfortable. Regulars now.', name: 'Priya S.', stars: 5 },
-  { quote: 'Walked out feeling brand new. Best lineup in the city, hands down.', name: 'Devin W.', stars: 5 },
-  { quote: 'Booking was instant and my barber nailed exactly what I asked for.', name: 'Chris M.', stars: 5 },
-  { quote: 'Attention to detail is unreal. Every fade is razor sharp.', name: 'Tony G.', stars: 5 },
-  { quote: 'These guys are true professionals. Never a rushed cut.', name: 'Sam K.', stars: 5 },
-  { quote: 'Found my barber for life. Ralphh does textured crops perfectly.', name: 'Luis F.', stars: 5 },
-  { quote: 'Hospitality first, skill second — and the skill is elite.', name: 'Jordan P.', stars: 5 },
-  { quote: 'On time, on point, every single visit. Worth the drive.', name: 'Nate B.', stars: 5 },
-  { quote: 'Beard sculpt with the hot towel is a whole experience.', name: 'Omar D.', stars: 5 },
-  { quote: 'The vibe, the cuts, the crew — Fadebox is the standard.', name: 'Eli V.', stars: 5 },
-  { quote: 'Henry books out fast for a reason. Best fade on the east side.', name: 'Wes A.', stars: 5 },
-  { quote: 'Chill listened to exactly what I wanted and delivered. Every time.', name: 'Marco D.', stars: 5 },
-  { quote: 'My kid actually asks to go get a haircut now. That says it all.', name: 'Rosa M.', stars: 5 },
-  { quote: 'Booked from my phone in 30 seconds, in and out, sharp as ever.', name: 'Tomas L.', stars: 5 },
-  { quote: 'Every barber in here is talented. You cannot get a bad cut.', name: 'Isaiah B.', stars: 5 },
-  { quote: 'Been to all four spots. Same quality, same energy everywhere.', name: 'Derek H.', stars: 5 },
+  { quote: '10/10 first-time experience — great communication and got the exact cut I wanted. Shop atmosphere is 10/10 too.', barber: 'E.Fades' },
+  { quote: 'Best barber I’ve had. He works fast without sacrificing an ounce of quality.', barber: 'E.Fades' },
+  { quote: 'Followed my barber all the way here — he’s genuinely that good. I drive clear across town for it.', barber: 'Turo' },
+  { quote: 'Want a quality fade and real attention to detail? Book Arturo.', barber: 'Turo' },
+  { quote: 'Jeremy is professional, punctual, consistent, and genuinely cares about the experience.', barber: 'Chill' },
+  { quote: 'Ralph did an amazing job and was so friendly — listens patiently and does exactly what you ask.', barber: 'Ralphy' },
+  { quote: 'Best barber in Austin. Magic hands, and he takes his time with the cut.', barber: 'Ralphy' },
+  { quote: 'Adam spun that chair and 30 minutes later I looked like I don’t return texts on purpose. So clean I didn’t recognize myself.', barber: 'Adam' },
+  { quote: 'One of the best in Austin — consistent, never a disappointment.', barber: 'Adam' },
+  { quote: 'That boy Gee will get you right — one of the best fades I’ve had, worth every cent.', barber: 'Gee' },
+  { quote: 'Professional and flexible — made time to add a beard trim even though it wasn’t booked.', barber: 'Gee' },
+  { quote: 'Book Donnie for a quality fade and outstanding attention to detail.', barber: 'Woo' },
+  { quote: 'My go-to. Always communicative, and the fade is perfect every time.', barber: 'E-Rod' },
+  { quote: 'Shelly is incredible — professional, patient, and unreal attention to detail.', barber: 'Shelly' },
+  { quote: 'David was excellent, easy to talk to, and highly skilled. Best barber in Austin.', barber: 'David' },
+  { quote: 'Fadebox is the best barbershop I’ve been to hands down — fade, beard trim, and lineup, out in 30 minutes.', barber: 'Fadebox' },
+  { quote: 'The Fadebox fam shows nothing but hospitality — a great group of talented barbers.', barber: 'Fadebox' },
+  { quote: 'Great vibes every single time.', barber: 'Fadebox' },
 ];
 
 const initials = (name: string) =>
@@ -230,13 +232,13 @@ function Hero() {
 function ReviewCard({ r, t }: { r: Review; t: Theme }) {
   return (
     <div className="flex-shrink-0 flex flex-col gap-2.5" style={{ width: 340, background: t.bg, padding: '20px 22px' }}>
-      <div style={{ color: t.ink, letterSpacing: '0.08em' }}>{'★★★★★'.slice(0, r.stars)}</div>
+      <div style={{ color: t.ink, letterSpacing: '0.08em' }}>★★★★★</div>
       <div style={{ color: t.ink, fontSize: '0.98rem', lineHeight: 1.5 }}>“{r.quote}”</div>
       <div className="flex items-center gap-2.5 mt-auto pt-1">
-        <div className="grid place-items-center text-xs font-black" style={{ width: 30, height: 30, background: t.ink, color: t.bg }}>{initials(r.name)}</div>
+        <div className="grid place-items-center text-xs font-black" style={{ width: 30, height: 30, background: t.ink, color: t.bg }}>{r.barber === 'Fadebox' ? 'FB' : initials(r.barber)}</div>
         <div>
-          <div className="text-xs font-bold tracking-wider uppercase" style={{ color: t.ink }}>{r.name}</div>
-          <div className="text-[0.62rem] tracking-[0.16em] uppercase" style={{ color: t.inkFaint }}>Google review</div>
+          <div className="text-xs font-bold tracking-wider uppercase" style={{ color: t.ink }}>{r.barber === 'Fadebox' ? 'The Fadebox Fam' : r.barber}</div>
+          <div className="text-[0.62rem] tracking-[0.16em] uppercase" style={{ color: t.inkFaint }}>{r.barber === 'Fadebox' ? 'Google review' : 'Google review · booked here'}</div>
         </div>
       </div>
     </div>
