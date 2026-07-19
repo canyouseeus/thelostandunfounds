@@ -37,7 +37,7 @@ function useLocalDark() {
   const [dark, setDark] = useState<boolean>(() => {
     try {
       const saved = localStorage.getItem('fadebox-dark');
-      return saved === null ? true : saved !== 'false';
+      return saved === null ? false : saved !== 'false';
     } catch { return true; }
   });
   const toggle = () => setDark(d => {
@@ -127,7 +127,7 @@ function Navbar({ dark, toggleDark }: { dark: boolean; toggleDark: () => void })
   const links: [string, string][] = [['Book', '#book'], ['Reviews', '#reviews'], ['Studios', '#studios'], ['Services', '#services']];
   return (
     <nav className="fixed top-0 left-0 right-0 z-50"
-      style={{ background: dark ? 'rgba(0,0,0,0.82)' : 'rgba(255,255,255,0.86)', backdropFilter: 'blur(14px)', borderBottom: `1px solid ${t.hair}` }}>
+      style={{ background: dark ? 'rgba(0,0,0,0.86)' : 'rgba(255,255,255,0.9)', backdropFilter: 'blur(14px)' }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-4">
         <a href="#top" className="flex items-center gap-2.5">
           <span className="grid place-items-center w-7 h-7 font-black text-xs" style={{ background: t.ink, color: t.bg }}>FB</span>
@@ -151,8 +151,8 @@ function Navbar({ dark, toggleDark }: { dark: boolean; toggleDark: () => void })
           </button>
           <a href="#book" className="hidden sm:inline-flex items-center px-4 py-2.5 text-xs font-black tracking-[0.16em] uppercase transition-colors"
             style={{ background: t.ink, color: t.bg }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = t.ink; e.currentTarget.style.boxShadow = `inset 0 0 0 1px ${t.ink}`; }}
-            onMouseLeave={e => { e.currentTarget.style.background = t.ink; e.currentTarget.style.color = t.bg; e.currentTarget.style.boxShadow = 'none'; }}>
+            onMouseEnter={e => { e.currentTarget.style.opacity = '0.82'; }}
+            onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}>
             Book a chair
           </a>
           <button onClick={() => setOpen(o => !o)} className="md:hidden p-1" style={{ color: t.ink }} aria-label="Menu">
@@ -161,7 +161,7 @@ function Navbar({ dark, toggleDark }: { dark: boolean; toggleDark: () => void })
         </div>
       </div>
       {open && (
-        <div className="md:hidden px-6 pb-4 flex flex-col" style={{ borderTop: `1px solid ${t.hair}` }}>
+        <div className="md:hidden px-6 pb-4 flex flex-col" style={{ background: dark ? 'rgba(0,0,0,0.96)' : 'rgba(255,255,255,0.98)' }}>
           {links.map(([label, href]) => (
             <a key={label} href={href} onClick={() => setOpen(false)}
               className="py-3 text-sm tracking-[0.16em] uppercase" style={{ color: t.inkDim }}>{label}</a>
@@ -181,20 +181,13 @@ function Hero({ dark }: { dark: boolean }) {
   const stats: [string, string][] = [['4.6★', 'Google rating'], ['78', 'Reviews & counting'], ['26', 'Barbers'], ['4', 'Studios']];
   return (
     <header id="top" className="relative overflow-hidden" style={{ background: t.bg, padding: '150px 0 72px' }}>
-      <div className="absolute inset-0 pointer-events-none" style={{
-        opacity: 0.5,
-        backgroundImage: `linear-gradient(${t.hair} 1px, transparent 1px)`,
-        backgroundSize: '100% 90px',
-        WebkitMaskImage: 'linear-gradient(to bottom, transparent, #000 30%, #000 70%, transparent)',
-        maskImage: 'linear-gradient(to bottom, transparent, #000 30%, #000 70%, transparent)',
-      }} />
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
         <p className="fb-rise text-[0.66rem] font-bold tracking-[0.34em] uppercase" style={{ color: t.inkDim, opacity: 0, transform: 'translateY(18px)', animation: 'fbRise 0.9s cubic-bezier(.2,.7,.2,1) forwards' }}>
           Austin, TX · 4 studios · San Antonio coming soon
         </p>
         <h1 className="fb-rise font-black uppercase mt-4"
           style={{ color: t.ink, fontSize: 'clamp(3rem, 10vw, 8rem)', lineHeight: 0.9, letterSpacing: '-0.03em', textWrap: 'balance', opacity: 0, transform: 'translateY(18px)', animation: 'fbRise 0.9s cubic-bezier(.2,.7,.2,1) 0.08s forwards' }}>
-          Book your<br /><span style={{ fontWeight: 300 }}>barber.</span> Not a<br />waitlist.
+          Book your <span style={{ fontWeight: 300 }}>barber.</span> Not a waitlist.
         </h1>
         <p className="fb-rise mt-7 text-lg" style={{ color: t.inkDim, maxWidth: '46ch', lineHeight: 1.6, opacity: 0, transform: 'translateY(18px)', animation: 'fbRise 0.9s cubic-bezier(.2,.7,.2,1) 0.16s forwards' }}>
           Twenty-six barbers. Four studios across Austin. Find your barber, pick your time, and you're booked in under a minute.
@@ -203,7 +196,7 @@ function Hero({ dark }: { dark: boolean }) {
           <a href="#book" className="inline-flex items-center gap-2 px-5 py-3.5 text-xs font-black tracking-[0.16em] uppercase"
             style={{ background: t.ink, color: t.bg }}>Find your barber <ArrowRightIcon className="w-4 h-4" /></a>
           <a href="#reviews" className="inline-flex items-center px-5 py-3.5 text-xs font-black tracking-[0.16em] uppercase"
-            style={{ color: t.ink, boxShadow: `inset 0 0 0 1px ${t.ink}` }}>Read the reviews</a>
+            style={{ background: t.panel2, color: t.ink }}>Read the reviews</a>
         </div>
         <div className="fb-rise flex flex-wrap gap-x-9 gap-y-6 mt-13" style={{ marginTop: '52px', opacity: 0, transform: 'translateY(18px)', animation: 'fbRise 0.9s cubic-bezier(.2,.7,.2,1) 0.32s forwards' }}>
           {stats.map(([n, l]) => (
@@ -315,12 +308,12 @@ function BarberBooking({ dark }: { dark: boolean }) {
     <section id="book" style={{ background: t.panel, padding: '88px 0' }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <SectionHead t={t} eyebrow="Reserve your chair"
-          title={<>Barber first.<br />Everything else follows.</>}
+          title="Barber first. Everything else follows."
           body="You come for your barber, not just any open chair. So that's where we start — pick your studio, choose your barber, then lock a service and time. Booked in under a minute." />
 
-        <div style={{ background: t.bg }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           {/* STEP 1 — STUDIO */}
-          <div style={{ padding: '30px', borderBottom: `1px solid ${t.hair}` }}>
+          <div style={{ padding: '30px', background: t.bg }}>
             <StepLabel t={t} num={1} title="Choose your studio" hint="4 open · 1 coming" />
             <div className="flex flex-wrap gap-2.5">
               {STUDIOS.map((s, i) => (
@@ -330,20 +323,17 @@ function BarberBooking({ dark }: { dark: boolean }) {
                   <span className="text-[0.66rem]" style={{ color: i === studioIdx ? t.bg : t.inkFaint, opacity: i === studioIdx ? 0.6 : 1 }}>{s.addr}</span>
                 </button>
               ))}
-              {/* Coming soon — San Antonio (not bookable) */}
-              <div aria-disabled="true" title="San Antonio — coming soon"
-                className="flex flex-col gap-0.5 flex-1" style={{ padding: '14px 18px', minWidth: 150, background: 'transparent', boxShadow: `inset 0 0 0 1px ${t.hair}`, cursor: 'not-allowed' }}>
-                <span className="flex items-center gap-2 text-sm font-black tracking-wider uppercase" style={{ color: t.inkFaint }}>
-                  {COMING_SOON.name}
-                  <span className="text-[0.55rem] tracking-[0.16em] px-1.5 py-0.5" style={{ background: t.ink, color: t.bg }}>SOON</span>
-                </span>
+              {/* Coming soon — San Antonio (not bookable; matches the bookable tiles so it aligns) */}
+              <button type="button" disabled aria-disabled="true" title="San Antonio — coming soon"
+                className="flex flex-col gap-0.5 flex-1" style={{ padding: '14px 18px', minWidth: 150, background: t.panel2, opacity: 0.55, cursor: 'not-allowed', color: t.inkFaint }}>
+                <span className="text-sm font-black tracking-wider uppercase">{COMING_SOON.name}</span>
                 <span className="text-[0.66rem]" style={{ color: t.inkFaint }}>{COMING_SOON.addr}</span>
-              </div>
+              </button>
             </div>
           </div>
 
           {/* STEP 2 — BARBER */}
-          <div style={{ padding: '30px', borderBottom: `1px solid ${t.hair}` }}>
+          <div style={{ padding: '30px', background: t.bg }}>
             <StepLabel t={t} num={2} title="Pick your barber" hint={`${studio.barbers.length} barbers · ${studio.name}`} />
             <div className="grid gap-2.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(112px, 1fr))' }}>
               {studio.barbers.map(([name, spec], i) => {
@@ -361,7 +351,7 @@ function BarberBooking({ dark }: { dark: boolean }) {
           </div>
 
           {/* STEP 3 — SERVICE */}
-          <div style={{ padding: '30px', borderBottom: `1px solid ${t.hair}`, opacity: barber ? 1 : 0.45, pointerEvents: barber ? 'auto' : 'none' }}>
+          <div style={{ padding: '30px', background: t.bg, opacity: barber ? 1 : 0.45, pointerEvents: barber ? 'auto' : 'none' }}>
             <StepLabel t={t} num={3} title="Choose a service" hint="Prices upfront" />
             <div className="flex flex-wrap gap-2.5">
               {SERVICES.map((s, i) => {
@@ -381,7 +371,7 @@ function BarberBooking({ dark }: { dark: boolean }) {
           </div>
 
           {/* STEP 4 — TIME */}
-          <div style={{ padding: '30px', opacity: service ? 1 : 0.45, pointerEvents: service ? 'auto' : 'none' }}>
+          <div style={{ padding: '30px', background: t.bg, opacity: service ? 1 : 0.45, pointerEvents: service ? 'auto' : 'none' }}>
             <StepLabel t={t} num={4} title="Lock a time" hint="Central Time" />
             <div className="flex flex-wrap gap-2 mb-3.5">
               {DAYS.map((d, i) => (
@@ -453,11 +443,11 @@ function WhyReviews({ dark }: { dark: boolean }) {
     <section id="studios" style={{ background: t.bg, padding: '88px 0' }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <SectionHead t={t} eyebrow="Why Austin books Fadebox"
-          title={<>Austin keeps<br />coming back.</>}
+          title="Austin keeps coming back."
           body="Four studios, twenty-six barbers, and a 4.6-star reputation built one fade at a time. Find your barber, book in seconds, and see why the chairs stay full." />
-        <div className="grid gap-px" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', background: t.hair }}>
+        <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
           {cells.map(([n, l, x]) => (
-            <div key={l} style={{ background: t.bg, padding: '34px 26px' }}>
+            <div key={l} style={{ background: t.panel, padding: '34px 26px' }}>
               <div className="font-black" style={{ color: t.ink, fontSize: '2.6rem', letterSpacing: '-0.03em', lineHeight: 1 }}>{n}</div>
               <div className="text-[0.7rem] tracking-[0.2em] uppercase mt-3.5" style={{ color: t.inkDim }}>{l}</div>
               <div className="text-sm mt-2.5" style={{ color: t.inkFaint, lineHeight: 1.5 }}>{x}</div>
@@ -476,7 +466,7 @@ function ServicesMenu({ dark }: { dark: boolean }) {
     <section id="services" style={{ background: t.panel, padding: '88px 0' }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <SectionHead t={t} eyebrow="The menu"
-          title={<>Clean list.<br />No surprises.</>}
+          title="Clean list. No surprises."
           body="Every service, every price, up front. What you see is what you pay at the chair — no surprises." />
         <div className="flex flex-wrap gap-2.5">
           {SERVICES.map(s => (
@@ -502,7 +492,7 @@ function CtaStrip({ dark }: { dark: boolean }) {
     <section style={{ background: t.ink, color: t.bg, padding: '70px 0' }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <span className="text-[0.66rem] font-bold tracking-[0.34em] uppercase" style={{ color: t.bg, opacity: 0.6 }}>Ready when you are</span>
-        <h2 className="font-black uppercase mt-3" style={{ fontSize: 'clamp(2rem, 6vw, 4.2rem)', lineHeight: 0.9, letterSpacing: '-0.02em' }}>Your chair is<br />one tap away.</h2>
+        <h2 className="font-black uppercase mt-3" style={{ fontSize: 'clamp(2rem, 6vw, 4.2rem)', lineHeight: 0.9, letterSpacing: '-0.02em' }}>Your chair is one tap away.</h2>
         <p className="mt-4 mb-7 text-lg" style={{ color: t.bg, opacity: 0.6, maxWidth: '44ch' }}>Your barber's ready when you are. Find your chair and lock a time.</p>
         <a href="#book" className="inline-flex items-center gap-2 px-7 py-4 text-sm font-black tracking-[0.16em] uppercase" style={{ background: t.bg, color: t.ink }}>Book a chair <ArrowRightIcon className="w-4 h-4" /></a>
       </div>
@@ -513,7 +503,7 @@ function CtaStrip({ dark }: { dark: boolean }) {
 function Footer({ dark }: { dark: boolean }) {
   const t = theme(dark);
   return (
-    <footer style={{ background: t.bg, padding: '64px 0 40px', borderTop: `1px solid ${t.hair}` }}>
+    <footer style={{ background: t.bg, padding: '64px 0 40px' }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="grid gap-10" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
           <div>
@@ -559,11 +549,13 @@ export default function FadeboxLanding() {
     <div className="min-h-screen font-sans" style={{ background: t.bg }}>
       <MarqueeStyles />
       <Navbar dark={dark} toggleDark={toggleDark} />
+      {/* Sections alternate ground: normal theme vs its inverse, so the black/white
+          rhythm flips together with the light/dark toggle. */}
       <main>
         <Hero dark={dark} />
-        <ReviewsMarquee dark={dark} />
+        <ReviewsMarquee dark={!dark} />
         <BarberBooking dark={dark} />
-        <WhyReviews dark={dark} />
+        <WhyReviews dark={!dark} />
         <ServicesMenu dark={dark} />
         <CtaStrip dark={dark} />
       </main>
