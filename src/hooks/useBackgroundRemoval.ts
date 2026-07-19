@@ -16,13 +16,23 @@ function supabasePublicUrl(filename: string): string {
     return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${filename}`;
 }
 
-/** Returns true if the file already exists in Supabase storage */
-async function existsInSupabase(filename: string): Promise<boolean> {
+/**
+ * HEAD-checks the processed file in Supabase storage.
+ *   'hit'     → already processed, use it
+ *   'missing' → genuinely not processed yet (404), safe to process fresh
+ *   'down'    → storage is unavailable (402 egress quota, 403, 429, 5xx, or a
+ *               network error). Don't run WASM + a doomed upload; the caller
+ *               should fall back to the original product photo instead.
+ */
+async function checkSupabase(filename: string): Promise<'hit' | 'missing' | 'down'> {
     try {
         const res = await fetch(supabasePublicUrl(filename), { method: 'HEAD' });
-        return res.ok;
+        if (res.ok) return 'hit';
+        if (res.status === 404) return 'missing';
+        // 402 (exceed_egress_quota), 403, 429, 5xx → service restricted/down.
+        return 'down';
     } catch {
-        return false;
+        return 'down';
     }
 }
 
@@ -104,18 +114,25 @@ export function useBackgroundRemoval(
                 return;
             }
 
-            // 2. Supabase hit — already processed by a previous visitor
-            const exists = await existsInSupabase(filename);
+            // 2. Supabase check — already processed, missing, or storage down
+            const status = await checkSupabase(filename);
             if (cancelled) return;
-            if (exists) {
+            if (status === 'hit') {
                 const url = supabasePublicUrl(filename);
                 localStorage.setItem(localKey, url);
                 setProcessedUrl(url);
                 onComplete?.(false);
                 return;
             }
+            if (status === 'down') {
+                // Storage is unavailable (e.g. exceed_egress_quota). Skip the
+                // heavy WASM removal + doomed upload — leave processedUrl null so
+                // the UI shows the original product photo without the outline.
+                onComplete?.(false);
+                return;
+            }
 
-            // 3. Process fresh — serialised through global queue so only one
+            // 3. Process fresh (status === 'missing') — serialised through global queue so only one
             //    WASM session runs at a time (prevents main-thread overload).
             setProcessing(true);
             await enqueue(async () => {

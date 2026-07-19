@@ -433,7 +433,14 @@ function ProductCard({ product, onOpen, onSettled }: { product: Product; onOpen:
   const displayPrice = product.price;
   const displayComparePrice = product.compareAtPrice || null;
   const { processedUrl, processing, error: bgrError } = useBackgroundRemoval(imageUrl, onSettled);
-  const displayUrl = processedUrl || imageUrl;
+
+  // If the processed (Supabase-hosted) image fails to load — e.g. storage is
+  // down or over its egress quota — fall back to the original product photo
+  // WITHOUT the styled outline. Reset the flag whenever the processed URL changes.
+  const [processedFailed, setProcessedFailed] = useState(false);
+  useEffect(() => { setProcessedFailed(false); }, [processedUrl]);
+  const showProcessed = !!processedUrl && !processedFailed;
+  const displayUrl = showProcessed ? processedUrl : imageUrl;
 
   // Get affiliate ref for tracking
   const affiliateRef = getAffiliateRef();
@@ -472,7 +479,12 @@ function ProductCard({ product, onOpen, onSettled }: { product: Product; onOpen:
             src={displayUrl}
             alt={product.title}
             className="w-full h-full transition-all duration-700"
-            style={processedUrl ? {
+            onError={() => {
+              // Only revert once — if the ORIGINAL image also fails there's
+              // nothing better to show, so don't loop.
+              if (showProcessed) setProcessedFailed(true);
+            }}
+            style={showProcessed ? {
               objectFit: 'contain',
               padding: '24px',
               filter: [
