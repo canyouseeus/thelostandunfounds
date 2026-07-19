@@ -176,33 +176,39 @@ function Navbar({ dark, toggleDark }: { dark: boolean; toggleDark: () => void })
 }
 
 /* ------------------------------- Hero ------------------------------- */
-function Hero({ dark }: { dark: boolean }) {
-  const t = theme(dark);
+// Full-bleed photo hero (Fadebox Off-5th, shot by tlau.photos). Always a dark
+// ground with white text — the alternating rhythm starts light in the next section.
+function Hero() {
   const stats: [string, string][] = [['4.6★', 'Google rating'], ['78', 'Reviews & counting'], ['26', 'Barbers'], ['4', 'Studios']];
+  const white = '#ffffff';
+  const dim = 'rgba(255,255,255,0.82)';
+  const faint = 'rgba(255,255,255,0.55)';
   return (
-    <header id="top" className="relative overflow-hidden" style={{ background: t.bg, padding: '150px 0 72px' }}>
+    <header id="top" className="relative overflow-hidden" style={{ padding: '168px 0 84px', background: '#000' }}>
+      <div className="absolute inset-0" style={{ backgroundImage: 'url(/fadebox/hero-e5th.jpg)', backgroundSize: 'cover', backgroundPosition: 'center 35%' }} />
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.42) 42%, rgba(0,0,0,0.82) 100%)' }} />
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-        <p className="fb-rise text-[0.66rem] font-bold tracking-[0.34em] uppercase" style={{ color: t.inkDim, opacity: 0, transform: 'translateY(18px)', animation: 'fbRise 0.9s cubic-bezier(.2,.7,.2,1) forwards' }}>
+        <p className="fb-rise text-[0.66rem] font-bold tracking-[0.34em] uppercase" style={{ color: dim, opacity: 0, transform: 'translateY(18px)', animation: 'fbRise 0.9s cubic-bezier(.2,.7,.2,1) forwards' }}>
           Austin, TX · 4 studios · San Antonio coming soon
         </p>
         <h1 className="fb-rise font-black uppercase mt-4"
-          style={{ color: t.ink, fontSize: 'clamp(3rem, 10vw, 8rem)', lineHeight: 0.9, letterSpacing: '-0.03em', textWrap: 'balance', opacity: 0, transform: 'translateY(18px)', animation: 'fbRise 0.9s cubic-bezier(.2,.7,.2,1) 0.08s forwards' }}>
+          style={{ color: white, fontSize: 'clamp(3rem, 10vw, 8rem)', lineHeight: 0.9, letterSpacing: '-0.03em', textWrap: 'balance', textShadow: '0 2px 30px rgba(0,0,0,0.4)', opacity: 0, transform: 'translateY(18px)', animation: 'fbRise 0.9s cubic-bezier(.2,.7,.2,1) 0.08s forwards' }}>
           Book your <span style={{ fontWeight: 300 }}>barber.</span> Not a waitlist.
         </h1>
-        <p className="fb-rise mt-7 text-lg" style={{ color: t.inkDim, maxWidth: '46ch', lineHeight: 1.6, opacity: 0, transform: 'translateY(18px)', animation: 'fbRise 0.9s cubic-bezier(.2,.7,.2,1) 0.16s forwards' }}>
+        <p className="fb-rise mt-7 text-lg" style={{ color: dim, maxWidth: '46ch', lineHeight: 1.6, opacity: 0, transform: 'translateY(18px)', animation: 'fbRise 0.9s cubic-bezier(.2,.7,.2,1) 0.16s forwards' }}>
           Twenty-six barbers. Four studios across Austin. Find your barber, pick your time, and you're booked in under a minute.
         </p>
         <div className="fb-rise flex flex-wrap gap-3.5 mt-9" style={{ opacity: 0, transform: 'translateY(18px)', animation: 'fbRise 0.9s cubic-bezier(.2,.7,.2,1) 0.24s forwards' }}>
           <a href="#book" className="inline-flex items-center gap-2 px-5 py-3.5 text-xs font-black tracking-[0.16em] uppercase"
-            style={{ background: t.ink, color: t.bg }}>Find your barber <ArrowRightIcon className="w-4 h-4" /></a>
+            style={{ background: white, color: '#000' }}>Find your barber <ArrowRightIcon className="w-4 h-4" /></a>
           <a href="#reviews" className="inline-flex items-center px-5 py-3.5 text-xs font-black tracking-[0.16em] uppercase"
-            style={{ background: t.panel2, color: t.ink }}>Read the reviews</a>
+            style={{ background: 'rgba(255,255,255,0.14)', color: white, backdropFilter: 'blur(4px)' }}>Read the reviews</a>
         </div>
-        <div className="fb-rise flex flex-wrap gap-x-9 gap-y-6 mt-13" style={{ marginTop: '52px', opacity: 0, transform: 'translateY(18px)', animation: 'fbRise 0.9s cubic-bezier(.2,.7,.2,1) 0.32s forwards' }}>
+        <div className="fb-rise flex flex-wrap gap-x-9 gap-y-6" style={{ marginTop: '52px', opacity: 0, transform: 'translateY(18px)', animation: 'fbRise 0.9s cubic-bezier(.2,.7,.2,1) 0.32s forwards' }}>
           {stats.map(([n, l]) => (
             <div key={l}>
-              <div className="font-black" style={{ color: t.ink, fontSize: '2rem', letterSpacing: '-0.02em' }}>{n}</div>
-              <div className="text-[0.66rem] tracking-[0.22em] uppercase mt-1" style={{ color: t.inkFaint }}>{l}</div>
+              <div className="font-black" style={{ color: white, fontSize: '2rem', letterSpacing: '-0.02em' }}>{n}</div>
+              <div className="text-[0.66rem] tracking-[0.22em] uppercase mt-1" style={{ color: faint }}>{l}</div>
             </div>
           ))}
         </div>
@@ -548,18 +554,18 @@ export default function FadeboxLanding() {
   return (
     <div className="min-h-screen font-sans" style={{ background: t.bg }}>
       <MarqueeStyles />
-      <Navbar dark={dark} toggleDark={toggleDark} />
-      {/* Sections alternate ground: normal theme vs its inverse, so the black/white
-          rhythm flips together with the light/dark toggle. */}
+      <Navbar dark toggleDark={toggleDark} />
+      {/* Photo hero is always a dark ground; the rest alternate light/dark and the
+          whole rhythm flips together with the light/dark toggle. */}
       <main>
-        <Hero dark={dark} />
-        <ReviewsMarquee dark={!dark} />
-        <BarberBooking dark={dark} />
-        <WhyReviews dark={!dark} />
-        <ServicesMenu dark={dark} />
-        <CtaStrip dark={dark} />
+        <Hero />
+        <ReviewsMarquee dark={dark} />
+        <BarberBooking dark={!dark} />
+        <WhyReviews dark={dark} />
+        <ServicesMenu dark={!dark} />
+        <CtaStrip dark={!dark} />
       </main>
-      <Footer dark={dark} />
+      <Footer dark={!dark} />
       <div className="text-center text-[0.62rem] tracking-[0.18em] uppercase" style={{ background: t.ink, color: t.bg, padding: '8px 12px' }}>
         Preview — bookings aren't live yet
       </div>
