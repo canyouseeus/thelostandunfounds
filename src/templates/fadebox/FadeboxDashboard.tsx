@@ -143,7 +143,7 @@ export default function FadeboxDashboard() {
     { label: 'Booked today', value: String(bookedCount), sub: `${noShows} no-show${noShows === 1 ? '' : 's'}`, icon: ScissorsIcon },
     { label: 'Revenue today', value: money(revenueToday), sub: 'Collected + expected', icon: ArrowTrendingUpIcon },
     { label: 'Chair utilization', value: `${util}%`, sub: studio === 'All' ? 'Across 4 studios' : studio, icon: ClockIcon },
-    { label: 'Avg rating', value: `${rating}★`, sub: '4,000+ reviews · team-wide', icon: StarIcon },
+    { label: 'Avg rating', value: `${rating}★`, sub: '4,800+ reviews · team-wide', icon: StarIcon },
   ];
 
   return (

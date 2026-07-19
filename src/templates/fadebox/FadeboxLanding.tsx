@@ -53,10 +53,10 @@ function useLocalDark() {
 interface Studio { id: string; name: string; addr: string; barbers: [string, string, number?, number?][]; }
 const STUDIOS: Studio[] = [
   { id: 'triangle', name: 'The Triangle', addr: '4601 N Lamar Blvd', barbers: [
-    ['Turo', 'Fades', 5.0, 330], ['Chill', 'Fades', 5.0, 284], ['Kasandra', "That'z K'z kutz", 4.9, 181],
-    ['Barber Ed', 'All-around', 5.0, 168], ['Yak', 'Skin fades', 4.9, 166], ['Alfred', 'Clean fades', 4.9, 165],
-    ['Blizzard', 'Blends', 5.0, 139], ['MC Stylez', 'Barber & braider', 5.0, 106], ['Dustin', 'Fades'],
-    ['Ralphy', 'Textured crops'] ] },
+    ['Turo', 'Fades', 5.0, 330], ['Dustin', 'Fades', 5.0, 288], ['Ralphy', 'Textured crops', 5.0, 287],
+    ['Chill', 'Fades', 5.0, 284], ['Kasandra', "That'z K'z kutz", 4.9, 181], ['Barber Ed', 'All-around', 5.0, 168],
+    ['Yak', 'Skin fades', 4.9, 166], ['Alfred', 'Clean fades', 4.9, 165], ['Blizzard', 'Blends', 5.0, 139],
+    ['MC Stylez', 'Barber & braider', 5.0, 106] ] },
   { id: 'off5th', name: 'Off-5th', addr: '902 E 5th St', barbers: [
     ['Jimmy', 'Fades', 5.0, 287], ['Adam', 'Fades', 5.0, 286], ['David', 'Scissor cuts', 5.0, 111],
     ['Gio', 'Beard sculpt', 5.0, 103], ['Shelly', 'Style & fades', 5.0, 102], ['Henry', 'Signature fades', 5.0, 80] ] },
@@ -188,7 +188,7 @@ function Navbar({ dark, toggleDark }: { dark: boolean; toggleDark: () => void })
 // Full-bleed photo hero (Fadebox Off-5th, shot by tlau.photos). Always a dark
 // ground with white text — the alternating rhythm starts light in the next section.
 function Hero() {
-  const stats: [string, string][] = [['4.9★', 'Avg rating'], ['4,000+', 'Reviews across the team'], ['26', 'Barbers'], ['4', 'Studios']];
+  const stats: [string, string][] = [['4.9★', 'Avg rating'], ['4,800+', 'Reviews across the team'], ['26', 'Barbers'], ['4', 'Studios']];
   const white = '#ffffff';
   const dim = 'rgba(255,255,255,0.82)';
   const faint = 'rgba(255,255,255,0.55)';
@@ -253,7 +253,7 @@ function ReviewsMarquee({ dark }: { dark: boolean }) {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-baseline justify-between gap-4 mb-5 flex-wrap">
         <span className="text-[0.66rem] font-bold tracking-[0.34em] uppercase" style={{ color: t.inkDim }}>Straight from the chair</span>
         <span className="text-xs tracking-wider uppercase" style={{ color: t.inkDim }}>
-          <b style={{ color: t.ink }}>4.9 ★</b> · 4,000+ reviews across the team
+          <b style={{ color: t.ink }}>4.9 ★</b> · 4,800+ reviews across the team
         </span>
       </div>
       <div className="fb-marquee flex flex-col gap-4" style={{ WebkitMaskImage: fade, maskImage: fade }}>
@@ -455,7 +455,7 @@ function WhyReviews({ dark }: { dark: boolean }) {
   const t = theme(dark);
   const cells: [string, string, string][] = [
     ['4.9★', 'Team rating', 'A near-perfect average across thousands of booked visits.'],
-    ['4,000+', 'Reviews across the team', 'Every barber carries their own 5-star reviews on Google, Booksy & Squire — it adds up fast.'],
+    ['4,800+', 'Reviews across the team', 'Every barber carries their own 5-star reviews on Google, Booksy & Squire — it adds up fast.'],
     ['4', 'Studios across Austin', 'Triangle, Off-5th, Box Boyz & Studio — with San Antonio coming soon.'],
     ['26', 'Barbers to choose from', 'Every specialty covered, from skin fades to beard sculpts.'],
   ];
