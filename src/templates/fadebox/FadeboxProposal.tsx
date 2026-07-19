@@ -187,7 +187,7 @@ export default function FadeboxProposal() {
 
           <div className="stat-row">
             <div className="cell"><div className="n">4.9★</div><div className="l">Avg rating</div></div>
-            <div className="cell"><div className="n">2,000+</div><div className="l">Reviews · team-wide</div></div>
+            <div className="cell"><div className="n">3,000+</div><div className="l">Reviews · team-wide</div></div>
             <div className="cell"><div className="n">26</div><div className="l">Barbers</div></div>
             <div className="cell"><div className="n">4</div><div className="l">Studios</div></div>
           </div>
@@ -196,7 +196,7 @@ export default function FadeboxProposal() {
             You're opening a fifth studio in San Antonio — so the last thing you need is a website project pulling at your attention. That's the whole idea here: this fixes the one thing quietly costing you bookings, and it's built to run without you. In fact, it already does — a working version is live today.
           </p>
           <p className="body">
-            Fadebox has earned what most shops never will — a 4.9-star average across 2,000+ reviews, a loyal following, and twenty-six barbers across four studios. But the site is plain, and every booking still hands your customer to Booksy: lost traffic, lost data, and a brand experience that ends the second someone tries to book. Opening a fifth location makes that leak bigger, not smaller.
+            Fadebox has earned what most shops never will — a 4.9-star average across 3,000+ reviews, a loyal following, and twenty-six barbers across four studios. But the site is plain, and every booking still hands your customer to Booksy: lost traffic, lost data, and a brand experience that ends the second someone tries to book. Opening a fifth location makes that leak bigger, not smaller.
           </p>
 
           <hr className="rule" />
