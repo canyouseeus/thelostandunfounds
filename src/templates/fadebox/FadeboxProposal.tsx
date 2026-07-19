@@ -187,7 +187,7 @@ export default function FadeboxProposal() {
 
           <div className="stat-row">
             <div className="cell"><div className="n">4.9★</div><div className="l">Avg rating</div></div>
-            <div className="cell"><div className="n">3,500+</div><div className="l">Reviews · team-wide</div></div>
+            <div className="cell"><div className="n">4,000+</div><div className="l">Reviews · team-wide</div></div>
             <div className="cell"><div className="n">26</div><div className="l">Barbers</div></div>
             <div className="cell"><div className="n">4</div><div className="l">Studios</div></div>
           </div>
@@ -196,7 +196,7 @@ export default function FadeboxProposal() {
             You're opening a fifth studio in San Antonio — so the last thing you need is a website project pulling at your attention. That's the whole idea here: this fixes the one thing quietly costing you bookings, and it's built to run without you. In fact, it already does — a working version is live today.
           </p>
           <p className="body">
-            The reputation is there — 4.9 stars across 3,500+ reviews. But underneath, booking is a patchwork: some barbers on Booksy, some on Squire, some on links that break — no single place to book, no single place to see sales and schedules. A fifth studio only multiplies that. Unify it now and every location you open runs on one system: one front door for customers, one dashboard of real numbers for you.
+            The reputation is there — 4.9 stars across 4,000+ reviews. But underneath, booking is a patchwork: some barbers on Booksy, some on Squire, some on links that break — no single place to book, no single place to see sales and schedules. A fifth studio only multiplies that. Unify it now and every location you open runs on one system: one front door for customers, one dashboard of real numbers for you.
           </p>
 
           <hr className="rule" />
