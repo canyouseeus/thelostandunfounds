@@ -18,7 +18,7 @@ const css = `
   @page { size: Letter; margin: 0; }
   .fbprop *{box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
   .fbprop{margin:0;padding:0;background:var(--paper);color:var(--ink);
-    font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;
+    font-family:'Inter','Helvetica Neue',Arial,sans-serif;
     -webkit-font-smoothing:antialiased;}
 
   .fbprop .page{
@@ -103,10 +103,10 @@ const css = `
   .fbprop .invest tr.total .item{font-size:12px; text-transform:uppercase; letter-spacing:.06em;}
   .fbprop .invest tr.total .price{font-size:16px;}
 
-  .fbprop .callout{ background:#0a0a0a; color:#fff; padding:16px 20px; }
+  .fbprop .callout{ background:#f5f5f5; color:var(--ink); padding:16px 20px; }
   .fbprop .callout .k{ font-size:9.5px; letter-spacing:.26em; text-transform:uppercase; font-weight:800; margin-bottom:8px; }
-  .fbprop .callout .v{ font-size:11.5px; line-height:1.7; color:rgba(255,255,255,.72); }
-  .fbprop .callout.soft{ background:#f4f4f4; color:var(--ink); }
+  .fbprop .callout .v{ font-size:11.5px; line-height:1.7; color:var(--soft); }
+  .fbprop .callout.soft{ background:#f5f5f5; color:var(--ink); }
   .fbprop .callout.soft .v{ color:var(--soft); }
 
   .fbprop .sign{ display:grid; grid-template-columns:1fr 1fr; gap:40px; margin-top:auto; padding-top:20px; }
@@ -115,12 +115,6 @@ const css = `
   .fbprop .sign .col .who{ font-size:12px; font-weight:700; }
   .fbprop .sign .col .role{ font-size:10px; color:var(--muted); margin-top:2px; }
 
-  .fbprop .toolbar{ position:sticky; top:0; z-index:20; display:flex; justify-content:center; gap:10px;
-    background:#0a0a0a; padding:10px; }
-  .fbprop .toolbar button, .fbprop .toolbar a{ font-family:inherit; cursor:pointer; font-size:10px; font-weight:800;
-    letter-spacing:.16em; text-transform:uppercase; padding:9px 16px; border:0; background:#fff; color:#0a0a0a; text-decoration:none; }
-  .fbprop .toolbar a.ghost{ background:transparent; color:#fff; box-shadow:inset 0 0 0 1px rgba(255,255,255,.4); }
-  @media print{ .fbprop .toolbar{ display:none; } }
 `;
 
 const RUNHEAD = (
@@ -135,16 +129,13 @@ export default function FadeboxProposal() {
       <Helmet>
         <title>THE LOST+UNFOUNDS — Proposal for Fadebox Barbershop</title>
         <meta name="robots" content="noindex, nofollow" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
         <style>{css}</style>
       </Helmet>
 
       <div className="fbprop">
-        <div className="toolbar">
-          <button onClick={() => window.print()}>Print / Save PDF</button>
-          <a className="ghost" href="/fadebox-preview">View the live site</a>
-          <a className="ghost" href="/fadebox-preview/dashboard">Owner dashboard</a>
-        </div>
-
         {/* PAGE 1 — COVER */}
         <section className="page">
           {RUNHEAD}
@@ -267,7 +258,7 @@ export default function FadeboxProposal() {
 
           <div className="callout">
             <div className="k">The 15% is yours if you move this month</div>
-            <div className="v">Say the word by <strong style={{ color: '#fff' }}>August 19</strong> and Phase&nbsp;1 holds at <strong style={{ color: '#fff' }}>$3,825</strong> — even if you'd rather we don't start building until San Antonio is open. From there it stays light on you: a short kickoff, one review before launch, and <strong style={{ color: '#fff' }}>you stay as involved as you feel you need to be</strong>. Lock the rate now, choose the kickoff date later.</div>
+            <div className="v">Say the word by <strong style={{ color: 'var(--ink)' }}>August 19</strong> and Phase&nbsp;1 holds at <strong style={{ color: 'var(--ink)' }}>$3,825</strong> — even if you'd rather we don't start building until San Antonio is open. From there it stays light on you: a short kickoff, one review before launch, and <strong style={{ color: 'var(--ink)' }}>you stay as involved as you feel you need to be</strong>. Lock the rate now, choose the kickoff date later.</div>
           </div>
 
           <p className="body" style={{ marginTop: '18px' }}>
