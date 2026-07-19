@@ -63,7 +63,7 @@ const STUDIOS: Studio[] = [
     ['E.Fades', 'All-around', 5.0, 422], ['Woo', 'Fades & blends', 5.0, 394], ['Gee', 'Skin fades', 4.9, 244],
     ['Elux', 'Textured', 5.0, 132], ['Ant', 'Blurry fades', 4.9, 104], ['Aandress', 'Precision', 5.0, 36] ] },
   { id: 'studio', name: 'Studio', addr: '2213 Poquito St', barbers: [
-    ['Raquel', 'Style & cut'], ['JD', 'Fades'], ['Erod', 'Beards'], ['Mathieu', 'Scissor work'], ['ATX', 'Guest chair'] ] },
+    ['Raquel', 'Style & fades', 5.0, 17], ['JD', 'Fades'], ['Erod', 'Beards'], ['Mathieu', 'Scissor work'], ['ATX', 'Guest chair'] ] },
 ];
 
 // Not bookable yet — shown as a "coming soon" tile in the studio switcher and footer.
