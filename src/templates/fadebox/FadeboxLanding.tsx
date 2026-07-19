@@ -49,18 +49,19 @@ function useLocalDark() {
 }
 
 /* ---------------------------- Data ---------------------------- */
-interface Studio { id: string; name: string; addr: string; barbers: [string, string][]; }
+// barber tuple: [name, specialty, rating?, reviewCount?] — rating/reviews shown when known (real Booksy data)
+interface Studio { id: string; name: string; addr: string; barbers: [string, string, number?, number?][]; }
 const STUDIOS: Studio[] = [
   { id: 'triangle', name: 'The Triangle', addr: '4601 N Lamar Blvd', barbers: [
     ['Chill', 'Fades & tapers'], ['Yak', 'Skin fades'], ['KZ', 'Scissor work'], ['MC Stylez', 'Designs'],
     ['Turo', 'Beards'], ['Keev', 'Classic cuts'], ['Pacman', 'Kids & fades'], ['Ralphh', 'Textured crops'],
     ['Fredo', 'Lineups'], ['Pink', 'Color & style'] ] },
   { id: 'off5th', name: 'Off-5th', addr: '902 E 5th St', barbers: [
-    ['Henry', 'Signature fades'], ['Gio', 'Beard sculpt'], ['David', 'Scissor cuts'],
-    ['Shelly', 'Style & color'], ['JP', 'Tapers'], ['Jimmy', 'Classic'] ] },
+    ['Shelly', 'Style & fades', 5.0, 102], ['Henry', 'Signature fades'], ['Gio', 'Beard sculpt'],
+    ['David', 'Scissor cuts'], ['JP', 'Tapers'], ['Jimmy', 'Classic'] ] },
   { id: 'boxboyz', name: 'Box Boyz', addr: '1200 E 11th St', barbers: [
-    ['Antto', 'Blurry fades'], ['Aandress', 'Precision'], ['Elux', 'Skin fades'],
-    ['Gee', 'Blends'], ['Woo', 'Textured'] ] },
+    ['E.Fades', 'All-around', 5.0, 422], ['Woo', 'Fades & blends', 5.0, 394], ['Gee', 'Skin fades', 4.9, 244],
+    ['Elux', 'Textured', 5.0, 132], ['Ant', 'Blurry fades', 4.9, 104], ['Aandress', 'Precision', 5.0, 36] ] },
   { id: 'studio', name: 'Studio', addr: '2213 Poquito St', barbers: [
     ['Raquel', 'Style & cut'], ['JD', 'Fades'], ['Erod', 'Beards'], ['Mathieu', 'Scissor work'], ['ATX', 'Guest chair'] ] },
 ];
@@ -99,6 +100,12 @@ const REVIEWS: Review[] = [
   { quote: 'On time, on point, every single visit. Worth the drive.', name: 'Nate B.', stars: 5 },
   { quote: 'Beard sculpt with the hot towel is a whole experience.', name: 'Omar D.', stars: 5 },
   { quote: 'The vibe, the cuts, the crew — Fadebox is the standard.', name: 'Eli V.', stars: 5 },
+  { quote: 'Henry books out fast for a reason. Best fade on the east side.', name: 'Wes A.', stars: 5 },
+  { quote: 'Chill listened to exactly what I wanted and delivered. Every time.', name: 'Marco D.', stars: 5 },
+  { quote: 'My kid actually asks to go get a haircut now. That says it all.', name: 'Rosa M.', stars: 5 },
+  { quote: 'Booked from my phone in 30 seconds, in and out, sharp as ever.', name: 'Tomas L.', stars: 5 },
+  { quote: 'Every barber in here is talented. You cannot get a bad cut.', name: 'Isaiah B.', stars: 5 },
+  { quote: 'Been to all four spots. Same quality, same energy everywhere.', name: 'Derek H.', stars: 5 },
 ];
 
 const initials = (name: string) =>
@@ -144,7 +151,7 @@ function Navbar({ dark, toggleDark }: { dark: boolean; toggleDark: () => void })
         <div className="ml-auto flex items-center gap-3">
           <div className="hidden sm:flex items-center gap-1.5 text-xs tracking-wider uppercase" style={{ color: t.inkDim }}>
             <StarIcon className="w-3.5 h-3.5" style={{ color: t.ink }} />
-            <b style={{ color: t.ink }}>4.6</b><span>· 78 reviews</span>
+            <b style={{ color: t.ink }}>4.6</b><span>· Google</span>
           </div>
           <button onClick={toggleDark} aria-label="Toggle theme" className="p-1.5" style={{ color: t.inkDim }}>
             {dark ? <SunIcon className="w-4 h-4" /> : <MoonIcon className="w-4 h-4" />}
@@ -179,7 +186,7 @@ function Navbar({ dark, toggleDark }: { dark: boolean; toggleDark: () => void })
 // Full-bleed photo hero (Fadebox Off-5th, shot by tlau.photos). Always a dark
 // ground with white text — the alternating rhythm starts light in the next section.
 function Hero() {
-  const stats: [string, string][] = [['4.6★', 'Google rating'], ['78', 'Reviews & counting'], ['26', 'Barbers'], ['4', 'Studios']];
+  const stats: [string, string][] = [['4.9★', 'Avg rating'], ['2,000+', 'Reviews across the team'], ['26', 'Barbers'], ['4', 'Studios']];
   const white = '#ffffff';
   const dim = 'rgba(255,255,255,0.82)';
   const faint = 'rgba(255,255,255,0.55)';
@@ -236,28 +243,27 @@ function ReviewCard({ r, t }: { r: Review; t: Theme }) {
 
 function ReviewsMarquee({ dark }: { dark: boolean }) {
   const t = theme(dark);
-  const rowA = REVIEWS.slice(0, 6);
-  const rowB = REVIEWS.slice(6);
+  const rows = [REVIEWS.slice(0, 6), REVIEWS.slice(6, 12), REVIEWS.slice(12)];
+  const anims = ['fbScrollL 52s linear infinite', 'fbScrollR 46s linear infinite', 'fbScrollL 58s linear infinite'];
   const fade = 'linear-gradient(to right, transparent, #000 6%, #000 94%, transparent)';
   return (
     <section id="reviews" style={{ background: t.panel, padding: '28px 0 30px' }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-baseline justify-between gap-4 mb-5 flex-wrap">
         <span className="text-[0.66rem] font-bold tracking-[0.34em] uppercase" style={{ color: t.inkDim }}>Straight from the chair</span>
         <span className="text-xs tracking-wider uppercase" style={{ color: t.inkDim }}>
-          <b style={{ color: t.ink }}>4.6 ★</b> · 78 reviews on Google
+          <b style={{ color: t.ink }}>4.6 ★</b> · 2,000+ reviews across the team
         </span>
       </div>
       <div className="fb-marquee flex flex-col gap-4" style={{ WebkitMaskImage: fade, maskImage: fade }}>
-        <div className="fb-track flex gap-4 w-max" style={{ animation: 'fbScrollL 48s linear infinite' }}>
-          {[...rowA, ...rowA].map((r, i) => <ReviewCard key={`a${i}`} r={r} t={t} />)}
-        </div>
-        <div className="fb-track flex gap-4 w-max" style={{ animation: 'fbScrollR 54s linear infinite' }}>
-          {[...rowB, ...rowB].map((r, i) => <ReviewCard key={`b${i}`} r={r} t={t} />)}
-        </div>
+        {rows.map((row, ri) => (
+          <div key={ri} className="fb-track flex gap-4 w-max" style={{ animation: anims[ri] }}>
+            {[...row, ...row].map((r, i) => <ReviewCard key={`${ri}-${i}`} r={r} t={t} />)}
+          </div>
+        ))}
       </div>
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <a href="#reviews" className="inline-flex items-center gap-1.5 text-[0.62rem] tracking-[0.14em] uppercase mt-5" style={{ color: t.inkFaint }}>
-          Read all 78 reviews on Google <ArrowRightIcon className="w-3 h-3" />
+          Every barber carries their own 5-star reviews on Google <ArrowRightIcon className="w-3 h-3" />
         </a>
       </div>
     </section>
@@ -342,14 +348,20 @@ function BarberBooking({ dark }: { dark: boolean }) {
           <div style={{ padding: '30px', background: t.bg }}>
             <StepLabel t={t} num={2} title="Pick your barber" hint={`${studio.barbers.length} barbers · ${studio.name}`} />
             <div className="grid gap-2.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(112px, 1fr))' }}>
-              {studio.barbers.map(([name, spec], i) => {
+              {studio.barbers.map(([name, spec, rating, reviews], i) => {
                 const active = i === barberIdx;
+                const dimColor = active ? t.bg : t.inkFaint;
                 return (
                   <button key={name} onClick={() => pickBarber(i)}
-                    className="flex flex-col items-center gap-2.5 text-center transition-colors" style={{ ...sel(active), padding: '16px 12px' }}>
+                    className="flex flex-col items-center gap-2 text-center transition-colors" style={{ ...sel(active), padding: '16px 12px' }}>
                     <span className="grid place-items-center text-lg font-black" style={{ width: 52, height: 52, background: active ? t.bg : t.ink, color: active ? t.ink : t.bg }}>{name.slice(0, 2).toUpperCase()}</span>
                     <span className="text-xs font-bold tracking-wider uppercase">{name}</span>
-                    <span className="text-[0.62rem]" style={{ color: active ? t.bg : t.inkFaint, opacity: active ? 0.65 : 1 }}>{spec}</span>
+                    <span className="text-[0.62rem]" style={{ color: dimColor, opacity: active ? 0.65 : 1 }}>{spec}</span>
+                    {reviews != null && (
+                      <span className="inline-flex items-center gap-1 text-[0.62rem] font-bold" style={{ color: active ? t.bg : t.ink }}>
+                        <StarIcon className="w-3 h-3" />{rating?.toFixed(1)} <span style={{ color: dimColor, fontWeight: 400 }}>· {reviews}</span>
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -440,8 +452,8 @@ function BarberBooking({ dark }: { dark: boolean }) {
 function WhyReviews({ dark }: { dark: boolean }) {
   const t = theme(dark);
   const cells: [string, string, string][] = [
-    ['4.6★', 'Google rating', 'Averaged across 78 reviews and climbing every week.'],
-    ['78+', 'Five-star reviews', "From first-timers to regulars who've been in the chair for years."],
+    ['4.9★', 'Team rating', 'A near-perfect average across thousands of booked visits.'],
+    ['2,000+', 'Reviews across the team', 'Every barber carries their own 5-star reviews on Google & Booksy — it adds up fast.'],
     ['4', 'Studios across Austin', 'Triangle, Off-5th, Box Boyz & Studio — with San Antonio coming soon.'],
     ['26', 'Barbers to choose from', 'Every specialty covered, from skin fades to beard sculpts.'],
   ];

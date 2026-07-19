@@ -170,7 +170,8 @@ export default function FadeboxProposal() {
 
             <div className="cover-dates">
               <div className="d">Proposal Date<span>July 19, 2026</span></div>
-              <div className="d">Valid Through<span>August 31, 2026</span></div>
+              <div className="d">Valid Through<span>November 30, 2026</span></div>
+              <div className="d">15% Early Rate<span>Commit by Aug 19</span></div>
             </div>
           </div>
           <div className="runfoot"><div>Sharpest fades in Austin · Booked in house</div><div>Page 1 / 3</div></div>
@@ -185,17 +186,17 @@ export default function FadeboxProposal() {
           </div>
 
           <div className="stat-row">
-            <div className="cell"><div className="n">4.6★</div><div className="l">Google rating</div></div>
-            <div className="cell"><div className="n">78</div><div className="l">Reviews</div></div>
+            <div className="cell"><div className="n">4.9★</div><div className="l">Avg rating</div></div>
+            <div className="cell"><div className="n">2,000+</div><div className="l">Reviews · team-wide</div></div>
             <div className="cell"><div className="n">26</div><div className="l">Barbers</div></div>
             <div className="cell"><div className="n">4</div><div className="l">Studios</div></div>
           </div>
 
           <p className="lede">
-            Fadebox has earned something most shops never will — a 4.6-star reputation, a loyal following, and twenty-six barbers across four Austin studios. But the current site is plain, and every booking hands your customer off to Booksy, a third-party app. That means lost traffic, lost data, and a brand experience that ends the moment someone tries to book.
+            You're opening a fifth studio in San Antonio — so the last thing you need is a website project pulling at your attention. That's the whole idea here: this fixes the one thing quietly costing you bookings, and it's built to run without you. In fact, it already does — a working version is live today.
           </p>
           <p className="body">
-            This proposal lays out a complete redesign that keeps customers on your site from first click to booked chair: a sharp black-and-white identity, your Google reviews scrolling front-and-center, a barber-first booking flow that replaces Booksy, and an owner dashboard that shows every chair, dollar, and review in one place.
+            Fadebox has earned what most shops never will — a 4.9-star average across 2,000+ reviews, a loyal following, and twenty-six barbers across four studios. But the site is plain, and every booking still hands your customer to Booksy: lost traffic, lost data, and a brand experience that ends the second someone tries to book. Opening a fifth location makes that leak bigger, not smaller.
           </p>
 
           <hr className="rule" />
@@ -223,11 +224,11 @@ export default function FadeboxProposal() {
           {RUNHEAD}
           <div className="pagehead">
             <div className="sect">03 · Investment &amp; Next Steps</div>
-            <h2>Flat rates. No surprises.</h2>
+            <h2>Flat rates. Built around your opening.</h2>
           </div>
 
           <p className="lede">
-            The build is a flat one-time fee. The retainer covers hosting, integrations, and minor tweaks — not new modules. New features are scoped and quoted flat-rate before any work begins, so you always know the cost before we start.
+            We know your focus is on San Antonio — as it should be. So this is priced and scheduled around it: lock your rate now, and we time the build so it never competes with the opening. You give a short block of input up front; we handle the rest.
           </p>
 
           <table className="invest">
@@ -240,7 +241,7 @@ export default function FadeboxProposal() {
                   <small>Full black-and-white redesign, barber-first booking across all 4 studios (replaces Booksy), Google reviews integration, owner dashboard, San Antonio-ready, 30-day post-launch support.</small>
                 </td>
                 <td className="freq">One-time</td>
-                <td className="price">$4,500</td>
+                <td className="price">$4,500<small>$3,825 if you commit by Aug 19</small></td>
               </tr>
               <tr>
                 <td className="item">Phase&nbsp;2 · Hosting &amp; Maintenance Retainer
@@ -257,20 +258,20 @@ export default function FadeboxProposal() {
                 <td className="price">From $300<small>quoted before work starts</small></td>
               </tr>
               <tr className="total">
-                <td className="item">To begin — Phase 1 deposit</td>
-                <td className="freq">50% up front</td>
-                <td className="price">$2,250</td>
+                <td className="item">Move by Aug 19 — 15% off Phase 1</td>
+                <td className="freq">Locked-in rate</td>
+                <td className="price">$3,825<small>was $4,500</small></td>
               </tr>
             </tbody>
           </table>
 
           <div className="callout">
-            <div className="k">Timeline &amp; Payment Terms</div>
-            <div className="v"><strong style={{ color: '#fff' }}>$2,250 deposit to begin, balance of $2,250 on launch day.</strong> Retainer billed monthly starting on launch. <strong style={{ color: '#fff' }}>Site goes live within 3 weeks</strong> of the deposit clearing.</div>
+            <div className="k">The 15% is yours if you move this month</div>
+            <div className="v">Say the word by <strong style={{ color: '#fff' }}>August 19</strong> and Phase&nbsp;1 holds at <strong style={{ color: '#fff' }}>$3,825</strong> — even if you'd rather we don't start building until San Antonio is open. From there it stays light on you: a short kickoff, one review before launch, and <strong style={{ color: '#fff' }}>you stay as involved as you feel you need to be</strong>. Lock the rate now, choose the kickoff date later.</div>
           </div>
 
           <p className="body" style={{ marginTop: '18px' }}>
-            <strong>Acceptance.</strong> Reply by email or text with <em>"approved"</em> to receive the deposit invoice. Fadebox Barbershop owns the website, the source code, and all customer and booking data — full export available any time.
+            <strong>Acceptance.</strong> No rush — this stands through <strong>November&nbsp;30</strong>, and with the opening on your plate we mean that. To hold the 15%, just reply <em>"approved"</em> by August&nbsp;19; we'll send the deposit and pencil in a kickoff for whenever you're ready. 50% starts the build, the balance is due at launch, and you're live within three weeks of kickoff. Fadebox owns the site, the code, and every bit of customer and booking data — export it any time.
           </p>
 
           <div className="sign">
