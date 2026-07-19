@@ -187,7 +187,7 @@ export default function FadeboxProposal() {
 
           <div className="stat-row">
             <div className="cell"><div className="n">4.9★</div><div className="l">Avg rating</div></div>
-            <div className="cell"><div className="n">3,000+</div><div className="l">Reviews · team-wide</div></div>
+            <div className="cell"><div className="n">3,500+</div><div className="l">Reviews · team-wide</div></div>
             <div className="cell"><div className="n">26</div><div className="l">Barbers</div></div>
             <div className="cell"><div className="n">4</div><div className="l">Studios</div></div>
           </div>
@@ -196,7 +196,7 @@ export default function FadeboxProposal() {
             You're opening a fifth studio in San Antonio — so the last thing you need is a website project pulling at your attention. That's the whole idea here: this fixes the one thing quietly costing you bookings, and it's built to run without you. In fact, it already does — a working version is live today.
           </p>
           <p className="body">
-            Fadebox has earned what most shops never will — a 4.9-star average across 3,000+ reviews, a loyal following, and twenty-six barbers across four studios. But the site is plain, and every booking still hands your customer to Booksy: lost traffic, lost data, and a brand experience that ends the second someone tries to book. Opening a fifth location makes that leak bigger, not smaller.
+            Fadebox has earned what most shops never will — a 4.9-star average across 3,500+ reviews, a loyal following, and twenty-six barbers across four studios. But the site is plain, and every booking still hands your customer to Booksy: lost traffic, lost data, and a brand experience that ends the second someone tries to book. Opening a fifth location makes that leak bigger, not smaller.
           </p>
 
           <hr className="rule" />
@@ -204,7 +204,7 @@ export default function FadeboxProposal() {
           <div className="subhead">02 · What you get</div>
           <ul className="list">
             <li><strong>A custom black-and-white redesign</strong> — <span className="lite">your brand colors, done right: sharp, premium, mobile-first. A site that finally matches the work.</span></li>
-            <li><strong>In-house barber-first booking</strong> — <span className="lite">pick studio → barber → service → time, all on your own site. Replaces Booksy — no redirect, no lost customers.</span></li>
+            <li><strong>One booking system for every barber</strong> — <span className="lite">right now your barbers are split across Booksy, Squire, and links that break. This puts all 4 studios and every barber behind one flow on your own site — no redirects, no dead links, no lost customers.</span></li>
             <li><strong>Google reviews — front and center, and growing</strong> — <span className="lite">a live marquee of your best reviews across the page, plus an automatic review request after every visit so each barber's Google presence keeps building — including the ones starting from zero today.</span></li>
             <li><strong>All four studios, one flow</strong> — <span className="lite">Triangle, Off-5th, Box Boyz &amp; Studio in a single switcher — with San Antonio ready to flip on the day it opens.</span></li>
             <li><strong>Owner dashboard</strong> — <span className="lite">today's chairs, revenue, barber leaderboard, chair utilization, and your review feed — one screen, no spreadsheets.</span></li>
