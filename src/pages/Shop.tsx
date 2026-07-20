@@ -105,6 +105,28 @@ export default function Shop({ hideBanner = false, embedded = false }: { hideBan
     initAffiliateTracking();
   }, []);
 
+  // Restore scroll position + the clicked product after the user returns
+  // (browser back) from an external product page. ProductCard writes
+  // 'shopReturn' to sessionStorage right before navigating to Fourthwall.
+  useEffect(() => {
+    if (loading || products.length === 0) return;
+    let raw: string | null = null;
+    try { raw = sessionStorage.getItem('shopReturn'); } catch { return; }
+    if (!raw) return;
+    try { sessionStorage.removeItem('shopReturn'); } catch { /* ignore */ }
+    let saved: { y?: number; id?: string };
+    try { saved = JSON.parse(raw); } catch { return; }
+    const t = setTimeout(() => {
+      // Center the product in its (mobile) carousel, then restore page scroll.
+      if (saved.id) {
+        const el = document.querySelector(`[data-product-id="${CSS.escape(String(saved.id))}"]`);
+        el?.scrollIntoView({ block: 'nearest', inline: 'center' });
+      }
+      if (typeof saved.y === 'number') window.scrollTo(0, saved.y);
+    }, 150);
+    return () => clearTimeout(t);
+  }, [loading, products]);
+
   // Fetch native products from our API
   useEffect(() => {
     // In dev, bypass API and load local test products so the page
@@ -448,6 +470,11 @@ function ProductCard({ product, onOpen, onSettled }: { product: Product; onOpen:
           trackAffiliateClick(affiliateRef);
         });
       }
+      // Remember where we were so we can restore scroll + this product when the
+      // user hits back from Fourthwall (see restore effect in Shop).
+      try {
+        sessionStorage.setItem('shopReturn', JSON.stringify({ y: window.scrollY, id: product.id }));
+      } catch { /* private mode / quota — restore just won't fire */ }
       window.location.href = product.url;
       return;
     }
@@ -574,7 +601,7 @@ function ProductRow({
         className="flex md:grid md:grid-cols-3 gap-4 sm:gap-6 overflow-x-auto md:overflow-visible snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {products.map((product) => (
-          <div key={product.id} className="snap-center shrink-0 w-full sm:w-[46%] md:w-auto">
+          <div key={product.id} data-product-id={product.id} className="snap-center shrink-0 w-full sm:w-[46%] md:w-auto">
             <ProductCard product={product} onOpen={() => onOpen(product)} onSettled={onSettled} />
           </div>
         ))}

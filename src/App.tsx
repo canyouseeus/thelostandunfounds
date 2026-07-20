@@ -162,7 +162,7 @@ function App() {
                 <Route index element={<PaymentCancel />} />
               </Route>
               <Route path="/shop" element={<Layout />}>
-                <Route index element={<Shop />} />
+                <Route index element={<ProtectedRoute requireAdmin={true}><Shop /></ProtectedRoute>} />
                 <Route path="success" element={<ShopSuccess />} />
               </Route>
               <Route path="/docs" element={<Layout />}>

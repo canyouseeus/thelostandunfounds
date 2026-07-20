@@ -11,6 +11,14 @@ declare global {
   }
 }
 
+// Take over scroll restoration from the browser so back-navigation lands at the
+// top of the page (Layout scrolls to top on route change) instead of the
+// browser restoring the previous scroll position. The Shop opts back in by
+// explicitly restoring position when returning from an external product page.
+if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
+  window.history.scrollRestoration = 'manual';
+}
+
 // Initialize debug log storage if not exists
 if (typeof window !== 'undefined') {
   const win = window as Window;
