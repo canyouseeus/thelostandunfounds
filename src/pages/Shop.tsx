@@ -262,28 +262,14 @@ export default function Shop({ hideBanner = false, embedded = false }: { hideBan
         {!loading && featuredProducts.length > 0 && (
           <div className="space-y-4 sm:space-y-6">
             <h2 className="text-xl sm:text-2xl font-bold text-white">Featured Products</h2>
-            {/* Mobile: horizontal swipe carousel. Desktop (md+): 3-col grid. */}
-            <div className="flex md:grid md:grid-cols-3 gap-4 sm:gap-6 overflow-x-auto md:overflow-visible snap-x snap-mandatory -mx-4 px-4 md:mx-0 md:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {featuredProducts.map((product) => (
-                <div key={product.id} className="snap-start shrink-0 w-[78%] sm:w-[46%] md:w-auto">
-                  <ProductCard product={product} onOpen={() => setSelectedProduct(product)} onSettled={handleImageSettled} />
-                </div>
-              ))}
-            </div>
+            <ProductRow products={featuredProducts} onOpen={setSelectedProduct} onSettled={handleImageSettled} />
           </div>
         )}
 
         {/* Regular Products */}
         {!loading && regularProducts.length > 0 && (
           <div className="space-y-4 sm:space-y-6">
-            {/* Mobile: horizontal swipe carousel. Desktop (md+): 3-col grid. */}
-            <div className="flex md:grid md:grid-cols-3 gap-4 sm:gap-6 overflow-x-auto md:overflow-visible snap-x snap-mandatory -mx-4 px-4 md:mx-0 md:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {regularProducts.map((product) => (
-                <div key={product.id} className="snap-start shrink-0 w-[78%] sm:w-[46%] md:w-auto">
-                  <ProductCard product={product} onOpen={() => setSelectedProduct(product)} onSettled={handleImageSettled} />
-                </div>
-              ))}
-            </div>
+            <ProductRow products={regularProducts} onOpen={setSelectedProduct} onSettled={handleImageSettled} />
           </div>
         )}
 
@@ -546,6 +532,71 @@ function ProductCard({ product, onOpen, onSettled }: { product: Product; onOpen:
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * A row of products. On mobile: a horizontal snap-scroll carousel showing ONE
+ * product at a time, with a dot indicator + "swipe" hint. On desktop (md+): a
+ * 3-column grid.
+ */
+function ProductRow({
+  products,
+  onOpen,
+  onSettled,
+}: {
+  products: Product[];
+  onOpen: (p: Product) => void;
+  onSettled?: (wasNew: boolean) => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(0);
+
+  const handleScroll = () => {
+    const el = scrollRef.current;
+    if (!el || el.children.length < 2) return;
+    const stride =
+      (el.children[1] as HTMLElement).offsetLeft - (el.children[0] as HTMLElement).offsetLeft;
+    if (stride > 0) {
+      setActive(Math.max(0, Math.min(products.length - 1, Math.round(el.scrollLeft / stride))));
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex md:grid md:grid-cols-3 gap-4 sm:gap-6 overflow-x-auto md:overflow-visible snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {products.map((product) => (
+          <div key={product.id} className="snap-center shrink-0 w-full sm:w-[46%] md:w-auto">
+            <ProductCard product={product} onOpen={() => onOpen(product)} onSettled={onSettled} />
+          </div>
+        ))}
+      </div>
+
+      {/* Swipe indicator — mobile only */}
+      {products.length > 1 && (
+        <div className="flex md:hidden flex-col items-center gap-2 pt-1">
+          <div className="flex items-center gap-2">
+            {products.map((_, i) => (
+              <span
+                key={i}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  i === active ? 'w-6 bg-white' : 'w-1.5 bg-white/25'
+                }`}
+              />
+            ))}
+          </div>
+          {active === 0 && (
+            <span className="text-[9px] font-black uppercase tracking-[0.25em] text-white/30 animate-pulse">
+              Swipe →
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }
