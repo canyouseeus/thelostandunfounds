@@ -437,30 +437,33 @@ function ProductCard({ product, onOpen, onSettled }: { product: Product; onOpen:
   // Get affiliate ref for tracking
   const affiliateRef = getAffiliateRef();
 
-  const handleCheckoutClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-
-    // Track click if affiliate ref exists
-    if (affiliateRef) {
-      import('../utils/affiliate-tracking').then(({ trackAffiliateClick }) => {
-        trackAffiliateClick(affiliateRef);
-      });
+  // Clicking a card goes STRAIGHT to the Fourthwall product page (no lightbox).
+  // Non-Fourthwall products (e.g. Prodigi prints) still open the modal, which
+  // handles their shipping/checkout flow.
+  const isFourthwall = !!product.url && product.url.includes('fourthwall.com');
+  const handleCardClick = () => {
+    if (isFourthwall && product.url) {
+      if (affiliateRef) {
+        import('../utils/affiliate-tracking').then(({ trackAffiliateClick }) => {
+          trackAffiliateClick(affiliateRef);
+        });
+      }
+      window.location.href = product.url;
+      return;
     }
-
-    // Open product modal first for Strike checkout
     onOpen();
   };
 
   return (
     <div
       className="transition-all duration-300 h-full cursor-pointer flex flex-col"
-      onClick={onOpen}
+      onClick={handleCardClick}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          onOpen();
+          handleCardClick();
         }
       }}
     >
