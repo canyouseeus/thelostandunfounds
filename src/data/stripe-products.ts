@@ -21,23 +21,9 @@ export interface StripeProduct {
 }
 
 export const STRIPE_PRODUCTS: StripeProduct[] = [
-    {
-        id: 'mystery-box',
-        title: 'Mystery Box',
-        description:
-            'A curated bundle of finds from the field — exclusive items hand-selected from THE LOST ARCHIVES.',
-        price: 999.0,
-        currency: 'USD',
-        images: ['https://dummyimage.com/800x800/000/ffffff.png&text=Mystery+Box'],
-        handle: 'mystery-box',
-        available: true,
-        url: '#',
-        category: 'mystery',
-        featured: true,
-        stripePriceId: 'price_1TX8dOF4xIdsehKGoawhJZD1',
-        stripeProductId: 'prod_UWAzp36MjgQe0C',
-        productKind: 'physical',
-    },
+    // Mystery Box removed — placeholder listing with a broken dummy image.
+    // Re-add a real entry here (with a valid Stripe price ID and image) to
+    // feature a native Stripe-checkout product in the shop again.
 ]
 
 /**

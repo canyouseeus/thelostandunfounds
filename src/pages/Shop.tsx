@@ -27,17 +27,6 @@ import { Helmet } from 'react-helmet-async';
 
 const FOURTHWALL_BASE = 'https://storefront-api.fourthwall.com';
 
-// White "sticker" outline for transparent product PNGs. A ~3px ring built from
-// 16 evenly-spaced drop-shadows (every 22.5°) so curved edges stay gap-free —
-// the previous 8-direction/1px version read too thin. Applied in ProductCard.
-const OUTLINE_RADIUS_PX = 3;
-const OUTLINE_FILTER = Array.from({ length: 16 }, (_, i) => {
-  const angle = (i / 16) * 2 * Math.PI;
-  const x = Math.round(Math.cos(angle) * OUTLINE_RADIUS_PX);
-  const y = Math.round(Math.sin(angle) * OUTLINE_RADIUS_PX);
-  return `drop-shadow(${x}px ${y}px 0 white)`;
-}).join(' ');
-
 interface Product {
   id: string;
   title: string;
@@ -496,9 +485,10 @@ function ProductCard({ product, onOpen, onSettled }: { product: Product; onOpen:
               if (showProcessed) setProcessedFailed(true);
             }}
             style={showProcessed ? {
+              // The white sticker outline is baked into the transparent PNG by
+              // scripts/generate-transparent-product-images.mjs — no CSS filter.
               objectFit: 'contain',
               padding: '24px',
-              filter: OUTLINE_FILTER,
             } : {
               objectFit: 'cover',
               objectPosition: 'center',

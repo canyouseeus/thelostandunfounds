@@ -19,10 +19,31 @@ import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-// Shop cards render ~292px; 600px is ample at 2x. Downscaling keeps the 16
-// drop-shadow outline (applied in the browser) cheap to paint — the full-res
-// 1536x2048 originals made the filter janky.
+// Shop cards render ~292px; 600px is ample at 2x.
 const MAX_PX = 600;
+// White sticker outline baked into the PNG (16 evenly-spaced silhouettes = a
+// gap-free ring). Baking it here avoids the CSS drop-shadow chain, which
+// COMPOUNDS (each shadow stacks on the previous) and read ~2x too thick. At
+// MAX_PX=600 an OUTLINE_PX of 6 renders ~3px at the shop's display size.
+const OUTLINE_PX = 6;
+
+/** Composite a white outline around the cutout onto a transparent canvas. */
+async function bakeOutline(cutBuf) {
+  const m = await sharp(cutBuf).metadata();
+  const alpha = await sharp(cutBuf).extractChannel(3).raw().toBuffer();
+  const whiteSil = await sharp({ create: { width: m.width, height: m.height, channels: 3, background: { r: 255, g: 255, b: 255 } } })
+    .joinChannel(alpha, { raw: { width: m.width, height: m.height, channels: 1 } })
+    .png().toBuffer();
+  const R = OUTLINE_PX;
+  const offsets = Array.from({ length: 16 }, (_, i) => {
+    const a = (i / 16) * 2 * Math.PI;
+    return [Math.round(Math.cos(a) * R), Math.round(Math.sin(a) * R)];
+  });
+  const comps = offsets.map(([dx, dy]) => ({ input: whiteSil, left: R + dx, top: R + dy }));
+  comps.push({ input: cutBuf, left: R, top: R });
+  return sharp({ create: { width: m.width + 2 * R, height: m.height + 2 * R, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+    .composite(comps).png({ compressionLevel: 9 }).toBuffer();
+}
 
 const PRODUCTS_URL = process.env.PRODUCTS_URL || 'https://thelostandunfounds.com/api/shop/products';
 const OUT_DIR = path.resolve('public/product-transparent');
@@ -60,10 +81,11 @@ async function main() {
       process.stdout.write(`  … ${p.title} → ${file} `);
       const blob = await removeBackground(p.url, { output: { format: 'image/png', quality: 0.9 } });
       const raw = Buffer.from(await blob.arrayBuffer());
-      const buf = await sharp(raw)
+      const cut = await sharp(raw)
         .resize({ width: MAX_PX, height: MAX_PX, fit: 'inside', withoutEnlargement: true })
-        .png({ compressionLevel: 9 })
+        .png()
         .toBuffer();
+      const buf = await bakeOutline(cut);
       await fs.writeFile(dest, buf);
       console.log(`OK (${(buf.length / 1024).toFixed(0)}kb)`);
       made++;
