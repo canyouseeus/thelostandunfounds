@@ -262,9 +262,12 @@ export default function Shop({ hideBanner = false, embedded = false }: { hideBan
         {!loading && featuredProducts.length > 0 && (
           <div className="space-y-4 sm:space-y-6">
             <h2 className="text-xl sm:text-2xl font-bold text-white">Featured Products</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+            {/* Mobile: horizontal swipe carousel. Desktop (md+): 3-col grid. */}
+            <div className="flex md:grid md:grid-cols-3 gap-4 sm:gap-6 overflow-x-auto md:overflow-visible snap-x snap-mandatory -mx-4 px-4 md:mx-0 md:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} onOpen={() => setSelectedProduct(product)} onSettled={handleImageSettled} />
+                <div key={product.id} className="snap-start shrink-0 w-[78%] sm:w-[46%] md:w-auto">
+                  <ProductCard product={product} onOpen={() => setSelectedProduct(product)} onSettled={handleImageSettled} />
+                </div>
               ))}
             </div>
           </div>
@@ -273,9 +276,12 @@ export default function Shop({ hideBanner = false, embedded = false }: { hideBan
         {/* Regular Products */}
         {!loading && regularProducts.length > 0 && (
           <div className="space-y-4 sm:space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+            {/* Mobile: horizontal swipe carousel. Desktop (md+): 3-col grid. */}
+            <div className="flex md:grid md:grid-cols-3 gap-4 sm:gap-6 overflow-x-auto md:overflow-visible snap-x snap-mandatory -mx-4 px-4 md:mx-0 md:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {regularProducts.map((product) => (
-                <ProductCard key={product.id} product={product} onOpen={() => setSelectedProduct(product)} onSettled={handleImageSettled} />
+                <div key={product.id} className="snap-start shrink-0 w-[78%] sm:w-[46%] md:w-auto">
+                  <ProductCard product={product} onOpen={() => setSelectedProduct(product)} onSettled={handleImageSettled} />
+                </div>
               ))}
             </div>
           </div>
@@ -520,12 +526,12 @@ function ProductCard({ product, onOpen, onSettled }: { product: Product; onOpen:
         )}
       </div>
 
-      {/* Text below the image */}
-      <div className="p-4 flex-1 flex flex-col gap-1">
+      {/* Text below the image — centered title + price, no description */}
+      <div className="p-4 flex-1 flex flex-col gap-1 items-center text-center">
         <h3 className="text-sm font-black text-white uppercase tracking-tight leading-tight line-clamp-2">
           {product.title.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim()}
         </h3>
-        <div className="flex items-center gap-2 text-white mt-1">
+        <div className="flex items-center justify-center gap-2 text-white mt-1">
           {displayPrice === 0 ? (
             <span className="text-sm font-black">Free</span>
           ) : (
@@ -539,11 +545,6 @@ function ProductCard({ product, onOpen, onSettled }: { product: Product; onOpen:
             </>
           )}
         </div>
-        {product.description && (
-          <p className="text-white/40 text-xs mt-1 line-clamp-2 font-light">
-            {product.description}
-          </p>
-        )}
       </div>
     </div>
   );
