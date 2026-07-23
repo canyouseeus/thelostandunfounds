@@ -39,6 +39,22 @@
   .wordmark .cut::after{content:"";position:absolute;left:-2px;right:-2px;top:52%;height:1.5px;background:var(--ink);transform:rotate(-14deg)}
   .wordmark .dot{color:var(--faint);font-weight:500}
 
+  /* real brand lockup */
+  .brand{display:inline-flex;align-items:center;gap:12px;color:var(--ink)}
+  .pc-mark{width:28px;height:28px;flex:none;display:block}
+  .pc-mark svg{display:block;width:100%;height:100%;fill:currentColor}
+  .pc-wm{font-family:"Arial Rounded MT Bold","Baloo 2",Nunito,"Varela Round",system-ui,sans-serif;
+    font-weight:800;letter-spacing:-.04em;text-transform:lowercase;line-height:1}
+  .pc-kon{display:grid;grid-template-columns:1fr 1fr;width:28px;height:28px;flex:none;border:1.5px solid currentColor;place-items:center;line-height:1}
+  .pc-kon i{font-style:normal;font-size:.55rem;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif}
+  /* hero doubled sign */
+  .sign-stack{font-family:"Arial Rounded MT Bold","Baloo 2",Nunito,"Varela Round",system-ui,sans-serif;
+    font-weight:800;text-transform:lowercase;letter-spacing:-.05em;line-height:.76;margin:0;
+    font-size:clamp(3.4rem,16vw,14rem);
+    text-shadow:0 0 26px rgba(255,255,255,.32),0 0 74px rgba(255,255,255,.15)}
+  .sign-stack span{display:block}
+  .sign-stack em{font-style:normal;animation:flick 6s infinite steps(1)}
+
   nav{position:fixed;top:0;left:0;right:0;z-index:60;background:color-mix(in srgb,var(--bg) 78%,transparent);
     backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--hair)}
   .nav-in{display:flex;align-items:center;gap:26px;height:66px}
@@ -136,7 +152,11 @@
 
 <nav>
   <div class="wrap nav-in">
-    <a href="#top" class="wordmark">paper<span class="cut">cut</span><span class="dot">.bar</span></a>
+    <a href="#top" class="brand" aria-label="papercut.bar konbini">
+      <span class="pc-mark"><svg viewBox="0 0 100 100" aria-hidden="true"><path fill-rule="evenodd" d="M50 14 A40 40 0 1 0 50 94 A40 40 0 1 0 50 14 Z M50 54 L20 30 L24 24 L54 48 Z"/><ellipse cx="72" cy="22" rx="14" ry="6.5" transform="rotate(-30 72 22)"/></svg></span>
+      <span class="pc-wm" style="font-size:1.42rem">papercut</span>
+      <span class="pc-kon" aria-hidden="true"><i>コ</i><i>ン</i><i>ビ</i><i>ニ</i></span>
+    </a>
     <div class="nav-links">
       <a href="#tonight">Tonight</a>
       <a href="#drinks">Drinks</a>
@@ -154,7 +174,7 @@
   <div class="beam"></div>
   <div class="wrap hero-in">
     <p class="label kick">East 5th · Austin · Walk-ins only</p>
-    <h1 class="sign">Paper<span class="flicker">cut</span></h1>
+    <h1 class="sign-stack"><span>paper<em>cut</em></span><span>paper<em>cut</em></span></h1>
     <div class="hero-tags">
       <span>Cocktails</span><span>Art</span><span>Sushi</span>
     </div>
@@ -210,7 +230,11 @@
   <div class="wrap">
     <div class="foot">
       <div>
-        <div class="wordmark" style="font-size:2rem">paper<span class="cut">cut</span><span class="dot">.bar</span></div>
+        <div class="brand" style="gap:13px">
+          <span class="pc-mark" style="width:38px;height:38px"><svg viewBox="0 0 100 100" aria-hidden="true"><path fill-rule="evenodd" d="M50 14 A40 40 0 1 0 50 94 A40 40 0 1 0 50 14 Z M50 54 L20 30 L24 24 L54 48 Z"/><ellipse cx="72" cy="22" rx="14" ry="6.5" transform="rotate(-30 72 22)"/></svg></span>
+          <span class="pc-wm" style="font-size:1.9rem">papercut</span>
+          <span class="pc-kon" style="width:38px;height:38px"><i style="font-size:.7rem">コ</i><i style="font-size:.7rem">ン</i><i style="font-size:.7rem">ビ</i><i style="font-size:.7rem">ニ</i></span>
+        </div>
         <p style="margin-top:16px;max-width:34ch">Cocktails, art, and sushi on East 5th Street. Konbini open the same hours. Walk-ins only.</p>
       </div>
       <div>

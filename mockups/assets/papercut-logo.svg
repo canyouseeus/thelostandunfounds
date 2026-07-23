@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  papercut.bar — logo lockup (monochrome, currentColor).
+  VECTOR RECREATION of the supplied logo: sliced-bowl mark + doubled rounded
+  "papercut" wordmark + コンビニ (Konbini) box. The wordmark uses a rounded
+  system font stack so it renders live; for pixel-exact letterforms, replace
+  the two <text> lines with the outlined paths from the original artwork.
+  Uses currentColor throughout, so it inverts cleanly on black or white.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" fill="currentColor" role="img" aria-label="papercut.bar — konbini">
+  <!-- sliced-bowl mark -->
+  <svg x="2" y="16" width="90" height="90" viewBox="0 0 100 100">
+    <path fill-rule="evenodd" d="M50 14 A40 40 0 1 0 50 94 A40 40 0 1 0 50 14 Z M50 54 L20 30 L24 24 L54 48 Z"/>
+    <ellipse cx="72" cy="22" rx="14" ry="6.5" transform="rotate(-30 72 22)"/>
+  </svg>
+  <!-- doubled rounded wordmark -->
+  <g font-family="'Arial Rounded MT Bold','Baloo 2',Nunito,'Varela Round',system-ui,sans-serif" font-weight="800" font-size="46" letter-spacing="-2.4">
+    <text x="106" y="54">papercut</text>
+    <text x="106" y="98">papercut</text>
+  </g>
+  <!-- konbini box -->
+  <rect x="320" y="26" width="68" height="68" fill="none" stroke="currentColor" stroke-width="3"/>
+  <g font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Noto Sans JP',sans-serif" font-size="24" text-anchor="middle">
+    <text x="337" y="56">コ</text>
+    <text x="371" y="56">ン</text>
+    <text x="337" y="86">ビ</text>
+    <text x="371" y="86">ニ</text>
+  </g>
+</svg>
