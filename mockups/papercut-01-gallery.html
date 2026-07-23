@@ -1,0 +1,311 @@
+<title>papercut — Option 1 · The Gallery Edition</title>
+<!--
+  papercut.bar — Landing mockup 01 · "The Gallery Edition"
+  Strictly black & white. Light-committed (a printed exhibition broadsheet).
+  Production type intent: display = a high-contrast didone/serif (e.g. GT Sectra,
+  Canela); labels = a neutral grotesque (Helvetica Neue / Neue Haas). System
+  fallbacks used here so nothing depends on a blocked font CDN.
+  Logo is a swappable wordmark — replace .wordmark with the real SVG.
+-->
+<style>
+  :root{
+    --paper:#f6f4ef;      /* warm gallery wall */
+    --paper-2:#efece4;
+    --ink:#100f0d;        /* carbon */
+    --stone:#7d786e;      /* warm mid-grey, hue-biased toward the paper */
+    --faint:#b7b2a6;
+    --hair:#d9d4c8;
+    --wall:#e7e3d9;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#111110;--paper-2:#171614;--ink:#f4f1e9;--stone:#9a958a;
+      --faint:#5a564d;--hair:#2a2824;--wall:#1c1b18;
+    }
+  }
+  :root[data-theme="light"]{--paper:#f6f4ef;--paper-2:#efece4;--ink:#100f0d;--stone:#7d786e;--faint:#b7b2a6;--hair:#d9d4c8;--wall:#e7e3d9;}
+  :root[data-theme="dark"]{--paper:#111110;--paper-2:#171614;--ink:#f4f1e9;--stone:#9a958a;--faint:#5a564d;--hair:#2a2824;--wall:#1c1b18;}
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:"Helvetica Neue",Helvetica,Arial,system-ui,sans-serif;
+    line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+    padding-bottom:34px;
+  }
+  a{color:inherit;text-decoration:none}
+  ::selection{background:var(--ink);color:var(--paper)}
+
+  .serif{font-family:"Times New Roman",Georgia,"Iowan Old Style",serif;font-weight:400}
+  .label{text-transform:uppercase;letter-spacing:.28em;font-size:.64rem;font-weight:700;color:var(--stone)}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 32px}
+  .rule{height:1px;background:var(--hair);border:0;margin:0}
+
+  /* logo wordmark */
+  .wordmark{display:inline-flex;align-items:baseline;gap:.02em;font-weight:800;letter-spacing:-.02em;font-size:1.12rem}
+  .wordmark .cut{position:relative}
+  .wordmark .cut::after{content:"";position:absolute;left:-2px;right:-2px;top:52%;height:1.5px;background:var(--ink);transform:rotate(-14deg);transform-origin:center}
+  .wordmark .dot{color:var(--stone);font-weight:500}
+
+  /* NAV */
+  nav{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--paper) 86%,transparent);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--hair)}
+  .nav-in{display:flex;align-items:center;gap:28px;height:70px}
+  .nav-links{display:flex;gap:26px;margin-left:8px}
+  .nav-links a{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--stone);transition:color .2s}
+  .nav-links a:hover{color:var(--ink)}
+  .nav-right{margin-left:auto;display:flex;align-items:center;gap:18px}
+  .walkins{font-size:.64rem;letter-spacing:.2em;text-transform:uppercase;color:var(--stone)}
+  .walkins b{color:var(--ink)}
+  @media(max-width:860px){.nav-links,.walkins{display:none}}
+
+  /* HERO — the current show */
+  .hero{padding:76px 0 54px}
+  .hero-top{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:16px;margin-bottom:34px}
+  .hero-grid{display:grid;grid-template-columns:1.55fr .85fr;gap:56px;align-items:end}
+  .show-title{font-size:clamp(3.4rem,11vw,9.2rem);line-height:.86;letter-spacing:-.02em;margin:0;text-wrap:balance}
+  .show-title em{font-style:italic}
+  .show-sub{margin:26px 0 0;font-size:1.06rem;line-height:1.62;color:var(--ink);max-width:40ch}
+  /* wall label */
+  .walllabel{border-top:2px solid var(--ink);padding-top:18px}
+  .walllabel dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 20px}
+  .walllabel dt{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--stone);padding-top:4px}
+  .walllabel dd{margin:0;font-size:.92rem;line-height:1.4}
+  .walllabel dd.big{font-family:"Times New Roman",Georgia,serif;font-size:1.15rem}
+  .hero-cta{display:flex;gap:14px;margin-top:30px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:10px;font-size:.7rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+    padding:15px 26px;border:1px solid var(--ink);background:var(--ink);color:var(--paper);cursor:pointer;transition:.18s}
+  .btn:hover{background:transparent;color:var(--ink)}
+  .btn.ghost{background:transparent;color:var(--ink)}
+  .btn.ghost:hover{background:var(--ink);color:var(--paper)}
+  @media(max-width:860px){.hero-grid{grid-template-columns:1fr;gap:38px}.walllabel{border-top-width:1px}}
+
+  /* deckle cut divider */
+  .deckle{height:26px;background:var(--ink);
+    -webkit-mask:repeating-linear-gradient(90deg,#000 0 7px,transparent 7px 15px);
+    mask:repeating-linear-gradient(90deg,#000 0 7px,transparent 7px 15px);
+    mask-size:15px 3px;mask-repeat:repeat-x;mask-position:0 bottom;background:transparent}
+  .cutline{position:relative;height:1px;background:var(--ink);margin:0}
+  .cutline::before{content:"✁";position:absolute;left:50%;top:-11px;transform:translateX(-50%);
+    background:var(--paper);padding:0 14px;font-size:1.1rem;color:var(--ink)}
+
+  /* WORKS gallery grid */
+  section{padding:78px 0}
+  .sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:20px;flex-wrap:wrap;margin-bottom:36px}
+  .sec-head h2{font-family:"Times New Roman",Georgia,serif;font-size:clamp(1.9rem,4.6vw,3rem);margin:0;letter-spacing:-.01em}
+  .works{display:grid;grid-template-columns:repeat(12,1fr);gap:2px;background:var(--hair)}
+  .work{background:var(--wall);position:relative;overflow:hidden;aspect-ratio:4/5;display:flex;align-items:flex-end}
+  .work.wide{grid-column:span 6}.work.tall{grid-column:span 4}.work.reg{grid-column:span 4}
+  .work .frame{position:absolute;inset:0;display:grid;place-items:center;color:var(--faint)}
+  .work .frame span{font-family:"Times New Roman",Georgia,serif;font-size:clamp(2rem,6vw,4rem);opacity:.5}
+  .work .cap{position:relative;z-index:2;width:100%;padding:16px 18px;background:linear-gradient(transparent,color-mix(in srgb,var(--wall) 92%,transparent));
+    display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+  .work .cap .t{font-size:.78rem;font-weight:700;letter-spacing:.02em}
+  .work .cap .m{font-size:.62rem;color:var(--stone);letter-spacing:.08em;text-transform:uppercase}
+  .work .cap .no{font-family:"Times New Roman",Georgia,serif;font-size:1.1rem;color:var(--ink)}
+  @media(max-width:860px){.work.wide,.work.tall,.work.reg{grid-column:span 6}}
+  @media(max-width:560px){.work.wide,.work.tall,.work.reg{grid-column:span 12}}
+
+  /* MENU — "for this show" */
+  .menu{background:var(--paper-2)}
+  .menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 64px}
+  .menu-note{grid-column:1/-1;max-width:60ch;color:var(--stone);font-size:.96rem;margin:0 0 30px}
+  .menu-col h3{font-family:"Times New Roman",Georgia,serif;font-size:1.4rem;margin:0 0 6px;font-weight:400}
+  .menu-col .h-sub{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--stone);margin-bottom:20px}
+  .item{display:grid;grid-template-columns:1fr auto;gap:4px 16px;padding:16px 0;border-top:1px solid var(--hair)}
+  .item .nm{font-size:1rem;font-weight:700;letter-spacing:.01em}
+  .item .pr{font-variant-numeric:tabular-nums;font-weight:700}
+  .item .ds{grid-column:1/2;font-size:.82rem;color:var(--stone);line-height:1.45}
+  @media(max-width:760px){.menu-grid{grid-template-columns:1fr;gap:0}.menu-col+.menu-col{margin-top:44px}}
+
+  /* VISIT */
+  .visit-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:56px}
+  .hours{border-top:2px solid var(--ink)}
+  .hours .row{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;padding:13px 0;border-bottom:1px solid var(--hair)}
+  .hours .row .d{font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;color:var(--stone);width:3.2em}
+  .hours .row .t{font-variant-numeric:tabular-nums;font-weight:700;text-align:right}
+  .hours .row.closed .t{color:var(--faint);font-weight:400}
+  .hours .row .tag{font-size:.56rem;letter-spacing:.16em;text-transform:uppercase;color:var(--stone)}
+  .visit-info .big{font-family:"Times New Roman",Georgia,serif;font-size:clamp(2rem,5vw,3.2rem);line-height:1.02;margin:0 0 22px}
+  .visit-info p{color:var(--stone);margin:0 0 18px;max-width:38ch}
+  .hh{border:1px solid var(--ink);padding:20px 22px;margin-top:8px}
+  .hh .k{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--stone)}
+  .hh .v{font-family:"Times New Roman",Georgia,serif;font-size:1.35rem;margin-top:6px}
+  @media(max-width:820px){.visit-grid{grid-template-columns:1fr;gap:40px}}
+
+  /* FOOTER */
+  footer{border-top:2px solid var(--ink);padding:56px 0 40px}
+  .foot{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:40px}
+  .foot h4{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--stone);margin:0 0 16px}
+  .foot a,.foot p{display:block;color:var(--stone);font-size:.9rem;margin:0 0 9px;transition:color .18s}
+  .foot a:hover{color:var(--ink)}
+  .foot .big-serif{font-family:"Times New Roman",Georgia,serif;font-size:2.4rem;color:var(--ink);line-height:1}
+  .foot-bot{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:44px;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  @media(max-width:720px){.foot{grid-template-columns:1fr 1fr}}
+
+  .ribbon{position:fixed;left:0;right:0;bottom:0;z-index:80;background:var(--ink);color:var(--paper);
+    text-align:center;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;padding:9px;font-weight:700}
+  .theme-tgl{background:none;border:1px solid var(--hair);color:var(--stone);width:34px;height:34px;cursor:pointer;font-size:.9rem;transition:.18s}
+  .theme-tgl:hover{border-color:var(--ink);color:var(--ink)}
+  :focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<nav>
+  <div class="wrap nav-in">
+    <a href="#top" class="wordmark">paper<span class="cut">cut</span><span class="dot">.bar</span></a>
+    <div class="nav-links">
+      <a href="#show">On View</a>
+      <a href="#works">The Show</a>
+      <a href="#menu">Menu</a>
+      <a href="#visit">Visit</a>
+    </div>
+    <div class="nav-right">
+      <span class="walkins"><b>Walk-ins only</b> · no reservations</span>
+      <button class="theme-tgl" id="tgl" aria-label="Toggle light and dark">◐</button>
+    </div>
+  </div>
+</nav>
+
+<header class="hero wrap" id="top">
+  <div class="hero-top">
+    <span class="label">East 5th Street · Austin, Texas</span>
+    <span class="label">Cocktails · Art · Sushi</span>
+  </div>
+  <div class="hero-grid" id="show">
+    <div>
+      <p class="label" style="margin:0 0 18px">Now on view — through Sept 14</p>
+      <h1 class="show-title serif">Cut <em>&amp;</em> Paste</h1>
+      <p class="show-sub">A bar that changes with the walls. Every few weeks a new show goes up and the menu is rewritten to match it — cocktails, sushi, and paper, made for the room you're standing in tonight.</p>
+      <div class="hero-cta">
+        <a href="#visit" class="btn">Plan a visit</a>
+        <a href="#works" class="btn ghost">See the show</a>
+      </div>
+    </div>
+    <div class="walllabel">
+      <dl>
+        <dt>Exhibition</dt><dd class="big serif">Cut &amp; Paste</dd>
+        <dt>Artist</dt><dd>[ Featured artist — TBD ]</dd>
+        <dt>Medium</dt><dd>Hand-cut paper, ink, collage</dd>
+        <dt>On view</dt><dd>Aug 6 – Sept 14</dd>
+        <dt>Paired by</dt><dd>The papercut bar team</dd>
+        <dt>Admission</dt><dd>Free · walk in</dd>
+      </dl>
+    </div>
+  </div>
+</header>
+
+<div class="wrap"><div class="cutline"></div></div>
+
+<section id="works" class="wrap">
+  <div class="sec-head">
+    <h2>The current show</h2>
+    <span class="label">Twelve works · rotating every few weeks</span>
+  </div>
+  <div class="works">
+    <div class="work wide"><div class="frame"><span>I</span></div><div class="cap"><div><div class="t">First Impression</div><div class="m">Paper on board · 2025</div></div><div class="no">01</div></div></div>
+    <div class="work tall"><div class="frame"><span>II</span></div><div class="cap"><div><div class="t">Negative Space</div><div class="m">Cut paper · 2025</div></div><div class="no">02</div></div></div>
+    <div class="work reg"><div class="frame"><span>III</span></div><div class="cap"><div><div class="t">Deckle</div><div class="m">Ink &amp; fold · 2025</div></div><div class="no">03</div></div></div>
+    <div class="work reg"><div class="frame"><span>IV</span></div><div class="cap"><div><div class="t">Second Edition</div><div class="m">Collage · 2024</div></div><div class="no">04</div></div></div>
+    <div class="work reg"><div class="frame"><span>V</span></div><div class="cap"><div><div class="t">White Wall</div><div class="m">Relief · 2025</div></div><div class="no">05</div></div></div>
+    <div class="work wide"><div class="frame"><span>VI</span></div><div class="cap"><div><div class="t">The Long Fold</div><div class="m">Paper, 6ft · 2025</div></div><div class="no">06</div></div></div>
+  </div>
+</section>
+
+<section id="menu" class="menu">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 class="serif">The menu for this show</h2>
+      <span class="label">Rewritten every exhibition</span>
+    </div>
+    <div class="menu-grid">
+      <p class="menu-note">Six cocktails and a short sushi list, built to sit with <em>Cut &amp; Paste</em>. Konbini — the sushi counter — is open the same hours as the bar. Kitchen runs Wednesday through Saturday.</p>
+      <div class="menu-col">
+        <h3>Cocktails</h3>
+        <div class="h-sub">$14 each · happy-hour priced in the first hour</div>
+        <div class="item"><span class="nm">First Cut</span><span class="pr">14</span><span class="ds">Mezcal, lime leaf, cucumber, salt rim</span></div>
+        <div class="item"><span class="nm">Ink &amp; Salt</span><span class="pr">14</span><span class="ds">Blackstrap rum, salted plum, lime</span></div>
+        <div class="item"><span class="nm">Negative Space</span><span class="pr">15</span><span class="ds">Clarified milk punch, jasmine, citrus</span></div>
+        <div class="item"><span class="nm">White Wall</span><span class="pr">13</span><span class="ds">Vodka, elderflower, soda, chalk bitters</span></div>
+        <div class="item"><span class="nm">Second Edition</span><span class="pr">15</span><span class="ds">Bourbon, black cardamom, fig</span></div>
+      </div>
+      <div class="menu-col">
+        <h3>Konbini · sushi</h3>
+        <div class="h-sub">Counter open · kitchen Wed–Sat</div>
+        <div class="item"><span class="nm">Nigiri flight</span><span class="pr">18</span><span class="ds">Six pieces, chef's choice</span></div>
+        <div class="item"><span class="nm">Hand roll set</span><span class="pr">16</span><span class="ds">Two rolls, seaweed cut to order</span></div>
+        <div class="item"><span class="nm">Onigiri</span><span class="pr">6</span><span class="ds">Pressed rice, umeboshi or salmon</span></div>
+        <div class="item"><span class="nm">Cucumber &amp; shiso</span><span class="pr">8</span><span class="ds">Cold, sharp, house pickle</span></div>
+        <div class="item"><span class="nm">Miso &amp; nori</span><span class="pr">7</span><span class="ds">The quiet one. Always on.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="visit" class="wrap">
+  <div class="sec-head">
+    <h2 class="serif">Visit</h2>
+    <span class="label">hello@papercut.bar</span>
+  </div>
+  <div class="visit-grid">
+    <div class="hours">
+      <div class="row"><span class="d">Sun</span><span class="tag">Open late</span><span class="t">5 – 10 pm</span></div>
+      <div class="row"><span class="d">Mon</span><span class="tag">Open late</span><span class="t">5 – 10 pm</span></div>
+      <div class="row closed"><span class="d">Tue</span><span class="tag">Dark</span><span class="t">Closed</span></div>
+      <div class="row"><span class="d">Wed</span><span class="tag">Kitchen on</span><span class="t">5 pm – 12 am</span></div>
+      <div class="row"><span class="d">Thu</span><span class="tag">Kitchen on</span><span class="t">5 pm – 12 am</span></div>
+      <div class="row"><span class="d">Fri</span><span class="tag">Kitchen on</span><span class="t">5 pm – 1 am</span></div>
+      <div class="row"><span class="d">Sat</span><span class="tag">Kitchen on</span><span class="t">5 pm – 1 am</span></div>
+    </div>
+    <div class="visit-info">
+      <p class="big serif">East 5th Street,<br>East Austin.</p>
+      <p>No reservations, no list. Walk in, find a seat, and take your time with the walls. Happy hour is the first hour of every day we're open — Friday and Saturday included.</p>
+      <div class="hh">
+        <div class="k">Happy hour</div>
+        <div class="v serif">The first hour, every day. Food &amp; drinks, priced down.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <div class="big-serif">papercut</div>
+        <p style="margin-top:16px;max-width:32ch">A cocktail bar and rotating gallery on East 5th. Cocktails, art, and sushi — remade for every show.</p>
+      </div>
+      <div>
+        <h4>Visit</h4>
+        <a href="#visit">Hours</a>
+        <a href="#works">Current show</a>
+        <a href="#menu">Menu</a>
+        <p>Walk-ins only</p>
+      </div>
+      <div>
+        <h4>Say hello</h4>
+        <a href="mailto:hello@papercut.bar">hello@papercut.bar</a>
+        <a href="#">Instagram</a>
+        <p>East 5th Street<br>Austin, TX</p>
+      </div>
+    </div>
+    <div class="foot-bot">
+      <span>© papercut.bar</span>
+      <span>Cocktails · Art · Sushi</span>
+    </div>
+  </div>
+</footer>
+
+<div class="ribbon">Concept mockup · Option 1 — The Gallery Edition · placeholder art &amp; menu</div>
+
+<script>
+(function(){
+  var root=document.documentElement, t=document.getElementById("tgl");
+  t.addEventListener("click",function(){
+    var cur=root.getAttribute("data-theme");
+    if(!cur){cur=matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light";}
+    root.setAttribute("data-theme",cur==="dark"?"light":"dark");
+  });
+})();
+</script>
