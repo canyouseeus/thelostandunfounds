@@ -100,18 +100,17 @@
   section{padding:78px 0}
   .sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:20px;flex-wrap:wrap;margin-bottom:36px}
   .sec-head h2{font-family:"Times New Roman",Georgia,serif;font-size:clamp(1.9rem,4.6vw,3rem);margin:0;letter-spacing:-.01em}
-  .works{display:grid;grid-template-columns:repeat(12,1fr);gap:2px;background:var(--hair)}
+  .works{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:2px;background:var(--hair)}
   .work{background:var(--wall);position:relative;overflow:hidden;aspect-ratio:4/5;display:flex;align-items:flex-end}
-  .work.wide{grid-column:span 6}.work.tall{grid-column:span 4}.work.reg{grid-column:span 4}
-  .work .frame{position:absolute;inset:0;display:grid;place-items:center;color:var(--faint)}
-  .work .frame span{font-family:"Times New Roman",Georgia,serif;font-size:clamp(2rem,6vw,4rem);opacity:.5}
-  .work .cap{position:relative;z-index:2;width:100%;padding:16px 18px;background:linear-gradient(transparent,color-mix(in srgb,var(--wall) 92%,transparent));
-    display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
-  .work .cap .t{font-size:.78rem;font-weight:700;letter-spacing:.02em}
-  .work .cap .m{font-size:.62rem;color:var(--stone);letter-spacing:.08em;text-transform:uppercase}
-  .work .cap .no{font-family:"Times New Roman",Georgia,serif;font-size:1.1rem;color:var(--ink)}
-  @media(max-width:860px){.work.wide,.work.tall,.work.reg{grid-column:span 6}}
-  @media(max-width:560px){.work.wide,.work.tall,.work.reg{grid-column:span 12}}
+  .work img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .work .frame{position:absolute;inset:0;display:grid;place-items:center}
+  .work .frame i{width:32px;height:32px;border:1.5px solid var(--faint);position:relative;display:block}
+  .work .frame i::after{content:"";position:absolute;left:-7px;right:-7px;top:50%;height:1.5px;background:var(--faint);transform:rotate(-45deg)}
+  .work .cap{position:relative;z-index:2;width:100%;padding:14px 15px;background:linear-gradient(transparent,color-mix(in srgb,var(--wall) 88%,transparent));
+    display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+  .work .cap .t{font-size:.76rem;font-weight:700;letter-spacing:.02em}
+  .work .cap .m{font-size:.6rem;color:var(--stone);letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+  .work .cap .no{font-family:"Times New Roman",Georgia,serif;font-size:1rem;color:var(--ink)}
 
   /* MENU — "for this show" */
   .menu{background:var(--paper-2)}
@@ -211,15 +210,15 @@
 <section id="works" class="wrap">
   <div class="sec-head">
     <h2>The current show</h2>
-    <span class="label">Twelve works · rotating every few weeks</span>
+    <span class="label">Six works · rotating every few weeks</span>
   </div>
   <div class="works">
-    <div class="work wide"><div class="frame"><span>I</span></div><div class="cap"><div><div class="t">First Impression</div><div class="m">Paper on board · 2025</div></div><div class="no">01</div></div></div>
-    <div class="work tall"><div class="frame"><span>II</span></div><div class="cap"><div><div class="t">Negative Space</div><div class="m">Cut paper · 2025</div></div><div class="no">02</div></div></div>
-    <div class="work reg"><div class="frame"><span>III</span></div><div class="cap"><div><div class="t">Deckle</div><div class="m">Ink &amp; fold · 2025</div></div><div class="no">03</div></div></div>
-    <div class="work reg"><div class="frame"><span>IV</span></div><div class="cap"><div><div class="t">Second Edition</div><div class="m">Collage · 2024</div></div><div class="no">04</div></div></div>
-    <div class="work reg"><div class="frame"><span>V</span></div><div class="cap"><div><div class="t">White Wall</div><div class="m">Relief · 2025</div></div><div class="no">05</div></div></div>
-    <div class="work wide"><div class="frame"><span>VI</span></div><div class="cap"><div><div class="t">The Long Fold</div><div class="m">Paper, 6ft · 2025</div></div><div class="no">06</div></div></div>
+    <div class="work"><div class="frame"><i></i></div><div class="cap"><div><div class="t">First Impression</div><div class="m">Paper on board · 2025</div></div><div class="no">01</div></div></div>
+    <div class="work"><div class="frame"><i></i></div><div class="cap"><div><div class="t">Negative Space</div><div class="m">Cut paper · 2025</div></div><div class="no">02</div></div></div>
+    <div class="work"><div class="frame"><i></i></div><div class="cap"><div><div class="t">Deckle</div><div class="m">Ink &amp; fold · 2025</div></div><div class="no">03</div></div></div>
+    <div class="work"><div class="frame"><i></i></div><div class="cap"><div><div class="t">Second Edition</div><div class="m">Collage · 2024</div></div><div class="no">04</div></div></div>
+    <div class="work"><div class="frame"><i></i></div><div class="cap"><div><div class="t">White Wall</div><div class="m">Relief · 2025</div></div><div class="no">05</div></div></div>
+    <div class="work"><div class="frame"><i></i></div><div class="cap"><div><div class="t">The Long Fold</div><div class="m">Paper, 6ft · 2025</div></div><div class="no">06</div></div></div>
   </div>
 </section>
 
