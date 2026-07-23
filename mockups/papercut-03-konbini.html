@@ -112,12 +112,22 @@
   .sec-head .meta{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
   .divider{border-top:1px dashed var(--dash);margin:22px 0 26px}
   .list{display:grid;grid-template-columns:1fr 1fr;gap:0 56px}
-  .li{display:grid;grid-template-columns:auto 1fr auto;gap:2px 12px;padding:14px 0;border-bottom:1px dashed var(--dash)}
+  .li{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;padding:14px 0;border-bottom:1px dashed var(--dash)}
   .li .idx{color:var(--faint);font-size:.78rem;font-variant-numeric:tabular-nums}
   .li .nm{font-weight:700;letter-spacing:.02em}
-  .li .pr{font-variant-numeric:tabular-nums;font-weight:700}
   .li .ds{grid-column:2/3;font-size:.8rem;color:var(--dim);line-height:1.45}
   @media(max-width:760px){.list{grid-template-columns:1fr}}
+
+  /* AWARDS — monochrome seals */
+  .awards{display:flex;flex-wrap:wrap;gap:26px;justify-content:center;align-items:center;margin-top:8px}
+  .seal{width:124px;height:124px;border:1.5px solid var(--ink);border-radius:50%;flex:none;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:4px;padding:12px;position:relative}
+  .seal::before,.seal::after{content:"";position:absolute;left:9px;right:9px;height:1px;background:var(--dash)}
+  .seal::before{top:26px}.seal::after{bottom:26px}
+  .seal .t{font-size:.5rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
+  .seal .m{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-weight:800;text-transform:uppercase;font-size:.82rem;line-height:1;letter-spacing:-.01em}
+  .seal .y{font-size:.54rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+  @media(max-width:560px){.seal{width:104px;height:104px}}
 
   /* INFO panels */
   .info{display:grid;grid-template-columns:1fr 1fr;gap:0}
@@ -156,6 +166,7 @@
     <div class="nav-links">
       <a href="#menu">Menu</a>
       <a href="#konbini">Konbini</a>
+      <a href="#press">Press</a>
       <a href="#hours">Hours</a>
       <a href="#find">Find us</a>
     </div>
@@ -183,24 +194,25 @@
       </div>
     </div>
 
-    <div class="receipt" role="img" aria-label="Mock order receipt for papercut bar">
+    <div class="receipt" role="img" aria-label="Sample counter order ticket for papercut bar">
       <div class="r-head">
         <div class="nm">papercut.bar</div>
-        <div class="sub">East 5th St — Austin TX</div>
+        <div class="sub">Konbini counter — East 5th</div>
       </div>
       <div class="r-dash"></div>
-      <div class="r-note" id="rTime">— · walk-in · table for you</div>
+      <div class="r-note" id="rTime">— · walk-in · no reservation</div>
       <div class="r-dash"></div>
-      <div class="r-row"><span class="q">1 × First Cut</span><span class="v">14.00</span></div>
-      <div class="r-row"><span class="q">1 × Nigiri flight</span><span class="v">18.00</span></div>
-      <div class="r-row"><span class="q">1 × Hand roll set</span><span class="v">16.00</span></div>
-      <div class="r-row"><span class="q">1 × Onigiri</span><span class="v">6.00</span></div>
+      <div class="r-row"><span class="q"><b>1</b> &nbsp;First Cut</span><span class="v">cocktail</span></div>
+      <div class="r-row"><span class="q"><b>1</b> &nbsp;Nigiri flight</span><span class="v">konbini</span></div>
+      <div class="r-row"><span class="q"><b>1</b> &nbsp;Hand roll set</span><span class="v">konbini</span></div>
+      <div class="r-row"><span class="q"><b>1</b> &nbsp;Onigiri</span><span class="v">konbini</span></div>
       <div class="r-dash"></div>
-      <div class="r-row"><span class="q">Subtotal</span><span class="v">54.00</span></div>
-      <div class="r-row"><span class="q">Happy hour (1st hr)</span><span class="v">−9.00</span></div>
-      <div class="r-total"><span>Total</span><span>45.00</span></div>
+      <div class="r-row"><span class="q">Guests</span><span class="v">2</span></div>
+      <div class="r-row"><span class="q">Table</span><span class="v">yours</span></div>
+      <div class="r-total"><span>No total</span><span>walk in</span></div>
+      <div class="r-note" style="padding-top:10px">No prices online — the menu changes with every show. Come see what's up.</div>
       <div class="barcode" id="barcode" aria-hidden="true"></div>
-      <div class="r-foot">Walk-ins only · No reservations · Thank you</div>
+      <div class="r-foot">Come · eat · drink · relax · vibe</div>
     </div>
   </div>
 </header>
@@ -208,16 +220,16 @@
 <section id="menu" class="wrap">
   <div class="sec-head">
     <h2>Bar</h2>
-    <span class="meta">Cocktails · $13–15 · happy-hour priced first hour</span>
+    <span class="meta">Rewritten for every show · happy hour, first hour daily</span>
   </div>
   <div class="divider"></div>
   <div class="list">
-    <div class="li"><span class="idx">01</span><span class="nm">First Cut</span><span class="pr">14</span><span class="ds">Mezcal, lime leaf, cucumber, salt rim.</span></div>
-    <div class="li"><span class="idx">02</span><span class="nm">Ink &amp; Salt</span><span class="pr">14</span><span class="ds">Blackstrap rum, salted plum, lime.</span></div>
-    <div class="li"><span class="idx">03</span><span class="nm">Negative Space</span><span class="pr">15</span><span class="ds">Clarified milk punch, jasmine, citrus.</span></div>
-    <div class="li"><span class="idx">04</span><span class="nm">White Wall</span><span class="pr">13</span><span class="ds">Vodka, elderflower, soda, chalk bitters.</span></div>
-    <div class="li"><span class="idx">05</span><span class="nm">Second Edition</span><span class="pr">15</span><span class="ds">Bourbon, black cardamom, fig.</span></div>
-    <div class="li"><span class="idx">06</span><span class="nm">Deckle Edge</span><span class="pr">14</span><span class="ds">Gin, shiso, yuzu, dry tonic.</span></div>
+    <div class="li"><span class="idx">01</span><span class="nm">First Cut</span><span class="ds">Mezcal, lime leaf, cucumber, salt rim.</span></div>
+    <div class="li"><span class="idx">02</span><span class="nm">Ink &amp; Salt</span><span class="ds">Blackstrap rum, salted plum, lime.</span></div>
+    <div class="li"><span class="idx">03</span><span class="nm">Negative Space</span><span class="ds">Clarified milk punch, jasmine, citrus.</span></div>
+    <div class="li"><span class="idx">04</span><span class="nm">White Wall</span><span class="ds">Vodka, elderflower, soda, chalk bitters.</span></div>
+    <div class="li"><span class="idx">05</span><span class="nm">Second Edition</span><span class="ds">Bourbon, black cardamom, fig.</span></div>
+    <div class="li"><span class="idx">06</span><span class="nm">Deckle Edge</span><span class="ds">Gin, shiso, yuzu, dry tonic.</span></div>
   </div>
 </section>
 
@@ -228,12 +240,27 @@
   </div>
   <div class="divider"></div>
   <div class="list">
-    <div class="li"><span class="idx">07</span><span class="nm">Nigiri flight</span><span class="pr">18</span><span class="ds">Six pieces, chef's choice.</span></div>
-    <div class="li"><span class="idx">08</span><span class="nm">Hand roll set</span><span class="pr">16</span><span class="ds">Two rolls, seaweed cut to order.</span></div>
-    <div class="li"><span class="idx">09</span><span class="nm">Onigiri</span><span class="pr">6</span><span class="ds">Pressed rice — umeboshi or salmon.</span></div>
-    <div class="li"><span class="idx">10</span><span class="nm">Cucumber &amp; shiso</span><span class="pr">8</span><span class="ds">Cold, sharp, house pickle.</span></div>
-    <div class="li"><span class="idx">11</span><span class="nm">Edamame, burnt salt</span><span class="pr">7</span><span class="ds">The one everyone orders.</span></div>
-    <div class="li"><span class="idx">12</span><span class="nm">Miso &amp; nori</span><span class="pr">7</span><span class="ds">The quiet one. Always on.</span></div>
+    <div class="li"><span class="idx">07</span><span class="nm">Nigiri flight</span><span class="ds">Six pieces, chef's choice.</span></div>
+    <div class="li"><span class="idx">08</span><span class="nm">Hand roll set</span><span class="ds">Two rolls, seaweed cut to order.</span></div>
+    <div class="li"><span class="idx">09</span><span class="nm">Onigiri</span><span class="ds">Pressed rice — umeboshi or salmon.</span></div>
+    <div class="li"><span class="idx">10</span><span class="nm">Cucumber &amp; shiso</span><span class="ds">Cold, sharp, house pickle.</span></div>
+    <div class="li"><span class="idx">11</span><span class="nm">Edamame, burnt salt</span><span class="ds">The one everyone orders.</span></div>
+    <div class="li"><span class="idx">12</span><span class="nm">Miso &amp; nori</span><span class="ds">The quiet one. Always on.</span></div>
+  </div>
+</section>
+
+<section id="press" class="wrap">
+  <div class="sec-head">
+    <h2>Recognition</h2>
+    <span class="meta">Austin &amp; beyond</span>
+  </div>
+  <div class="divider"></div>
+  <div class="awards">
+    <div class="seal"><span class="t">Best</span><span class="m">Esquire<br>Bars</span><span class="y">2026</span></div>
+    <div class="seal"><span class="t">Nominee</span><span class="m">Spirited<br>Awards</span><span class="y">Tales · 2025</span></div>
+    <div class="seal"><span class="t">Best of ATX</span><span class="m">Austin<br>Monthly</span><span class="y">Editors' Choice '25</span></div>
+    <div class="seal"><span class="t">Eater Awards</span><span class="m">Best<br>New Bar</span><span class="y">2025</span></div>
+    <div class="seal"><span class="t">Best of Austin</span><span class="m">Austin<br>Chronicle</span><span class="y">Winner · 2026</span></div>
   </div>
 </section>
 
@@ -277,7 +304,7 @@
   </div>
 </footer>
 
-<div class="ribbon">Concept mockup · Option 3 — Konbini · sample receipt, menu &amp; prices are placeholder</div>
+<div class="ribbon">Concept mockup · Option 3 — Konbini · no prices (matches papercut.bar) · awards &amp; sample menu shown</div>
 
 <script>
 (function(){
