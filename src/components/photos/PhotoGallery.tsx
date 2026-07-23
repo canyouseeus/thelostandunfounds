@@ -1075,11 +1075,9 @@ const PhotoGallery: React.FC<{ librarySlug: string; inline?: boolean }> = ({ lib
                             className="p-2 transition-colors text-white/60 hover:text-white"
                             title={viewMode === 'grid' ? 'Switch to Single Column View' : 'Switch to Grid View'}
                         >
-                            <span
-                                className="block transition-transform duration-300 ease-in-out"
-                                style={{ transform: viewMode === 'single' ? 'rotate(90deg)' : 'rotate(0deg)' }}
-                            >
-                                {viewMode === 'single' ? (
+                            {/* Icon shows the view you'll switch TO (grid is the default). */}
+                            <span className="block transition-transform duration-300 ease-in-out">
+                                {viewMode === 'grid' ? (
                                     <StopIcon className="w-5 h-5" />
                                 ) : (
                                     <Squares2X2Icon className="w-5 h-5" />
