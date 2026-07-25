@@ -43,6 +43,7 @@
 | AFFILIATE_GO_LIVE_PLAN.md | Affiliate launch plan |
 | AFFILIATE_TESTING_STATUS.md | Affiliate testing status |
 | AI_WRITING_PROMPT_FOR_CONTRIBUTORS.md | AI writing prompt guide |
+| CHARACTER_WRITING_GUIDE_THE_DETACHED_CONNECTOR.md | Character writing guide: the detached connector |
 | CRM_PRD_NOIR.md | CRM product requirements |
 | SEO_IMPROVEMENTS.md | SEO improvements overview |
 | TELEGRAM_SETUP.md | Telegram bot integration |
