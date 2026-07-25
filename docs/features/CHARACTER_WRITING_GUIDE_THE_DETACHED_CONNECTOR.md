@@ -1,17 +1,19 @@
-# Character Writing Guide — The Detached Connector
+# Character Writing Guide — *Connection*
 
-> A working guide for writing a protagonist who can bond with anyone yet stay
-> untouched by everyone — and who keeps getting cast as the problem in rooms he
-> was only trying to help. Use this as a blueprint for a short story, a serial,
-> a screenplay, or a recurring character in the Lost Archives universe.
+> A working guide for **_Connection_**, a story about a protagonist who can bond
+> with anyone yet stays untouched by everyone — and who keeps getting cast as the
+> problem in rooms he was only trying to help. Use this as a blueprint for a short
+> story, a serial, a screenplay, or a recurring character in the Lost Archives
+> universe.
 >
-> This character *is* **Connection** — not as a name, but as an essence. He is
-> the embodiment of the thing: the person who can bond with anyone, who makes a
-> room feel met, who is connection walking into places that were disconnected
-> before he arrived. The tragedy is built into that identity — the one being who
-> personifies connection is the one being who cannot turn it inward. Give him
-> whatever name you like on the page; what matters is that Connection is what he
-> is. Pronouns follow the concept as pitched; change freely.
+> **The story is titled _Connection_ — and so is its subject.** The protagonist
+> *is* connection: not a name he carries, but an essence he embodies. He is the
+> person who can bond with anyone, who makes a room feel met, who is connection
+> walking into places that were disconnected before he arrived. The title is the
+> thesis. The tragedy is built into it — the one being who personifies connection
+> is the one being who cannot turn it inward. Give him whatever name you like on
+> the page; what matters is that the story, and he, are *Connection*. Pronouns
+> follow the concept as pitched; change freely.
 
 ---
 
