@@ -285,6 +285,69 @@ Use these to draft, warm up, or fill out a bible:
 
 ---
 
+## The Origin Spark — The True Pattern (Source Material)
+
+This character was spawned by a real experience. The specifics don't belong in the
+story — the *pattern* does. Names, places, and details are deliberately stripped;
+what's preserved is the shape of the thing, because that shape is the engine.
+
+**The pattern in one line:**
+
+> You flag something wrong to protect the group. The group reframes your
+> protection as a personal attack, closes ranks, and expels you — then rewrites
+> the record so the expulsion looks justified.
+
+That's the whole tragedy of the character in miniature. He did the *right* thing —
+saw a real problem, named it plainly, tried to protect people — and the system
+punished him precisely *for* the clarity, then rewrote history to make him the
+villain of a story he was trying to fix. Break it into its thematic parts; each
+one is a scene or a beat you can build with:
+
+- **The Helper Reframed as the Aggressor.** He raises a legitimate concern *on
+  behalf of* the group. It gets relabeled as him "talking shit," a personal grudge,
+  an attack. The reframe is the weapon — it converts an act of care into an act of
+  aggression, and once relabeled, everything he does after reads as hostile.
+- **"Others feel threatened."** The retaliation dresses itself up as consensus —
+  *other people* are uncomfortable, so his truth-telling becomes the group's
+  problem. This is envy and self-protection wearing the mask of collective concern.
+  Nobody has to own it personally when "everyone" supposedly feels it.
+- **Truth vs. the Crowd's Narrative.** He has the checkable fact on his side — what
+  literally happened, who actually did what. It loses anyway, because a group's
+  shared story beats one accurate individual. Standing, not accuracy, decides whose
+  version becomes real. Write the moment a plain, verifiable truth gets *reversed*
+  and used against him — that reversal is the knife.
+- **The Assurance That Doesn't Hold.** An authority privately agrees with him,
+  face to face — and then folds the moment the group closes ranks, because the
+  institution depends on the group, not on him. Private agreement, public
+  abandonment. This is the specific betrayal that teaches detachment.
+- **Closing Ranks.** The instant the authority isn't watching, the collective acts
+  as one against him. Whether or not it was literally coordinated, it *functions*
+  as coordination — and that's what it feels like from inside: a majority choosing
+  their comfort over his truth.
+- **Detachment as the Only Dignity Left.** Through all of it he stays measured —
+  "have a good day," documents calmly, refuses to become the aggressor they've cast
+  him as. And that composure doesn't save him; it may even provoke them more,
+  because a man who won't lose control denies them the outburst that would prove
+  their story. His restraint is both his dignity and, to them, further evidence of
+  his "coldness." Same trait, both edges.
+
+**How to use it:** This can be the **inciting incident** (the story opens on a
+version of this, and the rest is aftermath and reckoning) or the **recurring
+pattern** the Scene Engine keeps re-running in new venues until the loop finally
+breaks. Either way, don't reproduce the literal event — find a *different* setting
+that carries the same shape (a co-op, a volunteer board, a group house, a
+workplace, an online community) so the theme reads as universal rather than
+score-settling. The reader should recognize the *feeling*, not the address.
+
+**The emotional truth to protect:** the deepest wound here isn't being disliked —
+it's being punished *for being right*, and watching the record get rewritten so
+that even your rightness is erased. That's what makes a person learn to detach:
+not cruelty, but the discovery that clarity and care are not safe to spend on
+people who will close ranks against them. Give the reader that discovery and
+they'll understand the armor completely.
+
+---
+
 ## Quick Reference Card
 
 - **Premise:** The gift and the grievance are the same trait.
@@ -298,6 +361,8 @@ Use these to draft, warm up, or fill out a bible:
 - **The trap to avoid:** The flawless martyr. Keep one critic who's *right*.
 - **The line that matters:** He asks for respect because he's given up on being
   known — and the reader should feel that before he does.
+- **Origin spark:** Punished for being right, then the record rewritten to erase
+  the rightness. That's what taught him to detach.
 
 ---
 
