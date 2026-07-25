@@ -5,9 +5,13 @@
 > was only trying to help. Use this as a blueprint for a short story, a serial,
 > a screenplay, or a recurring character in the Lost Archives universe.
 >
-> The protagonist's name is **Connection**. The name is the thesis: he is named
-> for the one thing he does effortlessly for everyone and withholds from himself.
-> Pronouns follow the concept as pitched; change freely.
+> This character *is* **Connection** — not as a name, but as an essence. He is
+> the embodiment of the thing: the person who can bond with anyone, who makes a
+> room feel met, who is connection walking into places that were disconnected
+> before he arrived. The tragedy is built into that identity — the one being who
+> personifies connection is the one being who cannot turn it inward. Give him
+> whatever name you like on the page; what matters is that Connection is what he
+> is. Pronouns follow the concept as pitched; change freely.
 
 ---
 
@@ -90,7 +94,7 @@ announce it. Give it texture:
   relabels his help as *interference*, his clarity as *arrogance*, his detachment
   as *not being a team player*. This is why he keeps getting cast as the problem:
   the group needs a story that makes their discomfort his fault. Let the reader
-  see the machinery before Connection does.
+  see the machinery before he does.
 - **Give at least one honest critic.** Not everyone who pushes back is envious.
   Plant one character whose criticism is *fair* — someone who's genuinely hurt by
   his detachment. This keeps the story from becoming "everyone is jealous of our
@@ -107,7 +111,7 @@ Build the supporting cast so each one refracts a different facet of the paradox:
    him *and* can't stand him, and can't tell which is winning. The relationship
    the story should hurt to watch.
 2. **The Honest Wound** — the person his detachment actually damaged. Their
-   grievance is legitimate. When they speak, Connection has no comeback,
+   grievance is legitimate. When they speak, he has no comeback,
    because they're right. This is his path to the *need*.
 3. **The Stranger He Reaches** — a one-scene or recurring figure he connects with
    effortlessly, showing the gift at full power. Use to remind readers *why*
@@ -238,7 +242,7 @@ Use these to draft, warm up, or fill out a bible:
 ## Quick Reference Card
 
 - **Premise:** The gift and the grievance are the same trait.
-- **Want:** Respect. **Need:** To be known. **Wound:** Connection is where the
+- **Want:** Respect. **Need:** To be known. **Wound:** connecting is where the
   damage came from, so he learned to give it without spending himself.
 - **Antagonist:** Envy wearing a smile, relabeling his help as interference.
 - **Scene loop:** Read → Reach → Turn → Verdict → Detach. Break it at the climax.
