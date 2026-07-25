@@ -19,16 +19,20 @@
 
 ## 1. The One-Line Premise (Logline)
 
-> A man who can read and reach anyone — and who deliberately keeps his own heart
-> at arm's length — keeps walking into rooms where his help is mistaken for a
-> threat, because the thing people admire in him from a distance is the exact
-> thing they resent up close.
+> A man with almost no money but an unteachable gift — he can read people and
+> systems, cut complexity down to what is plainly right or wrong, and reach anyone
+> — keeps walking into rooms where his help is mistaken for a threat, because the
+> world only accepts that kind of clarity from people who already have standing,
+> and he has none.
 
 The whole story lives in that last clause. **The gift and the grievance are the
-same trait.** People are drawn to his ease and his reach; people are unsettled by
-his ease and his reach. You are not writing a hero who is misunderstood by
-villains. You are writing a man whose greatest strength reads, to the envious, as
-arrogance — and who cannot tell the difference until it costs him.
+same trait.** People are drawn to his clarity and his reach; people are unsettled
+by his clarity and his reach. And because he can't *buy* the credibility that
+would let his insight land — no title, no money, no seat at the table — the exact
+same true observation that would be called wisdom from a wealthy man is called
+arrogance from him. You are not writing a hero misunderstood by villains. You are
+writing a man whose greatest strength reads, to the comfortable, as a threat —
+and who cannot tell the difference until it costs him.
 
 ---
 
@@ -40,8 +44,9 @@ Everything else is decoration on one contradiction. Keep it sharp:
 |---|---|
 | Connect with anyone, instantly, genuinely | He never lets the connection reach *him* |
 | Detach cleanly and walk away unharmed | That same detachment reads as coldness or superiority |
-| See what a room needs and offer it | The room often didn't ask, and resents being read |
-| Command respect by presence alone | Respect demanded is respect that invites a challenge |
+| See the truth of a person or a system at a glance | The truth is unwelcome, and he has no standing to make anyone hear it |
+| Cut a complicated problem down to plain right and wrong | Certainty from a man with no money reads as arrogance, not clarity |
+| Command respect by presence alone | Respect demanded without money or title invites a challenge |
 
 **Rule:** In every scene, the trait that saves him in one beat should indict him
 in the next. If detachment gets him out of a fight on page 3, detachment should
@@ -54,6 +59,14 @@ get him accused of not caring on page 8. Never let the gift be *only* a gift.
 Great characters run on the gap between what they *want* and what they *need*,
 and both grow from a *wound*.
 
+- **The Gift (what makes him worth writing).** Name it precisely, because it's not
+  charm — it's *clarity*. He processes complicated things into simple ones: he
+  reads people (their real motive under the polite one), he reads systems (how a
+  thing is actually rigged, who it serves, where it breaks), and he lands on what
+  is plainly *right or wrong* while everyone else is still negotiating. It's a
+  moral and structural X-ray. The gift is real and correct — that's what makes its
+  rejection tragic rather than just sad.
+
 - **The Wound (why he detached in the first place).** Detachment is a skill you
   build, not a temperament you're born with. Something taught him that being
   fully *in* something — a family, a friendship, a home — is where the damage
@@ -64,7 +77,10 @@ and both grow from a *wound*.
 
 - **The Want (conscious goal).** To be *respected* — seen clearly, taken at his
   word, allowed to help without suspicion. He states this out loud. He thinks
-  respect is the thing missing.
+  respect is the thing missing. And he half-believes respect is something money
+  would have bought him: that if he had the bank account, the title, the visible
+  proof of success, the same words out of his mouth would finally be heard. He's
+  not entirely wrong, and that's what makes it corrosive.
 
 - **The Need (unconscious truth).** To be *known* — which requires the one thing
   his gift is built to avoid: letting someone in past the point where he can
@@ -102,6 +118,34 @@ announce it. Give it texture:
   his detachment. This keeps the story from becoming "everyone is jealous of our
   perfect hero," which is the fastest way to lose a reader. His flaw must be
   real, not just perceived.
+
+### The Standing Gap (the class dimension — don't skip this)
+
+This is the engine underneath the envy, and for this character it may be the real
+subject. He has the clarity but not the *standing*, and the world quietly requires
+both before it will listen:
+
+- **Credibility is collateral, and he's broke.** The same true sentence is
+  "insight" from someone with money and a title, and "who does he think he is"
+  from someone with neither. He isn't imagining this — it's the actual rule.
+  Write scenes where his read is *correct* and *dismissed in the same breath*,
+  and let the dismissal track exactly to what he lacks: no budget, no credential,
+  no seat.
+- **The inversion that unsettles people.** A man with nothing seeing more clearly
+  than the people with everything is *threatening*, because it implies their
+  comfort was never the same thing as being right. That's why the comfortable
+  close ranks on him faster than anyone — his clarity is an indictment of their
+  standing.
+- **The trap of demanding respect with empty hands.** He knows he's right, so he
+  demands to be treated as an equal — but from the outside, a broke man insisting
+  on respect *looks* like the arrogance they've decided he has. The demand and the
+  dismissal feed each other. This is the loop the story has to break: he can't
+  out-argue a system that was never listening to the argument.
+- **Don't make poverty his whole identity — make it the friction.** He is not
+  "the poor guy." He's the clear-eyed one who happens to be shut out because
+  clarity without capital doesn't open doors. The lack of money is the *obstacle*
+  between his gift and the respect it should earn — that gap is where every scene
+  lives.
 
 ---
 
@@ -244,8 +288,11 @@ Use these to draft, warm up, or fill out a bible:
 ## Quick Reference Card
 
 - **Premise:** The gift and the grievance are the same trait.
+- **Gift:** Clarity — reads people, reads systems, lands on plain right and wrong.
 - **Want:** Respect. **Need:** To be known. **Wound:** connecting is where the
   damage came from, so he learned to give it without spending himself.
+- **The roadblock:** Clarity without capital. The right words from empty hands get
+  called arrogance; standing, not truth, is what the room actually rewards.
 - **Antagonist:** Envy wearing a smile, relabeling his help as interference.
 - **Scene loop:** Read → Reach → Turn → Verdict → Detach. Break it at the climax.
 - **The trap to avoid:** The flawless martyr. Keep one critic who's *right*.
