@@ -21,6 +21,7 @@ import Docs from './pages/Docs'
 import About from './pages/About'
 import Contact from './pages/Contact'
 import Support from './pages/Support'
+import Pay from './pages/Pay'
 import Shop from './pages/Shop'
 import ShopSuccess from './pages/ShopSuccess'
 import QR from './pages/QR'
@@ -145,6 +146,9 @@ function App() {
               </Route>
               <Route path="/support" element={<Layout />}>
                 <Route index element={<Support />} />
+              </Route>
+              <Route path="/pay" element={<Layout />}>
+                <Route index element={<Pay />} />
               </Route>
               <Route path="/events" element={<Layout />}>
                 <Route index element={<Events />} />

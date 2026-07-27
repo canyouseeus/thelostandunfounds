@@ -65,25 +65,38 @@ export default async function handler(
         const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
         const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
 
-        if (!supabaseUrl || !supabaseKey) {
-            console.error('Missing Supabase credentials')
-            return res.status(500).json({ error: 'Database service not configured' })
+        // Supabase is only used below for best-effort bookkeeping (product cost
+        // lookup + affiliate commission pre-record). Taking the payment itself
+        // needs nothing but Stripe, so missing database config degrades those
+        // extras instead of refusing the sale.
+        const supabase =
+            supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null
+
+        if (!supabase) {
+            console.warn('⚠️ Supabase not configured — checkout continues without commission tracking')
         }
 
-        const supabase = createClient(supabaseUrl, supabaseKey)
-
-        // Get product cost if productId provided (for affiliate commission math)
+        // Get product cost if productId provided (for affiliate commission math).
+        // Best-effort: this only feeds commission math, so a database outage
+        // must not stop a customer from paying. Fall back to a zero cost.
         let productCost = 0
-        if (productId) {
-            const { data: costData } = await supabase
-                .from('product_costs')
-                .select('cost')
-                .eq('product_id', productId)
-                .eq('variant_id', variantId || '')
-                .eq('source', 'local')
-                .single()
+        if (productId && supabase) {
+            try {
+                const { data: costData } = await supabase
+                    .from('product_costs')
+                    .select('cost')
+                    .eq('product_id', productId)
+                    .eq('variant_id', variantId || '')
+                    .eq('source', 'local')
+                    .single()
 
-            productCost = costData?.cost || 0
+                productCost = costData?.cost || 0
+            } catch (costError: any) {
+                console.error('⚠️ Product cost lookup failed (checkout continues):', {
+                    productId,
+                    message: costError?.message,
+                })
+            }
         }
 
         // Build success/cancel URLs from env, falling back to a sensible default
@@ -154,30 +167,45 @@ export default async function handler(
 
         // Pre-record a pending affiliate commission. The webhook flips it to
         // confirmed once Stripe tells us the session was paid.
-        if (affiliateRef) {
-            const { data: affiliate } = await supabase
-                .from('affiliates')
-                .select('id, commission_rate')
-                .eq('code', affiliateRef)
-                .eq('status', 'active')
-                .single()
+        //
+        // This runs AFTER the Checkout Session already exists, so it must never
+        // be able to fail the request: if the database is unreachable (e.g. a
+        // paused Supabase project) an unhandled throw here would return a 500
+        // and strand the customer on our side of a session Stripe already
+        // created — losing a sale to bookkeeping. Commission tracking is
+        // best-effort; the webhook reconciles from Stripe metadata regardless.
+        if (affiliateRef && supabase) {
+            try {
+                const { data: affiliate } = await supabase
+                    .from('affiliates')
+                    .select('id, commission_rate')
+                    .eq('code', affiliateRef)
+                    .eq('status', 'active')
+                    .single()
 
-            if (affiliate) {
-                const profit = Number(amount) - productCost
-                const commissionRate = affiliate.commission_rate / 100
-                const commission = profit * commissionRate
+                if (affiliate) {
+                    const profit = Number(amount) - productCost
+                    const commissionRate = affiliate.commission_rate / 100
+                    const commission = profit * commissionRate
 
-                await supabase
-                    .from('affiliate_commissions')
-                    .insert({
-                        affiliate_id: affiliate.id,
-                        order_id: session.id,
-                        amount: commission,
-                        profit_generated: profit,
-                        source: 'stripe',
-                        product_cost: productCost,
-                        status: 'pending',
-                    })
+                    await supabase
+                        .from('affiliate_commissions')
+                        .insert({
+                            affiliate_id: affiliate.id,
+                            order_id: session.id,
+                            amount: commission,
+                            profit_generated: profit,
+                            source: 'stripe',
+                            product_cost: productCost,
+                            status: 'pending',
+                        })
+                }
+            } catch (affiliateError: any) {
+                console.error('⚠️ Affiliate commission pre-record failed (checkout continues):', {
+                    sessionId: session.id,
+                    affiliateRef,
+                    message: affiliateError?.message,
+                })
             }
         }
 
