@@ -57,6 +57,14 @@ export default function Footer() {
             >
               Affiliates
             </Link>
+            {/* Site-wide entry point to checkout. /shop is admin-gated, so this
+                is the only route by which a visitor can pay anything. */}
+            <Link
+              to="/pay"
+              className="text-white hover:!text-white/60 transition-colors font-bold"
+            >
+              Pay
+            </Link>
           </div>
         </div>
       </div>

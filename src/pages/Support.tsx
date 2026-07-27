@@ -8,7 +8,8 @@ import {
   BookOpenIcon,
   EnvelopeIcon,
   ChatBubbleLeftEllipsisIcon,
-  ArrowRightIcon
+  ArrowRightIcon,
+  HeartIcon
 } from '@heroicons/react/24/outline';
 
 import { Helmet } from 'react-helmet-async';
@@ -99,6 +100,27 @@ export default function Support() {
             <span className="text-xs text-white/60">Coming Soon</span>
           </div>
         </div>
+
+        {/* "Support" reads two ways, and people arriving here looking to back
+            the work had nowhere to go. Send them to checkout. Matches the
+            bordered card styling used throughout this page. */}
+        <Link
+          to="/pay"
+          className="group relative bg-white text-black rounded-none px-6 py-5 mb-12 flex items-center justify-between cursor-pointer hover:bg-white/90 transition-all duration-300"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 border border-black flex items-center justify-center text-black group-hover:scale-110 transition-all flex-shrink-0">
+              <HeartIcon className="w-5 h-5" />
+            </div>
+            <div className="flex flex-col justify-center min-h-[40px]">
+              <h3 className="text-lg font-bold leading-none text-left">Support The Work</h3>
+              <p className="text-sm text-black/70 leading-tight mt-1.5 text-left">
+                Chip in any amount, or settle an invoice
+              </p>
+            </div>
+          </div>
+          <ArrowRightIcon className="w-5 h-5 text-black/50 group-hover:text-black group-hover:translate-x-2 transition-all" />
+        </Link>
 
         <div className="bg-black/50 border border-white rounded-none p-8">
           <h2 className="text-2xl font-bold text-white mb-4">Common Issues</h2>
