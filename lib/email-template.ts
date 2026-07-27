@@ -170,8 +170,14 @@ export function wrapEmailContent(
  */
 export function processEmailContent(
   rawHtml: string,
-  subscriberEmail: string
+  subscriberEmail: string,
+  options: { injectUnsubscribeIfMissing?: boolean } = {}
 ): string {
+  // Callers that wrap the result in a footer which already carries an
+  // unsubscribe link should pass false, otherwise the message ends up with two
+  // of them — one in the body, one in the footer.
+  const { injectUnsubscribeIfMissing = true } = options;
+
   let html = rawHtml || '';
   const unsubscribeUrl = getUnsubscribeUrl(subscriberEmail);
 
@@ -183,7 +189,7 @@ export function processEmailContent(
   const hasUnsubscribeLink = /href=["'][^"']*unsubscribe/i.test(html) || />Unsubscribe<\/a>/i.test(html);
 
   // Add unsubscribe block if missing
-  if (!hasUnsubscribeLink) {
+  if (injectUnsubscribeIfMissing && !hasUnsubscribeLink) {
     const unsubBlock = `
       <p style="color: ${BRAND.colors.textMuted}; font-size: 12px; line-height: 1.5; margin: 20px 0 0 0; text-align: left;">
         <a href="${unsubscribeUrl}" style="color: ${BRAND.colors.textMuted}; text-decoration: underline;">Unsubscribe</a>
@@ -209,7 +215,11 @@ export function generateNewsletterEmail(
   bodyContent: string,
   subscriberEmail: string
 ): string {
-  const processedContent = processEmailContent(bodyContent, subscriberEmail);
+  // wrapEmailContent below adds the footer unsubscribe link, so suppress the
+  // body-level one here — otherwise every newsletter carries two.
+  const processedContent = processEmailContent(bodyContent, subscriberEmail, {
+    injectUnsubscribeIfMissing: false,
+  });
   return wrapEmailContent(processedContent, {
     subscriberEmail,
     includeUnsubscribe: true,
