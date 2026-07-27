@@ -73,21 +73,44 @@ async function main() {
         return
     }
 
-    // Routed through the project's Zoho-primary / Resend-fallback helper rather
-    // than either provider directly, per the email-delivery convention.
-    const { sendEmail } = await import('../lib/api-handlers/_email-delivery.js' as string)
-        .catch(() => ({ sendEmail: null as any }))
+    // Mirrors sendResendEmail() in _newsletter-send-handler.ts. Inlined rather
+    // than imported because that helper is module-private to the handler.
+    const apiKey = process.env.RESEND_API_KEY
+    const fromEmail =
+        process.env.RESEND_FROM_EMAIL ||
+        'THE LOST+UNFOUNDS <noreply@thelostandunfounds.com>'
 
-    if (!sendEmail) {
+    if (!apiKey) {
         console.error(
-            '\nCould not load the email delivery helper. Wire this to the same helper the ' +
-            'newsletter handler uses before sending.'
+            '\nRESEND_API_KEY is not set, so there is no way to deliver this.\n' +
+            'Set it in the environment (it already exists in the Vercel project) and re-run,\n' +
+            'or send via the admin newsletter tooling instead.'
         )
         process.exit(1)
     }
 
-    await sendEmail({ to: recipient, subject: SUBJECT, html })
-    console.log(`\nSent to ${recipient}.`)
+    const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            from: fromEmail,
+            to: recipient,
+            subject: SUBJECT,
+            html,
+        }),
+    })
+
+    if (!response.ok) {
+        const detail = await response.text().catch(() => '')
+        console.error(`\nSend failed (HTTP ${response.status}): ${detail}`)
+        process.exit(1)
+    }
+
+    const result = await response.json().catch(() => ({}))
+    console.log(`\nSent to ${recipient}. Resend id: ${result?.id ?? 'unknown'}`)
 }
 
 main().catch((err) => {
