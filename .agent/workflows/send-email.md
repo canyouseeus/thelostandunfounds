@@ -8,7 +8,7 @@ description: How to send any outgoing email (newsletter, transactional, notifica
 // turbo
 1. Read the brand-email-manager skill:
    ```
-   view_file .agent/skills/brand-email-manager/SKILL.md
+   view_file .claude/skills/brand-email-manager/SKILL.md
    ```
 
 ## Verify the handler uses the correct function

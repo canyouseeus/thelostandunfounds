@@ -55,3 +55,15 @@ If the auth logs show the Google exchange is succeeding but the user is landing 
 - Do NOT change `signInWithGoogle` queryParams (`access_type: 'offline'`, `prompt: 'consent'`) without proof they're causing the issue
 - Do NOT change `signOut()` scope without proof
 - Do NOT make blind code changes based on symptoms — check logs first, every time
+
+## Helper script
+
+`scripts/update-google-secret.ts` updates the Google client secret in your local `.env.local`
+(prompts for the value, input hidden):
+
+```bash
+npx tsx scripts/update-google-secret.ts
+```
+
+Updating `.env.local` alone does **not** fix a login failure — the secret Supabase uses lives in
+the Supabase dashboard (Step 1 above). Change it in both places or the mismatch persists.

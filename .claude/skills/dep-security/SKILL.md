@@ -1,6 +1,6 @@
 ---
 name: dep-security
-description: Audit and remediate npm dependency vulnerabilities. Run after every npm install and before every deploy.
+description: Audit and remediate npm dependency vulnerabilities. Use after any npm install or dependency change, before every production deploy, and whenever the /audit command is invoked. Covers npm audit triage, safe vs breaking fixes, and severity thresholds.
 ---
 
 # Dependency Security Audit
@@ -12,9 +12,11 @@ description: Audit and remediate npm dependency vulnerabilities. Run after every
 
 ## Protocol
 
+Run these from the project root.
+
 ### Step 1 — Get the full picture
 ```bash
-cd /Users/thelostunfounds/thelostandunfounds && npm audit --json > /tmp/audit.json && npm audit
+npm audit --json > /tmp/audit.json && npm audit
 ```
 
 ### Step 2 — Apply safe fixes (no breaking changes)

@@ -73,14 +73,16 @@ Historical migration and blog-post scripts from the retired file-based workflow.
 path** — the `/sql` page that served them has been removed. All database changes now go through
 the Supabase MCP server (`apply_migration`). Do not add files here; see the `supabase-mcp` skill.
 
-### `.agent/` — Agent Configuration
+### `.claude/` — Agent Configuration
 | Directory | Purpose |
 |---|---|
-| `.agent/skills/` | 25 domain-specific skill guides |
+| `.claude/skills/` | **All** domain-specific skill guides — the single canonical location |
+| `.claude/commands/` | Slash commands (`/audit`, `/startdev`, …) |
 | `.agent/workflows/` | Step-by-step operational procedures |
 
-### `skills/` — Additional Skills
-6 specialized skills for dashboard clock, gallery agent, PayPal verification, env/schema verification.
+> `.agent/skills/` and a top-level `skills/` used to hold duplicate forks of the same skills. They
+> drifted apart and produced contradictory rules, so they were deleted and everything was
+> consolidated into `.claude/skills/`. Do not recreate them — one skill, one file.
 
 ### `scripts/` — Utility Scripts
 One-off and helper scripts for operations tasks.

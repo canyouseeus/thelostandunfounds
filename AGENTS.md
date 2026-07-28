@@ -25,11 +25,11 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full codebase map.
 
 | What you need | Where to look |
 |---|---|
-| Agent skills (domain-specific guides) | `.agent/skills/*/SKILL.md` and `skills/*/SKILL.md` |
+| Agent skills (domain-specific guides) | `.claude/skills/*/SKILL.md` — the single canonical location |
 | Step-by-step workflows | `.agent/workflows/*.md` |
 | Blog publishing rules | `.cursorrules` → Blog Publishing Rule section |
-| Email branding rules | `.agent/skills/brand-email-manager/SKILL.md` |
-| Design system & styling | `.agent/skills/noir-design/SKILL.md` |
+| Email branding rules | `.claude/skills/brand-email-manager/SKILL.md` |
+| Design system & styling | `.claude/skills/noir-design/SKILL.md` |
 | Database schema & migrations | Supabase MCP (`apply_migration`) — see `supabase-mcp` skill. `sql/` is a dead archive |
 | Environment variables | `.env.local` (local), Vercel dashboard (prod) |
 | Deployment verification | `.agent/workflows/deploy-and-verify.md` |

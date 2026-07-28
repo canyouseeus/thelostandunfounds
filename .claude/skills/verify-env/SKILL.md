@@ -12,7 +12,7 @@ This skill checks for the presence of essential environment variables required f
 Run the check script from the project root:
 
 ```bash
-node skills/verify-env/scripts/check-env.js
+node .claude/skills/verify-env/scripts/check-env.js
 ```
 
 ## Checked Variables

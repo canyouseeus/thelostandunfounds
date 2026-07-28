@@ -41,7 +41,7 @@ After moving or deleting docs, update `docs/index.md` to reflect the current sta
 - 🗄️ Archived — moved to `docs/archive/`
 
 ### 5. Check skill freshness
-Scan `.agent/skills/` and `skills/` directories:
+Scan the `.claude/skills/` directory:
 - Are any skills referencing files or patterns that no longer exist?
 - Are any skills missing coverage for new features?
 - Do skill instructions match current implementation?

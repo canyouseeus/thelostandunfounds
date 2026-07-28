@@ -12,7 +12,7 @@ This skill provides a way to verify that your PayPal environment variables are c
 Run the verification script to check your local and production-ready credentials:
 
 ```bash
-node skills/paypal-verify/scripts/verify-env.js
+node .claude/skills/paypal-verify/scripts/verify-env.js
 ```
 
 ## What it Checks
@@ -22,6 +22,6 @@ node skills/paypal-verify/scripts/verify-env.js
 
 ## Common Fixes
 If you see an "Invalid Client" error:
-- Run `node skills/paypal-verify/scripts/verify-env.js` to see if a newline is detected.
+- Run `node .claude/skills/paypal-verify/scripts/verify-env.js` to see if a newline is detected.
 - Use the `sync-local-env-to-vercel.sh` script to re-upload keys using `printf` which strips newlines.
 - Ensure `PAYPAL_ENVIRONMENT` is exactly `LIVE` or `SANDBOX`.

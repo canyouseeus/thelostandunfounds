@@ -40,7 +40,7 @@ If you created or modified a SQL file:
 - Must use check-and-insert/update pattern (check existence first with `SELECT INTO`, then `IF/ELSE`)
 
 ### 6. Skill was consulted
-Before implementing, check: did you read the relevant skill(s) from `.agent/skills/` or `skills/`?
+Before implementing, check: did you read the relevant skill(s) from `.claude/skills/`?
 If not, read them now and verify your implementation aligns.
 
 ## Quick One-Liner

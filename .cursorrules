@@ -5,7 +5,8 @@
 ## SKILL UTILIZATION RULE - HIGHEST PRIORITY
 **Before starting ANY task, read the relevant SKILL.md files.**
 
-Skills: `.agent/skills/*/SKILL.md` and `skills/*/SKILL.md`
+Skills live in **`.claude/skills/<name>/SKILL.md`** — this is the single canonical location.
+(`.agent/skills/` and `skills/` were duplicate forks and have been deleted. Do not recreate them.)
 
 | Keywords / Domain | Required Skill(s) |
 |---|---|
@@ -21,12 +22,13 @@ Skills: `.agent/skills/*/SKILL.md` and `skills/*/SKILL.md`
 | environment variables, secrets, .env | `secure-env-manager`, `verify-env` |
 | deploy, production, dev server, build | `dev-parity-guard`, `fix-dev-server` |
 | refactor, cleanup, technical debt | `code-refactor` |
+| npm audit, dependencies, CVE, vulnerability | `dep-security` |
 | revenue, earnings, transactions | `revenue-data-validator` |
-| browser, testing, UI verification | `smart-browsing`, `browser-ops-guard`, `verify_ui_changes` |
+| browser, testing, UI verification | `smart-browsing`, `browser-ops-guard`, `verify-ui-changes` |
 | Google Auth, OAuth, login | `fix-google-auth` |
-| clock, stopwatch, timer widget | `dashboard-clock-interaction` (in `skills/`) |
-| Google service account, photographer | `gallery-agent-management` (in `skills/`) |
-| PayPal credentials, verification | `paypal-verify` (in `skills/`), `fix-paypal-mcp` |
+| clock, stopwatch, timer widget | `dashboard-clock-interaction` |
+| Google service account, photographer | `gallery-agent-management` |
+| PayPal credentials, verification | `paypal-verify`, `fix-paypal-mcp` |
 
 **Rules:** Read FIRST, code SECOND. Multiple skills may apply. Skills override assumptions.
 

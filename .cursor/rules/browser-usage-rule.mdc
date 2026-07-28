@@ -11,7 +11,7 @@ globs:
 
 ## ENFORCEMENT
 1. **MANDATORY SKILL CHECK**: Before performing the first browser action of a session, you MUST read the skill file at:
-   - `.agent/skills/smart-browsing/SKILL.md`
+   - `.claude/skills/smart-browsing/SKILL.md`
 
 2. **SINGLE TAB POLICY**:
    - You are STRICTLY PROHIBITED from opening multiple tabs.
@@ -22,4 +22,4 @@ globs:
    - DO NOT fail on initial blank screens if the 15s window hasn't elapsed.
 
 ## FAILURE TO FOLLOW
-- If you ignore the protocol in `.agent/skills/smart-browsing/SKILL.md`, you risk providing false failure reports on JS-heavy sites.
+- If you ignore the protocol in `.claude/skills/smart-browsing/SKILL.md`, you risk providing false failure reports on JS-heavy sites.

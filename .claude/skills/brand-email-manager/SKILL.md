@@ -87,3 +87,10 @@ When reviewing any file that sends email, check for:
 - **Inconsistent Buttons**: Using different padding or colors for buttons. Always use `EMAIL_STYLES.button`.
 - **Relative URLs**: Emails must use absolute URLs for all links and images.
 - **Heading color**: Dark headings (`color:#000`) will be invisible on the black email background. Headings inside `wrapEmailContent` inherit white from the template styles — don't override with black unless you intend the content to sit on a white section.
+
+## Palette
+
+- Background: `#000000`
+- Text: `#ffffff`
+
+The template already applies these. Only restate them if you are hand-authoring a section that sits outside `wrapEmailContent`.
