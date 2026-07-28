@@ -18,7 +18,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full codebase map.
 | Database | Supabase | PostgreSQL + RLS |
 | Deployment | Vercel | Auto-deploy from `main` branch |
 | Email | Zoho Mail | OAuth2 integration |
-| Payments | PayPal | MCP server integration |
+| Payments | Stripe | Checkout Sessions + webhooks; Connect for affiliate payouts |
 | Shop | Fourthwall | External platform |
 
 ## Where to Find Things

@@ -33,7 +33,6 @@ This project uses the MCP (Model Context Protocol) registry system for dynamic t
 ### Available Tools
 
 The project automatically discovers and loads tools from:
-- PayPal MCP Server
 - Google Drive MCP Server
 - Vercel MCP Server
 - Railway MCP Server
@@ -46,12 +45,11 @@ The project automatically discovers and loads tools from:
 import { importTool } from '@tools/index';
 
 // Import a tool dynamically
-const createOrder = await importTool('paypal', 'createOrder');
+const listFiles = await importTool('googledrive', 'listFiles');
 
 // Use the tool
-const result = await createOrder.execute({
-  amount: 10.00,
-  currency: 'USD'
+const result = await listFiles.execute({
+  folderId: 'abc123'
 });
 ```
 

@@ -14,7 +14,7 @@ Skills live in **`.claude/skills/<name>/SKILL.md`** — this is the single canon
 | admin, dashboard, analytics | `admin-ops` |
 | affiliate, commission, tracking, Amazon links | `affiliate-ops`, `affiliate-program` |
 | blog, publish, post | `blog-publishing`, `supabase-mcp` |
-| shop, product, checkout, PayPal, order, payment | `commerce-engine`, `paypal-sandbox` |
+| shop, product, checkout, order, payment, Stripe | `commerce-engine` |
 | gallery, photos, upload, sync, Google Drive | `gallery-ops`, `gallery-sync-troubleshooting` |
 | UI, design, components, styling, CSS | `noir-design`, `bento-design`, `no-border-design` |
 | modal, overlay, z-index, popup | `modal-z-index-manager` |
@@ -28,7 +28,6 @@ Skills live in **`.claude/skills/<name>/SKILL.md`** — this is the single canon
 | Google Auth, OAuth, login | `fix-google-auth` |
 | clock, stopwatch, timer widget | `dashboard-clock-interaction` |
 | Google service account, photographer | `gallery-agent-management` |
-| PayPal credentials, verification | `paypal-verify`, `fix-paypal-mcp` |
 
 **Rules:** Read FIRST, code SECOND. Multiple skills may apply. Skills override assumptions.
 

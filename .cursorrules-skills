@@ -134,7 +134,7 @@ When building a feature:
 **Agent Process**:
 1. Search skills: `searchAvailableSkills('payment')`
 2. If no skill exists, create `payment-confirmation-skill.ts`
-3. Skill combines: PayPal tool + Email tool + Logging
+3. Skill combines: Stripe tool + Email tool + Logging
 4. Register skill in `skills-registry.ts`
 5. Use skill in feature: `useSkill('@payment-confirm', {...})`
 

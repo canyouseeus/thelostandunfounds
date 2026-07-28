@@ -50,7 +50,7 @@ This skill provides context on "The Lost+Unfounds" Affiliate Program, which incl
         -   **Pending Balance**: `status='pending'` OR (`status='approved'` AND `available_date > NOW()`).
     -   **Cron (Hourly)**: `api/cron/process-payouts.ts` (Sends `{ "processAll": true }`)
     -   **Handler**: `lib/api-handlers/admin/process-payouts.ts` (Handles `processAll` to pay ALL approved requests)
-    -   **PayPal**: `lib/api-handlers/admin/paypal-payouts.ts` (Direct Payouts API integration)
+    -   **Stripe Connect**: `lib/api-handlers/affiliates/connect-onboarding.ts` + `_stripe-client.ts`. Payouts are Stripe-only; PayPal is retired.
 -   **Database Schema**:
     -   `affiliates` (Profiles, points)
     -   `affiliate_customers` (Lifetime bindings)
@@ -62,7 +62,7 @@ This skill provides context on "The Lost+Unfounds" Affiliate Program, which incl
 ### Verify Affiliate Tracking
 When touching checkout or payments, ensure:
 1.  `initAffiliateTracking()` is called (usually in `Layout.tsx`).
-2.  `getPayPalCheckoutUrl` includes `X-Affiliate-Ref` header.
+2.  The Stripe Checkout Session creation path forwards the `X-Affiliate-Ref` header.
 
 ### King Midas debugging
 If rankings look wrong:

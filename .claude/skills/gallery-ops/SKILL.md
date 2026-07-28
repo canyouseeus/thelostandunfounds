@@ -13,8 +13,8 @@ The checkout process must ALWAYS follow this circular journey:
 1.  **Origin**: User selects photos in a specific gallery (e.g., `/gallery/kattitude-tattoo`).
 2.  **Checkout**: User hits "Secure Checkout".
     *   **Payload**: Must include `librarySlug` to identify the origin.
-    *   **Return URL**: Backend MUST append `?library={slug}` to the PayPal return URL.
-3.  **Payment**: User pays via PayPal.
+    *   **Return URL**: Backend MUST append `?library={slug}` to the Stripe success URL.
+3.  **Payment**: User pays via Stripe Checkout (the print path also accepts `strike`).
 4.  **Capture**: User returns to `/payment/success`.
 5.  **Delivery Redirection (CRITICAL)**:
     *   The Success Page MUST read the `library` query parameter.

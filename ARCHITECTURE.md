@@ -18,7 +18,7 @@
 │                            │                              │
 │              ┌─────────────┼─────────────┐               │
 │              │             │             │               │
-│         Zoho Mail     Fourthwall      PayPal             │
+│         Zoho Mail     Fourthwall      Stripe             │
 │         (email)       (shop)        (payments)           │
 └──────────────────────────────────────────────────────────┘
 ```

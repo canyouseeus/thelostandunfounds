@@ -33,7 +33,7 @@ npm audit fix --force
 ```bash
 npm audit fix --force --dry-run
 ```
-Check the dry-run output. If any package listed is a core dependency (react, vite, supabase-js, googleapis, paypal), do NOT run `--force` — investigate manually instead.
+Check the dry-run output. If any package listed is a core dependency (react, vite, supabase-js, googleapis, stripe), do NOT run `--force` — investigate manually instead.
 
 ### Step 4 — Handle unfixable vulnerabilities
 Some vulnerabilities have no fix yet (upstream issue). For each one:
