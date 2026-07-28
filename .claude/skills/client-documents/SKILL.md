@@ -85,11 +85,61 @@ Not a React component. These are the real deliverables:
 20 CSS class names. Kattitude's shares 19 of its 20 classes with Silva Star's. This system is
 working; do not reinvent it.
 
+### The stylesheet — one source, inlined into every document
+
+**`public/proposal.css` is the single source of truth.** Edit it there, never inside an HTML file,
+then run:
+
+```bash
+npm run proposal:css          # write the shared CSS into every proposal
+npm run proposal:css:check    # verify they're in sync (non-zero exit if stale)
+```
+
+`scripts/sync-proposal-css.mjs` rewrites only the region between these markers in each document:
+
+```html
+<!-- proposal-css:start -->
+<style> …generated, do not edit… </style>
+<!-- proposal-css:end -->
+<style> …optional per-document overrides, hand-edited… </style>
+```
+
+**Why inlined rather than `<link href="/proposal.css">`:** proposals get attached to emails and
+saved to disk. An external stylesheet would arrive completely unstyled. Every document must stay
+self-contained. Never replace the inlined block with a `<link>`.
+
+Per-document overrides go **after** the end marker and survive the sync. Keep them minimal —
+genuine deviations only, not a second copy of the shared rules. Current overrides:
+
+- `silva-star-proposal.html` — larger display type (`.cover-h1` 38px, `.pagehead h2` 32px /
+  `max-width:18ch`) and a glyph bullet instead of the square block
+- `kattitude-phase2-proposal.html` — `.pagehead h2{max-width:24ch}`, plus `.dep-grid` and `.flow`
+  components that exist only in that document
+
+> `max-width` on headings belongs to **`.pagehead h2`**, not `.subhead`. Putting it on the wrong
+> selector changes where headings wrap and is not obvious from reading the CSS.
+
 ### To make a new proposal
 
-**Copy the most recent `public/*-proposal.html` and rewrite the content.** Do not start from a
-blank file, and do not build one as a React component — that is a different, smaller lineage (see
-below) and is not the deliverable format.
+**Copy the most recent `public/*-proposal.html` and rewrite the content.** The markers and the
+inlined stylesheet come along with it; run `npm run proposal:css` afterwards to be certain it
+matches. Do not start from a blank file, and do not build one as a React component — that is a
+different, smaller lineage (see below) and is not the deliverable format.
+
+### Verifying a change
+
+These are client-facing documents. After editing `proposal.css`, confirm nothing shifted:
+
+```bash
+npm run proposal:css
+# render before/after and compare — headless_shell is at
+# /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell
+#   --headless --disable-gpu --no-sandbox --hide-scrollbars \
+#   --virtual-time-budget=4000 --window-size=1100,9000 --screenshot=out.png file://…
+```
+
+A 1100×9000 window covers the longest proposal (kiosk, 7 pages). A shorter viewport only renders
+the first page and will hide regressions further down.
 
 ### The shared class system
 
@@ -156,15 +206,30 @@ deviation forward.
 - [ ] `pdf_token` set; PDF linked via `/api/invoices/pdf?id=…&token=…`
 - [ ] No hand-written invoice HTML or PDF anywhere in the change
 - [ ] Proposal created as `public/<client>-proposal.html`, copied from the most recent one
+- [ ] Shared CSS edited in `public/proposal.css` only, then `npm run proposal:css` run
+- [ ] `npm run proposal:css:check` passes
+- [ ] Document still self-contained — inlined `<style>`, no `<link>` to an external sheet
 - [ ] Uses the shared class system and `--ink`/`--muted`/`--rule` variables, not literal hex
 - [ ] `@page` Letter + `print-color-adjust:exact` retained
 - [ ] Title reads `THE LOST+UNFOUNDS — Proposal for <Client>`
 - [ ] No `rounded-*`, no `shadow-*`
+- [ ] Rendered before/after at 1100×9000 and compared, if the shared CSS changed
 - [ ] Sent through the `email-delivery` path, with `brand-email-manager` rules applied
 
-## Known gap
+## Known gaps
 
-The proposal CSS is duplicated in full inside each HTML file rather than shared from one
-stylesheet. All five copies currently agree, so the system holds — but nothing enforces it, and
-the React preview components have already drifted (`FadeboxProposal.tsx` uses `#ededed`). Pulling
-the `:root` variables and the 20-class block into one included stylesheet is the durable fix.
+**Invoice brand identity is duplicated.** There are two `BRAND` objects:
+
+- `lib/email-template.ts` exports the shared one — name, logo, website, and a dark-mode palette
+  (`background #000000`, `text #ffffff`, `textMuted #999999`, `border #1a1a1a`). `api/invoices/send.ts`
+  correctly imports it for the email body.
+- `lib/api-handlers/_invoice-pdf.ts` defines its **own private** `BRAND` — name, tagline, website,
+  email — plus `INK #000000`, `MUTED #888888`, `HAIRLINE #dddddd`.
+
+The palettes *should* differ: the email is dark, the PDF is ink-on-paper. But the identity fields
+are duplicated and have already drifted — `website` is `https://www.thelostandunfounds.com` in one
+and `thelostandunfounds.com` in the other, and the muted grey is `#999999` vs `#888888`. Lifting
+name/website/tagline into a shared `lib/brand.ts` would fix it; the two palettes stay separate.
+
+**React preview components.** `FadeboxProposal.tsx` still uses `#ededed` where the HTML system
+uses `--rule-soft #d8d8d8`. Those components are not covered by the sync script.

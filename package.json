@@ -23,7 +23,9 @@
     "validate-env:local": "./scripts/validate-env.sh --local",
     "validate-env:vercel": "./scripts/validate-env.sh --vercel",
     "save:mantis": "./scripts/save-mantis-version.sh",
-    "dev:mantis": "./scripts/dev-mantis.sh"
+    "dev:mantis": "./scripts/dev-mantis.sh",
+    "proposal:css": "node scripts/sync-proposal-css.mjs",
+    "proposal:css:check": "node scripts/sync-proposal-css.mjs --check"
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",
