@@ -119,6 +119,39 @@ genuine deviations only, not a second copy of the shared rules. Current override
 > `max-width` on headings belongs to **`.pagehead h2`**, not `.subhead`. Putting it on the wrong
 > selector changes where headings wrap and is not obvious from reading the CSS.
 
+### Fonts are embedded — do not link to Google Fonts
+
+`public/proposal.css` carries **Inter as base64 `@font-face` rules** (variable, weight 100–900,
+roman + italic, latin subset — about 133 KB).
+
+Proposals used to `<link>` Inter from `fonts.googleapis.com`. That fetch has to succeed at the
+moment the document is displayed, which fails in exactly the cases that matter: attached to an
+email, opened offline, or printed to PDF. A proposal rendered without it silently falls back to
+Arial/Liberation and loses the letterforms the whole design depends on — this was confirmed by
+inspecting a generated PDF, which had embedded `LiberationSans` rather than Inter.
+
+**Never reintroduce a Google Fonts `<link>`, and never strip the `@font-face` blocks to save
+space.** Self-contained is the requirement.
+
+### PDF export
+
+```bash
+npm run proposal:pdf              # render every proposal to public/<client>-proposal.pdf
+node scripts/proposal-pdf.mjs kattitude   # or filter to one
+```
+
+PDFs are committed and served statically, so each has a stable URL —
+`https://www.thelostandunfounds.com/kattitude-proposal.pdf` — that can be linked in an email or
+attached directly.
+
+There is deliberately **no runtime PDF endpoint**. Proposals are static files, so changing one
+already requires a deploy; generating ahead of time avoids shipping a headless browser into a
+serverless function (`@sparticuz/chromium` is ~50 MB and sits near Vercel's limit). Invoices are
+different — they hold per-client data, so they genuinely need `/api/invoices/pdf` at runtime.
+
+**Regenerate the PDFs whenever a proposal or `proposal.css` changes**, otherwise the committed PDF
+and the HTML drift apart. Verify page counts match the document's `.page` sections.
+
 ### To make a new proposal
 
 **Copy the most recent `public/*-proposal.html` and rewrite the content.** The markers and the
@@ -208,6 +241,8 @@ deviation forward.
 - [ ] Proposal created as `public/<client>-proposal.html`, copied from the most recent one
 - [ ] Shared CSS edited in `public/proposal.css` only, then `npm run proposal:css` run
 - [ ] `npm run proposal:css:check` passes
+- [ ] `npm run proposal:pdf` re-run so the committed PDFs match the HTML
+- [ ] Inter still embedded as `@font-face`; no Google Fonts `<link>` reintroduced
 - [ ] Document still self-contained — inlined `<style>`, no `<link>` to an external sheet
 - [ ] Uses the shared class system and `--ink`/`--muted`/`--rule` variables, not literal hex
 - [ ] `@page` Letter + `print-color-adjust:exact` retained
