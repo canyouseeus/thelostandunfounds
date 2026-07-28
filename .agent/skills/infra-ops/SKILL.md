@@ -29,4 +29,4 @@ This skill governs the backend and deployment integrity of THE LOST+UNFOUNDS.
 
 ## Deployment Verification
 - **Build Logs**: After deployment, ALWAYS check Vercel logs for "Silent Failures" or JSON parsing errors.
-- **URL Check**: Verify the `https://www.thelostandunfounds.com/sql` page correctly lists new scripts.
+- **Schema Check**: After a migration, verify with the Supabase MCP (`list_tables`, `get_advisors` for RLS gaps). All DB changes go through `apply_migration` — see the `supabase-mcp` skill.

@@ -68,8 +68,10 @@ Code shared between API routes.
 | `lib/email-template.ts` | **Branded email templates** (MUST use for all emails) |
 | `lib/fourthwall/` | Fourthwall shop API client |
 
-### `sql/` — Database Scripts
-SQL migration and blog post creation scripts. Deployed via the `/sql` page on the live site.
+### `sql/` — Legacy Database Scripts (archive only)
+Historical migration and blog-post scripts from the retired file-based workflow. **Not a live
+path** — the `/sql` page that served them has been removed. All database changes now go through
+the Supabase MCP server (`apply_migration`). Do not add files here; see the `supabase-mcp` skill.
 
 ### `.agent/` — Agent Configuration
 | Directory | Purpose |
@@ -88,7 +90,7 @@ Images, SQL files, and other static content served directly.
 
 ## Key Data Flow
 
-1. **Blog Publishing**: Write content → create SQL file → update `SQL.tsx` + `api/sql/latest.ts` → merge to main → copy SQL from `/sql` page → execute in Supabase
+1. **Blog Publishing**: Write content → apply via Supabase MCP (`apply_migration`) → verify the row → verify the rendered post at `/thelostarchives/[slug]`
 2. **Newsletter**: Create campaign in admin → send via `api/newsletter/send` → Zoho Mail delivers using branded template
 3. **Shop Orders**: Customer buys on Fourthwall → webhook hits `api/webhooks/` → order tracked in Supabase
 4. **Photo Gallery**: Upload photos → sync to Google Drive → serve via gallery components

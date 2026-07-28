@@ -30,7 +30,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full codebase map.
 | Blog publishing rules | `.cursorrules` → Blog Publishing Rule section |
 | Email branding rules | `.agent/skills/brand-email-manager/SKILL.md` |
 | Design system & styling | `.agent/skills/noir-design/SKILL.md` |
-| Database schema & migrations | `sql/` directory, `.agent/skills/infra-ops/SKILL.md` |
+| Database schema & migrations | Supabase MCP (`apply_migration`) — see `supabase-mcp` skill. `sql/` is a dead archive |
 | Environment variables | `.env.local` (local), Vercel dashboard (prod) |
 | Deployment verification | `.agent/workflows/deploy-and-verify.md` |
 | Setup & onboarding docs | `docs/setup/` |
@@ -44,7 +44,7 @@ These rules are **non-negotiable**. Violating them will break production.
 
 1. **Blog text alignment is always `text-left`** — never `text-center` or `text-justify` on body text
 2. **Emails must use branded templates** — `generateNewsletterEmail()` or `generateTransactionalEmail()` from `lib/email-template.ts`. Never raw HTML.
-3. **SQL scripts use check-and-insert pattern** — never `ON CONFLICT (slug)`. Always check existence first.
+3. **Migrations are idempotent check-and-insert** — never `ON CONFLICT (slug)`. Always check existence first. Applied via Supabase MCP, never as committed SQL files.
 4. **Deploy = merge to `main` + push** — then verify at the live URL
 5. **Read the relevant skill BEFORE writing code** — use the keyword table in `.cursorrules`
 

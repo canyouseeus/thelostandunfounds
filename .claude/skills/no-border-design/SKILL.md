@@ -27,7 +27,7 @@ outline or a shadow, this skill wins.
 > name of this rule despite the property name containing "border".
 >
 > Note this is separate from the radius rule itself: corners are **square by default**, and
-> `rounded-*` is allowed *only* on the Platform Console Tray / tool-dock pill. See `noir-design`.
+> `rounded-*` is allowed *only* on the Platform Console Tray / tool-dock pill, and profile avatars (always `rounded-full`). See `noir-design`.
 
 ### NEVER use shadows or elevation:
 - ❌ `shadow`, `shadow-sm`, `shadow-lg`, `shadow-2xl`, any `shadow-*`

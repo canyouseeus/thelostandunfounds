@@ -15,7 +15,7 @@ description: Strict design rules and style preferences for the frontend.
    - Use padding, spacing, or background color differences (`bg-white/5`, `bg-white/10`) to
      separate elements. `backdrop-blur-*` is fine on overlays.
    - `borderRadius: 0` is **radius**, not a border — keep it (see `noir-design`). Corners are
-     square by default; `rounded-*` is allowed only on the Platform Console Tray / tool-dock pill.
+     square by default; `rounded-*` is allowed only on the Platform Console Tray / tool-dock pill, and profile avatars (always `rounded-full`).
    - **bento-cards**, **gallery items**, and **widgets** must be borderless.
    - The `no-border-design` skill is the authority here; it wins over any other design skill.
 

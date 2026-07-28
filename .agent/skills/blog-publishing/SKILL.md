@@ -1,24 +1,30 @@
 ---
 name: blog-publishing
-description: Handles the end-to-end workflow for publishing blog posts on THE LOST+UNFOUNDS. Use this when creating new posts or updating existing ones via SQL scripts.
+description: Handles the end-to-end workflow for publishing blog posts on THE LOST+UNFOUNDS. Use this when creating new posts or updating existing ones.
 ---
 
 # Blog Publishing & Styling Skill
 
 This skill ensures that every blog post is published correctly and adheres to the strict "Noir" aesthetic and styling rules.
 
-## Part 1: The 6-Step Publishing Workflow
+## Part 1: The Publishing Workflow
 
-1. **Create SQL File**: Create `sql/create-blog-post-[slug].sql` and `public/sql/create-blog-post-[slug].sql`.
-    - **Pattern**: Must use `DECLARE existing_post_id UUID;` and a check-and-insert/update block.
-    - **Critical**: Never use `ON CONFLICT (slug)`.
-2. **Update SQL.tsx**: Add fetch code and register in the `allScripts` array in `src/pages/SQL.tsx`.
-3. **Update API Endpoint**: Add the new SQL file path to `SQL_FILES` in `api/sql/latest.ts`.
-4. **Commit Changes**: Stage and commit with a descriptive message.
-5. **Merge to Production**: Checkout `main`, pull, merge the branch, and push.
-6. **Verify Deployment**:
-    - URL: `https://www.thelostandunfounds.com/sql/create-blog-post-[slug].sql`
-    - Page: `https://www.thelostandunfounds.com/sql`
+Publishing a post is a **database write, executed directly via the Supabase MCP server**. Read the
+`supabase-mcp` skill — it governs this. Do not write SQL files.
+
+1. **Write the post content** to the styling rules in Part 2.
+2. **Apply it via MCP**: use `apply_migration` (name it `snake_case`, e.g.
+   `publish_blog_post_[slug]`) with the idempotent check-and-update template below.
+    - **Pattern**: `DECLARE existing_post_id UUID;` then a check-and-insert/update block.
+    - **Critical**: Never use `ON CONFLICT (slug)` — `slug` is not guaranteed UNIQUE.
+    - Set `published=true` and `status='published'`, plus title, slug, content, excerpt, SEO fields.
+3. **Verify the write**: query the row back with `execute_sql` and confirm `published`/`status`.
+4. **Verify the rendered post** at `https://www.thelostandunfounds.com/thelostarchives/[slug]` —
+   check the live page, never the SQL you sent.
+
+> **Retired:** this workflow used to write `sql/` + `public/sql/` files, register them in
+> `src/pages/SQL.tsx` and an `SQL_FILES` array, and have a human copy the SQL off a `/sql` page.
+> That page and both code paths no longer exist. Do not recreate them.
 
 ## Part 2: Content Styling & Formatting
 
@@ -35,7 +41,10 @@ This skill ensures that every blog post is published correctly and adheres to th
 - **Disclosure**: Author names must be **UPPERCASE BOLD**. Disclosure text can be justified.
 - **Remove "⸻"**: Do not use the long dash character. Use proper paragraph spacing.
 
-## SQL Template Pattern
+## Migration Template Pattern
+
+Pass this as the `query` to `apply_migration` — it is not saved as a file anywhere.
+
 ```sql
 DO $$
 DECLARE

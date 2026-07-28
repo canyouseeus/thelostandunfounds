@@ -12,12 +12,12 @@ Skills: `.agent/skills/*/SKILL.md` and `skills/*/SKILL.md`
 | email, newsletter, send, campaign, branding, outreach | `brand-email-manager`, `outreach-ops` |
 | admin, dashboard, analytics | `admin-ops` |
 | affiliate, commission, tracking, Amazon links | `affiliate-ops`, `affiliate-program` |
-| blog, publish, post, SQL script | `blog-publishing` |
+| blog, publish, post | `blog-publishing`, `supabase-mcp` |
 | shop, product, checkout, PayPal, order, payment | `commerce-engine`, `paypal-sandbox` |
 | gallery, photos, upload, sync, Google Drive | `gallery-ops`, `gallery-sync-troubleshooting` |
 | UI, design, components, styling, CSS | `noir-design`, `bento-design`, `no-border-design` |
 | modal, overlay, z-index, popup | `modal-z-index-manager` |
-| database, migration, RLS, schema, Supabase | `infra-ops`, `verify-schema` |
+| database, migration, RLS, schema, Supabase, SQL | `supabase-mcp`, `infra-ops`, `verify-schema` |
 | environment variables, secrets, .env | `secure-env-manager`, `verify-env` |
 | deploy, production, dev server, build | `dev-parity-guard`, `fix-dev-server` |
 | refactor, cleanup, technical debt | `code-refactor` |
@@ -47,26 +47,33 @@ Never `text-center` or `text-justify` on body text. Applies to: BlogPost.tsx, Bl
 ### 2. Emails use branded templates
 Use `generateNewsletterEmail()`, `generateTransactionalEmail()`, or `wrapEmailContent()` from `lib/email-template.ts`. Never `processEmailContent` alone. Never raw HTML. Read `brand-email-manager` skill first.
 
-### 3. SQL uses check-and-insert pattern
+### 3. Migrations are idempotent check-and-insert
 Never `ON CONFLICT (slug)`. Always: `SELECT id INTO existing_post_id ... LIMIT 1` → `IF/ELSE` insert/update.
+Applies to every migration sent through `apply_migration`.
 
 ### 4. Deploy = merge to main + push + verify live URL
 Follow `.agent/workflows/deploy-and-verify.md`. Never mark deployment complete without verification.
 
 ### 5. Blog formatting: check live URL first
-Verify at `https://www.thelostandunfounds.com/thelostarchives/[slug]`, not the SQL file. See `BLOG_POST_STYLE_GUIDE.md`.
+Verify at `https://www.thelostandunfounds.com/thelostarchives/[slug]`, not the SQL you sent. See `BLOG_POST_STYLE_GUIDE.md`.
+
+### 6. Database changes go through Supabase MCP
+Never write SQL files to `sql/`/`public/sql/`, never hand SQL to the user to run by hand. See `supabase-mcp`.
 
 ## BLOG POST PUBLISHING RULE
 
-When publishing a blog post, follow ALL steps:
+Publishing a post is a **database write via the Supabase MCP server**. Read `supabase-mcp` and
+`blog-publishing` first.
 
-1. **Create SQL** in `sql/create-blog-post-[slug].sql` AND `public/sql/create-blog-post-[slug].sql`
+1. **Apply via MCP** — `apply_migration`, named `publish_blog_post_[slug]`
    - Use check-and-insert pattern (invariant #3)
    - Include title, slug, content, excerpt, SEO fields, published=true, status='published'
-2. **Update `src/pages/SQL.tsx`** — add fetch + entry in `allScripts` array (auto-sorted by `createdAt`)
-3. **Update `api/sql/latest.ts`** — add file path to `SQL_FILES` array
-4. **Commit, merge to main, push**
-5. **Verify** at `https://www.thelostandunfounds.com/sql` — script must appear with copy functionality
+2. **Verify the write** — query the row back with `execute_sql`
+3. **Verify the rendered post** at `https://www.thelostandunfounds.com/thelostarchives/[slug]`
+
+**Never** write SQL files to `sql/` or `public/sql/`, and never hand SQL to the user to paste into
+the Supabase dashboard. The `/sql` page, `src/pages/SQL.tsx` and the `SQL_FILES` endpoint were
+removed — do not recreate them.
 
 ## EMAIL SENDING RULE
 - Never claim you can't send email — use Zoho Mail integrations

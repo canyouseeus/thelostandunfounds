@@ -118,7 +118,6 @@ When implementing this skill, check these common modal locations:
 - `/src/components/admin/AdminGalleryView.tsx` - Gallery editor modal
 - `/src/components/admin/AdminMailView.tsx` - Mail compose modal
 - `/src/pages/Admin.tsx` - Any admin modals
-- `/src/pages/SQL.tsx` - SQL script viewer
 - `/src/components/shop/ProductComponents.tsx` - Product modals
 - Any component with "Modal", "Dialog", "Overlay", or "Popup" in the name
 

@@ -37,14 +37,17 @@ This skill ensures that all UI elements adhere to the project's signature "Noir"
   > `border-radius` is a corner radius, **not** a border. It is required here and is not a
   > violation of the no-border rule despite the property name. Do not strip it.
 
-  **The one exception — tool trays.** The Platform Console Tray / icon dock pattern (admin and
-  affiliate dashboards) is a pill: `rounded-full`, or `rounded-[32px] sm:rounded-full` when it
-  wraps to multiple rows. See `bento-design` → Platform Console Tray for the canonical markup.
+  **Exactly two exceptions:**
 
-  This exception covers **only** the tray pill itself and its icon buttons. It does not extend to
-  cards, modals, side panels, bottom sheets, inputs, ordinary buttons, or the expandable card a
-  tray icon opens — all of those stay square. If you are reaching for `rounded-*` on something
-  that is not a tool tray, the answer is no.
+  1. **Tool trays.** The Platform Console Tray / icon dock pattern (admin and affiliate
+     dashboards) is a pill: `rounded-full`, or `rounded-[32px] sm:rounded-full` when it wraps to
+     multiple rows. See `bento-design` → Platform Console Tray for the canonical markup. Covers
+     the tray pill itself and its icon buttons.
+  2. **Profile avatars.** Always `rounded-full` — avatars are circles, everywhere they appear.
+
+  Nothing else. Cards, modals, side panels, bottom sheets, inputs, ordinary buttons, product
+  images, gallery thumbnails and the expandable card a tray icon opens all stay square. If you are
+  reaching for `rounded-*` on something that is not a tool tray or an avatar, the answer is no.
 
 ### 3. Typography
 - **Font**: Use `Inter` or system sans-serif.

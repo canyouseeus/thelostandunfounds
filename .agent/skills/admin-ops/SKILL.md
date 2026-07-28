@@ -16,7 +16,7 @@ This skill governs the maintenance, data integrity, and visual excellence of the
 - **Accuracy**: Use the most accurate source of truth for stats (e.g., combining `platform_subscriptions`, `user_roles`, and `user_subdomains` for user counts).
 
 ### 2. UI & Noir Aesthetic
-- **Monochrome**: Pure black background (`#000000`) and pure white text/borders.
+- **Monochrome**: Pure black background (`#000000`) and pure white text. No borders, no shadows.
 - **Rigid Geometry**: STRICTLY enforce `border-radius: 0 !important`. No rounded corners on buttons, cards, or inputs.
 - **Typography**: Headers (h1, h2, Bento titles) MUST be **UPPERCASE**.
 - **Alignment**: Standardize on `text-left` for body content and lists.
@@ -45,8 +45,9 @@ The dashboard uses a 4-column Bento grid:
 
 ## Verification Checklist
 - [ ] No "coming soon" or static "--%" placeholders.
-- [ ] No `rounded` or `rounded-*` classes. The **only** sanctioned exception is the Platform
-      Console Tray / tool-dock pill and its icon buttons (see `noir-design` → No Rounded Corners).
+- [ ] No `rounded` or `rounded-*` classes. Two sanctioned exceptions only: the Platform Console
+      Tray / tool-dock pill and its icon buttons, and profile avatars (always `rounded-full`).
+      See `noir-design` → No Rounded Corners.
 - [ ] No `border-*` classes and no `shadow-*` — separation is surface tone and spacing only.
 - [ ] All headers are uppercase.
 - [ ] All data is fetched from Supabase.
