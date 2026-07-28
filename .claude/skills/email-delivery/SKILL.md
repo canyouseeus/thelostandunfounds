@@ -65,11 +65,26 @@ bulk sending through it risks the quota and the sending reputation of the same d
 transactional mail. Resend is a purpose-built ESP with batch endpoints, domain auth and bounce
 handling. Keep `RESEND_API_KEY` configured in every environment that sends newsletters.
 
-Two open items (do not resolve unilaterally):
-1. Whether the Zoho fallback should be removed outright so a missing `RESEND_API_KEY` fails loudly
-   instead of quietly degrading to a mailbox provider.
-2. `sendBatchEmails` exists in `_resend-email-handler.ts` but the newsletter loops one-at-a-time
-   with a 550ms delay. Wiring the batch endpoint would be materially faster.
+The Zoho fallback is deliberately retained so a missing key can't block a send outright, but it is
+a **degraded path** and is no longer silent: the handler logs `[newsletter] RESEND_API_KEY is not
+set …` and returns the same text as a `warning` field in the API response.
+
+### Resume safety (why send logs flush mid-loop)
+
+The handler skips subscribers already logged `sent` for the same subject within 24h, which makes a
+re-run resumable rather than duplicative. That guarantee depends on logs being written **as the
+send progresses** — `newsletter_send_logs` is flushed every 25 emails and once more at the end.
+
+Do not "optimise" this back into a single insert after the loop. `/api/newsletter/send` has
+`maxDuration: 300` and the loop costs ~550ms/email, so a list beyond roughly 500 recipients will be
+killed mid-send. With end-of-loop logging that meant real emails delivered and zero recorded — and
+the retry would mail the entire list a second time.
+
+### Still outstanding
+
+`sendBatchEmails` exists in `_resend-email-handler.ts` but the newsletter still loops one-at-a-time
+with a 550ms delay. Wiring the batch endpoint would remove the ~500-recipient timeout cliff
+entirely. Not done yet — it changes the send mechanism and needs a real test send to verify.
 
 ## What NOT to do
 
