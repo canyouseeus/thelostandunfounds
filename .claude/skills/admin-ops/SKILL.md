@@ -37,8 +37,10 @@ The dashboard uses a 4-column Bento grid:
 - **Small Cards**: 1x1 (Users, Subscriptions, Products, Blog, Newsletter, Mail, System)
 
 ### Standard Styles
-- Cards: `.noir-card` or custom Bento card with white border.
-- Buttons: White background with black text for primary actions; transparent with white border for secondary.
+- Cards: `.noir-card` or a custom Bento card — **borderless and shadowless**, separated by surface
+  tone (`bg-white/5`), never by an outline. Square corners.
+- Buttons: White background with black text for primary actions; `bg-white/10` for secondary. No
+  borders, no shadows (see `no-border-design`).
 - Stats: Use `AnimatedNumber` for all numeric values.
 
 ## Global Debug Report Button
@@ -66,7 +68,7 @@ logError(err.message);
 **Styling (Noir-compliant):**
 ```tsx
 <button
-  className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-widest bg-black text-white border border-white hover:bg-white hover:text-black transition-colors"
+  className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-widest bg-white/10 text-white hover:bg-white hover:text-black transition-colors"
   style={{ borderRadius: 0 }}
 >
   <ClipboardCopy className="w-3 h-3" />
@@ -76,7 +78,9 @@ logError(err.message);
 
 ## Verification Checklist
 - [ ] No "coming soon" or static "--%" placeholders.
-- [ ] No `rounded` or `rounded-*` classes (except for profile avatars if absolutely necessary).
+- [ ] No `rounded` or `rounded-*` classes. The **only** sanctioned exception is the Platform
+      Console Tray / tool-dock pill and its icon buttons (see `noir-design` → No Rounded Corners).
+- [ ] No `border-*` classes and no `shadow-*` — separation is surface tone and spacing only.
 - [ ] All headers are uppercase.
 - [ ] All data is fetched from Supabase.
 - [ ] Desktop and mobile layouts are aligned correctly.

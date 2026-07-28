@@ -12,15 +12,18 @@ This skill provides the core design principles, component patterns, and implemen
 1.  **Pure Black Base**: Use absolute black (`#000000`) for the primary background.
 2.  **Bento Card Structure**: Logical groupings of information should be encapsulated in `AdminBentoCard` (or similar containers) with:
     *   Header background: `#0a0a0a` (slightly lighter than base).
-    *   Subtle hover effects: Lift (`-translate-y-0.5`), scale (`scale-[1.01]`), and dark shadow.
-    *   No radius: All corners MUST be square/none.
+    *   Subtle hover effects: Lift (`-translate-y-0.5`) and scale (`scale-[1.01]`) only — no shadow.
+    *   No radius: All corners MUST be square/none. (The Platform Console Tray below is the *only*
+        sanctioned `rounded-*` in the system — it does not license rounding anything else.)
 3.  **Left-Aligned Content**: All body text, headers (within cards), and descriptions MUST be left-aligned (`text-left`).
 4.  **Premium Typography**:
     *   Use `Inter` as the primary font.
     *   Large headings should be uppercase with wide tracking (e.g., `uppercase tracking-widest`).
     *   Small labels/metadata should use `text-[10px]` with wide tracking (`tracking-[0.2em]`).
 5.  **Subtle Accents**:
-    *   Border colors: `border-white/10` or `border-white/20`.
+    *   **No borders — ever.** See the `no-border-design` skill; it is the authority. Bento cards
+        separate by surface tone (`bg-white/5`, `bg-white/10`) and spacing, never by an outline.
+        `border-white/10` and `border-white/20` are retired — do not reintroduce them.
     *   Text colors: `text-white/80` for labels, `text-white/60` or `text-white/40` for metadata.
     *   Primary Action: White background with black text for buttons, or subtle high-contrast accents.
 
@@ -74,7 +77,7 @@ the top of the scroll area:
 ```tsx
 <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2">
   {/* expandable card, if one is open, floats directly above the dock — see below */}
-  <div className="flex items-center gap-1 p-1.5 bg-white/10 backdrop-blur-md rounded-full shadow-2xl">
+  <div className="flex items-center gap-1 p-1.5 bg-white/10 backdrop-blur-md rounded-full">
     {/* icon buttons */}
   </div>
 </div>
@@ -85,7 +88,9 @@ the top of the scroll area:
 - `fixed` + `bottom-24` reuses the back-to-top button's own screen position verbatim. If the view
   also has another `fixed bottom-*` bar (e.g. a batch-selection action bar at `bottom-6`),
   `bottom-24` keeps the two from colliding — don't invent a new offset, match the existing one.
-- `shadow-2xl` gives the glass some separation from busy content behind it.
+- **No shadow.** Separation from the content behind comes from `backdrop-blur-md` plus the
+  `bg-white/10` tone — never a `shadow-*`. If the tray reads as flat against busy content,
+  strengthen the blur; do not add elevation.
 
 ### Icon button (both variants)
 ```tsx
@@ -94,7 +99,7 @@ the top of the scroll area:
   title={label}
   className={`relative p-2.5 sm:p-3 transition-all duration-300 rounded-full group/btn ${
     active
-      ? 'bg-white text-black scale-110 shadow-[0_0_20px_rgba(255,255,255,0.2)]'
+      ? 'bg-white text-black scale-110'
       : 'text-white/60 hover:text-white hover:bg-white/10'
   }`}
 >
@@ -146,7 +151,7 @@ same `fixed` wrapper:
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 8 }}
       transition={{ duration: 0.15 }}
-      className="bg-black/80 backdrop-blur-2xl shadow-2xl w-[calc(100vw-2rem)] max-w-sm p-4"
+      className="bg-black/80 backdrop-blur-2xl w-[calc(100vw-2rem)] max-w-sm p-4"
     >
       {openCard === 'search' && (/* the one tool this icon is for */)}
     </motion.div>
@@ -161,7 +166,7 @@ opens. Text-heavy content (search inputs, filter chips, tag pickers) needs to st
 
 ### 1. Migrating a Basic List to Bento Style
 
-**Before (Basic):**
+**Before (Basic — note the `border`, which is exactly what this migration removes):**
 ```tsx
 <div className="bg-black/50 border border-white p-6">
   <h3 className="text-white text-lg font-bold mb-4">Items</h3>
@@ -182,7 +187,7 @@ opens. Text-heavy content (search inputs, filter chips, tag pickers) needs to st
   icon={<Package className="w-4 h-4" />}
   action={<button onClick={handleAdd}>NEW</button>}
 >
-  <div className="divide-y divide-white/5">
+  <div>
     {items.map(item => (
       <div key={item.id} className="group/item py-4 flex items-center justify-between">
         <div className="flex-1 min-w-0">
@@ -197,11 +202,14 @@ opens. Text-heavy content (search inputs, filter chips, tag pickers) needs to st
 ```
 
 ### 2. Form Implementation
-*   Inputs: `bg-black border border-white/20 text-white focus:border-white transition-colors outline-none`.
+*   Inputs: `bg-white/5 text-white focus:bg-white/10 transition-colors outline-none` — borderless.
+    Note `outline-none` removes the focus ring, so the surface change *is* the focus affordance;
+    don't drop it or the field becomes unfocusable-looking.
 *   Buttons: `px-6 py-3 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-white/90 transition`.
 
 ## Best Practices
 *   **Grid Layouts**: Use `grid-cols-1 md:grid-cols-2` or `md:grid-cols-3` for desktop dashboards.
 *   **Avoid Over-nesting**: Keep the Bento cards as the primary top-level containers.
-*   **Shadows**: Use large, soft shadows on hover: `hover:shadow-[0_8px_30px_rgba(0,0,0,0.5)]`.
+*   **Shadows**: None. Never use `shadow-*` or an arbitrary `shadow-[...]`, on hover or at rest.
+    Hover feedback is `-translate-y-0.5` / `scale-[1.01]` / a surface-tone change.
 *   **Transitions**: Always include `transition-all duration-300 ease-out` for interactive elements.

@@ -19,5 +19,5 @@ This skill manages the commercial "Noir" marketplace and financial transactions.
 
 ## UI/UX Rules
 - **Direct Action**: Minimize friction. One-click transitions between pipeline stages.
-- **Card Styling**: Every product card is a simple white outline box (`border: 1px solid white`). Inactive states are `opacity: 0.6`. Hover state border glows pure white.
-- **Forms**: Use simple white bottom-border only for inputs. Labels are small and uppercase.
+- **Card Styling**: Every product card is a **borderless** surface — `bg-white/5` against the pure-black page. Inactive states are `opacity: 0.6`. Hover raises the surface to `bg-white/10`; it never adds an outline, ring, or glow. (No `border-*` classes anywhere — see `no-border-design`.)
+- **Forms**: Inputs are borderless — `bg-white/5` with `focus:bg-white/10`. No bottom-border rule. Labels are small and uppercase.
