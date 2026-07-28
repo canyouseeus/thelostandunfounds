@@ -15,6 +15,7 @@ Skills live in **`.claude/skills/<name>/SKILL.md`** — this is the single canon
 | admin, dashboard, analytics | `admin-ops` |
 | affiliate, commission, tracking, Amazon links | `affiliate-ops`, `affiliate-program` |
 | blog, publish, post | `blog-publishing`, `supabase-mcp` |
+| invoice, proposal, quote, estimate, client document | `client-documents` |
 | shop, product, checkout, order, payment, Stripe | `commerce-engine` |
 | gallery, photos, upload, sync, Google Drive | `gallery-ops`, `gallery-sync-troubleshooting` |
 | UI, design, components, styling, CSS | `noir-design`, `bento-design`, `no-border-design` |
@@ -61,6 +62,9 @@ Verify at `https://www.thelostandunfounds.com/thelostarchives/[slug]`, not the S
 
 ### 6. Database changes go through Supabase MCP
 Never write SQL files to `sql/`/`public/sql/`, never hand SQL to the user to run by hand. See `supabase-mcp`.
+
+### 7. Client documents are generated, never authored
+An invoice is a row in the `invoices` table — the PDF renders via `generateInvoicePdf`. Never hand-write invoice HTML or build a one-off PDF. Proposals are copied forward from the most recent one, never written from a blank file. See `client-documents`.
 
 ## BLOG POST PUBLISHING RULE
 

@@ -38,15 +38,16 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full codebase map.
 | Security docs | `docs/security/` |
 | Archived/completed docs | `docs/archive/` |
 
-## Five Critical Invariants
+## Six Critical Invariants
 
 These rules are **non-negotiable**. Violating them will break production.
 
 1. **Blog text alignment is always `text-left`** — never `text-center` or `text-justify` on body text
 2. **Emails must use branded templates** — `generateNewsletterEmail()` or `generateTransactionalEmail()` from `lib/email-template.ts`. Never raw HTML.
 3. **Migrations are idempotent check-and-insert** — never `ON CONFLICT (slug)`. Always check existence first. Applied via Supabase MCP, never as committed SQL files.
-4. **Deploy = merge to `main` + push** — then verify at the live URL
-5. **Read the relevant skill BEFORE writing code** — use the keyword table in `.cursorrules`
+4. **Client documents are generated, never authored** — an invoice is a row in the `invoices` table; the PDF renders via `generateInvoicePdf`. Never hand-write invoice HTML. Proposals are copied forward from the most recent one. See `client-documents`.
+5. **Deploy = merge to `main` + push** — then verify at the live URL
+6. **Read the relevant skill BEFORE writing code** — use the keyword table in `.cursorrules`
 
 ## Skill Lookup
 
