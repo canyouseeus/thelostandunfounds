@@ -24,7 +24,12 @@ This skill governs the backend and deployment integrity of THE LOST+UNFOUNDS.
 - **Secrets**: NEVER hardcode API keys. Use the `lib/api-handlers` pattern to fetch secrets.
 
 ## Zoho Mail Integration
-- **OAuth**: Use the `_zoho-mail-handler.ts` and associated refresh token logic.
+- **Sending email is not covered here.** Use `sendTransactionalEmail` from
+  `lib/api-handlers/_resend-email-handler.ts` — the `email-delivery` skill is the authority.
+- **`_zoho-mail-handler.ts` is the mailbox client**, not a sending path: `getFolders`,
+  `getMessages`, `moveMessage`, `saveDraft`, `markAsRead`. It backs the admin webmail page and is
+  imported only by `api/mail/[...path].ts`. Use it for inbox features, never to send.
+- **OAuth**: Zoho refresh-token logic lives in `_zoho-email-utils.ts` (`getZohoAuthContext`).
 - **Error Handling**: Surface specific Zoho status codes if a send fails.
 
 ## Deployment Verification

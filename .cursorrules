@@ -10,7 +10,8 @@ Skills live in **`.claude/skills/<name>/SKILL.md`** — this is the single canon
 
 | Keywords / Domain | Required Skill(s) |
 |---|---|
-| email, newsletter, send, campaign, branding, outreach | `brand-email-manager`, `outreach-ops` |
+| email, send, transactional, Zoho, Resend | `email-delivery` (authority), `brand-email-manager` |
+| newsletter, campaign, subscribers, outreach | `outreach-ops`, `brand-email-manager`, `email-delivery` |
 | admin, dashboard, analytics | `admin-ops` |
 | affiliate, commission, tracking, Amazon links | `affiliate-ops`, `affiliate-program` |
 | blog, publish, post | `blog-publishing`, `supabase-mcp` |
