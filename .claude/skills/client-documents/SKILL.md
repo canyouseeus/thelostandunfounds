@@ -41,7 +41,8 @@ payment_method, pdf_token
 
 `generateInvoicePdf()` in **`lib/api-handlers/_invoice-pdf.ts`** owns every visual decision:
 
-- the brand banner, fetched from `https://www.thelostandunfounds.com/brand/banner.png`
+- the brand banner, read from `public/brand/banner.png` **on disk** (cached per container).
+  It is deliberately not fetched over HTTP — see the warning below.
 - `BRAND` — name `THE LOST+UNFOUNDS`, tagline `PHOTOGRAPHY & VISUAL STORYTELLING`, website,
   `media@thelostandunfounds.com`
 - the palette: `INK #000000`, `MUTED #888888`, `HAIRLINE #dddddd`
@@ -49,6 +50,30 @@ payment_method, pdf_token
 
 Both live entry points — `api/invoices/pdf.ts` and `api/invoices/send.ts` — call it. **Create the
 row and correct branding is automatic.** That is why the existing invoices all match.
+
+### Brand assets are read from disk, never fetched — and the wordmark lives in the banner
+
+Two rules in `_invoice-pdf.ts` that are easy to undo by accident:
+
+**1. Never make a brand asset depend on a network fetch at render time.** The banner used to be
+pulled from `https://www.thelostandunfounds.com/brand/banner.png` on every render, inside a bare
+`catch {}`. When the site was down, every invoice rendered bannerless — structurally perfect, no
+error, no log line. It read as "the agent ignored our branding" when the generator was working
+exactly as written. It now reads `public/brand/banner.png` from disk; HTTP is a fallback only, and
+a total miss logs `[invoice-pdf] BANNER MISSING`.
+
+**2. The banner artwork already contains the wordmark.** `BRAND.name` is only drawn as text when
+the banner is *absent*. Rendering both prints "THE LOST+UNFOUNDS" twice — once inside the image,
+once beneath it. If you add a header element, check it against a rendered page, not just the code.
+
+**3. Don't compute layout offsets from `doc.y` after `doc.image()`.** pdfkit does not advance the
+cursor past an image placed at explicit coordinates, so `doc.y` still points at the top of the
+page and the header draws *over* the banner in dark-on-black. Derive the drawn height from the
+image's own aspect ratio (`pngSize()`).
+
+> **Verify by rendering.** After touching this file, generate a PDF and look at the whole page —
+> not just the thing you changed. Bugs 2 and 3 were both invisible while bug 1 was active, and
+> both were obvious the moment a page was actually rendered and viewed.
 
 ### The failure mode this prevents
 
@@ -238,6 +263,8 @@ deviation forward.
 - [ ] Invoice created as an `invoices` row, not authored markup
 - [ ] `pdf_token` set; PDF linked via `/api/invoices/pdf?id=…&token=…`
 - [ ] No hand-written invoice HTML or PDF anywhere in the change
+- [ ] If `_invoice-pdf.ts` was touched: rendered a test PDF and viewed the whole page
+- [ ] Banner present, wordmark appears exactly once, header clear of the banner
 - [ ] Proposal created as `public/<client>-proposal.html`, copied from the most recent one
 - [ ] Shared CSS edited in `public/proposal.css` only, then `npm run proposal:css` run
 - [ ] `npm run proposal:css:check` passes

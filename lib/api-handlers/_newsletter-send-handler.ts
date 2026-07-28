@@ -547,9 +547,19 @@ export default async function handler(
     // Initialize Zoho if needed (only when not using Resend)
     let accessToken: string = ''
     let accountId: string = ''
-    let actualFromEmail: string = fromEmail
+    let actualFromEmail: string = fromEmail ?? ''
 
     if (!useResend) {
+      // Unreachable in practice — the guard above returns unless at least one
+      // provider is configured, and !useResend means it wasn't Resend. Kept as
+      // an explicit check so the Zoho path can never send from an empty
+      // address, and so fromEmail narrows to string below.
+      if (!fromEmail) {
+        return res.status(500).json({
+          error: 'Zoho path selected but neither ZOHO_FROM_EMAIL nor ZOHO_EMAIL is set.'
+        })
+      }
+
       try {
         accessToken = await getZohoAccessToken()
         const accountInfo = await getZohoAccountInfo(accessToken, fromEmail)
