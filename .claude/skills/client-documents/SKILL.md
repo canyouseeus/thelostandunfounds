@@ -68,41 +68,85 @@ it per client. Delivery rules live in the `email-delivery` skill.
 
 ## Proposals
 
-### Current state — read this before starting
+### Where they actually live
 
-Proposals are **hand-built per client** and there is no shared component:
+A client proposal is a **standalone print-ready HTML file at `public/<client>-proposal.html`.**
+Not a React component. These are the real deliverables:
 
 | File | Lines |
 |---|---|
-| `src/templates/silva-star/SilvaStarProposal.tsx` | 407 |
-| `src/templates/fadebox/FadeboxProposal.tsx` | 288 |
+| `public/kattitude-proposal.html` | 646 |
+| `public/kiosk-proposal.html` | 660 |
+| `public/tattoo-artist-proposal.html` | 619 |
+| `public/kattitude-phase2-proposal.html` | 613 |
+| `public/silva-star-proposal.html` | 431 |
 
-Neither imports a shared brand module. They are copy-paste siblings and have **already drifted** —
-Silva Star uses `#1a1a1a`, Fadebox uses `#ededed`, for otherwise equivalent surfaces.
+**All five share the same design system** — identical palette, identical font stack, and the same
+20 CSS class names. Kattitude's shares 19 of its 20 classes with Silva Star's. This system is
+working; do not reinvent it.
 
-**So: start from the most recent existing proposal and adapt it. Never write one from a blank
-file.** Copying forward is the only thing currently keeping these consistent.
+### To make a new proposal
 
-### Canonical proposal spec
+**Copy the most recent `public/*-proposal.html` and rewrite the content.** Do not start from a
+blank file, and do not build one as a React component — that is a different, smaller lineage (see
+below) and is not the deliverable format.
 
-Shared by both existing proposals — treat as the standard:
+### The shared class system
 
-- **Palette**: `#0a0a0a` (ink), `#3a3a3a`, `#7a7a7a` (muted), `#d8d8d8`, `#f5f5f5` (page), `#ffffff`
-- **Typography**: uppercase with heavy letter-spacing — `.22em` to `.42em` — at small sizes
-  (8–13px) for labels, eyebrows and section headers. Headline sentences are sentence case.
-- **No rounded corners.** Both files contain zero `rounded` classes. Keep it that way.
-- **No shadows.** Both files contain zero `shadow` classes. Keep it that way.
+```
+.page  .pagehead  .runhead  .runfoot          layout + running header/footer
+.cover-brand  .cover-logo  .cover-label       cover block
+.cover-h1  .cover-h1-sub  .cover-tag
+.cover-body  .cover-grid  .cover-dates
+.subhead  .rule  .rule-soft                   section structure
+.callout  .compare  .invest  .sign            content blocks
+```
+
+### Palette — defined as CSS custom properties
+
+```css
+:root{
+  --paper:    #ffffff;
+  --ink:      #0a0a0a;
+  --soft:     #3a3a3a;
+  --muted:    #7a7a7a;
+  --rule:     #1a1a1a;
+  --rule-soft:#d8d8d8;
+}
+```
+
+Use the variables, never literal hex. `#1a1a1a` is `--rule` — it is the standard, not a variant.
+
+### Other conventions
+
+- **Print-first**: `@page { size: Letter; margin: 0 }` plus `print-color-adjust:exact`. These are
+  documents meant to be saved as PDF — keep both.
+- **Font**: Inter from Google Fonts, weights 400–800, stack
+  `'Inter','Helvetica Neue',Arial,sans-serif`.
+- **Title convention**: `THE LOST+UNFOUNDS — Proposal for <Client Name>`.
+- **Typography**: uppercase with heavy letter-spacing (`.22em`–`.42em`) at small sizes (8–13px)
+  for labels, eyebrows and running heads. Headline sentences are sentence case.
+- **Structure**: cover → positioning line → scope → comparison → pricing → sign-off. The
+  positioning line is second person and names the client's work
+  ("You create the art. The platform runs the studio." / "You run the trucks. The site brings the
+  work."). Keep that voice.
+- **No rounded corners, no shadows.**
 
 > **Hairline rules are allowed here.** Proposals and invoices are print-style documents and use
-> thin rules for structure. This is a deliberate exception to the app-wide `no-border-design`
-> rule, which governs the web UI, not client documents. Do not strip rules out of a proposal or
-> invoice in the name of that skill.
+> thin rules (`--rule`, `--rule-soft`) for structure. This is a deliberate exception to the
+> app-wide `no-border-design` rule, which governs the web UI, not client documents. Do not strip
+> rules out of a proposal or invoice in the name of that skill.
 
-### When adding a client
+### The React preview lineage — separate, don't confuse them
 
-`src/templates/<client>/` holds that client's `Landing`, `Dashboard` and optionally `Proposal`.
-Kattitude currently has a Landing and Dashboard but **no Proposal** — if one is needed, copy the
-most recent proposal rather than inventing a layout.
+`src/templates/<client>/` holds in-app preview routes: `Landing`, `Dashboard`, and for two clients
+a `Proposal` component (`SilvaStarProposal.tsx`, `FadeboxProposal.tsx`, routed at
+`/silva-star/proposal` and `/fadebox-preview/proposal`). These are **web previews, not the sent
+document.**
+
+They have drifted from the HTML system: `FadeboxProposal.tsx` uses `#ededed` where everything else
+uses `--rule-soft #d8d8d8`. If you touch it, bring it back in line rather than copying the
+deviation forward.
 
 ---
 
@@ -111,14 +155,16 @@ most recent proposal rather than inventing a layout.
 - [ ] Invoice created as an `invoices` row, not authored markup
 - [ ] `pdf_token` set; PDF linked via `/api/invoices/pdf?id=…&token=…`
 - [ ] No hand-written invoice HTML or PDF anywhere in the change
-- [ ] Proposal copied forward from the most recent one, not written fresh
-- [ ] Palette and letter-spaced uppercase treatment match the spec above
+- [ ] Proposal created as `public/<client>-proposal.html`, copied from the most recent one
+- [ ] Uses the shared class system and `--ink`/`--muted`/`--rule` variables, not literal hex
+- [ ] `@page` Letter + `print-color-adjust:exact` retained
+- [ ] Title reads `THE LOST+UNFOUNDS — Proposal for <Client>`
 - [ ] No `rounded-*`, no `shadow-*`
 - [ ] Sent through the `email-delivery` path, with `brand-email-manager` rules applied
 
 ## Known gap
 
-There is no shared proposal layout component. Until one is extracted, consistency depends on
-copying forward, which is how the `#1a1a1a` / `#ededed` drift happened. Extracting a shared
-proposal shell is the durable fix — it touches two live client-facing pages, so it needs a
-deliberate pass rather than an incidental one.
+The proposal CSS is duplicated in full inside each HTML file rather than shared from one
+stylesheet. All five copies currently agree, so the system holds — but nothing enforces it, and
+the React preview components have already drifted (`FadeboxProposal.tsx` uses `#ededed`). Pulling
+the `:root` variables and the 20-class block into one included stylesheet is the durable fix.
