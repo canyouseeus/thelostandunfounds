@@ -7,7 +7,9 @@ import globals from 'globals';
 
 export default [
   {
-    ignores: ['dist', 'node_modules', 'build', '.vercel'],
+    // previews/ holds standalone apps with their own package.json, tsconfig and
+    // dependency trees; they are not part of this build and lint separately.
+    ignores: ['dist', 'node_modules', 'build', '.vercel', 'previews'],
   },
   js.configs.recommended,
   {
