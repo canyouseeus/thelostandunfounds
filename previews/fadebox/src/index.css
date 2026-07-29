@@ -9,6 +9,19 @@ body,
   margin: 0;
 }
 
+/* Matches the main app's baseline (src/index.css). The Fadebox pages were
+   authored against it, so omitting it let the reviews marquee drag the whole
+   document sideways. The individual overflows are fixed at their source too —
+   this is a safety net, not the fix. */
+html,
+body {
+  overflow-x: hidden;
+}
+
+body {
+  min-width: 320px;
+}
+
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

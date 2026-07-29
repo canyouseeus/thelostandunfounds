@@ -122,6 +122,10 @@ function MarqueeStyles() {
       @keyframes fbScrollL { from { transform: translateX(0); } to { transform: translateX(-50%); } }
       @keyframes fbScrollR { from { transform: translateX(-50%); } to { transform: translateX(0); } }
       @keyframes fbRise { to { opacity: 1; transform: none; } }
+      /* The track is w-max (~4250px). Without clipping here it overflows the
+         document and the whole page scrolls sideways; the mask alone does not
+         contain layout. */
+      .fb-marquee { overflow: hidden; }
       .fb-marquee:hover .fb-track { animation-play-state: paused; }
       @media (prefers-reduced-motion: reduce) {
         .fb-track { animation: none !important; }

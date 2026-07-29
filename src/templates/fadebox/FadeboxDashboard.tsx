@@ -199,8 +199,11 @@ export default function FadeboxDashboard() {
           ))}
         </div>
 
-        {/* Two-column: schedule + side */}
-        <div className="grid gap-3" style={{ gridTemplateColumns: 'minmax(0, 1.6fr) minmax(0, 1fr)' }}>
+        {/* Two-column: schedule + side. Stacks below md — squeezed into a third
+            of a phone screen the revenue chart's day labels cannot shrink
+            (flex items default to min-width:auto), so the chart ran past the
+            viewport and the global overflow-x:hidden cut it off. */}
+        <div className="grid gap-3 grid-cols-1 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
           {/* Left: schedule */}
           <Card t={t} style={{ padding: 0 }}>
             <div className="flex items-center justify-between" style={{ padding: '20px 22px 14px' }}>
@@ -255,7 +258,7 @@ export default function FadeboxDashboard() {
         </div>
 
         {/* Leaderboard + reviews */}
-        <div className="grid gap-3 mt-3" style={{ gridTemplateColumns: 'minmax(0, 1.6fr) minmax(0, 1fr)' }}>
+        <div className="grid gap-3 mt-3 grid-cols-1 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
           {/* Barber leaderboard */}
           <Card t={t} style={{ padding: 0 }}>
             <div className="flex items-center justify-between" style={{ padding: '20px 22px 14px' }}>
