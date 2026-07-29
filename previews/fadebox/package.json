@@ -8,7 +8,8 @@
     "dev": "vite",
     "prebuild": "node scripts/fetch-remote-sources.mjs",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:single-file": "VITE_HASH_ROUTER=1 vite build && node scripts/build-single-file.mjs"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
