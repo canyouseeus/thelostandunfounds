@@ -15,7 +15,7 @@ import { dirname } from 'node:path'
 // Pinned to a commit rather than a branch so a later push cannot change what a
 // rebuild produces.
 const REPO = 'canyouseeus/thelostandunfounds'
-const REF = process.env.FADEBOX_SOURCE_REF || 'REPLACE_WITH_COMMIT_SHA'
+const REF = process.env.FADEBOX_SOURCE_REF || 'c043d1b38157f1e7c24736526959d8c12cf8dd44'
 const BASE = `https://raw.githubusercontent.com/${REPO}/${REF}/previews/fadebox`
 
 const FILES = [
