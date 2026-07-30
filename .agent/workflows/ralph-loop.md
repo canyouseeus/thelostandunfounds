@@ -52,7 +52,7 @@ npm run build
 ### Step 3: Review
 Review your own diff against the relevant rules:
 
-1. Does this change violate any of the 5 critical invariants in `AGENTS.md`?
+1. Does this change violate any of the seven critical invariants in `CLAUDE.md`?
 2. Did you read the relevant skill(s) before making this change?
 3. Are there any unintended side effects?
 4. Would this change make sense to a future agent session with no context?
@@ -72,4 +72,4 @@ Review your own diff against the relevant rules:
 If the loop reveals a recurring issue, don't just fix it — encode the fix:
 - Add a rule to the relevant skill's `SKILL.md`
 - Add a check to `.agent/workflows/preflight-check.md`
-- Update `AGENTS.md` if it's a new critical invariant
+- Update `CLAUDE.md` if it's a new critical invariant

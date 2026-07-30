@@ -21,7 +21,7 @@ If this fails, fix TypeScript/build errors before committing.
 # Check for any new .md files in root (not in docs/, .agent/, etc.)
 ls -la *.md | wc -l
 ```
-New documentation should go in `docs/`, not the project root. Exceptions: `README.md`, `AGENTS.md`, `ARCHITECTURE.md`, `BLOG_POST_STYLE_GUIDE.md`.
+New documentation should go in `docs/`, not the project root. Exceptions: `README.md`, `CLAUDE.md`, `ARCHITECTURE.md`, `BLOG_POST_STYLE_GUIDE.md`.
 
 ### 3. Email handlers use branded templates
 If you modified any file in `api/mail/`, `api/newsletter/`, or `lib/api-handlers/`:

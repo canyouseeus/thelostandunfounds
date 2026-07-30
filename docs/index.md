@@ -87,6 +87,6 @@ One-time status docs, resolved issues, and completed tasks — kept for historic
 | File | Purpose |
 |---|---|
 | README.md | Project overview |
-| AGENTS.md | Agent entry point / table of contents |
+| CLAUDE.md | Agent entry point / table of contents |
 | ARCHITECTURE.md | Codebase architecture map |
-| BLOG_POST_STYLE_GUIDE.md | Blog formatting rules (kept in root — referenced by `.cursorrules`) |
+| BLOG_POST_STYLE_GUIDE.md | Blog formatting rules (kept in root — referenced by `CLAUDE.md`) |
