@@ -2,6 +2,27 @@
 
 > **Start here → then read [AGENTS.md](AGENTS.md) for the full map.**
 
+## EVIDENCE RULE — every task, no exceptions
+
+Statements about your own process are reconstructions, not logs — they come out confident whether
+or not they're true. Produce artifacts instead.
+
+**Before writing code:**
+1. Name the files you will read, then read them.
+2. **Quote** the specific line from each that governs this task. A summary is not a quote. If you
+   can't quote it, you didn't read it.
+3. If any doc conflicts with a skill, say so out loud, state which you followed and why. The skill
+   wins. Never reconcile a conflict silently.
+
+**Before saying it's done:**
+4. Show the artifact — rendered page, screenshot, command output. Not a description of one.
+5. Every check must be able to fail. A command that passes when its inputs are missing is not a
+   check. Verify the failure path before trusting the pass.
+6. Look at the whole output, not just the part you changed. Bugs hide in what you didn't inspect.
+
+**Styling work:** run `git log --oneline -3` first. If `noir-design` still says *"rigid, thin
+borders"*, you're on a stale base and every rule you read is wrong.
+
 ## SKILL UTILIZATION RULE - HIGHEST PRIORITY
 **Before starting ANY task, read the relevant SKILL.md files.**
 

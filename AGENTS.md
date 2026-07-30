@@ -38,7 +38,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full codebase map.
 | Security docs | `docs/security/` |
 | Archived/completed docs | `docs/archive/` |
 
-## Six Critical Invariants
+## Seven Critical Invariants
 
 These rules are **non-negotiable**. Violating them will break production.
 
@@ -48,6 +48,7 @@ These rules are **non-negotiable**. Violating them will break production.
 4. **Client documents are generated, never authored** — an invoice is a row in the `invoices` table; the PDF renders via `generateInvoicePdf`. Never hand-write invoice HTML. Proposals are copied forward from the most recent one. See `client-documents`.
 5. **Deploy = merge to `main` + push** — then verify at the live URL
 6. **Read the relevant skill BEFORE writing code** — use the keyword table in `.cursorrules`
+7. **Produce evidence, not claims** — quote the rule you followed, show the rendered output, and make sure every check you run is capable of failing. See the Evidence Rule at the top of `.cursorrules`.
 
 ## Skill Lookup
 
