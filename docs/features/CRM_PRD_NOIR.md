@@ -1,6 +1,7 @@
 # PRD: NOIR AI-Powered CRM
 **Project Status:** Initial Discovery & Definition  
 **Target Atmosphere:** Minimalist Noir / Ultra-Premium  
+> **Design authority:** this PRD defers to the `noir-design` / `no-border-design` skills. Where it once specified outlines, that has been corrected — no borders, no shadows, square corners (tool trays and avatars excepted).  
 **Code Name:** Project Shadow  
 
 ---
@@ -16,7 +17,7 @@ The UI must feel like a high-end physical portfolio—stark, decisive, and devoi
 - **Color Palette:** Pure Black (`#000000`), Pure White (`#ffffff`), and Void Grey (`rgba(255, 255, 255, 0.1)`).
 - **Typography:** Inter for body text, uppercase sans-serif for headings.
 - **Motion:** Subtle fade-ins and high-speed transitions. No "bouncing" or playful animations.
-- **Structure:** Branded headers, sharp borders (no border-radius), and a focus on verticality.
+- **Structure:** Branded headers, **no borders and no shadows**, square corners (`border-radius: 0`), and a focus on verticality. Separation comes from surface tone — see the `no-border-design` skill, which is the authority.
 
 ### 2.2 User Experience (UX)
 The UX is built around **Direct Action**. 
@@ -56,17 +57,17 @@ The UX is built around **Direct Action**.
 - **Navigation:** A minimalist sidebar or hidden menu (hamburger) that reveals direct links: `BOARD`, `CONTACTS`, `ENRICH`, `SETTINGS`.
 
 ### 4.2 The "Shadow Board" View
-Each "Lead Card" is a simple white outline box. 
+Each "Lead Card" is a **borderless surface** — `bg-white/5` against the pure-black board.
 - **States:**
   - **Inactive:** Content is slightly dimmed (`opacity: 0.6`).
-  - **Hover:** Border glows pure white, text highlights to 100% opacity.
+  - **Hover:** Surface raises to `bg-white/10` and text highlights to 100% opacity. No border, no glow.
   - **Dragging:** Semi-transparent ghosting with no drop shadow.
 
 ### 4.3 Forms & Inputs
-- **Inputs:** Simple white bottom-border only. Labels are small, uppercase, and positioned above the input.
-- **Buttons:** Sharp 90-degree corners. 
+- **Inputs:** Borderless — `bg-white/5` with `focus:bg-white/10`. Labels are small, uppercase, and positioned above the input.
+- **Buttons:** Sharp 90-degree corners, no borders.
   - **Primary:** Solid White with Black text.
-  - **Secondary:** Transparent with White border.
+  - **Secondary:** `bg-white/10` with White text, inverting to White-on-Black on hover.
 
 ---
 
