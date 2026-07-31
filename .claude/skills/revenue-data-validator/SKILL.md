@@ -59,7 +59,7 @@ WHERE
 **Test Data Indicators:**
 - [ ] Orders from test email addresses
 - [ ] Orders created during development/testing phase
-- [ ] Orders with test payment IDs (PayPal sandbox transactions)
+- [ ] Orders with test payment IDs (Stripe test-mode sessions, e.g. `cs_test_…`)
 - [ ] Orders from admin/developer accounts
 
 **SQL to Identify Test Gallery Orders:**

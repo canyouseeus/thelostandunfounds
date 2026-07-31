@@ -8,6 +8,77 @@
  */
 
 import PDFDocument from 'pdfkit'
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
+
+/** Canonical banner location, used only as a fallback when disk lookup misses. */
+const BANNER_URL = 'https://www.thelostandunfounds.com/brand/banner.png'
+
+/** Cached across invocations so a warm serverless container reads disk once. */
+let cachedBanner: Buffer | null | undefined
+
+/**
+ * Fallback banner height in points, used only if the PNG header can't be read.
+ * Matches the shipped 1500x500 asset drawn at CONTENT_W (500pt) wide.
+ */
+const DEFAULT_BANNER_HEIGHT = 166.7
+
+/**
+ * Read intrinsic pixel dimensions straight from a PNG's IHDR chunk.
+ *
+ * pdfkit exposes `doc.openImage()` at runtime but does not declare it in its
+ * type definitions, so calling it fails the typecheck. The banner is a PNG we
+ * ship ourselves, and the header is fixed-layout — width and height are two
+ * big-endian uint32s at byte offset 16 — so parsing it directly is both typed
+ * and dependency-free.
+ */
+function pngSize(buf: Buffer): { width: number; height: number } | null {
+  // 8-byte signature + 4-byte length + 'IHDR' + 8 bytes of dimensions
+  if (buf.length < 24) return null
+  if (buf.readUInt32BE(0) !== 0x89504e47) return null // not a PNG
+  if (buf.toString('ascii', 12, 16) !== 'IHDR') return null
+
+  const width = buf.readUInt32BE(16)
+  const height = buf.readUInt32BE(20)
+  return width > 0 && height > 0 ? { width, height } : null
+}
+
+/**
+ * Resolve the brand banner, preferring the copy bundled in the repo.
+ * Returns null (never throws) if neither disk nor network yields the image —
+ * the caller logs that case rather than failing the whole PDF.
+ */
+async function loadBannerBuffer(): Promise<Buffer | null> {
+  if (cachedBanner !== undefined) return cachedBanner
+
+  // Vercel's bundler and local dev resolve cwd differently; try both shapes.
+  const candidates = [
+    join(process.cwd(), 'public', 'brand', 'banner.png'),
+    join(process.cwd(), 'brand', 'banner.png'),
+  ]
+  for (const path of candidates) {
+    try {
+      cachedBanner = await readFile(path)
+      return cachedBanner
+    } catch {
+      // try the next candidate
+    }
+  }
+
+  try {
+    const res = await fetch(BANNER_URL)
+    if (res.ok) {
+      cachedBanner = Buffer.from(await res.arrayBuffer())
+      return cachedBanner
+    }
+    console.warn(`[invoice-pdf] banner fetch returned HTTP ${res.status} from ${BANNER_URL}`)
+  } catch (err: any) {
+    console.warn(`[invoice-pdf] banner fetch failed: ${err?.message}`)
+  }
+
+  cachedBanner = null
+  return cachedBanner
+}
 
 export interface InvoicePdfLineItem {
   description: string
@@ -131,33 +202,59 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
   })
 
   // ── Brand banner ──────────────────────────────────────────────────────────
-  // Decorative; pushes the rest of the header down. Degrade gracefully if the
-  // image can't be fetched so PDF generation still works.
+  // Read from disk first. This used to fetch the banner over HTTP on every
+  // render, which meant the single most recognisable brand element depended on
+  // a network round trip succeeding at render time — and the failure was
+  // swallowed, so a bannerless invoice went out looking structurally correct
+  // with no error anywhere. That is exactly what happened to INV-004.
+  //
+  // The file ships in the repo at public/brand/banner.png, so bundle it rather
+  // than fetching it. The HTTP fetch stays only as a fallback for environments
+  // where the static asset isn't on disk, and a miss is now logged loudly.
   let topShift = 0
-  try {
-    const res = await fetch('https://www.thelostandunfounds.com/brand/banner.png')
-    if (res.ok) {
-      const bannerBuffer = Buffer.from(await res.arrayBuffer())
-      const bannerTop = 40
-      doc.image(bannerBuffer, LEFT, bannerTop, { width: CONTENT_W })
-      topShift = Math.max(0, doc.y + 16 - 56)
-    }
-  } catch {
-    // banner failed — render without it
+  const bannerBuffer = await loadBannerBuffer()
+  if (bannerBuffer) {
+    const bannerTop = 40
+    const bannerGap = 16
+    doc.image(bannerBuffer, LEFT, bannerTop, { width: CONTENT_W })
+
+    // Derive the drawn height from the image's own aspect ratio. Do NOT use
+    // doc.y here: pdfkit does not advance the cursor past an image placed at
+    // explicit coordinates, so doc.y still points at the top of the page and
+    // the header renders on top of the banner (dark text on black, unreadable).
+    const size = pngSize(bannerBuffer)
+    const drawnHeight = size ? CONTENT_W * (size.height / size.width) : DEFAULT_BANNER_HEIGHT
+    topShift = Math.max(0, bannerTop + drawnHeight + bannerGap - 56)
+  } else {
+    console.error(
+      '[invoice-pdf] BANNER MISSING — rendering an unbranded invoice. ' +
+      'Checked disk (public/brand/banner.png) and ' + BANNER_URL + '. ' +
+      'Fix before sending this document to a client.'
+    )
   }
 
   // ── Header ────────────────────────────────────────────────────────────────
-  doc
-    .fillColor(INK)
-    .font('Helvetica-Bold')
-    .fontSize(20)
-    .text(BRAND.name, LEFT, 56 + topShift, { characterSpacing: 1 })
+  // The banner artwork already contains the wordmark. Drawing BRAND.name as
+  // text as well prints the brand name twice — once inside the image, once
+  // beneath it. Only render the text wordmark when there is no banner.
+  if (!bannerBuffer) {
+    doc
+      .fillColor(INK)
+      .font('Helvetica-Bold')
+      .fontSize(20)
+      .text(BRAND.name, LEFT, 56 + topShift, { characterSpacing: 1 })
+  }
+
+  // Tagline + website sit beneath the text wordmark when it's present, and
+  // move up to sit level with the document title when the banner supplies the
+  // wordmark instead — otherwise the left column starts with a blank gap.
+  const metaTop = bannerBuffer ? 60 : 82
   doc
     .fillColor(MUTED)
     .font('Helvetica')
     .fontSize(7.5)
-    .text(BRAND.tagline, LEFT, 82 + topShift, { characterSpacing: 1.5 })
-  doc.fillColor(MUTED).fontSize(8).text(BRAND.website, LEFT, 94 + topShift)
+    .text(BRAND.tagline, LEFT, metaTop + topShift, { characterSpacing: 1.5 })
+  doc.fillColor(MUTED).fontSize(8).text(BRAND.website, LEFT, metaTop + 12 + topShift)
 
   // Document title (right-aligned, same top line as the wordmark)
   doc

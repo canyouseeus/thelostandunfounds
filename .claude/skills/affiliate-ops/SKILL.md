@@ -21,7 +21,7 @@ This skill governs the growth and referral engine of THE LOST+UNFOUNDS.
 - **MLM Bonuses**: Handle tiered bonus calculations for multi-level referrals.
 
 ## UI Standards
-- **Mechanical Dashboards**: Use high-contrast headers, sharp borders, and tabular data.
+- **Mechanical Dashboards**: Use high-contrast headers, square corners, and tabular data. **No borders and no shadows** — rows and sections separate by surface tone (`bg-white/5` / `bg-white/10`) and spacing. See `no-border-design`, which is the authority.
 - **Withdrawals**: 
   - The "Request Payout" flow must be stark and require explicit admin approval via the `AdminAffiliates` dashboard.
   - **Holding Period**: Ensure funds remain in "Pending" status for 30 days post-sale to cover chargebacks.

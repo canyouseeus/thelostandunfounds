@@ -41,7 +41,7 @@ Critical Alerts:     z-[10000]
 {/* Modal/Overlay */}
 {isOpen && (
   <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
-    <div className="bg-[#0A0A0A] border border-white/10 w-full max-w-2xl p-6 relative my-8 max-h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar">
+    <div className="bg-[#0A0A0A] w-full max-w-2xl p-6 relative my-8 max-h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar">
       {/* Modal content */}
     </div>
   </div>
@@ -82,7 +82,7 @@ Critical Alerts:     z-[10000]
 #### Side Panel
 ```tsx
 <div className="fixed inset-0 z-[9999] bg-black/60" onClick={onClose}>
-  <div className="fixed right-0 top-0 h-full w-96 bg-[#0A0A0A] border-l border-white/10 overflow-y-auto" onClick={e => e.stopPropagation()}>
+  <div className="fixed right-0 top-0 h-full w-96 bg-[#0A0A0A] overflow-y-auto" onClick={e => e.stopPropagation()}>
     {/* Panel content */}
   </div>
 </div>
@@ -91,7 +91,7 @@ Critical Alerts:     z-[10000]
 #### Bottom Sheet
 ```tsx
 <div className="fixed inset-0 z-[9999] flex items-end bg-black/60">
-  <div className="w-full bg-[#0A0A0A] border-t border-white/10 rounded-t-xl max-h-[80vh] overflow-y-auto">
+  <div className="w-full bg-[#0A0A0A] max-h-[80vh] overflow-y-auto">
     {/* Sheet content */}
   </div>
 </div>
@@ -119,7 +119,6 @@ When implementing this skill, check these common modal locations:
 - `/src/components/admin/AdminGalleryView.tsx` - Gallery editor modal
 - `/src/components/admin/AdminMailView.tsx` - Mail compose modal
 - `/src/pages/Admin.tsx` - Any admin modals
-- `/src/pages/SQL.tsx` - SQL script viewer
 - `/src/components/shop/ProductComponents.tsx` - Product modals
 - Any component with "Modal", "Dialog", "Overlay", or "Popup" in the name
 
@@ -178,7 +177,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
       onClick={onClose}
     >
       <div 
-        className="bg-[#0A0A0A] border border-white/10 w-full max-w-2xl p-6 relative my-8 max-h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar"
+        className="bg-[#0A0A0A] w-full max-w-2xl p-6 relative my-8 max-h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar"
         onClick={e => e.stopPropagation()}
       >
         <button

@@ -16,7 +16,7 @@ This skill governs the maintenance, data integrity, and visual excellence of the
 - **Accuracy**: Use the most accurate source of truth for stats (e.g., combining `platform_subscriptions`, `user_roles`, and `user_subdomains` for user counts).
 
 ### 2. UI & Noir Aesthetic
-- **Monochrome**: Pure black background (`#000000`) and pure white text/borders.
+- **Monochrome**: Pure black background (`#000000`) and pure white text. No borders, no shadows.
 - **Rigid Geometry**: STRICTLY enforce `border-radius: 0 !important`. No rounded corners on buttons, cards, or inputs.
 - **Typography**: Headers (h1, h2, Bento titles) MUST be **UPPERCASE**.
 - **Alignment**: Standardize on `text-left` for body content and lists.
@@ -37,8 +37,10 @@ The dashboard uses a 4-column Bento grid:
 - **Small Cards**: 1x1 (Users, Subscriptions, Products, Blog, Newsletter, Mail, System)
 
 ### Standard Styles
-- Cards: `.noir-card` or custom Bento card with white border.
-- Buttons: White background with black text for primary actions; transparent with white border for secondary.
+- Cards: `.noir-card` or a custom Bento card — **borderless and shadowless**, separated by surface
+  tone (`bg-white/5`), never by an outline. Square corners.
+- Buttons: White background with black text for primary actions; `bg-white/10` for secondary. No
+  borders, no shadows (see `no-border-design`).
 - Stats: Use `AnimatedNumber` for all numeric values.
 
 ## Global Debug Report Button
@@ -66,7 +68,7 @@ logError(err.message);
 **Styling (Noir-compliant):**
 ```tsx
 <button
-  className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-widest bg-black text-white border border-white hover:bg-white hover:text-black transition-colors"
+  className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-widest bg-white/10 text-white hover:bg-white hover:text-black transition-colors"
   style={{ borderRadius: 0 }}
 >
   <ClipboardCopy className="w-3 h-3" />
@@ -76,7 +78,10 @@ logError(err.message);
 
 ## Verification Checklist
 - [ ] No "coming soon" or static "--%" placeholders.
-- [ ] No `rounded` or `rounded-*` classes (except for profile avatars if absolutely necessary).
+- [ ] No `rounded` or `rounded-*` classes. Two sanctioned exceptions only: the Platform Console
+      Tray / tool-dock pill and its icon buttons, and profile avatars (always `rounded-full`).
+      See `noir-design` → No Rounded Corners.
+- [ ] No `border-*` classes and no `shadow-*` — separation is surface tone and spacing only.
 - [ ] All headers are uppercase.
 - [ ] All data is fetched from Supabase.
 - [ ] Desktop and mobile layouts are aligned correctly.

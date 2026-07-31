@@ -18,7 +18,7 @@
 │                            │                              │
 │              ┌─────────────┼─────────────┐               │
 │              │             │             │               │
-│         Zoho Mail     Fourthwall      PayPal             │
+│         Zoho Mail     Fourthwall      Stripe             │
 │         (email)       (shop)        (payments)           │
 └──────────────────────────────────────────────────────────┘
 ```
@@ -68,17 +68,21 @@ Code shared between API routes.
 | `lib/email-template.ts` | **Branded email templates** (MUST use for all emails) |
 | `lib/fourthwall/` | Fourthwall shop API client |
 
-### `sql/` — Database Scripts
-SQL migration and blog post creation scripts. Deployed via the `/sql` page on the live site.
+### `sql/` — Legacy Database Scripts (archive only)
+Historical migration and blog-post scripts from the retired file-based workflow. **Not a live
+path** — the `/sql` page that served them has been removed. All database changes now go through
+the Supabase MCP server (`apply_migration`). Do not add files here; see the `supabase-mcp` skill.
 
-### `.agent/` — Agent Configuration
+### `.claude/` — Agent Configuration
 | Directory | Purpose |
 |---|---|
-| `.agent/skills/` | 25 domain-specific skill guides |
+| `.claude/skills/` | **All** domain-specific skill guides — the single canonical location |
+| `.claude/commands/` | Slash commands (`/audit`, `/startdev`, …) |
 | `.agent/workflows/` | Step-by-step operational procedures |
 
-### `skills/` — Additional Skills
-6 specialized skills for dashboard clock, gallery agent, PayPal verification, env/schema verification.
+> `.agent/skills/` and a top-level `skills/` used to hold duplicate forks of the same skills. They
+> drifted apart and produced contradictory rules, so they were deleted and everything was
+> consolidated into `.claude/skills/`. Do not recreate them — one skill, one file.
 
 ### `scripts/` — Utility Scripts
 One-off and helper scripts for operations tasks.
@@ -88,7 +92,7 @@ Images, SQL files, and other static content served directly.
 
 ## Key Data Flow
 
-1. **Blog Publishing**: Write content → create SQL file → update `SQL.tsx` + `api/sql/latest.ts` → merge to main → copy SQL from `/sql` page → execute in Supabase
+1. **Blog Publishing**: Write content → apply via Supabase MCP (`apply_migration`) → verify the row → verify the rendered post at `/thelostarchives/[slug]`
 2. **Newsletter**: Create campaign in admin → send via `api/newsletter/send` → Zoho Mail delivers using branded template
 3. **Shop Orders**: Customer buys on Fourthwall → webhook hits `api/webhooks/` → order tracked in Supabase
 4. **Photo Gallery**: Upload photos → sync to Google Drive → serve via gallery components

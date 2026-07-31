@@ -21,9 +21,9 @@ When you encounter an error related to environment variables (e.g., authenticati
 First, verify which variables are actually missing or empty. Do NOT ask the user to check manually. Run the verification script:
 
 ```bash
-./.agent/skills/secure-env-manager/scripts/verify-env.sh REQUIRED_VAR_1 REQUIRED_VAR_2
+./.claude/skills/secure-env-manager/scripts/verify-env.sh REQUIRED_VAR_1 REQUIRED_VAR_2
 ```
-*Replace `REQUIRED_VAR_1`, etc., with the specific keys relevant to the error (e.g., `PAYPAL_CLIENT_ID`).*
+*Replace `REQUIRED_VAR_1`, etc., with the specific keys relevant to the error (e.g., `STRIPE_SECRET_KEY`).*
 
 - If the script returns **Success (0)**: The variables exist. Validating their *correctness* (e.g., is the key valid?) may require checking the service logs or asking the user to re-enter them if auth fails.
 - If the script returns **Failure (1)**: It will list exactly which variables are missing or empty.
@@ -31,17 +31,17 @@ First, verify which variables are actually missing or empty. Do NOT ask the user
 ### Step 2: Targeted Reset
 If variables are missing, empty, or known to be invalid/expired, provide the **Guided Mode** command to the user. This allows them to set *only* the specific keys needed.
 
-> "It looks like the following keys are missing/invalid: `PAYPAL_CLIENT_ID`. Please run this command to securely set them:"
+> "It looks like the following keys are missing/invalid: `STRIPE_SECRET_KEY`. Please run this command to securely set them:"
 
 ```bash
-./.agent/skills/secure-env-manager/scripts/set-env.sh PAYPAL_CLIENT_ID
+./.claude/skills/secure-env-manager/scripts/set-env.sh STRIPE_SECRET_KEY
 ```
 
 ### Step 3: Full Reset (The "Nuclear Option")
 If the user wants to start fresh, or if "everything is broken" and a full reset is requested, instruct them to use the `--all` flag. This will walk them through **every** variable currently defined in their `.env` file.
 
 ```bash
-./.agent/skills/secure-env-manager/scripts/set-env.sh --all
+./.claude/skills/secure-env-manager/scripts/set-env.sh --all
 ```
 
 ## How the Scripts Work
@@ -60,12 +60,12 @@ If the user wants to start fresh, or if "everything is broken" and a full reset 
 
 ## Usage Example (Agent Workflow)
 
-**User**: "My PayPal isn't working."
+**User**: "My Stripe isn't working."
 **Agent**: 
-1. *Thinking*: I should check if `PAYPAL_CLIENT_ID` and `PAYPAL_SECRET` are set.
-2. *Action*: `run_terminal` -> `./.agent/skills/secure-env-manager/scripts/verify-env.sh PAYPAL_CLIENT_ID PAYPAL_SECRET`
-3. *Result*: `Missing variables: - PAYPAL_SHORT_KEY` (Example)
-4. *Response*: "It looks like `PAYPAL_SECRET` is missing. Please run this command to set it:"
+1. *Thinking*: I should check if `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` are set.
+2. *Action*: `run_terminal` -> `./.claude/skills/secure-env-manager/scripts/verify-env.sh STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET`
+3. *Result*: `Missing variables: - STRIPE_WEBHOOK_SECRET` (Example)
+4. *Response*: "It looks like `STRIPE_WEBHOOK_SECRET` is missing. Please run this command to set it:"
    ```bash
-   ./.agent/skills/secure-env-manager/scripts/set-env.sh PAYPAL_SECRET
+   ./.claude/skills/secure-env-manager/scripts/set-env.sh STRIPE_WEBHOOK_SECRET
    ```

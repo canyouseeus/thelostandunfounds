@@ -21,7 +21,7 @@ If this fails, fix TypeScript/build errors before committing.
 # Check for any new .md files in root (not in docs/, .agent/, etc.)
 ls -la *.md | wc -l
 ```
-New documentation should go in `docs/`, not the project root. Exceptions: `README.md`, `AGENTS.md`, `ARCHITECTURE.md`, `BLOG_POST_STYLE_GUIDE.md`.
+New documentation should go in `docs/`, not the project root. Exceptions: `README.md`, `CLAUDE.md`, `ARCHITECTURE.md`, `BLOG_POST_STYLE_GUIDE.md`.
 
 ### 3. Email handlers use branded templates
 If you modified any file in `api/mail/`, `api/newsletter/`, or `lib/api-handlers/`:
@@ -40,7 +40,7 @@ If you created or modified a SQL file:
 - Must use check-and-insert/update pattern (check existence first with `SELECT INTO`, then `IF/ELSE`)
 
 ### 6. Skill was consulted
-Before implementing, check: did you read the relevant skill(s) from `.agent/skills/` or `skills/`?
+Before implementing, check: did you read the relevant skill(s) from `.claude/skills/`?
 If not, read them now and verify your implementation aligns.
 
 ## Quick One-Liner

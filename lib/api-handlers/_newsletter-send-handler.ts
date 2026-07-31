@@ -483,10 +483,14 @@ export default async function handler(
       }
     }
 
-    // Check Zoho configuration
+    // Check sender configuration.
+    // ZOHO_FROM_EMAIL is only required on the Zoho path — sendResendEmail uses RESEND_FROM_EMAIL
+    // and never reads this value, so a Resend-only environment must not be blocked here.
     const fromEmail = process.env.ZOHO_FROM_EMAIL || process.env.ZOHO_EMAIL
-    if (!fromEmail) {
-      return res.status(500).json({ error: 'Zoho email not configured' })
+    if (!fromEmail && !isResendConfigured()) {
+      return res.status(500).json({
+        error: 'No email provider configured. Set RESEND_API_KEY (preferred for bulk) or ZOHO_FROM_EMAIL.'
+      })
     }
 
     // Create or update campaign record
@@ -527,16 +531,35 @@ export default async function handler(
       campaignRecord = data
     }
 
-    // Determine which email provider to use
+    // Determine which email provider to use.
+    // Resend is the correct provider for bulk: Zoho Mail is a mailbox product with per-day send
+    // caps, and pushing a subscriber list through it burns quota and sending reputation on the
+    // same domain that carries transactional mail. Zoho remains a fallback so a missing key does
+    // not block a send outright — but it is a degraded path and must be visible, not silent.
     const useResend = isResendConfigured()
+    const providerWarning = useResend
+      ? undefined
+      : 'RESEND_API_KEY is not set — this newsletter was sent via Zoho Mail, which is rate-capped and risks the domain sending reputation used by transactional email. Set RESEND_API_KEY for bulk sends.'
+
     console.log(`Using email provider: ${useResend ? 'Resend' : 'Zoho'}`)
+    if (providerWarning) console.warn(`[newsletter] ${providerWarning}`)
 
     // Initialize Zoho if needed (only when not using Resend)
     let accessToken: string = ''
     let accountId: string = ''
-    let actualFromEmail: string = fromEmail
+    let actualFromEmail: string = fromEmail ?? ''
 
     if (!useResend) {
+      // Unreachable in practice — the guard above returns unless at least one
+      // provider is configured, and !useResend means it wasn't Resend. Kept as
+      // an explicit check so the Zoho path can never send from an empty
+      // address, and so fromEmail narrows to string below.
+      if (!fromEmail) {
+        return res.status(500).json({
+          error: 'Zoho path selected but neither ZOHO_FROM_EMAIL nor ZOHO_EMAIL is set.'
+        })
+      }
+
       try {
         accessToken = await getZohoAccessToken()
         const accountInfo = await getZohoAccountInfo(accessToken, fromEmail)
@@ -573,7 +596,47 @@ export default async function handler(
     }
 
     // Send emails
-    const sendLogs: { subscriber_email: string; status: string; error_message: string | null; sent_at: string | null }[] = []
+    type SendLog = { subscriber_email: string; status: string; error_message: string | null; sent_at: string | null }
+    const sendLogs: SendLog[] = []
+
+    // Send logs are flushed to the database DURING the loop, not after it.
+    //
+    // This matters: the resume filter above skips anyone already logged 'sent' for this subject
+    // within 24h. If logs were only written after the loop finished, a function timeout mid-send
+    // (maxDuration is 300s and the loop costs ~550ms/email) would leave real emails delivered but
+    // nothing recorded — and the retry would send to the whole list a second time.
+    //
+    // Flushing in chunks bounds the worst case to FLUSH_EVERY un-recorded sends instead of all of
+    // them. A logging failure is reported loudly but does not abort the run.
+    const FLUSH_EVERY = 25
+    let pendingLogs: SendLog[] = []
+
+    const record = (log: SendLog) => {
+      sendLogs.push(log)
+      pendingLogs.push(log)
+    }
+
+    const flushLogs = async () => {
+      if (pendingLogs.length === 0) return
+      const batch = pendingLogs
+      pendingLogs = []
+      try {
+        const { error: logError } = await supabase
+          .from('newsletter_send_logs')
+          .insert(batch.map(log => ({ campaign_id: campaignRecord.id, ...log })))
+        if (logError) {
+          console.error(
+            `[newsletter] FAILED to persist ${batch.length} send logs for campaign ${campaignRecord.id}. ` +
+            `Those recipients may be re-sent on retry. Error: ${logError.message}`
+          )
+        }
+      } catch (err: any) {
+        console.error(
+          `[newsletter] FAILED to persist ${batch.length} send logs for campaign ${campaignRecord.id}. ` +
+          `Those recipients may be re-sent on retry. Error: ${err?.message}`
+        )
+      }
+    }
 
     for (const subscriber of subscribers) {
       try {
@@ -586,7 +649,7 @@ export default async function handler(
 
         if (result.success) {
           emailsSent++
-          sendLogs.push({
+          record({
             subscriber_email: subscriber.email,
             status: 'sent',
             error_message: null,
@@ -596,7 +659,7 @@ export default async function handler(
           emailsFailed++
           const errorMsg = result.error || 'Unknown error'
           errors.push(`${subscriber.email}: ${errorMsg}`)
-          sendLogs.push({
+          record({
             subscriber_email: subscriber.email,
             status: 'failed',
             error_message: errorMsg,
@@ -607,12 +670,17 @@ export default async function handler(
         emailsFailed++
         const errorMsg = error.message || 'Unknown error'
         errors.push(`${subscriber.email}: ${errorMsg}`)
-        sendLogs.push({
+        record({
           subscriber_email: subscriber.email,
           status: 'failed',
           error_message: errorMsg,
           sent_at: new Date().toISOString()
         })
+      }
+
+      // Persist progress periodically so a timeout can't erase the record of what was sent.
+      if (pendingLogs.length >= FLUSH_EVERY) {
+        await flushLogs()
       }
 
       // Rate limiting delay
@@ -624,16 +692,8 @@ export default async function handler(
       }
     }
 
-    // Insert send logs into database
-    if (sendLogs.length > 0) {
-      const logsToInsert = sendLogs.map(log => ({
-        campaign_id: campaignRecord.id,
-        ...log
-      }))
-      await supabase
-        .from('newsletter_send_logs')
-        .insert(logsToInsert)
-    }
+    // Persist whatever is left over from the final partial chunk.
+    await flushLogs()
 
     // Update campaign with results
     const finalStatus = emailsFailed === totalSubscribers ? 'failed' : 'sent'
@@ -657,6 +717,7 @@ export default async function handler(
         emailsFailed,
       },
       errors: errors.length > 0 ? errors.slice(0, 10) : undefined, // Return first 10 errors
+      warning: providerWarning,
     })
 
   } catch (error: any) {

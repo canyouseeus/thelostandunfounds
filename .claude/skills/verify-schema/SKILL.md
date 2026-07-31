@@ -12,7 +12,7 @@ This skill provides tools to verify that the database schema matches application
 Run the check script from the project root:
 
 ```bash
-node skills/verify-schema/scripts/check-columns.js
+node .claude/skills/verify-schema/scripts/check-columns.js
 ```
 
 ## Checks Performed
