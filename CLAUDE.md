@@ -149,6 +149,12 @@ removed — do not recreate them.
 - Never claim you can't send email — use Zoho Mail integrations
 - Test: POST `https://www.thelostandunfounds.com/api/admin/send-welcome-emails` with `{"testEmail":"target@example.com"}`
 - Required env vars: `ZOHO_CLIENT_ID`, `ZOHO_CLIENT_SECRET`, `ZOHO_REFRESH_TOKEN`, `ZOHO_FROM_EMAIL`
+- **Always CC `media@thelostandunfounds.com`** on media-related outbound mail — client and booking
+  correspondence, invoices, quotes, proposals, shoot confirmations, photographer coordination. It is
+  the business address of record, so the thread stays on file even when a reply goes to one person.
+  Use the CC field, not BCC — recipients should see it. Never substitute a personal address for it.
+  Bulk sends (newsletters, campaigns) are exempt: one CC per subscriber is not a business record.
+  Verify the CC actually landed before treating a send as done — a dropped CC fails silently.
 
 ## NEWSLETTER RESEND RULE
 1. Query `newsletter_campaigns` (ordered by `created_at` desc, limit 1) using `.env.local` credentials
@@ -176,7 +182,9 @@ After creating any deployment (Vercel or otherwise), you MUST before calling the
 3. **Verify the deployment URL** — fetch it and confirm it's accessible
 4. **Confirm functionality** — exercise the key feature that changed
 
-If in progress, poll every ~15s up to a 5-minute timeout, then report it's still building rather than guessing success. Never mark a deployment complete based on creation alone or on logs you didn't check.
+**Builds currently take about 5 minutes.** Do not treat `BUILDING` at the 30-second or 1-minute mark as a problem, and do not poll every 15s — that just burns calls on a build that was never going to be done. Wait ~5 minutes before the first status check, then poll every ~30–60s up to a 10-minute timeout. Report it's still building rather than guessing success. Never mark a deployment complete based on creation alone or on logs you didn't check.
+
+**Never verify against production before the deploy carrying your change is `READY`.** Fetching a page or hitting an endpoint mid-build exercises the *previous* deployment, so a fix looks broken and an unfixed bug looks fixed. Both have happened. Confirm `READY` first, then verify.
 
 ## PAGE TITLE STYLE RULE
 

@@ -37,6 +37,17 @@ description, line_items, subtotal, total, amount_due, status,
 payment_method, pdf_token
 ```
 
+### Always CC media@thelostandunfounds.com
+
+Every client-facing send — invoice, quote, proposal, shoot confirmation — CCs
+`media@thelostandunfounds.com`. `/api/invoices/send` takes `cc_email` (comma-separated for
+multiple recipients) and passes it to `sendZohoEmail`, which maps it to Zoho's `ccAddress`.
+It is the business address of record; the thread has to stay on file regardless of who replies.
+CC, never BCC. A personal address is not a substitute.
+
+Confirm the CC landed rather than trusting the 200 — the API returns success whether or not Zoho
+honoured the field, and a dropped CC leaves a stakeholder silently off the thread.
+
 ### Deposit paid, balance outstanding — the standing rule
 
 A job where the deposit has landed but the balance has not is the normal case, not an exception.
