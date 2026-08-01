@@ -41,19 +41,6 @@ interface LineItem {
   amount: number
 }
 
-function fmtUSD(n: number): string {
-  return `$${Number(n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`
-}
-
-function fmtDate(d: string | null): string {
-  if (!d) return '—'
-  try {
-    return new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-  } catch {
-    return d
-  }
-}
-
 function escapeHtml(s: string): string {
   return String(s ?? '')
     .replace(/&/g, '&amp;')
@@ -91,223 +78,6 @@ function buildPersonalMessageBody(message: string, invoiceNumber: string): strin
   `
 }
 
-function statusBadge(status: string): string {
-  const isPaid = status === 'paid'
-  const bg = isPaid ? '#1f3a1f' : '#3a2a1f'
-  const color = isPaid ? '#7be07b' : '#ffb47b'
-  const label = (status || 'unpaid').toUpperCase()
-  return `<span style="display:inline-block;padding:6px 14px;background-color:${bg};color:${color};font-size:11px;font-weight:bold;letter-spacing:0.2em;font-family:Arial,Helvetica,sans-serif;">${escapeHtml(label)}</span>`
-}
-
-function buildInvoiceBody(args: {
-  invoiceNumber: string
-  date: string
-  eventDate: string | null
-  location: string | null
-  description: string | null
-  lineItems: LineItem[]
-  subtotal: number
-  total: number
-  amountDue: number
-  status: string
-  paymentMethod: string | null
-  stripePaymentLinkUrl: string | null
-  stripeFullPaymentLinkUrl: string | null
-  clientName: string
-  clientEmail: string | null
-  clientBusiness: string | null
-}): string {
-  const {
-    invoiceNumber,
-    date,
-    eventDate,
-    location,
-    description,
-    lineItems,
-    subtotal,
-    total,
-    amountDue,
-    status,
-    paymentMethod,
-    stripePaymentLinkUrl,
-    stripeFullPaymentLinkUrl,
-    clientName,
-    clientEmail,
-    clientBusiness,
-  } = args
-
-  const muted = BRAND.colors.textMuted
-  const text = BRAND.colors.text
-  const border = BRAND.colors.border
-
-  const labelStyle = `color:${muted};font-size:10px;font-weight:bold;letter-spacing:0.2em;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;margin:0 0 6px 0;`
-  const valueStyle = `color:${text} !important;font-size:14px;font-family:Arial,Helvetica,sans-serif;margin:0;`
-
-  const lineItemsRows = lineItems.length
-    ? lineItems
-        .map(
-          (item) => `
-            <tr>
-              <td style="padding:14px 0;border-bottom:1px solid ${border};color:${text} !important;font-size:14px;font-family:Arial,Helvetica,sans-serif;">
-                ${escapeHtml(item.description || '')}
-                ${item.quantity && item.quantity > 1 ? `<br><span style="color:${muted};font-size:11px;">${item.quantity} × ${fmtUSD(Number(item.unit_price || 0))}</span>` : ''}
-              </td>
-              <td align="right" style="padding:14px 0;border-bottom:1px solid ${border};color:${text} !important;font-size:14px;font-family:'Courier New',monospace;font-weight:bold;white-space:nowrap;">
-                ${fmtUSD(Number(item.amount || 0))}
-              </td>
-            </tr>`
-        )
-        .join('')
-    : `<tr><td colspan="2" style="padding:14px 0;color:${muted};font-size:13px;">No line items</td></tr>`
-
-  return `
-    <!-- Header -->
-    <h1 style="color:${text} !important;font-size:32px;font-weight:bold;letter-spacing:0.1em;margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;">INVOICE</h1>
-    <p style="color:${muted};font-size:12px;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 30px 0;font-family:Arial,Helvetica,sans-serif;">
-      ${escapeHtml(invoiceNumber)}
-    </p>
-
-    <!-- Status badge -->
-    <div style="margin:0 0 30px 0;">${statusBadge(status)}</div>
-
-    <!-- From / To -->
-    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 30px 0;">
-      <tr>
-        <td valign="top" style="width:50%;padding-right:15px;">
-          <p style="${labelStyle}">From</p>
-          <p style="${valueStyle}font-weight:bold;">${escapeHtml(BRAND.name)}</p>
-          <p style="color:${muted} !important;font-size:12px;margin:2px 0 0 0;font-family:Arial,Helvetica,sans-serif;">Photography &amp; Visual Storytelling</p>
-          <p style="color:${muted} !important;font-size:12px;margin:2px 0 0 0;font-family:Arial,Helvetica,sans-serif;">
-            <a href="${BRAND.website}" style="color:${muted};text-decoration:none;">thelostandunfounds.com</a>
-          </p>
-        </td>
-        <td valign="top" style="width:50%;padding-left:15px;">
-          <p style="${labelStyle}">Bill To</p>
-          <p style="${valueStyle}font-weight:bold;">${escapeHtml(clientName)}</p>
-          ${clientBusiness ? `<p style="color:${muted} !important;font-size:12px;margin:2px 0 0 0;font-family:Arial,Helvetica,sans-serif;">${escapeHtml(clientBusiness)}</p>` : ''}
-          ${clientEmail ? `<p style="color:${muted} !important;font-size:12px;margin:2px 0 0 0;font-family:Arial,Helvetica,sans-serif;">${escapeHtml(clientEmail)}</p>` : ''}
-        </td>
-      </tr>
-    </table>
-
-    <!-- Meta info -->
-    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 30px 0;border-top:1px solid ${border};border-bottom:1px solid ${border};">
-      <tr>
-        <td valign="top" style="padding:18px 15px 18px 0;width:50%;">
-          <p style="${labelStyle}">Invoice Date</p>
-          <p style="${valueStyle}">${escapeHtml(fmtDate(date))}</p>
-        </td>
-        <td valign="top" style="padding:18px 0 18px 15px;width:50%;">
-          <p style="${labelStyle}">Event Date</p>
-          <p style="${valueStyle}">${escapeHtml(fmtDate(eventDate))}</p>
-        </td>
-      </tr>
-      ${location ? `
-      <tr>
-        <td valign="top" style="padding:18px 15px 18px 0;width:50%;border-top:1px solid ${border};" colspan="2">
-          <p style="${labelStyle}">Location</p>
-          <p style="${valueStyle}">${escapeHtml(location)}</p>
-        </td>
-      </tr>` : ''}
-    </table>
-
-    ${
-      description
-        ? `<div style="margin:0 0 30px 0;">
-            <p style="${labelStyle}">Description</p>
-            <p style="${valueStyle}">${escapeHtml(description)}</p>
-          </div>`
-        : ''
-    }
-
-    <!-- Line items -->
-    <p style="${labelStyle}margin:0 0 12px 0;">Line Items</p>
-    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 20px 0;">
-      <thead>
-        <tr>
-          <th align="left" style="padding:10px 0;border-bottom:1px solid ${text};color:${muted};font-size:10px;font-weight:bold;letter-spacing:0.2em;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;">Description</th>
-          <th align="right" style="padding:10px 0;border-bottom:1px solid ${text};color:${muted};font-size:10px;font-weight:bold;letter-spacing:0.2em;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;">Amount</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${lineItemsRows}
-      </tbody>
-    </table>
-
-    <!-- Totals -->
-    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 30px 0;">
-      <tr>
-        <td align="right" style="padding:6px 0;color:${muted} !important;font-size:13px;font-family:Arial,Helvetica,sans-serif;">Subtotal</td>
-        <td align="right" style="padding:6px 0 6px 20px;color:${text} !important;font-size:13px;font-family:'Courier New',monospace;width:130px;">${fmtUSD(subtotal)}</td>
-      </tr>
-      <tr>
-        <td align="right" style="padding:14px 0 6px 0;border-top:1px solid ${text};color:${text} !important;font-size:13px;font-weight:bold;letter-spacing:0.2em;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;">Total</td>
-        <td align="right" style="padding:14px 0 6px 20px;border-top:1px solid ${text};color:${text} !important;font-size:22px;font-weight:bold;font-family:'Courier New',monospace;">${fmtUSD(total)}</td>
-      </tr>
-    </table>
-
-    ${
-      stripePaymentLinkUrl && status !== 'paid'
-        ? `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:10px 0 30px 0;">
-            <tr>
-              <td align="center" style="padding:0;">
-                <!--[if mso]>
-                <v:rect xmlns:v="urn:schemas-microsoft-com:vml" fillcolor="#000000" stroked="f" style="width:520px;height:60px;">
-                  <w:anchorlock xmlns:w="urn:schemas-microsoft-com:office:word"/>
-                  <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:18px;font-weight:bold;letter-spacing:0.18em;">PAY DEPOSIT — ${fmtUSD(amountDue)}</center>
-                </v:rect>
-                <![endif]-->
-                <a href="${escapeHtml(stripePaymentLinkUrl)}"
-                   style="display:block;width:100%;background-color:#000000 !important;background:#000000 !important;color:#ffffff !important;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:bold;letter-spacing:0.18em;text-transform:uppercase;padding:22px 24px;text-align:center;border-radius:0;border:1px solid #000000;mso-hide:all;">
-                  <span style="color:#ffffff !important;">PAY DEPOSIT — ${fmtUSD(amountDue)}</span>
-                </a>
-              </td>
-            </tr>
-            ${
-              stripeFullPaymentLinkUrl
-                ? `<tr>
-                    <td align="center" style="padding:12px 0 0 0;">
-                      <!--[if mso]>
-                      <v:rect xmlns:v="urn:schemas-microsoft-com:vml" fillcolor="#000000" stroked="f" style="width:520px;height:60px;">
-                        <w:anchorlock xmlns:w="urn:schemas-microsoft-com:office:word"/>
-                        <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:18px;font-weight:bold;letter-spacing:0.18em;">PAY FULL AMOUNT — ${fmtUSD(total)}</center>
-                      </v:rect>
-                      <![endif]-->
-                      <a href="${escapeHtml(stripeFullPaymentLinkUrl)}"
-                         style="display:block;width:100%;background-color:#000000 !important;background:#000000 !important;color:#ffffff !important;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:bold;letter-spacing:0.18em;text-transform:uppercase;padding:22px 24px;text-align:center;border-radius:0;border:1px solid #000000;mso-hide:all;">
-                        <span style="color:#ffffff !important;">PAY FULL AMOUNT — ${fmtUSD(total)}</span>
-                      </a>
-                    </td>
-                  </tr>`
-                : ''
-            }
-            <tr>
-              <td align="center" style="padding:12px 0 0 0;color:${muted} !important;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;">
-                Secure payment via Stripe
-              </td>
-            </tr>
-          </table>`
-        : ''
-    }
-
-    ${
-      paymentMethod
-        ? `<p style="color:${muted} !important;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;margin:0 0 24px 0;">
-            Accepted Payment: ${escapeHtml(paymentMethod)}
-          </p>`
-        : ''
-    }
-
-    <hr style="border:none;border-top:1px solid ${border};margin:30px 0;">
-
-    <p style="color:${text} !important;font-size:14px;line-height:1.6;margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;">
-      Thank you for your business.
-    </p>
-    <p style="color:${muted} !important;font-size:12px;line-height:1.6;margin:0;font-family:Arial,Helvetica,sans-serif;">
-      Questions about this invoice? Just reply to this email.
-    </p>
-  `
-}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*')
@@ -376,84 +146,62 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ? (invoice as any).line_items
       : []
 
+    // Every invoice email carries the branded PDF as an attachment — never
+    // the legacy inline render, which drops the banner/layout in most clients.
     const hasMessage = typeof message === 'string' && message.trim().length > 0
+    const bodyMessage = hasMessage
+      ? message!.trim()
+      : invoice.status === 'paid'
+      ? 'Thank you — here is your receipt.'
+      : 'Please find your invoice attached.'
 
-    // Two modes:
-    //   1. Personal message + PDF attachment (when `message` is supplied)
-    //   2. Legacy inline invoice render (no attachment) — backwards-compat
-    let bodyHtml: string
-    let pdfAttachment:
-      | { data: Buffer; fileName: string; mimeType: string }
-      | null = null
+    const bodyHtml = buildPersonalMessageBody(bodyMessage, invoice.invoice_number)
 
-    if (hasMessage) {
-      bodyHtml = buildPersonalMessageBody(message!.trim(), invoice.invoice_number)
+    const total = Number(invoice.total || 0)
+    const amountDue = invoice.amount_due != null ? Number(invoice.amount_due) : total
+    let docType: 'QUOTE' | 'INVOICE' = 'INVOICE'
+    let amountDueLabel = 'Amount Due'
+    if (invoice.invoice_type === 'quote') {
+      docType = 'QUOTE'
+      const pct = total > 0 ? Math.round((amountDue / total) * 100) : 50
+      amountDueLabel = `Deposit Due (${pct}%)`
+    } else if (invoice.invoice_type === 'final') {
+      amountDueLabel = 'Balance Due'
+    }
 
-      const total = Number(invoice.total || 0)
-      const amountDue = invoice.amount_due != null ? Number(invoice.amount_due) : total
-      let docType: 'QUOTE' | 'INVOICE' = 'INVOICE'
-      let amountDueLabel = 'Amount Due'
-      if (invoice.invoice_type === 'quote') {
-        docType = 'QUOTE'
-        const pct = total > 0 ? Math.round((amountDue / total) * 100) : 50
-        amountDueLabel = `Deposit Due (${pct}%)`
-      } else if (invoice.invoice_type === 'final') {
-        amountDueLabel = 'Balance Due'
-      }
+    const pdfLineItems: InvoicePdfLineItem[] = lineItems.map((li) => ({
+      description: li.description,
+      quantity: li.quantity,
+      unit_price: li.unit_price,
+      amount: li.amount,
+    }))
 
-      const pdfLineItems: InvoicePdfLineItem[] = lineItems.map((li) => ({
-        description: li.description,
-        quantity: li.quantity,
-        unit_price: li.unit_price,
-        amount: li.amount,
-      }))
+    const pdfBuffer = await generateInvoicePdf({
+      docType,
+      invoiceNumber: invoice.invoice_number,
+      date: invoice.date,
+      eventDate: invoice.event_date,
+      startTime: bookingStartTime,
+      endTime: bookingEndTime,
+      location: (invoice as any).location || null,
+      description: invoice.description,
+      lineItems: pdfLineItems,
+      subtotal: Number(invoice.subtotal || 0),
+      total,
+      amountDueLabel,
+      amountDue,
+      paymentUrl: invoice.stripe_payment_link_url || null,
+      fullPaymentUrl: (invoice as any).stripe_full_payment_link_url || null,
+      clientName: client?.name || 'Client',
+      clientBusiness: client?.business || null,
+      clientEmail: client?.email || null,
+      notes: null,
+    })
 
-      const pdfBuffer = await generateInvoicePdf({
-        docType,
-        invoiceNumber: invoice.invoice_number,
-        date: invoice.date,
-        eventDate: invoice.event_date,
-        startTime: bookingStartTime,
-        endTime: bookingEndTime,
-        location: (invoice as any).location || null,
-        description: invoice.description,
-        lineItems: pdfLineItems,
-        subtotal: Number(invoice.subtotal || 0),
-        total,
-        amountDueLabel,
-        amountDue,
-        paymentUrl: invoice.stripe_payment_link_url || null,
-        fullPaymentUrl: (invoice as any).stripe_full_payment_link_url || null,
-        clientName: client?.name || 'Client',
-        clientBusiness: client?.business || null,
-        clientEmail: client?.email || null,
-        notes: null,
-      })
-
-      pdfAttachment = {
-        data: pdfBuffer,
-        fileName: `${invoice.invoice_number}.pdf`,
-        mimeType: 'application/pdf',
-      }
-    } else {
-      bodyHtml = buildInvoiceBody({
-        invoiceNumber: invoice.invoice_number,
-        date: invoice.date,
-        eventDate: invoice.event_date,
-        location: invoice.location || null,
-        description: invoice.description,
-        lineItems,
-        subtotal: Number(invoice.subtotal || 0),
-        total: Number(invoice.total || 0),
-        amountDue: Number(invoice.amount_due || 0),
-        status: invoice.status,
-        paymentMethod: invoice.payment_method,
-        stripePaymentLinkUrl: invoice.stripe_payment_link_url || null,
-        stripeFullPaymentLinkUrl: (invoice as any).stripe_full_payment_link_url || null,
-        clientName: client?.name || 'Client',
-        clientEmail: client?.email || null,
-        clientBusiness: client?.business || null,
-      })
+    const pdfAttachment: { data: Buffer; fileName: string; mimeType: string } = {
+      data: pdfBuffer,
+      fileName: `${invoice.invoice_number}.pdf`,
+      mimeType: 'application/pdf',
     }
 
     const htmlContent = wrapEmailContent(bodyHtml, {
