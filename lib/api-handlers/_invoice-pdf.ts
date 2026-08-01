@@ -250,7 +250,7 @@ export async function generateInvoicePdf(data: InvoicePdfData): Promise<Buffer> 
   // wordmark instead — otherwise the left column starts with a blank gap.
   const metaTop = bannerBuffer ? 60 : 82
   doc
-    .fillColor(MUTED)
+    .fillColor(INK)
     .font('Helvetica')
     .fontSize(7.5)
     .text(BRAND.tagline, LEFT, metaTop + topShift, { characterSpacing: 1.5 })
