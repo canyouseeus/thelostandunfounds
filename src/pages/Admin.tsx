@@ -822,17 +822,38 @@ export default function Admin() {
           console.log('Total gallery revenue (real customers only):', galleryRevenueTotal);
         }
 
-        // Get booking (invoice) revenue — paid invoices only, net of subcontractor payouts
-        const { data: paidInvoices } = await supabase
+        // Booking revenue is money actually collected, not invoice status. A
+        // deposit-paid job stays status 'sent' until the balance clears (so the
+        // client's email still reads "Invoice", not "Receipt"), but the deposit
+        // is real income the moment it lands — keying off status alone hid it.
+        //
+        // Each invoice contributes what it has collected, capped at the site's
+        // own share (total − contractor_payout): a subcontractor's cut is never
+        // site revenue, and the site's share is treated as collected first.
+        const { data: revenueInvoices } = await supabase
           .from('invoices')
-          .select('total, contractor_payout')
-          .eq('status', 'paid');
+          .select('id, total, contractor_payout, status');
 
-        if (paidInvoices) {
-          bookingRevenueTotal = paidInvoices.reduce(
-            (sum, inv) => sum + (Number(inv.total || 0) - Number(inv.contractor_payout || 0)),
-            0
-          );
+        const { data: invoicePayments } = await supabase
+          .from('invoice_payments')
+          .select('invoice_id, amount');
+
+        if (revenueInvoices) {
+          const collectedByInvoice = new Map<string, number>();
+          for (const p of invoicePayments || []) {
+            const prior = collectedByInvoice.get(p.invoice_id) || 0;
+            collectedByInvoice.set(p.invoice_id, prior + Number(p.amount || 0));
+          }
+
+          bookingRevenueTotal = revenueInvoices.reduce((sum, inv) => {
+            const siteShare = Number(inv.total || 0) - Number(inv.contractor_payout || 0);
+            // Invoices marked paid with no itemised payments still count in
+            // full — older rows predate invoice_payments being populated.
+            const recorded = collectedByInvoice.get(inv.id);
+            const collected =
+              recorded != null ? recorded : inv.status === 'paid' ? Number(inv.total || 0) : 0;
+            return sum + Math.max(0, Math.min(collected, siteShare));
+          }, 0);
         }
       } catch (err) {
         console.warn('Error loading blog metrics:', err);
