@@ -88,9 +88,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
   if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' })
 
-  const { invoice_id, to_email, message } = (req.body || {}) as {
+  const { invoice_id, to_email, cc_email, message } = (req.body || {}) as {
     invoice_id?: string
     to_email?: string
+    cc_email?: string
     message?: string
   }
 
@@ -217,6 +218,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const result = await sendZohoEmail({
       auth: { ...auth, fromEmail: FROM_EMAIL },
       to: recipient,
+      cc: (cc_email && cc_email.trim()) || undefined,
       subject,
       htmlContent,
       attachments: pdfAttachment ? [pdfAttachment] : undefined,
