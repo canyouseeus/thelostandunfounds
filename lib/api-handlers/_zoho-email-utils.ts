@@ -38,6 +38,8 @@ export interface ZohoUploadedAttachment {
 export interface ZohoSendEmailParams {
   auth: ZohoAuthContext
   to: string
+  /** Comma-separated additional recipients, visible to everyone on the thread. */
+  cc?: string
   subject: string
   htmlContent: string
   attachments?: ZohoEmailAttachment[]
@@ -265,6 +267,7 @@ export async function uploadZohoAttachment(
 export async function sendZohoEmail({
   auth,
   to,
+  cc,
   subject,
   htmlContent,
   attachments
@@ -306,6 +309,9 @@ export async function sendZohoEmail({
     subject,
     content: finalHtml,
     mailFormat: 'html',
+  }
+  if (cc && cc.trim()) {
+    body.ccAddress = cc.trim()
   }
   if (resolvedAttachments.length > 0) {
     body.attachments = resolvedAttachments
