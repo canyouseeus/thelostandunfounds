@@ -116,7 +116,7 @@ export interface InvoicePdfData {
 
 const BRAND = {
   name: 'THE LOST+UNFOUNDS',
-  tagline: 'PHOTOGRAPHY & VISUAL STORYTELLING',
+  tagline: 'CAN YOU SEE US?',
   website: 'thelostandunfounds.com',
   email: 'media@thelostandunfounds.com',
 }
