@@ -43,7 +43,7 @@ payment_method, pdf_token
 
 - the brand banner, read from `public/brand/banner.png` **on disk** (cached per container).
   It is deliberately not fetched over HTTP — see the warning below.
-- `BRAND` — name `THE LOST+UNFOUNDS`, tagline `PHOTOGRAPHY & VISUAL STORYTELLING`, website,
+- `BRAND` — name `THE LOST+UNFOUNDS`, tagline `CAN YOU SEE US?`, website,
   `media@thelostandunfounds.com`
 - the palette: `INK #000000`, `MUTED #888888`, `HAIRLINE #dddddd`
 - page geometry: 56pt margins, 612pt page width, letter-spaced uppercase headings
