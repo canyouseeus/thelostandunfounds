@@ -822,14 +822,17 @@ export default function Admin() {
           console.log('Total gallery revenue (real customers only):', galleryRevenueTotal);
         }
 
-        // Get booking (invoice) revenue — paid invoices only
+        // Get booking (invoice) revenue — paid invoices only, net of subcontractor payouts
         const { data: paidInvoices } = await supabase
           .from('invoices')
-          .select('total')
+          .select('total, contractor_payout')
           .eq('status', 'paid');
 
         if (paidInvoices) {
-          bookingRevenueTotal = paidInvoices.reduce((sum, inv) => sum + Number(inv.total || 0), 0);
+          bookingRevenueTotal = paidInvoices.reduce(
+            (sum, inv) => sum + (Number(inv.total || 0) - Number(inv.contractor_payout || 0)),
+            0
+          );
         }
       } catch (err) {
         console.warn('Error loading blog metrics:', err);
