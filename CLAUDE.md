@@ -149,6 +149,12 @@ removed — do not recreate them.
 - Never claim you can't send email — use Zoho Mail integrations
 - Test: POST `https://www.thelostandunfounds.com/api/admin/send-welcome-emails` with `{"testEmail":"target@example.com"}`
 - Required env vars: `ZOHO_CLIENT_ID`, `ZOHO_CLIENT_SECRET`, `ZOHO_REFRESH_TOKEN`, `ZOHO_FROM_EMAIL`
+- **Always CC `media@thelostandunfounds.com`** on media-related outbound mail — client and booking
+  correspondence, invoices, quotes, proposals, shoot confirmations, photographer coordination. It is
+  the business address of record, so the thread stays on file even when a reply goes to one person.
+  Use the CC field, not BCC — recipients should see it. Never substitute a personal address for it.
+  Bulk sends (newsletters, campaigns) are exempt: one CC per subscriber is not a business record.
+  Verify the CC actually landed before treating a send as done — a dropped CC fails silently.
 
 ## NEWSLETTER RESEND RULE
 1. Query `newsletter_campaigns` (ordered by `created_at` desc, limit 1) using `.env.local` credentials
