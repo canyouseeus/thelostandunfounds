@@ -37,6 +37,30 @@ description, line_items, subtotal, total, amount_due, status,
 payment_method, pdf_token
 ```
 
+### Deposit paid, balance outstanding — the standing rule
+
+A job where the deposit has landed but the balance has not is the normal case, not an exception.
+Handle it the same way every time:
+
+- **Status stays `sent`, never `paid`.** `api/invoices/send.ts` picks the subject line off status —
+  `paid` sends "Receipt — INV-xxx". Calling a half-paid job a receipt misleads the client, so the
+  invoice stays an invoice until the balance clears.
+- **Record the deposit in `invoice_payments`** (`invoice_id`, `amount`, `method`, `notes`) the
+  moment it is received. That table — not invoice status — is the record of money collected.
+- **Revenue follows collected money, not status.** The admin dashboard sums `invoice_payments`
+  per invoice, capped at the site's share (`total − contractor_payout`), so a deposit shows up as
+  income immediately without anyone having to lie about the invoice's state.
+- **Flip to `paid` only when the full balance is in**, and add the closing payment row alongside it.
+
+Never resolve the tension by marking an unpaid invoice `paid` to make a number appear.
+
+### Subcontractor payouts are internal
+
+`invoices.contractor_payout` / `contractor_name` exist so the dashboard can report *net* revenue
+when part of a job's total is owed to a subcontracted shooter. They are deliberately **not** passed
+to `generateInvoicePdf` and never appear in the client's PDF or email — the client sees the full
+project total and what they owe, and nothing about how it is split internally. Keep it that way.
+
 ### Always show the full scope of work
 
 An invoice that only shows the price paid, with no deliverables, is incomplete — the client can't
