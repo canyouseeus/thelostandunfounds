@@ -37,6 +37,16 @@ description, line_items, subtotal, total, amount_due, status,
 payment_method, pdf_token
 ```
 
+### Always show the full scope of work
+
+An invoice that only shows the price paid, with no deliverables, is incomplete — the client can't
+tell what they're owed from it alone. Every invoice's `description` and/or `line_items` must state
+what was actually agreed: what gets delivered (e.g. "25–35 edited photos"), the turnaround (e.g.
+"24–72 hour delivery"), and any other scope terms negotiated in the deal (portfolio-use rights,
+golden-hour timing, etc.). Pull this from the actual negotiation — never invent deliverables that
+weren't agreed to, and never omit ones that were. A deposit invoice for a job that already has
+defined deliverables states them too, not just the deposit line.
+
 ### Why this guarantees consistency
 
 `generateInvoicePdf()` in **`lib/api-handlers/_invoice-pdf.ts`** owns every visual decision:
