@@ -38,6 +38,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full codebase map.
 | Feature documentation | `docs/features/` |
 | Security docs | `docs/security/` |
 | Archived/completed docs | `docs/archive/` |
+| Live URLs (site, previews, admin, Supabase, repo) | [`LINKS.md`](LINKS.md) — keep current, see Always Ship A Link Rule below |
 
 ## EVIDENCE RULE — every task, no exceptions
 
@@ -105,7 +106,7 @@ Skills live in **`.claude/skills/<name>/SKILL.md`** — this is the single canon
 | `/cleanup` | Monthly maintenance | `.agent/workflows/cleanup.md` |
 | `/send-email` | Sending emails | `.agent/workflows/send-email.md` |
 
-## SEVEN CRITICAL INVARIANTS
+## EIGHT CRITICAL INVARIANTS
 
 These rules are **non-negotiable**. Violating them will break production.
 
@@ -129,6 +130,9 @@ Use the keyword table above.
 
 ### 7. Produce evidence, not claims
 Quote the rule you followed, show the rendered output, and make sure every check you run is capable of failing. See the Evidence Rule above.
+
+### 8. Always ship a link
+Never report something as deployed, live, updated, published, or ready without its URL in the same message. See the Always Ship A Link Rule below.
 
 ## BLOG POST PUBLISHING RULE
 
@@ -185,6 +189,18 @@ After creating any deployment (Vercel or otherwise), you MUST before calling the
 **Builds currently take about 5 minutes.** Do not treat `BUILDING` at the 30-second or 1-minute mark as a problem, and do not poll every 15s — that just burns calls on a build that was never going to be done. Wait ~5 minutes before the first status check, then poll every ~30–60s up to a 10-minute timeout. Report it's still building rather than guessing success. Never mark a deployment complete based on creation alone or on logs you didn't check.
 
 **Never verify against production before the deploy carrying your change is `READY`.** Fetching a page or hitting an endpoint mid-build exercises the *previous* deployment, so a fix looks broken and an unfixed bug looks fixed. Both have happened. Confirm `READY` first, then verify.
+
+## ALWAYS SHIP A LINK RULE
+
+Every deployment, build, or deliverable is reported **with its URL**, every time, without being asked. No exceptions.
+
+- Never say something is "deployed", "live", "updated", "published" or "ready" without the URL in the same message. A blog post that went live gets the post URL, not a confirmation.
+- When both a stable alias and a deployment-specific URL exist, give the **stable** one, and say plainly if it is currently serving an older build.
+- If a previously shared URL is now stale, say so explicitly — "use this one, not the one from before."
+- Maintain **[`LINKS.md`](LINKS.md)** at the repo root listing every live URL: production site, each preview deployment, admin surfaces, Supabase project, and the GitHub repo. Update it whenever a URL changes.
+- A blocked or partial deploy still gets a status line naming which URL is current and which is not yet updated.
+
+**Why:** Joshua works from his phone, frequently away from the machine, and cannot scroll back through a long thread to recover a link. "It's deployed" without a URL is not a usable result.
 
 ## PAGE TITLE STYLE RULE
 
