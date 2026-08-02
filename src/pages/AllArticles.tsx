@@ -47,11 +47,15 @@ export default function AllArticles() {
 
       console.log('🔄 Loading all blog posts...');
 
-      // Load all native posts (subdomain IS NULL)
+      // Load THE LOST ARCHIVES posts only. The retired columns (Book Club,
+      // Gearheads, Borderlands, Science, New Theory) are excluded: this is
+      // the public "view all" page, and listing a post here is what makes it
+      // crawlable.
       let queryPromise = supabase
         .from('blog_posts')
         .select('id, title, slug, excerpt, content, published_at, created_at, seo_title, seo_description, published, status, subdomain')
         .is('subdomain', null)
+        .or('blog_column.eq.main,blog_column.is.null')
         .order('published_at', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(100);

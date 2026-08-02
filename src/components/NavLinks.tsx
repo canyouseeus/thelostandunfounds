@@ -22,7 +22,6 @@ export default function NavLinks({
     onLinkClick,
     onLoginClick,
 }: NavLinksProps) {
-    const [archivesMenuOpen, setArchivesMenuOpen] = useState(false);
     const [moreMenuOpen, setMoreMenuOpen] = useState(false);
 
     const moreSection = (
@@ -96,35 +95,13 @@ export default function NavLinks({
                 SERVICES
             </Link>
 
-            <div
-                className="menu-item menu-toggle-section flex items-center justify-start w-full gap-0 cursor-pointer"
-                onClick={(e) => {
-                    e.stopPropagation();
-                    setArchivesMenuOpen(!archivesMenuOpen);
-                }}
-            >
-                <span className="flex-grow">THE LOST ARCHIVES</span>
-                <div className="p-1 transition rounded-none flex items-center justify-center h-6 w-6 shrink-0">
-                    {archivesMenuOpen ? '▼' : '▶'}
-                </div>
-            </div>
-            <div className={`menu-subsection ${archivesMenuOpen ? 'open' : ''}`}>
-                <Link to="/thelostarchives" className="menu-item menu-subitem" onClick={onLinkClick}>
-                    ALL ARTICLES
-                </Link>
-                <Link to="/gearheads" className="menu-item menu-subitem" onClick={onLinkClick}>
-                    GEARHEADS
-                </Link>
-                <Link to="/borderlands" className="menu-item menu-subitem" onClick={onLinkClick}>
-                    EDGE OF THE BORDERLANDS
-                </Link>
-                <Link to="/science" className="menu-item menu-subitem" onClick={onLinkClick}>
-                    MAD SCIENTISTS
-                </Link>
-                <Link to="/newtheory" className="menu-item menu-subitem" onClick={onLinkClick}>
-                    NEW THEORY
-                </Link>
-            </div>
+            {/* THE LOST ARCHIVES is the only blog now, so this is a plain link
+                rather than a collapsible section — the sub-columns it used to
+                expand into (Gearheads, Borderlands, Mad Scientists, New Theory)
+                have been retired. */}
+            <Link to="/thelostarchives" className="menu-item" onClick={onLinkClick}>
+                THE LOST ARCHIVES
+            </Link>
 
             {moreSection}
 

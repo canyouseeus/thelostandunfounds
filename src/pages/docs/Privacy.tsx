@@ -95,7 +95,7 @@ export default function Privacy() {
             <li>Your published blog posts and articles are publicly accessible</li>
             <li>Your author name (if provided) will be displayed with your content</li>
             <li>Content published on your subdomain is publicly viewable</li>
-            <li>Submitted articles may be published in our columns (Book Club, GearHeads, Borderlands, Science, New Theory, etc.)</li>
+            <li>Submitted articles may be published in THE LOST ARCHIVES</li>
             <li>We may use your content for promotional purposes within our platform</li>
           </ul>
           <p className="mt-3">

@@ -36,6 +36,7 @@ interface BlogPost {
   featured_image?: string | null; // Support existing field
   amazon_affiliate_links?: AffiliateLink[] | null; // Amazon links from submission
   subdomain?: string | null; // User subdomain
+  blog_column?: string | null; // 'main' (THE LOST ARCHIVES) or a retired column
   author_id?: string | null; // Author ID
   author_name?: string | null; // Author name for disclosure
   blog_title?: string | null; // Blog title from user_subdomains (normalized)
@@ -135,13 +136,6 @@ export default function BlogPost() {
         } else if (pathParts[0] === 'blog' && pathParts[1]) {
           // /blog/:subdomain/:slug format
           subdomain = pathParts[1];
-        } else if (pathParts[0] === 'book-club' ||
-          pathParts[0] === 'gearheads' ||
-          pathParts[0] === 'borderlands' ||
-          pathParts[0] === 'science' ||
-          pathParts[0] === 'newtheory') {
-          // These are actual subdomains
-          subdomain = pathParts[0];
         } else {
           // Try hostname as fallback (but exclude localhost, www, and main domain)
           const hostname = window.location.hostname;
@@ -229,13 +223,6 @@ export default function BlogPost() {
         } else if (pathParts[0] === 'blog' && pathParts[1]) {
           // /blog/:subdomain/:slug format
           subdomain = pathParts[1];
-        } else if (pathParts[0] === 'book-club' ||
-          pathParts[0] === 'gearheads' ||
-          pathParts[0] === 'borderlands' ||
-          pathParts[0] === 'science' ||
-          pathParts[0] === 'newtheory') {
-          // These are actual subdomains
-          subdomain = pathParts[0];
         } else {
           // Try hostname as fallback (but exclude localhost, www, and main domain)
           const hostname = window.location.hostname;
@@ -493,12 +480,13 @@ export default function BlogPost() {
     <>
       <Helmet>
         <title>THE LOST+UNFOUNDS | {title.split(' | ')[0].trim()}</title>
-        {/* Only THE LOST ARCHIVES (subdomain-less) posts are meant to be
-            public/indexable. Column posts (Book Club, Gearheads, etc.) no
-            longer have any public internal link path, so they're marked
-            noindex here too in case a stale external link still reaches
-            them. */}
-        {post.subdomain && <meta name="robots" content="noindex, nofollow" />}
+        {/* Only THE LOST ARCHIVES posts are public. Posts from the retired
+            columns (Book Club, Gearheads, Borderlands, Science, New Theory)
+            have no route or internal link left, so they are marked noindex
+            in case a stale external link still reaches them. */}
+        {(post.subdomain || (post.blog_column && post.blog_column !== 'main')) && (
+          <meta name="robots" content="noindex, nofollow" />
+        )}
         <link rel="canonical" href={post.subdomain ? `https://www.thelostandunfounds.com/blog/${post.subdomain}/${post.slug}` : `https://www.thelostandunfounds.com/thelostarchives/${post.slug}`} />
         <meta name="description" content={description} />
         {post.seo_keywords && <meta name="keywords" content={post.seo_keywords} />}

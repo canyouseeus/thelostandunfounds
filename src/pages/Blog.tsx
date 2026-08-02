@@ -46,20 +46,19 @@ export default function Blog() {
 
       console.log('🔄 Starting to load blog posts...');
 
-      // THE LOST ARCHIVES is the only column shown publicly. The other
-      // columns (Book Club, Gearheads, Borderlands, Science, New Theory)
-      // live behind admin-gated pages (/book-club, /gearheads, etc.) with
-      // no public "view all" page, so posts in them had no reachable
-      // internal link path and were flagged by Ahrefs as orphan pages.
-      // Per request, only Main column posts are queried/rendered here now.
+      // THE LOST ARCHIVES is the only blog. The Book Club, Gearheads,
+      // Borderlands, Science and New Theory columns were retired — their
+      // pages and routes are gone, so only main-column posts are queried.
       let query = supabase
         .from('blog_posts')
         .select('id, title, slug, excerpt, content, published_at, created_at, seo_title, seo_description, published, status, subdomain, blog_column')
         .order('published_at', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(3)
-        // Main: blog_column is 'main' OR (null column AND null subdomain)
-        .or('blog_column.eq.main,and(blog_column.is.null,subdomain.is.null)');
+        // THE LOST ARCHIVES only: no subdomain, and either the main column or
+        // no column set at all. Same filter as AllArticles and the sitemap.
+        .is('subdomain', null)
+        .or('blog_column.eq.main,blog_column.is.null');
 
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Query timeout after 15 seconds')), 15000)

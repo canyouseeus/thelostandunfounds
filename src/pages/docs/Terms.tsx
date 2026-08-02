@@ -25,7 +25,7 @@ export default function Terms() {
             <li>Blog publishing and content management system</li>
             <li>Article submission and editorial review process</li>
             <li>User subdomains for personalized blog hosting</li>
-            <li>Multiple content columns (The Lost Archives, Book Club, GearHeads, Edge of the Borderlands, Science Column, New Theory)</li>
+            <li>A content archive (The Lost Archives)</li>
             <li>Digital tools and utilities</li>
             <li>Online shop for merchandise and products</li>
             <li>Email newsletter and subscription services</li>

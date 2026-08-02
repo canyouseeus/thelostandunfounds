@@ -22,8 +22,7 @@ import {
   UserIcon,
   ClipboardIcon,
   CheckIcon,
-  ExclamationTriangleIcon,
-  ArrowRightIcon
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import RichTextEditor from '../components/RichTextEditor';
 
@@ -35,7 +34,9 @@ interface AffiliateLink {
   phrase?: string;  // The exact phrase to hyperlink
 }
 
-type BlogColumn = 'main' | 'bookclub' | 'gearheads' | 'borderlands' | 'science' | 'newtheory';
+// THE LOST ARCHIVES (main) is the only blog — the BookClub, GearHeads,
+// Borderlands, MAD SCIENTISTS and NEW THEORY columns were retired.
+type BlogColumn = 'main';
 
 interface ColumnConfig {
   name: string;
@@ -64,74 +65,10 @@ const COLUMN_CONFIGS: Record<BlogColumn, ColumnConfig> = {
     itemLabel: '',
     linkLabel: '',
   },
-  bookclub: {
-    name: 'BookClub',
-    title: 'SUBMIT TO BOOK CLUB',
-    description: 'Share your insights on books and how they\'ve shaped your thinking. Submit an article featuring four books with your Amazon affiliate links.',
-    requiresAffiliates: true,
-    requiresStorefront: true,
-    requiresSubdomain: true,
-    minItems: 4,
-    maxItems: 4,
-    itemLabel: 'Book',
-    linkLabel: 'Amazon Affiliate Link',
-    promptPath: '/prompts/AI_WRITING_PROMPT_FOR_CONTRIBUTORS.md',
-  },
-  gearheads: {
-    name: 'GearHeads',
-    title: 'SUBMIT TO GEARHEADS',
-    description: 'Explore tools, setups, kits, and combinations that create experiences. Share how items combine to support workflows, hobbies, or lifestyle practices.',
-    requiresAffiliates: true,
-    requiresStorefront: true,
-    requiresSubdomain: true,
-    minItems: 1,
-    maxItems: 8,
-    itemLabel: 'Product',
-    linkLabel: 'Amazon Affiliate Link',
-    promptPath: '/prompts/GEARHEADS_WRITING_PROMPT.md',
-  },
-  borderlands: {
-    name: 'Edge of the Borderlands',
-    title: 'SUBMIT TO EDGE OF THE BORDERLANDS',
-    description: 'Share travel experiences and practical adventure insights. Stories of journeys, what you brought, how you navigated spaces, and lessons learned.',
-    requiresAffiliates: true,
-    requiresStorefront: true,
-    requiresSubdomain: true,
-    minItems: 1,
-    maxItems: 8,
-    itemLabel: 'Item',
-    linkLabel: 'Affiliate Link',
-    promptPath: '/prompts/BORDERLANDS_WRITING_PROMPT.md',
-  },
-  science: {
-    name: 'MAD SCIENTISTS',
-    title: 'SUBMIT TO MAD SCIENTISTS',
-    description: 'Deep dives into scientific concepts and discoveries. Physics, quantum theory, biology, emerging sciences, and applied innovation.',
-    requiresAffiliates: false,
-    requiresStorefront: false,
-    requiresSubdomain: false,
-    minItems: 0,
-    maxItems: 0,
-    itemLabel: '',
-    linkLabel: '',
-    promptPath: '/prompts/SCIENCE_WRITING_PROMPT.md',
-  },
-  newtheory: {
-    name: 'NEW THEORY',
-    title: 'SUBMIT TO NEW THEORY',
-    description: 'Practical application of technology and systems thinking in everyday life. Nutrition, household systems, habit-building, resource management, and DIY experiments.',
-    requiresAffiliates: false,
-    requiresStorefront: false,
-    requiresSubdomain: false,
-    minItems: 0,
-    maxItems: 8,
-    itemLabel: 'Item',
-    linkLabel: 'Affiliate Link',
-  },
 };
 
 export default function SubmitArticle() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const location = useLocation();
 
   const pathname = location.pathname;
@@ -139,11 +76,6 @@ export default function SubmitArticle() {
   // Helper to get column from URL
   const getColumnFromUrl = (): BlogColumn | null => {
     if (pathname.includes('/submit/main')) return 'main';
-    if (pathname.includes('/submit/bookclub')) return 'bookclub';
-    if (pathname.includes('/submit/gearheads')) return 'gearheads';
-    if (pathname.includes('/submit/borderlands')) return 'borderlands';
-    if (pathname.includes('/submit/science')) return 'science';
-    if (pathname.includes('/submit/newtheory')) return 'newtheory';
 
     const queryParam = searchParams.get('column');
     if (queryParam && Object.keys(COLUMN_CONFIGS).includes(queryParam.toLowerCase())) {
@@ -154,19 +86,14 @@ export default function SubmitArticle() {
   };
 
   const urlColumn = getColumnFromUrl();
-  // Default to bookclub for internal hooks safety, but track if we actually have a selection
-  const [selectedColumn, setSelectedColumn] = useState<BlogColumn>(urlColumn || 'bookclub');
-  const [hasSelected, setHasSelected] = useState<boolean>(!!urlColumn);
+  // Only one column exists, so it is always the selection.
+  const [selectedColumn, setSelectedColumn] = useState<BlogColumn>(urlColumn || 'main');
 
   // Sync with URL changes
   useEffect(() => {
     const col = getColumnFromUrl();
     if (col) {
       setSelectedColumn(col);
-      setHasSelected(true);
-    } else if (pathname === '/submit-article' && !searchParams.get('column')) {
-      // Only reset if explicit root visit without params
-      setHasSelected(false);
     }
   }, [location.pathname, searchParams]);
 
@@ -352,11 +279,9 @@ export default function SubmitArticle() {
     setAffiliateLinks(updated);
   };
 
-  const getTitleField = (): 'book_title' | 'product_title' | 'item_title' => {
-    if (column === 'bookclub') return 'book_title';
-    if (column === 'gearheads') return 'product_title';
-    return 'item_title';
-  };
+  // The retired affiliate columns used book_title/product_title; THE LOST
+  // ARCHIVES has no affiliate items, so the generic field is the only one left.
+  const getTitleField = (): 'book_title' | 'product_title' | 'item_title' => 'item_title';
 
   const getTitleValue = (link: AffiliateLink): string => {
     return link.book_title || link.product_title || link.item_title || '';
@@ -549,11 +474,6 @@ export default function SubmitArticle() {
           showError('Please provide valid URLs (starting with http:// or https://) for all affiliate links');
           return false;
         }
-        // For bookclub, require Amazon links
-        if (column === 'bookclub' && !link.link.includes('amazon') && !link.link.includes('amzn.to')) {
-          showError('Please provide valid Amazon affiliate links (amazon.com or amzn.to)');
-          return false;
-        }
       }
     }
 
@@ -671,53 +591,9 @@ export default function SubmitArticle() {
     }
   };
 
-  if (!hasSelected) {
-    return (
-      <>
-        <Helmet>
-          <title>THE LOST+UNFOUNDS | Submit Article</title>
-          <meta name="description" content="Submit your article to THE LOST ARCHIVES. Contribute your findings, research, and reflections to our expanding columns and earn as an Amazon Affiliate." />
-          <link rel="canonical" href="https://www.thelostandunfounds.com/submit-article" />
-        </Helmet>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 min-h-[60vh]">
-          <div className="text-center mb-12">
-            <h1 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-wide">
-              SUBMIT AN ARTICLE
-            </h1>
-            <p className="text-white/70 text-lg max-w-2xl mx-auto">
-              Choose a column to contribute to. Each column has its own unique focus and format.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(Object.entries(COLUMN_CONFIGS) as [BlogColumn, ColumnConfig][]).map(([key, conf]) => (
-              <button
-                key={key}
-                onClick={() => {
-                  setSelectedColumn(key);
-                  setHasSelected(true);
-                  setSearchParams({ column: key });
-                  window.scrollTo(0, 0);
-                }}
-                className="bg-black/50 p-6 text-left hover:bg-white/5 transition group flex flex-col h-full rounded-none"
-              >
-                <h3 className="text-xl font-bold text-white mb-2 group-hover:text-white transition-colors uppercase tracking-wide">
-                  {conf.name}
-                </h3>
-                <p className="text-white/60 text-sm mb-6 flex-grow">
-                  {conf.description}
-                </p>
-                <div className="mt-auto flex items-center text-white/40 text-xs font-medium uppercase tracking-wider group-hover:text-white transition-colors gap-2">
-                  Select Column <ArrowRightIcon className="w-4 h-4" />
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      </>
-    );
-  }
-
+  // There is only one column (THE LOST ARCHIVES), so the old
+  // "choose a column" step has been dropped — submissions go straight
+  // to the form.
   return (
     <>
       <Helmet>
@@ -896,11 +772,11 @@ export default function SubmitArticle() {
 
             <div className="space-y-4">
               <div>
-                <h4 className="text-white font-semibold mb-2">How {config.requiresAffiliates ? (column === 'bookclub' ? 'Book' : 'Product') : 'Content'} Linking Works:</h4>
+                <h4 className="text-white font-semibold mb-2">How {config.requiresAffiliates ? 'Product' : 'Content'} Linking Works:</h4>
                 <ul className="text-white/70 text-sm space-y-1 list-disc list-inside">
                   {config.requiresAffiliates ? (
                     <>
-                      <li>{column === 'bookclub' ? 'Book titles' : 'Product names'} in the text will automatically become clickable links - just mention them naturally where relevant</li>
+                      <li>Product names in the text will automatically become clickable links - just mention them naturally where relevant</li>
                       <li>Each {config.itemLabel.toLowerCase()} should be linked a maximum of 2 times - once in the introduction and once in its dedicated section</li>
                     </>
                   ) : (

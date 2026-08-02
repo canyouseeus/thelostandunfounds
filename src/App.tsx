@@ -34,14 +34,8 @@ import Blog from './pages/Blog'
 import AllArticles from './pages/AllArticles'
 import BlogPost from './pages/BlogPost'
 import UserBlog from './pages/UserBlog'
-import BookClub from './pages/BookClub'
-import GearHeads from './pages/GearHeads'
-import Borderlands from './pages/Borderlands'
-import Science from './pages/Science'
-import NewTheory from './pages/NewTheory'
 import SubmitArticle from './pages/SubmitArticle'
 import Debug from './pages/Debug'
-import AIWritingPrompt from './pages/AIWritingPrompt'
 import HelloWorld from './pages/HelloWorld'
 import BlogGettingStarted from './pages/BlogGettingStarted'
 import DesignSystem from './pages/DesignSystem'
@@ -259,9 +253,9 @@ function App() {
                 <Route index element={<ProtectedRoute requireAdmin={true}><SageMode /></ProtectedRoute>} />
                 <Route path="reports" element={<ProtectedRoute requireAdmin={true}><SageModeReports /></ProtectedRoute>} />
               </Route>
-              <Route path="/:column/prompt" element={<Layout />}>
-                <Route index element={<AIWritingPrompt />} />
-              </Route>
+              {/* The /:column/prompt page served AI writing prompts for the
+                  retired columns; THE LOST ARCHIVES has no such prompt, so the
+                  page and its markdown files were removed. */}
               <Route path="/helloworld" element={<Layout />}>
                 <Route index element={<HelloWorld />} />
               </Route>
@@ -276,21 +270,10 @@ function App() {
               <Route path="/unsubscribe" element={<Layout />}>
                 <Route index element={<Unsubscribe />} />
               </Route>
-              <Route path="/book-club" element={<Layout />}>
-                <Route index element={<AdminAuthGate><BookClub /></AdminAuthGate>} />
-              </Route>
-              <Route path="/gearheads" element={<Layout />}>
-                <Route index element={<AdminAuthGate><GearHeads /></AdminAuthGate>} />
-              </Route>
-              <Route path="/borderlands" element={<Layout />}>
-                <Route index element={<AdminAuthGate><Borderlands /></AdminAuthGate>} />
-              </Route>
-              <Route path="/science" element={<Layout />}>
-                <Route index element={<AdminAuthGate><Science /></AdminAuthGate>} />
-              </Route>
-              <Route path="/newtheory" element={<Layout />}>
-                <Route index element={<AdminAuthGate><NewTheory /></AdminAuthGate>} />
-              </Route>
+              {/* Book Club, Gearheads, Borderlands, Science and New Theory
+                  columns were retired — THE LOST ARCHIVES is the only blog.
+                  Their routes are gone so the paths 404 rather than render an
+                  empty gated page. */}
               <Route path="/blog/getting-started" element={<Layout />}>
                 <Route index element={<BlogGettingStarted />} />
               </Route>
@@ -308,21 +291,8 @@ function App() {
               <Route path="/submit/main" element={<Layout />}>
                 <Route index element={<SubmitArticle />} />
               </Route>
-              <Route path="/submit/bookclub" element={<Layout />}>
-                <Route index element={<SubmitArticle />} />
-              </Route>
-              <Route path="/submit/gearheads" element={<Layout />}>
-                <Route index element={<SubmitArticle />} />
-              </Route>
-              <Route path="/submit/borderlands" element={<Layout />}>
-                <Route index element={<SubmitArticle />} />
-              </Route>
-              <Route path="/submit/science" element={<Layout />}>
-                <Route index element={<SubmitArticle />} />
-              </Route>
-              <Route path="/submit/newtheory" element={<Layout />}>
-                <Route index element={<SubmitArticle />} />
-              </Route>
+              {/* Per-column submission routes retired along with the columns;
+                  /submit/main is the only remaining submission path. */}
               <Route path="/king-midas-leaderboard" element={<Layout />}>
                 <Route index element={<KingMidasLeaderboard />} />
               </Route>

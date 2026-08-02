@@ -39,13 +39,9 @@ interface BlogPost {
   amazon_affiliate_links?: any[] | null;
 }
 
+// THE LOST ARCHIVES is the only blog; the other columns were retired.
 const BLOG_COLUMNS = [
-  { value: 'main', label: 'Main Blog (The Lost Archives)' },
-  { value: 'bookclub', label: 'Book Club' },
-  { value: 'gearheads', label: 'GearHeads' },
-  { value: 'borderlands', label: 'Edge of the Borderlands' },
-  { value: 'science', label: 'Mad Scientists' },
-  { value: 'newtheory', label: 'New Theory' }
+  { value: 'main', label: 'Main Blog (The Lost Archives)' }
 ];
 
 export default function BlogManagement() {
@@ -278,7 +274,7 @@ export default function BlogManagement() {
       seo_description: post.seo_description || '',
       seo_keywords: post.seo_keywords || '',
       og_image_url: post.og_image_url || post.featured_image || '',
-      blog_column: post.blog_column || (post.subdomain ? 'bookclub' : 'main'),
+      blog_column: post.blog_column || 'main',
     });
 
     // Scroll to top so user sees the editor form
@@ -444,7 +440,7 @@ export default function BlogManagement() {
     return postAuthorId === currentUserId && post.subdomain;
   });
 
-  // Other users' book club posts (not admin)
+  // Posts from the retired columns (they are the ones carrying a subdomain).
   const bookClubPosts = posts.filter((post) => {
     const postAuthorId = post.author_id || post.user_id;
     return post.subdomain && postAuthorId !== currentUserId;
@@ -753,38 +749,14 @@ export default function BlogManagement() {
 
 
 
-        <AdminBentoCard
-          title="BOOK CLUB POSTS"
-          action={
-            <button
-              onClick={() => {
-                setIsCreating(true);
-                setIsBookClubPost(true);
-                setEditingPost(null);
-                setFormData({
-                  title: '',
-                  slug: '',
-                  content: '',
-                  excerpt: '',
-                  published: false,
-                  seo_title: '',
-                  seo_description: '',
-                  seo_keywords: '',
-                  og_image_url: '',
-                  blog_column: 'bookclub',
-                });
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              className="flex items-center gap-2 px-3 py-1.5 bg-white text-black text-[10px] font-bold uppercase tracking-widest hover:bg-white/90 transition shadow-sm"
-            >
-              <PlusIcon className="w-3 h-3" />
-              NEW BOOK CLUB POST
-            </button>
-          }
-        >
-          <div id="book-club-posts" className="space-y-1">
+        {/* Legacy posts from the retired columns. No new ones can be created,
+            but they stay listed here so they can still be reviewed and
+            deleted — they are no longer reachable anywhere on the public
+            site. */}
+        <AdminBentoCard title="RETIRED COLUMN POSTS">
+          <div id="retired-column-posts" className="space-y-1">
             {bookClubPosts.length === 0 ? (
-              <p className="text-white/40 text-sm py-4">No book club posts yet.</p>
+              <p className="text-white/40 text-sm py-4">No posts left from the retired columns.</p>
             ) : (
               bookClubPosts
                 .sort((a, b) => {

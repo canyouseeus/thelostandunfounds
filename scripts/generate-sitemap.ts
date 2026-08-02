@@ -51,7 +51,7 @@ async function generateSitemap() {
     // Fetch all published blog posts
     const { data: posts, error } = await supabase
       .from('blog_posts')
-      .select('slug, published_at, updated_at, created_at, subdomain')
+      .select('slug, published_at, updated_at, created_at, subdomain, blog_column')
       .eq('published', true)
       .order('published_at', { ascending: false });
 
@@ -146,8 +146,9 @@ async function generateSitemap() {
        in sitemap" error with no SEO upside. Re-add only once those pages
        are meant to be indexed (and their noindex tag is removed). -->
 
-  <!-- /pricing, /booking, /book-club, /gearheads, /borderlands, /science,
-       /newtheory are intentionally omitted: pricing is deleted, booking is
+  <!-- /pricing, /booking are intentionally omitted, along with the retired
+       /book-club, /gearheads, /borderlands, /science and /newtheory column
+       pages (those routes no longer exist): pricing is deleted, booking is
        admin-gated, and the five column pages are admin-only. -->
 
   <!-- Privacy Policy -->
@@ -190,12 +191,14 @@ async function generateSitemap() {
     }
 
     // Add blog posts
-    // Only THE LOST ARCHIVES (main column, subdomain IS NULL) is public.
-    // Other columns (Book Club, Gearheads, Borderlands, Science, New
-    // Theory) live behind admin-gated pages with no public "view all" link,
-    // so listing their posts here just re-creates the orphan-page problem
-    // Ahrefs flagged. Exclude any post that has a subdomain set.
-    const mainPosts = (posts || []).filter((post: any) => !post.subdomain);
+    // Only THE LOST ARCHIVES is public. The Book Club, Gearheads,
+    // Borderlands, Science and New Theory columns were retired — their pages
+    // and routes are gone, so their posts have no reachable URL and must not
+    // be listed here. A retired post is identified by carrying a subdomain
+    // or a non-main blog_column.
+    const mainPosts = (posts || []).filter(
+      (post: any) => !post.subdomain && (!post.blog_column || post.blog_column === 'main')
+    );
 
     if (mainPosts.length > 0) {
       console.log(`✅ Found ${mainPosts.length} published THE LOST ARCHIVES posts (of ${posts.length} total published)`);

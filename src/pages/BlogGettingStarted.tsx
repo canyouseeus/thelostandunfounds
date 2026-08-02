@@ -6,7 +6,7 @@ export default function BlogGettingStarted() {
     <>
       <Helmet>
         <title>THE LOST+UNFOUNDS | Contributor Getting Started Guide</title>
-        <meta name="description" content="A guide for contributors to share thoughtful reflections, engage readers, and earn as Amazon affiliates on THE LOST ARCHIVES." />
+        <meta name="description" content="A guide for contributors writing thoughtful, original articles for THE LOST ARCHIVES." />
         <link rel="canonical" href="https://www.thelostandunfounds.com/blog/getting-started" />
       </Helmet>
       
@@ -26,80 +26,28 @@ export default function BlogGettingStarted() {
         <div className="mb-12 prose prose-invert prose-lg max-w-none">
           <h3 className="text-2xl font-bold text-white mb-4 border-l-4 border-white/20 pl-4">Introduction</h3>
           <p className="text-white/80 leading-relaxed mb-6">
-            Welcome to <strong className="text-white">THE LOST ARCHIVES</strong>, a platform designed to help contributors share thoughtful reflections, engage readers, and earn as Amazon affiliates. This guide walks you through getting set up, writing high-quality articles, and using AI effectively while maintaining your unique voice by implementing Human-In-The-Loop principles and meeting Google's standards for human expertise, experience, authority, and trust (E‑E‑A‑T).
+            Welcome to <strong className="text-white">THE LOST ARCHIVES</strong>, a platform designed to help contributors share thoughtful reflections and engage readers. This guide walks you through getting set up, writing high-quality articles, and using AI effectively while maintaining your unique voice by implementing Human-In-The-Loop principles and meeting Google's standards for human expertise, experience, authority, and trust (E‑E‑A‑T).
           </p>
           <p className="text-white/80 leading-relaxed mb-6">
             THE LOST ARCHIVES exists to give contributors the opportunity to share knowledge, express personal insights, and connect with an audience they may not have reached through traditional channels. By contributing, you not only help educate and inspire others but also create a pathway to earn online by leveraging your expertise and experiences in meaningful ways.
           </p>
         </div>
 
-        {/* Available Columns */}
+        {/* What We Publish */}
         <div className="mb-12">
-          <h3 className="text-2xl font-bold text-white mb-6 border-l-4 border-white/20 pl-4">Available Columns</h3>
+          <h3 className="text-2xl font-bold text-white mb-6 border-l-4 border-white/20 pl-4">What We Publish</h3>
           <p className="text-white/80 mb-6">
-            THE LOST ARCHIVES features multiple columns, each with its own focus and requirements. Choose the column that best matches your content:
+            THE LOST ARCHIVES is our single blog. It is pure writing and personal expression: essays, reflections, stories, and philosophical or cultural commentary.
           </p>
-          
-          <div className="grid gap-4 md:grid-cols-2 mb-6">
-            <div className="bg-white/5 border border-white/10 p-6 rounded-none">
-              <h4 className="text-lg font-bold text-white mb-2">Main Blog</h4>
-              <p className="text-white/70 text-sm mb-2">
-                Pure writing and personal expression. Essays, reflections, stories, and philosophical or cultural commentary.
-              </p>
-              <p className="text-white/50 text-xs">
-                <strong>Structure:</strong> 6–8 paragraphs • <strong>Affiliates:</strong> None
-              </p>
-            </div>
 
-            <div className="bg-white/5 border border-white/10 p-6 rounded-none">
-              <h4 className="text-lg font-bold text-white mb-2">BookClub</h4>
-              <p className="text-white/70 text-sm mb-2">
-                Curated reading experiences. Share insights on books and how they've shaped your thinking.
-              </p>
-              <p className="text-white/50 text-xs">
-                <strong>Structure:</strong> 4–8 books per post • <strong>Affiliates:</strong> Amazon books required
-              </p>
-            </div>
-
-            <div className="bg-white/5 border border-white/10 p-6 rounded-none">
-              <h4 className="text-lg font-bold text-white mb-2">GearHeads</h4>
-              <p className="text-white/70 text-sm mb-2">
-                Explore tools, setups, kits, and combinations that create experiences. Share how items combine for workflows or hobbies.
-              </p>
-              <p className="text-white/50 text-xs">
-                <strong>Structure:</strong> Up to 8 products • <strong>Affiliates:</strong> Amazon products required
-              </p>
-            </div>
-
-            <div className="bg-white/5 border border-white/10 p-6 rounded-none">
-              <h4 className="text-lg font-bold text-white mb-2">Edge of the Borderlands</h4>
-              <p className="text-white/70 text-sm mb-2">
-                Travel experiences and practical adventure insights. Stories of journeys, what you brought, and lessons learned.
-              </p>
-              <p className="text-white/50 text-xs">
-                <strong>Structure:</strong> 4–8 items per post • <strong>Affiliates:</strong> Amazon/travel/Bitcoin required
-              </p>
-            </div>
-
-            <div className="bg-white/5 border border-white/10 p-6 rounded-none">
-              <h4 className="text-lg font-bold text-white mb-2">MAD SCIENTISTS</h4>
-              <p className="text-white/70 text-sm mb-2">
-                Deep dives into scientific concepts and discoveries. Physics, quantum theory, biology, emerging sciences.
-              </p>
-              <p className="text-white/50 text-xs">
-                <strong>Structure:</strong> 6–8 paragraphs (flexible) • <strong>Affiliates:</strong> None
-              </p>
-            </div>
-
-            <div className="bg-white/5 border border-white/10 p-6 rounded-none">
-              <h4 className="text-lg font-bold text-white mb-2">NEW THEORY</h4>
-              <p className="text-white/70 text-sm mb-2">
-                Practical application of technology and systems thinking in everyday life. Nutrition, household systems, habits, DIY experiments.
-              </p>
-              <p className="text-white/50 text-xs">
-                <strong>Structure:</strong> 4–8 items or 6–8 paragraphs • <strong>Affiliates:</strong> Optional (gear/tools)
-              </p>
-            </div>
+          <div className="bg-white/5 border border-white/10 p-6 rounded-none">
+            <h4 className="text-lg font-bold text-white mb-2">THE LOST ARCHIVES</h4>
+            <p className="text-white/70 text-sm mb-2">
+              Thoughtful, original writing. Ideas and knowledge first — no product round-ups, no affiliate requirements.
+            </p>
+            <p className="text-white/50 text-xs">
+              <strong>Structure:</strong> 6–8 paragraphs • <strong>Affiliates:</strong> None
+            </p>
           </div>
         </div>
 
@@ -111,7 +59,7 @@ export default function BlogGettingStarted() {
             <div className="bg-white/5 border border-white/10 p-6 rounded-none">
               <h4 className="text-lg font-bold text-white mb-2">Centralized Reach & Community Impact</h4>
               <p className="text-white/70 text-sm">
-                Your reviews become part of a trusted, curated platform that attracts readers interested in thoughtful book reflections. Unlike personal blogs or social media, THE LOST ARCHIVES BOOK CLUB drives traffic to all contributor content, giving you more visibility and increasing the potential for affiliate revenue.
+                Your writing becomes part of a trusted, curated platform. Unlike personal blogs or social media, THE LOST ARCHIVES drives traffic to all contributor content, giving your work more visibility than it would earn on its own.
               </p>
             </div>
 
@@ -125,14 +73,14 @@ export default function BlogGettingStarted() {
             <div className="bg-white/5 border border-white/10 p-6 rounded-none">
               <h4 className="text-lg font-bold text-white mb-2">Affiliate Opportunities</h4>
               <p className="text-white/70 text-sm">
-                Every article includes Amazon affiliate links. By publishing on this platform, your links benefit from more readers, search visibility, and engagement, increasing the chance of purchases and commissions.
+                Publishing here puts your work in front of an established readership, with the search visibility and engagement of the wider site behind it.
               </p>
             </div>
 
             <div className="bg-white/5 border border-white/10 p-6 rounded-none">
               <h4 className="text-lg font-bold text-white mb-2">Searchable Knowledge Base</h4>
               <p className="text-white/70 text-sm">
-                Readers can search by book title or author, surfacing multiple articles about the same book. This allows them to explore different perspectives and click affiliate links to purchase books. Contributors benefit from increased engagement and potential affiliate revenue.
+                Readers can search the archive by topic, surfacing multiple articles on the same subject and exploring different perspectives. Contributors benefit from the compounding engagement of a growing body of work.
               </p>
             </div>
           </div>
@@ -140,7 +88,7 @@ export default function BlogGettingStarted() {
 
         {/* 1. Getting Set Up */}
         <div className="mb-12">
-          <h3 className="text-2xl font-bold text-white mb-6 border-l-4 border-white/20 pl-4">1. Getting Set Up: Registration & Amazon Affiliate Integration</h3>
+          <h3 className="text-2xl font-bold text-white mb-6 border-l-4 border-white/20 pl-4">1. Getting Set Up: Registration</h3>
           
           <div className="bg-black/40 border border-white/10 p-8 mb-6 rounded-none">
             <h4 className="text-xl font-bold text-white mb-4">Steps</h4>
@@ -151,115 +99,25 @@ export default function BlogGettingStarted() {
               <li>
                 <strong className="text-white">Choose a username</strong>; this generates your custom contributor URL (subdomain).
               </li>
-              <li className="bg-yellow-900/20 border-l-4 border-yellow-500 pl-4 py-2">
-                <strong className="text-white">Amazon Affiliate Setup (Required for some columns):</strong>
-                <ul className="list-disc list-inside ml-4 mt-2 space-y-1 text-sm">
-                  <li>If submitting to <strong>BookClub</strong>, <strong>GearHeads</strong>, or <strong>Edge of the Borderlands</strong>, you must sign up for the Amazon Affiliate program.</li>
-                  <li>If submitting to <strong>Main Blog</strong> or <strong>MAD SCIENTISTS</strong>, Amazon affiliates are not required.</li>
-                  <li>If submitting to <strong>NEW THEORY</strong>, Amazon affiliates are optional.</li>
-                </ul>
-                <a href="https://affiliate-program.amazon.com/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline ml-4 text-sm block mt-2">
-                  Sign up: Amazon Associates
-                </a>
-              </li>
               <li>
-                During Amazon setup, <strong className="text-white">paste your custom contributor URL</strong> (your subdomain) to tie your affiliate links to your account.
-              </li>
-              <li>
-                <strong className="text-white">Obtain your Amazon Storefront ID</strong> from your Amazon Associates account.
-              </li>
-              <li>
-                Return to our platform and <strong className="text-white">paste your Storefront ID</strong> to finalize setup (only required for columns that use affiliates).
+                <strong className="text-white">Write and submit.</strong> THE LOST ARCHIVES does not use affiliate links, so there is no Amazon setup to complete — head straight to the submission form when your piece is ready.
               </li>
             </ol>
-          </div>
-
-          <div className="bg-blue-900/20 border-l-4 border-blue-500 p-4 mb-6">
-            <h5 className="font-bold text-white mb-2">Why this matters</h5>
-            <p className="text-white/70 text-sm">
-              Correct setup ensures all affiliate links are tracked, so you earn commissions when readers purchase through your articles. Note: Only columns that require affiliate links (BookClub, GearHeads, Edge of the Borderlands) need Amazon setup. Main Blog and MAD SCIENTISTS don't require affiliate accounts.
-            </p>
-          </div>
-
-          <div className="bg-white/5 border border-white/10 p-6 rounded-none">
-            <h4 className="text-lg font-bold text-white mb-4">Amazon Affiliate Impact: Make Your Story Compelling</h4>
-            <p className="text-white/70 mb-4">
-              <strong className="text-white">For columns that use affiliate links:</strong> Amazon will only give you credit when readers click your Amazon link to make a purchase. To maximize earnings:
-            </p>
-            <ul className="list-disc list-inside space-y-2 text-white/80">
-              <li>Share your personal perspective and experiences.</li>
-              <li>Reference specific passages, quotes, or product details.</li>
-              <li>Tell a story: why the item/book mattered and how it influenced your thinking or workflow.</li>
-              <li>Connect themes across multiple items in your article.</li>
-              <li>Include natural, integrated calls-to-action with your affiliate links.</li>
-              <li>Select items that are listed on Amazon (or relevant retailers for travel/adventure items).</li>
-            </ul>
-            <p className="text-white/60 text-sm mt-4 italic">
-              Note: Main Blog and MAD SCIENTISTS don't use affiliate links—focus purely on ideas and knowledge.
-            </p>
           </div>
         </div>
 
         {/* 2. Submission Requirements */}
         <div className="mb-12">
-          <h3 className="text-2xl font-bold text-white mb-6 border-l-4 border-white/20 pl-4">2. Submission Requirements by Column</h3>
-          
-          <div className="space-y-6">
-            <div className="bg-white/5 border border-white/10 p-6 rounded-none">
-              <h4 className="text-lg font-bold text-white mb-3">BookClub</h4>
-              <p className="text-white/90 font-medium mb-4">
-                Each article should feature <span className="text-yellow-400">four books</span> with unique Amazon affiliate links.
-              </p>
-              <ul className="list-disc list-inside space-y-2 text-white/80 mb-4">
-                <li>Validates your insights across multiple perspectives.</li>
-                <li>Encourages cross-genre and interdisciplinary thinking.</li>
-                <li>Helps synthesize deeper understanding and actionable lessons.</li>
-                <li>Builds credibility with Google's E‑E‑A‑T standards by demonstrating thoughtful analysis.</li>
-              </ul>
-              <p className="text-white/80 text-sm">
-                Articles should include direct quotes or passages from the books to illustrate key points.
-              </p>
-            </div>
+          <h3 className="text-2xl font-bold text-white mb-6 border-l-4 border-white/20 pl-4">2. Submission Requirements</h3>
 
-            <div className="bg-white/5 border border-white/10 p-6 rounded-none">
-              <h4 className="text-lg font-bold text-white mb-3">GearHeads</h4>
-              <p className="text-white/90 font-medium mb-4">
-                Share <span className="text-yellow-400">1–8 products</span> with Amazon affiliate links, focusing on how items combine to create experiences.
-              </p>
-              <p className="text-white/80 text-sm">
-                Focus on workflows, hobbies, lifestyle practices, and how gear choices influence outcomes.
-              </p>
-            </div>
-
-            <div className="bg-white/5 border border-white/10 p-6 rounded-none">
-              <h4 className="text-lg font-bold text-white mb-3">Edge of the Borderlands</h4>
-              <p className="text-white/90 font-medium mb-4">
-                Share <span className="text-yellow-400">4–8 items</span> (gear, tools, services) with affiliate links, combined with travel narratives.
-              </p>
-              <p className="text-white/80 text-sm">
-                Blend stories of journeys with practical recommendations for tools, services, or resources used during travel.
-              </p>
-            </div>
-
-            <div className="bg-white/5 border border-white/10 p-6 rounded-none">
-              <h4 className="text-lg font-bold text-white mb-3">Main Blog & MAD SCIENTISTS</h4>
-              <p className="text-white/90 font-medium mb-4">
-                Pure writing format: <span className="text-yellow-400">6–8 paragraphs</span> of thoughtful content.
-              </p>
-              <p className="text-white/80 text-sm">
-                No affiliate links required. Focus on ideas, insights, and knowledge sharing.
-              </p>
-            </div>
-
-            <div className="bg-white/5 border border-white/10 p-6 rounded-none">
-              <h4 className="text-lg font-bold text-white mb-3">NEW THEORY</h4>
-              <p className="text-white/90 font-medium mb-4">
-                Flexible format: <span className="text-yellow-400">4–8 items</span> (collection) or <span className="text-yellow-400">6–8 paragraphs</span> (narrative).
-              </p>
-              <p className="text-white/80 text-sm">
-                Affiliate links are optional. Focus on practical applications of science and systems thinking in daily life.
-              </p>
-            </div>
+          <div className="bg-white/5 border border-white/10 p-6 rounded-none">
+            <h4 className="text-lg font-bold text-white mb-3">THE LOST ARCHIVES</h4>
+            <p className="text-white/90 font-medium mb-4">
+              Pure writing format: <span className="text-yellow-400">6–8 paragraphs</span> of thoughtful content.
+            </p>
+            <p className="text-white/80 text-sm">
+              No affiliate links. Focus on ideas, insights, and knowledge sharing.
+            </p>
           </div>
         </div>
 
@@ -289,7 +147,7 @@ export default function BlogGettingStarted() {
           <div className="bg-blue-900/20 border-l-4 border-blue-500 p-4">
             <h5 className="font-bold text-white mb-2">Why this matters</h5>
             <p className="text-white/70 text-sm">
-              Meeting E‑E‑A‑T standards improves search rankings, builds reader trust, and increases engagement and affiliate conversions.
+              Meeting E‑E‑A‑T standards improves search rankings, builds reader trust, and increases engagement.
             </p>
           </div>
         </div>
@@ -304,7 +162,7 @@ export default function BlogGettingStarted() {
               <li>Fact-check AI-generated text.</li>
               <li>Refine tone, style, and voice to reflect your perspective.</li>
               <li>Add personal anecdotes, reflections, and direct quotes.</li>
-              <li>Verify affiliate links and ensure they are accurate and functional.</li>
+              <li>Verify any links you cite and ensure they are accurate and functional.</li>
             </ul>
           </div>
 
@@ -324,7 +182,7 @@ export default function BlogGettingStarted() {
             <div className="bg-white/5 border border-white/10 p-5 rounded-none">
               <h4 className="font-bold text-white mb-2">Step 1: Research & Planning (Human)</h4>
               <ul className="list-disc list-inside text-white/70 text-sm space-y-1">
-                <li>Gather background info and key themes of your four books.</li>
+                <li>Gather background info and the key themes of your subject.</li>
                 <li>Identify direct quotes or passages for use in your article.</li>
                 <li>Decide on personal experiences or insights to include.</li>
               </ul>
@@ -370,7 +228,7 @@ export default function BlogGettingStarted() {
               <h4 className="font-bold text-white mb-2">Step 6: Final HITL Review</h4>
               <ul className="list-disc list-inside text-white/70 text-sm space-y-1">
                 <li>Ensure tone, flow, and engagement are polished.</li>
-                <li>Confirm formatting, headings, and affiliate link accuracy.</li>
+                <li>Confirm formatting, headings, and link accuracy.</li>
                 <li>Verify E‑E‑A‑T and originality standards.</li>
               </ul>
             </div>
@@ -383,7 +241,7 @@ export default function BlogGettingStarted() {
           
           <div className="bg-white/5 border border-white/10 p-6 mb-6 rounded-none">
             <ul className="list-disc list-inside space-y-2 text-white/80 mb-6">
-              <li>Cross-reference all four books to show how themes relate.</li>
+              <li>Cross-reference your sources to show how themes relate.</li>
               <li>Inject personal voice: anecdotes, lessons, reflections.</li>
               <li>Use direct quotes/passages for credibility and depth.</li>
               <li>Iterate: revise drafts repeatedly until they express your ideas precisely.</li>
@@ -396,7 +254,7 @@ export default function BlogGettingStarted() {
           <div className="bg-blue-900/20 border-l-4 border-blue-500 p-4">
             <h5 className="font-bold text-white mb-2">Why this matters</h5>
             <p className="text-white/70 text-sm">
-              Original, human-refined content ranks better, attracts more readers, and increases affiliate revenue. Thoughtful posts build credibility and trust.
+              Original, human-refined content ranks better and attracts more readers. Thoughtful posts build credibility and trust.
             </p>
           </div>
         </div>
@@ -408,10 +266,10 @@ export default function BlogGettingStarted() {
           <div className="bg-green-900/10 border border-green-500/30 p-6 rounded-none">
             <ul className="space-y-3">
               {[
-                "Column-appropriate structure (books/products/items or paragraphs)",
+                "6–8 well-structured paragraphs",
                 "Article reviewed, fact-checked, and personalized",
                 "Direct quotes/passages integrated (where applicable)",
-                "Affiliate links verified (if required for your column)",
+                "Any cited links verified",
                 "Headings, SEO, and readability optimized",
                 "Tone and voice consistent with personal style",
                 "E‑E‑A‑T and HITL standards satisfied"
@@ -423,43 +281,13 @@ export default function BlogGettingStarted() {
               ))}
             </ul>
             <div className="mt-8 space-y-4">
-              <p className="text-white/80 text-center font-medium mb-4">Ready to submit? Choose your column:</p>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                <Link 
-                  to="/submit/main" 
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-xs font-medium transition text-center"
+              <p className="text-white/80 text-center font-medium mb-4">Ready to submit?</p>
+              <div className="flex justify-center">
+                <Link
+                  to="/submit/main"
+                  className="px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-xs font-medium transition text-center"
                 >
-                  Main Blog
-                </Link>
-                <Link 
-                  to="/submit/bookclub" 
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-xs font-medium transition text-center"
-                >
-                  BookClub
-                </Link>
-                <Link 
-                  to="/submit/gearheads" 
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-xs font-medium transition text-center"
-                >
-                  GearHeads
-                </Link>
-                <Link 
-                  to="/submit/borderlands" 
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-xs font-medium transition text-center"
-                >
-                  Borderlands
-                </Link>
-                <Link 
-                  to="/submit/science" 
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-xs font-medium transition text-center"
-                >
-                  MAD SCIENTISTS
-                </Link>
-                <Link 
-                  to="/submit/newtheory" 
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-none text-white text-xs font-medium transition text-center"
-                >
-                  NEW THEORY
+                  Submit to THE LOST ARCHIVES
                 </Link>
               </div>
             </div>
@@ -485,12 +313,11 @@ export default function BlogGettingStarted() {
             </div>
 
             <div>
-              <h4 className="text-lg font-bold text-white mb-2">How can I improve affiliate clicks?</h4>
+              <h4 className="text-lg font-bold text-white mb-2">How can I keep readers engaged?</h4>
               <ul className="list-disc list-inside text-white/70 text-sm">
                 <li>Make your story compelling and relatable.</li>
-                <li>Use personal anecdotes and reflections to engage readers.</li>
+                <li>Use personal anecdotes and reflections to draw readers in.</li>
                 <li>Reference direct quotes or passages for credibility.</li>
-                <li>Include clear and naturally placed affiliate links.</li>
               </ul>
             </div>
 

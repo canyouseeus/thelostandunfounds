@@ -28,10 +28,15 @@ async function preRenderBlogPosts() {
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // Fetch all published blog posts
+    // THE LOST ARCHIVES is the only blog. Posts from the retired columns
+    // carry a subdomain and/or a non-main blog_column; they have no public
+    // route any more, so there is nothing to pre-render for them.
     const { data: posts, error } = await supabase
       .from('blog_posts')
       .select('*')
       .eq('published', true)
+      .is('subdomain', null)
+      .or('blog_column.eq.main,blog_column.is.null')
       .order('published_at', { ascending: false });
 
     if (error) {

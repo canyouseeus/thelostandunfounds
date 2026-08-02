@@ -303,13 +303,9 @@ export default function BlogSubmissionReview() {
   };
 
 
+  // THE LOST ARCHIVES is the only blog; the other columns were retired.
   const BLOG_COLUMNS = [
-    { value: 'main', label: 'Main Blog (The Lost Archives)' },
-    { value: 'bookclub', label: 'Book Club' },
-    { value: 'gearheads', label: 'GearHeads' },
-    { value: 'borderlands', label: 'Edge of the Borderlands' },
-    { value: 'science', label: 'Mad Scientists' },
-    { value: 'newtheory', label: 'New Theory' }
+    { value: 'main', label: 'Main Blog (The Lost Archives)' }
   ];
 
   /* const adminStatus = useAdminStatus(); - Removed invalid hook */
