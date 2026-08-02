@@ -259,16 +259,11 @@ export default function Blog() {
         })()}
 
         {/* Empty State */}
-        {mainPosts.length === 0 &&
-          bookClubPosts.length === 0 &&
-          gearHeadsPosts.length === 0 &&
-          borderlandsPosts.length === 0 &&
-          sciencePosts.length === 0 &&
-          newTheoryPosts.length === 0 && (
-            <div className="text-white/60 text-lg">
-              <p>No posts yet. Check back soon for intel from the field.</p>
-            </div>
-          )}
+        {mainPosts.length === 0 && (
+          <div className="text-white/60 text-lg">
+            <p>No posts yet. Check back soon for intel from the field.</p>
+          </div>
+        )}
       </div>
     </>
   );
