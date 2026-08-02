@@ -140,21 +140,11 @@ async function generateSitemap() {
     <priority>0.6</priority>
   </url>
 
-  <!-- Become an Affiliate -->
-  <url>
-    <loc>${baseUrl}/become-affiliate</loc>
-    <lastmod>${currentDate}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-
-  <!-- King Midas Leaderboard -->
-  <url>
-    <loc>${baseUrl}/king-midas-leaderboard</loc>
-    <lastmod>${currentDate}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.5</priority>
-  </url>
+  <!-- /become-affiliate and /king-midas-leaderboard are intentionally
+       omitted: both pages render <meta name="robots" content="noindex,
+       nofollow">, so listing them here just created an Ahrefs "noindex page
+       in sitemap" error with no SEO upside. Re-add only once those pages
+       are meant to be indexed (and their noindex tag is removed). -->
 
   <!-- /pricing, /booking, /book-club, /gearheads, /borderlands, /science,
        /newtheory are intentionally omitted: pricing is deleted, booking is

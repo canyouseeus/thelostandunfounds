@@ -58,7 +58,14 @@ export default function Blog() {
           .select('id, title, slug, excerpt, content, published_at, created_at, seo_title, seo_description, published, status, subdomain, blog_column')
           .order('published_at', { ascending: false })
           .order('created_at', { ascending: false })
-          .limit(3);
+          // Non-main columns (bookclub, gearheads, etc.) have no public
+          // "view all" page of their own — their only public internal links
+          // come from this section. A limit of 3 orphaned any post that fell
+          // out of the "most recent 3" window (SEO: Ahrefs flagged these as
+          // orphan pages, since /book-club etc. are admin-gated and never
+          // crawlable). Raised so every published post in a column keeps at
+          // least one real internal link.
+          .limit(column === 'main' ? 3 : 25);
 
         if (column === 'main') {
           // Main: blog_column is 'main' OR (null column AND null subdomain)
