@@ -493,6 +493,12 @@ export default function BlogPost() {
     <>
       <Helmet>
         <title>THE LOST+UNFOUNDS | {title.split(' | ')[0].trim()}</title>
+        {/* Only THE LOST ARCHIVES (subdomain-less) posts are meant to be
+            public/indexable. Column posts (Book Club, Gearheads, etc.) no
+            longer have any public internal link path, so they're marked
+            noindex here too in case a stale external link still reaches
+            them. */}
+        {post.subdomain && <meta name="robots" content="noindex, nofollow" />}
         <link rel="canonical" href={post.subdomain ? `https://www.thelostandunfounds.com/blog/${post.subdomain}/${post.slug}` : `https://www.thelostandunfounds.com/thelostarchives/${post.slug}`} />
         <meta name="description" content={description} />
         {post.seo_keywords && <meta name="keywords" content={post.seo_keywords} />}

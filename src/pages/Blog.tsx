@@ -26,11 +26,6 @@ interface BlogPost {
 
 export default function Blog() {
   const [mainPosts, setMainPosts] = useState<BlogPost[]>([]);
-  const [bookClubPosts, setBookClubPosts] = useState<BlogPost[]>([]);
-  const [gearHeadsPosts, setGearHeadsPosts] = useState<BlogPost[]>([]);
-  const [borderlandsPosts, setBorderlandsPosts] = useState<BlogPost[]>([]);
-  const [sciencePosts, setSciencePosts] = useState<BlogPost[]>([]);
-  const [newTheoryPosts, setNewTheoryPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,74 +46,45 @@ export default function Blog() {
 
       console.log('🔄 Starting to load blog posts...');
 
-      // Helper to build a query for a specific column
-      const buildQuery = (column: string) => {
-        let query = supabase
-          .from('blog_posts')
-          .select('id, title, slug, excerpt, content, published_at, created_at, seo_title, seo_description, published, status, subdomain, blog_column')
-          .order('published_at', { ascending: false })
-          .order('created_at', { ascending: false })
-          // Non-main columns (bookclub, gearheads, etc.) have no public
-          // "view all" page of their own — their only public internal links
-          // come from this section. A limit of 3 orphaned any post that fell
-          // out of the "most recent 3" window (SEO: Ahrefs flagged these as
-          // orphan pages, since /book-club etc. are admin-gated and never
-          // crawlable). Raised so every published post in a column keeps at
-          // least one real internal link.
-          .limit(column === 'main' ? 3 : 25);
-
-        if (column === 'main') {
-          // Main: blog_column is 'main' OR (null column AND null subdomain)
-          query = query.or('blog_column.eq.main,and(blog_column.is.null,subdomain.is.null)');
-        } else if (column === 'bookclub') {
-          // Book Club: blog_column is 'bookclub' OR (blog_column is null AND subdomain is not null)
-          query = query.or('blog_column.eq.bookclub,and(blog_column.is.null,subdomain.not.is.null)');
-        } else {
-          // Others: strict match
-          query = query.eq('blog_column', column);
-        }
-        return query;
-      };
-
-      const columns = ['main', 'bookclub', 'gearheads', 'borderlands', 'science', 'newtheory'];
-      const queries = columns.map(col => buildQuery(col));
+      // THE LOST ARCHIVES is the only column shown publicly. The other
+      // columns (Book Club, Gearheads, Borderlands, Science, New Theory)
+      // live behind admin-gated pages (/book-club, /gearheads, etc.) with
+      // no public "view all" page, so posts in them had no reachable
+      // internal link path and were flagged by Ahrefs as orphan pages.
+      // Per request, only Main column posts are queried/rendered here now.
+      let query = supabase
+        .from('blog_posts')
+        .select('id, title, slug, excerpt, content, published_at, created_at, seo_title, seo_description, published, status, subdomain, blog_column')
+        .order('published_at', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(3)
+        // Main: blog_column is 'main' OR (null column AND null subdomain)
+        .or('blog_column.eq.main,and(blog_column.is.null,subdomain.is.null)');
 
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Query timeout after 15 seconds')), 15000)
       );
 
-      const results = await Promise.all(
-        queries.map(q => Promise.race([q, timeoutPromise]))
-      ) as any[];
+      const result = await Promise.race([query, timeoutPromise]) as any;
 
       if (!isMounted.current) return;
 
-      // Process results
-      const processedPosts = results.map((result, index) => {
-        const { data, error } = result;
-        if (error && error.code !== 'PGRST116' && error.code !== '42P01') {
-          console.error(`Error loading ${columns[index]} posts:`, error);
-          return [];
-        }
+      const { data, error: queryError } = result;
+      if (queryError && queryError.code !== 'PGRST116' && queryError.code !== '42P01') {
+        console.error('Error loading main posts:', queryError);
+      }
 
-        // Filter published
-        return (data || []).filter((post: any) => {
-          try {
-            return post.published === true || (post.published === undefined && post.status === 'published');
-          } catch (e) {
-            return false;
-          }
-        });
+      const publishedMainPosts = (data || []).filter((post: any) => {
+        try {
+          return post.published === true || (post.published === undefined && post.status === 'published');
+        } catch (e) {
+          return false;
+        }
       });
 
-      setMainPosts(processedPosts[0]);
-      setBookClubPosts(processedPosts[1]);
-      setGearHeadsPosts(processedPosts[2]);
-      setBorderlandsPosts(processedPosts[3]);
-      setSciencePosts(processedPosts[4]);
-      setNewTheoryPosts(processedPosts[5]);
+      setMainPosts(publishedMainPosts);
 
-      console.log('✅ Posts loaded via parallel queries');
+      console.log('✅ Posts loaded');
 
     } catch (err: any) {
       if (!isMounted.current) return;
@@ -249,12 +215,6 @@ export default function Blog() {
           </p>
           <div className="flex items-center justify-center gap-4 flex-nowrap whitespace-nowrap">
             <Link
-              to="/book-club"
-              className="inline-flex items-center justify-center w-40 sm:w-48 py-2 bg-white hover:bg-white/90 border border-white/20 rounded-none text-black text-xs sm:text-sm font-medium transition"
-            >
-              View BOOK CLUB →
-            </Link>
-            <Link
               to="/submit/main"
               className="inline-flex items-center justify-center w-40 sm:w-48 py-2 bg-white hover:bg-white/90 border border-white/20 rounded-none text-black text-xs sm:text-sm font-medium transition"
             >
@@ -295,31 +255,7 @@ export default function Blog() {
             );
           };
 
-          return (
-            <>
-              {renderSection('From THE LOST ARCHIVES', mainPosts, '/thelostarchives/all')}
-
-              {/* Logo divider only if Book Club posts exist */}
-              {bookClubPosts.length > 0 && (
-                <div className="flex justify-center my-8 gap-12">
-                  {[1, 2, 3].map((i) => (
-                    <img
-                      key={i}
-                      src="/logo.png"
-                      alt="THE LOST+UNFOUNDS"
-                      className="h-40 w-auto object-contain"
-                    />
-                  ))}
-                </div>
-              )}
-
-              {renderSection('From the BOOK CLUB', bookClubPosts, '/book-club')}
-              {renderSection('GEARHEADS', gearHeadsPosts, '/gearheads')}
-              {renderSection('EDGE OF THE BORDERLANDS', borderlandsPosts, '/borderlands')}
-              {renderSection('MAD SCIENTISTS', sciencePosts, '/science')}
-              {renderSection('NEW THEORY', newTheoryPosts, '/newtheory')}
-            </>
-          );
+          return renderSection('From THE LOST ARCHIVES', mainPosts, '/thelostarchives/all');
         })()}
 
         {/* Empty State */}

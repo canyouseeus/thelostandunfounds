@@ -190,16 +190,18 @@ async function generateSitemap() {
     }
 
     // Add blog posts
-    if (posts && posts.length > 0) {
-      console.log(`✅ Found ${posts.length} published blog posts`);
+    // Only THE LOST ARCHIVES (main column, subdomain IS NULL) is public.
+    // Other columns (Book Club, Gearheads, Borderlands, Science, New
+    // Theory) live behind admin-gated pages with no public "view all" link,
+    // so listing their posts here just re-creates the orphan-page problem
+    // Ahrefs flagged. Exclude any post that has a subdomain set.
+    const mainPosts = (posts || []).filter((post: any) => !post.subdomain);
 
-      for (const post of posts) {
-        // Determine path based on subdomain/column
-        let fullUrlPath = `/thelostarchives/${post.slug}`;
-        if (post.subdomain) {
-          fullUrlPath = `/blog/${post.subdomain}/${post.slug}`;
-        }
+    if (mainPosts.length > 0) {
+      console.log(`✅ Found ${mainPosts.length} published THE LOST ARCHIVES posts (of ${posts.length} total published)`);
 
+      for (const post of mainPosts) {
+        const fullUrlPath = `/thelostarchives/${post.slug}`;
         const postUrl = `${baseUrl}${fullUrlPath}`;
         // Normalize the date to ensure it's valid ISO 8601 format
         const lastmod = normalizeDate(post.updated_at || post.published_at || post.created_at);
@@ -228,9 +230,9 @@ async function generateSitemap() {
 
     writeFileSync(sitemapPath, sitemap, 'utf-8');
     const totalUrls = (sitemap.match(/<loc>/g) || []).length;
-    const navPageCount = totalUrls - (posts?.length || 0) - (libraries?.length || 0);
+    const navPageCount = totalUrls - mainPosts.length - (libraries?.length || 0);
     console.log(`✅ Sitemap generated successfully: ${sitemapPath}`);
-    console.log(`   Total URLs: ${totalUrls} (${posts?.length || 0} blog posts + ${libraries?.length || 0} galleries + ${navPageCount} navigation pages)`);
+    console.log(`   Total URLs: ${totalUrls} (${mainPosts.length} blog posts + ${libraries?.length || 0} galleries + ${navPageCount} navigation pages)`);
   } catch (err) {
     console.error('❌ Error generating sitemap:', err);
     process.exit(1);
