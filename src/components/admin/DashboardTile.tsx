@@ -4,20 +4,37 @@ import { cn } from '../ui/utils';
 /**
  * Grid shape for a tile.
  *
- * Two shapes, both sized off the column width, the way a phone's widget grid
- * works: a square taking one column, and a wide tile taking two at 2:1. The
- * grid is two columns on a phone and four on desktop, and the tiles run
- * square-square-wide — 1+1+2 fills a desktop row exactly, and on a phone the
- * pair fills one row and the wide fills the next. Nothing is a tall vertical
- * sliver and no row ends ragged.
+ * The shapes a phone's widget grid uses, on a grid of two columns on a phone
+ * and four on desktop. The square carries `aspect-square` and so sets the row
+ * height; everything else spans whole columns and rows of that unit, which is
+ * what keeps every tile aligned to the same lattice and every row level.
+ *
+ *   square  1x1   a small widget
+ *   wide    2x1   a medium widget
+ *   large   2x2   a large widget
+ *   tall    1x2   a column
+ *
+ * The areas have to add up to a whole number of rows at both column counts or
+ * the grid ends on a half-empty row.
  */
+// Every shape states its own height as a ratio, rather than borrowing it from
+// whatever else lands in its row. Leaning on a row companion worked until a wide
+// tile ended up alone in a row, where it collapsed to the height of its text.
+//
+// The ratios include the gutter: two columns plus one gap over one column is
+// 2.07 on a phone and 2.08 on desktop, so 2.075 is within half a pixel at both.
 export const TILE_SQUARE = 'col-span-1 aspect-square';
+// Two columns across and two rows down — square, since two columns plus a gap
+// is the same as two rows plus a gap.
+export const TILE_LARGE = 'col-span-2 row-span-2 aspect-square';
+// One column across, two rows down.
+export const TILE_TALL = 'col-span-1 row-span-2 aspect-[1/2.075]';
 // On desktop a wide tile shares its row with two squares, so it takes their
 // height — pinning its own ratio there made it taller than they were and left a
 // band of empty grid under them. On a phone it spans the whole row with no
 // square to measure against, so it needs the ratio spelled out or it collapses
 // to the height of its text.
-export const TILE_WIDE = 'col-span-2 aspect-[2/1] md:aspect-auto';
+export const TILE_WIDE = 'col-span-2 aspect-[2.075/1]';
 
 export interface TileShape {
   span?: string;

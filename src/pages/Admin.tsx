@@ -82,7 +82,7 @@ import { CrmDirectory } from '../components/admin/CrmDirectory';
 import { RefundsLedger } from '../components/admin/RefundsCard';
 import ProfitGraph from '../components/admin/ProfitGraph';
 import { DashboardCategoryCard } from '../components/admin/DashboardCategoryCard';
-import { TILE_SQUARE, TILE_WIDE } from '../components/admin/DashboardTile';
+import { TILE_SQUARE, TILE_WIDE, TILE_LARGE } from '../components/admin/DashboardTile';
 import { ExpandableScreen, ExpandableScreenTrigger, ExpandableScreenContent } from '../components/ui/expandable-screen';
 import { AnimatedNumber } from '../components/ui/animated-number';
 import { cn } from '../components/ui/utils';
@@ -1679,86 +1679,40 @@ export default function Admin() {
             plus three doubles is twelve cells, which divides evenly by both 2
             and 3 — so neither layout ends on a half-empty row. `dense` backfills
             any hole if that count ever changes. */}
-        <div id="dashboard-widgets" className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6 [grid-auto-flow:dense]">
-          {/* Square 1×1 cells so the widget row reads as a uniform grid.
-              !min-h-0 overrides each widget's own min-height, which would
-              otherwise stretch the cell taller than its width.
+        {/* One lattice for the whole dashboard.
+            The clock, calendar, calculator and weather used to sit in a grid of
+            their own above the data tiles, so nothing could pack against them
+            and the odd shapes left holes beside their neighbours. Everything is
+            now on the same grid in the same four shapes.
 
-              The calendar sizes its internals in fixed px (a 240px column of
-              40px day rows), so a narrow cell squeezed the day grid until the
-              digits overlapped and the month spilled out the bottom. `zoom`
-              didn't help — the widget still laid out at the cell's width and
-              only painted smaller afterwards. FitBox lays these out at a full
-              440px square and scales the painted result to the cell, so they
-              keep their proportions at every width. */}
-          <div className="col-span-2 md:col-span-3 grid grid-cols-3 md:grid-cols-5 gap-3 sm:gap-6">
-            {/* Uneven by design: the clock and calendar are the widgets you
-                actually read, so they take two columns each and the weather
-                takes one — a half square in portrait rather than a third of the
-                row. On a phone the calendar drops to its own full-width row,
-                because a third of 390px renders its day grid at about 4px.
+            Areas: six squares (6) + three wides (6) + two larges (8) = 20 units,
+            which divides by both 2 and 4 — so neither the phone nor the desktop
+            layout ends on a half-empty row. `dense` backfills anything left. */}
+        <div id="dashboard-widgets" className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 [grid-auto-flow:dense]">
+          <ClockWidget size="lg" className={cn(TILE_SQUARE, '!min-h-0 w-full')} />
 
-                The clock is drawn in percentages, so it fills its square on its
-                own — no FitBox needed. The calendar and weather lay out in fixed
-                px, so they're designed against a FitBox box and scaled to the
-                cell afterwards. */}
-            <ClockWidget size="lg" className="col-span-2 aspect-square !min-h-0 w-full" />
+          <FitBox baseWidth={220} baseHeight={220} className={TILE_SQUARE}>
+            <WeatherWidget className="w-full h-full !min-h-0" />
+          </FitBox>
 
-            {/* 220x440 — half of the square the other tiles use, so the weather
-                reads as a portrait strip beside them. */}
-            <FitBox baseWidth={220} baseHeight={440} className="col-span-1 md:order-3">
-              <WeatherWidget className="w-full h-full !min-h-0" />
+          {/* Long press (or click with a mouse) opens the master calendar — the
+              same panel the header date links to. Selection is suppressed on the
+              way in: a long press landing on text otherwise starts an iOS
+              selection instead of opening anything. */}
+          <div
+            {...calendarPress}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPanel('calendar'); } }}
+            aria-label="Calendar — open master calendar"
+            className={cn(TILE_LARGE, 'cursor-pointer touch-manipulation select-none')}
+            style={{ WebkitTouchCallout: 'none', WebkitTapHighlightColor: 'transparent' }}
+          >
+            <FitBox base={500} className="h-full">
+              <CalendarWidget size="fill" className="w-full h-full" />
             </FitBox>
-
-            {/* Long press (or click with a mouse) opens the master calendar —
-                the same panel the header date links to. Selection is suppressed
-                on the way in: a long press that lands on text otherwise starts
-                an iOS selection instead of opening anything.
-
-                500, not the default 440: the fill variant lays out at roughly
-                480px tall, and a base shorter than the content clips the last
-                week of the month. */}
-            <div
-              {...calendarPress}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPanel('calendar'); } }}
-              aria-label="Calendar — open master calendar"
-              className="col-span-3 md:col-span-2 md:order-2 cursor-pointer touch-manipulation select-none"
-              style={{ WebkitTouchCallout: 'none', WebkitTapHighlightColor: 'transparent' }}
-            >
-              <FitBox base={500}>
-                <CalendarWidget size="fill" className="w-full h-full" />
-              </FitBox>
-            </div>
           </div>
 
-          {/* The calculator gets the full width to itself. Squeezed into a 1/3
-              cell its keys scaled down to well under a fingertip; across the
-              whole row they're a real touch target. */}
-          <CalculatorCard wide className="col-span-2 md:col-span-3 w-full" />
-        </div>
-
-        {/* A mosaic on a unit grid, not a stack.
-            Masonry packed the tiles but left a ragged bottom edge, and every
-            tile was the same width. Here each tile takes an explicit shape on a
-            grid of 92px rows — squares, verticals, and a full-width horizontal —
-            and the shapes are chosen so the areas sum to a whole number of rows
-            at both column counts: 30 units over 2 columns is 15 rows, over 3
-            columns is 10. That's what makes the bottom edge come out flat.
-            `dense` backfills rather than leaving a hole if a shape changes.
-
-            Tile heights: a span of N rows is 92N + 12(N-1) px — 196, 300, 404 —
-            and each tile's shape is sized to its own content. */}
-        {/* Two tile shapes, both sized off the column width: a square, and a
-            wide tile two columns across and one tall. Rows come out level
-            because every tile in a row is the same height, and the counts
-            divide exactly — 1+1+2 fills a four-column desktop row, and on a
-            phone a pair of squares fills one row and a wide fills the next.
-            Nothing is a tall vertical sliver and nothing is left ragged.
-
-            Order matters here: it is what keeps the rows full. */}
-        <div className="mt-3 sm:mt-6 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
           {dashboardCategories.filter(c => c.id !== 'notifications').map((category) => (
             <DashboardCategoryCard
               key={category.id}
@@ -1779,14 +1733,14 @@ export default function Admin() {
           {/* CRM — client directory + billing rollup */}
           <CrmCard span={TILE_SQUARE} />
 
-          {/* Notifications closes the grid, full width on desktop so the last
-              row fills as exactly as the ones above it. */}
+          <CalculatorCard wide className={cn(TILE_LARGE, 'w-full')} />
+
           {dashboardCategories.filter(c => c.id === 'notifications').map((category) => (
             <DashboardCategoryCard
               key={category.id}
               icon={category.icon}
               title={category.title}
-              span="col-span-2 aspect-[2/1] md:col-span-4 md:aspect-[4/1]"
+              span={TILE_WIDE}
               primary={category.primary}
               caption={category.caption}
               aside={category.aside}
