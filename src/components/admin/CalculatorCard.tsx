@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { CalculatorIcon } from '@heroicons/react/24/outline';
+import { ExpandableScreen, ExpandableScreenTrigger, ExpandableScreenContent } from '../ui/expandable-screen';
 import { cn } from '../ui/utils';
 
 type Op = '+' | '-' | '×' | '÷';
@@ -77,7 +79,13 @@ function Key({ label, onClick, variant = 'default', wide, pressed, onPressStart,
  * CalendarWidget so the three read as one row: black card, centered content,
  * live and usable in place rather than behind a modal.
  */
-export function CalculatorCard({ className, wide = false }: { className?: string; wide?: boolean }) {
+export function CalculatorCard({ className, wide = false, compact = false }: {
+  className?: string;
+  wide?: boolean;
+  /** Too small for a keypad: show a face that opens the calculator full screen. */
+  compact?: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
   const [display, setDisplay] = useState('0');
   const [acc, setAcc] = useState<number | null>(null);
   const [op, setOp] = useState<Op | null>(null);
@@ -136,7 +144,7 @@ export function CalculatorCard({ className, wide = false }: { className?: string
     />
   );
 
-  return (
+  const keypad = (
     <div className={cn(
       'bg-black flex flex-col items-center justify-center',
       // The 280px floor was sized for the old third-width cell. In a full-width
@@ -179,4 +187,32 @@ export function CalculatorCard({ className, wide = false }: { className?: string
       </div>
     </div>
   );
+
+  // At 1x1 the keys would be a few pixels across — too small to hit and too
+  // small to read. The tile becomes a face you tap, and the calculator opens
+  // full screen, the same expandable pattern the other widgets use.
+  if (compact) {
+    return (
+      <div className="contents">
+        <ExpandableScreen isOpen={expanded} onOpenChange={setExpanded}>
+          <ExpandableScreenTrigger className="w-full h-full text-left cursor-pointer">
+            <div className={cn('bg-black w-full h-full flex flex-col justify-between p-2 overflow-hidden', className)} style={{ borderRadius: 0 }}>
+              <span className="opacity-30"><CalculatorIcon className="w-4 h-4" /></span>
+              <span className="text-xl font-black font-mono tabular-nums truncate">{display}</span>
+            </div>
+          </ExpandableScreenTrigger>
+
+          <ExpandableScreenContent className="overflow-x-hidden">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden">
+              <div className="max-w-2xl mx-auto w-full px-4 sm:px-8 pt-20 pb-16">
+                {keypad}
+              </div>
+            </div>
+          </ExpandableScreenContent>
+        </ExpandableScreen>
+      </div>
+    );
+  }
+
+  return keypad;
 }

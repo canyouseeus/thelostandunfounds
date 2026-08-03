@@ -269,6 +269,12 @@ export default function Admin() {
   const calendarPress = useLongPress(() => openPanel('calendar'));
   // Widget shapes and order, editable and saved to this browser.
   const layout = useDashboardLayout();
+  // Ticks once a minute — enough for a date face.
+  const [today, setToday] = useState(new Date());
+  useEffect(() => {
+    const t = setInterval(() => setToday(new Date()), 60_000);
+    return () => clearInterval(t);
+  }, []);
 
   const openPanel = (id: string) => {
     setActivePanelSection(prev => (prev === id ? null : id));
@@ -1761,7 +1767,7 @@ export default function Admin() {
               // on the way in: a long press landing on text otherwise starts an
               // iOS selection instead of opening anything.
               <div
-                {...calendarPress}
+                {...(size === '1x1' ? { onClick: () => openPanel('calendar') } : calendarPress)}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPanel('calendar'); } }}
@@ -1769,13 +1775,31 @@ export default function Admin() {
                 className="w-full h-full cursor-pointer touch-manipulation select-none"
                 style={{ WebkitTouchCallout: 'none', WebkitTapHighlightColor: 'transparent' }}
               >
-                <FitBox base={500} className="h-full">
-                  <CalendarWidget size="fill" className="w-full h-full" />
-                </FitBox>
+                {size === '1x1' ? (
+                  // A month grid at 135px is unreadable, so the smallest size is
+                  // a face: today's date, and a tap straight into the master
+                  // calendar rather than a long press.
+                  // Reads like a calendar app icon: the weekday in a band across
+                  // the top, the date filling the rest.
+                  <div className="bg-black w-full h-full flex flex-col overflow-hidden" style={{ borderRadius: 0 }}>
+                    <span className="bg-white text-black text-[10px] font-black uppercase tracking-widest text-center py-1 shrink-0">
+                      {today.toLocaleDateString('en-US', { weekday: 'short' })}
+                    </span>
+                    <span className="flex-1 flex items-center justify-center text-4xl font-black tabular-nums leading-none">
+                      {today.getDate()}
+                    </span>
+                  </div>
+                ) : (
+                  <FitBox base={500} className="h-full">
+                    <CalendarWidget size="fill" className="w-full h-full" />
+                  </FitBox>
+                )}
               </div>
             ));
 
-            if (id === 'calculator') return cell(invertIfLight(<CalculatorCard wide className="w-full h-full" />));
+            if (id === 'calculator') return cell(invertIfLight(
+              <CalculatorCard wide compact={size === '1x1'} className="w-full h-full" />
+            ));
             if (id === 'site-analytics') return cell(<SiteAnalyticsCard light={light} size={size} />);
             if (id === 'crm') return cell(<CrmCard light={light} size={size} />);
 
