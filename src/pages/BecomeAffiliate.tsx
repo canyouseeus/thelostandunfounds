@@ -110,7 +110,7 @@ export default function BecomeAffiliate() {
             initialMode="signup"
         />
         <SEOHead
-            title="Become an Affiliate - Earn 42% of Profits"
+            title="Join THE AFFILIATE PROGRAM - Earn 42% of Profit"
             description="Join THE LOST+UNFOUNDS affiliate network. Earn 42% of the profit on every sale, compete for the King Midas 8% profit pool, and build your earning network."
             canonicalPath="/become-affiliate"
         />
