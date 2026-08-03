@@ -257,11 +257,11 @@ export async function fetchWeather(place: WeatherPlace, signal?: AbortSignal): P
 const STORAGE_KEY = 'lu.weather.place';
 
 export const DEFAULT_PLACE: WeatherPlace = {
-  name: 'Dallas',
+  name: 'Austin',
   admin: 'Texas',
   country: 'US',
-  latitude: 32.7767,
-  longitude: -96.797,
+  latitude: 30.2672,
+  longitude: -97.7431,
 };
 
 export function loadSavedPlace(): WeatherPlace | null {
