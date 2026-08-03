@@ -100,6 +100,7 @@ import { RevenueTracker } from '../components/ui/revenue-tracker';
 import { ClockWidget } from '../components/ui/clock-widget';
 import { CalendarWidget } from '../components/ui/calendar-widget';
 import { FitBox } from '../components/ui/fit-box';
+import { WeatherWidget } from '../components/ui/weather-widget';
 import CopyDebugReport from '../components/admin/CopyDebugReport';
 import AdminDeploymentNotifications from '../components/admin/AdminDeploymentNotifications';
 import { installGlobalListeners } from '../lib/adminErrorLog';
@@ -1612,13 +1613,13 @@ export default function Admin() {
               !min-h-0 overrides each widget's own min-height, which would
               otherwise stretch the cell taller than its width.
 
-              The calendar and calculator size their internals in fixed px (a
-              240px column of 40px day rows), so a narrow cell squeezed the day
-              grid until the digits overlapped and the month spilled out the
-              bottom. `zoom` didn't help — the widget still laid out at the
-              cell's width and only painted smaller afterwards. FitBox lays them
-              out at a full 440px square and scales the painted result to the
-              cell, so they keep their proportions at every width. */}
+              The calendar sizes its internals in fixed px (a 240px column of
+              40px day rows), so a narrow cell squeezed the day grid until the
+              digits overlapped and the month spilled out the bottom. `zoom`
+              didn't help — the widget still laid out at the cell's width and
+              only painted smaller afterwards. FitBox lays these out at a full
+              440px square and scales the painted result to the cell, so they
+              keep their proportions at every width. */}
           <FitBox>
             <ClockWidget size="lg" className="w-full h-full !min-h-0" />
           </FitBox>
@@ -1626,8 +1627,13 @@ export default function Admin() {
             <CalendarWidget className="w-full h-full !min-h-0" />
           </FitBox>
           <FitBox>
-            <CalculatorCard className="w-full h-full !min-h-0" />
+            <WeatherWidget className="w-full h-full !min-h-0" />
           </FitBox>
+
+          {/* The calculator gets the full width to itself. Squeezed into a 1/3
+              cell its keys scaled down to well under a fingertip; across the
+              whole row they're a real touch target. */}
+          <CalculatorCard wide className="col-span-3 w-full" />
 
           {dashboardCategories.map((category) => (
             <DashboardCategoryCard
