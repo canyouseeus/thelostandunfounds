@@ -52,11 +52,13 @@ export default function Layout({ children }: { children?: ReactNode }) {
       const el = grid?.firstElementChild
       if (!el) return setBigWidgetsVisible(false)
       const r = el.getBoundingClientRect()
-      // Swap once the row has actually been scrolled to — its top reaching the
-      // middle of the viewport — not on the first sliver. At the top of the
-      // page the row already peeks in by ~45px, which would otherwise hand
-      // straight over to the verse before you'd scrolled anywhere.
-      setBigWidgetsVisible(r.bottom > 0 && r.top <= window.innerHeight * 0.5)
+      // Track the row's centre rather than its edges, so entering and leaving
+      // are symmetric. Edge tests misbehave at both ends: the row peeks in at
+      // the top of the page (handing over before you've scrolled), and its
+      // bottom edge lingers on screen while you're already reading the second
+      // row (holding the verse too long).
+      const centre = r.top + r.height / 2
+      setBigWidgetsVisible(centre > 0 && centre < window.innerHeight)
     }
     const onScroll = () => { if (!frame) frame = requestAnimationFrame(measure) }
     measure()
