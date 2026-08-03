@@ -45,14 +45,16 @@ export default function Layout({ children }: { children?: ReactNode }) {
     let frame = 0
     const measure = () => {
       frame = 0
-      const el = document.getElementById('dashboard-widgets')
+      // Track only the first row (clock / calendar / calculator), not the whole
+      // grid — anchoring to the full grid kept the ticker up until every one of
+      // the twelve cells had scrolled past.
+      const grid = document.getElementById('dashboard-widgets')
+      const el = grid?.firstElementChild
       if (!el) return setBigWidgetsVisible(false)
       const r = el.getBoundingClientRect()
-      // Swap only once the widget row has actually scrolled up to the header —
-      // merely being on screen isn't enough, since the row sits high on the
-      // page and would keep the clock permanently hidden.
-      const HEADER_BAND = 140
-      setBigWidgetsVisible(r.top <= HEADER_BAND && r.bottom >= 0)
+      // The header widgets stand in for the full-size ones, so show the verse
+      // exactly while the real clock and calendar are on screen.
+      setBigWidgetsVisible(r.bottom > 0 && r.top < window.innerHeight)
     }
     const onScroll = () => { if (!frame) frame = requestAnimationFrame(measure) }
     measure()
@@ -323,27 +325,35 @@ export default function Layout({ children }: { children?: ReactNode }) {
               {/* Admin header widgets — absolutely centered to the page, so they
                   sit mid-header regardless of the logo and menu on either side.
                   ClockWidget draws its face with `absolute inset-0`, so it needs
-                  an explicit width or it collapses to nothing. They fade out once
-                  the full-size widget grid scrolls into view. */}
+                  an explicit width or it collapses to nothing.
+
+                  The slot always shows something: while the full-size clock and
+                  calendar are on screen the mini versions are redundant, so it
+                  crossfades to the daily verse. Both layers stay mounted and
+                  stacked — mounting/unmounting can't crossfade. */}
               {isAdminRoute && (
-                <div className="flex items-center justify-center gap-2 h-[46px] leading-none absolute left-1/2 -translate-x-1/2 top-3 z-10 max-w-[55vw]">
-                  {/* The header widgets always persist. Once the full-size clock
-                      and calendar are on screen the mini versions would be
-                      redundant, so the slot shows the daily verse instead. */}
-                  {bigWidgetsVisible ? (
-                    <VerseTicker className="animate-in fade-in duration-300" />
-                  ) : (
-                    <div className="flex items-center gap-2 animate-in fade-in duration-300">
-                      <ClockWidget size="lg" hideLabel lockMode className="w-[64px] !min-h-[46px]" />
-                      <Link
-                        to="/admin?panel=calendar"
-                        title="Open master calendar"
-                        className="flex items-center h-[46px] font-mono text-[13px] tracking-widest text-white hover:text-white/70 transition-colors"
-                      >
-                        {`${headerNow.getMonth() + 1}.${headerNow.getDate()}.${headerNow.getFullYear()}`}
-                      </Link>
-                    </div>
-                  )}
+                <div className="absolute left-1/2 -translate-x-1/2 top-3 z-10 h-[46px] w-[55vw] max-w-[520px] leading-none pointer-events-none">
+                  <div
+                    className={`absolute inset-0 flex items-center justify-center gap-2 transition-opacity duration-500 ${
+                      bigWidgetsVisible ? 'opacity-0' : 'opacity-100 pointer-events-auto'
+                    }`}
+                  >
+                    <ClockWidget size="lg" hideLabel lockMode className="w-[64px] !min-h-[46px]" />
+                    <Link
+                      to="/admin?panel=calendar"
+                      title="Open master calendar"
+                      className="flex items-center h-[46px] font-mono text-[13px] tracking-widest text-white hover:text-white/70 transition-colors"
+                    >
+                      {`${headerNow.getMonth() + 1}.${headerNow.getDate()}.${headerNow.getFullYear()}`}
+                    </Link>
+                  </div>
+                  <div
+                    className={`absolute inset-0 flex items-center justify-center transition-opacity duration-500 ${
+                      bigWidgetsVisible ? 'opacity-100 pointer-events-auto' : 'opacity-0'
+                    }`}
+                  >
+                    <VerseTicker className="w-full" />
+                  </div>
                 </div>
               )}
 
