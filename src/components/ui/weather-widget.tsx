@@ -177,10 +177,18 @@ function WeatherDetail({
   data,
   onClose,
   onPick,
+  isDefault,
+  onSetDefault,
+  onUseDefault,
+  hasSavedDefault,
 }: {
   data: WeatherSnapshot | null;
   onClose: () => void;
   onPick: (p: WeatherPlace) => void;
+  isDefault: boolean;
+  onSetDefault: () => void;
+  onUseDefault: () => void;
+  hasSavedDefault: boolean;
 }) {
   // Escape closes, and the page behind must not scroll while the sheet is up.
   useEffect(() => {
@@ -215,6 +223,7 @@ function WeatherDetail({
               <h2 className="text-2xl font-black uppercase tracking-widest text-white pr-10">{data.place.name}</h2>
               <p className="mt-1 text-[11px] uppercase tracking-widest text-white/40">
                 {[data.place.admin, data.place.country].filter(Boolean).join(', ')}
+                {isDefault && ' — Default'}
               </p>
               <div className="mt-6 flex items-end gap-4">
                 <span className={cn('text-6xl leading-none text-white', GLYPH)}>{conditionGlyph(data.current.code, data.current.isDay)}</span>
@@ -291,6 +300,30 @@ function WeatherDetail({
             <div className="mt-8">
               <h3 className="text-[10px] font-black uppercase tracking-widest text-white/40 text-left mb-3">Location</h3>
               <LocationPicker onPick={onPick} />
+
+              {/* Looking at a city is not the same as adopting it. Picking one
+                  from the search only changes what's on screen; it becomes the
+                  city the dashboard opens on when it's pinned here. */}
+              {!isDefault && (
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={onSetDefault}
+                    className="px-4 py-2 text-sm font-bold uppercase tracking-widest bg-white text-black hover:bg-white/10 hover:text-white transition-colors"
+                    style={{ borderRadius: 0 }}
+                  >
+                    Set {data.place.name} As Default
+                  </button>
+                  {hasSavedDefault && (
+                    <button
+                      onClick={onUseDefault}
+                      className="px-3 py-2 text-xs font-bold uppercase tracking-widest bg-white/10 text-white hover:bg-white hover:text-black transition-colors"
+                      style={{ borderRadius: 0 }}
+                    >
+                      Back To Default
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </>
         )}
@@ -306,6 +339,10 @@ function WeatherDetail({
  * hourly strip, 7-day forecast, air quality and the rest of the conditions.
  */
 export function WeatherWidget({ className }: { className?: string }) {
+  // Two separate ideas: the city the dashboard opens on, and the city you're
+  // currently looking at. Searching only moves the second one — the first
+  // changes when you pin it.
+  const [savedDefault, setSavedDefault] = useState<WeatherPlace | null>(() => loadSavedPlace());
   const [place, setPlace] = useState<WeatherPlace>(() => loadSavedPlace() ?? DEFAULT_PLACE);
   const [data, setData] = useState<WeatherSnapshot | null>(null);
   const [error, setError] = useState(false);
@@ -326,7 +363,36 @@ export function WeatherWidget({ className }: { className?: string }) {
     return () => { alive = false; ctrl.abort(); window.clearInterval(poll); };
   }, [place]);
 
-  const choose = (p: WeatherPlace) => { savePlace(p); setPlace(p); setData(null); };
+  // With no city explicitly chosen, follow the device. Austin is only the
+  // fallback for a denied prompt, a timeout, or a browser with no location
+  // service — it shows immediately either way, so the tile is never blank
+  // while the fix is pending. A geolocated place isn't saved: saving is for
+  // deliberate choices, and persisting a fix would pin the widget to wherever
+  // you happened to be the first time it loaded.
+  useEffect(() => {
+    if (loadSavedPlace() || !navigator.geolocation) return;
+    let alive = true;
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const located = await describeCoords(pos.coords.latitude, pos.coords.longitude);
+        if (alive) setPlace(located);
+      },
+      () => { /* denied or unavailable — the default city stands */ },
+      { timeout: 10_000, maximumAge: 900_000 },
+    );
+    return () => { alive = false; };
+  }, []);
+
+  const choose = (p: WeatherPlace) => { setPlace(p); setData(null); };
+  const pinCurrent = () => { savePlace(place); setSavedDefault(place); };
+  const backToDefault = () => { if (savedDefault) { setPlace(savedDefault); setData(null); } };
+
+  // Coordinates round-trip through JSON and a reverse lookup, so compare them
+  // at ~100m rather than exactly.
+  const samePlace = (a: WeatherPlace, b: WeatherPlace) =>
+    Math.abs(a.latitude - b.latitude) < 0.001 && Math.abs(a.longitude - b.longitude) < 0.001;
+  const isDefault = !!savedDefault && samePlace(place, savedDefault);
+
   const press = useLongPress(() => setOpen(true));
 
   return (
@@ -370,7 +436,17 @@ export function WeatherWidget({ className }: { className?: string }) {
         <span className="text-[9px] uppercase tracking-widest text-white/20 text-left">Hold for detail</span>
       </div>
 
-      {open && <WeatherDetail data={data} onClose={() => setOpen(false)} onPick={choose} />}
+      {open && (
+        <WeatherDetail
+          data={data}
+          onClose={() => setOpen(false)}
+          onPick={choose}
+          isDefault={isDefault}
+          onSetDefault={pinCurrent}
+          onUseDefault={backToDefault}
+          hasSavedDefault={!!savedDefault}
+        />
+      )}
     </>
   );
 }
