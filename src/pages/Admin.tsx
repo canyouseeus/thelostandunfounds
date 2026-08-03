@@ -79,9 +79,10 @@ import { SiteAnalyticsCard } from '../components/admin/SiteAnalyticsCard';
 import { CrmCard } from '../components/admin/CrmCard';
 import { CalculatorCard } from '../components/admin/CalculatorCard';
 import { CrmDirectory } from '../components/admin/CrmDirectory';
-import { ProfitTrendCard } from '../components/admin/ProfitTrendCard';
-import { RefundsCard } from '../components/admin/RefundsCard';
+import { RefundsLedger } from '../components/admin/RefundsCard';
+import ProfitGraph from '../components/admin/ProfitGraph';
 import { DashboardCategoryCard } from '../components/admin/DashboardCategoryCard';
+import { TILE_SQUARE, TILE_WIDE } from '../components/admin/DashboardTile';
 import { ExpandableScreen, ExpandableScreenTrigger, ExpandableScreenContent } from '../components/ui/expandable-screen';
 import { AnimatedNumber } from '../components/ui/animated-number';
 import { cn } from '../components/ui/utils';
@@ -101,6 +102,7 @@ import { RevenueTracker } from '../components/ui/revenue-tracker';
 import { ClockWidget } from '../components/ui/clock-widget';
 import { CalendarWidget } from '../components/ui/calendar-widget';
 import { FitBox } from '../components/ui/fit-box';
+import { MiniBars, Sparkline, StatusMarks } from '../components/ui/viz';
 import { useLongPress } from '../components/ui/use-long-press';
 import { WeatherWidget } from '../components/ui/weather-widget';
 import CopyDebugReport from '../components/admin/CopyDebugReport';
@@ -1385,9 +1387,22 @@ export default function Admin() {
   const dashboardCategories = [
     {
       id: 'operational-load',
-      span: 'col-span-1 row-span-4',
+      span: TILE_SQUARE,
       title: 'Operational Load',
       icon: <ChartBarIcon className="w-4 h-4" />,
+      primary: <AnimatedNumber value={stats?.totalUsers || 0} />,
+      caption: 'Total users',
+      aside: (
+        <MiniBars
+          className="h-full max-h-24"
+          values={[
+            { label: 'Users', value: stats?.totalUsers || 0 },
+            { label: 'Subscribers', value: stats?.newsletterSubscribers || 0 },
+            { label: 'Affiliates', value: affiliateStats?.totalAffiliates || 0 },
+            { label: 'Pending', value: pendingSubmissions },
+          ]}
+        />
+      ),
       footer: <span className="text-[10px] text-white/40">Real-time sync</span>,
       content: (
         <div className="space-y-4 pt-2">
@@ -1420,24 +1435,54 @@ export default function Admin() {
     },
     {
       id: 'revenue-performance',
-      span: 'col-span-1 row-span-4',
+      span: TILE_WIDE,
       title: 'Revenue Performance',
       icon: <ArrowTrendingUpIcon className="w-4 h-4" />,
+      primary: <span className="text-green-400">${((stats?.affiliateRevenue || 0) + (stats?.galleryRevenue || 0) + (stats?.bookingRevenue || 0)).toLocaleString()}</span>,
+      caption: 'Revenue, all sources',
+      aside: (
+        <Sparkline
+          className="h-full max-h-28"
+          values={(stats?.history?.revenue || []).map(r => (typeof r === 'string' ? 1 : r.amount))}
+        />
+      ),
       footer: <span className="text-[10px] text-white/40">Gross profit estimate</span>,
       content: (
-        <div className="space-y-4 pt-2">
-          <AdminBentoRow label="Affiliate" value={`$${(stats?.affiliateRevenue || 0).toLocaleString()}`} />
-          <AdminBentoRow label="Gallery" value={`$${(stats?.galleryRevenue || 0).toLocaleString()}`} />
-          <AdminBentoRow label="Bookings" value={`$${(stats?.bookingRevenue || 0).toLocaleString()}`} />
-          <AdminBentoRow label="Total" valueClassName="text-green-400 font-bold" value={`$${((stats?.affiliateRevenue || 0) + (stats?.galleryRevenue || 0) + (stats?.bookingRevenue || 0)).toLocaleString()}`} />
+        <div className="space-y-10 pt-2">
+          <div className="space-y-4">
+            <AdminBentoRow label="Affiliate" value={`$${(stats?.affiliateRevenue || 0).toLocaleString()}`} />
+            <AdminBentoRow label="Gallery" value={`$${(stats?.galleryRevenue || 0).toLocaleString()}`} />
+            <AdminBentoRow label="Bookings" value={`$${(stats?.bookingRevenue || 0).toLocaleString()}`} />
+            <AdminBentoRow label="Total" valueClassName="text-green-400 font-bold" value={`$${((stats?.affiliateRevenue || 0) + (stats?.galleryRevenue || 0) + (stats?.bookingRevenue || 0)).toLocaleString()}`} />
+          </div>
+
+          {/* Was its own Profit Trend tile, which showed the same total as this
+              one — the graph belongs with the figures it plots. */}
+          <ProfitGraph />
+
+          {/* Refunds were a separate tile too. They're money out; they belong
+              with money in. */}
+          <RefundsLedger />
         </div>
       )
     },
     {
       id: 'network-status',
-      span: 'col-span-1 row-span-3',
+      span: TILE_WIDE,
       title: 'Network Status',
       icon: <CpuChipIcon className="w-4 h-4" />,
+      primary: `${[healthMetrics.db, healthMetrics.api, healthMetrics.auth, healthMetrics.storage].filter(Boolean).length}/4`,
+      caption: 'Services online — 42ms',
+      aside: (
+        <StatusMarks
+          items={[
+            { label: 'Database', ok: healthMetrics.db },
+            { label: 'API Engine', ok: healthMetrics.api },
+            { label: 'Auth', ok: healthMetrics.auth },
+            { label: 'Storage', ok: healthMetrics.storage },
+          ]}
+        />
+      ),
       footer: <span className="text-[10px] text-white/40">System health</span>,
       content: (
         <div className="flex flex-col gap-2 pt-2">
@@ -1457,39 +1502,59 @@ export default function Admin() {
             <span className="text-white/40">Storage</span>
             <span className={healthMetrics.storage ? "text-green-400" : "text-amber-500"}>{healthMetrics.storage ? 'Online' : 'Degraded'}</span>
           </div>
-          <div className="mt-2 pt-2 border-t border-transparent flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-[9px] text-white/60 font-bold uppercase tracking-tighter">Latency: 42ms</span>
-          </div>
         </div>
       )
     },
     {
       id: 'registry',
-      span: 'col-span-1 row-span-3',
+      span: TILE_SQUARE,
       title: 'Registry',
       icon: <ShieldCheckIcon className="w-4 h-4" />,
+      primary: (stats?.galleryPhotoCount || 0).toLocaleString(),
+      caption: 'Gallery photos',
+      aside: (
+        <div className="text-right text-[11px] uppercase tracking-widest text-white/40 tabular-nums">
+          {registeredWriters} writers
+        </div>
+      ),
       footer: <Link to="/admin/affiliates" className="text-[10px] text-white/60 hover:text-white underline" onClick={e => e.stopPropagation()}>Manage Affiliates</Link>,
       content: (
         <div className="space-y-4 pt-2">
           <AdminBentoRow label="Writers" value={registeredWriters} />
           <AdminBentoRow label="Gallery Photos" value={stats?.galleryPhotoCount || 0} />
           <AdminBentoRow label="Active Admins" value="2" />
-          <AdminBentoRow label="Environment" value={<span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-[9px] font-bold rounded">PRODUCTION</span>} />
+          <AdminBentoRow label="Environment" value={<span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-[9px] font-bold">PRODUCTION</span>} />
         </div>
       )
     },
     {
       id: 'notifications',
-
+      span: TILE_WIDE,
       title: 'Notifications',
       icon: <BellIcon className="w-4 h-4" />,
+      primary: alerts.length,
+      caption: alerts.length ? String(alerts[0].message).slice(0, 42) : 'Nothing to report',
+      aside: (
+        <div className="flex flex-col gap-1.5 items-end">
+          {alerts.slice(0, 4).map(alert => (
+            <div key={alert.id} className="flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 truncate max-w-[9rem]">
+                {String(alert.message).slice(0, 24)}
+              </span>
+              <span className={cn(
+                'w-2 h-2 shrink-0',
+                alert.type === 'error' ? 'bg-red-500' : alert.type === 'warning' ? 'bg-amber-500' : 'bg-white/50',
+              )} />
+            </div>
+          ))}
+        </div>
+      ),
       footer: <span className="text-[10px] text-white/40">System alerts</span>,
       content: (
         <div className="space-y-3 pt-2">
           {alerts.length > 0 ? (
-            alerts.slice(0, 3).map(alert => (
-              <div key={alert.id} className="flex flex-col gap-1 py-1 border-b border-transparent last:border-0">
+            alerts.slice(0, 8).map(alert => (
+              <div key={alert.id} className="flex flex-col gap-1 py-1">
                 <div className="flex items-center justify-between">
                   <span className={cn(
                     "text-[8px] font-bold uppercase px-1.5 py-0.5",
@@ -1499,15 +1564,13 @@ export default function Admin() {
                   )}>
                     {alert.type}
                   </span>
-                  <span className="text-[8px] text-white/30">{alert.time}</span>
+                  <span className="text-[10px] text-white/40">{alert.time}</span>
                 </div>
-                <p className="text-[10px] text-white/70 line-clamp-1">{alert.message}</p>
+                <span className="text-xs text-white/70 text-left">{alert.message}</span>
               </div>
             ))
           ) : (
-            <div className="py-4 text-center">
-              <p className="text-white/40 text-[10px] uppercase font-bold tracking-widest">No active alerts</p>
-            </div>
+            <span className="text-xs text-white/40">No alerts</span>
           )}
         </div>
       )
@@ -1687,44 +1750,46 @@ export default function Admin() {
 
             Tile heights: a span of N rows is 92N + 12(N-1) px — 196, 300, 404 —
             and each tile's shape is sized to its own content. */}
-        <div className="mt-3 sm:mt-6 grid grid-cols-2 md:grid-cols-3 auto-rows-[92px] gap-3 [grid-auto-flow:dense]">
+        {/* Two tile shapes, both sized off the column width: a square, and a
+            wide tile two columns across and one tall. Rows come out level
+            because every tile in a row is the same height, and the counts
+            divide exactly — 1+1+2 fills a four-column desktop row, and on a
+            phone a pair of squares fills one row and a wide fills the next.
+            Nothing is a tall vertical sliver and nothing is left ragged.
+
+            Order matters here: it is what keeps the rows full. */}
+        <div className="mt-3 sm:mt-6 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
           {dashboardCategories.filter(c => c.id !== 'notifications').map((category) => (
             <DashboardCategoryCard
               key={category.id}
               icon={category.icon}
               title={category.title}
               span={category.span}
+              primary={category.primary}
+              caption={category.caption}
+              aside={category.aside}
               footer={category.footer}
               content={category.content}
             />
           ))}
 
           {/* Site Analytics — fullscreen ExpandableScreen pattern */}
-          <SiteAnalyticsCard span="col-span-1 row-span-3" />
+          <SiteAnalyticsCard span={TILE_SQUARE} />
 
           {/* CRM — client directory + billing rollup */}
-          <CrmCard span="col-span-1 row-span-3" />
+          <CrmCard span={TILE_SQUARE} />
 
-          {/* Profit Trend — wires ProfitGraph into the dashboard */}
-          <ProfitTrendCard
-            span="col-span-1 row-span-3"
-            affiliateRevenue={stats?.affiliateRevenue || 0}
-            galleryRevenue={stats?.galleryRevenue || 0}
-            bookingRevenue={stats?.bookingRevenue || 0}
-          />
-
-          {/* Refunds — previously invisible, now a real ledger */}
-          <RefundsCard span="col-span-1 row-span-3" />
-
-          {/* Notifications runs full width and last, which is what makes the
-              bottom edge flat: whatever heights the columns above end on, the
-              grid closes on a single tile spanning every column. */}
+          {/* Notifications closes the grid, full width on desktop so the last
+              row fills as exactly as the ones above it. */}
           {dashboardCategories.filter(c => c.id === 'notifications').map((category) => (
             <DashboardCategoryCard
               key={category.id}
               icon={category.icon}
               title={category.title}
-              span="col-span-2 md:col-span-3 row-span-2"
+              span="col-span-2 aspect-[2/1] md:col-span-4 md:aspect-[4/1]"
+              primary={category.primary}
+              caption={category.caption}
+              aside={category.aside}
               footer={category.footer}
               content={category.content}
             />

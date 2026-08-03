@@ -1,63 +1,77 @@
 import { ReactNode } from 'react';
 import { cn } from '../ui/utils';
 
-/** Grid shape for a tile, e.g. "col-span-2 row-span-2". */
+/**
+ * Grid shape for a tile.
+ *
+ * Two shapes, both sized off the column width, the way a phone's widget grid
+ * works: a square taking one column, and a wide tile taking two at 2:1. The
+ * grid is two columns on a phone and four on desktop, and the tiles run
+ * square-square-wide — 1+1+2 fills a desktop row exactly, and on a phone the
+ * pair fills one row and the wide fills the next. Nothing is a tall vertical
+ * sliver and no row ends ragged.
+ */
+export const TILE_SQUARE = 'col-span-1 aspect-square';
+// On desktop a wide tile shares its row with two squares, so it takes their
+// height — pinning its own ratio there made it taller than they were and left a
+// band of empty grid under them. On a phone it spans the whole row with no
+// square to measure against, so it needs the ratio spelled out or it collapses
+// to the height of its text.
+export const TILE_WIDE = 'col-span-2 aspect-[2/1] md:aspect-auto';
+
 export interface TileShape {
   span?: string;
 }
 
 interface DashboardTileProps {
+  /** Small and dim, top-left. Says what this is without a heading. */
   icon: ReactNode;
-  /** First word reads at full strength, the rest dims — e.g. "NETWORK status". */
-  title: string;
-  children: ReactNode;
-  /** Pinned to the bottom of the tile, below the scrolling body (sparklines). */
-  footer?: ReactNode;
+  /** The number you're here to read. Set large; it carries the tile. */
+  primary: ReactNode;
+  /** A few words under the figure saying what it counts. */
+  caption: string;
+  /** Optional supporting rows, sitting above the figure. */
+  children?: ReactNode;
   className?: string;
 }
 
 /**
- * The at-a-glance face shared by every dashboard tile.
+ * The face of a dashboard tile.
  *
- * It used to be a hard `aspect-square` with `[zoom:0.72]` on the contents. In a
- * half-width phone cell that left roughly 110px of height for four rows of
- * figures, so titles truncated to "OPERATIO…", status values clipped mid-word
- * ("DATABASE ONL"), and the rest of the rows were simply cut off — the numbers
- * you keep a dashboard open for were the first thing to go.
+ * It used to lead with an icon and an uppercase title, then list every figure as
+ * a label/value row. That gave each tile a header band before any content,
+ * pushed the numbers into whatever space was left, and made the tiles tall and
+ * narrow to fit it all.
  *
- * So the square is gone. A tile keeps a floor height and then grows to fit
- * whatever it holds, at full type size rather than scaled into illegibility —
- * a four-row tile is simply taller than a two-row one. That's the bento read:
- * cells of uneven height, sized by their content instead of cropped to a
- * uniform square. Nothing is clipped, so every figure the dashboard is kept
- * open for is actually on screen.
- *
- * The tile is solid black — spacing and type weight do the separating, not a
- * raised surface.
+ * A tile now reads the way a phone widget does: one figure at a size you can
+ * take in at a glance, a short caption saying what it is, and an icon instead of
+ * a heading. Supporting numbers sit above it in small type. What a tile shows
+ * should be obvious without reading a title first.
  */
-export function DashboardTile({ icon, title, children, footer, className }: DashboardTileProps) {
-  const [first, ...rest] = title.split(' ');
-
+export function DashboardTile({ icon, primary, caption, children, className }: DashboardTileProps) {
   return (
     <div
       className={cn(
-        'bg-black hover:bg-[#0a0a0a] active:scale-95 transition-all duration-300',
-        'w-full h-full flex flex-col p-5 overflow-hidden',
+        'bg-black hover:bg-[#0a0a0a] transition-colors duration-300',
+        'w-full h-full flex flex-col justify-between p-4 sm:p-5 overflow-hidden text-left',
         className,
       )}
       style={{ borderRadius: 0 }}
     >
-      <div className="flex items-center gap-2 mb-4 shrink-0">
-        <span className="text-white/50 [&>svg]:w-4 [&>svg]:h-4 shrink-0">{icon}</span>
-        <h3 className="text-[10px] font-black uppercase tracking-widest text-white/80 leading-tight text-left">
-          {first}
-          {rest.length > 0 && <span className="text-white/40"> {rest.join(' ')}</span>}
-        </h3>
+      <span className="text-white/30 [&>svg]:w-5 [&>svg]:h-5 shrink-0">{icon}</span>
+
+      {/* The instrument gets the middle of the tile and grows into it, rather
+          than sitting in a strip at the top with dead space beneath. */}
+      {children && <div className="flex-1 min-h-0 w-full py-3 flex flex-col justify-center">{children}</div>}
+
+      <div className="min-w-0">
+        <div className="text-4xl sm:text-5xl font-black tracking-tight text-white tabular-nums leading-none truncate">
+          {primary}
+        </div>
+        <div className="mt-2 text-[10px] font-black uppercase tracking-[0.2em] text-white/40 truncate">
+          {caption}
+        </div>
       </div>
-
-      <div className="flex-1">{children}</div>
-
-      {footer && <div className="shrink-0">{footer}</div>}
     </div>
   );
 }

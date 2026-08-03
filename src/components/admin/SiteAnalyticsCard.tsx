@@ -77,28 +77,20 @@ export function SiteAnalyticsCard({ span }: TileShape = {}) {
         <ExpandableScreenTrigger className={`text-left cursor-pointer ${span ?? ''}`}>
           <DashboardTile
             icon={<ChartBarIcon className="w-4 h-4" />}
-            title="Site Analytics"
-            footer={
-              // Only draw the sparkline when there is something to draw. With no
-              // traffic every bar sat at its 4% floor, which rendered as a row of
-              // dashes across the tile — it read as a broken divider rule, not a
-              // chart.
-              trend.some((t) => t.count > 0) ? (
-                <div className="flex gap-[3px] h-10 items-end justify-between mt-4">
-                  {trend.map((t, i) => (
-                    <div
-                      key={i}
-                      className="bg-white/20 w-full hover:bg-white transition-colors"
-                      style={{ height: `${Math.max(6, (t.count / maxTrend) * 100)}%` }}
-                    />
-                  ))}
-                </div>
-              ) : null
-            }
+            primary={stats ? stats.totalViews.toLocaleString() : loading ? '…' : '0'}
+            caption="Site views"
           >
-              <AdminBentoRow label="Total Views" value={stats ? stats.totalViews.toLocaleString() : loading ? '…' : '0'} />
-              <AdminBentoRow label="Unique Visitors" value={stats ? stats.uniqueVisitors.toLocaleString() : loading ? '…' : '0'} />
-              <AdminBentoRow label="Bounce Rate" value={stats ? `${stats.bounceRate.toFixed(1)}%` : loading ? '…' : '—'} />
+            {trend.some((t) => t.count > 0) && (
+              <div className="flex gap-[3px] h-full max-h-24 items-end justify-between">
+                {trend.map((t, i) => (
+                  <div
+                    key={i}
+                    className="bg-white/20 w-full"
+                    style={{ height: `${Math.max(6, (t.count / maxTrend) * 100)}%` }}
+                  />
+                ))}
+              </div>
+            )}
           </DashboardTile>
         </ExpandableScreenTrigger>
 

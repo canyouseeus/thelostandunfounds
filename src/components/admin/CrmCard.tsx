@@ -4,6 +4,7 @@ import { ExpandableScreen, ExpandableScreenTrigger, ExpandableScreenContent } fr
 import { AdminBentoRow } from '../ui/admin-bento-card';
 import { useCrmClients, CrmDirectoryScreen } from './CrmDirectory';
 import { DashboardTile, TileShape } from './DashboardTile';
+import { RingGauge } from '../ui/viz';
 
 const money = (n: number) => `$${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
@@ -17,10 +18,21 @@ export function CrmCard({ span }: TileShape = {}) {
     <div className="contents">
       <ExpandableScreen isOpen={isOpen} onOpenChange={setIsOpen}>
         <ExpandableScreenTrigger className={`text-left cursor-pointer ${span ?? ''}`}>
-          <DashboardTile icon={<UserGroupIcon className="w-4 h-4" />} title="CRM Clients">
-              <AdminBentoRow label="Clients" value={val(totals.clients, (n) => String(n))} />
-              <AdminBentoRow label="Billed" value={val(totals.billed, money)} />
-              <AdminBentoRow label="Outstanding" value={val(totals.outstanding, money)} />
+          <DashboardTile
+            icon={<UserGroupIcon className="w-4 h-4" />}
+            primary={loading ? '…' : totals.clients}
+            caption="CRM clients"
+          >
+            <div className="flex items-center justify-center gap-3">
+              <RingGauge
+                className="w-16 h-16 sm:w-20 sm:h-20"
+                value={totals.billed}
+                max={Math.max(totals.billed + totals.outstanding, 1)}
+              />
+              <span className="text-[11px] uppercase tracking-widest text-white/40 tabular-nums">
+                {val(totals.billed, money)} billed
+              </span>
+            </div>
           </DashboardTile>
         </ExpandableScreenTrigger>
 

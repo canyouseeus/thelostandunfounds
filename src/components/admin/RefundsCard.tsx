@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ReceiptRefundIcon } from '@heroicons/react/24/outline';
-import { ExpandableScreen, ExpandableScreenTrigger, ExpandableScreenContent } from '../ui/expandable-screen';
-import { AdminBentoRow } from '../ui/admin-bento-card';
 import { LoadingSpinner } from '../Loading';
 import { supabase } from '../../lib/supabase';
-import { DashboardTile, TileShape } from './DashboardTile';
 
 interface RefundRow {
   id: string;
@@ -27,7 +24,13 @@ const SOURCE_LABEL: Record<string, string> = {
 };
 
 /** Dashboard tile surfacing the refunds ledger — previously invisible (webhook only logged to console). */
-export function RefundsCard({ span }: TileShape = {}) {
+/**
+ * The refunds ledger, as a section rather than a tile of its own.
+ *
+ * It was a separate dashboard tile showing a figure that belongs with the rest
+ * of the money — so it now renders inside the Revenue Performance panel.
+ */
+export function RefundsLedger() {
   const [isOpen, setIsOpen] = useState(false);
   const [refunds, setRefunds] = useState<RefundRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,23 +67,7 @@ export function RefundsCard({ span }: TileShape = {}) {
     .reduce((sum, r) => sum + (r.amount_cents || 0), 0);
 
   return (
-    <div className="contents">
-      <ExpandableScreen isOpen={isOpen} onOpenChange={setIsOpen}>
-        <ExpandableScreenTrigger className={`text-left cursor-pointer ${span ?? ''}`}>
-          <DashboardTile icon={<ReceiptRefundIcon className="w-4 h-4" />} title="Refunds">
-              <AdminBentoRow
-                label="Last 30 Days"
-                valueClassName={last30dCents > 0 ? 'text-amber-400 font-bold' : ''}
-                value={`$${(last30dCents / 100).toLocaleString()}`}
-              />
-              <AdminBentoRow label="All Time" value={`$${(totalRefundedCents / 100).toLocaleString()}`} />
-              <AdminBentoRow label="Count" value={refunds.length} />
-          </DashboardTile>
-        </ExpandableScreenTrigger>
-
-        <ExpandableScreenContent className="overflow-x-hidden">
-          <div className="flex-1 overflow-y-auto overflow-x-hidden">
-            <div className="max-w-4xl mx-auto w-full px-4 sm:px-8 pt-20 pb-16">
+            <div className="w-full">
               <div className="flex items-center gap-3 mb-1">
                 <ReceiptRefundIcon className="w-5 h-5 text-white/40" />
                 <h2 className="text-xl font-black uppercase tracking-wide text-white">Refunds</h2>
@@ -139,10 +126,6 @@ export function RefundsCard({ span }: TileShape = {}) {
                   </div>
                 </div>
               )}
-            </div>
-          </div>
-        </ExpandableScreenContent>
-      </ExpandableScreen>
     </div>
   );
 }
